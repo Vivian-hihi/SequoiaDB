@@ -1318,6 +1318,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                            bson *select,
                            bson *orderBy,
                            bson *hint,
+                           INT32 flags,
                            INT64 numToSkip,
                            INT64 numToReturn,
                            bson *options,                          
@@ -1328,6 +1329,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
     \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] flags The flags of query
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
     \param [in] options the rules of explain
@@ -1340,6 +1342,7 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
                               bson *select,
                               bson *orderBy,
                               bson *hint,
+                              INT32 flags,
                               INT64 numToSkip,
                               INT64 numToReturn,
                               bson *options,

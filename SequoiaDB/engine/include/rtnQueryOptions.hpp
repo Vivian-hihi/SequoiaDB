@@ -81,6 +81,29 @@ namespace engine
 
       }
 
+      _rtnQueryOptions( const bson::BSONObj &query,
+                        const bson::BSONObj &selector,
+                        const bson::BSONObj &orderBy,
+                        const bson::BSONObj &hint,
+                        const CHAR *fullName,
+                        SINT64 skip,
+                        SINT64 limit,
+                        INT32 flag,
+                        BOOLEAN enablePrefetch )
+      :_query( query ),
+       _selector( selector ),
+       _orderBy( orderBy ),
+       _hint( hint ),
+       _fullName( fullName ),
+       _fullNameBuf( NULL ),
+       _skip( skip ),
+       _limit( limit ),
+       _flag( flag ),
+       _enablePrefetch( enablePrefetch )
+      {
+
+      }
+
       virtual ~_rtnQueryOptions() ;
 
       INT32 getOwned() ;

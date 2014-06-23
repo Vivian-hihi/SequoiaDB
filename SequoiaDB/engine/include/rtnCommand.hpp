@@ -1458,11 +1458,16 @@ namespace engine
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
 
+      virtual const CHAR *collectionFullName() { return _fullName ; }
+
    private:
-      const CHAR *_query ;
-      const CHAR *_selector ;
-      const CHAR *_orderBy ;
-      const CHAR *_hint ;
+      BSONObj _query ;
+      BSONObj _selector ;
+      BSONObj _orderBy ;
+      BSONObj _hint ;
+      BSONObj _realHint ;
+      BSONObj _explainOptions ;
+      const CHAR *_fullName ;
       INT64 _skip ;
       INT64 _limit ;
       INT32 _flags ;

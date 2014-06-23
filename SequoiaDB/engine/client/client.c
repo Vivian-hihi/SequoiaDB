@@ -4383,6 +4383,7 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
                               bson *selector,
                               bson *orderBy,
                               bson *hint,
+                              INT32 flags,
                               INT64 numToSkip,
                               INT64 numToReturn,
                               bson *options,
@@ -4420,7 +4421,7 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
 
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                               CMD_ADMIN_PREFIX CMD_NAME_EXPLAIN,
-                              0, 0, -1, -1,
+                              flags, 0, numToSkip, numToReturn,
                               condition, selector, orderBy,
                               &newObj, cs->_endianConvert ) ;
 

@@ -1498,7 +1498,7 @@ static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
    JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
 
    rc = sdbExplain( *collection, condition , selector , sort , hint ,
-                   skip , limit , explain, cursor ) ;
+                   0, skip , limit , explain, cursor ) ;
    REPORT_RC ( SDB_OK == rc || SDB_DMS_EOC == rc ,
                "SdbCollection.explain()" , rc ) ;
    if ( SDB_DMS_EOC == rc )

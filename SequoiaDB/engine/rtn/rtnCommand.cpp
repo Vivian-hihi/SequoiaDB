@@ -2645,10 +2645,7 @@ namespace engine
    }
 
    _rtnExplain::_rtnExplain()
-   :_query( NULL ),
-    _selector( NULL ),
-    _orderBy( NULL ),
-    _hint( NULL ),
+   :_fullName( NULL ),
     _skip( 0 ),
     _limit( -1 ),
     _flags( 0 )
@@ -2669,54 +2666,37 @@ namespace engine
                             const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
-      _query = pMatcherBuff ;
-      _selector = pSelectBuff ;
-      _orderBy = pOrderByBuff ;
-      _hint = pHintBuff ;
       _skip = numToSkip ;
       _limit = numToReturn ;
       _flags = flags ;
-   done:
-      return rc ;
-   }
 
-   INT32 _rtnExplain::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                             _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                             INT16 w, INT64 *pContextID )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *fullName = NULL ;
-      const CHAR *realHint = NULL ;
-      BSONObj dummy ;
-      BSONObj explainOptions ;
       try
       {
-         BSONObj hint( _hint ) ;
-         BSONElement ele = hint.getField( FIELD_NAME_COLLECTION ) ;
+         _query = BSONObj( pMatcherBuff ) ;
+         _selector = BSONObj( pSelectBuff ) ;
+         _orderBy = BSONObj( pOrderByBuff ) ;
+         _hint = BSONObj( pHintBuff ) ;
+         BSONElement ele = _hint.getField( FIELD_NAME_COLLECTION ) ;
          if ( String != ele.type() )
          {
             PD_LOG( PDERROR, "invalid hint in query request:%s",
-                    hint.toString( FALSE, TRUE ).c_str() ) ;
+                    _hint.toString( FALSE, TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
 
-         fullName = ele.valuestr() ;
+         _fullName = ele.valuestr() ;
 
-         ele = hint.getField( FIELD_NAME_HINT ) ;
+         ele =_hint.getField( FIELD_NAME_HINT ) ;
          if ( Object == ele.type() )
          {
-            realHint = ele.embeddedObject().objdata() ;
-         }
-         else
-         {
-            realHint = dummy.objdata() ;
+            _realHint = ele.embeddedObject() ;
          }
 
-         ele = hint.getField( FIELD_NAME_OPTIONS ) ;
+         ele = _hint.getField( FIELD_NAME_OPTIONS ) ;
          if ( Object == ele.type() )
          {
-            explainOptions = ele.embeddedObject() ;
+            _explainOptions = ele.embeddedObject() ;
          }
       }
       catch ( std::exception &e )
@@ -2724,20 +2704,28 @@ namespace engine
          PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
-      }
+      }   
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
-      {
+   INT32 _rtnExplain::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                             _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                             INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
       rtnQueryOptions queryOptions( _query, _selector, _orderBy,
-                                    realHint, fullName, _skip,
+                                    _realHint, _fullName, _skip,
                                     _limit, _flags, FALSE ) ;
       rc = rtnExplain( queryOptions,
-                       explainOptions,
+                       _explainOptions,
                        cb, dmsCB, rtnCB, *pContextID ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to explain request:%d", rc ) ;
          goto error ;
-      }
       }
    done:
       return rc ;

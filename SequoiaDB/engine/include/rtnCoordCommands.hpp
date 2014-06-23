@@ -116,6 +116,7 @@ namespace engine
    #define COORD_CMD_LIST_DOMAINS             CMD_ADMIN_PREFIX CMD_NAME_LIST_DOMAINS
    #define COORD_CMD_LIST_CS_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN
    #define COORD_CMD_LIST_CL_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN
+   #define COORD_CMD_EXPLAIN                  CMD_ADMIN_PREFIX CMD_NAME_EXPLAIN
 
 #if defined (_DEBUG)
    #define COORD_CMD_DEBUG_QUERY              CMD_ADMIN_PREFIX CMD_NAME_DEBUG_QUERY
@@ -1202,6 +1203,15 @@ namespace engine
       INT32 _rebuildListResult( const std::vector<BSONObj> &infoFromCata,
                                 pmdEDUCB *cb,
                                 SINT64 &contextID ) ;
+   } ;
+
+   class rtnCoordCMDExplain : public rtnCoordCommand
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj ) ;
    } ;
 
 }
