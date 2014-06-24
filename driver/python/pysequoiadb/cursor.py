@@ -21,8 +21,7 @@ except ImportError:
 
 import bson
 import pysequoiadb
-from pysequoiadb import error
-from pysequoiadb.error import SequoiaDBError
+from pysequoiadb.common import const
 
 class cursor(object):
    """Cursor of SequoiaDB
@@ -50,8 +49,11 @@ class cursor(object):
        retcode other Operation Failure
        return record after retcode is Node
       """
-      bson_string = error.err_process(result)
-      return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
+      result, bson_string = sdbcursor.next(self._cursor)
+      if const.SDB_OK != result:
+         record = None
+      record,_ = bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
+      return result,record
 
 
    def current(self):
@@ -62,8 +64,11 @@ class cursor(object):
        retcode other Operation Failure
        return record after retcode is Node
       """
-      bson_string = error.err_process(result)
-      return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
+      result, bson_string = sdbcursor.current(self._cursor)
+      if const.SDB_OK != result:
+         record = None
+      record,_ = bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
+      return result,record
 
    def close(self):
       """
