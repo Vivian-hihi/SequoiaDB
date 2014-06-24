@@ -791,7 +791,6 @@ namespace bson {
                 int base64_size = 0 ;
                 char *pBase64Buf = NULL ;
                 const char* data = binDataClean(len);
-                --len ;
                 base64_size = getEnBase64Size( len ) ;
                 pBase64Buf = (char *)malloc( base64_size + 1 ) ;
                 if ( pBase64Buf )
