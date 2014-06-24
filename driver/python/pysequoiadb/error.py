@@ -1,4 +1,4 @@
-
+import string
 import pysequoiadb
 from pysequoiadb import common
 from pysequoiadb.common import const
@@ -30,13 +30,13 @@ class OperationError(SequoiaDBError):
    def __str__(self):
       """return the error info.
       """
-      return self.__repr__(self.code())
+      return self.__repr__(string(self.__code))
 
    @property
    def code(self):
       """The error code returned by the server, if any.
       """
-      return "%d" % self.__code
+      return self.__code
 
    @property
    def details(self):
