@@ -837,7 +837,9 @@ static PYOBJECT *eval_JS( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
 
-   rc = client->evalJS( *cursor, code, &sdb_spd_res_type, errmsg ) ;
+   SDB_SPD_RES_TYPE sp_type = (SDB_SPD_RES_TYPE)sdb_spd_res_type;
+
+   rc = client->evalJS( *cursor, code, &sp_type, errmsg ) ;
    if ( rc )
    {
       goto done ;
