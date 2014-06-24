@@ -616,7 +616,7 @@ namespace engine
       goto done ;
    }
 
-   CHAR* _pmdEDUCB::getBuff( INT32 len )
+   CHAR* _pmdEDUCB::getCompressBuff( INT32 len )
    {
       if ( _compressBuffLen < len )
       {
