@@ -820,7 +820,7 @@ done:
 static PYOBJECT *eval_JS( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                          = 0 ;
-   INT32 sdb_spd_res_type            = 0 ;
+   SDB_SPD_RES_TYPE sdb_spd_res_type = SDB_SPD_RES_TYPE_VOID ;
    PYOBJECT *obj                     = NULL ;
    PYOBJECT *cursor_object           = NULL ;
    sdb *client                       = NULL ;
@@ -837,9 +837,7 @@ static PYOBJECT *eval_JS( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
 
-   SDB_SPD_RES_TYPE sp_type = (SDB_SPD_RES_TYPE)sdb_spd_res_type;
-
-   rc = client->evalJS( *cursor, code, &sp_type, errmsg ) ;
+   rc = client->evalJS( *cursor, code, &sdb_spd_res_type, errmsg ) ;
    if ( rc )
    {
       goto done ;
