@@ -1075,10 +1075,10 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             /* first we calculate the expected size after extraction */
             INT32 len = getDeBase64Size ( cj->valuestring ) ;
             /* and allocate memory */
-            CHAR *out = (CHAR *)malloc ( len + 1 ) ;
+            CHAR *out = (CHAR *)malloc ( len ) ;
             if ( !out )
                return FALSE ;
-            memset ( out, 0, len + 1 ) ;
+            memset ( out, 0, len ) ;
             /* and then decode into the buffer we just allocated */
             if ( !base64Decode( cj->valuestring, out, len ) )
             {
@@ -1094,7 +1094,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             if ( 3 == cj->valueint && CJSON_UUID != out_len )
                return FALSE ;
             /* and then append into bson */
-            bson_append_binary( bs, cj->string , cj->valueint, out, len ) ;
+            bson_append_binary( bs, cj->string , cj->valueint, out, out_len ) ;
             free( out ) ;
          }
          else
@@ -1106,10 +1106,10 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             get_char_num ( num, i, INT_NUM_SIZE ) ;
             len = getDeBase64Size ( cj->valuestring ) ;
 
-            out = (CHAR *)malloc( len + 1 ) ;
+            out = (CHAR *)malloc(len) ;
             if ( !out )
                return FALSE ;
-            memset ( out, 0, len + 1 ) ;
+            memset ( out, 0, len ) ;
             if ( !base64Decode( cj->valuestring, out, len ) )
             {
                free ( out ) ;
@@ -1123,7 +1123,7 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
                return FALSE ;
             if ( 3 == cj->valueint && CJSON_UUID != out_len )
                return FALSE ;
-            bson_append_binary( bs, num , cj->valueint, out, len ) ;
+            bson_append_binary( bs, num , cj->valueint, out, out_len ) ;
             free ( out ) ;
          }
          break ;
