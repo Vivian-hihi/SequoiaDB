@@ -116,11 +116,6 @@ namespace engine
          CHAR                             *_pBuff ;
          INT32                            _buffLen ;
 
-         CATCH_MAP                        _catchMap ;
-         ALLOC_MAP                        _allocMap ;
-         INT64                            _totalCatchSize ;
-         INT64                            _totalMemSize ;
-
    } ;
    typedef _pmdSession pmdSession ;
 

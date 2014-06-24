@@ -44,8 +44,6 @@ using namespace bson ;
 namespace engine
 {
    const UINT32 SESSION_SOCKET_DFT_TIMEOUT = 10 ;
-   const UINT32 SESSION_MEM_ALIGMENT_SIZE  = 1024 ;
-   const UINT32 SESSION_MAX_CATCH_SIZE     = 16*1024*1024 ;
 
    /*
       _pmdSession implement
@@ -57,9 +55,6 @@ namespace engine
       _eduID   = PMD_INVALID_EDUID ;
       _pBuff   = NULL ;
       _buffLen = 0 ;
-
-      _totalCatchSize   = 0 ;
-      _totalMemSize     = 0 ;
 
       _socket.disableNagle() ;
 
@@ -90,30 +85,6 @@ namespace engine
          _pBuff = NULL ;
       }
       _buffLen = 0 ;
-
-      // clean catch
-      CATCH_MAP_IT it = _catchMap.begin() ;
-      while ( it != _catchMap.end() )
-      {
-         SDB_OSS_FREE( it->second ) ;
-         _totalCatchSize -= it->first ;
-         _totalMemSize -= it->first ;
-         ++it ;
-      }
-      _catchMap.clear() ;
-
-      // clean alloc memory
-      ALLOC_MAP_IT itAlloc = _allocMap.begin() ;
-      while ( itAlloc != _allocMap.end() )
-      {
-         SDB_OSS_FREE( itAlloc->first ) ;
-         _totalMemSize -= itAlloc->second ;
-         ++itAlloc ;
-      }
-      _allocMap.clear() ;
-
-      SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
-      SDB_ASSERT( _totalMemSize == 0, "Memory size is error" ) ;
    }
 
    void _pmdSession::attach( _pmdEDUCB * cb )
@@ -138,6 +109,7 @@ namespace engine
               eduID() ) ;
 
       _onDetach() ;
+      clear() ;
       _pEDUCB->detachSession() ;
       _pEDUCB = NULL ;
    }
@@ -151,27 +123,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      // first alloc from catch
-      if ( _totalCatchSize >= len && _allocFromCatch( len, ppBuff, buffLen ) )
+      if ( !_pEDUCB )
       {
-         goto done ;
-      }
-
-      // malloc
-      len = ossRoundUpToMultipleX( len, SESSION_MEM_ALIGMENT_SIZE ) ;
-      *ppBuff = ( CHAR* )SDB_OSS_MALLOC( len ) ;
-      if( !*ppBuff )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "Session[%s] malloc memory[size: %d] failed",
-                 sessionName(), len ) ;
+         rc = SDB_SYS ;
          goto error ;
       }
-      buffLen = len ;
-
-      // update meta info
-      _totalMemSize += buffLen ;
-      _allocMap[ *ppBuff ] = buffLen ;
+      rc = _pEDUCB->allocBuff( len, ppBuff, buffLen ) ;
 
    done:
       return rc ;
@@ -181,86 +138,28 @@ namespace engine
 
    void _pmdSession::releaseBuff( CHAR *pBuff, INT32 buffLen )
    {
-      ALLOC_MAP_IT itAlloc = _allocMap.find( pBuff ) ;
-      if ( itAlloc == _allocMap.end() )
-      {
-         SDB_OSS_FREE( pBuff ) ;
-         return ;
-      }
-      buffLen = itAlloc->second ;
-      _allocMap.erase( itAlloc ) ;
+      SDB_ASSERT( _pEDUCB, "EDUCB can't be NULL" ) ;
 
-      if ( (UINT32)buffLen > SESSION_MAX_CATCH_SIZE )
+      if ( _pEDUCB )
       {
-         SDB_OSS_FREE( pBuff ) ;
-         _totalMemSize -= buffLen ;
-      }
-      else
-      {
-         // add to catch
-         _catchMap.insert( std::make_pair( buffLen, pBuff ) ) ;
-         _totalCatchSize += buffLen ;
-
-         // re-org catch
-         while ( _totalCatchSize > SESSION_MAX_CATCH_SIZE )
-         {
-            CATCH_MAP_IT it = _catchMap.begin() ;
-            SDB_OSS_FREE( it->second ) ;
-            _totalMemSize -= it->first ;
-            _totalCatchSize -= it->first ;
-            _catchMap.erase( it ) ;
-         }
+         _pEDUCB->releaseBuff( pBuff ) ;
       }
    }
 
    INT32 _pmdSession::reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
    {
       INT32 rc = SDB_OK ;
-      CHAR *pOld = *ppBuff ;
-      INT32 oldLen = buffLen ;
 
-      ALLOC_MAP_IT itAlloc = _allocMap.find( *ppBuff ) ;
-      if ( itAlloc != _allocMap.end() )
+      if ( !_pEDUCB )
       {
-         buffLen = itAlloc->second ;
-         oldLen = buffLen ;
-      }
-      else if ( *ppBuff != NULL || buffLen != 0 )
-      {
-         PD_LOG( PDERROR, "Session[%s] realloc input buffer error",
-                 sessionName() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
-
-      if ( buffLen >= len )
-      {
-         goto done ;
-      }
-      len = ossRoundUpToMultipleX( len, SESSION_MEM_ALIGMENT_SIZE ) ;
-      *ppBuff = ( CHAR* )SDB_OSS_REALLOC( *ppBuff, len ) ;
-      if ( !*ppBuff )
-      {
-         PD_LOG( PDERROR, "Failed to realloc memory, size: %d", len ) ;
-         goto error ;
-      }
-
-      buffLen = len ;
-
-      // update meta info
-      _totalMemSize += ( len - oldLen ) ;
-
-      _allocMap[ *ppBuff ] = buffLen ;
+      rc = _pEDUCB->reallocBuff( len, ppBuff, buffLen ) ;
 
    done:
       return rc ;
    error:
-      if ( pOld )
-      {
-         releaseBuff( pOld, oldLen ) ;
-         *ppBuff = NULL ;
-         buffLen = 0 ;
-      }
       goto done ;
    }
 
@@ -279,22 +178,6 @@ namespace engine
       }
 
       return _pBuff ;
-   }
-
-   BOOLEAN _pmdSession::_allocFromCatch( INT32 len, CHAR **ppBuff,
-                                         INT32 &buffLen )
-   {
-      CATCH_MAP_IT it = _catchMap.lower_bound( len ) ;
-      if ( it != _catchMap.end() )
-      {
-         *ppBuff = it->second ;
-         buffLen = it->first ;
-         _catchMap.erase( it ) ;
-         _allocMap[ *ppBuff ] = buffLen ;
-         _totalCatchSize -= buffLen ;
-         return TRUE ;
-      }
-      return FALSE ;
    }
 
    void _pmdSession::disconnect()
