@@ -43,6 +43,7 @@
 #include "dmsCB.hpp"
 #include "rtnCB.hpp"
 #include "netRouteAgent.hpp"
+#include "pmdRemoteSession.hpp"
 
 #include <vector>
 #include <string>
@@ -94,6 +95,7 @@ namespace engine
          void              releaseSessionInfo ( const string &sessionID ) ;
 
          restAdaptor*      getRestAdptor() { return &_restAdptor ; }
+         pmdRemoteSessionMgr* getRSManager() { return &_rsManager ; }
 
          INT32             authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
 
@@ -123,6 +125,7 @@ namespace engine
          ossSpinSLatch                          _omLatch ;
 
          restAdaptor                            _restAdptor ;
+         pmdRemoteSessionMgr                    _rsManager ;
 
          // configure info
          INT32                                  _maxRestBodySize ;

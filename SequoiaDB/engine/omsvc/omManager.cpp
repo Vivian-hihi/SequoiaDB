@@ -49,7 +49,8 @@ namespace engine
       implement om manager
    */
    _omManager::_omManager()
-   :_fixBufSize( SDB_PAGE_SIZE )
+   :_fixBufSize( SDB_PAGE_SIZE ),
+    _rsManager( NULL )
    {
       _maxRestBodySize     = OM_REST_MAX_BODY_SIZE ;
       _restTimeout         = REST_TIMEOUT ;
