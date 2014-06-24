@@ -594,34 +594,6 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-// static PYOBJECT *active_replica_group( PYOBJECT *self, PYOBJECT *args )
-// {
-//   INT32 rc             = 0 ;
-//   PYOBJECT *obj         = NULL ;
-//   PYOBJECT *group_obj     = NULL ;
-//   sdb *client           = NULL ;
-//   sdbReplicaGroup *group   = NULL ;
-//   const char *group_name   = NULL ;
-// 
-//   if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &group_name, &group_obj ) )
-//   {
-//      rc = SDB_INVALIDARGS ;
-//      goto done ;
-//   }
-// 
-//   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-//   CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
-// 
-//   rc = client->activateReplicaGroup( group_name, *group ) ;
-//   if ( rc )
-//   {
-//      goto done ;
-//   }
-// 
-// done:
-//   return MAKE_RETURN_INT( rc ) ;
-// }
-
 static PYOBJECT *exec_update( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc        = 0 ;
@@ -760,6 +732,118 @@ static PYOBJECT *flush_configure( PYOBJECT *self, PYOBJECT *args )
 
 done:
    DELETE_CPPOBJECT( option ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+static PYOBJECT *create_JS_procedure( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc              = 0 ;
+   PYOBJECT *obj         = NULL ;
+   sdb *client           = NULL ;
+   const char *str_code  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &str_code ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+
+   rc = client->crtJSProcedure( str_code ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+static PYOBJECT *remove_procedure( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc              = 0 ;
+   PYOBJECT *obj         = NULL ;
+   sdb *client           = NULL ;
+   const char *spname  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &spname ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+
+   rc = client->rmProcedure( spname ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+static PYOBJECT *list_procedures( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc                       = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_object        = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   sdb *client                    = NULL ;
+   sdbCursor *cursor              = NULL ;
+   const bson::BSONObj *condition = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OOO", &obj,
+                            &cursor_object, &bson_condition ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+
+   rc = client->listProcedures( *cursor, *condition ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( condition ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+static PYOBJECT *eval_JS( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc                       = 0 ;
+   INT32 sdb_spd_res_type         = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_object        = NULL ;
+   sdb *client                    = NULL ;
+   sdbCursor *cursor              = NULL ;
+   const bson::BSONObj errmsg    = NULL ;
+   const char *code               = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OOs", &obj, &cursor_object, &code ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
+
+   rc = client->evalJS( *cursor, code, sdb_spd_res_type, errmsg ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -1075,6 +1159,10 @@ static PyMethodDef client_methods[] = {
    {"transaction_commit",        transaction_commit,        METH_VARARGS},
    {"transaction_rollback",      transaction_rollback,      METH_VARARGS},
    {"flush_configure",           flush_configure,           METH_VARARGS},
+   {"create_JS_procedure",       create_JS_procedure,       METH_VARARGS},
+   {"remove_procedure",          remove_procedure,          METH_VARARGS},
+   {"list_procedures",           list_procedures,           METH_VARARGS},
+   {"eval_JS",                   eval_JS,                   METH_VARARGS},
    {"backup_offline",            backup_offline,            METH_VARARGS},
    {"list_backup",               list_backup,               METH_VARARGS},
    {"remove_backup",             remove_backup,             METH_VARARGS},

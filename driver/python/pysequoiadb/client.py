@@ -341,10 +341,37 @@ class client(object):
 
       return rc
 
-#   def crt_js_procedure(self, code)
-#   def rm_procedure(self, sp_name)
-#   def list_procedures(self, cursor, condition)
-#   def eval_js(self, cursor, code, type, err_msg)
+   def create_js_procedure(self, code):
+
+      rc = sdbclient.create_JS_procedure(self._client, code)
+      pysequoiadb.check_error(rc)
+
+      return rc
+
+   def remove_procedure(self, sp_name):
+
+      rc = sdbclient.remove_procedure(self._client, sp_name)
+      pysequoiadb.check_error(rc)
+
+      return rc
+
+   def list_procedures(self, condition):
+
+      bson_condition = bson.BSON.encode(condition)
+      result = cursor()
+      rc = sdbclient.list_procedures(self._client, result._cursor,
+                                                   bson_condition)
+      pysequoiadb.check_error(rc)
+
+      return rc, result
+
+   def eval_js(self, code):
+
+      result = cursor()
+      rc = sdbclient.eval_JS(self._client, result._cursor, code)
+      pysequoiadb.check_error(rc)
+
+      return rc, result
 
    def backup_offline(self, options):
 
