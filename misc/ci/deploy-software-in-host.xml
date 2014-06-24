@@ -17,7 +17,7 @@
 		<tstamp>
 			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
 		</tstamp>
-		<echo message="Begin to clean deploy env at ${current.time}">
+		<echo message="Begin to clean deploy env at ${current.time}"/>
 		
 		
 		<!--
@@ -56,7 +56,7 @@
 		<tstamp>
 			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
 		</tstamp>
-		<echo message="Compeleted to clean deploy env at ${current.time}">
+		<echo message="Compeleted to clean deploy env at ${current.time}"/>
 	</target>
 
 	<target name="install-software" depends="uninstall-software">
@@ -65,7 +65,7 @@
 		<tstamp>
 			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
 		</tstamp>
-		<echo message="Begin to deploy software at ${current.time}">
+		<echo message="Begin to deploy software at ${current.time}"/>
 s
 		<property environment="env" />
 
@@ -116,7 +116,7 @@ s
 		<tstamp>
 			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
 		</tstamp>
-		<echo message="Compeleted to install software at ${current.time}">
+		<echo message="Compeleted to install software at ${current.time}"/>
 
 	</target>
 
