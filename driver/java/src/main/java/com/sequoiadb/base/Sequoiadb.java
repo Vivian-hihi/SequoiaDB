@@ -77,6 +77,10 @@ public class Sequoiadb {
 	public final static int SDB_LIST_STORAGEUNITS = 6;
 	public final static int SDB_LIST_GROUPS = 7;
 	public final static int SDB_LIST_STOREPROCEDURES = 8;
+	public final static int SDB_LIST_DOMAINS = 9;
+    public final static int SDB_LIST_TASKS = 10;
+	public final static int SDB_LIST_CS_IN_DOMAIN = 11;
+    public final static int SDB_LIST_CL_IN_DOMAIN = 12;
 
 	public final static int SDB_SNAP_CONTEXTS = 0;
 	public final static int SDB_SNAP_CONTEXTS_CURRENT = 1;
@@ -475,17 +479,22 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void createCollectionSpace(String collectionSpaceName, int pageSize)
-	 * @brief Create the named collection space.
-	 * @param csName
-	 *            The collection space name
-	 * @param pageSize
-	 *            The Page Size as below SDB_PAGESIZE_4K SDB_PAGESIZE_8K
-	 *            SDB_PAGESIZE_16K SDB_PAGESIZE_32K SDB_PAGESIZE_64K
-	 *            SDB_PAGESIZE_DEFAULT
+	 * @brief Create collection space.
+	 * @param csName The name of collection space
+	 * @param pageSize The Page Size as below:
+	 * <ul>
+	 * <li> SDB_PAGESIZE_4K
+	 * <li> SDB_PAGESIZE_8K
+	 * <li> SDB_PAGESIZE_16K
+	 * <li> SDB_PAGESIZE_32K
+	 * <li> SDB_PAGESIZE_64K
+	 * <li> SDB_PAGESIZE_DEFAULT
+	 * </ul>
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public CollectionSpace createCollectionSpace(String csName, int pageSize)
 			throws BaseException {
+/*
 		if (isCollectionSpaceExist(csName))
 			throw new BaseException("SDB_DMS_CS_EXIST", csName);
 		if (pageSize != SDB_PAGESIZE_4K && pageSize != SDB_PAGESIZE_8K
@@ -498,8 +507,34 @@ public class Sequoiadb {
 		if (flags != 0)
 			throw new BaseException(flags);
 		return getCollectionSpace(csName);
+*/
+		BSONObject options = new BasicBSONObject();
+		options.put("PageSize", pageSize);
+		return createCollectionSpace(csName, options);
 	}
 
+	/**
+	 * @fn CollectionSpace createCollectionSpace(String csName, BSONObj options)
+	 * @brief Create collection space.
+	 * @param csName The name of the created collection space
+	 * @param options Contains configuration informations for create collection space. The options are as below:
+     *<ul>
+     *<li>PageSize   : Assign how large the page size is for the collection, it will create a collection space with default page size(current it's 64k) if not assign this option
+     *<li>Domain     : Assign which domain does this collection space belong to, this collection space belongs to system domain if not assign this option
+     *</ul>
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public CollectionSpace createCollectionSpace(String csName, BSONObject options)
+			throws BaseException {
+		if (isCollectionSpaceExist(csName))
+			throw new BaseException("SDB_DMS_CS_EXIST", csName);
+		SDBMessage rtnSDBMessage = createCS(csName, options);
+		int flags = rtnSDBMessage.getFlags();
+		if (flags != 0)
+			throw new BaseException(flags);
+		return getCollectionSpace(csName);
+	}
+	
 	/**
 	 * @fn void dropCollectionSpace(String collectionSpaceName)
 	 * @brief Remove the named collection space.
@@ -1342,6 +1377,109 @@ public class Sequoiadb {
 	}
 	
 	/**
+	 * @fn boolean isDomainExist(String domainName)
+	 * @brief Verify the existence of domain.
+	 * @param domainName the name of domain
+	 * @return True if existed or False if not existed
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public boolean isDomainExist(String domainName) throws BaseException {
+		if (null == domainName || domainName.equals(""))
+			throw new BaseException("SDB_INVALIDARG", domainName);
+		BSONObject matcher = new BasicBSONObject();
+		matcher.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
+		DBCursor cursor = getList(SDB_LIST_DOMAINS, matcher, null, null);
+		if (null != cursor && cursor.hasNext())
+			return true;
+		else
+			return false;
+	}
+	
+	/**
+	 * @fn Domain createDomain(String domainName, BSONObject options)
+	 * @brief Create a domain.
+	 * @param domainName the name of the domain
+     * @param options the options for the domain. The options are as below:
+     *<ul>
+     *<li>Group: the list of the names of replica groups that the domain contains.
+     *           eg: { "Group": [ "group1", "group2", "group3" ] }
+     *           If this argument is not included, the domain will contain all replica groups in the cluster.
+     *</ul>
+     * return the created Domain instance
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public Domain createDomain(String domainName, BSONObject options) throws BaseException {
+		if (null == domainName || domainName.equals(""))
+			throw new BaseException("SDB_INVALIDARG", domainName, options);
+		if (isDomainExist(domainName))
+			throw new BaseException("SDB_CAT_DOMAIN_EXIST", domainName);
+		
+		BSONObject newObj = new BasicBSONObject();
+		newObj.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
+		newObj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+		// command
+		SDBMessage rtn = adminCommand( SequoiadbConstants.CMD_NAME_CREATE_DOMAIN,
+				                       0, 0, 0, -1, newObj,
+				                       null, null, null);
+		int flags = rtn.getFlags();
+		if ( flags != 0 ) {
+			throw new BaseException( flags );
+		}
+		return new Domain(this, domainName);
+		
+	}
+	
+	/**
+	 * @fn void dropDomain(String domainName)
+	 * @brief Drop a domain.
+	 * @param domainName the name of the domain
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public void dropDomain(String domainName) throws BaseException {
+		if (null == domainName || domainName.equals(""))
+			throw new BaseException("SDB_INVALIDARG", domainName);
+		
+		BSONObject newObj = new BasicBSONObject();
+		newObj.put(SequoiadbConstants.FIELD_NAME_NAME, domainName);
+		// command
+		SDBMessage rtn = adminCommand( SequoiadbConstants.CMD_NAME_DROP_DOMAIN,
+				                       0, 0, 0, -1, newObj,
+				                       null, null, null);
+		int flags = rtn.getFlags();
+		if ( flags != 0 ) {
+			throw new BaseException( flags );
+		}
+	}
+	
+	/**
+	 * @fn Domain getDomain(String domainName)
+	 * @brief Get the specified domain.
+	 * @param domainName the name of the domain
+	 * @return the Domain instance
+	 * @exception com.sequoiadb.exception.BaseException
+	 *            If the domain not exit, throw BaseException with the error type "SDB_CAT_DOMAIN_NOT_EXIST"
+	 */
+	public Domain getDomain(String domainName)
+			throws BaseException {
+		if (isDomainExist(domainName)) {
+			return new Domain(this, domainName);
+		} else {
+			throw new BaseException("SDB_CAT_DOMAIN_NOT_EXIST", domainName);
+		}
+	}
+	
+	/**
+	 * @fn DBCursor listDomains(String domainName)
+	 * @brief Drop a domain.
+	 * @param domainName the name of the domain
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public DBCursor listDomains(BSONObject matcher, BSONObject selector,
+                           BSONObject orderBy, BSONObject hint) throws BaseException {
+		 	return getList(SDB_LIST_DOMAINS, 0, 0, 0, -1, matcher, selector, orderBy, hint);
+	}
+	
+	/**
 	 * @fn ArrayList<String> getReplicaGroupNames()
 	 * @brief Get all the replica groups' name.
 	 * @return A list of all the replica groups' names.
@@ -1506,7 +1644,6 @@ public class Sequoiadb {
 		}
 	}
 
-	
 	DBCursor getList(int listType, int flag, long reqID, long skipNum,
 			long returnNum, BSONObject query, BSONObject selector,
 			BSONObject order, BSONObject hint) throws BaseException {
@@ -1538,6 +1675,18 @@ public class Sequoiadb {
 			break;
 		case SDB_LIST_STOREPROCEDURES:
 			command = SequoiadbConstants.CMD_NAME_LIST_PROCEDURES;
+			break;
+		case SDB_LIST_DOMAINS:
+			command = SequoiadbConstants.CMD_NAME_LIST_DOMAINS;
+			break;
+		case SDB_LIST_TASKS:
+			command = SequoiadbConstants.CMD_NAME_LIST_TASKS;
+			break;
+		case SDB_LIST_CS_IN_DOMAIN:
+			command = SequoiadbConstants.CMD_NAME_LIST_CS_IN_DOMAIN;
+			break;
+		case SDB_LIST_CL_IN_DOMAIN:
+			command = SequoiadbConstants.CMD_NAME_LIST_CL_IN_DOMAIN;
 			break;
 		default:
 			throw new BaseException("SDB_INVALIDARG");
@@ -1597,7 +1746,7 @@ public class Sequoiadb {
 		connection.initialize();
 	}
 
-	private SDBMessage adminCommand(String commandString, int flag, long reqID,
+    SDBMessage adminCommand(String commandString, int flag, long reqID,
 			long skipNum, long returnNum, BSONObject query,
 			BSONObject selector, BSONObject order, BSONObject hint)
 			throws BaseException {
@@ -1697,7 +1846,7 @@ public class Sequoiadb {
 		return rtnSDBMessage;
 	}
 	
-	private SDBMessage createCS(String csName, int pageSize)
+	private SDBMessage createCS(String csName, BSONObject options)
 			throws BaseException {
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.CREATE_CMD + " "
@@ -1707,7 +1856,8 @@ public class Sequoiadb {
 		SDBMessage sdbMessage = new SDBMessage();
 
 		cObj.put(SequoiadbConstants.FIELD_NAME_NAME, csName);
-		cObj.put(SequoiadbConstants.FIELD_NAME_PAGE_SIZE, pageSize);
+		if (null != options)
+		    cObj.putAll(options);
 		sdbMessage.setMatcher(cObj);
 		sdbMessage.setCollectionFullName(commandString);
 

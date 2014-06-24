@@ -81,6 +81,10 @@ public class SequoiadbConstants {
 	public final static String CMD_NAME_LIST_STORAGEUNITS = "list storageunits";
 	public final static String CMD_NAME_LIST_GROUPS = "list groups";
 	public final static String CMD_NAME_LIST_PROCEDURES = "list procedures";
+	public final static String CMD_NAME_LIST_DOMAINS = "list domains";
+	public final static String CMD_NAME_LIST_TASKS = "list tasks";
+	public final static String CMD_NAME_LIST_CS_IN_DOMAIN = "list collectionspaces in domain";
+	public final static String CMD_NAME_LIST_CL_IN_DOMAIN = "list collections in domain";
 	public final static String CMD_NAME_CREATE_GROUP = "create group";
 	public final static String CMD_NAME_REMOVE_GROUP = "remove group";
 	public final static String CMD_NAME_REMOVE_NODE = "remove node";
@@ -102,7 +106,12 @@ public class SequoiadbConstants {
 	public final static String CMD_NAME_LIST_TASK = "list tasks";             
 	public final static String CMD_NAME_WAITTASK = "wait task";
 	public final static String CMD_NAME_CANCEL_TASK = "cancel task";
-	
+	public final static String CMD_NAME_CREATE_DOMAIN = "create domain";
+	public final static String CMD_NAME_DROP_DOMAIN = "drop domain";
+	public final static String CMD_NAME_ALTER_DOMAIN = "alter domain";
+	public final static String CMD_NAME_ADD_DOMAIN_GROUP = "add domain group";
+	public final static String CMD_NAME_REMOVE_DOMAIN_GROUP = "remove domain group";
+	public final static String CMD_NAME_ALTER_COLLECTION = "alter collection";
 	
 	public final static String FIELD_NAME_NAME = "Name";
 	public final static String FIELD_NAME_OLDNAME = "OldName";
@@ -135,6 +144,9 @@ public class SequoiadbConstants {
 	public final static String FIELD_NAME_ASYNC = "Async";
 	public final static String FIELD_NAME_TASKTYPE = "TaskType";
 	public final static String FIELD_NAME_TASKID = "TaskID";
+	public final static String FIELD_NAME_OPTIONS = "Options";
+	public final static String FIELD_NAME_DOMAIN = "Domain";
+	
 	public final static String FMP_FUNC_TYPE = "funcType";
 	public final static String FIELD_COLLECTION = "Collection";
 	public final static String FIELD_TOTAL = "Total";

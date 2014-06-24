@@ -43,7 +43,7 @@ public class CollectionSpace {
 
 	/**
 	 * @fn String getName()
-	 * @brief Return the name of current collection space
+	 * @brief Return the name of current collection space.
 	 * @return The collection space name
 	 */
 	public String getName() {
@@ -52,7 +52,7 @@ public class CollectionSpace {
 
 	/**
 	 * @fn Sequoiadb getSequoiadb()
-	 * @brief Return the Sequoiadb handle of current collection space
+	 * @brief Return the Sequoiadb instance of current collection space belong to.
 	 * @return Sequoiadb object
 	 */
 	public Sequoiadb getSequoiadb() {

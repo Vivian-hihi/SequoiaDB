@@ -1492,6 +1492,32 @@ public class DBCollection {
 		}
 	}
 	
+	/**
+	 * @fn void alterCollection( BSONObject options )
+	 * @brief Alter the attribute of current collection.
+	 * @param options The options for alter the attribute of current collection, the options are as below: 
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public void alterCollection( BSONObject options ) throws BaseException {
+		// check arguments
+		if ( null == options ) {
+			throw new BaseException("SDB_INVALIDARG", options);
+		}
+		// command
+		String command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CMD_NAME_ALTER_COLLECTION;
+		// build condition
+		BSONObject newobj = new BasicBSONObject();
+		newobj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+		newobj.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+		// build message/send/receive/extract
+		SDBMessage rtnSDBMessage = adminCommand ( command, newobj, null, null, null,
+				      			                  0, -1, 0 );
+		int flags = rtnSDBMessage.getFlags();
+		if (0 != flags){
+			throw new BaseException(flags, options);
+		}
+	}
+	
 	private SDBMessage adminCommand(String commandString, BSONObject query,
 			BSONObject selector, BSONObject orderBy, BSONObject hint,
 			long skipRows, long returnRows, int flag) throws BaseException {
