@@ -172,6 +172,14 @@ namespace engine
 
    // om rest check_host_req
    #define  OM_CHECK_HOST_REQ                "check_host_req"
+   //****************sub command with agent***************************
+   #define  OM_BASIC_CHECK_REQ               "basic_check_req"
+   #define  OM_INSTALL_REMOTE_AGENT          "install_remote_agent_req"
+   //******************************************************************
+
+
+   // om rest add_host_req
+   #define  OM_ADD_HOST_REQ                  "add_host_req"
    
 
 

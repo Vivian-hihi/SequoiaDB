@@ -286,20 +286,32 @@ namespace engine
          
          if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
          {
-            commandIf = new omAuthCommand (pAdptor, this, 
+            commandIf = new omAuthCommand( pAdptor, this, 
                                            _wwwRootPath.c_str() ) ;
          }
          else if ( ossStrcmp ( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
          {
-            commandIf = new omCheckSessionCommand (pAdptor, this ) ;
+            commandIf = new omCheckSessionCommand( pAdptor, this ) ;
          }
          else if ( ossStrcmp ( pSubCommand, OM_CREATE_CLUSTER_REQ ) == 0 )
          {
-            commandIf = new omCreateClusterCommand (pAdptor, this ) ;
+            commandIf = new omCreateClusterCommand( pAdptor, this ) ;
          }
          else if ( ossStrcmp ( pSubCommand, OM_QUERY_CLUSTER_REQ ) == 0 )
          {
-            commandIf = new omQueryClusterCommand (pAdptor, this ) ;
+            commandIf = new omQueryClusterCommand( pAdptor, this ) ;
+         }
+         else if (ossStrcmp ( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
+         {
+            commandIf = new omScanHostCommand( pAdptor, this ) ;
+         }
+         else if (ossStrcmp ( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
+         {
+            commandIf = new omCheckHostCommand( pAdptor, this ) ;
+         }
+         else if (ossStrcmp ( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
+         {
+            commandIf = new omAddHostCommand( pAdptor, this ) ;
          }
          else
          {

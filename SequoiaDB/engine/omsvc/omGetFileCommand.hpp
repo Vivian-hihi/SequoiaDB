@@ -111,7 +111,7 @@ namespace engine
 
       public:
          virtual INT32   doCommand() ;
-         
+
    };
 
    class omScanHostCommand : public omCreateClusterCommand
@@ -124,9 +124,48 @@ namespace engine
       public:
          virtual INT32   doCommand() ;
 
+      protected:
+         virtual bool    _isHostExist( BSONObj &host ) ;
+         virtual void    _checkHostExistence(list<BSONObj> &hostInfoList, 
+                                               list<BSONObj> &hostResult ) ;
+         virtual void    _generateArray( list<BSONObj> &hostInfoList, string arrayKeyName, 
+                                         BSONObj &result ) ;
+
       private:
          INT32           _getHostList( list<BSONObj> &hostInfo ) ;
-         INT32           _generateRequestBson( list<BSONObj> &hostInfo, BSONObj &request ) ;
+         
+   };
+
+   class omCheckHostCommand : public omScanHostCommand
+   {
+      public:
+         omCheckHostCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+
+         ~omCheckHostCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      private:
+         INT32           _getHostList( string &clusterName, list<BSONObj> &hostInfo ) ;
+         INT32           _doBasicCheck( list<BSONObj> &hostInfoList, list<BSONObj> &hostResult ) ;
+         INT32           _doCheck( list<BSONObj> &hostInfoList, list<BSONObj> &hostResult ) ;
+         void            _sendOkRes2Web( list<BSONObj> &hostResult ) ;
+   };
+
+   class omAddHostCommand : public omCreateClusterCommand
+   {
+      public:
+         omAddHostCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+
+         ~omAddHostCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      private:
+         INT32           _getHostDetialList( string &clusterName, 
+                                               list<BSONObj> &hostInfo ) ;
    };
    
    class omGetFileCommand : public omCommandInterface
