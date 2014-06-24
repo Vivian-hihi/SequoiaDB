@@ -25,18 +25,18 @@ class OperationError(SequoiaDBError):
    def __repr__(self, what):
       """make the error info.
       """
-      return self.errmsg + str(self.__code) + ' -----> ' + self.__details()
+      return self.errmsg + what + ' -----> ' + self.__details()
 
    def __str__(self):
       """return the error info.
       """
-      return self.__repr__("")
+      return self.__repr__(self.code())
 
    @property
    def code(self):
       """The error code returned by the server, if any.
       """
-      return self.__code
+      return str(self.__code)
 
    @property
    def details(self):
