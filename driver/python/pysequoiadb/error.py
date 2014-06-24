@@ -36,7 +36,7 @@ class OperationError(SequoiaDBError):
    def code(self):
       """The error code returned by the server, if any.
       """
-      return str(self.__code)
+      return "%d" % self.__code
 
    @property
    def details(self):
