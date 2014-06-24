@@ -143,6 +143,8 @@ INT32   gPageNum                                     = 0 ;
 CHAR   *gMMEBuff                                     = NULL ;
 BOOLEAN gInitMME                                     = FALSE ;
 BOOLEAN gShowRecordContent                           = FALSE ;
+BOOLEAN gReachEnd                                    = FALSE ;
+BOOLEAN gHitCS                                       = FALSE ;
 SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
 
 #define RETRY_COUNT 5
@@ -461,6 +463,8 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                        gStartingPage ) ;
    dumpAndShowPrintf ( "   Num Pages  : %d"OSS_NEWLINE,
                        gNumPages ) ;
+   dumpAndShowPrintf ( "   Show record: %s"OSS_NEWLINE,
+                       gShowRecordContent ? "True":"False") ;
    dumpAndShowPrintf ( OSS_NEWLINE ) ;
 done :
    PD_TRACE_EXITRC ( SDB_SDBINSPT_RESVARG, rc );
@@ -929,6 +933,9 @@ INT32 getExtent ( OSSFILE &file, dmsExtentID extentID, SINT32 pageSize,
       dumpPrintf ( "Error: Failed to read extent , read %lld bytes, "
                    "expect %d bytes, rc = %d"OSS_NEWLINE, lenRead,
                    extentSize * pageSize, rc ) ;
+      // out of range, should jump out of loop to avoid printing valid log
+      gReachEnd = TRUE ;
+
       if ( !rc )
          rc = SDB_IO ;
    }
@@ -2288,7 +2295,7 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
       {
          dumpHeader ( file, csPageSize ) ;
          // specific pages dump
-         for ( SINT32 i = 0; i < gNumPages; ++i )
+         for ( SINT32 i = 0; i < gNumPages && !gReachEnd; ++i )
          {
             dumpPrintf ( " Dump page %d"OSS_NEWLINE, gStartingPage + i ) ;
             dumpRawPage ( file, csPageSize, gStartingPage + i ) ;
@@ -2444,6 +2451,11 @@ error:
 void actionCSAttemptEntry( const CHAR *csName, UINT32 sequence,
                            BOOLEAN specific, SDB_INSPT_ACTION action )
 {
+   if ( !gHitCS )
+   {
+      gHitCS = TRUE ;
+   }
+
    string csFileName ;
    string csFullName ;
 
@@ -2638,7 +2650,8 @@ INT32 main ( INT32 argc, CHAR **argv )
       }
       goto done ;
    }
-   if ( FALSE == gDumpData && FALSE == gDumpIndex )
+   if ( OSS_BIT_TEST ( gAction, ACTION_DUMP ) &&
+        FALSE == gDumpData && FALSE == gDumpIndex )
    {
       dumpPrintf( "Error: should specific dump data or index " ) ;
       goto done ;
@@ -2678,6 +2691,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    {
       inspectDB () ;
    }
+
    // are we doing database dump?
    if ( OSS_BIT_TEST ( gAction, ACTION_DUMP ) )
    {
@@ -2691,6 +2705,12 @@ INT32 main ( INT32 argc, CHAR **argv )
          // if we don't specify pages to dump, let's dump entire database
          dumpDB () ;
       }
+   }
+
+   if ( 0 != ossStrlen( gCSName ) && !gHitCS )
+   {
+      dumpPrintf( "Warning: Cannot fine any collection space named %s",
+                  gCSName ) ;
    }
 
 done :
