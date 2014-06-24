@@ -232,6 +232,7 @@ static zend_class_entry *pSequoiadbRegex ;
 static zend_class_entry *pSequoiadbInt64 ;
 static zend_class_entry *pSequoiadbGroup ;
 static zend_class_entry *pSequoiadbReplicaNode ;
+static zend_class_entry *pSequoiadbDomain ;
 
 const zend_function_entry sequoiadb_sdb_functions[] = {
    PHP_ME ( SequoiaDB, __construct     , NULL, ZEND_ACC_PUBLIC )
@@ -251,6 +252,10 @@ const zend_function_entry sequoiadb_sdb_functions[] = {
    PHP_ME ( SequoiaDB, execUpdateSQL   , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaDB, createCataGroup , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaDB, dropCollectionSpace , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaDB, createDomain    , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaDB, dropDomain      , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaDB, getDomain       , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaDB, listDomains     , NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 
@@ -293,6 +298,13 @@ const zend_function_entry sequoiadb_cursor_functions[] = {
    PHP_ME ( SequoiaCursor, current        , NULL, ZEND_ACC_PUBLIC )
    //PHP_ME ( SequoiaCursor, updateCurrent  , NULL, ZEND_ACC_PUBLIC )
    //PHP_ME ( SequoiaCursor, deleteCurrent  , NULL, ZEND_ACC_PUBLIC )
+   PHP_FE_END
+};
+
+const zend_function_entry sequoiadb_domain_functions[] = {
+   PHP_ME ( SequoiaDomain, alterDomain    , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaDomain, listCSInDomain , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaDomain, listCLInDomain , NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 
@@ -379,6 +391,7 @@ PHP_MINIT_FUNCTION(sequoiadb)
    zend_class_entry sequoiadbCollectionSpace ;
    zend_class_entry sequoiadbCollection ;
    zend_class_entry sequoiadbCursor ;
+   zend_class_entry sequoiaDomain ;
    zend_class_entry sequoiadbID ;
    zend_class_entry sequoiadbDate ;
    zend_class_entry sequoiadbTimeStamp ;
@@ -395,6 +408,8 @@ PHP_MINIT_FUNCTION(sequoiadb)
                       sequoiadb_collection_functions  ) ;
    INIT_CLASS_ENTRY ( sequoiadbCursor,
                       "SequoiaCursor", sequoiadb_cursor_functions  ) ;
+   INIT_CLASS_ENTRY ( sequoiaDomain,
+                      "SequoiaDomain", sequoiadb_domain_functions  ) ;
    INIT_CLASS_ENTRY ( sequoiadbID, "SequoiaID", sequoia_id_functions  ) ;
    INIT_CLASS_ENTRY ( sequoiadbDate, "SequoiaDate", sequoia_date_functions  ) ;
    INIT_CLASS_ENTRY ( sequoiadbTimeStamp,
@@ -416,6 +431,8 @@ zend_register_internal_class( &sequoiadbCollectionSpace TSRMLS_CC ) ;
 zend_register_internal_class( &sequoiadbCollection TSRMLS_CC ) ;
    pSequoiadbCursor          =
 zend_register_internal_class( &sequoiadbCursor TSRMLS_CC ) ;
+   pSequoiadbDomain          =
+zend_register_internal_class( &sequoiaDomain TSRMLS_CC ) ;
    pSequoiadbId              =
 zend_register_internal_class( &sequoiadbID TSRMLS_CC ) ;
    pSequoiadbData            =
@@ -444,18 +461,10 @@ zend_register_internal_class( &sequoiaNode TSRMLS_CC ) ;
                                ZEND_STRL("_error"),
                                0,
                                ZEND_ACC_PRIVATE TSRMLS_CC ) ;
-   /*zend_declare_property_long( pSequoiadbSdb,
-                               ZEND_STRL("_auto_disconnect"),
-                               1,
-                               ZEND_ACC_PRIVATE TSRMLS_CC ) ;*/
    //collection space
    zend_declare_property_null( pSequoiadbCollectionSpace,
                                ZEND_STRL("_collectionSpace"),
                                ZEND_ACC_PUBLIC TSRMLS_CC ) ;
-   /*zend_declare_property_long( pSequoiadbCollectionSpace,
-                               ZEND_STRL("_return_model"),
-                               1,
-                               ZEND_ACC_PRIVATE TSRMLS_CC ) ;*/
    zend_declare_property_null( pSequoiadbCollectionSpace,
                                ZEND_STRL("_connection"),
                                ZEND_ACC_PRIVATE TSRMLS_CC ) ;
@@ -463,21 +472,20 @@ zend_register_internal_class( &sequoiaNode TSRMLS_CC ) ;
    zend_declare_property_null( pSequoiadbCollection,
                                ZEND_STRL("_collection"),
                                ZEND_ACC_PRIVATE TSRMLS_CC ) ;
-   /*zend_declare_property_long( pSequoiadbCollection,
-                               ZEND_STRL("_return_model"),
-                               1,
-                               ZEND_ACC_PRIVATE TSRMLS_CC ) ;*/
    zend_declare_property_null( pSequoiadbCollection,
+                               ZEND_STRL("_connection"),
+                               ZEND_ACC_PRIVATE TSRMLS_CC ) ;
+   //domain
+   zend_declare_property_null( pSequoiadbDomain,
+                               ZEND_STRL("_domain"),
+                               ZEND_ACC_PRIVATE TSRMLS_CC ) ;
+   zend_declare_property_null( pSequoiadbDomain,
                                ZEND_STRL("_connection"),
                                ZEND_ACC_PRIVATE TSRMLS_CC ) ;
    //cursor
    zend_declare_property_null( pSequoiadbCursor,
                                ZEND_STRL("_cursor"),
                                ZEND_ACC_PRIVATE TSRMLS_CC ) ;
-   /*zend_declare_property_long( pSequoiadbCursor,
-                               ZEND_STRL("_return_model"),
-                               1,
-                               ZEND_ACC_PRIVATE TSRMLS_CC ) ;*/
    zend_declare_property_null( pSequoiadbCursor,
                                ZEND_STRL("_connection"),
                                ZEND_ACC_PRIVATE TSRMLS_CC ) ;
@@ -957,7 +965,8 @@ PHP_METHOD ( SequoiaDB, selectCS )
    zval* cs_obj           = NULL ;
    CHAR *pError           = NULL ;
    zval *pPageSize        = NULL ;
-   INT32 pageSize         = 4096    ;
+   CHAR *options          = NULL ;
+   INT32 pageSize         = 4096 ;
    if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
                                 "s|z",
                                 &csName,
@@ -974,27 +983,6 @@ PHP_METHOD ( SequoiaDB, selectCS )
       SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
       RETURN_NULL() ;
    }
-   if ( pPageSize )
-   {
-      if ( IS_LONG == Z_TYPE_P ( pPageSize ) )
-      {
-         pageSize = Z_LVAL_P ( pPageSize ) ;
-      }
-      else if ( IS_STRING == Z_TYPE_P ( pPageSize ) )
-      {
-         CHAR *num = Z_STRVAL_P ( pPageSize ) ;
-         pageSize = ossAtoi ( num ) ;
-      }
-      else if ( IS_NULL == Z_TYPE_P ( pPageSize ) )
-      {
-         pageSize = 4096 ;
-      }
-      else
-      {
-         SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
-         RETURN_NULL() ;
-      }
-   }
    // init and create a new SequoiaCS class
    MAKE_STD_ZVAL ( cs_obj ) ;
    object_init_ex ( cs_obj, pSequoiadbCollectionSpace ) ;
@@ -1005,7 +993,32 @@ PHP_METHOD ( SequoiaDB, selectCS )
       SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
       RETURN_NULL() ;
    }
-   rc = selectCollectionSpace ( connection, &cs, csName, pageSize ) ;
+   if ( pPageSize )
+   {
+      if ( IS_LONG == Z_TYPE_P ( pPageSize ) )
+      {
+         pageSize = Z_LVAL_P ( pPageSize ) ;
+         rc = selectCollectionSpace ( connection, &cs, csName, pageSize ) ;
+      }
+      else if ( IS_STRING == Z_TYPE_P ( pPageSize ) )
+      {
+         if ( !php_toJson ( &options, pPageSize TSRMLS_CC ) )
+         {
+            SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+            RETURN_NULL() ;
+         }
+         rc = selectCollectionSpace2 ( connection, &cs, csName, options ) ;
+      }
+      else
+      {
+         SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+         RETURN_NULL() ;
+      }
+   }
+   else
+   {
+      rc = selectCollectionSpace ( connection, &cs, csName, pageSize ) ;
+   }
    SETERROR2 ( getThis(), rc ) ;
    if ( rc )
    {
@@ -1290,6 +1303,196 @@ PHP_METHOD ( SequoiaDB, dropCollectionSpace )
    PRINTFERROR ( rc, error ) ;
    SETERROR2 ( getThis(), rc ) ;
    RETURN_ARRAY_STRING2 ( getThis(), error, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaDB, createDomain )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *name           = NULL ;
+   INT32 name_len       = 0    ;
+   zval *pOptions       = NULL ;
+   CHAR *options        = NULL ;
+   zval* domain_obj     = NULL ;
+   sdb *connection      = NULL ;
+   sdbDomain *domain    = NULL ;
+
+   if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
+                                "sz",
+                                &name,
+                                &name_len,
+                                &pOptions ) == FAILURE )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   // get sdb connection
+   GETCLASSFROMZVAL ( getThis(), "_connection", sdb, connection ) ;
+   if ( !connection )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   // init and create a new SequoiaCS class
+   MAKE_STD_ZVAL ( domain_obj ) ;
+   object_init_ex ( domain_obj, pSequoiadbDomain ) ;
+   CREATECLASS ( domain_obj, "_domain", sdbDomain, domain ) ;
+   if ( !domain )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   if ( !php_toJson ( &options, pOptions TSRMLS_CC ) )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   rc = createDomain( connection, name, options, &domain ) ;
+   SETERROR2 ( getThis(), rc ) ;
+   if ( rc )
+   {
+      RETURN_NULL() ;
+   }
+   SETZVAL ( domain_obj, "_connection", getThis() ) ;
+   //SETCLASSFROMZVAL ( cs_obj, "_collectionSpace", sdbCollectionSpace, &cs ) ;
+   RETURN_ZVAL( domain_obj, 1, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaDB, dropDomain )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *error     = NULL ;
+   sdb *connection = NULL ;
+   CHAR *pName     = NULL ;
+   INT32 namelen   = 0    ;
+
+   if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
+                                "s",
+                                &pName,
+                                &namelen ) == FAILURE )
+   {
+      PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_ARRAY_STRING2 ( getThis(), error, 0 ) ;
+   }
+   // get sdb connection
+   GETCLASSFROMZVAL ( getThis(), "_connection", sdb, connection ) ;
+   if ( !connection )
+   {
+      PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_ARRAY_STRING2 ( getThis(), error, 0 ) ;
+   }
+   rc = dropDomain( connection, pName ) ;
+   PRINTFERROR ( rc, error ) ;
+   SETERROR2 ( getThis(), rc ) ;
+   RETURN_ARRAY_STRING2 ( getThis(), error, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaDB, getDomain )
+{
+   INT32 rc = SDB_OK ;
+   sdb *connection   = NULL ;
+   sdbDomain *domain = NULL ;
+   zval* domain_obj  = NULL ;
+   CHAR *pName       = NULL ;
+   INT32 namelen     = 0    ;
+
+   if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
+                                "s",
+                                &pName,
+                                &namelen ) == FAILURE )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+
+   GETCLASSFROMZVAL ( getThis(), "_connection", sdb, connection ) ;
+   if ( !connection )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+
+   // init and create a new SequoiaCS class
+   MAKE_STD_ZVAL ( domain_obj ) ;
+   object_init_ex ( domain_obj, pSequoiadbDomain ) ;
+   CREATECLASS ( domain_obj, "_domain", sdbDomain, domain ) ;
+   if ( !domain )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   rc = getDomain ( connection, pName, &domain ) ;
+   SETERROR2 ( getThis(), rc ) ;
+   if ( rc )
+   {
+      RETURN_NULL() ;
+   }
+   SETZVAL ( domain_obj, "_connection", getThis() ) ;
+   //SETCLASSFROMZVAL ( cursor_obj, "_cursor", sdbCursor, &query ) ;
+   RETURN_ZVAL( domain_obj, 1, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaDB, listDomains )
+{
+   INT32 rc = SDB_OK ;
+   sdbCursor *query = NULL ;
+   zval* cursor_obj = NULL ;
+   sdb *connection  = NULL ;
+
+   zval *pCondition  = NULL ;
+   zval *pSelected   = NULL ;
+   zval *pOrderBy    = NULL ;
+   zval *pHint       = NULL ;
+   CHAR *condition   = NULL ;
+   CHAR *selected    = NULL ;
+   CHAR *orderBy     = NULL ;
+   CHAR *hint        = NULL ;
+
+   if ( zend_parse_parameters ( ZEND_NUM_ARGS() TSRMLS_CC,
+                                "|zzzz",
+                                &pCondition,
+                                &pSelected,
+                                &pOrderBy,
+                                &pHint ) == FAILURE )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   GETCLASSFROMZVAL ( getThis(), "_connection", sdb, connection ) ;
+   if ( !connection )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   // init and create a new SequoiaCS class
+   MAKE_STD_ZVAL ( cursor_obj ) ;
+   object_init_ex ( cursor_obj, pSequoiadbCursor ) ;
+   CREATECLASS ( cursor_obj, "_cursor", sdbCursor, query ) ;
+   if ( !query )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+
+   if ( !php_toJson ( &condition, pCondition TSRMLS_CC ) ||
+        !php_toJson ( &selected , pSelected  TSRMLS_CC ) ||
+        !php_toJson ( &orderBy  , pOrderBy   TSRMLS_CC ) ||
+        !php_toJson ( &hint     , pHint      TSRMLS_CC ) )
+   {
+      SETERROR2 ( getThis(), SDB_INVALIDARG ) ;
+      RETURN_NULL() ;
+   }
+
+   rc = listDomains ( connection, &query, condition, selected, orderBy, hint ) ;
+   SETERROR2 ( getThis(), rc ) ;
+   if ( rc )
+   {
+      RETURN_NULL() ;
+   }
+   SETZVAL ( cursor_obj, "_connection", getThis() ) ;
+   //SETCLASSFROMZVAL ( cursor_obj, "_cursor", sdbCursor, &query ) ;
+   RETURN_ZVAL( cursor_obj, 1, 0 ) ;
 }
 
 PHP_METHOD ( SequoiaDB, __destruct )
@@ -2244,6 +2447,115 @@ PHP_METHOD ( SequoiaCursor, __destruct )
    {
       delete query ;
    }
+}
+
+/***************  domain class  ****************/
+
+PHP_METHOD ( SequoiaDomain, alterDomain )
+{
+   INT32 rc = SDB_OK ;
+   sdbDomain *domain = NULL ;
+   CHAR *error       = NULL ;
+   zval *pOptions    = NULL ;
+   CHAR *options     = NULL ;
+
+   if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
+                                "z",
+                                &pOptions ) == FAILURE )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
+      RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+   }
+   GETCLASSFROMZVAL ( getThis(), "_domain", sdbDomain, domain ) ;
+   if ( !domain )
+   {
+      SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
+      RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+   }
+   if ( !php_toJson ( &options, pOptions TSRMLS_CC ) )
+   {
+      SETERROR2 ( getThis(), SDB_INVALIDARG ) ;
+      PRINTFERROR ( SDB_INVALIDARG, error ) ;
+      RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+   }
+   rc = alterDomain ( domain, options ) ;
+   SETERROR ( getThis(), rc ) ;
+   PRINTFERROR ( rc, error ) ;
+   RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaDomain, listCSInDomain )
+{
+   INT32 rc = SDB_OK ;
+   sdbDomain *domain = NULL ;
+   sdbCursor *query = NULL ;
+   zval* cursor_obj = NULL ;
+
+   GETCLASSFROMZVAL ( getThis(), "_domain", sdbDomain, domain ) ;
+   if ( !domain )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+
+   // init and create a new SequoiaCS class
+   MAKE_STD_ZVAL ( cursor_obj ) ;
+   object_init_ex ( cursor_obj, pSequoiadbCursor ) ;
+   CREATECLASS ( cursor_obj, "_cursor", sdbCursor, query ) ;
+   if ( !query )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   rc = listCollectionSpacesInDomain ( domain, &query ) ;
+   SETERROR2 ( getThis(), rc ) ;
+   if ( rc )
+   {
+      RETURN_NULL() ;
+   }
+   zval *sdbobj = NULL ;
+   MAKE_STD_ZVAL ( sdbobj ) ;
+   GETZVAL ( getThis(), "_connection", sdbobj ) ;
+   SETZVAL ( cursor_obj, "_connection", sdbobj ) ;
+   RETURN_ZVAL( cursor_obj, 1, 0 ) ;
+}
+
+PHP_METHOD ( SequoiaDomain, listCLInDomain )
+{
+   INT32 rc = SDB_OK ;
+   sdbDomain *domain = NULL ;
+   sdbCursor *query = NULL ;
+   zval* cursor_obj = NULL ;
+
+   GETCLASSFROMZVAL ( getThis(), "_domain", sdbDomain, domain ) ;
+   if ( !domain )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+
+   // init and create a new SequoiaCS class
+   MAKE_STD_ZVAL ( cursor_obj ) ;
+   object_init_ex ( cursor_obj, pSequoiadbCursor ) ;
+   CREATECLASS ( cursor_obj, "_cursor", sdbCursor, query ) ;
+   if ( !query )
+   {
+      SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
+      RETURN_NULL() ;
+   }
+   rc = listCollectionsInDomain ( domain, &query ) ;
+   SETERROR2 ( getThis(), rc ) ;
+   if ( rc )
+   {
+      RETURN_NULL() ;
+   }
+   zval *sdbobj = NULL ;
+   MAKE_STD_ZVAL ( sdbobj ) ;
+   GETZVAL ( getThis(), "_connection", sdbobj ) ;
+   SETZVAL ( cursor_obj, "_connection", sdbobj ) ;
+   RETURN_ZVAL( cursor_obj, 1, 0 ) ;
 }
 
 /* **************  Sequoiadb_id class  ****************/

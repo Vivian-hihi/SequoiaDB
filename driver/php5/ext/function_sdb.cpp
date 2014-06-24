@@ -278,6 +278,28 @@ INT32 selectCollectionSpace ( sdb *connection,
    return rc ;
 }
 
+INT32 selectCollectionSpace2 ( sdb *pConnection,
+                               sdbCollectionSpace **cs,
+                               const CHAR *csName,
+                               CHAR *pOptions )
+{
+   INT32 rc = SDB_OK ;
+   BSONObj options ;
+   rc = pConnection->getCollectionSpace ( csName, **cs ) ;
+   if ( SDB_DMS_CS_NOTEXIST == rc )
+   {
+      if ( pOptions && *pOptions )
+      {
+         rc = fromjson ( pOptions, options ) ;
+         if ( rc )
+         {
+            return rc ;
+         }
+      }
+      rc = pConnection->createCollectionSpace ( csName, options, **cs ) ;
+   }
+   return rc ;
+}
 
 INT32 listCollectionSpaces ( sdb *connection, sdbCursor **query )
 {
@@ -293,7 +315,75 @@ INT32 listCollections ( sdb *connection, sdbCursor **query )
    return rc;
 }
 
-INT32 collectionSpaceDrop  ( sdbCollectionSpace *cs )
+INT32 createDomain( sdb *connection, const CHAR *pDomainName,
+                    CHAR *pOptions, sdbDomain **dm )
+{
+   INT32 rc = SDB_OK ;
+   BSONObj options ;
+   if ( pOptions && *pOptions )
+   {
+      rc = fromjson ( pOptions, options ) ;
+      if ( rc )
+      {
+         return rc ;
+      }
+   }
+   rc = connection->createDomain( pDomainName, options, **dm ) ;
+   return rc ;
+}
+
+INT32 dropDomain( sdb *connection, const CHAR *pDomainName )
+{
+   return connection->dropDomain( pDomainName ) ;
+}
+
+INT32 getDomain( sdb *connection, const CHAR *pDomainName, sdbDomain **dm )
+{
+   return connection->getDomain( pDomainName, **dm ) ;
+}
+
+INT32 listDomains( sdb *connection, sdbCursor **query,
+                   const CHAR *condition, const CHAR *selector,
+                   const CHAR *orderBy, const CHAR *hint )
+{
+   INT32 rc = SDB_OK ;
+   BSONObj condition_bson ;
+   BSONObj selector_bson ;
+   BSONObj orderBy_bson ;
+   BSONObj hint_bson ;
+
+   if ( condition && *condition )
+   {
+      rc = fromjson ( condition, condition_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( selector && *selector )
+   {
+      rc = fromjson ( selector, selector_bson ) ;
+      if ( rc )
+         return rc ;
+    }
+
+   if ( orderBy && *orderBy )
+   {
+      rc = fromjson ( orderBy, orderBy_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+
+   if ( hint && *hint )
+   {
+      rc = fromjson ( hint, hint_bson ) ;
+      if ( rc )
+         return rc ;
+   }
+   return connection->listDomains( **query, condition_bson, selector_bson,
+                                   orderBy_bson, hint_bson ) ;
+}
+
+INT32 collectionSpaceDrop( sdbCollectionSpace *cs )
 {
    INT32 rc = SDB_OK ;
    rc = cs->drop () ;
@@ -735,6 +825,35 @@ INT32 delCurrent ( sdbCursor *query )
    rc = query->delCurrent () ;
    return rc ;
 }*/
+
+/*************** sdbDomain ******************************/
+
+const CHAR *getDomainName( sdbDomain *dm )
+{
+   return dm->getName() ;
+}
+
+INT32 alterDomain ( sdbDomain *dm, CHAR *pOptions )
+{
+   INT32 rc = SDB_OK ;
+   BSONObj bs ;
+   rc = fromjson ( pOptions, bs ) ;
+   if ( rc )
+   {
+      return rc ;
+   }
+   return dm->alterDomain( bs ) ;
+}
+
+INT32 listCollectionSpacesInDomain( sdbDomain *dm, sdbCursor **query )
+{
+   return dm->listCollectionSpacesInDomain( **query ) ;
+}
+
+INT32 listCollectionsInDomain( sdbDomain *dm, sdbCursor **query )
+{
+   return dm->listCollectionsInDomain( **query ) ;
+}
 
 /*************** sdbReplicaGroup ******************************/
 

@@ -63,6 +63,11 @@ INT32 selectCollectionSpace ( sdb *pConnection,
                               const CHAR *csName,
                               INT32 pageSize ) ;
 
+INT32 selectCollectionSpace2 ( sdb *pConnection,
+                               sdbCollectionSpace **cs,
+                               const CHAR *csName,
+                               CHAR *pOptions ) ;
+
 INT32 listCollectionSpaces ( sdb *connection, sdbCursor **query ) ;
 
 INT32 listCollections ( sdb *connection, sdbCursor **query ) ;
@@ -76,8 +81,20 @@ INT32 createCataGroup ( sdb *connection,
                         const CHAR *pServiceName,
                         const CHAR *pDatabasePath,
                         const CHAR *configure ) ;
+
 INT32 dropCollectionSpace ( sdb *connection,
                             const CHAR *pCsName ) ;
+
+INT32 createDomain( sdb *connection, const CHAR *pDomainName,
+                    CHAR *pOptions, sdbDomain **dm );
+
+INT32 dropDomain( sdb *connection, const CHAR *pDomainName ) ;
+
+INT32 getDomain( sdb *connection, const CHAR *pDomainName, sdbDomain **dm ) ;
+
+INT32 listDomains( sdb *connection, sdbCursor **query,
+                   const CHAR *condition, const CHAR *selector,
+                   const CHAR *orderBy, const CHAR *hint ) ;
 
 /*
 INT32 activateGroup ( sdb *connection,
@@ -166,6 +183,13 @@ INT32 updateCurrent ( sdbCursor *query, const CHAR *rule ) ;
 
 INT32 delCurrent ( sdbCursor *query ) ;
 
+/*************** sdbDomain ******************************/
+
+INT32 alterDomain ( sdbDomain *dm, CHAR *pOptions ) ;
+
+INT32 listCollectionSpacesInDomain( sdbDomain *dm, sdbCursor **query ) ;
+
+INT32 listCollectionsInDomain( sdbDomain *dm, sdbCursor **query ) ;
 
 /*************** sdbReplicaGroup ******************************/
 

@@ -91,6 +91,10 @@ PHP_METHOD ( SequoiaDB, listCSs ) ;
 PHP_METHOD ( SequoiaDB, listCollections ) ;
 PHP_METHOD ( SequoiaDB, createCataGroup ) ;
 PHP_METHOD ( SequoiaDB, dropCollectionSpace ) ;
+PHP_METHOD ( SequoiaDB, createDomain ) ;
+PHP_METHOD ( SequoiaDB, dropDomain ) ;
+PHP_METHOD ( SequoiaDB, getDomain ) ;
+PHP_METHOD ( SequoiaDB, listDomains ) ;
 
 PHP_METHOD ( SequoiaCS, __construct ) ;
 PHP_METHOD ( SequoiaCS, __destruct ) ;
@@ -122,6 +126,10 @@ PHP_METHOD ( SequoiaCursor, getNext ) ;
 PHP_METHOD ( SequoiaCursor, current ) ;
 //PHP_METHOD ( SequoiaCursor, updateCurrent ) ;
 //PHP_METHOD ( SequoiaCursor, deleteCurrent ) ;
+
+PHP_METHOD ( SequoiaDomain, alterDomain ) ;
+PHP_METHOD ( SequoiaDomain, listCSInDomain ) ;
+PHP_METHOD ( SequoiaDomain, listCLInDomain ) ;
 
 PHP_METHOD ( SequoiaID, __construct ) ;
 PHP_METHOD ( SequoiaID, __toString ) ;
