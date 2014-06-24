@@ -31,11 +31,11 @@ def get_info(code):
 import os
 import string
 def init_errmaps():
-   if False == os.access("err.prop", os.R_OK):
+   if False == os.access(os.path.dirname(__file__) + "/err.prop", os.R_OK):
       raise Exception("file not exist")
    import ConfigParser
    config = ConfigParser.ConfigParser()
-   config.read("err.prop")
+   config.read(os.path.dirname(__file__) + "/err.prop")
    pairs = config.items("error")
    for pair in pairs:
       const.errmaps[ string.atoi(pair[0]) ] = pair[1];
