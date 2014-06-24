@@ -819,13 +819,13 @@ done:
 
 static PYOBJECT *eval_JS( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc                       = 0 ;
-   INT32 sdb_spd_res_type         = 0 ;
-   PYOBJECT *obj                  = NULL ;
-   PYOBJECT *cursor_object        = NULL ;
-   sdb *client                    = NULL ;
-   sdbCursor *cursor              = NULL ;
-   const char *code               = NULL ;
+   INT32 rc                          = 0 ;
+   SDB_SPD_RES_TYPE sdb_spd_res_type = 0 ;
+   PYOBJECT *obj                     = NULL ;
+   PYOBJECT *cursor_object           = NULL ;
+   sdb *client                       = NULL ;
+   sdbCursor *cursor                 = NULL ;
+   const char *code                  = NULL ;
    const bson::BSONObj errmsg;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOs", &obj, &cursor_object, &code ) )
