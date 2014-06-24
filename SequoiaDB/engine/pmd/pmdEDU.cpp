@@ -157,6 +157,8 @@ namespace engine
       _pSession         = NULL ;
       _pBuff            = NULL ;
       _buffLen          = 0 ;
+      _pUncompressBuff  = NULL ;
+      _uncompressBuffLen= 0 ;
       _totalCatchSize   = 0 ;
       _totalMemSize     = 0 ;
       _isDoRollback     = FALSE ;
@@ -175,7 +177,7 @@ namespace engine
       _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) ) ;
 #endif // SDB_ENGINE
 
-      _pErrorBuff = (CHAR *)SDB_OSS_MALLOC( EDU_ERROR_BUFF_SIZE + 1 );
+      _pErrorBuff = (CHAR *)SDB_OSS_MALLOC( EDU_ERROR_BUFF_SIZE + 1 ) ;
    }
 
    _pmdEDUCB::~_pmdEDUCB ()
@@ -206,6 +208,8 @@ namespace engine
          _pTransNodeMap = NULL;
       }
 #endif // SDB_ENGINE
+
+      clear() ;
    }
 
    void _pmdEDUCB::clear()
@@ -233,6 +237,12 @@ namespace engine
          _pBuff = NULL ;
       }
       _buffLen = 0 ;
+      if ( _pUncompressBuff )
+      {
+         releaseBuff( _pUncompressBuff ) ;
+         _pUncompressBuff = NULL ;
+      }
+      _uncompressBuffLen = 0 ;
 
       // clean catch
       CATCH_MAP_IT it = _catchMap.begin() ;
@@ -621,6 +631,23 @@ namespace engine
       }
 
       return _pBuff ;
+   }
+
+   CHAR* _pmdEDUCB::getUncompressBuff( INT32 len )
+   {
+      if ( _uncompressBuffLen < len )
+      {
+         if ( _pUncompressBuff )
+         {
+            releaseBuff( _pUncompressBuff ) ;
+            _pUncompressBuff = NULL ;
+         }
+         _uncompressBuffLen = 0 ;
+
+         allocBuff( len, &_pUncompressBuff, _uncompressBuffLen ) ;
+      }
+
+      return _pUncompressBuff ;
    }
 
 #if defined ( SDB_ENGINE )

@@ -155,7 +155,7 @@ namespace engine
          goto error ;
       }
 
-      pBuff = cb->getBuff( maxUncompressedLen ) ;
+      pBuff = cb->getUncompressBuff( maxUncompressedLen ) ;
       if ( !pBuff )
       {
          PD_LOG( PDERROR, "Failed to allocate uncompression buff, size: %d",

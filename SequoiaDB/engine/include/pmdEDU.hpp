@@ -151,6 +151,8 @@ namespace engine
 
       CHAR*       getBuff( INT32 len ) ;
       INT32       getBuffLen () const { return _buffLen ; }
+      CHAR*       getUncompressBuff( INT32 len ) ;
+      INT32       getUncompressBuffLen() const { return _uncompressBuffLen ; }
 
       void        incEventCount() { ++_processEventCount ; }
 
@@ -390,6 +392,8 @@ namespace engine
       // buffer related
       CHAR           *_pBuff ;
       INT32          _buffLen ;
+      CHAR           *_pUncompressBuff ;
+      INT32          _uncompressBuffLen ;
 
       CATCH_MAP      _catchMap ;
       ALLOC_MAP      _allocMap ;
