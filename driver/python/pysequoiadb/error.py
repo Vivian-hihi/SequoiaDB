@@ -17,12 +17,20 @@ class OperationError(SequoiaDBError):
    """
 
    def __init__(self, errmsg, code):
+
       self.errmsg = errmsg
       self.__code = code
       self.__details = common.get_info(code)
 
+   def __repr__(self, what):
+      """make the error info.
+      """
+      return self.errmsg + str(self.__code) + ' -----> ' + self.__details()
+
    def __str__(self):
-      return repr( self.errmsg + str(self.__code) + '----->' + self.details() )
+      """return the error info.
+      """
+      return self.__repr__("")
 
    @property
    def code(self):
@@ -32,6 +40,7 @@ class OperationError(SequoiaDBError):
 
    @property
    def details(self):
+      
       return self.__details
 
 
