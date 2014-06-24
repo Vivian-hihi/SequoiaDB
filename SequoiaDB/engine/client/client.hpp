@@ -1809,7 +1809,7 @@ namespace sdbclient
       {
          if ( !pDomain )
             return NULL ;
-         pDomain->getName() ;
+         return pDomain->getName() ;
       }
 
 /** \fn INT32 alterDomain( const bson::BSONObj &options ) ;
@@ -1822,7 +1822,7 @@ namespace sdbclient
       {
          if ( !pDomain )
             return SDB_SYS ;
-         pDomain->alterDomain ( options ) ;
+         return pDomain->alterDomain ( options ) ;
       }
 
 /** \fn INT32 listCollectionSpacesInDomain ( sdbCursor &cursor ) ;
@@ -1836,7 +1836,7 @@ namespace sdbclient
       {
          if ( !pDomain )
             return SDB_SYS ;
-         pDomain->listCollectionSpacesInDomain ( cursor ) ;
+         return pDomain->listCollectionSpacesInDomain ( cursor ) ;
       }
 
 /** \fn INT32 listCollectionsInDomain ( sdbCursor &cursor ) ;
@@ -1850,7 +1850,7 @@ namespace sdbclient
       {
          if ( !pDomain )
             return SDB_SYS ;
-         pDomain->listCollectionsInDomain ( cursor ) ;
+         return pDomain->listCollectionsInDomain ( cursor ) ;
       }
 
    };
