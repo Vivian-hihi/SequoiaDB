@@ -1075,10 +1075,10 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             /* first we calculate the expected size after extraction */
             INT32 len = getDeBase64Size ( cj->valuestring ) ;
             /* and allocate memory */
-            CHAR *out = (CHAR *)malloc ( len ) ;
+            CHAR *out = (CHAR *)malloc ( len + 1 ) ;
             if ( !out )
                return FALSE ;
-            memset ( out, 0, len ) ;
+            memset ( out, 0, len + 1 ) ;
             /* and then decode into the buffer we just allocated */
             if ( !base64Decode( cj->valuestring, out, len ) )
             {
@@ -1106,10 +1106,10 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             get_char_num ( num, i, INT_NUM_SIZE ) ;
             len = getDeBase64Size ( cj->valuestring ) ;
 
-            out = (CHAR *)malloc(len) ;
+            out = (CHAR *)malloc( len + 1 ) ;
             if ( !out )
                return FALSE ;
-            memset ( out, 0, len ) ;
+            memset ( out, 0, len + 1 ) ;
             if ( !base64Decode( cj->valuestring, out, len ) )
             {
                free ( out ) ;

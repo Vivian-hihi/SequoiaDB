@@ -33,7 +33,7 @@ int getEnBase64Size ( int size )
 {
    int len = size ;
    int zeroize = len % 3 ;
-   len = ( len + ( zeroize ? 3 - zeroize : 0 ) ) / 3 * 4 + 1 ;
+   len = ( len + ( zeroize ? 3 - zeroize : 0 ) ) / 3 * 4 ;
    return len ;
 }
 
@@ -45,7 +45,7 @@ int getDeBase64Size ( const char *s )
       zeroize = 2 ;
    else if ( '=' == s [ len - 1 ] )
       zeroize = 1 ;
-   len = len / 4 * 3 - zeroize + 1 ;
+   len = len / 4 * 3 - zeroize ;
    return len ;
 }
 
