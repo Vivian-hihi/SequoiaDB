@@ -4,19 +4,26 @@
   <title>Tips when using shell</title>
   <body>
     <p>Sequoiadb shell has built-in help documents. It can be read through the command of
-      help.<codeblock>> help
-function () {
-    println("   var db = new Sdb('localhost', 11810)   connect to database");
-    println("   db.help()                              help on db methods");
-    println("   db.cs.help()                           help on collection space                                                                                                                      cs");
-    println("   db.cs.cl                               access collection cl on c                                                                                                                     ollection space cs");
-    println("   db.cs.cl.help()                        help on collection cl");
-    println("   db.cs.cl.find()                        list all records");
-    println("   db.cs.cl.find({a:1})                   list records where a=1");
-    println("   print(x), println(x)                   print out x");
-    println("   getErr(ret)                        print error description for r                                                                                                                     eturn code");
-    println("   quit                                   exit");
-    }</codeblock></p>
+      help.<codeblock>> help()
+   var db = new Sdb()                     connect to database use default host 'localhost' and default port 11810
+   var db = new Sdb('localhost',11810)    connect to database use specified host and port
+   var db = new Sdb('ubuntu',11810,'','') connect to database with username and password
+   help(&lt;method>)                         help on specified method, e.g. help('createCS')
+   db.help()                              help on db methods
+   db.cs.help()                           help on collection space cs
+   db.cs.cl                               access collection cl on collection space cs
+   db.cs.cl.help()                        help on collection cl
+   db.cs.cl.find()                        list all records
+   db.cs.cl.find({a:1})                   list records where a=1
+   db.cs.cl.find().help()                 help on find methods
+   db.cs.cl.count().help()                help on count methods
+   print(x), println(x)                   print out x
+   traceFmt(&lt;type>,&lt;in>,&lt;out>)            format trace input(in) to output(out) by type
+   getErr(ret)                            print error description for return code
+   clear                                  clear the terminal screen
+   history -c                             clear the history
+   quit                                   exit
+Takes 0.2993s.</codeblock></p>
     <ul>
       <li>Database Help <p>The command to check help document on database
         level:</p><codeblock>db.help()</codeblock></li>

@@ -41,18 +41,18 @@
       <ul class="ul">
         <li class="li">配置主机名 <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d53626e24" class="stentry">配置项 </th>
+              <th valign="bottom" align="left" id="d53660e24" class="stentry">配置项 </th>
 
-              <th valign="bottom" align="left" id="d53626e27" class="stentry">配置方法</th>
+              <th valign="bottom" align="left" id="d53660e27" class="stentry">配置方法</th>
 
-              <th valign="bottom" align="left" id="d53626e30" class="stentry">验证方法</th>
+              <th valign="bottom" align="left" id="d53660e30" class="stentry">验证方法</th>
 
             </tr>
 <tr class="strow"/>
 <tr class="strow">
-              <td valign="top" headers="d53626e24" class="stentry"> 配置主机名</td>
+              <td valign="top" headers="d53660e24" class="stentry"> 配置主机名</td>
 
-              <td valign="top" headers="d53626e27" class="stentry"> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<ul class="ul">
+              <td valign="top" headers="d53660e27" class="stentry"> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<ul class="ul">
                   <li class="li">对于SUSE：<p class="p">2.打开/etc/HOSTNAME文件；</p>
 <p class="p">  vi /etc/HOSTNAME</p>
 
@@ -61,25 +61,32 @@
 <p class="p">4.按:wq保存退出；</p>
 </li>
 
-                  <li class="li">对于Redhat：<p class="p">2.打开/etc/sysconfig/network文件；</p>
+                  <li class="li">对于RedHat：<p class="p">2.打开/etc/sysconfig/network文件；</p>
 <p class="p">  vi
                       /etc/sysconfig/network</p>
 <p class="p">3.将HOSTNAME一行修改为
-                      HOSTNAME=sdbserver1，其中sdbserver1为新主机名</p>
+                        HOSTNAME=sdbserver1，其中sdbserver1为新主机名</p>
+ <p class="p">4.按 :wq 保存退出；</p>
+</li>
+
+                <li class="li">对于Ubuntu：<p class="p">2.打开/etc/hostname文件；</p>
+<p class="p">  vi /etc/hostname</p>
+<p class="p">3.修改文件内容，配置为主机名称；</p>
+<p class="p">sdbserver1</p>
  4.按 :wq 保存退出；</li>
 
                 </ul>
 </td>
 
-              <td valign="top" headers="d53626e30" class="stentry"> 执行 hostname 命令，确认打印信息是否为 “sdbserver1” </td>
+              <td valign="top" headers="d53660e30" class="stentry"> 执行 hostname 命令，确认打印信息是否为 “sdbserver1” </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d53626e24" class="stentry">
+              <td valign="top" headers="d53660e24" class="stentry">
                 配置物理机之间通过主机名可连接
               </td>
 
-              <td valign="top" headers="d53626e27" class="stentry">
+              <td valign="top" headers="d53660e27" class="stentry">
                 <ul class="ul">
                   <li class="li">使用root权限，打开/etc/hosts文件 <p class="p">  vi /etc/hosts</p>
 </li>
@@ -96,7 +103,7 @@
 
               </td>
 
-              <td valign="top" headers="d53626e30" class="stentry"><p class="p">1. ping sdbserver1（本机主机名）可以ping通</p>
+              <td valign="top" headers="d53660e30" class="stentry"><p class="p">1. ping sdbserver1（本机主机名）可以ping通</p>
 2. ping sdbserver2（远端主机名）可以ping通</td>
 
             </tr>

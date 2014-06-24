@@ -8,8 +8,9 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C Environment to Build"/>
-<meta name="description" content="First,press here to load C client-driven . C Client development interface is in the directory &#34;sequoiadb/client/C&#34;(corresponding windows &#34;sequoiadb\client\C&#34;),including following files: ./include: ..."/>
+<meta name="description" content="Get Driver Development Kit Download SequoiaDBDriver Development kit for the corresponding operating systems from http://www.sequoiadb.com . Configure development environment Linux 1.Extract the Driver ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/C/topics/c_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="c_driver_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_ncz_12t_zj_en"/>
 <link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
@@ -36,113 +37,62 @@
   <h1 class="title topictitle1">C Environment to Build</h1>
 
   <div class="body">
-    <p class="p">First,press here to load <u class="ph u">C client-driven</u>.</p>
-
-    <div class="p">C Client development interface is in the directory "sequoiadb/client/C"(corresponding windows
-      "sequoiadb\client\C"),including following files:
-      <pre class="pre codeblock">./include:
-     base64.h
-     bson/
-     client.h
-     core.h
-     jstobs.h
-     ossErr.h
-     ossFeat.h
-     ossTypes.h
-     
-     ./include/bson:
-     bcon.h
-     bson.h
-     encoding.h
-     
-     ./lib:
-     in Linux
-     libsdbcpp.so
-     in Windous
-     sdbc.dll
-     sdbc.exp
-     sdbc.lib</pre>
-Illustrating:in
-      the above files,".h" and ".hpp" are head files,".so" are dynamic runtime files in Linux,".dll"
-      and ".lib" are dynamic runtime files in Windows.</div>
-
-    <div class="section"><h2 class="title sectiontitle">Compiling and linking in Linux</h2>
+    <div class="section"><h2 class="title sectiontitle">Get Driver Development Kit</h2>
       
-      <p class="p">Please add the "include" directory to head directory when compiling programs,and add the
-        "lib" directory to link diretory when linking,at the same time,add the "lib" directory to
-        the environment variables "LD_LIBRARY_PATH".The following shows how to compile a C program
-        in Linux:</p>
-
-      <pre class="pre codeblock">cc testClient.c -o testClientC -I/<em class="ph i">path</em>/C/include -L /<em class="ph i">path</em>/C/lib -lsdbc</pre>
-
-      <p class="p">"-o" assign the output file,"-I" specify the head path,"-L" specify the runtime library
-        path,"-l" assign the runtime library name.</p>
-
-      <p class="p">When running the programs,users can specify the path of  <em class="ph i">LD_LIBRARY_PATH</em> as the path
-        which contain <em class="ph i">libsdbc.so</em> dynamic library.If the path is specified
-        uncorrectly,run-time errors message will appear like this:</p>
-
-      <pre class="pre codeblock">[sequoiadb@vmsvr1-rhel-x64 test]$ export | grep LD_LIBRARY_PATH
-[sequoiadb@vmsvr1-rhel-x64 test]$ ldd testClientC
-        linux-vdso.so.1 =&gt;  (0x00007fff099ff000)
-        libsdbc.so =&gt; not found
-        libc.so.6 =&gt; /lib64/libc.so.6 (0x00000033c1200000)
-        /lib64/ld-linux-x86-64.so.2 (0x00000033c0a00000)
-[sequoiadb@vmsvr1-rhel-x64 test]$ ./testClientC
-./testClientC: error while loading shared libraries: libsdbc.so: cannot open shared object file: No such file or directory</pre>
-
-      <p class="p">Using the command "ldd" can list the dynamic libraries which the executable program
-        needed.In the above example,program  "testClientC" need four dynamic libraries,including
-        linux-vdso,libsdbc,libc and ld-linux-x86-64.Except the "libsdbc" library,the other two linux
-        library are system library,"libc" is run-time library for C program.</p>
-
-      <p class="p">As in the above example is not defined "LD_LIBRARY_PATH",so the program can't find
-        "libsdbc" library,as shown above in italics tag:"libsdbc.so =&gt; not found".so set
-        "LD_LIBRARY_PATH"：</p>
-
-      <pre class="pre codeblock">$ export LD_LIBRARY_PATH=/home/sequoiadb/sequoiadb/client/C/lib
-$ ldd testClientC
-        linux-vdso.so.1 =&gt;  (0x00007fffe45c1000)
-        libsdbc.so =&gt; /home/sequoiadb/sequoiadb/client/C/lib/libsdbc.so (0x00007f00ff0b9000)
-        libc.so.6 =&gt; /lib64/libc.so.6 (0x00000033c1200000)
-        libm.so.6 =&gt; /lib64/libm.so.6 (0x00000033c1e00000)
-        libdl.so.2 =&gt; /lib64/libdl.so.2 (0x00000033c0e00000)
-        libpthread.so.0 =&gt; /lib64/libpthread.so.0 (0x00000033c1600000)
-        libcrypto.so.10 =&gt; /usr/lib64/libcrypto.so.10 (0x00000033c7e00000)
-        /lib64/ld-linux-x86-64.so.2 (0x00000033c0a00000)
-        libz.so.1 =&gt; /lib64/libz.so.1 (0x00000033c1a00000)
-$ ls /home/sequoiadb/sequoiadb/client/C/lib
-libsdbc.so
-[sequoiadb@vmsvr1-rhel-x64 test]$ ./testClientC
-        name : 2         tom
-        address : 3
-                city : 2         Toronto
-                provice : 2      Ontario</pre>
-
-      <p class="p">When referring to the libsdbc library,you can run the program successfully.</p>
+      <p class="p">Download SequoiaDBDriver Development kit for the corresponding operating systems from<a class="xref" href="http://www.sequoiadb.com" target="_blank">http://www.sequoiadb.com</a>.</p>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">Compiling and linking in Windows</h2>
+    <div class="section"><h2 class="title sectiontitle">Configure development environment</h2>
       
-      <p class="p">Please add the "include" directory to head directory when compiling programs,and add the
-        "lib" directory to link diretory when linking，before running,copy the file "sdbc.dll" in the
-        "lib" directory to the directory which generated the file ".exe".The following shows how to
-        compile a C program: in Windows:</p>
+      <ul class="ul">
+        <li class="li">Linux <p class="p">1.Extract the Driver Development kit from the downloaded archive.</p>
 
-      <pre class="pre codeblock">cl /Fo testClient.obj /c testClient.c /I <em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\C\include /wd4047
-link /OUT:testClient.exe /LIBPATH:<em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\C\lib sdbc.lib testClient.obj 
-copy <em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\C\lib\sdbc.dll .</pre>
+          <p class="p">2.Copy folder named driver from the downloaded archive to development directory(suggest to put on third-party directory), and renameit as "sdbdriver".</p>
 
-      <p class="p">"/Fo" represents creating-object file,"/c" means compiling but not link,"/I" expresses
-        searching needed file in the specified directory,"/OUT" specifies the output file,"/LIBPATH"
-        specified the environment-library path.</p>
+          <p class="p">3. Add directory named "sdbdriver/include" into compiled directory:</p>
+<strong class="ph b"><em class="ph i">Dynamic Link:</em></strong><p class="p"/>
+Use lib directory libsdbc.so dynamic library, gcc compiler parameters forms such as: <div class="p">
+          <pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;path&gt;/sdbdriver/include -L &lt;path&gt;/sdbdriver/lib -lsdbc  </pre>
+
+        </div>
+<p class="p">Where: PATH is sdbdriver placed path, When you run the program, you need to specify the path to the LD_LIBRARY_PATH contains libsdbc.so dynamic library.</p>
+<div class="p">
+          <pre class="pre codeblock">export LD_LIBRARY_PATH=&lt;PATH&gt;/sdbdriver/lib </pre>
+
+        </div>
+<ul class="ul"><li class="li"><div class="note note"><span class="notetitle">Note:</span> 
+          <p class="p">If there will be an error message when you run the program: </p>
+
+          <p class="p">error while loading shared libraries: libsdbc.so: cannot open shared object file: No such file or directory</p>
+
+          <p class="p">Said LD_LIBRARY_PATH environment variable is not set properly, it is recommmended to set to /etc/profile or application startup script, avoiding each new terminal will need to re-open setting. </p>
+
+        </div>
+</li>
+</ul>
+
+          <strong class="ph b"><em class="ph i">Static Link:</em></strong><p class="p"/>
+Use lib directory libstaticsdbc.a static library, gcc compiler parameters forms such as:<pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/libstaticsdbc.a -lm</pre>
+
+        </li>
+
+        <li class="li">Windows
+          <p class="p">Windows driver development kit is not released yet.</p>
+
+        </li>
+
+      </ul>
 
     </div>
 
   </div>
 
-<div class="related-links"/>
+  <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
+<div><a class="navheader_parent_path" href="c_driver_en.html" title="C Development Foundation">C Development Foundation</a></div>
+</div>
+</div>
+  
 <div class="navfooter"><a class="link" href="../../../../developement/application/C/topics/c_en.html" title="C Driver"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C Driver</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
@@ -152,7 +102,7 @@ copy <em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\C\lib\sdbc.dll .</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

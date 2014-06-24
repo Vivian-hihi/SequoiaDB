@@ -9,7 +9,6 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.createCL()"/>
 <meta name="description" content="db.collectionspace.createCL(&lt;name&gt;,[options]) Create a collection in a specified collection space. Collection is a logical object which stores records. Each record should belong to on and only one ..."/>
-<meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="resetSnapshot_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="getCL_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/database/topics/collection_en.html"/>
@@ -35,7 +34,7 @@
 <body onload="highlightSearchTerm()" id="references_method_createCL"><a name="references_method_createCL"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist_en.html" title="Sequoiadb javascript Method List"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript Method List</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references_en.html" title="Reference">Reference</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist_en.html" title="Sequoiadb javascript Method List">Sequoiadb javascript Method List</a></td></tr></tbody></table>
+                    --></script></span></div></td><td width="50%"/></tr></tbody></table>
 
   <h1 class="title topictitle1">db.collectionspace.createCL()</h1>
 
@@ -48,42 +47,13 @@
 
     <div class="section"><h2 class="title sectiontitle">Parameter Description</h2>
       
-      <a name="references_method_createCL__references_method_createCL_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_method_createCL__references_method_createCL_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d121459e27" class="stentry">Parameter Name</th>
+      <p class="p">    <strong class="ph b">Parameter Name    Parameter Type    Description                                                                                                                                                                 Not null</strong></p>
 
-          <th valign="bottom" align="left" id="d121459e30" class="stentry">Parameter Type</th>
+      <p class="p">    name      string           Collection name. Collection names should be unique to each other in a collection space.                                                                                                yes</p>
 
-          <th valign="bottom" align="left" id="d121459e33" class="stentry">Description</th>
+      <p class="p">    options    Json object     when create collection,you can set other properties about the collection through the param <em class="ph i">options</em>,such as assigning the ShardingKey or whether storing the data in compressed form.     no</p>
 
-          <th valign="bottom" align="left" id="d121459e36" class="stentry">Not null</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d121459e27" class="stentry">name</td>
-
-          <td valign="top" headers="d121459e30" class="stentry">string</td>
-
-          <td valign="top" headers="d121459e33" class="stentry"> Collection name. Collection names should be unique to each other in a collection
-            space.</td>
-
-          <td valign="top" headers="d121459e36" class="stentry">yes</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d121459e27" class="stentry">options</td>
-
-          <td valign="top" headers="d121459e30" class="stentry">option</td>
-
-          <td valign="top" headers="d121459e33" class="stentry"> when create collection,you can set other properties about the collection through
-            the param <em class="ph i">options</em>,such as assigning the ShardingKey or whether <div class="fig fignone"/>
-storing the data
-            in compressed form.</td>
-
-          <td valign="top" headers="d121459e36" class="stentry">no</td>
-
-        </tr>
-</table>
-
+      
     </div>
 
     <div class="section"><h2 class="title sectiontitle">Format</h2>
@@ -92,18 +62,33 @@ storing the data
         properties for the collection,at present,you can set the following properties by the
           <em class="ph i">options</em>:</p>
 
-      <p class="p">(1)ShardingKey: a json form param,the format is:{ShardingKey:{field name1:1|-1,field
-        name2:1|-1,...}, {ShardingType:"hash"}  [, {Partition:&lt;number of slices&gt;}]}，ShardingType
-        specify the way of sharding,"Range Sharding" is in default;"Partition" specify the number of
-        slices,only fill in Hash Sharding.</p>
+      <p class="p">  <strong class="ph b">Options formats    [ShardingKey]  [ShardingType]  [Partition]  [ReplSize]  [Compressed]  [IsMainCL]</strong></p>
 
-      <p class="p">(2)copy number: a json form param,the format is:{ReplSize:&lt;int num&gt;}</p>
+      <p class="p">    <strong class="ph b">ShardingKey</strong></p>
 
-      <p class="p">(3)data commpressed:a json form param,the format is:{Compressed:true|false}</p>
+      <p class="p">     ShardingKey. Example: ShardingKey:{&lt;field name1&gt;:&lt;1|-1&gt; [,&lt;field name2&gt;:&lt;1|-1&gt;, ...]}</p>
 
-      <div class="p"><pre class="pre codeblock">{"name":"&lt;collection name&gt;",[options]} </pre>
-</div>
+      <p class="p">    <strong class="ph b">ShardingType</strong> </p>
 
+      <p class="p">     ShardingType specify the way of sharding, "Range Sharding" is in default. Example: ShardingType:"hash"|"range"</p>
+
+      <p class="p">    <strong class="ph b">Partition</strong> </p>
+
+      <p class="p">     Specify the number of slices, only fill in Hash Sharding.[2^3, 2^20]. Example: Partition:&lt;Partition&gt;]</p>
+
+      <p class="p">    <strong class="ph b">ReplSize</strong> </p>
+
+      <p class="p">     Copy number: a json form param. Example: ReplSize:&lt;int num&gt;</p>
+
+      <p class="p">    <strong class="ph b">Compressed</strong> </p>
+
+      <p class="p">     A json form param. Example: Compressed:true|false</p>
+
+      <p class="p">    <strong class="ph b">IsMainCL</strong> </p>
+
+      <p class="p">     Primary partition collection. Identifies whether the primary partition the set, the default is no. Example: IsMainCL:true|false</p>
+
+      
       <div class="note note"><span class="notetitle">Note:</span> 
         <ul class="ul">
           <li class="li">The parameter "shardingkey" is a JSON object. Each of the fields in the JSON object
@@ -160,7 +145,7 @@ storing the data
 <div><a class="navheader_parent_path" href="../../../administration/concepts/database/topics/collectionspace_en.html" title="Collection Space">Collection Space</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist_en.html" title="Sequoiadb javascript Method List"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript Method List</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -169,7 +154,7 @@ storing the data
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

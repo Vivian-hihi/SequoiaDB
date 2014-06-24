@@ -3,6 +3,36 @@
 <topic id="topic_ncz_12t_zj_en">
   <title>C Environment to Build</title>
   <body>
+    <section>
+      <title>Get Driver Development Kit</title>
+      <p>Download SequoiaDBDriver Development kit for the corresponding operating systems from<xref href="http://www.sequoiadb.com" format="html" scope="external">http://www.sequoiadb.com</xref>.</p>
+    </section>
+    <section>
+      <title>Configure development environment</title>
+      <ul>
+        <li>Linux <p>1.Extract the Driver Development kit from the downloaded archive.</p>
+          <p>2.Copy folder named driver from the downloaded archive to development directory(suggest to put on third-party directory), and renameit as "sdbdriver".</p>
+          <p>3. Add directory named "sdbdriver/include" into compiled directory:</p><b><i>Dynamic Link:</i></b><p></p>Use lib directory libsdbc.so dynamic library, gcc compiler parameters forms such as: <p>
+          <codeblock>cc testClient.c -o testClientC -I &lt;path>/sdbdriver/include -L &lt;path>/sdbdriver/lib -lsdbc  </codeblock>
+        </p><p>Where: PATH is sdbdriver placed path, When you run the program, you need to specify the path to the LD_LIBRARY_PATH contains libsdbc.so dynamic library.</p><p>
+          <codeblock>export LD_LIBRARY_PATH=&lt;PATH>/sdbdriver/lib </codeblock>
+        </p><ul><li><note>
+          <p>If there will be an error message when you run the program: </p>
+          <p>error while loading shared libraries: libsdbc.so: cannot open shared object file: No such file or directory</p>
+          <p>Said LD_LIBRARY_PATH environment variable is not set properly, it is recommmended to set to /etc/profile or application startup script, avoiding each new terminal will need to re-open setting. </p>
+        </note></li></ul>
+          <b><i>Static Link:</i></b><p></p>Use lib directory libstaticsdbc.a static library, gcc compiler parameters forms such as:<codeblock>cc testClient.c -o testClientC -I &lt;path>/sdbdriver/include –L &lt;path>/sdbdriver/lib/libstaticsdbc.a -lm</codeblock>
+        </li>
+        <li>Windows
+          <p>Windows driver development kit is not released yet.</p>
+        </li>
+      </ul>
+    </section>
+  </body>
+  <related-links>
+    <link href="c_driver_en.dita" format="dita" type="topic"></link>
+  </related-links>
+  <!--<body>
     <p>First,press here to load <u>C client-driven</u>.</p>
     <p>C Client development interface is in the directory "sequoiadb/client/C"(corresponding windows
       "sequoiadb\client\C"),including following files:
@@ -90,5 +120,5 @@ copy <i>&lt;PATH></i>\sequoiadb\client\C\lib\sdbc.dll .</codeblock>
         searching needed file in the specified directory,"/OUT" specifies the output file,"/LIBPATH"
         specified the environment-library path.</p>
     </section>
-  </body>
+  </body>-->
 </topic>

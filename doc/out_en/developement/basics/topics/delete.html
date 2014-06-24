@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="删除"/>
-<meta name="description" content="四大基本数据库操作即（CRUD），删除操作即移除集合中的记录。sequoiadb中使用 remove() 方法做删除操作。 本文档的所有例子都是使用sequoiadb的shell接口。 remove() remove()方法是删除集合中记录主要方法，它的语法结构为： db.collectionspace.collection.remove([cond],[hint]) ..."/>
+<meta name="description" content="四大基本数据库操作即（CRUD），删除操作即移除集合中的记录。SequoiaDB中使用 remove() 方法做删除操作。 本文档的所有例子都是使用SequoiaDB的shell接口。 remove() remove()方法是删除集合中记录主要方法，它的语法结构为： db.collectionspace.collection.remove([cond],[hint]) ..."/>
 <meta name="DC.Relation" scheme="URI" content="update.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="developement_basics_delete"/>
@@ -36,10 +36,10 @@
   <h1 class="title topictitle1">删除</h1>
 
   <div class="body">
-    <p class="p">四大基本数据库操作即（CRUD），删除操作即移除集合中的记录。sequoiadb中使用<a class="xref" href="../../../references/methods/topics/remove.html">remove()</a>方法做删除操作。</p>
+    <p class="p">四大基本数据库操作即（CRUD），删除操作即移除集合中的记录。SequoiaDB中使用<a class="xref" href="../../../references/methods/topics/remove.html">remove()</a>方法做删除操作。</p>
 
     <div class="note note"><span class="notetitle">Note:</span> 
-      <p class="p">本文档的所有例子都是使用sequoiadb的shell接口。</p>
+      <p class="p">本文档的所有例子都是使用SequoiaDB的shell接口。</p>
 
     </div>
 
@@ -49,7 +49,7 @@
 
       <pre class="pre codeblock">db.collectionspace.collection.remove([cond],[hint])</pre>
 
-      <p class="p">在SQL中对应的操作：remove()的方法与 DELETE 语句相似：</p>
+      <p class="p">在SQL中对应的操作：remove()的方法与DELETE语句相似：</p>
 
       <p class="p"><strong class="ph b">.</strong> [cond] 参数对应where语句</p>
 
@@ -63,7 +63,7 @@
         <li class="li">
           <p class="p">删除集合中的所有记录</p>
 
-          <p class="p">以下操作会删除集合bar中所有的记录</p>
+          <p class="p">以下操作会删除集合bar中所有的记录。</p>
 
           <pre class="pre codeblock">db.foo.bar.remove()</pre>
 
@@ -72,7 +72,7 @@
         <li class="li">
           <p class="p">删除集合中匹配条件的记录</p>
 
-          <p class="p">以下操作会删除集合bar中所有匹配name字段值为“Tom”的记录</p>
+          <p class="p">以下操作会删除集合bar中所有匹配name字段值为“Tom”的记录。</p>
 
           <pre class="pre codeblock">db.foo.bar.remove({name:"Tom"})</pre>
 
@@ -81,7 +81,7 @@
         <li class="li">
           <p class="p">hint参数</p>
 
-          <p class="p">以下操作会通过索引遍历快速删除匹配条件的记录，“textIndex”为索引名称</p>
+          <p class="p">以下操作会通过索引遍历快速删除匹配条件的记录，“textIndex”为索引名称。</p>
 
           <pre class="pre codeblock">db.foo.bar.remove({name:"Tom"},{"":"testIndex"})</pre>
 
@@ -106,7 +106,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

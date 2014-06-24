@@ -47,33 +47,35 @@
     <div class="section"><h2 class="title sectiontitle">参数描述</h2><p class="p"/>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d129443e27" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d124764e27" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d129443e30" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d124764e30" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d129443e33" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d124764e33" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d129443e36" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d129443e27" class="stentry">doc|docs</td>
-
-          <td valign="top" headers="d129443e30" class="stentry">json对象</td>
-
-          <td valign="top" headers="d129443e33" class="stentry">文档记录。doc为一条记录，docs为多条记录。</td>
-
-          <td valign="top" headers="d129443e36" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d124764e36" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d129443e27" class="stentry">flag</td>
+          <td valign="top" headers="d124764e27" class="stentry">doc|docs</td>
 
-          <td valign="top" headers="d129443e30" class="stentry">Int</td>
+          <td valign="top" headers="d124764e30" class="stentry">json对象</td>
 
-          <td valign="top" headers="d129443e33" class="stentry">是否显示记录的_id值。它的值为SDB_INSERT_CONTONDUP或者SDB_INSERT_RETURN_ID。只有在插入单条记录的时候有效。</td>
+          <td valign="top" headers="d124764e33" class="stentry">文档记录。doc为一条记录，docs为多条记录。</td>
 
-          <td valign="top" headers="d129443e36" class="stentry">否</td>
+          <td valign="top" headers="d124764e36" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d124764e27" class="stentry">flag</td>
+
+          <td valign="top" headers="d124764e30" class="stentry">Int</td>
+
+          <td valign="top" headers="d124764e33" class="stentry">可取SDB_INSERT_RETURN_ID或者SDB_INSERT_CONTONDUP。<div class="fig fignone"/>
+前者在插入单条记录时有效，表示插入记录后返回记录中“_id”字段内容；后者在插入多条记录时有效，表示在插入的记录中，若存在“_id”字段内容重复的记录时，将跳过<div class="fig fignone"/>
+这些存在重复“_id”的记录继续插入后面记录。默认情况下，当存在重复“_id”字段内容的记录时，将停止插入后面的记录。</td>
+
+          <td valign="top" headers="d124764e36" class="stentry">否</td>
 
         </tr>
 </table>
@@ -82,7 +84,7 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p"> insert() 方法的定义格式包含doc|docs和flag两个字段，doc|docs是一个JSON对象，flag为int类型，在插入单条记录时，如果设置flag参数的值为“SDB_INSERT_RETURN_ID”，会返回记录的_id值；设置为“SDB_INSERT_CONTONDUP”，批量插入时存在重复键值是否忽略错误，不返回；默认不返回。</p>
+      <p class="p"> insert() 方法的定义格式包含doc|docs和flag两个字段。</p>
 
       <div class="p">doc：<pre class="pre codeblock">{"&lt; 字段名 1&gt;":"&lt; 值 &gt;","&lt; 字段名 2&gt;":"&lt; 值 &gt;",…}</pre>
 </div>
@@ -154,6 +156,24 @@
 
           </li>
 
+          <li class="li">
+            <p class="p">插入拥有重复“_id”键的多条记录。</p>
+
+            <pre class="pre codeblock">db.foo.bar.insert([{_id:1,a:1 },{_id:1,b:2 },{_id:3,c:3}], SDB_INSERT_CONTONDUP)</pre>
+
+            <p class="p">此操作将会在集合bar中插入两条记录：</p>
+
+            <pre class="pre codeblock">{
+"_id": 1,
+"a": 1,
+}
+{
+"_id": 3,
+"c": 3
+}</pre>
+
+          </li>
+
         </ul>
               
      </div>
@@ -176,7 +196,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

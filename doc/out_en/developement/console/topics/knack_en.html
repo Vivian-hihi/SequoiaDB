@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Tips when using shell"/>
-<meta name="description" content="Sequoiadb shell has built-in help documents. It can be read through the command of help. &gt; help function () { println(&#34; var db = new Sdb('localhost', 11810) connect to database&#34;); println(&#34; db.help() ..."/>
+<meta name="description" content="Sequoiadb shell has built-in help documents. It can be read through the command of help. &gt; help() var db = new Sdb() connect to database use default host 'localhost' and default port 11810 var db = ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../developement/console/topics/console_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="developement_console_knack"/>
@@ -37,19 +37,26 @@
 
   <div class="body">
     <div class="p">Sequoiadb shell has built-in help documents. It can be read through the command of
-      help.<pre class="pre codeblock">&gt; help
-function () {
-    println("   var db = new Sdb('localhost', 11810)   connect to database");
-    println("   db.help()                              help on db methods");
-    println("   db.cs.help()                           help on collection space                                                                                                                      cs");
-    println("   db.cs.cl                               access collection cl on c                                                                                                                     ollection space cs");
-    println("   db.cs.cl.help()                        help on collection cl");
-    println("   db.cs.cl.find()                        list all records");
-    println("   db.cs.cl.find({a:1})                   list records where a=1");
-    println("   print(x), println(x)                   print out x");
-    println("   getErr(ret)                        print error description for r                                                                                                                     eturn code");
-    println("   quit                                   exit");
-    }</pre>
+      help.<pre class="pre codeblock">&gt; help()
+   var db = new Sdb()                     connect to database use default host 'localhost' and default port 11810
+   var db = new Sdb('localhost',11810)    connect to database use specified host and port
+   var db = new Sdb('ubuntu',11810,'','') connect to database with username and password
+   help(&lt;method&gt;)                         help on specified method, e.g. help('createCS')
+   db.help()                              help on db methods
+   db.cs.help()                           help on collection space cs
+   db.cs.cl                               access collection cl on collection space cs
+   db.cs.cl.help()                        help on collection cl
+   db.cs.cl.find()                        list all records
+   db.cs.cl.find({a:1})                   list records where a=1
+   db.cs.cl.find().help()                 help on find methods
+   db.cs.cl.count().help()                help on count methods
+   print(x), println(x)                   print out x
+   traceFmt(&lt;type&gt;,&lt;in&gt;,&lt;out&gt;)            format trace input(in) to output(out) by type
+   getErr(ret)                            print error description for return code
+   clear                                  clear the terminal screen
+   history -c                             clear the history
+   quit                                   exit
+Takes 0.2993s.</pre>
 </div>
 
     <ul class="ul">
@@ -107,7 +114,7 @@ function (query, select) {
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

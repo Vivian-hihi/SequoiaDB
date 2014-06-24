@@ -1,13 +1,13 @@
-#Fri Jun 06 14:09:36 CST 2014
+#Tue Jun 24 10:15:23 CST 2014
 copytosourcelist=
-hreftargetslist=install_media.xml
+hreftargetslist=testEM.xml
 fullditatopicfile=fullditatopic.list
 fullditamapandtopicfile=fullditamapandtopic.list
-fullditatopiclist=install_media.xml
-fullditamapandtopiclist=install_media.xml
+fullditatopiclist=testEM.xml
+fullditamapandtopiclist=testEM.xml
 hrefditatopicfile=hrefditatopic.list
-hrefditatopiclist=install_media.xml
-user.input.file=install_media.xml
+hrefditatopiclist=
+user.input.file=testEM.xml
 subtargetsfile=subtargets.list
 fullditamapfile=fullditamap.list
 copytotarget2sourcemapfile=copytotarget2sourcemap.list

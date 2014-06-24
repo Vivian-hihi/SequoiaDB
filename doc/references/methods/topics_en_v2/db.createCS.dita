@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.createCS</apiname>(<parmname>&lt;name></parmname>,<parmname>[pageSize]</parmname>)
+      <p></p><apiname>db.createCS</apiname>(<parmname>&lt;name></parmname>,<parmname>[options]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -21,16 +21,21 @@
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>Collection space name. Collection space names should be unique to each other in a database object.</pd>
+          <pd>Collection space name. Collection space name should be unique to each other in a database instance.</pd>
         </plentry>
         <plentry>
-          <pt>pageSize (int)</pt>
-          <pd>Size of data page. The default value is 65536B.
+          <pt>options (Json object)</pt>
+          <pd>Optional in a collection space.
             <parml>
               <plentry>
-                <pt>Format</pt>
-                <pd>Users can create a collection space with 2 parameters: name and pageSize. The parameter "name" is in the type of string. The parameter "pageSize" is in the type of 32-bit integer.</pd>
-                <pd>("&lt;collection space name>",[pagesize])</pd>
+                <pt>PageSize</pt>
+                <pd>Size of data page. The default value is 65536B.</pd>
+                <pd>PageSize:&lt;int32></pd>
+              </plentry>
+              <plentry>
+                <pt>Domain</pt>
+                <pd>Domain that collection space belongs to.</pd>
+                <pd>Domain:&lt;string></pd>
               </plentry>
             </parml>
           </pd>          
@@ -40,14 +45,17 @@
         <ul><li>The parameter "name" should not be null string. It should not contain "." or "$". The length of it should not be greater than 127B.</li>
           <li>Collection space names should be unique to each other in a database object.</li>
           <li>When creating a collection space, users can specify the size of data page. It is unchangable afterward. The default value of it is 65536B.</li>
+          <li>PageSize can only be one of the following six:0,4096,8192,16384,32768,and 65536. The default value is 0.</li>
+          <li>Domain must already exist, and cannot be SYSDOMAIN.</li>
+          <li>It is compatible with earlier version interface, and function db.createCS(&lt;name>, [PageSize]) can alsobe used.</li>
         </ul></note>
     </section>    
     <section>
       <title>Examples</title>
       <p>Create a collection space named "foo" without specifying the size of data page.</p>
       <codeblock>db.createCS("foo")</codeblock>
-      <p>Create a collection space named "foo" and specify the size of data page as 1024.</p>
-      <codeblock>db.createCS("foo",1024)</codeblock>
+      <p>Create a collection space named "foo", set 4096B for PageSize and "mydomain" for Domain.</p>
+      <codeblock>db.createCS("foo",{PageSize:4096,Domain:"mydomain"})</codeblock>
     </section>
   </body>
   <related-links>    

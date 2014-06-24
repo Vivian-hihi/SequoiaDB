@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="更新"/>
-<meta name="description" content="四大基本数据库操作即（CRUD），更新操作即修改集合中已存在的记录。sequoiadb中使用 update() 方法做更新操作。 本文档的所有例子都是使用sequoiadb的shell接口。 update() update()方法是修改集合中记录的主要方法，它的语法结构为： db.collectionspace.collection.update(&lt;rule&gt;,[cond],[hint]) ..."/>
+<meta name="description" content="四大基本数据库操作即（CRUD），更新操作即修改集合中已存在的记录。SequoiaDB中使用 update() 方法做更新操作。 本文档的所有例子都是使用SequoiaDB的shell接口。 update() update()方法是修改集合中记录的主要方法，它的语法结构为： db.collectionspace.collection.update(&lt;rule&gt;,[cond],[hint]) ..."/>
 <meta name="DC.Relation" scheme="URI" content="read.html"/>
 <meta name="DC.Relation" scheme="URI" content="delete.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -37,9 +37,9 @@
   <h1 class="title topictitle1">更新</h1>
 
   <div class="body">
-    <p class="p">四大基本数据库操作即（CRUD），更新操作即修改集合中已存在的记录。sequoiadb中使用<a class="xref" href="../../../references/methods/topics/dbupdate.html">update()</a>方法做更新操作。</p>
+    <p class="p">四大基本数据库操作即（CRUD），更新操作即修改集合中已存在的记录。SequoiaDB中使用<a class="xref" href="../../../references/methods/topics/dbupdate.html">update()</a>方法做更新操作。</p>
 
-    <div class="note note"><span class="notetitle">Note:</span> <p class="p">本文档的所有例子都是使用sequoiadb的shell接口。</p>
+    <div class="note note"><span class="notetitle">Note:</span> <p class="p">本文档的所有例子都是使用SequoiaDB的shell接口。</p>
 </div>
 
     <div class="section"><h2 class="title sectiontitle">update()</h2>
@@ -60,7 +60,7 @@
 
     <div class="section"><h2 class="title sectiontitle">使用update操作修改记录</h2>
       
-      <p class="p">如果update()方法只有rule参数的表达式（例如使用<a class="xref" href="../../../references/console/topics/gset.html">$set</a>更新表达式），那么update方法会修改集合记录中所有指定的字段；更新嵌套对象sequoiadb使用点（.）操作符。</p>
+      <p class="p">如果update()方法只有rule参数的表达式（例如使用<a class="xref" href="../../../references/console/topics/gset.html">$set</a>更新表达式），那么update方法会修改集合记录中所有指定的字段；更新嵌套对象SequoiaDB使用点（.）操作符。</p>
 
       <ul class="ul">
         <li class="li">
@@ -85,7 +85,7 @@
         <li class="li">
           <p class="p">数组元素更新</p>
 
-          <div class="p">如果需要更新数组中的元素，sequoiadb使用点操作符（.），数组下标从0开始。下面的操作是修改数组字段arr的第二个元素的值，将它的值添加为5,：<pre class="pre codeblock">db.foo.bar.update({<a class="xref" href="../../../references/console/topics/inc.html">$inc</a>:{"arr.1":5}})</pre>
+          <div class="p">如果需要更新数组中的元素，SequoiaDB使用点操作符（.），数组下标从0开始。下面的操作是修改数组字段arr的第二个元素的值，将它的值添加为5：<pre class="pre codeblock">db.foo.bar.update({<a class="xref" href="../../../references/console/topics/inc.html">$inc</a>:{"arr.1":5}})</pre>
 </div>
 
         </li>
@@ -93,7 +93,7 @@
         <li class="li">
           <p class="p">hint参数</p>
 
-          <p class="p">下面操作会通过索引遍历对所有记录的 name 字段内容修改为 Tom，“textIndex”为索引名称</p>
+          <p class="p">下面操作会通过索引遍历对所有记录的name字段内容修改为Tom，“textIndex”为索引名称。</p>
 
           <pre class="pre codeblock">db.foo.bar.update({$set:{name:"Tom"}},null,{"":"textIndex"})</pre>
 
@@ -121,7 +121,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

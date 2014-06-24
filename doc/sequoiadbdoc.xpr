@@ -548,6 +548,8 @@
                 <file name="installation/topics/install_overview.dita"/>
                 <file name="installation/topics/start_web.dita"/>
                 <file name="installation/topics/startweb_en.dita"/>
+                <file name="installation/topics/testEM_en.dita"/>
+                <file name="installation/topics/testEM.dita"/>
             </folder>
             <folder name="uninstall">
                 <folder name="images"/>

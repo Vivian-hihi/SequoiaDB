@@ -1,13 +1,13 @@
-#Wed Jun 18 18:55:02 CST 2014
+#Thu Jun 19 11:51:24 CST 2014
 copytosourcelist=
-hreftargetslist=db.createDomain.xml
+hreftargetslist=db.removeRG.xml,db.resetSnapshot.xml,db.getRG.xml,db.listCollections.xml,db.getCS.xml,db.snapshot.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.listCollectionSpaces.xml,db.dropCS.xml,db.listReplicaGroups.xml
 fullditatopicfile=fullditatopic.list
 fullditamapandtopicfile=fullditamapandtopic.list
-fullditatopiclist=db.createDomain.xml
-fullditamapandtopiclist=db.createDomain.xml
+fullditatopiclist=db.removeRG.xml,db.resetSnapshot.xml,db.getRG.xml,db.listCollections.xml,db.getCS.xml,db.snapshot.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.listCollectionSpaces.xml,db.dropCS.xml,db.listReplicaGroups.xml
+fullditamapandtopiclist=db.removeRG.xml,db.resetSnapshot.xml,db.getRG.xml,db.listCollections.xml,db.getCS.xml,db.snapshot.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.listCollectionSpaces.xml,db.dropCS.xml,db.listReplicaGroups.xml
 hrefditatopicfile=hrefditatopic.list
-hrefditatopiclist=
-user.input.file=db.createDomain.xml
+hrefditatopiclist=db.removeRG.xml,db.getRG.xml,db.listCollections.xml,db.getCS.xml,db.snapshot.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.listCollectionSpaces.xml,db.dropCS.xml,db.listReplicaGroups.xml
+user.input.file=db.createCS.xml
 subtargetsfile=subtargets.list
 fullditamapfile=fullditamap.list
 copytotarget2sourcemapfile=copytotarget2sourcemap.list
@@ -27,7 +27,7 @@ imagelist=
 htmlfile=html.list
 htmllist=
 canditopicsfile=canditopics.list
-canditopicslist=
+canditopicslist=db.removeRG.xml,db.resetSnapshot.xml,db.getRG.xml,db.listCollections.xml,db.getCS.xml,db.snapshot.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.listCollectionSpaces.xml,db.dropCS.xml,db.listReplicaGroups.xml
 keyreffile=keyref.list
 subjectschemefile=subjectscheme.list
 keyreflist=

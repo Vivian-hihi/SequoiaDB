@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.createCS()"/>
-<meta name="description" content="NAME createCS - Create a collection space in a database instance. SYNOPSIS db.createCS ( &lt;name&gt; , [pageSize] ) CATEGORY Sequoiadb DESCRIPTION Create a collection space in a database instance. name ..."/>
+<meta name="description" content="NAME createCS - Create a collection space in a database instance. SYNOPSIS db.createCS ( &lt;name&gt; , [options] ) CATEGORY Sequoiadb DESCRIPTION Create a collection space in a database instance. name ..."/>
 <meta name="DC.Relation" scheme="URI" content="../topics_en_v2/methodlist_en_v2.html"/>
 <meta name="DC.Relation" scheme="URI" content="db.dropCS.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -46,7 +46,7 @@
     <div class="section"><h2 class="title sectiontitle">SYNOPSIS</h2>
       
       <p class="p"/>
-<span class="keyword apiname">db.createCS</span>(<span class="keyword parmname">&lt;name&gt;</span>,<span class="keyword parmname">[pageSize]</span>)
+<span class="keyword apiname">db.createCS</span>(<span class="keyword parmname">&lt;name&gt;</span>,<span class="keyword parmname">[options]</span>)
     </div>
 
     <div class="section"><h2 class="title sectiontitle">CATEGORY</h2>
@@ -63,20 +63,28 @@ Sequoiadb
         
           <dt class="dt pt dlterm">name (string)</dt>
 
-          <dd class="dd pd">Collection space name. Collection space names should be unique to each other in a database object.</dd>
+          <dd class="dd pd">Collection space name. Collection space name should be unique to each other in a database instance.</dd>
 
         
         
-          <dt class="dt pt dlterm">pageSize (int)</dt>
+          <dt class="dt pt dlterm">options (Json object)</dt>
 
-          <dd class="dd pd">Size of data page. The default value is 65536B.
+          <dd class="dd pd">Optional in a collection space.
             <dl class="dl parml">
               
-                <dt class="dt pt dlterm">Format</dt>
+                <dt class="dt pt dlterm">PageSize</dt>
 
-                <dd class="dd pd">Users can create a collection space with 2 parameters: name and pageSize. The parameter "name" is in the type of string. The parameter "pageSize" is in the type of 32-bit integer.</dd>
+                <dd class="dd pd">Size of data page. The default value is 65536B.</dd>
 
-                <dd class="dd pd">("&lt;collection space name&gt;",[pagesize])</dd>
+                <dd class="dd pd">PageSize:&lt;int32&gt;</dd>
+
+              
+              
+                <dt class="dt pt dlterm">Domain</dt>
+
+                <dd class="dd pd">Domain that collection space belongs to.</dd>
+
+                <dd class="dd pd">Domain:&lt;string&gt;</dd>
 
               
             </dl>
@@ -93,6 +101,12 @@ Sequoiadb
 
           <li class="li">When creating a collection space, users can specify the size of data page. It is unchangable afterward. The default value of it is 65536B.</li>
 
+          <li class="li">PageSize can only be one of the following six:0,4096,8192,16384,32768,and 65536. The default value is 0.</li>
+
+          <li class="li">Domain must already exist, and cannot be SYSDOMAIN.</li>
+
+          <li class="li">It is compatible with earlier version interface, and function db.createCS(&lt;name&gt;, [PageSize]) can alsobe used.</li>
+
         </ul>
 </div>
 
@@ -104,9 +118,9 @@ Sequoiadb
 
       <pre class="pre codeblock">db.createCS("foo")</pre>
 
-      <p class="p">Create a collection space named "foo" and specify the size of data page as 1024.</p>
+      <p class="p">Create a collection space named "foo", set 4096B for PageSize and "mydomain" for Domain.</p>
 
-      <pre class="pre codeblock">db.createCS("foo",1024)</pre>
+      <pre class="pre codeblock">db.createCS("foo",{PageSize:4096,Domain:"mydomain"})</pre>
 
     </div>
 
