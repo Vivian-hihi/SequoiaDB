@@ -447,7 +447,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          CHECK_LEFT ( left )
          //bson_sprint_hex_concat ( pbuf, left, bson_iterator_bin_data ( i ),
          //                         bson_iterator_bin_len ( i ) ) ;
-         bin_size = bson_iterator_bin_len ( i ) - 1 ;
+         bin_size = bson_iterator_bin_len ( i ) ;
          base64_size = getEnBase64Size( bin_size ) ;
          pBase64Buf = (char *)malloc( base64_size + 1 ) ;
          if ( !pBase64Buf )
