@@ -1,4 +1,3 @@
-import string
 import pysequoiadb
 from pysequoiadb import common
 from pysequoiadb.common import const
@@ -25,24 +24,18 @@ class OperationError(SequoiaDBError):
    def __repr__(self, what):
       """make the error info.
       """
-      return self.errmsg + what + ' -----> ' + self.__details()
+      return self.errmsg + '%d -----> ' % self.__code + what
 
    def __str__(self):
       """return the error info.
       """
-      return self.__repr__(string(self.__code))
+      return self.__repr__(self.__details)
 
    @property
    def code(self):
       """The error code returned by the server, if any.
       """
       return self.__code
-
-   @property
-   def details(self):
-      
-      return self.__details
-
 
 class InvalidParameter(SequoiaDBError):
    """Raised when an invalid parameter is used.
