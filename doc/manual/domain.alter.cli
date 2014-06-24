@@ -50,7 +50,7 @@ Alter the specified fields of the current domain.
    *  Make sure that there is no data in the domain before
    deleting it.
 .sp 2
-   *  The modification of the “AutoSplit” field will not affect
+   *  The modification of the "AutoSplit" field will not affect
    the former created collections and collection spaces.
 .SH "Examples"
 
