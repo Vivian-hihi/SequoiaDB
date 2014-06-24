@@ -515,6 +515,8 @@ static PYOBJECT *get_collection_name( PYOBJECT *self, PYOBJECT *args )
    sdbCollection *cl   = NULL ;
    const char *cl_name = NULL ;
 
+   printf("get_cl_name invoked\n");
+
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
