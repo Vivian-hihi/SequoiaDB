@@ -66,7 +66,7 @@
 			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="Begin to deploy software at ${current.time}"/>
-s
+
 		<property environment="env" />
 
 		<echo message="Begin to install sequoiadb software..." />
