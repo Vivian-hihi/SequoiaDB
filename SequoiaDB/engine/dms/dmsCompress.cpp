@@ -57,7 +57,7 @@ namespace engine
       // estimate the max possible size for compressed data
       size_t maxCompressedLen = snappy::MaxCompressedLength ( inputSize ) ;
 
-      pBuff = cb->getBuff( maxCompressedLen ) ;
+      pBuff = cb->getCompressBuff( maxCompressedLen ) ;
       if ( !pBuff )
       {
          PD_LOG( PDERROR, "Failed to alloc compress buff, size: %d",

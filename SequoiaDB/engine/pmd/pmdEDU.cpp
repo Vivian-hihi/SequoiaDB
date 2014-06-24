@@ -155,8 +155,8 @@ namespace engine
    {
       _Name[0]          = 0 ;
       _pSession         = NULL ;
-      _pBuff            = NULL ;
-      _buffLen          = 0 ;
+      _pCompressBuff    = NULL ;
+      _compressBuffLen  = 0 ;
       _pUncompressBuff  = NULL ;
       _uncompressBuffLen= 0 ;
       _totalCatchSize   = 0 ;
@@ -231,12 +231,12 @@ namespace engine
 #endif // SDB_ENGINE
 
       // release buff
-      if ( _pBuff )
+      if ( _pCompressBuff )
       {
-         releaseBuff( _pBuff ) ;
-         _pBuff = NULL ;
+         releaseBuff( _pCompressBuff ) ;
+         _pCompressBuff = NULL ;
       }
-      _buffLen = 0 ;
+      _compressBuffLen = 0 ;
       if ( _pUncompressBuff )
       {
          releaseBuff( _pUncompressBuff ) ;
@@ -618,19 +618,19 @@ namespace engine
 
    CHAR* _pmdEDUCB::getBuff( INT32 len )
    {
-      if ( _buffLen < len )
+      if ( _compressBuffLen < len )
       {
-         if ( _pBuff )
+         if ( _pCompressBuff )
          {
-            releaseBuff( _pBuff ) ;
-            _pBuff = NULL ;
+            releaseBuff( _pCompressBuff ) ;
+            _pCompressBuff = NULL ;
          }
-         _buffLen = 0 ;
+         _compressBuffLen = 0 ;
 
-         allocBuff( len, &_pBuff, _buffLen ) ;
+         allocBuff( len, &_pCompressBuff, _compressBuffLen ) ;
       }
 
-      return _pBuff ;
+      return _pCompressBuff ;
    }
 
    CHAR* _pmdEDUCB::getUncompressBuff( INT32 len )

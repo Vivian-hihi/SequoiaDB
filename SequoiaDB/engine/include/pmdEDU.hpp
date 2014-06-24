@@ -149,8 +149,8 @@ namespace engine
       void        releaseBuff( CHAR *pBuff ) ;
       INT32       reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
 
-      CHAR*       getBuff( INT32 len ) ;
-      INT32       getBuffLen () const { return _buffLen ; }
+      CHAR*       getCompressBuff( INT32 len ) ;
+      INT32       getCompressBuffLen () const { return _compressBuffLen ; }
       CHAR*       getUncompressBuff( INT32 len ) ;
       INT32       getUncompressBuffLen() const { return _uncompressBuffLen ; }
 
@@ -390,8 +390,8 @@ namespace engine
       BOOLEAN        _writingDB ;
 
       // buffer related
-      CHAR           *_pBuff ;
-      INT32          _buffLen ;
+      CHAR           *_pCompressBuff ;
+      INT32          _compressBuffLen ;
       CHAR           *_pUncompressBuff ;
       INT32          _uncompressBuffLen ;
 
