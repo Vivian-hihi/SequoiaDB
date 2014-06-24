@@ -825,8 +825,8 @@ static PYOBJECT *eval_JS( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *cursor_object        = NULL ;
    sdb *client                    = NULL ;
    sdbCursor *cursor              = NULL ;
-   const bson::BSONObj errmsg    = NULL ;
    const char *code               = NULL ;
+   const bson::BSONObj errmsg;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOs", &obj, &cursor_object, &code ) )
    {
@@ -837,7 +837,7 @@ static PYOBJECT *eval_JS( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
 
-   rc = client->evalJS( *cursor, code, sdb_spd_res_type, errmsg ) ;
+   rc = client->evalJS( *cursor, code, &sdb_spd_res_type, errmsg ) ;
    if ( rc )
    {
       goto done ;
