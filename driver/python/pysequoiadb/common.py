@@ -26,9 +26,11 @@ const.errmaps = dict()
 init=False
 
 def get_info(code):
-   return const.errmaps.get(code,"Unknown")
+   return const.errmaps[code];
+#   return const.errmaps.get(code,"Unknown")
 
 import os
+import sys
 import string
 def init_errmaps():
    if False == os.access(os.path.dirname(__file__) + "/err.prop", os.R_OK):
