@@ -109,13 +109,6 @@ class client(object):
 
       return rc
 
-   def is_connected(self):
-
-      rc = sdbclient.is_connected(self._client)
-      pysequoiadb.check_error(rc)
-
-      return rc
-
    def create_user(self, name, psw):
 
       rc = sdbclient.create_user(self._client, name, psw)
