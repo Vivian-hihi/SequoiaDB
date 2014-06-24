@@ -51,6 +51,11 @@
 	</target>
 
 	<target name="test-one-suite" depends="">
+		<tstamp>
+			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="This suite begin time is ${current.time}">
+
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<echo message="Execute test suite(${test.suite.name}) test.suite.fullname=${test.suite.fullname}" />
 		<hostinfo prefix="host" />
@@ -80,6 +85,10 @@
 										&lt;![CDATA[${on screen}]]&gt;
 										&lt;/system-out&gt;
 										&lt;/testsuite&gt;" append="true" />
+		<tstamp>
+			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="This suite end time is ${current.time}">
 
 	</target>
 
@@ -97,6 +106,7 @@
 		<tstamp>
 			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
 		</tstamp>
+		<echo message="This testcase begin time is ${current.time}">
 
 		<echo file="${reportfile.fullname}" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; time=&quot;${current.time}&quot;&gt;" />
 
@@ -139,5 +149,9 @@
 		</if>
 
 		<echo file="${reportfile.fullname}" append="true" message="&lt;/testcase&gt;" />
+		<tstamp>
+			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="This testcase end time is ${current.time}">
 	</target>
 </project>

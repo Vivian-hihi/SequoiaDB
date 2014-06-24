@@ -14,6 +14,10 @@
 	<target name="uninstall-software" depends="">
 		<property environment="env" />
 		<echo message="Begin to clean deploy env...with STAF.PATH=${STAF.PATH},env.PATH=${env.PATH},deploy.host.name=${deploy.host.name}" />
+		<tstamp>
+			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="Begin to clean deploy env at ${current.time}">
 		
 		
 		<!--
@@ -49,11 +53,20 @@
 		</exec>
 
 		<echo message="Clean deploy env compeleted." />
+		<tstamp>
+			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="Compeleted to clean deploy env at ${current.time}">
 	</target>
 
 	<target name="install-software" depends="uninstall-software">
 		<echo message="Begin to deploy softeware and test..." />
 
+		<tstamp>
+			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="Begin to deploy software at ${current.time}">
+s
 		<property environment="env" />
 
 		<echo message="Begin to install sequoiadb software..." />
@@ -100,7 +113,10 @@
 
 		<echo message="Sequoiadb install compeleted." />
 
-
+		<tstamp>
+			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="Compeleted to install software at ${current.time}">
 
 	</target>
 
