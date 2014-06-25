@@ -17,7 +17,7 @@
 try:
    import sdbreplicagroup
 except ImportError:
-   raise Exception("cannot fine C module file: sdbreplicagroup")
+   raise Exception("cannot find C module file: sdbreplicagroup")
 
 import bson
 import types

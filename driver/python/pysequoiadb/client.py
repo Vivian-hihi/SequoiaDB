@@ -18,7 +18,7 @@
 try:
    import sdbclient
 except ImportError:
-   raise Exception("cannot fine C module file: sdbclient")
+   raise Exception("cannot find C module file: sdbclient")
 
 import bson
 import pysequoiadb

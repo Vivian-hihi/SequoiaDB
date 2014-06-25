@@ -18,7 +18,7 @@
 try:
    import sdbcs
 except ImportError:
-   raise Exception("cannot fine C module file: sdbcs")
+   raise Exception("cannot find C module file: sdbcs")
 
 import bson
 import pysequoiadb
