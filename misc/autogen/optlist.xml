@@ -163,6 +163,25 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_WWWPATH</name>
+      <long>wwwpath</long>
+      <description>
+         <en>web service root path</en>
+         <cn>WEB服务根路径</cn>
+      </description>
+      <detail>
+          <en>1. It specifies the root catalog of web service.<fig></fig>
+              2. If it is not specified, the default path is "Data file path/www".<fig></fig>
+			  3. Only for om.</en>
+          <cn>1.指定WEB服务根目录。<fig></fig>
+              2.如果不指定，则默认为：数据文件路径/www。<fig></fig>
+			  3.仅对OM生效。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+	  <hidden>true</hidden>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_MAXPOOL</name>
       <long>maxpool</long>
       <typeofweb>str</typeofweb>
@@ -283,6 +302,23 @@
              2.如果不指定则默认为svcname+4。</cn>
       </detail>
       <typeofweb>str</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_OMNAME</name>
+      <long>omname</long>
+      <description>
+         <en>OM service name or port, default: 'svcname'+5</en>
+         <cn>OM服务名或端口, 默认:'svcname'+5</cn>
+      </description>
+      <detail>
+         <en>1. It specifies om port.<fig></fig>
+             2. If it is not specified, the default value is "svcname+5".</en>
+         <cn>1.指定OM端口。<fig></fig>
+             2.如果不指定则默认为svcname+5。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+	  <hidden>true</hidden>
    </opt>
 
    <opt>
