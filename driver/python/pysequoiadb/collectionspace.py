@@ -55,7 +55,7 @@ class collectionspace(object):
 
       cl = collection()
       rc = sdbcs.get_collection(self._cs, name, cl._cl)
-      pysequoiadb.check_error(rc)
+#      pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
          cl = None
@@ -65,10 +65,6 @@ class collectionspace(object):
    def __getitem__(self, name):
 
       return self.__getattr__(name)
-
-   def __dir__(self):
-
-      return [self.__members__, self.__methods__]
 
    def get_collection(self, cl_name):
 

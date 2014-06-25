@@ -72,15 +72,11 @@ class client(object):
       cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, name, cs._cs)
 
-      pysequoiadb.check_error(rc)
+#      pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:
          cs = None
 
       return cs
-
-   def __dir__(self):
-
-      return dir(self)
 
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
