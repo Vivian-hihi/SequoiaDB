@@ -211,6 +211,11 @@ namespace engine
          _pmdRemoteSessionMgr( netRouteAgent *pAgent ) ;
          ~_pmdRemoteSessionMgr() ;
 
+         INT32       pushMessage( const NET_HANDLE &handle,
+                                  const MsgHeader *pMsg ) ;
+         void        handleClose( const NET_HANDLE &handle,
+                                  const _MsgRouteID &id ) ;
+
       public:
 
          pmdRemoteSession* addSession( _pmdEDUCB *cb,
