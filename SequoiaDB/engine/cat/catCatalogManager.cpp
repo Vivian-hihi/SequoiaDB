@@ -2837,19 +2837,24 @@ namespace engine
       PD_TRACE_ENTRY(  SDB_CATALOGMGR__BUILDALTEROBJWITHMETAANDOBJ) ;
       BSONElement groupID ;
       BSONElement groupName ;
-      BSONElement eleVersion ;
-      BSONElement cataInfo ;
-      BSONObj cataInfoObj ;
       BSONObj groupObj ;
-
-      if ( CAT_MASK_SHDKEY & mask )
+      _clsCatalogSet::POSITION pos ;
+      clsCatalogItem *item = NULL ;
+      _clsCatalogSet catSet( "" ) ;
+      rc = catSet.updateCatSet( clMeta ) ;
+      if ( SDB_OK != rc )
       {
-         if ( clMeta.hasField( CAT_SHARDINGKEY_NAME ) )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "can not alter a sharding collection's shardingkey" ) ;
-            goto error ;
-         }
+         PD_LOG( PDERROR, "failed to save json[%s] to catalogset:%d",
+                 clMeta.toString(FALSE, TRUE).c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( ( CAT_MASK_SHDKEY & mask ) &&
+           catSet.isSharding() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "can not alter a sharding collection's shardingkey" ) ;
+         goto error ;
       }
 
       eleVersion = clMeta.getField( CAT_CATALOGVERSION_NAME ) ;
@@ -2861,22 +2866,12 @@ namespace engine
          goto error ;
       }
 
-      alterInfo._version = eleVersion.Int() ;
+      alterInfo._version = catSet.getVersion() ;
       ++alterInfo._version ;
 
-      cataInfo = clMeta.getField( CAT_CATALOGINFO_NAME ) ;
-      if ( Array != cataInfo.type() )
+      if ( 1 != catSet.groupCount() )
       {
-         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
-                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      cataInfoObj = cataInfo.embeddedObject() ;
-      if ( 1 != cataInfoObj.nFields() )
-      {
-         /// this is a splited collection. we can only change replsize or auto rebalance.
+         /// this is a splited collection or a main cl. we can only change replsize or auto rebalance.
          BSONObjBuilder builder ;
          builder.append( CAT_CATALOGVERSION_NAME, alterInfo._version ) ;
          if ( mask & CAT_MASK_REPLSIZE )
@@ -2893,28 +2888,17 @@ namespace engine
          goto done ;
       }
 
-      groupObj = cataInfoObj.firstElement().embeddedObject() ;
-
-      groupID = groupObj.getField( CAT_GROUPID_NAME ) ;
-      if ( NumberInt != groupID.type() )
+      pos = catSet.getFirstItem() ;
+      item = catSet.getNextItem( pos ) ;
+      if ( NULL == item )
       {
-         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
-                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
+         PD_LOG( PDERROR, "failed to get first item from catalogset" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      groupName = groupObj.getField( CAT_GROUPNAME_NAME ) ;
-      if ( String != groupName.type() )
-      {
-         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
-                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = _buildCatalogRecord( alterInfo, mask, groupID.Int(),
-                                groupName.valuestr(),
+      rc = _buildCatalogRecord( alterInfo, mask, item->getGroupID(),
+                                item->getGroupName().c_str(),
                                 alterObj ) ;
       if ( SDB_OK != rc )
       {
