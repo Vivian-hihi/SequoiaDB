@@ -1552,20 +1552,24 @@ namespace engine
          goto error ;
       }
 
-      /// reassign it as a command.
-      pAlterReq->header.opCode = MSG_BS_QUERY_REQ ;
-      pAlterReq->version = cataInfo->getVersion() ;
-
-      /// send request to data
-      rc = executeOnDataGroup( (MsgHeader *)pAlterReq, groupList,
-                               sendList, pRouteAgent, cb,
-                               TRUE ) ;
-      if ( SDB_OK != rc )
+      if ( !cataInfo->isMainCL() )
       {
-         PD_LOG( PDERROR, "failed to alter collection on data group:%d",
-                 rc ) ;
-         rc = SDB_BUT_FAILED_ON_DATA ;
-         goto error ;
+         SDB_ASSERT( !groupList.empty(), "can not be empty" ) ;
+         /// reassign it as a command.
+         pAlterReq->header.opCode = MSG_BS_QUERY_REQ ;
+         pAlterReq->version = cataInfo->getVersion() ;
+
+         /// send request to data
+         rc = executeOnDataGroup( (MsgHeader *)pAlterReq, groupList,
+                                  sendList, pRouteAgent, cb,
+                                  TRUE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to alter collection on data group:%d",
+                    rc ) ;
+            rc = SDB_BUT_FAILED_ON_DATA ;
+            goto error ;
+         }
       }
    done :
       replyHeader.flags = rc;
