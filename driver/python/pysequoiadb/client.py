@@ -52,6 +52,7 @@ class client(object):
          pysequoiadb.check_error(rc)
          if rc:
             sdbclient.disconnect(self._client)
+            sdbclient.release_client(self._client)
       except SystemError:
          pysequoiadb.check_error(const.SDM_OOM)
      
