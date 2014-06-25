@@ -215,6 +215,17 @@ namespace engine
    {
    }
 
+   INT32 _pmdRemoteSessionMgr::pushMessage( const NET_HANDLE &handle,
+                                            const MsgHeader *pMsg )
+   {
+      return SDB_OK ;
+   }
+
+   void _pmdRemoteSessionMgr::handleClose( const NET_HANDLE &handle,
+                                           const _MsgRouteID &id )
+   {
+   }
+
    pmdRemoteSession* _pmdRemoteSessionMgr::addSession( _pmdEDUCB * cb,
                                                        INT64 timeout,
                                                        IRemoteSessionHandler *pHandle )
