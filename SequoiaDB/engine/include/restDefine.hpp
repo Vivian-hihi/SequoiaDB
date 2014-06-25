@@ -150,6 +150,8 @@ struct httpConnection
    INT32 _headerSize ;
    //recv temp a part of the body size
    INT32 _partSize ;
+   //temp query size
+   INT32 _querySize ;
 
 /* response */
 
@@ -178,6 +180,8 @@ struct httpConnection
    CHAR *_pTempKey ;
    //temp value buffer ;
    CHAR *_pTempValue ;
+   //temp query
+   CHAR *_pQuery ;
    //path
    const CHAR *_pPath ;
 
@@ -200,6 +204,7 @@ struct httpConnection
                       _CRLFNum(0),
                       _headerSize(0),
                       _partSize(0),
+                      _querySize(0),
                       _firstRecordSize(0),
                       _responseSize(0),
                       _isKey(TRUE),
@@ -211,7 +216,8 @@ struct httpConnection
                       _pSendBuffer(NULL),
                       _pTempKey(NULL),
                       _pTempValue(NULL),
-                      _pPath(NULL)
+                      _pPath(NULL),
+                      _pQuery(NULL)
    {
       _httpParser.data = this ;
    }
