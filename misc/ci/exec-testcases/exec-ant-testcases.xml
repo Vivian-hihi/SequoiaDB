@@ -51,7 +51,7 @@
 
 	<target name="test-one-suite" depends="">
 		<tstamp>
-			<format property="testcase.begin.time" pattern="YYYY-MM-dd-hh.mm.ss" />
+			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="This suite begin time is ${testcase.begin.time}"/>
 
@@ -81,7 +81,7 @@
 										&lt;/system-out&gt;
 										&lt;/testsuite&gt;" append="true" />
 		<tstamp>
-			<format property="testcase.end.time" pattern="YYYY-MM-dd-hh.mm.ss" />
+			<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="This suite end time is ${testcase.end.time}"/>
 
@@ -99,7 +99,7 @@
 		<echo message="Execute test case(${test.suite.class.name}.${test.case.name}) test.suite.fullname=${test.case.fullname}" />
 
 		<tstamp>
-			<format property="testcase.begin.time" pattern="YYYY-MM-dd-hh.mm.ss" />
+			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="This testcase begin time is ${testcase.begin.time}"/>
 
@@ -145,7 +145,7 @@
 
 		<echo file="${reportfile.fullname}" append="true" message="&lt;/testcase&gt;" />
 		<tstamp>
-			<format property="testcase.end.time" pattern="YYYY-MM-dd-hh.mm.ss" />
+			<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="This testcase end time is ${testcase.end.time}"/>
 	</target>

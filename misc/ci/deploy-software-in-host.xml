@@ -15,7 +15,7 @@
 		<property environment="env" />
 		<echo message="Begin to clean deploy env...with STAF.PATH=${STAF.PATH},env.PATH=${env.PATH},deploy.host.name=${deploy.host.name}" />
 		<tstamp>
-			<format property="cleandeploy.begin.time" pattern="YYYY-MM-dd-hh.mm.ss" />
+			<format property="cleandeploy.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="Begin to clean deploy env at ${cleandeploy.begin.time}"/>
 		
@@ -54,7 +54,7 @@
 
 		<echo message="Clean deploy env compeleted." />
 		<tstamp>
-			<format property="cleanenv.compeleted.time" pattern="YYYY-MM-dd-hh.mm.ss" />
+			<format property="cleanenv.compeleted.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="Compeleted to clean deploy env at ${cleanenv.compeleted.time}"/>
 	</target>
@@ -63,7 +63,7 @@
 		<echo message="Begin to deploy softeware and test..." />
 
 		<tstamp>
-			<format property="deploy.begin.time" pattern="YYYY-MM-dd-hh.mm.ss" />
+			<format property="deploy.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="Begin to deploy software at ${deploy.begin.time"/>
 
@@ -114,7 +114,7 @@
 		<echo message="Sequoiadb install compeleted." />
 
 		<tstamp>
-			<format property="install.compelete.time" pattern="YYYY-MM-dd-hh.mm.ss" />
+			<format property="install.compelete.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="Compeleted to install software at ${install.compelete.time}"/>
 
