@@ -216,8 +216,8 @@ struct httpConnection
                       _pSendBuffer(NULL),
                       _pTempKey(NULL),
                       _pTempValue(NULL),
-                      _pPath(NULL),
-                      _pQuery(NULL)
+                      _pQuery(NULL),
+                      _pPath(NULL)
    {
       _httpParser.data = this ;
    }
