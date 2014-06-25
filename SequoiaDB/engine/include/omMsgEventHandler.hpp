@@ -35,6 +35,7 @@
 
 #include "omDef.hpp"
 #include "netMsgHandler.hpp"
+#include "netTimer.hpp"
 
 namespace engine
 {
@@ -56,10 +57,8 @@ namespace engine
 
          virtual INT32 handleMsg( const NET_HANDLE &handle,
                                   const _MsgHeader *header,
-                                  const CHAR *msg );
+                                  const CHAR *msg ) ;
          virtual void  handleClose( const NET_HANDLE &handle, _MsgRouteID id ) ;
-
-      public:
 
       protected:
          _pmdRemoteSessionMgr                *_pRSManager ;
@@ -68,6 +67,27 @@ namespace engine
 
    } ;
    typedef _omMsgHandler omMsgHandler ;
+
+   /*
+      _omTimerHandler define
+   */
+   class _omTimerHandler : public _netTimeoutHandler
+   {
+      public:
+         _omTimerHandler() ;
+         virtual ~_omTimerHandler() ;
+
+         void  attach( _pmdEDUCB *cb ) ;
+         void  detach() ;
+
+         virtual void handleTimeout( const UINT32 &millisec,
+                                     const UINT32 &id ) ;
+
+      private:
+         _pmdEDUCB               *_pMainCB ;
+
+   } ;
+   typedef _omTimerHandler omTimerHandler ;
 
 }
 
