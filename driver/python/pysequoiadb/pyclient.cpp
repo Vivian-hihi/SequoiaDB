@@ -126,7 +126,7 @@ static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args )
    INT32 addr_size   = 0 ;
    PYOBJECT *obj     = NULL ;
    sdb *client       = NULL ;
-   const char **addr = NULL ;
+   const char *addr = NULL ;
    const char *user  = NULL ;
    const char *psw   = NULL ;
 
