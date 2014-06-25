@@ -214,6 +214,7 @@ namespace engine
       public:
 
          pmdRemoteSession* addSession( _pmdEDUCB *cb,
+                                       INT64 timeout = -1, // ms
                                        IRemoteSessionHandler *pHandle = NULL ) ;
          pmdRemoteSession* getSession( UINT32 tid ) ;
          void              removeSession( UINT32 tid ) ;
