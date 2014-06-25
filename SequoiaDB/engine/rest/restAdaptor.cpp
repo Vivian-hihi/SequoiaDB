@@ -812,10 +812,13 @@ namespace engine
       httpConnection *pHttpCon = pSession->getRestConn() ;
       CHAR *pBuffer = NULL ;
       const CHAR *pContentLength = NULL ;
+      CHAR *pUrl = NULL ;
       INT32 bodySize = 0 ;
       INT32 sumBodySize = 0 ;
       INT32 curRecvSize  = 0 ;
       INT32 receivedSize = 0 ;
+      INT32 tempSize = 0 ;
+      INT32 urlSize = 0 ;
 
       rc = getHttpHeader( pSession, REST_STRING_CONLEN, &pContentLength ) ;
       if ( rc )
@@ -872,7 +875,18 @@ namespace engine
             }
             receivedSize += curRecvSize ;
 
-            _parse_http_query( pHttpCon, pBuffer, receivedSize ) ;
+            urlSize = urlDecodeSize( pBuffer, receivedSize ) ;
+            rc = pSession->allocBuff( urlSize + 1, &pUrl, tempSize ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
+                        urlSize + 1, rc ) ;
+               goto error ;
+            }
+            urlDecode( pBuffer, receivedSize,
+                       &pUrl, urlSize ) ;
+            pUrl[ urlSize ] = 0 ;
+            _parse_http_query( pHttpCon, pUrl, urlSize ) ;
          }
       }
 
