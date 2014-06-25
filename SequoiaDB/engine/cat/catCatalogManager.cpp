@@ -1228,7 +1228,7 @@ namespace engine
       BSONObj groupInfo ;
 
       // Check group exist
-      rc = catGetGroupObj( groupName, groupInfo, _pEduCB ) ;
+      rc = catGetGroupObj( groupName, TRUE, groupInfo, _pEduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Get group[%s] info failed, rc: %d",
                    groupName, rc ) ;
 
@@ -2534,7 +2534,7 @@ namespace engine
          }
          else
          {
-            rc = catGetGroupObj( clInfo._gpSpecified, gpObj, _pEduCB ) ;
+            rc = catGetGroupObj( clInfo._gpSpecified, TRUE, gpObj, _pEduCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Get group[%s] info failed, rc: %d",
                          clInfo._gpSpecified, rc ) ;
             rc = rtnGetIntElement( gpObj, CAT_GROUPID_NAME, groupID ) ;
