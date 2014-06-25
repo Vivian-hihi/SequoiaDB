@@ -329,7 +329,7 @@ namespace engine
       {
          const CHAR *name = (CHAR *)(&(pGrpReq->header)) +
                             sizeof(MsgCatGroupReq) ;
-         rc = catGetGroupObj( name, boGroupInfo, _pEduCB ) ;
+         rc = catGetGroupObj( name, FALSE, boGroupInfo, _pEduCB ) ;
       }
       // param is error
       else
@@ -1764,7 +1764,7 @@ namespace engine
       UINT32 groupID = 0 ;
       BOOLEAN isDeleted = FALSE;
 
-      rc = catGetGroupObj( groupName, groupInfo, _pEduCB ) ;
+      rc = catGetGroupObj( groupName, FALSE, groupInfo, _pEduCB ) ;
       if ( SDB_CLS_GRP_NOT_EXIST == rc )
       {
          rc = SDB_CAT_GRP_NOT_EXIST;
@@ -1956,7 +1956,7 @@ namespace engine
       }
 
       // get group info
-      rc = catGetGroupObj( groupName, groupInfo, _pEduCB ) ;
+      rc = catGetGroupObj( groupName, FALSE, groupInfo, _pEduCB ) ;
       PD_RC_CHECK( rc, PDERROR, "Get group info by name[%s] failed, rc: %d",
                    groupName, rc ) ;
 
@@ -2037,7 +2037,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
                       FIELD_NAME_GROUPNAME, rc ) ;
 
-         rc = catGetGroupObj( groupName, boGroupInfo, _pEduCB ) ;
+         rc = catGetGroupObj( groupName, FALSE, boGroupInfo, _pEduCB ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get group[%s] info, rc: %d",
                       groupName, rc ) ;
 
@@ -2460,7 +2460,8 @@ namespace engine
       {
          try
          {
-            rc = catGetGroupObj( strGroupName.c_str(), boGroupInfo, _pEduCB );
+            rc = catGetGroupObj( strGroupName.c_str(),
+                                 FALSE, boGroupInfo, _pEduCB );
             if ( rc )
             {
                PD_LOG( PDERROR, "Failed to get group(%s) info(rc=%d)",

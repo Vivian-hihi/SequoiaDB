@@ -87,7 +87,9 @@ namespace engine
                        BSONObj &obj ) ;
 
    /* Collection[CAT_NODE_INFO_COLLECTION] functions: */
-   INT32 catGetGroupObj( const CHAR *groupName, BSONObj &obj, pmdEDUCB *cb ) ;
+   INT32 catGetGroupObj( const CHAR *groupName,
+                         BOOLEAN dataGroupOnly,
+                         BSONObj &obj, pmdEDUCB *cb ) ;
    INT32 catGetGroupObj( UINT32 groupID, BSONObj &obj, pmdEDUCB *cb ) ;
    INT32 catGetGroupObj( UINT16 nodeID, BSONObj &obj, pmdEDUCB *cb ) ;
 

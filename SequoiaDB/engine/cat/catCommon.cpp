@@ -138,16 +138,8 @@ namespace engine
                goto error ;
             }
 
-            if ( 0 == ossStrncmp( beGroupElement.valuestr(),
-                                  SYS_PREFIX, ossStrlen( SYS_PREFIX ) ) )
-            {
-               PD_LOG( PDERROR, "invalid group name[%s], can not start with:%s",
-                       beGroupElement.valuestr(), SYS_PREFIX ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-
             rc = catGetGroupObj( beGroupElement.valuestr(),
+                                 TRUE,
                                  groupInfo,
                                  cb ) ;
             if ( SDB_OK != rc )
@@ -420,13 +412,23 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETGROUPOBJ, "catGetGroupObj" )
-   INT32 catGetGroupObj( const CHAR * groupName, BSONObj & obj, pmdEDUCB *cb  )
+   INT32 catGetGroupObj( const CHAR * groupName, BOOLEAN dataGroupOnly,
+                         BSONObj & obj, pmdEDUCB *cb  )
    {
       INT32 rc           = SDB_OK;
 
       PD_TRACE_ENTRY ( SDB_CATGETGROUPOBJ ) ;
       BSONObj dummyObj ;
-      BSONObj boMatcher = BSON( CAT_GROUPNAME_NAME << groupName );
+      BSONObj boMatcher ;
+      if ( dataGroupOnly )
+      {
+         boMatcher = BSON( CAT_GROUPNAME_NAME << groupName
+                           << CAT_ROLE_NAME << SDB_ROLE_DATA ) ;
+      }
+      else
+      {
+         boMatcher = BSON( CAT_GROUPNAME_NAME << groupName ) ;
+      }
 
       rc = catGetOneObj( CAT_NODE_INFO_COLLECTION, dummyObj, boMatcher,
                          dummyObj, cb, obj ) ;
@@ -514,7 +516,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATGROUPCHECK ) ;
       BSONObj boGroupInfo ;
-      rc = catGetGroupObj( groupName, boGroupInfo, cb ) ;
+      rc = catGetGroupObj( groupName, FALSE, boGroupInfo, cb ) ;
       if ( SDB_OK == rc )
       {
          exist = TRUE ;
@@ -595,7 +597,7 @@ namespace engine
       BSONObj groupObj ;
 
       PD_TRACE_ENTRY ( SDB_CATGROUPNAME2ID ) ;
-      rc = catGetGroupObj( groupName, groupObj, cb ) ;
+      rc = catGetGroupObj( groupName, FALSE, groupObj, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get group obj by name[%s], rc: %d",
                    groupName, rc ) ;
 
