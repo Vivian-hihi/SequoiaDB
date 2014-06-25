@@ -63,7 +63,12 @@ class collectionspace(object):
       return cl
 
    def __getitem__(self, name):
+
       return self.__getattr__(name)
+
+   def __dir__(self):
+
+      return self.__methods__
 
    def get_collection(self, cl_name):
 
