@@ -130,7 +130,7 @@ static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args )
    const char *user  = NULL ;
    const char *psw   = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "Osss", &obj, &addr, &addr_size,
+   if ( !PARSE_PYTHON_ARGS( args, "Osiss", &obj, &addr, &addr_size,
                                                 &user, &psw ) )
    {
       rc = SDB_INVALIDARGS ;
