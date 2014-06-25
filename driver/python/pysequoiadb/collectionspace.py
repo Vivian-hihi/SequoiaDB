@@ -68,7 +68,7 @@ class collectionspace(object):
 
    def __dir__(self):
 
-      return self.__methods__
+      return [self.__members__, self.__methods__]
 
    def get_collection(self, cl_name):
 

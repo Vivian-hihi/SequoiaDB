@@ -80,7 +80,7 @@ class client(object):
 
    def __dir__(self):
 
-      return self.__methods__
+      return [self.__members__, self.__methods__]
 
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
