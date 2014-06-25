@@ -49,9 +49,8 @@ class client(object):
          self._client = sdbclient.create_client()
          # try to connect with default user and password 
          rc = sdbclient.init_connect(self._client, host, port)
-         pysequoiadb.check_error(rc)
          if const.SDB_OK != rc:
-            what = "connect to %s:%d failed\n" % (host, port)
+            what = " Error: connect to host:%s port: %d failed" % (host, port)
             pysequoiadb.printInfo(what)
             sdbclient.disconnect(self._client)
       except SystemError:
