@@ -65,6 +65,8 @@ class client(object):
 
    def __getitem__(self, name):
 
+      if name == '__members__' or name == '__methods__':
+         pass
       return self.__getattr__(name)
 
    def __getattr__(self, name):
@@ -72,7 +74,7 @@ class client(object):
       cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, name, cs._cs)
 
-#      pysequoiadb.check_error(rc)
+      pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:
          cs = None
 
