@@ -102,7 +102,8 @@ namespace engine
          }
 
          DPS_LSN startLSN = sdbGetDPSCB()->getStartLsn() ;
-         if ( _isOn && startLSN.offset != DPS_INVALID_LSN_OFFSET )
+         if ( _isOn && startLSN.offset != DPS_INVALID_LSN_OFFSET &&
+              SDB_ROLE_STANDALONE != pmdGetDBRole() )
          {
             rc = syncTransInfoFromLocal( startLSN.offset ) ;
             if ( rc )
