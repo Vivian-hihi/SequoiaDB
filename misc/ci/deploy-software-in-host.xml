@@ -65,7 +65,7 @@
 		<tstamp>
 			<format property="deploy.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
-		<echo message="Begin to deploy software at ${deploy.begin.time"/>
+		<echo message="Begin to deploy software at ${deploy.begin.time}"/>
 
 		<property environment="env" />
 
