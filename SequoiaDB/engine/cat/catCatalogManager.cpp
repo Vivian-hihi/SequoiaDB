@@ -2857,15 +2857,6 @@ namespace engine
          goto error ;
       }
 
-      eleVersion = clMeta.getField( CAT_CATALOGVERSION_NAME ) ;
-      if ( NumberInt != eleVersion.type() )
-      {
-         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
-                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
       alterInfo._version = catSet.getVersion() ;
       ++alterInfo._version ;
 
