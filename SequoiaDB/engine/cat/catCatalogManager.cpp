@@ -540,6 +540,7 @@ namespace engine
       BSONObj optionsObj ;
       UINT32 mask = 0 ;
       catCollectionInfo clInfo ;
+      returnNum = 0 ;
       try
       {
          BSONObj boAlterObj ( ( CHAR * )pMsg ) ;
@@ -610,22 +611,24 @@ namespace engine
          /// build reply body: group info.
          {
          BSONArrayBuilder arrBuilder ;
-         /// we are sure that there is one group in catalog info.
-         arrBuilder.append(
-                boCollectionRecord.getField( CAT_CATALOGINFO_NAME )
-                                  .embeddedObject().firstElement() ) ;
-         BSONObj replyObj = BSON( CAT_GROUP_NAME << arrBuilder.arr() ) ;
-         replyBodyLen = replyObj.objsize() ;
-         *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyBodyLen ) ;
-         if ( NULL == *ppReplyBody )
+         BSONElement gpInfo = boCollectionRecord.getField( CAT_CATALOGINFO_NAME ) ;
+         /// main cl has no group info
+         if ( Object == gpInfo.type() )
          {
-            PD_LOG( PDERROR, "failed to allocate mem." ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
+            arrBuilder.append( gpInfo.embeddedObject().firstElement() ) ;
+            BSONObj replyObj = BSON( CAT_GROUP_NAME << arrBuilder.arr() ) ;
+            replyBodyLen = replyObj.objsize() ;
+            *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyBodyLen ) ;
+            if ( NULL == *ppReplyBody )
+            {
+               PD_LOG( PDERROR, "failed to allocate mem." ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
 
-         ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
-         returnNum = 1 ;
+            ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
+            returnNum = 1 ;
+         }
          }
          
       }

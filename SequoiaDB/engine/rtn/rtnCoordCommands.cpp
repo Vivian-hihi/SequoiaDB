@@ -712,7 +712,7 @@ namespace engine
                rc = pContext->addSubContext ( pReply->header.routeID,
                                               pReply->contextID ) ;
             }
-            if ( pGroupList && SDB_OK == rc )
+            if ( pGroupList && SDB_OK == rc && pReply->numReturned > 0 )
             {
                rc = processCatReply( pReply, *pGroupList) ;
             }
