@@ -216,6 +216,7 @@ namespace engine
    }
 
    pmdRemoteSession* _pmdRemoteSessionMgr::addSession( _pmdEDUCB * cb,
+                                                       INT64 timeout,
                                                        IRemoteSessionHandler *pHandle )
    {
       return NULL ;
