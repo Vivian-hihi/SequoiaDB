@@ -545,8 +545,7 @@ namespace engine
 
    void _clsMgr::pushMsgHandle ( void * msg, NET_HANDLE handle )
    {
-      ossScopedLock lock ( &_msg2NetLatch ) ;
-      _mapMsg2NetHandle[msg] = handle ;
+      _msgAssister.pushMsgHandle( msg, handle ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_INVDATACAT, "_clsMgr::invalidateCata" )
@@ -582,22 +581,9 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_PEEKMSGHND, "_clsMgr::peekMsgHandle" )
    NET_HANDLE _clsMgr::peekMsgHandle ( void * msg )
    {
-      PD_TRACE_ENTRY ( SDB__CLSMGR_PEEKMSGHND );
-      NET_HANDLE handle = NET_INVALID_HANDLE ;
-      ossScopedLock lock ( &_msg2NetLatch ) ;
-
-      MAP_MSGNET_IT it = _mapMsg2NetHandle.find ( msg ) ;
-      if ( it != _mapMsg2NetHandle.end() )
-      {
-         handle = it->second ;
-         _mapMsg2NetHandle.erase ( it ) ;
-      }
-
-      PD_TRACE_EXIT ( SDB__CLSMGR_PEEKMSGHND );
-      return handle ;
+      return _msgAssister.peekMsgHandle( msg ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_STARTINSN, "_clsMgr::startInnerSession" )

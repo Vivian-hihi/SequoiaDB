@@ -44,6 +44,7 @@
 #include "rtnCB.hpp"
 #include "netRouteAgent.hpp"
 #include "pmdRemoteSession.hpp"
+#include "omMsgEventHandler.hpp"
 
 #include <vector>
 #include <string>
@@ -106,13 +107,14 @@ namespace engine
          void              _add2UserMap( const string &user,
                                          restSessionInfo *pSessionInfo ) ;
 
-         INT32             _initOmTables();
+         INT32             _initOmTables() ;
          
          INT32             _createCollectionIndex ( const CHAR *pCollection,
                                                     const CHAR *pIndex,
-                                                    pmdEDUCB *cb );
+                                                    pmdEDUCB *cb ) ;
 
-         INT32             _createCollection ( const CHAR *pCollection, pmdEDUCB *cb );
+         INT32             _createCollection ( const CHAR *pCollection,
+                                               pmdEDUCB *cb ) ;
 
       private:
          vector< CHAR* >                        _vecFixBuf ;
@@ -126,6 +128,10 @@ namespace engine
 
          restAdaptor                            _restAdptor ;
          pmdRemoteSessionMgr                    _rsManager ;
+ 
+         omMsgHandler                           _msgHandler ;
+         omTimerHandler                         _timerHandler ;
+         netRouteAgent                          _netAgent ;
 
          // configure info
          INT32                                  _maxRestBodySize ;

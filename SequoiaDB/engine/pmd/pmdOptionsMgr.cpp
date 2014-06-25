@@ -887,11 +887,13 @@ namespace engine
       ossMemset( _krcbDiagLogPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbLogPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbBkupPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      ossMemset( _krcbWWWPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbSvcName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _replServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _catServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _shardServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _restServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
+      ossMemset( _omServiceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
       ossMemset( _krcbRole, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _syncStrategyStr, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _prefReplStr, 0, PMD_MAX_ENUM_STR_LEN + 1 ) ;
@@ -965,6 +967,9 @@ namespace engine
       // --bkuppath
       rdxPath( pEX, PMD_OPTION_BKUPPATH, _krcbBkupPath, sizeof(_krcbBkupPath),
                FALSE, FALSE, "" ) ;
+      // --wwwpath
+      rdxPath( pEX, PMD_OPTION_WWWPATH, _krcbWWWPath, sizeof(_krcbWWWPath),
+               FALSE, FALSE, "", TRUE ) ;
       // --maxpool
       rdxUInt( pEX, PMD_OPTION_MAXPOOL, _krcbMaxPool, FALSE, TRUE, 0 ) ;
       // --diagnum
@@ -987,6 +992,9 @@ namespace engine
       // --restname
       rdxString( pEX, PMD_OPTION_RESTNAME, _restServiceName,
                  sizeof(_restServiceName), FALSE, FALSE, "" ) ;
+      // --omname
+      rdxString( pEX, PMD_OPTION_OMNAME, _omServiceName,
+                 sizeof(_omServiceName), FALSE, FALSE, "", TRUE ) ;
       // --diaglevel
       rdxUShort( pEX, PMD_OPTION_DIAGLEVEL, _krcbDiagLvl, FALSE, TRUE,
                  (UINT16)PDWARNING ) ;
@@ -1174,6 +1182,12 @@ namespace engine
                                                     + PMD_REST_PORT ) ;
          ossMemcpy( _restServiceName, port.c_str(), port.size() ) ;
       }
+      if ( 0 == ossStrlen( _omServiceName ) )
+      {
+         string port = boost::lexical_cast<string>( _krcbSvcPort
+                                                    + PMD_OM_PORT ) ;
+         ossMemcpy( _restServiceName, port.c_str(), port.size() ) ;
+      }
 
       if ( 0 == _krcbIndexPath[0] )
       {
@@ -1205,6 +1219,16 @@ namespace engine
                                   _krcbBkupPath, OSS_MAX_PATHSIZE ) )
          {
             std::cerr << "bakup path is too long!" << endl ;
+            rc = SDB_INVALIDPATH ;
+            goto error ;
+         }
+      }
+      if ( 0 == _krcbWWWPath[0] )
+      {
+         if ( SDB_OK != _joinDir( PMD_CURRENT_PATH, PMD_OPTION_WWW_PATH_DIR,
+                                  _krcbWWWPath, OSS_MAX_PATHSIZE ) )
+         {
+            std::cerr << "www path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
@@ -1249,6 +1273,12 @@ namespace engine
          if ( 0 == ossStrcmp( _krcbDiagLogPath, _dmsTmpBlkPath))
          {
             std::cerr << "tmp path and diaglog path should not be the same" << endl ;
+            rc = SDB_INVALIDPATH ;
+            goto error ;
+         }
+         if ( 0 == ossStrcmp( _krcbWWWPath, _dmsTmpBlkPath ) )
+         {
+            std::cerr << "tmp path and www path should not be the same" << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }

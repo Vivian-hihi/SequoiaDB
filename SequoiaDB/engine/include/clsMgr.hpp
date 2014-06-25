@@ -88,9 +88,6 @@ namespace engine
       typedef std::vector<_innerSessionInfo>    VECINNERPARAM ;
       typedef std::map<UINT64, BSONObj>         MAPTASKQUERY ;
 
-      typedef std::map<void*, NET_HANDLE>       MAP_MSGNET ;
-      typedef MAP_MSGNET::iterator              MAP_MSGNET_IT ;
-
       typedef std::vector< IEventHander* >      VEC_EVENTHANDLER ;
 
       public:
@@ -248,8 +245,7 @@ namespace engine
          VEC_EVENTHANDLER              _vecEventHandler ;
          ossSpinSLatch                 _handlerLatch ;
 
-         MAP_MSGNET                    _mapMsg2NetHandle ;
-         ossSpinXLatch                 _msg2NetLatch ;
+         netMsgAssister                _msgAssister ;
 
          UINT64                        _regTimerID ;
          UINT64                        _oneSecTimerID ;

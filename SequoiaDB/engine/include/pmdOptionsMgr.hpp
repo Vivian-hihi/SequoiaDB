@@ -275,6 +275,10 @@ namespace engine
          {
             return _krcbBkupPath;
          }
+         OSS_INLINE const CHAR *getWWWPath() const
+         {
+            return _krcbWWWPath ;
+         }
          OSS_INLINE const CHAR *getDiagLogPath() const
          {
             return _krcbDiagLogPath;
@@ -310,6 +314,10 @@ namespace engine
          OSS_INLINE const CHAR *getRestService() const
          {
             return _restServiceName ;
+         }
+         OSS_INLINE const CHAR *getOMService() const
+         {
+            return _omServiceName ;
          }
          OSS_INLINE const CHAR *getServiceAddr() const
          {
@@ -377,12 +385,14 @@ namespace engine
          CHAR        _krcbDiagLogPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbLogPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbBkupPath[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR        _krcbWWWPath[ OSS_MAX_PATHSIZE + 1 ] ;
          UINT32      _krcbMaxPool ;
          CHAR        _krcbSvcName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR        _replServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR        _catServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR        _shardServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR        _restServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
+         CHAR        _omServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          UINT16      _krcbDiagLvl ;
          CHAR        _krcbRole[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          CHAR        _syncStrategyStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;

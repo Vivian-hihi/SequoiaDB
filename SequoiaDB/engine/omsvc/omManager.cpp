@@ -50,7 +50,9 @@ namespace engine
    */
    _omManager::_omManager()
    :_fixBufSize( SDB_PAGE_SIZE ),
-    _rsManager( NULL )
+    _rsManager(),
+    _msgHandler( &_rsManager ),
+    _netAgent( &_msgHandler )
    {
       _maxRestBodySize     = OM_REST_MAX_BODY_SIZE ;
       _restTimeout         = REST_TIMEOUT ;
@@ -58,8 +60,6 @@ namespace engine
 
       _pKrcb               = NULL ;
       _pDmsCB              = NULL ;
-
-      _wwwRootPath         = "./www" ;
    }
 
    _omManager::~_omManager()
@@ -75,7 +75,14 @@ namespace engine
       _pKrcb  = pmdGetKRCB() ;
       _pDmsCB = _pKrcb->getDMSCB() ;
       _pRtnCB = _pKrcb->getRTNCB() ;
-      
+
+      // get options
+      _wwwRootPath = pmdGetOptionCB()->getWWWPath() ;
+
+      rc = _rsManager.init( getRouteAgent() ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init remote session manager, rc: %d",
+                   rc ) ;
+
       rc = _initOmTables();
       PD_RC_CHECK ( rc, PDERROR, "Failed to initial the om tables rc = %d", 
                     rc ) ;
@@ -261,6 +268,8 @@ namespace engine
 
    INT32 _omManager::fini ()
    {
+      _rsManager.fini() ;
+
       // release fix buff catch
       _omLatch.get() ;
       for ( UINT32 i = 0 ; i < _vecFixBuf.size() ; ++i )
@@ -474,7 +483,7 @@ namespace engine
 
    netRouteAgent* _omManager::getRouteAgent()
    {
-      return NULL ;
+      return &_netAgent ;
    }
 
    MsgRouteID _omManager::updateAgentInfo( const CHAR *pHost,

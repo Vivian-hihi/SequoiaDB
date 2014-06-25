@@ -380,7 +380,8 @@ omsvcFiles = [
       "pmd/pmdRestSession.cpp",
       "omsvc/omManager.cpp",
       "omsvc/omGetFileCommand.cpp",
-      "omsvc/omCommandInterface.cpp"
+      "omsvc/omCommandInterface.cpp",
+	  "omsvc/omMsgEventHandler.cpp"
       ]
 
 barFiles = [

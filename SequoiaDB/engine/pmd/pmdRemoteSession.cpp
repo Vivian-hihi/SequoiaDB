@@ -207,12 +207,22 @@ namespace engine
    /*
       _pmdRemoteSessionMgr implement
    */
-   _pmdRemoteSessionMgr::_pmdRemoteSessionMgr( netRouteAgent *pAgent )
+   _pmdRemoteSessionMgr::_pmdRemoteSessionMgr()
    {
    }
 
    _pmdRemoteSessionMgr::~_pmdRemoteSessionMgr()
    {
+   }
+
+   INT32 _pmdRemoteSessionMgr::init( netRouteAgent * pAgent )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _pmdRemoteSessionMgr::fini()
+   {
+      return SDB_OK ;
    }
 
    INT32 _pmdRemoteSessionMgr::pushMessage( const NET_HANDLE &handle,

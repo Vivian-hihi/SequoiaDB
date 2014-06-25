@@ -339,4 +339,37 @@ namespace engine
       return _frame.resetMon() ;
    }
 
+   /*
+      _netMsgAssister implement
+   */
+   _netMsgAssister::_netMsgAssister()
+   {
+   }
+
+   _netMsgAssister::~_netMsgAssister()
+   {
+   }
+
+   void _netMsgAssister::pushMsgHandle( void * msg, NET_HANDLE handle )
+   {
+      ossScopedLock lock ( &_msg2NetLatch ) ;
+      _mapMsg2NetHandle[msg] = handle ;
+   }
+
+   NET_HANDLE _netMsgAssister::peekMsgHandle ( void * msg )
+   {
+      NET_HANDLE handle = NET_INVALID_HANDLE ;
+      ossScopedLock lock ( &_msg2NetLatch ) ;
+
+      MAP_MSGNET_IT it = _mapMsg2NetHandle.find ( msg ) ;
+      if ( it != _mapMsg2NetHandle.end() )
+      {
+         handle = it->second ;
+         _mapMsg2NetHandle.erase ( it ) ;
+      }
+
+      return handle ;
+   }
+
 }
+

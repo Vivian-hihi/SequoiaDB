@@ -208,8 +208,11 @@ namespace engine
    class _pmdRemoteSessionMgr : public SDBObject
    {
       public:
-         _pmdRemoteSessionMgr( netRouteAgent *pAgent ) ;
+         _pmdRemoteSessionMgr() ;
          ~_pmdRemoteSessionMgr() ;
+
+         INT32       init( netRouteAgent *pAgent ) ;
+         INT32       fini() ;
 
          INT32       pushMessage( const NET_HANDLE &handle,
                                   const MsgHeader *pMsg ) ;
