@@ -354,7 +354,7 @@ namespace engine
          default:
             pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
                     "Invalid Key is accessed" ) ;
-            throw std::exception( /*"Invalid Key is accessed"*/ ) ;
+            throw pdGeneralException( "Invalid Key is accessed" ) ;
          }
          if ( (bits & cHASMORE) == 0 )
             break ;
@@ -581,7 +581,7 @@ namespace engine
          default:
             pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
                     "Invalid type compare" ) ;
-            throw "Invalid type compare" ;
+            throw pdGeneralException ( "Invalid type compare" ) ;
          }
          if( (lval&cHASMORE) == 0 )
             break ;
