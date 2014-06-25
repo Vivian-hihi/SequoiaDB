@@ -54,22 +54,21 @@
         </strow>
         <strow>
           <stentry>--dumpdata -t </stentry>
-          <stentry>specify whether to formatted output data or not(t<i>true/false</i>),default is
+          <stentry>The set operating data file(t<i>true/false</i>),default is
               <i>false</i>. </stentry>
         </strow>
         <strow>
           <stentry>--dumpindex, -i </stentry>
-          <stentry>specify whether to formatted output <i>index</i> or
-              not(t<i>true/false</i>),<i>false</i> is default. </stentry>
+          <stentry>The set operation index file(<i>true/false</i>),<i>false</i> is default. </stentry>
         </strow>
         <strow>
           <stentry>--pagestart, -s </stentry>
-          <stentry>specify the starting data page,<i>0 </i>is default. </stentry>
+          <stentry>Specifies the starting data pages,<i>1 </i>is default. </stentry>
         </strow>
         <strow>
           <stentry>--numpage, -n </stentry>
-          <stentry>specify whether need to check or format the number of data page,default is
-              <i>all</i></stentry>
+          <stentry>Specifies the data pages need to detect or formatted number, when you specify the -s parameter is non negative, the parameters take effect,default is
+              <i>1</i></stentry>
         </strow>
         <strow>
           <stentry>--record, -p </stentry>
@@ -83,7 +82,7 @@
       <p>The following sample shows <b>sdbinspt</b> will detect in current directory and formatted
         output  the data and indexes in all of collectionspaces and collections to <i>output.txt</i>
         file .</p>
-      <codeblock>sdbinspt –d . –o output.txt –v true –a all –t true –i true</codeblock>
+      <codeblock>sdbinspt –d . –o output.txt –v true –a all –t true –i true –p true</codeblock>
     </section>
   </body>
 </topic>

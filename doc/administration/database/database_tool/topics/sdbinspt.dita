@@ -61,7 +61,7 @@
         </strow>
         <strow>
           <stentry>--numpage, -n </stentry>
-          <stentry>指定需要检测或格式化的数据页数量，当指定–s参数为非负值时，该参数生效。默认值为1</stentry>
+          <stentry>指定需要检测或格式化的数据页数量，当指定-s参数为非负值时，该参数生效。默认值为1</stentry>
         </strow>
         <strow>
           <stentry>--record, -p </stentry>
@@ -73,7 +73,7 @@
       <title>用法</title>
       <p>使用sdbinspt工具时，请务必保证数据库进程已经停止。</p>
       <p>在下面的例子，sdbinspt在当前目录下检测并格式化输出所有集合空间与集合的数据与索引至output.txt文件。</p>
-      <codeblock>sdbinspt -d . -o output.txt -v true -a all -t true -i true –p true</codeblock>
+      <codeblock>sdbinspt -d . -o output.txt -v true -a all -t true -i true -p true</codeblock>
     </section>
   </body>
 </topic>
