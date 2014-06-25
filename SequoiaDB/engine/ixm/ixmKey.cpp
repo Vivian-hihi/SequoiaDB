@@ -354,7 +354,7 @@ namespace engine
          default:
             pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
                     "Invalid Key is accessed" ) ;
-            throw std::exception() ;
+            throw "Invalid Key is accessed" ;
          }
          if ( (bits & cHASMORE) == 0 )
             break ;
