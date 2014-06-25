@@ -120,31 +120,6 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args )
-{
-   INT32 rc          = 0 ;
-   INT32 addr_size   = 0 ;
-   PYOBJECT *obj     = NULL ;
-   sdb *client       = NULL ;
-   const char *addr = NULL ;
-   const char *user  = NULL ;
-   const char *psw   = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "Osiss", &obj, &addr, &addr_size,
-                                                &user, &psw ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-
-   rc = client->connect( addr, addr_size, user, psw ) ;
-
-done:
-   return MAKE_RETURN_INT( rc ) ;
-}
-
 static PYOBJECT *disconnect( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc      = 0 ;
@@ -1190,7 +1165,6 @@ static PyMethodDef client_methods[] = {
    {"release_client",            release_client,            METH_VARARGS},
    {"connect_by_host",           connect_by_host,           METH_VARARGS},
    {"connect_by_service",        connect_by_service,        METH_VARARGS},
-   {"connect_by_address",        connect_by_address,        METH_VARARGS},
    {"disconnect",                disconnect,                METH_VARARGS},
    {"create_user",               create_user,               METH_VARARGS},
    {"remove_user",               remove_user,               METH_VARARGS},

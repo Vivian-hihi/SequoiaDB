@@ -100,15 +100,6 @@ class client(object):
 
       return rc
 
-   def connect_by_address(self, addr, addr_size, user = default_user,
-                                                 psw = default_psw):
-
-      rc = sdbclient.connect_by_address(self._client, addr, addr_size,
-                                                      user, psw)
-      pysequoiadb.check_error(rc)
-
-      return rc
-
    def disconnect(self):
 
       rc = sdbclient.disconnect(self._client)
