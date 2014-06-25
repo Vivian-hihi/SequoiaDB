@@ -99,6 +99,7 @@ namespace engine
 
       public:
          UINT32    getGroupID () const ;
+         const string &getGroupName() const { return _groupName ;}
          BSONObj&  getLowBound () ;
          BSONObj&  getUpBound () ;
 
