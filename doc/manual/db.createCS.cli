@@ -63,8 +63,8 @@ Create a collection space in a database instance.
    size of data page. It is unchangable afterward. The default
    value of it is 65536B.
 .sp 2
-   *  PageSize can only be one of the following
-   six:0,4096,8192,16384,32768,and 65536. The default value is 0.
+   *  PageSize can only be one of the following six: 0, 4096,
+   8192, 16384, 32768, and 65536. The default value is 0.
 .sp 2
    *  Domain must already exist, and cannot be SYSDOMAIN.
 .sp 2
