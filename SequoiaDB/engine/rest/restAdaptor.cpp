@@ -8,6 +8,7 @@
 #include "restTrace.hpp"
 #include "dms.hpp"
 #include "rtnContext.hpp"
+#include "../util/url.h"
 
 /* once recv size */
 #define REST_ONCE_RECV_SIZE       1024
@@ -179,8 +180,13 @@ namespace engine
       if( i + 1 < length )
       {
          ++i ;
-         _parse_http_query( pHttpCon,
-                            pPath + i, length - i ) ;
+         pHttpCon->_pQuery = pPath + i ;
+         pHttpCon->_querySize = length - i ;
+      }
+      else
+      {
+         pHttpCon->_pQuery = NULL ;
+         pHttpCon->_querySize = 0 ;
       }
       return 0 ;
    }
@@ -289,7 +295,6 @@ namespace engine
          {
             pBuffer[i] = 0 ;
             valueOffset = i + 1 ;
-            continue ;
          }
          else if ( pBuffer[i] == '&' || ( i + 1 == length ) )
          {
@@ -301,12 +306,10 @@ namespace engine
             {
                pBuffer[i] = 0 ;
             }
-
             //printf("%s = %s\n", pBuffer + keyOffset, pBuffer + valueOffset ) ;
             pHttpConnection->_requestQuery.insert(
                   std::make_pair(pBuffer + keyOffset, pBuffer + valueOffset) ) ;
             keyOffset = i + 1 ;
-            continue ;
          }
       }
       PD_TRACE_EXITRC ( SDB__RESTADP_PARQUERY, rc ) ;
@@ -698,9 +701,12 @@ namespace engine
       CHAR *pBuffer = pSession->getFixBuff() ;
       INT32 bufSize = pSession->getFixBuffSize() ;
       http_parser *pParser = &(pHttpCon->_httpParser) ;
+      CHAR *pUrl = NULL ;
       INT32 curRecvSize  = 0 ;
       INT32 receivedSize = 0 ;
       INT32 bodyOffset = 0 ;
+      INT32 urlSize = 0 ;
+      INT32 tempSize = 0 ;
       UINT32 recvSize = 0 ;
 
       _paraInit( pHttpCon ) ;
@@ -769,6 +775,22 @@ namespace engine
                      rc ) ;
             goto error ;
          }
+      }
+
+      if( pHttpCon->_pQuery != NULL )
+      {
+         urlSize = urlDecodeSize( pHttpCon->_pQuery, pHttpCon->_querySize ) ;
+         rc = pSession->allocBuff( urlSize + 1, &pUrl, tempSize ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
+                     urlSize + 1, rc ) ;
+            goto error ;
+         }
+         urlDecode( pHttpCon->_pQuery, pHttpCon->_querySize,
+                    &pUrl, urlSize ) ;
+         pUrl[ urlSize ] = 0 ;
+         _parse_http_query( pHttpCon, pUrl, urlSize ) ;
       }
    done:
       PD_TRACE_EXITRC( SDB__RESTADP_RECVREQHE, rc ) ;
@@ -1359,5 +1381,19 @@ namespace engine
       httpConnection *pHttpCon = pSession->getRestConn() ;
       _getQuery( pHttpCon, pKey, ppValue ) ;
       PD_TRACE_EXIT( SDB__RESTADP_GETQUERY ) ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_CLEARHTTPBODY, "restAdaptor::clearHtttpBody" )
+   void clearHtttpBody( pmdRestSession *pSession )
+   {
+      PD_TRACE_ENTRY( SDB__RESTADP_CLEARHTTPBODY ) ;
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
+      httpConnection *pHttpCon = pSession->getRestConn() ;
+      httpResponse httpRe ;
+      pHttpCon->_responseBody.clear() ;
+      httpRe.pBuffer = REST_RESULT_STRING_OK ;
+      httpRe.len = sizeof( REST_RESULT_STRING_OK ) - 1 ;
+      pHttpCon->_responseBody.push_back( httpRe ) ;
+      PD_TRACE_EXIT( SDB__RESTADP_CLEARHTTPBODY ) ;
    }
 }
