@@ -70,15 +70,8 @@ class client(object):
 
    def __getattr__(self, name):
 
-      if name == '__members__' or name == '__methods__':
-         pass
-      else:
          cs = collectionspace()
          rc = sdbclient.get_collection_space(self._client, name, cs._cs)
-
-         pysequoiadb.check_error(rc)
-         if const.SDB_OK != rc:
-            cs = None
 
          return cs
 
