@@ -51,7 +51,7 @@ class client(object):
          rc = sdbclient.init_connect(self._client, host, port)
          pysequoiadb.check_error(rc)
          if const.SDB_OK != rc:
-            what = "connect to %s:%d failed\n" % host, port
+            what = "connect to %s:%d failed\n" % (host, port)
             pysequoiadb.printInfo(what)
             sdbclient.disconnect(self._client)
       except SystemError:
@@ -81,7 +81,7 @@ class client(object):
 
    def __dir__(self):
 
-      return [self.__members__, self.__methods__]
+      return dir(self)
 
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
