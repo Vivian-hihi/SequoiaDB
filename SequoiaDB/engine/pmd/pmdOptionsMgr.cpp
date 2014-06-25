@@ -1186,7 +1186,7 @@ namespace engine
       {
          string port = boost::lexical_cast<string>( _krcbSvcPort
                                                     + PMD_OM_PORT ) ;
-         ossMemcpy( _restServiceName, port.c_str(), port.size() ) ;
+         ossMemcpy( _omServiceName, port.c_str(), port.size() ) ;
       }
 
       if ( 0 == _krcbIndexPath[0] )
