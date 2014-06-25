@@ -106,31 +106,31 @@ all：检测数据页损坏，并格式化输出数据页 </td>
 <tr class="strow">
           <td valign="top" headers="d15500e40" class="stentry">--dumpdata -t </td>
 
-          <td valign="top" headers="d15500e43" class="stentry">指定是否需要格式化输出数据（ture/false），默认为false           </td>
+          <td valign="top" headers="d15500e43" class="stentry">设定操作数据文件（ture/false），默认为false           </td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d15500e40" class="stentry">--dumpindex, -i </td>
 
-          <td valign="top" headers="d15500e43" class="stentry">指定是否需要格式化输出索引（true/false），默认为 false </td>
+          <td valign="top" headers="d15500e43" class="stentry">设定操作索引文件（true/false），默认为 false </td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d15500e40" class="stentry">--pagestart, -s </td>
 
-          <td valign="top" headers="d15500e43" class="stentry">指定起始数据页，默认为0 </td>
+          <td valign="top" headers="d15500e43" class="stentry">指定起始数据页，默认为-1</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d15500e40" class="stentry">--numpage, -n </td>
 
-          <td valign="top" headers="d15500e43" class="stentry">指定需要检测或格式化的数据页数量，默认为全部 </td>
+          <td valign="top" headers="d15500e43" class="stentry">指定需要检测或格式化的数据页数量，当指定–s参数为非负值时，该参数生效。默认值为1</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d15500e40" class="stentry">--record, -p </td>
 
-          <td valign="top" headers="d15500e43" class="stentry">指定显示格式化输出数据或索引内容，默认只输出数据或索引的元数据 </td>
+          <td valign="top" headers="d15500e43" class="stentry">指定显示格式化输出数据或索引内容（true/false），默认为false </td>
 
         </tr>
 </table>
@@ -143,7 +143,7 @@ all：检测数据页损坏，并格式化输出数据页 </td>
 
       <p class="p">在下面的例子，sdbinspt在当前目录下检测并格式化输出所有集合空间与集合的数据与索引至output.txt文件。</p>
 
-      <pre class="pre codeblock">sdbinspt -d . -o output.txt -v true -a all -t true -i true</pre>
+      <pre class="pre codeblock">sdbinspt -d . -o output.txt -v true -a all -t true -i true –p true</pre>
 
     </div>
 

@@ -49,23 +49,23 @@
         </strow>
         <strow>
           <stentry>--dumpdata -t </stentry>
-          <stentry>指定是否需要格式化输出数据（ture/false），默认为false           </stentry>
+          <stentry>设定操作数据文件（ture/false），默认为false           </stentry>
         </strow>
         <strow>
           <stentry>--dumpindex, -i </stentry>
-          <stentry>指定是否需要格式化输出索引（true/false），默认为 false </stentry>
+          <stentry>设定操作索引文件（true/false），默认为 false </stentry>
         </strow>
         <strow>
           <stentry>--pagestart, -s </stentry>
-          <stentry>指定起始数据页，默认为0 </stentry>
+          <stentry>指定起始数据页，默认为-1</stentry>
         </strow>
         <strow>
           <stentry>--numpage, -n </stentry>
-          <stentry>指定需要检测或格式化的数据页数量，默认为全部 </stentry>
+          <stentry>指定需要检测或格式化的数据页数量，当指定–s参数为非负值时，该参数生效。默认值为1</stentry>
         </strow>
         <strow>
           <stentry>--record, -p </stentry>
-          <stentry>指定显示格式化输出数据或索引内容，默认只输出数据或索引的元数据 </stentry>
+          <stentry>指定显示格式化输出数据或索引内容（true/false），默认为false </stentry>
         </strow>
       </simpletable>
     </section>
@@ -73,7 +73,7 @@
       <title>用法</title>
       <p>使用sdbinspt工具时，请务必保证数据库进程已经停止。</p>
       <p>在下面的例子，sdbinspt在当前目录下检测并格式化输出所有集合空间与集合的数据与索引至output.txt文件。</p>
-      <codeblock>sdbinspt -d . -o output.txt -v true -a all -t true -i true</codeblock>
+      <codeblock>sdbinspt -d . -o output.txt -v true -a all -t true -i true –p true</codeblock>
     </section>
   </body>
 </topic>

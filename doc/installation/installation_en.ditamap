@@ -15,6 +15,7 @@
   <topicref href="topics/startweb_en.dita"></topicref>
   <!--anchorref href="web_manage/web_manage_en.ditamap"/-->
   <anchorref href="configuration_start/configuration_start_en.ditamap"/>
+  <topicref href="topics/testEM_en.dita"></topicref>
   <anchorref href="uninstall/uninstall_en.ditamap"/>
  </topicref>
 </map>
