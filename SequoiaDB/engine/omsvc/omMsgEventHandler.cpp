@@ -129,6 +129,56 @@ namespace engine
       _pRSManager->handleClose( handle, id ) ;
    }
 
+   /*
+      _omTimerHandler implement
+   */
+   _omTimerHandler::_omTimerHandler()
+   {
+      _pMainCB       = NULL ;
+   }
+
+   _omTimerHandler::~_omTimerHandler()
+   {
+   }
+
+   void _omTimerHandler::attach( _pmdEDUCB * cb )
+   {
+      _pMainCB       = cb ;
+   }
+
+   void _omTimerHandler::detach()
+   {
+      _pMainCB       = NULL ;
+   }
+
+   void _omTimerHandler::handleTimeout( const UINT32 &millisec,
+                                        const UINT32 &id )
+   {
+      if ( !_pMainCB )
+      {
+         return ;
+      }
+      PMD_EVENT_MESSAGES *eventMsg = (PMD_EVENT_MESSAGES *)
+         SDB_OSS_MALLOC( sizeof (PMD_EVENT_MESSAGES ) ) ;
+
+      if ( NULL == eventMsg )
+      {
+         PD_LOG ( PDERROR, "Failed to allocate memory for PDM timeout Event" ) ;
+      }
+      else
+      {
+         ossTimestamp ts ;
+         ossGetCurrentTime( ts ) ;
+
+         eventMsg->timeoutMsg.interval = millisec ;
+         eventMsg->timeoutMsg.occurTime = ts.time ;
+         eventMsg->timeoutMsg.timerID = id ;
+
+         _pMainCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT, 
+                                            TRUE, (void*)eventMsg) ) ;
+      }
+   }
+
 }
 
 
