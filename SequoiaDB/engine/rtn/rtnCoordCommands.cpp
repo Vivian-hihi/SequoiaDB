@@ -716,7 +716,7 @@ namespace engine
             {
                rc = processCatReply( pReply, *pGroupList) ;
             }
-            if ( pReplyObjs && SDB_OK == rc && pReply->numReturned > 0 )
+            else if ( pReplyObjs && SDB_OK == rc && pReply->numReturned > 0 )
             {
                try
                {
