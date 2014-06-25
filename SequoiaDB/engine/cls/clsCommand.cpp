@@ -412,7 +412,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
-         _alterObj = BSONObj( pMatcherBuff ).getOwned() ;
+         _alterObj = BSONObj( pMatcherBuff ) ;
       }
       catch ( std::exception &e )
       {
@@ -500,6 +500,11 @@ namespace engine
       }
       else
       {
+        /// the version which is from coord has been updated.
+        /// we override the interface collectionFullName(). so
+        /// the local catalog info will be autoly updated before
+        /// this function is called.
+        /*
          /// catalog info has been updated, clear local's info.
          /// it will download the last info when next request comes.
          catAgent *catAgent = sdbGetShardCB()->getCataAgent() ;
@@ -507,7 +512,7 @@ namespace engine
          catAgent->clear( collectionFullName() ) ;
          catAgent->release_w() ;
          /// notify other secondary nodes to clear catalog info.
-         sdbGetClsCB()->invalidateCata( collectionFullName() ) ;
+         sdbGetClsCB()->invalidateCata( collectionFullName() ) ;*/
       }
    done:
       PD_TRACE_EXITRC( SDB__RTNALTERCL_DOIT, rc ) ;

@@ -1219,6 +1219,7 @@ namespace engine
       }
       else
       {
+         _clsCatalogSet *catSet = NULL ;
          rc = msgExtractReply ( (CHAR *)msg, &flag, &contextID, &startFrom,
                                 &numReturned, objList ) ;
          if ( SDB_OK != rc )
@@ -1232,10 +1233,16 @@ namespace engine
 
          _pCatAgent->lock_w () ;
          rc = _pCatAgent->updateCatalog ( 0, groupID, objList[0].objdata(),
-                                          objList[0].objsize() ) ;
+                                          objList[0].objsize(), &catSet ) ;
          _pCatAgent->release_w () ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to update catalog:%d", rc ) ;
+            goto error ;
+         }
 
-         PD_LOG ( PDEVENT, "Update catalog [version:%u, rc: %d]", 0, rc ) ;
+         PD_LOG ( PDEVENT, "Update catalog [version:%u, rc: %d]",
+                  NULL == catSet ? 0 : catSet->getVersion(), rc ) ;
 
          //signal collection info event
          BSONElement ele = objList[0].getField ( CAT_COLLECTION_NAME ) ;

@@ -342,7 +342,8 @@ namespace engine
          // 1) if returned = 0, it means collection does not exist
          // 2) if returned > 1, it means possible catalog corruption
          PD_CHECK ( pReply->numReturned >= 1, SDB_DMS_NOTEXIST, error,
-                    PDWARNING, "Collection does not exist" ) ;
+                    PDWARNING, "Collection does not exist:%s",
+                    matcher.toString().c_str() ) ;
          PD_CHECK ( pReply->numReturned <= 1, SDB_CAT_CORRUPTION, error,
                     PDSEVERE,
                     "More than one records returned for query, "
@@ -2836,7 +2837,7 @@ namespace engine
       PD_TRACE_ENTRY(  SDB_CATALOGMGR__BUILDALTEROBJWITHMETAANDOBJ) ;
       BSONElement groupID ;
       BSONElement groupName ;
-      BSONElement version ;
+      BSONElement eleVersion ;
       BSONElement cataInfo ;
       BSONObj cataInfoObj ;
       BSONObj groupObj ;
@@ -2851,6 +2852,18 @@ namespace engine
          }
       }
 
+      eleVersion = clMeta.getField( CAT_CATALOGVERSION_NAME ) ;
+      if ( NumberInt != eleVersion.type() )
+      {
+         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
+                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      alterInfo._version = eleVersion.Int() ;
+      ++alterInfo._version ;
+
       cataInfo = clMeta.getField( CAT_CATALOGINFO_NAME ) ;
       if ( Array != cataInfo.type() )
       {
@@ -2863,10 +2876,21 @@ namespace engine
       cataInfoObj = cataInfo.embeddedObject() ;
       if ( 1 != cataInfoObj.nFields() )
       {
-         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
-                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         /// this is a splited collection. we can only change replsize or auto rebalance.
+         BSONObjBuilder builder ;
+         builder.append( CAT_CATALOGVERSION_NAME, alterInfo._version ) ;
+         if ( mask & CAT_MASK_REPLSIZE )
+         {
+            builder.append( CAT_CATALOG_W_NAME, alterInfo._replSize ) ;
+         }
+         if ( mask & CAT_MASK_AUTOREBALAN )
+         {
+            builder.appendBool( CAT_DOMAIN_AUTO_REBALANCE,
+                                alterInfo._autoRebalance ) ;
+         }
+
+         alterObj = builder.obj() ; 
+         goto done ;
       }
 
       groupObj = cataInfoObj.firstElement().embeddedObject() ;
@@ -2888,18 +2912,6 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-
-      version = clMeta.getField( CAT_CATALOGVERSION_NAME ) ;
-      if ( NumberInt != version.type() )
-      {
-         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
-                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      alterInfo._version = version.Int() ;
-      ++alterInfo._version ;
 
       rc = _buildCatalogRecord( alterInfo, mask, groupID.Int(),
                                 groupName.valuestr(),
