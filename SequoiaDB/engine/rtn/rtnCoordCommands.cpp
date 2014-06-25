@@ -1742,6 +1742,8 @@ namespace engine
       BSONObj condition = BSON( FIELD_NAME_TASKID << builder.obj() );
       MsgOpQuery *msgHeader = NULL ;
       INT32 everRc = SDB_OK ;
+      CHAR *waitTaskResBuf = NULL ;
+      BSONObj *waitTaskErrObj = NULL ;
 
       rc = msgBuildQueryMsg( &buffer, &bufferLen, CAT_TASK_INFO_COLLECTION,
                              0, 0, 0, -1, &condition, NULL, NULL, NULL ) ;
@@ -1779,9 +1781,6 @@ namespace engine
       vector<BSONObj>::const_iterator itr = reply.begin() ;
       for ( ; itr != reply.end(); itr++ )
       {
-         CHAR *resultBuf = NULL ;
-         MsgOpReply replyHeader ;
-         BSONObj *errObj = NULL ;
          groupList.clear() ;
          dummy.clear() ;
          ignore.clear() ;
@@ -1833,27 +1832,6 @@ namespace engine
             continue ;
             /// here we try to send msg to all groups, do not goto error.
          }
-
-         /// wait the task done.
-         rc = cmd->execute( buffer, bufferLen,
-                            &resultBuf, cb,
-                            replyHeader, &errObj ) ;
-         if ( NULL != resultBuf )
-         {
-            SDB_OSS_FREE( resultBuf ) ;
-         }
-         if ( NULL != errObj )
-         {
-            SDB_OSS_DEL( errObj ) ;
-         }
-
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to wait task:%d", rc ) ;
-            /// do not care about rc.
-            rc = SDB_OK ;
-         }
-      }
       }
 
       rc = ( SDB_OK == everRc ) ? SDB_OK : everRc ;
@@ -1863,10 +1841,40 @@ namespace engine
          goto error ;
       }
 
+      rc = msgBuildQueryMsg( &buffer, &bufferLen, "CAT",
+                                0, 0, 0, -1, &condition, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build split msg:%d", rc ) ;
+         goto error ;
+      }
+
+      {
+      MsgOpReply replyHeader ;
+      rc = cmd->execute( buffer, bufferLen,
+                         &waitTaskResBuf, cb,
+                         replyHeader, &waitTaskErrObj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to wait task done:%d", rc ) ;
+         rc = SDB_OK ;
+         ossSleep( 5000 ) ;
+         /// do not return err. only sleep some time to wait task done.
+      }
+      }
+      }
    done:
       if ( NULL != buffer )
       {
          SDB_OSS_FREE( buffer ) ;
+      }
+      if ( NULL != waitTaskResBuf )
+      {
+         SDB_OSS_FREE( waitTaskResBuf ) ;
+      }
+      if ( NULL != waitTaskErrObj )
+      {
+         SDB_OSS_DEL( waitTaskErrObj ) ;
       }
       PD_TRACE_EXITRC( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS, rc ) ;
       return rc ;

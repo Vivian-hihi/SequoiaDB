@@ -624,6 +624,7 @@ namespace engine
          }
 
          ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
+         returnNum = 1 ;
          }
          
       }
