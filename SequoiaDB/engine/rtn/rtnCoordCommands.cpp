@@ -6429,6 +6429,12 @@ namespace engine
                                    cb, NULL, &groupList1, &boRecv ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to execute split ready on catalog, "
                        "rc = %d", rc ) ;
+         if ( boRecv.empty() )
+         {
+            PD_LOG( PDERROR, "Failed to get task id from result msg" ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
          taskID = (UINT64)(boRecv.at(0).getField( CAT_TASKID_NAME ).numberLong()) ;
 
          // construct split query req
