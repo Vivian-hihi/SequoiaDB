@@ -183,6 +183,17 @@ class client(object):
 
       return rc, result
 
+   def get_collection(self, cl_full_name):
+      
+      cl = collection()
+      rc = sdbclient.get_collection(self._client, cl_full_name, cl._cl)
+      pysequoiadb.check_error(rc)
+
+      if const.SDB_OK != rc:
+         cl = None
+
+      return rc, cl
+
    def get_collection_space(self, cs_name):
 
       cs = collectionspace()
@@ -217,6 +228,17 @@ class client(object):
 
       result = cursor()
       rc = sdbclient.list_collection_spaces(self._client, result._cursor)
+      pysequoiadb.check_error(rc)
+
+      if const.SDB_OK != rc:
+         result = None
+
+      return rc, result
+
+   def list_collections(self):
+
+      result = cursor()
+      rc = sdbclient.list_collections(self._client, result._cursor)
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:

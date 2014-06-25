@@ -345,6 +345,34 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   PYOBJECT *cs_obj       = NULL ;
+   const char *cs_name    = NULL ;
+   sdb *client            = NULL ;
+   sdbCollection *cl      = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &cl_name, &cs_obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollection, cl ) ;
+
+   rc = client->getCollection( cl_name, *cl ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc               = 0 ;
@@ -418,6 +446,33 @@ static PYOBJECT *list_collection_spaces( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
    rc = client->listCollectionSpaces( *cursor ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+static PYOBJECT *list_collections( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc             = 0 ;
+   PYOBJECT *obj        = NULL ;
+   PYOBJECT *cursor_obj = NULL ;
+   sdb *client          = NULL ;
+   sdbCursor *cursor    = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &cursor_obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
+
+   rc = client->listCollections( *cursor ) ;
    if ( rc )
    {
       goto done ;
@@ -1143,9 +1198,11 @@ static PyMethodDef client_methods[] = {
    {"reset_snapshot",            reset_snapshot,            METH_VARARGS},
    {"get_list",                  get_list,                  METH_VARARGS},
    {"get_collection_space",      get_collection_space,      METH_VARARGS},
+   {"get_collection",            get_collection,            METH_VARARGS},
    {"create_collection_space",   create_collection_space,   METH_VARARGS},
    {"drop_collection_space",     drop_collection_space,     METH_VARARGS},
    {"list_collection_spaces",    list_collection_spaces,    METH_VARARGS},
+   {"list_collections",          list_collections,          METH_VARARGS},
    {"list_replica_groups",       list_replica_groups,       METH_VARARGS},
    {"get_replica_group_by_name", get_replica_group_by_name, METH_VARARGS},
    {"get_replica_group_by_id",   get_replica_group_by_id,   METH_VARARGS},

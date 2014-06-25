@@ -52,6 +52,15 @@ from pysequoiadb.error import ( SequoiaDBError,
                                 ConnectError,
                                 OperationError )
 
+import sys
+
+PY3 = sys.version_info[0] == 3
+
+def printInfo( what ):
+   if PY3:
+      print (what)
+   else:
+      print what
 def check_error( rc ):
    if const.SDB_OK != rc:
-      print OperationError("  Error: ", rc)
+      printInfo (OperationError("  Error: ", rc))
