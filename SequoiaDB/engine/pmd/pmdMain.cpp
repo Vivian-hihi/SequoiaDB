@@ -125,6 +125,14 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR, "Failed to rebuild database, rc: %d",
                          rc ) ;
 
+            // cut all dps
+            rc = sdbGetDPSCB()->move( 0, 0 ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Move dps to begin failed, rc: %d", rc ) ;
+               goto error ;
+            }
+            PD_LOG( PDEVENT, "Clean dps logs succeed." ) ;
             PD_LOG( PDEVENT, "Rebuild database succeed." ) ;
             pmdGetStartup().ok( TRUE ) ;
          }
