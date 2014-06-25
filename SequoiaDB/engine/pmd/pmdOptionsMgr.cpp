@@ -1302,7 +1302,7 @@ namespace engine
       }
 
       // if start is stanalone, must enable dps local
-      if ( SDB_ROLE_STANDALONE == dbRole && _traceOn )
+      if ( SDB_ROLE_STANDALONE == dbRole && _transactionOn )
       {
          _dpslocal = TRUE ;
       }
