@@ -349,19 +349,19 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
-   PYOBJECT *cs_obj       = NULL ;
-   const char *cs_name    = NULL ;
+   PYOBJECT *cl_obj       = NULL ;
+   const char *cl_name    = NULL ;
    sdb *client            = NULL ;
    sdbCollection *cl      = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &cl_name, &cs_obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &cl_name, &cl_obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( cl_obj, sdbCollection, cl ) ;
 
    rc = client->getCollection( cl_name, *cl ) ;
    if ( rc )
