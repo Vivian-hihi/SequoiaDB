@@ -346,6 +346,14 @@ namespace engine
       goto done ;
    }
 
+   void registerCB()
+   {
+      PMD_REGISTER_CB( sdbGetDPSCB() ) ;
+      PMD_REGISTER_CB( sdbGetTransCB() ) ;
+      PMD_REGISTER_CB( sdbGetDMSCB() ) ;
+      PMD_REGISTER_CB( sdbGetRTNCB() ) ;
+   }
+
    INT32 restoreSysInit ()
    {
       INT32 rc = SDB_OK ;
@@ -468,15 +476,7 @@ namespace engine
       }
 
       // 4. register cbs
-      sdbGetPMDController()->registerCB( pmdGetDBRole() ) ;
-
-      // 5. inti krcb
-      rc = krcb->init() ;
-      if ( rc )
-      {
-         std::cerr << "init krcb failed, " << rc << std::endl ;
-         return rc ;
-      }
+      registerCB() ;
 
       // only for list
       if ( 0 == ossStrcmp( optMgr._action, RS_BK_LIST ) )
@@ -518,6 +518,14 @@ namespace engine
       // initialize variables
       rc = restoreSysInit () ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to initialize, rc: %d", rc ) ;
+
+      // 5. inti krcb
+      rc = krcb->init() ;
+      if ( rc )
+      {
+         std::cerr << "init krcb failed, " << rc << std::endl ;
+         return rc ;
+      }
 
       std::cout << "Begin to restore... " << std::endl ;
       // start restore task
