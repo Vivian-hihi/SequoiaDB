@@ -452,8 +452,14 @@ namespace engine
                           INT32 objNum, SINT32 flags, pmdEDUCB *cb,
                           SDB_DMSCB *dmsCB, SINT64 &contextID ) ;
 
-   INT32 rtnExplain( const rtnQueryOptions &options,
-                     const BSONObj &exOptions,
+   INT32 rtnExplain( const CHAR *pCollectionName,
+                     const BSONObj &selector,
+                     const BSONObj &matcher,
+                     const BSONObj &orderBy,
+                     const BSONObj &hint,
+                     SINT32 flags,
+                     SINT64 numToSkip,
+                     SINT64 numToReturn,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                      SDB_RTNCB *rtnCB, INT64 &contextID ) ;
 }

@@ -365,7 +365,6 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCata )
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnWaitTask)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListTask)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnExplain)
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnBackup)
    _rtnBackup::_rtnBackup ()
@@ -2644,99 +2643,6 @@ namespace engine
       return rc ;
    }
 
-   _rtnExplain::_rtnExplain()
-   :_fullName( NULL ),
-    _skip( 0 ),
-    _limit( -1 ),
-    _flags( 0 )
-   {
-
-   }
-
-   _rtnExplain::~_rtnExplain()
-   {
-
-   }
-
-   INT32 _rtnExplain::init( INT32 flags, INT64 numToSkip,
-                            INT64 numToReturn,
-                            const CHAR *pMatcherBuff,
-                            const CHAR *pSelectBuff,
-                            const CHAR *pOrderByBuff,
-                            const CHAR *pHintBuff )
-   {
-      INT32 rc = SDB_OK ;
-      _skip = numToSkip ;
-      _limit = numToReturn ;
-      _flags = flags ;
-
-      try
-      {
-         _query = BSONObj( pMatcherBuff ) ;
-         _selector = BSONObj( pSelectBuff ) ;
-         _orderBy = BSONObj( pOrderByBuff ) ;
-         _hint = BSONObj( pHintBuff ) ;
-         BSONElement ele = _hint.getField( FIELD_NAME_COLLECTION ) ;
-         if ( String != ele.type() )
-         {
-            PD_LOG( PDERROR, "invalid hint in query request:%s",
-                    _hint.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         _fullName = ele.valuestr() ;
-
-         ele =_hint.getField( FIELD_NAME_HINT ) ;
-         if ( Object == ele.type() )
-         {
-            _realHint = ele.embeddedObject() ;
-         }
-
-         ele = _hint.getField( FIELD_NAME_OPTIONS ) ;
-         if ( Object == ele.type() )
-         {
-            _explainOptions = ele.embeddedObject() ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }   
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _rtnExplain::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                             _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                             INT16 w, INT64 *pContextID )
-   {
-      INT32 rc = SDB_OK ;
-      rtnQueryOptions queryOptions( _query, _selector, _orderBy,
-                                    _realHint, _fullName, _skip,
-                                    _limit, _flags, FALSE ) ;
-      rc = rtnExplain( queryOptions,
-                       _explainOptions,
-                       cb, dmsCB, rtnCB, *pContextID ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to explain request:%d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      if ( -1 != *pContextID )
-      {
-         rtnCB->contextDelete( *pContextID, cb ) ;
-         *pContextID = -1 ;
-      }
-      goto done ;
-   }
 }
 
 

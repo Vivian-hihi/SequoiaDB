@@ -14,13 +14,13 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnExplainDef.hpp
+   Source File Name = rtnDataSet.hpp
 
    Descriptive Name =
 
    When/how to use: this program may be used on binary and text-formatted
-   versions of Optimizer component. This file contains structure for access
-   plan, which is indicating how to run a given query.
+   versions of Runtime component. This file contains structure for Runtime
+   Context.
 
    Dependencies: N/A
 
@@ -29,31 +29,44 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          06/16/2014  YW  Initial Draft
+          24/06/2014  YW  Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
 
-#ifndef RTN_EXPLAINDEF_HPP_
-#define RTN_EXPLAINDEF_HPP_
+#ifndef RTN_BSONSET_HPP_
+#define RTN_BSONSET_HPP_
+
+#include "rtnContext.hpp"
 
 namespace engine
 {
-   #define RTN_EXPLAIN_FULLNAME "FullName"
-   #define RTN_EXPLAIN_SCANTYPE "ScanType"
-   #define RTN_EXPLAIN_IXMSCAN "IdxScan"
-   #define RTN_EXPLAIN_TBLSCAN "TblScan"
-   #define RTN_EXPLAIN_USR_EX_SORT "UseExtSort"
-   #define RTN_EXPLAIN_IDXNAME "IdxName"
-   #define RTN_EXPLAIN_NODE "Node"
-   #define RTN_EXPLAIN_RETURNNUM "ReturnNum"
-   #define RTN_EXPLAIN_MILLIS "Millis"
-   #define RTN_EXPLAIN_IDXREAD "IdxRead"
-   #define RTN_EXPLAIN_DATAREAD "DataRead"
-   #define RTN_EXPLAIN_USRCPU "UsrCpu"   
-   #define RTN_EXPLAIN_SYSCPU "SysCpu"
-   #define RTN_EXPLAIN_SUBCL "subCollections"
+   class _rtnDataSet : public SDBObject
+   {
+   public:
+      _rtnDataSet( const rtnQueryOptions &options,
+                   _pmdEDUCB *cb ) ;
+
+      _rtnDataSet( SINT64 contextID,
+                   _pmdEDUCB *cb ) ;
+
+      virtual ~_rtnDataSet() ;
+
+   public:
+      INT32 next( BSONObj &obj ) ;
+
+   private:
+      rtnContextBuf _contextBuf ;
+      INT64 _startPos ;
+      SINT64 _contextID ;
+      _pmdEDUCB *_cb ;
+      INT32 _lastErr ;
+      BOOLEAN _fetchFromContext ;
+      _SDB_RTNCB *_rtnCB ;
+   } ;
+   typedef class _rtnDataSet rtnDataSet ;
 }
 
 #endif
+

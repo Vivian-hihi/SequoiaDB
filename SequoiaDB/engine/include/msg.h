@@ -475,6 +475,8 @@ typedef struct _MsgOpInsert MsgOpInsert ;
 #define FLG_QUERY_PARALLED            0x00000100
 // Find one only
 #define FLG_QUERY_FINDONE             0x00000200
+// explain query
+#define FLG_QUERY_EXPLAIN             0x00000400
 
 // For query takes 4 document
 // Query + returnFieldSelector + orderBy + hint

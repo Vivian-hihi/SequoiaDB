@@ -159,143 +159,6 @@ namespace engine
       goto done ;
    }
 
-/*
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSORT, "rtnSort" )
-   INT32 rtnSort ( rtnContext **ppContext,
-                   const BSONObj &orderBy,
-                   pmdEDUCB *cb,
-                   SINT64 numToSkip,
-                   SINT64 numToReturn,
-                   SDB_DMSCB *dmsCB,
-                   SDB_RTNCB *rtnCB,
-                   SINT64 &contextID )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_RTNSORT ) ;
-      SDB_ASSERT ( *ppContext, "context can't be NULL" ) ;
-      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
-      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
-
-      monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
-      BSONObj emptyObj ;
-
-      BSONObj sortHint       = BSON ( "" << RTN_SORT_INDEX_NAME ) ;
-      SINT64 startingPos     = 0 ;
-      rtnContextBuf buffObj ;
-
-      optAccessPlan *plan        = NULL ;
-      dmsTempCB *tempCB          = dmsCB->getTempCB() ;
-      dmsStorageUnit *tempSU     = tempCB->getTempSU() ;
-      dmsMBContext *mbContext    = NULL ;
-      BSONObj indexKey = BSON( IXM_FIELD_NAME_KEY << orderBy <<
-                               IXM_FIELD_NAME_NAME << RTN_SORT_INDEX_NAME ) ;
-
-      // get a temp table first, this will be released during context
-      // destruction
-      rc = tempCB->reserve ( &mbContext, (*ppContext)->eduID() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to reserve temp table, rc: %d", rc ) ;
-
-      // tempSU can't be NULL since it's static variable in tempCB
-      rc = tempSU->index()->createIndex( mbContext, indexKey, cb, NULL, TRUE ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to create index on temp table, rc: %d",
-                   rc ) ;
-
-      // keep calling rtnGetMore and fetch rows
-      while ( TRUE )
-      {
-         rc = (*ppContext)->getMore( 1, buffObj, startingPos, cb ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC != rc )
-            {
-               PD_LOG ( PDERROR, "Error detected during fetch, rc = %d", rc ) ;
-               goto error ;
-            }
-            rc = SDB_OK ;
-            break ;
-         }
-         // insert each row into the new temp table
-         try
-         {
-            BSONObj dataRecord ( buffObj.data() ) ;
-            rc = tempSU->data()->insertRecord ( mbContext, dataRecord, cb,
-                                                NULL, FALSE, FALSE ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to insert record into temp table,"
-                         "rc: %d", rc ) ;
-            DMS_MON_OP_COUNT_INC( pMonAppCB, MON_TEMP_WRITE, 1 ) ;
-         }
-         catch ( std::exception &e )
-         {
-            rc = SDB_SYS ;
-            PD_LOG ( PDERROR, "Failed to build bson record: %s", e.what() ) ;
-            goto error ;
-         }
-      } // while ( TRUE )
-
-      // now the temp table should contain all the data in dataset
-      // create a context and make it doing index scan for the temp table
-      // make sure to delete original context from EDUCB and rtnCB
-      rtnCB->contextDelete ( contextID, cb ) ;
-      *ppContext = NULL ;
-      contextID = -1 ;
-
-      rc = rtnCB->contextNew ( RTN_CONTEXT_TEMP, ppContext, contextID, cb ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to create new context, rc: %d", rc ) ;
-
-      // for temp scan, we can't reuse the plan anyway, so let's simply allocate
-      // new plan instead of using APM, plan will be deleted in
-      // context destructor
-      plan = SDB_OSS_NEW optAccessPlan ( tempSU,
-                                         mbContext->mb()->_collectionName,
-                                         emptyObj, emptyObj, sortHint ) ;
-      if ( !plan )
-      {
-         PD_LOG ( PDERROR, "Failed allocate memory for optAccessPlan" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-
-      mbContext->mbUnlock() ;
-      rc = plan->optimize() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to optimize access plan, rc: %d", rc ) ;
-
-      // open context
-      rc = ((rtnContextTemp*)*ppContext)->open( tempSU, mbContext, plan, cb,
-                                                emptyObj, numToReturn,
-                                                numToSkip, NULL ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
-
-      mbContext = NULL ;
-      plan = NULL ;
-
-      // sample timetamp
-      if ( cb->getMonConfigCB()->timestampON )
-      {
-         (*ppContext)->getMonCB()->recordStartTimestamp() ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_RTNSORT, rc ) ;
-      return rc ;
-   error :
-      if ( mbContext )
-      {
-         tempCB->release( mbContext ) ;
-      }
-      if ( plan )
-      {
-         plan->release() ;
-      }
-      if ( -1 != contextID )
-      {
-         rtnCB->contextDelete ( contextID, cb ) ;
-         contextID = -1 ;
-      }
-      goto done ;
-   }
-*/
-
    INT32 rtnSort ( rtnContext **ppContext,
                    const BSONObj &orderBy,
                    _pmdEDUCB *cb,
@@ -381,6 +244,28 @@ namespace engine
       const CHAR *scanType  = NULL ;
       INT32 indexLID = DMS_INVALID_EXTENT ;
       INT32 direction = 0 ;
+
+      if ( FLG_QUERY_EXPLAIN & flags )
+      {
+         rc = rtnExplain( pCollectionName,
+                          selector,
+                          matcher,
+                          orderBy,
+                          hint,
+                          flags, numToSkip,
+                          numToReturn,
+                          cb, dmsCB, rtnCB,
+                          contextID ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to explain query:%d", rc ) ;
+            goto error ;
+         }
+         else
+         {
+            goto done ;
+         }
+      }
 
       // This prevents other sessions drop the collectionspace during accessing
       rc = rtnResolveCollectionNameAndLock ( pCollectionName, dmsCB, &su,
@@ -710,17 +595,42 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNEXPLAIN, "rtnExplain" )
-   INT32 rtnExplain( const rtnQueryOptions &options,
-                     const BSONObj &explainOptions,
+   INT32 rtnExplain( const CHAR *pCollectionName,
+                     const BSONObj &selector,
+                     const BSONObj &matcher,
+                     const BSONObj &orderBy,
+                     const BSONObj &hint,
+                     SINT32 flags,
+                     SINT64 numToSkip,
+                     SINT64 numToReturn,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                      SDB_RTNCB *rtnCB, INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNEXPLAIN ) ;
-      SDB_ASSERT( NULL != options._fullName, "can not be NULL" ) ;
       SDB_ASSERT ( cb, "educb can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
       SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
+      BSONObj explainOptions ;
+      BSONObj realHint ;
+      BSONElement ele = hint.getField( FIELD_NAME_OPTIONS ) ;
+      if ( Object == ele.type() )
+      {
+         explainOptions = ele.embeddedObject() ;
+      }
+
+      ele = hint.getField( FIELD_NAME_HINT ) ;
+      if ( Object == ele.type() )
+      {
+         realHint = ele.embeddedObject() ;
+      }
+
+      rtnQueryOptions options( matcher, selector,
+                               orderBy, realHint,
+                               pCollectionName,
+                               numToSkip, numToReturn,
+                               OSS_BIT_CLEAR( flags, FLG_QUERY_EXPLAIN),
+                               FALSE ) ;
 
       rtnContextExplain *context = NULL ;
       rc = rtnCB->contextNew( RTN_CONTEXT_EXPLAIN,

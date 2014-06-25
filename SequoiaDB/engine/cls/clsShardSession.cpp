@@ -33,10 +33,11 @@
 #include "clsShardSession.hpp"
 #include "pmd.hpp"
 #include "clsMgr.hpp"
-#include "rtn.hpp"
 #include "msgMessage.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "rtnDataSet.hpp"
+#include "rtnExplainDef.hpp"
 
 using namespace bson ;
 
@@ -1641,6 +1642,7 @@ namespace engine
       BSONObj boNewMatcher;
       rtnContextMainCL *pContextMainCL = NULL;
       BOOLEAN includeShardingOrder = FALSE;
+      SINT64 tmpContextID = -1 ;
 
       SDB_ASSERT( pCollectionName, "collection name can't be NULL!" ) ;
       SDB_ASSERT( cb, "educb can't be NULL!" );
@@ -1661,7 +1663,7 @@ namespace engine
 
       rc = rtnCB->contextNew( RTN_CONTEXT_MAINCL,
                               (rtnContext **)&pContextMainCL,
-                              contextID, cb );
+                              tmpContextID, cb );
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to create new main-collection context(rc=%d)",
                    rc );
@@ -1689,6 +1691,22 @@ namespace engine
       }
       }
 
+      if ( FLG_QUERY_EXPLAIN & flags )
+      {
+         rc = _aggregateMainCLExplaining( pCollectionName, cb,
+                                          tmpContextID,
+                                          contextID ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to aggregate sub cl info:%d", rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         contextID = tmpContextID ;
+         tmpContextID = -1 ;
+      }
    done:
       return rc;
    error:
@@ -1696,6 +1714,11 @@ namespace engine
       {
          rtnCB->contextDelete( contextID, cb );
          contextID = -1;
+      }
+      if ( -1 != tmpContextID )
+      {
+         rtnCB->contextDelete( tmpContextID, cb );
+         tmpContextID = -1;
       }
       goto done;
    }
@@ -2245,6 +2268,193 @@ namespace engine
    {
       _pShdMgr->updateCatGroup( FALSE ) ;
       return SDB_OK ;
+   }
+
+   INT32 _clsShdSession::_aggregateMainCLExplaining( const CHAR *fullName,
+                                                     pmdEDUCB *cb,
+                                                     SINT64 &mainCLContextID,
+                                                     SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrBuilder ;
+      BSONObj obj ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      _rtnContextDump *context = NULL ;
+      BOOLEAN extractNode = FALSE ;
+
+      rc = rtnCB->contextNew ( RTN_CONTEXT_DUMP,
+                               (rtnContext**)&context,
+                               contextID, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create new context:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = context->open( BSONObj(), BSONObj() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open context:%d", rc ) ;
+         goto error ;
+      }
+
+      builder.append( RTN_EXPLAIN_FULLNAME, fullName ) ;
+      {
+      rtnDataSet dataSet( mainCLContextID, cb ) ;
+      while ( TRUE )
+      {
+         BSONObjBuilder tmp ;
+         BSONElement ele ;
+         rc = dataSet.next( obj ) ;
+         if ( SDB_OK != rc )
+         {
+            break ;
+         }
+
+         if ( !extractNode )
+         {
+            ele = obj.getField( RTN_EXPLAIN_NODE ) ;
+            if ( String != ele.type() )
+            {
+               PD_LOG( PDERROR, "invalid result of explaining:%s",
+                       obj.toString( FALSE, TRUE ).c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            builder.append( ele ) ;
+         }
+
+         ele = obj.getField( RTN_EXPLAIN_FULLNAME ) ;
+         if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         ele = obj.getField( RTN_EXPLAIN_USR_EX_SORT ) ;
+         if ( Bool != ele.type() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+         
+         ele = obj.getField( RTN_EXPLAIN_SCANTYPE ) ;
+         if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         ele = obj.getField( RTN_EXPLAIN_IDXNAME ) ;
+         if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         ele = obj.getField( RTN_EXPLAIN_RETURNNUM ) ;
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         ele = obj.getField( RTN_EXPLAIN_MILLIS ) ;
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         ele = obj.getField( RTN_EXPLAIN_IDXREAD ) ;
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         ele = obj.getField( RTN_EXPLAIN_DATAREAD ) ;
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         ele = obj.getField( RTN_EXPLAIN_USRCPU ) ;
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         ele = obj.getField( RTN_EXPLAIN_SYSCPU ) ;
+         if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "invalid result of explaining:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         tmp.append( ele ) ;
+
+         arrBuilder << tmp.obj() ;
+      }
+
+      if ( SDB_DMS_EOC != rc )
+      {
+         PD_LOG( PDERROR, "failed to get the next obj:%d", rc ) ;
+         goto error ;
+      }
+      mainCLContextID = -1 ;
+
+      builder.append( RTN_EXPLAIN_SUBCL, arrBuilder.arr() ) ;
+      }
+
+      rc = context->monAppend( builder.obj() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to append obj to context:%d", rc ) ;
+         goto error ;
+      }
+
+      
+   done:
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
    }
 
 }

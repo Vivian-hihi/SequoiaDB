@@ -138,6 +138,15 @@ namespace engine
                goto error ;
             }
 
+            if ( 0 == ossStrncmp( beGroupElement.valuestr(),
+                                  SYS_PREFIX, ossStrlen( SYS_PREFIX ) ) )
+            {
+               PD_LOG( PDERROR, "invalid group name[%s], can not start with:%s",
+                       beGroupElement.valuestr(), SYS_PREFIX ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+
             rc = catGetGroupObj( beGroupElement.valuestr(),
                                  groupInfo,
                                  cb ) ;

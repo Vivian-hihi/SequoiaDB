@@ -3326,7 +3326,7 @@ SDB_EXPORT INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
    }
 
    BSON_INIT( newObj ) ;
-   BSON_APPEND( newObj, CAT_COLLECTION_NAME,
+   BSON_APPEND( newObj, FIELD_NAME_NAME,
                 cs->_collectionFullName, string ) ;
 
    BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson ) ;
@@ -4405,8 +4405,6 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
    }
 
    BSON_INIT( newObj ) ;
-   BSON_APPEND( newObj, FIELD_NAME_COLLECTION, 
-                cs->_collectionFullName, string ) ;
 
    if ( hint )
    {
@@ -4420,8 +4418,9 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
    BSON_FINISH ( newObj ) ;
 
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                              CMD_ADMIN_PREFIX CMD_NAME_EXPLAIN,
-                              flags, 0, numToSkip, numToReturn,
+                              cs->_collectionFullName,
+                              flags | FLG_QUERY_EXPLAIN, 0,
+                              numToSkip, numToReturn,
                               condition, selector, orderBy,
                               &newObj, cs->_endianConvert ) ;
 

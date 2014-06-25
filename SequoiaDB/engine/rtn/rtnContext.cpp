@@ -4741,6 +4741,14 @@ namespace engine
       }
 
       _cbOfQuery = cb ;
+
+      if ( NULL == _contextOfQuery )
+      {
+         PD_LOG( PDERROR, "can not get the context of query" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
       plan = _contextOfQuery->getPlan() ;
       if ( NULL == plan )
       {

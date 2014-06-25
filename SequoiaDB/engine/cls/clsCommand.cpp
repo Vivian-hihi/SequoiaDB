@@ -244,7 +244,6 @@ namespace engine
       _collectionName = NULL ;
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnAlterCollection)
    _rtnLinkCollection::~_rtnLinkCollection()
    {
    }
@@ -385,6 +384,7 @@ namespace engine
       return SDB_OK ;
    }
 
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnAlterCollection)
    _rtnAlterCollection::_rtnAlterCollection()
    {
 

@@ -186,6 +186,11 @@ namespace engine
                               BSONObj &boNewMatcher,
                               std::vector< std::string > &strSubCLList );
 
+         INT32 _aggregateMainCLExplaining( const CHAR *fullName,
+                                           pmdEDUCB *cb,
+                                           SINT64 &mainCLContextID,
+                                           SINT64 &contextID ) ;
+
       protected:
          _clsReplicateSet       *_pReplSet ;
          _clsShardMgr           *_pShdMgr ;
