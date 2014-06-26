@@ -504,8 +504,7 @@ namespace engine
             rc = _procInfo->setDMNCMD( PMDDMN_SHM_CMD_DMN_QUIT );
             if ( SDB_OK !=rc )
             {
-               PD_LOG( PDWARNING,
-                     "daemon process is not stop!" );
+               PD_LOG( PDWARNING, "daemon process is not stop!" );
             }
          }
          detachSHM();
