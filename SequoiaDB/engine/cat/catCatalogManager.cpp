@@ -613,7 +613,8 @@ namespace engine
          BSONArrayBuilder arrBuilder ;
          BSONElement gpInfo = boCollectionRecord.getField( CAT_CATALOGINFO_NAME ) ;
          /// main cl has no group info
-         if ( Object == gpInfo.type() )
+         if ( Array == gpInfo.type() ||
+              Object == gpInfo.type() )
          {
             arrBuilder.append( gpInfo.embeddedObject().firstElement() ) ;
             BSONObj replyObj = BSON( CAT_GROUP_NAME << arrBuilder.arr() ) ;
