@@ -2861,6 +2861,13 @@ namespace engine
          goto error ;
       }
 
+      if ( CAT_MASK_ISMAINCL & mask )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "can not change a collection to a main cl" ) ;
+         goto error ;
+      }
+
       alterInfo._version = catSet.getVersion() ;
       ++alterInfo._version ;
 
