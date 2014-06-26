@@ -8,10 +8,23 @@ namespace CLSMGR
    // _omagentCommand
    _omagentCommand::_omagentCommand ()
    {
+      if ( NULL == scope )
+      {
+         _sptContainer container ;
+         scope = container.newScope( SPT_SCOPE_TYPE_SP ) ;
+         if ( NULL == scope )
+            ossPrintf( "Failed to get scope"OSS_NEWLINE ) ;
+      }
    }
 
    _omagentCommand::~_omagentCommand ()
    {
+      if ( NULL != scope )
+      {
+         scope->shutdown() ;
+         delete scope ;
+         scope = NULL ;
+      }
    }
 
    // _omagentCmdAssit
@@ -120,14 +133,29 @@ namespace CLSMGR
       ossPrintf ( "In add host destructor."OSS_NEWLINE ) ;
    }
 
-   _omagentAddHost::init ()
+   INT32 _omagentAddHost::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                                 const CHAR *pMatcherBuff,
+                                 const CHAR *pSelectBuff,
+                                 const CHAR *pOrderByBuff,
+                                 const CHAR *pHintBuff )
    {
+      INT32 rc = SDB_OK ;
       ossPrintf ( "In add host init."OSS_NEWLINE ) ;
+   done:
+      retrun rc ;
+   error:
+     goto done ;
    }
 
-   _omagentAddHost::doit ()
+
+   INT32 _omagentAddHost::doit ()
    {
+      INT32 rc = SDB_OK ;
       ossPrintf ( "In add host doit."OSS_NEWLINE ) ;
+   done:
+      retrun rc ;
+   error:
+     goto done ;
    }
 
 
