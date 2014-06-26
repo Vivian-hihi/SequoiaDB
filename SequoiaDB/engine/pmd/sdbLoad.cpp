@@ -740,7 +740,7 @@ done:
    SAFE_OSS_FREE( _pSendBuffer ) ;
    clientDisconnect ( s ) ;
    PD_TRACE_EXITRC ( SDB_SDBLOAD_MAIN, rc );
-   return rc ;
+   return SDB_OK == rc ? 0 : 1 ;
 error:
    goto done ;
 }

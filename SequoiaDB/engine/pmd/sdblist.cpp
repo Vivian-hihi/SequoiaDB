@@ -501,5 +501,5 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
 done :
    PD_TRACE_EXITRC ( SDB_SDBLIST_MAIN, rc );
-   return rc ;
+   return SDB_OK == rc ? 0 : 1 ;
 }

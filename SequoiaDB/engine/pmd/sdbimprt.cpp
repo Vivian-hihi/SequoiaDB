@@ -234,7 +234,7 @@ done :
       ossPrintf ( "Detail in log path: %s"OSS_NEWLINE, getDialogName() ) ;
       PD_LOG ( PDEVENT, "Import Completed" ) ;
    }
-   return rc ;
+   return SDB_OK == rc ? 0 : 1 ;
 error :
    goto done ;
 }
