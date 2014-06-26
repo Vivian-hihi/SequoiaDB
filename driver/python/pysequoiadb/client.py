@@ -55,7 +55,7 @@ class client(object):
             sdbclient.disconnect(self._client)
       except SystemError:
          pysequoiadb.check_error(const.SDM_OOM)
-     
+
    def __del__(self):
 
       if self._client is not None:
@@ -65,7 +65,7 @@ class client(object):
 
    def __getitem__(self, name):
 
-      
+
       return self.__getattr__(name)
 
    def __getattr__(self, name):
@@ -146,7 +146,7 @@ class client(object):
       rc = sdbclient.reset_snapshot(self._client, bson_condition)
       pysequoiadb.check_error(rc)
 
-      return rc 
+      return rc
 
    def get_list(self, list_type, condition = static_object,
                                  selector  = static_object,
@@ -174,7 +174,7 @@ class client(object):
       return rc, result
 
    def get_collection(self, cl_full_name):
-      
+
       cl = collection()
       rc = sdbclient.get_collection(self._client, cl_full_name, cl._cl)
       pysequoiadb.check_error(rc)
@@ -413,7 +413,7 @@ class client(object):
 
    def list_task(self, condition = static_object, selector  = static_object,
                        order_by  = static_object, hint      = static_object):
-      
+
       bson_condition = None
       bson_selector = None
       bson_order_by = None
@@ -435,25 +435,25 @@ class client(object):
 
       if const.SDB_OK != rc:
          result = None
-      
+
       return rc, result
 
    def wait_task(self, task_ids, num):
 
       rc = sdbclient.wait_task(self._client, task_ids, num)
       pysequoiadb.check_error(rc)
-      
+
       return rc
 
    def cancel_task(self, task_id, is_async):
-      
+
       rc = sdbclient.cancel_task(self._client, task_id, is_async)
       pysequoiadb.check_error(rc)
 
       return rc
 
    def set_session_attri(self, options = static_object):
-      
+
       bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
@@ -464,7 +464,7 @@ class client(object):
       return rc
 
    def close_all_cursors(self):
-      
+
       rc = sdbclient.close_all_cursors(self._client)
       pysequoiadb.check_error(rc)
 
