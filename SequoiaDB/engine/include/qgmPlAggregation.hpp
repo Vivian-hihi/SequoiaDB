@@ -78,7 +78,8 @@ namespace engine
       BSONObj _groupbyKey ;
       BSONObj _preObj ;
       BOOLEAN _eoc ;
-      UINT32  _pushCount ;
+      BOOLEAN _pushedAtThisTime ;
+      BOOLEAN _pushedAtAnyTime ;
       BOOLEAN _isAggr;
    } ;
 

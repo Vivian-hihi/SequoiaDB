@@ -49,7 +49,8 @@ namespace engine
                                          const qgmField &alias,
                                          _qgmPtrTable *table )
    :_qgmPlan( QGM_PLAN_TYPE_AGGR, alias ),
-    _eoc( FALSE ), _pushCount( 0 ), _isAggr( FALSE )
+    _eoc( FALSE ), _pushedAtThisTime( FALSE ),
+    _pushedAtAnyTime( FALSE ), _isAggr( FALSE )
    {
       INT32 rc = SDB_OK ;
       SQL_CB *sqlCB = pmdGetKRCB()->getSqlCB() ;
@@ -173,7 +174,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      _pushCount = 0 ;
+      _pushedAtThisTime = FALSE ;
+      _pushedAtAnyTime = FALSE ; 
       _eoc = FALSE ;
       _groupbyKey = BSONObj() ;
 
@@ -208,7 +210,7 @@ namespace engine
          {
             _eoc = TRUE ;
 
-            if ( 0 == _pushCount )
+            if ( !_pushedAtThisTime && _pushedAtAnyTime )
             {
                goto error ;
             }
@@ -371,12 +373,13 @@ namespace engine
             }
          }
      }
-     else if ( 0 == _pushCount )
+     else if ( !_pushedAtThisTime )
      {
         _preObj = next.mergedObj() ;
      }
 
-     ++_pushCount ;
+     _pushedAtThisTime = TRUE ;
+     _pushedAtAnyTime = TRUE ;
 
    done:
       return rc ;
@@ -413,7 +416,7 @@ namespace engine
       }
 
       // clear push count
-      _pushCount = 0 ;
+      _pushedAtThisTime = FALSE ;
 
    done:
       return rc ;

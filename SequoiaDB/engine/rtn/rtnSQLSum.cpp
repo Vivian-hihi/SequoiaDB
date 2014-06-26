@@ -58,8 +58,7 @@ namespace engine
       {
          if ( !_effective )
          {
-            //builder.appendNull( _alias.toString() ) ;
-            builder.append( _alias.toString(), 0 ) ;
+            builder.appendNull( _alias.toString() ) ;
          }
          else
          {
