@@ -100,6 +100,56 @@
 </table>
 </li>
 
+        <li class="li"><p class="p">Close the firewall</p>
+ <p class="p"/>
+<table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+            <th valign="bottom" align="left" id="d76413e102" class="stentry">Configuration Item </th>
+
+            <th valign="bottom" align="left" id="d76413e105" class="stentry">Configuration method</th>
+
+            <th valign="bottom" align="left" id="d76413e108" class="stentry">Verification method</th>
+
+          </tr>
+<tr class="strow"/>
+<tr class="strow">
+            <td valign="top" headers="d76413e102" class="stentry"> Close the firewall</td>
+
+            <td valign="top" headers="d76413e105" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
+<ul class="ul">
+              <li class="li">For SUSE：<p class="p">1.SuSEfirewall2 stop；</p>
+
+                <p class="p">2.chkconfig SuSEfirewall2_setup；</p>
+</li>
+
+              <li class="li">For RedHat：<p class="p">1.service iptables stop；</p>
+<p class="p">2.chkconfig iptables off；</p>
+ </li>
+
+              <li class="li">For Ubuntu：<p class="p">1.ufw disable；</p>
+</li>
+
+            </ul>
+</td>
+
+            <td valign="top" headers="d76413e108" class="stentry"><ul class="ul">
+              <li class="li">For SUSE：<p class="p"> chkconfig -list | grep fire；</p>
+
+              </li>
+
+              <li class="li">For RedHat：<p class="p">service iptables status；</p>
+ </li>
+
+              <li class="li">For Ubuntu：<p class="p">ufw status；</p>
+</li>
+
+            </ul>
+</td>
+
+          </tr>
+<tr class="strow"/>
+</table>
+</li>
+
       </ul>
 
       <div class="note note"><span class="notetitle">Note:</span> Each database server should be configured.</div>

@@ -43,26 +43,26 @@
               <stentry>Check with "ping sdbserver2"</stentry>
             </strow>
         </simpletable></li>
-        <li><p>关闭防火墙</p> <p/><simpletable>
+        <li><p>Close the firewall</p> <p/><simpletable>
           <sthead>
-            <stentry>配置项 </stentry>
-            <stentry>配置方法</stentry>
-            <stentry>验证方法</stentry>
+            <stentry>Configuration Item </stentry>
+            <stentry>Configuration method</stentry>
+            <stentry>Verification method</stentry>
           </sthead>
           <strow/>
           <strow>
-            <stentry> 关闭防火墙</stentry>
-            <stentry>关闭防火墙操作，需要管理员权限。<p></p><ul>
-              <li>对于SUSE：<p>1.SuSEfirewall2 stop；</p>
+            <stentry> Close the firewall</stentry>
+            <stentry>Close the firewall operation, need administrator privileges.<p></p><ul>
+              <li>For SUSE：<p>1.SuSEfirewall2 stop；</p>
                 <p>2.chkconfig SuSEfirewall2_setup；</p></li>
-              <li>对于RedHat：<p>1.service iptables stop；</p><p>2.chkconfig iptables off；</p> </li>
-              <li>对于Ubuntu：<p>1.ufw disable；</p></li>
+              <li>For RedHat：<p>1.service iptables stop；</p><p>2.chkconfig iptables off；</p> </li>
+              <li>For Ubuntu：<p>1.ufw disable；</p></li>
             </ul></stentry>
             <stentry><ul>
-              <li>对于SUSE：<p> chkconfig -list | grep fire；</p>
+              <li>For SUSE：<p> chkconfig -list | grep fire；</p>
               </li>
-              <li>对于RedHat：<p>service iptables status；</p> </li>
-              <li>对于Ubuntu：<p>ufw status；</p></li>
+              <li>For RedHat：<p>service iptables status；</p> </li>
+              <li>For Ubuntu：<p>ufw status；</p></li>
             </ul></stentry>
           </strow>          
           <strow/>
