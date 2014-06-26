@@ -58,8 +58,12 @@ namespace engine
    {
    }
 
-   void iPmdProc::stop()
+   void iPmdProc::stop( INT32 sigNum )
    {
+      if ( 0 != sigNum )
+      {
+         PD_LOG( PDEVENT, "Recieved signal[%d], stop...", sigNum ) ;
+      }
       _isRunning = FALSE;
    }
 

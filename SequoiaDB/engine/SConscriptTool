@@ -52,6 +52,7 @@ ossFiles = [
       "oss/ossProc.cpp",
       "oss/ossNPipe.cpp",
       "oss/ossLatch.cpp",
+	  "oss/ossEvent.cpp",
       "oss/ossDynamicLoad.cpp",
       "oss/ossHdfs.cpp",
       "oss/ossShMem.cpp"

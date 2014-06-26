@@ -307,7 +307,9 @@ namespace engine
                   "_procInfo can't be null, call active at first" );
       BOOLEAN isRunning = FALSE;
       static BOOLEAN isFirstRun = TRUE;
-      _pid = OSS_INVALID_PID;
+      _pid = OSS_INVALID_PID ;
+      BOOLEAN stop = FALSE ;
+
       if ( _procInfo != NULL )
       {
          pmdDMNProcInfo procInfo = *_procInfo;
@@ -316,8 +318,7 @@ namespace engine
             INT32 rc = SDB_OK;
             isRunning = TRUE;
             _deadTime = 0;
-            if ( OSS_INVALID_PID == procInfo.pid
-               && !isFirstRun )
+            if ( OSS_INVALID_PID == procInfo.pid && !isFirstRun )
             {
                isRunning = FALSE;
             }
@@ -330,10 +331,10 @@ namespace engine
             {
                PD_LOG( PDERROR, "Failed to process command(rc=%d)", rc ) ;
             }
-            _pid = procInfo.pid;
-            ++(_procInfo->sn);
-            _procInfo->pid = OSS_INVALID_PID;
-            _procInfo->stat = PMDDMN_SHM_STAT_CHILDREN;
+            _pid = procInfo.pid ;
+            ++( _procInfo->sn ) ;
+            _procInfo->pid = OSS_INVALID_PID ;
+            _procInfo->stat = PMDDMN_SHM_STAT_CHILDREN ;
          }
          else if ( _deadTime++ < PMDDMN_SHMSTAT_EXPRIRED_TIMES )
          {
@@ -352,14 +353,19 @@ namespace engine
    {
       if ( PMDDMN_SHM_CMD_DMN_QUIT == cmd )
       {
-         iPmdProc::stop();
-         PD_LOG( PDEVENT, "stop by children-process!" );
+         iPmdProc::stop( 0 ) ;
+         PD_LOG( PDEVENT, "stop by children-process!" ) ;
       }
       return SDB_OK;
    }
 
    INT32 iPmdDMNChildProc::ChildProcessCMD( INT32 cmd )
    {
+      if ( PMDDMN_SHM_CMD_CHL_QUIT == cmd )
+      {
+         iPmdProc::stop( 0 ) ;
+         PD_LOG( PDEVENT, "stop by parent-process!" ) ;
+      }
       return SDB_OK;
    }
 
@@ -398,6 +404,36 @@ namespace engine
    void iPmdDMNChildProc::deactive()
    {
       freeSHM();
+   }
+
+   void iPmdDMNChildProc::lock()
+   {
+#if defined ( _WINDOWS )
+      _mutex.get() ;
+#endif // _WINDOWS
+   }
+
+   void iPmdDMNChildProc::unlock()
+   {
+#if defined ( _WINDOWS )
+      _mutex.release() ;
+#endif // _WINDOWS
+   }
+
+   void iPmdDMNChildProc::signal()
+   {
+#if defined ( _WINDOWS )
+      _event.signalAll() ;
+#endif // _WINDOWS
+   }
+
+   INT32 iPmdDMNChildProc::wait( INT64 timeout )
+   {
+#if defined ( _WINDOWS )
+      return _event.wait( timeout ) ;
+#else
+      return SDB_OK ;
+#endif // _WINDOWS
    }
 
    INT32 iPmdDMNChildProc::start()
@@ -445,25 +481,36 @@ namespace engine
       if ( NULL != _procInfo )
       {
          INT32 tryTimes = 0;
-         BOOLEAN isForce = FALSE;
+         BOOLEAN isForce = FALSE ;
          while( isChildRunning() )
          {
             if ( tryTimes++ >= PMDDMN_STOP_CHILD_MAX_TRY_TIMES )
             {
-               isForce = TRUE;
+               isForce = TRUE ;
             }
             if ( OSS_INVALID_PID != _pid )
             {
-               ossTerminateProcess( _pid, isForce );
-               ossSleep( PMDDMN_STOP_CHILD_WAIT_TIME );
-               PD_LOG( PDEVENT, "stop the service process(%u)...",
-                     _pid );
+               if ( !isForce && _procInfo )
+               {
+                  _procInfo->stat = PMDDMN_SHM_STAT_CHILDREN ;
+                  _procInfo->setCHLCMD( PMDDMN_SHM_CMD_CHL_QUIT ) ;
+               }
+#if defined ( _WINDOWS )
+               else
+               {
+#endif // _WINDOWS
+                  ossTerminateProcess( _pid, isForce ) ;
+#if defined ( _WINDOWS )
+               }
+#endif // _WINDOWS
+               ossSleep( PMDDMN_STOP_CHILD_WAIT_TIME ) ;
+               PD_LOG( PDEVENT, "stop the service process(%d)...", _pid ) ;
             }
             else if ( tryTimes >= PMDDMN_STOP_CHILD_MAX_TRY_TIMES )
             {
                break;
             }
-            ossSleep( PMDDMN_INTERVAL_TIME_DMN );
+            ossSleep( PMDDMN_INTERVAL_TIME_DMN ) ;
          }
       }
       return SDB_OK;
@@ -473,35 +520,37 @@ namespace engine
    {
       _syncExit = FALSE;
       INT32 rc = SDB_OK;
+
       while( isRunning() )
       {
          rc = attachSHM();
          if ( SDB_OK == rc )
          {
-            if ( _procInfo->isInit()
-               && PMDDMN_SHM_STAT_DAEMON != _procInfo->stat )
+            if ( _procInfo->isInit() &&
+                 PMDDMN_SHM_STAT_DAEMON != _procInfo->stat )
             {
-               _procInfo->pid = ossGetCurrentProcessID();
-               rc = ChildProcessCMD( _procInfo->cmd );
+               _procInfo->pid = ossGetCurrentProcessID() ;
+               rc = ChildProcessCMD( _procInfo->getCHLCMD() ) ;
                if ( SDB_OK != rc )
                {
-                  PD_LOG( PDERROR,
-                        "failed to process command(rc=%d)", rc );
+                  PD_LOG( PDERROR, "Failed to process command(rc=%d)", rc ) ;
                }
-               ++(_procInfo->sn);
-               _procInfo->stat = PMDDMN_SHM_STAT_DAEMON;
+               ++( _procInfo->sn ) ;
+               _procInfo->stat = PMDDMN_SHM_STAT_DAEMON ;
             }
-            detachSHM();
+            detachSHM() ;
          }
-         ossSleep( PMDDMN_INTERVAL_TIME );
+         ossSleep( PMDDMN_INTERVAL_TIME ) ;
       }
       rc = attachSHM();
       if ( SDB_OK == rc )
       {
          if ( _procInfo->isInit() )
          {
-            PD_LOG( PDEVENT, "stop service..." );
-            rc = _procInfo->setDMNCMD( PMDDMN_SHM_CMD_DMN_QUIT );
+            PD_LOG( PDEVENT, "stop service..." ) ;
+            _procInfo->pid = OSS_INVALID_PID ;
+            _procInfo->stat = PMDDMN_SHM_STAT_DAEMON ;
+            rc = _procInfo->setDMNCMD( PMDDMN_SHM_CMD_DMN_QUIT ) ;
             if ( SDB_OK !=rc )
             {
                PD_LOG( PDWARNING, "daemon process is not stop!" );
@@ -578,9 +627,12 @@ namespace engine
 
    INT32 cPmdDaemon::_run( INT32 argc, CHAR **argv )
    {
-      INT32 rc = SDB_OK;
-      INT32 retryTimes = 0;
+      INT32 rc = SDB_OK ;
+      INT32 retryTimes = 0 ;
+      BOOLEAN isChildRunning = FALSE ;
+
       SDB_ASSERT( _process, "children process can't be null!" );
+
       if ( NULL == _process )
       {
          rc = SDB_INVALIDARG;
@@ -595,7 +647,11 @@ namespace engine
                         retryTimes );
          }*/
 
-         if ( !( _process->isChildRunning() ) )
+         _process->lock() ;
+         isChildRunning = _process->isChildRunning() ;
+         _process->unlock() ;
+
+         if ( !isChildRunning && isRunning() )
          {
             PD_LOG( PDEVENT, "Start the service process...(times:%d)",
                     retryTimes );
@@ -613,6 +669,8 @@ namespace engine
          }
          ossSleep( PMDDMN_INTERVAL_TIME_DMN );
       }
+      _process->signal() ;
+
    done:
       return rc;
    error:
@@ -644,9 +702,14 @@ namespace engine
 
    void cPmdDaemon::stop()
    {
+      iPmdProc::stop( 0 ) ;
       if ( NULL != _process )
       {
-         _process->stop();
+         _process->lock() ;
+         _process->stop() ;
+         _process->unlock() ;
+
+         _process->wait() ;
       }
    }
 }

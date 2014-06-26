@@ -53,7 +53,7 @@ namespace engine
       static BOOLEAN isRunning() ;
 
    public:
-      static void stop();
+      static void stop( INT32 sigNum );
 
    private:
       static BOOLEAN                _isRunning ;

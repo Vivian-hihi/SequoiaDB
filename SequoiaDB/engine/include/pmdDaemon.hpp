@@ -43,6 +43,8 @@
 #include "ossShMem.hpp"
 #include "oss.h"
 #include "pmdProc.hpp"
+#include "ossEvent.hpp"
+#include "ossLatch.hpp"
 
 namespace engine
 {
@@ -52,8 +54,11 @@ namespace engine
 #define PMDDMN_SVCNAME_DEFAULT            "sdbcmd"
 #define PMDDMN_SHM_TAG                    "sequoiadbDMN"
 #define PMDDMN_SHMSTAT_EXPRIRED_TIMES     10
-#define PMDDMN_STOP_CHILD_MAX_TRY_TIMES   3
+#define PMDDMN_STOP_CHILD_MAX_TRY_TIMES   60
 #define PMDDMN_STOP_CHILD_WAIT_TIME       (5*1000)
+
+#define PMDDMN_STOP_WAIT_TIME             (60*1000)
+
 #if defined (_LINUX)
    #define PMDDMN_SHMKEY_DEFAULT          50010
 #elif defined (_WINDOWS)
@@ -68,23 +73,24 @@ namespace engine
 
    enum pmdDMNSHMCmd
    {
-      PMDDMN_SHM_CMD_INVALID = 0,
+      PMDDMN_SHM_CMD_INVALID     = 0,
 
       // daemon command:
-      PMDDMN_SHM_CMD_DMN_BEGIN = 1,
-      PMDDMN_SHM_CMD_DMN_QUIT = 2,
+      PMDDMN_SHM_CMD_DMN_BEGIN   = 1,
+      PMDDMN_SHM_CMD_DMN_QUIT    = 2,
 
-      PMDDMN_SHM_CMD_DMN_END = 255,
+      PMDDMN_SHM_CMD_DMN_END     = 0x00FF,
 
       // children command:
-      PMDDMN_SHM_CMD_CHL_BEGIN = 0xff00,
+      PMDDMN_SHM_CMD_CHL_BEGIN   = 0x0100,
+      PMDDMN_SHM_CMD_CHL_QUIT    = 0x0200,
 
-      PMDDMN_SHM_CMD_CHL_END = 0xffff
+      PMDDMN_SHM_CMD_CHL_END     = 0xFF00
    };
    typedef struct _pmdDMNProcInfo
    {
-#define PMDDMN_SHM_CMD_DMN_MASK        0x00ff
-#define PMDDMN_SHM_CMD_CHL_MASK        0xff00
+#define PMDDMN_SHM_CMD_DMN_MASK        0x00FF
+#define PMDDMN_SHM_CMD_CHL_MASK        0xFF00
       CHAR           szTag[32];
       OSSPID         pid;
       pmdDMNSHMStat  stat;
@@ -121,6 +127,11 @@ namespace engine
       INT32 active();
       void  deactive();
 
+      void  lock() ;
+      void  unlock() ;
+      void  signal() ;
+      INT32 wait( INT64 timeout = PMDDMN_STOP_WAIT_TIME ) ;
+
    private:
       INT32 allocSHM( ossSHMKey shmKey );
       INT32 allocSHM();
@@ -140,6 +151,11 @@ namespace engine
       ossSHMKey            _shmKey;
       BOOLEAN              _syncExit;
       OSSPID               _pid;
+#if defined ( _WINDOWS )
+      ossSpinXLatch        _mutex ;
+      ossEvent             _event ;
+#endif // _WINDOWS
+
    };
 
    class cPmdDaemon : public iPmdProc
