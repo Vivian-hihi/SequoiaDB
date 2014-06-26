@@ -69,22 +69,16 @@
 using namespace std;
 namespace po = boost::program_options;
 
-#define ADD_PARAM_OPTIONS_BEGIN( desc )\
-        desc.add_options()
-
-#define ADD_PARAM_OPTIONS_END ;
-
-#define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 #define COMMANDS_OPTIONS \
-       ( COMMANDS_STRING(PMD_OPTION_HELP, ",h"),                          "help" )\
-       ( COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configure file path" )
+       ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" ) \
+       ( PMD_COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configure file path" )
 
 // initialize options
 void init ( po::options_description &desc )
 {
-   ADD_PARAM_OPTIONS_BEGIN ( desc )
+   PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
       COMMANDS_OPTIONS
-   ADD_PARAM_OPTIONS_END
+   PMD_ADD_PARAM_OPTIONS_END
 }
 
 void displayArg ( po::options_description &desc )
@@ -585,7 +579,7 @@ done :
    if ( pArgumentBuffer )
       SDB_OSS_FREE ( pArgumentBuffer ) ;
    PD_TRACE_EXITRC ( SDB_SDBSTART_MAIN, rc );
-   return rc ;
+   return SDB_OK == rc ? 0 : 1 ;
 error :
    goto done ;
 }
