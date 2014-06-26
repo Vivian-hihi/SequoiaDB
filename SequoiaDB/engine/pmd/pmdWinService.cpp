@@ -60,7 +60,7 @@ BOOLEAN pmdWinSvcReportStatusToSCMgr( DWORD dwStatus );
 
 //PD_TRACE_DECLARE_FUNCTION ( SDB_PMDWINSTARTSVC, "pmdWinstartService" )
 INT32 WINAPI pmdWinstartService( const CHAR *pServiceName,
-                        PMD_WINSERVICE_FUNC svcFun )
+                                 PMD_WINSERVICE_FUNC svcFun )
 {
    INT32 rc = SDB_OK;
    //PD_TRACE_ENTRY ( SDB_PMDWINSTARTSVC );
@@ -75,8 +75,8 @@ INT32 WINAPI pmdWinstartService( const CHAR *pServiceName,
    PD_CHECK( nameLen <= PMD_WINSVC_SVCNAME_MAX_LEN, SDB_INVALIDARG, error,
             PDERROR, "invalid service name size(%u)", nameLen );
    //ossStrcpy( g_service_name, pServiceName );
-   MultiByteToWideChar(CP_ACP, 0, pServiceName, -1,
-                     g_service_name, PMD_WINSVC_SVCNAME_MAX_LEN );
+   MultiByteToWideChar( CP_ACP, 0, pServiceName, -1,
+                        g_service_name, PMD_WINSVC_SVCNAME_MAX_LEN );
    g_service_fun = svcFun;
    
    SERVICE_TABLE_ENTRY serviceTable[] = {
