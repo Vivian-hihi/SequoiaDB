@@ -42,8 +42,8 @@ namespace engine
 {
    #define RTN_EXPLAIN_FULLNAME "FullName"
    #define RTN_EXPLAIN_SCANTYPE "ScanType"
-   #define RTN_EXPLAIN_IXMSCAN "IdxScan"
-   #define RTN_EXPLAIN_TBLSCAN "TblScan"
+   #define RTN_EXPLAIN_IXMSCAN "IXSCAN"
+   #define RTN_EXPLAIN_TBLSCAN "TBSCAN"
    #define RTN_EXPLAIN_USR_EX_SORT "UseExtSort"
    #define RTN_EXPLAIN_IDXNAME "IdxName"
    #define RTN_EXPLAIN_NODE "Node"
