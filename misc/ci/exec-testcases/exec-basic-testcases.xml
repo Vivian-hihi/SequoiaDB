@@ -202,7 +202,7 @@
 		
 		
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="120000000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
 			<arg line="${sdb.cmd.argument}" />
 		</exec>
 
