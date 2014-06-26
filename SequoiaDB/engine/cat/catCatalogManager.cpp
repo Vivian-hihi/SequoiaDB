@@ -616,7 +616,11 @@ namespace engine
          if ( Array == gpInfo.type() ||
               Object == gpInfo.type() )
          {
-            arrBuilder.append( gpInfo.embeddedObject().firstElement() ) ;
+            BSONObjIterator itr( gpInfo.embeddedObject() ) ;
+            while ( itr.more() )
+            {
+               arrBuilder << itr.next() ;
+            }
             BSONObj replyObj = BSON( CAT_GROUP_NAME << arrBuilder.arr() ) ;
             replyBodyLen = replyObj.objsize() ;
             *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyBodyLen ) ;
@@ -2871,7 +2875,7 @@ namespace engine
       alterInfo._version = catSet.getVersion() ;
       ++alterInfo._version ;
 
-      if ( 1 != catSet.groupCount() )
+      if ( catSet.isSharding() || catSet.isMainCL() )
       {
          /// this is a splited collection or a main cl. we can only change replsize or auto rebalance.
          BSONObjBuilder builder ;
