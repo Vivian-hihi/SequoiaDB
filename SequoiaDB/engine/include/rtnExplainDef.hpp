@@ -48,7 +48,7 @@ namespace engine
    #define RTN_EXPLAIN_IDXNAME "IdxName"
    #define RTN_EXPLAIN_NODE "Node"
    #define RTN_EXPLAIN_RETURNNUM "ReturnNum"
-   #define RTN_EXPLAIN_MILLIS "Millis"
+   #define RTN_EXPLAIN_ETIME "ElapsedTime"
    #define RTN_EXPLAIN_IDXREAD "IdxRead"
    #define RTN_EXPLAIN_DATAREAD "DataRead"
    #define RTN_EXPLAIN_USRCPU "UsrCpu"   

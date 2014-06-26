@@ -2375,7 +2375,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_MILLIS ) ;
+         ele = obj.getField( RTN_EXPLAIN_ETIME ) ;
          if ( !ele.isNumber() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",

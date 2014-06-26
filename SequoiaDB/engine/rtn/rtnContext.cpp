@@ -4915,8 +4915,8 @@ namespace engine
       _builder.appendNumber( RTN_EXPLAIN_RETURNNUM, _recordNum ) ;
       UINT64 beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
       UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
-      _builder.append( RTN_EXPLAIN_MILLIS,
-                       FLOAT64( ( endTime - beginTime ) / 1000.0 ) ) ; 
+      _builder.append( RTN_EXPLAIN_ETIME,
+                       FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ; 
       
       BSONElement begin = _beginMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
       BSONElement end = _endMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
