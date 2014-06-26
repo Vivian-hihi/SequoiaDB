@@ -69,10 +69,13 @@ class client(object):
 
    def __getattr__(self, name):
 
-      cs = collectionspace()
-      rc = sdbclient.get_collection_space(self._client, name, cs._cs)
+      if '__members__' == name or '__methods__' == name:
+         pass
+      else:
+         cs = collectionspace()
+         rc = sdbclient.get_collection_space(self._client, name, cs._cs)
 
-      return cs
+         return cs
 
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):

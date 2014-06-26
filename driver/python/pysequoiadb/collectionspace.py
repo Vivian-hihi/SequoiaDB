@@ -53,10 +53,13 @@ class collectionspace(object):
 
    def __getattr__(self, name):
 
-      cl = collection()
-      rc = sdbcs.get_collection(self._cs, name, cl._cl)
-
-      return cl
+      if '__members__' == name or '__methods__' == name:
+         pass
+      else:
+         cl = collection()
+         rc = sdbcs.get_collection(self._cs, name, cl._cl)
+         pysequoiadb.check_error(rc)
+         return cl
 
    def __getitem__(self, name):
 
