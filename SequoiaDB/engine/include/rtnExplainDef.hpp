@@ -53,7 +53,7 @@ namespace engine
    #define RTN_EXPLAIN_DATAREAD "DataRead"
    #define RTN_EXPLAIN_USRCPU "UsrCpu"   
    #define RTN_EXPLAIN_SYSCPU "SysCpu"
-   #define RTN_EXPLAIN_SUBCL "subCollections"
+   #define RTN_EXPLAIN_SUBCL "SubCollections"
 }
 
 #endif
