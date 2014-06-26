@@ -111,28 +111,27 @@ all: to check data page corruption and formatted output data page. </td>
 <tr class="strow">
           <td valign="top" headers="d19478e51" class="stentry">--dumpdata -t </td>
 
-          <td valign="top" headers="d19478e54" class="stentry">specify whether to formatted output data or not(t<em class="ph i">true/false</em>),default is
+          <td valign="top" headers="d19478e54" class="stentry">The set operating data file(t<em class="ph i">true/false</em>),default is
               <em class="ph i">false</em>. </td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d19478e51" class="stentry">--dumpindex, -i </td>
 
-          <td valign="top" headers="d19478e54" class="stentry">specify whether to formatted output <em class="ph i">index</em> or
-              not(t<em class="ph i">true/false</em>),<em class="ph i">false</em> is default. </td>
+          <td valign="top" headers="d19478e54" class="stentry">The set operation index file(<em class="ph i">true/false</em>),<em class="ph i">false</em> is default. </td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d19478e51" class="stentry">--pagestart, -s </td>
 
-          <td valign="top" headers="d19478e54" class="stentry">specify the starting data page,<em class="ph i">0 </em>is default. </td>
+          <td valign="top" headers="d19478e54" class="stentry">Specifies the starting data pages,<em class="ph i">1 </em>is default. </td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d19478e51" class="stentry">--numpage, -n </td>
 
-          <td valign="top" headers="d19478e54" class="stentry">specify whether need to check or format the number of data page,default is
-              <em class="ph i">all</em></td>
+          <td valign="top" headers="d19478e54" class="stentry">Specifies the data pages need to detect or formatted number, when you specify the -s parameter is non negative, the parameters take effect,default is
+              <em class="ph i">1</em></td>
 
         </tr>
 <tr class="strow">
@@ -153,7 +152,7 @@ all: to check data page corruption and formatted output data page. </td>
         output  the data and indexes in all of collectionspaces and collections to <em class="ph i">output.txt</em>
         file .</p>
 
-      <pre class="pre codeblock">sdbinspt –d . –o output.txt –v true –a all –t true –i true</pre>
+      <pre class="pre codeblock">sdbinspt –d . –o output.txt –v true –a all –t true –i true –p true</pre>
 
     </div>
 

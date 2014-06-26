@@ -33,7 +33,7 @@
         </strow>
         <strow>
           <stentry>--verbose, -v </stentry>
-          <stentry>是否进行 ASCII 文本输出（true/false），默认为 true </stentry>
+          <stentry>是否进行 ASCII 文本输出（true/false），默认为true </stentry>
         </strow>
         <strow>
           <stentry>--csname, -c </stentry>
@@ -53,7 +53,7 @@
         </strow>
         <strow>
           <stentry>--dumpindex, -i </stentry>
-          <stentry>设定操作索引文件（true/false），默认为 false </stentry>
+          <stentry>设定操作索引文件（true/false），默认为false </stentry>
         </strow>
         <strow>
           <stentry>--pagestart, -s </stentry>

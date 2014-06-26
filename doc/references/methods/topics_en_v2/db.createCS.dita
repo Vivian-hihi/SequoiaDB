@@ -45,7 +45,7 @@
         <ul><li>The parameter "name" should not be null string. It should not contain "." or "$". The length of it should not be greater than 127B.</li>
           <li>Collection space names should be unique to each other in a database object.</li>
           <li>When creating a collection space, users can specify the size of data page. It is unchangable afterward. The default value of it is 65536B.</li>
-          <li>PageSize can only be one of the following six:0,4096,8192,16384,32768,and 65536. The default value is 0.</li>
+          <li>PageSize can only be one of the following six: 0, 4096, 8192, 16384, 32768, and 65536. The default value is 0.</li>
           <li>Domain must already exist, and cannot be SYSDOMAIN.</li>
           <li>It is compatible with earlier version interface, and function db.createCS(&lt;name>, [PageSize]) can alsobe used.</li>
         </ul></note>

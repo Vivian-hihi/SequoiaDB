@@ -48,7 +48,7 @@ node.
 .sp 2
 \fBconfig (json)\fR
 .br
-       parameter is optional, for more details on the
+       Parameter is optional, for more details on the
        configuration parameters, the format must be json format,
        database configuration parameters see a, If you need to
        configure the log size parameters {logfilesz:64}.

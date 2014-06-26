@@ -33,7 +33,7 @@
         </plentry>        
       </parml>      
       <note>
-        <ul><li>the value of param <i>name</i> can't be null, contain dot(.) or '$', the length of it must be not more than 127B.</li>
+        <ul><li>The value of param <i>name</i> can't be null, contain dot(.) or '$', the length of it must be not more than 127B.</li>
           <li>The collectionspace must be existed in the database.</li>
         </ul></note>
     </section>    

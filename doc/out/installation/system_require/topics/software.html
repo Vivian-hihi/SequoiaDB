@@ -52,7 +52,8 @@
 <tr class="strow">
               <td valign="top" headers="d53660e24" class="stentry"> 配置主机名</td>
 
-              <td valign="top" headers="d53660e27" class="stentry"> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<ul class="ul">
+              <td valign="top" headers="d53660e27" class="stentry"> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<p class="p"/>
+<ul class="ul">
                   <li class="li">对于SUSE：<p class="p">2.打开/etc/HOSTNAME文件；</p>
 <p class="p">  vi /etc/HOSTNAME</p>
 
@@ -65,7 +66,7 @@
 <p class="p">  vi
                       /etc/sysconfig/network</p>
 <p class="p">3.将HOSTNAME一行修改为
-                        HOSTNAME=sdbserver1，其中sdbserver1为新主机名</p>
+                        HOSTNAME=sdbserver1，其中sdbserver1为新主机名；</p>
  <p class="p">4.按 :wq 保存退出；</p>
 </li>
 
@@ -107,6 +108,56 @@
 2. ping sdbserver2（远端主机名）可以ping通</td>
 
             </tr>
+<tr class="strow"/>
+</table>
+</li>
+
+        <li class="li"><p class="p">关闭防火墙</p>
+ <p class="p"/>
+<table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+            <th valign="bottom" align="left" id="d53660e135" class="stentry">配置项 </th>
+
+            <th valign="bottom" align="left" id="d53660e138" class="stentry">配置方法</th>
+
+            <th valign="bottom" align="left" id="d53660e141" class="stentry">验证方法</th>
+
+          </tr>
+<tr class="strow"/>
+<tr class="strow">
+            <td valign="top" headers="d53660e135" class="stentry"> 关闭防火墙</td>
+
+            <td valign="top" headers="d53660e138" class="stentry">关闭防火墙操作，需要管理员权限。<p class="p"/>
+<ul class="ul">
+              <li class="li">对于SUSE：<p class="p">1.SuSEfirewall2 stop；</p>
+
+                <p class="p">2.chkconfig SuSEfirewall2_setup；</p>
+</li>
+
+              <li class="li">对于RedHat：<p class="p">1.service iptables stop；</p>
+<p class="p">2.chkconfig iptables off；</p>
+ </li>
+
+              <li class="li">对于Ubuntu：<p class="p">1.ufw disable；</p>
+</li>
+
+            </ul>
+</td>
+
+            <td valign="top" headers="d53660e141" class="stentry"><ul class="ul">
+              <li class="li">对于SUSE：<p class="p"> chkconfig -list | grep fire；</p>
+
+                </li>
+
+              <li class="li">对于RedHat：<p class="p">service iptables status；</p>
+ </li>
+
+              <li class="li">对于Ubuntu：<p class="p">ufw status；</p>
+</li>
+
+            </ul>
+</td>
+
+          </tr>
 <tr class="strow"/>
 </table>
 </li>

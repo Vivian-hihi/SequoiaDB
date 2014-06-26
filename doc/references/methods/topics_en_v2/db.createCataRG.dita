@@ -33,7 +33,7 @@
         </plentry>
         <plentry>
           <pt>config (json)</pt>
-          <pd>parameter is optional, for more details on the configuration parameters, the format must be json format, database configuration parameters see a, If you need to configure the log size parameters {logfilesz:64}.
+          <pd>Parameter is optional, for more details on the configuration parameters, the format must be json format, database configuration parameters see a, If you need to configure the log size parameters {logfilesz:64}.
             <parml>
               <plentry>
                 <pt>Format</pt>
