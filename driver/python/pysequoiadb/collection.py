@@ -208,6 +208,7 @@ class collection(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -226,6 +227,7 @@ class collection(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -270,6 +272,7 @@ class collection(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -296,6 +299,7 @@ class collection(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result

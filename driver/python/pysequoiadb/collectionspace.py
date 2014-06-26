@@ -69,6 +69,7 @@ class collectionspace(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del cl
          cl = None
 
       return rc, cl
@@ -88,6 +89,7 @@ class collectionspace(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del cl
          cl = None
 
       return rc, cl

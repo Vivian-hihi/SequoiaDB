@@ -65,15 +65,14 @@ class client(object):
 
    def __getitem__(self, name):
 
-
       return self.__getattr__(name)
 
    def __getattr__(self, name):
 
-         cs = collectionspace()
-         rc = sdbclient.get_collection_space(self._client, name, cs._cs)
+      cs = collectionspace()
+      rc = sdbclient.get_collection_space(self._client, name, cs._cs)
 
-         return cs
+      return cs
 
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
@@ -133,6 +132,7 @@ class client(object):
                                   bson_condition, bson_selector, bson_order_by)
       pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -169,6 +169,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -180,6 +181,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del cl
          cl = None
 
       return rc, cl
@@ -191,6 +193,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del cs
          cs = None
 
       return rc, cs
@@ -203,6 +206,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del cs
          cs = None
 
       return rc, cs
@@ -221,6 +225,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -232,6 +237,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -243,6 +249,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -255,6 +262,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -266,6 +274,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -278,6 +287,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del replica_group
          replica_group = None
 
       return rc, replica_group
@@ -313,6 +323,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -407,6 +418,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result
@@ -434,6 +446,7 @@ class client(object):
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
+         del result
          result = None
 
       return rc, result

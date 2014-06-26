@@ -96,6 +96,7 @@ class replicagroup(object):
       pysequoiadb.check_error(ret)
 
       if const.SDB_OK != ret:
+         del node
          node = None
 
       return ret, node
@@ -113,6 +114,7 @@ class replicagroup(object):
       pysequoiadb.check_error(ret)
 
       if const.SDB_OK != ret:
+         del node
          node = None
 
       return ret, node
@@ -131,6 +133,7 @@ class replicagroup(object):
       pysequoiadb.check_error(ret)
 
       if const.SDB_OK != ret:
+         del node
           node = None
 
       return ret, node
@@ -148,6 +151,7 @@ class replicagroup(object):
       pysequoiadb.check_error(ret)
 
       if const.SDB_OK != ret:
+         del node
          node = None
 
       return ret, node
