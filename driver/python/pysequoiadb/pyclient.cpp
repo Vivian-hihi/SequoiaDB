@@ -39,16 +39,18 @@ static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj    = NULL ;
    sdb *client      = NULL ;
    const char *host = NULL ;
+   const char *user = NULL ;
+   const char *psw  = NULL ;
    
    
-   if ( !PARSE_PYTHON_ARGS( args, "Osi", &obj, &host, &port ) )
+   if ( !PARSE_PYTHON_ARGS( args, "Osiss", &obj, &host, &port, &user, &psw ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-   rc = client->connect( host, port ) ;
+   rc = client->connect( host, port, user, psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;

@@ -37,7 +37,9 @@ class collectionspace(object):
    """CollectionSpace for SequoiaDB"""
    
    def __init__(self):
+      """invoked when a new object is producted.
 
+      """
       #'cs' is short for collection space
       try:
          self._cs = sdbcs.create_cs()
@@ -45,28 +47,56 @@ class collectionspace(object):
          pysequoiadb.check_error(const.SDM_OOM)
 
    def __del__(self):
+      """delete a object existed.
 
+      """
       if self._cs is not None:
          rc = sdbcs.release_cs(self._cs)
          pysequoiadb.check_error(rc)
          self._cs = None
 
    def __getattr__(self, name):
+      """support client.cs to access to collection.
 
+         eg.
+         cc = client()
+         cs = cc.test
+         cl = cs.test_cl  # access to collection named 'test_cl'
+
+         and we should pass '__members__' and '__methods__',
+         becasue dir(cc) will invoke __getattr__("__members__") and
+         __getattr__("__methods__").
+
+         if success, a collection object will be returned, or None.
+      """
       if '__members__' == name or '__methods__' == name:
          pass
       else:
          cl = collection()
          rc = sdbcs.get_collection(self._cs, name, cl._cl)
          pysequoiadb.check_error(rc)
+         if const.SDB_OK != rc:
+            del cl;
+            cl = None
          return cl
 
    def __getitem__(self, name):
-
+      """support [] to access to collection.
+      
+         eg.
+         cc = client()
+         cs = cc['test']
+         cl = cs['test_cl']# access to collection named 'test_cl'.
+      """
       return self.__getattr__(name)
 
+   @classmethod
    def get_collection(self, cl_name):
-
+      """get a collection by name.
+      
+         if success, a collection object will be returned with error code,
+         or collection object is None.
+      """
       cl = collection()
       rc = sdbcs.get_collection(self._cs, cl_name, cl._cl)
       pysequoiadb.check_error(rc)
@@ -77,8 +107,14 @@ class collectionspace(object):
 
       return rc, cl
 
+   @classmethod
    def create_collection(self, cl_name, options = static_object):
+      """create a collection using name and options.
 
+         options should be a dict. default value:None will be set.
+         if success, a collection object will be returned with error code,
+         or collection object is None.
+      """
       bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
@@ -97,15 +133,20 @@ class collectionspace(object):
 
       return rc, cl
 
+   @classmethod
    def drop_collection(self, cl_name):
+      """drop the specified collection
 
+      """
       rc = sdbcs.drop_collection(self._cs, cl_name)
       pysequoiadb.check_error(rc)
 
       return rc
 
+   @classmethod
    def get_collection_space_name(self):
-
+      """get the collection space name of current collection located in.
+      """
       _, cs_name = sdbcs.get_collection_space_name(self._cs)
       pysequoiadb.check_error(_)
 

@@ -119,8 +119,8 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args )
    sdbCollection *cl           = NULL ;
    const bson::BSONObj *option = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OsOO", &obj, &cl_name, &cl_object,
-                                          &bson_option ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OsOO", &obj, &cl_name, &bson_option,
+                                                          &cl_object ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;

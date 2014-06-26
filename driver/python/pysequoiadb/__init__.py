@@ -64,7 +64,10 @@ def printInfo(what):
 
 def check_error(rc):
    if const.SDB_OK != rc:
-      printInfo( OperationError("  Error: ", rc) )
+      printInfo( OperationError("  Error code: ", rc) )
+
+def getErr(rc):
+   return OparationError("", rc)
 
 #def check_error( rc ):
 #   if const.SDB_OK != rc:

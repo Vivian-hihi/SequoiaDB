@@ -710,7 +710,7 @@ static PyMethodDef sdbcollection_methods[] = {
    {"insert",                    insert,                    METH_VARARGS},
    {"update",                    update,                    METH_VARARGS},
    {"upsert",                    upsert,                    METH_VARARGS},
-   {"del",                       del,                       METH_VARARGS},
+   {"delete",                    del,                       METH_VARARGS},
    {"query",                     query,                     METH_VARARGS},
    {"create_index",              create_index,              METH_VARARGS},
    {"get_index",                 get_index,                 METH_VARARGS},

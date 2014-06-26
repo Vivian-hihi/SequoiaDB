@@ -134,7 +134,7 @@ class replicagroup(object):
 
       if const.SDB_OK != ret:
          del node
-          node = None
+         node = None
 
       return ret, node
 
