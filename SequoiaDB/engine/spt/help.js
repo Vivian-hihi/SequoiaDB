@@ -13,7 +13,6 @@ var help = function( val ) {
       println("   db.cs.cl.find({a:1})                   list records where a=1");
       println("   db.cs.cl.find().help()                 help on find methods");
       println("   db.cs.cl.count().help()                help on count methods");
-      println("   domain.help()                          help on domain methods");
       println("   print(x), println(x)                   print out x");
       println("   traceFmt(<type>,<in>,<out>)            format trace input(in) to output(out) by type");
       println("   getErr(ret)                            print error description for return code");
