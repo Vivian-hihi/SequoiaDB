@@ -1,0 +1,170 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
+\fBcursor.explain()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+explain - Return the access plan of the current cursor.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+cousor.explain()
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Cursor
+.SH "DESCRIPTION"
+
+.sp 2
+Return the access plan of the current cursor.
+.sp 2
+\fBFullName (string)\fR
+.br
+       Collection Name.
+.sp 2
+\fBScanType (string)\fR
+.br
+       Scanning Type: TableScan: "TBSCAN"; IndexScan:"IXSCAN"
+.sp 2
+\fBIdxName (string)\fR
+.br
+       Index name.
+.sp 2
+\fBUseExtSort (bool)\fR
+.br
+       Whether use external sort or not.
+.sp 2
+\fBNode (string)\fR
+.br
+       Node Name.
+.sp 2
+\fBReturnNum (int64)\fR
+.br
+       Number of returned records.
+.sp 2
+\fBElapsedTime (float64)\fR
+.br
+       Elapsed Time(seconds).
+.sp 2
+\fBIdxRead (int64)\fR
+.br
+       Number of Index read.
+.sp 2
+\fBDataRead (int64)\fR
+.br
+       Number of data read.
+.sp 2
+\fBUsrCpu (float64)\fR
+.br
+       Time used by cpu in user mode(seconds).
+.sp 2
+\fBSysCpu (float64)\fR
+.br
+       Time used by cpu in kernel mode(seconds).
+.sp 2
+\fBSubCollections (Json Array)\fR
+.br
+       The access plan of each sub-collections of the
+       vertical-partitioning collection.
+.sp 2
+\fBNote: \fR
+.sp 2
+   *  If the collection is splitted into different replica
+   groups, each replica group will return its own access plan
+   correspondingly.
+.SH "Examples"
+
+.sp 2
+Suppose foo.bar is a horizontal-partitioning collection splitted
+in three replica groups.
+.sp 2
+db.foo.bar.find().sort({b:1}).explain()
+.sp 2
+Return:
+.sp 2
+{
+.br
+  "FullName": "foo.bar",
+.br
+  "ScanType": "TBSCAN",
+.br
+  "IdxName": "",
+.br
+  "UseExtSort": true,
+.br
+  "Node": "vmsvr2-cent-x64:40020",
+.br
+  "ReturnNum": 0,
+.br
+  "ElapsedTime": 0.000477,
+.br
+  "IdxRead": 0,
+.br
+  "DataRead": 38,
+.br
+  "UsrCpu": 0,
+.br
+  "SysCpu": 0
+.br
+}
+.br
+{
+.br
+  "FullName": "foo.bar",
+.br
+  "ScanType": "TBSCAN",
+.br
+  "IdxName": "",
+.br
+  "UseExtSort": true,
+.br
+  "Node": "vmsvr2-cent-x64:40000",
+.br
+  "ReturnNum": 0,
+.br
+  " ElapsedTime ": 0.000415,
+.br
+  "IdxRead": 0,
+.br
+  "DataRead": 34,
+.br
+  "UsrCpu": 0,
+.br
+  "SysCpu": 0
+.br
+}
+.br
+{
+.br
+  "FullName": "foo.bar",
+.br
+  "ScanType": "TBSCAN",
+.br
+  "IdxName": "",
+.br
+  "UseExtSort": true,
+.br
+  "Node": "vmsvr2-cent-x64:40010",
+.br
+  "ReturnNum": 0,
+.br
+  " ElapsedTime ": 0.000517,
+.br
+  "IdxRead": 0,
+.br
+  "DataRead": 28,
+.br
+  "UsrCpu": 0,
+.br
+  "SysCpu": 0
+.br
+}
