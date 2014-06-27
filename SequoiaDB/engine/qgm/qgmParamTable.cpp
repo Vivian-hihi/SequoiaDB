@@ -37,7 +37,7 @@
 
 #include "qgmParamTable.hpp"
 #include "pd.hpp"
-#include "util2Bsonobj.hpp"
+#include "utilStr.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 
@@ -89,8 +89,9 @@ namespace engine
       else if ( SQL_GRAMMAR::DATE == value.type )
       {
          bson::Date_t t ;
-         rc = utilStr2Datet( value.value.toString().c_str(),
-                             t ) ;
+         UINT64 millis = 0 ;
+         rc = utilStr2Date( value.value.toString().c_str(),
+                            millis ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDDEBUG, "failed to parse to Date_t:%s",
@@ -99,6 +100,7 @@ namespace engine
             goto error ;
          }
 
+         t.millis = millis ;
          builder.appendDate( "$const", t ) ;
       }
       else

@@ -57,9 +57,12 @@ namespace engine
                       CHAR *join,
                       UINT32 &joinSize ) ;
 
+   /// non-reentrant
    INT32 utilStr2TimeT( const CHAR *str,
                         time_t &tm,
                         UINT64 *usec = NULL ) ;
+
+   INT32 utilStr2Date( const CHAR *str, UINT64 &millis ) ;
 
    INT32 utilBuildFullPath( const CHAR *path, const CHAR *name,
                             UINT32 fullSize, CHAR *full ) ;

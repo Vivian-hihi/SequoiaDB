@@ -282,7 +282,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
    {
       std::string strValue ;
       jsval value ;
-      time_t tm ;
+      UINT64 tm ;
       bson_date_t datet ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
@@ -295,13 +295,13 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      if ( SDB_OK != engine::utilStr2TimeT( strValue.c_str(),
-                                            tm ) )
+      if ( SDB_OK != engine::utilStr2Date( strValue.c_str(),
+                                           tm ) )
       {
          goto error ;
       }
 
-      datet = tm * 1000 ;
+      datet = tm ;
       bson_append_date( bs, key, datet ) ;
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_REGEX ) &&

@@ -38,6 +38,7 @@
 #include "pd.hpp"
 #include <boost/xpressive/xpressive_dynamic.hpp>
 
+using namespace boost::xpressive ;
 namespace engine
 {
    INT32 utilStrTrimBegin( const CHAR *src, const CHAR *&begin )
@@ -202,9 +203,14 @@ namespace engine
       INT32 second = 0 ;
       INT32 micros = 0 ;
 
-      if ( NULL != usec )
+      static cregex reg = cregex::compile("^((((1[6-9]|[2-9]\\d)\\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\\d|3[01]))|(((1[6-9]|[2-9]\\d)\\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\\d|30))|(((1[6-9]|[2-9]\\d)\\d{2})-0?2-(0?[1-9]|1\\d|2[0-8]))|(((1[6-9]|[2-9]\\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))-0?2-29-))-(20|21|22|23|[0-1]?\\d).[0-5]?\\d.[0-5]?\\d(.[0-9]{6})?$") ;
+      if ( !( regex_match( str, reg ) ) )
       {
-         if ( !sscanf ( str,
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !sscanf ( str,
                      "%d-%d-%d-%d.%d.%d.%d",
                      &year   ,
                      &month  ,
@@ -213,18 +219,9 @@ namespace engine
                      &minute ,
                      &second ,
                      &micros ) )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-      }
-      else
       {
-         if ( !sscanf( str, "%d-%d-%d", &year, &month, &day ) )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
 
       t.tm_year  = year - 1900  ;
@@ -241,6 +238,45 @@ namespace engine
          *usec = micros ;
       }
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 utilStr2Date( const CHAR *str, UINT64 &millis )
+   {
+      INT32 rc = SDB_OK ;
+      struct tm t ;
+      time_t timep ;
+      memset ( &t, 0, sizeof(t) ) ;
+      INT32 year   = 0 ;
+      INT32 month  = 0 ;
+      INT32 day    = 0 ;
+
+      static cregex reg = cregex::compile("^((((1[6-9]|[2-9]\\d)\\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\\d|3[01]))|(((1[6-9]|[2-9]\\d)\\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\\d|30))|(((1[6-9]|[2-9]\\d)\\d{2})-0?2-(0?[1-9]|1\\d|2[0-8]))|(((1[6-9]|[2-9]\\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))-0?2-29-))$") ;
+      if ( !( regex_match( str, reg ) ) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !sscanf ( str,
+                     "%d-%d-%d",
+                     &year   ,
+                     &month  ,
+                     &day ) )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      t.tm_year  = year - 1900  ;
+      t.tm_mon   = month - 1 ;
+      t.tm_mday  = day    ;
+
+      timep = mktime( &t ) ;
+      millis = timep * 1000 ;
    done:
       return rc ;
    error:
@@ -316,7 +352,6 @@ namespace engine
 
    BOOLEAN isValidIPV4( const CHAR *ip )
    {
-using namespace boost::xpressive ;
       static cregex reg = cregex::compile( "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]" \
                                             "|[1-9][0-9]|[1-9])[.](25[0-5]|" \
                                             "2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]" \

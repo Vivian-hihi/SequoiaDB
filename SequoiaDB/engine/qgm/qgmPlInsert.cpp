@@ -42,9 +42,9 @@
 #include "rtn.hpp"
 #include "msgMessage.hpp"
 #include "qgmUtil.hpp"
-#include "util2Bsonobj.hpp"
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
+#include "utilStr.hpp"
 #include <sstream>
 
 using namespace bson ;
@@ -116,8 +116,9 @@ namespace engine
             else if ( SQL_GRAMMAR::DATE == itr2->type )
             {
                Date_t t ;
-               rc = utilStr2Datet( itr2->value.toString().c_str(),
-                                   t ) ;
+               UINT64 millis = 0 ;
+               rc = utilStr2Date( itr2->value.toString().c_str(),
+                                  millis ) ;
                if ( SDB_OK != rc )
                {
                    PD_LOG( PDDEBUG, "failed to parse to Date_t:%s",
@@ -126,6 +127,7 @@ namespace engine
                    goto error ;
                }
 
+               t.millis = millis ;
                builder.appendDate( itr1->value.toString(), t ) ;
             }
             else

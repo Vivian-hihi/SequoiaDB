@@ -84,7 +84,6 @@ utilFiles = [
       ]
 
 util2Files = [
-     "util/util2Bsonobj.cpp",
      "bson/bsonobj.cpp",
      "bson/oid.cpp",
      "bson/base64.cpp",

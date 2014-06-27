@@ -111,7 +111,6 @@ utilFiles = [
       "util/utilParseCSV.cpp",
       "util/utilAccessDataLocalIO.cpp",
       "util/utilAccessDataHdfs.cpp",
-      "util/util2Bsonobj.cpp",
       "util/utilParam.cpp",
       "client/bson/numbers.c",
       "client/bson/bson.c",
