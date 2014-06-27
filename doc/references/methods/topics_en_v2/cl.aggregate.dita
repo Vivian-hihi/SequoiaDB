@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>aggregate - retrieve documents form the collection SequoiaDB's record, and return the cursor.</p>
+      <p>aggregate - retrieve the documents from the collection in the SequoiaDB and return a cursor.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,43 +17,42 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>aggregate() method with find() method function relatively close, but also retrieve documents form the 
-        collection SequoiaDB's record, and return the cursor.</p>
+      <p>The functions of aggregate() and find() are pretty similar to each other. It also retrieves the documents from the collection in the SequoiaDB and return a cursor.</p>
       <parml>        
         <plentry>
           <pt>subOp (json object)</pt>
-          <pd>subOp said sub-operation, In aggregate() method can fill 1~N sub-operation.
+          <pd>Sub-operation, 1 to N sub-operations can be filled in the aggregate() method.
             <p>aggregate() method has only one parameter subOp, which represents 1~N sub-operations,each sub-operation is a json 
-              object, separated by commas sub-operation. Aggregation framework supports the following sub-operating parameters:</p>
+              object, separated by commas sub-operation. Aggregation framework supports the following Sub-operation parameters:</p>
             <parml>              
               <plentry>
                 <pt>$project</pt>
-                <pd>Selection field names need to output "1" output, "0" means no output, you can also implement rename fields.</pd>
+                <pd>Select the output fields by specifying field names, 1 stands for output, 0 means do not output. The rename of fields can be realized.</pd>
                 <pd>{$project:{field1:1,field:0,aliase:"$field3"}}</pd>
               </plentry>
               <plentry>
                 <pt>$match</pt>
-                <pd>Match to achieve matching criteria to select from a collection of records, rather with the SQL statement where.</pd>
+                <pd>Select records which match the criteria from the collection, equivalent to the "WHERE" command in SQL.</pd>
                 <pd>{$match:{field:{$lte:value}}}</pd>                
               </plentry>
               <plentry>
                 <pt>$limit</pt>
-                <pd>Limit the number of returned.</pd>
+                <pd>Limit the number of returned records.</pd>
                 <pd>{$limit:10}</pd>
               </plentry>
               <plentry>
                 <pt>$skip</pt>
-                <pd>Control of the result set the starting point, ie the number of skips specified result set records.</pd>
+                <pd>Control the starting point of the result set, in other words, skip specified number of records in the result set.</pd>
                 <pd>{$skip:5}</pd>
               </plentry>
               <plentry>
                 <pt>$group</pt>
-                <pd>Achieve grouping of records, similar to SQL's group by statement, "_id" designated group field.</pd>
+                <pd>Divide the records into groups, similar to the "group by" command in SQL, specify the grouping field by "_id".</pd>
                 <pd>{$group:{_id:"$field"}}</pd>
               </plentry>
               <plentry>
                 <pt>$sort</pt>
-                <pd>Sort the result set to achieve, "1" represents the ASC, "-1" for descending.</pd>
+                <pd>Sort the result set. 1 for ascending while 0 for descending.</pd>
                 <pd>{$sort:{field1:1,field2:-1,...}}</pd>
               </plentry>
             </parml></pd>
@@ -61,13 +60,13 @@
       </parml>
       <note>
         <ul>
-          <li><b>Description: </b>aggregate() method can have any number of word operations, but note that the name of each parameter syntax tules sub-operations.</li>
+          <li><b>Description: </b>aggregate() can have any number of sub-operations, but please be careful about the syntax of the parameters.</li>
         </ul>
       </note>      
     </section>    
     <section>
       <title>Examples</title>
-      <p>Assuming collection of records collection contains the following format:</p>
+      <p>Assume a collection stores records in following format:</p>
       <codeblock>{
   no:1000,
   score:80,
@@ -80,10 +79,10 @@
         gender:"male"
         }
         }</codeblock>
-      <p>Conditional select the record, and specify the field names returned.</p>
+      <p>Select records according to the criteria, and specify the returned field name.</p>
       <codeblock>db.collectionspace.collection.aggregate({$match:{$and:[{no:{$gt:1002}},{no:{$lt:1015}},{dep:"Computer Academy"}]}},
 {$project:{no:1,"info.name":1,major:1}})</codeblock>
-      <p>This gathering operation the first to use <b>$match</b> operation to select records matching conditions, then use the <b>$project</b> returns only the specified field name. Return result sets as follows:</p>
+      <p>This aggregate operation firstly uses $match to select the records match the criteria, then uses $project to specify the names of the returned fields.</p>
       <codeblock>{
   "no": 1003,
   "info.name": "Sam",
@@ -99,10 +98,10 @@
   "info.name": "Jim",
   "major": "Computer Engineering"
   }</codeblock>
-      <p>Conditional select records, and the records are grouped</p>
+      <p>Select records by criteria and divide the selected records into groups.</p>
       <codeblock>db.collectionspace.collection.aggregate({$match:{dep:"Computer Academy"}},{$group:{_id:"$major",Major:{$first:"$major"},
 avg_age:{$avg:"$info.age"}}})</codeblock>
-      <p>This first gathering operation to select records using <b>$match</b> matching conditions, then use <b>$group</b> of records grouped by major field and use the <b>$avg</b> returns each age group nested object field average.</p>
+      <p>This operation firstly uses $match to select records that match the selecting criteria, then uses $group to divide the selected records by field "major", and uses $avg to return the average of the "age" field in each group.</p>
       <codeblock>{
   "Major": "Computer Engineering",
   "avg_age": 25
@@ -115,10 +114,10 @@ avg_age:{$avg:"$info.age"}}})</codeblock>
   "Major": "Computer Software and Theory",
   "avg_age": 26
   }</codeblock>
-      <p>Conditional select records,and records grouping, sorting, limit records returned starting position and number of records returned.</p>
+      <p>Select records by criteria, then group and sort the selected records, limit the starting point of the result set and the number of returned records.</p>
       <codeblock>db.collectionspace.collection.aggregate({$match:{interest:{$exists:1}}},{$group:{_id:"$major",avg_age:{$avg:"$info.age"},
 major:{$first:"$major"}}},{$sort:{avg_age:-1,major:-1}},{$skip:2},{$limit:3})</codeblock>
-      <p>This gathering operations by <b>$match</b> first select records matching conditions, then use <b>$group</b> grouped by major and use <b>$avg</b> return nested objects in each age group in the field, on average, the output field named avg_age, finally use <b>$sort</b> by avg_age field values (in descending order), major field values (in descending order) to sort the result set, use the <b>$skip</b> OK to return to the starting posistion of the recording, use the <b>$limit</b> limit the number of records returned.</p>
+      <p>This aggregate operation firstly uses $match to select records match the criteria, then uses $group to group the records by "major", uses $avg to return the average of "age" field in each group, and sort the records in descending order, uses $skip to specify the starting point of the returned result, and $limit to limit the number of returned records.</p>
       <codeblock>{
   "avg_age": 25,
   "major": "Computer Science and Technology"

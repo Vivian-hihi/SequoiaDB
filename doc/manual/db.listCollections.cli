@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-listCollections - Enumerate collection.
+listCollections - Enumerate collections.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,8 +25,8 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Enumerate collection. It will show information of all collections
-in a collection space.
+Enumerate collections. It will return the information of every
+collection in a collection space.
 .SH "Examples"
 
 .sp 2

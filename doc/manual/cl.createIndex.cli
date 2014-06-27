@@ -7,7 +7,8 @@
 .SH "NAME"
 
 .sp 2
-createIndex - Create index in a collection to accelerate query.
+createIndex - Create an index for the collection to accelerate
+query.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,7 +26,7 @@ Collection
 .SH "DESCRIPTION"
 
 .sp 2
-Create index in a collection to accelerate query.
+Create an index for the collection to accelerate query.
 .sp 2
 \fBname (string)\fR
 .br
@@ -44,9 +45,11 @@ Create index in a collection to accelerate query.
 .sp 2
 \fBenforced (Boolean)\fR
 .br
-       The only index is mandatory, optional, The default value
-       is "false". Represents the unique index when the index is
-       forced to "ture".
+       Optional, whether the index is mandatorily unique or not.
+       Its default value is false, and it becomes effective when
+       "isUnique" is true. When it is true, it means that in the
+       premise of "isUnique" is true, no more than one null index
+       key can exist in this index.
 .sp 2
        \fBFormat\fR
 .br
@@ -57,7 +60,7 @@ Create index in a collection to accelerate query.
               which contains at least one field. The field name
               is index name. The value of it is 1 or -1. "1"
               means ascending order. "-1" means descending order.
-              The parameter "isUnique" is in the type of bool.
+              The parameter "isUnique" is in the type of boolean.
               Its default value is "false".
 .br
               {"name":"<index name>","indexDef":{"<index field
@@ -66,11 +69,11 @@ Create index in a collection to accelerate query.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  Values on the field that an unique index specified should
-   not be the same in defferent records.
+   *  There should not be any exactly same records in the fields
+   that are specified by the unique index in a collection.
 .sp 2
    *  Index name should not be null string. It should not contain
-   "." or "$". The length of it should not be lesser than 127B.
+   "." or "$". The length of it should be no more than 127B.
 .SH "Examples"
 
 .sp 2

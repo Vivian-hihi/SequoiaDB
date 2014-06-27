@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>setSessionAttr - Set Session Properties.</p>
+      <p>setSessionAttr - Set session attributes.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,15 +17,15 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Set Session Properties.</p>
+      <p>Set session attributes.</p>
       <parml>
         <plentry>
           <pt>options (json object)</pt>
-          <pd>Session Properties option.
+          <pd>Session attributes' options.
             <parml>
               <plentry>
                 <pt>PreferedInstance</pt>
-                <pd>Read database instance conversation priority selected logo; value "m"/"M"/"s"/"S"/"a"/"A"/1-7, Respectively master/slave/anyone/node1-node7.</pd>
+                <pd>A preferred database instance mark for sessions' read operations. Its values contain:"m"/"M"/"s"/"S"/"a"/"A"/1-7 which stands for master/slave/anyone/node1-node7 respectively.</pd>
                 <pd>PreferedInstance:"M"</pd>
               </plentry>
             </parml></pd>
@@ -34,7 +34,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Set the session priority access to the data from the "master" database instance.</p>
+      <p>Set the preferred instance as master so that the session will preferentially read the data from a master database instance.</p>
       <codeblock>db.setSessionAttr({PreferedInstance:"M"})</codeblock>      
     </section>
   </body> 

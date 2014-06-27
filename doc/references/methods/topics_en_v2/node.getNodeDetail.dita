@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getNodeDetail - Return information of current node.</p>
+      <p>getNodeDetail - Return the information of the current node.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,11 +17,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return information of current node.</p>            
+      <p>Return the information of the current node.</p>            
     </section>    
     <section>
       <title>Examples</title>
-      <p>Return information of a node named "node".</p>
+      <p>Return the information of the current node.</p>
       <codeblock>> node.getNodeDetail()
 Return: 1000:vmsvr2-suse-x64:11800(group)
 Here "1000" is node ID(NodeID); "vmsvr2-suse-x64" is hostname(HostName); "11800" is service name(ServiceName), "(group)" is the ReplicaGroup name of the node.</codeblock>   

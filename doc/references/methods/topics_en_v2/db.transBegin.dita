@@ -17,8 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Open the transaction, SequoiaDB database transation is a series of operations as a single logical unit of work performed. Transaction processing to ensure 
-        that all operations within the unit unless all transactional successfully completed, it would not permanently updated data-oriented resources.</p>      
+      <p>Open the transaction function. Transaction in SequoiaDB is a series of operations performed as a single logical unit. Transaction processing can ensure that all the non-transactional operations are successfully completed in the unit, otherwise it would not permanently update the data-oriented resources.</p>      
     </section>    
     <section>
       <title>Examples</title>

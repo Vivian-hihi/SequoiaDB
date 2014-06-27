@@ -87,6 +87,7 @@
      <!--topicref href="topics/updateCurrent.dita"/-->
      <topicref href="topics/csize.dita"/>
      <topicref href="topics/toArray.dita"/>
+     <topicref href="topics/explain.dita"/>
      <topicref href="topics/domainalter.dita"/>
      
      

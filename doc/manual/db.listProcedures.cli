@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-listProcedures - Enumerate all of the stored procedure fundtion.
+listProcedures - Enumerate the stored procedure functions.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,20 +25,21 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Enumerate all of the stored procedure fundtion.
+Enumerate the stored procedure functions.
 .sp 2
 \fBcond (json)\fR
 .br
-       Conditions is empty, enumerate all the functions, is not
-       empty, the enumeration aualified function.
+       If cond is "", enumerate all the functions. Otherwise,
+       enumerate all the functions satisfy the criteria.
 .sp 2
-Defined listProcedures() method, only a json lbject type
-parameter name condition, the function returns the input value
-matches the specified value, otherwise return all functions.
+listProcedures() has only one parameter 'cond' which is a json
+object. It returns the all the functions if there is no given
+criteria, otherwise all the functions satisfy the criteria will
+be returned.
 .SH "Examples"
 
 .sp 2
-All functions return information
+Return the information of all the functions.
 .sp 2
 >db.listProcedures()
 .br
@@ -56,7 +57,7 @@ All functions return information
 .br
 ...
 .sp 2
-Return function named sum specified records
+Returns the information of the function named "sum".
 .sp 2
 >db.listProcedures({name:"sum"})
 .br

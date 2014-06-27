@@ -7,8 +7,7 @@
 .SH "NAME"
 
 .sp 2
-listCollectionSpaces - Emurate all the collection spaces in the
-database.
+listCollectionSpaces - The collection spaces in the database.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -26,7 +25,7 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Emurate all the collection spaces in the database.
+The collection spaces in the database.
 .SH "Examples"
 
 .sp 2

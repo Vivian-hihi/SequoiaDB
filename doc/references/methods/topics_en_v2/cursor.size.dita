@@ -22,7 +22,7 @@
     <section>
       <title>Examples</title>
       <p>Select records with the value of "age" greater than 10 in the collection "bar" and
-        return the amount of record in the range from current cursor to final cursor.</p>
+        return the amount of records in the range from current cursor to final cursor.</p>
       <codeblock>db.foo.bar.find({age:{$gt:10}}).size()</codeblock>   
     </section>
   </body>

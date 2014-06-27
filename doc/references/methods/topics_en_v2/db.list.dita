@@ -46,7 +46,7 @@
       </parml>      
       <note>
         <ul><li>The value of "listType" is in the range from 0 to 7.</li>
-          <li>The value of "sel" is in the type of json object. The value of each field in it is always null string. If it is specified as "{"field name 1": "value 1", "field name 2":"value 2",...}", the values of existing fields are invalid. As for fields that doesn't exist, it will return "{"field name 1": "value 1", "field name 2":"value 2",...}".</li>
+          <li>The value of "sel" is in the type of json object. The value of field is often specified as a null string. If the parameters are specified in this format: "{"field name 1": "value 1", "field name 2":"value 2",...}", for the fields that do exist in the records, the value of these fields is actually useless; for the fields that do not exist in the records, "{"field name 1": "value 1", "field name 2":"value 2",...}" will be returned.</li>
           <li>If a value of a field is in the type of array, users can use "." to invoke it and add double quotation.</li>
         </ul></note>
     </section>    
@@ -73,9 +73,7 @@
       <p>
         <codeblock>db.list(6,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})</codeblock>
       </p>
-      <p>Return records that contains the value of "Logical" greater than 1. Each record just
-        return the 2 fields: Name and ID. The values of "Name" in these records are in ascending
-        order.  </p>
+      <p>Return the records that contain the value of "Logical ID" greater than 1. Each record just returns two fields: "Name" and "ID". The values of "Name" in these records are sorted in ascending order.</p>
       <codeblock>      {
         "ID": 4091,
         "Name": "foo" 

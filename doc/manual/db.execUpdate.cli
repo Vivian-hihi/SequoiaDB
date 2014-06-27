@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-execUpdate - SQL execution of other statements.
+execUpdate - Execute other SQL statements.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,10 +25,10 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-SQL execution of other statements.
+Execute other SQL statements.
 .SH "Examples"
 
 .sp 2
-The collection "my.my" insert a new record.
+Insert a new record into the collection named "my.my".
 .sp 2
 db.execUpdate("insert into my.my(name,age) values('zhangshang', 30) ")

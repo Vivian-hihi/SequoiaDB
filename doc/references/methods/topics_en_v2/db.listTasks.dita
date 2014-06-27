@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>listTasks - View database of all background tasks.</p>
+      <p>listTasks - View the background tasks of the database.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>View database of all background tasks.</p>
+      <p>View the background tasks of the database.</p>
       <parml>
         <plentry>
           <pt>cond (json object)</pt>
@@ -25,7 +25,7 @@
         </plentry>
         <plentry>
           <pt>sel (json object)</pt>
-          <pd>Task selection field.</pd>
+          <pd>Tasks selecting condition.</pd>
         </plentry>
         <plentry>
           <pt>hint (json object)</pt>
@@ -35,7 +35,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>List all system background tasks.</p>
+      <p>List all the background tasks in the system.</p>
       <codeblock>db.listTasks()</codeblock>
     </section>
   </body>

@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-stop - Stop ReplicaGroup.
+stop - Stop the current replica group.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +25,12 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Stop ReplicaGroup. After stopping ReplicaGroup, manipulations
-lilke creating nodes cannot be executed on the ReplicaGroup.
+Stop the current replica group. Operations on the replica group
+like creating a node in this group cannot be done after the
+replica group is stopped.
 .SH "Examples"
 
 .sp 2
-Stop ReplicaGroup.
+Stop the current replica group.
 .sp 2
 rg.stop()

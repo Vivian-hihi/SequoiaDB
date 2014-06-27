@@ -21,7 +21,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Return the server name of a node called "node".</p>
+      <p>Return of server name of the current node.</p>
       <codeblock>> node.getServiceName()
 Return: 11800</codeblock>   
     </section>

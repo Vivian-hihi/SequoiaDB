@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getNode - Return information of specified node.
+getNode - Return the information of a specified node.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,7 +25,7 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Return information of specified node.
+Return the information of a specified node.
 .sp 2
 \fBnodename (string)\fR
 .br
@@ -41,16 +41,17 @@ Return information of specified node.
 .sp 2
        \fBFormat\fR
 .br
-              The method "rg.getNode()" has 2 parameter. The
-              first one is node name or hostname. The secend one
-              is server name. The types of the 2 parameters are
-              both string. And they should not be null.
+              rg.getNode() has two parameters, the first
+              parameter can be either the node name or host name,
+              the second parameter is the server name. These
+              parameters are all required and must in the type of
+              string.
 .br
               ("<Node name>|<hostname>","<server name>")
 .SH "Examples"
 
 .sp 2
-Return node according to specified hostname and server name
+Return a node with specified hostname and server name.
 .sp 2
 > rg.getNode("vmsvr2-suse-x64","11800")
 .br

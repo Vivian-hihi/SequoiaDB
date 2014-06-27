@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getIndex - Return the quotation of specified index.</p>
+      <p>getIndex - Return the reference of specified index.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,11 +17,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return the quotation of specified index.</p>
+      <p>Return the reference of specified index.</p>
       <parml>        
         <plentry>
           <pt>name (string)</pt>
-          <pd>Index name, all the index name in a collection should be unique to each other.
+          <pd>Index name, all the index names in a collection should be unique to each other.
             <parml>
               <plentry>
                 <pt>Format</pt>
@@ -35,7 +35,7 @@
         <p>
           <ul>
             <li>It should be ensured that the index name exists in the collection before users get
-              index quotation.</li>
+              index reference.</li>
             <li>Index name should not contain null string, "." or "$". The length of it should not
               be greater than 127B.</li>
           </ul>
@@ -45,7 +45,7 @@
     <section>
       <title>Examples</title>
       <p>Supposing that the index "ageIndex" exists in collection "bar", the following command will return
-        the quotation of it.</p>
+        the reference of it.</p>
       <codeblock>db.foo.bar.getIndex("ageIndex")</codeblock>
     </section>
   </body>

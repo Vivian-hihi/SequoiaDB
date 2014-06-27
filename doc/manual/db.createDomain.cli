@@ -33,7 +33,7 @@ Create a domain. A domain can contain multiple replica groups.
 .sp 2
 \fBgroups (Json Array)\fR
 .br
-       Replica groups belongs to the domain.
+       Replica groups belong to the domain.
 .sp 2
 \fBoptions (Json Object)\fR
 .br
@@ -65,7 +65,7 @@ Create a domain which contains two replica groups.
 .sp 2
 db.createDomain('mydomain', ['datagroup1','datagroup2'])
 .sp 2
-Create a domain which contains two replica groups, and enables it
-to auto-split.
+Create a domain which contains two replica groups, and enables
+its auto-split function.
 .sp 2
 db.createDomain('mydomain', ['datagroup1','datagroup2'],{AutoSplit:true})

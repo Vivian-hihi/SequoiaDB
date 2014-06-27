@@ -1,13 +1,13 @@
-#Wed Jun 25 14:27:15 CST 2014
+#Fri Jun 27 11:47:52 CST 2014
 copytosourcelist=
-hreftargetslist=db.cancelTask.xml
+hreftargetslist=cursor.explain.xml
 fullditatopicfile=fullditatopic.list
 fullditamapandtopicfile=fullditamapandtopic.list
-fullditatopiclist=db.cancelTask.xml
-fullditamapandtopiclist=db.cancelTask.xml
+fullditatopiclist=cursor.explain.xml
+fullditamapandtopiclist=cursor.explain.xml
 hrefditatopicfile=hrefditatopic.list
 hrefditatopiclist=
-user.input.file=db.cancelTask.xml
+user.input.file=cursor.explain.xml
 subtargetsfile=subtargets.list
 fullditamapfile=fullditamap.list
 copytotarget2sourcemapfile=copytotarget2sourcemap.list

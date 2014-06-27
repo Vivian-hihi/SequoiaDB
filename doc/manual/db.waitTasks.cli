@@ -7,8 +7,8 @@
 .SH "NAME"
 
 .sp 2
-waitTasks - Wait for the end of the specified task synchronizaton
-or canceled.
+waitTasks - Wait for the end or cancellation of specified task
+synchronously.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -26,8 +26,7 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Wait for the end of the specified task synchronizaton or
-canceled.
+Wait for the end or cancellation of specified task synchronously.
 .sp 2
 \fBid1,id2,... (Integer)\fR
 .br
@@ -35,7 +34,7 @@ canceled.
 .SH "Examples"
 
 .sp 2
-Wait for data synchronization segmentation task is completed.
+Synchronously wait the data split task to finish.
 .sp 2
 var taskid1 = db.test.test.splitAsync("db1", "db2", 50);
 .br

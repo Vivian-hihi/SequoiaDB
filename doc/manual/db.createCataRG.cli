@@ -25,40 +25,41 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Create a new catalog ReplicaGroup, and create and start a catalog
-node.
+Create a new catalog ReplicaGroup, create and start a catalog
+node at the same time.
 .sp 2
 \fBhost (string)\fR
 .br
-       Specifies the host name of the catalog node.
+       Specify the host name of the catalog node.
 .sp 2
 \fBservice (int)\fR
 .br
-       Service port specified catalog node, make sure that the
-       port number, and the subsequent continuation of the three
-       port numbers unoccupied, if set to 11800, make sure
-       11800/11801/11802/11803 ports are not occupied.
+       Specify the service port of the catalog node, please make
+       sure this port and its three succeeding ones are
+       unoccupied. For example, if 11800 is specified, please
+       make sure all of 11800/11801/11802/11803 are unoccupied.
 .sp 2
 \fBdbpath (string)\fR
 .br
-       Data file path used to store catalog data files,
-       administrators need to ensure that the data (created
-       during installation, the default is sdbadmin) the user has
-       write permissions.
+       The path for the data files which is used to store the
+       catalog data files. Please make sure that the data
+       administrator users(created during installation,
+       'sdbadmin' in default) have the write permissions.
 .sp 2
 \fBconfig (json)\fR
 .br
-       Parameter is optional, for more details on the
-       configuration parameters, the format must be json format,
-       database configuration parameters see a, If you need to
-       configure the log size parameters {logfilesz:64}.
+       Optional. Used to set up more detailed configurations. It
+       must be in Json format. For more details please check the
+       Database Configuration section, for example the parameter
+       for configuring of log file size: {logfilesz:64}.
 .sp 2
        \fBFormat\fR
 .br
-              Definition Format createCataRG() method has host,
-              service, dbpath, config four parameters, host,
-              dbpath a string type, service is an integer type,
-              config as json object in the following format:
+              createCataRG() method has four parameters: host,
+              service, dbpath, and config. The value of 'host'
+              and 'dbpath' should be a string, 'service' should
+              be an int, and a Json Object for 'config', the
+              format is:
 .br
               {"<host name>",<port number>,"<data file
               path>",[database configuration parameter object]}
@@ -67,9 +68,9 @@ node.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  Make sure the permissions data file storage path, if
-   SequoiaDB using the default installation, then the path to the
-   authority conferred sdbadmin.
+   *  Please make sure to give proper permissions to the
+   data-file storage path, if default installation was used, then
+   give the 'sdbadmin' permission to the path.
 .SH "Examples"
 
 .sp 2

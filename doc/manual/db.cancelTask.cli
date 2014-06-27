@@ -33,11 +33,11 @@ Cancel the task.
 .sp 2
 \fBisAsync (Boolean)\fR
 .br
-       Whether asynchronous.
+       Whether to cancel the task asynchronously or not.
 .SH "Examples"
 
 .sp 2
-Stop splitting tasks.
+Stop a split task asynchronously.
 .sp 2
 var taskid1 = db.test.test.splitAsync("db1", "db2", 50);
 .br

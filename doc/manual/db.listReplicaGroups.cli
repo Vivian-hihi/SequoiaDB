@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-listReplicaGroups - List all ReplicaGroup.
+listReplicaGroups - List Replica Groups.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +25,11 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-List all ReplicaGroup.
+List Replica Groups.
 .SH "Examples"
 
 .sp 2
-Return information of all ReplicaGroup:
+Return the information of every Replica Group:
 .sp 2
 > db.listReplicaGroups()
 .br

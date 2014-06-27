@@ -25,13 +25,13 @@
         </plentry>
         <plentry>
           <pt>isAsync (Boolean)</pt>
-          <pd>Whether asynchronous.</pd>
+          <pd>Whether to cancel the task asynchronously or not.</pd>
         </plentry>
       </parml>      
     </section>    
     <section>
       <title>Examples</title>
-      <p>Stop splitting tasks.</p>
+      <p>Stop a split task asynchronously.</p>
       <codeblock>var taskid1 = db.test.test.splitAsync("db1", "db2", 50);
 db.cancelTask( taskid1, true )</codeblock>      
     </section>

@@ -21,11 +21,11 @@
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>ReplicaGroup name. All ReplicaGroup names are unique to each other in a database object.
+          <pd>ReplicaGroup name. All ReplicaGroup names are unique to each other in a database instance.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "createRG()" contains the parameter "name", which is in the type od string. It should not be null.</pd>
+                <pd>The method "createRG()" contains the parameter "name", which is in the type of string. It should not be null.</pd>
                 <pd>(&lt;"ReplicaGroup name">)</pd>
               </plentry>
             </parml>
@@ -33,7 +33,7 @@
         </plentry>        
       </parml>      
       <note>
-        <ul><li>ReplicaGroup is not null string. It should not contains "." or "$". The length of it should not be greater than 127B.</li>
+        <ul><li>The value of the "name" cannot be a null string. It should not contain "." or "$". The length of it should not be greater than 127B.</li>
         </ul></note>
     </section>    
     <section>

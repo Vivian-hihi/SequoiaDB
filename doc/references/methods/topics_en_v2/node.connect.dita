@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>connect - Connect the database to specified node.</p>
+      <p>connect - Connect the database to the current node.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,13 +17,13 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Connect the database to specified node. After connecting them, users can execute a set of
+      <p>Connect the database to the current node. After connecting them, users can execute a set of
         operations. Users can check relative manipulations with the method
         "node.connect().help()".</p>            
     </section>    
     <section>
       <title>Examples</title>
-      <p>Connect the database to a node named "node".</p>
+      <p>Connect the database to the current node.</p>
       <codeblock>> node.connect()
 Return: vmsvr2-suse-x64:11800</codeblock>   
     </section>

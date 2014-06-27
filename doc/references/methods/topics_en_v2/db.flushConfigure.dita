@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>flushConfigure - Brush disk configuration to configuration files.</p>
+      <p>flushConfigure - Flush the configurations to the configuration files.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,15 +17,15 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Brush disk configuration to configuration files.</p>
+      <p>Flush the configurations to the configuration files.</p>
       <parml>
         <plentry>
           <pt>rule (json object)</pt>
-          <pd>Brush rules.
+          <pd>Flush rules.
           <parml>
             <plentry>
               <pt>Global</pt>
-              <pd>True indicates whether the brush plate system-wide configuration, false indicates that only brush plate node configuration.</pd>
+              <pd>True indicates to flush the entire system's configurations. False indicates to flush the current node's configurations.</pd>
               <pd>Global:true</pd>
             </plentry>
           </parml></pd>
@@ -34,7 +34,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Brush database configuration.</p>
+      <p>Flush database's configurations.</p>
       <codeblock>db.flushConfigure({Global:true})</codeblock>      
     </section>
   </body> 

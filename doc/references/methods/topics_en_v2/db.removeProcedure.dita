@@ -18,20 +18,20 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Deletes the specified function name, function name must exist, otherwise an exception message.</p>
+      <p>Deletes the specified function name, The specified function name must exist, otherwise exceptions will occur.</p>
       <parml>
         <plentry>
           <pt>function name (string)</pt>
           <pd>function name.</pd>          
         </plentry>        
       </parml>
-      <p>Defined removeProcedure() method, only one string type parameter name function name, its value must already exits, otherwise an exception.</p>
+      <p>removeProcedure() method has one parameter 'function name' in a string type. Its value should already exist, otherwise exceptions will occur.</p>
     </section>    
     <section>
       <title>Examples</title>
       <p></p>Delete the sum function:
       <codeblock>db.removeProcedure("sum")</codeblock>
-      Function must be guaranteed and consistent definition of the function name. Such as db.removeProcedure('sum') call will return a failure.
+      Make sure that the function name specified in the removeProcedure() method be exactly the same as the name in its definition. Otherwise, it will return a failure. db.removeProcedure('sum') call will return a failure.
     </section>
   </body>
   <related-links>

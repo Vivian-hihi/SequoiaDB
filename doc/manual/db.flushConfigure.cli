@@ -7,7 +7,8 @@
 .SH "NAME"
 
 .sp 2
-flushConfigure - Brush disk configuration to configuration files.
+flushConfigure - Flush the configurations to the configuration
+files.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,22 +26,22 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Brush disk configuration to configuration files.
+Flush the configurations to the configuration files.
 .sp 2
 \fBrule (json object)\fR
 .br
-       Brush rules.
+       Flush rules.
 .sp 2
        \fBGlobal\fR
 .br
-              True indicates whether the brush plate system-wide
-              configuration, false indicates that only brush
-              plate node configuration.
+              True indicates to flush the entire system's
+              configurations. False indicates to flush the
+              current node's configurations.
 .br
               Global:true
 .SH "Examples"
 
 .sp 2
-Brush database configuration.
+Flush database's configurations.
 .sp 2
 db.flushConfigure({Global:true})

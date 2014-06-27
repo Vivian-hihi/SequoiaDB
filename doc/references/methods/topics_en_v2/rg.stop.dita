@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>stop - Stop ReplicaGroup.</p>
+      <p>stop - Stop the current replica group.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,11 +17,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Stop ReplicaGroup. After stopping ReplicaGroup, manipulations lilke creating nodes cannot be executed on the ReplicaGroup.</p>            
+      <p>Stop the current replica group. Operations on the replica group like creating a node in this group cannot be done after the replica group is stopped.</p>            
     </section>    
     <section>
       <title>Examples</title>
-      <p>Stop ReplicaGroup.</p>
+      <p>Stop the current replica group.</p>
       <codeblock>rg.stop()</codeblock>   
     </section>
   </body>

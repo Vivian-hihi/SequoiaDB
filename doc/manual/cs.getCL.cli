@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getCL - Returns the quotation of collection in a collection
+getCL - Returns the reference of collection in a collection
 space.
 .SH "SYNOPSIS"
 
@@ -26,7 +26,7 @@ Collectionspace
 .SH "DESCRIPTION"
 
 .sp 2
-Returns the quotation of collection in a collection space.
+Returns the reference of collection in a collection space.
 .sp 2
 \fBname (string)\fR
 .br
@@ -54,6 +54,6 @@ Returns the quotation of collection in a collection space.
 
 .sp 2
 Supposing that the collection name "bar", the command returns the
-quotation of the collection "bar" in the collection space "foo".
+reference of the collection "bar" in the collection space "foo".
 .sp 2
 db.foo.getCL("bar")

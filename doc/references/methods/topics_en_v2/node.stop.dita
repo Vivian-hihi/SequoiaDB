@@ -21,7 +21,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Stop the current node named "node".</p>
+      <p>Stop the current node.</p>
       <codeblock>node.stop()</codeblock>   
     </section>
   </body>

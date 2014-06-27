@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-exec - Executing SQL select statement.
+exec - Execute SQL select statements.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,10 +25,11 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Executing SQL select statement.
+Execute SQL select statements.
 .SH "Examples"
 
 .sp 2
-Check all "age = 20" records from the collection "my.my" in.
+Get all the records with "age = 20" from the collection named
+"my.my".
 .sp 2
 db.exec("select * from my.my where age = 20")

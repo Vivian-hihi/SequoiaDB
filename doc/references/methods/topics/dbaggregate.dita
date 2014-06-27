@@ -64,7 +64,7 @@
           <stentry>{$sort:{field1:1,field2:-1,...}}</stentry>
         </strow>
       </simpletable></p>
-      <p><b>说明：</b>aggregate()方法可以有任意多个字操作，但是注意各子操作的参数名的语法规则。</p>
+      <p><b>说明：</b>aggregate()方法可以有任意多个子操作，但是注意各子操作的参数名的语法规则。</p>
     </section>
     <section>
       <title>示例</title>

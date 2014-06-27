@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>exec - Executing SQL select statement.</p>
+      <p>exec - Execute SQL select statements.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -18,11 +18,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Executing SQL select statement.</p>      
+      <p>Execute SQL select statements.</p>      
     </section>    
     <section>
       <title>Examples</title>
-      <p>Check all "age = 20" records from the collection "my.my" in.</p>
+      <p>Get all the records with "age = 20" from the collection named "my.my".</p>
       <codeblock>db.exec("select * from my.my where age = 20")</codeblock>
     </section>
   </body>  

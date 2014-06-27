@@ -37,7 +37,7 @@ Delete a specified collection in a specified collection space.
 .br
               The parameter "name" should be specified in the
               method "dropCL()". It should be ensured that the
-              collcection name exists in the collection space, or
+              collection name exists in the collection space, or
               operation exception will occur.
 .br
               {"name":"<collection name>"}

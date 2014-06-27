@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getNode - Return information of specified node.</p>
+      <p>getNode - Return the information of a specified node.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return information of specified node.</p>
+      <p>Return the information of a specified node.</p>
       <parml>
         <plentry>
           <pt>nodename (string)</pt>
@@ -33,9 +33,7 @@
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "rg.getNode()" has 2 parameter. The first one is node name or hostname. The
-                  secend one is server name. The types of the 2 parameters are both string. And they should
-                  not be null.</pd>
+                <pd>rg.getNode() has two parameters, the first parameter can be either the node name or host name, the second parameter is the server name. These parameters are all required and must in the type of string.</pd>
                 <pd>("&lt;Node name>|&lt;hostname>","&lt;server name>")</pd>
               </plentry>
             </parml></pd>
@@ -44,8 +42,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      Return node according to specified hostname and server
-      name<codeblock>> rg.getNode("vmsvr2-suse-x64","11800")
+      Return a node with specified hostname and server name.<codeblock>> rg.getNode("vmsvr2-suse-x64","11800")
 Return: vmsvr2-suse-x64:11800</codeblock>    
     </section>
   </body>

@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>current - Return the record that current cursor currently point to.</p>
+      <p>current - Return the record that current cursor points to.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,12 +17,12 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return the record that current cursor currently point to.</p>            
+      <p>Return the record that current cursor points to.</p>            
     </section>    
     <section>
       <title>Examples</title>
       <p>Select records with the value of "age" greater than 10 in the collection "bar" and
-        return the record that current cursor currently point to.</p>
+        return the record that current cursor points to.</p>
       <codeblock>db.foo.bar.find({age:{$gt:10}}).current()</codeblock>   
     </section>
   </body>

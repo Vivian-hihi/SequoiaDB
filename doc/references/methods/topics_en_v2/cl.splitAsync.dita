@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>splitAsync - It operates as an asynchronous partition operation.</p>
+      <p>splitAsync - This method has the same function as db.collection.collection.split, but this is a asynchronous operation, a task ID will be returned immediately after the task is created.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,8 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Interview operation "db.collectionspace.collection.split" the same function, but it operates as an asynchronous partition operation, the task ID 
-        returned immediately after the partition created task.</p>           
+      <p>This method has the same function as db.collection.collection.split, but this is a asynchronous operation, a task ID will be returned immediately after the task is created.</p>           
     </section>    
   </body>
 </topic>

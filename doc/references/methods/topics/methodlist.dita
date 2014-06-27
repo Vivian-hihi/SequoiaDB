@@ -488,6 +488,11 @@
           <stentry>以数组的形式返回结果集</stentry>
           <stentry>db.foo.bar.find.toArray()</stentry>
         </strow>
+        <strow>
+          <stentry><xref href="explain.dita">cursor.explain()</xref></stentry>
+          <stentry>返回查询的访问计划</stentry>
+          <stentry>db.foo.bar.find().sort({b:1}).explain()</stentry>
+        </strow>
       </simpletable>
     </section>
   </body>

@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>remove - Delete record in a collection.</p>
+      <p>remove - Delete records from the current collection.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,25 +17,25 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Delete record in a collection.</p>
+      <p>Delete records from the current collection.</p>
       <parml>
         <plentry>
           <pt>cont (json object)</pt>
-          <pd>Selectable condition. If it is null, it will delete all the records. If it is not
-            null, delete records that match the condition.</pd>
+          <pd>Selecting condition. If it is null, it will delete all the records. If it is not
+            null, delete the records that match the condition.</pd>
         </plentry>
         <plentry>
           <pt>hint (json object)</pt>
-          <pd>Specify visiting plan.
+          <pd>Specify access plan.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The "cond" is a json object. When it is null ( For example, "{}".), delete all records in
+                <pd>The "cond" is a json object. When it is null (e.g. {} ), delete all records in
                   the collection. "hint" is a json object that contains a single element. The field name of
                   this element is ignored. But the value of the field in it is specified as the name of index
                   which is needed to visit. When the value of field is null, it will visit all the records in
                   the collection.</pd>
-                <pd>{[{"Field name 1":{"Matching character 1":"value 1","Field name 2":{"Matching character 2":"value 2"},...}],[{"":"index name"|null}]}</pd>
+                <pd>{[{"Field name 1":{"Match Operator 1":"value 1","Field name 2":{"Match Operator 2":"value 2"},...}],[{"":"index name"|null}]}</pd>
               </plentry>
             </parml></pd>
         </plentry>        
@@ -45,10 +45,9 @@
       <title>Examples</title>
       <p>Delete all the records in the collection "bar".</p>
       <codeblock>db.foo.bar.remove()</codeblock>
-      <p>Delete records that match the condition in "cond" according to visit plan.</p>
+      <p>Delete records that match the condition in "cond" according to access plan.</p>
       <codeblock>db.foo.bar.remove({age:{$gte:20}},{"":"myIndex"})</codeblock>
-      <p>This manipulation visits records in a collection named "bar" according to the index
-        named "myIndex" and delete records which contains the value of "age" greater than 20. </p>
+      <p>This operation accesses all the records in the current collection according to the index named "myIndex", then it deletes all the records that match the condition(with a value greater than or equal to 20 in "age" field. </p>
     </section>
   </body>
   <related-links>

@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getCS - Return the quotation of a specified collection space.
+getCS - Return the reference of a specified collection space.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,7 +25,7 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Return the quotation of a specified collection space.
+Return the reference of a specified collection space.
 .sp 2
 \fBname (string)\fR
 .br
@@ -34,8 +34,8 @@ Return the quotation of a specified collection space.
 .sp 2
        \fBFormat\fR
 .br
-              The definition formant of \fIgetCS()\fR method only
-              have\fI name \fRparam, it is a string type.
+              \fIgetCS()\fR only has one parameter\fI name
+              \fRwhose value should in a type of string.
 .br
               ("<collectionspace name>")
 .sp 2
@@ -44,13 +44,13 @@ Return the quotation of a specified collection space.
 \fBNote: \fR
 .sp 2
    *  The value of param \fIname\fR can't be null, contain dot(.)
-   or '$', the length of it must be not more than 127B.
+   or '$', the length of it must be no more than 127B.
 .sp 2
-   *  The collectionspace must be existed in the database.
+   *  The collectionspace must exist in the database.
 .SH "Examples"
 
 .sp 2
-Supposing that the collection space "foo" exists, it will return
-the quotation of it.
+Assume a collection space named "foo" exists, It will return the
+reference of it.
 .sp 2
 db.getCS("foo")

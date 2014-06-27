@@ -18,7 +18,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Start a specified ReplicaGroup. Only after it is started can a node be created on it. This method is equal to "rg.start()"</p>
+      <p>Start a specified ReplicaGroup. A node can only be created after a replica group is already started. This method is equivalent to rg.start().</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>

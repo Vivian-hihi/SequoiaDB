@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>createProcedure - Create a stord procedure in the database object.</p>
+      <p>createProcedure - Create a stored procedure in the database instance.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -18,15 +18,15 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Create a stord procedure in the database object.</p>
+      <p>Create a stored procedure in the database instance.</p>
       <parml>
         <plentry>
           <pt>code (Custom Functions)</pt>
-          <pd>Standard function definition, not a string type, input parameters can not use quotation marks.
+          <pd>Standard function definition, not a string type, iquotation marks cannot be used when inputting parameters.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>Definition Format createProcedure() method contains the code parameter, the parameter value is the standard fuction definition.</pd>
+                <pd>createProcedure() has a parameter "code" which is a standard function definition.</pd>
                 <pd>createProcedure(&lt;code>)</pd>
               </plentry>
             </parml>
@@ -34,33 +34,31 @@
         </plentry>        
       </parml>
       <ul>
-          <li>Recommended direct use stored procedures have been initialized global db, such as:  <b>db.createProcedure( function getAll(){return
-        db.foo.bar.find();} )</b> . But if you need authentication, then the global db failure. Needs its own initialization db.</li>
-          <li> Db initialization own form of <b>var db=new Sdb()</b>. If you need to add a user name and password, as <b>var db=new Sdb('usrname','passwd')</b>. 
-            It should be noted that when the stored procedure can only be run on a connected db, db does not provide remote connection to other methods. Without 
-            the need for authentication, even if <b>var db = new Sdb('hostname', 'servicename')</b> statement is executed normally. Db still get local db.</li>
-          <li>Db role must be coordinated nodes. standalone mode does not provide the stored procedure functionality.</li>
+        <li>Recommend to directly use the database instance initialized during the stored procedure, for example: <b>db.createProcedure( function getAll(){return
+          db.foo.bar.find();} )</b> . But if authentication is required, the global database will fail. A new database instance need to be initialized.</li>
+        <li>Database initialization is in the form of: <b>var db=new Sdb()</b>. If user name and password are needed, it will be: <b>var db=new Sdb('usrname','passwd')</b>. 
+          Note that the stored procedure can only run on its own connected database, it does not support remote connection methods with other databases. In the case that authentication is not required, <b>var db = new Sdb('hostname', 'servicename')</b> can still execute successfully, the returned database is still the local database.</li>
+        <li>Database's role must be a coord node. Standalone mode cannot support procedure function.</li>
         </ul>
     </section>
     <section>
       <title>Function definition</title>
       <ul>
         <li><p>Function definition</p>
-          <p>1. function must contain the tunction name. Can not be used as: <b>function(x,y){return x+y;}</b></p>
-          <p>2. In the function definition can call other functions or function does not exist. But need to ensure the operation of all fuctions already exist.</p>
-          <p>3. globally unique function name. No overloading. </p>
-          <p>4. Each fuction are available in the whole system. Feel free to delete a stored procedure may cause others to fail.</p></li>
-        <li>Function parameters <p>native type of JS</p></li>
-        <li>Function outputs <p>Function for all standard output, standard error will be masked. While not recommend adding output statements in the function
-          definition or execution. The output may result in large number of stored procedures fail.</p></li>
-        <li>function return values <p>Function return value can be any type of data except for db. Such as: <b>function getCL(){return db.foo.bar;}</b></p></li>
+          <p>1. Function must contain the function name. It cannot be usedin the following form <b>function(x,y){return x+y;}</b></p>
+          <p>2. Other functions or even inexistent functions can be called in the function definition. But it should be ensured that all the functions are existent during runtime.</p>
+          <p>3. The function name should be globally unique and overload is not supported. </p>
+          <p>4. Each fuction is available in the whole system. Delete a procedure without proper check may lead to run time exceptions of other people.</p></li>
+        <li>Function's parameters <p>native type of JS</p></li>
+        <li>Function's outputs <p>Functions for all standard output, standard error will be masked. And the uses of output commands are not recommended in the function definitions. Too much output may lead to a failure during the running of stored procedure.</p></li>
+        <li>Function's returned values <p>Function's returned values can be any data type except for a database. For example: <b>function getCL(){return db.foo.bar;}</b></p></li>
       </ul>
     </section>
     <section>
       <title>Examples</title>
       <p></p>Create a sum function:
       <codeblock>db.createProcedure(function sum(x,y){return x+y;})</codeblock>
-      After you crdate can be used db.listProcedures() function to view the information.
+      Once the function is created, db.listProcedures() can be used to check the information of the functions.
     </section>
   </body>
   <related-links>

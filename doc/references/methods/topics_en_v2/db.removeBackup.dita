@@ -25,27 +25,27 @@
             <parml>
               <plentry>
                 <pt>GroupID</pt>
-                <pd>Backup ReplicaGroup ID specified, the default is all ReplicaGroup.</pd>
+                <pd>Specify the ID of the backup replica group needs to be deleted. Delete all replica groups in default.</pd>
                 <pd>GroupID:1000 or GroupID:[1000, 1001]</pd>
               </plentry>
               <plentry>
                 <pt>GroupName</pt>
-                <pd>Backup ReplicaGroup name is specified, the default is all ReplicaGroup.</pd>
+                <pd>Specify the name of the backup replica group needs to be deleted. Delete all replica groups in default.</pd>
                 <pd>GroupName:"data1" or GroupName:["data1", "data2"]</pd>
               </plentry>
               <plentry>
                 <pt>Name</pt>
-                <pd>Backup name, the default view all backups.</pd>
+                <pd> Backup name, delete all the backups in default.</pd>
                 <pd>Name:"backup-2014-1-1"</pd>
               </plentry>
               <plentry>
                 <pt>Path</pt>
-                <pd>Backup path, the default configuration parameters for the specified backup path. The path supports wildcards(%g/%G: group name, %h/%H: host name, %s/%S:service name)</pd>
+                <pd>Backup path, the default path is the one specified in the configuration. The path supports wildcards(%g%G: group name, %h%H:host name, %s%S:service name).</pd>
                 <pd>Path:"/opt/sequoiadb/backup/%g"</pd>
               </plentry>
               <plentry>
                 <pt>IsSubDir</pt>
-                <pd>The above path "Path" configuration parameters are specified for the backup path configuration parameters subdirectory, the default is false.</pd>
+                <pd>Whether the path configured in the above Path parameter is a subdirectory of the backup path in the configuration. False in default.</pd>
                 <pd>IsSubDir:false</pd>
               </plentry>
               <plentry>
@@ -60,7 +60,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Backup information called "backup-2014-1-1" delete the database.</p>
+      <p>Delete the backup named "backup-2014-1-1" from the database.</p>
       <codeblock>db.removeBackup({Name:"backup-2014-1-1"})</codeblock>
     </section>
   </body>

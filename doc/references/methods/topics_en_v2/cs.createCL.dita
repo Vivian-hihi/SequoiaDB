@@ -18,7 +18,7 @@
     <section>
       <title>DESCRIPTION</title> 
       <p>Create a collection in a specified collection space.</p>
-      <p>Collection is a logical object which stores records. Each record should belong to on and only one collection.</p>
+      <p>Collection is a logical object which stores records. Each record should belong to one and only one collection.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
@@ -79,7 +79,7 @@
                 <pd>automatic split.</pd>
               </plentry>
               <plentry>
-                <pt>Groups (string)</pt>
+                <pt>Group (string)</pt>
                 <pd>Specify a replica group which the collection should be in.</pd>
                 <pd>Groups:&lt;group name></pd>
               </plentry>

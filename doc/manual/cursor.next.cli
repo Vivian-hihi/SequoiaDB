@@ -7,7 +7,8 @@
 .SH "NAME"
 
 .sp 2
-next - Return the next record in current cursor.
+next - Return the next record of the record that current cursor
+points to.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +26,13 @@ Cursor
 .SH "DESCRIPTION"
 
 .sp 2
-Return the next record in current cursor.
+Return the next record of the record that current cursor points
+to.
 .SH "Examples"
 
 .sp 2
 Select records with the value of "age" greater than 10 in the
-collection "bar" and return the next record in current cursor.
+collection "bar" and return the next record of the record that
+current cursor points to.
 .sp 2
 db.foo.bar.find({age:{$gt:10}}).next()

@@ -38,7 +38,7 @@ Create a collection space in a database instance.
 .sp 2
        \fBPageSize\fR
 .br
-              Size of data page. The default value is 65536B.
+              Size of a data page. The default value is 65536B.
 .br
               PageSize:<int32>
 .sp 2
@@ -52,15 +52,15 @@ Create a collection space in a database instance.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  The parameter "name" should not be null string. It should
+   *  The parameter "name" should not be a null string. It should
    not contain "." or "$". The length of it should not be greater
    than 127B.
 .sp 2
    *  Collection space names should be unique to each other in a
-   database object.
+   database instance.
 .sp 2
    *  When creating a collection space, users can specify the
-   size of data page. It is unchangable afterward. The default
+   size of data page. It is unchangeable afterward. The default
    value of it is 65536B.
 .sp 2
    *  PageSize can only be one of the following six: 0, 4096,
@@ -74,11 +74,11 @@ Create a collection space in a database instance.
 
 .sp 2
 Create a collection space named "foo" without specifying the size
-of data page.
+of data page, so its default page size will be 65536B.
 .sp 2
 db.createCS("foo")
 .sp 2
-Create a collection space named "foo", set 4096B for PageSize and
-"mydomain" for Domain.
+Create a collection space named "foo", specify the size of the
+data page as 4096 and its domain as "mydomain".
 .sp 2
 db.createCS("foo",{PageSize:4096,Domain:"mydomain"})

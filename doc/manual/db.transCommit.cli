@@ -25,10 +25,10 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Transaction commits. After the open transaction, the operation if
-a single logical unit of work performed without exception,
-execute transaction commit command, the data of the database will
-be update.
+Commit transactions. When transaction function is on, if an
+operation of a single logical unit performed without any
+exception, execute the transCommit() command, the data in the
+database will be updated.
 .SH "Examples"
 
 .sp 2

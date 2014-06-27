@@ -5,8 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>split - At least two sharding groups environment,the data records will be cut into different
-        sharding group according to the specified conditions.</p>
+      <p>split - Split the records into different replica groups according to the given conditions in an environment with no less than two replica groups. This operation is a synchronous operation, so it will terminate and return after finishing the data split.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -18,57 +17,49 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>At least two sharding groups environment,the data records will be cut into different
-        sharding group according to the specified conditions.</p>
+      <p>Split the records into different replica groups according to the given conditions in an environment with no less than two replica groups. This operation is a synchronous operation, so it will terminate and return after finishing the data split.</p>
       <parml>
         <plentry>
           <pt>source group (string)</pt>
-          <pd>The source sharding group.</pd>
+          <pd>The source Replica Group.</pd>
         </plentry>
         <plentry>
           <pt>target group (string)</pt>
-          <pd>The target sharding group.</pd>
+          <pd>The target Replica Group.</pd>
         </plentry>
         <plentry>
           <pt>percent(0~100) (double)</pt>
-          <pd>percent split condition. (percent or condition.)</pd>
+          <pd>percentage split condition. (Either "percent" or "condition".)</pd>
         </plentry>
         <plentry>
           <pt>cond (json object)</pt>
-          <pd>Range split condition. (condition or percent.)</pd>
+          <pd>Range split condition. (Either "condition" or "percent".)</pd>
         </plentry>        
         <plentry>
           <pt>endcondition (json object)</pt>
-          <pd>End of the range condition. (Optional, and only in the conditional cut time-effective, time-sharing a percentage cut invalid.)
+          <pd>End of the range condition. (Optional, and it is effective when using range split, useless when using percentage split.)
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>Data spliting is divided into range-spliting and percent-spliting,"source shard" and
-                  "target shard"are common params,and are string type;the param "condition" and "endconditionis" filled when
-                  range spliting,it is a object of json structure;param "percent" is filled when
-                  percent-spliting,it is a int type.</pd>                
-                <pd><b>range-splitingRange</b> Sharding use exact conditions when range-spliting, while Hash
-                  Sharding use "Partition"(number of slices) conditions. The starting condition is a
-                  required field and the ending condition is a optional condition when spliting, if the
-                  ending condition doesn't fill, then it default as the max range of data that "source
-                  shard" contains.</pd>
+                <pd>Data split is classified into range split and percentage split. Both "source group" and "target group" are common parameters in a type of string; both "condition" and "endcondition" are json objects that are needed when using range split; "percent" is a double float number that are needed when using percentage split.</pd>                
+                <pd><b>Range split:</b>  When using range split, range partitions use precise condition, hash partitions use "number of partitions" as a condition. The starting point of split is a required condition, but the ending point is optional, in default, the ending point is the maximum data range of the split source.</pd>
                 <pd>("&lt;source shard>","&lt;target shard>",&lt;condition>) </pd>                
-                <pd><b>percent-spliting</b> db.foo.bar.split("&lt;source shard>","&lt;target shard>",&lt;percent>)</pd>
+                <pd><b>Percentage split:</b> db.foo.bar.split("&lt;source shard>","&lt;target shard>",&lt;percent>)</pd>
               </plentry>              
             </parml>
-            <note>The range of partition, if you specify the partition key fields such as when descending:{groupingKey:{&lt;field 1>:&lt;-1>,condition (or Partition) the starting 
-            conditions range should be greater than the scope of the termination conditions.</note>
+            <note> When using range split, if the specified field of sharding key is in descending order, like: {groupingKey:{&lt;Field 1>:&lt;-1>}, the starting point in "condition" or "partition" should be larger than the ending point.</note>
           </pd>
         </plentry>        
       </parml>      
     </section>    
     <section>
       <title>Examples</title>
-      <p>Range-spliting of Hash Sharding</p>
+      <p>Range-split of a hash-partition collection</p>
         <codeblock>db.foo.bar.split("shard1", "shard2",{Partition:10},{Partition:20}) </codeblock>
-      <p>Range-spliting of Range</p>
-      Sharding<codeblock>db.foo.bar.split("shard1", "shard2",{a:10}, {a:10000})</codeblock>
-      <p>Percent-spliting</p><codeblock>db.foo.bar.split("shard1", "shard2", 50) </codeblock>
+      <p>Range-split of range-partition collection</p>
+      <codeblock>db.foo.bar.split("shard1", "shard2",{a:10}, {a:10000})</codeblock>
+      <p>Percentage split</p><codeblock>db.foo.bar.split("shard1", "shard2", 50) </codeblock>
+      <note>When using percentage split, please make sure that there are data in the source group, in other words, the collection is not empty.</note>
     </section>
   </body>
 </topic>

@@ -7,7 +7,8 @@
 .SH "NAME"
 
 .sp 2
-removeRG - Delete the database specified ReplicaGroup.
+removeRG - Delete the specified ReplicaGroup in the current
+database.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,17 +26,17 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Delete the database specified ReplicaGroup.
+Delete the specified ReplicaGroup in the current database.
 .sp 2
 \fBname (string)\fR
 .br
-       ReplicaGroup name, the same database object, a unique
-       ReplicaGroup name.
+       ReplicaGroup name, All the ReplicaGroup names are unique
+       to each other in a database instance.
 .sp 2
        \fBFormat\fR
 .br
-              Definition Format removeRG() method, only the name
-              field, name value is a string, required.
+              removeRG() only has one "name" parameter, it is
+              required and its value should be a string.
 .br
               (<"ReplicaGroup name">)
 .sp 2
@@ -47,6 +48,6 @@ Delete the database specified ReplicaGroup.
 .SH "Examples"
 
 .sp 2
-Delete ReplicaGroup called "group" of.
+Delete the ReplicaGroup named "group".
 .sp 2
 db.removeRG("group")

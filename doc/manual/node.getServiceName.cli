@@ -29,7 +29,7 @@ Return the server name of a node.
 .SH "Examples"
 
 .sp 2
-Return the server name of a node called "node".
+Return of server name of the current node.
 .sp 2
 > node.getServiceName()
 .br

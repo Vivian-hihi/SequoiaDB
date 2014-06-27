@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>limit - Set the maximum amount of records in result set.</p>
+      <p>limit - Limit the maximum number of returned records.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,17 +17,16 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Set the maximum amount of records in result set.</p>
+      <p>Limit the maximum number of returned records.</p>
       <parml>
         <plentry>
           <pt>num (int)</pt>
-          <pd>The parameter "num" sets the maximum amount of records in result set.
+          <pd>The parameter "num" specifies the maximum number of returned records.
             <parml>
               <plentry>
                 <pt>Format</pt>
                 <pd>The method "cousor.limit()" contains the parameter "num". It is in the type of "int". If
-                  the value of "num" is not specified, it will return all the records in the result set. If
-                  users need the first 5 records, the value of "num"should be set as 5.</pd>
+                  the value of "num" is not specified, it will return all the records in the result set. If only the first 5 records are wanted, the value of "num"should be set as 5.</pd>
               </plentry>
             </parml></pd>
         </plentry>        
@@ -41,7 +40,7 @@
     </section>
     <note>
       <p>If the amount of records in the result set is lesser than 10, it will return all the
-        records. It it is greater than 10, it will return the first 10 records.</p>
+        records. If it is greater than 10, it will return the first 10 records.</p>
     </note>
   </body>
   <related-links>

@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-sort - Sort result set according to a specified field.
+sort - Sort the result set according to a specified field.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,12 +25,12 @@ Cursor
 .SH "DESCRIPTION"
 
 .sp 2
-Sort result set according to a specified field.
+Sort the result set according to a specified field.
 .sp 2
 \fBsort (json object)\fR
 .br
-       Sort result set according to a specified field. The value
-       of it is 1 or -1. 1 represents ascending order. -1
+       Sort the result set according to a specified field. The
+       value of it is 1 or -1. 1 represents ascending order. -1
        represents descending order.
 .sp 2
        \fBFormat\fR
@@ -44,15 +44,15 @@ Sort result set according to a specified field.
 
 .sp 2
 Return records that contains the value of "age" greater than 20.
-And it just return the fields named "name" and "age" in them with
-ascending order on the field "age".
+And it just return the fields named "name" and "age" sorted on
+the field "age" in ascending order.
 .sp 2
 db.foo.bar.find({age:{$gt:20}},{age:"",name:""}).sort({age:1})
 .sp 2
 \fBNote: \fR
 .sp 2
 Through the method "find()", we can select the fields we need. In
-the example above, it returns "age" and "name", so it we use
-"sort()" to sort the records, we can only sort according to "age"
-and "name". If we don't specify the parameter "sel" in the method
-"find", we can sort the records according to any field.
+the example above, it returns "age" and "name", so if we use
+"sort()" to sort the records, we can only sort the result set on
+"age" and "name". If we don't specify the parameter "sel" in the
+method "find", we can sort the result set on any field.

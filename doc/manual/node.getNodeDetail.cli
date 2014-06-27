@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getNodeDetail - Return information of current node.
+getNodeDetail - Return the information of the current node.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +25,11 @@ Node
 .SH "DESCRIPTION"
 
 .sp 2
-Return information of current node.
+Return the information of the current node.
 .SH "Examples"
 
 .sp 2
-Return information of a node named "node".
+Return the information of the current node.
 .sp 2
 > node.getNodeDetail()
 .br

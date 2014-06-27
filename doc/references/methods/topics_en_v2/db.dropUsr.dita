@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>dropUsr - Delete an existing user and the corresponding password in the database.</p>
+      <p>dropUsr - Delete an existent user and the corresponding password in the database.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -18,7 +18,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Delete an existing user and the corresponding password in the database.</p>
+      <p>Delete an existent user and the corresponding password in the database.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>

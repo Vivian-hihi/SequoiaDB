@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>createUsr - Create a databse user with a user name and a password.</p>
+      <p>createUsr - Create a database user with a user name and a password.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -18,7 +18,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Create a databse user with a user name and a password.</p>
+      <p>Create a database user with a user name and a password.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
@@ -38,9 +38,8 @@
         </plentry>        
       </parml>
       <note>
-        <ul><li><p>Only when users log in database with correct user name and password can they enter database and
-          make some operations. The comamd to log in database is as
-          follow:<codeblock>db = new Sdb("&lt;hostname>","&lt;port>","&lt;name>","&lt;password>")</codeblock></p></li>
+        <ul><li><p>If there are any user accounts have been configured into the database, only the user with correct user name and password can log in and manipulate the database.
+          <codeblock>db = new Sdb("&lt;hostname>","&lt;port>","&lt;name>","&lt;password>")</codeblock></p></li>
         </ul></note>
     </section>    
     <section>

@@ -28,7 +28,7 @@ Collectionspace
 Create a collection in a specified collection space.
 .sp 2
 Collection is a logical object which stores records. Each record
-should belong to on and only one collection.
+should belong to one and only one collection.
 .sp 2
 \fBname (string)\fR
 .br
@@ -91,7 +91,7 @@ should belong to on and only one collection.
 .br
               automatic split.
 .sp 2
-       \fBGroups (string)\fR
+       \fBGroup (string)\fR
 .br
               Specify a replica group which the collection should
               be in.

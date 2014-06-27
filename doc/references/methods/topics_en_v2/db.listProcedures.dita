@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>listProcedures - Enumerate all of the stored procedure fundtion.</p>
+      <p>listProcedures - Enumerate the stored procedure functions.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -18,19 +18,18 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Enumerate all of the stored procedure fundtion.</p>
+      <p>Enumerate the stored procedure functions.</p>
       <parml>
         <plentry>
           <pt>cond (json)</pt>
-          <pd>Conditions is empty, enumerate all the functions, is not empty, the enumeration aualified function.</pd>          
+          <pd>If cond is "", enumerate  all the functions. Otherwise, enumerate all the functions satisfy the criteria.</pd>          
         </plentry>        
       </parml>
-      <p>Defined listProcedures() method, only a json lbject type parameter name condition, the function returns the input value 
-        matches the specified value, otherwise return all functions.</p>
+      <p>listProcedures() has only one parameter 'cond' which is a json object. It returns the all the functions if there is no given criteria, otherwise all the functions satisfy the criteria will be returned.</p>
     </section>    
     <section>
       <title>Examples</title>
-      <p>All functions return information</p>
+      <p>Return the information of all the functions.</p>
       <codeblock>>db.listProcedures()
 { "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
     return x + y;
@@ -39,7 +38,7 @@
     return db.foo.bar.find();
 }", "funcType" : 0 }
 ...</codeblock>
-      <p>Return function named sum specified records</p>
+      <p>Returns the information of the function named "sum".</p>
       <codeblock>>db.listProcedures({name:"sum"})
 { "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
     return x + y;

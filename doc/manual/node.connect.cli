@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-connect - Connect the database to specified node.
+connect - Connect the database to the current node.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,13 +25,13 @@ Node
 .SH "DESCRIPTION"
 
 .sp 2
-Connect the database to specified node. After connecting them,
+Connect the database to the current node. After connecting them,
 users can execute a set of operations. Users can check relative
 manipulations with the method "node.connect().help()".
 .SH "Examples"
 
 .sp 2
-Connect the database to a node named "node".
+Connect the database to the current node.
 .sp 2
 > node.connect()
 .br

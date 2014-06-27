@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getRG - Return the quotation of a ReplicaGroup.</p>
+      <p>getRG - Return the reference of a ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,11 +17,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return the quotation of a ReplicaGroup.</p>
+      <p>Return the reference of a ReplicaGroup.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>ReplicaGroup name. ReplicaGroup names are unique to each other in a database object.</pd>
+          <pd>ReplicaGroup name. ReplicaGroup names are unique to each other in a database instance.</pd>
         </plentry>
         <plentry>
           <pt>id (int)</pt>
@@ -29,7 +29,7 @@
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "getRG()" contains "name" or "id". The type of "name" is string. The type of "id" is "int". It the ReplicaGroup specified by "name" or "id" doesn't exist, operation exception will occur.</pd>
+                <pd>getRG() has two parameters "name" and "id". The value of "name" should be a string, the value of "id" is a int. If the replica group specified by "name" or "id" does not exist, an exception will occur.</pd>
                 <pd>("&lt;ReplicaGroup name>"|&lt;id>)</pd>
               </plentry>
             </parml>
@@ -42,9 +42,9 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Specify the value of "name", the return of ReplicaGroup "rg1".</p>
+      <p>Specify the value of the "name", the command will return the corresponding reference of the Replica Group named "rg1".</p>
       <codeblock>db.getRG("rg1")</codeblock>
-      <p>Specify the value of "id", the return of ReplicaGroup "rg1".</p>
+      <p>Specify the value of the "id", the command will return the corresponding reference of the Replica Group named "rg1".</p>
       <codeblock>db.getRG("1000")</codeblock>
     </section>
   </body>

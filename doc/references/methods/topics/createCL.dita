@@ -76,9 +76,9 @@
           <stentry>AutoSplit:true|false</stentry>
         </strow>
         <strow>
-          <stentry>Groups</stentry>
+          <stentry>Group</stentry>
           <stentry>指定创建在某个复制组。</stentry>
-          <stentry>Groups:&lt;group name></stentry>
+          <stentry>Group:&lt;group name></stentry>
         </strow>
       </simpletable></p>
       
@@ -93,7 +93,7 @@
           <li>AutoSplit必须配合散列分区和域使用，且不能与Groups同时使用。</li>
           <li>AutoSplit不能与Groups同时使用。</li>
           <li>如果在集合中没有指定AutoSplit，则使用所属域中的AutoSplit参数。</li>
-          <li>Groups必须存在于集合空间所属的域中（所有复制组均属于SYSDOMAIN，即如果集合空间没有指定域，则系统内任意复制组均可）。</li>
+          <li>Group必须存在于集合空间所属的域中（所有复制组均属于SYSDOMAIN，即如果集合空间没有指定域，则系统内任意复制组均可）。</li>
         </ul> 
       </note>
     </section>

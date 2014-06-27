@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getSlave - Return the slave nodes in ReplicaGroup.</p>
+      <p>getSlave - Return a random slave node in the current replica group.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,11 +17,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return the slave nodes in ReplicaGroup.</p>            
+      <p>Return a random slave node in the current replica group.</p>            
     </section>    
     <section>
       <title>Examples</title>
-      <p>Return slave nodes in ReplicaGroup:</p>
+      <p>Return a random slave node in the current replica group:</p>
       <codeblock>> rg.getSlave()
 Return: vmsvr2-suse-x64:11800</codeblock>   
     </section>

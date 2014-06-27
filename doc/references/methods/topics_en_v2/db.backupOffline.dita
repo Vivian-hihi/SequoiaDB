@@ -21,31 +21,31 @@
       <parml>        
         <plentry>
           <pt>options (json object)</pt>
-          <pd>Set the ReplicaGroup, specify the ReplicaGroup, backup and other parameters.
+          <pd>Specify the name of the backup, the replica group, and number of copies, etc.
             <parml>
               <plentry>
                 <pt>GroupID</pt>
-                <pd>Backup ReplicaGroup ID specified, the default is all ReplicaGroup.</pd>
+                <pd>Specify the ID of the replica group need to be backup. Backup all replica groups in default.</pd>
                 <pd>GroupID:1000 or GroupID:[1000, 1001]</pd>
               </plentry>
               <plentry>
                 <pt>GroupName</pt>
-                <pd>Backup ReplicaGroup name is specified, the default is all ReplicaGroup.</pd>
+                <pd>Specify the name of the replica group need to backup. Backup all replica groups in default.</pd>
                 <pd>GroupName:"data1" or GroupName:["data1", "data2"]</pd>
               </plentry>
               <plentry>
                 <pt>Name</pt>
-                <pd>Backup name, default "YYYY-MM-DD-HH:mm:SS" Backup name time format.</pd>
+                <pd>Backup name, the default name is in the "YYYY-MM-DD-HH:mm:SS" time format.</pd>
                 <pd>Name:"backup-2014-1-1"</pd>
               </plentry>
               <plentry>
                 <pt>Path</pt>
-                <pd>Backup path, the default configuration parameters for the specified backup path.The path supports wildcards (%g/%G: group name, %h/%H: host name, %s/%S:service name).</pd>
+                <pd>Backup path, the default path is the one specified in the configuration. The path supports wildcards(%g%G: group name, %h%H:host name, %s%S:service name).</pd>
                 <pd>Path:"/opt/sequoiadb/backup/%g"</pd>
               </plentry>
               <plentry>
                 <pt>IsSubDir</pt>
-                <pd>The above Path configuration parameter configuration parameters are specified for the backup path subdircetory, the default is false.</pd>
+                <pd>Whether the path configured in the above Path parameter is a subdirectory of the backup path in the configuration. False in default.</pd>
                 <pd>IsSubDir:false</pd>
               </plentry>
               <plentry>
@@ -55,7 +55,7 @@
               </plentry>
               <plentry>
                 <pt>EnableDataDir</pt>
-                <pd>Date subdirectories feature is turned on, if the current date is automatically rurned on create a subdirectory "YYYY-MM-DD", the default according to false</pd>
+                <pd>Whether to enable the date-subdirectory function or not. It will automatically create subdirectories with names in "YYYY-MM-DD" format according to the current date if the function is enabled. False in default.</pd>
                 <pd>EnableDataDir:false</pd>
               </plentry>
               <plentry>
@@ -65,12 +65,12 @@
               </plentry>
               <plentry>
                 <pt>EnsureInc</pt>
-                <pd>Whether to open an incremental backup, the default is false.</pd>
+                <pd>Whether to enable incremental backup or not. False in default.</pd>
                 <pd>EnsureInc:false</pd>
               </plentry>
               <plentry>
                 <pt>OverWrite</pt>
-                <pd>Backup is covered with the same name exists, the default is false.</pd>
+                <pd>Whether to overwrite the backups with the same name. False in default.</pd>
                 <pd>OverWrite:false</pd>
               </plentry>
             </parml>
@@ -80,7 +80,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>The entire database full backup.</p>
+      <p>Back up the entire database.</p>
       <codeblock>db.backupOffline({Name:"FullBackup1"})</codeblock>
     </section>
   </body>  

@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-createUsr - Create a databse user with a user name and a
+createUsr - Create a database user with a user name and a
 password.
 .SH "SYNOPSIS"
 
@@ -26,7 +26,7 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Create a databse user with a user name and a password.
+Create a database user with a user name and a password.
 .sp 2
 \fBname (string)\fR
 .br
@@ -49,9 +49,9 @@ Create a databse user with a user name and a password.
 \fBNote: \fR
 .sp 2
 *  
-   Only when users log in database with correct user name and
-   password can they enter database and make some operations. The
-   comamd to log in database is as follow:
+   If there are any user accounts have been configured into the
+   database, only the user with correct user name and password
+   can log in and manipulate the database.
 .sp 2
    db = new Sdb("<hostname>","<port>","<name>","<password>")
 .SH "Examples"

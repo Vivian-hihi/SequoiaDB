@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>execUpdate - SQL execution of other statements.</p>
+      <p>execUpdate - Execute other SQL statements.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -18,11 +18,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>SQL execution of other statements.</p>      
+      <p>Execute other SQL statements.</p>      
     </section>    
     <section>
       <title>Examples</title>
-      <p>The collection "my.my" insert a new record.</p>
+      <p>Insert a new record into the collection named "my.my".</p>
       <codeblock>db.execUpdate("insert into my.my(name,age) values('zhangshang', 30) ")</codeblock>
     </section>
   </body>  

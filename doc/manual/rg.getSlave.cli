@@ -7,7 +7,8 @@
 .SH "NAME"
 
 .sp 2
-getSlave - Return the slave nodes in ReplicaGroup.
+getSlave - Return a random slave node in the current replica
+group.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +26,11 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Return the slave nodes in ReplicaGroup.
+Return a random slave node in the current replica group.
 .SH "Examples"
 
 .sp 2
-Return slave nodes in ReplicaGroup:
+Return a random slave node in the current replica group:
 .sp 2
 > rg.getSlave()
 .br

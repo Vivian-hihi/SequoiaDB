@@ -21,11 +21,11 @@
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>Collection space name. All the collection sapces in a database instance is unique to each other.
+          <pd>Collection space name. All the collection sapcenames in a database instance are unique to each other.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The parameter "name" should be specified in the method "dropCS()". The type of collection space name should be string. It should be ensured that the collcection space name exists in the database instance, or operation exception will occur.</pd>
+                <pd>The parameter "name" should be specified in the method "dropCS()". The type of collection space name should be string. It should be ensured that the collection space name exists in the database instance, or operation exception will occur.</pd>
                 <pd>("&lt;Collection space name>")</pd>
               </plentry>
             </parml>
@@ -33,7 +33,7 @@
         </plentry>        
       </parml>      
       <note>
-        <ul><li>The value of "name" should not be null string. It should not contain "." or "$". And the length of it should not be greater than 127B. If the collection space name is invalid , the operation will fail. </li>
+        <ul><li>The value of "name" should not be a null string. It should not contain "." or "$". And the length of it should not be greater than 127B. If the collection space name is invalid , the operation will fail. </li>
           <li>It should be ensured that the collection space name exists, or exception will occur.</li>
         </ul></note>
     </section>    

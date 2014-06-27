@@ -31,7 +31,7 @@ Return the amount of records from current cursor to final cursor.
 
 .sp 2
 Select records with the value of "age" greater than 10 in the
-collection "bar" and return the amount of record in the range
+collection "bar" and return the amount of records in the range
 from current cursor to final cursor.
 .sp 2
 db.foo.bar.find({age:{$gt:10}}).size()

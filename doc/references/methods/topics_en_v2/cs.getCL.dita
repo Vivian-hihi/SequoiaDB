@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getCL - Returns the quotation of collection in a collection space.</p>
+      <p>getCL - Returns the reference of collection in a collection space.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Returns the quotation of collection in a collection space.</p>
+      <p>Returns the reference of collection in a collection space.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
@@ -43,7 +43,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Supposing that the collection name "bar", the command returns the quotation of the collection
+      <p>Supposing that the collection name "bar", the command returns the reference of the collection
         "bar" in the collection space "foo".</p>
       <codeblock>db.foo.getCL("bar")</codeblock>           
     </section>

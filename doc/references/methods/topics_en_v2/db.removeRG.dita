@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>removeRG - Delete the database specified ReplicaGroup.</p>
+      <p>removeRG - Delete the specified ReplicaGroup in the current database.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,15 +17,15 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Delete the database specified ReplicaGroup.</p>
+      <p>Delete the specified ReplicaGroup in the current database.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>ReplicaGroup name, the same database object, a unique ReplicaGroup name.
+          <pd>ReplicaGroup name, All the ReplicaGroup names are unique to each other in a database instance.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>Definition Format removeRG() method, only the name field, name value is a string, required.</pd>
+                <pd>removeRG() only has one "name" parameter, it is required and its value should be a string.</pd>
                 <pd>(&lt;"ReplicaGroup name">)</pd>
               </plentry>
             </parml>
@@ -38,7 +38,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Delete ReplicaGroup called "group" of.</p>
+      <p>Delete the ReplicaGroup named "group".</p>
       <codeblock>db.removeRG("group")</codeblock>
     </section>
   </body>

@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getIndex - Return the quotation of specified index.
+getIndex - Return the reference of specified index.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +25,11 @@ Collection
 .SH "DESCRIPTION"
 
 .sp 2
-Return the quotation of specified index.
+Return the reference of specified index.
 .sp 2
 \fBname (string)\fR
 .br
-       Index name, all the index name in a collection should be
+       Index name, all the index names in a collection should be
        unique to each other.
 .sp 2
        \fBFormat\fR
@@ -42,7 +42,7 @@ Return the quotation of specified index.
 \fBNote: \fR
 .sp 2
    *  It should be ensured that the index name exists in the
-   collection before users get index quotation.
+   collection before users get index reference.
 .sp 2
    *  Index name should not contain null string, "." or "$". The
    length of it should not be greater than 127B.
@@ -50,6 +50,6 @@ Return the quotation of specified index.
 
 .sp 2
 Supposing that the index "ageIndex" exists in collection "bar",
-the following command will return the quotation of it.
+the following command will return the reference of it.
 .sp 2
 db.foo.bar.getIndex("ageIndex")

@@ -29,6 +29,6 @@ Stop the current node.
 .SH "Examples"
 
 .sp 2
-Stop the current node named "node".
+Stop the current node.
 .sp 2
 node.stop()

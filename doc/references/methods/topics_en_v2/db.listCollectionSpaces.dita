@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>listCollectionSpaces - Emurate all the collection spaces in the database.</p>
+      <p>listCollectionSpaces - The collection spaces in the database.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Emurate all the collection spaces in the database.</p>      
+      <p>The collection spaces in the database.</p>      
     </section>    
     <section>
       <title>Examples</title>

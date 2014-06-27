@@ -30,15 +30,15 @@ Delete a specified collection space in a database instance.
 .sp 2
 \fBname (string)\fR
 .br
-       Collection space name. All the collection sapces in a
-       database instance is unique to each other.
+       Collection space name. All the collection sapcenames in a
+       database instance are unique to each other.
 .sp 2
        \fBFormat\fR
 .br
               The parameter "name" should be specified in the
               method "dropCS()". The type of collection space
               name should be string. It should be ensured that
-              the collcection space name exists in the database
+              the collection space name exists in the database
               instance, or operation exception will occur.
 .br
               ("<Collection space name>")
@@ -47,7 +47,7 @@ Delete a specified collection space in a database instance.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  The value of "name" should not be null string. It should
+   *  The value of "name" should not be a null string. It should
    not contain "." or "$". And the length of it should not be
    greater than 127B. If the collection space name is invalid ,
    the operation will fail.

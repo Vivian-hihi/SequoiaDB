@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>removeNode - Delete ReplicaGroup specified node.</p>
+      <p>removeNode - Delete the specified node in the replica group</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,24 +17,24 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Delete ReplicaGroup specified node.</p>
+      <p>Delete the specified node in the replica group</p>
       <parml>
         <plentry>
           <pt>host (string)</pt>
-          <pd>Node hostname.</pd>
+          <pd>Node's hostname.</pd>
         </plentry>
         <plentry>
           <pt>service (string)</pt>
-          <pd>Node port number.</pd>
+          <pd>Node's port number.</pd>
         </plentry>        
         <plentry>
           <pt>config (json)</pt>
-          <pd>Node configuration information.
+          <pd>Node's configuration information.
             <parml>
               <plentry>
                 <pt>Format</pt>
                 <pd>Definition Format rg.removeNode() method has three parameters: host, service, config, as
-                  shown above, the following format:</pd>
+                  shown above, in the following format:</pd>
                 <pd>("&lt;hostname>","&lt;port number>"[,{&lt;configParam>:value,...}])</pd>
               </plentry>
             </parml></pd>
@@ -43,9 +43,9 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Delete node command follows ReplicaGroup shard.</p>
+      <p>Delete specified node from the replica group.</p>
       <codeblock>rg.removeNode("vmsvr2-suse-x64",11800)</codeblock>
-      <note><p>Delete the specified node must exist, otherwise abnormal.</p></note>      
+      <note><p>The specified node to be deleted must exist, otherwise an exception will occur.</p></note>      
     </section>
   </body>
   <related-links>

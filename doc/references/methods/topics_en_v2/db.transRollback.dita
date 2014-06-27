@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Transaction rollback, After the open transaction, the operation if a single logical unit of work performed by abnormal, perform transaction rollback command, then the database back to its original state.</p>      
+      <p>Roll back the transactions. When transaction function is on, if any exceptions occurred when performing operations in a single logical unit, execute the transRollback() command, the batabase will back to its original state.</p>      
     </section>    
     <section>
       <title>Examples</title>

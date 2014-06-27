@@ -30,16 +30,12 @@
         </plentry>
         <plentry>
           <pt>hint (json object)</pt>
-          <pd>It specify the visiting plan by giving an index.
+          <pd>Specify the access plan.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "update()" should contains the field "rule". It is a json object. The parameter
-                  "cond" and "hint" are selectable. The parameter "hint" contains one json object that contains one field. The "name" in this field is ignored, but
-                  the value specify the index to visit records. When the value is null, it will visit all the records in the collection. The format is "{"":null}" or
-                  "{"":"&lt;indexname>"}".</pd>                
-                <pd>{&lt;{""Update character 1"":{field name 1:"value"},"Update character 2":{"field name 2":"value 2"},...}>,
-                  [{"field name 1":{"match 1":"value 1"},"field name 2":{"match 2":"value 2"},...}],[{"":"Index name"|null}]}</pd>
+                <pd>The definition of update() must contain field "rule" which should be a json object. "cond" and "hint" are optional fields. Parameter "hint" is a json object that includes one field, the field name will be ignored, and its value specifies the index name, when the value of the field is null, all the records in the collection will be accessed, its format is {"":null} or {"":"&lt;indexname>"}.</pd>                
+                <pd>{&lt; {&lt;{""update operator 1"":{field name 1:"value"},"update operator 2":{"field name 2":"value 2"},...}>,[{"field name 1":{"match operator 1":"value 1"},"field name 2":{"match operator 2":"value 2"},...}],[{"":"index name"|null}]}</pd>
               </plentry>
             </parml></pd>
         </plentry>        
@@ -47,16 +43,14 @@
       <note>
         <p>
           <ul>
-            <li>"update" does not support this version of the table partitioning key(ShardingKey) segment updates, if you include the 
-            partition key update operations to weed out automatically update the partition key, but other fields update to take effect, 
-            and no error occurs.</li>
+            <li>update() does not support the update of sharding key in this version, if there are update operations on sharding key, these operations will be automatically neglected and the update of other fields will still work without any problems.</li>
           </ul>
         </p>
       </note>
     </section>    
     <section>
       <title>Examples</title>
-      <p>Update all the records according to the updating rule. That's to say, we merely set the
+      <p>Update all the records according to the updae rule. That's to say, we merely set the
         value of "rule", but not "cond" or "hint".</p>
       <p><codeblock>db.foo.bar.update({$inc:{age:1}})</codeblock></p>
       <p>This operation updates the field "age" in collection "bar" by adding 1 to the value of
@@ -64,13 +58,12 @@
       <p>Select records that match the condition. Update these records according to update rules
         by setting the values of "rule" and "cond". </p>
       <p><codeblock>db.foo.bar.update({$unset:{age:""}},{age:{$exists:1},name:{$exists:0}})</codeblock></p>
-      <p>This operation will update records that contains the field "age" but not the field
+      <p>This operation will update records that contain the field "age" but not the field
       "name" in collection "bar" and delete the field "age" in these records.</p>
       <p>Update records according to visiting plan, supposing that the collection contains the
         specified index name.</p>
       <codeblock>db.foo.bar.update({$inc:{age:1}},{age:{$gt:20}},{"":"testIndex"})></codeblock>
-      <p>This operation visit records that contains the value of "age" greater than 20 in the
-        collection "bar" through the index "testIndex". Add 1 to the field of "age".</p>
+      <p>This operation accesses records that contain a value which is no less than 20 in the field "age" according to the index named "testIndex"</p>
     </section>
   </body>
   <related-links>

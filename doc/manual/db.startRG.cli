@@ -25,8 +25,9 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Start a specified ReplicaGroup. Only after it is started can a
-node be created on it. This method is equal to "rg.start()"
+Start a specified ReplicaGroup. A node can only be created after
+a replica group is already started. This method is equivalent to
+rg.start().
 .sp 2
 \fBname (string)\fR
 .br
