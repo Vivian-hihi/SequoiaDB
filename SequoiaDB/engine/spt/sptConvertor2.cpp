@@ -245,6 +245,7 @@ BOOLEAN sptConvertor2::_addSpecialObj( JSObject *obj,
       std::string strValue ;
       jsval value ;
       Date_t dt ;
+      UINT64 millis = 0 ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
          goto error ;
@@ -256,11 +257,12 @@ BOOLEAN sptConvertor2::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      if ( SDB_OK != engine::utilStr2Datet( strValue.c_str(), dt ) )
+      if ( SDB_OK != engine::utilStr2Date( strValue.c_str(), millis ) )
       {
          goto error ;
       }
 
+      dt.millis = millis ;
       builder.appendDate( key, dt ) ;
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_REGEX ) &&
