@@ -76,7 +76,7 @@
 		<echo message="This suite begin time is ${testsuite.begin.time}"/>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;
-							            &lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot; time=&quot;0.55&quot; timestamp=&quot;${current.time}&quot;&gt;&#10;" />
+							            &lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot; time=&quot;0.55&quot; timestamp=&quot;${testsuite.begin.time}&quot;&gt;&#10;" />
 
 
     
@@ -162,7 +162,7 @@
 		<!-- end -->
 
 
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; time=&quot;${current.time}&quot;&gt;&#10;" />
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; time=&quot;${testcase.begin.time}&quot;&gt;&#10;" />
     
 
     
@@ -283,7 +283,7 @@
 				  	
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure 
 					type=&quot;junit.framework.AssertionFailedError&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; 
-					return code=${ret.code}; time=${current.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}&#10;&#10;
+					return code=${ret.code}; time=${testsuite.begin.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}&#10;&#10;
 					testBeginStr=${testBeginStr} &#10;
 					testEndStr=${testEndStr} &#10;
 					db.listReplicaGroups() : &#10;
