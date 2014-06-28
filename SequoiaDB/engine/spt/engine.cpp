@@ -199,7 +199,7 @@ error :
 
 // caller should free the return pointer using SAFE_JS_FREE
 PD_TRACE_DECLARE_FUNCTION ( SDB_CONVJS2STR, "convertJsvalToString" )
-static CHAR *convertJsvalToString ( JSContext *cx , jsval val )
+CHAR *convertJsvalToString ( JSContext *cx , jsval val )
 {
    PD_TRACE_ENTRY ( SDB_CONVJS2STR );
    JSString *  str   = NULL ;

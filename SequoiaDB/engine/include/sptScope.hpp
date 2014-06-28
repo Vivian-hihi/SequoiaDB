@@ -37,11 +37,8 @@
 #include "oss.hpp"
 #include "../bson/bson.hpp"
 
-#define SPT_ADD_USRCLASS( scope, classsdef ) \
-        scope->loadUsrDefObj( &(classsdef::__desc) )
-
 #define SPT_EVAL_FLAG_NONE 0
-#define SPT_EVAL_FLAG_PRINT 1
+#define SPT_EVAL_FLAG_PRINT 0x00000001
 
 namespace engine
 {
@@ -64,13 +61,13 @@ namespace engine
                           INT32 flag,
                           bson::BSONObj &rval,
                           bson::BSONObj &detail ) = 0 ;
-
-      /// for dbClasses.
-      virtual INT32 eval( const CHAR *code, UINT32 len,
-                          const CHAR *filename,
-                          UINT32 lineno ) = 0 ;
-
    public:
+      template<typename T>
+      INT32 loadUsrDefObj()
+      {
+         return loadUsrDefObj( &(T::__desc) ) ;
+      }
+
       INT32 loadUsrDefObj( _sptObjDesc *desc ) ;
 
    private:

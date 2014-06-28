@@ -43,8 +43,12 @@ const UINT32 RUNTIME_SIZE = 8 * 1024 * 1024 ;
 
 const UINT32 FUNC_ARRAY_SIZE = 50 ;
 
+
+extern BOOLEAN JSObjIsSdbObj( JSContext *cx, JSObject *obj ) ;
 namespace engine
 {
+extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
+
    _sptSPScope::_sptSPScope()
    :_runtime( NULL ),
     _context( NULL )
@@ -395,7 +399,7 @@ namespace engine
       SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" ) ;
       jsval jsrval = JSVAL_VOID ;
       jsval exception = JSVAL_VOID ;
-      string print ;
+      CHAR *print = NULL ;
 
       if ( !JS_EvaluateScript( _context, _global, code,
                                len, filename, lineno, &jsrval ) )
@@ -409,19 +413,24 @@ namespace engine
 
       if ( flag & SPT_EVAL_FLAG_PRINT )
       {
-         if ( JSVAL_IS_STRING( jsrval ) ||
-              JSVAL_IS_NUMBER( jsrval ) ||
-              JSVAL_IS_OBJECT( jsrval ) ||
-              JSVAL_IS_BOOLEAN( jsrval ) )
+         if ( !JSVAL_IS_VOID ( jsrval ) )
          {
-            rc = sptConvertor2::toString( _context, jsrval, print ) ;
-            if ( SDB_OK == rc )
-            {
-               ossPrintf( "%s\n", print.c_str() ) ;
-            }
+            print = convertJsvalToString ( _context , jsrval ) ;
+         }
+
+         if ( !print )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         if ( print[0] != '\0' )
+         {
+            ossPrintf ( "%s"OSS_NEWLINE, print ) ;
          }
       }
    done:
+      SAFE_JS_FREE ( _context , print ) ;
       return rc ;
    error:
       if ( JS_IsExceptionPending( _context ) &&
@@ -501,7 +510,8 @@ namespace engine
          }
          builder.appendBool( SPT_RVAL_KEY, v ) ;
       }
-      else if ( JSVAL_IS_OBJECT( jsrval ) )
+      else if ( JSVAL_IS_OBJECT( jsrval ) &&
+                !JSObjIsSdbObj(_context, JSVAL_TO_OBJECT( jsrval ) ) )
       {
          sptConvertor2 c( cx ) ;
          bson::BSONObj v ;

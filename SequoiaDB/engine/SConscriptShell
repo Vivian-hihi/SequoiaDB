@@ -9,7 +9,8 @@ sptFiles = [
       "spt/engine.cpp",
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
-      "spt/sptParseTroff.cpp"
+      "spt/sptParseTroff.cpp",
+      "spt/sptConvertorHelper.cpp"
       ]
 
 spt2Files = [
@@ -190,7 +191,7 @@ shellEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Shell Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2", "spt2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdb )
