@@ -467,13 +467,6 @@ namespace engine
       /// start from 1. 0 is out put buf.
       for ( UINT32 i = 1; i < _mergeBlkSize; i++ )
       {
-         if ( cb->isInterrupted() )
-         {
-            PD_LOG( PDERROR, "cb is interrupted" ) ;
-            rc = SDB_APP_INTERRUPT ;
-            goto error ;
-         }
-
          PD_LOG( PDDEBUG, "put the [%d] blk [%s] to the heap",
                  i, src.front().toString().c_str() ) ;
 

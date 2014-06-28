@@ -306,13 +306,6 @@ namespace engine
             }
 
             _internalBlk->clearBuf() ;
-
-            if ( cb->isInterrupted() )
-            {
-               PD_LOG( PDERROR, "cb is interrupted" ) ;
-               rc = SDB_APP_INTERRUPT ;
-               goto error ;
-            }
          }
          else if ( SDB_OK != rc )
          {
