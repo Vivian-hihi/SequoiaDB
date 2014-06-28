@@ -1563,7 +1563,8 @@ namespace engine
          rc = executeOnDataGroup( (MsgHeader *)pAlterReq, groupList,
                                    sendList, pRouteAgent, cb,
                                    TRUE ) ;
-         if ( SDB_MAIN_CL_OP_ERR == rc )
+         if ( SDB_MAIN_CL_OP_ERR == rc ||
+              SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
          {
             /// we only want to update data's catalog version.
             rc = SDB_OK ;
