@@ -466,6 +466,8 @@ namespace engine
       BSONElement shardingKey ;
       options = _alterObj.getField( FIELD_NAME_OPTIONS ).embeddedObject() ;
       shardingKey = options.getField( FIELD_NAME_SHARDINGKEY ) ;
+
+      /// TODO:should get catalog info to do some more judgements.
       if ( Object != shardingKey.type() )
       {
          PD_LOG( PDDEBUG, "no sharding key in the alter object, do noting." ) ;

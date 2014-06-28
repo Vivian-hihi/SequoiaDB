@@ -246,10 +246,13 @@ namespace engine
                              UINT32 begin,
                              UINT32 end ) ;
 
-      INT32 _buildAlterObjWithMetaAndObj( const BSONObj &clMeta,
+      INT32 _buildAlterObjWithMetaAndObj( _clsCatalogSet &catSet,
                                           UINT32 mask,
                                           catCollectionInfo &alterInfo,
                                           BSONObj &alterObj ) ;
+
+      INT32 _getGroupsOfCollections( const std::vector<string> &clNames,
+                                     BSONObj &groups  ) ;
    private:
       INT32 _buildInitBound ( UINT32 fieldNum,
                               const Ordering& order,

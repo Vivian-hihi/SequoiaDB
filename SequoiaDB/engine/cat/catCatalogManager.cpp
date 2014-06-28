@@ -541,6 +541,8 @@ namespace engine
       UINT32 mask = 0 ;
       catCollectionInfo clInfo ;
       returnNum = 0 ;
+      _clsCatalogSet catSet( "" ) ; 
+
       try
       {
          BSONObj boAlterObj ( ( CHAR * )pMsg ) ;
@@ -587,7 +589,14 @@ namespace engine
             goto error ;
          }
 
-         rc = _buildAlterObjWithMetaAndObj( boCollectionRecord,
+         rc = catSet.updateCatSet( boCollectionRecord ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to save json[%s] to catalogset:%d",
+                    boCollectionRecord.toString(FALSE, TRUE).c_str(), rc ) ;
+            goto error ;
+         }
+         rc = _buildAlterObjWithMetaAndObj( catSet,
                                             mask,
                                             clInfo,
                                             updater ) ;
@@ -609,31 +618,65 @@ namespace engine
                        "Failed to alter collection, rc = %d", rc ) ;
 
          /// build reply body: group info.
+         if ( !catSet.isMainCL() )
          {
-         BSONArrayBuilder arrBuilder ;
-         BSONElement gpInfo = boCollectionRecord.getField( CAT_CATALOGINFO_NAME ) ;
-         /// main cl has no group info
-         if ( Array == gpInfo.type() ||
-              Object == gpInfo.type() )
-         {
-            BSONObjIterator itr( gpInfo.embeddedObject() ) ;
-            while ( itr.more() )
+            BSONArrayBuilder arrBuilder ;
+            BSONElement gpInfo = boCollectionRecord.getField( CAT_CATALOGINFO_NAME ) ;
+            if ( Array == gpInfo.type() ||
+                 Object == gpInfo.type() )
             {
-               arrBuilder << itr.next() ;
+               BSONObjIterator itr( gpInfo.embeddedObject() ) ;
+               while ( itr.more() )
+               {
+                  arrBuilder << itr.next() ;
+               }
+               BSONObj replyObj = BSON( CAT_GROUP_NAME << arrBuilder.arr() ) ;
+               replyBodyLen = replyObj.objsize() ;
+               *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyBodyLen ) ;
+               if ( NULL == *ppReplyBody )
+               {
+                  PD_LOG( PDERROR, "failed to allocate mem." ) ;
+                  rc = SDB_OOM ;
+                  goto error ;
+               }
+
+               ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
+               returnNum = 1 ;
             }
-            BSONObj replyObj = BSON( CAT_GROUP_NAME << arrBuilder.arr() ) ;
-            replyBodyLen = replyObj.objsize() ;
-            *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyBodyLen ) ;
-            if ( NULL == *ppReplyBody )
+         }
+         /// get all sub collections' groups
+         else
+         {
+            BSONObj replyObj ;
+            vector<string> subCLLst ;
+            rc = catSet.getSubCLList( subCLLst ) ;
+            if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to allocate mem." ) ;
-               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "failed to get sub cl list:%d", rc ) ;
                goto error ;
             }
 
-            ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
-            returnNum = 1 ;
-         }
+            if ( !subCLLst.empty() )
+            {
+               rc = _getGroupsOfCollections( subCLLst, replyObj ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to get groups of sub cl:%d", rc ) ;
+                  goto error ;
+               }
+
+               *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyObj.objsize() ) ;
+               if ( NULL == *ppReplyBody )
+               {
+                  PD_LOG( PDERROR, "failed to allocate mem." ) ;
+                  rc = SDB_OOM ;
+                  goto error ;
+               }
+
+               replyBodyLen = replyObj.objsize() ;
+               ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
+               returnNum = 1 ;
+            }
          }
          
       }
@@ -2836,7 +2879,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__BUILDALTEROBJWITHMETAANDOBJ, "catCatalogueManager::_buildAlterObjWithMetaAndObj" )
-   INT32 catCatalogueManager::_buildAlterObjWithMetaAndObj( const BSONObj &clMeta,
+   INT32 catCatalogueManager::_buildAlterObjWithMetaAndObj( _clsCatalogSet &catSet,
                                                             UINT32 mask,
                                                             catCollectionInfo &alterInfo,
                                                             BSONObj &alterObj )
@@ -2848,14 +2891,6 @@ namespace engine
       BSONObj groupObj ;
       _clsCatalogSet::POSITION pos ;
       clsCatalogItem *item = NULL ;
-      _clsCatalogSet catSet( "" ) ;
-      rc = catSet.updateCatSet( clMeta ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to save json[%s] to catalogset:%d",
-                 clMeta.toString(FALSE, TRUE).c_str(), rc ) ;
-         goto error ;
-      }
 
       if ( ( CAT_MASK_SHDKEY & mask ) &&
            catSet.isSharding() )
@@ -2917,4 +2952,76 @@ namespace engine
    error:
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__GETGROUPSOFCOLLECTIONS, "catCatalogueManager::_getGroupsOfCollections" )
+   INT32 catCatalogueManager::_getGroupsOfCollections(
+                              const std::vector<string> &clNames,
+                              BSONObj &groups )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__GETGROUPSOFCOLLECTIONS ) ;
+      BSONArrayBuilder builder ;
+      set<INT32> pushed ;
+      vector<string>::const_iterator itr = clNames.begin() ;
+      for ( ; itr != clNames.end(); ++itr )
+      {
+         BSONObj clInfo ;
+         BOOLEAN exist = FALSE ;
+         BSONElement cataInfo ;
+         rc = catCheckCollectionExist( itr->c_str(),
+                                       exist,
+                                       clInfo,
+                                       _pEduCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to detect collection[%s]"
+                    ", rc:%d", itr->c_str(), rc ) ;
+            goto error ;
+         }
+
+         if ( !exist )
+         {
+            PD_LOG( PDERROR, "collection[%s] does not exist" ) ;
+            rc = SDB_DMS_NOTEXIST ;
+            goto error ;
+         }
+
+         cataInfo = clInfo.getField( CAT_CATALOGINFO_NAME ) ;
+         if ( Array != cataInfo.type() )
+         {
+            PD_LOG( PDERROR, "invalid cl info:%s",
+                    clInfo.toString( FALSE, FALSE ).c_str()) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         {
+         BSONObjIterator i( cataInfo.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            BSONElement ele = i.next() ;
+            if ( Object == ele.type() )
+            {
+               BSONElement groupID = ele.embeddedObject().getField( CAT_GROUPID_NAME ) ;
+               if ( NumberInt == groupID.type() )
+               {
+                  if ( pushed.find( groupID.Int() ) == pushed.end() )
+                  {
+                     builder << ele ;
+                     pushed.insert( groupID.Int() ) ;
+                  }
+               }
+            }
+         }
+         }
+      }
+
+      groups = BSON( CAT_GROUP_NAME << builder.arr() ) ;   
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__GETGROUPSOFCOLLECTIONS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
+

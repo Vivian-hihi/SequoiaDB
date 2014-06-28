@@ -1552,23 +1552,32 @@ namespace engine
          goto error ;
       }
 
-      if ( !cataInfo->isMainCL() )
+      /// empty main cl has no groups
+      if ( !groupList.empty() )
       {
-         SDB_ASSERT( !groupList.empty(), "can not be empty" ) ;
          /// reassign it as a command.
          pAlterReq->header.opCode = MSG_BS_QUERY_REQ ;
          pAlterReq->version = cataInfo->getVersion() ;
 
          /// send request to data
          rc = executeOnDataGroup( (MsgHeader *)pAlterReq, groupList,
-                                  sendList, pRouteAgent, cb,
-                                  TRUE ) ;
-         if ( SDB_OK != rc )
+                                   sendList, pRouteAgent, cb,
+                                   TRUE ) ;
+         if ( SDB_MAIN_CL_OP_ERR == rc )
+         {
+            /// we only want to update data's catalog version.
+            rc = SDB_OK ;
+         }
+         else if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to alter collection on data group:%d",
                     rc ) ;
             rc = SDB_BUT_FAILED_ON_DATA ;
             goto error ;
+         }
+         else
+         {
+            /// do nothing.
          }
       }
    done :
