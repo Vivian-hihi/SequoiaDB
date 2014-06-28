@@ -6451,6 +6451,14 @@ JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj )
    {
       return TRUE ;
    }
+   else if ( JS_InstanceOf( cx, obj, &domain_class, NULL ) )
+   {
+      return TRUE ;
+   }
+   else if ( JS_InstanceOf( cx, obj, &count_class, NULL ) )
+   {
+      return TRUE ;
+   }
    else
    {
       return FALSE ;
