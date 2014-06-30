@@ -45,7 +45,7 @@ Create a domain. A domain can contain multiple replica groups.
               When this field is set to be True, all the
               hash-partitioning collection spaces created in this
               domain will be automatically splitted into the
-              replica groups it belongs to.
+              replica groups it belong to.
 .br
               AutoSplit:true|false
 .sp 2
