@@ -26,6 +26,7 @@ import pysequoiadb
 from pysequoiadb.replicanode import replicanode
 from pysequoiadb.common import const
 from pysequoiadb import common
+from pysequoiadb import SequoiaDBError
 
 class replicagroup(object):
    """Entrance of SequoiaDB
@@ -38,6 +39,7 @@ class replicagroup(object):
          self._group = sdbreplicagroup.create_replicagroup()
       except SystemError:
          pysequoiadb.check_error(const.SDM_OOM)
+         raise SequoiaDBError
 
    def __del__(self):
 
@@ -47,13 +49,24 @@ class replicagroup(object):
       self._client = None
 
    def get_nodenum(self, nodestatus):
+      """Get the count of node with given status in current replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         [in] nodestatus   int      The specified status, see Info as below.
+      Return values:
+         Success: SDB_OK  and  the count of node
+         Fail   : Others  and  None
+      Info:
+         flags : 0 or 1. 
+            0 : count of all node
+            1 : count of actived node
+            2 : count of inactived node
+            3 : count of unknown node
       """
-       get node number  of group
-       retcode SDB_OK Operation Success
-       return node number after retcode
-       retcode other Operation Failure
-       return node number is Node
-      """
+      if not isinstance(nodestatus, int):
+         raise TypeError("nodestatus be an instance of int")
+
       if nodestatus not in common.NODE_STATUS.available_options() :
          return const.INVALIDARG, None
 
@@ -66,12 +79,14 @@ class replicagroup(object):
       return ret, nodenum
 
    def get_detail(self):
-      """
-       get detail of group
-       retcode SDB_OK Operation Success
-       return detail after retcode
-       retcode other Operation Failure
-       return detail is Node
+      """Get the detail of the replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK  and  a dict object of query
+         Fail   : Others  and  None
       """
       ret, bson_string = sdbreplicagroup.get_detail(self._group)
       pysequoiadb.check_error(ret)
@@ -84,12 +99,14 @@ class replicagroup(object):
 
 
    def get_master(self):
-      """
-       get master of group
-       retcode SDB_OK Operation Success
-       return node after retcode
-       retcode other Operation Failure
-       return node is Node
+      """Get the master node of the current replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK  and  a replicanode object of query
+         Fail   : Others  and  None
       """
       node = replicanode(self._client)
       ret = sdbreplicagroup.get_master(self._group, node._node)
@@ -102,12 +119,15 @@ class replicagroup(object):
       return ret, node
 
    def get_slave(self):
-      """
-       get slave of group
-       retcode SDB_OK Operation Success
-       return node after retcode
-       retcode other Operation Failure
-       return node is Node
+      """Get one of slave node of the current replica group, if no slave exists
+         then get master.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK  and  a replicanode object of query
+         Fail   : Others  and  None
       """
       node = replicanode(self._client)
       ret = sdbreplicagroup.get_slave(self._group, node._node)
@@ -120,13 +140,21 @@ class replicagroup(object):
       return ret, node
 
    def get_nodebyendpoint(self, hostname, servicename):
+      """Get specified node from current replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         [in] hostname     str      The host name of the node.
+         [in] servicename  str      The service name of the node.
+      Return values:
+         Success: SDB_OK  and  a replicanode object of query
+         Fail   : Others  and  None
       """
-       get node by endpoint of group
-       retcode SDB_OK Operation Success
-       return node after retcode
-       retcode other Operation Failure
-       return node is Node
-      """
+      if not isintance(hostname, basestring):
+         raise TypeError("hostname must be an instance of basestring")
+      if not isintance(servicename, basestring):
+         raise TypeError("servicename must be an instance of basestring")
+
       node = replicanode(self._client)
       ret = sdbreplicagroup.get_nodebyendpoint(self._group, node._node,
                                                     hostname, servicename)
@@ -139,13 +167,18 @@ class replicagroup(object):
       return ret, node
 
    def get_nodebyname(self,nodename):
+      """Get specified node from current replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         [in] nodename     str      The host name of the node.
+      Return values:
+         Success: SDB_OK  and  a replicanode object of query
+         Fail   : Others  and  None
       """
-       get node by name of group
-       retcode SDB_OK Operation Success
-       return node after retcode
-       retcode other Operation Failure
-       return node is Node
-      """
+      if not isintance(nodename, basestring):
+         raise TypeError("nodename must be an instance of basestring")
+
       node = replicanode(self._client)
       ret = sdbreplicagroup.get_nodebyname(self._group, node._node, nodename)
       pysequoiadb.check_error(ret)
@@ -158,6 +191,24 @@ class replicagroup(object):
 
 
    def create_node(self, hostname, servicename, dbpath, config = None):
+      """Create node in a given replica group.
+
+      Parameters:
+              Name         Type     Info:
+         [in] hostname     str      The host name for the node.
+         [in] servicename  str      The servicename for the node.
+         [in] dbpath       str      The database path for the node.
+         [in] config       dict     The configurations for the node.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
+      """
+      if not isinstance(hostname, basestring):
+         raise TypeError("host must be an instance of basestring")
+      if not isinstance(servicename, basestring):
+         raise TypeError("service name must be an instance of basestring")
+      if not isinstance(dbpath, basestring):
+         raise TypeError("path must be an instance of basestring")
 
       if config is None:
          config = {}
@@ -172,11 +223,22 @@ class replicagroup(object):
       return rc
 
    def remove_node(self, hostname, servicename, config=None):
+      """Remove node in a given replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         [in] hostname     str      The host name for the node.
+         [in] servicename  str      The servicename for the node.
+         [in] config       dict     The configurations for the node.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
-       remove node of group
-       retcode SDB_OK Operation Success
-       retcode other Operation Failure
-      """
+      if not isinstance(hostname, basestring):
+         raise TypeError("host must be an instance of basestring")
+      if not isinstance(servicename, basestring):
+         raise TypeError("service name must be an instance of basestring")
+
       if None != config:
          pybson = bson.BSON.encode(config)
          rc = sdbreplicagroup.remove_node(self._group, hostname, servicename, pybson)
@@ -187,32 +249,42 @@ class replicagroup(object):
       return rc
 
    def start(self):
-      """
-       start group
-       retcode SDB_OK Operation Success
-       retcode other Operation Failure
+      """Start up current replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
       rc = sdbreplicagroup.start(self._group)
       pysequoiadb.check_error(rc)
       return rc
 
    def stop(self):
-      """
-       stop group
-       retcode SDB_OK Operation Success
-       retcode other Operation Failure
+      """Stop current replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
       rc = sdbreplicagroup.stop(self._group)
       pysequoiadb.check_error(rc)
       return rc
 
    def is_catalog(self):
-      """
-       group is catalog group
-       retcode SDB_OK Operation Success
-         True is catalog group
-         False is not catalog group
-       retcode other Operation Failure
+      """Test whether current replica group is catalog replica group.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK  and  True, if The replica group is catalog, or False
+         Fail   : Others  and  False
       """
       rc = sdbreplicagroup.is_catalog(self._group)
       if (const.SDB_OK == rc):

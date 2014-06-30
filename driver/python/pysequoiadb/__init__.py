@@ -48,7 +48,6 @@ driver_version = get_version()
 from pysequoiadb.client import client
 from pysequoiadb.common import const
 from pysequoiadb.error import ( SequoiaDBError,
-                                InvalidParameter,
                                 ConnectError,
                                 OperationError )
 
@@ -56,24 +55,25 @@ import sys
 
 PY3 = sys.version_info[0] == 3
 
-def printInfo(what):
+def cout(what):
    if PY3:
       print(what)
    else:
       print what
 
+def ASSERT( condition ):
+   if condition != True:
+      cout("Error: SquoiaDB Assert Failed.")
+      raise SequoiaDBError
+
 def check_error(rc):
    if const.SDB_OK != rc:
-      printInfo( OperationError("  Error code: ", rc) )
+      cout( OperationError("  Error code: ", rc) )
 
 def getErr(rc):
-   return OparationError("", rc)
-
-#def check_error( rc ):
-#   if const.SDB_OK != rc:
-#      print OperationError("  Error: ", rc)
+   return OparationError(" ", rc)
 
 if __name__ == "__main__":
    cc = client("192.168.20.111", 50000)
 
-   print dir( cc )
+   cout( dir( cc ))

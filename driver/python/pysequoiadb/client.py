@@ -33,15 +33,16 @@ from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb.replicagroup import replicagroup
 from pysequoiadb.common import const
+from pysequoiadb.error import SequoiaDBError
 
 
 class client(object):
    """SequoiaDB Client Driver
    
-   The client support interfaces to connect to SequoiaDB.
-   In order to connect to SequoiaDB, you need use the class first.
-   And you should make sure the instance of it released when you don't use it
-   any more.
+      The client support interfaces to connect to SequoiaDB.
+      In order to connect to SequoiaDB, you need use the class first.
+      And you should make sure the instance of it released when you don't use it
+      any more.
    """
    def __init__(self, host = default_host, port = default_port,
                       user = default_user, psw  = default_psw):
@@ -51,38 +52,52 @@ class client(object):
          localhost and 11810 are the default value of host and port,
          user and password are "". 
       """
-      self._host = host
-      self._port = port
-      self._user = user
-      self._psw  = '*' * len(psw)
+      if isinstance(host, basestring):
+         self.__host = host
+      else:
+         raise TypeError("host must be an instance of basestring")
+
+      if isinstance(port, int):
+         _port = port
+      else:
+         raise TypeError("port must be an instance of int")
+
+      if isinstance(user, basestring):
+         _user = user
+      else:
+         raise TypeError("user name must be an instance of basestring")
+
+      if isinstance(psw, basestring):
+         _psw = psw
+      else:
+         raise TypeError("password must be an instance of basestring")
+
       try:
          self._client = sdbclient.create_client()
-         # try to connect with default user and password 
-         rc = sdbclient.init_connect(self._client, host, port, user, psw)
-         if const.SDB_OK != rc:
-            what = " Error: connect to host: %s, port: %d" % (host, port) + \
-                   " user: %s, psw : %s failed." % (user, psw)
-            pysequoiadb.printInfo(what)
-            sdbclient.disconnect(self._client)
       except SystemError:
          pysequoiadb.check_error(const.SDM_OOM)
+         raise SequoiaDBError
+
+      # try to connect with default user and password 
+      rc = sdbclient.init_connect(self._client, self.__host,
+                                                 _port, _user, _psw)
+      if const.SDB_OK != rc:
+         sdbclient.disconnect(self._client)
+         pysequoiadb.check_error(rc)
 
    def __del__(self):
       """release resource when del called.
 
       """
-      self._host = default_host
-      self._port = default_port
-      self._user = default_user
-      self._psw  = default_psw
+      self.__host = default_host
       if self._client is not None:
          rc = sdbclient.release_client(self._client)
          pysequoiadb.check_error(rc)
          self._client = None
 
-   def __str__(self):
+   def __repr__(self):
 
-      return "Client "
+      return "Client, connect to: %s" % (self.__host)
 
    def __getitem__(self, name):
       """support [] to access to collection space.
@@ -121,62 +136,158 @@ class client(object):
    @classmethod
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
-      """connect to database, using default host ip, port, user, password.
+      """connect to specified database
 
-         if there is no arguments specified, default value insteaded. 
+      Parameters:
+              Name    Type    Info:
+         [in] host    str     The host name or IP address of database server,
+                              if None, 'localhost' instead.
+         [in] port    int     The port of database server, if None, 11810
+                              instead.
+         [in] user    str     The user name to access to database, if None,
+                              "" instead.
+         [in] psw     str     The password to access to database, if None,
+                              "" instead.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
-      self._host = host
-      self._port = port
-      self._user = user
-      self._psw  = '*' * len(psw)
+      if isinstance(host, basestring):
+         self.__host = host
+      else:
+         raise TypeError("host must be an instance of basestring")
 
-      rc = sdbclient.connect_by_host(self._client, host, port, user, psw)
+      if isinstance(port, int):
+         _port = port
+      else:
+         raise TypeError("port must be an instance of int")
+
+      if isinstance(user, basestring):
+         _user = user
+      else:
+         raise TypeError("user name must be an instance of basestring")
+
+      if isinstance(psw, basestring):
+         _psw = psw
+      else:
+         raise TypeError("password must be an instance of basestring")
+
+      rc = sdbclient.connect_by_host(self._client, self.__host,
+                                                    _port, _user, _psw)
       pysequoiadb.check_error(rc)
 
       return rc
 
    @classmethod
-   def connect_by_service(self, host, service_name, user = default_user,
-                                                    psw  = default_psw):
-      """connect to database, using host ip and service name, user and password.
+   def connect_by_service(self, host, service, user = default_user,
+                                               psw  = default_psw):
+      """connect to specified database, using host and service name.
 
-         if there is no arguments specified, default value insteaded. 
+      Parameters:
+              Name    Type    Info:
+         [in] host    str     The host name or IP address of database server.
+         [in] service str     The service name of database server.
+         [in] user    str     The user name to access to database, if None,
+                              "" instead.
+         [in] psw     str     The password to access to database, if None,
+                              "" instead.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
-      self._host = host
-      self._service = service_name
-      self._user = user
-      self._psw  = '*' * len(psw)
-      rc = sdbclient.connect_by_service(self._client, host, service_name,
-                                                      user, psw)
+      if isinstance(host, basestring):
+         self.__host = host
+      else:
+         raise TypeError("host must be an instance of basestring")
+
+      if isinstance(service, basestring):
+         _service = service
+      else:
+         raise TypeError("port must be an instance of basestring")
+
+      if isinstance(user, basestring):
+         _user = user
+      else:
+         raise TypeError("user name must be an instance of basestring")
+
+      if isinstance(psw, basestring):
+         _psw = psw
+      else:
+         raise TypeError("password must be an instance of basestring")
+
+      rc = sdbclient.connect_by_service(self._client, self.__host,
+                                                       _service, _user, _psw)
       pysequoiadb.check_error(rc)
 
       return rc
 
    @classmethod
    def disconnect(self):
-      """release current connection.
-       
+      """disconnect to current server.
+
+      Parameters:
+              Name    Type    Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
+      self.__host = default_host
       rc = sdbclient.disconnect(self._client)
       pysequoiadb.check_error(rc)
 
       return rc
 
    @classmethod
-   def create_user(self, name, psw):
-      """create a new user, with user name and password.
+   def create_user(self, user_name, psw):
+      """Add an user in current database.
 
+      Parameters:
+              Name         Type     Info:
+         [in] user_name    str      The name of user to be created.
+         [in] psw          str      The password of user to be created.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
-      rc = sdbclient.create_user(self._client, name, psw)
+      if isinstance(user_name, basestring):
+         _user_name = user_name
+      else:
+         raise TypeError("user name must be an instance of basestring")
+
+      if isinstance(psw, basestring):
+         _psw = psw
+      else:
+         raise TypeError("password must be an instance of basestring")
+
+      rc = sdbclient.create_user(self._client, _user_name, _psw)
       pysequoiadb.check_error(rc)
 
       return rc
 
    @classmethod
    def remove_user(self, user, psw):
-      """delete a user.
+      """Remove the spacified user from current database.
+
+      Parameters:
+              Name         Type     Info:
+         [in] user_name    str      The name of user to be removed.
+         [in] psw          str      The password of user to be removed.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
-      rc = sdbclient.remove_user(self._client, user, psw)
+      if isinstance(user_name, basestring):
+         _user_name = user_name
+      else:
+         raise TypeError("user name must be an instance of basestring")
+
+      if isinstance(psw, basestring):
+         _psw = psw
+      else:
+         raise TypeError("password must be an instance of basestring")
+
+      rc = sdbclient.remove_user(self._client, _user_name, _psw)
       pysequoiadb.check_error(rc)
 
       return rc
@@ -185,11 +296,35 @@ class client(object):
    def get_snapshot(self, snap_type, condition = static_object,
                                      selector  = static_object,
                                      order_by  = static_object):
-      """get a snapshot of current database.
+      """Get the snapshots of specified type.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] snap_typr    str      The type of snapshot, see Info as below
+         [in] condition    dict     The matching rule, match all the documents
+                                    if not provided.
+         [in] selector     dict     The selective rule, return the whole
+                                    document if not provided.
+         [in] order_by     dict     The ordered rule, result set is unordered
+                                    if not provided.
+      Return values:
+         Success: SDB_OK       and  a cursor object of query
+         Fail   : Others  and  None
+      Info:
+        snapshot type:
+                  0     : Get all contexts' snapshot
+                  1     : Get the current context's snapshot
+                  2     : Get all sessions' snapshot
+                  3     : Get the current session's snapshot
+                  4     : Get the collections' snapshot
+                  5     : Get the collection spaces' snapshot
+                  6     : Get database's snapshot
+                  7     : Get system's snapshot
+                  8     : Get catalog's snapshot
       """
+      if not isinstance(snap_type, int):
+         raise TypeError("snap type must be an instance of int")
+
       bson_condition = None
       bson_selector = None
       bson_order_by = None
@@ -213,7 +348,16 @@ class client(object):
 
    @classmethod
    def reset_snapshot(self, condition = static_object):
-      """reset the snapshot.
+      """Reset the snapshot.
+
+      Parameters:
+              Name         Type     Info:
+         [in] condition    dict     The matching rule, usually specifies the
+                                    node in sharding environment, in standalone
+                                    mode, this option is ignored.
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
       bson_condition = None
       if condition is not None:
@@ -228,11 +372,38 @@ class client(object):
    def get_list(self, list_type, condition = static_object,
                                  selector  = static_object,
                                  order_by  = static_object):
-      """list the content of database, according to the given list_type.
+      """Get the informations of specified type.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] list_type    int      type of list, see Info as below.
+         [in] condition    dict     The matching rule, match all the documents
+                                    if None.
+         [in] selector     dict     The selective rule, return the whole
+                                    documents if None.
+         [in] order_by     dict     The ordered rule, never sort if None.
+      Return values:
+         Success: SDB_OK   and   a cursor object of query
+         Fail   : Other    and   None
+      Info:
+         list type:
+                0          : Get all contexts list
+                1          : Get contexts list for the current session
+                2          : Get all sessions list
+                3          : Get the current session
+                4          : Get all collections list
+                5          : Get all collecion spaces' list
+                6          : Get storage units list
+                7          : Get replicaGroup list ( only applicable in sharding env )
+                8          : Get store procedure list
+                9          : Get domains list
+                10         : Get tasks list
+                11         : Get collection space list in domain
+                12         : Get collection list in domain
       """
+      if not isinstance(list_type, int):
+         raise TypeError("list type must be an instance of int")
+
       bson_condition = None
       bson_selector = None
       bson_order_by = None
@@ -257,11 +428,18 @@ class client(object):
 
    @classmethod
    def get_collection(self, cl_full_name):
-      """get the collection by the full name specified.
+      """Get the specified collection.
 
-         if success, a collection object will be returned with error code,
-         or collection object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] cl_full_name str      The full name of collection
+      Return values:
+         Success: SDB_OK   and   a collection object of query.
+         Fail   : Other    and   None
       """
+      if not isinstance(cl_full_name, basestring):
+         raise TypeError("full name of collection must be an instance of basestring")
+
       cl = collection()
       rc = sdbclient.get_collection(self._client, cl_full_name, cl._cl)
       pysequoiadb.check_error(rc)
@@ -274,11 +452,18 @@ class client(object):
 
    @classmethod
    def get_collection_space(self, cs_name):
-      """get the collection space by the name specified.
+      """Get the specified collection space.
 
-         if success, a collection space object will be returned with error code,
-         or collection object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] cs_name      str      The name of collection space.
+      Return values:
+         Success: SDB_OK   and   a collection space object of query.
+         Fail   : Other    and   None
       """
+      if not isinstance(cs_name, basestring):
+         raise TypeError("name of collection space must be an instance of basestring")
+
       cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, cs_name, cs._cs)
       pysequoiadb.check_error(rc)
@@ -291,13 +476,30 @@ class client(object):
 
    @classmethod
    def create_collection_space(self, cs_name, page_size = 0):
-      """create the collection space by the name specified.
+      """Create collection space with specified pagesize.
 
-         page_size must be times of 4096(4k). 0 means create collection space
-         using default page size.
-         if success, a collection space object will be returned with error code,
-         or collection object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] cs_name      str      The name of collection space to be created.
+         [in] page_size    int      The page size of collection space. See Info
+                                    as below.
+      Return values:
+         Success: SDB_OK   and   the collection space object created.
+         Fail   : Other    and   None
+      Info:
+         valid page size value:
+                           0  :  64k default page size
+                        4096  :  4k
+                        8192  :  8k
+                       16384  :  16k
+                       32768  :  32k
+                       65536  :  64k
       """
+      if not isinstance(cs_name, basestring):
+         raise TypeError("name of collection space must be an instance of basestring")
+      if not isinstance(page_size, int):
+         raise TypeError("page size must be an instance of int")
+      
       cs = collectionspace()
       rc = sdbclient.create_collection_space(self._client, cs_name,
                                              page_size, cs._cs)
@@ -311,8 +513,17 @@ class client(object):
 
    @classmethod
    def drop_collection_space(self, cs_name):
-      """drop the collection space
+      """Remove the specified collection space.
+
+      Parameters:
+              Name         Type     Info:
+         [in] cs_name      str      The name of collection space to be dropped
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
+      if not isinstance(cs_name, basestring):
+         raise TypeError("name of collection space must be an instance of basestring")
 
       rc = sdbclient.drop_collection_space(self._client, cs_name)
       pysequoiadb.check_error(rc)
@@ -321,10 +532,15 @@ class client(object):
 
    @classmethod
    def list_collection_spaces(self):
-      """list all the collection spaces in current database.
+      """List all collection space of current database, include temporary
+         collection space.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK   and   a cursor object of collection space list.
+         Fail   : Other    and   None
       """
       result = cursor()
       rc = sdbclient.list_collection_spaces(self._client, result._cursor)
@@ -338,10 +554,14 @@ class client(object):
 
    @classmethod
    def list_collections(self):
-      """list all the collection in current database.
+      """List all collections in current database.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK   and   a cursor object of collection list.
+         Fail   : Other    and   None
       """
       result = cursor()
       rc = sdbclient.list_collections(self._client, result._cursor)
@@ -355,10 +575,14 @@ class client(object):
 
    @classmethod
    def list_replica_groups(self):
-      """list all the replica groups in current database.
+      """List all replica groups of current database.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK   and   a cursor object of replication groups.
+         Fail   : Other    and   None
       """
       result = cursor()
       rc = sdbclient.list_replica_groups(self._client, result._cursor)
@@ -372,11 +596,18 @@ class client(object):
 
    @classmethod
    def get_replica_group_by_name(self, group_name):
-      """get the replica group using specified group name.
+      """Get the specified replica group of specified group name.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] group_name   str      The name of replica group.
+      Return values:
+         Success: SDB_OK   and   the replicagroup object of query.
+         Fail   : Other    and   None
       """
+      if not isinstance(group_name, basestring):
+         raise TypeError("group name must be an instance of basestring")
+
       result = replicagroup(self._client)
       rc = sdbclient.get_replica_group_by_name(self._client, group_name,
                                                              result._group)
@@ -390,11 +621,18 @@ class client(object):
 
    @classmethod
    def get_replica_group_by_id(self, id):
-      """get the replica group using specified group id.
+      """Get the specified replica group of specified group id.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         [in]   id         str      The id of replica group.
+      Return values:
+         Success: SDB_OK   and   the replicagroup object of query.
+         Fail   : Other    and   None
       """
+      if not isinstance(id, int):
+         raise TypeError("group id must be an instance of int")
+
       result = replicagroup(self._client)
       rc = sdbclient.get_replica_group_by_id(self._client, id, result._group)
       pysequoiadb.check_error(rc)
@@ -407,11 +645,18 @@ class client(object):
 
    @classmethod
    def creat_replica_group(self, group_name):
-      """create the replica group using specified group name.
+      """Create the specified replica group.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] group_name   str      The name of replica group to be created.
+      Return values:
+         Success: SDB_OK   and   the replicagroup object created.
+         Fail   : Other    and   None
       """
+      if not isinstance(group_name, basestring):
+         raise TypeError("group name must be an instance of basestring")
+
       replica_group = replicagroup(self._client)
       rc = sdbclient.create_replica_group(self._client, group_name,
                                                         replica_group._group)
@@ -425,33 +670,68 @@ class client(object):
 
    @classmethod
    def remove_replica_group(self, group_name):
-      """remove the replica group using specified group name.
+      """Remove the specified replica group.
 
+      Parameters:
+              Name         Type     Info:
+         [in] group_name   str      The name of replica group to be removed
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
+      if not isinstance(group_name, basestring):
+         raise TypeError("group name must be an instance of basestring")
+
       rc = sdbclient.remove_replica_group(self._client, group_name)
       pysequoiadb.check_error(rc)
 
       return rc
 
    @classmethod
-   def create_replica_cata_group(self, host, service_name, dbpath, configure):
-      """create the replica group using specified group name.
+   def create_replica_cata_group(self, host, service, path, configure):
+      """Create a catalog replica group.
 
-         if success, SDB_OK will be returned.
+      Parameters:
+              Name         Type     Info:
+         [in] host         str      The hostname for the catalog replica group.
+         [in] service      str      The servicename for the catalog replica
+                                    group.
+         [in] path         str      The path for the catalog replica group.
+         [in] configure    dict     The configurations for the catalog replica
+                                    group.
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
+      if not isinstance(host, basestring):
+         raise TypeError("host must be an instance of basestring")
+      if not isinstance(service, basestring):
+         raise TypeError("service name must be an instance of basestring")
+      if not isinstance(path, basestring):
+         raise TypeError("path must be an instance of basestring")
+
       bson_configure = bson.BSON.encode(configure)
 
-      rc = sdbclient.create_replica_cata_group(self._client, host, service_name,
-                                               dbpath, bson_configure)
+      rc = sdbclient.create_replica_cata_group(self._client, host, service,
+                                               path, bson_configure)
       pysequoiadb.check_error(rc)
 
       return rc
 
    @classmethod
    def exec_update(self, sql):
-      """execute a update sql.
+      """Executing SQL command for updating.
 
+      Parameters:
+              Name         Type     Info:
+         [in] sql          str      The SQL command.
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
+      if not isinstance(sql, basestring):
+         raise TypeError("update sql must be an instance of basestring")
+
       rc = sdbclient.exec_update(self._client, sql)
       pysequoiadb.check_error(rc)
 
@@ -459,9 +739,18 @@ class client(object):
 
    @classmethod
    def exec_sql(self, sql):
-      """execute a sql.
+      """Executing SQL command.
 
+      Parameters:
+              Name         Type     Info:
+         [in] sql          str      The SQL command.
+      Return values:
+         Success: SDB_OK   and   a cursor object of matching documents.
+         Fail   : Other    and   None
       """
+      if not isinstance(sql, basestring):
+         raise TypeError("sql must be an instance of basestring")
+
       result = cursor()
       rc = sdbclient.exec_sql(self._client, sql, result._cursor)
       pysequoiadb.check_error(rc)
@@ -474,8 +763,14 @@ class client(object):
 
    @classmethod
    def transaction_begin(self):
-      """begin transaction.
+      """Transaction begin.
 
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
       rc = sdbclient.transaction_begin(self._client)
       pysequoiadb.check_error(rc)
@@ -484,8 +779,14 @@ class client(object):
 
    @classmethod
    def transaction_commit(self):
-      """commit transaction.
+      """Transaction commit.
 
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
       rc = sdbclient.transaction_commit(self._client)
       pysequoiadb.check_error(rc)
@@ -494,10 +795,15 @@ class client(object):
 
    @classmethod
    def transaction_rollback(self):
-      """rollback
+      """Transaction rollback
 
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
-
       rc = sdbclient.transaction_rollback(self._client)
       pysequoiadb.check_error(rc)
 
@@ -505,8 +811,18 @@ class client(object):
 
    @classmethod
    def flush_configure(self, options):
-      """flush the configure
-
+      """Flush the options to configure file.
+      Parameters:
+              Name      Type  Info:
+         [in] options   dict  The configure infomation, pass {"Global":true} or
+                        {"Global":false} In cluster environment, passing
+                        {"Global":true} will flush data's and catalog's 
+                        configuration file, while passing {"Global":false} will 
+                        flush coord's configuration file. In stand-alone
+                        environment, both them have the same behaviour.
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
       bson_options = bson.BSON.encode(options)
       rc = sdbclient.flush_configure(self._client, bson_options)
@@ -516,9 +832,17 @@ class client(object):
 
    @classmethod
    def create_js_procedure(self, code):
-      """create procedure usring js
+      """Create a store procedures
 
+      Parameters:
+              Name         Type     Info:
+         [in] code         str      The code of store procedures.
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
+      if not isinstance(code, basestring):
+         raise TypeError("code must be an instance of basestring")
       rc = sdbclient.create_JS_procedure(self._client, code)
       pysequoiadb.check_error(rc)
 
@@ -526,10 +850,17 @@ class client(object):
 
    @classmethod
    def remove_procedure(self, sp_name):
-      """remove procedure.
+      """Remove a store procedures.
      
-         procedure name should be specified.
+      Parameters:
+              Name         Type     Info:
+         [in] sp_name      str      The name of store procedure.
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
       """
+      if not isinstance(sp_name, basestring):
+         raise TypeError("procedure name must be an instance of basestring")
       rc = sdbclient.remove_procedure(self._client, sp_name)
       pysequoiadb.check_error(rc)
 
@@ -537,10 +868,14 @@ class client(object):
 
    @classmethod
    def list_procedures(self, condition):
-      """list all procedures in current database.
+      """List store procedures.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] condition    dict     The condition of list.
+      Return values:
+         Success: SDB_OK  and  an cursor object of result
+         Fail   : Other   and  None
       """
       bson_condition = bson.BSON.encode(condition)
       result = cursor()
@@ -551,20 +886,62 @@ class client(object):
       return rc, result
 
    @classmethod
-   def eval_js(self, code):
+   def eval_js(self, code, type, errormsg):
+      """Eval a func.
+      
+      Parameters:
+              Name         Type     Info:
+         [in] code         str      The name of store procedure.
+      Return values:
+         Success: SDB_OK   and  a cursor object of current eval.
+         Fail   : Other    and  None
+      """
+      if not isinstance(code, basestring):
+         raise TypeError("code must be an instance of basestring")
 
       result = cursor()
       rc = sdbclient.eval_JS(self._client, result._cursor, code)
       pysequoiadb.check_error(rc)
+      if const.SDB_OK != rc:
+         result = None
 
       return rc, result
 
    @classmethod
-   def backup_offline(self, options):
-      """backup offline.
+   def backup_offline(self, options = static_object):
+      """Backup the whole database or specifed replica group.
 
+      Parameters:
+              Name      Type  Info:
+         [in] options   dict  Contains a series of backup configuration
+                              infomations. Backup the whole cluster if None. 
+                              The "options" contains 5 options as below. 
+                              All the elements in options are optional. 
+                              eg:
+                              { "GroupName":["rgName1", "rgName2"], 
+                                "Path":"/opt/sequoiadb/backup",
+                                "Name":"backupName", "Description":description,
+                                "EnsureInc":true, "OverWrite":true }
+                              See Info as below.
+      Return values:
+         Success: SDB_OK
+         Fail   : Other
+      Info:
+         GroupName   :  The replica groups which to be backuped.
+         Path        :  The backup path, if not assign, use the backup path
+                        assigned in configuration file.
+         Name        :  The name for the backup.
+         Description :  The description for the backup.
+         EnsureInc   :  Whether excute increment synchronization,
+                        default to be false.
+         OverWrite   :  Whether overwrite the old backup file,
+                        default to be false.
       """
-      rc = sdbclient.backup_offline(self._client, options)
+      bson_options = None
+      if options is not None:
+         bson_options = bson.BSON.encode(options)
+
+      rc = sdbclient.backup_offline(self._client, bson_options)
       pysequoiadb.check_error(rc)
 
       return rc
@@ -573,10 +950,34 @@ class client(object):
    def list_backup(self, options, condition = static_object,
                                   selector  = static_object,
                                   order_by  = static_object):
-      """list all backup in current database.
+      """List the backups.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name      Type  Info:
+         [in] options   dict  Contains configuration infomations for remove
+                              backups, list all the backups in the default
+                              backup path if None. 
+                              The "options" contains 3 options as below. 
+                              All the elements in options are optional. 
+                              eg:
+                              { "GroupName":["rgame1", "rgName2"], 
+                                "Path":"/opt/sequoiadb/backup",
+                                "Name":"backupName" }
+                              See Info as below.
+         [in] condition dict  The matching rule, return all the documents
+                              if None.
+         [in] selector  dict  The selective rule, return the whole document
+                              if None.
+         [in] order_by  dict  The ordered rule, never sort if None.
+      Return values:
+         Success: SDB_OK  and  a cursor object of backup list
+         Fail   : Others  and  None
+      Info:
+         GroupName   :  Assign the backups of specifed replica groups to be list.
+         Path        :  Assign the backups in specifed path to be list,
+                        if not assign, use the backup path asigned in the
+                        configuration file.
+         Name        :  Assign the backups with specifed name to be list.
       """
       bson_condition = None
       bson_selector = None
@@ -604,10 +1005,20 @@ class client(object):
    @classmethod
    def list_task(self, condition = static_object, selector  = static_object,
                        order_by  = static_object, hint      = static_object):
-      """list all tasks in current database.
+      """List the tasks.
 
-         if success, a cursor object will be returned with error code,
-         or cursor object is None.
+      Parameters:
+              Name         Type     Info:
+         [in] condition    dict     The matching rule, return all the documents
+                                    if None.
+         [in] selector     dict     The selective rule, return the whole
+                                    document if None.
+         [in] order_by     dict     The ordered rule, never sort if None.
+         [in] hint         dict     The hint, automatically match the optimal
+                                    hint if None.
+      Return values:
+         Success: SDB_OK  and  a cursor object of task list
+         Fail   : Others  and  None
       """
       bson_condition = None
       bson_selector = None
@@ -636,9 +1047,21 @@ class client(object):
 
    @classmethod
    def wait_task(self, task_ids, num):
-      """wait task.
+      """Wait the tasks to finish.
 
+      Parameters:
+              Name         Type     Info:
+         [in] task_ids     list     The list of task id.
+         [in] num          int      The number of task id.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
+      if not isinstance(task_ids, list):
+         raise TypeError("task id must be an instance of list")
+      if not isinstance(num, int):
+         raise TypeError("size of tasks must be an instance of int")
+
       rc = sdbclient.wait_task(self._client, task_ids, num)
       pysequoiadb.check_error(rc)
 
@@ -646,18 +1069,42 @@ class client(object):
 
    @classmethod
    def cancel_task(self, task_id, is_async):
-      """cancel task.
+      """Cancel the specified task.
 
+      Parameters:
+              Name         Type     Info:
+         [in] task_id      long     The task id to be canceled.
+         [in] is_async     int      The operation "cancel task" is async or not,
+                                    "true" for async, "false" for sync.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
-      rc = sdbclient.cancel_task(self._client, task_id, is_async)
+      if not isinstance(task_id, long):
+         raise TypeError("task id must be an instance of list")
+
+      async = 0
+      if isinstance(is_async, bool):
+         if is_async:
+            async = 1
+      else:
+         raise TypeError("size of tasks must be an instance of int")
+
+      rc = sdbclient.cancel_task(self._client, task_id, async)
       pysequoiadb.check_error(rc)
 
       return rc
 
    @classmethod
    def set_session_attri(self, options = static_object):
-      """set session attribution.
+      """Set the attributes of the session.
 
+      Parameters:
+              Name         Type     Info:
+         [in] options      dict     The configuration options for session.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
       bson_options = None
       if options is not None:
@@ -670,8 +1117,15 @@ class client(object):
 
    @classmethod
    def close_all_cursors(self):
-      """close all cursors.
+      """Close all the cursors in current thread, we can't use those cursors to 
+         get data again.
 
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
       rc = sdbclient.close_all_cursors(self._client)
       pysequoiadb.check_error(rc)
@@ -680,8 +1134,14 @@ class client(object):
 
    @classmethod
    def is_valid(self):
-      """check current client is valid or not.
+      """Judge whether the connection is valid.
 
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: True, if the result is valid 
+         Fail   : False
       """
       rc, valid = sdbclient.is_valid(self._client)
       pysequoiadb.check_error(rc)

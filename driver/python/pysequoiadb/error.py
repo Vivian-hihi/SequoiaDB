@@ -1,6 +1,9 @@
 import pysequoiadb
 from pysequoiadb import common
 from pysequoiadb.common import const
+
+#class TypeError()
+
 class SequoiaDBError(Exception):
    """Base Exception of Python Driver for SequoiaDB
    

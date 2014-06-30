@@ -22,6 +22,7 @@ except ImportError:
 import bson
 import pysequoiadb
 from pysequoiadb.common import const
+from pysequoiadb import SequoiaDBError
 
 class cursor(object):
    """Cursor of SequoiaDB
@@ -34,6 +35,7 @@ class cursor(object):
          self._cursor = sdbcursor.create_cursor()
       except SystemError:
          pysequoiadb.check_error(const.SDM_OOM)
+         raise SequoiaDBError
 
    def __del__(self):
 
@@ -42,12 +44,14 @@ class cursor(object):
          self._cursor = None
 
    def next(self):
-      """
-       get next record
-       retcode SDB_OK Operation Success
-       return record after retcode
-       retcode other Operation Failure
-       return record after retcode is Node
+      """Return the next document of current cursor, and move forward.
+       
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK and an dict object of record
+         Fail   : Others and None
       """
       result, bson_string = sdbcursor.next(self._cursor)
       if const.SDB_OK != result:
@@ -57,12 +61,14 @@ class cursor(object):
 
 
    def current(self):
-      """
-       get current record
-       retcode SDB_OK Operation Success
-       return record after retcode is Node
-       retcode other Operation Failure
-       return record after retcode is Node
+      """Return the current document of cursor, and don't move.
+
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK and an dict object of record
+         Fail   : Others and None
       """
       result, bson_string = sdbcursor.current(self._cursor)
       if const.SDB_OK != result:
@@ -71,10 +77,15 @@ class cursor(object):
       return result,record
 
    def close(self):
-      """
-       close cursor
-       retcode SDB_OK Operation Success
-       retcode other Operation Failure
+      """Close the cursor's connection to database, we can't use this handle to
+         get data again.
+
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
 
       rc = sdbcursor.close(self._cursor)

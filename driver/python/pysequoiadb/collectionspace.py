@@ -32,6 +32,7 @@ from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
 from pysequoiadb.common import const
+from pysequoiadb.error import SequoiaDBError
 
 class collectionspace(object):
    """CollectionSpace for SequoiaDB"""
@@ -45,6 +46,7 @@ class collectionspace(object):
          self._cs = sdbcs.create_cs()
       except SystemError:
          pysequoiadb.check_error(const.SDM_OOM)
+         raise SequoiaDBError
 
    def __del__(self):
       """delete a object existed.
@@ -54,6 +56,10 @@ class collectionspace(object):
          rc = sdbcs.release_cs(self._cs)
          pysequoiadb.check_error(rc)
          self._cs = None
+
+   def __repr__(self):
+
+      return "Collection Space %s" %(self.get_collection_space_name())
 
    def __getattr__(self, name):
       """support client.cs to access to collection.
@@ -92,11 +98,18 @@ class collectionspace(object):
 
    @classmethod
    def get_collection(self, cl_name):
-      """get a collection by name.
-      
-         if success, a collection object will be returned with error code,
-         or collection object is None.
+      """Get the named collection.
+         
+      Parameters:
+              Name         Type     Info:
+         [in] cl_name      str      The full name of the collection..
+      Return values:
+         Success: SDB_OK  and  a collection object of query
+         Fail   : Others  and  None
       """
+      if not isinstance(cl_name, basestring):
+         raise TypeError("collection must be an instance of basestring")
+
       cl = collection()
       rc = sdbcs.get_collection(self._cs, cl_name, cl._cl)
       pysequoiadb.check_error(rc)
@@ -111,10 +124,20 @@ class collectionspace(object):
    def create_collection(self, cl_name, options = static_object):
       """create a collection using name and options.
 
-         options should be a dict. default value:None will be set.
-         if success, a collection object will be returned with error code,
-         or collection object is None.
+      Parameters:
+              Name      Type     Info:
+         [in] cl_name   str      The collection name.
+         [in] options   str      The options for creating collection, including
+                                 "ShardingKey", "ReplSize", "IsMainCL" and
+                                 "Compressed" informations, no options, if None.
+      Return values:
+         Success: SDB_OK  and  a collection object created
+         Fail   : Others  and  None
+
       """
+      if not isinstance(cl_name, basestring):
+         raise TypeError("collection must be an instance of basestring")
+
       bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
@@ -135,9 +158,18 @@ class collectionspace(object):
 
    @classmethod
    def drop_collection(self, cl_name):
-      """drop the specified collection
+      """Drop the specified collection in current collection space.
 
+      Parameters:
+              Name      Type     Info:
+         [in] cl_name   str      The collection name.
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
+      if not isinstance(cl_name, basestring):
+         raise TypeError("collection must be an instance of basestring")
+
       rc = sdbcs.drop_collection(self._cs, cl_name)
       pysequoiadb.check_error(rc)
 
@@ -145,7 +177,13 @@ class collectionspace(object):
 
    @classmethod
    def get_collection_space_name(self):
-      """get the collection space name of current collection located in.
+      """Get the current collection space name.
+
+      Parameters:
+              Name      Type     Info:
+         N/A
+      Return values:
+         The name of current collection space.
       """
       _, cs_name = sdbcs.get_collection_space_name(self._cs)
       pysequoiadb.check_error(_)

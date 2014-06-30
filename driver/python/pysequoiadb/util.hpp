@@ -143,6 +143,22 @@
       }                                                                 \
    }while( FALSE ) 
 
+#define MAKE_PYLIST_TO_BUFFER( py_list, buffer )                        \
+   do                                                                   \
+   {                                                                    \
+      if( !PyList_Check( py_list) )                                     \
+      {                                                                 \
+         rc = SDB_INVALIDARGS ;                                         \
+         goto done ;                                                    \
+      }                                                                 \
+                                                                        \
+      INT32 list_size = PyList_Size( py_list ) ;                        \
+      for ( int idx = 0 ; idx < list_size ; ++idx )                     \
+      {                                                                 \
+         SINT64 id = PyLong_LongLong(PyList_GetItem( py_list, idx)) ;   \
+         buffer[idx] = id;                                              \
+      }                                                                 \
+   }while( FALSE ) 
 
 ///<  macros used in module declaration
 #define DEFINE_MODULE(modulename, methods)   \

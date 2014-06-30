@@ -41,7 +41,6 @@ def init_errmaps():
    pairs = config.items("error")
    for pair in pairs:
       const.errmaps[ string.atoi(pair[0]) ] = pair[1];
-#      print const.errmaps.keys()
 
 if False == init:
    init_errmaps()

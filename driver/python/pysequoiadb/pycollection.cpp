@@ -443,7 +443,6 @@ static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_index_def, index_def ) ;
 
-
    rc = cl->createIndex( *index_def, name, is_unique, is_enforced ) ;
    if ( rc )
    {
@@ -460,6 +459,7 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
    PYOBJECT *cursor_object = NULL ;
+   PYOBJECT *index_name_obj= NULL ;
    sdbCollection *cl       = NULL ;
    sdbCursor *cursor       = NULL ;
    const char *index_name  = NULL ;
@@ -473,6 +473,10 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
 
+   if ( "" == index_name )
+   {
+      index_name = NULL ;
+   }
    rc = cl->getIndexes( *cursor, index_name ) ;
    if ( rc )
    {

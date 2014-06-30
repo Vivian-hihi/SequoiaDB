@@ -6,5 +6,4 @@ class const:
       self.__dict__[name]=value
 
 import sys
-#print __name__
 sys.modules[__name__] = const()

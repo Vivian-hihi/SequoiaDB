@@ -1025,27 +1025,33 @@ done:
 
 static PYOBJECT *wait_task( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc       = 0 ;
-   PYOBJECT *obj  = NULL ;
-   sdb *client    = NULL ;
-   SINT64 task_id = 0 ;
-   SINT32 num     = 0 ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   PYOBJECT *task_ids_obj = NULL ;
+   sdb *client            = NULL ;
+   SINT64 *task_ids       = NULL ;
+   SINT32 num             = 0 ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OLi", &obj, &task_id, &num ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OOi", &obj, &task_ids_obj, &num ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-
-   rc = client->waitTasks( &task_id, num ) ;
+   task_ids = new SINT64[num] ;
+   MAKE_PYLIST_TO_BUFFER( task_ids_obj, task_ids)
+   rc = client->waitTasks( task_ids, num ) ;
    if ( rc )
    {
       goto done ;
    }
 
 done:
+   if ( NULL != task_ids )
+   {
+      delete [] task_ids ;
+   }
    return MAKE_RETURN_INT( rc ) ;
 }
 

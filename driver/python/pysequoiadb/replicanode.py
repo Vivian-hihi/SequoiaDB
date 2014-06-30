@@ -21,6 +21,7 @@ except ImportError:
 
 import pysequoiadb
 from pysequoiadb.common import const
+from pysequoiadb import SequoiaDBError
 
 class replicanode(object):
    """Entrance of SequoiaDB
@@ -33,6 +34,7 @@ class replicanode(object):
          self._node = sdbreplicanode.create_node()
       except SystemError:
          pysequoiadb.check_error(const.SDB_OK)
+         raise SequoiaDBError
 
    def __del__(self):
 
@@ -42,22 +44,28 @@ class replicanode(object):
       self._client = None
 
    def connect(self):
-      """
-       retcode SDB_OK Operation Success
-       retcode other Operation Failure
+      """Connect to the current node.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
       ret = sdbreplicanode.connect(self._node, self._client)
       pysequoiadb.check_error(ret)
       return ret
 
    def get_status(self):
-      """
-       get nodestatus
-       retcode SDB_OK Operation Success
-       return nodestatus after retcode
-
-       retcode other Operation Failure
-       return nodestatus is None
+      """Get status of the current node
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK  and  the status of node
+         Fail   : Others  and  None
       """
       ret, nodestatus = sdbreplicanode.get_status(self._node)
       pysequoiadb.check_error(ret)
@@ -68,13 +76,14 @@ class replicanode(object):
       return ret, nodestatus
 
    def get_hostname(self):
-      """
-       get hostname
-       retcode SDB_OK Operation Success
-       return hostname after retcode
-
-       retcode other Operation Failure
-       return hostname is None
+      """Get host name of the current node.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK  and  the name of host
+         Fail   : Others  and  None
       """
       ret, hostname = sdbreplicanode.get_hostname(self._node)
       pysequoiadb.check_error(ret)
@@ -85,13 +94,14 @@ class replicanode(object):
       return ret, hostname
 
    def get_servicename(self):
-      """
-       get servicename
-       retcode SDB_OK Operation Success
-       return servicename after retcode
+      """Get service name of the current node.
 
-       retcode other Operation Failure
-       return servicename is None
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK  and  the name of service
+         Fail   : Others  and  None
       """
       ret, servicename = sdbreplicanode.get_servicename(self._node)
       pysequoiadb.check_error(ret)
@@ -102,13 +112,14 @@ class replicanode(object):
       return ret,servicename
 
    def get_nodename(self):
-      """
-       get nodename
-       retcode SDB_OK Operation Success
-       return nodename after retcode
+      """Get node name of the current node.
 
-       retcode other Operation Failure
-       return nodename is None
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK  and  the name of node
+         Fail   : Others  and  None
       """
       ret, nodename = sdbreplicanode.get_nodename(self._node)
       pysequoiadb.check_error(ret)
@@ -119,20 +130,28 @@ class replicanode(object):
       return ret, nodename
 
    def stop(self):
-      """
-       stop node
-       retcode SDB_OK Operation Success
-       retcode other Operation Failure
+      """Stop the node.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
       ret = sdbreplicanode.stop(self._node)
       pysequoiadb.check_error(ret)
       return ret
 
    def start(self):
-      """
-       start node
-       retcode SDB_OK Operation Success
-       retcode other Operation Failure
+      """Start the node.
+      
+      Parameters:
+              Name         Type     Info:
+         N/A
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
       """
       ret = sdbreplicanode.start(self._node)
       pysequoiadb.check_error(ret)
