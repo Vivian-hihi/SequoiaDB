@@ -1346,28 +1346,28 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l01809"></a><span class="lineno"> 1809</span>&#160;      {</div>
 <div class="line"><a name="l01810"></a><span class="lineno"> 1810</span>&#160;         <span class="keywordflow">if</span> ( !pDomain )</div>
 <div class="line"><a name="l01811"></a><span class="lineno"> 1811</span>&#160;            <span class="keywordflow">return</span> NULL ;</div>
-<div class="line"><a name="l01812"></a><span class="lineno"> 1812</span>&#160;         pDomain-&gt;<a class="code" href="classsdbclient_1_1sdbDomain.html#a81faf2aea84005ea27b1d7755fe1f00c" title="Get the name of current domain.">getName</a>() ;</div>
+<div class="line"><a name="l01812"></a><span class="lineno"> 1812</span>&#160;         <span class="keywordflow">return</span> pDomain-&gt;<a class="code" href="classsdbclient_1_1sdbDomain.html#a81faf2aea84005ea27b1d7755fe1f00c" title="Get the name of current domain.">getName</a>() ;</div>
 <div class="line"><a name="l01813"></a><span class="lineno"> 1813</span>&#160;      }</div>
 <div class="line"><a name="l01814"></a><span class="lineno"> 1814</span>&#160;</div>
 <div class="line"><a name="l01821"></a><span class="lineno"><a class="code" href="classsdbclient_1_1sdbDomain.html#ac9bc39c02e6e63c461a775651e0a6f5d"> 1821</a></span>&#160;      INT32 alterDomain ( <span class="keyword">const</span> bson::BSONObj &amp;options )</div>
 <div class="line"><a name="l01822"></a><span class="lineno"> 1822</span>&#160;      {</div>
 <div class="line"><a name="l01823"></a><span class="lineno"> 1823</span>&#160;         <span class="keywordflow">if</span> ( !pDomain )</div>
 <div class="line"><a name="l01824"></a><span class="lineno"> 1824</span>&#160;            <span class="keywordflow">return</span> SDB_SYS ;</div>
-<div class="line"><a name="l01825"></a><span class="lineno"> 1825</span>&#160;         pDomain-&gt;alterDomain ( options ) ;</div>
+<div class="line"><a name="l01825"></a><span class="lineno"> 1825</span>&#160;         <span class="keywordflow">return</span> pDomain-&gt;alterDomain ( options ) ;</div>
 <div class="line"><a name="l01826"></a><span class="lineno"> 1826</span>&#160;      }</div>
 <div class="line"><a name="l01827"></a><span class="lineno"> 1827</span>&#160;</div>
 <div class="line"><a name="l01835"></a><span class="lineno"><a class="code" href="classsdbclient_1_1sdbDomain.html#a9386a9a833b1d37bd37bef097f63f461"> 1835</a></span>&#160;      INT32 listCollectionSpacesInDomain ( <a class="code" href="classsdbclient_1_1sdbCursor.html" title="Database operation interfaces of cursor.">sdbCursor</a> &amp;cursor )</div>
 <div class="line"><a name="l01836"></a><span class="lineno"> 1836</span>&#160;      {</div>
 <div class="line"><a name="l01837"></a><span class="lineno"> 1837</span>&#160;         <span class="keywordflow">if</span> ( !pDomain )</div>
 <div class="line"><a name="l01838"></a><span class="lineno"> 1838</span>&#160;            <span class="keywordflow">return</span> SDB_SYS ;</div>
-<div class="line"><a name="l01839"></a><span class="lineno"> 1839</span>&#160;         pDomain-&gt;listCollectionSpacesInDomain ( cursor ) ;</div>
+<div class="line"><a name="l01839"></a><span class="lineno"> 1839</span>&#160;         <span class="keywordflow">return</span> pDomain-&gt;listCollectionSpacesInDomain ( cursor ) ;</div>
 <div class="line"><a name="l01840"></a><span class="lineno"> 1840</span>&#160;      }</div>
 <div class="line"><a name="l01841"></a><span class="lineno"> 1841</span>&#160;</div>
 <div class="line"><a name="l01849"></a><span class="lineno"><a class="code" href="classsdbclient_1_1sdbDomain.html#ab593e01ba287193cc88c571c543e78c4"> 1849</a></span>&#160;      INT32 listCollectionsInDomain ( <a class="code" href="classsdbclient_1_1sdbCursor.html" title="Database operation interfaces of cursor.">sdbCursor</a> &amp;cursor )</div>
 <div class="line"><a name="l01850"></a><span class="lineno"> 1850</span>&#160;      {</div>
 <div class="line"><a name="l01851"></a><span class="lineno"> 1851</span>&#160;         <span class="keywordflow">if</span> ( !pDomain )</div>
 <div class="line"><a name="l01852"></a><span class="lineno"> 1852</span>&#160;            <span class="keywordflow">return</span> SDB_SYS ;</div>
-<div class="line"><a name="l01853"></a><span class="lineno"> 1853</span>&#160;         pDomain-&gt;listCollectionsInDomain ( cursor ) ;</div>
+<div class="line"><a name="l01853"></a><span class="lineno"> 1853</span>&#160;         <span class="keywordflow">return</span> pDomain-&gt;listCollectionsInDomain ( cursor ) ;</div>
 <div class="line"><a name="l01854"></a><span class="lineno"> 1854</span>&#160;      }</div>
 <div class="line"><a name="l01855"></a><span class="lineno"> 1855</span>&#160;</div>
 <div class="line"><a name="l01856"></a><span class="lineno"> 1856</span>&#160;   };</div>
@@ -2424,7 +2424,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jun 30 2014 15:29:18 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jun 30 2014 15:51:52 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
