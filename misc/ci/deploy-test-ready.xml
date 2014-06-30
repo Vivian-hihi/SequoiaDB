@@ -106,9 +106,9 @@
 		</exec>
 
 		<move file="${release.path}/${BUILD.INSTALL.FILENAME}.${BUILD.NUMBER}" tofile="${release.path}/${BUILD.INSTALL.FILENAME}" />
-		<move file="${release.path}/${BUILD.DRIVER.FILENAME}.${BUILD.NUMBER}" tofile="${release.path}/${BUILD.DRIVER.FILENAME}" />
+<!-- 		<move file="${release.path}/${BUILD.DRIVER.FILENAME}.${BUILD.NUMBER}" tofile="${release.path}/${BUILD.DRIVER.FILENAME}" />
 		
-		<untar src="${release.path}/${BUILD.DRIVER.FILENAME}" dest="${release.path}" compression="gzip" />
+		<untar src="${release.path}/${BUILD.DRIVER.FILENAME}" dest="${release.path}" compression="gzip" /> -->
 
 	</target>
 
