@@ -45,6 +45,8 @@ const UINT32 FUNC_ARRAY_SIZE = 50 ;
 
 
 extern BOOLEAN JSObjIsSdbObj( JSContext *cx, JSObject *obj ) ;
+extern INT32 gShellReturnCode ;
+
 namespace engine
 {
 extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
@@ -345,50 +347,6 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
 
    INT32 _sptSPScope::eval( const CHAR *code, UINT32 len,
                             const CHAR *filename,
-                            UINT32 lineno )
-   {
-      INT32 rc = SDB_OK ;
-      SDB_ASSERT ( _context && _global, "this scope has not been initilized" ) ;
-      SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" ) ;
-      jsval jsrval = JSVAL_VOID ;
-      jsval exception = JSVAL_VOID ;
-      string print ;
-
-      if ( !JS_EvaluateScript( _context, _global, code,
-                               len, filename, lineno, &jsrval ) )
-      {
-         rc = SDB_SPT_EVAL_FAIL ;
-         PD_LOG( PDERROR, "failed to eval js code" ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      if ( JS_IsExceptionPending( _context ) &&
-           JS_GetPendingException ( _context , &exception ) )
-      {
-         bson::BSONObjBuilder builder ;
-         CHAR *strException = NULL ;
-         JSString *jsstr = JS_ValueToString( _context, exception ) ;
-         if ( NULL != jsstr )
-         {
-            strException = JS_EncodeString ( _context, jsstr ) ;
-         }
-
-         if ( NULL != strException )
-         {
-            ossPrintf ( "Uncaught exception: %s\n" , strException ) ;
-            SAFE_JS_FREE( _context, strException ) ;
-         }
-
-         JS_ClearPendingException ( _context ) ;
-      }
-      goto done ;
-   }
-
-   INT32 _sptSPScope::eval( const CHAR *code, UINT32 len,
-                            const CHAR *filename,
                             UINT32 lineno,
                             INT32 flag,
                             bson::BSONObj &rval,
@@ -416,18 +374,23 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
          if ( !JSVAL_IS_VOID ( jsrval ) )
          {
             print = convertJsvalToString ( _context , jsrval ) ;
+            if ( !print )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
          }
 
-         if ( !print )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         if ( print[0] != '\0' )
+         if ( NULL != print && print[0] != '\0' )
          {
             ossPrintf ( "%s"OSS_NEWLINE, print ) ;
          }
+      }
+
+      /// TODO: remove this return code.
+      if ( gShellReturnCode && ! JS_IsExceptionPending( _context ) )
+      {
+         gShellReturnCode = SDB_OK ;
       }
    done:
       SAFE_JS_FREE ( _context , print ) ;

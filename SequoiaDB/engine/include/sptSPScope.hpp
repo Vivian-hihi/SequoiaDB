@@ -67,10 +67,6 @@ namespace engine
                          bson::BSONObj &rval,
                          bson::BSONObj &detail ) ;
 
-      virtual INT32 eval(const CHAR *code, UINT32 len,
-                         const CHAR *filename,
-                         UINT32 lineno ) ;
-
    private:
       virtual INT32 _loadUsrDefObj( _sptObjDesc *desc ) ;
 
