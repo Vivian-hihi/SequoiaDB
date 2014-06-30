@@ -53,8 +53,7 @@ Create a domain. A domain can contain multiple replica groups.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  AutoSplit can only apply to hash-partitioning collection
-   spaces.
+   *  AutoSplit can only apply to hash-partitioning collections.
 .sp 2
    *  Cannot create collection spaces in an empty domain(domain
    with no replica groups).
