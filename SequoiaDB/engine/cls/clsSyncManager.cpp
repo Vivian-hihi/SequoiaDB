@@ -587,6 +587,9 @@ namespace engine
                                           CLS_WAKE_PLAN &plan )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__CTWAKEPLAN ) ;
+
+      DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
+
       for ( UINT32 i = 0; i < _validSync; i++ )
       {
          if ( DPS_INVALID_LSN_OFFSET == _notifyList[i].offset )
@@ -598,7 +601,8 @@ namespace engine
          }
          else
          {
-            plan.insert( _notifyList[i].offset ) ;
+            offset = _notifyList[i].offset ;
+            plan.insert( offset ) ;
          }
       }
 
