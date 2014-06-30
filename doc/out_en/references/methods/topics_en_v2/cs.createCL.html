@@ -153,7 +153,7 @@ Collectionspace
 
                 <dd class="dd pd">Specify a replica group which the collection should be in.</dd>
 
-                <dd class="dd pd">Groups:&lt;group name&gt;</dd>
+                <dd class="dd pd">Group:&lt;group name&gt;</dd>
 
               
             </dl>
@@ -182,13 +182,13 @@ Collectionspace
           <li class="li">The value of "name" should not be null string, "." or "$". The length of it should not
           be greater than 127B, or exception will occur. </li>
 
-          <li class="li">AutoSplit must cooperate with hash partitioning and domain. AutoSplit and Groups cannot be set at the same time.</li>
+          <li class="li">AutoSplit must cooperate with hash partitioning and domain. AutoSplit and Group cannot be set at the same time.</li>
 
-          <li class="li">AutoSplit and Groups cannot be set at the same time.</li>
+          <li class="li">AutoSplit and Group cannot be set at the same time.</li>
 
           <li class="li">If AutoSplit is not specified in a collection, the value of AutoSplit will come from domain.</li>
 
-          <li class="li">Group must exist in a domain, which contains a collection space, which has the group(All replica groups belong to SYSDOMAIN, that is to say, a collection space can be distributed into any replica group if no specific group is given)</li>
+          <li class="li">Group must exist in a domain, which contains a collection space, which has the group(All replica group belong to SYSDOMAIN, that is to say, a collection space can be distributed into any replica group if no specific group is given)</li>
 
         </ul>
  

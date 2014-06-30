@@ -43,7 +43,7 @@
           <li>
             <p>按访问计划删除匹配cond条件的记录</p>
             <codeblock>db.foo.bar.remove({age:{<xref href="../../console/topics/gte.dita">$gte</xref>:20}},{"":"myIndex"})</codeblock>
-            <p>此操作按照索引名为“myIndex”遍历集合中的记录，在遍历得到的记录中删除符合条件age字段值大于等于20的记录。</p>
+            <p>此操作按照索引名为“myIndex”的索引遍历集合中的记录，在遍历得到的记录中删除符合条件age字段值大于等于20的记录。</p>
           </li>
         </ul>   
     </section>

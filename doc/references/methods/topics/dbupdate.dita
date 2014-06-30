@@ -55,7 +55,7 @@
         <li>
           <p>按访问计划更新记录，假设集合中存在指定的索引名</p>
           <codeblock>db.foo.bar.update({<xref href="../../console/topics/inc.dita">$inc</xref>:{age:1}},{age:{<xref href="../../console/topics/gt.dita">$gt</xref>:20}},{"":"testIndex"})></codeblock>
-          <p>此操作使用索引名为testIndex访问集合bar中age字段值大于20的记录，将这些记录的age字段名加1。</p>
+          <p>此操作使用索引名为testIndex的索引访问集合bar中age字段值大于20的记录，将这些记录的age字段名加1。</p>
         </li>
       </ul>
     </section>

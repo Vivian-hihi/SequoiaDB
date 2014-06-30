@@ -183,7 +183,7 @@
 
           <pre class="pre codeblock">db.foo.bar.upsert({<a class="xref" href="../../console/topics/inc.html">$inc</a>:{age:1}},{age:{<a class="xref" href="../../console/topics/gt.html">$gt</a>:20}},{"":"testIndex"})&gt;</pre>
 
-          <div class="p">此操作等效于使用update方法，使用索引名为testIndex访问集合bar中age字段值大于20的记录，将这些记录的age字段名加1。此时返回：<pre class="pre codeblock"> {
+          <div class="p">此操作等效于使用update方法，使用索引名为testIndex的索引访问集合bar中age字段值大于20的记录，将这些记录的age字段名加1。此时返回：<pre class="pre codeblock"> {
     "_id": {
       "$oid": "516a76a1c9565daf06050000"
     },

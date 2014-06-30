@@ -41,7 +41,7 @@
         </strow>
         <strow>
           <stentry>Name</stentry>
-          <stentry>备份名称，缺省查看所有备份</stentry>
+          <stentry>备份名称，缺省删除所有备份</stentry>
           <stentry>Name:"backup-2014-1-1"</stentry>
         </strow>
         <strow>

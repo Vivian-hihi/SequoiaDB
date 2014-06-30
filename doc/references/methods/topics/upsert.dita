@@ -110,7 +110,7 @@
         <li>
           <p>按访问计划更新记录，假设集合中存在指定的索引名testIndex</p>
           <codeblock>db.foo.bar.upsert({<xref href="../../console/topics/inc.dita">$inc</xref>:{age:1}},{age:{<xref href="../../console/topics/gt.dita">$gt</xref>:20}},{"":"testIndex"})></codeblock>
-          <p>此操作等效于使用update方法，使用索引名为testIndex访问集合bar中age字段值大于20的记录，将这些记录的age字段名加1。此时返回：<codeblock> {
+          <p>此操作等效于使用update方法，使用索引名为testIndex的索引访问集合bar中age字段值大于20的记录，将这些记录的age字段名加1。此时返回：<codeblock> {
     "_id": {
       "$oid": "516a76a1c9565daf06050000"
     },
