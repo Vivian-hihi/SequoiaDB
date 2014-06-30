@@ -25,18 +25,7 @@
 #include "sptCommon.hpp"
 #include "utilPath.hpp"
 #include "utilPipe.hpp"
-#include "sptApi.hpp"
-#include "sptSPScope.hpp"
-#include "../spt/js_in_cpp.hpp"
-#include "jsapi.h"
-#include "sptUsrSsh.hpp"
-#include "sptUsrCmd.hpp"
-#include "sptUsrFile.hpp"
-#include "sptUsrSystem.hpp"
-
-JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
-
-using namespace bson ;
+#include <iostream>
 
 using std::ostream ;
 using std::vector ;
@@ -254,7 +243,7 @@ error :
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERBATCHMODE, "enterBatchMode" )
-INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
+INT32 enterBatchMode( Scope * scope , const CHAR * filename ,
                                       const CHAR * variable )
 {
    INT32    rc       = SDB_OK ;
@@ -332,14 +321,15 @@ INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
 
    if ( content.length() > varLen )
    {
-      BSONObj rval ;
-      BSONObj detail ;
-      rc = scope->eval ( content.c_str() , (UINT32)content.length() ,
-                         filename , 1, SPT_EVAL_FLAG_PRINT,
-                         rval, detail ) ;
-      if ( SDB_OK != rc )
+      rc = scope->evaluate ( content.c_str() , (UINT32)content.length() ,
+                             filename , 1 , &result ) ;
+      if ( SDB_OK == rc )
       {
-         goto error ;
+         SDB_ASSERT ( result, "evaluation succeed, but result is null" ) ;
+         if ( result[0] != '\0' )
+         {
+            ossPrintf ( "%s"OSS_NEWLINE, result ) ;
+         }
       }
    }
    else
@@ -358,7 +348,7 @@ error :
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERINTATVMODE, "enterInteractiveMode" )
-INT32 enterInteractiveMode ( sptScope *scope )
+INT32 enterInteractiveMode ( Scope *scope )
 {
    INT32    rc          = SDB_OK ;
    CHAR *   result      = NULL ;
@@ -369,8 +359,6 @@ INT32 enterInteractiveMode ( sptScope *scope )
    ossTimestamp tmBegin ;
    ossTimestamp tmEnd ;
    string history ;
-   BSONObj rval ;
-   BSONObj detail ;
 
    SDB_ASSERT ( scope , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_ENTERINTATVMODE );
@@ -418,11 +406,14 @@ INT32 enterInteractiveMode ( sptScope *scope )
       rc = SDB_OK ;
       ossGetCurrentTime ( tmBegin ) ;
       // result is freed in loop_next:
-      rc = scope->eval ( code , history.size(),
-                         "(shell)" , 1, SPT_EVAL_FLAG_PRINT,
-                         rval, detail ) ;
+      rc = scope->evaluate ( code , 0 , "(shell)" , 1 , &result ) ;
+      if ( SDB_OK == rc )
+      {
+         SDB_ASSERT ( result , "evaluation succeed, but result is null" ) ;
+         if ( result[0] != '\0' )
+            ossPrintf ( "%s"OSS_NEWLINE , result ) ;
+      }
       ossGetCurrentTime ( tmEnd ) ;
-      
       // takes time
       tkTime = ( tmEnd.time * 1000000 + tmEnd.microtm ) -
                ( tmBegin.time * 1000000 + tmBegin.microtm ) ;
@@ -803,8 +794,8 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_MAIN, "main" )
 int main ( int argc , CHAR **argv )
 {
-   engine::sptContainer container ;
-   engine::sptScope *scope = NULL ;
+   ScriptEngine *    engine   = NULL ;
+   Scope *           scope    = NULL ;
    INT32             rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDB_MAIN );
    ArgInfo           argInfo ;
@@ -818,33 +809,13 @@ int main ( int argc , CHAR **argv )
    //
    linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
 
-   scope = container.newScope() ;
-   SH_VERIFY_COND ( scope , SDB_SYS ) ;
+   // will purge engine in done:
+   engine = ScriptEngine::globalScriptEngine() ;
+   SH_VERIFY_COND ( engine , SDB_SYS )
 
-   if ( !InitDbClasses( ((engine::sptSPScope *)scope)->getContext(),
-                       ((engine::sptSPScope *)scope)->getGlobalObj() ) )
-   {
-      PD_LOG( PDERROR, "failed to init dbclass" ) ;
-      rc = SDB_SYS ;
-      goto error ;
-   }
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrSsh>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrCmd>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrFile>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrSystem>() ;
-   SH_VERIFY_RC
-
-   rc = evalInitScripts2( scope ) ;
-   SH_VERIFY_RC
-
+   // scope is freed in done:
+   scope = engine->newScope() ;
+   SH_VERIFY_COND ( scope , SDB_SYS )
 
    // parse Argument into argInfo
    rc = parseArguments ( argc , argv , argInfo ) ;
@@ -874,8 +845,8 @@ int main ( int argc , CHAR **argv )
    }
 
 done :
-   scope->shutdown() ;
    SAFE_OSS_DELETE ( scope ) ;
+   ScriptEngine::purgeGlobalScriptEngine() ;
    PD_TRACE_EXITRC ( SDB_SDB_MAIN, rc );
    if ( rc )
    {
