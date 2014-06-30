@@ -33,7 +33,7 @@
             <parml>
               <plentry>
                 <pt>AutoSplit</pt>
-                <pd>When this field is set to be True, all the hash-partitioning collection spaces created in this domain will be automatically splitted into the replica groups it belongs to.</pd>
+                <pd>When this field is set to be True, all the hash-partitioning collection spaces created in this domain will be automatically splitted into the replica groups it belong to.</pd>
                 <pd>AutoSplit:true|false</pd>
               </plentry>
             </parml>
@@ -41,7 +41,7 @@
         </plentry>        
       </parml>      
       <note>
-        <ul><li>AutoSplit can only apply to hash-partitioning collection spaces.</li>
+        <ul><li>AutoSplit can only apply to hash-partitioning collections.</li>
           <li>Cannot create collection spaces in an empty domain(domain with no replica groups).</li>          
         </ul></note>
     </section>    

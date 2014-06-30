@@ -98,9 +98,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9737dc172b206f908c21b389f7e1bd61"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9737dc172b206f908c21b389f7e1bd61"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getCount</b> (SINT64 &amp;count, const bson::BSONObj &amp;condition=_sdbStaticObject)=0</td></tr>
 <tr class="separator:a9737dc172b206f908c21b389f7e1bd61"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5eea00bb7368439a5aa904e0028feb74"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5eea00bb7368439a5aa904e0028feb74"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>insert</b> (const bson::BSONObj &amp;obj, bson::BSONElement *id=NULL)=0</td></tr>
-<tr class="separator:a5eea00bb7368439a5aa904e0028feb74"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0da1ca90dc6581270a1269c2cc6451c8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0da1ca90dc6581270a1269c2cc6451c8"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>insert</b> (const bson::BSONObj &amp;obj, bson::OID *id=NULL)=0</td></tr>
+<tr class="separator:a0da1ca90dc6581270a1269c2cc6451c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada24d6ed24d62b67f9012c7bf8bb46eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ada24d6ed24d62b67f9012c7bf8bb46eb"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>bulkInsert</b> (SINT32 flags, std::vector&lt; bson::BSONObj &gt; &amp;obj)=0</td></tr>
 <tr class="separator:ada24d6ed24d62b67f9012c7bf8bb46eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -176,14 +176,17 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>attachCollec
 <tr class="memitem:a0d2c2b6b14407b512c0521d403ca01b2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d2c2b6b14407b512c0521d403ca01b2"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>detachCollection</b> (const CHAR *subClFullName)=0</td></tr>
 <tr class="separator:a0d2c2b6b14407b512c0521d403ca01b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64e983a85d7390d834b2bc93e507b3a5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a64e983a85d7390d834b2bc93e507b3a5"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>alterCollection</b> (const bson::BSONObj &amp;options)=0</td></tr>
+<tr class="separator:a64e983a85d7390d834b2bc93e507b3a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 11 2014 16:32:40 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jun 30 2014 15:29:18 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

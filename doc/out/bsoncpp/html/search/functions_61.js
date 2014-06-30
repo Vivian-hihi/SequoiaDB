@@ -19,6 +19,7 @@ var searchData=
   ['appendobject',['appendObject',['../classbson_1_1BSONObjBuilder.html#a94de4e5755784ab2561017b042ac5fdc',1,'bson::BSONObjBuilder']]],
   ['appendoid',['appendOID',['../classbson_1_1BSONObjBuilder.html#acd4a3537590d05af07585d13058915b6',1,'bson::BSONObjBuilder']]],
   ['appendregex',['appendRegex',['../classbson_1_1BSONObjBuilder.html#a856483bb76fdd7bb536ca53d0a629f4b',1,'bson::BSONObjBuilder']]],
+  ['appendstrwithnoterminating',['appendStrWithNoTerminating',['../classbson_1_1BSONObjBuilder.html#a4c5abe4632fa84eb70320eae3bb0f251',1,'bson::BSONObjBuilder']]],
   ['appendtimestamp',['appendTimestamp',['../classbson_1_1BSONObjBuilder.html#ab941a5a1c21b6e6e41f0d8d08d6870df',1,'bson::BSONObjBuilder']]],
   ['appendtimet',['appendTimeT',['../classbson_1_1BSONObjBuilder.html#a1211695b3084150fb00b4281cbe70145',1,'bson::BSONObjBuilder']]],
   ['appendundefined',['appendUndefined',['../classbson_1_1BSONObjBuilder.html#a5fb8fd255f28a2e4186d43ede5c06ef8',1,'bson::BSONObjBuilder']]],

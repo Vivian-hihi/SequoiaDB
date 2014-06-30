@@ -10,6 +10,7 @@ var searchData=
   ['sdbcollectionspace',['sdbCollectionSpace',['../classsdbclient_1_1sdbCollectionSpace.html',1,'sdbclient']]],
   ['sdbcursor',['sdbCursor',['../classsdbclient_1_1sdbCursor.html',1,'sdbclient']]],
   ['sdbcursor',['sdbCursor',['../classsdbclient_1_1sdbCursor.html#a82bee251ec1076c461be6c0b13230c67',1,'sdbclient::sdbCursor']]],
+  ['sdbdomain',['sdbDomain',['../classsdbclient_1_1sdbDomain.html',1,'sdbclient']]],
   ['sdbnode',['sdbNode',['../classsdbclient_1_1sdbNode.html',1,'sdbclient']]],
   ['sdbnode',['sdbNode',['../classsdbclient_1_1sdbNode.html#a97b9b44327a10685c286c16ba5d0df25',1,'sdbclient::sdbNode']]],
   ['sdbnodestatus',['sdbNodeStatus',['../namespacesdbclient.html#a6c710c7703ba4083058b5ee6ca67535a',1,'sdbclient']]],

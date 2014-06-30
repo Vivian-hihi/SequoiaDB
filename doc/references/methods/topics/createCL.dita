@@ -90,8 +90,8 @@
           <li>Compressed也是一个JSON对象，它的值为boolean类型，为“true”时，表示集合中的数据压缩存储，“false”时表示正常存储数据。</li>
           <li>当options内设置了多个参数时，用逗号（,）隔开。</li>
           <li>name 的值不能是空串、含点（.）或者美元符号（$），并且长度不能超过127B，否则操作失败。</li>
-          <li>AutoSplit必须配合散列分区和域使用，且不能与Groups同时使用。</li>
-          <li>AutoSplit不能与Groups同时使用。</li>
+          <li>AutoSplit必须配合散列分区和域使用，且不能与Group同时使用。</li>
+          <li>AutoSplit不能与Group同时使用。</li>
           <li>如果在集合中没有指定AutoSplit，则使用所属域中的AutoSplit参数。</li>
           <li>Group必须存在于集合空间所属的域中（所有复制组均属于SYSDOMAIN，即如果集合空间没有指定域，则系统内任意复制组均可）。</li>
         </ul> 
