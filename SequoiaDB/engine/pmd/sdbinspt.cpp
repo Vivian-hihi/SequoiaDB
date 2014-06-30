@@ -1443,7 +1443,7 @@ retry :
 done :
    if ( oldErr != err )
    {
-      dumpPrintf ( " Inspect Index Def for Collection [%u] Done with Error %d"
+      dumpPrintf ( " Inspect Index Def for Collection [%u] Done with (%d) Error"
                    OSS_NEWLINE, collectionID, err-oldErr ) ;
    }
    PD_TRACE1 ( SDB_INSPINXDEF, PD_PACK_INT(rc) );
@@ -2351,7 +2351,7 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
       }
       else
       {
-         dumpPrintf ( " Inspection collection space is Done with Error: %d"
+         dumpPrintf ( " Inspection collection space is Done with %d Error(s)"
                       OSS_NEWLINE, totalErr ) ;
       }
       break ;
@@ -2455,6 +2455,8 @@ void actionCSAttemptEntry( const CHAR *csName, UINT32 sequence,
    {
       gHitCS = TRUE ;
    }
+
+   gReachEnd = FALSE ;
 
    string csFileName ;
    string csFullName ;
