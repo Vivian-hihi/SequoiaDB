@@ -3,7 +3,7 @@
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
-from pysequoiadb import SequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 from bson.objectid import ObjectId
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
                                  % (basketball, pysequoiadb.getErr(rc)))
 
    # update records
-   update = {{'$set':{"Item":"fuck tencent", "Rank":1 }}, {'id':0}}
+   update = {{'$set':{"Item":"football", "Rank":1 }}, {'id':0}}
    rc = cl.update(update)
    if const.SDB_OK != rc:
       pysequoiadb.cout("update record:% failed, %s"\

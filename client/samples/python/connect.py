@@ -3,7 +3,7 @@
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
-from pysequoiadb import SequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 if "__main__" == __name__:
 
@@ -73,8 +73,8 @@ if "__main__" == __name__:
    # do something
    #
    # create a new user, if succeed, new user can connect to db server.
-   user = 'fuck_tencent'
-   psw  = 'fuck_qq'
+   user = 'guest'
+   psw  = 'guest'
    rc = db.create_user(user, psw)
    if const.SDB_OK != rc:
       pysequoiadb.cout("failed to create user %s, %s"\

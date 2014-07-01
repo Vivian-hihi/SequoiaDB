@@ -3,7 +3,7 @@
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
-from pysequoiadb import SequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 if __name__ == "__main__":
 
