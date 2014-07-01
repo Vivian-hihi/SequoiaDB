@@ -60,6 +60,9 @@ import sys
 
 PY3 = sys.version_info[0] == 3
 
+# OPEN THE SWITCH WHEN DEBUG
+_DEBUG = False
+
 def cout(what):
    if PY3:
       print(what)
@@ -77,7 +80,7 @@ def check_error(rc):
    """Check error occurred, and print error message if error occurred.
 
    """
-   if const.SDB_OK != rc:
+   if const.SDB_OK != rc and __DEBUG:
       cout( OperationError("  Error code: ", rc) )
 
 def getErr(rc):
