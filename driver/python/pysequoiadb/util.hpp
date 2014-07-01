@@ -155,7 +155,7 @@
       INT32 list_size = PyList_Size( py_list ) ;                        \
       for ( int idx = 0 ; idx < list_size ; ++idx )                     \
       {                                                                 \
-         SINT64 id = PyLong_LongLong(PyList_GetItem( py_list, idx)) ;   \
+         SINT64 id = PyLong_AsLongLong(PyList_GetItem( py_list, idx)) ; \
          buffer[idx] = id;                                              \
       }                                                                 \
    }while( FALSE ) 

@@ -1040,7 +1040,7 @@ static PYOBJECT *wait_task( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    task_ids = new SINT64[num] ;
-   MAKE_PYLIST_TO_BUFFER( task_ids_obj, task_ids)
+   MAKE_PYLIST_TO_BUFFER( task_ids_obj, task_ids) ;
    rc = client->waitTasks( task_ids, num ) ;
    if ( rc )
    {
