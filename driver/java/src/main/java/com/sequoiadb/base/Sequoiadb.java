@@ -21,10 +21,9 @@
 package com.sequoiadb.base;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Random;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -229,14 +228,14 @@ public class Sequoiadb {
 	/**
 	 * @fn Sequoiadb(List<String> connStrings, String username, String password,
 	 *               ConfigOptions options)
-	 * @brief Constructor, use any useful address to connect to database.
+	 * @brief Constructor, use a random valid address to connect to database.
 	 * @param connStrings The array of the coord's address
 	 * @param username the user's name of the account
 	 * @param password the password  of the account
 	 * @param options the options for connection
 	 * @exception com.sequoiadb.exception.BaseException
 	 *            "SDB_NETWORK" means network error,
-	 *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
+	 *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table in local computer
 	 */
 	public Sequoiadb(List<String> connStrings, String username, String password,
 			         ConfigOptions options) throws BaseException
@@ -244,12 +243,15 @@ public class Sequoiadb {
 		ConfigOptions opts = options;
 		if (options == null)
 			opts = new ConfigOptions();
-		Iterator<String> it = connStrings.iterator();
 		int size = connStrings.size();
-		int count = 0;
-		while (it.hasNext())
+		Random random = new Random();
+		int count = random.nextInt(size);
+		int mark = count;
+		do
 		{
-			String str = it.next();
+System.out.println("count is: " + count);
+			String str = connStrings.get(count);
+			count = ++count % size;
 			try
 			{
 				// connect
@@ -269,12 +271,11 @@ public class Sequoiadb {
 			}
 			catch (BaseException e)
 			{
-				count++;
 				continue;
 			}
 			break;
-		}
-		if (count == size)
+		} while (mark != count);
+		if (size == count)
 			throw new BaseException("SDB_NET_CANNOT_CONNECT");
 	}
 	
