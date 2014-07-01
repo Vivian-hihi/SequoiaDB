@@ -66,7 +66,7 @@ namespace engine
    #define PMD_MAX_PREF_POOL           (200)
    #define PMD_MAX_SUB_QUERY           (10)
    #define PMD_MIN_SORTBUF_SZ          (RTN_SORT_MIN_BUFSIZE)
-   #define PMD_DEFAULT_SORTBUF_SZ      (512)
+   #define PMD_DEFAULT_SORTBUF_SZ      (256)
    #define PMD_DEFAULT_HJ_SZ           (128)
    #define PMD_MIN_HJ_SZ               (64)
    #define PMD_DEFAULT_MAX_REPLSYNC    (10)
