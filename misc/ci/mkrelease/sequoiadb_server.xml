@@ -3,7 +3,6 @@
     <fullName>SequoiaDB Server</fullName>
     <version>1.0</version>
     <installerFilename>${product_shortname}-${product_version}-${platform}-installer.${platform_exec_suffix}</installerFilename>
-    <licenseFile>${build_project_directory}/sequoiadb/license/license_en.txt</licenseFile>
     <allowLanguageSelection>1</allowLanguageSelection>
     <componentList>
         <component>
@@ -388,86 +387,126 @@
         </licenseFile>
     </licenseFileList>
     <parameterList>
-        <directoryParameter>
-            <name>installdir</name>
-            <description>Installer.Parameter.installdir.description</description>
-            <explanation>Installer.Parameter.installdir.explanation</explanation>
-            <value></value>
-            <default>${platform_install_prefix}/${product_shortname}</default>
-            <allowEmptyValue>0</allowEmptyValue>
-            <ask>yes</ask>
-            <cliOptionName>prefix</cliOptionName>
-            <mustBeWritable>yes</mustBeWritable>
-            <mustExist>0</mustExist>
-            <width>40</width>
-        </directoryParameter>
+        <choiceParameterGroup>
+            <name>licenseRead</name>
+            <description>Install.Paramers.LicenseRead.License.Information.Part</description>
+            <explanation></explanation>
+            <value>1</value>
+            <default>1</default>
+            <cliOptionShow>0</cliOptionShow>
+            <parameterList>
+                <licenseParameter>
+                    <name>license_empty</name>
+                    <description>Install.Paramers.LicenseRead.Agree.Description</description>
+                    <explanation>Install.Paramers.LicenseRead.Agree.Explanation</explanation>
+                    <file>${build_project_directory}/license_empty.txt</file>
+                    <htmlFile></htmlFile>
+                </licenseParameter>
+                <licenseParameter>
+                    <name>read</name>
+                    <description>Install.Paramers.LicenseRead.Read.Description</description>
+                    <explanation></explanation>
+                    <file>${build_project_directory}/sequoiadb/license/license_en.txt</file>
+                    <htmlFile></htmlFile>
+                    <wrapText>1</wrapText>
+                    <licenseFileList>
+                        <licenseFile>
+                            <code>zh_CN</code>
+                            <encoding>utf-8</encoding>
+                            <file>${build_project_directory}/sequoiadb/license/license_zh.txt</file>
+                        </licenseFile>
+                    </licenseFileList>
+                </licenseParameter>
+            </parameterList>
+        </choiceParameterGroup>
         <parameterGroup>
-            <name>user_data</name>
-            <title>${msg(Install.Paramers.user.title)}</title>
-            <explanation>${msg(Install.Paramers.user.explanation)}</explanation>
+            <name>ActionGroup</name>
+            <explanation></explanation>
             <value></value>
             <default></default>
             <parameterList>
-                <stringParameter>
-                    <name>username</name>
-                    <description>${msg(Install.Paramers.user.username.description)}</description>
-                    <explanation></explanation>
-                    <value>sdbadmin</value>
-                    <default>sdbadmin</default>
+                <directoryParameter>
+                    <name>installdir</name>
+                    <description>Installer.Parameter.installdir.description</description>
+                    <explanation>Installer.Parameter.installdir.explanation</explanation>
+                    <value></value>
+                    <default>${platform_install_prefix}/${product_shortname}</default>
                     <allowEmptyValue>0</allowEmptyValue>
+                    <ask>yes</ask>
+                    <cliOptionName>prefix</cliOptionName>
+                    <mustBeWritable>yes</mustBeWritable>
+                    <mustExist>0</mustExist>
+                    <width>40</width>
+                </directoryParameter>
+                <stringParameter>
+                    <name>platform</name>
+                    <description></description>
+                    <explanation></explanation>
+                    <value>${platform_name}</value>
+                    <default>${platform_name}</default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <ask>0</ask>
+                    <cliOptionShow>0</cliOptionShow>
                     <width>40</width>
                 </stringParameter>
-                <passwordParameter>
-                    <name>userpasswd</name>
-                    <description>${msg(Install.Paramers.user.password.description)}</description>
-                    <explanation></explanation>
+                <parameterGroup>
+                    <name>user_data</name>
+                    <title>${msg(Install.Paramers.user.title)}</title>
+                    <explanation>${msg(Install.Paramers.user.explanation)}</explanation>
                     <value></value>
-                    <default>${username}</default>
-                    <allowEmptyValue>0</allowEmptyValue>
-                    <descriptionRetype>${msg(Install.Paramers.user.reentry_password.description)}</descriptionRetype>
-                    <width>20</width>
+                    <default></default>
+                    <parameterList>
+                        <stringParameter>
+                            <name>username</name>
+                            <description>${msg(Install.Paramers.user.username.description)}</description>
+                            <explanation></explanation>
+                            <value>sdbadmin</value>
+                            <default>sdbadmin</default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>40</width>
+                        </stringParameter>
+                        <passwordParameter>
+                            <name>userpasswd</name>
+                            <description>${msg(Install.Paramers.user.password.description)}</description>
+                            <explanation></explanation>
+                            <value></value>
+                            <default>${username}</default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <descriptionRetype>${msg(Install.Paramers.user.reentry_password.description)}</descriptionRetype>
+                            <width>20</width>
 
 	<!-- throw an error if password is empty -->
 	<validationActionList>
-                        <throwError>
-                            <text>${msg(Install.Paramers.user.password.error)}</text>
-                            <ruleList>
-                                <compareText logic="equals" text="${userpasswd}" value=""/>
-                            </ruleList>
-                        </throwError>
-                    </validationActionList>
-                </passwordParameter>
+                                <throwError>
+                                    <text>${msg(Install.Paramers.user.password.error)}</text>
+                                    <ruleList>
+                                        <compareText logic="equals" text="${userpasswd}" value=""/>
+                                    </ruleList>
+                                </throwError>
+                            </validationActionList>
+                        </passwordParameter>
+                    </parameterList>
+                </parameterGroup>
+                <stringParameter>
+                    <name>port</name>
+                    <title>${msg(Install.Paramers.port.title)}</title>
+                    <description>${msg(Install.Paramers.port.Description)}</description>
+                    <explanation>${msg(Install.Paramers.port.explanation)}</explanation>
+                    <value>11790</value>
+                    <default>11790</default>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <width>40</width>
+                </stringParameter>
+                <booleanParameter>
+                    <name>processAutoStart</name>
+                    <description>${msg(Install.Paramers.processAutoStart.Description)}</description>
+                    <explanation>${msg(Install.Paramers.processAutoStart.explanation)}</explanation>
+                    <value>true</value>
+                    <default>true</default>
+                    <cliOptionText>${msg(Install.Paramers.processAutoStart.explanation)}</cliOptionText>
+                </booleanParameter>
             </parameterList>
         </parameterGroup>
-        <stringParameter>
-            <name>platform</name>
-            <description></description>
-            <explanation></explanation>
-            <value>${platform_name}</value>
-            <default>${platform_name}</default>
-            <allowEmptyValue>0</allowEmptyValue>
-            <ask>0</ask>
-            <cliOptionShow>0</cliOptionShow>
-            <width>40</width>
-        </stringParameter>
-        <stringParameter>
-            <name>port</name>
-            <title>${msg(Install.Paramers.port.title)}</title>
-            <description>${msg(Install.Paramers.port.Description)}</description>
-            <explanation>${msg(Install.Paramers.port.explanation)}</explanation>
-            <value>11790</value>
-            <default>11790</default>
-            <allowEmptyValue>1</allowEmptyValue>
-            <width>40</width>
-        </stringParameter>
-        <booleanParameter>
-            <name>processAutoStart</name>
-            <description>${msg(Install.Paramers.processAutoStart.Description)}</description>
-            <explanation>${msg(Install.Paramers.processAutoStart.explanation)}</explanation>
-            <value>true</value>
-            <default>true</default>
-            <cliOptionText>${msg(Install.Paramers.processAutoStart.explanation)}</cliOptionText>
-        </booleanParameter>
     </parameterList>
 </project>
 
