@@ -218,7 +218,7 @@
 		</copy>
 
 		<copy todir="${RELEASE_DIR}/tools/sdbtop">
-			<fileset dir="${CODE_DIR}/tools/sdbtop" includes="**/*" />
+			<fileset dir="${CODE_DIR}/tools/sdbtop"/>
 		</copy>
 
 
