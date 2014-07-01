@@ -214,7 +214,7 @@
 		</copy>
 		
 		<copy todir="${RELEASE_DIR}/tools/sdbsupport">
-			<fileset dir="${CODE_DIR}/tools/sdbsupport" includes="**/*" />
+			<fileset dir="${CODE_DIR}/tools/sdbsupport/" includes="**/*" />
 		</copy>
 
 
