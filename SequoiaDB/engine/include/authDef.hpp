@@ -37,12 +37,12 @@
 
 namespace engine
 {
-   #define AUTH_SPACE "SYSAUTH"
-   #define AUTH_USR_COLLECTION AUTH_SPACE".SYSUSRS"
+   #define AUTH_SPACE                     "SYSAUTH"
+   #define AUTH_USR_COLLECTION            AUTH_SPACE".SYSUSRS"
    /// AUTH_USR_COLLECTION SCHEMA
-   /// {usr:"", passwd:"", fromusr:"", frompasswd:"", crttime:}
+   /// {User:"", Passwd:""}
 
-   #define AUTH_USR_INDEX_NAME "usrindex"
+   #define AUTH_USR_INDEX_NAME            "usrindex"
 
 }
 

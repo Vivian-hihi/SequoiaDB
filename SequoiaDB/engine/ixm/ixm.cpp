@@ -239,7 +239,7 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION ( SDB__IXMINXCB_ISSAMEDEF, "_ixmIndexCB::isSameDef" )
-   BOOLEAN _ixmIndexCB::isSameDef( BSONObj defObj )
+   BOOLEAN _ixmIndexCB::isSameDef( const BSONObj &defObj )
    {
       //PD_TRACE_ENTRY ( SDB__IXMINXCB_ISSAMEDEF );
       BOOLEAN rs = TRUE;

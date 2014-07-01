@@ -37,8 +37,7 @@
 #include "pmd.hpp"
 #include "../bson/bsonobj.h"
 #include "../util/fromjson.hpp"
-#include "rtn.hpp"
-
+#include "catCommon.hpp"
 
 using namespace bson ;
 
@@ -104,67 +103,58 @@ namespace engine
       SDB_AUTHCB *pAuthCB = NULL ;
       
       cb = pmdGetThreadEDUCB() ;
-      rc = rtnTestCollectionSpaceCommand( OM_CS_DEPLOY, _pDmsCB ) ;
-      if ( rc )
-      {
-         if ( SDB_DMS_CS_NOTEXIST == rc )
-         {
-            // if collection space was not exist, let's create one
-            rc = rtnCreateCollectionSpaceCommand ( OM_CS_DEPLOY, cb, _pDmsCB, 
-                                                   NULL, DMS_PAGE_SIZE_DFT, 
-                                                   TRUE, FALSE ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to create %s collection space, rc = %d",
-                          OM_CS_DEPLOY, rc ) ;
-         }
-         else
-         {
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to test collection space %s, rc = %d",
-                          OM_CS_DEPLOY, rc ) ;
-         }
-      }
 
       // SYSDEPLOY.SYSCLUSTER
       rc = _createCollection ( OM_CS_DEPLOY_CL_CLUSTER, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
-
-      //TODO: check the index's content to make sure the index key is the same
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_CLUSTER,
                                     OM_CS_DEPLOY_CL_CLUSTERIDX1, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    OM_CS_DEPLOY_CL_CLUSTERIDX1, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       // SYSDEPLOY.SYSHOST
       rc = _createCollection ( OM_CS_DEPLOY_CL_HOST, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    OM_CS_DEPLOY_CL_HOST, rc ) ;
-
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_HOST,
                                     OM_CS_DEPLOY_CL_HOSTIDX1, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    OM_CS_DEPLOY_CL_HOSTIDX1, rc ) ;
-
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_HOST,
                                     OM_CS_DEPLOY_CL_HOSTIDX2, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    OM_CS_DEPLOY_CL_HOSTIDX2, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       // SYSDEPLOY.SYSBUSINESS
       rc = _createCollection ( OM_CS_DEPLOY_CL_BUSINESS, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_BUSINESS,
                              OM_CS_DEPLOY_CL_BUSINESSIDX1, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    OM_CS_DEPLOY_CL_BUSINESSIDX1, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       // SYSDEPLOY.SYSCONFIGURE
       rc = _createCollection ( OM_CS_DEPLOY_CL_CONFIGURE, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       pAuthCB = pmdGetKRCB()->getAuthCB() ;
       pAuthCB->checkNeedAuth( cb, TRUE ) ;
@@ -178,7 +168,6 @@ namespace engine
          PD_RC_CHECK ( rc, PDERROR, "Failed to create default user:rc = %d",
                        rc ) ;
       }
-
       pAuthCB->checkNeedAuth( cb, TRUE ) ;
 
    done:
@@ -193,29 +182,18 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj indexDef ;
+
       rc = fromjson ( pIndex, indexDef ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to build index object, rc = %d",
                     rc ) ;
-      
-      // attempt to create index, NULL for dpscb for no-logging
-      rc = rtnCreateIndexCommand ( pCollection,
-                                   indexDef, cb, _pDmsCB, NULL, TRUE ) ;
+
+      rc = catTestAndCreateIndex( pCollection, indexDef, cb, _pDmsCB,
+                                  NULL, TRUE ) ;
       if ( rc )
       {
-         // if index already exist, let's set rc = ok
-         if ( SDB_IXM_REDEF == rc )
-         {
-            rc = SDB_OK ;
-         }
-         else
-         {
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to create index for %s\n"
-                          "Index def: %s\nrc = %d",
-                          pCollection, pIndex, rc ) ;
-         }
+         goto error ;
       }
-      
+
    done :
       return rc ;
    error :
@@ -224,33 +202,7 @@ namespace engine
 
    INT32 _omManager::_createCollection ( const CHAR *pCollection, pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK ;
-      rc = rtnFindCollection ( pCollection, _pDmsCB ) ;
-      if ( rc )
-      {
-         if ( SDB_DMS_NOTEXIST == rc )
-         {
-            // if the collection does not exist, let's create one
-            // NULL for dpscb to disable logging, no compression
-            rc = rtnCreateCollectionCommand ( pCollection,
-                                              0, cb, _pDmsCB, NULL, 0,
-                                              TRUE ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to create %s collection, rc = %d",
-                          pCollection, rc ) ;
-         }
-         else
-         {
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to find collection %s, rc = %d",
-                          pCollection, rc ) ;
-         }
-      }
-      
-   done :
-      return rc ;
-   error :
-      goto done ;
+      return catTestAndCreateCL( pCollection, cb, _pDmsCB, NULL, TRUE ) ;
    }
 
    INT32 _omManager::active ()

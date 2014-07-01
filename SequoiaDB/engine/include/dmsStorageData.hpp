@@ -554,9 +554,10 @@ namespace engine
          dmsStorageUnitID CSID () const { return _CSID ; }
 
          OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, UINT16 mbID,
-                                     UINT32 clLID, INT32 lockType = -1 );
-         OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, const CHAR* pName,
-                                     INT32 lockType = -1 ) ;
+                                         UINT32 clLID, INT32 lockType = -1 );
+         OSS_INLINE INT32  getMBContext( dmsMBContext **pContext,
+                                         const CHAR* pName,
+                                         INT32 lockType = -1 ) ;
          OSS_INLINE void   releaseMBContext( dmsMBContext *&pContext ) ;
 
          OSS_INLINE const dmsMBStatInfo* getMBStatInfo( UINT16 mbID ) const ;
@@ -745,7 +746,7 @@ namespace engine
       OSS_INLINE functions :
    */
    OSS_INLINE void _dmsStorageData::_collectionNameInsert( const CHAR * pName,
-                                                       UINT16 mbID )
+                                                           UINT16 mbID )
    {
       _collectionNameMap[ ossStrdup( pName ) ] = mbID ;
    }
@@ -788,8 +789,8 @@ namespace engine
       return extPtr ;
    }
    OSS_INLINE const CHAR* _dmsStorageData::_clFullName( const CHAR *clName,
-                                                    CHAR * clFullName,
-                                                    UINT32 fullNameLen )
+                                                        CHAR * clFullName,
+                                                        UINT32 fullNameLen )
    {
       SDB_ASSERT( fullNameLen > DMS_COLLECTION_FULL_NAME_SZ,
                   "Collection full name len error" ) ;
@@ -801,8 +802,8 @@ namespace engine
       return clFullName ;
    }
    OSS_INLINE INT32 _dmsStorageData::getMBContext( dmsMBContext ** pContext,
-                                               UINT16 mbID, UINT32 clLID,
-                                               INT32 lockType )
+                                                   UINT16 mbID, UINT32 clLID,
+                                                   INT32 lockType )
    {
       if ( mbID >= DMS_MME_SLOTS )
       {
@@ -846,8 +847,8 @@ namespace engine
       return SDB_OK ;
    }
    OSS_INLINE INT32 _dmsStorageData::getMBContext( dmsMBContext ** pContext,
-                                               const CHAR * pName,
-                                               INT32 lockType )
+                                                   const CHAR * pName,
+                                                   INT32 lockType )
    {
       UINT16 mbID = DMS_INVALID_MBID ;
       UINT32 clLID = DMS_INVALID_CLID ;

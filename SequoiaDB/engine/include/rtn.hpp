@@ -411,6 +411,12 @@ namespace engine
    INT32 rtnTestCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                          SDB_DMSCB *dmsCB ) ;
 
+   INT32 rtnTestIndex( const CHAR *pCollection,
+                       const CHAR *pIndexName,
+                       SDB_DMSCB *dmsCB,
+                       const BSONObj *pIndexDef = NULL,
+                       BOOLEAN *pIsSame = NULL ) ;
+
    BOOLEAN rtnIsCommand ( const CHAR *name ) ;
    INT32 rtnParserCommand ( const CHAR *name, _rtnCommand **ppCommand ) ;
    INT32 rtnReleaseCommand ( _rtnCommand **ppCommand ) ;

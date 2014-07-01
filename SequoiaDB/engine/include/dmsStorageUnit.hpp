@@ -122,6 +122,11 @@ namespace engine
                                vector<_monIndex> &resultIndexes,
                                dmsMBContext *context = NULL ) ;
 
+         INT32    getIndex( const CHAR *pName,
+                            const CHAR *pIndexName,
+                            _monIndex &resultIndex,
+                            dmsMBContext *context = NULL ) ;
+
       // only for LOAD
       public:
          OSS_INLINE void    mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,

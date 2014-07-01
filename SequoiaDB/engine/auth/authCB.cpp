@@ -35,6 +35,7 @@
 #include "rtn.hpp"
 #include "authTrace.hpp"
 #include "pmdCB.hpp"
+#include "catCommon.hpp"
 
 using namespace bson ;
 
@@ -225,39 +226,27 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB_INITAUTH ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
-      rc = rtnTestCollectionCommand( AUTH_USR_COLLECTION,
-                                     dmsCB ) ;
-      if ( SDB_OK == rc )
-      {
-         goto done ;
-      }
 
-      // no compression for all system catalog collections
-      rc = rtnCreateCollectionCommand( AUTH_USR_COLLECTION,
-                                       0, cb, dmsCB, NULL,
-                                       FLG_CREATE_WHEN_NOT_EXIST,
-                                       TRUE ) ;
-
-      if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
+      rc = catTestAndCreateCL( AUTH_USR_COLLECTION, cb, dmsCB, NULL, TRUE ) ;
+      if ( rc )
       {
          goto error ;
       }
-      else if ( SDB_OK == rc )
+
+      // create index
       {
          BSONObjBuilder builder ;
-         builder.append("key", BSON( SDB_AUTH_USER << 1) ) ;
-         builder.append("name", AUTH_USR_INDEX_NAME ) ;
-         builder.appendBool("unique", TRUE) ;
-         rc = rtnCreateIndexCommand( AUTH_USR_COLLECTION,
-                                     builder.obj(), cb, dmsCB, NULL, TRUE ) ;
+         builder.append( IXM_FIELD_NAME_KEY, BSON( SDB_AUTH_USER << 1) ) ;
+         builder.append( IXM_FIELD_NAME_NAME, AUTH_USR_INDEX_NAME ) ;
+         builder.appendBool( IXM_FIELD_NAME_UNIQUE, TRUE ) ;
+         BSONObj indexDef = builder.obj() ;
+
+         rc = catTestAndCreateIndex( AUTH_USR_COLLECTION, indexDef, cb, dmsCB,
+                                     NULL, TRUE ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
-      }
-      else
-      {
-         rc = SDB_OK ;
       }
 
    done:

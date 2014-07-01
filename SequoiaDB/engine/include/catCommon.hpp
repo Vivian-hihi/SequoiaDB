@@ -163,13 +163,22 @@ namespace engine
    INT32 catPraseFunc( const BSONObj &func, BSONObj &parsed ) ;
 
    INT32 catUnlinkCL( const CHAR *mainCLName, const CHAR *subCLName,
-                     pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
-                     INT16 w, std::vector<UINT32>  &groupList );
+                      pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
+                      INT16 w, std::vector<UINT32>  &groupList );
 
    INT32 catLinkCL( const CHAR *mainCLName, const CHAR *subCLName,
-                     BSONObj &boLowBound, BSONObj &boUpBound,
-                     pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
-                     INT16 w, std::vector<UINT32>  &groupList );
+                    BSONObj &boLowBound, BSONObj &boUpBound,
+                    pmdEDUCB *cb, _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB,
+                    INT16 w, std::vector<UINT32>  &groupList );
+
+   INT32 catTestAndCreateCL( const CHAR *pCLFullName, pmdEDUCB *cb,
+                             _SDB_DMSCB *dmsCB, _dpsLogWrapper *dpsCB,
+                             BOOLEAN sys = TRUE ) ;
+
+   INT32 catTestAndCreateIndex( const CHAR *pCLFullName,
+                                const BSONObj &indexDef,
+                                pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                _dpsLogWrapper *dpsCB, BOOLEAN sys = TRUE) ;
 
 }
 

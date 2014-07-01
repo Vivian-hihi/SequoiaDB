@@ -900,6 +900,64 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageUnit::getIndex( const CHAR *pName,
+                                    const CHAR *pIndexName,
+                                    _monIndex &resultIndex,
+                                    dmsMBContext *context )
+   {
+      INT32 rc                     = SDB_IXM_NOTEXIST ;
+      BOOLEAN getContext           = FALSE ;
+      UINT32 indexID               = 0 ;
+
+      SDB_ASSERT( pIndexName, "Index name can't be NULL" ) ;
+
+      if ( NULL == context )
+      {
+         SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
+
+         rc = _pDataSu->getMBContext( &context, pName, SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get collection[%s] mb context failed, "
+                      "rc: %d", pName, rc ) ;
+         getContext = TRUE ;
+      }
+      else
+      {
+         rc = context->mbLock( SHARED ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      }
+
+      for ( indexID = 0 ; indexID < DMS_COLLECTION_MAX_INDEX ; ++indexID )
+      {
+         if ( DMS_INVALID_EXTENT == context->mb()->_indexExtent[indexID] )
+         {
+            break ;
+         }
+
+         ixmIndexCB indexCB ( context->mb()->_indexExtent[indexID],
+                              _pIndexSu, NULL ) ;
+         if ( 0 == ossStrcmp( indexCB.getName(), pIndexName ) )
+         {
+            resultIndex._indexFlag = indexCB.getFlag () ;
+            resultIndex._scanExtLID = indexCB.scanExtLID () ;
+            resultIndex._version = indexCB.version () ;
+            // copy the index def to it's owned buffer
+            resultIndex._indexDef = indexCB.getDef().copy () ;
+
+            rc = SDB_OK ;
+            break ;
+         }
+      }
+
+   done :
+      if ( context && getContext )
+      {
+         _pDataSu->releaseMBContext( context ) ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
    void _dmsStorageUnit::dumpInfo ( vector<CHAR*> &collectionList,
                                     BOOLEAN sys )
    {

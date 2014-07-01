@@ -1635,6 +1635,68 @@ namespace engine
       goto done ;
    }
 
+   INT32 rtnTestIndex( const CHAR *pCollection, const CHAR *pIndexName,
+                       SDB_DMSCB *dmsCB, const BSONObj *pIndexDef,
+                       BOOLEAN *pIsSame )
+   {
+      INT32 rc                   = SDB_OK ;
+      dmsStorageUnit *su         = NULL ;
+      dmsStorageUnitID suID      = DMS_INVALID_SUID ;
+      const CHAR *pCLShortName   = NULL ;
+      dmsMBContext *mbContext    = NULL ;
+      dmsExtentID extentID       = DMS_INVALID_EXTENT ;
+
+      rc = rtnResolveCollectionNameAndLock( pCollection, dmsCB, &su,
+                                            &pCLShortName, suID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = su->data()->getMBContext( &mbContext, pCLShortName, SHARED ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( pIndexDef && String == pIndexDef->getField( IXM_NAME_FIELD ).type() )
+      {
+         pIndexName = pIndexDef->getField( IXM_NAME_FIELD ).valuestr() ;
+      }
+
+      rc = su->index()->getIndexCBExtent( mbContext, pIndexName, extentID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( pIndexDef && pIsSame )
+      {
+         ixmIndexCB indexCB( extentID, su->index(), NULL ) ;
+         if ( indexCB.isSameDef( *pIndexDef ) )
+         {
+            *pIsSame = TRUE ;
+         }
+         else
+         {
+            *pIsSame = FALSE ;
+         }
+      }
+      mbContext->mbUnlock() ;
+
+   done:
+      if ( mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
+      }
+      if ( DMS_INVALID_SUID != suID )
+      {
+         dmsCB->suUnlock( suID ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTESTCLCOMMAND, "rtnTestCollectionCommand" )
    INT32 rtnTestCollectionCommand ( const CHAR *pCollection,
                                     SDB_DMSCB *dmsCB )

@@ -14,6 +14,7 @@
 #include "pmdDef.hpp"
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
+#include "catCommon.hpp"
 
 using namespace bson;
 namespace engine
@@ -264,27 +265,18 @@ namespace engine
       PD_TRACE2 ( SDB_CATMAINCT__CREATESYSIDX,
                   PD_PACK_STRING ( pCollection ),
                   PD_PACK_STRING ( pIndex ) ) ;
+
       rc = fromjson ( pIndex, indexDef ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to build index object, rc = %d",
                     rc ) ;
-      // attempt to create index, NULL for dpscb for no-logging
-      rc = rtnCreateIndexCommand ( pCollection,
-                                   indexDef, cb, _pDmsCB, NULL, TRUE ) ;
+
+      rc = catTestAndCreateIndex( pCollection, indexDef, cb, _pDmsCB,
+                                  NULL, TRUE ) ;
       if ( rc )
       {
-         // if index already exist, let's set rc = ok
-         if ( SDB_IXM_REDEF == rc )
-         {
-            rc = SDB_OK ;
-         }
-         else
-         {
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to create index for %s\n"
-                          "Index def: %s\nrc = %d",
-                          pCollection, pIndex, rc ) ;
-         }
+         goto error ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT__CREATESYSIDX, rc ) ;
       return rc ;
@@ -300,27 +292,13 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATMAINCT__CREATESYSCOL ) ;
       PD_TRACE1 ( SDB_CATMAINCT__CREATESYSCOL,
                   PD_PACK_STRING ( pCollection ) ) ;
-      rc = rtnFindCollection ( pCollection, _pDmsCB ) ;
+
+      rc = catTestAndCreateCL( pCollection, cb, _pDmsCB, NULL, TRUE ) ;
       if ( rc )
       {
-         if ( SDB_DMS_NOTEXIST == rc )
-         {
-            // if the collection does not exist, let's create one
-            // NULL for dpscb to disable logging, no compression
-            rc = rtnCreateCollectionCommand ( pCollection,
-                                              0, cb, _pDmsCB, NULL, 0,
-                                              TRUE ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to create %s collection, rc = %d",
-                          pCollection, rc ) ;
-         }
-         else
-         {
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to find collection %s, rc = %d",
-                          pCollection, rc ) ;
-         }
+         goto error ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT__CREATESYSCOL, rc ) ;
       return rc ;
@@ -336,111 +314,89 @@ namespace engine
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT__ENSUREMETADATA ) ;
 
-      // create collection space and collection
-      rc = rtnTestCollectionSpaceCommand( CAT_SYS_SPACE_NAME,
-                                          _pDmsCB ) ;
+      // create SYSCAT.SYSNODES
+      rc = _createSysCollection( CAT_NODE_INFO_COLLECTION, cb ) ;
       if ( rc )
       {
-         if ( SDB_DMS_CS_NOTEXIST == rc )
-         {
-            // if collection space was not exist, let's create one
-            rc = rtnCreateCollectionSpaceCommand ( CAT_SYS_SPACE_NAME,
-                                                   cb, _pDmsCB, NULL,
-                                                   DMS_PAGE_SIZE_DFT, TRUE,
-                                                   FALSE ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to create %s collection space, rc = %d",
-                          CAT_SYS_SPACE_NAME, rc ) ;
-         }
-         else
-         {
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to test collection space %s, rc = %d",
-                          CAT_SYS_SPACE_NAME, rc ) ;
-         }
+         goto error ;
       }
-      // create SYSCAT.SYSNODES
-      rc = _createSysCollection ( CAT_NODE_INFO_COLLECTION, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    CAT_NODE_INFO_COLLECTION, rc ) ;
       rc = _createSysIndex ( CAT_NODE_INFO_COLLECTION,
                              CAT_NODEINFO_GROUPNAMEIDX, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    CAT_NODEINFO_GROUPNAMEIDX, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createSysIndex ( CAT_NODE_INFO_COLLECTION,
                              CAT_NODEINFO_GROUPIDIDX, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    CAT_NODEINFO_GROUPIDIDX, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       // create SYSCAT.SYSCOLLECTIONSPACES
       rc = _createSysCollection ( CAT_COLLECTION_SPACE_COLLECTION, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    CAT_COLLECTION_SPACE_COLLECTION, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createSysIndex ( CAT_COLLECTION_SPACE_COLLECTION,
                              CAT_COLLECTION_SPACE_NAMEIDX, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    CAT_COLLECTION_SPACE_NAMEIDX, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       // create SYSCAT.SYSCOLLECTIONS
       rc = _createSysCollection ( CAT_COLLECTION_INFO_COLLECTION, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    CAT_COLLECTION_INFO_COLLECTION, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createSysIndex ( CAT_COLLECTION_INFO_COLLECTION,
                              CAT_COLLECTION_NAMEIDX, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    CAT_COLLECTION_NAMEIDX, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       // create SYSCAT.SYSTASKS
       rc = _createSysCollection ( CAT_TASK_INFO_COLLECTION, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    CAT_TASK_INFO_COLLECTION, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createSysIndex ( CAT_TASK_INFO_COLLECTION,
                              CAT_TASK_INFO_CLOBJIDX, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    CAT_TASK_INFO_CLOBJIDX, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
       // create SYSCAT.SYSDOMAINS
       rc = _createSysCollection ( CAT_DOMAIN_COLLECTION, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    CAT_DOMAIN_COLLECTION, rc ) ;
-      rc = _createSysIndex ( CAT_DOMAIN_COLLECTION,
-                             CAT_DOMAIN_NAMEIDX, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    CAT_COLLECTION_NAMEIDX, rc ) ;
-
-      /// store procedures
-      rc = rtnTestCollectionSpaceCommand( CAT_PROCEDURES_SPACE_NAME,
-                                          _pDmsCB ) ;
-      if ( SDB_DMS_CS_NOTEXIST == rc )
+      if ( rc )
       {
-         rc = rtnCreateCollectionSpaceCommand ( CAT_PROCEDURES_SPACE_NAME,
-                                                _pEDUCB, _pDmsCB, NULL,
-                                                DMS_PAGE_SIZE_DFT, TRUE,
-                                                FALSE ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to crt procedures cs:%d",rc ) ;
-            goto error ;
-         }
-      }
-      else if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to test cs %s, %d",
-                 CAT_PROCEDURES_SPACE_NAME, rc ) ;
          goto error ;
       }
-      else
+      rc = _createSysIndex ( CAT_DOMAIN_COLLECTION,
+                             CAT_DOMAIN_NAMEIDX, cb ) ;
+      if ( rc )
       {
-         /// do noting.
+         goto error ;
       }
 
+      /// procedures
       rc = _createSysCollection ( CAT_PROCEDURES_COLLECTION, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    CAT_PROCEDURES_COLLECTION, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _createSysIndex ( CAT_PROCEDURES_COLLECTION,
                              CAT_PROCEDURES_COLLECTION_INDEX, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    CAT_PROCEDURES_COLLECTION_INDEX, rc ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT__ENSUREMETADATA, rc ) ;
