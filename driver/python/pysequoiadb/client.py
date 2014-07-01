@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-"""Module of client for python driver for SequoiaDB
+"""Module of client for python driver of SequoiaDB
 """
 
 try:
@@ -694,11 +694,9 @@ class client(object):
       Parameters:
               Name         Type     Info:
          [in] host         str      The hostname for the catalog replica group.
-         [in] service      str      The servicename for the catalog replica
-                                    group.
+         [in] service      str      The servicename for the catalog replica group.
          [in] path         str      The path for the catalog replica group.
-         [in] configure    dict     The configurations for the catalog replica
-                                    group.
+         [in] configure    dict     The configurations for the catalog replica group.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -928,8 +926,7 @@ class client(object):
          Fail   : Other
       Info:
          GroupName   :  The replica groups which to be backuped.
-         Path        :  The backup path, if not assign, use the backup path
-                        assigned in configuration file.
+         Path        :  The backup path, if not assign, use the backup path assigned in configuration file.
          Name        :  The name for the backup.
          Description :  The description for the backup.
          EnsureInc   :  Whether excute increment synchronization,

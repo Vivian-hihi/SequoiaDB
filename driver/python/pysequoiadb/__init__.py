@@ -14,9 +14,14 @@
 
 """Python Driver for SequoiaDB
 
-   All operation need deal with the error code returned first. 
-   ervry error code is not SDB_OK(or 0), it means something error has appeared,
+   All operation need deal with the error code returned first, if it has. 
+   Every error code is not SDB_OK(or 0), it means something error has appeared,
    and user should deal with it according the meaning of error code printed.
+
+   @author : SequoiaDB Ltd
+   @license: see Apache License, Version 2.0
+   @see    : http://www.sequoiadb.com
+   @version: 1.8
 """
 
 default_host = "localhost"
@@ -62,18 +67,21 @@ def cout(what):
       print what
 
 def ASSERT( condition ):
+   """Check and make sure the parameter is always true.
+   """
    if condition != True:
       cout("Error: SquoiaDB Assert Failed.")
       raise SequoiaDBError
 
 def check_error(rc):
+   """Check error occurred, and print error message if error occurred.
+
+   """
    if const.SDB_OK != rc:
       cout( OperationError("  Error code: ", rc) )
 
 def getErr(rc):
+   """Display error message of code specified
+
+   """
    return OparationError(" ", rc)
-
-if __name__ == "__main__":
-   cc = client("192.168.20.111", 50000)
-
-   cout( dir( cc ))

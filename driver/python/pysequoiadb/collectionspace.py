@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-"""Module of collectionspace for python driver for SequoiaDB
+"""Module of collectionspace for python driver of SequoiaDB
 """
 
 try:
