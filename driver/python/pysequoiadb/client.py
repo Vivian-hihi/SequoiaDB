@@ -71,7 +71,6 @@ class client(object):
       else:
          raise TypeError("password must be an instance of basestring")
 
-      self._client = None
       try:
          self._client = sdbclient.create_client()
       except SystemError:

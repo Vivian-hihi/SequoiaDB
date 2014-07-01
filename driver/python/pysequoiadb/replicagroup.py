@@ -36,7 +36,6 @@ class replicagroup(object):
    def __init__(self, client):
 
       self._client = client
-      self._group = None
       try:
          self._group = sdbreplicagroup.create_replicagroup()
       except SystemError:

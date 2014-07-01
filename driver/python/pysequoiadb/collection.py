@@ -41,7 +41,6 @@ class collection(object):
       """create a new collection.
 
       """
-      self._cl = None
       try:
          self._cl = sdbcl.create_cl()
       except SystemError:

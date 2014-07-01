@@ -41,7 +41,6 @@ class collectionspace(object):
 
       """
       #'cs' is short for collection space
-      self._cs = None
       try:
          self._cs = sdbcs.create_cs()
       except SystemError:
