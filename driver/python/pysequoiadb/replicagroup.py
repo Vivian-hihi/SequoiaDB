@@ -27,7 +27,7 @@ import pysequoiadb
 from pysequoiadb.replicanode import replicanode
 from pysequoiadb.common import const
 from pysequoiadb import common
-from pysequoiadb import SequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 class replicagroup(object):
    """Entrance of SequoiaDB
@@ -36,6 +36,7 @@ class replicagroup(object):
    def __init__(self, client):
 
       self._client = client
+      self._group = None
       try:
          self._group = sdbreplicagroup.create_replicagroup()
       except SystemError:
@@ -97,7 +98,6 @@ class replicagroup(object):
 
       detail, _= bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
       return ret, detail
-
 
    def get_master(self):
       """Get the master node of the current replica group.
@@ -189,7 +189,6 @@ class replicagroup(object):
          node = None
 
       return ret, node
-
 
    def create_node(self, hostname, servicename, dbpath, config = None):
       """Create node in a given replica group.

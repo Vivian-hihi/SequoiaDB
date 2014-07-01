@@ -27,8 +27,7 @@ from pysequoiadb import ( static_object,
                           default_host,
                           default_port,
                           default_user,
-                          default_psw,
-                          driver_version )
+                          default_psw )
 
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
@@ -42,6 +41,7 @@ class collection(object):
       """create a new collection.
 
       """
+      self._cl = None
       try:
          self._cl = sdbcl.create_cl()
       except SystemError:
@@ -61,7 +61,6 @@ class collection(object):
 
       return "Collection:%s" %(self.get_full_name())
 
-   @classmethod
    def get_count(self, condition = static_object):
       """Get the count of matching documents in current collection.
 
@@ -85,7 +84,6 @@ class collection(object):
 
       return rc, count
 
-   @classmethod
    def split_by_condition(self, source_group_name, target_group_name,
                                 split_condition,
                                 split_end_condition = static_object):
@@ -133,7 +131,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def split_by_precent(self, source_group_name, target_group_name, precent):
       """Split the specified collection from source replica group to target
          replica group by percent.
@@ -160,7 +157,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def split_async_by_condition(self, source_group_name, target_group_name,
                          split_condition, split_end_condition = static_object):
       """Split the specified collection from source replica group to target
@@ -211,7 +207,6 @@ class collection(object):
 
       return rc, task_id
 
-   @classmethod
    def split_async_by_precent(self, source_group_name, target_group_name,
                                                        precent):
       """Split the specified collection from source replica group to target
@@ -242,7 +237,6 @@ class collection(object):
 
       return rc, task_id
 
-   @classmethod
    def bulk_insert(self, flags, records):
       """Insert a bulk of record into current collection.
       
@@ -273,7 +267,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def insert(self, record, oid = None):
       """Insert a record into current collection.
 
@@ -297,7 +290,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def update(self, rule, condition = static_object, hint = static_object):
       """Update the matching documents in current collection.
 
@@ -329,7 +321,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def upsert(self, rule, condition = static_object, hint = static_object):
       """Update the matching documents in current collection, insert if
          no matching.
@@ -362,7 +353,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def delete(self, condition = static_object, hint = static_object):
       """Delete the matching documents in current collection.
 
@@ -389,7 +379,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def query(self, condition   = static_object, selected = static_object,
                    order_by    = static_object, hint     = static_object,
                    num_to_skip = 0L, num_to_return = -1L):
@@ -439,7 +428,6 @@ class collection(object):
 
       return rc, result
 
-   @classmethod
    def create_index(self, index_def, idx_name, is_unique, is_enforced):
       """Create the index in current collection.
          more info: http://www.sequoiadb.com/document/1.8/index.html
@@ -480,7 +468,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def get_indexes(self, idx_name):
       """Get all of or one of the indexes in current collection.
 
@@ -505,7 +492,6 @@ class collection(object):
 
       return rc, result
 
-   @classmethod
    def drop_index(self, idx_name):
       """The index name.
 
@@ -524,7 +510,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def get_collection_name(self):
       """Get the name of specified collection in current collection space.
 
@@ -539,7 +524,6 @@ class collection(object):
 
       return cl_name
 
-   @classmethod
    def get_cs_name(self):
       """Get the name of current collection space.
 
@@ -554,7 +538,6 @@ class collection(object):
 
       return cs_name
 
-   @classmethod
    def get_full_name(self):
       """Get the full name of specified collection in current collection space.
 
@@ -576,7 +559,6 @@ class collection(object):
 
       return full_name
 
-   @classmethod
    def aggregate(self, aggregate_options):
       """Execute aggregate operation in specified collection.
 
@@ -602,7 +584,6 @@ class collection(object):
 
       return rc, result
 
-   @classmethod
    def get_query_meta(self, condition = static_object,
                             order_by  = static_object,
                             hint      = static_object,
@@ -654,7 +635,6 @@ class collection(object):
 
       return rc, result
 
-   @classmethod
    def attach_collection(self, cl_full_name, options):
       """Attach the specified collection.
 
@@ -679,7 +659,6 @@ class collection(object):
 
       return rc
 
-   @classmethod
    def detach_collection(self, sub_cl_full_name):
       """Dettach the specified collection.
 

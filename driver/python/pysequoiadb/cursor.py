@@ -20,7 +20,7 @@ except ImportError:
 import bson
 import pysequoiadb
 from pysequoiadb.common import const
-from pysequoiadb import SequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 class cursor(object):
    """Cursor of SequoiaDB
@@ -29,6 +29,7 @@ class cursor(object):
    """
    def __init__(self):
 
+      self._cursor = None
       try:
          self._cursor = sdbcursor.create_cursor()
       except SystemError:
@@ -56,7 +57,6 @@ class cursor(object):
          record = None
       record,_ = bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
       return result,record
-
 
    def current(self):
       """Return the current document of cursor, and don't move.

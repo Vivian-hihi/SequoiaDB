@@ -72,6 +72,8 @@
 #define MAKE_RETURN_INT_PYSTRING_BYSIZE( ret_value, c_string, c_stringsize ) \
    ( PyObject * )Py_BuildValue( "(i,s#)", ret_value, c_string, c_stringsize )
 
+#define MAKE_RETURN_INT_INT_INT_STRING( verion, sub_verion, release, build)\
+   ( PyObject * )Py_BuildValue( "(i,i,i,s)", version, sub_version, release, build )
 /*
  *@brief    macro to cast python object to specified class object
  *@py_object [in] object need to cast

@@ -26,8 +26,7 @@ from pysequoiadb import ( static_object,
                           default_host,
                           default_port,
                           default_user,
-                          default_psw,
-                          driver_version )
+                          default_psw )
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
@@ -42,6 +41,7 @@ class collectionspace(object):
 
       """
       #'cs' is short for collection space
+      self._cs = None
       try:
          self._cs = sdbcs.create_cs()
       except SystemError:
@@ -96,7 +96,6 @@ class collectionspace(object):
       """
       return self.__getattr__(name)
 
-   @classmethod
    def get_collection(self, cl_name):
       """Get the named collection.
          
@@ -120,7 +119,6 @@ class collectionspace(object):
 
       return rc, cl
 
-   @classmethod
    def create_collection(self, cl_name, options = static_object):
       """create a collection using name and options.
 
@@ -156,7 +154,6 @@ class collectionspace(object):
 
       return rc, cl
 
-   @classmethod
    def drop_collection(self, cl_name):
       """Drop the specified collection in current collection space.
 
@@ -175,7 +172,6 @@ class collectionspace(object):
 
       return rc
 
-   @classmethod
    def get_collection_space_name(self):
       """Get the current collection space name.
 

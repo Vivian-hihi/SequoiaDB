@@ -26,8 +26,7 @@ from pysequoiadb import ( static_object,
                           default_host,
                           default_port,
                           default_user,
-                          default_psw,
-                          driver_version )
+                          default_psw )
 from pysequoiadb.collectionspace import collectionspace
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
@@ -72,6 +71,7 @@ class client(object):
       else:
          raise TypeError("password must be an instance of basestring")
 
+      self._client = None
       try:
          self._client = sdbclient.create_client()
       except SystemError:
@@ -133,7 +133,6 @@ class client(object):
 
          return cs
    
-   @classmethod
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
       """connect to specified database
@@ -178,7 +177,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def connect_by_service(self, host, service, user = default_user,
                                                psw  = default_psw):
       """connect to specified database, using host and service name.
@@ -221,7 +219,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def disconnect(self):
       """disconnect to current server.
 
@@ -238,7 +235,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def create_user(self, user_name, psw):
       """Add an user in current database.
 
@@ -265,8 +261,7 @@ class client(object):
 
       return rc
 
-   @classmethod
-   def remove_user(self, user, psw):
+   def remove_user(self, user_name, psw):
       """Remove the spacified user from current database.
 
       Parameters:
@@ -292,7 +287,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def get_snapshot(self, snap_type, condition = static_object,
                                      selector  = static_object,
                                      order_by  = static_object):
@@ -346,7 +340,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def reset_snapshot(self, condition = static_object):
       """Reset the snapshot.
 
@@ -368,7 +361,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def get_list(self, list_type, condition = static_object,
                                  selector  = static_object,
                                  order_by  = static_object):
@@ -426,7 +418,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def get_collection(self, cl_full_name):
       """Get the specified collection.
 
@@ -450,7 +441,6 @@ class client(object):
 
       return rc, cl
 
-   @classmethod
    def get_collection_space(self, cs_name):
       """Get the specified collection space.
 
@@ -474,7 +464,6 @@ class client(object):
 
       return rc, cs
 
-   @classmethod
    def create_collection_space(self, cs_name, page_size = 0):
       """Create collection space with specified pagesize.
 
@@ -511,7 +500,6 @@ class client(object):
 
       return rc, cs
 
-   @classmethod
    def drop_collection_space(self, cs_name):
       """Remove the specified collection space.
 
@@ -530,7 +518,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def list_collection_spaces(self):
       """List all collection space of current database, include temporary
          collection space.
@@ -552,7 +539,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def list_collections(self):
       """List all collections in current database.
 
@@ -573,7 +559,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def list_replica_groups(self):
       """List all replica groups of current database.
 
@@ -594,7 +579,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def get_replica_group_by_name(self, group_name):
       """Get the specified replica group of specified group name.
 
@@ -619,7 +603,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def get_replica_group_by_id(self, id):
       """Get the specified replica group of specified group id.
 
@@ -643,7 +626,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def creat_replica_group(self, group_name):
       """Create the specified replica group.
 
@@ -668,7 +650,6 @@ class client(object):
 
       return rc, replica_group
 
-   @classmethod
    def remove_replica_group(self, group_name):
       """Remove the specified replica group.
 
@@ -687,7 +668,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def create_replica_cata_group(self, host, service, path, configure):
       """Create a catalog replica group.
 
@@ -716,7 +696,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def exec_update(self, sql):
       """Executing SQL command for updating.
 
@@ -735,7 +714,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def exec_sql(self, sql):
       """Executing SQL command.
 
@@ -759,7 +737,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def transaction_begin(self):
       """Transaction begin.
 
@@ -775,7 +752,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def transaction_commit(self):
       """Transaction commit.
 
@@ -791,7 +767,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def transaction_rollback(self):
       """Transaction rollback
 
@@ -807,7 +782,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def flush_configure(self, options):
       """Flush the options to configure file.
       Parameters:
@@ -828,13 +802,12 @@ class client(object):
 
       return rc
 
-   @classmethod
-   def create_js_procedure(self, code):
+   def create_procedure(self, code):
       """Create a store procedures
 
       Parameters:
               Name         Type     Info:
-         [in] code         str      The code of store procedures.
+         [in] code         str      The JS code of store procedures.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -846,25 +819,23 @@ class client(object):
 
       return rc
 
-   @classmethod
-   def remove_procedure(self, sp_name):
+   def remove_procedure(self, name):
       """Remove a store procedures.
      
       Parameters:
               Name         Type     Info:
-         [in] sp_name      str      The name of store procedure.
+         [in] name         str      The name of store procedure.
       Return values:
          Success: SDB_OK
          Fail   : Other
       """
-      if not isinstance(sp_name, basestring):
+      if not isinstance(name, basestring):
          raise TypeError("procedure name must be an instance of basestring")
-      rc = sdbclient.remove_procedure(self._client, sp_name)
+      rc = sdbclient.remove_procedure(self._client, name)
       pysequoiadb.check_error(rc)
 
       return rc
 
-   @classmethod
    def list_procedures(self, condition):
       """List store procedures.
 
@@ -883,29 +854,27 @@ class client(object):
 
       return rc, result
 
-   @classmethod
-   def eval_js(self, code, type, errormsg):
+   def eval_procedure(self, name):
       """Eval a func.
       
       Parameters:
               Name         Type     Info:
-         [in] code         str      The name of store procedure.
+         [in] name         str      The name of store procedure.
       Return values:
          Success: SDB_OK   and  a cursor object of current eval.
          Fail   : Other    and  None
       """
-      if not isinstance(code, basestring):
+      if not isinstance(name, basestring):
          raise TypeError("code must be an instance of basestring")
 
       result = cursor()
-      rc = sdbclient.eval_JS(self._client, result._cursor, code)
+      rc = sdbclient.eval_JS(self._client, result._cursor, name)
       pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:
          result = None
 
       return rc, result
 
-   @classmethod
    def backup_offline(self, options = static_object):
       """Backup the whole database or specifed replica group.
 
@@ -943,7 +912,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def list_backup(self, options, condition = static_object,
                                   selector  = static_object,
                                   order_by  = static_object):
@@ -999,7 +967,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def list_task(self, condition = static_object, selector  = static_object,
                        order_by  = static_object, hint      = static_object):
       """List the tasks.
@@ -1042,7 +1009,6 @@ class client(object):
 
       return rc, result
 
-   @classmethod
    def wait_task(self, task_ids, num):
       """Wait the tasks to finish.
 
@@ -1064,7 +1030,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def cancel_task(self, task_id, is_async):
       """Cancel the specified task.
 
@@ -1092,7 +1057,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def set_session_attri(self, options = static_object):
       """Set the attributes of the session.
 
@@ -1112,7 +1076,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def close_all_cursors(self):
       """Close all the cursors in current thread, we can't use those cursors to 
          get data again.
@@ -1129,7 +1092,6 @@ class client(object):
 
       return rc
 
-   @classmethod
    def is_valid(self):
       """Judge whether the connection is valid.
 

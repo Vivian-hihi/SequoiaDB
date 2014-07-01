@@ -15,6 +15,7 @@
    limitations under the License.
 
 *******************************************************************************/
+#include "ossVer.h"
 #include "util.hpp"
 #include "client.hpp"
 
@@ -1166,6 +1167,18 @@ done:
    return MAKE_RETURN_INT_INT( rc, result ) ;
 }
 
+static PYOBJECT *get_version( PYOBJECT *self, PYOBJECT *args )
+{
+   int version = 0 ;
+   int sub_version = 0 ;
+   int release = 0 ;
+   const char *build = NULL ;
+
+   ossGetVersion( &version, &sub_version, &release, &build ) ;
+
+   return MAKE_RETURN_INT_INT_INT_STRING( version, sub_version, release, build ) ;
+}
+
 /* List of functions defined in the module */
 static PyMethodDef client_methods[] = {
    {"create_client",             create_client,             METH_VARARGS},
@@ -1211,6 +1224,7 @@ static PyMethodDef client_methods[] = {
    {"set_session_attri",         set_session_attri,         METH_VARARGS},
    {"close_all_cursors",         close_all_cursors,         METH_VARARGS},
    {"is_valid",                  is_valid,                  METH_VARARGS},
+   {"get_version",               get_version,               METH_VARARGS},
    {NULL, NULL}
 };
 

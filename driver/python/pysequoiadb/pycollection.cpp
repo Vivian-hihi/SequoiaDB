@@ -459,7 +459,6 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
    PYOBJECT *cursor_object = NULL ;
-   PYOBJECT *index_name_obj= NULL ;
    sdbCollection *cl       = NULL ;
    sdbCursor *cursor       = NULL ;
    const char *index_name  = NULL ;

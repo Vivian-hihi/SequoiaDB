@@ -39,17 +39,6 @@ default_psw  = ""
 static_object = None
 """Default bson"""
 
-version_tuple = (1, 8)
-
-def get_version():
-   if isinstance( version_tuple[-1], basestring):
-      return '.'.join(map(str, version_tuple[:-1])) + version_tuple[-1]
-   return '.'.join(map(str, version_tuple))
-
-driver_version = get_version()
-"""Current version of python driver for SequoiaDB."""
-
-
 from pysequoiadb.client import client
 from pysequoiadb.common import const
 from pysequoiadb.error import ( SequoiaDBError,
@@ -57,11 +46,22 @@ from pysequoiadb.error import ( SequoiaDBError,
                                 OperationError )
 
 import sys
+import sdbclient
+
+def get_version():
+   ver, sub_version, release, build = sdbclient.get_version()
+   return { "Version"    : ver,
+            "subVersion" : sub_version,
+            "Release"    : release,
+            "build"      : build }
 
 PY3 = sys.version_info[0] == 3
 
 # OPEN THE SWITCH WHEN DEBUG
 _DEBUG = False
+
+driver_version = get_version()
+"""Current version of python driver for SequoiaDB."""
 
 def cout(what):
    if PY3:
@@ -80,11 +80,11 @@ def check_error(rc):
    """Check error occurred, and print error message if error occurred.
 
    """
-   if const.SDB_OK != rc and __DEBUG:
+   if const.SDB_OK != rc and _DEBUG:
       cout( OperationError("  Error code: ", rc) )
 
 def getErr(rc):
    """Display error message of code specified
 
    """
-   return OparationError(" ", rc)
+   return OperationError(" ", rc)

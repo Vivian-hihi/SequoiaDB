@@ -22,7 +22,7 @@ except ImportError:
 
 import pysequoiadb
 from pysequoiadb.common import const
-from pysequoiadb import SequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 class replicanode(object):
    """Entrance of SequoiaDB
@@ -31,6 +31,7 @@ class replicanode(object):
    def __init__(self, client):
 
       self._client = client
+      self._node = None
       try:
          self._node = sdbreplicanode.create_node()
       except SystemError:
