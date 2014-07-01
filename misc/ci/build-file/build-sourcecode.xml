@@ -68,7 +68,7 @@
 		</exec-->
 		
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/java/build_driver.xml" >
-		   <property name="is.debug" value="${compile.debug}" />
+		   <!--property name="is.debug" value="${compile.debug}" /-->
 		   <property name="JDK.VERIONS.5" value="${choise.jdk5}" />
 		   <property name="base.dir" value="${WORKSPACE}/sequoiadb/driver/java" />
 		</ant>
@@ -308,6 +308,8 @@
 	  
 	  <!--exec dir="${RELEASE_DIR}" executable="export PATH=$PATH:'${PATH_BUILDER}'" /-->
 		<!--exec dir="${RELEASE_DIR}" executable="/opt/installbuilder-8.5.2/bin/builder"-->
+		
+		<echo file="${RELEASE_DIR}/license_empty.txt" message="" />
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
 			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
