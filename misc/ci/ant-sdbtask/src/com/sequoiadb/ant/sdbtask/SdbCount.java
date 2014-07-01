@@ -35,7 +35,7 @@ public class SdbCount extends Task {
 
    public JsonElement createQuery() {
       if (record != null) {
-         throw new BuildException("Error: cannt set more than one record.");
+         throw new BuildException("Error: cannot set more than one record.");
       }
 
       record = new JsonElement();
