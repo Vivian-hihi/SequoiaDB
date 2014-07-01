@@ -2245,7 +2245,7 @@ namespace sdbclient
                         const CHAR *pUsrName,
                         const CHAR *pPasswd
                       )
-    \brief Connect to database used the first valid address in the array.
+    \brief Connect to database used  a random  valid address in the array.
     \param [in] pConnAddrs The array of the coord's address
     \param [in] arrSize The size of the array
     \param [in] pUsrName The connection user name.
@@ -2265,7 +2265,7 @@ namespace sdbclient
       }
 
 /** \fn INT32 createUsr( const CHAR *pUsrName,
-                       const CHAR *pPasswd )
+                         const CHAR *pPasswd )
     \brief Add an user in current database.
     \param [in] pUsrName The connection user name.
     \param [in] pPasswd The connection password.

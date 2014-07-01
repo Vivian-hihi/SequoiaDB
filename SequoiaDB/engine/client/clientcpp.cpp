@@ -280,12 +280,18 @@ namespace sdbclient
       {
          _killCursor () ;
       }
+      _isClosed = TRUE ;
       _contextID  = -1 ;
       _offset     = -1 ;
       if ( _connection )
       {
          _connection->_unregCursor ( this ) ;
          _connection = NULL ;
+      }
+      if ( _collection )
+      {
+         _collection->_unregCursor ( this ) ;
+         _collection = NULL ;
       }
       goto done ;
    }
@@ -468,13 +474,17 @@ namespace sdbclient
       BOOLEAN result ;
       SINT64 contextID = 0 ;
       // check wether the cursor had been close or not
-      if ( _isClosed || -1 == _contextID )
+      if ( _isClosed )
+      {
+         goto done ;
+      }
+      if (  -1 == _contextID )
       {
          rc = SDB_RTN_CONTEXT_NOTEXIST ;
          goto error ;
       }
       rc = clientBuildKillContextsMsg( &_pSendBuffer, &_sendBufferSize, 0, 1,
-                                        &_contextID, _connection->_endianConvert ) ;
+                                       &_contextID, _connection->_endianConvert ) ;
       if ( rc )
       {
          goto error ;
@@ -498,10 +508,12 @@ namespace sdbclient
       if ( _connection )
       {
          _connection->_unregCursor ( this ) ;
+         _connection = NULL ;
       }
       if ( _collection )
       {
          _collection->_unregCursor ( this ) ;
+         _collection = NULL ;
       }
    done :
       if ( locked )
@@ -3761,16 +3773,23 @@ namespace sdbclient
       const CHAR *addr = NULL ;
       CHAR *pStr = NULL ;
       CHAR *pTmp = NULL ;
+      INT32 mark = 0 ;
       INT32 i = 0 ;
       if ( !pConnAddrs || arrSize <= 0 || !pUsrName || !pPasswd )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+      // calculate the start position
+      srand ( (UINT32)time(NULL) ) ;
+      i = rand() % arrSize ;
+      mark = i ;
+
       // get host and port
-      for ( ; i < arrSize; i++ )
+      do
       {
          addr = pConnAddrs[i] ;
+         i = ++i % arrSize ;
          pStr = ossStrdup ( addr ) ;
          if ( pStr == NULL )
          {
@@ -3792,7 +3811,7 @@ namespace sdbclient
          pTmp = NULL ;
          if ( rc == SDB_OK)
             goto done ;
-      }
+      } while ( mark != i ) ;
       // if we go here, means no valid addresses
       rc = SDB_NET_CANNOT_CONNECT ;
    done :

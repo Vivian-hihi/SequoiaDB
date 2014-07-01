@@ -152,7 +152,7 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
 /** \fn INT32 sdbConnect1 ( const CHAR **pConnAddrs, int arrSize;
                             const CHAR *pUsrName, const CHAR *pPasswd ,
                             sdbConnectionHandle *handle ) ;
-    \brief Connect to database used the first valid address in the array.
+    \brief Connect to database used a random valid address in the array.
     \param [in] pConnAddrs The array of the coord's address
     \param [in] arrSize The size of the array
     \param [in] pUsrName The User's Name of the account
@@ -1403,7 +1403,7 @@ SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle ) ;
 
 /** \fn INT32 sdbCloseAllCursors( sdbConnectionHandle cHandle )
     \brief Close all the cursors in current thread, we can't use those cursors to get
-                 data anymore.
+           data anymore.
     \param [in] cHandle The database connection handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
