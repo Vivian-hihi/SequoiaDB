@@ -102,7 +102,6 @@ namespace engine
 
       do
       {
-         BOOLEAN isInclude = FALSE;
          hasRefresh = isNeedRefresh;
          CoordCataInfoPtr cataInfo;
          BOOLEAN hasShardingKey = FALSE;
@@ -120,8 +119,6 @@ namespace engine
          //rc = checkIfIncludeShardingKey( cataInfo, pUpdator, isInclude, cb );
          PD_RC_CHECK( rc, PDERROR, "update failed, failed to kick the "
                       "sharding-key field(rc=%d)", rc );
-         PD_CHECK( !isInclude, SDB_UPDATE_SHARD_KEY, error, PDERROR,
-                   "update failed, couldn't update the sharding-key field" );
          if ( cataInfo->isMainCL() )
          {
             std::set< INT32 > emptyRCList;
@@ -552,9 +549,9 @@ namespace engine
    }
 
    INT32 rtnCoordUpdate::kickShardingKey( const CoordCataInfoPtr &cataInfo,
-                                         const BSONObj &boUpdator,
-                                         bson::BSONObj &boNewUpdator,
-                                         BOOLEAN &hasShardingKey )
+                                          const BSONObj &boUpdator,
+                                          bson::BSONObj &boNewUpdator,
+                                          BOOLEAN &hasShardingKey )
    {
       INT32 rc = SDB_OK;
       hasShardingKey = FALSE;
@@ -608,7 +605,7 @@ namespace engine
             if ( !boFields.isEmpty() )
             {
                bobNewUpdator.appendObject( beTmp.fieldName(),
-                                          boFields.objdata() );
+                                           boFields.objdata() );
             }
          }
          boNewUpdator = bobNewUpdator.obj();
