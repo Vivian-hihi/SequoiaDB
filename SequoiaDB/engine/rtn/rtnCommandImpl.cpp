@@ -1651,15 +1651,11 @@ namespace engine
                                              &pCollectionShortName, suID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d", 
-                  pCollection, rc ) ;
          goto error ;
       }
       rc = su->data()->findCollection ( pCollectionShortName, cID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Collection does not exist: %s, rc: %d",
-                  pCollection, rc ) ;
          goto error ;
       }
    done :
