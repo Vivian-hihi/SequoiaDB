@@ -530,12 +530,12 @@
       <name>PMD_OPTION_SORTBUF_SIZE</name>
       <long>sortbuf</long>
       <description>
-         <en>size of the sorting buf(MB), default:512, min value:128</en>
+         <en>size of the sorting buf(MB), default:256, min value:128</en>
          <cn>排序缓存大小(MB),默认值256,最小值128</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>size of the sorting buf(MB), default:512, min value:128</en>
+         <en>size of the sorting buf(MB), default:256, min value:128</en>
          <cn>排序缓存大小(MB),默认值256,最小值128</cn>
       </detail>
       <typeofweb>num</typeofweb>
