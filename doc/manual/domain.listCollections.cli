@@ -32,7 +32,7 @@ collection in a domain.
 .sp 2
 domain.listCollections()
 .sp 2
-Return：
+Return:
 .sp 2
     { 
 .br
