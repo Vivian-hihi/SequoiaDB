@@ -309,10 +309,11 @@
 	  <!--exec dir="${RELEASE_DIR}" executable="export PATH=$PATH:'${PATH_BUILDER}'" /-->
 		<!--exec dir="${RELEASE_DIR}" executable="/opt/installbuilder-8.5.2/bin/builder"-->
 		
-		<echo file="${RELEASE_DIR}/license_empty.txt" message="" />
+		<touch file="${RELEASE_DIR}/license_empty.txt" />
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
 			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
+		
 
 		<!--tar destfile="${RELEASE_DIR}/${project.name}-${project.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb/**" compression="gzip" /-->
 
