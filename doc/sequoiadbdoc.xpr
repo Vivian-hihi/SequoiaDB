@@ -836,8 +836,10 @@
                     <file name="references/methods/topics/hint.dita"/>
                     <file name="references/methods/listBackup_en.dita"/>
                     <file name="references/methods/listBackup.dita"/>
+                    <file name="references/methods/topics/listCollections_domain.dita"/>
                     <file name="references/methods/topics/listCollections_en.dita"/>
                     <file name="references/methods/topics/listCollections.dita"/>
+                    <file name="references/methods/topics/listCollectionSpaces_domain.dita"/>
                     <file name="references/methods/topics/listCollectionSpaces_en.dita"/>
                     <file name="references/methods/topics/listCollectionSpaces.dita"/>
                     <file name="references/methods/topics/listDomains.dita"/>

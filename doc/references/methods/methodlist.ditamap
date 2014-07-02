@@ -89,8 +89,8 @@
      <topicref href="topics/toArray.dita"/>
      <topicref href="topics/explain.dita"/>
      <topicref href="topics/domainalter.dita"/>
-     
-     
+     <topicref href="topics/listCollections_domain.dita"/>
+     <topicref href="topics/listCollectionSpaces_domain.dita"/>    
      
  </topicref>
 </map>

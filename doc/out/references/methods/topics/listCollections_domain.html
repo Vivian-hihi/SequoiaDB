@@ -7,16 +7,15 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.removeRG()"/>
-<meta name="description" content="db.removeRG(&lt;name&gt;) 删除数据库中指定的分区组。 参数描述 参数名 参数类型 描述 是否必填 name string 分区组名，同一个数据库对象中，分区组名唯一。 是 格式 removeRG() 方法的定义格式只有name字段，name的值是字符串型，必填。 (&lt;&#34;分区组名&#34;&gt;) 分区组名必须存在。 示例 删除名为“group”的分区组 db.removeRG(&#34;group&#34;)"/>
+<meta name="DC.Title" content="domain.listCollections()"/>
+<meta name="description" content="domain.listCollections() 枚举集合，执行此方法会将指定域下的集合信息全部显示出来。 示例 domain.listCollections() 返回： { &#34;Name&#34;: &#34;foo.bar&#34; }"/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
-<meta name="DC.Relation" scheme="URI" content="getRG.html"/>
-<meta name="DC.Relation" scheme="URI" content="dblist.html"/>
+<meta name="DC.Relation" scheme="URI" content="listCollectionSpaces_domain.html"/>
 <meta name="DC.Format" content="XHTML"/>
-<meta name="DC.Identifier" content="references_method_removeRG"/>
+<meta name="DC.Identifier" content="topic_g5f_ps1_q4"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.removeRG()</title>
+<title>domain.listCollections()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -30,76 +29,42 @@
         }
     }
 //--></script></head>
-<body onload="highlightSearchTerm()" id="references_method_removeRG"><a name="references_method_removeRG"><!-- --></a>
+<body onload="highlightSearchTerm()" id="topic_g5f_ps1_q4"><a name="topic_g5f_ps1_q4"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法">SequoiaDB JavaScript方法</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.removeRG()</h1>
+  <h1 class="title topictitle1">domain.listCollections()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.removeRG(&lt;name&gt;)</h2>
-      <p class="p">删除数据库中指定的分区组。</p>
-
-    </div>
-
-    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
-      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d112541e26" class="stentry">参数名</th>
-
-          <th valign="bottom" align="left" id="d112541e29" class="stentry">参数类型</th>
-
-          <th valign="bottom" align="left" id="d112541e32" class="stentry">描述</th>
-
-          <th valign="bottom" align="left" id="d112541e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d112541e26" class="stentry">name</td>
-
-          <td valign="top" headers="d112541e29" class="stentry">string</td>
-
-          <td valign="top" headers="d112541e32" class="stentry">分区组名，同一个数据库对象中，分区组名唯一。</td>
-
-          <td valign="top" headers="d112541e35" class="stentry">是</td>
-
-        </tr>
-</table>
-
-      
-    </div>
-
-    <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p"> removeRG() 方法的定义格式只有name字段，name的值是字符串型，必填。</p>
-
-      <div class="p"><pre class="pre codeblock">(&lt;"分区组名"&gt;)</pre>
-</div>
-
-      <div class="note note"><span class="notetitle">Note:</span> 
-        <ul class="ul"><li class="li">分区组名必须存在。</li>
-</ul>
-
-      </div>
+    <div class="section"><h2 class="title sectiontitle">domain.listCollections()</h2>
+      <p class="p">枚举集合，执行此方法会将指定域下的集合信息全部显示出来。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li"><p class="p">删除名为“group”的分区组 </p>
-
-          <div class="p"><pre class="pre codeblock">db.removeRG("group")</pre>
+        <li class="li">
+          <div class="p"><pre class="pre codeblock">domain.listCollections()</pre>
 </div>
-</li>
+
+          <p class="p">返回：</p>
+
+          <pre class="pre codeblock">    { 
+        "Name": "foo.bar"
+      }</pre>
+  
+        </li>
 
       </ul>
-     
+
+      
     </div>
 
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="getRG.html" title="db.getRG()">db.getRG()</a></div>
-<div><a class="navheader_parent_path" href="dblist.html" title="db.list()">db.list()</a></div>
+<div><a class="navheader_parent_path" href="listCollectionSpaces_domain.html" title="domain.listCollectionSpaces()">domain.listCollectionSpaces()</a></div>
 </div>
 </div>
 <div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  <script type="text/javascript"><!--         
