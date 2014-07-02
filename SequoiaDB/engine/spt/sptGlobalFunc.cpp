@@ -36,10 +36,12 @@ namespace engine
 {
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, getLastError )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
+JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, print )
 
 JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "getLastErrMsg", getLastError )
    JS_ADD_GLOBAL_FUNC( "sleep", sleep )
+   JS_ADD_GLOBAL_FUNC( "print", print )
 JS_MAPPING_END()
    
 
@@ -93,5 +95,24 @@ JS_MAPPING_END()
    error:
       goto done ;
    }
+
+   INT32 _sptGlobalFunc::print( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      std::string str ;
+      rc = arg.getString( 0, str ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      ossPrintf( "%s", str.c_str() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 

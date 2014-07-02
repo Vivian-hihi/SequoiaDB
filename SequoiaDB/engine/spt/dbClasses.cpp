@@ -827,12 +827,13 @@ static JSBool cursor_close ( JSContext *cx , uintN argc , jsval *vp )
    if ( ! cursor )
    {
       JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
-      goto error ;
+      goto done ;
    }
 
    rc = sdbCloseCursor( *cursor ) ;
    REPORT_RC ( SDB_OK == rc, "SdbCursor.close()", rc ) ;
-
+   SAFE_RELEASE_CURSOR ( cursor ) ;
+   JS_SetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ), NULL ) ;
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
 done :
    PD_TRACE_EXIT ( SDB_CURSOR_CLOSE );
