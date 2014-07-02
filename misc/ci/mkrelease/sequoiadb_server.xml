@@ -301,18 +301,21 @@
                 </fileExists>
             </ruleList>
         </deleteFile>
-        <deleteUser>
+        <runProgram>
             <customErrorMessage>${msg(Install.ErrorMsg.DeleteUser.error)}</customErrorMessage>
-            <showMessageOnError>1</showMessageOnError>
-            <username>${username}</username>
+            <program>userdel</program>
+            <programArguments>${username}</programArguments>
             <ruleList>
                 <userTest>
                     <logic>exists</logic>
                     <password>${username}</password>
                     <username>${username}</username>
                 </userTest>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
             </ruleList>
-        </deleteUser>
+        </runProgram>
         <deleteGroup>
             <groupname>${username}_group</groupname>
             <showMessageOnError>1</showMessageOnError>
@@ -361,16 +364,21 @@
                 </fileExists>
             </ruleList>
         </deleteFile>
-        <deleteUser>
-            <username>${username}</username>
+        <runProgram>
+            <customErrorMessage>${msg(Install.ErrorMsg.DeleteUser.error)}</customErrorMessage>
+            <program>userdel</program>
+            <programArguments>${username}</programArguments>
             <ruleList>
                 <userTest>
                     <logic>exists</logic>
                     <password>${username}</password>
                     <username>${username}</username>
                 </userTest>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
             </ruleList>
-        </deleteUser>
+        </runProgram>
         <deleteGroup>
             <groupname>${username}_group</groupname>
         </deleteGroup>
@@ -397,6 +405,7 @@
             <parameterList>
                 <licenseParameter>
                     <name>license_empty</name>
+                    <title>License Agreement</title>
                     <description>Install.Paramers.LicenseRead.Agree.Description</description>
                     <explanation>Install.Paramers.LicenseRead.Agree.Explanation</explanation>
                     <file>${build_project_directory}/license_empty.txt</file>
@@ -404,6 +413,7 @@
                 </licenseParameter>
                 <licenseParameter>
                     <name>read</name>
+                    <title>License Agreement</title>
                     <description>Install.Paramers.LicenseRead.Read.Description</description>
                     <explanation></explanation>
                     <file>${build_project_directory}/sequoiadb/license/license_en.txt</file>
