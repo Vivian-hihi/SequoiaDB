@@ -109,9 +109,9 @@
 								&lt;/system-out&gt;&#10;
 								&lt;/testsuite&gt;&#10;" append="true" />
 		<tstamp>
-			<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+			<format property="testsuite.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
-		<echo message="This suite end time is ${testcase.end.time}"/>
+		<echo message="This suite end time is ${testsuite.end.time}"/>
 
 	</target>
 
