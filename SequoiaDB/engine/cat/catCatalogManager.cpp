@@ -1451,9 +1451,7 @@ namespace engine
       collectionName = clInfo._pCLName ;
 
       // get version from bucket collection
-      clInfo._version = catGetBucketVersion( catCalcBucketID( collectionName,
-                                             ossStrlen( collectionName ) ),
-                                             _pEduCB ) ;
+      clInfo._version = catGetBucketVersion( collectionName, _pEduCB ) ;
 
       PD_TRACE1 ( SDB_CATALOGMGR_CREATECOLLECTION,
                   PD_PACK_STRING ( collectionName ) ) ;
