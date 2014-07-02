@@ -1622,11 +1622,12 @@ namespace engine
       pCreateReq->header.opCode        = MSG_CAT_CREATE_COLLECTION_REQ;
       CoordGroupList groupLst ;
       CoordGroupList sendGroupLst ;
-      BOOLEAN isMainCL                 = FALSE;
-      CHAR *pCollectionName            = NULL ;
+      BOOLEAN isMainCL                 = FALSE ;
+      const CHAR *pCollectionName      = NULL ;
 
       try
       {
+         CHAR *pCommandName = NULL ;
          INT32 flag = 0;
          SINT64 numToSkip = 0 ;
          SINT64 numToReturn = -1 ;
@@ -1635,11 +1636,12 @@ namespace engine
          CHAR *pOrderBy = NULL ;
          CHAR *pHint = NULL ;
          BSONObj boQuery;
-         BSONElement beIsMainCL;
-         BSONElement beShardingType;
-         BSONElement beShardingKey;
+         BSONElement beIsMainCL ;
+         BSONElement beShardingType ;
+         BSONElement beShardingKey ;
+         BSONElement eleName ;
 
-         rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName,
+         rc = msgExtractQuery( pReceiveBuffer, &flag, &pCommandName,
                                &numToSkip, &numToReturn, &pQuery,
                                &pFieldSelector, &pOrderBy, &pHint ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to parse the "
@@ -1658,6 +1660,16 @@ namespace engine
                       SDB_INVALID_MAIN_CL_TYPE, error, PDERROR,
                       "The sharding-type of main-collection must be range" ) ;
          }
+         eleName = boQuery.getField( FIELD_NAME_NAME ) ;
+         // get collection name
+         if ( eleName.type() != String )
+         {
+            PD_LOG( PDERROR, "Field[%s] type[%d] is error",
+                    FIELD_NAME_NAME, eleName.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         pCollectionName = eleName.valuestr() ;
       }
       catch ( std::exception &e )
       {
