@@ -1589,10 +1589,13 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCRCL_EXE, "rtnCoordCMDCreateCollection::execute" )
-   INT32 rtnCoordCMDCreateCollection::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                                    CHAR **ppResultBuffer, pmdEDUCB *cb,
-                                    MsgOpReply &replyHeader, BSONObj **ppErrorObj )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCRCL_EXE, "rtnCoordCMDCreateCollection::execute" )
+   INT32 rtnCoordCMDCreateCollection::execute( CHAR *pReceiveBuffer,
+                                               SINT32 packSize,
+                                               CHAR **ppResultBuffer,
+                                               pmdEDUCB *cb,
+                                               MsgOpReply &replyHeader,
+                                               BSONObj **ppErrorObj )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCRCL_EXE ) ;
@@ -1619,48 +1622,48 @@ namespace engine
       pCreateReq->header.opCode        = MSG_CAT_CREATE_COLLECTION_REQ;
       CoordGroupList groupLst ;
       CoordGroupList sendGroupLst ;
-      BOOLEAN isMainCL = FALSE;
+      BOOLEAN isMainCL                 = FALSE;
+      CHAR *pCollectionName            = NULL ;
 
       try
       {
          INT32 flag = 0;
-         CHAR *pCollectionName;
-         SINT64 numToSkip;
-         SINT64 numToReturn;
-         CHAR *pQuery;
-         CHAR *pFieldSelector;
-         CHAR *pOrderBy;
-         CHAR *pHint;
+         SINT64 numToSkip = 0 ;
+         SINT64 numToReturn = -1 ;
+         CHAR *pQuery = NULL ;
+         CHAR *pFieldSelector = NULL ;
+         CHAR *pOrderBy = NULL ;
+         CHAR *pHint = NULL ;
          BSONObj boQuery;
          BSONElement beIsMainCL;
          BSONElement beShardingType;
          BSONElement beShardingKey;
-         rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName, &numToSkip,
-                              &numToReturn, &pQuery, &pFieldSelector, &pOrderBy, &pHint );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to parse the create-collection-message(rc=%d)",
-                     rc );
+
+         rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName,
+                               &numToSkip, &numToReturn, &pQuery,
+                               &pFieldSelector, &pOrderBy, &pHint ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse the "
+                      "create-collection-message(rc=%d)", rc ) ;
          boQuery = BSONObj( pQuery );
          beIsMainCL = boQuery.getField( FIELD_NAME_ISMAINCL );
          isMainCL = beIsMainCL.booleanSafe();
          if ( isMainCL )
          {
             beShardingKey = boQuery.getField( FIELD_NAME_SHARDINGKEY );
-            PD_CHECK( beShardingKey.type() == Object, SDB_NO_SHARDINGKEY, error, PDERROR,
-                     "there is no valid sharding-key field" );
+            PD_CHECK( beShardingKey.type() == Object, SDB_NO_SHARDINGKEY,
+                      error, PDERROR, "There is no valid sharding-key field" ) ;
             beShardingType = boQuery.getField( FIELD_NAME_SHARDTYPE );
-            PD_CHECK( 0 != beShardingType.str().compare( FIELD_NAME_SHARDTYPE_HASH ),
-                     SDB_INVALID_MAIN_CL_TYPE, error, PDERROR,
-                     "the sharding-type of main-collection must be range" );
+            PD_CHECK( 0 != beShardingType.str().compare(
+                      FIELD_NAME_SHARDTYPE_HASH ),
+                      SDB_INVALID_MAIN_CL_TYPE, error, PDERROR,
+                      "The sharding-type of main-collection must be range" ) ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,
-                  "failed to create collection, "
-                  "received unexpected error:%s",
-                  e.what() );
+         PD_LOG ( PDERROR, "Failed to create collection, received "
+                  "unexpected error: %s", e.what() ) ;
          goto error ;
       }
 
@@ -1676,18 +1679,31 @@ namespace engine
             goto error ;
          }
 
-         // send request to data-nodes
-         pCreateReq->header.opCode = MSG_BS_QUERY_REQ;
-         pCreateReq->version = CAT_VERSION_BEGIN;
-         rc = executeOnDataGroup( (MsgHeader *)pCreateReq, groupLst,
-                                 sendGroupLst, pRouteAgent, cb, TRUE );
-         if ( rc != SDB_OK )
+         UINT32 retryTime = 0 ;
+         while ( TRUE )
          {
-            PD_LOG ( PDWARNING,
-                     "create collection failed on data node(rc = %d)",
-                     rc );
-            rc = SDB_OK;
-            goto error ;
+            CoordCataInfoPtr cataInfo ;
+            rc = rtnCoordGetCataInfo( cb, pCollectionName, TRUE, cataInfo ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get catalog info of "
+                         "collection[%s], rc: %d", pCollectionName, rc ) ;
+
+            // send request to data-nodes
+            pCreateReq->header.opCode = MSG_BS_QUERY_REQ;
+            pCreateReq->version = cataInfo->getVersion() ;
+            rc = executeOnDataGroup( (MsgHeader *)pCreateReq, groupLst,
+                                     sendGroupLst, pRouteAgent, cb, TRUE ) ;
+            if ( rc != SDB_OK )
+            {
+               if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc && retryTime < 3 )
+               {
+                  ++retryTime ;
+                  continue ;
+               }
+               PD_LOG ( PDWARNING, "Create collection failed on data "
+                        "node(rc = %d)", rc ) ;
+               rc = SDB_OK ;
+            }
+            break ;
          }
       }
       else

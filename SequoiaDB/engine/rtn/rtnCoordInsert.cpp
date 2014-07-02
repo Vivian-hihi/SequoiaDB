@@ -96,7 +96,8 @@ namespace engine
       while ( TRUE )
       {
          CoordCataInfoPtr cataInfo;
-         rc = rtnCoordGetCataInfo( cb, pCollectionName, isNeedRefreshCata, cataInfo );
+         rc = rtnCoordGetCataInfo( cb, pCollectionName, isNeedRefreshCata,
+                                   cataInfo );
          PD_RC_CHECK( rc, PDERROR,
                       "failed to get the catalog info(collection name:%s)",
                       pCollectionName );
