@@ -48,9 +48,9 @@ namespace engine
 {
    //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATE_EXECUTE, "rtnCoordUpdate::execute" )
    INT32 rtnCoordUpdate::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                           CHAR **ppResultBuffer, pmdEDUCB *cb,
-                           MsgOpReply &replyHeader,
-                           BSONObj **ppErrorObj )
+                                  CHAR **ppResultBuffer, pmdEDUCB *cb,
+                                  MsgOpReply &replyHeader,
+                                  BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCOUPDATE_EXECUTE ) ;
@@ -58,11 +58,11 @@ namespace engine
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
       rtnCoordOperator *pRollbackOperator = NULL;
-      BOOLEAN isNeedRefresh = FALSE;
-      BOOLEAN hasRefresh = FALSE;
-      CoordGroupList sendGroupLst;
+      BOOLEAN isNeedRefresh = FALSE ;
+      BOOLEAN hasRefresh = FALSE ;
+      CoordGroupList sendGroupLst ;
       INT64 updateNum = 0;
-      BSONObj newUpdator;
+      BSONObj newUpdator ;
 
       // fill default-reply(update success)
       MsgHeader*pHeader                = (MsgHeader *)pReceiveBuffer;
@@ -102,34 +102,36 @@ namespace engine
 
       do
       {
-         hasRefresh = isNeedRefresh;
-         CoordCataInfoPtr cataInfo;
-         BOOLEAN hasShardingKey = FALSE;
-         CHAR *pNewMsg = NULL;
-         INT32 bufferSize = 0;
-         INT64 numTmp = 0;
-         newUpdator = boUpdator;
+         hasRefresh = isNeedRefresh ;
+         CoordCataInfoPtr cataInfo ;
+         BOOLEAN hasShardingKey = FALSE ;
+         CHAR *pNewMsg = NULL ;
+         INT32 bufferSize = 0 ;
+         INT64 numTmp = 0 ;
+         newUpdator = boUpdator ;
          MsgOpUpdate *pMsgReq = (MsgOpUpdate *)pReceiveBuffer;
-         rc = rtnCoordGetCataInfo( cb, pCollectionName, isNeedRefresh, cataInfo );
-         PD_RC_CHECK( rc, PDERROR,
-                     "update failed, "
-                     "failed to get the catalogue info(collection name:%s)",
-                     pCollectionName );
-         rc = kickShardingKey( cataInfo, boUpdator, newUpdator, hasShardingKey );
-         //rc = checkIfIncludeShardingKey( cataInfo, pUpdator, isInclude, cb );
-         PD_RC_CHECK( rc, PDERROR, "update failed, failed to kick the "
-                      "sharding-key field(rc=%d)", rc );
+         rc = rtnCoordGetCataInfo( cb, pCollectionName, isNeedRefresh,
+                                   cataInfo ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update failed, failed to get the "
+                      "catalogue info(collection name:%s)", pCollectionName ) ;
+
+         rc = kickShardingKey( cataInfo, boUpdator, newUpdator,
+                               hasShardingKey ) ;
+         PD_RC_CHECK( rc, PDERROR, "Update failed, failed to kick the "
+                      "sharding-key field(rc=%d)", rc ) ;
+
          if ( cataInfo->isMainCL() )
          {
             std::set< INT32 > emptyRCList;
             CoordSubCLlist subCLList;
             BSONObj newSubCLUpdator;
             rc = cataInfo->getMatchSubCLs( boSelector, subCLList );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to get match sub-collection(rc=%d)",
-                        rc );
-            rc = kickShardingKeyForSubCL( subCLList, newUpdator, newSubCLUpdator,
-                                          hasShardingKey, cb );
+            PD_RC_CHECK( rc, PDERROR,"Failed to get match "
+                         "sub-collection(rc=%d)", rc ) ;
+
+            rc = kickShardingKeyForSubCL( subCLList, newUpdator,
+                                          newSubCLUpdator,
+                                          hasShardingKey, cb ) ;
             //rc = checkModifierForSubCL( subCLList, pUpdator, cb );
             PD_RC_CHECK( rc, PDERROR,
                         "failed to kick the sharding-key field "
@@ -300,9 +302,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATE_GETNODEGROUPS, "rtnCoordUpdate::getNodeGroups" )
    INT32 rtnCoordUpdate::getNodeGroups( const CoordCataInfoPtr &cataInfo,
-                           bson::BSONObj &selectObj,
-                           CoordGroupList &sendGroupLst,
-                           CoordGroupList &groupLst )
+                                        bson::BSONObj &selectObj,
+                                        CoordGroupList &sendGroupLst,
+                                        CoordGroupList &groupLst )
    {
       // TODO: parse selectorObj and select data-node
       INT32 rc = SDB_OK;
@@ -516,31 +518,31 @@ namespace engine
    }
 
    INT32 rtnCoordUpdate::checkModifierForSubCL ( const CoordSubCLlist &subCLList,
-                                                const CHAR *pUpdator,
-                                                pmdEDUCB *cb )
+                                                 const CHAR *pUpdator,
+                                                 pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       BOOLEAN isInclude;
-      CoordSubCLlist::const_iterator iterCL = subCLList.begin();
+      CoordSubCLlist::const_iterator iterCL = subCLList.begin() ;
       while( iterCL != subCLList.end() )
       {
-         CoordCataInfoPtr subCataInfo;
+         CoordCataInfoPtr subCataInfo ;
          rc = rtnCoordGetCataInfo( cb, (*iterCL).c_str(), FALSE,
-                                 subCataInfo );
+                                   subCataInfo ) ;
          PD_RC_CHECK( rc, PDERROR,
-                     "get catalog of sub-collection(%s) failed(rc=%d)",
-                     (*iterCL).c_str(), rc );
+                      "get catalog of sub-collection(%s) failed(rc=%d)",
+                      (*iterCL).c_str(), rc ) ;
          rc = checkIfIncludeShardingKey( subCataInfo, pUpdator,
-                                       isInclude, cb );
+                                         isInclude, cb ) ;
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to check if include sharding-key(rc=%d)",
-                     rc );
+                      "failed to check if include sharding-key(rc=%d)",
+                      rc ) ;
          if ( isInclude )
          {
-            rc = SDB_UPDATE_SHARD_KEY;
-            goto done;
+            rc = SDB_UPDATE_SHARD_KEY ;
+            goto done ;
          }
-         ++iterCL;
+         ++iterCL ;
       }
    done:
       return rc;
@@ -553,25 +555,25 @@ namespace engine
                                           bson::BSONObj &boNewUpdator,
                                           BOOLEAN &hasShardingKey )
    {
-      INT32 rc = SDB_OK;
-      hasShardingKey = FALSE;
+      INT32 rc = SDB_OK ;
+      hasShardingKey = FALSE ;
       try
       {
-         BSONObj boShardingKey;
-         cataInfo->getShardingKey( boShardingKey );
-         BSONObjBuilder bobNewUpdator;
-         BSONObjIterator iter( boUpdator );
+         BSONObj boShardingKey ;
+         cataInfo->getShardingKey( boShardingKey ) ;
+         BSONObjBuilder bobNewUpdator ;
+         BSONObjIterator iter( boUpdator ) ;
          while ( iter.more() )
          {
-            BSONElement beTmp = iter.next();
-            BSONObj boTmp = beTmp.Obj();
+            BSONElement beTmp = iter.next() ;
+            BSONObj boTmp = beTmp.Obj() ;
             BSONObjBuilder bobFields;
-            BSONObjIterator iterField( boTmp );
+            BSONObjIterator iterField( boTmp ) ;
             while( iterField.more() )
             {
-               BSONElement beField = iterField.next();
-               BSONObjIterator iterKey( boShardingKey );
-               BOOLEAN isKey = FALSE;
+               BSONElement beField = iterField.next() ;
+               BSONObjIterator iterKey( boShardingKey ) ;
+               BOOLEAN isKey = FALSE ;
                while( iterKey.more() )
                {
                   BSONElement beKey = iterKey.next();
@@ -608,19 +610,16 @@ namespace engine
                                            boFields.objdata() );
             }
          }
-         boNewUpdator = bobNewUpdator.obj();
-         PD_CHECK( !boNewUpdator.isEmpty(), SDB_INVALIDARG, error, PDERROR,
-                  "all of update-fields are sharding-key fields!" );
+         boNewUpdator = bobNewUpdator.obj() ;
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,
-                  "failed to check the record is include sharding-key,"
-                  "occured unexpected error:%s",
-                  e.what() );
+         PD_LOG ( PDERROR,"Failed to check the record is include sharding-key,"
+                  "occured unexpected error: %s", e.what() ) ;
          goto error;
       }
+
    done:
       return rc;
    error:
@@ -641,17 +640,18 @@ namespace engine
       {
          CoordCataInfoPtr subCataInfo;
          rc = rtnCoordGetCataInfo( cb, (*iterCL).c_str(), FALSE,
-                                 subCataInfo );
+                                   subCataInfo ) ;
          PD_RC_CHECK( rc, PDERROR,
-                     "get catalog of sub-collection(%s) failed(rc=%d)",
-                     (*iterCL).c_str(), rc );
-         rc = kickShardingKey( subCataInfo, boCur, boNew, hasShardingKey );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to kick sharding-key for sub-collection(rc=%d)", rc );
-         boCur = boNew;
-         ++iterCL;
+                      "get catalog of sub-collection(%s) failed(rc=%d)",
+                      (*iterCL).c_str(), rc ) ;
+         rc = kickShardingKey( subCataInfo, boCur, boNew, hasShardingKey ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to kick sharding-key for "
+                      "sub-collection(rc=%d)", rc ) ;
+         boCur = boNew ;
+         ++iterCL ;
       }
-      boNewUpdator = boNew;
+      boNewUpdator = boNew ;
+
    done:
       return rc;
    error:

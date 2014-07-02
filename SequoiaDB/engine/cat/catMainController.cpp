@@ -385,6 +385,19 @@ namespace engine
          goto error ;
       }
 
+      // create SYSCAT.SYSBUCKETS
+      rc = _createSysCollection( CAT_BUCKET_COLLECTION, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _createSysIndex( CAT_BUCKET_COLLECTION, CAT_BUCKET_BUCKETID_IDX,
+                            cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
       /// procedures
       rc = _createSysCollection ( CAT_PROCEDURES_COLLECTION, cb ) ;
       if ( rc )

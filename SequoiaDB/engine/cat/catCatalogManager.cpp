@@ -388,7 +388,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCOLLECTION, "catCatalogueManager::processCmdDropCollection" )
    INT32 catCatalogueManager::processCmdDropCollection( const CHAR *pQuery,
-                                                      INT32 version )
+                                                        INT32 version )
    {
       INT32 rc                         = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_DROPCOLLECTION ) ;
@@ -1449,6 +1449,11 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Check create collection obj[%s] failed, rc: %d",
                    createObj.toString().c_str(), rc ) ;
       collectionName = clInfo._pCLName ;
+
+      // get version from bucket collection
+      clInfo._version = catGetBucketVersion( catCalcBucketID( collectionName,
+                                             ossStrlen( collectionName ) ),
+                                             _pEduCB ) ;
 
       PD_TRACE1 ( SDB_CATALOGMGR_CREATECOLLECTION,
                   PD_PACK_STRING ( collectionName ) ) ;

@@ -39,6 +39,8 @@
 #include "fmpDef.hpp"
 #include "clsCatalogAgent.hpp"
 
+#include "../bson/lib/md5.hpp"
+
 using namespace bson ;
 
 namespace engine
@@ -1299,6 +1301,82 @@ namespace engine
       goto done ;
    }
 
+   INT32 catGetBucketVersion( UINT32 bucketID, pmdEDUCB *cb )
+   {
+      INT32 version = CAT_VERSION_BEGIN ;
+      BSONObj dummy ;
+      BSONObj mather = BSON( FIELD_NAME_BUCKETID << bucketID ) ;
+      BSONObj result ;
+
+      INT32 rc = catGetOneObj( CAT_BUCKET_COLLECTION, dummy, mather,
+                               dummy, cb, result ) ;
+      if ( SDB_OK == rc )
+      {
+         version = (INT32)result.getField( FIELD_NAME_VERSION ).numberInt() ;
+         ++version ;
+      }
+      return version ;
+   }
+
+   INT32 catSaveBucketVersion( UINT32 bucketID, INT32 version,
+                               pmdEDUCB *cb, INT16 w )
+   {
+      INT32 rc = SDB_OK ;
+      const INT32 reverseVer = 0x00FFFFFF ;
+      BSONObj dummy ;
+      BSONObj mather = BSON( FIELD_NAME_BUCKETID << bucketID ) ;
+      BSONObj result ;
+
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
+      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      rc = catGetOneObj( CAT_BUCKET_COLLECTION, dummy, mather,
+                         dummy, cb, result ) ;
+      // not exist
+      if ( SDB_DMS_EOC == rc )
+      {
+         BSONObj obj = BSON( FIELD_NAME_BUCKETID << bucketID <<
+                             FIELD_NAME_VERSION << version ) ;
+         rc = rtnInsert( CAT_BUCKET_COLLECTION, obj, 1, 0, cb, dmsCB,
+                         dpsCB, w ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to insert record[%s] to "
+                      "collection[%s], rc: %d", obj.toString().c_str(),
+                      CAT_BUCKET_COLLECTION, rc ) ;
+      }
+      else if ( SDB_OK == rc )
+      {
+         INT32 verTmp = (INT32)result.getField( FIELD_NAME_VERSION
+                                               ).numberInt() ;
+         if ( version < verTmp && verTmp - version < reverseVer )
+         {
+            goto done ;
+         }
+         // update
+         else
+         {
+            BSONObj updator = BSON( "$set" << BSON( FIELD_NAME_VERSION <<
+                                                    version ) ) ;
+            rc = rtnUpdate( CAT_BUCKET_COLLECTION, mather, updator,
+                            BSONObj(), 0, cb, dmsCB, dpsCB, w, NULL ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to update record[%s] to "
+                         "collection[%s], rc: %d", updator.toString().c_str(),
+                         CAT_BUCKET_COLLECTION, rc ) ;
+         }
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Failed to get record from collection[%s], rc: %d",
+                 CAT_BUCKET_COLLECTION, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVECLEX, "catRemoveCLEx" )
    INT32 catRemoveCLEx( const CHAR * clFullName, pmdEDUCB * cb,
                         SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB, INT16 w,
@@ -1327,9 +1405,6 @@ namespace engine
                SDB_CLS_COORD_NODE_CAT_VER_OLD, error, PDERROR,
                "failed to dropCL, coord version old(curVer:%d, coordVer:%d)",
                cataInfo.getVersion(), version );
-      /*PD_CHECK( cataInfo.getMainCLName().empty(),
-               SDB_ILL_RM_SUB_CL, error, PDERROR,
-               "illegal remove sub-collection" );*/
 
       rc = catResolveCollectionName( clFullName, ossStrlen(clFullName),
                                      szCSName, DMS_COLLECTION_SPACE_NAME_SZ,
@@ -1355,6 +1430,10 @@ namespace engine
          {
             goto error ;
          }
+
+         catSaveBucketVersion( catCalcBucketID( clFullName,
+                               ossStrlen( clFullName ) ),
+                               cataInfo.getVersion(), cb, w ) ;
 
          // 3) Pull collection from collection space info
          rc = catDelCLFromCS( szCSName, szCLName, cb, dmsCB, dpsCB, w ) ;
@@ -1936,6 +2015,20 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   UINT32 catCalcBucketID( const CHAR *pData, UINT32 length,
+                           UINT32 bucketSize )
+   {
+      md5::md5digest digest ;
+      md5::md5( pData, length, digest ) ;
+      UINT32 hashValue = 0 ;
+      UINT32 i = 0 ;
+      while ( i++ < 4 )
+      {
+         hashValue |= ( (UINT32)digest[i-1] << ( 32 - 8 * i ) ) ;
+      }
+      return ( hashValue % bucketSize ) ;
    }
 
 }

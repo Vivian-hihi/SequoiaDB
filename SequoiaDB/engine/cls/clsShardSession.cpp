@@ -460,7 +460,8 @@ namespace engine
 
          //Need to update catalog info
          if ( ( SDB_CLS_NO_CATALOG_INFO == rc ||
-                SDB_CLS_DATA_NODE_CAT_VER_OLD == rc ) && loopTime < 1 )
+                SDB_CLS_DATA_NODE_CAT_VER_OLD == rc ||
+                SDB_CLS_COORD_NODE_CAT_VER_OLD == rc ) && loopTime < 1 )
          {
             loopTime++ ;
             PD_LOG ( PDWARNING, "Catalog is empty or older[rc:%d] in "

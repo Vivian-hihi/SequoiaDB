@@ -152,6 +152,10 @@ namespace engine
    INT32 catRemoveTask( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
    INT32 catRemoveTask( BSONObj &match, pmdEDUCB *cb, INT16 w ) ;
 
+   /* Collection[CAT_BUCKET_COLLECTION] functions */
+   INT32 catGetBucketVersion( UINT32 bucketID, pmdEDUCB *cb ) ;
+   INT32 catSaveBucketVersion( UINT32 bucketID, INT32 version,
+                               pmdEDUCB *cb, INT16 w ) ;
 
    /* Other Tools */
    INT32 catRemoveCLEx( const CHAR *clFullName,  pmdEDUCB *cb,
@@ -179,6 +183,9 @@ namespace engine
                                 const BSONObj &indexDef,
                                 pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                                 _dpsLogWrapper *dpsCB, BOOLEAN sys = TRUE) ;
+
+   UINT32 catCalcBucketID( const CHAR *pData, UINT32 length,
+                           UINT32 bucketSize = CAT_BUCKET_SIZE ) ;
 
 }
 
