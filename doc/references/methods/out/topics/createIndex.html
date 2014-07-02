@@ -9,6 +9,7 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.collection.createIndex()"/>
 <meta name="description" content="db.collectionspace.collection.createIndex(&lt;name&gt;,&lt;indexDef&gt;,[isUnique],[enforced]) 为集合创建 索引 ，提高查询速度。 参数描述 参数名 参数类型 描述 是否必填 name string 索引名，同一个集合中的索引名必须唯一。 是 indexDef json对象 ..."/>
+<meta name="DC.Relation" scheme="URI" content="../topics/methodlist.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/database/topics/index.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/database/topics/collection.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/database/topics/collectionspace.html"/>
@@ -35,7 +36,7 @@
 <body onload="highlightSearchTerm()" id="references_method_createIndex"><a name="references_method_createIndex"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span></div></td><td width="50%"/></tr></tbody></table>
+                    --></script></span><a class="link" href="../topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../topics/methodlist.html" title="SequoiaDB JavaScript方法">SequoiaDB JavaScript方法</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">db.collectionspace.collection.createIndex()</h1>
 
@@ -48,53 +49,53 @@
     <div class="section"><h2 class="title sectiontitle">参数描述</h2><p class="p"/>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d1833e31" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d6280e31" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d1833e34" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d6280e34" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d1833e37" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d6280e37" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d1833e40" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d1833e31" class="stentry">name</td>
-
-          <td valign="top" headers="d1833e34" class="stentry">string</td>
-
-          <td valign="top" headers="d1833e37" class="stentry">索引名，同一个集合中的索引名必须唯一。 </td>
-
-          <td valign="top" headers="d1833e40" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d6280e40" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d1833e31" class="stentry">indexDef</td>
+          <td valign="top" headers="d6280e31" class="stentry">name</td>
 
-          <td valign="top" headers="d1833e34" class="stentry">json对象</td>
+          <td valign="top" headers="d6280e34" class="stentry">string</td>
 
-          <td valign="top" headers="d1833e37" class="stentry"> 索引键，包含一个或多个指定索引字段与方向的对象。其中方向为1代表从小到大排序，-1则为从大到小排序。</td>
+          <td valign="top" headers="d6280e37" class="stentry">索引名，同一个集合中的索引名必须唯一。 </td>
 
-          <td valign="top" headers="d1833e40" class="stentry">是</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d1833e31" class="stentry">isUnique</td>
-
-          <td valign="top" headers="d1833e34" class="stentry">Boolean</td>
-
-          <td valign="top" headers="d1833e37" class="stentry">索引是否唯一，默认false。设置为true时代表该索引为唯一索引。</td>
-
-          <td valign="top" headers="d1833e40" class="stentry">否</td>
+          <td valign="top" headers="d6280e40" class="stentry">是</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d1833e31" class="stentry">enforced</td>
+          <td valign="top" headers="d6280e31" class="stentry">indexDef</td>
 
-          <td valign="top" headers="d1833e34" class="stentry">Boolean</td>
+          <td valign="top" headers="d6280e34" class="stentry">json对象</td>
 
-          <td valign="top" headers="d1833e37" class="stentry">索引是否强制唯一，可选参数，在unique为true时生效，默认false。设置为true时代表该索引在unique为true的前提下，不可存在一个以上全空的索引键。</td>
+          <td valign="top" headers="d6280e37" class="stentry"> 索引键，包含一个或多个指定索引字段与方向的对象。其中方向为1代表从小到大排序，-1则为从大到小排序。</td>
 
-          <td valign="top" headers="d1833e40" class="stentry">否</td>
+          <td valign="top" headers="d6280e40" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d6280e31" class="stentry">isUnique</td>
+
+          <td valign="top" headers="d6280e34" class="stentry">Boolean</td>
+
+          <td valign="top" headers="d6280e37" class="stentry">索引是否唯一，默认false。设置为true时代表该索引为唯一索引。</td>
+
+          <td valign="top" headers="d6280e40" class="stentry">否</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d6280e31" class="stentry">enforced</td>
+
+          <td valign="top" headers="d6280e34" class="stentry">Boolean</td>
+
+          <td valign="top" headers="d6280e37" class="stentry">索引是否强制唯一，可选参数，在isUnique为true时生效，默认false。设置为true时代表该索引在isUnique为true的前提下，不可存在一个以上全空的索引键。</td>
+
+          <td valign="top" headers="d6280e40" class="stentry">否</td>
 
         </tr>
 </table>
@@ -147,7 +148,7 @@
 <div><a class="navheader_parent_path" href="dropIndex.html" title="db.collectionspace.collection.dropIndex()">db.collectionspace.collection.dropIndex()</a></div>
 </div>
 </div>
-<div class="navfooter"><script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -156,7 +157,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>
