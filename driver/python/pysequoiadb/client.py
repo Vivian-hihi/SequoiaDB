@@ -966,6 +966,41 @@ class client(object):
 
       return rc, result
 
+   def remove_backup(self, options):
+      """Remove the backups
+
+      Parameters:
+              Name      Type  Info:
+         [in] options   dict  Contains configuration infomations for remove
+                              backups, remove all the backups in the default
+                              backup path if null. The "options" contains 3
+                              options as below. All the elements in options are
+                              optional.
+                              eg:
+                              { "GroupName":["rgName1", "rgName2"],
+                                "Path":"/opt/sequoiadb/backup",
+                                "Name":"backupName" }
+                              See Info as below.
+      Return values:
+         Success: SDB_OK  and  an cursor object of result
+         Fail   : Other   and  None
+
+      Info:
+         GroupName   : Assign the backups of specifed replica groups to be
+                       remove.
+         Path        : Assign the backups in specifed path to be remove, if not
+                       assign, use the backup path asigned in the configuration
+                       file.
+         Name        : Assign the backups with specifed name to be remove.
+      """
+      bson_condition = None
+
+      bson_options = bson.BSON.encode(options)
+      rc = sdbclient.remove_backup(self._client, bson_options)
+      pysequoiadb.check_error(rc)
+
+      return rc
+
    def list_task(self, condition = static_object, selector  = static_object,
                        order_by  = static_object, hint      = static_object):
       """List the tasks.

@@ -215,7 +215,6 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
 
-   NEW_CPPOBJECT( cursor, sdbCursor ) ;
    rc = client->getSnapshot( *cursor, snap_type, *condition,
                                       *selector, *order_by ) ;
    if ( rc )
@@ -227,7 +226,7 @@ done:
    DELETE_CPPOBJECT( condition ) ;
    DELETE_CPPOBJECT( selector ) ;
    DELETE_CPPOBJECT( order_by ) ;
-   return MAKE_RETURN_INT_OBJECT( rc, MAKE_PYOBJECT( cursor ) ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
