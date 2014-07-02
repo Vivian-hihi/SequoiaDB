@@ -12,7 +12,7 @@
           <p>返回：</p>
           <codeblock>      { 
         "Name":"foo" 
-      }...</codeblock></li>
+      }</codeblock></li>
       </ul>      
     </section>
   </body>
