@@ -2,6 +2,7 @@
 BashPath=$(dirname $(readlink -f $0))
 . $BashPath/sdbsupportfunc1.sh
 . $BashPath/sdbsupportfunc2.sh
+. /etc/default/sequoiadb
 #variable in bash shell
 #declare -a PORT
 #declare -a DBPATH
@@ -12,6 +13,9 @@ pHostNum=""
 
 #user permission
 USER=`whoami`
+if [ "" == $USER ] ; then
+   USER="sdbadmin"
+fi
 
 #gloable variable
 hostName=""
@@ -79,7 +83,7 @@ function Usage()
    echo "    --help                 help information" ;
    echo "    -N [--hostname] arg    database host name [eg:-N hostname1:hostname2:.....]" ;
    echo "    -p [--svcport] arg     database sevice port [eg:-p 50000:30000:......]" ;
-   echo "    -t [--thread] arg      number of concurrent threads,default:10" ;
+#   echo "    -t [--thread] arg      number of concurrent threads,default:10" ;
    echo "    -s [--snapshot]        snapshot of database database" ;
    echo "    -o [--osinfo]          operating system information" ;
    echo "    -h [--hardware]        hardware information" ;
@@ -293,24 +297,53 @@ if [ $? -ne 0 ] ;then
    sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to create folder log in local path"
    exit 1
 fi
-#echo "log":$log
-#get install path
-cd $localPath
-rc=$?
-if [ $rc -ne 0 ] ; then
-   echo "Failed ,Permisson"
-   exit 1
+#*************************************
+# Give expect tool run permission
+#*************************************
+ls $localPath/expect/expect
+if [ $? -ne 0 ] ; then
+   echo "Don't have expect tools in path : $localPath/expect/expect"
+   exit -1
 fi
-cd ../../ >>/dev/null 2>&1
-rc=$?
-ls ./bin/sequoiadb >>/dev/null 2>&1
-rc1=$?
-if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
-   echo "Failed to go to install path,please check"
-   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to confirm installpath"
-   exit 1
+chmod 755 $localPath/expect/expect
+if [ $? -ne 0 ] ; then
+   echo "Failed to give expect tools run permission"
+   exit -1
 fi
-installpath=`pwd`
+
+#**********************************************************
+#  export  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$localPath/expect
+#**********************************************************
+libPath=`env | grep LD_LIBRARY_PATH | cut -d "=" -f 2`
+libNum=`awk 'BEGIN{print split('"\"$libPath\""',libArr,":")}'`
+for i in $(seq 1 $libNum)
+do
+   libpath[$i]=`awk 'BEGIN{split('"\"$libPath\""',libArr,":");print libArr['$i']}'`
+   # awk 'BEGIN{split('"\"$cataddr\""',cateArr,",");print cateArr['$i']'}
+   if [ "$localPath/expect/" != ${libpath[$i]} ] ; then
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$localPath/expect/
+      if [ $? -ne 0 ] ; then
+         echo "Failed to config system environment variable"
+         exit -1
+      fi
+      echo "Success to export System environment variable : $localPath/expect/"
+   else
+      echo "System have environment variable : $localPath/expect/"
+   fi
+done
+
+#***********************************************************
+#get install path from /etc/default/sequoiadb file
+#   NAME=sdbcm
+#   SDBADMIN_USER=sdbadmin
+#   INSTALL_DIR=/opt/sequoiadb
+#***********************************************************
+installpath=$INSTALL_DIR
+if [ "" == $installpath ] ; then
+   echo "Don't have file /etc/default/sequoiadb, inspect your "
+   exit -1
+fi
+
 ls $installpath >/dev/null 2>&1
 if [ $? -ne 0 ] ; then
    echo "Wrong install path ,Please check over the sdbsupport path and installpath!"
@@ -319,6 +352,7 @@ if [ $? -ne 0 ] ; then
 else
    sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Success to get install path:$installpath"
 fi
+
 
 cd $dirpath
 if [ $? -ne 0 ] ; then
@@ -390,19 +424,20 @@ fi
 #***************************************************************************
 #MODE:standalone           //database have standalone database collect
 #***************************************************************************
-if [ "$aloneRole" != "" ] ; then
-   echo "Node $aloneRole is standalone node"
-   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Node $aloneRole is standalone node"
-   alonehost="standalone.$localhost"
-   dbpath=`grep -E "dbpath" $confpath/$aloneRole/sdb.conf|cut -d '=' -f 2`
-   sdbPortGather "$localhost" "$dbpath" "$aloneRole" "$installpath"
-   sdbSnapShotCataLog "$localhost" "$aloneRole" "$installpath"
-   sdbSnapShot "$localhost" "$aloneRole" "$installpath"
-   sdbHardwareInfoAll "$localhost" "$installpath"
-   sdbSystemInfoAll "$localhost" "$installpath"
-   #tar
-   sdbTarGzPack $alonehost
-fi
+#if [ "$aloneRole" != "" ] ; then
+#   echo "Node $aloneRole is standalone node"
+#   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Node $aloneRole is standalone node"
+#   alonehost="standalone.$localhost"
+#   dbpath=`grep -E "dbpath" $confpath/$aloneRole/sdb.conf|cut -d '=' -f 2`
+#   sdbPortGather "$localhost" "$dbpath" "$aloneRole" "$installpath"
+#   sdbSnapShotCataLog "$localhost" "$aloneRole" "$installpath"
+#   sdbSnapShot "$localhost" "$aloneRole" "$installpath"
+#   sdbHardwareInfoAll "$localhost" "$installpath"
+#   sdbSystemInfoAll "$localhost" "$installpath"
+#   #tar
+#   sdbTarGzPack $alonehost
+#fi
+
 #***************************************************************************
 #MODE:Group           //database database cluster/[group] only have coord
 #***************************************************************************
@@ -553,7 +588,7 @@ if [ "$all" == "true" ] ; then
          read -s PASSWD[$i]
          sdbCheckPassword "${HOST[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
          retVal=$?
-         #echo "return value :$retVal"
+         echo "inspect password, rc = $retVal"
          while [ "$retVal" == "5" ]
          do
             PASSWD[$i]=""
@@ -561,7 +596,7 @@ if [ "$all" == "true" ] ; then
             read -s PASSWD[$i]
             sdbCheckPassword "${HOST[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
             retVal=$?
-            #echo "until return value"$retVal
+            echo "inspect password, rc = $retVal"
          done
          #echo "password:" "${PASSWD[$i]}"
       fi
@@ -577,7 +612,7 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
          read -s PASSWD[$i]
          sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}"
          retVal=$?
-         echo paswdrc:$retVal
+         echo "inspect password, rc = $retVal"
          while [ "$retVal" == "5" ]
          do
             PASSWD[$i]=""
@@ -585,7 +620,7 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
             read -s PASSWD[$i]
             sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}"
             retVal=$?
-            #echo "until return value"$retVal
+            echo "inspect password, rc = "$retVal
          done
          #echo "password:" "${PASSWD[$i]}"
       fi
@@ -735,17 +770,17 @@ do
             fi
             #Parameter:--sysinfo ; Collect all system information or collect part of system information !
             if [ "$sysInfo" == "true" ] ; then
-               sdbSystemInfoAll "${HOST[$i]}"
+               sdbSystemInfoAll "${HostPara[$i]}"
             else
-               sdbSystemInfoPartFore "${HOST[$i]}" "$diskmanage" "$osystem" "$module" "$env" "$network"
-               sdbSystemInfoPartEnd "${HOST[$i]}" "$progress" "$login" "$limit" "$vmstat"
+               sdbSystemInfoPartFore "${HostPara[$i]}" "$diskmanage" "$osystem" "$module" "$env" "$network"
+               sdbSystemInfoPartEnd "${HostPara[$i]}" "$progress" "$login" "$limit" "$vmstat"
             fi
 
             #Parameter:--hardinfo ; Collect all hardware information or collect part of system information !
             if [ "$hardInfo" == "true" ] ; then
-               sdbHardwareInfoAll "${HOST[$i]}"
+               sdbHardwareInfoAll "${HostPara[$i]}"
             else
-               sdbHardwareInfoPart "${HOST[$i]}" "$cpu" "$memory" "$disk" "$netcard" "$mainboard"
+               sdbHardwareInfoPart "${HostPara[$i]}" "$cpu" "$memory" "$disk" "$netcard" "$mainboard"
             fi
             #echo "" >&6
          fi
