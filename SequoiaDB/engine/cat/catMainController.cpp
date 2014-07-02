@@ -385,13 +385,13 @@ namespace engine
          goto error ;
       }
 
-      // create SYSCAT.SYSBUCKETS
-      rc = _createSysCollection( CAT_BUCKET_COLLECTION, cb ) ;
+      // create SYSCAT.SYSHISTORY
+      rc = _createSysCollection( CAT_HISTORY_COLLECTION, cb ) ;
       if ( rc )
       {
          goto error ;
       }
-      rc = _createSysIndex( CAT_BUCKET_COLLECTION, CAT_BUCKET_BUCKETID_IDX,
+      rc = _createSysIndex( CAT_HISTORY_COLLECTION, CAT_HISTORY_BUCKETID_IDX,
                             cb ) ;
       if ( rc )
       {

@@ -10,7 +10,7 @@
 #define  CAT_COLLECTION_INFO_COLLECTION   CAT_SYS_SPACE_NAME".SYSCOLLECTIONS"
 #define  CAT_TASK_INFO_COLLECTION         CAT_SYS_SPACE_NAME".SYSTASKS"
 #define  CAT_DOMAIN_COLLECTION            CAT_SYS_SPACE_NAME".SYSDOMAINS"
-#define  CAT_BUCKET_COLLECTION            CAT_SYS_SPACE_NAME".SYSBUCKETS"
+#define  CAT_HISTORY_COLLECTION           CAT_SYS_SPACE_NAME".SYSHISTORY"
 
 #define  CAT_NODEINFO_GROUPNAMEIDX        "{name:\"SYSIDX1\",key: {"\
                                           CAT_GROUPNAME_NAME":1}, unique: true, enforced: true } "
@@ -58,7 +58,7 @@
 
 #define CAT_BUCKET_SIZE                ( 200000 )
 #define FIELD_NAME_BUCKETID            "BucketID"
-#define CAT_BUCKET_BUCKETID_IDX        "{name:\"SYSIDX1\",key: {"\
+#define CAT_HISTORY_BUCKETID_IDX       "{name:\"SYSIDX1\",key: {"\
                                        FIELD_NAME_BUCKETID":1}, unique: true, enforced: true } "
 
 #endif

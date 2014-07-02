@@ -152,9 +152,9 @@ namespace engine
    INT32 catRemoveTask( UINT64 taskID, pmdEDUCB *cb, INT16 w ) ;
    INT32 catRemoveTask( BSONObj &match, pmdEDUCB *cb, INT16 w ) ;
 
-   /* Collection[CAT_BUCKET_COLLECTION] functions */
-   INT32 catGetBucketVersion( UINT32 bucketID, pmdEDUCB *cb ) ;
-   INT32 catSaveBucketVersion( UINT32 bucketID, INT32 version,
+   /* Collection[CAT_HISTORY_COLLECTION] functions */
+   INT32 catGetBucketVersion( const CHAR *pCLName, pmdEDUCB *cb ) ;
+   INT32 catSaveBucketVersion( const CHAR *pCLName, INT32 version,
                                pmdEDUCB *cb, INT16 w ) ;
 
    /* Other Tools */

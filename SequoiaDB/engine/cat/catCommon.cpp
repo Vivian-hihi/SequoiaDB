@@ -1301,14 +1301,15 @@ namespace engine
       goto done ;
    }
 
-   INT32 catGetBucketVersion( UINT32 bucketID, pmdEDUCB *cb )
+   INT32 catGetBucketVersion( const CHAR *pCLName, pmdEDUCB *cb )
    {
       INT32 version = CAT_VERSION_BEGIN ;
+      UINT32 bucketID = catCalcBucketID( pCLName, ossStrlen( pCLName ) ) ;
       BSONObj dummy ;
       BSONObj mather = BSON( FIELD_NAME_BUCKETID << bucketID ) ;
       BSONObj result ;
 
-      INT32 rc = catGetOneObj( CAT_BUCKET_COLLECTION, dummy, mather,
+      INT32 rc = catGetOneObj( CAT_HISTORY_COLLECTION, dummy, mather,
                                dummy, cb, result ) ;
       if ( SDB_OK == rc )
       {
@@ -1318,11 +1319,12 @@ namespace engine
       return version ;
    }
 
-   INT32 catSaveBucketVersion( UINT32 bucketID, INT32 version,
+   INT32 catSaveBucketVersion( const CHAR *pCLName, INT32 version,
                                pmdEDUCB *cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
       const INT32 reverseVer = 0x00FFFFFF ;
+      UINT32 bucketID = catCalcBucketID( pCLName, ossStrlen( pCLName ) ) ;
       BSONObj dummy ;
       BSONObj mather = BSON( FIELD_NAME_BUCKETID << bucketID ) ;
       BSONObj result ;
@@ -1331,18 +1333,19 @@ namespace engine
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
 
-      rc = catGetOneObj( CAT_BUCKET_COLLECTION, dummy, mather,
+      rc = catGetOneObj( CAT_HISTORY_COLLECTION, dummy, mather,
                          dummy, cb, result ) ;
       // not exist
       if ( SDB_DMS_EOC == rc )
       {
          BSONObj obj = BSON( FIELD_NAME_BUCKETID << bucketID <<
+                             FIELD_NAME_NAME << pCLName <<
                              FIELD_NAME_VERSION << version ) ;
-         rc = rtnInsert( CAT_BUCKET_COLLECTION, obj, 1, 0, cb, dmsCB,
+         rc = rtnInsert( CAT_HISTORY_COLLECTION, obj, 1, 0, cb, dmsCB,
                          dpsCB, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert record[%s] to "
                       "collection[%s], rc: %d", obj.toString().c_str(),
-                      CAT_BUCKET_COLLECTION, rc ) ;
+                      CAT_HISTORY_COLLECTION, rc ) ;
       }
       else if ( SDB_OK == rc )
       {
@@ -1356,18 +1359,20 @@ namespace engine
          else
          {
             BSONObj updator = BSON( "$set" << BSON( FIELD_NAME_VERSION <<
-                                                    version ) ) ;
-            rc = rtnUpdate( CAT_BUCKET_COLLECTION, mather, updator,
+                                                    version <<
+                                                    FIELD_NAME_NAME <<
+                                                    pCLName ) ) ;
+            rc = rtnUpdate( CAT_HISTORY_COLLECTION, mather, updator,
                             BSONObj(), 0, cb, dmsCB, dpsCB, w, NULL ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to update record[%s] to "
                          "collection[%s], rc: %d", updator.toString().c_str(),
-                         CAT_BUCKET_COLLECTION, rc ) ;
+                         CAT_HISTORY_COLLECTION, rc ) ;
          }
       }
       else
       {
          PD_LOG( PDERROR, "Failed to get record from collection[%s], rc: %d",
-                 CAT_BUCKET_COLLECTION, rc ) ;
+                 CAT_HISTORY_COLLECTION, rc ) ;
          goto error ;
       }
 
@@ -1431,9 +1436,7 @@ namespace engine
             goto error ;
          }
 
-         catSaveBucketVersion( catCalcBucketID( clFullName,
-                               ossStrlen( clFullName ) ),
-                               cataInfo.getVersion(), cb, w ) ;
+         catSaveBucketVersion( clFullName, cataInfo.getVersion(), cb, w ) ;
 
          // 3) Pull collection from collection space info
          rc = catDelCLFromCS( szCSName, szCLName, cb, dmsCB, dpsCB, w ) ;
