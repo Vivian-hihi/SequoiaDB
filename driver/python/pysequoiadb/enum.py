@@ -13,16 +13,6 @@
 #   limitations under the License.
 
 class enum(object):
-   """
-   >>> Sex = enum(((1,"FEMALE"),
-    (2, "MALE")))
-   >>> Sex.FEMALE
-   1
-   >>> tuple(Sex.choice_tuples())
-   ((1,'FEMALE',(2,'MALE'))
-   >>> tuple(Sex.available_options())
-   (1,2)
-   """
 
    def __init__(self, config):
       self.config = config

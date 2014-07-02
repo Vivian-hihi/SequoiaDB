@@ -25,7 +25,7 @@ from pysequoiadb.common import const
 from pysequoiadb.error import SequoiaDBError
 
 class replicanode(object):
-   """Entrance of SequoiaDB
+   """Replica Node of SequoiaDB
 
    """
    def __init__(self, client):
@@ -157,55 +157,3 @@ class replicanode(object):
       ret = sdbreplicanode.start(self._node)
       pysequoiadb.check_error(ret)
       return ret
-
-
-   if '__main__' == __name__:
-    from pysequoiadb.client import client
-    from pysequoiadb import common
-    sdb = client("192.168.30.61")
-    rc,group = sdb.creat_replica_group('newgroup')
-    if -153 == rc:
-        rc,group = sdb.get_replica_group_by_name("newgroup")
-    if const.SDB_OK == rc:
-        rc = group.create_node('r520-3','11840','/data/disk3/sequoiadb/database/data/11840',
-                          {'numpagecleaners':'1','pagecleaninterval':'1000',})
-    if const.SDB_OK == rc:
-       rc,node = group.get_nodebyendpoint("r520-3", '11840')
-    if const.SDB_OK == rc:
-        rc = node.start()
-    if const.SDB_OK == rc:
-        rc = node.stop()
-    if const.SDB_OK == rc:
-        rc,hostname = node.get_hostname()
-    if const.SDB_OK == rc:
-        if hostname != 'r520-3':
-            raise Exception('Test failure')
-    rc,servicename = node.get_servicename()
-    if const.SDB_OK == rc:
-        if servicename != '11840':
-            raise Exception('Test failure')
-    rc,status = node.get_status()
-    if const.SDB_OK == rc:
-        if status != common.NODE_STATUS.ACTIVE:
-            raise Exception('Test failure')
-    rc,nodename = node.get_nodename()
-    if const.SDB_OK == rc:
-        if status != common.NODE_STATUS.ACTIVE:
-            raise Exception('Test failure')
-    rc = node.stop()
-    if const.SDB_OK == rc:
-        raise Exception('Test failure')
-    rc = group.remove_node("r520-3","11840")
-    if -204 != rc:
-        raise Exception("Test Failure")
-    rc = sdb.remove_replica_group("newgroup")
-    if const.SDB_OK != rc:
-        raise  Exception("Test Failure")
-
-
-
-
-
-
-
-

@@ -258,8 +258,8 @@ class collection(object):
 
       container = []
       for elem in records :
-         bson = bson.BSON.encode( elem )
-         container.append( bson )
+         record = bson.BSON.encode( elem )
+         container.append( record )
 
       rc = sdbcl.bulk_insert(self._cl, flags, container)
       pysequoiadb.check_error(rc)
@@ -283,8 +283,8 @@ class collection(object):
       if oid is not None and not isinstance(oid, ObjectId):
          raise TypeError("oid must be an instance of bson.ObjectId")
 
-      bson = bson.BSON.encode(record)
-      rc = sdbcl.insert(self._cl, bson, oid)
+      bson_record = bson.BSON.encode(record)
+      rc = sdbcl.insert(self._cl, bson_record, oid)
       pysequoiadb.check_error(rc)
 
       return rc
@@ -433,7 +433,7 @@ class collection(object):
 
       Parameters:
               Name         Type  Info:
-         [in] index_def    dict  The bson structure of index element.
+         [in] index_def    dict  The dict object of index element.
                                  e.g. {name:1, age:-1}
          [in] idx_name     str   The index name.
          [in] is_unique    bool  Whether the index elements are unique or not.
@@ -563,15 +563,15 @@ class collection(object):
 
       Parameters:
               Name               Type  Info:
-         [in] aggregate_options  list  The array of bson objects.
+         [in] aggregate_options  list  The array of dict objects.
       Return values:
          Success: SDB_OK  and  a cursor object of result
          Fail   : Others  and  None
       """
       container = []
       for option in aggregate_options :
-         bson = bson.BSON.encode( option )
-         container.append( bson )
+         bson_option = bson.BSON.encode( option )
+         container.append( bson_option )
 
       result = cursor()
       rc = sdbcl.aggregate(self._cl, result._cursor, container)
@@ -639,7 +639,7 @@ class collection(object):
 
       Parameters:
               Name            Type  Info:
-         [in] subcl_full_name str   The array of bson objects.
+         [in] subcl_full_name str   The name fo the subcollection.
          [in] options         dict  he low boudary and up boudary
                                     eg: {"LowBound":{a:1},"UpBound":{a:100}}
       Return values:
@@ -663,7 +663,7 @@ class collection(object):
 
       Parameters:
               Name            Type  Info:
-         [in] subcl_full_name str   The array of bson objects.
+         [in] subcl_full_name str   The name fo the subcollection.
       Return values:
          Success: SDB_OK
          Fail   : Others

@@ -30,7 +30,7 @@ from pysequoiadb import common
 from pysequoiadb.error import SequoiaDBError
 
 class replicagroup(object):
-   """Entrance of SequoiaDB
+   """Replica group of SequoiaDB
 
    """
    def __init__(self, client):
@@ -239,8 +239,9 @@ class replicagroup(object):
          raise TypeError("service name must be an instance of basestring")
 
       if None != config:
-         pybson = bson.BSON.encode(config)
-         rc = sdbreplicagroup.remove_node(self._group, hostname, servicename, pybson)
+         bson_config = bson.BSON.encode(config)
+         rc = sdbreplicagroup.remove_node(self._group, hostname, servicename,
+                                                                 bson_config)
       else:
          rc = sdbreplicagroup.remove_node(self._group, hostname, servicename)
       pysequoiadb.check_error(rc)
@@ -297,57 +298,3 @@ class replicagroup(object):
       pysequoiadb.check_error(rc)
 
       return rc, iscatalog
-
-
-   if '__main__' == __name__:
-    from pysequoiadb.client import client
-    from pysequoiadb import common
-    sdb = client("192.168.30.61")
-    rc,group = sdb.creat_replica_group('newgroup')
-    if -153 == rc:
-        rc,group = sdb.get_replica_group_by_name("newgroup")
-    if const.SDB_OK == rc:
-        rc = group.create_node('r520-3','11840','/data/disk3/sequoiadb/database/data/11840',
-                          {'numpagecleaners':'1','pagecleaninterval':'1000',})
-    if -157 != rc:
-        raise Exception("Test Failure")
-    rc = group.start()
-    if const.SDB_OK == rc:
-        rc,node  = group.get_master()
-        rc,nodename = node.get_nodename()
-        if (nodename != 'r520-3:11840'):
-            raise Exception("Test Failure")
-    if const.SDB_OK == rc:
-        rc,node = group.get_slave();
-        rc,nodename = node.get_nodename()
-        if (nodename != 'r520-3:11840'):
-            raise Exception("Test Failure")
-    if const.SDB_OK == rc:
-        rc,detail = group.get_detail()
-    #rc = group.get_nodenum(common.NODE_STATUS.ALL)
-    if const.SDB_OK == rc:
-       rc,iscatalog = group.is_catalog()
-    if const.SDB_OK == rc:
-        if iscatalog:
-            raise Exception("Test Failure")
-
-    rc = group.stop()
-    if const.SDB_OK != rc:
-        raise Exception("Test Failure")
-    rc,nodenum = group.get_nodenum(common.NODE_STATUS.INACTIVE)
-    if const.SDB_OK == rc:
-        if 1 != nodenum:
-            raise Exception("Test Failure")
-    rc,node = group.get_nodebyendpoint("r520-3", '11840')
-    if const.SDB_OK == rc:
-        rc,node = group.get_nodebyname("r520-3:11840")
-    if const.SDB_OK != rc:
-        raise Exception("Test Failure")
-    rc = group.remove_node("r520-3","11840")
-    if -204 != rc:
-        raise Exception("Test Failure")
-    rc = sdb.remove_replica_group("newgroup")
-    if const.SDB_OK != rc:
-        raise  Exception("Test Failure")
-
-
