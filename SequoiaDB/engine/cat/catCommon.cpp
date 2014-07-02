@@ -1338,9 +1338,15 @@ namespace engine
       // not exist
       if ( SDB_DMS_EOC == rc )
       {
+#if defined ( _DEBUG )
          BSONObj obj = BSON( FIELD_NAME_BUCKETID << bucketID <<
                              FIELD_NAME_NAME << pCLName <<
                              FIELD_NAME_VERSION << version ) ;
+#else
+         BSONObj obj = BSON( FIELD_NAME_BUCKETID << bucketID <<
+                             FIELD_NAME_VERSION << version ) ;
+#endif // _DEBUG
+
          rc = rtnInsert( CAT_HISTORY_COLLECTION, obj, 1, 0, cb, dmsCB,
                          dpsCB, w ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to insert record[%s] to "
@@ -1358,10 +1364,15 @@ namespace engine
          // update
          else
          {
+#if defined ( _DEBUG )
             BSONObj updator = BSON( "$set" << BSON( FIELD_NAME_VERSION <<
                                                     version <<
                                                     FIELD_NAME_NAME <<
                                                     pCLName ) ) ;
+#else
+            BSONObj updator = BSON( "$set" << BSON( FIELD_NAME_VERSION <<
+                                                    version ) ) ;
+#endif // _DEBUG
             rc = rtnUpdate( CAT_HISTORY_COLLECTION, mather, updator,
                             BSONObj(), 0, cb, dmsCB, dpsCB, w, NULL ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to update record[%s] to "
