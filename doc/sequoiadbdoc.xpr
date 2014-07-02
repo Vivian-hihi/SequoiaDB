@@ -744,6 +744,7 @@
                     <file name="references/methods/cancelTask_en.dita"/>
                     <file name="references/methods/cancelTask.dita"/>
                     <file name="references/methods/topics/ccalter.dita"/>
+                    <file name="references/methods/topics/cclose.dita"/>
                     <file name="references/methods/topics/ccurrent_en.dita"/>
                     <file name="references/methods/topics/ccurrent.dita"/>
                     <file name="references/methods/topics/climit_en.dita"/>
@@ -926,6 +927,7 @@
                     <file name="references/methods/topics_en_v2/cs.createCL.dita"/>
                     <file name="references/methods/topics_en_v2/cs.dropCL.dita"/>
                     <file name="references/methods/topics_en_v2/cs.getCL.dita"/>
+                    <file name="references/methods/topics_en_v2/cursor.close.dita"/>
                     <file name="references/methods/topics_en_v2/cursor.current.dita"/>
                     <file name="references/methods/topics_en_v2/cursor.explain.dita"/>
                     <file name="references/methods/topics_en_v2/cursor.hint.dita"/>

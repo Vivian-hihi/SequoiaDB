@@ -61,6 +61,7 @@
      <topicref href="topics/dbupdate.dita"/>
      <topicref href="topics/upsert.dita"/>
      
+     <topicref href="topics/cclose.dita"/>
      <topicref href="topics/ccurrent.dita"/>
      <topicref href="topics/explain.dita"/>
      <topicref href="topics/hint.dita"/>
