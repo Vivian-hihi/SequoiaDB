@@ -393,7 +393,7 @@ namespace engine
                   if ( rcTmp )
                   {
                      rc = rcTmp ;
-                     PD_LOG ( PDERROR, "failed to delete on data node"
+                     PD_LOG ( PDERROR, "Failed to update on data node"
                               "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
                               pReply->header.routeID.columns.groupID,
                               pReply->header.routeID.columns.nodeID,
