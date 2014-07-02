@@ -16,11 +16,11 @@
           <p>使用游标取出一条记录</p>
           <p><codeblock>cur.next()</codeblock></p>
           <p><codeblock>{
-							  "_id": {
-							    "$oid": "53b3c2d7bb65d2f74c000000"
-							  },
-							  "a": 0
-							}</codeblock></p>
+  "_id": {
+  "$oid": "53b3c2d7bb65d2f74c000000"
+  },
+  "a": 0
+}</codeblock></p>
           <p>关闭游标</p>
           <p><codeblock>cur.close()</codeblock></p>
           <p>再次获取下一条记录</p>
