@@ -7,16 +7,16 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.listProcedures()"/>
-<meta name="description" content="db.listProcedures([cond]) 枚举所有的存储过程函数。 参数描述 参数名 参数类型 描述 是否必填 cond json 条件为空时，枚举所有的函数，不为空时，枚举符合条件函数。 是 listProcedures()方法的定义，只有一个json对象类型的参数名cond，输入值时返回符合指定值的函数，否则的话返回所有的函数。 示例 返回所有的函数信息 &gt;db ..."/>
+<meta name="DC.Title" content="cursor.close()"/>
+<meta name="description" content="cursor.close() 关闭当前游标，当前游标不再可用。 示例 插入10条记录 for(i = 0; i &lt; 10; i++) { db.foo.bar.insert({a:i}) } 查询集合foo.bar的所有记录 var cur = db.foo.bar.find() 使用游标取出一条记录 cur.next() { &#34;_id&#34;: { &#34;$oid&#34;: ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
-<meta name="DC.Relation" scheme="URI" content="removeProcedure.html"/>
-<meta name="DC.Relation" scheme="URI" content="eval.html"/>
+<meta name="DC.Relation" scheme="URI" content="next.html"/>
+<meta name="DC.Relation" scheme="URI" content="current.html"/>
 <meta name="DC.Format" content="XHTML"/>
-<meta name="DC.Identifier" content="topic_y4l_dpw_ql"/>
+<meta name="DC.Identifier" content="topic_fqt_1hb_q4"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.listProcedures()</title>
+<title>cursor.close()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -30,69 +30,56 @@
         }
     }
 //--></script></head>
-<body onload="highlightSearchTerm()" id="topic_y4l_dpw_ql"><a name="topic_y4l_dpw_ql"><!-- --></a>
+<body onload="highlightSearchTerm()" id="topic_fqt_1hb_q4"><a name="topic_fqt_1hb_q4"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法">SequoiaDB JavaScript方法</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.listProcedures()</h1>
+  <h1 class="title topictitle1">cursor.close()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.listProcedures([cond])</h2>
-      <p class="p">枚举所有的存储过程函数。</p>
-
-    </div>
-
-    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
-      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d106898e26" class="stentry">参数名</th>
-
-          <th valign="bottom" align="left" id="d106898e29" class="stentry">参数类型</th>
-
-          <th valign="bottom" align="left" id="d106898e32" class="stentry">描述</th>
-
-          <th valign="bottom" align="left" id="d106898e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d106898e26" class="stentry">cond</td>
-
-          <td valign="top" headers="d106898e29" class="stentry">json</td>
-
-          <td valign="top" headers="d106898e32" class="stentry">条件为空时，枚举所有的函数，不为空时，枚举符合条件函数。</td>
-
-          <td valign="top" headers="d106898e35" class="stentry">是</td>
-
-        </tr>
-</table>
-
-      <p class="p">listProcedures()方法的定义，只有一个json对象类型的参数名cond，输入值时返回符合指定值的函数，否则的话返回所有的函数。</p>
+    <div class="section"><h2 class="title sectiontitle">cursor.close()</h2>
+      <p class="p">关闭当前游标，当前游标不再可用。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
         <li class="li">
-          <p class="p">返回所有的函数信息</p>
+          <p class="p">插入10条记录</p>
 
-          <pre class="pre codeblock">&gt;db.listProcedures()
-{ "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
-    return x + y;
-}", "funcType" : 0 }
-{ "_id" : { "$oid" : "52480d3ef5ce8d5817c4c354" }, "name" : "getAll", "func" : "function getAll() {
-    return db.foo.bar.find();
-}", "funcType" : 0 }
-...</pre>
+          <div class="p"><pre class="pre codeblock">for(i = 0; i &lt; 10; i++) { db.foo.bar.insert({a:i}) }</pre>
+</div>
 
-        </li>
+          <p class="p">查询集合foo.bar的所有记录</p>
 
-        <li class="li">
-          <p class="p">指定返回函数名为sum的记录</p>
+          <div class="p"><pre class="pre codeblock">var cur = db.foo.bar.find()</pre>
+</div>
 
-          <pre class="pre codeblock">&gt;db.listProcedures({name:"sum"})
-{ "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
-    return x + y;
-}", "funcType" : 0 }</pre>
+          <p class="p">使用游标取出一条记录</p>
+
+          <div class="p"><pre class="pre codeblock">cur.next()</pre>
+</div>
+
+          <div class="p"><pre class="pre codeblock">{
+							  "_id": {
+							    "$oid": "53b3c2d7bb65d2f74c000000"
+							  },
+							  "a": 0
+							}</pre>
+</div>
+
+          <p class="p">关闭游标</p>
+
+          <div class="p"><pre class="pre codeblock">cur.close()</pre>
+</div>
+
+          <p class="p">再次获取下一条记录</p>
+
+          <div class="p"><pre class="pre codeblock">cur.next()</pre>
+</div>
+
+          <p class="p">无结果返回</p>
 
         </li>
 
@@ -103,8 +90,8 @@
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="removeProcedure.html" title="removeProcedure.html">removeProcedure.html</a></div>
-<div><a class="navheader_parent_path" href="eval.html" title="db.eval()">db.eval()</a></div>
+<div><a class="navheader_parent_path" href="next.html" title="cursor.next()">cursor.next()</a></div>
+<div><a class="navheader_parent_path" href="current.html" title="cursor.current()">cursor.current()</a></div>
 </div>
 </div>
 <div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  <script type="text/javascript"><!--         
