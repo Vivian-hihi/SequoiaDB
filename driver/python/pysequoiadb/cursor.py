@@ -114,7 +114,7 @@ if __name__ == '__main__':
         if const.SDB_OK != rc:
             raise Exception("Test Failure")
     for i in range(1000):
-        rc = cl.insert({'id':i})
+        rc, oid = cl.insert({'id':i})
         if const.SDB_OK != rc:
             raise Exception("Test Failure")
     import sdbcl

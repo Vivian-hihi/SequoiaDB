@@ -20,6 +20,8 @@ try:
 except ImportError:
    raise Exception("cannot find C module file: sdbcl")
 
+import copy
+
 import bson
 from bson.objectid import ObjectId
 import pysequoiadb
@@ -266,14 +268,12 @@ class collection(object):
 
       return rc
 
-   def insert(self, record, oid = None):
+   def insert(self, record):
       """Insert a record into current collection.
 
       Parameters:
               Name      Type           Info:
          [in] records   dict           The inserted record.
-        [out] oid       bson.ObjectId  The object id of inserted bson object in
-                                       current collection.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -284,10 +284,14 @@ class collection(object):
          raise TypeError("oid must be an instance of bson.ObjectId")
 
       bson_record = bson.BSON.encode(record)
-      rc = sdbcl.insert(self._cl, bson_record, oid)
+      rc, id_str = sdbcl.insert(self._cl, bson_record)
       pysequoiadb.check_error(rc)
+      if const.SDB_OK != rc:
+         id_str = None
 
-      return rc
+      oid = bson.ObjectId(id_str)
+
+      return rc, oid
 
    def update(self, rule, condition = static_object, hint = static_object):
       """Update the matching documents in current collection.
@@ -482,7 +486,7 @@ class collection(object):
          raise TypeError("index name must be an instance of basestring")
 
       result = cursor()
-      rc = sdbcl.get_indexes(self._cl, result._cursor, idx_name)
+      rc = sdbcl.get_index(self._cl, result._cursor, idx_name)
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:

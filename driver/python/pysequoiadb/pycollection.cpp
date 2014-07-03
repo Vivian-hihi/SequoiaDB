@@ -16,6 +16,7 @@
 
 *******************************************************************************/
 #include "util.hpp"
+#include "ossUtil.hpp"
 #include "client.hpp"
 
 using namespace sdbclient ;
@@ -241,23 +242,18 @@ static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
    PYOBJECT *bson_object       = NULL ;
-   PYOBJECT *oid_object        = NULL ;
    sdbCollection *cl           = NULL ;
    const bson::BSONObj *object = NULL ;
-   bson::OID *id = NULL ;
-   if ( !PARSE_PYTHON_ARGS( args, "OOO", &obj, &bson_object, &oid_object ) )
+   bson::OID id ;
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_object ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
-   if ( Py_None != oid_object )
-   {
-      CAST_PYOBJECT_TO_COBJECT( oid_object, bson::OID, id ) ;
-   }
    CAST_PYBSON_TO_CPPBSON( bson_object, object ) ;
-   rc = cl->insert( *object, id ) ;
+   rc = cl->insert( *object, &id ) ;
    if ( rc )
    {
       goto done ;
@@ -265,7 +261,7 @@ static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
 
 done:
    DELETE_CPPOBJECT( object ) ;
-   return MAKE_RETURN_INT( rc ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, id.toString().c_str() ) ;
 }
 
 static PYOBJECT *update( PYOBJECT *self, PYOBJECT *args )
@@ -472,10 +468,11 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
 
-   if ( "" == index_name )
+   if ( 0 == ossStrncmp("", index_name, ossStrlen(index_name) ) )
    {
       index_name = NULL ;
    }
+
    rc = cl->getIndexes( *cursor, index_name ) ;
    if ( rc )
    {

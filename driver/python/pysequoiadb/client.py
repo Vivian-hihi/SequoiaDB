@@ -326,7 +326,7 @@ class client(object):
          bson_condition = bson.BSON.encode(condition)
       if selector is not None:
          bson_selector = bson.BSON.encode(selector)
-      if condition is not None:
+      if order_by is not None:
          bson_order_by = bson.BSON.encode(order_by)
 
       result = cursor()
@@ -403,7 +403,7 @@ class client(object):
          bson_condition = bson.BSON.encode(condition)
       if selector is not None:
          bson_selector = bson.BSON.encode(selector)
-      if condition is not None:
+      if order_by is not None:
          bson_order_by = bson.BSON.encode(order_by)
 
       result = cursor()
@@ -625,7 +625,7 @@ class client(object):
 
       return rc, result
 
-   def creat_replica_group(self, group_name):
+   def create_replica_group(self, group_name):
       """Create the specified replica group.
 
       Parameters:
@@ -952,7 +952,7 @@ class client(object):
          bson_condition = bson.BSON.encode(condition)
       if selector is not None:
          bson_selector = bson.BSON.encode(selector)
-      if condition is not None:
+      if order_by is not None:
          bson_order_by = bson.BSON.encode(order_by)
 
       result = cursor()
@@ -1027,7 +1027,7 @@ class client(object):
          bson_condition = bson.BSON.encode(condition)
       if selector is not None:
          bson_selector = bson.BSON.encode(selector)
-      if condition is not None:
+      if order_by is not None:
          bson_order_by = bson.BSON.encode(order_by)
       if hint is not None:
          bson_hint = bson.BSON.encode(hint)
