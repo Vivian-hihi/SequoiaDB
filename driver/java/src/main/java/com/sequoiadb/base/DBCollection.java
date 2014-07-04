@@ -865,8 +865,7 @@ public class DBCollection {
 	}
 	
 	/**
-	 * @fn BSONObject queryOne(BSONObject matcher, BSONObject selector, BSONObject
-	 *     orderBy, BSONObject hint, int flag)
+	 * @fn BSONObject queryOne()
 	 * @brief Returns one document from current collection.
 	 * @return the document or null if no any document in current collection
 	 * @exception com.sequoiadb.exception.BaseException

@@ -227,7 +227,7 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn Sequoiadb(List<String> connStrings, String username, String password,
-	 *               ConfigOptions options)
+	 *	             ConfigOptions options)
 	 * @brief Constructor, use a random valid address to connect to database.
 	 * @param connStrings The array of the coord's address
 	 * @param username the user's name of the account
@@ -311,7 +311,8 @@ System.out.println("count is: " + count);
 	}
 
 	/**
-	 * @fn Sequoiadb(String addr, int port, String username, String password)
+	 * @fn Sequoiadb(String addr, int port, String username,
+	 *               String password, ConfigOptions options)
 	 * @brief Constructor.
 	 * @param addr the address of coord
 	 * @param port the port of coord
@@ -515,7 +516,7 @@ System.out.println("count is: " + count);
 	}
 
 	/**
-	 * @fn CollectionSpace createCollectionSpace(String csName, BSONObj options)
+	 * @fn CollectionSpace createCollectionSpace(String csName, BSONObject options)
 	 * @brief Create collection space.
 	 * @param csName The name of the created collection space
 	 * @param options Contains configuration informations for create collection space. The options are as below:
@@ -704,10 +705,12 @@ System.out.println("count is: " + count);
      *<dt>Sequoiadb.SDB_LIST_SESSIONS        : Get all sessions list
      *<dt>Sequoiadb.SDB_LIST_SESSIONS_CURRENT        : Get the current session
      *<dt>Sequoiadb.SDB_LIST_COLLECTIONS        : Get all collections list
-     *<dt>Sequoiadb.SDB_LIST_COLLECTIONSPACES        : Get all collecion spaces list
+     *<dt>Sequoiadb.SDB_LIST_COLLECTIONSPACES        : Get all collection spaces list
      *<dt>Sequoiadb.SDB_LIST_STORAGEUNITS        : Get storage units list
      *<dt>Sequoiadb.SDB_LIST_GROUPS        : Get replica group list ( only applicable in sharding env )
      *<dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
+     *<dt>Sequoiadb.SDB_LIST_DOMAINS        : Get all the domains list ( only applicable in sharding env )
+     *<dt>Sequoiadb.SDB_LIST_TASKS        : Get all the running split tasks ( only applicable in sharding env )
      *</dl>
      * @param query The matching rule, match all the documents if null.
      * @param selector The selective rule, return the whole document if null.
@@ -1913,37 +1916,69 @@ System.out.println("count is: " + count);
 		}
 	}
 	
+	/**
+	 * @class SptEvalResult
+	 * @brief Class for executing stored procedure result. 
+	 */
 	public static class SptEvalResult {
 		private SptReturnType returnType;
 		private BSONObject errmsg;
 		private DBCursor cursor;
 		
+		/**
+		 * @fn SptEvalResult ()
+	     * @brief Constructor.
+		 */
 		public SptEvalResult(){
 			returnType = null;
 			errmsg = null;
 			cursor = null;
 		}
 		
+		/**
+		 * @fn setReturnType ()
+	     * @brief Set return type.
+		 */
 		public void setReturnType(SptReturnType returnType){
 			this.returnType = returnType;  
 		}
 		
+		/**
+		 * @fn SptReturnType getReturnType ()
+	     * @brief Get return type.
+		 */
 		public SptReturnType getReturnType(){
 			return returnType;
 		}
 		
+		/**
+		 * @fn setErrMsg ()
+	     * @brief Set error type.
+		 */
 		public void setErrMsg(BSONObject errmsg){
 			this.errmsg = errmsg;
 		}
 		
+		/**
+		 * @fn BSONObject getErrMsg ()
+	     * @brief Get error type.
+		 */
 		public BSONObject getErrMsg(){
 			return errmsg;
 		}
 		
+		/**
+		 * @fn setCursor ()
+	     * @brief Set result cursor.
+		 */
 		public void setCursor(DBCursor cursor){
 			this.cursor = cursor;
 		}
 		
+		/**
+		 * @fn DBCursor getCursor ()
+	     * @brief Get result cursor.
+		 */
 		public DBCursor getCursor(){
 			return cursor;
 		}
