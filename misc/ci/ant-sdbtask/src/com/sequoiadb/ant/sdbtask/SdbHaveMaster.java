@@ -175,7 +175,7 @@ public class SdbHaveMaster extends Task {
 		if(failonerror){
 			throw new BuildException("is not primary");
 		}else{
-			log("is not primary");
+			System.out.println("is not primary");
 		}
 	}
 
