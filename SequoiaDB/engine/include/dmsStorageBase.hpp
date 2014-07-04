@@ -230,7 +230,7 @@ namespace engine
          INT32 removeStorage() ;
          BOOLEAN isOpened() const { return ossMmapFile::_opened ; }
          virtual void  syncMemToMmap () {}
-         void  flushDirtySegments () ;
+         void  flushDirtySegments ( UINT32 *pNum = NULL ) ;
 
       private:
          virtual UINT64 _dataOffset()  = 0 ;

@@ -86,6 +86,7 @@ namespace engine
       pmdEDUEvent event ;
       SDB_ASSERT ( krcb && eduMgr && dmsCB && cb,
                    "All control blocks can't be NULL" ) ;
+
       while ( !PMD_IS_DB_DOWN && !cb->isForced() )
       {
          // set EDU to wait status
@@ -132,6 +133,7 @@ namespace engine
                      "Failed to join su ( %d ) back to history list, rc = %d",
                      cleanSUID, rc ) ;
          }
+         cb->incEventCount() ;
       }
       PD_TRACE_EXITRC ( SDB_RTNPAGECLEANERJOB_DOIT, rc ) ;
       return rc ;

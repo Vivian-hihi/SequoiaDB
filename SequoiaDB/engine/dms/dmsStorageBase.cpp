@@ -864,10 +864,11 @@ namespace engine
    // flush all dirty segments to disk by traverse _dirtyList array
    // this function returns void since it doesn't affect frontend workload
    // regardless whether the flush success or not
-   void _dmsStorageBase::flushDirtySegments ()
+   void _dmsStorageBase::flushDirtySegments ( UINT32 *pNum )
    {
       INT32 rc = SDB_OK ;
       INT32 maxSegmentID = 0 ;
+      UINT32 numbers = 0 ;
       // once we latch the storage unit, we have to check if the header is null.
       // If the header is null, that means closeStorage is called and we should
       // get out of the function
@@ -890,7 +891,7 @@ namespace engine
          // the storage unit is still open at the time
          if ( !_dmsHeader )
             goto done ;
-         rc = flush ( i ) ;
+         rc = flush ( i, TRUE ) ;
          if ( rc )
          {
             PD_LOG ( PDWARNING,
@@ -915,7 +916,7 @@ namespace engine
                // if the segment on j's bit is dirty, let's flush
                if ( OSS_BIT_TEST ( _dirtyList[i], ( 1 << j ) ) )
                {
-                  rc = flush ( _dataSegID + (i<<3) + j ) ;
+                  rc = flush ( _dataSegID + (i<<3) + j, TRUE ) ;
                   if ( rc )
                   {
                      PD_LOG ( PDWARNING,
@@ -924,11 +925,16 @@ namespace engine
                   }
                   // now let's convert the bit back to 0
                   OSS_BIT_CLEAR ( _dirtyList[i], ( 1 << j ) ) ;
+                  ++numbers ;
                } // if ( _dirtyList[i] & ( 1 << j ) )
             } // for ( INT32 j = 0; j < 8; ++j )
          } // if ( _dirtyList[i] != 0 )
       } // for ( INT32 i = 0; i < maxSegmentNum; ++i )
    done :
+      if ( pNum )
+      {
+         *pNum = numbers ;
+      }
       return ;
    }
 

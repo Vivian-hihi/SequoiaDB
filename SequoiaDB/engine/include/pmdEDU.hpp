@@ -154,7 +154,10 @@ namespace engine
       CHAR*       getUncompressBuff( INT32 len ) ;
       INT32       getUncompressBuffLen() const { return _uncompressBuffLen ; }
 
-      void        incEventCount() { ++_processEventCount ; }
+      void        incEventCount( UINT32 step = 1 )
+      {
+         _processEventCount += step ;
+      }
 
       void        interrupt () ;
       void        disconnect () ;
