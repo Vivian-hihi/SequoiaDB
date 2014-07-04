@@ -123,78 +123,64 @@ public class SdbHaveMaster extends Task {
 		return false; 
 	}
 	
-	public void execute ()
-	{
+	public void execute (){
 		Sequoiadb sdb = null;
 		boolean isError = false;
+		BaseException errorSdb = null;
 		try{
 			sdb = new Sequoiadb( this.hostName , Integer.parseInt( this.port ) , "" ,"") ;
 		}catch( BaseException e ){
 			if( failonerror ){
 				throw e;
 			}
+			errorSdb = e;
 			isError = true;
 		}
 		if( !isError ){
-					ReplicaGroup RG = null ;
-		int i = 0 ;
-		int times = Integer.parseInt( this.waitTime ) ;
-		for(; i < times ; ++i )
-		{
-			try{
-				if( ! this.groupName.equals("1") )
-					RG = sdb.getReplicaGroup( this.groupName ) ;
-				else
-					RG = sdb.getReplicaGroup(1) ;
-				if( RG != null )
-					break;
-			}catch( BaseException e ){ 
-				try {
-					if( e.getErrorCode() == ERROR_STANTALONG )
-						this.getProject().setProperty( this.propertyName , "true" ) ;
-				   Thread.sleep(1000) ;
-			    } catch (InterruptedException e1) {
-				   // TODO Auto-generated catch block
-				   e1.printStackTrace();
-			    }
-			}
-		}
-		
-		
-		for(; i < times ; ++i )
-		{
-			if( false == checkMaster( RG , sdb ) )
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			ReplicaGroup RG = null ;
+			int i = 0 ;
+			int times = Integer.parseInt( this.waitTime ) ;
+			for(; i < times ; ++i ){
+				try{
+					if( ! this.groupName.equals("1") )
+						RG = sdb.getReplicaGroup( this.groupName ) ;
+					else
+						RG = sdb.getReplicaGroup(1) ;
+					if( RG != null )
+						break;
+				}catch( BaseException e ){ 
+					try {
+						if( e.getErrorCode() == ERROR_STANTALONG )
+							this.getProject().setProperty( this.propertyName , "true" ) ;
+					   Thread.sleep(1000) ;
+				    } catch (InterruptedException e1) {
+					   // TODO Auto-generated catch block
+					   e1.printStackTrace();
+				    }
 				}
-			else
-			{	
-				System.out.println("is primary");
-				this.getProject().setProperty( this.propertyName , "true" ) ;
-				break ;
 			}
-		}
-		if( ! (i < times) ){
-			System.out.println("is not primary");
+		
+			for(; i < times ; ++i ){
+				if( false == checkMaster( RG , sdb ) )
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}else{	
+						System.out.println("is primary");
+						this.getProject().setProperty( this.propertyName , "true" ) ;
+						break ;
+					}
+			}
+		
+			if( ! (i < times) ){
+				System.out.println("is not primary");
+				this.getProject().setProperty( this.propertyName , "false" ) ;
+			}
+		}else{
+			errorSdb.printStackTrace();
 			this.getProject().setProperty( this.propertyName , "false" ) ;
 		}
-		}else{
-			System.out.println("e");
-			this.getProject().setProperty( this.propertyName , "false" ) ;
-		
-		}
-
-
-		
-/*
-		if(failonerror){
-			throw new BuildException("is not primary");
-		}else{
-			System.out.println("is not primary");
-		}*/
 	}
-
+	
 }
