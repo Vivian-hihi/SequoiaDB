@@ -19,9 +19,25 @@
    and user should deal with it according the meaning of error code printed.
 
    @author : SequoiaDB Ltd
-   @license: see Apache License, Version 2.0
+   @license: See Apache License, Version 2.0
    @see    : http://www.sequoiadb.com
    @version: 1.8
+
+   @notice : The dict of built-in Python is hashed and non-ordered. so the
+             element in dict may not the order we make it. we make a dict and
+             print it like this:
+             ...
+             >>> a = {"avg_age":24, "major":"computer science"}
+             >>> a
+             >>> {'major': 'computer science', 'avg_age': 24}
+             ...
+             the elements order print is not we make it!!
+             therefore, we use bson.SON to make the order-sensitive dict if the
+             order is important such as operations in "$sort", "$group",
+             "split_by_condition", "aggregate","create_collection"...
+             In every scene which the order is important when make dict, please
+             make it using bson.SON and list. It is a subclass of built-in dict
+             and order-sensitive
 """
 
 default_host = "localhost"

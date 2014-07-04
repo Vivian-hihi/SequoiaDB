@@ -14,6 +14,7 @@
 
 """Module of client for python driver of SequoiaDB
 """
+import socket
 
 try:
    import sdbclient
@@ -81,8 +82,11 @@ class client(object):
       rc = sdbclient.init_connect(self._client, self.__host,
                                                  _port, _user, _psw)
       if const.SDB_OK != rc:
+         pysequoiadb.cout("Attempt to connect to host:[%s], port:[%d],\
+                           user:[%s], password:[%s] failed."\
+                           % (self.__host, _port, _user, _psw))
+         pysequoiadb.cout("Error: %s", pysequoiadb.getErr(rc))
          sdbclient.disconnect(self._client)
-         pysequoiadb.check_error(rc)
 
    def __del__(self):
       """release resource when del called.
@@ -131,6 +135,73 @@ class client(object):
             cs = None
 
          return cs
+
+   def connect_to(self, hosts, policy = "random"):
+      """try to connect to database util connect success.
+
+      Parameters:
+              Name    Type    Info:
+         [in] hosts   list    The list contains hosts.
+                              eg.
+                              [ {'host':'localhost', 'port':11810, 'user':'root1', 'password':'admin1'},
+                                {'host':'192.168.10.30', 'port':11810, 'user':'root2', 'password':'admin2'},
+                                {'host':'192.168.20.63', 'port':11810, 'user':'root3', 'password':'admin3'},
+                              ]
+         [in] policy   str    The policy of select hosts. 'random' or 'one_by_one'
+      Return values:
+         Success: SDB_OK
+         Fail   : Others
+      """
+
+      if not isinstance(hosts, list):
+         raise TypeError("hosts must be an instance of list")
+      if not isinstance(policy, str):
+         raise TypeError("policy must be an instance of str")
+
+      if hosts.count() == 0:
+         pysequoiadb.cout("hosts must hava 1 item at least")
+         return const.INVALIDARG
+
+      local = socket.gethostname
+      localip = socket.gethostbyname(local)
+
+      for ip in hosts:
+         if ( "localhost" in ip.values() or
+              local in ip.values() or
+              localip in ip.values() ):
+
+            host = ip['host']
+            port = ip['port']
+            user = ip['user']
+            psw  = ip['psw']
+            rc = self.connect_by_host(host, port, user, psw)
+            if const.SDB_OK == rc:
+               pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
+                                 % (host, port))
+            return rc
+
+      size = hosts.count()
+      if 0 == cmp("random", policy):
+         begin = random(0, size)
+      elif 0 == cmp("one_by_one", policy):
+         begin = 0;
+
+      count = 0
+      while count < size:
+         ip = hosts[begin]
+         host = ip['host']
+         port = ip['port']
+         user = ip['user']
+         psw  = ip['psw']
+
+         rc = self.connect_by_host(host, port, user, psw)
+         if const.SDB_OK == rc:
+            pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
+                              % (host, port))
+            return rc
+         begin += 1
+
+      return rc
    
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
@@ -292,14 +363,14 @@ class client(object):
       """Get the snapshots of specified type.
 
       Parameters:
-              Name         Type     Info:
-         [in] snap_typr    str      The type of snapshot, see Info as below
-         [in] condition    dict     The matching rule, match all the documents
-                                    if not provided.
-         [in] selector     dict     The selective rule, return the whole
-                                    document if not provided.
-         [in] order_by     dict     The ordered rule, result set is unordered
-                                    if not provided.
+              Name         Type  Info:
+         [in] snap_typr    str   The type of snapshot, see Info as below
+         [in] condition    dict  The matching rule, match all the documents
+                                 if not provided.
+         [in] selector     dict  The selective rule, return the whole
+                                 document if not provided.
+         [in] order_by     dict  The ordered rule, result set is unordered
+                                 if not provided.
       Return values:
          Success: SDB_OK       and  a cursor object of query
          Fail   : Others  and  None
@@ -321,7 +392,7 @@ class client(object):
       bson_condition = None
       bson_selector = None
       bson_order_by = None
-
+      
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
       if selector is not None:
@@ -917,22 +988,22 @@ class client(object):
       """List the backups.
 
       Parameters:
-              Name      Type  Info:
-         [in] options   dict  Contains configuration infomations for remove
-                              backups, list all the backups in the default
-                              backup path if None. 
-                              The "options" contains 3 options as below. 
-                              All the elements in options are optional. 
-                              eg:
-                              { "GroupName":["rgame1", "rgName2"], 
-                                "Path":"/opt/sequoiadb/backup",
-                                "Name":"backupName" }
-                              See Info as below.
-         [in] condition dict  The matching rule, return all the documents
-                              if None.
-         [in] selector  dict  The selective rule, return the whole document
-                              if None.
-         [in] order_by  dict  The ordered rule, never sort if None.
+              Name      Type     Info:
+         [in] options   dict     Contains configuration infomations for remove
+                                 backups, list all the backups in the default
+                                 backup path if None. 
+                                 The "options" contains 3 options as below. 
+                                 All the elements in options are optional. 
+                                 eg:
+                                 { "GroupName":["rgame1", "rgName2"], 
+                                   "Path":"/opt/sequoiadb/backup",
+                                   "Name":"backupName" }
+                                 See Info as below.
+         [in] condition dict     The matching rule, return all the documents
+                                 if None.
+         [in] selector  dict     The selective rule, return the whole document
+                                 if None.
+         [in] order_by  dict     The ordered rule, never sort if None.
       Return values:
          Success: SDB_OK  and  a cursor object of backup list
          Fail   : Others  and  None
@@ -943,6 +1014,7 @@ class client(object):
                         configuration file.
          Name        :  Assign the backups with specifed name to be list.
       """
+
       bson_condition = None
       bson_selector = None
       bson_order_by = None
@@ -1012,6 +1084,11 @@ class client(object):
          [in] selector     dict     The selective rule, return the whole
                                     document if None.
          [in] order_by     dict     The ordered rule, never sort if None.
+                                    bson.SON may need if it is order-sensitive.
+                                    eg.
+                                    bson.SON([("name",-1), ("age":1)]) it will
+                                    be ordered descending by 'name' first, and
+                                    be ordered ascending by 'age'
          [in] hint         dict     The hint, automatically match the optimal
                                     hint if None.
       Return values:

@@ -20,8 +20,6 @@ try:
 except ImportError:
    raise Exception("cannot find C module file: sdbcl")
 
-import copy
-
 import bson
 from bson.objectid import ObjectId
 import pysequoiadb
@@ -92,23 +90,24 @@ class collection(object):
          replica group by range.
 
       Parameters:
-              Name                  Type  Info:
-         [in] source_group_name     str   The source replica group name.
-         [in] target_group_name     str   The target replica group name.
-         [in] split_condition       dict  The matching rule, return the count of
-                                          all documents if None.
-         [in] split_end_condition   dict  The split end condition or None.
-                                          eg:
-                                          If we create a collection with the 
-                                          option { ShardingKey:{"age":1},
-                                          ShardingType:"Hash",Partition:2^10 },
-                                          we can fill {age:30} as the
-                                          splitCondition, and fill {age:60} 
-                                          as the splitEndCondition. when split,
-                                          the target replica group will get the
-                                          records whose age's hash value are in
-                                          [30,60). If splitEndCondition is null,
-                                          they are in [30,max).
+              Name                  Type     Info:
+         [in] source_group_name     str      The source replica group name.
+         [in] target_group_name     str      The target replica group name.
+         [in] split_condition       dict     The matching rule, return the count
+                                             of all documents if None.
+         [in] split_end_condition   dict     The split end condition or None.
+                                             eg:
+                                             If we create a collection with the 
+                                             option { ShardingKey:{"age":1},
+                                             ShardingType:"Hash",Partition:2^10 },
+                                             we can fill {age:30} as the
+                                             splitCondition, and fill {age:60} 
+                                             as the splitEndCondition. when
+                                             split, the target replica group
+                                             will get the records whose age's
+                                             hash value are in [30,60).
+                                             If splitEndCondition is null, they
+                                             are in [30,max).
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -118,9 +117,11 @@ class collection(object):
       if not isinstance(target_group_name, basestring):
          raise TypeError("target group name must be an instance of basestring")
 
-      bson_split_condition = bson.BSON.encode(split_condition)
-      bson_end_condition = None
+      bson_split_condition = None
+      if bson_split_condition is not None:
+         bson_split_condition = bson.BSON.encode(split_condition)
 
+      bson_end_condition = None
       if split_end_condition is not None:
          bson_end_condition = bson.BSON.encode(split_end_condition)
 
@@ -132,7 +133,7 @@ class collection(object):
 
       return rc
 
-   def split_by_precent(self, source_group_name, target_group_name, precent):
+   def split_by_percent(self, source_group_name, target_group_name, percent):
       """Split the specified collection from source replica group to target
          replica group by percent.
       
@@ -140,7 +141,7 @@ class collection(object):
               Name               Type     Info:
          [in] source_group_name  str      The source replica group name.
          [in] target_group_name  str      The target replica group name.
-         [in]percent	            float    The split percent, Range:(0,100]
+         [in] percent	         float    The split percent, Range:(0,100]
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -149,11 +150,11 @@ class collection(object):
          raise TypeError("source group name must be an instance of basestring")
       if not isinstance(target_group_name, basestring):
          raise TypeError("target group name must be an instance of basestring")
-      if not isinstance(precent, float):
+      if not isinstance(percent, float):
          raise TypeError("precent must be an instance of float")
 
-      rc = sdbcl.split_by_precent(self._cl, source_group_name,
-                                            target_group_name, precent)
+      rc = sdbcl.split_by_percent(self._cl, source_group_name,
+                                            target_group_name, percent)
       pysequoiadb.check_error(rc)
 
       return rc
@@ -190,9 +191,11 @@ class collection(object):
       if not isinstance(target_group_name, basestring):
          raise TypeError("target group name must be an instance of basestring")
 
-      bson_split_condition = bson.BSON.encode(split_condition)
-      bson_end_condition = None
+      bson_split_condition = None
+      if bson_split_condition is not None:
+         bson_split_condition = bson.BSON.encode(split_condition)
 
+      bson_end_condition = None
       if split_end_condition is not None:
          bson_end_condition = bson.BSON.encode(split_end_condition)
 
@@ -208,8 +211,8 @@ class collection(object):
 
       return rc, task_id
 
-   def split_async_by_precent(self, source_group_name, target_group_name,
-                                                       precent):
+   def split_async_by_percent(self, source_group_name, target_group_name,
+                                                       percent):
       """Split the specified collection from source replica group to target
          replica group by percent.
       
@@ -217,7 +220,7 @@ class collection(object):
               Name               Type     Info:
          [in] source_group_name  str      The source replica group name.
          [in] target_group_name  str      The target replica group name.
-         [in]percent	            float    The split percent, Range:(0,100]
+         [in] percent	         float    The split percent, Range:(0,100]
       Return values:
          Success: SDB_OK  and  the task id
          Fail   : Others  and  0
@@ -226,11 +229,11 @@ class collection(object):
          raise TypeError("source group name must be an instance of basestring")
       if not isinstance(target_group_name, basestring):
          raise TypeError("target group name must be an instance of basestring")
-      if not isinstance(precent, float):
-         raise TypeError("precent must be an instance of float")
+      if not isinstance(percent, float):
+         raise TypeError("percent must be an instance of float")
 
-      rc, task_id = sdbcl.splite_async_by_precent(self._cl, source_group_name,
-                                                  target_group_name, precent)
+      rc, task_id = sdbcl.splite_async_by_percent(self._cl, source_group_name,
+                                                  target_group_name, percent)
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
@@ -280,8 +283,6 @@ class collection(object):
       """
       if not isinstance(record, dict):
          raise TypeError("record must be an instance of dict")
-      if oid is not None and not isinstance(oid, ObjectId):
-         raise TypeError("oid must be an instance of bson.ObjectId")
 
       bson_record = bson.BSON.encode(record)
       rc, id_str = sdbcl.insert(self._cl, bson_record)
@@ -290,7 +291,6 @@ class collection(object):
          id_str = None
 
       oid = bson.ObjectId(id_str)
-
       return rc, oid
 
    def update(self, rule, condition = static_object, hint = static_object):
@@ -389,22 +389,23 @@ class collection(object):
 
       Parameters:
               Name            Type  Info:
-         [in] condition       dict  The matching rule, update all the documents
-                                    if not provided.
-         [in] selected        dict  The selective rule, return the whole
-                                    document if not provided.
-         [in] order_by        dict  The ordered rule, result set is unordered
-                                    if not provided.
-         [in] hint            dict  The hint, automatically match the optimal
-                                    hint if not provided.
-         [in] num_to_skip     long  Skip the first numToSkip documents,
-                                    default is 0L.
-         [in] num_to_return   long  Only return numToReturn documents, default
-                                    is -1L for returning all results.
+         [in] condition       dict     The matching rule, update all the
+                                       documents if not provided.
+         [in] selected        dict     The selective rule, return the whole
+                                       document if not provided.
+         [in] order_by        dict     The ordered rule, result set is unordered
+                                       if not provided.
+         [in] hint            dict     The hint, automatically match the optimal
+                                       hint if not provided.
+         [in] num_to_skip     long     Skip the first numToSkip documents,
+                                       default is 0L.
+         [in] num_to_return   long     Only return numToReturn documents,
+                                       default is -1L for returning all results.
       Return values:
          Success: SDB_OK   and   a cursor object of query
          Fail   : Others   and   None
       """
+
       bson_condition = None
       bson_selected = None
       bson_order_by = None
@@ -568,10 +569,17 @@ class collection(object):
       Parameters:
               Name               Type  Info:
          [in] aggregate_options  list  The array of dict objects.
+                                       bson.SON may need if the element is
+                                       order-sensitive.
+                                       eg.
+                                       {'$sort':bson.SON([("name",-1), ("age":1)])}
+                                       it will be ordered descending by 'name'
+                                       first, and be ordered ascending by 'age'
       Return values:
          Success: SDB_OK  and  a cursor object of result
          Fail   : Others  and  None
       """
+
       container = []
       for option in aggregate_options :
          bson_option = bson.BSON.encode( option )
@@ -594,19 +602,21 @@ class collection(object):
       """Get the index blocks' or data blocks' infomations for concurrent query.
 
       Parameters:
-              Name            Type  Info:
-         [in] condition       dict  The matching rule, return the whole range of
-                                    index blocks if not provided.
-                                    eg:{"age":{"$gt":25},"age":{"$lt":75}}.
-         [in] order_by        dict  The ordered rule, result set is unordered
-                                    if not provided.
-         [in] hint            dict  One of the indexs in current collection,
-                                    using default index to query if not provided
-                                    eg:{"":"ageIndex"}.
-         [in] num_to_skip     long  Skip the first num_to_skip documents,
-                                    default is 0L.
-         [in] num_to_return   long  Only return num_to_return documents, default
-                                    is -1L for returning all results.
+              Name            Type     Info:
+         [in] condition       dict     The matching rule, return the whole range
+                                       of index blocks if not provided.
+                                       eg:{"age":{"$gt":25},"age":{"$lt":75}}.
+         [in] order_by        dict     The ordered rule, result set is unordered
+                                       if not provided.bson.SON may need if it is
+                                       order-sensitive.
+         [in] hint            dict     One of the indexs in current collection,
+                                       using default index to query if not
+                                       provided.
+                                       eg:{"":"ageIndex"}.
+         [in] num_to_skip     long     Skip the first num_to_skip documents,
+                                       default is 0L.
+         [in] num_to_return   long     Only return num_to_return documents,
+                                       default is -1L for returning all results.
       Return values:
          Success: SDB_OK   and   a cursor object of query
          Fail   : Others   and   None

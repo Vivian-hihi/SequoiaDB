@@ -115,17 +115,17 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-static PYOBJECT *split_by_precent( PYOBJECT *self, PYOBJECT *args )
+static PYOBJECT *split_by_percent( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
    const char *dst_name = NULL ;
    const char *src_name = NULL ;
    sdbCollection *cl    = NULL ;
-   FLOAT64 precent      = 0 ;
+   FLOAT64 percent      = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Ossd", &obj, &src_name, &dst_name,
-                                  &precent ) )
+                                  &percent ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -133,7 +133,7 @@ static PYOBJECT *split_by_precent( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
 
-   rc = cl->split( src_name, dst_name, precent ) ;
+   rc = cl->split( src_name, dst_name, percent ) ;
    if ( rc )
    {
       goto done ;
@@ -180,18 +180,18 @@ done:
    return MAKE_RETURN_INT_LONG( rc, task_id ) ;
 }
 
-static PYOBJECT *splite_async_by_precent( PYOBJECT *self, PYOBJECT *args )
+static PYOBJECT *splite_async_by_percent( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
    const char *src_name = NULL ;
    const char *dst_name = NULL ;
    sdbCollection *cl    = NULL ;
-   FLOAT64 precent      = 0 ;
+   FLOAT64 percent      = 0 ;
    SINT64 task_id       = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Ossd", &obj, &src_name, &dst_name,
-                                                &precent ) )
+                                                &percent ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -199,7 +199,7 @@ static PYOBJECT *splite_async_by_precent( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
 
-   rc = cl->splitAsync( src_name, dst_name, precent, task_id ) ;
+   rc = cl->splitAsync( src_name, dst_name, percent, task_id ) ;
    if ( rc )
    {
       goto done ;
@@ -703,9 +703,9 @@ static PyMethodDef sdbcollection_methods[] = {
    {"release_cl",                release_cl,                METH_VARARGS},
    {"get_count",                 get_count,                 METH_VARARGS},
    {"split_by_condition",        split_by_condition,        METH_VARARGS},
-   {"split_by_precent",          split_by_precent,          METH_VARARGS},
+   {"split_by_percent",          split_by_percent,          METH_VARARGS},
    {"split_async_by_condition",  split_async_by_condition,  METH_VARARGS},
-   {"splite_async_by_precent",   splite_async_by_precent,   METH_VARARGS},
+   {"splite_async_by_percent",   splite_async_by_percent,   METH_VARARGS},
    {"bulk_insert",               bulk_insert,               METH_VARARGS},
    {"insert",                    insert,                    METH_VARARGS},
    {"update",                    update,                    METH_VARARGS},
