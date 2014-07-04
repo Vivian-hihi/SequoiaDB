@@ -874,12 +874,8 @@ namespace bson {
            rest of the implementation of bson, not this part, fails to support
            big endian)
         */
-#if defined (SDB_BIG_ENDIAN)
-        static char p[] = { /*size*/0, 0, 0, 5, /*eoo*/0 };
-#else
-        static char p[] = { /*size*/5, 0, 0, 0, /*eoo*/0 };
-#endif
-        _objdata = p;
+        static int data[] = { /*size*/5, /*eoo*/0 } ;
+        _objdata = data ;
     }
 
     inline BSONObj BSONElement::Obj() const { return embeddedObjectUserCheck(); }
