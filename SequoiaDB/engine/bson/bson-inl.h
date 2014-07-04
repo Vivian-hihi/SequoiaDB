@@ -875,7 +875,7 @@ namespace bson {
            big endian)
         */
         static int data[] = { /*size*/5, /*eoo*/0 } ;
-        _objdata = data ;
+        _objdata = (const char*)&data[0] ;
     }
 
     inline BSONObj BSONElement::Obj() const { return embeddedObjectUserCheck(); }
