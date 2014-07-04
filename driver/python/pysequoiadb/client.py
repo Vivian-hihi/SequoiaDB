@@ -159,11 +159,11 @@ class client(object):
       if not isinstance(policy, str):
          raise TypeError("policy must be an instance of str")
 
-      if hosts.count() == 0:
-         pysequoiadb.cout("hosts must hava 1 item at least")
-         return const.INVALIDARG, -1
+      if len(hosts) == 0:
+         raise TypeError("hosts must hava at least 1 item")
+         #return const.INVALIDARG, -1
 
-      local = socket.gethostname
+      local = socket.gethostname()
       localip = socket.gethostbyname(local)
 
       count = 0
