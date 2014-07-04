@@ -151,18 +151,21 @@ class client(object):
       
       return localip
 
-   def connect_to_hosts(self, hosts, policy = "random"):
+   def connect_to_hosts(self, hosts, user = default_user,
+                              psw = default_psw, policy = "random"):
       """try to connect to hosts
 
       Parameters:
               Name    Type    Info:
          [in] hosts   list    The list contains hosts.
                               eg.
-                              [ {'host':'localhost', 'port':11810, 'user':'root1', 'password':'admin1'},
-                                {'host':'192.168.10.30', 'port':11810, 'user':'root2', 'password':'admin2'},
-                                {'host':'192.168.20.63', 'port':11810, 'user':'root3', 'password':'admin3'},
-                              ]
-         [in] policy   str    The policy of select hosts. 'random' or 'one_by_one'
+                              [ {'host':'localhost', 'port':11810,},
+                                {'host':'192.168.10.30', 'port':11810},
+                                {'host':'192.168.20.63', 'port':11810}, ]
+         [in] user    str     The user name to access to database 
+         [in] psw     str     The user password to access to database
+         [in] policy  str     The policy of select hosts. it must be string of
+                              'random' or 'one_by_one'
       Return values:
          Success: SDB_OK  and  the index the hosts connect to
          Fail   : Others  and  -1
@@ -175,10 +178,11 @@ class client(object):
 
       if len(hosts) == 0:
          raise TypeError("hosts must hava at least 1 item")
-         #return const.INVALIDARG, -1
 
       local = socket.gethostname()
       localip = self.__get_local_ip()
+      _user = user
+      _psw  = psw
 
       count = 0
       for ip in hosts:
@@ -188,8 +192,6 @@ class client(object):
 
             host = ip['host']
             port = ip['port']
-            user = ip['user']
-            psw  = ip['password']
             rc = self.connect_by_host(host, port, user, psw)
             if const.SDB_OK == rc:
                pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
@@ -210,10 +212,8 @@ class client(object):
          ip = hosts[position]
          host = ip['host']
          port = ip['port']
-         user = ip['user']
-         psw  = ip['password']
 
-         rc = self.connect_by_host(host, port, user, psw)
+         rc = self.connect_by_host(host, port, _user, _psw)
          if const.SDB_OK == rc:
             pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
                               % (host, port))
