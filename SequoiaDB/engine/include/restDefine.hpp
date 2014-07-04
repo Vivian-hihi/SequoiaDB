@@ -119,7 +119,9 @@ struct cmp_str
 {
    bool operator() ( const char *a, const char *b )
    {
-      return ossStrcmp( a, b ) < 0 ;
+      int aLen = ossStrlen( a ) ;
+      int bLen = ossStrlen( b ) ;
+      return ossStrncasecmp( a, b, aLen > bLen ? aLen : bLen ) < 0 ;
    }
 } ;
 

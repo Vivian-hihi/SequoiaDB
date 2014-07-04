@@ -35,6 +35,7 @@
 #include "pmdEDUMgr.hpp"
 #include "msgDef.h"
 #include "pmdCommon.hpp"
+#include "ossMem.hpp"
 #include "../omsvc/omGetFileCommand.hpp"
 
 #include "../bson/bson.h"
@@ -249,8 +250,8 @@ namespace engine
       if ( COM_GETFILE == command )
       {
          PD_LOG( PDEVENT, "OM: getfile command:file=%s", pFilePath ) ;
-         commandIf = new omGetFileCommand(pAdptor, this, 
-                                          _wwwRootPath.c_str(), pFilePath) ;
+         commandIf = new omGetFileCommand( pAdptor, this, 
+                                           _wwwRootPath.c_str(), pFilePath ) ;
       }
       else 
       {
@@ -267,51 +268,84 @@ namespace engine
          }
 
          PD_LOG( PDEVENT, "OM: command:command=%s", pSubCommand ) ;
-         if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
-              && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
-              && !isAuthOK() )
-         {
-            // except login_rep and check_seesion_req, other commands can only 
-            // execute in authrity status
-            BSONObjBuilder builder ;
-            builder.append( OM_REST_RES_RETCODE, 
-                            SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
-            builder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
-            pAdptor->setOPResult( this, SDB_AUTH_AUTHORITY_FORBIDDEN, 
-                                  builder.obj() ) ;
-            pAdptor->sendResponse( this, HTTP_OK ) ;
-            PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
-            goto error ;
-         }
+         //TODO temperately close authrity!!!!!!!!!!!
+//         if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
+//              && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
+//              && !isAuthOK() )
+//         {
+//            // except login_rep and check_seesion_req, other commands can only 
+//            // execute in authrity status
+//            BSONObjBuilder builder ;
+//            builder.append( OM_REST_RES_RETCODE, 
+//                            SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
+//            builder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
+//            pAdptor->setOPResult( this, SDB_AUTH_AUTHORITY_FORBIDDEN, 
+//                                  builder.obj() ) ;
+//            pAdptor->sendResponse( this, HTTP_OK ) ;
+//            PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
+//            goto error ;
+//         }
          
-         if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
+         if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
          {
             commandIf = new omAuthCommand( pAdptor, this, 
                                            _wwwRootPath.c_str() ) ;
          }
-         else if ( ossStrcmp ( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
          {
             commandIf = new omCheckSessionCommand( pAdptor, this ) ;
          }
-         else if ( ossStrcmp ( pSubCommand, OM_CREATE_CLUSTER_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_CREATE_CLUSTER_REQ ) == 0 )
          {
             commandIf = new omCreateClusterCommand( pAdptor, this ) ;
          }
-         else if ( ossStrcmp ( pSubCommand, OM_QUERY_CLUSTER_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_CLUSTER_REQ ) == 0 )
          {
             commandIf = new omQueryClusterCommand( pAdptor, this ) ;
          }
-         else if (ossStrcmp ( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
          {
-            commandIf = new omScanHostCommand( pAdptor, this ) ;
+            commandIf = new omScanHostCommand( pAdptor, this, 
+                                               "localhost", 
+                                               "1" ) ;
          }
-         else if (ossStrcmp ( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
          {
-            commandIf = new omCheckHostCommand( pAdptor, this ) ;
+            commandIf = new omCheckHostCommand( pAdptor, this, 
+                                                "localhost", 
+                                                "1" ) ;
          }
-         else if (ossStrcmp ( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
          {
-            commandIf = new omAddHostCommand( pAdptor, this ) ;
+            commandIf = new omAddHostCommand( pAdptor, this, 
+                                              "localhost", 
+                                              "1" ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_REQ ) == 0 )
+         {
+            commandIf = new omQueryHostCommand( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = new omQueryBusinessCommand( pAdptor, this, 
+                                                    _wwwRootPath.c_str(), 
+                                                    pFilePath ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_TEMPLATE_REQ ) 
+                      == 0 )
+         {
+            commandIf = new omQueryBusinessTemplateCommand(
+                                                           pAdptor, 
+                                                           this, 
+                                                           _wwwRootPath.c_str(), 
+                                                           pFilePath ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) 
+                      == 0 )
+         {
+            commandIf = new omConfigBusinessCommand( pAdptor, this, 
+                                                     _wwwRootPath.c_str(), 
+                                                     pFilePath ) ;
          }
          else
          {

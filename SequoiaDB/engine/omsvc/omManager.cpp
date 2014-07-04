@@ -157,17 +157,17 @@ namespace engine
       }
 
       pAuthCB = pmdGetKRCB()->getAuthCB() ;
-      pAuthCB->checkNeedAuth( cb, TRUE ) ;
-      if ( !pAuthCB->needAuthenticate() )
-      {
-         BSONObj obj ;
-         bsonBuilder.append( SDB_AUTH_USER, OM_DEFAULT_LOGIN_USER ) ;
-         bsonBuilder.append( SDB_AUTH_PASSWD, OM_DEFAULT_LOGIN_PASSWD ) ;
-         obj = bsonBuilder.obj() ;
-         rc = pAuthCB->createUsr( obj, cb ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to create default user:rc = %d",
-                       rc ) ;
-      }
+//      pAuthCB->checkNeedAuth( cb, TRUE ) ;
+//      if ( !pAuthCB->needAuthenticate() )
+//      {
+//         BSONObj obj ;
+//         bsonBuilder.append( SDB_AUTH_USER, OM_DEFAULT_LOGIN_USER ) ;
+//         bsonBuilder.append( SDB_AUTH_PASSWD, OM_DEFAULT_LOGIN_PASSWD ) ;
+//         obj = bsonBuilder.obj() ;
+//         rc = pAuthCB->createUsr( obj, cb ) ;
+//         PD_RC_CHECK ( rc, PDERROR, "Failed to create default user:rc = %d",
+//                       rc ) ;
+//      }
       pAuthCB->checkNeedAuth( cb, TRUE ) ;
 
    done:

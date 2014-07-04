@@ -135,58 +135,145 @@ namespace engine
    #define  OM_REST_RES_DETAIL               "detail"
    #define  OM_REST_RES_LOCAL                "local"
 
-   // ****************om command list********************************
+   // *********************om command list****************************
    #define  OM_REST_FIELD_COMMAND            "cmd"
 
-   // om rest create_cluster_req
-   #define  OM_CREATE_CLUSTER_REQ            "create_cluster_req"
+   // ***************om rest create_cluster_req***********************
+   #define  OM_CREATE_CLUSTER_REQ            "CreateClusterReq"
+
+   #define  OM_REST_CLUSTER_INFO             "ClusterInfo"
    
-   #define  OM_REST_FIELD_CLUSTER_INFO       "cluster_info"
+   #define  OM_BSON_FIELD_CLUSTER_NAME       "ClusterName"
+   #define  OM_BSON_FIELD_CLUSTER_DESC       "Desc"
+   // *****************************************************************
 
-   #define  OM_BSON_FIELD_CLUSTER_NAME       "cluster_name"
-   #define  OM_BSON_FIELD_CLUSTER_DESC       "desc"
+   // *********************om rest query_cluster_req*******************
+   #define  OM_QUERY_CLUSTER_REQ             "QueryClusterReq"
+   // *****************************************************************
 
-   // om rest query_cluster_req
-   #define  OM_QUERY_CLUSTER_REQ             "query_cluster_req"
-
-   // om rest login_req
-   #define  OM_LOGIN_REQ                     "login_req"
+   // *********************om rest login_req***************************
+   #define  OM_LOGIN_REQ                     "LoginReq"
    
-   #define  OM_REST_FIELD_LOGIN_NAME         "user"
-   #define  OM_REST_FIELD_LOGIN_PASSWD       "passwd"
-   #define  OM_REST_FIELD_TIMESTAMP          "timestamp"
+   #define  OM_REST_FIELD_LOGIN_NAME         "User"
+   #define  OM_REST_FIELD_LOGIN_PASSWD       "Passwd"
+   #define  OM_REST_FIELD_TIMESTAMP          "Timestamp"
+   // *****************************************************************
 
-   // om rest check_session_req
-   #define  OM_CHECK_SESSION_REQ             "check_session_req"
+   // *******************om rest check_session_req*********************
+   #define  OM_CHECK_SESSION_REQ             "CheckSessionReq"
+   // *****************************************************************
 
-   // om rest scan_host_req
-   #define  OM_SCAN_HOST_REQ                 "scan_host_req"
+   // *********************om rest scan_host_req***********************
+   #define  OM_SCAN_HOST_REQ                 "ScanHostReq"
 
-   #define  OM_REST_FIELD_HOST_INFO          "host_info"
-   
-   #define  OM_BSON_FIELD_HOST_IP            "host_ip"
-   #define  OM_BSON_FIELD_HOST_NAME          "host_name"
-   #define  OM_BSON_FIELD_HOST_USER          "username"
-   #define  OM_BSON_FIELD_HOST_PASSWD        "passwd"
-   #define  OM_BSON_FIELD_HOST_SSHPORT       "port"
+   #define  OM_REST_FIELD_HOST_INFO          "HostInfo"
 
-   // om rest check_host_req
-   #define  OM_CHECK_HOST_REQ                "check_host_req"
-   //****************sub command with agent***************************
-   #define  OM_BASIC_CHECK_REQ               "basic_check_req"
-   #define  OM_INSTALL_REMOTE_AGENT          "install_remote_agent_req"
-   //******************************************************************
-
-
-   // om rest add_host_req
-   #define  OM_ADD_HOST_REQ                  "add_host_req"
-   
-
-
-
+   #define  OM_BSON_FIELD_HOST_INFO          "HostInfo"
+   #define  OM_BSON_FIELD_HOST_IP            "IP"
+   #define  OM_BSON_FIELD_HOST_NAME          "HostName"
+   #define  OM_BSON_FIELD_HOST_USER          "User"
+   #define  OM_BSON_FIELD_HOST_PASSWD        "Passwd"
+   #define  OM_BSON_FIELD_HOST_SSHPORT       "SshPort"
+   #define  OM_BSON_FIELD_HOST_AGENTPORT     "AgentPort"
 
    // milliseconds
+   #define  OM_WAIT_SCAN_RES_INTERVAL        (10000)
+   // *****************************************************************
+
+   // *********************om rest check_host_req**********************
+   #define  OM_CHECK_HOST_REQ                "CheckHostReq"
+   
+   // sub command with agent
+   #define  OM_BASIC_CHECK_REQ               "BasicCheckReq"
+   #define  OM_INSTALL_REMOTE_AGENT          "InstallRemoteAgentReq"
+   #define  OM_CHECK_REMOTE_HOST             "CheckRemoteHostReq"
+   #define  OM_UNINSTALL_REMOTE_AGENT        "UninstallRemoteAgentReq"
+
+   #define  OM_BSON_FIELD_OS                 "OS"
+   #define  OM_BSON_FIELD_OM                 "OM"
+   // array
+   #define  OM_BSON_FIELD_MEMORY             "Memory"
+   // array
+   #define  OM_BSON_FIELD_DISK               "Disk"
+   // array
+   #define  OM_BSON_FIELD_CPU                "CPU"
+   // array
+   #define  OM_BSON_FIELD_NET                "Net"
+   #define  OM_BSON_FIELD_PORT               "Port"
+   #define  OM_BSON_FIELD_SERVICE            "Service"
+   #define  OM_BSON_FIELD_SAFETY             "Safety"
+   // *****************************************************************
+
+   // ***************om rest add_host_req******************************
+   #define  OM_ADD_HOST_REQ                  "AddHostReq"
+
+   #define  OM_ROLLBACK_TRANSACTION_REQ      "RollbackTransactionReq"
+   
+   #define  OM_BSON_FIELD_INSTALL_PATH       "InstallPath"
+   #define  OM_BSON_FIELD_TRANSACTION_ID     "TransactionID"
+   // *****************************************************************
+
+   // om rest query_host_req
+   #define  OM_QUERY_HOST_REQ                "QueryHostReq"
+   // *****************************************************************
+
+
+   // om rest query_business_list_req
+   #define  OM_QUERY_BUSINESS_REQ            "QueryBusinessListReq"
+
+   #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
+   #define  OM_BUSINESS_FILE_NAME            "business.xml"
+
+   #define  OM_XML_BUSINESS_LIST             "business_list"
+   #define  OM_XMLATTR_BUSINESS_NAME         "<xmlattr>.name"
+   #define  OM_XMLATTR_BUSINESS_DESC         "<xmlattr>.desc"
+
+   #define  OM_BSON_BUSINESS_LIST            "BusinessList"
+   #define  OM_BSON_BUSINESS_TYPE            "BusinessType"
+   #define  OM_BSON_BUSINESS_DESC            "BusinessDesc"
+   // *****************************************************************
+
+   // om rest query_business_template_req
+   #define  OM_QUERY_BUSINESS_TEMPLATE_REQ   "QueryBusinessTemplateReq"
+
+   #define  OM_TEMPLATE_FILE_NAME            "_template.xml"
+   #define  OM_XML_CLUSTER_TYPE_LIST         "cluster_type_list"
+
+   #define  OM_XMLATTR_PROPERTY_NAME         "<xmlattr>.name"
+   #define  OM_XMLATTR_PROPERTY_TYPE         "<xmlattr>.type"
+   #define  OM_XMLATTR_PROPERTY_DEFAULT      "<xmlattr>.default"
+   #define  OM_XMLATTR_PROPERTY_VALID        "<xmlattr>.valid"
+   #define  OM_XMLATTR_PROPERTY_DISPLAY      "<xmlattr>.display"
+   #define  OM_XMLATTR_PROPERTY_EDIT         "<xmlattr>.edit"
+
+   #define  OM_REST_BUSINESS_TYPE            "BusinessType"
+
+   #define  OM_BSON_CLUSTER_TYPE             "ClusterType"
+   #define  OM_BSON_PROPERTY_ARRAY           "Property"
+   #define  OM_BSON_PROPERTY_NAME            "Name"
+   #define  OM_BSON_PROPERTY_TYPE            "Type"
+   #define  OM_BSON_PROPERTY_DEFAULT         "Default"
+   #define  OM_BSON_PROPERTY_VALID           "Valid"
+   #define  OM_BSON_PROPERTY_DISPLAY         "Display"
+   #define  OM_BSON_PROPERTY_EDIT            "Edit"
+
+   // *****************************************************************
+
+   // om rest config_business_req
+   #define  OM_CONFIG_BUSINESS_REQ           "ConfigBusinessReq"
+
+   #define  OM_CONFIG_ITEM_FILE_NAME         "_configitem.xml"
+   #define  OM_XML_CONFIG                    "config"
+
+   #define  OM_REST_TEMPLATE_INFO            "TemplateInfo"
+   #define  OM_REST_CONFIG_INFO              "ConfigInfo"
+
+   
+   // *****************************************************************
+   
+   // milliseconds
    #define  OM_WAIT_EVENT_INTERVAL           (500)
+   
    
 }
 

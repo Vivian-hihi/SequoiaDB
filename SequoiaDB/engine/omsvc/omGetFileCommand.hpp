@@ -30,15 +30,17 @@
 
 *******************************************************************************/
 
-#ifndef OM_GETFILECOMMAND_HPP_
-#define OM_GETFILECOMMAND_HPP_
+#ifndef OM_GETFILECOMMAND_HPP__
+#define OM_GETFILECOMMAND_HPP__
 
 #include "omCommandInterface.hpp"
 #include "restAdaptor.hpp"
 #include "pmdRestSession.hpp"
+#include "pmdRemoteSession.hpp"
 #include "rtnCB.hpp"
 #include "pmd.hpp"
 #include "dmsCB.hpp"
+#include "omManager.hpp"
 #include <map>
 #include <string>
 
@@ -69,7 +71,8 @@ namespace engine
    class omCheckSessionCommand : public omCommandInterface
    {
       public:
-         omCheckSessionCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+         omCheckSessionCommand( restAdaptor *pRestAdaptor, 
+                                pmdRestSession *pRestSession ) ;
 
          ~omCheckSessionCommand() ;
 
@@ -84,7 +87,8 @@ namespace engine
    class omCreateClusterCommand : public omCommandInterface
    {
       public:
-         omCreateClusterCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+         omCreateClusterCommand( restAdaptor *pRestAdaptor, 
+                                 pmdRestSession *pRestSession ) ;
 
          virtual ~omCreateClusterCommand() ;
 
@@ -95,7 +99,7 @@ namespace engine
          void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
 
       private:
-         INT32           _getClusterInfo( const CHAR **pClusterName, const CHAR **pDesc ) ;
+         INT32           _getClusterInfo( string &clusterName, string &desc ) ;
          
       protected:
          restAdaptor*    _restAdaptor ;
@@ -105,7 +109,8 @@ namespace engine
    class omQueryClusterCommand : public omCreateClusterCommand 
    {
       public:
-         omQueryClusterCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+         omQueryClusterCommand( restAdaptor *pRestAdaptor, 
+                                pmdRestSession *pRestSession ) ;
 
          ~omQueryClusterCommand() ;
 
@@ -117,7 +122,9 @@ namespace engine
    class omScanHostCommand : public omCreateClusterCommand
    {
       public:
-         omScanHostCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+         omScanHostCommand( restAdaptor *pRestAdaptor, 
+                            pmdRestSession *pRestSession, 
+                            string localAgentHost, string localAgentService ) ;
 
          ~omScanHostCommand() ;
 
@@ -125,21 +132,41 @@ namespace engine
          virtual INT32   doCommand() ;
 
       protected:
-         virtual bool    _isHostExist( BSONObj &host ) ;
-         virtual void    _checkHostExistence(list<BSONObj> &hostInfoList, 
-                                               list<BSONObj> &hostResult ) ;
-         virtual void    _generateArray( list<BSONObj> &hostInfoList, string arrayKeyName, 
+         bool            _isHostExist( BSONObj &host ) ;
+         void            _checkHostExistence(list<BSONObj> &hostInfoList, 
+                                             list<BSONObj> &hostResult ) ;
+         void            _generateArray( list<BSONObj> &hostInfoList, 
+                                         string arrayKeyName, 
                                          BSONObj &result ) ;
+         void            _sendOkRes2Web( list<BSONObj> &hostResult ) ;
+         INT32           _sendMsgToLocalAgent( omManager *om,
+                                               pmdRemoteSession *remoteSession, 
+                                               MsgHeader *pMsg ) ;
+         INT32           _receiveFromAgent( pmdRemoteSession *remoteSession,
+                                            BSONObj &result ) ;
+         INT32           _getHostList( string &clusterName, 
+                                       list<BSONObj> &hostInfo ) ;
 
       private:
-         INT32           _getHostList( list<BSONObj> &hostInfo ) ;
+         INT32           _parseResonpse( VEC_SUB_SESSIONPTR &subSessionVec, 
+                                         BSONObj &response, 
+                                         list<BSONObj> &bsonResult ) ;
+
+      protected:
+         string          _localAgentHost ;
+         string          _localAgentService ;
+
+      private:
+         
          
    };
 
    class omCheckHostCommand : public omScanHostCommand
    {
       public:
-         omCheckHostCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+         omCheckHostCommand( restAdaptor *pRestAdaptor, 
+                             pmdRestSession *pRestSession,
+                             string localAgentHost, string localAgentService ) ;
 
          ~omCheckHostCommand() ;
 
@@ -147,32 +174,132 @@ namespace engine
          virtual INT32   doCommand() ;
 
       private:
-         INT32           _getHostList( string &clusterName, list<BSONObj> &hostInfo ) ;
-         INT32           _doBasicCheck( list<BSONObj> &hostInfoList, list<BSONObj> &hostResult ) ;
-         INT32           _doCheck( list<BSONObj> &hostInfoList, list<BSONObj> &hostResult ) ;
-         void            _sendOkRes2Web( list<BSONObj> &hostResult ) ;
+         INT32           _doBasicCheck( list<BSONObj> &hostInfoList, 
+                                        list<BSONObj> &hostResult ) ;
+         INT32           _doCheck( list<BSONObj> &hostInfoList, 
+                                        list<BSONObj> &hostResult ) ;
+         INT32           _installAgent( list<BSONObj> &hostInfoList ) ;
+         INT32           _addCheckHostReq( omManager *om,
+                                           pmdRemoteSession *remoteSession,
+                                           list<BSONObj> &hostInfoList,
+                                           list<BSONObj> &hostResult ) ;
+         INT32           _checkHostEnv( list<BSONObj> &hostInfoList, 
+                                        list<BSONObj> &hostResult ) ;
+         INT32           _uninstallAgent( list<BSONObj> &hostInfoList ) ;
+         void            _eraseFromList( list<BSONObj> &hostInfoList, 
+                                         BSONObj &oneHost ) ;
    };
 
-   class omAddHostCommand : public omCreateClusterCommand
+   class omAddHostCommand : public omScanHostCommand
    {
       public:
-         omAddHostCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+         omAddHostCommand( restAdaptor *pRestAdaptor, 
+                           pmdRestSession *pRestSession,
+                           string localAgentHost, string localAgentService ) ;
 
          ~omAddHostCommand() ;
 
       public:
          virtual INT32   doCommand() ;
 
+      protected:
+                         // overwrite
+         INT32           _getHostList( string &clusterName, 
+                                       list<BSONObj> &hostInfo ) ;
+
       private:
-         INT32           _getHostDetialList( string &clusterName, 
-                                               list<BSONObj> &hostInfo ) ;
+         void            _transactionRollBack( string host, string service, 
+                                               INT32 transactionID ) ;
+         INT32           _storeHostInfo( string clusterName, 
+                                         list<BSONObj> &hostInfoList ) ;
+         void            _generateTableField( BSONObjBuilder &builder, 
+                                              string newFieldName,
+                                              BSONObj &bsonOld,
+                                              string oldFiledName ) ;
+         INT32           _addHost( list<BSONObj> &hostInfoList, 
+                                   INT32 &transationID ) ;
+         void            _generateAddHostReq( list<BSONObj> &hostInfoList, 
+                                              BSONObj &bsonRequest ) ;
    };
+
+   class omQueryHostCommand : public omCreateClusterCommand
+   {
+      public:
+         omQueryHostCommand( restAdaptor *pRestAdaptor, 
+                             pmdRestSession *pRestSession ) ;
+
+         ~omQueryHostCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+   } ;
+
    
+   class omQueryBusinessCommand : public omCreateClusterCommand
+   {
+      public:
+         omQueryBusinessCommand(  restAdaptor *pRestAdaptor, 
+                                  pmdRestSession *pRestSession, 
+                                  const CHAR *pRootPath, 
+                                  const CHAR *pSubPath ) ;
+         virtual ~omQueryBusinessCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      protected:
+         string          _rootPath ;
+         string          _subPath ;
+
+   } ;
+
+   class omQueryBusinessTemplateCommand : public omQueryBusinessCommand
+   {
+      public:
+         omQueryBusinessTemplateCommand(  restAdaptor *pRestAdaptor, 
+                                          pmdRestSession *pRestSession, 
+                                          const CHAR *pRootPath, 
+                                          const CHAR *pSubPath ) ;
+         virtual ~omQueryBusinessTemplateCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      protected:
+
+   } ;
+   
+   class omConfigBusinessCommand : public omQueryBusinessCommand
+   {
+      public:
+         omConfigBusinessCommand(  restAdaptor *pRestAdaptor, 
+                                   pmdRestSession *pRestSession, 
+                                   const CHAR *pRootPath, 
+                                   const CHAR *pSubPath ) ;
+         virtual ~omConfigBusinessCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      protected:
+      private:
+         INT32          _generateConfig( const BSONObj &bsonTemplate, 
+                                         const BSONObj &bsonHostInfo, 
+                                         const BSONObj &bsonConfigItem, 
+                                         BSONObj &bsonConfig ) ;
+         INT32          _getConfigItem( const BSONObj &bsonTemplate, 
+                                        BSONObj &bsonConfigItem ) ;
+         INT32          _getTemplateInfo( BSONObj &bsonTemplate, 
+                                          BSONObj &bsonHostInfo ) ;
+
+   } ;
+
    class omGetFileCommand : public omCommandInterface
    {
       public:
-         omGetFileCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession, 
-                       const CHAR *pRootPath, const CHAR *pSubPath ) ;
+         omGetFileCommand( restAdaptor *pRestAdaptor, 
+                           pmdRestSession *pRestSession, 
+                           const CHAR *pRootPath, const CHAR *pSubPath ) ;
          virtual ~omGetFileCommand() ;
 
       public:
@@ -181,7 +308,7 @@ namespace engine
 
       private:
          INT32           _getFileContent( string filePath, CHAR **pFileContent, 
-                                            INT32 &fileContentLen ) ;
+                                          INT32 &fileContentLen ) ;
 
       private:
          restAdaptor*    _restAdaptor ;
@@ -214,5 +341,5 @@ namespace engine
    };
 }
 
-#endif /* OM_GETFILECOMMAND_HPP_ */
+#endif /* OM_GETFILECOMMAND_HPP__ */
 
