@@ -45,8 +45,8 @@ public class SdbHaveMaster extends Task {
 		this.waitTime = value ; 
 	}
 	public void setFailonerror( boolean value ){
-/*		this.failonerror = value;*/
-		failonerror = Boolean.parseBoolean(value);
+		this.failonerror = value;
+/*		failonerror = Boolean.parseBoolean(value);*/
 	}
 	
 	private boolean checkMaster( ReplicaGroup RG , Sequoiadb sdb )
@@ -125,8 +125,18 @@ public class SdbHaveMaster extends Task {
 	
 	public void execute ()
 	{
-		Sequoiadb sdb = new Sequoiadb( this.hostName , Integer.parseInt( this.port ) , "" ,"") ;
-		ReplicaGroup RG = null ;
+		Sequoiadb sdb = null;
+		boolean isError = false;
+		try{
+			sdb = new Sequoiadb( this.hostName , Integer.parseInt( this.port ) , "" ,"") ;
+		}catch( BaseException e ){
+			if( failonerror ){
+				throw e;
+			}
+			isError = true;
+		}
+		if( !isError ){
+					ReplicaGroup RG = null ;
 		int i = 0 ;
 		int times = Integer.parseInt( this.waitTime ) ;
 		for(; i < times ; ++i )
@@ -171,12 +181,20 @@ public class SdbHaveMaster extends Task {
 			System.out.println("is not primary");
 			this.getProject().setProperty( this.propertyName , "false" ) ;
 		}
+		}else{
+			System.out.println("e");
+			this.getProject().setProperty( this.propertyName , "false" ) ;
+		
+		}
 
+
+		
+/*
 		if(failonerror){
 			throw new BuildException("is not primary");
 		}else{
 			System.out.println("is not primary");
-		}
+		}*/
 	}
 
 }
