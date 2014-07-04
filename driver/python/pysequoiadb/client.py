@@ -15,6 +15,7 @@
 """Module of client for python driver of SequoiaDB
 """
 import socket
+import random
 
 try:
    import sdbclient
@@ -182,9 +183,9 @@ class client(object):
             return rc, count
          count += 1
 
-      size = hosts.count()
+      size = len(hosts)
       if 0 == cmp("random", policy):
-         position = random(0, size)
+         position = random.randint(0, size - 1)
       elif 0 == cmp("one_by_one", policy):
          position = 0;
       else:
