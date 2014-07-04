@@ -74,7 +74,7 @@ def get_version():
 PY3 = sys.version_info[0] == 3
 
 # OPEN THE SWITCH WHEN DEBUG
-_DEBUG = True
+_DEBUG = False
 
 driver_version = get_version()
 """Current version of python driver for SequoiaDB."""
