@@ -136,8 +136,8 @@ class client(object):
 
          return cs
 
-   def connect_to(self, hosts, policy = "random"):
-      """try to connect to database util connect success.
+   def connect_to_hosts(self, hosts, policy = "random"):
+      """try to connect to hosts
 
       Parameters:
               Name    Type    Info:
@@ -149,8 +149,8 @@ class client(object):
                               ]
          [in] policy   str    The policy of select hosts. 'random' or 'one_by_one'
       Return values:
-         Success: SDB_OK
-         Fail   : Others
+         Success: SDB_OK  and  the index the hosts connect to
+         Fail   : Others  and  -1
       """
 
       if not isinstance(hosts, list):
@@ -160,11 +160,12 @@ class client(object):
 
       if hosts.count() == 0:
          pysequoiadb.cout("hosts must hava 1 item at least")
-         return const.INVALIDARG
+         return const.INVALIDARG, -1
 
       local = socket.gethostname
       localip = socket.gethostbyname(local)
 
+      count = 0
       for ip in hosts:
          if ( "localhost" in ip.values() or
               local in ip.values() or
@@ -178,17 +179,20 @@ class client(object):
             if const.SDB_OK == rc:
                pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
                                  % (host, port))
-            return rc
+            return rc, count
+         count += 1
 
       size = hosts.count()
       if 0 == cmp("random", policy):
-         begin = random(0, size)
+         position = random(0, size)
       elif 0 == cmp("one_by_one", policy):
-         begin = 0;
+         position = 0;
+      else:
+         raise TypeError("policy must be 'random' or 'one_by_one'.")
 
       count = 0
       while count < size:
-         ip = hosts[begin]
+         ip = hosts[position]
          host = ip['host']
          port = ip['port']
          user = ip['user']
@@ -198,10 +202,10 @@ class client(object):
          if const.SDB_OK == rc:
             pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
                               % (host, port))
-            return rc
-         begin += 1
+            return rc, position
+         position += 1
 
-      return rc
+      return rc, const.INVALIDARG
    
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
