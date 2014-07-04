@@ -211,7 +211,7 @@ class client(object):
          host = ip['host']
          port = ip['port']
          user = ip['user']
-         psw  = ip['psw']
+         psw  = ip['password']
 
          rc = self.connect_by_host(host, port, user, psw)
          if const.SDB_OK == rc:
