@@ -66,11 +66,14 @@ SDB_EXPORT BOOLEAN jsonToBson2 ( bson *bs,
                                  const CHAR *json_str,
                                  BOOLEAN isMongo,
                                  BOOLEAN isBatch ) ;
-/** \fn BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b ) 
+/** \fn BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
+                             BOOLEAN toCSV, BOOLEAN skipUndefined) 
     \brief Bson converts to json.
+    \param [in] buffer the buffer to convert
+    \param [in] bufsize the buffer's size
     \param [in] b The bson object to convert
-    \param [in] bufsize The buffer's size
-    \param [in] convert bson to csv or not
+    \param [in] toCSV bson to csv or not
+    \param [in] skipUndefined to skip undefined filed or not
     \param [out] buffer The return json string 
     \retval TRUE Operation Success
     \retval FALSE Operation Fail

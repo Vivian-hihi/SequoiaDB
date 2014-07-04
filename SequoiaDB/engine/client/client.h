@@ -149,9 +149,9 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                               const CHAR *pUsrName, const CHAR *pPasswd ,
                               sdbConnectionHandle *handle ) ;
 
-/** \fn INT32 sdbConnect1 ( const CHAR **pConnAddrs, int arrSize;
+/** \fn INT32 sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
                             const CHAR *pUsrName, const CHAR *pPasswd ,
-                            sdbConnectionHandle *handle ) ;
+                            sdbConnectionHandle *handle )
     \brief Connect to database used a random valid address in the array.
     \param [in] pConnAddrs The array of the coord's address
     \param [in] arrSize The size of the array
@@ -220,7 +220,7 @@ SDB_EXPORT INT32 sdbModifyNodeConfig ( sdbConnectionHandle cHandle,
                                        INT32 nodeID,
                                        bson *config ) ;*/
 
-/* \fn INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
+/** \fn INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
                                 bson *condition,
                                 bson *select,
                                 bson *orderBy,
@@ -251,13 +251,13 @@ SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
                                     INT64 numToReturn,
                                     sdbCursorHandle *handle );
 
-/* \fn INT32 sdbGetQueryMeta ( sdbConnectionHandle cHandle,
+/** \fn INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
                                bson *condition,
                                bson *orderBy,
                                bson *hint,
                                INT64 numToSkip,
                                INT64 numToReturn,
-                               sdbCursorHandle *handle ) ;
+                               sdbCursorHandle *handle )
     \brief Get the index blocks' or data blocks' infomations for concurrent query
     \param [in] condition The matching rule, return all the documents if null
     \param [in] orderBy The ordered rule, never sort if null
@@ -919,8 +919,8 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
                                         bson *options,
                                         sdbCollectionHandle *handle ) ;
 
-/* \fn INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
-                                   bson *options  )
+/** \fn INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
+                                  bson *options  )
     \brief Alter the specified collection
     \param [in] cHandle The colleciton handle
     \param [in] options The modified options as following:
@@ -1259,6 +1259,7 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
                           bson *hint,
                           INT64 numToSkip,
                           INT64 numToReturn,
+                          INT32 flag,
                           sdbCursorHandle *handle )
     \brief Get the matching documents in current collection
     \param [in] cHandle The collection handle
@@ -1759,11 +1760,10 @@ SDB_EXPORT INT32 sdbGetDomain ( sdbConnectionHandle cHandle,
                                 sdbDomainHandle *handle ) ;
 
 /** \fn INT32 sdbListDomains ( sdbConnectionHandle cHandle,
-                               bson *condition,
-                               bson *selector,
-                               bson *orderBy,
-                               bson *hint,
-                               sdbCursorHandle *handle ) ;
+                                  bson *condition,
+                                  bson *selector,
+                                  bson *orderBy,
+                                  sdbCursorHandle *handle )
     \brief List the domains.
     \param [in] cHandle The connection handle
     \param [in] condition The matching rule, return all the documents if null

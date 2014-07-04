@@ -3101,9 +3101,10 @@ namespace sdbclient
         GroupName   : Assign the backups of specifed replica groups to be list
         Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
         Name        : Assign the backups with specifed name to be list
-    \param [in] select The selective rule, return the whole document if null
+    \param [in] condition The matching rule, return all the documents if not provided
+    \param [in] selector The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
-    \param [out] handle The cusor handle of result
+    \param [out] cursor The cusor handle of result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
