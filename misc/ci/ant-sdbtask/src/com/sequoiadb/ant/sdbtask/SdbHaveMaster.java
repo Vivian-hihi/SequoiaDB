@@ -19,7 +19,7 @@ public class SdbHaveMaster extends Task {
 	private String waitTime = "120" ; 
 	private String propertyName= null ;
 	private static int ERROR_STANTALONG=-159;
-	
+	private boolean failonerror = true;
 	
 	public void setPropertyName( String value )
 	{
@@ -43,6 +43,10 @@ public class SdbHaveMaster extends Task {
 	public void setWaitTime( String value )
 	{
 		this.waitTime = value ; 
+	}
+	public void setFailonerror( boolean value ){
+/*		this.failonerror = value;*/
+		failonerror = Boolean.parseBoolean(value);
 	}
 	
 	private boolean checkMaster( ReplicaGroup RG , Sequoiadb sdb )
@@ -166,6 +170,12 @@ public class SdbHaveMaster extends Task {
 		if( ! (i < times) ){
 			System.out.println("is not primary");
 			this.getProject().setProperty( this.propertyName , "false" ) ;
+		}
+
+		if(failonerror){
+			throw new BuildException("is not primary");
+		}else{
+			log("is not primary");
 		}
 	}
 
