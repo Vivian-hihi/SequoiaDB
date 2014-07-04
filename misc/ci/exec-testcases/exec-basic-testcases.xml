@@ -13,6 +13,8 @@
 	<property name="report.suffix" value="" />
 	<property file="${ci.properties.path}" />
 	<property name="COORD_SVC_NAME" value="50000" />
+	<property name="testcase.path" value="${testcase.path}" />
+	<property name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
 
 	<target name="clean-test-reports" depends="">
 		<echo message="Begin to clean test result reports..." />
@@ -49,6 +51,14 @@
 		<echo message="perform the base-bussiness testcases,with testcase.path=${testcase.path}" />
 		<chmod file="${install.path}/sequoiadb/bin/sdb" perm="u+x" />
 
+		<property name="sdb.cmd.allPrepare" value="-e &quot;var COORDSVCNAME=${COORDSVCNAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/all_prepare.js&quot;" />
+		<property name="sdb.cmd.allClean" value="-e &quot;var COORDSVCNAME=${COORDSVCNAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/all_clean.js&quot;" />
+
+		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" >
+			<arg line="${sdb.cmd.allPrepare}" />
+		</exec>
+
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
 				<dirset dir="${testcase.path}/js" excludes="${excludes.dir.patterns}" />
@@ -60,6 +70,11 @@
 			<param name="testcase.path" value="${testcase.path}" />
 			<param name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
 		</foreach>
+		
+		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allClean}" />
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" >
+			<arg line="${sdb.cmd.allClean}" />
+		</exec>
 	</target>
 
 	<target name="test-one-suite" depends="">
@@ -190,6 +205,11 @@
 
 		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ;
 			 &quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${test.case.fullname}&quot;" />
+
+		<property name="sdb.cmd.beforeUsecase" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ;
+			 &quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/before_usecase.js&quot;" />
+		<property name="sdb.cmd.afterUsecase" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ;
+			 &quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/after_usecase.js&quot;" />
 		
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}.${parallel.num}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}.${parallel.num}" />
@@ -203,7 +223,9 @@
 		
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
+			<arg line="${sdb.cmd.beforeUsecase}" />
 			<arg line="${sdb.cmd.argument}" />
+			<arg line="${sdb.cmd.afterUsecase}" />
 		</exec>
 
 		
@@ -261,7 +283,7 @@
 							<equals arg1="${ret.code.forShards}" arg2="0" />
 							</not>
 							<then>
-								<!--statealong mode-->
+								<!--standalone mode-->
 								<stafTools workType="shell" workHost="LOCAL" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
 							</then>
 							<else>
@@ -292,7 +314,7 @@
 					${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;
 					&lt;/failure&gt;&#10;" />
 					
-						<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost"/>
+						<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
 						<echo message="${haveMaster}" />
 						<if>
 							<equals arg1="${haveMaster}" arg2="true"/>
