@@ -145,7 +145,8 @@ class client(object):
       else:
          import socket, fcntl, struct
          sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-         inet = fcntl.ioctl(sock.fileno(), 0x8915, struct.pack('256s', ifname[:15]))
+         inet = fcntl.ioctl( sock.fileno(), 0x8915, 
+                             struct.pack('256s', ifname[:15].encode('utf-8')))
          localip = socket.inet_ntoa(inet[20:24])
       
       return localip
