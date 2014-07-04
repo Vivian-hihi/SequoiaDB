@@ -137,6 +137,19 @@ class client(object):
 
          return cs
 
+   def __get_local_ip(ifname = 'eth0'):
+      import sys
+      if sys.platform == 'win32':
+         local = socket.gethostname()
+         localip = socket.gethostbyname(local)
+      else:
+         import socket, fcntl, struct
+         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+         inet = fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', ifname[:15]))
+         localip = socket.inet_ntoa(inet[20:24])
+      
+      return localip
+
    def connect_to_hosts(self, hosts, policy = "random"):
       """try to connect to hosts
 
@@ -164,7 +177,7 @@ class client(object):
          #return const.INVALIDARG, -1
 
       local = socket.gethostname()
-      localip = socket.gethostbyname(local)
+      localip = self.__get_local_ip()
 
       count = 0
       for ip in hosts:
@@ -175,7 +188,7 @@ class client(object):
             host = ip['host']
             port = ip['port']
             user = ip['user']
-            psw  = ip['psw']
+            psw  = ip['password']
             rc = self.connect_by_host(host, port, user, psw)
             if const.SDB_OK == rc:
                pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
