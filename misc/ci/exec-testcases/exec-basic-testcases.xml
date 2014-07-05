@@ -206,10 +206,8 @@
 		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ;
 			 &quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${test.case.fullname}&quot;" />
 
-		<property name="sdb.cmd.beforeUsecase" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ;
-			 &quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/before_usecase.js&quot;" />
-		<property name="sdb.cmd.afterUsecase" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ;
-			 &quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/after_usecase.js&quot;" />
+		<property name="sdb.cmd.beforeUsecase" value="-e &quot; var COORDSVCNAME='${COORD_SVC_NAME}' ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/before_usecase.js&quot;" />
+		<property name="sdb.cmd.afterUsecase" value="-e &quot; var COORDSVCNAME='${COORD_SVC_NAME}' ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/after_usecase.js&quot;" />
 		
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}.${parallel.num}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}.${parallel.num}" />
@@ -217,11 +215,10 @@
 		<exec executable="${sdb.fullname}" dir="" timeout="300000">
 		  <arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testBeginStr}');db.close(); &quot;" />
 		</exec>
-		
-		
-		
-		
+
+		<echo message="Exec:${sdb.fullname} ${sdb.cmd.beforeUsecase}" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
+		<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterUsecase}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
 			<arg line="${sdb.cmd.beforeUsecase}" />
 			<arg line="${sdb.cmd.argument}" />
