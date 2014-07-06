@@ -108,6 +108,9 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>connect</b> 
 <tr class="memitem:a4adb0d10a37da6c20dac7a91f03d5e34"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4adb0d10a37da6c20dac7a91f03d5e34"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>connect</b> (const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pUsrName, const CHAR *pPasswd)=0</td></tr>
 <tr class="separator:a4adb0d10a37da6c20dac7a91f03d5e34"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7fa9a087525fdfc5cbc3a47b8fad4882"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7fa9a087525fdfc5cbc3a47b8fad4882"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>connect</b> (const CHAR **pConnAddrs, INT32 arrSize, const CHAR *pUsrName, const CHAR *pPasswd)=0</td></tr>
+<tr class="separator:a7fa9a087525fdfc5cbc3a47b8fad4882"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a473db47880759e3cc412955c7b6af4ab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a473db47880759e3cc412955c7b6af4ab"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>disconnect</b> ()=0</td></tr>
 <tr class="separator:a473db47880759e3cc412955c7b6af4ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -150,6 +153,12 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollec
 <tr class="memitem:a143b2ddcd06a8c6e7cb63ca26ad58a6c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a143b2ddcd06a8c6e7cb63ca26ad58a6c"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, INT32 iPageSize, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)=0</td></tr>
 <tr class="separator:a143b2ddcd06a8c6e7cb63ca26ad58a6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2075b46d0c168eca29d1b923fbb6be24"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2075b46d0c168eca29d1b923fbb6be24"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1__sdbCollectionSpace.html">_sdbCollectionSpace</a> **cs)=0</td></tr>
+<tr class="separator:a2075b46d0c168eca29d1b923fbb6be24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fe83c555364426e1e8b347061d78f0b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1fe83c555364426e1e8b347061d78f0b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)=0</td></tr>
+<tr class="separator:a1fe83c555364426e1e8b347061d78f0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adc69d5ffe7643ee780f063efc4e44540"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adc69d5ffe7643ee780f063efc4e44540"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>dropCollectionSpace</b> (const CHAR *pCollectionSpaceName)=0</td></tr>
 <tr class="separator:adc69d5ffe7643ee780f063efc4e44540"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -225,9 +234,9 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>flushConfigu
 <tr class="memitem:a82b47739d3300db82abaebf75ba57119"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a82b47739d3300db82abaebf75ba57119"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>crtJSProcedure</b> (const CHAR *code)=0</td></tr>
 <tr class="separator:a82b47739d3300db82abaebf75ba57119"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc9d490ff9df599986752ba84bf59718"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adc9d490ff9df599986752ba84bf59718"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>rmProcedures</b> (const CHAR *spName)=0</td></tr>
-<tr class="separator:adc9d490ff9df599986752ba84bf59718"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a162657cd9005dd10a96935d10c53107b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a162657cd9005dd10a96935d10c53107b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>rmProcedure</b> (const CHAR *spName)=0</td></tr>
+<tr class="separator:a162657cd9005dd10a96935d10c53107b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43ed724fda7c72d39a6c3524dd5c85a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43ed724fda7c72d39a6c3524dd5c85a1"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listProcedures</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition)=0</td></tr>
 <tr class="separator:a43ed724fda7c72d39a6c3524dd5c85a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -273,6 +282,27 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>closeAllCurs
 <tr class="memitem:a0c586b88ad9278db249e91d7eaeb0ad8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c586b88ad9278db249e91d7eaeb0ad8"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> (BOOLEAN *result)=0</td></tr>
 <tr class="separator:a0c586b88ad9278db249e91d7eaeb0ad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a940830347e534a1587354172b1cca727"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a940830347e534a1587354172b1cca727"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createDomain</b> (const CHAR *pDomainName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1__sdbDomain.html">_sdbDomain</a> **domain)=0</td></tr>
+<tr class="separator:a940830347e534a1587354172b1cca727"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fdc78c610bb9e9d568bbfc1f9636278"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9fdc78c610bb9e9d568bbfc1f9636278"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createDomain</b> (const CHAR *pDomainName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;domain)=0</td></tr>
+<tr class="separator:a9fdc78c610bb9e9d568bbfc1f9636278"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f3ed50ae72f92b7a949c62126ab592b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0f3ed50ae72f92b7a949c62126ab592b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>dropDomain</b> (const CHAR *pDomainName)=0</td></tr>
+<tr class="separator:a0f3ed50ae72f92b7a949c62126ab592b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a460f54665dfce6beabde54a268d5ffb9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a460f54665dfce6beabde54a268d5ffb9"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getDomain</b> (const CHAR *pDomainName, <a class="el" href="classsdbclient_1_1__sdbDomain.html">_sdbDomain</a> **domain)=0</td></tr>
+<tr class="separator:a460f54665dfce6beabde54a268d5ffb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88faf19adddfba0833ca573279a5744c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a88faf19adddfba0833ca573279a5744c"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getDomain</b> (const CHAR *pDomainName, <a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;domain)=0</td></tr>
+<tr class="separator:a88faf19adddfba0833ca573279a5744c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a457302979c9ec34e6de131960ffccbd7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a457302979c9ec34e6de131960ffccbd7"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listDomains</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a457302979c9ec34e6de131960ffccbd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f73e117c769d5ebcaad54ee3985ce49"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f73e117c769d5ebcaad54ee3985ce49"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listDomains</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a4f73e117c769d5ebcaad54ee3985ce49"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -281,12 +311,12 @@ static <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a> *&#160;</td><t
 <tr class="separator:ad7181ea46a96424b126b69b7530491a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 11 2014 16:32:40 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

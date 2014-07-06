@@ -151,6 +151,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const C
 <tr class="memitem:a1e28a382f4272458d382d1eebe6d86e0"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a1e28a382f4272458d382d1eebe6d86e0">start</a> ()</td></tr>
 <tr class="memdesc:a1e28a382f4272458d382d1eebe6d86e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start up current replica group.  <a href="#a1e28a382f4272458d382d1eebe6d86e0"></a><br/></td></tr>
 <tr class="separator:a1e28a382f4272458d382d1eebe6d86e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a810fa83e611ddd773370b48906fcfd95"><td class="memItemLeft" align="right" valign="top">const CHAR *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a810fa83e611ddd773370b48906fcfd95">getName</a> ()</td></tr>
+<tr class="memdesc:a810fa83e611ddd773370b48906fcfd95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the name of current replica group.  <a href="#a810fa83e611ddd773370b48906fcfd95"></a><br/></td></tr>
+<tr class="separator:a810fa83e611ddd773370b48906fcfd95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10e5653a1e1962abd1f092bc5a030e09"><td class="memItemLeft" align="right" valign="top">BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbReplicaGroup.html#a10e5653a1e1962abd1f092bc5a030e09">isCatalog</a> ()</td></tr>
 <tr class="memdesc:a10e5653a1e1962abd1f092bc5a030e09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Test whether current replica group is catalog replica group.  <a href="#a10e5653a1e1962abd1f092bc5a030e09"></a><br/></td></tr>
 <tr class="separator:a10e5653a1e1962abd1f092bc5a030e09"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -299,6 +302,37 @@ Public Attributes</h2></td></tr>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
     <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a810fa83e611ddd773370b48906fcfd95"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const CHAR * sdbclient::sdbReplicaGroup::getName </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the name of current replica group. </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">The</td><td>name of current replica group or null if fail </td></tr>
   </table>
   </dd>
 </dl>
@@ -674,12 +708,12 @@ SDB_NODE_UNKNOWN
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 11 2014 16:32:40 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

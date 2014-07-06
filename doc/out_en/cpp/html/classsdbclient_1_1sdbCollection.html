@@ -124,12 +124,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:add4fa8fa068f241d997d3c21b388c323"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#add4fa8fa068f241d997d3c21b388c323">splitAsync</a> (const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, FLOAT64 percent, SINT64 &amp;taskID)</td></tr>
 <tr class="memdesc:add4fa8fa068f241d997d3c21b388c323"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source replica group to target replica group by percent.  <a href="#add4fa8fa068f241d997d3c21b388c323"></a><br/></td></tr>
 <tr class="separator:add4fa8fa068f241d997d3c21b388c323"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69e7129e2f3eae91ac9a0e2ce2d379d3"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a69e7129e2f3eae91ac9a0e2ce2d379d3">alterCollection</a> (const bson::BSONObj &amp;options)</td></tr>
+<tr class="memdesc:a69e7129e2f3eae91ac9a0e2ce2d379d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the current collection.  <a href="#a69e7129e2f3eae91ac9a0e2ce2d379d3"></a><br/></td></tr>
+<tr class="separator:a69e7129e2f3eae91ac9a0e2ce2d379d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adcf15277babcda91553ba20e6bea3c06"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#adcf15277babcda91553ba20e6bea3c06">bulkInsert</a> (SINT32 flags, std::vector&lt; bson::BSONObj &gt; &amp;obj)</td></tr>
 <tr class="memdesc:adcf15277babcda91553ba20e6bea3c06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a bulk of bson objects into current collection.  <a href="#adcf15277babcda91553ba20e6bea3c06"></a><br/></td></tr>
 <tr class="separator:adcf15277babcda91553ba20e6bea3c06"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa650ba3ffc166f3d012a4b8f43833d24"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#aa650ba3ffc166f3d012a4b8f43833d24">insert</a> (const bson::BSONObj &amp;obj, bson::BSONElement *id=NULL)</td></tr>
-<tr class="memdesc:aa650ba3ffc166f3d012a4b8f43833d24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a bson object into current collection.  <a href="#aa650ba3ffc166f3d012a4b8f43833d24"></a><br/></td></tr>
-<tr class="separator:aa650ba3ffc166f3d012a4b8f43833d24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f1f71eb57d42dd766ef43d90702f837"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a4f1f71eb57d42dd766ef43d90702f837">insert</a> (const bson::BSONObj &amp;obj, bson::OID *id=NULL)</td></tr>
+<tr class="memdesc:a4f1f71eb57d42dd766ef43d90702f837"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a bson object into current collection.  <a href="#a4f1f71eb57d42dd766ef43d90702f837"></a><br/></td></tr>
+<tr class="separator:a4f1f71eb57d42dd766ef43d90702f837"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a4a0d3636bfd79c2c9d7f61e101cb0fcb">update</a> (const bson::BSONObj &amp;rule, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
 <tr class="memdesc:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection.  <a href="#a4a0d3636bfd79c2c9d7f61e101cb0fcb"></a><br/></td></tr>
 <tr class="separator:a4a0d3636bfd79c2c9d7f61e101cb0fcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -145,9 +148,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>query</b> (<a class=
 <tr class="memitem:a0b094c874ea53c019da6f5b4ad62a37f"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a0b094c874ea53c019da6f5b4ad62a37f">query</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selected=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1)</td></tr>
 <tr class="memdesc:a0b094c874ea53c019da6f5b4ad62a37f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matching documents in current collection.  <a href="#a0b094c874ea53c019da6f5b4ad62a37f"></a><br/></td></tr>
 <tr class="separator:a0b094c874ea53c019da6f5b4ad62a37f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa99808fa4b055c494ed4d0dbebaee80e"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#aa99808fa4b055c494ed4d0dbebaee80e">createIndex</a> (bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)</td></tr>
-<tr class="memdesc:aa99808fa4b055c494ed4d0dbebaee80e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#aa99808fa4b055c494ed4d0dbebaee80e"></a><br/></td></tr>
-<tr class="separator:aa99808fa4b055c494ed4d0dbebaee80e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a233a9df73d247e5a78bd113fe2bd2dff"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a233a9df73d247e5a78bd113fe2bd2dff">createIndex</a> (const bson::BSONObj &amp;indexDef, const CHAR *pName, BOOLEAN isUnique, BOOLEAN isEnforced)</td></tr>
+<tr class="memdesc:a233a9df73d247e5a78bd113fe2bd2dff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#a233a9df73d247e5a78bd113fe2bd2dff"></a><br/></td></tr>
+<tr class="separator:a233a9df73d247e5a78bd113fe2bd2dff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3f87e58a837453b5c1403b99e4769ce6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3f87e58a837453b5c1403b99e4769ce6"></a>
 INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getIndexes</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *pName)</td></tr>
 <tr class="separator:a3f87e58a837453b5c1403b99e4769ce6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -236,6 +239,45 @@ Public Attributes</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">obj</td><td>The array of bson objects </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor object of result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a69e7129e2f3eae91ac9a0e2ce2d379d3"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::alterCollection </td>
+          <td>(</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Alter the current collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The modified options as following: ReplSize Number of replnodes for sync write </td></tr>
   </table>
   </dd>
 </dl>
@@ -382,7 +424,7 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aa99808fa4b055c494ed4d0dbebaee80e"></a>
+<a class="anchor" id="a233a9df73d247e5a78bd113fe2bd2dff"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -392,7 +434,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="memname">INT32 sdbclient::sdbCollection::createIndex </td>
           <td>(</td>
-          <td class="paramtype">bson::BSONObj &amp;&#160;</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
           <td class="paramname"><em>indexDef</em>, </td>
         </tr>
         <tr>
@@ -863,7 +905,7 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aa650ba3ffc166f3d012a4b8f43833d24"></a>
+<a class="anchor" id="a4f1f71eb57d42dd766ef43d90702f837"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -879,7 +921,7 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bson::BSONElement *&#160;</td>
+          <td class="paramtype">bson::OID *&#160;</td>
           <td class="paramname"><em>id</em> = <code>NULL</code>&#160;</td>
         </tr>
         <tr>
@@ -1386,12 +1428,12 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 11 2014 16:32:40 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
