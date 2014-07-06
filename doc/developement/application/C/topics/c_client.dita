@@ -5,7 +5,7 @@
   <body>
     <section>
     <title>概述</title>
-    <p>C客户端程序主要提供了数据库的连接，数据的增删改查，索引的创建删除，以及集合与集合空间的创建删除操作。<xref href="..\..\..\..\c\html\index.html" format="html">更多参考C在线API</xref>。</p>
+      <p>C客户端程序主要提供了数据库，集合空间，集合，副本组，节点，域这7个级别的操作。<xref href="..\..\..\..\c\html\index.html" format="html">更多参考C在线API</xref>。</p>
     </section>
     <section>
       <title>句柄</title>
@@ -42,9 +42,9 @@
               </ul>
             </p>
           </note></li>
-        <li>集群操作句柄 <p>SequoiaDB数据库中的集群操作分为两个级别：</p><p>&nbsp;&nbsp;1）分区组 </p><p>&nbsp;&nbsp;2）数据节点 </p><note>
+        <li>集群操作句柄 <p>SequoiaDB数据库中的集群操作分为两个级别：</p><p>&nbsp;&nbsp;1）分区组 </p><p>&nbsp;&nbsp;2）数据节点 </p><p>&nbsp;&nbsp;2）域 </p><note>
           <p>分区组包二种类型：编目分区组、数据分区组。</p>
-          </note><p>分区组实例和数据节点实例可以用以下两类句柄表示。</p><simpletable>
+        </note><p>分区组实例，数据节点实例，域实例可以用以下句柄表示。</p><simpletable>
             <strow>
               <stentry> sdbReplicaGroupHandle </stentry>
               <stentry> 分区组句柄 </stentry>
@@ -55,9 +55,14 @@
               <stentry> 数据节点句柄 </stentry>
               <stentry> 代表一个单独的数据节点 </stentry>
             </strow>
+          <strow>
+            <stentry> sdbDomainHandle </stentry>
+            <stentry> 域句柄 </stentry>
+            <stentry> 代表一个单独的域 </stentry>
+          </strow>
           </simpletable><p>与集群相关的操作需要使用分区组及数据节点句柄。</p><p>sdbReplicaGroupHandle的实例用于管理分区组。其操作包括启动、停止分区组，获取分区组中节点的状态、名称信息、数目信息。
-            </p><p>sdbNodeHandle的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。
-          </p></li>
+          </p><p>sdbNodeHandle的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。</p>
+          <p>sdbDomainHandle的实例用于修改、获取域信息。</p></li>
       </ul>
     </section>
     <section>

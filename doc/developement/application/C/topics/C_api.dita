@@ -7,6 +7,16 @@
     <p><xref href="..\..\..\..\c\html\index.html" format="html">C API</xref></p>
     <section>
       <title>历史更新情况：</title>
+      <p><b>Version1.8</b></p>
+      <p>新添加接口：</p><codeblock>sdbConnect1，可提供多个地址，接口随机选择一个有效的地址连接。
+sdbCreateCollectionSpaceV2，提供一个bson的选项，使创建集合空间更加灵活
+sdbAlterCollection，修改集合（表）属性
+sdbCreateDomain，创建域
+sdbDropDomain，删除域
+sdbGetDomain，获取域句柄
+sdbListDomains，列出所有域
+sdbReleaseDomain，删除域句柄
+sdbAlterDomain，更改域属性</codeblock>
       <p><b>Version1.6</b></p>
       <p>1、使用sdbNodeHandle来取代原来的sdbReplicaNodeHandle。sdbReplicaNodeHandle将在version2.x中被弃用。</p>
       <p>2、使用概念”node”取代原来的”replica node”。和”replica node”相关的API接口将保留，直到version2.x会被弃用。</p>

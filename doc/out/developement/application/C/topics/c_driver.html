@@ -95,21 +95,16 @@ INT32 main ( INT32 argc, CHAR **argv )
 <pre class="pre codeblock">$gcc -o connect connect.c -I /<em class="ph i">&lt;PATH&gt;</em>/sdbdriver/include -lsdbc -L /<em class="ph i">&lt;PATH&gt;</em>/sdbdriver/lib
 $ ./connect localhost 11810 "" ""
 connect success!</pre>
-<p class="p">在Windows下，如下编译及连接动态链接库文件sdbc.lib和sdbc.dll:</p>
-<pre class="pre codeblock">&gt; cl /Fo connect.obj /c connect.c /I &lt;PATH&gt; \sdbdriver\include /wd4047
-&gt; link /OUT:connect.exe /LIBPATH:&lt;PATH&gt;\sdbdriver\lib sdbc.lib testClient.obj 
-&gt; copy &lt;PATH&gt;\sdbdriver\lib\sdbc.dll .
-执行结果如下：
-&gt; connect.exe localhost 11810 "" ""
-&gt; connect success!</pre>
-<div class="note note"><span class="notetitle">Note:</span> 
+
+               
+               <div class="note note"><span class="notetitle">Note:</span> 
                   <p class="p">本例程连接到本地数据库的11810端口，使用的是空的用户名很密码。用户需要根据自己的实际情况配置参数。但如果数据库已经创建用户，可以使用已经创建的用户及密码连接到数据库。</p>
 
                </div>
 </li>
 
           <li class="li">创建集合空间，集合
-                  <p class="p">以上创建了一个名字为“foo”的集合空间和一个名字为“bar”的集合，集合空间内的集合的数据页大小为4k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。</p>
+             <p class="p">以下创建了一个名字为“foo”的集合空间和一个名字为“bar”的集合，集合空间内的集合的数据页大小为4k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。</p>
 
                <pre class="pre codeblock">// 首先，定义集合空间、集合句柄。
 sdbCSHandle collectionspace       = 0 ;
@@ -136,16 +131,16 @@ rc = bson_finish( &amp;obj ) ;
 if ( rc != SDB_OK )
 printf("Error.");
 // 接着，把此bson对象插入集合中
-sdbInsert ( collection, &amp;obj ) ;</pre>
+rc = sdbInsert ( collection, &amp;obj ) ;</pre>
 </li>
 
             <li class="li">查询<p class="p">查询操作需要一个游标句柄存放查询的结果到本地。要获得查询的结果需要使用游标操作。本例使用了游标操作的sdbNext接口，表示从查询结果中取到一条记录。此示例中没有设置查询条件、筛选条件、排序情况、及仅使用默认索引。</p>
 <div class="p">
                   <pre class="pre codeblock">// 定义一个游标句柄
-dbCursorHandle cursor    = 0 ;
+sdbCursorHandle cursor = 0 ;
 …
 // 查询所有记录，查询结果放在游标句柄中
-sdbQuery(collection, NULL, NULL, NULL, NULL, 0, -1, &amp;cursor ) ;
+rc = sdbQuery(collection, NULL, NULL, NULL, NULL, 0, -1, &amp;cursor ) ;
 // 从游标中显示所有记录
 bson_init(obj);
 while( !( rc=sdbNext( cursor, &amp;obj ) ) )
@@ -170,7 +165,7 @@ rc = bson_finish( &amp;obj ) ;
 if ( rc != SDB_OK )
 printf("Error.");
 // 创建一个以"name"为升序，"age"为降序的索引
-sdbCreateIndex ( collection, &amp;obj, INDEX_NAME, FALSE, FALSE ) ;
+rc = sdbCreateIndex ( collection, &amp;obj, INDEX_NAME, FALSE, FALSE ) ;
 bson_destroy ( &amp;obj ) ;   </pre>
 </div>
 </li>
@@ -188,7 +183,7 @@ printf("Error.");
 // 打印出更新规则
 bson_print( &amp;rule ) ;
 // 更新记录
-sdbUpdate( collection, &amp;rule, NULL, NULL ) ;
+rc = sdbUpdate( collection, &amp;rule, NULL, NULL ) ;
 bson_destroy(&amp;rule);</pre>
 <p class="p">此处，因为没有指定记录匹配条件，所以此示例将更新集合句柄collection指定的集合中所有的记录。</p>
 </li>
@@ -206,17 +201,13 @@ bson_destroy(&amp;rule);</pre>
 sdbReplicaGroupHandle rg = 0 ;
 …
 // 先建立一个编目分区组
-sdbCreateCataReplicaGroup ( connection, HOST_NAME, SERVICE_NAME,
-                               CATALOG_SET_PATH , NULL ) ;
-// 睡眠5秒等待编目分区组启动并且选举好主从节点
-sleep( 5 ) ;
+rc = sdbCreateCataReplicaGroup ( connection, HOST_NAME, SERVICE_NAME, CATALOG_SET_PATH , NULL ) ;
 // 创建数据分区组
-sdbCreateReplicaGroup ( connection, GROUP_NAME, &amp;rg ) ;
- 
+rc = sdbCreateReplicaGroup ( connection, GROUP_NAME, &amp;rg ) ;
 // 创建数据节点
-sdbCreateNode ( rg, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
+rc = sdbCreateNode ( rg, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
 // 启动分区组
-sdbStartReplicaGroup( rg ) ;</pre>
+rc = sdbStartReplicaGroup( rg ) ;</pre>
 </div>
 </li>
 
@@ -227,13 +218,10 @@ sdbStartReplicaGroup( rg ) ;</pre>
 sdbNodeHandle masternode   = 0 ;
 sdbNodeHandle slavenode    = 0 ;
 …
-// 等待数据分区组启动并选举出主节点
-sleep( 10 ) ;
-
 // 获取主数据节点
-sdbGetNodeMaster ( rg, &amp;masternode ) ;
+rc = sdbGetNodeMaster ( rg, &amp;masternode ) ;
 //获取从数据节点
-sdbGetNodeSlave ( rg, &amp;slavenode ) ;         </pre>
+rc = sdbGetNodeSlave ( rg, &amp;slavenode ) ;         </pre>
 </div>
 
             </li>

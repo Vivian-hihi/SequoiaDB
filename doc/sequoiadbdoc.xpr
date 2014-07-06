@@ -332,6 +332,8 @@
                     </folder>
                     <folder name="tasks"/>
                     <folder name="topics">
+                        <file name="developement/application/java/topics/datasource_en.dita"/>
+                        <file name="developement/application/java/topics/datasource.dita"/>
                         <file name="developement/application/java/topics/java_api_en.dita"/>
                         <file name="developement/application/java/topics/java_api.dita"/>
                         <file name="developement/application/java/topics/java_en.dita"/>

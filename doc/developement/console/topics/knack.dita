@@ -3,9 +3,9 @@
 <topic id="developement_console_knack">
   <title>使用shell的窍门</title>
   <body>
-      <p>SequoiaDB shell本身内置了帮助文档，通过help命令可以查看。</p>
+      <p>SequoiaDB shell本身内置了帮助文档，通过help()命令可以查看使用介绍。另外，参考手册SequoiaDB JavaScript方法一节中，有各方法的详细使用介绍。</p>
         <ul>
-            <li>Help<p>查看帮助命令：</p>
+            <li>Help<p>查看使用介绍：</p>
                 <codeblock>> help()
    var db = new Sdb()                     connect to database use default host 'localhost' and default port 11810
    var db = new Sdb('localhost',11810)    connect to database use specified host and port
@@ -25,33 +25,41 @@
    clear                                  clear the terminal screen
    history -c                             clear the history
    quit                                   exit
-Takes 0.2993s.</codeblock>
-            <!--<codeblock>> help()
-function () {
-    println("   var db = new Sdb('localhost', 11810)   connect to database");
-    println("   db.help()                              help on db methods");
-    println("   db.cs.help()                           help on collection space                                                                                                                      cs");
-    println("   db.cs.cl                               access collection cl on c                                                                                                                     ollection space cs");
-    println("   db.cs.cl.help()                        help on collection cl");
-    println("   db.cs.cl.find()                        list all records");
-    println("   db.cs.cl.find({a:1})                   list records where a=1");
-    println("   print(x), println(x)                   print out x");
-    println("   getErr(ret)                            print error description for r                                                                                                                     eturn code");
-    println("   quit                                   exit");
-    }</codeblock>--></li>    
-      <li>Database Help <p>查看数据库级别帮助使用命令：</p><codeblock>db.help()</codeblock></li>
-      <li>CollectionSpace
-          Help<p>查看集合空间下的方法帮助使用命令：<codeblock>db.&lt;collectionspace>.help()</codeblock></p></li>
-      <li>Collection Help<p>
-          查看集合下的方法帮助使用命令：<codeblock>db.&lt;collectionspace>.&lt;collection>.help()</codeblock></p></li>
-      <li>Cursor Help<p>在shell命令中，当使用<xref href="../../../references/methods/topics/find.dita"
-            >find()</xref>方法执行数据库读操作时，可是使用各种游标方法和JavaScript方法来处理find()方法返回的结果集。</p><p>查看游标处理方法帮助使用命令：<codeblock>db.&lt;collectionspace>.&lt;collection>.find().help()</codeblock></p></li>
-    <li>Methods Help
-        <p>此外还有一个了解函数功能的技巧，就是在输入的时候不要输入括号，这样就会显示该函数的JavaScript源代码。如：</p><codeblock>> db.foo.bar.find
-function (query, select) {
-    return new SdbQuery(this, query, select);
-}</codeblock></li>
-    </ul>    
+   Takes 0.2993s.</codeblock>
+                <note><p>SequoiaDB shell主要包括database(db)、collection space(cs)、collection(cl)、cursor(cur)、replica group(rg)、node(nd)、domain(dm)这7大级别的操作。用户需要理解各级别之间的关系。各级别都有使用帮助命令如下所示：</p></note></li>            
+            <li>Database Help <p>database级别主要包括用管理户组，集合空间，副本组，域，快照，存储过程，备份，事务，sql，及错误跟踪等操作。</p>
+                <p>假设已经连接上数据库，并取得database的javascript对象db。</p>
+                <p>查看database所有方法：</p><codeblock>db.help()</codeblock>
+                <p>查看database具体方法：</p><codeblock>db.help("method")</codeblock></li>
+            <li>CollectionSpace Help<p>collection space级别主要包括对集合管理的操作。</p>
+                <p>假设存在名字为"foo"的集合空间。</p>
+                <p>查看collection space所有方法：</p><codeblock>db.foo.help()</codeblock>
+                <p>查看collection space具体方法：</p><codeblock>db.foo.help("method")</codeblock></li>
+            <li>Collection Help<p>collection级别主要包括CRUD，索引管理，数据切分，垂直分区表管理等操作。</p>
+                <p>假设在集合空间"foo"中存在名字为"bar"的集合空间。</p>
+                <p>查看collection所有方法：</p><codeblock>db.foo.bar.help()</codeblock>
+                <p>查看collection具体方法：</p><codeblock>db.foo.bar.help("method")</codeblock></li>
+            <li>Cursor Help<p>cursor级别主要包括对返回记录（数据）的操作。</p>
+                <p>在shell命令中，与sequoiadb引擎交互时，若有记录（数据）返回，都是以游标（cursor）的方式呈现。例如，当使用db.foo.bar.<xref href="../../../references/methods/topics/find.dita">find()</xref>方法执行数据库查询操作，将返回一个游标对象，所有查询结果将放在这个游标中。通常的使用方法如下：</p>
+                <codeblock>db.foo.bar.find()</codeblock><p>或者</p><codeblock>var cur = db.foo.bar.find()</codeblock>
+                <p>前者直接将所有结果显示在屏幕上，后者将结果放到游标中。</p>
+                <p>查看cursor所有方法：</p><codeblock>db.foo.bar.find().help()</codeblock><p>或者</p><codeblock>cur.help()</codeblock>
+                <p>查看cursor具体方法：</p><codeblock>db.foo.bar.find().help("method")</codeblock><p>或者</p><codeblock>cur.help("method")</codeblock>
+                <p>类似于find()返回游标的方法，还有list，snapshot等等。</p></li>
+            <li>Replica Group Help<p>replica group级别主要包括对数据节点的管理的操作。</p>
+                <p>假设数据库中存在名字为"group1"的副本组，通过var rg = db.getRG("group1")获取一个关于副本组的javascript对象rg。</p>
+                <p>查看replica group所有方法：</p><codeblock>rg.help()</codeblock>
+                <p>查看replica group具体方法：</p><codeblock>rg.help("method")</codeblock></li>
+            <li>Node Help<p>node级别主要包括对数据节点状态信息获取的操作。</p>
+                <p>假设在副本组"group1"中创建一个数据节点，var rn = rg.createNode("ubuntu-dev1", 51000, "/opt/sequoiadb/database/data/51000")，获取一个关于数据节点的javascript对象rn。</p>
+                <p>查看node所有方法：</p><codeblock>rn.help()</codeblock>
+                <p>查看replica group具体方法：</p><codeblock>rn.help("method")</codeblock></li>
+            <li>Domain Help<p>domain级别主要包括对域更改及获取域信息的操作。</p>
+                <p>假设在数据库中创建一个名字为"domain1"的域，var dm = db.createDomain("domain1",["group1","group2"],{AutoSplit:true})，获取一个关于域的javascript对象dm。</p>
+                <p>查看domain所有方法：</p><codeblock>dm.help()</codeblock>
+                <p>查看domain具体方法：</p><codeblock>dm.help("method")</codeblock></li>    
+        </ul>
+      <note>以man page方式显示帮助文档功能是随SequoiaDB1.8版本发布的，若使用1.8版本以下的sdb shell客户端，将不具备上述的help("method")功能。另外，应该确保/opt/sequoiadb/doc/manual目录下有相关方法的troff文件，否则，无法显示相应的man page介绍。</note>
       <p>查看shell提供的所有自动生成的JavaScript函数API文档，可访问<xref href="https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources"></xref></p>
   </body>
 </topic>

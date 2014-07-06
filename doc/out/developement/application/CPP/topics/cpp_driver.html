@@ -101,15 +101,9 @@ void displaySyntax ( CHAR *pCommand )
 执行结果如下：
 $ ./connect localhost 11810 "" ""
 Connect success!</pre>
-<p class="p">在Windows下，如下编译及连接动态链接库文件sdbcpp.lib和sdbcpp.dll:</p>
-<pre class="pre codeblock">&gt; cl /Fo connect.obj /c connect.cpp /I &lt;PATH&gt;\sdbdriver\include /wd4047  
-&gt; link /OUT:connect.exe /LIBPATH:&lt;PATH&gt;\sdbdriver\lib sdbcpp.lib connect.obj  
-&gt; copy &lt;PATH&gt;\sdbdriver\lib\sdbcpp.dll .
-执行结果如下：
-&gt; connect.exe localhost 11810 "" ""
-&gt; Connect success!</pre>
-<div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">本例程连接到本地数据库的11810端口，使用的是空的用户名很密码。用户需要根据自己的实际情况配置参数。譬如，connect.exe localhost 11810
+
+        <div class="note note"><span class="notetitle">Note:</span> 
+          <p class="p">本例程连接到本地数据库的11810端口，使用的是空的用户名和密码。用户需要根据自己的实际情况配置参数。譬如，./connect localhost 11810
               “sequoiadb” “sequoiadb”。当数据库已经创建用户时，应该使用正确的用户及密码连接到数据库，否则连接失败。 </p>
 
           </div>
@@ -194,8 +188,6 @@ map&lt;string,string&gt; config ;
 …
 // 先建立一个编目分区组
 connection.createCataReplicaGroup ( HOST_NAME, SERVICE_NAME, CATALOG_GROUP_PATH , NULL ) ;
-// 睡眠5秒等待编目分区组启动并且选举好主从节点
-sleep( 5 ) ;
 // 创建数据分区组
 connection.createRG ( REPLICA_GROUP_NAME, rg ) ;
  
@@ -216,9 +208,6 @@ rg.start () ;</pre>
 sdbNode masternode ;
 sdbNode slavenode ;
 …
-// 等待数据分区组启动并选举出主节点
-sleep( 15 ) ;
-
 // 获取主数据节点
 rg.getMaster( masternode ) ;
 //获取从数据节点

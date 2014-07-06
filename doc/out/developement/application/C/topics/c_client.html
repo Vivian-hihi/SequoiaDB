@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C 驱动"/>
-<meta name="description" content="概述 C客户端程序主要提供了数据库的连接，数据的增删改查，索引的创建删除，以及集合与集合空间的创建删除操作。 更多参考C在线API 。 句柄 C客户端驱动的句柄分为两类。一类用于数据库操作，另一类用于集群操作。 数据库操作句柄 SequoiaDB数据库中的数据存放分为三个级别：   1）数据库   2）集合空间   3）集合 ..."/>
+<meta name="description" content="概述 C客户端程序主要提供了数据库，集合空间，集合，副本组，节点，域这7个级别的操作。 更多参考C在线API 。 句柄 C客户端驱动的句柄分为两类。一类用于数据库操作，另一类用于集群操作。 数据库操作句柄 SequoiaDB数据库中的数据存放分为三个级别：   1）数据库   2）集合空间   3）集合 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/C/topics/c.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_kmr_n2s_wj"/>
@@ -38,7 +38,7 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">概述</h2>
     
-    <p class="p">C客户端程序主要提供了数据库的连接，数据的增删改查，索引的创建删除，以及集合与集合空间的创建删除操作。<a class="xref" href="../../../../c/html/index.html">更多参考C在线API</a>。</p>
+      <p class="p">C客户端程序主要提供了数据库，集合空间，集合，副本组，节点，域这7个级别的操作。<a class="xref" href="../../../../c/html/index.html">更多参考C在线API</a>。</p>
 
     </div>
 
@@ -106,11 +106,12 @@
         <li class="li">集群操作句柄 <p class="p">SequoiaDB数据库中的集群操作分为两个级别：</p>
 <p class="p">  1）分区组 </p>
 <p class="p">  2）数据节点 </p>
+<p class="p">  2）域 </p>
 <div class="note note"><span class="notetitle">Note:</span> 
           <p class="p">分区组包二种类型：编目分区组、数据分区组。</p>
 
-          </div>
-<p class="p">分区组实例和数据节点实例可以用以下两类句柄表示。</p>
+        </div>
+<p class="p">分区组实例，数据节点实例，域实例可以用以下句柄表示。</p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
               <td valign="top" class="stentry"> sdbReplicaGroupHandle </td>
 
@@ -127,12 +128,21 @@
               <td valign="top" class="stentry"> 代表一个单独的数据节点 </td>
 
             </tr>
+<tr class="strow">
+            <td valign="top" class="stentry"> sdbDomainHandle </td>
+
+            <td valign="top" class="stentry"> 域句柄 </td>
+
+            <td valign="top" class="stentry"> 代表一个单独的域 </td>
+
+          </tr>
 </table>
 <p class="p">与集群相关的操作需要使用分区组及数据节点句柄。</p>
 <p class="p">sdbReplicaGroupHandle的实例用于管理分区组。其操作包括启动、停止分区组，获取分区组中节点的状态、名称信息、数目信息。
-            </p>
-<p class="p">sdbNodeHandle的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。
           </p>
+<p class="p">sdbNodeHandle的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。</p>
+
+          <p class="p">sdbDomainHandle的实例用于修改、获取域信息。</p>
 </li>
 
       </ul>

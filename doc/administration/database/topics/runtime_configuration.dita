@@ -80,7 +80,7 @@
 					<stentry>-p</stentry>
 					<stentry>str</stentry>
 					<stentry>1.指定本地服务端口。
-             2.如果不指定则默认为11810端口用于编目节点，11800用于协调节点，11820用于数据节点。</stentry>
+             2.如果不指定则默认为11800端口用于编目节点，11810用于协调节点，11820用于数据节点。</stentry>
 				</strow>
 				<strow>
 					<stentry>--replname</stentry>

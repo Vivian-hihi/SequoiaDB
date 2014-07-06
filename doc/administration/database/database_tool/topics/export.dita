@@ -15,16 +15,20 @@
           <stentry>描述</stentry>
         </sthead>
         <strow>
-          <stentry>--help</stentry>
+          <stentry>--help,-h</stentry>
           <stentry>返回基本帮助和用法文本。</stentry>
         </strow>
         <strow>
-          <stentry>--hostname,-h</stentry>
+          <stentry>--version</stentry>
+          <stentry>返回版本信息。</stentry>
+        </strow>
+        <strow>
+          <stentry>--hostname,-s</stentry>
           <stentry>从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。
           </stentry>
         </strow>
         <strow>
-          <stentry>--svcname,-s
+          <stentry>--svcname,-p
           </stentry>
           <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</stentry>
         </strow>
@@ -63,21 +67,16 @@
           <stentry>--clname,-l
           </stentry>
           <stentry>指定导出数的集合名。</stentry>
-        </strow>
-        <strow>
-          <stentry>--hasoid,-i
-          </stentry>
-          <stentry>指定是否导出字段_id，默认true，json格式有效。</stentry>
-        </strow>
+        </strow>        
         <strow>
           <stentry>--fields
           </stentry>
           <stentry>指定一个或多个字段来导出数据，使用逗号分隔多个字段。csv格式有效。</stentry>
         </strow>
         <strow>
-          <stentry>--fieldincluded
+          <stentry>--included
           </stentry>
-          <stentry>指定是否导出字段名到csv首行，默认 true，csv格式有效。</stentry>
+          <stentry>指定是否导出字段名到csv首行，默认true，csv格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--file
@@ -88,7 +87,12 @@
           <stentry>--type
           </stentry>
           <stentry>指定的导出数据格式。默认csv，数据格式可以是csv或json。</stentry>
-        </strow>       
+        </strow>
+        <strow>
+          <stentry>--errorstop
+          </stentry>
+          <stentry>如果遇到错误就停止，默认false。</stentry>
+        </strow>
       </simpletable>
     </section>
     <section>

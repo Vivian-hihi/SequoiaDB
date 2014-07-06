@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="数据迁移 — 导出"/>
-<meta name="description" content="sdbexprt sdbexprt是一个实用的工具。它可以从SequoiaDB数据库导出一个JSON格式或者CSV格式的数据存储文件。 选项 参数 描述 --help 返回基本帮助和用法文本。 --hostname,-h 从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。 --svcname,-s ..."/>
+<meta name="description" content="sdbexprt sdbexprt是一个实用的工具。它可以从SequoiaDB数据库导出一个JSON格式或者CSV格式的数据存储文件。 选项 参数 描述 --help,-h 返回基本帮助和用法文本。 --version 返回版本信息。 --hostname,-s 从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。 --svcname,-p ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/database/database_tool/topics/database_tool.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_jvq_px5_hk"/>
@@ -51,20 +51,26 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13358e28" class="stentry">--help</td>
+          <td valign="top" headers="d13358e28" class="stentry">--help,-h</td>
 
           <td valign="top" headers="d13358e31" class="stentry">返回基本帮助和用法文本。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13358e28" class="stentry">--hostname,-h</td>
+          <td valign="top" headers="d13358e28" class="stentry">--version</td>
+
+          <td valign="top" headers="d13358e31" class="stentry">返回版本信息。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13358e28" class="stentry">--hostname,-s</td>
 
           <td valign="top" headers="d13358e31" class="stentry">从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13358e28" class="stentry">--svcname,-s
+          <td valign="top" headers="d13358e28" class="stentry">--svcname,-p
           </td>
 
           <td valign="top" headers="d13358e31" class="stentry">指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</td>
@@ -120,13 +126,6 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13358e28" class="stentry">--hasoid,-i
-          </td>
-
-          <td valign="top" headers="d13358e31" class="stentry">指定是否导出字段_id，默认true，json格式有效。</td>
-
-        </tr>
-<tr class="strow">
           <td valign="top" headers="d13358e28" class="stentry">--fields
           </td>
 
@@ -134,10 +133,10 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13358e28" class="stentry">--fieldincluded
+          <td valign="top" headers="d13358e28" class="stentry">--included
           </td>
 
-          <td valign="top" headers="d13358e31" class="stentry">指定是否导出字段名到csv首行，默认 true，csv格式有效。</td>
+          <td valign="top" headers="d13358e31" class="stentry">指定是否导出字段名到csv首行，默认true，csv格式有效。</td>
 
         </tr>
 <tr class="strow">
@@ -152,6 +151,13 @@
           </td>
 
           <td valign="top" headers="d13358e31" class="stentry">指定的导出数据格式。默认csv，数据格式可以是csv或json。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13358e28" class="stentry">--errorstop
+          </td>
+
+          <td valign="top" headers="d13358e31" class="stentry">如果遇到错误就停止，默认false。</td>
 
         </tr>
 </table>

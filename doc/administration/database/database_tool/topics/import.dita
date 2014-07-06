@@ -42,15 +42,19 @@
           <stentry>描述</stentry>
         </sthead>
         <strow>
-          <stentry>--help</stentry>
-          <stentry>返回基本帮助和用法文本 。</stentry>
+          <stentry>--help,-h</stentry>
+          <stentry>返回基本帮助和用法文本。</stentry>
         </strow>
         <strow>
-          <stentry>--hostname,-h</stentry>
-          <stentry>从指定主机名的SequoiaDB中导入数据。默认情况下sdbexprt尝试连接到本地主机。 </stentry>
+          <stentry>--version</stentry>
+          <stentry>返回版本信息。</stentry>
         </strow>
         <strow>
-          <stentry>--svcname,-s
+          <stentry>--hostname,-s</stentry>
+          <stentry>从指定主机名的SequoiaDB中导入数据。默认情况下sdbimprt尝试连接到本地主机。 </stentry>
+        </strow>
+        <strow>
+          <stentry>--svcname,-p
           </stentry>
           <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</stentry>
         </strow>
@@ -89,6 +93,11 @@
           <stentry>指定导入数据的集合名。 </stentry>
         </strow>
         <strow>
+          <stentry>--insertnum,-n
+          </stentry>
+          <stentry>批量导入记录，如果设置1，使用普通方式导入，如果大于1，则使用批量方式，设置范围是1—100000。 </stentry>
+        </strow>
+        <strow>
           <stentry>--file
           </stentry>
           <stentry>指定要导入的文件名。</stentry>
@@ -124,9 +133,14 @@
           <stentry>当前分隔符默认的优先级为：记录分隔符，字符分隔符，字段分隔符，默认值是true；如果设置为false，那么分隔符的优先级为：字符分隔符，记录分隔符，字段分隔符。</stentry>
         </strow>
         <strow>
-          <stentry>--stringtype
+          <stentry>--force
           </stentry>
-          <stentry>所有导入的值都强制转换成字符串类型， 默认false，csv格式有效。</stentry>
+          <stentry>如果数据中有非utf8的数据，强制导入数据，默认false。</stentry>
+        </strow>
+        <strow>
+          <stentry>--errorstop
+          </stentry>
+          <stentry>如果遇到错误就停止。默认false。</stentry>
         </strow>
       </simpletable>
     </section>
@@ -137,138 +151,119 @@
       <p>在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型是csv，导入文件为test.csv</p>
       <codeblock>sdbimprt -h localhost -s 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
+    <p>从1.8版本开始支持指定类型和默认值：</p>
+    <p>语法：field [type] [default &lt;default value ]</p>
+    <p>支援数据类型（type）： int(integer)， long， bool(boolean)， double， string， null</p>
+    <p>支援特殊数据类型：timestamp， date</p>
+    <p>例子：name string default "Jack", age int default 18, phone string</p>   
     <section>
-      <title>sdbload</title>
-      <p>sdbload是一个SequoiaDB数据库批量导入工具，它可以实现从JSON和CSV格式的数据存储文件快速导入到SequoiaDB数据库。</p>
-      <p>JSON格式的记录必须符合Json的定义，以左右花括号作为记录的分界符，并且字符串类型的数据必须包含在两个双引号之间，转义字符定义为反斜杠。</p>
-    </section>
-    <section>
-      <title>选项</title>
+      <title>指定的类型与数据：</title>
       <simpletable>
         <sthead>
-          <stentry>参数</stentry>
-          <stentry>描述</stentry>
+          <stentry>指定的类型</stentry>
+          <stentry>支援的数据类型</stentry>
+          <stentry>注意</stentry>
         </sthead>
         <strow>
-          <stentry>--help</stentry>
-          <stentry>返回基本帮助和用法文本。</stentry>
-        </strow>
-        <strow>
-          <stentry>--hostname,-h</stentry>
-          <stentry>从指定主机名的 SequoiaDB 中导入数据。默认情况下 sdbload 尝试连接到本地主机。</stentry>
-        </strow>
-        <strow>
-          <stentry>--svcname,-s
+          <stentry>int(interger)</stentry>
+          <stentry>int，string，bool</stentry>
+          <stentry>bool类型，true转换1，false转换0
           </stentry>
-          <stentry>指定的端口号。默认情况下sdbload尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
-          <stentry>--user,-u
+          <stentry>long</stentry>
+          <stentry>long，string，int，bool</stentry>
+          <stentry>bool类型，true转换1，false转换0
           </stentry>
-          <stentry>数据库用户名。</stentry>
         </strow>
         <strow>
-          <stentry>--password,-w
-          </stentry>
-          <stentry>数据库密码。</stentry>
+          <stentry>bool(boolean)</stentry>
+          <stentry>bool，string，int，long</stentry>
+          <stentry>int和long类型，0转换false，不等于0转换true</stentry>
         </strow>
         <strow>
-          <stentry>--delchar,-a
-          </stentry>
-          <stentry>指定字符分隔符。默认是（"），csv格式有效。</stentry>
+          <stentry>double</stentry>
+          <stentry>double，string，int</stentry>
+          <stentry></stentry>
         </strow>
         <strow>
-          <stentry>--delfield,-e
-          </stentry>
-          <stentry>指定字段分隔符。默认是（,），csv格式有效。</stentry>
+          <stentry>string</stentry>
+          <stentry>int，long，bool，double，string，timestamp，date，null</stentry>
+          <stentry></stentry>
         </strow>
         <strow>
-          <stentry>--delrecord,-r
-          </stentry>
-          <stentry>指定记录分隔符。默认是（\n），csv格式有效。</stentry>
+          <stentry>timestamp</stentry>
+          <stentry>string，long</stentry>
+          <stentry>如果数据是string，如“2014-01-01-10.30.00.000000”，“1388543400000”，如果是long，如1388543400000，这两种格式是正确的，数值代表的是毫秒单位</stentry>
         </strow>
         <strow>
-          <stentry>--csname,-c</stentry>
-          <stentry>指定导入数据的集合空间名。</stentry>
+          <stentry>date</stentry>
+          <stentry>string，long</stentry>
+          <stentry>如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的毫秒单位</stentry>
         </strow>
         <strow>
-          <stentry>--clname,-l
-          </stentry>
-          <stentry>指定导入数据的的集合名。</stentry>
-        </strow>
-        <strow>
-          <stentry>--insertnum,-n
-          </stentry>
-          <stentry>指定每一批导入的记录数。默认是100。</stentry>
-        </strow>
-        <strow>
-          <stentry>--file
-          </stentry>
-          <stentry>指定导入文件名。</stentry>
-        </strow>
-        <strow>
-          <stentry>--model
-          </stentry>
-          <stentry>指定获取数据模式，默认 io ，模式可以是 io 或 hdfs。</stentry>
-        </strow>
-        <strow>
-          <stentry>--libpath
-          </stentry>
-          <stentry>指定加载库的路径，hdfs模式下有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--sourcehost
-          </stentry>
-          <stentry>指定连接数据源服务端的主机名，hdfs模式有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--sourceport
-          </stentry>
-          <stentry>指定连接数据源服务端的端口，hdfs模式有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--sourceuser
-          </stentry>
-          <stentry>指定连接数据源服务端的用户名，hdfs模式有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--type
-          </stentry>
-          <stentry>指定导入数据的文件类型，默认csv，类型可以是json或csv。</stentry>
-        </strow>
-        <strow>
-          <stentry>--fields
-          </stentry>
-          <stentry>指定导入数据的字段名，csv格式有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--headerline
-          </stentry>
-          <stentry>指定导入数据首行是否作为字段名，默认false，csv格式有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--sparse
-          </stentry>
-          <stentry>指定导入数据时，自动添加字段名，默认true，csv格式有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--extra
-          </stentry>
-          <stentry>指定导入数据时，自动添加值，默认false，csv格式有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--linepriority
-          </stentry>
-          <stentry>当前分隔符默认的优先级为：记录分隔符>字符分隔符>字段分隔符，默认值是true；如果设置为false，那么分隔符的优先级为：字符分隔符>记录分隔符>字段分隔符。</stentry>
-        </strow>
+          <stentry>null</stentry>
+          <stentry>string</stentry>
+          <stentry>指定了数据类型为null，那么无论数据是什么，都是null</stentry>
+        </strow>        
       </simpletable>
     </section>
-    <note>Linepriority参数需要被特别关注，如果设置不当，可能会导入数据失败。<fig></fig>当记录中包含“记录分隔符”并且linepriority为true时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当选择linepriority为false模式。
-    </note>
+    <p>数据类型是可选的，不填则程序自动判断类型，判断以上面表格为准。</p>
     <section>
-      <title>用法</title>
-      <p> 在下面的例子，sdbload将数据导入到端口11810中对应集合空间foo和集合bar，导入文件为test.json。 </p>
-      <codeblock>sdbload –h localhost -s 11810 --file test.json -c foo -l bar –type json</codeblock>
+      <title>指定的类型与数据：</title>
+      <simpletable>
+        <sthead>
+          <stentry>指定的类型</stentry>
+          <stentry>支援的数据类型</stentry>
+          <stentry>注意</stentry>
+        </sthead>
+        <strow>
+          <stentry>int(interger)</stentry>
+          <stentry>int，string，bool</stentry>
+          <stentry>bool类型，true转换1，false转换0
+          </stentry>
+        </strow>
+        <strow>
+          <stentry>long</stentry>
+          <stentry>long，string，int，bool</stentry>
+          <stentry>bool类型，true转换1，false转换0
+          </stentry>
+        </strow>
+        <strow>
+          <stentry>bool(boolean)</stentry>
+          <stentry>bool，string，int，long</stentry>
+          <stentry>int和long类型，0转换false，不等于0转换true</stentry>
+        </strow>
+        <strow>
+          <stentry>double</stentry>
+          <stentry>double，string，int</stentry>
+          <stentry></stentry>
+        </strow>
+        <strow>
+          <stentry>string</stentry>
+          <stentry>int，long，bool，double，string，timestamp，date，null</stentry>
+          <stentry></stentry>
+        </strow>
+        <strow>
+          <stentry>timestamp</stentry>
+          <stentry>string，long</stentry>
+          <stentry>如果数据是string，如“2014-01-01-10.30.00.000000”，“1388543400000”，如果是long，如1388543400000，这两种格式是正确的，数值代表的是毫秒单位</stentry>
+        </strow>
+        <strow>
+          <stentry>date</stentry>
+          <stentry>string，long</stentry>
+          <stentry>如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的毫秒单位</stentry>
+        </strow>
+        <strow>
+          <stentry>null</stentry>
+          <stentry>string</stentry>
+          <stentry>指定了数据类型为null，那么无论数据是什么，都是null</stentry>
+        </strow>        
+      </simpletable>
     </section>
+    <p>数据类型优先级：</p>
+    <p>1.不指定数据类型（不支援特殊数据类型）：程序自动判断类型，优先级是null > bool > int > double > long > string</p>
+    <p>2.指定数据类型：优先级是指定的类型 > 支援的类型（参考指定的类型与数据表格） > null</p>
+    <p>3.指定数据类型，并且带默认值：优先级是指定的类型 > 支援的类型（参考指定的类型与数据表格） > 默认值 > null</p>    
   </body>
 </topic>

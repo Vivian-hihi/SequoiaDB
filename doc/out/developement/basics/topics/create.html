@@ -46,8 +46,8 @@
 
         <li class="li">最大的BSON文档长度为16MB。</li>
 
-        <li class="li">文档结构的字段命令有如下限制：
-            <p class="p">字段名_id作为主键保存在集合中，它的值必须唯一且不可改变。并且可以是除数组类型以外的其他任何类型。字段的命名不能是空串；不能以$开始；不能含有（.）。</p>
+      <li class="li">文档结构的字段命名有如下限制：
+        <p class="p">字段名_id作为主键保存在集合中，它的值必须唯一且不可改变，它的值可以是除数组类型以外的其他任何类型。字段的命名不能是空串；不能以$开始；不能含有（.）。</p>
 </li>
 
       </ul>
@@ -70,7 +70,7 @@
   {
      _id:1,
      name:{fist:"Jhon",last:"Black"},
-     phone:[1853742XXX,1802321XXX],
+     phone:[1853742000,1802321000],
      remark:[
               {
                  position:"manager",
@@ -93,7 +93,7 @@
        <pre class="pre codeblock"> {
     _id:1,
     name:{fist:"Jhon",last:"Black"},
-    phone:[1853742XXX,1802321XXX],
+    phone:[1853742000,1802321000],
     remark:[
              {
                 position:"manager",

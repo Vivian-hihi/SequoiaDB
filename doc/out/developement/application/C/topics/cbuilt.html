@@ -52,7 +52,7 @@
 <p class="p">3.将sdbdriver/include目录加入到编译头目录，并将sdbdriver/lib目录加入连接目录。</p>
 <strong class="ph b"><em class="ph i">动态链接：</em></strong><p class="p"/>
 使用lib目录下的libsdbc.so动态库，gcc编译参数形式如： <div class="p">
-            <pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;path&gt;/sdbdriver/include -L &lt;path&gt;/sdbdriver/lib -lsdbc  </pre>
+            <pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;PATH&gt;/sdbdriver/include -L &lt;PATH&gt;/sdbdriver/lib -lsdbc  </pre>
 
           </div>
 <p class="p">其中：PATH为sdbdriver放置路径；运行程序时，用户需要将LD_LIBRARY_PATH路径指定为包含libsdbc.so动态库的路径。</p>
@@ -72,7 +72,7 @@
 </ul>
 
           <strong class="ph b"><em class="ph i">静态链接：</em></strong><p class="p"/>
-使用lib目录下的libstaticsdbc.a静态库，gcc编译参数形式如：<pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/libstaticsdbc.a -lm</pre>
+使用lib目录下的libstaticsdbc.a静态库，gcc编译参数形式如：<pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;PATH&gt;/sdbdriver/include –L &lt;PATH&gt;/sdbdriver/lib/libstaticsdbc.a -lm</pre>
 
         </li>
 

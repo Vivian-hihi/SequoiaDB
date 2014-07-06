@@ -103,7 +103,7 @@
           be greater than 127B, or exception will occur. </li>
           <li>AutoSplit must cooperate with hash partitioning and domain. AutoSplit and Group cannot be set at the same time.</li>
           <li>AutoSplit and Group cannot be set at the same time.</li>
-          <li>If AutoSplit is not specified in a collection, the value of AutoSplit will come from domain.</li>
+          <li>If AutoSplit is not specOKified in a collection, the value of AutoSplit will come from domain.</li>
           <li>Group must exist in a domain, which contains a collection space, which has the group(All replica group belong to SYSDOMAIN, that is to say, a collection space can be distributed into any replica group if no specific group is given)</li>
         </ul> 
       </note>

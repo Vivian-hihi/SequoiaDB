@@ -126,6 +126,8 @@
 <!--<xref href="../../../references/methods/topics/deleteCurrent.dita">db.foo.bar.find().deleteCurrent()</xref> 删除当前游标指向的记录-->
 <xref href="../../../references/methods/topics/next.dita">db.foo.bar.find().next()</xref> 返回当前游标指向的下一条记录
 <!--<xref href="../../../references/methods/topics/updateCurrent.dita">db.foo.bar.find().updateCurrent()</xref>更新当前游标指向的记录-->
+<xref href="../../../references/methods/topics/ccolse.dita">db.foo.bar.find().close()</xref>关闭当前游标，当前游标不再可用           
+            
 <xref href="../../../references/methods/topics/dbcount.dita">db.foo.bar.find().count()</xref>返回当前游标的记录总数
             
 <xref href="../../../references/methods/topics/csize.dita">db.foo.bar.find().size()</xref> 返回当前游标到最终游标的距离
