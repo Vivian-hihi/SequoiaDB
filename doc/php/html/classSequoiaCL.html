@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>SequoiaDB: SequoiaCollection Class Reference</title>
+<title>SequoiaDB: SequoiaCL Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -81,67 +81,67 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="classSequoiaCollection-members.html">List of all members</a>  </div>
+<a href="classSequoiaCL-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">SequoiaCollection Class Reference</div>  </div>
+<div class="title">SequoiaCL Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ae7f529f597ee5453d54c973b82b8f98b"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#ae7f529f597ee5453d54c973b82b8f98b">insert</a> (array|string $record)</td></tr>
-<tr class="memdesc:ae7f529f597ee5453d54c973b82b8f98b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts an array into the collection.  <a href="#ae7f529f597ee5453d54c973b82b8f98b"></a><br/></td></tr>
-<tr class="separator:ae7f529f597ee5453d54c973b82b8f98b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af8a05c537f11b04b9ee934e225bb432d"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#af8a05c537f11b04b9ee934e225bb432d">update</a> (array|string $rule, array|string $condition=NULL, array|string $hint=NULL)</td></tr>
-<tr class="memdesc:af8a05c537f11b04b9ee934e225bb432d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection.  <a href="#af8a05c537f11b04b9ee934e225bb432d"></a><br/></td></tr>
-<tr class="separator:af8a05c537f11b04b9ee934e225bb432d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01a7073e3e92b79436503c831f2bdebd"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a01a7073e3e92b79436503c831f2bdebd">remove</a> (array|string $condition=NULL, array|string $hint=NULL)</td></tr>
-<tr class="memdesc:a01a7073e3e92b79436503c831f2bdebd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove records from this collection.  <a href="#a01a7073e3e92b79436503c831f2bdebd"></a><br/></td></tr>
-<tr class="separator:a01a7073e3e92b79436503c831f2bdebd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a97186585d2f75a048ab02e9636b4f848"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a97186585d2f75a048ab02e9636b4f848">find</a> (array|string $condition=NULL, array|string $select=NULL, array|string $orderBy=NULL, array|string $hint=NULL, int $numToSkip=0, int $numToReturn=-1)</td></tr>
-<tr class="memdesc:a97186585d2f75a048ab02e9636b4f848"><td class="mdescLeft">&#160;</td><td class="mdescRight">Querys this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set.  <a href="#a97186585d2f75a048ab02e9636b4f848"></a><br/></td></tr>
-<tr class="separator:a97186585d2f75a048ab02e9636b4f848"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49f7ebe670955c15c68a4072f7ca9c01"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a49f7ebe670955c15c68a4072f7ca9c01">split</a> (string $sourceName, string $destName, array|string $condition, array|string $endCondition=NULL)</td></tr>
-<tr class="memdesc:a49f7ebe670955c15c68a4072f7ca9c01"><td class="mdescLeft">&#160;</td><td class="mdescRight">data split,source collection split to dest collection  <a href="#a49f7ebe670955c15c68a4072f7ca9c01"></a><br/></td></tr>
-<tr class="separator:a49f7ebe670955c15c68a4072f7ca9c01"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af5455cf8484c6a72131c06e47b0a5e82"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#af5455cf8484c6a72131c06e47b0a5e82">split</a> (string $sourceName, string $destName, double $percent)</td></tr>
-<tr class="memdesc:af5455cf8484c6a72131c06e47b0a5e82"><td class="mdescLeft">&#160;</td><td class="mdescRight">data split,source collection split to dest collection  <a href="#af5455cf8484c6a72131c06e47b0a5e82"></a><br/></td></tr>
-<tr class="separator:af5455cf8484c6a72131c06e47b0a5e82"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7ae8752f4c563e0efcab32b1be396306"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a7ae8752f4c563e0efcab32b1be396306">drop</a> (void)</td></tr>
-<tr class="memdesc:a7ae8752f4c563e0efcab32b1be396306"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops this collection.  <a href="#a7ae8752f4c563e0efcab32b1be396306"></a><br/></td></tr>
-<tr class="separator:a7ae8752f4c563e0efcab32b1be396306"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9b20ecf0a5a0df47e53cb100cea11eeb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a9b20ecf0a5a0df47e53cb100cea11eeb">aggregate</a> (array|string $aggrObj)</td></tr>
-<tr class="memdesc:a9b20ecf0a5a0df47e53cb100cea11eeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">aggregate this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set  <a href="#a9b20ecf0a5a0df47e53cb100cea11eeb"></a><br/></td></tr>
-<tr class="separator:a9b20ecf0a5a0df47e53cb100cea11eeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21d9c8e47e25e2ccf1a1efb9262e16de"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a21d9c8e47e25e2ccf1a1efb9262e16de">createIndex</a> (array|string $indexDef, string $pIndexName, bool $isUnique=FALSE)</td></tr>
-<tr class="memdesc:a21d9c8e47e25e2ccf1a1efb9262e16de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#a21d9c8e47e25e2ccf1a1efb9262e16de"></a><br/></td></tr>
-<tr class="separator:a21d9c8e47e25e2ccf1a1efb9262e16de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a811b2d169fdad031dc19bdf05f3772bc"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a811b2d169fdad031dc19bdf05f3772bc">deleteIndex</a> (string $pIndexName)</td></tr>
-<tr class="memdesc:a811b2d169fdad031dc19bdf05f3772bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">delete the index in current collection  <a href="#a811b2d169fdad031dc19bdf05f3772bc"></a><br/></td></tr>
-<tr class="separator:a811b2d169fdad031dc19bdf05f3772bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af373eefecfe1c216bb80a114cd18b042"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#af373eefecfe1c216bb80a114cd18b042">getIndex</a> (string $pIndexName=&quot;&quot;)</td></tr>
-<tr class="memdesc:af373eefecfe1c216bb80a114cd18b042"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of or one of the indexes in current collection.  <a href="#af373eefecfe1c216bb80a114cd18b042"></a><br/></td></tr>
-<tr class="separator:af373eefecfe1c216bb80a114cd18b042"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2fd0970564da7323038f53b84b7ce818"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a2fd0970564da7323038f53b84b7ce818">getCSName</a> (void)</td></tr>
-<tr class="memdesc:a2fd0970564da7323038f53b84b7ce818"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns this collection space's name.  <a href="#a2fd0970564da7323038f53b84b7ce818"></a><br/></td></tr>
-<tr class="separator:a2fd0970564da7323038f53b84b7ce818"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a069206ce7403d53c81e895083405bb9f"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a069206ce7403d53c81e895083405bb9f">getCollectionName</a> (void)</td></tr>
-<tr class="memdesc:a069206ce7403d53c81e895083405bb9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns this collection's name.  <a href="#a069206ce7403d53c81e895083405bb9f"></a><br/></td></tr>
-<tr class="separator:a069206ce7403d53c81e895083405bb9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa856d6d665c3723afa95d8864047aa25"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#aa856d6d665c3723afa95d8864047aa25">getFullName</a> (void)</td></tr>
-<tr class="memdesc:aa856d6d665c3723afa95d8864047aa25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns this collection full name.  <a href="#aa856d6d665c3723afa95d8864047aa25"></a><br/></td></tr>
-<tr class="separator:aa856d6d665c3723afa95d8864047aa25"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d00dcf49c624d6fe6c4af538549f8a7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCollection.html#a8d00dcf49c624d6fe6c4af538549f8a7">count</a> (array|string $condition=NULL)</td></tr>
-<tr class="memdesc:a8d00dcf49c624d6fe6c4af538549f8a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Counts the number of documents in this collection.  <a href="#a8d00dcf49c624d6fe6c4af538549f8a7"></a><br/></td></tr>
-<tr class="separator:a8d00dcf49c624d6fe6c4af538549f8a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef2c2fce247c521500eaf5f0e34dad8a"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#aef2c2fce247c521500eaf5f0e34dad8a">insert</a> (array|string $record)</td></tr>
+<tr class="memdesc:aef2c2fce247c521500eaf5f0e34dad8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts an array into the collection.  <a href="#aef2c2fce247c521500eaf5f0e34dad8a"></a><br/></td></tr>
+<tr class="separator:aef2c2fce247c521500eaf5f0e34dad8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fda470494d214378b80ce30d45141c8"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a9fda470494d214378b80ce30d45141c8">update</a> (array|string $rule, array|string $condition=NULL, array|string $hint=NULL)</td></tr>
+<tr class="memdesc:a9fda470494d214378b80ce30d45141c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the matching documents in current collection.  <a href="#a9fda470494d214378b80ce30d45141c8"></a><br/></td></tr>
+<tr class="separator:a9fda470494d214378b80ce30d45141c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1805b0ce88c24708800c63bda8d2d27"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#ab1805b0ce88c24708800c63bda8d2d27">remove</a> (array|string $condition=NULL, array|string $hint=NULL)</td></tr>
+<tr class="memdesc:ab1805b0ce88c24708800c63bda8d2d27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove records from this collection.  <a href="#ab1805b0ce88c24708800c63bda8d2d27"></a><br/></td></tr>
+<tr class="separator:ab1805b0ce88c24708800c63bda8d2d27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a1c45c62ae4bf9ad626c86dfd5eb8ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a2a1c45c62ae4bf9ad626c86dfd5eb8ef">find</a> (array|string $condition=NULL, array|string $select=NULL, array|string $orderBy=NULL, array|string $hint=NULL, int $numToSkip=0, int $numToReturn=-1)</td></tr>
+<tr class="memdesc:a2a1c45c62ae4bf9ad626c86dfd5eb8ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Querys this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set.  <a href="#a2a1c45c62ae4bf9ad626c86dfd5eb8ef"></a><br/></td></tr>
+<tr class="separator:a2a1c45c62ae4bf9ad626c86dfd5eb8ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae44abe1394d7a1e0c6c34c442a173e9c"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#ae44abe1394d7a1e0c6c34c442a173e9c">split</a> (string $sourceName, string $destName, array|string $condition, array|string $endCondition=NULL)</td></tr>
+<tr class="memdesc:ae44abe1394d7a1e0c6c34c442a173e9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">data split,source collection split to dest collection  <a href="#ae44abe1394d7a1e0c6c34c442a173e9c"></a><br/></td></tr>
+<tr class="separator:ae44abe1394d7a1e0c6c34c442a173e9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45d2ffc81d735c7d75ebf4ef9076c063"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a45d2ffc81d735c7d75ebf4ef9076c063">split</a> (string $sourceName, string $destName, double $percent)</td></tr>
+<tr class="memdesc:a45d2ffc81d735c7d75ebf4ef9076c063"><td class="mdescLeft">&#160;</td><td class="mdescRight">data split,source collection split to dest collection  <a href="#a45d2ffc81d735c7d75ebf4ef9076c063"></a><br/></td></tr>
+<tr class="separator:a45d2ffc81d735c7d75ebf4ef9076c063"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76086d6f6a0600a81788506e18855eca"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a76086d6f6a0600a81788506e18855eca">drop</a> (void)</td></tr>
+<tr class="memdesc:a76086d6f6a0600a81788506e18855eca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops this collection.  <a href="#a76086d6f6a0600a81788506e18855eca"></a><br/></td></tr>
+<tr class="separator:a76086d6f6a0600a81788506e18855eca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec620b8ba6217b2b3d0df60db76095a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#aec620b8ba6217b2b3d0df60db76095a5">aggregate</a> (array|string $aggrObj)</td></tr>
+<tr class="memdesc:aec620b8ba6217b2b3d0df60db76095a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">aggregate this collection, returning a <a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> for the result set  <a href="#aec620b8ba6217b2b3d0df60db76095a5"></a><br/></td></tr>
+<tr class="separator:aec620b8ba6217b2b3d0df60db76095a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31e2929f49d02dd7e96c75745cda38e4"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a31e2929f49d02dd7e96c75745cda38e4">createIndex</a> (array|string $indexDef, string $pIndexName, bool $isUnique=FALSE)</td></tr>
+<tr class="memdesc:a31e2929f49d02dd7e96c75745cda38e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the index in current collection.  <a href="#a31e2929f49d02dd7e96c75745cda38e4"></a><br/></td></tr>
+<tr class="separator:a31e2929f49d02dd7e96c75745cda38e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78fc172b8a5af7396e2330266f700579"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a78fc172b8a5af7396e2330266f700579">deleteIndex</a> (string $pIndexName)</td></tr>
+<tr class="memdesc:a78fc172b8a5af7396e2330266f700579"><td class="mdescLeft">&#160;</td><td class="mdescRight">delete the index in current collection  <a href="#a78fc172b8a5af7396e2330266f700579"></a><br/></td></tr>
+<tr class="separator:a78fc172b8a5af7396e2330266f700579"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7a861e9153d8128b49c384e065173e7e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a7a861e9153d8128b49c384e065173e7e">getIndex</a> (string $pIndexName=&quot;&quot;)</td></tr>
+<tr class="memdesc:a7a861e9153d8128b49c384e065173e7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all of or one of the indexes in current collection.  <a href="#a7a861e9153d8128b49c384e065173e7e"></a><br/></td></tr>
+<tr class="separator:a7a861e9153d8128b49c384e065173e7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab851a52e21d809f230c4aa9f989234dd"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#ab851a52e21d809f230c4aa9f989234dd">getCSName</a> (void)</td></tr>
+<tr class="memdesc:ab851a52e21d809f230c4aa9f989234dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns this collection space's name.  <a href="#ab851a52e21d809f230c4aa9f989234dd"></a><br/></td></tr>
+<tr class="separator:ab851a52e21d809f230c4aa9f989234dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a281600f5f94f1f5a4a7428526ed589e9"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#a281600f5f94f1f5a4a7428526ed589e9">getCollectionName</a> (void)</td></tr>
+<tr class="memdesc:a281600f5f94f1f5a4a7428526ed589e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns this collection's name.  <a href="#a281600f5f94f1f5a4a7428526ed589e9"></a><br/></td></tr>
+<tr class="separator:a281600f5f94f1f5a4a7428526ed589e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee73050e74311185841d330f8e16d90f"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#aee73050e74311185841d330f8e16d90f">getFullName</a> (void)</td></tr>
+<tr class="memdesc:aee73050e74311185841d330f8e16d90f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns this collection full name.  <a href="#aee73050e74311185841d330f8e16d90f"></a><br/></td></tr>
+<tr class="separator:aee73050e74311185841d330f8e16d90f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed703c2e2dabfe8361829bd366036689"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCL.html#aed703c2e2dabfe8361829bd366036689">count</a> (array|string $condition=NULL)</td></tr>
+<tr class="memdesc:aed703c2e2dabfe8361829bd366036689"><td class="mdescLeft">&#160;</td><td class="mdescRight">Counts the number of documents in this collection.  <a href="#aed703c2e2dabfe8361829bd366036689"></a><br/></td></tr>
+<tr class="separator:aed703c2e2dabfe8361829bd366036689"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a9b20ecf0a5a0df47e53cb100cea11eeb"></a>
+<a class="anchor" id="aec620b8ba6217b2b3d0df60db76095a5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> SequoiaCollection::aggregate </td>
+          <td class="memname"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> SequoiaCL::aggregate </td>
           <td>(</td>
           <td class="paramtype">array|string&#160;</td>
           <td class="paramname"><em>$aggrObj</em></td><td>)</td>
@@ -166,12 +166,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a8d00dcf49c624d6fe6c4af538549f8a7"></a>
+<a class="anchor" id="aed703c2e2dabfe8361829bd366036689"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int SequoiaCollection::count </td>
+          <td class="memname">int SequoiaCL::count </td>
           <td>(</td>
           <td class="paramtype">array|string&#160;</td>
           <td class="paramname"><em>$condition</em> = <code>NULL</code></td><td>)</td>
@@ -196,12 +196,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a21d9c8e47e25e2ccf1a1efb9262e16de"></a>
+<a class="anchor" id="a31e2929f49d02dd7e96c75745cda38e4"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">array string SequoiaCollection::createIndex </td>
+          <td class="memname">array string SequoiaCL::createIndex </td>
           <td>(</td>
           <td class="paramtype">array|string&#160;</td>
           <td class="paramname"><em>$indexDef</em>, </td>
@@ -244,12 +244,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a811b2d169fdad031dc19bdf05f3772bc"></a>
+<a class="anchor" id="a78fc172b8a5af7396e2330266f700579"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">array string SequoiaCollection::deleteIndex </td>
+          <td class="memname">array string SequoiaCL::deleteIndex </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
           <td class="paramname"><em>$pIndexName</em></td><td>)</td>
@@ -274,12 +274,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a7ae8752f4c563e0efcab32b1be396306"></a>
+<a class="anchor" id="a76086d6f6a0600a81788506e18855eca"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">array string SequoiaCollection::drop </td>
+          <td class="memname">array string SequoiaCL::drop </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -298,12 +298,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a97186585d2f75a048ab02e9636b4f848"></a>
+<a class="anchor" id="a2a1c45c62ae4bf9ad626c86dfd5eb8ef"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> SequoiaCollection::find </td>
+          <td class="memname"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> SequoiaCL::find </td>
           <td>(</td>
           <td class="paramtype">array|string&#160;</td>
           <td class="paramname"><em>$condition</em> = <code>NULL</code>, </td>
@@ -367,12 +367,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a069206ce7403d53c81e895083405bb9f"></a>
+<a class="anchor" id="a281600f5f94f1f5a4a7428526ed589e9"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">string SequoiaCollection::getCollectionName </td>
+          <td class="memname">string SequoiaCL::getCollectionName </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -391,12 +391,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a2fd0970564da7323038f53b84b7ce818"></a>
+<a class="anchor" id="ab851a52e21d809f230c4aa9f989234dd"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">string SequoiaCollection::getCSName </td>
+          <td class="memname">string SequoiaCL::getCSName </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -415,12 +415,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aa856d6d665c3723afa95d8864047aa25"></a>
+<a class="anchor" id="aee73050e74311185841d330f8e16d90f"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">string SequoiaCollection::getFullName </td>
+          <td class="memname">string SequoiaCL::getFullName </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -439,12 +439,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af373eefecfe1c216bb80a114cd18b042"></a>
+<a class="anchor" id="a7a861e9153d8128b49c384e065173e7e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> SequoiaCollection::getIndex </td>
+          <td class="memname"><a class="el" href="classSequoiaCursor.html">SequoiaCursor</a> SequoiaCL::getIndex </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
           <td class="paramname"><em>$pIndexName</em> = <code>&quot;&quot;</code></td><td>)</td>
@@ -469,12 +469,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ae7f529f597ee5453d54c973b82b8f98b"></a>
+<a class="anchor" id="aef2c2fce247c521500eaf5f0e34dad8a"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">array string SequoiaCollection::insert </td>
+          <td class="memname">array string SequoiaCL::insert </td>
           <td>(</td>
           <td class="paramtype">array|string&#160;</td>
           <td class="paramname"><em>$record</em></td><td>)</td>
@@ -499,12 +499,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a01a7073e3e92b79436503c831f2bdebd"></a>
+<a class="anchor" id="ab1805b0ce88c24708800c63bda8d2d27"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">array string SequoiaCollection::remove </td>
+          <td class="memname">array string SequoiaCL::remove </td>
           <td>(</td>
           <td class="paramtype">array|string&#160;</td>
           <td class="paramname"><em>$condition</em> = <code>NULL</code>, </td>
@@ -540,12 +540,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a49f7ebe670955c15c68a4072f7ca9c01"></a>
+<a class="anchor" id="ae44abe1394d7a1e0c6c34c442a173e9c"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">array string SequoiaCollection::split </td>
+          <td class="memname">array string SequoiaCL::split </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
           <td class="paramname"><em>$sourceName</em>, </td>
@@ -595,12 +595,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af5455cf8484c6a72131c06e47b0a5e82"></a>
+<a class="anchor" id="a45d2ffc81d735c7d75ebf4ef9076c063"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">array string SequoiaCollection::split </td>
+          <td class="memname">array string SequoiaCL::split </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
           <td class="paramname"><em>$sourceName</em>, </td>
@@ -643,12 +643,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af8a05c537f11b04b9ee934e225bb432d"></a>
+<a class="anchor" id="a9fda470494d214378b80ce30d45141c8"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">array string SequoiaCollection::update </td>
+          <td class="memname">array string SequoiaCL::update </td>
           <td>(</td>
           <td class="paramtype">array|string&#160;</td>
           <td class="paramname"><em>$rule</em>, </td>
@@ -698,7 +698,7 @@ Public Member Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 16:58:50 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:05:51 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
