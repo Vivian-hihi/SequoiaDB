@@ -104,6 +104,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a87958428bd04a9dce6eebecde99abfce"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a87958428bd04a9dce6eebecde99abfce">Sequoiadb</a> (string connString)</td></tr>
 <tr class="memdesc:a87958428bd04a9dce6eebecde99abfce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <a href="#a87958428bd04a9dce6eebecde99abfce"></a><br/></td></tr>
 <tr class="separator:a87958428bd04a9dce6eebecde99abfce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86b7d01b624b0c38b24c728a2f59b182"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a86b7d01b624b0c38b24c728a2f59b182">Sequoiadb</a> (List&lt; string &gt; connStrings)</td></tr>
+<tr class="memdesc:a86b7d01b624b0c38b24c728a2f59b182"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <a href="#a86b7d01b624b0c38b24c728a2f59b182"></a><br/></td></tr>
+<tr class="separator:a86b7d01b624b0c38b24c728a2f59b182"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06ff4dcf4b8e3bf7bf45057f39943078"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a06ff4dcf4b8e3bf7bf45057f39943078">Sequoiadb</a> (string host, int port)</td></tr>
 <tr class="memdesc:a06ff4dcf4b8e3bf7bf45057f39943078"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <a href="#a06ff4dcf4b8e3bf7bf45057f39943078"></a><br/></td></tr>
 <tr class="separator:a06ff4dcf4b8e3bf7bf45057f39943078"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -131,6 +134,18 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </dl>
 <br/></td></tr>
 <tr class="separator:a3edd6d00dbcdd9eb0878b4bd6aeda54d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab38e72edd418c60fea0d83d221b89ccd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab38e72edd418c60fea0d83d221b89ccd"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ab38e72edd418c60fea0d83d221b89ccd">Connect</a> (string username, string password, <a class="el" href="classSequoiaDB_1_1ConfigOptions.html">ConfigOptions</a> options)</td></tr>
+<tr class="memdesc:ab38e72edd418c60fea0d83d221b89ccd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to remote <a class="el" href="classSequoiaDB_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> database server  <a class="el" href="classSequoiaDB_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> connection user name  <a class="el" href="classSequoiaDB_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> connection password  The options for connection </p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception.</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<br/></td></tr>
+<tr class="separator:ab38e72edd418c60fea0d83d221b89ccd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf7f9722345820c356e241726e954bb3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf7f9722345820c356e241726e954bb3"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#acf7f9722345820c356e241726e954bb3">Disconnect</a> ()</td></tr>
 <tr class="memdesc:acf7f9722345820c356e241726e954bb3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disconnect the remote server </p>
@@ -262,6 +277,27 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a4acd6dc36c0b6edd19b8677ce28845cf">ResetSnapshot</a> (BsonDocument matcher)</td></tr>
 <tr class="memdesc:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset the snapshot.  <a href="#a4acd6dc36c0b6edd19b8677ce28845cf"></a><br/></td></tr>
 <tr class="separator:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a705a34f662399a4cba9c5443a44a7395"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a705a34f662399a4cba9c5443a44a7395">backupOffline</a> (BsonDocument options)</td></tr>
+<tr class="memdesc:a705a34f662399a4cba9c5443a44a7395"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backup the whole database or specifed replica group.  <a href="#a705a34f662399a4cba9c5443a44a7395"></a><br/></td></tr>
+<tr class="separator:a705a34f662399a4cba9c5443a44a7395"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab408e18af93ca779d90c82912505aa17"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ab408e18af93ca779d90c82912505aa17">listBackup</a> (BsonDocument options, BsonDocument matcher, BsonDocument selector, BsonDocument orderBy)</td></tr>
+<tr class="memdesc:ab408e18af93ca779d90c82912505aa17"><td class="mdescLeft">&#160;</td><td class="mdescRight">List the backups.  <a href="#ab408e18af93ca779d90c82912505aa17"></a><br/></td></tr>
+<tr class="separator:ab408e18af93ca779d90c82912505aa17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70034279b61d0f3ab798cdb6d9827219"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a70034279b61d0f3ab798cdb6d9827219">removeBackup</a> (BsonDocument options)</td></tr>
+<tr class="memdesc:a70034279b61d0f3ab798cdb6d9827219"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the backups.  <a href="#a70034279b61d0f3ab798cdb6d9827219"></a><br/></td></tr>
+<tr class="separator:a70034279b61d0f3ab798cdb6d9827219"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad34c78b756290b0716f3aa3250437487"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad34c78b756290b0716f3aa3250437487">listTasks</a> (BsonDocument matcher, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)</td></tr>
+<tr class="memdesc:ad34c78b756290b0716f3aa3250437487"><td class="mdescLeft">&#160;</td><td class="mdescRight">List the tasks.  <a href="#ad34c78b756290b0716f3aa3250437487"></a><br/></td></tr>
+<tr class="separator:ad34c78b756290b0716f3aa3250437487"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62174a11b9661a4e1e0bdafee5b8ad44"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a62174a11b9661a4e1e0bdafee5b8ad44">waitTasks</a> (List&lt; long &gt; taskIDs)</td></tr>
+<tr class="memdesc:a62174a11b9661a4e1e0bdafee5b8ad44"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait the tasks to finish.  <a href="#a62174a11b9661a4e1e0bdafee5b8ad44"></a><br/></td></tr>
+<tr class="separator:a62174a11b9661a4e1e0bdafee5b8ad44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b6f879f0c71ed5aa15541a6f34f8dbc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a9b6f879f0c71ed5aa15541a6f34f8dbc">cancelTask</a> (long taskID, bool isAsync)</td></tr>
+<tr class="memdesc:a9b6f879f0c71ed5aa15541a6f34f8dbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancel the specified task.  <a href="#a9b6f879f0c71ed5aa15541a6f34f8dbc"></a><br/></td></tr>
+<tr class="separator:a9b6f879f0c71ed5aa15541a6f34f8dbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad48286e77e8bb6ce8ca86a04e31c1fd0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad48286e77e8bb6ce8ca86a04e31c1fd0">setSessionAttr</a> (BsonDocument options)</td></tr>
+<tr class="memdesc:ad48286e77e8bb6ce8ca86a04e31c1fd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the attributes of the session.  <a href="#ad48286e77e8bb6ce8ca86a04e31c1fd0"></a><br/></td></tr>
+<tr class="separator:ad48286e77e8bb6ce8ca86a04e31c1fd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c6ab0fa29c12c3cafc02bddc7343d39"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c6ab0fa29c12c3cafc02bddc7343d39"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a0c6ab0fa29c12c3cafc02bddc7343d39">closeAllCursors</a> ()</td></tr>
 <tr class="memdesc:a0c6ab0fa29c12c3cafc02bddc7343d39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close all the cursors created in current connection, we can't use those cursors to get data again. </p>
@@ -359,7 +395,39 @@ IConnection&#160;</td><td class="memItemRight" valign="bottom"><b>Connection</b>
 <p>Constructor. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">connString</td><td>Remote server address "IP : Port" or "IP"(port is 50000) </td></tr>
+    <tr><td class="paramname">connString</td><td>Remote server address "IP : Port" or "IP"(port is 11810) </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a86b7d01b624b0c38b24c728a2f59b182"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SequoiaDB.Sequoiadb.Sequoiadb </td>
+          <td>(</td>
+          <td class="paramtype">List&lt; string &gt;&#160;</td>
+          <td class="paramname"><em>connStrings</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructor. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">connStrings</td><td>Remote server addresses "IP : Port" or "IP"(port is 11810) </td></tr>
   </table>
   </dd>
 </dl>
@@ -440,6 +508,109 @@ IConnection&#160;</td><td class="memItemRight" valign="bottom"><b>Connection</b>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html" title="Database operation interfaces of replica group.">ReplicaGroup</a> has been activated if succeed or null if fail </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a705a34f662399a4cba9c5443a44a7395"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SequoiaDB.Sequoiadb.backupOffline </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Backup the whole database or specifed replica group. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">options</td><td>Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true} <ul>
+<li>
+GroupName : The replica groups which to be backuped </li>
+<li>
+Path : The backup path, if not assign, use the backup path assigned in configuration file </li>
+<li>
+Name : The name for the backup </li>
+<li>
+Description : The description for the backup </li>
+<li>
+EnsureInc : Whether excute increment synchronization, default to be false </li>
+<li>
+OverWrite : Whether overwrite the old backup file, default to be false </li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a9b6f879f0c71ed5aa15541a6f34f8dbc"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SequoiaDB.Sequoiadb.cancelTask </td>
+          <td>(</td>
+          <td class="paramtype">long&#160;</td>
+          <td class="paramname"><em>taskIDs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>isAsync</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Cancel the specified task. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">taskID</td><td>The task id </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
@@ -1162,6 +1333,79 @@ SDB_SNAP_SYSTEM
 
 </div>
 </div>
+<a class="anchor" id="ab408e18af93ca779d90c82912505aa17"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a> SequoiaDB.Sequoiadb.listBackup </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>options</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>matcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>orderBy</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>List the backups. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">options</td><td>Contains configuration infomations for remove backups, list all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"} <ul>
+<li>
+GroupName : Assign the backups of specifed replica groups to be list </li>
+<li>
+Path : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file </li>
+<li>
+Name : Assign the backups with specifed name to be list </li>
+</ul>
+</td></tr>
+    <tr><td class="paramname">matcher</td><td>The matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramname">selector</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramname">orderBy</td><td>The ordered rule, never sort if null </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the <a class="el" href="classSequoiaDB_1_1DBCursor.html" title="Database collection cursor.">DBCursor</a> of the backup or null while having no backup infonation </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a4154feb73dd45bf92db4f01b97b4b4ab"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1185,6 +1429,118 @@ SDB_SNAP_SYSTEM
 
 <p>Get all the groups. </p>
 <dl class="section return"><dt>Returns</dt><dd>A cursor of all the groups </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ad34c78b756290b0716f3aa3250437487"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a> SequoiaDB.Sequoiadb.listTasks </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>matcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>hint</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>List the tasks. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matcher</td><td>The matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramname">selector</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramname">orderBy</td><td>The ordered rule, never sort if null </td></tr>
+    <tr><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a70034279b61d0f3ab798cdb6d9827219"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SequoiaDB.Sequoiadb.removeBackup </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remove the backups. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">options</td><td>Contains configuration infomations for remove backups, remove all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"} <ul>
+<li>
+GroupName : Assign the backups of specifed replica grouops to be remove </li>
+<li>
+Path : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file </li>
+<li>
+Name : Assign the backups with specifed name to be remove </li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
@@ -1274,6 +1630,88 @@ SDB_SNAP_SYSTEM
 
 </div>
 </div>
+<a class="anchor" id="ad48286e77e8bb6ce8ca86a04e31c1fd0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SequoiaDB.Sequoiadb.setSessionAttr </td>
+          <td>(</td>
+          <td class="paramtype">BsonDocument&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the attributes of the session. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">options</td><td>The configuration options for session.The options are as below: <pre class="fragment">PreferedInstance : indicate which instance to respond read request in current session.
+                   eg:{"PreferedInstance":"m"/"M"/"s"/"S"/"a"/"A"/1-7},
+                   prefer to choose "read and write instance"/"read only instance"/"anyone instance"/instance1-insatance7,
+                   default to be {"PreferedInstance":"A"}, means would like to choose anyone instance to respond read request such as query. 
+</pre> </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a62174a11b9661a4e1e0bdafee5b8ad44"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SequoiaDB.Sequoiadb.waitTasks </td>
+          <td>(</td>
+          <td class="paramtype">List&lt; long &gt;&#160;</td>
+          <td class="paramname"><em>taskIDs</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Wait the tasks to finish. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">taskIDs</td><td>The list of task id </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <h2 class="groupheader">Property Documentation</h2>
 <a class="anchor" id="aa937756502c1373c6fd4b34604c39c0d"></a>
 <div class="memitem">
@@ -1299,12 +1737,12 @@ SDB_SNAP_SYSTEM
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/driver/C#.Net/Driver/base/Sequoiadb.cs</li>
+<li>E:/sequoiadb/driver/C#.Net/Driver/base/Sequoiadb.cs</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 11 2014 15:44:58 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
