@@ -313,7 +313,7 @@
 			        		<equals arg1="${allPrepare.ret.code}" arg2="0" />
 			        	</not>
 			        	<then>
-			        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;The allPrepare.ret.code.js failed...&quot;&gt;" />
+			        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="The allPrepare.ret.code.js failed..." />
 			        	</then>
 				  	</if>
 				  	<if>
@@ -321,7 +321,7 @@
 			        		<equals arg1="${allClean.ret.code}" arg2="0" />
 			        	</not>
 			        	<then>
-			        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;The allClean.js failed...&quot;&gt;" />
+			        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="The allClean.js failed..." />
 			        	</then>
 				  	</if>
 				  	<if>
@@ -329,7 +329,7 @@
 			        		<equals arg1="${beforeUsecase.ret.code}" arg2="0" />
 			        	</not>
 			        	<then>
-			        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;The before_usecase.js failed...&quot;&gt;" />
+			        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="The before_usecase.js failed..." />
 			        	</then>
 				  	</if>
 				  	<if>
@@ -337,7 +337,7 @@
 				  			<equals arg1="${afterUsecase.ret.code}" arg2="0" />
 				  		</not>
 				  		<then>
-			        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;The after_usecase.js failed...&quot;&gt;" />		
+			        		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="The after_usecase.js failed..." />		
 				  		</then>
 				  	</if>
 				  	
