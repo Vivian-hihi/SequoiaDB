@@ -228,6 +228,9 @@ BufBuilder &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el
 <tr class="memitem:ada1072c18a841125cf6773117a8496af"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbson_1_1BSONObjBuilder.html">BSONObjBuilder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbson_1_1BSONObjBuilder.html#ada1072c18a841125cf6773117a8496af">append</a> (const StringData &amp;fieldName, const char *str, int sz)</td></tr>
 <tr class="memdesc:ada1072c18a841125cf6773117a8496af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append a string element.  <a href="#ada1072c18a841125cf6773117a8496af"></a><br/></td></tr>
 <tr class="separator:ada1072c18a841125cf6773117a8496af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c5abe4632fa84eb70320eae3bb0f251"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbson_1_1BSONObjBuilder.html">BSONObjBuilder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbson_1_1BSONObjBuilder.html#a4c5abe4632fa84eb70320eae3bb0f251">appendStrWithNoTerminating</a> (const StringData &amp;fieldName, const char *str, int sz)</td></tr>
+<tr class="memdesc:a4c5abe4632fa84eb70320eae3bb0f251"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append a string element.  <a href="#a4c5abe4632fa84eb70320eae3bb0f251"></a><br/></td></tr>
+<tr class="separator:a4c5abe4632fa84eb70320eae3bb0f251"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8513b53ea03ed674e43e82cab5d078d3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8513b53ea03ed674e43e82cab5d078d3"></a>
 <a class="el" href="classbson_1_1BSONObjBuilder.html">BSONObjBuilder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbson_1_1BSONObjBuilder.html#a8513b53ea03ed674e43e82cab5d078d3">append</a> (const StringData &amp;fieldName, const char *str)</td></tr>
 <tr class="memdesc:a8513b53ea03ed674e43e82cab5d078d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append a string element. <br/></td></tr>
@@ -1059,6 +1062,54 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="a4c5abe4632fa84eb70320eae3bb0f251"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classbson_1_1BSONObjBuilder.html">BSONObjBuilder</a>&amp; bson::BSONObjBuilder::appendStrWithNoTerminating </td>
+          <td>(</td>
+          <td class="paramtype">const StringData &amp;&#160;</td>
+          <td class="paramname"><em>fieldName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sz</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Append a string element. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sz</td><td>size does not include terminating null character </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="ab941a5a1c21b6e6e41f0d8d08d6870df"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1377,12 +1428,12 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/client/include/bson/<a class="el" href="bsonobjbuilder_8h_source.html">bsonobjbuilder.h</a></li>
+<li>E:/sequoiadb/client/include/bson/<a class="el" href="bsonobjbuilder_8h_source.html">bsonobjbuilder.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 11 2014 16:32:13 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:01:12 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
