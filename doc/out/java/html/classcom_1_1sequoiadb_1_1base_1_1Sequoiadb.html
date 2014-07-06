@@ -100,6 +100,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><b>SptEvalResult</b></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class for executing stored procedure result. <br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="enumcom_1_1sequoiadb_1_1base_1_1Sequoiadb_1_1SptReturnType.html">SptReturnType</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -128,14 +129,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a189b943d53dbdde133c957f98f7aaa81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <a href="#a189b943d53dbdde133c957f98f7aaa81"></a><br/></td></tr>
 <tr class="separator:a189b943d53dbdde133c957f98f7aaa81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf7e08e07ef6c6c361e1aa1d458b6202"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#abf7e08e07ef6c6c361e1aa1d458b6202">Sequoiadb</a> (List&lt; String &gt; connStrings, String username, String password, <a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html">ConfigOptions</a> options)  throws BaseException 	</td></tr>
-<tr class="memdesc:abf7e08e07ef6c6c361e1aa1d458b6202"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor, use any useful address to connect to database.  <a href="#abf7e08e07ef6c6c361e1aa1d458b6202"></a><br/></td></tr>
+<tr class="memdesc:abf7e08e07ef6c6c361e1aa1d458b6202"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor, use a random valid address to connect to database.  <a href="#abf7e08e07ef6c6c361e1aa1d458b6202"></a><br/></td></tr>
 <tr class="separator:abf7e08e07ef6c6c361e1aa1d458b6202"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa502848382bfc45aaf29df48b86460e1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#aa502848382bfc45aaf29df48b86460e1">Sequoiadb</a> (String addr, int port, String username, String password)  throws BaseException     </td></tr>
 <tr class="memdesc:aa502848382bfc45aaf29df48b86460e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <a href="#aa502848382bfc45aaf29df48b86460e1"></a><br/></td></tr>
 <tr class="separator:aa502848382bfc45aaf29df48b86460e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17ccd20d18fc5575e58b5711e0cd2850"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a17ccd20d18fc5575e58b5711e0cd2850"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Sequoiadb</b> (String addr, int port, String username, String password, <a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html">ConfigOptions</a> options)  throws BaseException     </td></tr>
-<tr class="separator:a17ccd20d18fc5575e58b5711e0cd2850"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae946468b4905f9d42671b4ac4fd0d51f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ae946468b4905f9d42671b4ac4fd0d51f">Sequoiadb</a> (String addr, int port, String username, String password, <a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html">ConfigOptions</a> options)  throws BaseException     </td></tr>
+<tr class="memdesc:ae946468b4905f9d42671b4ac4fd0d51f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <a href="#ae946468b4905f9d42671b4ac4fd0d51f"></a><br/></td></tr>
+<tr class="separator:ae946468b4905f9d42671b4ac4fd0d51f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a606f64daa83f537a89bded3821308025"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a606f64daa83f537a89bded3821308025">createUser</a> (String username, String password)  throws BaseException </td></tr>
 <tr class="memdesc:a606f64daa83f537a89bded3821308025"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add an user in current database.  <a href="#a606f64daa83f537a89bded3821308025"></a><br/></td></tr>
 <tr class="separator:a606f64daa83f537a89bded3821308025"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,9 +158,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7fe313aca78a35ec29812ec60e2e6f48"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html">CollectionSpace</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a7fe313aca78a35ec29812ec60e2e6f48">createCollectionSpace</a> (String csName, int pageSize)  throws BaseException </td></tr>
 <tr class="memdesc:a7fe313aca78a35ec29812ec60e2e6f48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create collection space.  <a href="#a7fe313aca78a35ec29812ec60e2e6f48"></a><br/></td></tr>
 <tr class="separator:a7fe313aca78a35ec29812ec60e2e6f48"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc6857af8f0e011d2924722d04a13fca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afc6857af8f0e011d2924722d04a13fca"></a>
-<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html">CollectionSpace</a>&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (String csName, BSONObject options)  throws BaseException </td></tr>
-<tr class="separator:afc6857af8f0e011d2924722d04a13fca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab66185f9a55636a054b57b0e12983e33"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html">CollectionSpace</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ab66185f9a55636a054b57b0e12983e33">createCollectionSpace</a> (String csName, BSONObject options)  throws BaseException </td></tr>
+<tr class="memdesc:ab66185f9a55636a054b57b0e12983e33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create collection space.  <a href="#ab66185f9a55636a054b57b0e12983e33"></a><br/></td></tr>
+<tr class="separator:ab66185f9a55636a054b57b0e12983e33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab961e51462a695a7be5d3779c6e4980e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ab961e51462a695a7be5d3779c6e4980e">dropCollectionSpace</a> (String csName)  throws BaseException </td></tr>
 <tr class="memdesc:ab961e51462a695a7be5d3779c6e4980e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the named collection space.  <a href="#ab961e51462a695a7be5d3779c6e4980e"></a><br/></td></tr>
 <tr class="separator:ab961e51462a695a7be5d3779c6e4980e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -609,7 +610,7 @@ static final String&#160;</td><td class="memItemRight" valign="bottom"><b>CATALO
 </table>
 </div><div class="memdoc">
 
-<p>Constructor, use any useful address to connect to database. </p>
+<p>Constructor, use a random valid address to connect to database. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">connStrings</td><td>The array of the coord's address </td></tr>
@@ -621,7 +622,7 @@ static final String&#160;</td><td class="memItemRight" valign="bottom"><b>CATALO
 </dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td>"SDB_NETWORK" means network error, "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table </td></tr>
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td>"SDB_NETWORK" means network error, "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table in local computer </td></tr>
   </table>
   </dd>
 </dl>
@@ -658,6 +659,75 @@ static final String&#160;</td><td class="memItemRight" valign="bottom"><b>CATALO
           <td></td>
           <td class="paramtype">String&#160;</td>
           <td class="paramname"><em>password</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException     </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructor. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">addr</td><td>the address of coord </td></tr>
+    <tr><td class="paramname">port</td><td>the port of coord </td></tr>
+    <tr><td class="paramname">username</td><td>the user's name of the account </td></tr>
+    <tr><td class="paramname">password</td><td>the password of the account </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td>"SDB_NETWORK" means network error, "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ae946468b4905f9d42671b4ac4fd0d51f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">com.sequoiadb.base.Sequoiadb.Sequoiadb </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>addr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>port</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>username</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>password</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html">ConfigOptions</a>&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1065,6 +1135,56 @@ SDB_PAGESIZE_DEFAULT </li>
   </table>
   </dd>
 </dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ab66185f9a55636a054b57b0e12983e33"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html">CollectionSpace</a> com.sequoiadb.base.Sequoiadb.createCollectionSpace </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>csName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create collection space. </p>
+<pre class="fragment"> @param csName The name of the created collection space
+ @param options Contains configuration informations for create collection space. The options are as below:
+</pre> <ul>
+<li>
+PageSize : Assign how large the page size is for the collection, it will create a collection space with default page size(current it's 64k) if not assign this option </li>
+<li>
+Domain : Assign which domain does this collection space belong to, this collection space belongs to system domain if not assign this option </li>
+</ul>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1799,13 +1919,17 @@ return the created Domain instance </td></tr>
 <dd></dd>
 <dt>Sequoiadb.SDB_LIST_COLLECTIONS : Get all collections list </dt>
 <dd></dd>
-<dt>Sequoiadb.SDB_LIST_COLLECTIONSPACES : Get all collecion spaces list </dt>
+<dt>Sequoiadb.SDB_LIST_COLLECTIONSPACES : Get all collection spaces list </dt>
 <dd></dd>
 <dt>Sequoiadb.SDB_LIST_STORAGEUNITS : Get storage units list </dt>
 <dd></dd>
 <dt>Sequoiadb.SDB_LIST_GROUPS : Get replica group list ( only applicable in sharding env ) </dt>
 <dd></dd>
 <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES : Get stored procedure list ( only applicable in sharding env ) </dt>
+<dd></dd>
+<dt>Sequoiadb.SDB_LIST_DOMAINS : Get all the domains list ( only applicable in sharding env ) </dt>
+<dd></dd>
+<dt>Sequoiadb.SDB_LIST_TASKS : Get all the running split tasks ( only applicable in sharding env ) </dt>
 <dd></dd>
 </dl>
 </td></tr>
@@ -3056,7 +3180,7 @@ PreferedInstance : indicate which instance to respond read request in current se
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jun 30 2014 15:52:06 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:03:05 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
