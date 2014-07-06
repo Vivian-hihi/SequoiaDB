@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>SequoiaDB: sdbclient::sdbCursor Class Reference</title>
+<title>SequoiaDB: sdbclient::sdbDomain Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -81,53 +81,49 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="namespacesdbclient.html">sdbclient</a></li><li class="navelem"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a></li>  </ul>
+<li class="navelem"><a class="el" href="namespacesdbclient.html">sdbclient</a></li><li class="navelem"><a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="classsdbclient_1_1sdbCursor-members.html">List of all members</a>  </div>
+<a href="classsdbclient_1_1sdbDomain-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">sdbclient::sdbCursor Class Reference</div>  </div>
+<div class="title">sdbclient::sdbDomain Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Database operation interfaces of cursor.  
- <a href="classsdbclient_1_1sdbCursor.html#details">More...</a></p>
+<p>Database operation interfaces of domain.  
+ <a href="classsdbclient_1_1sdbDomain.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="client_8hpp_source.html">client.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a82bee251ec1076c461be6c0b13230c67"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a82bee251ec1076c461be6c0b13230c67"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCursor.html#a82bee251ec1076c461be6c0b13230c67">sdbCursor</a> ()</td></tr>
-<tr class="memdesc:a82bee251ec1076c461be6c0b13230c67"><td class="mdescLeft">&#160;</td><td class="mdescRight">default constructor <br/></td></tr>
-<tr class="separator:a82bee251ec1076c461be6c0b13230c67"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9da66fb383701b3c816b1febc0a17399"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9da66fb383701b3c816b1febc0a17399"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCursor.html#a9da66fb383701b3c816b1febc0a17399">~sdbCursor</a> ()</td></tr>
-<tr class="memdesc:a9da66fb383701b3c816b1febc0a17399"><td class="mdescLeft">&#160;</td><td class="mdescRight">destructor <br/></td></tr>
-<tr class="separator:a9da66fb383701b3c816b1febc0a17399"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0b130a95748bf62455445d0c0f3f740"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCursor.html#ac0b130a95748bf62455445d0c0f3f740">next</a> (bson::BSONObj &amp;obj)</td></tr>
-<tr class="memdesc:ac0b130a95748bf62455445d0c0f3f740"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the next document of current cursor, and move forward.  <a href="#ac0b130a95748bf62455445d0c0f3f740"></a><br/></td></tr>
-<tr class="separator:ac0b130a95748bf62455445d0c0f3f740"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb470b283094adf420c6db26eff45e11"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCursor.html#abb470b283094adf420c6db26eff45e11">current</a> (bson::BSONObj &amp;obj)</td></tr>
-<tr class="memdesc:abb470b283094adf420c6db26eff45e11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the current document of cursor, and don't move.  <a href="#abb470b283094adf420c6db26eff45e11"></a><br/></td></tr>
-<tr class="separator:abb470b283094adf420c6db26eff45e11"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae19fe2a2fa1e1ef9c031e8b00c8fb462"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCursor.html#ae19fe2a2fa1e1ef9c031e8b00c8fb462">close</a> ()</td></tr>
-<tr class="memdesc:ae19fe2a2fa1e1ef9c031e8b00c8fb462"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close the cursor's connection to database, we can't use this handle to get data again.  <a href="#ae19fe2a2fa1e1ef9c031e8b00c8fb462"></a><br/></td></tr>
-<tr class="separator:ae19fe2a2fa1e1ef9c031e8b00c8fb462"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81faf2aea84005ea27b1d7755fe1f00c"><td class="memItemLeft" align="right" valign="top">const CHAR *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbDomain.html#a81faf2aea84005ea27b1d7755fe1f00c">getName</a> ()</td></tr>
+<tr class="memdesc:a81faf2aea84005ea27b1d7755fe1f00c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the name of current domain.  <a href="#a81faf2aea84005ea27b1d7755fe1f00c"></a><br/></td></tr>
+<tr class="separator:a81faf2aea84005ea27b1d7755fe1f00c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9bc39c02e6e63c461a775651e0a6f5d"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbDomain.html#ac9bc39c02e6e63c461a775651e0a6f5d">alterDomain</a> (const bson::BSONObj &amp;options)</td></tr>
+<tr class="memdesc:ac9bc39c02e6e63c461a775651e0a6f5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Alter the domains.  <a href="#ac9bc39c02e6e63c461a775651e0a6f5d"></a><br/></td></tr>
+<tr class="separator:ac9bc39c02e6e63c461a775651e0a6f5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9386a9a833b1d37bd37bef097f63f461"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbDomain.html#a9386a9a833b1d37bd37bef097f63f461">listCollectionSpacesInDomain</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor)</td></tr>
+<tr class="memdesc:a9386a9a833b1d37bd37bef097f63f461"><td class="mdescLeft">&#160;</td><td class="mdescRight">List all the collection spaces in current domain.  <a href="#a9386a9a833b1d37bd37bef097f63f461"></a><br/></td></tr>
+<tr class="separator:a9386a9a833b1d37bd37bef097f63f461"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab593e01ba287193cc88c571c543e78c4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbDomain.html#ab593e01ba287193cc88c571c543e78c4">listCollectionsInDomain</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor)</td></tr>
+<tr class="memdesc:ab593e01ba287193cc88c571c543e78c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">List all the collections in current domain.  <a href="#ab593e01ba287193cc88c571c543e78c4"></a><br/></td></tr>
+<tr class="separator:ab593e01ba287193cc88c571c543e78c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:afbccbc01559bfc9c4b2f4da0ac10d386"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCursor.html#afbccbc01559bfc9c4b2f4da0ac10d386">pCursor</a></td></tr>
-<tr class="separator:afbccbc01559bfc9c4b2f4da0ac10d386"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace3cfdecb356b1b0b8e2a74613d0d041"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace3cfdecb356b1b0b8e2a74613d0d041"></a>
+<a class="el" href="classsdbclient_1_1__sdbDomain.html">_sdbDomain</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>pDomain</b></td></tr>
+<tr class="separator:ace3cfdecb356b1b0b8e2a74613d0d041"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Database operation interfaces of cursor. </p>
+<div class="textblock"><p>Database operation interfaces of domain. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="ae19fe2a2fa1e1ef9c031e8b00c8fb462"></a>
+<a class="anchor" id="ac9bc39c02e6e63c461a775651e0a6f5d"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -135,7 +131,46 @@ Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">INT32 sdbclient::sdbCursor::close </td>
+          <td class="memname">INT32 sdbclient::sdbDomain::alterDomain </td>
+          <td>(</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Alter the domains. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options user wants to alter </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a81faf2aea84005ea27b1d7755fe1f00c"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const CHAR * sdbclient::sdbDomain::getName </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -148,18 +183,17 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Close the cursor's connection to database, we can't use this handle to get data again. </p>
+<p>Get the name of current domain. </p>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
-    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+    <tr><td class="paramname">The</td><td>name of current domain or null if fail </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="abb470b283094adf420c6db26eff45e11"></a>
+<a class="anchor" id="ab593e01ba287193cc88c571c543e78c4"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -167,10 +201,10 @@ Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">INT32 sdbclient::sdbCursor::current </td>
+          <td class="memname">INT32 sdbclient::sdbDomain::listCollectionsInDomain </td>
           <td>(</td>
-          <td class="paramtype">bson::BSONObj &amp;&#160;</td>
-          <td class="paramname"><em>obj</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -181,10 +215,11 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Return the current document of cursor, and don't move. </p>
+<p>List all the collections in current domain. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">obj</td><td>The return bson object </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The domain handle </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The <a class="el" href="classsdbclient_1_1sdbCursor.html" title="Database operation interfaces of cursor.">sdbCursor</a> object of result </td></tr>
   </table>
   </dd>
 </dl>
@@ -198,7 +233,7 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ac0b130a95748bf62455445d0c0f3f740"></a>
+<a class="anchor" id="a9386a9a833b1d37bd37bef097f63f461"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -206,10 +241,10 @@ Public Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">INT32 sdbclient::sdbCursor::next </td>
+          <td class="memname">INT32 sdbclient::sdbDomain::listCollectionSpacesInDomain </td>
           <td>(</td>
-          <td class="paramtype">bson::BSONObj &amp;&#160;</td>
-          <td class="paramname"><em>obj</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -220,10 +255,11 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Return the next document of current cursor, and move forward. </p>
+<p>List all the collection spaces in current domain. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">obj</td><td>The return bson object </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cHandle</td><td>The domain handle </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The <a class="el" href="classsdbclient_1_1sdbCursor.html" title="Database operation interfaces of cursor.">sdbCursor</a> object of result </td></tr>
   </table>
   </dd>
 </dl>
@@ -234,21 +270,6 @@ Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a class="anchor" id="afbccbc01559bfc9c4b2f4da0ac10d386"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">sdbclient::sdbCursor::pCursor</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>A pointer of virtual base class <a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a></p>
-<p>Class <a class="el" href="classsdbclient_1_1sdbCursor.html" title="Database operation interfaces of cursor.">sdbCursor</a> is a shell for _sdbCursor.We use pCursor to call the methods in class <a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a>. </p>
 
 </div>
 </div>

@@ -121,6 +121,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a97c1f8b762abebfeec2b550f803490de"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a97c1f8b762abebfeec2b550f803490de">connect</a> (const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pUsrName, const CHAR *pPasswd)</td></tr>
 <tr class="memdesc:a97c1f8b762abebfeec2b550f803490de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to remote Database Server.  <a href="#a97c1f8b762abebfeec2b550f803490de"></a><br/></td></tr>
 <tr class="separator:a97c1f8b762abebfeec2b550f803490de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34313780f36d821b9a6627f0ca743a01"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a34313780f36d821b9a6627f0ca743a01">connect</a> (const CHAR **pConnAddrs, INT32 arrSize, const CHAR *pUsrName, const CHAR *pPasswd)</td></tr>
+<tr class="memdesc:a34313780f36d821b9a6627f0ca743a01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to database used the first valid address in the array.  <a href="#a34313780f36d821b9a6627f0ca743a01"></a><br/></td></tr>
+<tr class="separator:a34313780f36d821b9a6627f0ca743a01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6f6df869718e162c3dea937f3cd39e8"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#ac6f6df869718e162c3dea937f3cd39e8">createUsr</a> (const CHAR *pUsrName, const CHAR *pPasswd)</td></tr>
 <tr class="memdesc:ac6f6df869718e162c3dea937f3cd39e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add an user in current database.  <a href="#ac6f6df869718e162c3dea937f3cd39e8"></a><br/></td></tr>
 <tr class="separator:ac6f6df869718e162c3dea937f3cd39e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -163,6 +166,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpac
 <tr class="memitem:a52f05987880262c5f1451b71aac819ae"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a52f05987880262c5f1451b71aac819ae">createCollectionSpace</a> (const CHAR *pCollectionSpaceName, INT32 iPageSize, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)</td></tr>
 <tr class="memdesc:a52f05987880262c5f1451b71aac819ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create collection space with specified pagesize.  <a href="#a52f05987880262c5f1451b71aac819ae"></a><br/></td></tr>
 <tr class="separator:a52f05987880262c5f1451b71aac819ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d082a5292b3bf2aa2e9925c8c3d953e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4d082a5292b3bf2aa2e9925c8c3d953e"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)</td></tr>
+<tr class="separator:a4d082a5292b3bf2aa2e9925c8c3d953e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c100a59139cfbf4eaf05c67eb2c98d4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a0c100a59139cfbf4eaf05c67eb2c98d4">dropCollectionSpace</a> (const CHAR *pCollectionSpaceName)</td></tr>
 <tr class="memdesc:a0c100a59139cfbf4eaf05c67eb2c98d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified collection space.  <a href="#a0c100a59139cfbf4eaf05c67eb2c98d4"></a><br/></td></tr>
 <tr class="separator:a0c100a59139cfbf4eaf05c67eb2c98d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -238,9 +244,9 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>exec</b> (const CHAR
 <tr class="memitem:a04fabc0ba18b7ee81bdf0a5f7267e485"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a04fabc0ba18b7ee81bdf0a5f7267e485">crtJSProcedure</a> (const CHAR *code)</td></tr>
 <tr class="memdesc:a04fabc0ba18b7ee81bdf0a5f7267e485"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a store procedures.  <a href="#a04fabc0ba18b7ee81bdf0a5f7267e485"></a><br/></td></tr>
 <tr class="separator:a04fabc0ba18b7ee81bdf0a5f7267e485"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6168d5ae7ffefb7234069679be90cf69"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a6168d5ae7ffefb7234069679be90cf69">rmProcedures</a> (const CHAR *spName)</td></tr>
-<tr class="memdesc:a6168d5ae7ffefb7234069679be90cf69"><td class="mdescLeft">&#160;</td><td class="mdescRight">remove a store procedures.  <a href="#a6168d5ae7ffefb7234069679be90cf69"></a><br/></td></tr>
-<tr class="separator:a6168d5ae7ffefb7234069679be90cf69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24d5014faeb2d424b9f80942c81f3a41"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a24d5014faeb2d424b9f80942c81f3a41">rmProcedure</a> (const CHAR *spName)</td></tr>
+<tr class="memdesc:a24d5014faeb2d424b9f80942c81f3a41"><td class="mdescLeft">&#160;</td><td class="mdescRight">remove a store procedure.  <a href="#a24d5014faeb2d424b9f80942c81f3a41"></a><br/></td></tr>
+<tr class="separator:a24d5014faeb2d424b9f80942c81f3a41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf13cf86c9ca28a408442f63bb315996"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf13cf86c9ca28a408442f63bb315996"></a>
 INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listProcedures</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition)</td></tr>
 <tr class="separator:adf13cf86c9ca28a408442f63bb315996"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -286,6 +292,18 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listTasks</b> (<a cl
 <tr class="memitem:a587e82a600dfefaab2872df189e08ca4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a587e82a600dfefaab2872df189e08ca4">isValid</a> (BOOLEAN *result)</td></tr>
 <tr class="memdesc:a587e82a600dfefaab2872df189e08ca4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Judge whether the connection is valid.  <a href="#a587e82a600dfefaab2872df189e08ca4"></a><br/></td></tr>
 <tr class="separator:a587e82a600dfefaab2872df189e08ca4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a615990b4893d5c2e41629c22b8c16997"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a615990b4893d5c2e41629c22b8c16997">createDomain</a> (const CHAR *pDomainName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;domain)</td></tr>
+<tr class="memdesc:a615990b4893d5c2e41629c22b8c16997"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a domain.  <a href="#a615990b4893d5c2e41629c22b8c16997"></a><br/></td></tr>
+<tr class="separator:a615990b4893d5c2e41629c22b8c16997"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a062ae778caaa1d4171e497d3fd253614"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a062ae778caaa1d4171e497d3fd253614">dropDomain</a> (const CHAR *pDomainName)</td></tr>
+<tr class="memdesc:a062ae778caaa1d4171e497d3fd253614"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drop a domain.  <a href="#a062ae778caaa1d4171e497d3fd253614"></a><br/></td></tr>
+<tr class="separator:a062ae778caaa1d4171e497d3fd253614"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac869176932b4251ff276736996e9c875"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#ac869176932b4251ff276736996e9c875">getDomain</a> (const CHAR *pDomainName, <a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;domain)</td></tr>
+<tr class="memdesc:ac869176932b4251ff276736996e9c875"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a domain.  <a href="#ac869176932b4251ff276736996e9c875"></a><br/></td></tr>
+<tr class="separator:ac869176932b4251ff276736996e9c875"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a507853027ef45972e5dffdd1c5d53621"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a507853027ef45972e5dffdd1c5d53621">listDomains</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition, const bson::BSONObj &amp;selector, const bson::BSONObj &amp;orderBy, const bson::BSONObj &amp;hint)</td></tr>
+<tr class="memdesc:a507853027ef45972e5dffdd1c5d53621"><td class="mdescLeft">&#160;</td><td class="mdescRight">List the domains.  <a href="#a507853027ef45972e5dffdd1c5d53621"></a><br/></td></tr>
+<tr class="separator:a507853027ef45972e5dffdd1c5d53621"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -370,9 +388,14 @@ Public Attributes</h2></td></tr>
 <p>Backup the whole database or specifed replica group. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true} <pre class="fragment">GroupName   : The replica groups which to be backuped
-Path        : The backup path, if not assign, use the backup path assigned in configuration file
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true} <pre class="fragment">GroupID     : The id(s) of replica group(s) which to be backuped
+GroupName   : The replica groups which to be backuped
+Path        : The backup path, if not assign, use the backup path assigned in the configuration file,
+              the path support to use wildcard(%g/%G:group name, %h/%H:host name, %s/%S:service name). e.g.  {Path:"/opt/sequoiadb/backup/%g"}
+isSubDir    : Whether the path specified by paramer "Path" is a subdirectory of the path specified in the configuration file, default to be false
 Name        : The name for the backup
+Prefix      : The prefix of name for the backup, default to be null. e.g. {Prefix:"%g_bk_"}
+EnableDateDir : Whether turn on the feature which will create subdirectory named to current date like "YYYY-MM-DD" automatically, default to be false
 Description : The description for the backup
 EnsureInc   : Whether excute increment synchronization, default to be false
 OverWrite   : Whether overwrite the old backup file, default to be false
@@ -700,6 +723,70 @@ OverWrite   : Whether overwrite the old backup file, default to be false
 
 </div>
 </div>
+<a class="anchor" id="a34313780f36d821b9a6627f0ca743a01"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::connect </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR **&#160;</td>
+          <td class="paramname"><em>pConnAddrs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">INT32&#160;</td>
+          <td class="paramname"><em>arrSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pUsrName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pPasswd</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Connect to database used the first valid address in the array. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">pConnAddrs</td><td>The array of the coord's address </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">arrSize</td><td>The size of the array </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pUsrName</td><td>The connection user name. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pPasswd</td><td>The connection password. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a52f05987880262c5f1451b71aac819ae"></a>
 <div class="memitem">
 <div class="memproto">
@@ -750,6 +837,66 @@ SDB_PAGESIZE_64K
 SDB_PAGESIZE_DEFAULT
 </pre> </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">cs</td><td>The return collection space object of creation. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a615990b4893d5c2e41629c22b8c16997"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::createDomain </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pDomainName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;&#160;</td>
+          <td class="paramname"><em>domain</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Create a domain. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">pDomainName</td><td>The name of the domain </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The options for the domain. The options are as below: <pre class="fragment">Group: The list of name for replica groups that the domain contains.
+       eg: { "Group": [ "group1", "group2", "group3" ] }
+       If this argument is not included, the domain will contain all replica groups in the cluster.
+</pre> </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">domain</td><td>The created <a class="el" href="classsdbclient_1_1sdbDomain.html" title="Database operation interfaces of domain.">sdbDomain</a> object </td></tr>
   </table>
   </dd>
 </dl>
@@ -992,6 +1139,45 @@ SDB_PAGESIZE_DEFAULT
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">pCollectionSpaceName</td><td>The name of collection space. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a062ae778caaa1d4171e497d3fd253614"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::dropDomain </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pDomainName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Drop a domain. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">pDomainName</td><td>The name of the domain </td></tr>
   </table>
   </dd>
 </dl>
@@ -1283,6 +1469,56 @@ SDB_PAGESIZE_DEFAULT
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">pCollectionSpaceName</td><td>The name of collection space. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">cs</td><td>The return collection space object of query. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ac869176932b4251ff276736996e9c875"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::getDomain </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pDomainName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;&#160;</td>
+          <td class="paramname"><em>domain</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get a domain. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">pDomainName</td><td>The name of the domain </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">domain</td><td>The <a class="el" href="classsdbclient_1_1sdbDomain.html" title="Database operation interfaces of domain.">sdbDomain</a> object to get </td></tr>
   </table>
   </dd>
 </dl>
@@ -1745,6 +1981,77 @@ Name        : Assign the backups with specifed name to be list
 
 </div>
 </div>
+<a class="anchor" id="a507853027ef45972e5dffdd1c5d53621"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::listDomains </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>condition</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>selector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>orderBy</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>hint</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>List the domains. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">selector</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, never sort if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The <a class="el" href="classsdbclient_1_1sdbCursor.html" title="Database operation interfaces of cursor.">sdbCursor</a> object of result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a5a2fa83aaae147419194df4cd9df9a86"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2075,7 +2382,7 @@ Name        : Assign the backups with specifed name to be remove
 
 </div>
 </div>
-<a class="anchor" id="a6168d5ae7ffefb7234069679be90cf69"></a>
+<a class="anchor" id="a24d5014faeb2d424b9f80942c81f3a41"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -2083,7 +2390,7 @@ Name        : Assign the backups with specifed name to be remove
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">INT32 sdbclient::sdb::rmProcedures </td>
+          <td class="memname">INT32 sdbclient::sdb::rmProcedure </td>
           <td>(</td>
           <td class="paramtype">const CHAR *&#160;</td>
           <td class="paramname"><em>spName</em></td><td>)</td>
@@ -2097,7 +2404,7 @@ Name        : Assign the backups with specifed name to be remove
 </table>
 </div><div class="memdoc">
 
-<p>remove a store procedures. </p>
+<p>remove a store procedure. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">spName</td><td>The name of store procedure </td></tr>
@@ -2319,12 +2626,12 @@ Name        : Assign the backups with specifed name to be remove
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 11 2014 15:44:47 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

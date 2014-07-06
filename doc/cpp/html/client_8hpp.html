@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>SequoiaDB: C:/sequoiadb/client/include/client.hpp File Reference</title>
+<title>SequoiaDB: E:/sequoiadb/client/include/client.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -131,6 +131,11 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbclient::sdbCollectionSpace</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Database operation interfaces of collection space.  <a href="classsdbclient_1_1sdbCollectionSpace.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1__sdbDomain.html">sdbclient::_sdbDomain</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbDomain.html">sdbclient::sdbDomain</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Database operation interfaces of domain.  <a href="classsdbclient_1_1sdbDomain.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1__sdb.html">sdbclient::_sdb</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html">sdbclient::sdb</a></td></tr>
@@ -146,7 +151,7 @@ Namespaces</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:a808e08638be3cba36e36759e5b150de0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a808e08638be3cba36e36759e5b150de0"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DLLEXPORT</b></td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>DLLEXPORT</b>&#160;&#160;&#160;SDB_EXPORT</td></tr>
 <tr class="separator:a808e08638be3cba36e36759e5b150de0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a416bab94768827d4268d54fbff819b28"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a416bab94768827d4268d54fbff819b28"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_PAGESIZE_4K</b>&#160;&#160;&#160;4096</td></tr>
@@ -219,6 +224,18 @@ Macros</h2></td></tr>
 <tr class="memitem:a19aebca53c65109cd34afa3ea75e0939"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19aebca53c65109cd34afa3ea75e0939"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_LIST_STOREPROCEDURES</b>&#160;&#160;&#160;8</td></tr>
 <tr class="separator:a19aebca53c65109cd34afa3ea75e0939"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c1e1b7244d97a1394959da54908ccdc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9c1e1b7244d97a1394959da54908ccdc"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_LIST_DOMAINS</b>&#160;&#160;&#160;9</td></tr>
+<tr class="separator:a9c1e1b7244d97a1394959da54908ccdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a613ea0fc3feb15c5ad16c771239cab87"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a613ea0fc3feb15c5ad16c771239cab87"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_LIST_TASKS</b>&#160;&#160;&#160;10</td></tr>
+<tr class="separator:a613ea0fc3feb15c5ad16c771239cab87"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad787d6123a5760f75ccfbddbebe97983"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad787d6123a5760f75ccfbddbebe97983"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_LIST_CS_IN_DOMAIN</b>&#160;&#160;&#160;11</td></tr>
+<tr class="separator:ad787d6123a5760f75ccfbddbebe97983"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace2769c4b8ee46909b1f5a254de6918c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace2769c4b8ee46909b1f5a254de6918c"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_LIST_CL_IN_DOMAIN</b>&#160;&#160;&#160;12</td></tr>
+<tr class="separator:ace2769c4b8ee46909b1f5a254de6918c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5387deee4c330c29a64ae8da60dde03a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5387deee4c330c29a64ae8da60dde03a"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>FLG_INSERT_CONTONDUP</b>&#160;&#160;&#160;0x00000001</td></tr>
 <tr class="separator:a5387deee4c330c29a64ae8da60dde03a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -282,7 +299,7 @@ Enumerations</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Mar 11 2014 15:44:46 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
