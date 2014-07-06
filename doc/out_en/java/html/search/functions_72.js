@@ -5,6 +5,6 @@ var searchData=
   ['removereplicagroup',['removeReplicaGroup',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ac41dd7a44d0363b1e57b6cf9edb6f7d6',1,'com::sequoiadb::base::Sequoiadb']]],
   ['removeuser',['removeUser',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ae6ae657f97013ffedab6935311ec26b5',1,'com::sequoiadb::base::Sequoiadb']]],
   ['resetsnapshot',['resetSnapshot',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a7f83065819527c0f1bfea0c3acfc8479',1,'com::sequoiadb::base::Sequoiadb']]],
-  ['rmprocedures',['rmProcedures',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a952692067a2b9ee8e7ca162faaf9c35d',1,'com::sequoiadb::base::Sequoiadb']]],
+  ['rmprocedure',['rmProcedure',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a58868647736ef8ab266fc720a38487cc',1,'com::sequoiadb::base::Sequoiadb']]],
   ['rollback',['rollback',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a37e2aa5cbb09673721c54639c95ba8c4',1,'com::sequoiadb::base::Sequoiadb']]]
 ];
