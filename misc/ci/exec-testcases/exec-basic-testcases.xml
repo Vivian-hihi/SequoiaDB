@@ -51,8 +51,8 @@
 		<echo message="perform the base-bussiness testcases,with testcase.path=${testcase.path}" />
 		<chmod file="${install.path}/sequoiadb/bin/sdb" perm="u+x" />
 
-		<property name="sdb.cmd.allPrepare" value="-e &quot;var COORDSVCNAME=${COORDSVCNAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/all_prepare.js&quot;" />
-		<property name="sdb.cmd.allClean" value="-e &quot;var COORDSVCNAME=${COORDSVCNAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/all_clean.js&quot;" />
+		<property name="sdb.cmd.allPrepare" value="-e &quot;var COORDSVCNAME=${COORDSVCNAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ,${testcase.path}/libs/all_prepare.js&quot;" />
+		<property name="sdb.cmd.allClean" value="-e &quot;var COORDSVCNAME=${COORDSVCNAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ,${testcase.path}/libs/all_clean.js&quot;" />
 
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="screen.output" errorproperty="error.output" resultproperty="allPrepare.ret.code">
