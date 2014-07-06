@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>SequoiaDB: Main Page</title>
+<title>SequoiaDB: E:/sequoiadb/client/include/spd.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -35,9 +35,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </script>
   <div id="navrow1" class="tabs">
     <ul class="tablist">
-      <li class="current"><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
-      <li><a href="files.html"><span>Files</span></a></li>
+      <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
         <span class="left">
@@ -56,7 +56,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       </li>
     </ul>
   </div>
-</div><!-- top -->
+  <div id="navrow2" class="tabs2">
+    <ul class="tablist">
+      <li><a href="files.html"><span>File&#160;List</span></a></li>
+      <li><a href="globals.html"><span>File&#160;Members</span></a></li>
+    </ul>
+  </div>
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -71,12 +76,54 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </iframe>
 </div>
 
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_5d5e8e09700f72ff2a276389d62c94f7.html">client</a></li><li class="navelem"><a class="el" href="dir_abc5dc4d4aa4b7cb7eaa95f96145854d.html">include</a></li>  </ul>
+</div>
+</div><!-- top -->
 <div class="header">
+  <div class="summary">
+<a href="#typedef-members">Typedefs</a> &#124;
+<a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle">
-<div class="title">SequoiaDB Documentation</div>  </div>
+<div class="title">spd.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-</div><!-- contents -->
+
+<p>store procedure  
+<a href="#details">More...</a></p>
+<div class="textblock"><code>#include &quot;core.h&quot;</code><br/>
+</div>
+<p><a href="spd_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:ae6f64a8e8b94e8c65c0deb9855648650"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae6f64a8e8b94e8c65c0deb9855648650"></a>
+typedef enum _SDB_SPD_RES_TYPE&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_SPD_RES_TYPE</b></td></tr>
+<tr class="separator:ae6f64a8e8b94e8c65c0deb9855648650"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a4406356bddac057eeafca320989cb8e1"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>_SDB_SPD_RES_TYPE</b> { <br/>
+&#160;&#160;<b>SDB_SPD_RES_TYPE_VOID</b> = 0, 
+<b>SDB_SPD_RES_TYPE_STR</b>, 
+<b>SDB_SPD_RES_TYPE_NUMBER</b>, 
+<b>SDB_SPD_RES_TYPE_OBJ</b>, 
+<br/>
+&#160;&#160;<b>SDB_SPD_RES_TYPE_BOOL</b>, 
+<b>SDB_SPD_RES_TYPE_RECORDSET</b>, 
+<b>SDB_SPD_RES_TYPE_CS</b>, 
+<b>SDB_SPD_RES_TYPE_CL</b>, 
+<br/>
+&#160;&#160;<b>SDB_SPD_RES_TYPE_RG</b>, 
+<b>SDB_SPD_RES_TYPE_RN</b>
+<br/>
+ }</td></tr>
+<tr class="separator:a4406356bddac057eeafca320989cb8e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>store procedure </p>
+</div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated on Sun Jul 6 2014 16:00:23 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
