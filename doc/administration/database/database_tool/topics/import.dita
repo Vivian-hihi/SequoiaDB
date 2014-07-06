@@ -208,59 +208,7 @@
         </strow>        
       </simpletable>
     </section>
-    <p>数据类型是可选的，不填则程序自动判断类型，判断以上面表格为准。</p>
-    <section>
-      <title>指定的类型与数据：</title>
-      <simpletable>
-        <sthead>
-          <stentry>指定的类型</stentry>
-          <stentry>支援的数据类型</stentry>
-          <stentry>注意</stentry>
-        </sthead>
-        <strow>
-          <stentry>int(interger)</stentry>
-          <stentry>int，string，bool</stentry>
-          <stentry>bool类型，true转换1，false转换0
-          </stentry>
-        </strow>
-        <strow>
-          <stentry>long</stentry>
-          <stentry>long，string，int，bool</stentry>
-          <stentry>bool类型，true转换1，false转换0
-          </stentry>
-        </strow>
-        <strow>
-          <stentry>bool(boolean)</stentry>
-          <stentry>bool，string，int，long</stentry>
-          <stentry>int和long类型，0转换false，不等于0转换true</stentry>
-        </strow>
-        <strow>
-          <stentry>double</stentry>
-          <stentry>double，string，int</stentry>
-          <stentry></stentry>
-        </strow>
-        <strow>
-          <stentry>string</stentry>
-          <stentry>int，long，bool，double，string，timestamp，date，null</stentry>
-          <stentry></stentry>
-        </strow>
-        <strow>
-          <stentry>timestamp</stentry>
-          <stentry>string，long</stentry>
-          <stentry>如果数据是string，如“2014-01-01-10.30.00.000000”，“1388543400000”，如果是long，如1388543400000，这两种格式是正确的，数值代表的是毫秒单位</stentry>
-        </strow>
-        <strow>
-          <stentry>date</stentry>
-          <stentry>string，long</stentry>
-          <stentry>如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的毫秒单位</stentry>
-        </strow>
-        <strow>
-          <stentry>null</stentry>
-          <stentry>string</stentry>
-          <stentry>指定了数据类型为null，那么无论数据是什么，都是null</stentry>
-        </strow>        
-      </simpletable>
-    </section>
+    <p>数据类型是可选的，不填则程序自动判断类型，判断以上面表格为准。</p>    
     <p>数据类型优先级：</p>
     <p>1.不指定数据类型（不支援特殊数据类型）：程序自动判断类型，优先级是null > bool > int > double > long > string</p>
     <p>2.指定数据类型：优先级是指定的类型 > 支援的类型（参考指定的类型与数据表格） > null</p>

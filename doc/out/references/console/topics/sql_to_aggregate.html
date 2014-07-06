@@ -39,51 +39,51 @@
     <p class="p">下表主要是描述SQL关键字与SequoiaDB聚集操作符的对照表。</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d73354e17" class="stentry">SQL关键字</th>
+        <th valign="bottom" align="left" id="d73004e17" class="stentry">SQL关键字</th>
 
-        <th valign="bottom" align="left" id="d73354e20" class="stentry">SequoiaDB聚集操作符</th>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d73354e17" class="stentry">where</td>
-
-        <td valign="top" headers="d73354e20" class="stentry">$match </td>
+        <th valign="bottom" align="left" id="d73004e20" class="stentry">SequoiaDB聚集操作符</th>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e17" class="stentry">group by</td>
+        <td valign="top" headers="d73004e17" class="stentry">where</td>
 
-        <td valign="top" headers="d73354e20" class="stentry">$group</td>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d73354e17" class="stentry">having</td>
-
-        <td valign="top" headers="d73354e20" class="stentry">$match</td>
+        <td valign="top" headers="d73004e20" class="stentry">$match </td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e17" class="stentry">select</td>
+        <td valign="top" headers="d73004e17" class="stentry">group by</td>
 
-        <td valign="top" headers="d73354e20" class="stentry">$project</td>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d73354e17" class="stentry">order by</td>
-
-        <td valign="top" headers="d73354e20" class="stentry">$sort</td>
+        <td valign="top" headers="d73004e20" class="stentry">$group</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e17" class="stentry">top</td>
+        <td valign="top" headers="d73004e17" class="stentry">having</td>
 
-        <td valign="top" headers="d73354e20" class="stentry">$limit</td>
+        <td valign="top" headers="d73004e20" class="stentry">$match</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e17" class="stentry">offset</td>
+        <td valign="top" headers="d73004e17" class="stentry">select</td>
 
-        <td valign="top" headers="d73354e20" class="stentry">$skip</td>
+        <td valign="top" headers="d73004e20" class="stentry">$project</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d73004e17" class="stentry">order by</td>
+
+        <td valign="top" headers="d73004e20" class="stentry">$sort</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d73004e17" class="stentry">top</td>
+
+        <td valign="top" headers="d73004e20" class="stentry">$limit</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d73004e17" class="stentry">offset</td>
+
+        <td valign="top" headers="d73004e20" class="stentry">$skip</td>
 
       </tr>
 <tr class="strow"/>
@@ -92,18 +92,18 @@
     <p class="p">下表主要描述标准SQL语句与SequoiaDB聚集语句之间的对照。</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d73354e98" class="stentry">SQL语句</th>
+        <th valign="bottom" align="left" id="d73004e98" class="stentry">SQL语句</th>
 
-        <th valign="bottom" align="left" id="d73354e101" class="stentry">SequoiaDB聚集语句</th>
+        <th valign="bottom" align="left" id="d73004e101" class="stentry">SequoiaDB聚集语句</th>
 
-        <th valign="bottom" align="left" id="d73354e104" class="stentry">描述</th>
+        <th valign="bottom" align="left" id="d73004e104" class="stentry">描述</th>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select product_id as p_id,price<p class="p"> from table </p>
+        <td valign="top" headers="d73004e98" class="stentry">select product_id as p_id,price<p class="p"> from table </p>
 </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$project:{p_id:"$product_id",</p>
 
@@ -113,14 +113,14 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">返回所有记录的product_id和price字段，其中product_id重命名为p_id，对记录中的date字段不返回。</td>
+        <td valign="top" headers="d73004e104" class="stentry">返回所有记录的product_id和price字段，其中product_id重命名为p_id，对记录中的date字段不返回。</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select sum(price) as total <p class="p"> from table </p>
+        <td valign="top" headers="d73004e98" class="stentry">select sum(price) as total <p class="p"> from table </p>
 </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:null,</p>
 
@@ -128,15 +128,15 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">对table中的字段price值求和，并重命名为total。</td>
+        <td valign="top" headers="d73004e104" class="stentry">对table中的字段price值求和，并重命名为total。</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by
+        <td valign="top" headers="d73004e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by
           product_id</p>
 </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:"$product_id",</p>
 
@@ -146,7 +146,7 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">
+        <td valign="top" headers="d73004e104" class="stentry">
           对表table中的记录按product_id字段分组；
           <p class="p">求每个分组中字段price值的累加和，并重命名为total。</p>
 
@@ -154,12 +154,12 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by product_id </p>
+        <td valign="top" headers="d73004e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by product_id </p>
 <p class="p">order
             by total</p>
 </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:"$product_id",</p>
 
@@ -171,7 +171,7 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">
+        <td valign="top" headers="d73004e104" class="stentry">
           对表table中的记录按product_id字段分组；
           <p class="p">求每个分组中字段price值的累加和，并重命名为total；</p>
 
@@ -181,7 +181,7 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">
+        <td valign="top" headers="d73004e98" class="stentry">
           select product_type_id,product_id,
           <p class="p">sum(price) as total from table </p>
 
@@ -189,7 +189,7 @@
 
         </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:{product_type_id:"$product_type_id",product_id:"$product_id"},</p>
 
@@ -199,7 +199,7 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">
+        <td valign="top" headers="d73004e104" class="stentry">
           对表table中的记录按首先按product_type_id字段分组，再按product_id字段分组；
           <p class="p">求每个分组中字段price值的累加和，并重命名为total。</p>
 
@@ -207,12 +207,12 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by product_id
+        <td valign="top" headers="d73004e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by product_id
             </p>
 <p class="p">having total&gt;1000</p>
 </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:"$product_id",</p>
 
@@ -224,7 +224,7 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">
+        <td valign="top" headers="d73004e104" class="stentry">
           对表table中的记录按product_id字段分组；
           <p class="p">求每个分组中字段price值的累加和，并重命名为total；</p>
 
@@ -234,12 +234,12 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select product_id,sum(price) as total<p class="p">from table where
+        <td valign="top" headers="d73004e98" class="stentry">select product_id,sum(price) as total<p class="p">from table where
             product_type_id=1001</p>
 <p class="p">group by product_id </p>
 </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$match:{product_type_id:1001}},</p>
 
@@ -251,18 +251,18 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">选择符合条件product_type_id=1001的记录；<p class="p">对选出的记录按product_id进行分组；</p>
+        <td valign="top" headers="d73004e104" class="stentry">选择符合条件product_type_id=1001的记录；<p class="p">对选出的记录按product_id进行分组；</p>
 <p class="p">对每个分组中的price字段值就和，并重命名为total。</p>
 </td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select product_id,sum(price) as total<p class="p">from table where product_type_id=1001 group
+        <td valign="top" headers="d73004e98" class="stentry">select product_id,sum(price) as total<p class="p">from table where product_type_id=1001 group
             by product_id </p>
 <p class="p">having total&gt;1000</p>
 </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$match:{product_type_id:1001}},</p>
 
@@ -276,7 +276,7 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">
+        <td valign="top" headers="d73004e104" class="stentry">
           选择符合条件product_type_id=1001的记录；
           <p class="p">对选出的记录按product_id进行分组；</p>
 
@@ -288,9 +288,9 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select top 10 * from table </td>
+        <td valign="top" headers="d73004e98" class="stentry">select top 10 * from table </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:null}},</p>
 
@@ -298,14 +298,14 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">返回结果集中的前10条记录。</td>
+        <td valign="top" headers="d73004e104" class="stentry">返回结果集中的前10条记录。</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d73354e98" class="stentry">select * from table offset 50 rows <p class="p">fetch next 10</p>
+        <td valign="top" headers="d73004e98" class="stentry">select * from table offset 50 rows <p class="p">fetch next 10</p>
 </td>
 
-        <td valign="top" headers="d73354e101" class="stentry">
+        <td valign="top" headers="d73004e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:null}},</p>
 
@@ -315,7 +315,7 @@
 
         </td>
 
-        <td valign="top" headers="d73354e104" class="stentry">跳过结果集中前50条记录之后，返回接下来的10条记录。</td>
+        <td valign="top" headers="d73004e104" class="stentry">跳过结果集中前50条记录之后，返回接下来的10条记录。</td>
 
       </tr>
 <tr class="strow"/>
