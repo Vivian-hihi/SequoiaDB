@@ -5,7 +5,7 @@
   <body>
     <section>
     <title>概述</title>
-      <p>C客户端程序主要提供了数据库，集合空间，集合，副本组，节点，域这7个级别的操作。<xref href="..\..\..\..\c\html\index.html" format="html">更多参考C在线API</xref>。</p>
+      <p>C客户端程序主要提供了数据库，集合空间，集合，游标，副本组，节点，域这7个级别的操作。<xref href="..\..\..\..\c\html\index.html" format="html">更多参考C在线API</xref>。</p>
     </section>
     <section>
       <title>句柄</title>
@@ -42,7 +42,7 @@
               </ul>
             </p>
           </note></li>
-        <li>集群操作句柄 <p>SequoiaDB数据库中的集群操作分为两个级别：</p><p>&nbsp;&nbsp;1）分区组 </p><p>&nbsp;&nbsp;2）数据节点 </p><p>&nbsp;&nbsp;2）域 </p><note>
+        <li>集群操作句柄 <p>SequoiaDB数据库中的集群操作分为三个级别：</p><p>&nbsp;&nbsp;1）分区组 </p><p>&nbsp;&nbsp;2）数据节点 </p><p>&nbsp;&nbsp;3）域 </p><note>
           <p>分区组包二种类型：编目分区组、数据分区组。</p>
         </note><p>分区组实例，数据节点实例，域实例可以用以下句柄表示。</p><simpletable>
             <strow>
