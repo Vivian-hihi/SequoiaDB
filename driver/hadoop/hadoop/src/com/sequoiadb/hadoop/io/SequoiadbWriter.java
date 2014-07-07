@@ -39,6 +39,10 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 	@Override
 	public void close(TaskAttemptContext arg0) throws IOException,
 			InterruptedException {
+		if(lstBsonBuffer.size()>0){
+			this.dbCollection.bulkInsert(lstBsonBuffer, DBCollection.FLG_INSERT_CONTONDUP);
+			lstBsonBuffer.clear();
+		}
 		if (this.sequoiadb != null) {
 			this.sequoiadb.disconnect();
 		}
@@ -64,7 +68,7 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 			}
 		}
 
-		if (key != null) {
+		if (key != null !(key instanceof NullWritable)) {
 			if (key instanceof Text) {
 				bson.put("_id", new ObjectId(((Text) key).toString()));
 			} else if (key instanceof ObjectId) {
