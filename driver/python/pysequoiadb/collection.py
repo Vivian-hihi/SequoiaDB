@@ -13,30 +13,6 @@
 #   limitations under the License.
 
 """Module of collection for python driver of SequoiaDB
-
-All operation need deal with the error code returned first, if it has. 
-   Every error code is not SDB_OK(or 0), it means something error has appeared,
-   and user should deal with it according the meaning of error code printed.
-
-   @version: execute to get version
-             >>> import pysequoiadb
-             >>> print pysequoiadb.get_version()
-
-   @notice : The dict of built-in Python is hashed and non-ordered. so the
-             element in dict may not the order we make it. we make a dict and
-             print it like this:
-             ...
-             >>> a = {"avg_age":24, "major":"computer science"}
-             >>> a
-             >>> {'major': 'computer science', 'avg_age': 24}
-             ...
-             the elements order it is not we make it!!
-             therefore, we use bson.SON to make the order-sensitive dict if the
-             order is important such as operations in "$sort", "$group",
-             "split_by_condition", "aggregate","create_collection"...
-             In every scene which the order is important, please make it using
-             bson.SON and list. It is a subclass of built-in dict
-             and order-sensitive
 """
 
 try:
@@ -59,7 +35,32 @@ from pysequoiadb.common import const
 from pysequoiadb.error import SequoiaDBError
 
 class collection(object):
-   """Collection for SequoiaDB"""
+   """Collection for SequoiaDB
+   
+   All operation need deal with the error code returned first, if it has. 
+   Every error code is not SDB_OK(or 0), it means something error has appeared,
+   and user should deal with it according the meaning of error code printed.
+
+   @version: execute to get version
+             >>> import pysequoiadb
+             >>> print pysequoiadb.get_version()
+
+   @notice : The dict of built-in Python is hashed and non-ordered. so the
+             element in dict may not the order we make it. we make a dict and
+             print it like this:
+             ...
+             >>> a = {"avg_age":24, "major":"computer science"}
+             >>> a
+             >>> {'major': 'computer science', 'avg_age': 24}
+             ...
+             the elements order it is not we make it!!
+             therefore, we use bson.SON to make the order-sensitive dict if the
+             order is important such as operations in "$sort", "$group",
+             "split_by_condition", "aggregate","create_collection"...
+             In every scene which the order is important, please make it using
+             bson.SON and list. It is a subclass of built-in dict
+             and order-sensitive
+   """
 
    def __init__(self):
       """create a new collection.

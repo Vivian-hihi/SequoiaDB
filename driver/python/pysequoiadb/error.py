@@ -20,8 +20,6 @@ from pysequoiadb.common import const
 
 class SequoiaDBError(Exception):
    """Base Exception of Python Driver for SequoiaDB
-   
-   version 1.8
    """
 
 class ConnectError(SequoiaDBError):
