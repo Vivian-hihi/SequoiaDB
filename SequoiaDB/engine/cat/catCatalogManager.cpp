@@ -2211,6 +2211,9 @@ namespace engine
                goto error ;
             }
          }
+
+         PD_LOG( PDEVENT, "create domain[%s]",
+                 insertObj.toString( FALSE, TRUE ).c_str() ) ;
       }
       catch ( std::exception &e )
       {
@@ -2289,6 +2292,8 @@ namespace engine
             rc = SDB_CAT_DOMAIN_NOT_EXIST ;
             goto error ;
          }
+
+         PD_LOG( PDEVENT, "drop domain[%s]", pDomainName ) ;
       }
       catch ( std::exception &e )
       {
@@ -2390,10 +2395,11 @@ namespace engine
       {
       BSONObjBuilder matchBuilder ;
       matchBuilder.append( eleDomainName ) ;
+      BSONObj alterObj = alterBuilder.obj() ;
       BSONObj dummy ;
       rc = rtnUpdate( CAT_DOMAIN_COLLECTION,
                       matchBuilder.obj(),
-                      BSON( "$set" << alterBuilder.obj() ),
+                      BSON( "$set" << alterObj ),
                       dummy,
                       0, _pEduCB, NULL ) ;
       if ( SDB_OK != rc )
@@ -2401,6 +2407,10 @@ namespace engine
          PD_LOG( PDERROR, "failed to update cata info:%d", rc ) ;
          goto error ;
       }
+
+      PD_LOG( PDEVENT, "alter domain[%s] to[%s]",
+              eleDomainName.valuestr(),
+              alterObj.toString( FALSE, TRUE ).c_str() ) ;
       }
    done :
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
