@@ -151,6 +151,107 @@
       <p>在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型是csv，导入文件为test.csv</p>
       <codeblock>sdbimprt -h localhost -s 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
+    <section>
+      <title>csv转json数据类型：</title>
+      <simpletable>
+        <sthead>
+          <stentry>csv数据</stentry>
+          <stentry>sdbimprt自动判断的类型</stentry>
+          <stentry>实际数据</stentry>
+        </sthead>
+        <strow>
+          <stentry>123</stentry>
+          <stentry>数值</stentry>
+          <stentry>123</stentry>
+        </strow>
+        <strow>
+          <stentry>123.1</stentry>
+          <stentry>数值</stentry>
+          <stentry>123.1</stentry>
+        </strow>
+        <strow>
+          <stentry>+123</stentry>
+          <stentry>数值</stentry>
+          <stentry>123</stentry>
+        </strow>
+        <strow>
+          <stentry>-123</stentry>
+          <stentry>数值</stentry>
+          <stentry>-123</stentry>
+        </strow>
+        <strow>
+          <stentry>2E+2</stentry>
+          <stentry>数值</stentry>
+          <stentry>200</stentry>
+        </strow>
+        <strow>
+          <stentry>-2E+2</stentry>
+          <stentry>数值</stentry>
+          <stentry>-200</stentry>
+        </strow>
+        <strow>
+          <stentry>0123</stentry>
+          <stentry>数值</stentry>
+          <stentry>123</stentry>
+        </strow>
+        <strow>
+          <stentry>"123"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>123</stentry>
+        </strow>
+        <strow>
+          <stentry>123a</stentry>
+          <stentry>字符串</stentry>
+          <stentry>123a</stentry>
+        </strow>
+        <strow>
+          <stentry>"ab""c"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>ab"c</stentry>
+        </strow>
+        <strow>
+          <stentry>"{a:1}"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>{a:1}</stentry>
+        </strow>
+        <strow>
+          <stentry>"true"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>true</stentry>
+        </strow>
+        <strow>
+          <stentry>"false"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>false</stentry>
+        </strow>
+        <strow>
+          <stentry>"null"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>null</stentry>
+        </strow>
+        <strow>
+          <stentry>true</stentry>
+          <stentry>布尔</stentry>
+          <stentry>true</stentry>
+        </strow>
+        <strow>
+          <stentry>false</stentry>
+          <stentry>布尔</stentry>
+          <stentry>false</stentry>
+        </strow>
+        <strow>
+          <stentry>null</stentry>
+          <stentry>空</stentry>
+          <stentry>null</stentry>
+        </strow>
+
+
+
+
+
+      </simpletable>
+    </section>
+    
     <p>从1.8版本开始支持指定类型和默认值：</p>
     <p>语法：field [type] [default &lt;default value ]</p>
     <p>支援数据类型（type）： int(integer)， long， bool(boolean)， double， string， null</p>
