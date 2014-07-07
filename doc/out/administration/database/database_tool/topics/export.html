@@ -168,7 +168,7 @@
       
       <p class="p">在下面的例子，sdbexprt从本地数据库端口11810中导出集合空间foo的集合bar的数据，导出类型是csv，导出文件为contact，导出字段是field1和field2。</p>
 
-      <pre class="pre codeblock">sdbexprt -h localhost -s 11810 --type csv --file contace --fields field1,field2 -c foo -l bar</pre>
+      <pre class="pre codeblock">sdbexprt -s localhost -p 11810 --type csv --file contace --fields field1,field2 -c foo -l bar</pre>
 
     </div>
 

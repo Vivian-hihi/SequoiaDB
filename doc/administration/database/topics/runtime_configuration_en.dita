@@ -82,7 +82,7 @@
 					<stentry>-p</stentry>
 					<stentry>str</stentry>
 					<stentry>1. It specifies local service port.
-             2. If it is not specified, the default value are 11810 for coord, 11800 for catalog, 11820 for datanode.</stentry>
+             2. If it is not specified, the default value are 11800 for coord, 11810 for catalog, 11820 for datanode.</stentry>
 				</strow>
 				<strow>
 					<stentry>--replname</stentry>

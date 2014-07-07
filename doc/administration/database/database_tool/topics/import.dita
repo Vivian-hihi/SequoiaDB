@@ -149,7 +149,7 @@
     <section>
       <title>用法</title>
       <p>在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型是csv，导入文件为test.csv</p>
-      <codeblock>sdbimprt -h localhost -s 11810 --type csv --file test.csv -c foo -l bar</codeblock>
+      <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
     <section>
       <title>sdbimprt自动判断的类型：</title>
