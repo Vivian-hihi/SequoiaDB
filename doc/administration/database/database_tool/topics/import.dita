@@ -152,7 +152,7 @@
       <codeblock>sdbimprt -h localhost -s 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
     <section>
-      <title>csv转json数据类型：</title>
+      <title>sdbimprt自动判断的类型：</title>
       <simpletable>
         <sthead>
           <stentry>csv数据</stentry>
@@ -244,14 +244,8 @@
           <stentry>空</stentry>
           <stentry>null</stentry>
         </strow>
-
-
-
-
-
       </simpletable>
-    </section>
-    
+    </section>    
     <p>从1.8版本开始支持指定类型和默认值：</p>
     <p>语法：field [type] [default &lt;default value ]</p>
     <p>支援数据类型（type）： int(integer)， long， bool(boolean)， double， string， null</p>
@@ -300,11 +294,11 @@
         <strow>
           <stentry>date</stentry>
           <stentry>string，long</stentry>
-          <stentry>如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的毫秒单位</stentry>
+          <stentry>如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的秒单位</stentry>
         </strow>
         <strow>
           <stentry>null</stentry>
-          <stentry>string</stentry>
+          <stentry></stentry>
           <stentry>指定了数据类型为null，那么无论数据是什么，都是null</stentry>
         </strow>        
       </simpletable>
