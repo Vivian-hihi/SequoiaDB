@@ -78,7 +78,7 @@
 					<stentry>--replname</stentry>
 					<stentry>-r</stentry>
 					<stentry>str</stentry>
-					<stentry>1.指定数据同步平面端口。2.如果不指定则默认为svcname+1。</stentry>
+					<stentry>1.指定数据同步平面端口。<fig></fig>2.如果不指定则默认为svcname+1。</stentry>
 				</strow>
 				<strow>
 					<stentry>--shardname</stentry>
