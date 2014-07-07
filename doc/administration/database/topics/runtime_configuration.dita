@@ -17,7 +17,7 @@
 					<stentry>--help</stentry>
 					<stentry>-h</stentry>
 					<stentry>--</stentry>
-					<stentry>打印帮助</stentry>
+					<stentry>打印帮助。</stentry>
 				</strow>
 				<strow>
 					<stentry>--dbpath</stentry>
@@ -138,13 +138,13 @@
 					<stentry>--numpreload</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>页面预加载代理数据，默认值为0，取值范围：[0,100]</stentry>
+					<stentry>页面预加载代理数据，默认值为0，取值范围：[0,100]。</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxprefpool</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>数据预取代理池最大数量，默认值：200，取值范围：[0,1000]</stentry>
+					<stentry>数据预取代理池最大数量，默认值：200，取值范围：[0,1000]。</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxsubquery</stentry>
@@ -192,11 +192,11 @@
 					<stentry>--preferedinstance</stentry>
 					<stentry>--</stentry>
 					<stentry>str</stentry>
-					<stentry>1.指定执行读请求时优先选择的实例<fig></fig>2.如果不指定，则默认为随机选择任意实例。<fig></fig>3.取值列表：
-                    M--可读写实例
-                    S--只读实例
-                    A--任意实例
-                    1-7--第n个实例</stentry>
+					<stentry>1.指定执行读请求时优先选择的实例。<fig></fig>2.如果不指定，则默认为随机选择任意实例。<fig></fig>3.取值列表：
+                    M--可读写实例；
+                    S--只读实例；
+                    A--任意实例；
+                    1-7--第n个实例。</stentry>
 				</strow>
 				<strow>
 					<stentry>--numpagecleaners</stentry>
