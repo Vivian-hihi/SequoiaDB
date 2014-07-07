@@ -36,6 +36,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
@@ -68,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -92,7 +93,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p>the replica node in DB  
+<p>Database operation interfaces of replica node.This class will be deprecated in version 2.x. Use class <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html" title="Database operation interfaces of node.This class takes the place of class &quot;replicaNode&quot;.">Node</a> instead of it.  
  <a href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
@@ -140,15 +141,34 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a24b40699fc4c10d770ae2b7abeed7808"><td class="memItemLeft" align="right" valign="top">NodeStatus&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#a24b40699fc4c10d770ae2b7abeed7808">getStatus</a> ()</td></tr>
 <tr class="memdesc:a24b40699fc4c10d770ae2b7abeed7808"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the status of current replicaNode.  <a href="#a24b40699fc4c10d770ae2b7abeed7808"></a><br/></td></tr>
 <tr class="separator:a24b40699fc4c10d770ae2b7abeed7808"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4e0d7e1c3fe04b08e5d0ecdc966e62f"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#af4e0d7e1c3fe04b08e5d0ecdc966e62f">start</a> ()</td></tr>
-<tr class="memdesc:af4e0d7e1c3fe04b08e5d0ecdc966e62f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start current replicaNode in db.  <a href="#af4e0d7e1c3fe04b08e5d0ecdc966e62f"></a><br/></td></tr>
-<tr class="separator:af4e0d7e1c3fe04b08e5d0ecdc966e62f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9cc073bc3adf837c3666cf9c5c23f070"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#a9cc073bc3adf837c3666cf9c5c23f070">stop</a> ()</td></tr>
-<tr class="memdesc:a9cc073bc3adf837c3666cf9c5c23f070"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop current replicaNode in db.  <a href="#a9cc073bc3adf837c3666cf9c5c23f070"></a><br/></td></tr>
-<tr class="separator:a9cc073bc3adf837c3666cf9c5c23f070"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c36d86d0a402787f2783654209bb9a9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1c36d86d0a402787f2783654209bb9a9"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#a1c36d86d0a402787f2783654209bb9a9">start</a> ()</td></tr>
+<tr class="memdesc:a1c36d86d0a402787f2783654209bb9a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start current replicaNode in db </p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException.</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<br/></td></tr>
+<tr class="separator:a1c36d86d0a402787f2783654209bb9a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef47a8e93211b62ca6645f805a87bb8d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aef47a8e93211b62ca6645f805a87bb8d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#aef47a8e93211b62ca6645f805a87bb8d">stop</a> ()</td></tr>
+<tr class="memdesc:aef47a8e93211b62ca6645f805a87bb8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop current replicaNode in db </p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException.</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<br/></td></tr>
+<tr class="separator:aef47a8e93211b62ca6645f805a87bb8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>the replica node in DB </p>
+<div class="textblock"><p>Database operation interfaces of replica node.This class will be deprecated in version 2.x. Use class <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html" title="Database operation interfaces of node.This class takes the place of class &quot;replicaNode&quot;.">Node</a> instead of it. </p>
+<dl class="section note"><dt>Note</dt><dd>We use concept "node" instead of "replica node", and change the class name "ReplicaNode" to "Node". </dd></dl>
+<dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000002">Deprecated:</a></b></dt><dd></dd></dl>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html" title="Database operation interfaces of node.This class takes the place of class &quot;replicaNode&quot;.">Node</a> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a88b327193ec3b5319ac913200d5d8293"></a>
 <div class="memitem">
@@ -420,77 +440,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
-<a class="anchor" id="af4e0d7e1c3fe04b08e5d0ecdc966e62f"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">boolean com.sequoiadb.base.ReplicaNode.start </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Start current replicaNode in db. </p>
-<dl class="section return"><dt>Returns</dt><dd>true:success/false:fail </dd></dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a9cc073bc3adf837c3666cf9c5c23f070"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">boolean com.sequoiadb.base.ReplicaNode.stop </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Stop current replicaNode in db. </p>
-<dl class="section return"><dt>Returns</dt><dd>true:success/false:fail </dd></dl>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/SequoiaDB/driver/java/src/main/java/com/sequoiadb/base/ReplicaNode.java</li>
+<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/ReplicaNode.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2013 14:55:29 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:03:05 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

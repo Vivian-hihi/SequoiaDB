@@ -36,6 +36,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
@@ -68,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -100,7 +101,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a0c562e61274094d842e5a201cf328fc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the name of current collection space.  <a href="#a0c562e61274094d842e5a201cf328fc9"></a><br/></td></tr>
 <tr class="separator:a0c562e61274094d842e5a201cf328fc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47ddb98bffee3ec83f4baf6aabd4d139"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a47ddb98bffee3ec83f4baf6aabd4d139">getSequoiadb</a> ()</td></tr>
-<tr class="memdesc:a47ddb98bffee3ec83f4baf6aabd4d139"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> handle of current collection space.  <a href="#a47ddb98bffee3ec83f4baf6aabd4d139"></a><br/></td></tr>
+<tr class="memdesc:a47ddb98bffee3ec83f4baf6aabd4d139"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> instance of current collection space belong to.  <a href="#a47ddb98bffee3ec83f4baf6aabd4d139"></a><br/></td></tr>
 <tr class="separator:a47ddb98bffee3ec83f4baf6aabd4d139"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afeec569eb722b9aac48991934f67d845"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html">DBCollection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#afeec569eb722b9aac48991934f67d845">getCollection</a> (String collectionName)  throws BaseException </td></tr>
 <tr class="memdesc:afeec569eb722b9aac48991934f67d845"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the named collection.  <a href="#afeec569eb722b9aac48991934f67d845"></a><br/></td></tr>
@@ -117,9 +118,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab3e80faed1a08e44d812d361b70f8823"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html">DBCollection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#ab3e80faed1a08e44d812d361b70f8823">createCollection</a> (String collectionName, BSONObject options)</td></tr>
 <tr class="memdesc:ab3e80faed1a08e44d812d361b70f8823"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create collection by options.  <a href="#ab3e80faed1a08e44d812d361b70f8823"></a><br/></td></tr>
 <tr class="separator:ab3e80faed1a08e44d812d361b70f8823"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af129b02d06463cd7bbed9ca6448bd770"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#af129b02d06463cd7bbed9ca6448bd770">drop</a> ()</td></tr>
-<tr class="memdesc:af129b02d06463cd7bbed9ca6448bd770"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drop current collectionSpace.  <a href="#af129b02d06463cd7bbed9ca6448bd770"></a><br/></td></tr>
-<tr class="separator:af129b02d06463cd7bbed9ca6448bd770"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aebd5262adcc77951592d3ac79d13ba60"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#aebd5262adcc77951592d3ac79d13ba60">drop</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:aebd5262adcc77951592d3ac79d13ba60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drop current collectionSpace.  <a href="#aebd5262adcc77951592d3ac79d13ba60"></a><br/></td></tr>
+<tr class="separator:aebd5262adcc77951592d3ac79d13ba60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a21f14d895c3c4588352960c2a766de62"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1CollectionSpace.html#a21f14d895c3c4588352960c2a766de62">dropCollection</a> (String collectionName)  throws BaseException </td></tr>
 <tr class="memdesc:a21f14d895c3c4588352960c2a766de62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the named collection of current collection space.  <a href="#a21f14d895c3c4588352960c2a766de62"></a><br/></td></tr>
 <tr class="separator:a21f14d895c3c4588352960c2a766de62"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -182,7 +183,7 @@ Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">BSONObject&#160;</td>
-          <td class="paramname"><em>shardingKey</em>&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -200,7 +201,8 @@ Public Member Functions</h2></td></tr>
 <p>Create collection by options. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">collectionName,options</td><td></td></tr>
+    <tr><td class="paramname">collectionName</td><td>The collection name </td></tr>
+    <tr><td class="paramname">options</td><td>The options for creating collection, including "ShardingKey", "ReplSize", "IsMainCL" and "Compressed" informations, no options, if null </td></tr>
   </table>
   </dd>
 </dl>
@@ -214,7 +216,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af129b02d06463cd7bbed9ca6448bd770"></a>
+<a class="anchor" id="aebd5262adcc77951592d3ac79d13ba60"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -222,10 +224,10 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">boolean com.sequoiadb.base.CollectionSpace.drop </td>
+          <td class="memname">void com.sequoiadb.base.CollectionSpace.drop </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td>  throws BaseException </td>
         </tr>
       </table>
   </td>
@@ -236,13 +238,15 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Drop current collectionSpace. </p>
-<dl class="section return"><dt>Returns</dt><dd>the created <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html" title="Database operation interfaces of collection.">DBCollection</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000001">Deprecated:</a></b></dt><dd>the method will be deprecated in version 2.x, use dropCollectionSpace instead </dd></dl>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#ab961e51462a695a7be5d3779c6e4980e" title="Remove the named collection space.">com.sequoiadb.base.Sequoiadb.dropCollectionSpace</a> </dd></dl>
 
 </div>
 </div>
@@ -313,7 +317,7 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html" title="Database operation interfaces of collection.">DBCollection</a> handle </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html" title="Database operation interfaces of collection.">DBCollection</a> handle or null for not exist </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -345,7 +349,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get all the collection names of current collection space. </p>
-<dl class="section return"><dt>Returns</dt><dd>A list of collection names </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A list of collection names or null </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -402,7 +406,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Return the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> handle of current collection space. </p>
+<p>Return the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> instance of current collection space belong to. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> object </dd></dl>
 
 </div>
@@ -447,12 +451,12 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/SequoiaDB/driver/java/src/main/java/com/sequoiadb/base/CollectionSpace.java</li>
+<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/CollectionSpace.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2013 14:55:29 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:03:05 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

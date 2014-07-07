@@ -36,6 +36,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -69,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -97,9 +98,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9737dc172b206f908c21b389f7e1bd61"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9737dc172b206f908c21b389f7e1bd61"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getCount</b> (SINT64 &amp;count, const bson::BSONObj &amp;condition=_sdbStaticObject)=0</td></tr>
 <tr class="separator:a9737dc172b206f908c21b389f7e1bd61"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5eea00bb7368439a5aa904e0028feb74"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5eea00bb7368439a5aa904e0028feb74"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>insert</b> (const bson::BSONObj &amp;obj, bson::BSONElement *id=NULL)=0</td></tr>
-<tr class="separator:a5eea00bb7368439a5aa904e0028feb74"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0da1ca90dc6581270a1269c2cc6451c8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0da1ca90dc6581270a1269c2cc6451c8"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>insert</b> (const bson::BSONObj &amp;obj, bson::OID *id=NULL)=0</td></tr>
+<tr class="separator:a0da1ca90dc6581270a1269c2cc6451c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada24d6ed24d62b67f9012c7bf8bb46eb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ada24d6ed24d62b67f9012c7bf8bb46eb"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>bulkInsert</b> (SINT32 flags, std::vector&lt; bson::BSONObj &gt; &amp;obj)=0</td></tr>
 <tr class="separator:ada24d6ed24d62b67f9012c7bf8bb46eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -145,20 +146,47 @@ virtual const CHAR *&#160;</td><td class="memItemRight" valign="bottom"><b>getCS
 <tr class="memitem:a429cd3f464297258936d0d9c76838476"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a429cd3f464297258936d0d9c76838476"></a>
 virtual const CHAR *&#160;</td><td class="memItemRight" valign="bottom"><b>getFullName</b> ()=0</td></tr>
 <tr class="separator:a429cd3f464297258936d0d9c76838476"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a461ad6ba04203c41179d90104550af60"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a461ad6ba04203c41179d90104550af60"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>split</b> (const CHAR *sourceGroupName, const CHAR *destGroupName, const bson::BSONObj &amp;splitQueryCond)=0</td></tr>
-<tr class="separator:a461ad6ba04203c41179d90104550af60"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a11452e68b6e3f63b48b2987a161fa9d9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a11452e68b6e3f63b48b2987a161fa9d9"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>split</b> (const CHAR *sourceGroupName, const CHAR *destGroupName, FLOAT64 percent)=0</td></tr>
-<tr class="separator:a11452e68b6e3f63b48b2987a161fa9d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3f498dd2c5bc6dca516f77b0647cf9d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad3f498dd2c5bc6dca516f77b0647cf9d"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>split</b> (const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, const bson::BSONObj &amp;splitConditon, const bson::BSONObj &amp;splitEndCondition=_sdbStaticObject)=0</td></tr>
+<tr class="separator:ad3f498dd2c5bc6dca516f77b0647cf9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59992f00537e77bdf0b80fa217b050d7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a59992f00537e77bdf0b80fa217b050d7"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>split</b> (const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, FLOAT64 percent)=0</td></tr>
+<tr class="separator:a59992f00537e77bdf0b80fa217b050d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2f645780cd9f728efece220652ac4f2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2f645780cd9f728efece220652ac4f2"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>splitAsync</b> (SINT64 &amp;taskID, const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, const bson::BSONObj &amp;splitCondition, const bson::BSONObj &amp;splitEndCondition=_sdbStaticObject)=0</td></tr>
+<tr class="separator:ac2f645780cd9f728efece220652ac4f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2542ab04e9417813286d1f328ef7626a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2542ab04e9417813286d1f328ef7626a"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>splitAsync</b> (const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, FLOAT64 percent, SINT64 &amp;taskID)=0</td></tr>
+<tr class="separator:a2542ab04e9417813286d1f328ef7626a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e35ae7547b9d31460074a7d7d0ee4f1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3e35ae7547b9d31460074a7d7d0ee4f1"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>aggregate</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, std::vector&lt; bson::BSONObj &gt; &amp;obj)=0</td></tr>
+<tr class="separator:a3e35ae7547b9d31460074a7d7d0ee4f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0d6ffbfbd29e1f88f36efcd26a215f9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac0d6ffbfbd29e1f88f36efcd26a215f9"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>aggregate</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, std::vector&lt; bson::BSONObj &gt; &amp;obj)=0</td></tr>
+<tr class="separator:ac0d6ffbfbd29e1f88f36efcd26a215f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06e63f26a8089ac0e0d2488f7915d51a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a06e63f26a8089ac0e0d2488f7915d51a"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getQueryMeta</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1)=0</td></tr>
+<tr class="separator:a06e63f26a8089ac0e0d2488f7915d51a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a147b2672bc87fa537b1b155e4333b117"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a147b2672bc87fa537b1b155e4333b117"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getQueryMeta</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject, INT64 numToSkip=0, INT64 numToReturn=-1)=0</td></tr>
+<tr class="separator:a147b2672bc87fa537b1b155e4333b117"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a415037f0f8ccad41bf345bb7f8f5393a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a415037f0f8ccad41bf345bb7f8f5393a"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>attachCollection</b> (const CHAR *subClFullName, const bson::BSONObj &amp;options)=0</td></tr>
+<tr class="separator:a415037f0f8ccad41bf345bb7f8f5393a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d2c2b6b14407b512c0521d403ca01b2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d2c2b6b14407b512c0521d403ca01b2"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>detachCollection</b> (const CHAR *subClFullName)=0</td></tr>
+<tr class="separator:a0d2c2b6b14407b512c0521d403ca01b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64e983a85d7390d834b2bc93e507b3a5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a64e983a85d7390d834b2bc93e507b3a5"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>alterCollection</b> (const bson::BSONObj &amp;options)=0</td></tr>
+<tr class="separator:a64e983a85d7390d834b2bc93e507b3a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/SequoiaDB/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2013 14:54:59 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

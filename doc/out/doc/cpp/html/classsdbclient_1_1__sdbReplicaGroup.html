@@ -36,6 +36,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -69,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -100,33 +101,36 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNodeNum</
 <tr class="memitem:a19706e077eb00edd5f0b5aec93b4cd31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19706e077eb00edd5f0b5aec93b4cd31"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getDetail</b> (bson::BSONObj &amp;result)=0</td></tr>
 <tr class="separator:a19706e077eb00edd5f0b5aec93b4cd31"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d2ef124aead38cd43e7a34fb3a69bd4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d2ef124aead38cd43e7a34fb3a69bd4"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getMaster</b> (<a class="el" href="classsdbclient_1_1__sdbReplicaNode.html">_sdbReplicaNode</a> **node)=0</td></tr>
-<tr class="separator:a7d2ef124aead38cd43e7a34fb3a69bd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9ecf3e0ed5223dff20f4e9d682e915e3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9ecf3e0ed5223dff20f4e9d682e915e3"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getMaster</b> (<a class="el" href="classsdbclient_1_1sdbReplicaNode.html">sdbReplicaNode</a> &amp;node)=0</td></tr>
-<tr class="separator:a9ecf3e0ed5223dff20f4e9d682e915e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5599f93c94cf019cf865d3ba0f13815b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5599f93c94cf019cf865d3ba0f13815b"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getSlave</b> (<a class="el" href="classsdbclient_1_1__sdbReplicaNode.html">_sdbReplicaNode</a> **node)=0</td></tr>
-<tr class="separator:a5599f93c94cf019cf865d3ba0f13815b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad75f91a3e8e95de3d0eabee1f06f7f19"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad75f91a3e8e95de3d0eabee1f06f7f19"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getSlave</b> (<a class="el" href="classsdbclient_1_1sdbReplicaNode.html">sdbReplicaNode</a> &amp;node)=0</td></tr>
-<tr class="separator:ad75f91a3e8e95de3d0eabee1f06f7f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6400eddf475a18e6f9cf85e6226f02dc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6400eddf475a18e6f9cf85e6226f02dc"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const CHAR *pNodeName, <a class="el" href="classsdbclient_1_1__sdbReplicaNode.html">_sdbReplicaNode</a> **node)=0</td></tr>
-<tr class="separator:a6400eddf475a18e6f9cf85e6226f02dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae87915832c090822de951bba8ef76080"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae87915832c090822de951bba8ef76080"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const CHAR *pNodeName, <a class="el" href="classsdbclient_1_1sdbReplicaNode.html">sdbReplicaNode</a> &amp;node)=0</td></tr>
-<tr class="separator:ae87915832c090822de951bba8ef76080"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8e9fa1d9ba0b85098e82916c096f255"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8e9fa1d9ba0b85098e82916c096f255"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const CHAR *pHostName, const CHAR *pServiceName, <a class="el" href="classsdbclient_1_1__sdbReplicaNode.html">_sdbReplicaNode</a> **node)=0</td></tr>
-<tr class="separator:ab8e9fa1d9ba0b85098e82916c096f255"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6252050a0c202313db7a628f6f2144ca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6252050a0c202313db7a628f6f2144ca"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const CHAR *pHostName, const CHAR *pServiceName, <a class="el" href="classsdbclient_1_1sdbReplicaNode.html">sdbReplicaNode</a> &amp;node)=0</td></tr>
-<tr class="separator:a6252050a0c202313db7a628f6f2144ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a048b30dde9c29816882c6a3326963857"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a048b30dde9c29816882c6a3326963857"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getMaster</b> (<a class="el" href="classsdbclient_1_1__sdbNode.html">_sdbNode</a> **node)=0</td></tr>
+<tr class="separator:a048b30dde9c29816882c6a3326963857"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd702bfbd225abbfbf61b1168b86d23b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afd702bfbd225abbfbf61b1168b86d23b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getMaster</b> (<a class="el" href="classsdbclient_1_1sdbNode.html">sdbNode</a> &amp;node)=0</td></tr>
+<tr class="separator:afd702bfbd225abbfbf61b1168b86d23b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a797891fd5f09abdb79d602b8aebcf361"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a797891fd5f09abdb79d602b8aebcf361"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getSlave</b> (<a class="el" href="classsdbclient_1_1__sdbNode.html">_sdbNode</a> **node)=0</td></tr>
+<tr class="separator:a797891fd5f09abdb79d602b8aebcf361"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21a8b9e118b685dcf4dacce3efdac8ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21a8b9e118b685dcf4dacce3efdac8ea"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getSlave</b> (<a class="el" href="classsdbclient_1_1sdbNode.html">sdbNode</a> &amp;node)=0</td></tr>
+<tr class="separator:a21a8b9e118b685dcf4dacce3efdac8ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ab73adda122c94a61e01c64ef294484"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4ab73adda122c94a61e01c64ef294484"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const CHAR *pNodeName, <a class="el" href="classsdbclient_1_1__sdbNode.html">_sdbNode</a> **node)=0</td></tr>
+<tr class="separator:a4ab73adda122c94a61e01c64ef294484"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b22da5ee5ab770032cbce5b27960a8b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9b22da5ee5ab770032cbce5b27960a8b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const CHAR *pNodeName, <a class="el" href="classsdbclient_1_1sdbNode.html">sdbNode</a> &amp;node)=0</td></tr>
+<tr class="separator:a9b22da5ee5ab770032cbce5b27960a8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21734d1e817c458985a2dc2676767c72"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21734d1e817c458985a2dc2676767c72"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const CHAR *pHostName, const CHAR *pServiceName, <a class="el" href="classsdbclient_1_1__sdbNode.html">_sdbNode</a> **node)=0</td></tr>
+<tr class="separator:a21734d1e817c458985a2dc2676767c72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae55299c80074e000ff83848d0085e288"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae55299c80074e000ff83848d0085e288"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getNode</b> (const CHAR *pHostName, const CHAR *pServiceName, <a class="el" href="classsdbclient_1_1sdbNode.html">sdbNode</a> &amp;node)=0</td></tr>
+<tr class="separator:ae55299c80074e000ff83848d0085e288"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1fb2c054e0b07c257f66ca33831702e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1fb2c054e0b07c257f66ca33831702e4"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createNode</b> (const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pDatabasePath, std::map&lt; std::string, std::string &gt; &amp;config)=0</td></tr>
 <tr class="separator:a1fb2c054e0b07c257f66ca33831702e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a0dd706078b115267e00526d7ca5af8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a0dd706078b115267e00526d7ca5af8"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>removeNode</b> (const CHAR *pHostName, const CHAR *pServiceName, const bson::BSONObj &amp;configure=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a9a0dd706078b115267e00526d7ca5af8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13a46507c654ec57b6ee7f566a58e310"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a13a46507c654ec57b6ee7f566a58e310"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>stop</b> ()=0</td></tr>
 <tr class="separator:a13a46507c654ec57b6ee7f566a58e310"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -141,12 +145,12 @@ virtual BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog<
 <tr class="separator:a3be57350587590a69ac5dd4a2c1be18f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/SequoiaDB/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2013 14:54:59 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

@@ -1,12 +1,12 @@
 var searchData=
 [
-  ['getcollectionname',['getCollectionName',['../classSequoiaCollection.html#a069206ce7403d53c81e895083405bb9f',1,'SequoiaCollection']]],
-  ['getcsname',['getCSName',['../classSequoiaCollection.html#a2fd0970564da7323038f53b84b7ce818',1,'SequoiaCollection']]],
+  ['getcollectionname',['getCollectionName',['../classSequoiaCL.html#a281600f5f94f1f5a4a7428526ed589e9',1,'SequoiaCL']]],
+  ['getcsname',['getCSName',['../classSequoiaCL.html#ab851a52e21d809f230c4aa9f989234dd',1,'SequoiaCL']]],
   ['getdetail',['getDetail',['../classSequoiaGroup.html#a163a62fd0d7c5043e8f2a0ea935dd26f',1,'SequoiaGroup']]],
   ['geterror',['getError',['../classSequoiaDB.html#a4870caf658a0c9d420429cb2dabcde6b',1,'SequoiaDB']]],
-  ['getfullname',['getFullName',['../classSequoiaCollection.html#aa856d6d665c3723afa95d8864047aa25',1,'SequoiaCollection']]],
+  ['getfullname',['getFullName',['../classSequoiaCL.html#aee73050e74311185841d330f8e16d90f',1,'SequoiaCL']]],
   ['gethostname',['getHostName',['../classSequoiaNode.html#a281124653d2897c9fe357f25ef99b098',1,'SequoiaNode']]],
-  ['getindex',['getIndex',['../classSequoiaCollection.html#af373eefecfe1c216bb80a114cd18b042',1,'SequoiaCollection']]],
+  ['getindex',['getIndex',['../classSequoiaCL.html#a7a861e9153d8128b49c384e065173e7e',1,'SequoiaCL']]],
   ['getlist',['getList',['../classSequoiaDB.html#a9b1109656857021826a6079b418711b3',1,'SequoiaDB']]],
   ['getmaster',['getMaster',['../classSequoiaGroup.html#ac1b75afa3ea7569b59a111bb5910fe9d',1,'SequoiaGroup']]],
   ['getname',['getName',['../classSequoiaCS.html#a544e0305d30c1d3bb69c21021ee11276',1,'SequoiaCS']]],

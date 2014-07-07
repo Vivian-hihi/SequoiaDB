@@ -89,12 +89,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad1e054c0c08721b350fb23929bac9f21"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCollection.html">SequoiaCollection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCS.html#ad1e054c0c08721b350fb23929bac9f21">selectCollection</a> (string $name)</td></tr>
-<tr class="memdesc:ad1e054c0c08721b350fb23929bac9f21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a collection.  <a href="#ad1e054c0c08721b350fb23929bac9f21"></a><br/></td></tr>
-<tr class="separator:ad1e054c0c08721b350fb23929bac9f21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33cda5aad4308a4d4ea0181b195a5cae"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaCL.html">SequoiaCL</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCS.html#a33cda5aad4308a4d4ea0181b195a5cae">selectCollection</a> (string $name, array|string $options)</td></tr>
+<tr class="memdesc:a33cda5aad4308a4d4ea0181b195a5cae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a collection, if is not exist, will auto create.  <a href="#a33cda5aad4308a4d4ea0181b195a5cae"></a><br/></td></tr>
+<tr class="separator:a33cda5aad4308a4d4ea0181b195a5cae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2250914b228993b007303040f6286f19"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCS.html#a2250914b228993b007303040f6286f19">drop</a> (void)</td></tr>
 <tr class="memdesc:a2250914b228993b007303040f6286f19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops this collection space.  <a href="#a2250914b228993b007303040f6286f19"></a><br/></td></tr>
 <tr class="separator:a2250914b228993b007303040f6286f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ca77666e862d60a413a67088a83972a"><td class="memItemLeft" align="right" valign="top">array string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCS.html#a5ca77666e862d60a413a67088a83972a">dropCollection</a> (string $name)</td></tr>
+<tr class="memdesc:a5ca77666e862d60a413a67088a83972a"><td class="mdescLeft">&#160;</td><td class="mdescRight">drop this collection  <a href="#a5ca77666e862d60a413a67088a83972a"></a><br/></td></tr>
+<tr class="separator:a5ca77666e862d60a413a67088a83972a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a544e0305d30c1d3bb69c21021ee11276"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaCS.html#a544e0305d30c1d3bb69c21021ee11276">getName</a> (void)</td></tr>
 <tr class="memdesc:a544e0305d30c1d3bb69c21021ee11276"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns this collection space's name.  <a href="#a544e0305d30c1d3bb69c21021ee11276"></a><br/></td></tr>
 <tr class="separator:a544e0305d30c1d3bb69c21021ee11276"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,6 +118,30 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Drops this collection space. </p>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">Returns</td><td>the database response </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a5ca77666e862d60a413a67088a83972a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">array string SequoiaCS::dropCollection </td>
+          <td>(</td>
+          <td class="paramtype">string&#160;</td>
+          <td class="paramname"><em>$name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>drop this collection </p>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">Returns</td><td>the database response </td></tr>
@@ -148,24 +175,35 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ad1e054c0c08721b350fb23929bac9f21"></a>
+<a class="anchor" id="a33cda5aad4308a4d4ea0181b195a5cae"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classSequoiaCollection.html">SequoiaCollection</a> SequoiaCS::selectCollection </td>
+          <td class="memname"><a class="el" href="classSequoiaCL.html">SequoiaCL</a> SequoiaCS::selectCollection </td>
           <td>(</td>
           <td class="paramtype">string&#160;</td>
-          <td class="paramname"><em>$name</em></td><td>)</td>
+          <td class="paramname"><em>$name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">array|string&#160;</td>
+          <td class="paramname"><em>$options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Gets a collection. </p>
+<p>Gets a collection, if is not exist, will auto create. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">$name</td><td>The collection name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">$options</td><td>create collection,set collection options </td></tr>
   </table>
   </dd>
 </dl>
@@ -179,12 +217,12 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/SequoiaDB/driver/php5/ext/<a class="el" href="sequoiadb_8h_source.html">sequoiadb.h</a></li>
+<li>E:/sequoiadb/driver/php5/ext/<a class="el" href="sequoiadb_8h_source.html">sequoiadb.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Sep 3 2013 16:07:45 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:05:51 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

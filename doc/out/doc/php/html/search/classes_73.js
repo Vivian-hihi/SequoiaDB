@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['sequoiacollection',['SequoiaCollection',['../classSequoiaCollection.html',1,'']]],
+  ['sequoiacl',['SequoiaCL',['../classSequoiaCL.html',1,'']]],
   ['sequoiacs',['SequoiaCS',['../classSequoiaCS.html',1,'']]],
   ['sequoiacursor',['SequoiaCursor',['../classSequoiaCursor.html',1,'']]],
   ['sequoiadate',['SequoiaDate',['../classSequoiaDate.html',1,'']]],

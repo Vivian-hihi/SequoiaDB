@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['finished',['finished',['../structbson.html#a890e7cf3344f0e5fdbb71981b7782499',1,'bson']]]
+  ['flushconfigure',['flushConfigure',['../classsdbclient_1_1sdb.html#a4f64ee8f658595ed4582cc094caf526b',1,'sdbclient::sdb']]]
 ];
