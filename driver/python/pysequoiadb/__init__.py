@@ -18,10 +18,9 @@
    Every error code is not SDB_OK(or 0), it means something error has appeared,
    and user should deal with it according the meaning of error code printed.
 
-   @author : SequoiaDB Ltd
    @license: See Apache License, Version 2.0
    @see    : http://www.sequoiadb.com
-   @version: 1.8
+   @version: pysequoiadb.get_version()
 
    @notice : The dict of built-in Python is hashed and non-ordered. so the
              element in dict may not the order we make it. we make a dict and
@@ -64,7 +63,10 @@ from pysequoiadb.error import ( SequoiaDBError,
                                 OperationError )
 
 import sys
-import sdbclient
+try:
+   import sdbclient
+except ImportError:
+   raise Exception("cannot find C module file: sdbclient")
 
 def get_version():
    ver, sub_version, release, build = sdbclient.get_version()

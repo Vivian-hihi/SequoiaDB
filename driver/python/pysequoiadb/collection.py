@@ -18,10 +18,9 @@ All operation need deal with the error code returned first, if it has.
    Every error code is not SDB_OK(or 0), it means something error has appeared,
    and user should deal with it according the meaning of error code printed.
 
-   @author : SequoiaDB Ltd
-   @license: See Apache License, Version 2.0
-   @see    : http://www.sequoiadb.com
-   @version: 1.8
+   @version: execute to get version
+             >>> import pysequoiadb
+             >>> print pysequoiadb.get_version()
 
    @notice : The dict of built-in Python is hashed and non-ordered. so the
              element in dict may not the order we make it. we make a dict and

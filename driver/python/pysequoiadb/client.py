@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-"""@package docstring
+"""
 Module of client for python driver of SequoiaDB
 
 """
@@ -51,10 +51,9 @@ class client(object):
    Every error code is not SDB_OK(or 0), it means something error has appeared,
    and user should deal with it according the meaning of error code printed.
 
-   @author : SequoiaDB Ltd
    @license: See Apache License, Version 2.0
    @see    : http://www.sequoiadb.com
-   @version: 1.8
+   @version: pysequoiadb.get_version()
 
    @notice : The dict of built-in Python is hashed and non-ordered. so the
              element in dict may not the order we make it. we make a dict and
