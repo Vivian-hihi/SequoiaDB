@@ -55,6 +55,8 @@ default_psw  = ""
 static_object = None
 """Default bson"""
 
+from bson.son import SON
+
 from pysequoiadb.client import client
 from pysequoiadb.common import const
 from pysequoiadb.error import ( SequoiaDBError,
@@ -66,10 +68,8 @@ import sdbclient
 
 def get_version():
    ver, sub_version, release, build = sdbclient.get_version()
-   return { "Version"    : ver,
-            "subVersion" : sub_version,
-            "Release"    : release,
-            "build"      : build }
+   return ("( Version: %s , subVersion: %s , Release: %s , build: %s )"
+            % (ver, sub_version, release, build))
 
 PY3 = sys.version_info[0] == 3
 
