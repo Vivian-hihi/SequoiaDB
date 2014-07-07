@@ -111,15 +111,12 @@
       <p>执行db.foo.bar.find().help() , 会看到find() 的更多使用方法</p>
       <ul>
         <li>
-          <p><xref href="../../../references/methods/topics/csort.dita"></xref>sort(&lt;sort>)</p>
+          <p>cursor.sort(&lt;sort>)</p>
           <p>sort()方法用来按指定的字段排序，语法格式为：sort({"字段名1"：1|-1,"字段名2"：1|-1,...})，1为升序，-1为降序。如果find方法的sel参数不设定内容，sort()方法按指定sort参数设定的字段排序，如果sel参数设定了返回的字段名，那么sort()方法只能对sel参数中选定的字段进行排序。如：<codeblock>db.foo.bar.find().sort({age:1}) 对返回的记录按age字段值的升序排序</codeblock><codeblock>db.foo.bar.find(null,{name:""}).sort({age:1})此操作实际上对返回的记录达不到排序的效果。</codeblock></p>
         </li>
-        <li><xref href="../../../references/methods/topics/hint.dita"
-            />hint(&lt;hint>)<p>添加索引加快查找速度，假设存在名为"testIndex"的索引：<codeblock>db.foo.bar.find().hint({"":"testIndex"})</codeblock></p></li>
-        <li><xref href="../../../references/methods/topics/climit.dita"
-            />limit(&lt;num>)<p>在结果集中限制返回的记录条数：<codeblock>db.foo.bar.find().limit(3)返回结果集里面的的前三条记录</codeblock></p></li>
-        <li><xref href="../../../references/methods/topics/cskip.dita"
-            />skip(&lt;num>)<p>skip()方法控制结果集的开始点，即跳过前面的num条记录，从num+1条记录开始返回：<codeblock>db.foo.bar.find().skip(5)从查询的结果集的第6条记录开始返回</codeblock></p></li>
+        <li>cursor.hint(&lt;hint>)<p>添加索引加快查找速度，假设存在名为"testIndex"的索引：<codeblock>db.foo.bar.find().hint({"":"testIndex"})</codeblock></p></li>
+        <li>cursor.limit(&lt;num>)<p>在结果集中限制返回的记录条数：<codeblock>db.foo.bar.find().limit(3)返回结果集里面的的前三条记录</codeblock></p></li>
+        <li>cursor.skip(&lt;num>)<p>skip()方法控制结果集的开始点，即跳过前面的num条记录，从num+1条记录开始返回：<codeblock>db.foo.bar.find().skip(5)从查询的结果集的第6条记录开始返回</codeblock></p></li>
       <li>
         <p>使用游标控制find()返回的记录</p>
           <p><codeblock><xref href="../../../references/methods/topics/ccurrent.dita">db.foo.bar.find().current()</xref> 返回当前游标指向的记录
