@@ -12,7 +12,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-"""Module of client for python driver of SequoiaDB
+"""@package docstring
+Module of client for python driver of SequoiaDB
+
 """
 import socket
 import random
@@ -40,10 +42,35 @@ from pysequoiadb.error import SequoiaDBError
 class client(object):
    """SequoiaDB Client Driver
    
-      The client support interfaces to connect to SequoiaDB.
-      In order to connect to SequoiaDB, you need use the class first.
-      And you should make sure the instance of it released when you don't use it
-      any more.
+   The client support interfaces to connect to SequoiaDB.
+   In order to connect to SequoiaDB, you need use the class first.
+   And you should make sure the instance of it released when you don't use it
+   any more.
+
+   All operation need deal with the error code returned first, if it has. 
+   Every error code is not SDB_OK(or 0), it means something error has appeared,
+   and user should deal with it according the meaning of error code printed.
+
+   @author : SequoiaDB Ltd
+   @license: See Apache License, Version 2.0
+   @see    : http://www.sequoiadb.com
+   @version: 1.8
+
+   @notice : The dict of built-in Python is hashed and non-ordered. so the
+             element in dict may not the order we make it. we make a dict and
+             print it like this:
+             ...
+             >>> a = {"avg_age":24, "major":"computer science"}
+             >>> a
+             >>> {'major': 'computer science', 'avg_age': 24}
+             ...
+             the elements order it is not we make it!!
+             therefore, we use bson.SON to make the order-sensitive dict if the
+             order is important such as operations in "$sort", "$group",
+             "split_by_condition", "aggregate","create_collection"...
+             In every scene which the order is important, please make it using
+             bson.SON and list. It is a subclass of built-in dict
+             and order-sensitive
    """
    def __init__(self, host = default_host, port = default_port,
                       user = default_user, psw  = default_psw):
@@ -138,6 +165,7 @@ class client(object):
          return cs
 
    def __get_local_ip(self, ifname = 'eth0'):
+
       import sys
       if sys.platform == 'win32':
          local = socket.gethostname()
@@ -156,21 +184,20 @@ class client(object):
       """try to connect to hosts
 
       Parameters:
-              Name    Type    Info:
-         [in] hosts   list    The list contains hosts.
-                              eg.
-                              [ {'host':'localhost', 'port':11810,},
-                                {'host':'192.168.10.30', 'port':11810},
-                                {'host':'192.168.20.63', 'port':11810}, ]
-         [in] user    str     The user name to access to database 
-         [in] psw     str     The user password to access to database
-         [in] policy  str     The policy of select hosts. it must be string of
-                              'random' or 'one_by_one'
+         Name    Type    Info:
+         hosts   list    The list contains hosts.
+                               eg.
+                               [ {'host':'localhost', 'port':11810,},
+                                 {'host':'192.168.10.30', 'port':11810},
+                                 {'host':'192.168.20.63', 'port':11810}, ]
+         user    str     The user name to access to database 
+         psw     str     The user password to access to database
+         policy  str     The policy of select hosts. it must be string of
+                               'random' or 'one_by_one'
       Return values:
-         Success: SDB_OK  and  the index the hosts connect to
+         Success: SDB_OK  and  the index in the hosts of current connection
          Fail   : Others  and  -1
       """
-
       if not isinstance(hosts, list):
          raise TypeError("hosts must be an instance of list")
       if not isinstance(policy, str):
@@ -227,15 +254,12 @@ class client(object):
       """connect to specified database
 
       Parameters:
-              Name    Type    Info:
-         [in] host    str     The host name or IP address of database server,
-                              if None, 'localhost' instead.
-         [in] port    int     The port of database server, if None, 11810
-                              instead.
-         [in] user    str     The user name to access to database, if None,
-                              "" instead.
-         [in] psw     str     The password to access to database, if None,
-                              "" instead.
+         Name    Type    Info:
+         host    str     The host name or IP address of database server, if None,
+                               'localhost' instead.
+         port    int     The port of database server, if None, 11810 instead.
+         user    str     The user name to access to database, if None, "" instead.
+         psw     str     The password to access to database, if None, "" instead.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -271,12 +295,12 @@ class client(object):
       """connect to specified database, using host and service name.
 
       Parameters:
-              Name    Type    Info:
-         [in] host    str     The host name or IP address of database server.
-         [in] service str     The service name of database server.
-         [in] user    str     The user name to access to database, if None,
+         Name    Type    Info:
+         host    str     The host name or IP address of database server.
+         service str     The service name of database server.
+         user    str     The user name to access to database, if None,
                               "" instead.
-         [in] psw     str     The password to access to database, if None,
+         psw     str     The password to access to database, if None,
                               "" instead.
       Return values:
          Success: SDB_OK
@@ -312,7 +336,7 @@ class client(object):
       """disconnect to current server.
 
       Parameters:
-              Name    Type    Info:
+         Name    Type    Info:
          N/A
       Return values:
          Success: SDB_OK
@@ -328,9 +352,9 @@ class client(object):
       """Add an user in current database.
 
       Parameters:
-              Name         Type     Info:
-         [in] user_name    str      The name of user to be created.
-         [in] psw          str      The password of user to be created.
+         Name         Type     Info:
+         user_name    str      The name of user to be created.
+         psw          str      The password of user to be created.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -354,9 +378,9 @@ class client(object):
       """Remove the spacified user from current database.
 
       Parameters:
-              Name         Type     Info:
-         [in] user_name    str      The name of user to be removed.
-         [in] psw          str      The password of user to be removed.
+         Name         Type     Info:
+         user_name    str      The name of user to be removed.
+         psw          str      The password of user to be removed.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -382,14 +406,14 @@ class client(object):
       """Get the snapshots of specified type.
 
       Parameters:
-              Name         Type  Info:
-         [in] snap_typr    str   The type of snapshot, see Info as below
-         [in] condition    dict  The matching rule, match all the documents
-                                 if not provided.
-         [in] selector     dict  The selective rule, return the whole
-                                 document if not provided.
-         [in] order_by     dict  The ordered rule, result set is unordered
-                                 if not provided.
+         Name         Type  Info:
+         snap_typr    str   The type of snapshot, see Info as below
+         condition    dict  The matching rule, match all the documents
+                                  if not provided.
+         selector     dict  The selective rule, return the whole
+                                  document if not provided.
+         order_by     dict  The ordered rule, result set is unordered
+                                  if not provided.
       Return values:
          Success: SDB_OK       and  a cursor object of query
          Fail   : Others  and  None
@@ -433,10 +457,10 @@ class client(object):
       """Reset the snapshot.
 
       Parameters:
-              Name         Type     Info:
-         [in] condition    dict     The matching rule, usually specifies the
-                                    node in sharding environment, in standalone
-                                    mode, this option is ignored.
+         Name         Type     Info:
+         condition    dict     The matching rule, usually specifies the
+                                     node in sharding environment, in standalone
+                                     mode, this option is ignored.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -456,13 +480,13 @@ class client(object):
       """Get the informations of specified type.
 
       Parameters:
-              Name         Type     Info:
-         [in] list_type    int      type of list, see Info as below.
-         [in] condition    dict     The matching rule, match all the documents
-                                    if None.
-         [in] selector     dict     The selective rule, return the whole
-                                    documents if None.
-         [in] order_by     dict     The ordered rule, never sort if None.
+         Name         Type     Info:
+         list_type    int      type of list, see Info as below.
+         condition    dict     The matching rule, match all the documents
+                                     if None.
+         selector     dict     The selective rule, return the whole
+                                     documents if None.
+         order_by     dict     The ordered rule, never sort if None.
       Return values:
          Success: SDB_OK   and   a cursor object of query
          Fail   : Other    and   None
@@ -511,8 +535,8 @@ class client(object):
       """Get the specified collection.
 
       Parameters:
-              Name         Type     Info:
-         [in] cl_full_name str      The full name of collection
+         Name         Type     Info:
+         cl_full_name str      The full name of collection
       Return values:
          Success: SDB_OK   and   a collection object of query.
          Fail   : Other    and   None
@@ -534,8 +558,8 @@ class client(object):
       """Get the specified collection space.
 
       Parameters:
-              Name         Type     Info:
-         [in] cs_name      str      The name of collection space.
+         Name         Type     Info:
+         cs_name      str      The name of collection space.
       Return values:
          Success: SDB_OK   and   a collection space object of query.
          Fail   : Other    and   None
@@ -557,10 +581,10 @@ class client(object):
       """Create collection space with specified pagesize.
 
       Parameters:
-              Name         Type     Info:
-         [in] cs_name      str      The name of collection space to be created.
-         [in] page_size    int      The page size of collection space. See Info
-                                    as below.
+         Name         Type     Info:
+         cs_name      str      The name of collection space to be created.
+         page_size    int      The page size of collection space. See Info
+                                     as below.
       Return values:
          Success: SDB_OK   and   the collection space object created.
          Fail   : Other    and   None
@@ -593,8 +617,8 @@ class client(object):
       """Remove the specified collection space.
 
       Parameters:
-              Name         Type     Info:
-         [in] cs_name      str      The name of collection space to be dropped
+         Name         Type     Info:
+         cs_name      str      The name of collection space to be dropped
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -612,7 +636,7 @@ class client(object):
          collection space.
 
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK   and   a cursor object of collection space list.
@@ -632,7 +656,7 @@ class client(object):
       """List all collections in current database.
 
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK   and   a cursor object of collection list.
@@ -652,7 +676,7 @@ class client(object):
       """List all replica groups of current database.
 
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK   and   a cursor object of replication groups.
@@ -672,8 +696,8 @@ class client(object):
       """Get the specified replica group of specified group name.
 
       Parameters:
-              Name         Type     Info:
-         [in] group_name   str      The name of replica group.
+         Name         Type     Info:
+         group_name   str      The name of replica group.
       Return values:
          Success: SDB_OK   and   the replicagroup object of query.
          Fail   : Other    and   None
@@ -696,8 +720,8 @@ class client(object):
       """Get the specified replica group of specified group id.
 
       Parameters:
-              Name         Type     Info:
-         [in]   id         str      The id of replica group.
+         Name       Type     Info:
+         id         str      The id of replica group.
       Return values:
          Success: SDB_OK   and   the replicagroup object of query.
          Fail   : Other    and   None
@@ -719,8 +743,8 @@ class client(object):
       """Create the specified replica group.
 
       Parameters:
-              Name         Type     Info:
-         [in] group_name   str      The name of replica group to be created.
+         Name         Type     Info:
+         group_name   str      The name of replica group to be created.
       Return values:
          Success: SDB_OK   and   the replicagroup object created.
          Fail   : Other    and   None
@@ -743,8 +767,8 @@ class client(object):
       """Remove the specified replica group.
 
       Parameters:
-              Name         Type     Info:
-         [in] group_name   str      The name of replica group to be removed
+         Name         Type     Info:
+         group_name   str      The name of replica group to be removed
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -761,11 +785,11 @@ class client(object):
       """Create a catalog replica group.
 
       Parameters:
-              Name         Type     Info:
-         [in] host         str      The hostname for the catalog replica group.
-         [in] service      str      The servicename for the catalog replica group.
-         [in] path         str      The path for the catalog replica group.
-         [in] configure    dict     The configurations for the catalog replica group.
+         Name         Type     Info:
+         host         str      The hostname for the catalog replica group.
+         service      str      The servicename for the catalog replica group.
+         path         str      The path for the catalog replica group.
+         configure    dict     The configurations for the catalog replica group.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -789,8 +813,8 @@ class client(object):
       """Executing SQL command for updating.
 
       Parameters:
-              Name         Type     Info:
-         [in] sql          str      The SQL command.
+         Name         Type     Info:
+         sql          str      The SQL command.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -807,8 +831,8 @@ class client(object):
       """Executing SQL command.
 
       Parameters:
-              Name         Type     Info:
-         [in] sql          str      The SQL command.
+         Name         Type     Info:
+         sql          str      The SQL command.
       Return values:
          Success: SDB_OK   and   a cursor object of matching documents.
          Fail   : Other    and   None
@@ -830,7 +854,7 @@ class client(object):
       """Transaction begin.
 
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK
@@ -845,7 +869,7 @@ class client(object):
       """Transaction commit.
 
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK
@@ -860,7 +884,7 @@ class client(object):
       """Transaction rollback
 
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK
@@ -874,13 +898,13 @@ class client(object):
    def flush_configure(self, options):
       """Flush the options to configure file.
       Parameters:
-              Name      Type  Info:
-         [in] options   dict  The configure infomation, pass {"Global":true} or
-                        {"Global":false} In cluster environment, passing
-                        {"Global":true} will flush data's and catalog's 
-                        configuration file, while passing {"Global":false} will 
-                        flush coord's configuration file. In stand-alone
-                        environment, both them have the same behaviour.
+         Name      Type  Info:
+         options   dict  The configure infomation, pass {"Global":true} or
+                               {"Global":false} In cluster environment, passing
+                               {"Global":true} will flush data's and catalog's 
+                               configuration file, while passing {"Global":false} will 
+                               flush coord's configuration file. In stand-alone
+                               environment, both them have the same behaviour.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -895,8 +919,8 @@ class client(object):
       """Create a store procedures
 
       Parameters:
-              Name         Type     Info:
-         [in] code         str      The JS code of store procedures.
+         Name         Type     Info:
+         code         str      The JS code of store procedures.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -912,8 +936,8 @@ class client(object):
       """Remove a store procedures.
      
       Parameters:
-              Name         Type     Info:
-         [in] name         str      The name of store procedure.
+         Name         Type     Info:
+         name         str      The name of store procedure.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -929,8 +953,8 @@ class client(object):
       """List store procedures.
 
       Parameters:
-              Name         Type     Info:
-         [in] condition    dict     The condition of list.
+         Name         Type     Info:
+         condition    dict     The condition of list.
       Return values:
          Success: SDB_OK  and  an cursor object of result
          Fail   : Other   and  None
@@ -947,8 +971,8 @@ class client(object):
       """Eval a func.
       
       Parameters:
-              Name         Type     Info:
-         [in] name         str      The name of store procedure.
+         Name         Type     Info:
+         name         str      The name of store procedure.
       Return values:
          Success: SDB_OK   and  a cursor object of current eval.
          Fail   : Other    and  None
@@ -968,17 +992,17 @@ class client(object):
       """Backup the whole database or specifed replica group.
 
       Parameters:
-              Name      Type  Info:
-         [in] options   dict  Contains a series of backup configuration
-                              infomations. Backup the whole cluster if None. 
-                              The "options" contains 5 options as below. 
-                              All the elements in options are optional. 
-                              eg:
-                              { "GroupName":["rgName1", "rgName2"], 
-                                "Path":"/opt/sequoiadb/backup",
-                                "Name":"backupName", "Description":description,
-                                "EnsureInc":true, "OverWrite":true }
-                              See Info as below.
+         Name      Type  Info:
+         options   dict  Contains a series of backup configuration
+                               infomations. Backup the whole cluster if None. 
+                               The "options" contains 5 options as below. 
+                               All the elements in options are optional. 
+                               eg:
+                               { "GroupName":["rgName1", "rgName2"], 
+                                 "Path":"/opt/sequoiadb/backup",
+                                 "Name":"backupName", "Description":description,
+                                 "EnsureInc":true, "OverWrite":true }
+                               See Info as below.
       Return values:
          Success: SDB_OK
          Fail   : Other
@@ -988,9 +1012,9 @@ class client(object):
          Name        :  The name for the backup.
          Description :  The description for the backup.
          EnsureInc   :  Whether excute increment synchronization,
-                        default to be false.
+                              default to be false.
          OverWrite   :  Whether overwrite the old backup file,
-                        default to be false.
+                              default to be false.
       """
       bson_options = None
       if options is not None:
@@ -1007,30 +1031,30 @@ class client(object):
       """List the backups.
 
       Parameters:
-              Name      Type     Info:
-         [in] options   dict     Contains configuration infomations for remove
-                                 backups, list all the backups in the default
-                                 backup path if None. 
-                                 The "options" contains 3 options as below. 
-                                 All the elements in options are optional. 
-                                 eg:
-                                 { "GroupName":["rgame1", "rgName2"], 
-                                   "Path":"/opt/sequoiadb/backup",
-                                   "Name":"backupName" }
-                                 See Info as below.
-         [in] condition dict     The matching rule, return all the documents
-                                 if None.
-         [in] selector  dict     The selective rule, return the whole document
-                                 if None.
-         [in] order_by  dict     The ordered rule, never sort if None.
+         Name      Type     Info:
+         options   dict     Contains configuration infomations for remove
+                                  backups, list all the backups in the default
+                                  backup path if None. 
+                                  The "options" contains 3 options as below. 
+                                  All the elements in options are optional. 
+                                  eg:
+                                  { "GroupName":["rgame1", "rgName2"], 
+                                    "Path":"/opt/sequoiadb/backup",
+                                    "Name":"backupName" }
+                                  See Info as below.
+         condition dict     The matching rule, return all the documents
+                                  if None.
+         selector  dict     The selective rule, return the whole document
+                                  if None.
+         order_by  dict     The ordered rule, never sort if None.
       Return values:
          Success: SDB_OK  and  a cursor object of backup list
          Fail   : Others  and  None
       Info:
          GroupName   :  Assign the backups of specifed replica groups to be list.
          Path        :  Assign the backups in specifed path to be list,
-                        if not assign, use the backup path asigned in the
-                        configuration file.
+                              if not assign, use the backup path asigned in the
+                              configuration file.
          Name        :  Assign the backups with specifed name to be list.
       """
 
@@ -1061,27 +1085,27 @@ class client(object):
       """Remove the backups
 
       Parameters:
-              Name      Type  Info:
-         [in] options   dict  Contains configuration infomations for remove
-                              backups, remove all the backups in the default
-                              backup path if null. The "options" contains 3
-                              options as below. All the elements in options are
-                              optional.
-                              eg:
-                              { "GroupName":["rgName1", "rgName2"],
-                                "Path":"/opt/sequoiadb/backup",
-                                "Name":"backupName" }
-                              See Info as below.
+         Name      Type  Info:
+         options   dict  Contains configuration infomations for remove
+                               backups, remove all the backups in the default
+                               backup path if null. The "options" contains 3
+                               options as below. All the elements in options are
+                               optional.
+                               eg:
+                               { "GroupName":["rgName1", "rgName2"],
+                                 "Path":"/opt/sequoiadb/backup",
+                                 "Name":"backupName" }
+                               See Info as below.
       Return values:
          Success: SDB_OK  and  an cursor object of result
          Fail   : Other   and  None
 
       Info:
          GroupName   : Assign the backups of specifed replica groups to be
-                       remove.
+                             remove.
          Path        : Assign the backups in specifed path to be remove, if not
-                       assign, use the backup path asigned in the configuration
-                       file.
+                             assign, use the backup path asigned in the configuration
+                             file.
          Name        : Assign the backups with specifed name to be remove.
       """
       bson_condition = None
@@ -1097,19 +1121,19 @@ class client(object):
       """List the tasks.
 
       Parameters:
-              Name         Type     Info:
-         [in] condition    dict     The matching rule, return all the documents
-                                    if None.
-         [in] selector     dict     The selective rule, return the whole
-                                    document if None.
-         [in] order_by     dict     The ordered rule, never sort if None.
-                                    bson.SON may need if it is order-sensitive.
-                                    eg.
-                                    bson.SON([("name",-1), ("age":1)]) it will
-                                    be ordered descending by 'name' first, and
-                                    be ordered ascending by 'age'
-         [in] hint         dict     The hint, automatically match the optimal
-                                    hint if None.
+         Name         Type     Info:
+         condition    dict     The matching rule, return all the documents
+                                     if None.
+         selector     dict     The selective rule, return the whole
+                                     document if None.
+         order_by     dict     The ordered rule, never sort if None.
+                                     bson.SON may need if it is order-sensitive.
+                                     eg.
+                                     bson.SON([("name",-1), ("age":1)]) it will
+                                     be ordered descending by 'name' first, and
+                                     be ordered ascending by 'age'
+         hint         dict     The hint, automatically match the optimal
+                                     hint if None.
       Return values:
          Success: SDB_OK  and  a cursor object of task list
          Fail   : Others  and  None
@@ -1143,9 +1167,9 @@ class client(object):
       """Wait the tasks to finish.
 
       Parameters:
-              Name         Type     Info:
-         [in] task_ids     list     The list of task id.
-         [in] num          int      The number of task id.
+         Name         Type     Info:
+         task_ids     list     The list of task id.
+         num          int      The number of task id.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -1164,10 +1188,10 @@ class client(object):
       """Cancel the specified task.
 
       Parameters:
-              Name         Type     Info:
-         [in] task_id      long     The task id to be canceled.
-         [in] is_async     int      The operation "cancel task" is async or not,
-                                    "true" for async, "false" for sync.
+         Name         Type     Info:
+         task_id      long     The task id to be canceled.
+         is_async     int      The operation "cancel task" is async or not,
+                                     "true" for async, "false" for sync.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -1191,8 +1215,8 @@ class client(object):
       """Set the attributes of the session.
 
       Parameters:
-              Name         Type     Info:
-         [in] options      dict     The configuration options for session.
+         Name         Type     Info:
+         options      dict     The configuration options for session.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -1211,7 +1235,7 @@ class client(object):
          get data again.
 
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK
@@ -1226,7 +1250,7 @@ class client(object):
       """Judge whether the connection is valid.
 
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: True, if the result is valid 

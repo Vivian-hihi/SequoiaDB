@@ -31,12 +31,12 @@
              >>> a
              >>> {'major': 'computer science', 'avg_age': 24}
              ...
-             the elements order print is not we make it!!
+             the elements order it is not we make it!!
              therefore, we use bson.SON to make the order-sensitive dict if the
              order is important such as operations in "$sort", "$group",
              "split_by_condition", "aggregate","create_collection"...
-             In every scene which the order is important when make dict, please
-             make it using bson.SON and list. It is a subclass of built-in dict
+             In every scene which the order is important, please make it using
+             bson.SON and list. It is a subclass of built-in dict
              and order-sensitive
 """
 

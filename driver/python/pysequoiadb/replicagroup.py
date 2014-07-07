@@ -32,6 +32,30 @@ from pysequoiadb.error import SequoiaDBError
 class replicagroup(object):
    """Replica group of SequoiaDB
 
+   All operation need deal with the error code returned first, if it has. 
+   Every error code is not SDB_OK(or 0), it means something error has appeared,
+   and user should deal with it according the meaning of error code printed.
+
+   @author : SequoiaDB Ltd.
+   @license: See Apache License, Version 2.0
+   @see    : http://www.sequoiadb.com
+   @version: 1.8
+
+   @notice : The dict of built-in Python is hashed and non-ordered. so the
+             element in dict may not the order we make it. we make a dict and
+             print it like this:
+             ...
+             >>> a = {"avg_age":24, "major":"computer science"}
+             >>> a
+             >>> {'major': 'computer science', 'avg_age': 24}
+             ...
+             the elements order it is not we make it!!
+             therefore, we use bson.SON to make the order-sensitive dict if the
+             order is important such as operations in "$sort", "$group",
+             "split_by_condition", "aggregate","create_collection"...
+             In every scene which the order is important, please make it using
+             bson.SON and list. It is a subclass of built-in dict
+             and order-sensitive
    """
    def __init__(self, client):
 
@@ -53,17 +77,17 @@ class replicagroup(object):
       """Get the count of node with given status in current replica group.
       
       Parameters:
-              Name         Type     Info:
-         [in] nodestatus   int      The specified status, see Info as below.
+         Name         Type     Info:
+         nodestatus   int      The specified status, see Info as below.
       Return values:
          Success: SDB_OK  and  the count of node
          Fail   : Others  and  None
       Info:
          flags : 0 or 1. 
-            0 : count of all node
-            1 : count of actived node
-            2 : count of inactived node
-            3 : count of unknown node
+             0 : count of all node
+             1 : count of actived node
+             2 : count of inactived node
+             3 : count of unknown node
       """
       if not isinstance(nodestatus, int):
          raise TypeError("nodestatus be an instance of int")
@@ -83,7 +107,7 @@ class replicagroup(object):
       """Get the detail of the replica group.
       
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK  and  a dict object of query
@@ -102,7 +126,7 @@ class replicagroup(object):
       """Get the master node of the current replica group.
       
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK  and  a replicanode object of query
@@ -123,7 +147,7 @@ class replicagroup(object):
          then get master.
       
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK  and  a replicanode object of query
@@ -143,9 +167,9 @@ class replicagroup(object):
       """Get specified node from current replica group.
       
       Parameters:
-              Name         Type     Info:
-         [in] hostname     str      The host name of the node.
-         [in] servicename  str      The service name of the node.
+         Name         Type     Info:
+         hostname     str      The host name of the node.
+         servicename  str      The service name of the node.
       Return values:
          Success: SDB_OK  and  a replicanode object of query
          Fail   : Others  and  None
@@ -170,8 +194,8 @@ class replicagroup(object):
       """Get specified node from current replica group.
       
       Parameters:
-              Name         Type     Info:
-         [in] nodename     str      The host name of the node.
+         Name         Type     Info:
+         nodename     str      The host name of the node.
       Return values:
          Success: SDB_OK  and  a replicanode object of query
          Fail   : Others  and  None
@@ -193,11 +217,11 @@ class replicagroup(object):
       """Create node in a given replica group.
 
       Parameters:
-              Name         Type     Info:
-         [in] hostname     str      The host name for the node.
-         [in] servicename  str      The servicename for the node.
-         [in] dbpath       str      The database path for the node.
-         [in] config       dict     The configurations for the node.
+         Name         Type     Info:
+         hostname     str      The host name for the node.
+         servicename  str      The servicename for the node.
+         dbpath       str      The database path for the node.
+         config       dict     The configurations for the node.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -225,10 +249,10 @@ class replicagroup(object):
       """Remove node in a given replica group.
       
       Parameters:
-              Name         Type     Info:
-         [in] hostname     str      The host name for the node.
-         [in] servicename  str      The servicename for the node.
-         [in] config       dict     The configurations for the node.
+         Name         Type     Info:
+         hostname     str      The host name for the node.
+         servicename  str      The servicename for the node.
+         config       dict     The configurations for the node.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -252,7 +276,7 @@ class replicagroup(object):
       """Start up current replica group.
       
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK
@@ -266,7 +290,7 @@ class replicagroup(object):
       """Stop current replica group.
       
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK
@@ -280,7 +304,7 @@ class replicagroup(object):
       """Test whether current replica group is catalog replica group.
       
       Parameters:
-              Name         Type     Info:
+         Name         Type     Info:
          N/A
       Return values:
          Success: SDB_OK  and  True, if The replica group is catalog, or False

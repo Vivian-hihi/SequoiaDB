@@ -34,7 +34,33 @@ from pysequoiadb.common import const
 from pysequoiadb.error import SequoiaDBError
 
 class collectionspace(object):
-   """CollectionSpace for SequoiaDB"""
+   """CollectionSpace for SequoiaDB
+   
+   All operation need deal with the error code returned first, if it has. 
+   Every error code is not SDB_OK(or 0), it means something error has appeared,
+   and user should deal with it according the meaning of error code printed.
+
+   @author : SequoiaDB Ltd
+   @license: See Apache License, Version 2.0
+   @see    : http://www.sequoiadb.com
+   @version: 1.8
+
+   @notice : The dict of built-in Python is hashed and non-ordered. so the
+             element in dict may not the order we make it. we make a dict and
+             print it like this:
+             ...
+             >>> a = {"avg_age":24, "major":"computer science"}
+             >>> a
+             >>> {'major': 'computer science', 'avg_age': 24}
+             ...
+             the elements order it is not we make it!!
+             therefore, we use bson.SON to make the order-sensitive dict if the
+             order is important such as operations in "$sort", "$group",
+             "split_by_condition", "aggregate","create_collection"...
+             In every scene which the order is important, please make it using
+             bson.SON and list. It is a subclass of built-in dict
+             and order-sensitive
+   """
    
    def __init__(self):
       """invoked when a new object is producted.
@@ -99,8 +125,8 @@ class collectionspace(object):
       """Get the named collection.
          
       Parameters:
-              Name         Type     Info:
-         [in] cl_name      str      The full name of the collection..
+         Name         Type     Info:
+         cl_name      str      The full name of the collection..
       Return values:
          Success: SDB_OK  and  a collection object of query
          Fail   : Others  and  None
@@ -122,11 +148,11 @@ class collectionspace(object):
       """create a collection using name and options.
 
       Parameters:
-              Name      Type     Info:
-         [in] cl_name   str      The collection name.
-         [in] options   str      The options for creating collection, including
-                                 "ShardingKey", "ReplSize", "IsMainCL" and
-                                 "Compressed" informations, no options, if None.
+         Name      Type     Info:
+         cl_name   str      The collection name.
+         options   str      The options for creating collection, including
+                                  "ShardingKey", "ReplSize", "IsMainCL" and
+                                  "Compressed" informations, no options, if None.
       Return values:
          Success: SDB_OK  and  a collection object created
          Fail   : Others  and  None
@@ -157,8 +183,8 @@ class collectionspace(object):
       """Drop the specified collection in current collection space.
 
       Parameters:
-              Name      Type     Info:
-         [in] cl_name   str      The collection name.
+         Name      Type     Info:
+         cl_name   str      The collection name.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -175,7 +201,7 @@ class collectionspace(object):
       """Get the current collection space name.
 
       Parameters:
-              Name      Type     Info:
+         Name      Type     Info:
          N/A
       Return values:
          The name of current collection space.

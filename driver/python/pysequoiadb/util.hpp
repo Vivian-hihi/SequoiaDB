@@ -76,8 +76,8 @@
    ( PyObject * )Py_BuildValue( "(i,i,i,s)", version, sub_version, release, build )
 /*
  *@brief    macro to cast python object to specified class object
- *@py_object [in] object need to cast
- *@classname [in] the class of the instance
+ *@py_object object need to cast
+ *@classname the class of the instance
  *@instance  [out] the pointer pointing to real object
  **/
 #define CAST_PYOBJECT_TO_COBJECT( py_object, classname, instance )   \
@@ -101,7 +101,7 @@
 /*
  *@brief    macro to new a c++ bson object, with initialize python bson object.
  *          it will new a  c++ object, and must be remember to delete.
- *@py_object [in] object need to cast
+ *@py_object object need to cast
  *@instance  [out] the pointer pointing to real object
  **/
 #define CAST_PYBSON_TO_CPPBSON( py_object, bson_object )       \

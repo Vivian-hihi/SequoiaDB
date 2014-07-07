@@ -13,6 +13,31 @@
 #   limitations under the License.
 
 """Module of collection for python driver of SequoiaDB
+
+All operation need deal with the error code returned first, if it has. 
+   Every error code is not SDB_OK(or 0), it means something error has appeared,
+   and user should deal with it according the meaning of error code printed.
+
+   @author : SequoiaDB Ltd
+   @license: See Apache License, Version 2.0
+   @see    : http://www.sequoiadb.com
+   @version: 1.8
+
+   @notice : The dict of built-in Python is hashed and non-ordered. so the
+             element in dict may not the order we make it. we make a dict and
+             print it like this:
+             ...
+             >>> a = {"avg_age":24, "major":"computer science"}
+             >>> a
+             >>> {'major': 'computer science', 'avg_age': 24}
+             ...
+             the elements order it is not we make it!!
+             therefore, we use bson.SON to make the order-sensitive dict if the
+             order is important such as operations in "$sort", "$group",
+             "split_by_condition", "aggregate","create_collection"...
+             In every scene which the order is important, please make it using
+             bson.SON and list. It is a subclass of built-in dict
+             and order-sensitive
 """
 
 try:
@@ -64,9 +89,9 @@ class collection(object):
       """Get the count of matching documents in current collection.
 
       Parameters:
-              Name         Type     Info:
-         [in] condition    dict     The matching rule, return the count of all
-                                    documents if None.
+         Name         Type     Info:
+         condition    dict     The matching rule, return the count of all
+                                     documents if None.
       Return values:
          Success: SDB_OK   and   count of result
          Fail   : Others   and   0
@@ -90,24 +115,24 @@ class collection(object):
          replica group by range.
 
       Parameters:
-              Name                  Type     Info:
-         [in] source_group_name     str      The source replica group name.
-         [in] target_group_name     str      The target replica group name.
-         [in] split_condition       dict     The matching rule, return the count
-                                             of all documents if None.
-         [in] split_end_condition   dict     The split end condition or None.
-                                             eg:
-                                             If we create a collection with the 
-                                             option { ShardingKey:{"age":1},
-                                             ShardingType:"Hash",Partition:2^10 },
-                                             we can fill {age:30} as the
-                                             splitCondition, and fill {age:60} 
-                                             as the splitEndCondition. when
-                                             split, the target replica group
-                                             will get the records whose age's
-                                             hash value are in [30,60).
-                                             If splitEndCondition is null, they
-                                             are in [30,max).
+         Name                  Type     Info:
+         source_group_name     str      The source replica group name.
+         target_group_name     str      The target replica group name.
+         split_condition       dict     The matching rule, return the count
+                                              of all documents if None.
+         split_end_condition   dict     The split end condition or None.
+                                              eg:
+                                              If we create a collection with the 
+                                              option { ShardingKey:{"age":1},
+                                              ShardingType:"Hash",Partition:2^10 },
+                                              we can fill {age:30} as the
+                                              splitCondition, and fill {age:60} 
+                                              as the splitEndCondition. when
+                                              split, the target replica group
+                                              will get the records whose age's
+                                              hash value are in [30,60).
+                                              If splitEndCondition is null, they
+                                              are in [30,max).
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -138,10 +163,10 @@ class collection(object):
          replica group by percent.
       
       Parameters:
-              Name               Type     Info:
-         [in] source_group_name  str      The source replica group name.
-         [in] target_group_name  str      The target replica group name.
-         [in] percent	         float    The split percent, Range:(0,100]
+         Name               Type     Info:
+         source_group_name  str      The source replica group name.
+         target_group_name  str      The target replica group name.
+         percent	          float    The split percent, Range:(0,100]
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -165,23 +190,23 @@ class collection(object):
          replica group by range.
       
       Parameters:
-              Name                  Type  Info:
-         [in] source_group_name     str   The source replica group name.
-         [in] target_group_name     str   The target replica group name.
-         [in] split_condition       dict  The matching rule, return the count of
-                                          all documents if None.
-         [in] split_end_condition   dict  The split end condition or None.
-                                          eg:
-                                          If we create a collection with the 
-                                          option { ShardingKey:{"age":1},
-                                          ShardingType:"Hash",Partition:2^10 },
-                                          we can fill {age:30} as the
-                                          splitCondition, and fill {age:60} 
-                                          as the splitEndCondition. when split,
-                                          the target replica group will get the
-                                          records whose age's hash value are in
-                                          [30,60). If splitEndCondition is null,
-                                          they are in [30,max).
+         Name                  Type  Info:
+         source_group_name     str   The source replica group name.
+         target_group_name     str   The target replica group name.
+         split_condition       dict  The matching rule, return the count of
+                                           all documents if None.
+         split_end_condition   dict  The split end condition or None.
+                                           eg:
+                                           If we create a collection with the 
+                                           option { ShardingKey:{"age":1},
+                                           ShardingType:"Hash",Partition:2^10 },
+                                           we can fill {age:30} as the
+                                           splitCondition, and fill {age:60} 
+                                           as the splitEndCondition. when split,
+                                           the target replica group will get the
+                                           records whose age's hash value are in
+                                           [30,60). If splitEndCondition is null,
+                                           they are in [30,max).
       Return values:
          Success: SDB_OK  and  the task id
          Fail   : Others  and  0
@@ -217,10 +242,10 @@ class collection(object):
          replica group by percent.
       
       Parameters:
-              Name               Type     Info:
-         [in] source_group_name  str      The source replica group name.
-         [in] target_group_name  str      The target replica group name.
-         [in] percent	         float    The split percent, Range:(0,100]
+         Name               Type     Info:
+         source_group_name  str      The source replica group name.
+         target_group_name  str      The target replica group name.
+         percent	          float    The split percent, Range:(0,100]
       Return values:
          Success: SDB_OK  and  the task id
          Fail   : Others  and  0
@@ -245,9 +270,9 @@ class collection(object):
       """Insert a bulk of record into current collection.
       
       Parameters:
-              Name      Type     Info:
-         [in] flags     int      0 or 1, see Info as below.
-         [in] records   list     The list of inserted records.
+         Name      Type     Info:
+         flags     int      0 or 1, see Info as below.
+         records   list     The list of inserted records.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -275,11 +300,11 @@ class collection(object):
       """Insert a record into current collection.
 
       Parameters:
-              Name      Type           Info:
-         [in] records   dict           The inserted record.
+         Name      Type    Info:
+         records   dict    The inserted record.
       Return values:
-         Success: SDB_OK
-         Fail   : Others
+         Success: SDB_OK  and  ObjectId of record inserted
+         Fail   : Others  and  None
       """
       if not isinstance(record, dict):
          raise TypeError("record must be an instance of dict")
@@ -288,27 +313,28 @@ class collection(object):
       rc, id_str = sdbcl.insert(self._cl, bson_record)
       pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:
-         id_str = None
-
-      oid = bson.ObjectId(id_str)
+         oid = bson.ObjectId(id_str)
+         
+      oid = None
+      
       return rc, oid
 
    def update(self, rule, condition = static_object, hint = static_object):
       """Update the matching documents in current collection.
 
       Parameters:
-              Name      Type  Info:
-         [in] rule      dict  The updating rule.
-         [in] condition dict  The matching rule, update all the documents
-                              if not provided.
-         [in] hint      dict  The hint, automatically match the optimal hint
-                              if not provided
+         Name      Type  Info:
+         rule      dict  The updating rule.
+         condition dict  The matching rule, update all the documents
+                               if not provided.
+         hint      dict  The hint, automatically match the optimal hint
+                               if not provided
       Return values:
          Success: SDB_OK
          Fail   : Others
       Note:
          It won't work to update the "ShardingKey" field, but the other fields
-         take effect.
+               take effect.
       """
       bson_rule = bson.BSON.encode(rule)
       bson_condition = None
@@ -329,18 +355,18 @@ class collection(object):
          no matching.
 
       Parameters:
-              Name      Type  Info:
-         [in] rule      dict  The updating rule.
-         [in] condition dict  The matching rule, update all the documents
-                              if not provided.
-         [in] hint      dict  The hint, automatically match the optimal hint
-                              if not provided
+         Name      Type  Info:
+         rule      dict  The updating rule.
+         condition dict  The matching rule, update all the documents
+                               if not provided.
+         hint      dict  The hint, automatically match the optimal hint
+                               if not provided
       Return values:
          Success: SDB_OK
          Fail   : Others
       Note:
          It won't work to update the "ShardingKey" field, but the other fields
-         take effect.
+               take effect.
       """
       bson_rule = bson.BSON.encode(rule)
       bson_condition = None
@@ -360,11 +386,11 @@ class collection(object):
       """Delete the matching documents in current collection.
 
       Parameters:
-              Name      Type  Info:
-         [in] condition dict  The matching rule, delete all the documents
-                              if not provided.
-         [in] hint      dict  The hint, automatically match the optimal hint
-                              if not provided
+         Name      Type  Info:
+         condition dict  The matching rule, delete all the documents
+                               if not provided.
+         hint      dict  The hint, automatically match the optimal hint
+                               if not provided
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -388,19 +414,19 @@ class collection(object):
       """Get the matching documents in current collection.
 
       Parameters:
-              Name            Type  Info:
-         [in] condition       dict     The matching rule, update all the
-                                       documents if not provided.
-         [in] selected        dict     The selective rule, return the whole
-                                       document if not provided.
-         [in] order_by        dict     The ordered rule, result set is unordered
-                                       if not provided.
-         [in] hint            dict     The hint, automatically match the optimal
-                                       hint if not provided.
-         [in] num_to_skip     long     Skip the first numToSkip documents,
-                                       default is 0L.
-         [in] num_to_return   long     Only return numToReturn documents,
-                                       default is -1L for returning all results.
+         Name            Type     Info:
+         condition       dict     The matching rule, update all the
+                                        documents if not provided.
+         selected        dict     The selective rule, return the whole
+                                        document if not provided.
+         order_by        dict     The ordered rule, result set is unordered
+                                        if not provided.
+         hint            dict     The hint, automatically match the optimal
+                                        hint if not provided.
+         num_to_skip     long     Skip the first numToSkip documents,
+                                        default is 0L.
+         num_to_return   long     Only return numToReturn documents,
+                                        default is -1L for returning all results.
       Return values:
          Success: SDB_OK   and   a cursor object of query
          Fail   : Others   and   None
@@ -434,17 +460,16 @@ class collection(object):
 
    def create_index(self, index_def, idx_name, is_unique, is_enforced):
       """Create the index in current collection.
-         more info: http://www.sequoiadb.com/document/1.8/index.html
 
       Parameters:
-              Name         Type  Info:
-         [in] index_def    dict  The dict object of index element.
-                                 e.g. {name:1, age:-1}
-         [in] idx_name     str   The index name.
-         [in] is_unique    bool  Whether the index elements are unique or not.
-         [in] is_enforced  bool  Whether the index is enforced unique This
-                                 element is meaningful when isUnique is set to
-                                 true.
+         Name         Type  Info:
+         index_def    dict  The dict object of index element.
+                                  e.g. {name:1, age:-1}
+         idx_name     str   The index name.
+         is_unique    bool  Whether the index elements are unique or not.
+         is_enforced  bool  Whether the index is enforced unique This
+                                  element is meaningful when isUnique is set to
+                                  true.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -476,9 +501,9 @@ class collection(object):
       """Get all of or one of the indexes in current collection.
 
       Parameters:
-              Name         Type  Info:
-         [in] idx_name     str   The index name, returns all of the indexes
-                                 if this parameter is ""(empty str).
+         Name         Type  Info:
+         idx_name     str   The index name, returns all of the indexes
+                                  if this parameter is ""(empty str).
       Return values:
          Success: SDB_OK  and  a cursor object of result
          Fail   : Others  and  None
@@ -500,8 +525,8 @@ class collection(object):
       """The index name.
 
       Parameters:
-              Name         Type  Info:
-         [in] idx_name     str   The index name.
+         Name         Type  Info:
+         idx_name     str   The index name.
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -518,7 +543,7 @@ class collection(object):
       """Get the name of specified collection in current collection space.
 
       Parameters:
-              Name         Type  Info:
+         Name         Type  Info:
          N/A
       Return values:
          The name of specified collection
@@ -532,7 +557,7 @@ class collection(object):
       """Get the name of current collection space.
 
       Parameters:
-              Name         Type  Info:
+         Name         Type  Info:
          N/A
       Return values:
          The name of current collection space
@@ -545,15 +570,8 @@ class collection(object):
    def get_full_name(self):
       """Get the full name of specified collection in current collection space.
 
-         +--------+--------+------------+
-         |   db   |   cs   |     cl     |
-         +--------+--------+------------+
-         | localdb. sports . basketball |
-         +--------+--------+------------+
-         |        |        |            |
-         +--------+--------+------------+
       Parameters:
-              Name         Type  Info:
+         Name         Type  Info:
          N/A
       Return values:
          The full name of current collection
@@ -567,14 +585,14 @@ class collection(object):
       """Execute aggregate operation in specified collection.
 
       Parameters:
-              Name               Type  Info:
-         [in] aggregate_options  list  The array of dict objects.
-                                       bson.SON may need if the element is
-                                       order-sensitive.
-                                       eg.
-                                       {'$sort':bson.SON([("name",-1), ("age":1)])}
-                                       it will be ordered descending by 'name'
-                                       first, and be ordered ascending by 'age'
+         Name               Type  Info:
+         aggregate_options  list  The array of dict objects.
+                                        bson.SON may need if the element is
+                                        order-sensitive.
+                                        eg.
+                                        {'$sort':bson.SON([("name",-1), ("age":1)])}
+                                        it will be ordered descending by 'name'
+                                        first, and be ordered ascending by 'age'
       Return values:
          Success: SDB_OK  and  a cursor object of result
          Fail   : Others  and  None
@@ -602,21 +620,21 @@ class collection(object):
       """Get the index blocks' or data blocks' infomations for concurrent query.
 
       Parameters:
-              Name            Type     Info:
-         [in] condition       dict     The matching rule, return the whole range
-                                       of index blocks if not provided.
-                                       eg:{"age":{"$gt":25},"age":{"$lt":75}}.
-         [in] order_by        dict     The ordered rule, result set is unordered
-                                       if not provided.bson.SON may need if it is
-                                       order-sensitive.
-         [in] hint            dict     One of the indexs in current collection,
-                                       using default index to query if not
-                                       provided.
-                                       eg:{"":"ageIndex"}.
-         [in] num_to_skip     long     Skip the first num_to_skip documents,
-                                       default is 0L.
-         [in] num_to_return   long     Only return num_to_return documents,
-                                       default is -1L for returning all results.
+         Name            Type     Info:
+         condition       dict     The matching rule, return the whole range
+                                        of index blocks if not provided.
+                                        eg:{"age":{"$gt":25},"age":{"$lt":75}}.
+         order_by        dict     The ordered rule, result set is unordered
+                                        if not provided.bson.SON may need if it is
+                                        order-sensitive.
+         hint            dict     One of the indexs in current collection,
+                                        using default index to query if not
+                                        provided.
+                                        eg:{"":"ageIndex"}.
+         num_to_skip     long     Skip the first num_to_skip documents,
+                                        default is 0L.
+         num_to_return   long     Only return num_to_return documents,
+                                        default is -1L for returning all results.
       Return values:
          Success: SDB_OK   and   a cursor object of query
          Fail   : Others   and   None
@@ -652,10 +670,10 @@ class collection(object):
       """Attach the specified collection.
 
       Parameters:
-              Name            Type  Info:
-         [in] subcl_full_name str   The name fo the subcollection.
-         [in] options         dict  he low boudary and up boudary
-                                    eg: {"LowBound":{a:1},"UpBound":{a:100}}
+         Name            Type  Info:
+         subcl_full_name str   The name fo the subcollection.
+         options         dict  he low boudary and up boudary
+                                     eg: {"LowBound":{a:1},"UpBound":{a:100}}
       Return values:
          Success: SDB_OK
          Fail   : Others
@@ -676,8 +694,8 @@ class collection(object):
       """Dettach the specified collection.
 
       Parameters:
-              Name            Type  Info:
-         [in] subcl_full_name str   The name fo the subcollection.
+         Name            Type  Info:
+         subcl_full_name str   The name fo the subcollection.
       Return values:
          Success: SDB_OK
          Fail   : Others
