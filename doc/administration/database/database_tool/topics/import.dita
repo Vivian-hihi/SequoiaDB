@@ -7,8 +7,8 @@
       <title>sdbimprt</title>
       <p>sdbimprt是一个SequoiaDB数据库导入工具，它可以实现从JSON格式或CSV格式的数据存储文件导入到SequoiaDB数据库。</p>
       <p>JSON格式的记录必须符合Json的定义，以左右花括号作为记录的分界符，并且字符串类型的数据必须包含在两个双引号之间，转义字符定义为反斜杠。</p>
-      <p>CSV为Comma-Separated Value格式，为逗号分割数值。默认情况下每条记录以0x0D分割，字段之间以逗号分割。用户能够指定字段之间的分隔符与记录之间的分隔符。
-      分隔符定义（只支持ASCII字符）：</p>
+      <p>CSV为Comma-Separated Value格式，为逗号分割数值。默认情况下每条记录以0x0D分割，字段之间以逗号分割。用户能够指定字段之间的分隔符与记录之间的分隔符。</p>
+      <p>分隔符定义（只支持ASCII字符）：</p>
       <p>
         <simpletable>
           <sthead>
@@ -144,7 +144,7 @@
         </strow>
       </simpletable>
     </section>
-    <note>Linepriority参数需要被特别关注，如果设置不当，可能会导入数据失败。<fig></fig>当记录中包含“记录分隔符”并且linepriority为true时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当选择linepriority为false模式。
+    <note>Linepriority参数需要被特别关注，如果设置不当，可能会导入数据失败。当记录中包含“记录分隔符”并且linepriority为true时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当选择linepriority为false模式。
     </note>
     <section>
       <title>用法</title>
@@ -250,7 +250,7 @@
     <p>语法：field [type] [default &lt;default value ]</p>
     <p>支援数据类型（type）： int(integer)， long， bool(boolean)， double， string， null</p>
     <p>支援特殊数据类型：timestamp， date</p>
-    <p>例子：name string default "Jack", age int default 18, phone string</p>   
+    <p>例子：<codeblock>name string default "Jack", age int default 18, phone string</codeblock> </p>  
     <section>
       <title>指定的类型与数据：</title>
       <simpletable>
