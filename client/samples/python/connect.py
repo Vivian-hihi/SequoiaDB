@@ -47,39 +47,37 @@ if "__main__" == __name__:
       del db
       exit()
 
-
-   hosts = [
-            {'host':'192.168.20.48', 'port':11810},
-            {'host':'192.168.20.111', 'port':50000},
-            {'host':'localhost', 'port':11810}
-           ]
-   rc, idx = db.connect_to_hosts(hosts)
-   if const.SDB_OK != rc:
-      pysequoiadb.cout("failed to connect all hosts")
-
-   pysequoiadb.cout("success to connect to %s" % hosts[idx])
    # if no error occurs, succeed to connect db server at localhost
    #
    # do something
    #
-   # try to connect other db server
    host = "192.168.30.63"
    service = '80000'
    rc = db.connect_by_host(host, 11810, 'admin', '*****')
    if const.SDB_OK != rc:
       pysequoiadb.cout("connect to server [%s] failed, %s"\
                                % (host, pysequoiadb.getErr(rc)))
+
+   # try to connect another db server by service
+   rc = db.connect_by_service(host, service)
+   if const.SDB_OK != rc:
+      pysequoiadb.cout("connect to server [%s] failed, %s"\
+                                 % (host, pysequoiadb.getErr(rc)))
    #
    # do something
    #
    # close connection to db server
    db.disconnect()
 
-   # try to connect another db server
-   rc = db.connect_by_service(host, service)
+   # try to connect other db server
+   hosts = [ {'host':'192.168.20.48', 'port':11810},
+             {'host':'192.168.20.111', 'port':50000},
+             {'host':'localhost', 'port':11810} ]
+   rc, idx = db.connect_to_hosts(hosts)
    if const.SDB_OK != rc:
-      pysequoiadb.cout("connect to server [%s] failed, %s"\
-                                 % (host, pysequoiadb.getErr(rc)))
+      pysequoiadb.cout("failed to connect all hosts")
+
+   pysequoiadb.cout("success to connect to %s" % hosts[idx])
    #
    # do something
    #
@@ -99,6 +97,10 @@ if "__main__" == __name__:
    if const.SDB_OK != rc:
       pysequoiadb.cout("failed to remove user:%s, %s"\
                               % (user, pysequoiadb.getErr(rc)))
+
+   # close connection to db server
+   db.disconnect()
+
    # Need to release clinet
    del db
    
