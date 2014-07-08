@@ -529,7 +529,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          }
          bin_type = bson_iterator_bin_type( &i ) ;
          bin_data = (CHAR *)bson_iterator_bin_data( &i ) ;
-         bin_size = bson_iterator_bin_len ( &i ) - 1 ;
+         bin_size = bson_iterator_bin_len ( &i ) ;
          /* first we need to calculate how much space we need to put the new
           * data */
          len = getEnBase64Size ( bin_size ) ;
