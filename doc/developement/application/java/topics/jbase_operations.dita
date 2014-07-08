@@ -3,8 +3,7 @@
 <topic id="application_java_driver">
   <title>Java 开发基础</title>
   <body>
-    <p>这里介绍如何使用Java驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录<i>/client/samples/java</i>下获取相应的完整的代码。 <xref href="..\..\..\..\java\html\index.html"
-        format="html">更多查看Java API</xref></p>
+    <p>这里介绍如何使用Java驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录<i>/client/samples/java</i>下获取相应的完整的代码。 <xref href="..\..\..\..\java\html\index.html" format="html">更多查看Java API</xref></p>
     <section>
       <title>数据操作</title>
       <ul>
