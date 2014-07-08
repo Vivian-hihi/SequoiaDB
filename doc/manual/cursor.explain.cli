@@ -103,7 +103,7 @@ Return:
 .br
   "Node": "vmsvr2-cent-x64:40020",
 .br
-  "ReturnNum": 0,
+  "ReturnNum": 38,
 .br
   "ElapsedTime": 0.000477,
 .br
@@ -129,7 +129,7 @@ Return:
 .br
   "Node": "vmsvr2-cent-x64:40000",
 .br
-  "ReturnNum": 0,
+  "ReturnNum": 34,
 .br
   " ElapsedTime ": 0.000415,
 .br
@@ -155,7 +155,7 @@ Return:
 .br
   "Node": "vmsvr2-cent-x64:40010",
 .br
-  "ReturnNum": 0,
+  "ReturnNum": 28,
 .br
   " ElapsedTime ": 0.000517,
 .br
