@@ -2122,5 +2122,14 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_COORD_NOT_ALL_DONE</name>
+         <description>
+            <en>not all nodes returned ok</en>
+            <cn>不是所有节点都返回成功</cn>
+         </description>
+      </code>
+
+
    </codelist>
 </rclist>
