@@ -1,4 +1,5 @@
 //Auto generated index for searching.
+w["sysprocedures系统存储过程集合空间，包含一个集合，用于存储所有的存储过程函数信息"]="10*1";
 w["systasks"]="10*2";
 w["systasks插入任务记录"]="23*1";
 w["systasks集合"]="23*1,29*51,31*1";

@@ -260,7 +260,7 @@
           <stentry>注意</stentry>
         </sthead>
         <strow>
-          <stentry>int(interger)</stentry>
+          <stentry>int(integer)</stentry>
           <stentry>int，string，bool</stentry>
           <stentry>bool类型，true转换1，false转换0
           </stentry>
