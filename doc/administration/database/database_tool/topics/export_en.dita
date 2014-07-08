@@ -21,7 +21,7 @@
         </strow>
         <strow>
           <stentry>--version</stentry>
-          <stentry>Returns version information.</stentry>
+          <stentry>returns version information.</stentry>
         </strow>
         <strow>
           <stentry>--hostname,-s</stentry>
@@ -90,7 +90,7 @@
         11810, and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and export type
         is csv,export file name is<i> contact</i>,export field are <i>field1</i> and
         <i>field2</i>.</p>
-      <codeblock>sdbexprt -h localhost -s 11810 --type csv --file contace --fields field1,field2 --c foo -l bar</codeblock>
+      <codeblock>sdbexprt -s localhost -p 11810 --type csv --file contace --fields field1,field2 --c foo -l bar</codeblock>
     </section>
   </body>
 </topic>

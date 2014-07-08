@@ -46,20 +46,23 @@
           <stentry>Description</stentry>
         </sthead>
         <strow>
-          <stentry>--help</stentry>
+          <stentry>--help,-h</stentry>
           <stentry>return the basic help and usage information.</stentry>
         </strow>
         <strow>
-          <stentry>--hostname,-h                </stentry>
+          <stentry>--version</stentry>
+          <stentry>returns version information.</stentry>
+        </strow>
+        <strow>
+          <stentry>--hostname,-s                </stentry>
           <stentry>import data from SequoiaDB of the specified hostname.In default,the
-              <b>sdbexprt</b> try to connect to local hostname.</stentry>
+            <b>sdbimprt</b> try to connect to local hostname.</stentry>
         </strow>
         <strow>
           <stentry>
-            --svcname,-s
+            --svcname,-p
           </stentry>
-          <stentry>specify port.In default,the <b>sdbimprt</b> try to connect to the host which port
-            number is 11810.</stentry>
+          <stentry>specify port.In default,the <b>sdbimprt</b> try to connect to the host which port number is 11810.</stentry>
         </strow>
         <strow>
           <stentry>--user,-u
@@ -100,6 +103,11 @@
           <stentry>specify the collection name of exported data.</stentry>
         </strow>
         <strow>
+          <stentry>--insertnum,-n
+          </stentry>
+          <stentry>Batch import records, if you set one, use common way to import, if more than one, use batch mode ,the setting range is 1-100000. </stentry>
+        </strow>
+        <strow>
           <stentry>
             --file
           </stentry>
@@ -110,7 +118,7 @@
             --type
           </stentry>
           <stentry>specify the format of import data.It can be CSV or JSON.</stentry>
-        </strow>
+        </strow>        
         <strow>
           <stentry>
             --fields
@@ -142,12 +150,16 @@
             then the priority of the separator: character deliiter, record delimiter, field delimiter.</stentry>
         </strow>
         <strow>
-          <stentry>--stringtype
+          <stentry>--force
           </stentry>
-          <stentry>All values are forced to import into a string type, default false,csv format is valid.</stentry>
+          <stentry>If the data has not utf8 data, forced to import data, default false.</stentry>
+        </strow>
+        <strow>
+          <stentry>--errorstop
+          </stentry>
+          <stentry>If you encounter an error stop, default false.</stentry>
         </strow>        
-      </simpletable>
-      
+      </simpletable>      
     </section>
     <note>Linepriority parameters need to be particularly concerned, if set properly, it may fail to import the data.<fig></fig>When the record contains "record separator" 
       and linepriority is true, the tool will give priority in accordance with the "record separator" resolution, which led to the import fails. For example: 
@@ -158,7 +170,7 @@
       <p>In the following sample,sdbimprt will import data into local database which port is 11810,
         and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import type is
         csv,import file is<i> test.csv</i>.</p>
-      <codeblock>sdbimprt –h localhost –s 11810 -–type csv –-file test.csv -c foo -l bar</codeblock>
+      <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
     <section>
       <title>sdbload</title>

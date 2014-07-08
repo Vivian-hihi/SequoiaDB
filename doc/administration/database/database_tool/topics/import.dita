@@ -56,7 +56,7 @@
         <strow>
           <stentry>--svcname,-p
           </stentry>
-          <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</stentry>
+          <stentry>指定的端口号。默认情况下sdbimprt尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
           <stentry>--user,-u
