@@ -14,7 +14,7 @@
    limitations under the License.
 *******************************************************************************/
 
-/** \file Base64.h
+/** \file Base64c.h
     \brief Encode binary data using printable characters.
 */
 #ifndef ALAN_BASE64_H
@@ -52,10 +52,8 @@
 
 SDB_EXTERN_C_START
 
-/** \fn
-*/
 
-/** \fn int base64Encode ( char *s, int in_size, char *out, int out_size )
+/** \fn int base64Encode ( const char *s, int in_size, char *out, int out_size )
     \brief String convert base64
     \param [in] s Input buffer
     \param [in] in_size Input buffer size
@@ -76,7 +74,7 @@ SDB_EXTERN_C_START
 */
 SDB_EXPORT int base64Encode ( const char *s, int in_size, char *out, int out_size ) ;
 
-/** \fn int base64Decode ( char *s, char *out, int out_size ) 
+/** \fn int base64Decode ( const char *s, char *out, int out_size ) 
     \brief Base64 convert string
     \param [in] s Input string
     \param [in] out_size The size of the buffer that 'out' pointing to ,
