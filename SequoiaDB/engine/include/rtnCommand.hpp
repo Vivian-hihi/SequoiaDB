@@ -94,6 +94,7 @@ namespace engine
 #define NAME_REMOVE_BACKUP                   CMD_NAME_REMOVE_BACKUP
 #define NAME_LINK_COLLECTION                 CMD_NAME_LINK_CL
 #define NAME_UNLINK_COLLECTION               CMD_NAME_UNLINK_CL
+#define NAME_INVALIDATE_CACHE                CMD_NAME_INVALIDATE_CACHE
 
 // the commands that does not supported by data nodes or standalone mode
 #define NAME_CREATE_GROUP                    CMD_NAME_CREATE_GROUP
@@ -213,6 +214,7 @@ namespace engine
 
       CMD_REMOVE_BACKUP                      = 210,
 
+      CMD_INVALIDATE_CACHE              = 220,      
 #if defined (_DEBUG)
       // all debug commands goes into here
       CMD_DEBUG_QUERY                        = 65534,
@@ -1433,6 +1435,25 @@ namespace engine
 
    } ;
 
+   class _rtnInvalidateCache : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnInvalidateCache() ;
+      virtual ~_rtnInvalidateCache() ;
+
+   public:
+      virtual const CHAR *name() { return NAME_INVALIDATE_CACHE ; }
+      virtual RTN_COMMAND_TYPE type() { return CMD_INVALIDATE_CACHE ; } 
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL ) ;
+   } ;
 }
 
 const UINT32 pdGetTraceFunctionListNum();

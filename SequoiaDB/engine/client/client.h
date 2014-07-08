@@ -1813,6 +1813,17 @@ SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
 SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
                                              sdbCursorHandle *cursor ) ;
 
+/** \fn INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
+                                  bson *condition )
+    \brief invalidate cache on specified nodes.
+    \param [in] cHandle The connection handle
+    \param [in] condition The destination we want to invalidate.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
+                                     bson *condition ) ;
+
 SDB_EXTERN_C_END
 #endif
 

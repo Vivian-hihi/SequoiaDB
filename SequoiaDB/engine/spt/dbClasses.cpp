@@ -3594,6 +3594,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "cancelTask",
                                    "setSessionAttr",
                                    "msg",
+                                   "invalidateCache",
                                    "help"
    };
    JSBool   in = JS_FALSE ;
@@ -6348,6 +6349,42 @@ error :
    goto done ;
 }
 
+PD_TRACE_DECLARE_FUNCTION( SDB_SDB_INVALIDATE_CACHE, "sdb_invalidate_cache" )
+static JSBool sdb_invalidate_cache( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_INVALIDATE_CACHE ) ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbConnectionHandle *connection = NULL ;
+   JSObject *conditionObj = NULL ;
+   bson *condition = NULL ;
+
+   connection = (sdbConnectionHandle *)
+                 JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.invalidateCataCache(): no connection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "/o" , &conditionObj ) ;
+   REPORT ( ret , "Sdb.invalidateCataCache: wrong arguments" ) ;
+
+   if ( NULL != conditionObj )
+   {
+      ret = objToBson( cx, conditionObj, &condition ) ;
+      REPORT ( ret , "Sdb.invalidateCataCache: failed to convert object" ) ;
+   }
+
+   rc = sdbInvalidateCache( *connection, condition ) ;
+   REPORT_RC ( SDB_OK == rc , "Sdb.invalidateCataCache" , rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done:
+   SAFE_BSON_DISPOSE( condition ) ;
+   PD_TRACE_EXIT( SDB_SDB_INVALIDATE_CACHE ) ;
+   return ret ;
+error:
+   goto done ;
+}
+
 static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getCS" , sdb_get_cs , 1 , 0 ) ,
    JS_FS ( "getRG" , sdb_get_rg , 1 , 0 ) ,
@@ -6389,6 +6426,7 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "dropDomain", sdb_drop_domain, 1, 0 ),
    JS_FS ( "getDomain", sdb_get_domain, 1, 0 ),
    JS_FS ( "listDomains", sdb_list_domains, 0, 0 ),
+   JS_FS ( "invalidateCache", sdb_invalidate_cache, 0, 0 ),
    JS_FS_END
 } ;
 
@@ -6485,6 +6523,8 @@ void *jsobj_get_cursor_private( JSContext *cx, JSObject *obj )
 
 JSBool InitDbClasses( JSContext *cx, JSObject *obj )
 {
+/// WARNING:  modify jsobj_is_sdbobj when u add a new object.
+
    JSBool ret = JS_TRUE ;
 
    VERIFY ( JS_DefineFunctions ( cx , obj , global_functions ) ) ;

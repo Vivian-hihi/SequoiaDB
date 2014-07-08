@@ -224,6 +224,12 @@ namespace engine
          _cataInfoMap.erase( collectionName );
       }
 
+      void invalidateCataInfo()
+      {
+         ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );
+         _cataInfoMap.clear() ;
+      }
+
    protected:
       INT32         _addGroupName ( const std::string& name, UINT32 id ) ;
       INT32         _clearGroupName ( UINT32 id ) ;

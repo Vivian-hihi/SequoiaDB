@@ -46,11 +46,6 @@ function rand () {
    return Math.random() ;
 }
 
-function sleep ( val ) {
-   var t1 = Date.now() ;
-   while (true) if( Date.now()-t1>val ) break;
-}
-
 function test() {
    return man("attachCL") ;
 }
@@ -295,6 +290,16 @@ SdbQuery.prototype.arrayAccess = function( idx ) {
 
 SdbQuery.prototype.count = function() {
    return this._collection.count( this._query ) ;
+}
+
+SdbQuery.prototype.explain = function( options ) {
+   return this._collection.explain( this._query,
+                                    this._select,
+                                    this._sort,
+                                    this._hint,
+                                    this._skip,
+                                    this._limit,
+                                    options ) ;
 }
 
 SdbQuery.prototype.size = function() {

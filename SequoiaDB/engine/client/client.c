@@ -6827,3 +6827,27 @@ error:
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
+                                     bson *condition )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN result = TRUE ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+   rc = _runCommand ( connection->_sock, &connection->_pSendBuffer,
+                     &connection->_sendBufferSize,
+                     &connection->_pReceiveBuffer,
+                     &connection->_receiveBufferSize,
+                     connection->_endianConvert,
+                     (CMD_ADMIN_PREFIX CMD_NAME_INVALIDATE_CACHE),
+                     &result, condition, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
