@@ -2188,6 +2188,8 @@ namespace engine
                string valid        = "" ;
                string display      = "" ;
                string edit         = "" ;
+               string desc         = "" ;
+               string level        = "" ;
                name         = propertyIte->second.get<string>( 
                                                 OM_XMLATTR_PROPERTY_NAME ) ;
                type         = propertyIte->second.get<string>( 
@@ -2200,12 +2202,18 @@ namespace engine
                                                 OM_XMLATTR_PROPERTY_DISPLAY ) ;
                edit         = propertyIte->second.get<string>( 
                                                 OM_XMLATTR_PROPERTY_EDIT ) ;
+               desc         = propertyIte->second.get<string>( 
+                                                OM_XMLATTR_PROPERTY_DESC ) ;
+               level        = propertyIte->second.get<string>( 
+                                                OM_XMLATTR_PROPERTY_LEVEL ) ;
                builder.append( OM_BSON_PROPERTY_NAME, name ) ;
                builder.append( OM_BSON_PROPERTY_TYPE, type ) ;
                builder.append( OM_BSON_PROPERTY_DEFAULT, defaultValue ) ;
                builder.append( OM_BSON_PROPERTY_VALID, valid ) ;
                builder.append( OM_BSON_PROPERTY_DISPLAY, display ) ;
                builder.append( OM_BSON_PROPERTY_EDIT, edit ) ;
+               builder.append( OM_BSON_PROPERTY_DESC, desc ) ;
+               builder.append( OM_BSON_PROPERTY_LEVEL, level ) ;
                temp = builder.obj() ;
                arrayBuilder.append( temp ) ;
             }
@@ -2299,6 +2307,7 @@ namespace engine
       }
 
       bsonTemplate = templateBuilder.obj() ;
+      // OM_BSON_FIELD_HOST_INFO can be null 
       bsonHostInfo = hostInfoBuilder.obj() ;
 
       if ( bsonTemplate.isEmpty() )
@@ -2311,22 +2320,13 @@ namespace engine
          goto error ;
       }
 
-      if ( bsonHostInfo.isEmpty() )
-      {
-         string errorInfo = string( OM_REST_TEMPLATE_INFO ) + "is invalid" ;
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
-         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
-         goto error ;
-      }
-      
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 omConfigBusinessCommand::_getConfigItem( const BSONObj &bsonTemplate, 
+   INT32 omConfigBusinessCommand::_getConfigDetail( const BSONObj &bsonTemplate, 
                                                   BSONObj &bsonConfigItem )
    {
       INT32 rc = SDB_OK ;
@@ -2362,6 +2362,8 @@ namespace engine
             string valid        = "" ;
             string display      = "" ;
             string edit         = "" ;
+            string desc         = "" ;
+            string level        = "" ;
             name         = ite->second.get<string>( 
                                              OM_XMLATTR_PROPERTY_NAME ) ;
             type         = ite->second.get<string>( 
@@ -2374,12 +2376,18 @@ namespace engine
                                              OM_XMLATTR_PROPERTY_DISPLAY ) ;
             edit         = ite->second.get<string>( 
                                              OM_XMLATTR_PROPERTY_EDIT ) ;
+            desc         = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_DESC ) ;
+            level        = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_LEVEL ) ;
             builder.append( OM_BSON_PROPERTY_NAME, name ) ;
             builder.append( OM_BSON_PROPERTY_TYPE, type ) ;
             builder.append( OM_BSON_PROPERTY_DEFAULT, defaultValue ) ;
             builder.append( OM_BSON_PROPERTY_VALID, valid ) ;
             builder.append( OM_BSON_PROPERTY_DISPLAY, display ) ;
             builder.append( OM_BSON_PROPERTY_EDIT, edit ) ;
+            builder.append( OM_BSON_PROPERTY_DESC, desc ) ;
+            builder.append( OM_BSON_PROPERTY_LEVEL, level ) ;
             temp = builder.obj() ;
             arrayBuilder.append( temp ) ;
          }
@@ -2406,6 +2414,10 @@ namespace engine
                                                 BSONObj &bsonConfig )
    {
       INT32 rc = SDB_OK ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
       
    done:
       return rc ;
@@ -2418,9 +2430,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObj bsonTemplate ;
       BSONObj bsonHostInfo ;
-      BSONObj bsonConfigItem ;
+      BSONObj bsonConfigDetail ;
       BSONObj bsonConfig ;
       BSONObjBuilder opBuilder ;
+      //TODO: bsonTemplate 再load本地配置表
       rc = _getTemplateInfo( bsonTemplate, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
@@ -2428,14 +2441,14 @@ namespace engine
          goto error ;
       }
       
-      rc = _getConfigItem( bsonTemplate, bsonConfigItem ) ;
+      rc = _getConfigDetail( bsonTemplate, bsonConfigDetail ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get config item failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = _generateConfig( bsonTemplate, bsonHostInfo, bsonConfigItem, 
+      rc = _generateConfig( bsonTemplate, bsonHostInfo, bsonConfigDetail, 
                             bsonConfig ) ;
       if ( SDB_OK != rc )
       {
@@ -2450,8 +2463,7 @@ namespace engine
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-      
-      
+
    done:
       return rc ;
    error:

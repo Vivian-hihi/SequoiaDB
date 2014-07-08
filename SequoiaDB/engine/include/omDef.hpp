@@ -195,6 +195,11 @@ namespace engine
    #define  OM_BSON_FIELD_MEMORY             "Memory"
    // array
    #define  OM_BSON_FIELD_DISK               "Disk"
+   #define  OM_BSON_FIELD_DISK_NAME          "Name"
+   #define  OM_BSON_FIELD_DISK_SIZE          "Size"
+   #define  OM_BSON_FIELD_DISK_MOUNT         "Mount"
+   #define  OM_BSON_FIELD_DISK_FREE_SIZE     "Free"
+   #define  OM_BSON_FIELD_DISK_USED          "Used"
    // array
    #define  OM_BSON_FIELD_CPU                "CPU"
    // array
@@ -245,6 +250,8 @@ namespace engine
    #define  OM_XMLATTR_PROPERTY_VALID        "<xmlattr>.valid"
    #define  OM_XMLATTR_PROPERTY_DISPLAY      "<xmlattr>.display"
    #define  OM_XMLATTR_PROPERTY_EDIT         "<xmlattr>.edit"
+   #define  OM_XMLATTR_PROPERTY_DESC         "<xmlattr>.desc"
+   #define  OM_XMLATTR_PROPERTY_LEVEL        "<xmlattr>.level"
 
    #define  OM_REST_BUSINESS_TYPE            "BusinessType"
 
@@ -256,6 +263,8 @@ namespace engine
    #define  OM_BSON_PROPERTY_VALID           "Valid"
    #define  OM_BSON_PROPERTY_DISPLAY         "Display"
    #define  OM_BSON_PROPERTY_EDIT            "Edit"
+   #define  OM_BSON_PROPERTY_DESC            "Desc"
+   #define  OM_BSON_PROPERTY_LEVEL           "Level"
 
    // *****************************************************************
 
@@ -268,6 +277,7 @@ namespace engine
    #define  OM_REST_TEMPLATE_INFO            "TemplateInfo"
    #define  OM_REST_CONFIG_INFO              "ConfigInfo"
 
+   #define  OM_BSON_PROPERTY_VALUE           "Value"
    
    // *****************************************************************
    

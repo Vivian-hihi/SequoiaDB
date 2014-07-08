@@ -60,7 +60,7 @@ namespace engine
          virtual INT32   doCommand() ;
 
       private:
-         void  _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
+         void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
          
       private:
          restAdaptor*    _restAdaptor ;
@@ -287,7 +287,7 @@ namespace engine
                                          const BSONObj &bsonHostInfo, 
                                          const BSONObj &bsonConfigItem, 
                                          BSONObj &bsonConfig ) ;
-         INT32          _getConfigItem( const BSONObj &bsonTemplate, 
+         INT32          _getConfigDetail( const BSONObj &bsonTemplate, 
                                         BSONObj &bsonConfigItem ) ;
          INT32          _getTemplateInfo( BSONObj &bsonTemplate, 
                                           BSONObj &bsonHostInfo ) ;
