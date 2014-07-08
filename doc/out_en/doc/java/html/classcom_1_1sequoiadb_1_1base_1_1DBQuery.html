@@ -36,6 +36,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
@@ -68,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -85,6 +86,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classcom_1_1sequoiadb_1_1base_1_1DBQuery-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">com.sequoiadb.base.DBQuery Class Reference</div>  </div>
@@ -100,7 +102,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:abeabfb313b685a9e4cb45883f841aad1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get modified rule.  <a href="#abeabfb313b685a9e4cb45883f841aad1"></a><br/></td></tr>
 <tr class="separator:abeabfb313b685a9e4cb45883f841aad1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0128cd3b318413d46b2e9c6f02877b6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac0128cd3b318413d46b2e9c6f02877b6">setModifier</a> (BSONObject modifier)</td></tr>
-<tr class="memdesc:ac0128cd3b318413d46b2e9c6f02877b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get modified rule.  <a href="#ac0128cd3b318413d46b2e9c6f02877b6"></a><br/></td></tr>
+<tr class="memdesc:ac0128cd3b318413d46b2e9c6f02877b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set modified rule.  <a href="#ac0128cd3b318413d46b2e9c6f02877b6"></a><br/></td></tr>
 <tr class="separator:ac0128cd3b318413d46b2e9c6f02877b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36a5b85845d03755d402383253930cb3"><td class="memItemLeft" align="right" valign="top">BSONObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a36a5b85845d03755d402383253930cb3">getSelector</a> ()</td></tr>
 <tr class="memdesc:a36a5b85845d03755d402383253930cb3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get selective rule.  <a href="#a36a5b85845d03755d402383253930cb3"></a><br/></td></tr>
@@ -138,10 +140,55 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aca4eb612267600a6f7a9c13cac7e0cf8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#aca4eb612267600a6f7a9c13cac7e0cf8">setReturnRowsCount</a> (Long returnRowsCount)</td></tr>
 <tr class="memdesc:aca4eb612267600a6f7a9c13cac7e0cf8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the count of BSONObjects to return.  <a href="#aca4eb612267600a6f7a9c13cac7e0cf8"></a><br/></td></tr>
 <tr class="separator:aca4eb612267600a6f7a9c13cac7e0cf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cfce7f562cd9c34026113e974a029a7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2cfce7f562cd9c34026113e974a029a7">getFlag</a> ()</td></tr>
+<tr class="memdesc:a2cfce7f562cd9c34026113e974a029a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the query.  <a href="#a2cfce7f562cd9c34026113e974a029a7"></a><br/></td></tr>
+<tr class="separator:a2cfce7f562cd9c34026113e974a029a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90071b3c7b73e94598757ef4ca03f242"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a90071b3c7b73e94598757ef4ca03f242">setFlag</a> (int flag)</td></tr>
+<tr class="memdesc:a90071b3c7b73e94598757ef4ca03f242"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the query flag.  <a href="#a90071b3c7b73e94598757ef4ca03f242"></a><br/></td></tr>
+<tr class="separator:a90071b3c7b73e94598757ef4ca03f242"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a2b4c991db1d4024d6bde92849c6b300c"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2b4c991db1d4024d6bde92849c6b300c">FLG_QUERY_STRINGOUT</a> = 0x00000001</td></tr>
+<tr class="memdesc:a2b4c991db1d4024d6bde92849c6b300c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Nornally, query return bson stream, if add this flag, query return binary data stream.  <a href="#a2b4c991db1d4024d6bde92849c6b300c"></a><br/></td></tr>
+<tr class="separator:a2b4c991db1d4024d6bde92849c6b300c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac26e2c0cee7cf2b23fa52a288abb698c"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac26e2c0cee7cf2b23fa52a288abb698c">FLG_QUERY_FORCE_HINT</a> = 0x00000080</td></tr>
+<tr class="memdesc:ac26e2c0cee7cf2b23fa52a288abb698c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Force to use specifed hint to query, if database have no index assigned by the hint, fail to query.  <a href="#ac26e2c0cee7cf2b23fa52a288abb698c"></a><br/></td></tr>
+<tr class="separator:ac26e2c0cee7cf2b23fa52a288abb698c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3dbd2e5fe88a3a683fe78d8d73b8a3d"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3dbd2e5fe88a3a683fe78d8d73b8a3d">FLG_QUERY_PARALLED</a> = 0x00000100</td></tr>
+<tr class="memdesc:ad3dbd2e5fe88a3a683fe78d8d73b8a3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable paralled sub querys.  <a href="#ad3dbd2e5fe88a3a683fe78d8d73b8a3d"></a><br/></td></tr>
+<tr class="separator:ad3dbd2e5fe88a3a683fe78d8d73b8a3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Database operation rules. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a2cfce7f562cd9c34026113e974a029a7"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int com.sequoiadb.base.DBQuery.getFlag </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the query. </p>
+<dl class="section return"><dt>Returns</dt><dd>The query flag </dd></dl>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ac852fd77867a16f73d55d73e053f1584" title="Get all documents of current collection.">com.sequoiadb.base.DBCollection.query</a> </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="acd7e12aee052613024b5fe732730f43b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -324,6 +371,37 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a90071b3c7b73e94598757ef4ca03f242"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.DBQuery.setFlag </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>flag</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the query flag. </p>
+<pre class="fragment">@param The query flag as below:
+      DBQuery.FLG_QUERY_STRINGOUT
+   DBQuery.FLG_QUERY_FORCE_HINT
+   DBQuery.LG_QUERY_PARALLED  
+</pre> <dl class="section see"><dt>See Also</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ac852fd77867a16f73d55d73e053f1584" title="Get all documents of current collection.">com.sequoiadb.base.DBCollection.query</a> </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a22c478a842333c033320d9ca1a6d2b58"></a>
 <div class="memitem">
 <div class="memproto">
@@ -410,7 +488,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get modified rule. </p>
+<p>Set modified rule. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">Modifier</td><td>The modified rule BSONObject </td></tr>
@@ -548,13 +626,83 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="ac26e2c0cee7cf2b23fa52a288abb698c"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">final int FLG_QUERY_FORCE_HINT = 0x00000080</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Force to use specifed hint to query, if database have no index assigned by the hint, fail to query. </p>
+<p>0x00000080 </p>
+
+</div>
+</div>
+<a class="anchor" id="ad3dbd2e5fe88a3a683fe78d8d73b8a3d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">final int FLG_QUERY_PARALLED = 0x00000100</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enable paralled sub querys. </p>
+<p>0x00000100 </p>
+
+</div>
+</div>
+<a class="anchor" id="a2b4c991db1d4024d6bde92849c6b300c"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">final int FLG_QUERY_STRINGOUT = 0x00000001</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Nornally, query return bson stream, if add this flag, query return binary data stream. </p>
+<p>0x00000001 </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBQuery.java</li>
+<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBQuery.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:05:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:03:05 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

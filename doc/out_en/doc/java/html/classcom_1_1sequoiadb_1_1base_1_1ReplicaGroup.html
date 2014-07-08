@@ -36,6 +36,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
@@ -68,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -91,74 +92,58 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p>the replica group in DB  
+<p>Database operation interfaces of replica group.  
  <a href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:acad344a5dbae23aa4f2ed8a12c158c88"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#acad344a5dbae23aa4f2ed8a12c158c88">getSequoiadb</a> ()</td></tr>
-<tr class="memdesc:acad344a5dbae23aa4f2ed8a12c158c88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get current replicaGroup's <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a>.  <a href="#acad344a5dbae23aa4f2ed8a12c158c88"></a><br/></td></tr>
+<tr class="memdesc:acad344a5dbae23aa4f2ed8a12c158c88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get current replica group's <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a>.  <a href="#acad344a5dbae23aa4f2ed8a12c158c88"></a><br/></td></tr>
 <tr class="separator:acad344a5dbae23aa4f2ed8a12c158c88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a405b7e638fdcb59929bf4eea67f26c78"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a405b7e638fdcb59929bf4eea67f26c78">getId</a> ()</td></tr>
-<tr class="memdesc:a405b7e638fdcb59929bf4eea67f26c78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get current replicaGroup's id.  <a href="#a405b7e638fdcb59929bf4eea67f26c78"></a><br/></td></tr>
+<tr class="memdesc:a405b7e638fdcb59929bf4eea67f26c78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get current replica group's id.  <a href="#a405b7e638fdcb59929bf4eea67f26c78"></a><br/></td></tr>
 <tr class="separator:a405b7e638fdcb59929bf4eea67f26c78"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2cfcf01198d0a46ac43f266db0d79d6d"><td class="memItemLeft" align="right" valign="top">String&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a2cfcf01198d0a46ac43f266db0d79d6d">getGroupName</a> ()</td></tr>
-<tr class="memdesc:a2cfcf01198d0a46ac43f266db0d79d6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get current replicaGroup's name.  <a href="#a2cfcf01198d0a46ac43f266db0d79d6d"></a><br/></td></tr>
+<tr class="memdesc:a2cfcf01198d0a46ac43f266db0d79d6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get current replica group's name.  <a href="#a2cfcf01198d0a46ac43f266db0d79d6d"></a><br/></td></tr>
 <tr class="separator:a2cfcf01198d0a46ac43f266db0d79d6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45e65d22d841beb732842248def2b397"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a45e65d22d841beb732842248def2b397">getNodeNum</a> (ReplicaNode.NodeStatus status)</td></tr>
-<tr class="memdesc:a45e65d22d841beb732842248def2b397"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get number of nodes with the status.  <a href="#a45e65d22d841beb732842248def2b397"></a><br/></td></tr>
-<tr class="separator:a45e65d22d841beb732842248def2b397"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab49c5e5e5667aee9322dd680e9a4d703"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ab49c5e5e5667aee9322dd680e9a4d703">getNodeNum</a> (Node.NodeStatus status)  throws BaseException </td></tr>
+<tr class="memdesc:ab49c5e5e5667aee9322dd680e9a4d703"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the amount of the nodes with the specified status.  <a href="#ab49c5e5e5667aee9322dd680e9a4d703"></a><br/></td></tr>
+<tr class="separator:ab49c5e5e5667aee9322dd680e9a4d703"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3d93947705545f510b2b48119be91a3"><td class="memItemLeft" align="right" valign="top">BSONObject&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ad3d93947705545f510b2b48119be91a3">getDetail</a> ()  throws BaseException </td></tr>
 <tr class="memdesc:ad3d93947705545f510b2b48119be91a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get detail info of current replicaGoup.  <a href="#ad3d93947705545f510b2b48119be91a3"></a><br/></td></tr>
 <tr class="separator:ad3d93947705545f510b2b48119be91a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6a12aa833e9220554ac34a03f7e348e3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a6a12aa833e9220554ac34a03f7e348e3">getMaster</a> ()</td></tr>
-<tr class="memdesc:a6a12aa833e9220554ac34a03f7e348e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the master replicaNode of current replicaGroup.  <a href="#a6a12aa833e9220554ac34a03f7e348e3"></a><br/></td></tr>
-<tr class="separator:a6a12aa833e9220554ac34a03f7e348e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1230cbe7a377aebf1d5680039fe505c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ab1230cbe7a377aebf1d5680039fe505c">getSlave</a> ()  throws BaseException </td></tr>
-<tr class="memdesc:ab1230cbe7a377aebf1d5680039fe505c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the random slave replicaNode of current replicaGroup.  <a href="#ab1230cbe7a377aebf1d5680039fe505c"></a><br/></td></tr>
-<tr class="separator:ab1230cbe7a377aebf1d5680039fe505c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0f34428785c8c28025ac44de88170ac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ac0f34428785c8c28025ac44de88170ac">getNode</a> (String replicaNodeName)</td></tr>
-<tr class="memdesc:ac0f34428785c8c28025ac44de88170ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get replicaNode by replicaNode name (IP:PORT)  <a href="#ac0f34428785c8c28025ac44de88170ac"></a><br/></td></tr>
-<tr class="separator:ac0f34428785c8c28025ac44de88170ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa1cf653d5487291edb1e9317ac856406"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#aa1cf653d5487291edb1e9317ac856406">getNode</a> (String hostName, int port)</td></tr>
-<tr class="memdesc:aa1cf653d5487291edb1e9317ac856406"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get replicaNode by hostName and port.  <a href="#aa1cf653d5487291edb1e9317ac856406"></a><br/></td></tr>
-<tr class="separator:aa1cf653d5487291edb1e9317ac856406"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a91b90dede225331199516e4a694e4ef8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a91b90dede225331199516e4a694e4ef8">createNode</a> (String hostName, int port, String dbPath, Map&lt; String, String &gt; configure)  throws BaseException </td></tr>
-<tr class="memdesc:a91b90dede225331199516e4a694e4ef8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create replicaNode with some args.  <a href="#a91b90dede225331199516e4a694e4ef8"></a><br/></td></tr>
-<tr class="separator:a91b90dede225331199516e4a694e4ef8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0edf6c3f4dcc7c5166935626d09b7531"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a0edf6c3f4dcc7c5166935626d09b7531">getMaster</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:a0edf6c3f4dcc7c5166935626d09b7531"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the master node of current replica group.  <a href="#a0edf6c3f4dcc7c5166935626d09b7531"></a><br/></td></tr>
+<tr class="separator:a0edf6c3f4dcc7c5166935626d09b7531"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09cc3213b67cdf98b6a95e5a10264edd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a09cc3213b67cdf98b6a95e5a10264edd">getSlave</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:a09cc3213b67cdf98b6a95e5a10264edd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the random slave of current replica group.  <a href="#a09cc3213b67cdf98b6a95e5a10264edd"></a><br/></td></tr>
+<tr class="separator:a09cc3213b67cdf98b6a95e5a10264edd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adecf8441dfd6c0c7ca0015351bc8009e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#adecf8441dfd6c0c7ca0015351bc8009e">getNode</a> (String nodeName)  throws BaseException </td></tr>
+<tr class="memdesc:adecf8441dfd6c0c7ca0015351bc8009e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get node by node's name (IP:PORT).  <a href="#adecf8441dfd6c0c7ca0015351bc8009e"></a><br/></td></tr>
+<tr class="separator:adecf8441dfd6c0c7ca0015351bc8009e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae69fd4960faa3941677ac7d967c52569"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#ae69fd4960faa3941677ac7d967c52569">getNode</a> (String hostName, int port)  throws BaseException </td></tr>
+<tr class="memdesc:ae69fd4960faa3941677ac7d967c52569"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get node by hostName and port.  <a href="#ae69fd4960faa3941677ac7d967c52569"></a><br/></td></tr>
+<tr class="separator:ae69fd4960faa3941677ac7d967c52569"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed08890659a3a7a3288d506c304bc1a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#aed08890659a3a7a3288d506c304bc1a2">createNode</a> (String hostName, int port, String dbPath, Map&lt; String, String &gt; configure)  throws BaseException </td></tr>
+<tr class="memdesc:aed08890659a3a7a3288d506c304bc1a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create node.  <a href="#aed08890659a3a7a3288d506c304bc1a2"></a><br/></td></tr>
+<tr class="separator:aed08890659a3a7a3288d506c304bc1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e4f605f77d22fe48923b7a148b83cdd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a7e4f605f77d22fe48923b7a148b83cdd">removeNode</a> (String hostName, int port, BSONObject configure)  throws BaseException </td></tr>
-<tr class="memdesc:a7e4f605f77d22fe48923b7a148b83cdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove replicaNode.  <a href="#a7e4f605f77d22fe48923b7a148b83cdd"></a><br/></td></tr>
+<tr class="memdesc:a7e4f605f77d22fe48923b7a148b83cdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove node.  <a href="#a7e4f605f77d22fe48923b7a148b83cdd"></a><br/></td></tr>
 <tr class="separator:a7e4f605f77d22fe48923b7a148b83cdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5cffb9ad5b6e995610af757959fc0916"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5cffb9ad5b6e995610af757959fc0916"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a5cffb9ad5b6e995610af757959fc0916">start</a> ()</td></tr>
-<tr class="memdesc:a5cffb9ad5b6e995610af757959fc0916"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start current replicaGroup in db </p>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">com.sequoiadb.exception.BaseException.</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<br/></td></tr>
+<tr class="memitem:a5cffb9ad5b6e995610af757959fc0916"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a5cffb9ad5b6e995610af757959fc0916">start</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:a5cffb9ad5b6e995610af757959fc0916"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start current replica group.  <a href="#a5cffb9ad5b6e995610af757959fc0916"></a><br/></td></tr>
 <tr class="separator:a5cffb9ad5b6e995610af757959fc0916"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06424148e6fd1390bfc1aa9666e60062"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a06424148e6fd1390bfc1aa9666e60062"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a06424148e6fd1390bfc1aa9666e60062">stop</a> ()</td></tr>
-<tr class="memdesc:a06424148e6fd1390bfc1aa9666e60062"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop current replicaGroup in db </p>
-<dl class="exception"><dt>Exceptions</dt><dd>
-  <table class="exception">
-    <tr><td class="paramname">com.sequoiadb.exception.BaseException.</td><td></td></tr>
-  </table>
-  </dd>
-</dl>
-<br/></td></tr>
+<tr class="memitem:a06424148e6fd1390bfc1aa9666e60062"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a06424148e6fd1390bfc1aa9666e60062">stop</a> ()  throws BaseException </td></tr>
+<tr class="memdesc:a06424148e6fd1390bfc1aa9666e60062"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop current replica group.  <a href="#a06424148e6fd1390bfc1aa9666e60062"></a><br/></td></tr>
 <tr class="separator:a06424148e6fd1390bfc1aa9666e60062"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aecb9107fb4317ccc602527ba3b924ac9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecb9107fb4317ccc602527ba3b924ac9"></a>
-boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</td></tr>
-<tr class="separator:aecb9107fb4317ccc602527ba3b924ac9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2ccdcd06e97cac7f1e5bb6e800337d3"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#af2ccdcd06e97cac7f1e5bb6e800337d3">isCatalog</a> ()</td></tr>
+<tr class="memdesc:af2ccdcd06e97cac7f1e5bb6e800337d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Judge whether current replicaGroup is catalog replica group or not.  <a href="#af2ccdcd06e97cac7f1e5bb6e800337d3"></a><br/></td></tr>
+<tr class="separator:af2ccdcd06e97cac7f1e5bb6e800337d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>the replica group in DB </p>
+<div class="textblock"><p>Database operation interfaces of replica group. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a91b90dede225331199516e4a694e4ef8"></a>
+<a class="anchor" id="aed08890659a3a7a3288d506c304bc1a2"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -166,7 +151,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a> com.sequoiadb.base.ReplicaGroup.createNode </td>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a> com.sequoiadb.base.ReplicaGroup.createNode </td>
           <td>(</td>
           <td class="paramtype">String&#160;</td>
           <td class="paramname"><em>hostName</em>, </td>
@@ -202,7 +187,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Create replicaNode with some args. </p>
+<p>Create node. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">hostName</td><td>host name </td></tr>
@@ -212,7 +197,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the created replicaNode </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the created <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html" title="Database operation interfaces of node.This class takes the place of class &quot;replicaNode&quot;.">Node</a> object </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -275,8 +260,8 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Get current replicaGroup's name. </p>
-<dl class="section return"><dt>Returns</dt><dd>the current replicaGroup's name </dd></dl>
+<p>Get current replica group's name. </p>
+<dl class="section return"><dt>Returns</dt><dd>the current replica group's name </dd></dl>
 
 </div>
 </div>
@@ -301,12 +286,12 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Get current replicaGroup's id. </p>
-<dl class="section return"><dt>Returns</dt><dd>the current replicaGroup's id </dd></dl>
+<p>Get current replica group's id. </p>
+<dl class="section return"><dt>Returns</dt><dd>the current replica group's id </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="a6a12aa833e9220554ac34a03f7e348e3"></a>
+<a class="anchor" id="a0edf6c3f4dcc7c5166935626d09b7531"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -314,10 +299,10 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a> com.sequoiadb.base.ReplicaGroup.getMaster </td>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a> com.sequoiadb.base.ReplicaGroup.getMaster </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td>  throws BaseException </td>
         </tr>
       </table>
   </td>
@@ -327,8 +312,8 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Get the master replicaNode of current replicaGroup. </p>
-<dl class="section return"><dt>Returns</dt><dd>the master replicaNode </dd></dl>
+<p>Get the master node of current replica group. </p>
+<dl class="section return"><dt>Returns</dt><dd>the master node </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -338,7 +323,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 
 </div>
 </div>
-<a class="anchor" id="ac0f34428785c8c28025ac44de88170ac"></a>
+<a class="anchor" id="adecf8441dfd6c0c7ca0015351bc8009e"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -346,11 +331,11 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a> com.sequoiadb.base.ReplicaGroup.getNode </td>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a> com.sequoiadb.base.ReplicaGroup.getNode </td>
           <td>(</td>
           <td class="paramtype">String&#160;</td>
-          <td class="paramname"><em>replicaNodeName</em></td><td>)</td>
-          <td></td>
+          <td class="paramname"><em>nodeName</em></td><td>)</td>
+          <td>  throws BaseException </td>
         </tr>
       </table>
   </td>
@@ -360,14 +345,14 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Get replicaNode by replicaNode name (IP:PORT) </p>
+<p>Get node by node's name (IP:PORT). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">replicaNodeName</td><td>The name of the replica node </td></tr>
+    <tr><td class="paramname">nodeName</td><td>The name of the node </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the replicaNode </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the specified node </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -377,7 +362,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 
 </div>
 </div>
-<a class="anchor" id="aa1cf653d5487291edb1e9317ac856406"></a>
+<a class="anchor" id="ae69fd4960faa3941677ac7d967c52569"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -385,7 +370,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a> com.sequoiadb.base.ReplicaGroup.getNode </td>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a> com.sequoiadb.base.ReplicaGroup.getNode </td>
           <td>(</td>
           <td class="paramtype">String&#160;</td>
           <td class="paramname"><em>hostName</em>, </td>
@@ -399,7 +384,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td>  throws BaseException </td>
         </tr>
       </table>
   </td>
@@ -409,7 +394,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Get replicaNode by hostName and port. </p>
+<p>Get node by hostName and port. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">hostName</td><td>host name </td></tr>
@@ -417,7 +402,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the replicaNode </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html" title="Database operation interfaces of node.This class takes the place of class &quot;replicaNode&quot;.">Node</a> object </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -427,7 +412,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 
 </div>
 </div>
-<a class="anchor" id="a45e65d22d841beb732842248def2b397"></a>
+<a class="anchor" id="ab49c5e5e5667aee9322dd680e9a4d703"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -437,9 +422,9 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
         <tr>
           <td class="memname">int com.sequoiadb.base.ReplicaGroup.getNodeNum </td>
           <td>(</td>
-          <td class="paramtype">ReplicaNode.NodeStatus&#160;</td>
+          <td class="paramtype">Node.NodeStatus&#160;</td>
           <td class="paramname"><em>status</em></td><td>)</td>
-          <td></td>
+          <td>  throws BaseException </td>
         </tr>
       </table>
   </td>
@@ -449,14 +434,14 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Get number of nodes with the status. </p>
+<p>Get the amount of the nodes with the specified status. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">status</td><td>ReplicaNode.NodeStatus </td></tr>
+    <tr><td class="paramname">status</td><td>Node.NodeStatus </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the number </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the amount of the nodes with the specified status </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -487,12 +472,12 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Get current replicaGroup's <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a>. </p>
-<dl class="section return"><dt>Returns</dt><dd>the current replicaGroup's <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> </dd></dl>
+<p>Get current replica group's <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>the current replica group's <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ab1230cbe7a377aebf1d5680039fe505c"></a>
+<a class="anchor" id="a09cc3213b67cdf98b6a95e5a10264edd"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -500,7 +485,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html">ReplicaNode</a> com.sequoiadb.base.ReplicaGroup.getSlave </td>
+          <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Node.html">Node</a> com.sequoiadb.base.ReplicaGroup.getSlave </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td>  throws BaseException </td>
@@ -513,14 +498,40 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Get the random slave replicaNode of current replicaGroup. </p>
-<dl class="section return"><dt>Returns</dt><dd>the slave replicaNode </dd></dl>
+<p>Get the random slave of current replica group. </p>
+<dl class="section return"><dt>Returns</dt><dd>the slave node </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="af2ccdcd06e97cac7f1e5bb6e800337d3"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean com.sequoiadb.base.ReplicaGroup.isCatalog </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Judge whether current replicaGroup is catalog replica group or not. </p>
+<dl class="section return"><dt>Returns</dt><dd>true is while false is not </dd></dl>
 
 </div>
 </div>
@@ -562,7 +573,7 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 </table>
 </div><div class="memdoc">
 
-<p>Remove replicaNode. </p>
+<p>Remove node. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">hostName</td><td>host name </td></tr>
@@ -580,13 +591,77 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>isCatalog</b> ()</
 
 </div>
 </div>
+<a class="anchor" id="a5cffb9ad5b6e995610af757959fc0916"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.ReplicaGroup.start </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Start current replica group. </p>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a06424148e6fd1390bfc1aa9666e60062"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void com.sequoiadb.base.ReplicaGroup.stop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Stop current replica group. </p>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/ReplicaGroup.java</li>
+<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/ReplicaGroup.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:05:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:03:05 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

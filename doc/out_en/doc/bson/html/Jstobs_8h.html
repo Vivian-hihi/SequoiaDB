@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>SequoiaDB: C:/SequoiaDB/client/include/Jstobs.h File Reference</title>
+<title>SequoiaDB: E:/sequoiadb/client/include/Jstobs.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -78,7 +78,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_ad01e378f1e2b365ab9e6368d0f1d157.html">client</a></li><li class="navelem"><a class="el" href="dir_1080c4fc4aac9d35ac17fd4ac53388c5.html">include</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_5d5e8e09700f72ff2a276389d62c94f7.html">client</a></li><li class="navelem"><a class="el" href="dir_abc5dc4d4aa4b7cb7eaa95f96145854d.html">include</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -92,9 +92,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <p>Json and Bson convert to each other.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;time.h&quot;</code><br/>
+<div class="textblock"><code>#include &quot;core.h&quot;</code><br/>
+<code>#include &quot;time.h&quot;</code><br/>
 <code>#include &quot;<a class="el" href="bson_8h_source.html">bson/bson.h</a>&quot;</code><br/>
-<code>#include &quot;core.h&quot;</code><br/>
 </div>
 <p><a href="Jstobs_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -161,7 +161,7 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>TIME_OUTPUT_CSV_FORMAT</b>&#160;&#160;&#160;&quot;%04d-%02d-%02d-%02d.%02d.%02d.%06d&quot;</td></tr>
 <tr class="separator:a8a1fae9c910600dcd24840250c3e720b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27f5c03db781ff533a57921021d83106"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a27f5c03db781ff533a57921021d83106"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>TIME_OUTPUT_FORMAT</b>&#160;&#160;&#160;&quot;{ \&quot;$timestamp\&quot; : \&quot;&quot; TIME_OUTPUT_CSV_FORMAT &quot;\&quot; }&quot;</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>TIME_OUTPUT_FORMAT</b>&#160;&#160;&#160;&quot;{ \&quot;$timestamp\&quot;: \&quot;&quot; TIME_OUTPUT_CSV_FORMAT &quot;\&quot; }&quot;</td></tr>
 <tr class="separator:a27f5c03db781ff533a57921021d83106"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af3a7249af0dc84e61384327caa331213"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af3a7249af0dc84e61384327caa331213"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>DATE_FORMAT</b>&#160;&#160;&#160;&quot;%d-%d-%d&quot;</td></tr>
@@ -170,7 +170,7 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>DATE_OUTPUT_CSV_FORMAT</b>&#160;&#160;&#160;&quot;%04d-%02d-%02d&quot;</td></tr>
 <tr class="separator:ad26b93ac171c9a9834288b240f68d647"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47565f5fc1a5aab29aecd021e098c06a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47565f5fc1a5aab29aecd021e098c06a"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DATE_OUTPUT_FORMAT</b>&#160;&#160;&#160;&quot;{ \&quot;$date\&quot; : \&quot;&quot; DATE_OUTPUT_CSV_FORMAT &quot;\&quot; }&quot;</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>DATE_OUTPUT_FORMAT</b>&#160;&#160;&#160;&quot;{ \&quot;$date\&quot;: \&quot;&quot; DATE_OUTPUT_CSV_FORMAT &quot;\&quot; }&quot;</td></tr>
 <tr class="separator:a47565f5fc1a5aab29aecd021e098c06a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
@@ -181,9 +181,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a1c93d8d6d1407162b77c5e39bc707cad"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1c93d8d6d1407162b77c5e39bc707cad"></a>
 SDB_EXPORT BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>jsonToBson2</b> (<a class="el" href="structbson.html">bson</a> *bs, const CHAR *json_str, BOOLEAN isMongo, BOOLEAN isBatch)</td></tr>
 <tr class="separator:a1c93d8d6d1407162b77c5e39bc707cad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73a0288f567ed0c7af3c534b5ac25b33"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a73a0288f567ed0c7af3c534b5ac25b33"></a>
-SDB_EXPORT BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>bsonToJson</b> (CHAR *buffer, INT32 bufsize, const <a class="el" href="structbson.html">bson</a> *b, BOOLEAN toCSV)</td></tr>
-<tr class="separator:a73a0288f567ed0c7af3c534b5ac25b33"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abbcbbe56acde4612dee869ddc61caa3c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abbcbbe56acde4612dee869ddc61caa3c"></a>
+SDB_EXPORT BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>bsonToJson</b> (CHAR *buffer, INT32 bufsize, const <a class="el" href="structbson.html">bson</a> *b, BOOLEAN toCSV, BOOLEAN skipUndefined)</td></tr>
+<tr class="separator:abbcbbe56acde4612dee869ddc61caa3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae81e3b53b3ce7fc2ddf21942862e356b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae81e3b53b3ce7fc2ddf21942862e356b"></a>
 SDB_EXPORT BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>bsonElementToChar</b> (CHAR **buffer, INT32 *bufsize, <a class="el" href="structbson__iterator.html">bson_iterator</a> *in)</td></tr>
 <tr class="separator:ae81e3b53b3ce7fc2ddf21942862e356b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -236,7 +236,7 @@ SDB_EXPORT BOOLEAN&#160;</td><td class="memItemRight" valign="bottom"><b>bsonEle
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2013 14:55:19 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:00:23 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

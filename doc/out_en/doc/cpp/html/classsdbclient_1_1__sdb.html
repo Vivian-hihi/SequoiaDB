@@ -70,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -108,6 +108,9 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>connect</b> 
 <tr class="memitem:a4adb0d10a37da6c20dac7a91f03d5e34"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4adb0d10a37da6c20dac7a91f03d5e34"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>connect</b> (const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pUsrName, const CHAR *pPasswd)=0</td></tr>
 <tr class="separator:a4adb0d10a37da6c20dac7a91f03d5e34"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7fa9a087525fdfc5cbc3a47b8fad4882"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7fa9a087525fdfc5cbc3a47b8fad4882"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>connect</b> (const CHAR **pConnAddrs, INT32 arrSize, const CHAR *pUsrName, const CHAR *pPasswd)=0</td></tr>
+<tr class="separator:a7fa9a087525fdfc5cbc3a47b8fad4882"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a473db47880759e3cc412955c7b6af4ab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a473db47880759e3cc412955c7b6af4ab"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>disconnect</b> ()=0</td></tr>
 <tr class="separator:a473db47880759e3cc412955c7b6af4ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -150,6 +153,12 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollec
 <tr class="memitem:a143b2ddcd06a8c6e7cb63ca26ad58a6c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a143b2ddcd06a8c6e7cb63ca26ad58a6c"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, INT32 iPageSize, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)=0</td></tr>
 <tr class="separator:a143b2ddcd06a8c6e7cb63ca26ad58a6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2075b46d0c168eca29d1b923fbb6be24"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2075b46d0c168eca29d1b923fbb6be24"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1__sdbCollectionSpace.html">_sdbCollectionSpace</a> **cs)=0</td></tr>
+<tr class="separator:a2075b46d0c168eca29d1b923fbb6be24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fe83c555364426e1e8b347061d78f0b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1fe83c555364426e1e8b347061d78f0b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)=0</td></tr>
+<tr class="separator:a1fe83c555364426e1e8b347061d78f0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adc69d5ffe7643ee780f063efc4e44540"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adc69d5ffe7643ee780f063efc4e44540"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>dropCollectionSpace</b> (const CHAR *pCollectionSpaceName)=0</td></tr>
 <tr class="separator:adc69d5ffe7643ee780f063efc4e44540"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -183,21 +192,24 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getReplicaGr
 <tr class="memitem:adb3c9567af19aea0b03f5ac05be01898"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adb3c9567af19aea0b03f5ac05be01898"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getReplicaGroup</b> (INT32 id, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;result)=0</td></tr>
 <tr class="separator:adb3c9567af19aea0b03f5ac05be01898"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47eeafd848e4921236de973b90afd308"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47eeafd848e4921236de973b90afd308"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **rg)=0</td></tr>
-<tr class="separator:a47eeafd848e4921236de973b90afd308"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add16619c297f6c6143193e4c46c69555"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add16619c297f6c6143193e4c46c69555"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;rg)=0</td></tr>
-<tr class="separator:add16619c297f6c6143193e4c46c69555"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a715d993d724d7228a8611af1c12471ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a715d993d724d7228a8611af1c12471ee"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>removeReplicaGroup</b> (const CHAR *pRGName)=0</td></tr>
-<tr class="separator:a715d993d724d7228a8611af1c12471ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1155bf92db68b785bcae6957b1626007"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1155bf92db68b785bcae6957b1626007"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **replicaGroup)=0</td></tr>
+<tr class="separator:a1155bf92db68b785bcae6957b1626007"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8b96810932f289263e367b38724df8e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac8b96810932f289263e367b38724df8e"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;replicaGroup)=0</td></tr>
+<tr class="separator:ac8b96810932f289263e367b38724df8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affa4d640518ee1389c71f1c1c6a9ded4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="affa4d640518ee1389c71f1c1c6a9ded4"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>removeReplicaGroup</b> (const CHAR *pName)=0</td></tr>
+<tr class="separator:affa4d640518ee1389c71f1c1c6a9ded4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f8813a2eeee246ed61839a5098a2b28"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2f8813a2eeee246ed61839a5098a2b28"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createReplicaCataGroup</b> (const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pDatabasePath, const bson::BSONObj &amp;configure)=0</td></tr>
 <tr class="separator:a2f8813a2eeee246ed61839a5098a2b28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aee4852770f4742ccdd742b1f9da04890"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aee4852770f4742ccdd742b1f9da04890"></a>
-virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>activateReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **rg)=0</td></tr>
-<tr class="separator:aee4852770f4742ccdd742b1f9da04890"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70992269471e06b92b28596dad6bda07"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a70992269471e06b92b28596dad6bda07"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>activateReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **replicaGroup)=0</td></tr>
+<tr class="separator:a70992269471e06b92b28596dad6bda07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff9f05f3c36b3f1c567e43771f5d7bae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aff9f05f3c36b3f1c567e43771f5d7bae"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>activateReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;replicaGroup)=0</td></tr>
+<tr class="separator:aff9f05f3c36b3f1c567e43771f5d7bae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5ce96b8be7b25183074ee906a77e4ab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac5ce96b8be7b25183074ee906a77e4ab"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>execUpdate</b> (const CHAR *sql)=0</td></tr>
 <tr class="separator:ac5ce96b8be7b25183074ee906a77e4ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -219,6 +231,78 @@ virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>transactionR
 <tr class="memitem:a78a2e0ceb45142c71439522f4f799271"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a78a2e0ceb45142c71439522f4f799271"></a>
 virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>flushConfigure</b> (const bson::BSONObj &amp;options)=0</td></tr>
 <tr class="separator:a78a2e0ceb45142c71439522f4f799271"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82b47739d3300db82abaebf75ba57119"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a82b47739d3300db82abaebf75ba57119"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>crtJSProcedure</b> (const CHAR *code)=0</td></tr>
+<tr class="separator:a82b47739d3300db82abaebf75ba57119"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a162657cd9005dd10a96935d10c53107b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a162657cd9005dd10a96935d10c53107b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>rmProcedure</b> (const CHAR *spName)=0</td></tr>
+<tr class="separator:a162657cd9005dd10a96935d10c53107b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43ed724fda7c72d39a6c3524dd5c85a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43ed724fda7c72d39a6c3524dd5c85a1"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listProcedures</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition)=0</td></tr>
+<tr class="separator:a43ed724fda7c72d39a6c3524dd5c85a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abae9f6fc67c0ef3fc3082b30147d38f5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abae9f6fc67c0ef3fc3082b30147d38f5"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listProcedures</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition)=0</td></tr>
+<tr class="separator:abae9f6fc67c0ef3fc3082b30147d38f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad4292ebed959d906a1f1639061f67f05"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad4292ebed959d906a1f1639061f67f05"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *code, SDB_SPD_RES_TYPE *type, const bson::BSONObj &amp;errmsg)=0</td></tr>
+<tr class="separator:ad4292ebed959d906a1f1639061f67f05"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a300280d780b9563b082d323735067826"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a300280d780b9563b082d323735067826"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const CHAR *code, SDB_SPD_RES_TYPE *type, const bson::BSONObj &amp;errmsg)=0</td></tr>
+<tr class="separator:a300280d780b9563b082d323735067826"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae2373e4a2d86a89dc142df5950033dd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aae2373e4a2d86a89dc142df5950033dd"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>backupOffline</b> (const bson::BSONObj &amp;options)=0</td></tr>
+<tr class="separator:aae2373e4a2d86a89dc142df5950033dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a483f3e7d731cbdff87af6de6961d4c3d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a483f3e7d731cbdff87af6de6961d4c3d"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listBackup</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;options, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a483f3e7d731cbdff87af6de6961d4c3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a797fba4410edddf18e0297a341cd356b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a797fba4410edddf18e0297a341cd356b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listBackup</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;options, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a797fba4410edddf18e0297a341cd356b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a460817319c99be98a35fa622b04fb7b7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a460817319c99be98a35fa622b04fb7b7"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>removeBackup</b> (const bson::BSONObj &amp;options)=0</td></tr>
+<tr class="separator:a460817319c99be98a35fa622b04fb7b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b2096aa5fc6bee5b8af956db0c69780"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3b2096aa5fc6bee5b8af956db0c69780"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listTasks</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a3b2096aa5fc6bee5b8af956db0c69780"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c4505a4985bd9425d92a5a0aabb5d9f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6c4505a4985bd9425d92a5a0aabb5d9f"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listTasks</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a6c4505a4985bd9425d92a5a0aabb5d9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9b19036fe06e0b737f028673da75ea9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad9b19036fe06e0b737f028673da75ea9"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>waitTasks</b> (const SINT64 *taskIDs, SINT32 num)=0</td></tr>
+<tr class="separator:ad9b19036fe06e0b737f028673da75ea9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ec4d5fab27276b6c2a97dddd64be8a2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1ec4d5fab27276b6c2a97dddd64be8a2"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>cancelTask</b> (SINT64 taskID, BOOLEAN isAsync)=0</td></tr>
+<tr class="separator:a1ec4d5fab27276b6c2a97dddd64be8a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af27d2b02e0d57b8fbb1fa090814eb578"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af27d2b02e0d57b8fbb1fa090814eb578"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>setSessionAttr</b> (const bson::BSONObj &amp;options=_sdbStaticObject)=0</td></tr>
+<tr class="separator:af27d2b02e0d57b8fbb1fa090814eb578"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45e5cc621dc9d7372f15e741af1f6283"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45e5cc621dc9d7372f15e741af1f6283"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>closeAllCursors</b> ()=0</td></tr>
+<tr class="separator:a45e5cc621dc9d7372f15e741af1f6283"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c586b88ad9278db249e91d7eaeb0ad8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c586b88ad9278db249e91d7eaeb0ad8"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> (BOOLEAN *result)=0</td></tr>
+<tr class="separator:a0c586b88ad9278db249e91d7eaeb0ad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a940830347e534a1587354172b1cca727"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a940830347e534a1587354172b1cca727"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createDomain</b> (const CHAR *pDomainName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1__sdbDomain.html">_sdbDomain</a> **domain)=0</td></tr>
+<tr class="separator:a940830347e534a1587354172b1cca727"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fdc78c610bb9e9d568bbfc1f9636278"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9fdc78c610bb9e9d568bbfc1f9636278"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createDomain</b> (const CHAR *pDomainName, const bson::BSONObj &amp;options, <a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;domain)=0</td></tr>
+<tr class="separator:a9fdc78c610bb9e9d568bbfc1f9636278"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f3ed50ae72f92b7a949c62126ab592b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0f3ed50ae72f92b7a949c62126ab592b"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>dropDomain</b> (const CHAR *pDomainName)=0</td></tr>
+<tr class="separator:a0f3ed50ae72f92b7a949c62126ab592b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a460f54665dfce6beabde54a268d5ffb9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a460f54665dfce6beabde54a268d5ffb9"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getDomain</b> (const CHAR *pDomainName, <a class="el" href="classsdbclient_1_1__sdbDomain.html">_sdbDomain</a> **domain)=0</td></tr>
+<tr class="separator:a460f54665dfce6beabde54a268d5ffb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88faf19adddfba0833ca573279a5744c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a88faf19adddfba0833ca573279a5744c"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getDomain</b> (const CHAR *pDomainName, <a class="el" href="classsdbclient_1_1sdbDomain.html">sdbDomain</a> &amp;domain)=0</td></tr>
+<tr class="separator:a88faf19adddfba0833ca573279a5744c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a457302979c9ec34e6de131960ffccbd7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a457302979c9ec34e6de131960ffccbd7"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listDomains</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a457302979c9ec34e6de131960ffccbd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f73e117c769d5ebcaad54ee3985ce49"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f73e117c769d5ebcaad54ee3985ce49"></a>
+virtual INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listDomains</b> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)=0</td></tr>
+<tr class="separator:a4f73e117c769d5ebcaad54ee3985ce49"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -227,12 +311,12 @@ static <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a> *&#160;</td><t
 <tr class="separator:ad7181ea46a96424b126b69b7530491a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
+<li>E:/sequoiadb/client/include/<a class="el" href="client_8hpp_source.html">client.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:30:54 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Sun Jul 6 2014 16:02:09 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
