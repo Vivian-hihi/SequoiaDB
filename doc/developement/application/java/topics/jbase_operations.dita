@@ -81,12 +81,9 @@ while (cursor.hasNext()) {
     rg.start();
   } catch (BaseException e) {
 	  System.out.println("Sequoiadb driver error, error description" + e.getErrorType());
-	}
-        </codeblock><note>
-            <p>1)rg.createNode() 方法的第一个参数为新增节点所在的主机名，注意这里必须是主机名（暂时不支持使用IP地址），
-              第三个参数为数据文件存放路径，SequoiaDB 将自动新建该目录，但需要确保SequoiaDB管理员用户（默认sdbadmin）有写权限。</p>
-            <p>2)rg.start()
-              方法用于启动一个分区组的所有节点，该函数一般需要等待10Sec钟左右才可完成。该方法不保证分区组选举完成，为了保证分区组可以正常使用，start完成后，还需要等待30Sec时间才可以正常使用新建的分区组。</p>
+	}</codeblock><note>
+	  <p>1）rg.createNode() 方法的第一个参数为新增节点所在的主机名，注意这里必须是主机名（暂时不支持使用IP地址），第三个参数为数据文件存放路径，SequoiaDB 将自动新建该目录，但需要确保SequoiaDB管理员用户（默认sdbadmin）有写权限。</p>
+	  <p>2）rg.start() 方法用于启动一个分区组的所有节点，该函数一般需要等待10Sec钟左右才可完成。该方法不保证分区组选举完成，为了保证分区组可以正常使用，start完成后，还需要等待30Sec时间才可以正常使用新建的分区组。</p>
           </note></li>
         <li>在分区组增加节点 <codeblock>String connString = "192.168.1.2:11810";
   try {
@@ -99,8 +96,7 @@ while (cursor.hasNext()) {
   } catch (BaseException e) {
 	  System.out.println("Sequoiadb driver error, error description" + e.getErrorType());
     }</codeblock><note>
-            <p>rg.createNode() 方法的第一个参数为新增节点所在的主机名，注意这里必须是主机名（暂时不支持使用IP地址），第三个参数为数据文件存放路径，SequoiaDB
-              将自动新建该目录，但需要确保SequoiaDB管理员用户（默认sdbadmin）有写权限。</p>
+            <p>rg.createNode() 方法的第一个参数为新增节点所在的主机名，注意这里必须是主机名（暂时不支持使用IP地址），第三个参数为数据文件存放路径，SequoiaDB将自动新建该目录，但需要确保SequoiaDB管理员用户（默认sdbadmin）有写权限。</p>
           </note>
         </li>
       </ul>

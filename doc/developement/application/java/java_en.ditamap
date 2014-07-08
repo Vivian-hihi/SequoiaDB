@@ -5,8 +5,8 @@
   <topicref href="topics/joverview_en.dita"/>
   <topicref href="topics/java_environment_en.dita"/>
   <topicref href="topics/jbase_operations_en.dita"/>
+  <topicref href="topics/datasource_en.dita"/>
   <topicref href="topics/jsql_en.dita"/>
   <topicref href="topics/java_api_en.dita"/>
  </topicref>
-
 </map>

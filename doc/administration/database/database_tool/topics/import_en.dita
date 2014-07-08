@@ -173,156 +173,161 @@
       <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
     <section>
-      <title>sdbload</title>
-      <p>sdbload is a batch import tool in SequoiaDB database, it can achieve from a JSON format
-        data stored file import into Sequoiadb database. </p>
-      <p>The record of JSON format must meet the json definition:Left and right curly braces ({})as
-        a record delimiter; and the string data type must be contained in doublequotation marks;and
-        escape character is defined as the backslash(\).。</p>
-    </section>
-    <section>
-      <title>Options</title>
+      <title>sdbimprt自动判断的类型：</title>
       <simpletable>
         <sthead>
-          <stentry>Params</stentry>
-          <stentry>Description</stentry>
+          <stentry>csv数据</stentry>
+          <stentry>sdbimprt自动判断的类型</stentry>
+          <stentry>实际数据</stentry>
         </sthead>
         <strow>
-          <stentry>--help</stentry>
-          <stentry>return the basic help and usage information</stentry>
+          <stentry>123</stentry>
+          <stentry>数值</stentry>
+          <stentry>123</stentry>
         </strow>
         <strow>
-          <stentry>--hostname,-h</stentry>
-          <stentry>import data from SequoiaDB of the specified hostname.In default,the
-            <b>sdbload</b> try to connect to local hostname.</stentry>
+          <stentry>123.1</stentry>
+          <stentry>数值</stentry>
+          <stentry>123.1</stentry>
         </strow>
         <strow>
-          <stentry>
-            --svcname,-s
+          <stentry>+123</stentry>
+          <stentry>数值</stentry>
+          <stentry>123</stentry>
+        </strow>
+        <strow>
+          <stentry>-123</stentry>
+          <stentry>数值</stentry>
+          <stentry>-123</stentry>
+        </strow>
+        <strow>
+          <stentry>2E+2</stentry>
+          <stentry>数值</stentry>
+          <stentry>200</stentry>
+        </strow>
+        <strow>
+          <stentry>-2E+2</stentry>
+          <stentry>数值</stentry>
+          <stentry>-200</stentry>
+        </strow>
+        <strow>
+          <stentry>0123</stentry>
+          <stentry>数值</stentry>
+          <stentry>123</stentry>
+        </strow>
+        <strow>
+          <stentry>"123"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>123</stentry>
+        </strow>
+        <strow>
+          <stentry>123a</stentry>
+          <stentry>字符串</stentry>
+          <stentry>123a</stentry>
+        </strow>
+        <strow>
+          <stentry>"ab""c"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>ab"c</stentry>
+        </strow>
+        <strow>
+          <stentry>"{a:1}"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>{a:1}</stentry>
+        </strow>
+        <strow>
+          <stentry>"true"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>true</stentry>
+        </strow>
+        <strow>
+          <stentry>"false"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>false</stentry>
+        </strow>
+        <strow>
+          <stentry>"null"</stentry>
+          <stentry>字符串</stentry>
+          <stentry>null</stentry>
+        </strow>
+        <strow>
+          <stentry>true</stentry>
+          <stentry>布尔</stentry>
+          <stentry>true</stentry>
+        </strow>
+        <strow>
+          <stentry>false</stentry>
+          <stentry>布尔</stentry>
+          <stentry>false</stentry>
+        </strow>
+        <strow>
+          <stentry>null</stentry>
+          <stentry>空</stentry>
+          <stentry>null</stentry>
+        </strow>
+      </simpletable>
+    </section>    
+    <p>从1.8版本开始支持指定类型和默认值：</p>
+    <p>语法：field [type] [default &lt;default value ]</p>
+    <p>支援数据类型（type）： int(integer)， long， bool(boolean)， double， string， null</p>
+    <p>支援特殊数据类型：timestamp， date</p>
+    <p>例子：<codeblock>name string default "Jack", age int default 18, phone string</codeblock> </p>  
+    <section>
+      <title>指定的类型与数据：</title>
+      <simpletable>
+        <sthead>
+          <stentry>指定的类型</stentry>
+          <stentry>支援的数据类型</stentry>
+          <stentry>注意</stentry>
+        </sthead>
+        <strow>
+          <stentry>int(interger)</stentry>
+          <stentry>int，string，bool</stentry>
+          <stentry>bool类型，true转换1，false转换0
           </stentry>
-          <stentry>specify port.In default,the <b>sdbload</b> try to connect to the host which port
-            number is 11810.</stentry>
         </strow>
         <strow>
-          <stentry>--user,-u
+          <stentry>long</stentry>
+          <stentry>long，string，int，bool</stentry>
+          <stentry>bool类型，true转换1，false转换0
           </stentry>
-          <stentry>database username.</stentry>
         </strow>
         <strow>
-          <stentry>--password,-w
-          </stentry>
-          <stentry>database password.</stentry>
+          <stentry>bool(boolean)</stentry>
+          <stentry>bool，string，int，long</stentry>
+          <stentry>int和long类型，0转换false，不等于0转换true</stentry>
         </strow>
         <strow>
-          <stentry>--delchar,-a</stentry>
-          <stentry>specify the character delimiter." " " is default,"csv" format effective.</stentry>
+          <stentry>double</stentry>
+          <stentry>double，string，int</stentry>
+          <stentry></stentry>
         </strow>
         <strow>
-          <stentry>
-            --delfield,-e
-          </stentry>
-          <stentry>specify the field delimiter. "," is default,"csv" format effective. </stentry>
+          <stentry>string</stentry>
+          <stentry>int，long，bool，double，string，timestamp，date，null</stentry>
+          <stentry></stentry>
         </strow>
         <strow>
-          <stentry>
-            --delrecord,-r
-          </stentry>
-          <stentry>specify the record delimiter."\n" is default,"csv" format effective.</stentry>
+          <stentry>timestamp</stentry>
+          <stentry>string，long</stentry>
+          <stentry>如果数据是string，如“2014-01-01-10.30.00.000000”，“1388543400000”，如果是long，如1388543400000，这两种格式是正确的，数值代表的是毫秒单位</stentry>
         </strow>
         <strow>
-          <stentry>
-            --csname,-c
-          </stentry>
-          <stentry>specify the collectionspace name of exported data.</stentry>
+          <stentry>date</stentry>
+          <stentry>string，long</stentry>
+          <stentry>如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的秒单位</stentry>
         </strow>
         <strow>
-          <stentry>
-            --clname,-l
-          </stentry>
-          <stentry>specify the collection name of exported data.</stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --file
-          </stentry>
-          <stentry>specify the imported file name. </stentry>
+          <stentry>null</stentry>
+          <stentry></stentry>
+          <stentry>指定了数据类型为null，那么无论数据是什么，都是null</stentry>
         </strow>        
-        <strow>
-          <stentry>
-            --model
-          </stentry>
-          <stentry>specify the data capture mode, the default "io","io" or "hdfs" pattern can be.</stentry>
-        </strow>
-        <strow>
-          <stentry>--libpath</stentry>
-          <stentry>Specified load library path, hafs mode is active.</stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --sourcehost
-          </stentry>
-          <stentry>Specifies the data source to connect the server's host name, hafs mode is active.</stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --sourceport
-          </stentry>
-          <stentry>Specifies the data source to connect the service side of the port, hdfs mode is active.</stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --sourceuser
-          </stentry>
-          <stentry>specify the collection data source server user name, hdfs mode is active.</stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --type 
-          </stentry>
-          <stentry>specify the import data file type, default "csv", "json" or "csv" type can be.</stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --fields 
-          </stentry>
-          <stentry>specify the import data filed names."csv" formats.</stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --headerline
-          </stentry>
-          <stentry>Specifies whether the first row of imported data as field names."false" is default,"csv" format effective. </stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --sparse
-          </stentry>
-          <stentry>Specify the import data, automatically add the field name."ture" is default,"csv" format effective.</stentry>
-        </strow>
-        <strow>
-          <stentry>
-            --extra
-          </stentry>
-          <stentry>Specify the import data, automatically add value."false" is default,"csv" format effective.</stentry>
-        </strow>
-        <strow>
-          <stentry>--linepriority
-          </stentry>
-          <stentry>Current delimiter default priority is: record delimiter > character delimiter > field delimiter, the default value is ture; If set to false, 
-            then the priority of the separator: character deliiter > record delimiter > field delimiter.</stentry>
-        </strow> 
       </simpletable>
     </section>
-    <note>Linepriority parameters need to be particularly concerned, if set properly, it may fail to import the data.<fig></fig>When the record contains "record separator" 
-      and linepriority is true, the tool will give priority in accordance with the "record separator" resolution, which led to the import fails. For example: 
-      If the record is {"name":"Mike\n"}, the false linepriority mode should be selected.
-    </note>
-    <section>
-      <title>Usage</title>
-      <p> In the following sample,sdbload will import data into local database which port is 11810,
-        and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import file is<i>
-          test.json</i> with asynchronous loading.</p>
-      <codeblock>sdbload –h localhost -s 11810 –-file test.json –c foo –l bar –type json</codeblock>
-    </section>
+    <p>数据类型是可选的，不填则程序自动判断类型，判断以上面表格为准。</p>    
+    <p>数据类型优先级：</p>
+    <p>1.不指定数据类型（不支援特殊数据类型）：程序自动判断类型，优先级是null > bool > int > double > long > string</p>
+    <p>2.指定数据类型：优先级是指定的类型 > 支援的类型（参考指定的类型与数据表格） > null</p>
+    <p>3.指定数据类型，并且带默认值：优先级是指定的类型 > 支援的类型（参考指定的类型与数据表格） > 默认值 > null</p>    
   </body>
 </topic>

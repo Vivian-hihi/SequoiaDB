@@ -5,5 +5,21 @@
   <body>
     <p>This part is related to the C++ API document.</p>
     <p><xref href="..\..\..\..\cpp\html\index.html" format="html">C++ API</xref></p>
+    <section>
+      <title>历史更新情况：</title>
+      <p><b>Version1.8</b></p>
+      <p>1、sdb类新添加的接口：</p><codeblock>connect，可提供多个地址，接口随机选择一个有效的地址连接。
+createCollectionSpace，提供一个BSONObject的选项，使创建集合空间更加灵活
+backupOffline，离线备份支持更多的选项
+createDomain，创建域
+getDomain，获取域
+dropDomain,删除域
+listDomain，列出所有域</codeblock>
+      <p>2、sdbCollection类新添加的接口：</p><codeblock>alterCollection，修改集合（表）属性</codeblock>
+      <p>3、添加Domain类用于与域相关的操作</p>
+      <p><b>Version1.6</b></p>
+      <p>1. Add a class Node to replace the original class ReplicaNode. Class ReplicaNode and methods associated with it will be abandoned in the version 2.x.</p>
+      <p>For details, please see the relevant API.</p>
+    </section>
   </body>
 </topic>
