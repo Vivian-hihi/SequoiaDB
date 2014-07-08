@@ -1048,6 +1048,18 @@
             <stentry>rest common unknow</stentry>
             <stentry>-260</stentry>
          </strow>
+         <strow>
+            <stentry>successfully done on catalog, but sth wrong happened when did it on data group.</stentry>
+            <stentry>-261</stentry>
+         </strow>
+         <strow>
+            <stentry>domain does not have any groups at all</stentry>
+            <stentry>-262</stentry>
+         </strow>
+         <strow>
+            <stentry>suggest sdb om's user to change the passwd</stentry>
+            <stentry>-263</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

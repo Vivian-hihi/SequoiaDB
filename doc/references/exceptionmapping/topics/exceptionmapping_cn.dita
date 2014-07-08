@@ -1048,6 +1048,18 @@
             <stentry>未知的命令</stentry>
             <stentry>-260</stentry>
          </strow>
+         <strow>
+            <stentry>在编目上执行成功但是由于某种原因导致在数据节点上执行失败</stentry>
+            <stentry>-261</stentry>
+         </strow>
+         <strow>
+            <stentry>域中不包含任何数据组</stentry>
+            <stentry>-262</stentry>
+         </strow>
+         <strow>
+            <stentry>提示用户修改登陆密码</stentry>
+            <stentry>-263</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>
