@@ -55,28 +55,6 @@ SDB_EXTERN_C_START
 /** \fn
 */
 
-
-/*********** Test example *************
-
-* ========== Encode ===========
-* char *str = "1234567" ;
-* int len = getEnBase64Size ( str ) ;
-* char *out = (char *)malloc(len) ;
-* base64Encode( str, out, len ) ;
-* print ( out ) ;
-* free( out ) ;
-
-* ========== Decode ===========
-* char *str = "1234567" ;
-* int len = getDeBase64Size ( str ) ;
-* char *out = (char *)malloc(len) ;
-* base64Decode( str, out, len ) ;
-* print ( out ) ;
-* free( out ) ;
-
-***************************************/
-
-
 /** \fn int base64Encode ( char *s, int in_size, char *out, int out_size )
     \brief String convert base64
     \param [in] s Input buffer
@@ -85,6 +63,16 @@ SDB_EXTERN_C_START
                                    make sure it's large enough
     \param [out] out Output string
     \return If successful return the length of base64,else return 0
+    \code
+     char *str = "hello world" ;
+     int strLen = strlen( str ) ;
+     int len = getEnBase64Size ( strLen ) ;
+     char *out = (char *)malloc( len ) ;
+     memset( out, 0, len ) ;
+     base64Encode( str, out, len ) ;
+     print ( out ) ;
+     free( out ) ;
+    \endcode
 */
 SDB_EXPORT int base64Encode ( const char *s, int in_size, char *out, int out_size ) ;
 
@@ -95,20 +83,29 @@ SDB_EXPORT int base64Encode ( const char *s, int in_size, char *out, int out_siz
                                    make sure it's large enough
     \param [out] out Output string
     \return If successful return the length of string,else return 0
+    \code
+     char *str = "aGVsbG8gd29ybGQ=" ;
+     int len = getDeBase64Size ( str ) ;
+     char *out = (char *)malloc( len ) ;
+     memset( out, 0, len ) ;
+     base64Decode( str, out, len ) ;
+     print ( out ) ;
+     free( out ) ;
+   \endcode
 */
 SDB_EXPORT int base64Decode ( const char *s, char *out, int out_size ) ;
 
 /** \fn int getEnBase64Size ( int size )
     \brief Get string convert base64 need size
     \param [in] size original data size
-    \return Base64 size
+    \return Base64 length + 1
 */
 SDB_EXPORT int getEnBase64Size ( int size ) ;
 
-/** \fn int getDeBase64Size ( char *s )
+/** \fn int getDeBase64Size ( const char *s )
     \brief Get base64 convert string need size
     \param [in] s Base64
-    \return String size
+    \return String length + 1
 */
 SDB_EXPORT int getDeBase64Size ( const char *s ) ;
 
