@@ -837,6 +837,7 @@
                     <file name="references/methods/topics/getSlave.dita"/>
                     <file name="references/methods/topics/hint_en.dita"/>
                     <file name="references/methods/topics/hint.dita"/>
+                    <file name="references/methods/topics/invalidateCache.dita"/>
                     <file name="references/methods/listBackup_en.dita"/>
                     <file name="references/methods/listBackup.dita"/>
                     <file name="references/methods/topics/listCollections_domain.dita"/>
@@ -957,6 +958,7 @@
                     <file name="references/methods/topics_en_v2/db.getCS.dita"/>
                     <file name="references/methods/topics_en_v2/db.getDomain.dita"/>
                     <file name="references/methods/topics_en_v2/db.getRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.invalidateCache.dita"/>
                     <file name="references/methods/topics_en_v2/db.list.dita"/>
                     <file name="references/methods/topics_en_v2/db.listBackup.dita"/>
                     <file name="references/methods/topics_en_v2/db.listCollections.dita"/>

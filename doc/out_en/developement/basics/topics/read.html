@@ -194,7 +194,7 @@
 
       <ul class="ul">
         <li class="li">
-          <p class="p"><a class="xref" href="../../../references/methods/topics/csort.html">cursor.sort()</a>sort(&lt;sort&gt;)</p>
+          <p class="p">cursor.sort(&lt;sort&gt;)</p>
 
           <div class="p">sort()方法用来按指定的字段排序，语法格式为：sort({"字段名1"：1|-1,"字段名2"：1|-1,...})，1为升序，-1为降序。如果find方法的sel参数不设定内容，sort()方法按指定sort参数设定的字段排序，如果sel参数设定了返回的字段名，那么sort()方法只能对sel参数中选定的字段进行排序。如：<pre class="pre codeblock">db.foo.bar.find().sort({age:1}) 对返回的记录按age字段值的升序排序</pre>
 <pre class="pre codeblock">db.foo.bar.find(null,{name:""}).sort({age:1})此操作实际上对返回的记录达不到排序的效果。</pre>
@@ -202,15 +202,15 @@
 
         </li>
 
-        <li class="li"><a class="xref" href="../../../references/methods/topics/hint.html">cursor.hint()</a>hint(&lt;hint&gt;)<div class="p">添加索引加快查找速度，假设存在名为"testIndex"的索引：<pre class="pre codeblock">db.foo.bar.find().hint({"":"testIndex"})</pre>
+        <li class="li">cursor.hint(&lt;hint&gt;)<div class="p">添加索引加快查找速度，假设存在名为"testIndex"的索引：<pre class="pre codeblock">db.foo.bar.find().hint({"":"testIndex"})</pre>
 </div>
 </li>
 
-        <li class="li"><a class="xref" href="../../../references/methods/topics/climit.html">cursor.limit()</a>limit(&lt;num&gt;)<div class="p">在结果集中限制返回的记录条数：<pre class="pre codeblock">db.foo.bar.find().limit(3)返回结果集里面的的前三条记录</pre>
+        <li class="li">cursor.limit(&lt;num&gt;)<div class="p">在结果集中限制返回的记录条数：<pre class="pre codeblock">db.foo.bar.find().limit(3)返回结果集里面的的前三条记录</pre>
 </div>
 </li>
 
-        <li class="li"><a class="xref" href="../../../references/methods/topics/cskip.html">cursor.skip()</a>skip(&lt;num&gt;)<div class="p">skip()方法控制结果集的开始点，即跳过前面的num条记录，从num+1条记录开始返回：<pre class="pre codeblock">db.foo.bar.find().skip(5)从查询的结果集的第6条记录开始返回</pre>
+        <li class="li">cursor.skip(&lt;num&gt;)<div class="p">skip()方法控制结果集的开始点，即跳过前面的num条记录，从num+1条记录开始返回：<pre class="pre codeblock">db.foo.bar.find().skip(5)从查询的结果集的第6条记录开始返回</pre>
 </div>
 </li>
 
@@ -221,6 +221,8 @@
 
 <a class="xref" href="../../../references/methods/topics/next.html">db.foo.bar.find().next()</a> 返回当前游标指向的下一条记录
 
+<a class="xref" href="../../../references/methods/topics/ccolse.html">db.foo.bar.find().close()</a>关闭当前游标，当前游标不再可用           
+            
 <a class="xref" href="../../../references/methods/topics/dbcount.html">db.foo.bar.find().count()</a>返回当前游标的记录总数
             
 <a class="xref" href="../../../references/methods/topics/csize.html">db.foo.bar.find().size()</a> 返回当前游标到最终游标的距离

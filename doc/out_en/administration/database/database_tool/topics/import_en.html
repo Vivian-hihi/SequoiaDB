@@ -51,35 +51,35 @@
 
       <div class="p">
         <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d17848e30" class="stentry">usage</th>
+            <th valign="bottom" align="left" id="d17679e30" class="stentry">usage</th>
 
-            <th valign="bottom" align="left" id="d17848e33" class="stentry">default</th>
+            <th valign="bottom" align="left" id="d17679e33" class="stentry">default</th>
 
-            <th valign="bottom" align="left" id="d17848e36" class="stentry">be equipped</th>
-
-          </tr>
-<tr class="strow">
-            <td valign="top" headers="d17848e30" class="stentry">string delimiter</td>
-
-            <td valign="top" headers="d17848e33" class="stentry"> "</td>
-
-            <td valign="top" headers="d17848e36" class="stentry">yes </td>
+            <th valign="bottom" align="left" id="d17679e36" class="stentry">be equipped</th>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d17848e30" class="stentry">character delimiter</td>
+            <td valign="top" headers="d17679e30" class="stentry">string delimiter</td>
 
-            <td valign="top" headers="d17848e33" class="stentry"> ,</td>
+            <td valign="top" headers="d17679e33" class="stentry"> "</td>
 
-            <td valign="top" headers="d17848e36" class="stentry">yes</td>
+            <td valign="top" headers="d17679e36" class="stentry">yes </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d17848e30" class="stentry">record delimiter</td>
+            <td valign="top" headers="d17679e30" class="stentry">character delimiter</td>
 
-            <td valign="top" headers="d17848e33" class="stentry"> '\n'(0X0D) </td>
+            <td valign="top" headers="d17679e33" class="stentry"> ,</td>
 
-            <td valign="top" headers="d17848e36" class="stentry">yes</td>
+            <td valign="top" headers="d17679e36" class="stentry">yes</td>
+
+          </tr>
+<tr class="strow">
+            <td valign="top" headers="d17679e30" class="stentry">record delimiter</td>
+
+            <td valign="top" headers="d17679e33" class="stentry"> '\n'(0X0D) </td>
+
+            <td valign="top" headers="d17679e36" class="stentry">yes</td>
 
           </tr>
 </table>
@@ -91,150 +91,168 @@
     <div class="section"><h2 class="title sectiontitle">Options</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d17848e88" class="stentry">Param</th>
+          <th valign="bottom" align="left" id="d17679e88" class="stentry">Param</th>
 
-          <th valign="bottom" align="left" id="d17848e91" class="stentry">Description</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">--help</td>
-
-          <td valign="top" headers="d17848e91" class="stentry">return the basic help and usage information.</td>
+          <th valign="bottom" align="left" id="d17679e91" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">--hostname,-h                </td>
+          <td valign="top" headers="d17679e88" class="stentry">--help,-h</td>
 
-          <td valign="top" headers="d17848e91" class="stentry">import data from SequoiaDB of the specified hostname.In default,the
-              <strong class="ph b">sdbexprt</strong> try to connect to local hostname.</td>
+          <td valign="top" headers="d17679e91" class="stentry">return the basic help and usage information.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
-            --svcname,-s
+          <td valign="top" headers="d17679e88" class="stentry">--version</td>
+
+          <td valign="top" headers="d17679e91" class="stentry">returns version information.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e88" class="stentry">--hostname,-s                </td>
+
+          <td valign="top" headers="d17679e91" class="stentry">import data from SequoiaDB of the specified hostname.In default,the
+            <strong class="ph b">sdbimprt</strong> try to connect to local hostname.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e88" class="stentry">
+            --svcname,-p
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">specify port.In default,the <strong class="ph b">sdbimprt</strong> try to connect to the host which port
-            number is 11810.</td>
+          <td valign="top" headers="d17679e91" class="stentry">specify port.In default,the <strong class="ph b">sdbimprt</strong> try to connect to the host which port number is 11810.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">--user,-u
+          <td valign="top" headers="d17679e88" class="stentry">--user,-u
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">database username.</td>
+          <td valign="top" headers="d17679e91" class="stentry">database username.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">--password,-w
+          <td valign="top" headers="d17679e88" class="stentry">--password,-w
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">database password.</td>
+          <td valign="top" headers="d17679e91" class="stentry">database password.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">--delchar,-a</td>
+          <td valign="top" headers="d17679e88" class="stentry">--delchar,-a</td>
 
-          <td valign="top" headers="d17848e91" class="stentry">specify the character delimiter." " " is default,"csv" format effective.</td>
+          <td valign="top" headers="d17679e91" class="stentry">specify the character delimiter." " " is default,"csv" format effective.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --delfield,-e
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">specify the field delimiter. "," is default,"csv" format effective. </td>
+          <td valign="top" headers="d17679e91" class="stentry">specify the field delimiter. "," is default,"csv" format effective. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --delrecord,-r
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">specify the record delimiter."\n" is default,"csv" format effective.</td>
+          <td valign="top" headers="d17679e91" class="stentry">specify the record delimiter."\n" is default,"csv" format effective.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --csname,-c
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">specify the collectionspace name of exported data.</td>
+          <td valign="top" headers="d17679e91" class="stentry">specify the collectionspace name of exported data.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --clname,-l
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">specify the collection name of exported data.</td>
+          <td valign="top" headers="d17679e91" class="stentry">specify the collection name of exported data.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">--insertnum,-n
+          </td>
+
+          <td valign="top" headers="d17679e91" class="stentry">Batch import records, if you set one, use common way to import, if more than one, use batch mode ,the setting range is 1-100000. </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e88" class="stentry">
             --file
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">specify the name of file want to import.</td>
+          <td valign="top" headers="d17679e91" class="stentry">specify the name of file want to import.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --type
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">specify the format of import data.It can be CSV or JSON.</td>
+          <td valign="top" headers="d17679e91" class="stentry">specify the format of import data.It can be CSV or JSON.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --fields
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">Specify import data field names."csv" format effective. </td>
+          <td valign="top" headers="d17679e91" class="stentry">Specify import data field names."csv" format effective. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --headerline
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">Specifies whether the first row of imported data as field names."false" is default,"csv" format effective. </td>
+          <td valign="top" headers="d17679e91" class="stentry">Specifies whether the first row of imported data as field names."false" is default,"csv" format effective. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --sparse
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">Specify the import data, automatically add the field name."ture" is default,"csv" format effective.</td>
+          <td valign="top" headers="d17679e91" class="stentry">Specify the import data, automatically add the field name."ture" is default,"csv" format effective.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">
+          <td valign="top" headers="d17679e88" class="stentry">
             --extra
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">Specify the import data, automatically add value."false" is default,"csv" format effective.</td>
+          <td valign="top" headers="d17679e91" class="stentry">Specify the import data, automatically add value."false" is default,"csv" format effective.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">--linepriority
+          <td valign="top" headers="d17679e88" class="stentry">--linepriority
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">Current delimiter default priority is: record delimiter, character delimiter, field delimiter, the default value is ture; If set to false, 
+          <td valign="top" headers="d17679e91" class="stentry">Current delimiter default priority is: record delimiter, character delimiter, field delimiter, the default value is ture; If set to false, 
             then the priority of the separator: character deliiter, record delimiter, field delimiter.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e88" class="stentry">--stringtype
+          <td valign="top" headers="d17679e88" class="stentry">--force
           </td>
 
-          <td valign="top" headers="d17848e91" class="stentry">All values are forced to import into a string type, default false,csv format is valid.</td>
+          <td valign="top" headers="d17679e91" class="stentry">If the data has not utf8 data, forced to import data, default false.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e88" class="stentry">--errorstop
+          </td>
+
+          <td valign="top" headers="d17679e91" class="stentry">If you encounter an error stop, default false.</td>
 
         </tr>
 </table>
-
       
     </div>
 
@@ -250,217 +268,261 @@ When the record contains "record separator"
         and collectionspace name is <em class="ph i">foo</em>,collection name is<em class="ph i"> bar</em>,and import type is
         csv,import file is<em class="ph i"> test.csv</em>.</p>
 
-      <pre class="pre codeblock">sdbimprt –h localhost –s 11810 -–type csv –-file test.csv -c foo -l bar</pre>
+      <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar</pre>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">sdbload</h2>
-      
-      <p class="p">sdbload is a batch import tool in SequoiaDB database, it can achieve from a JSON format
-        data stored file import into Sequoiadb database. </p>
-
-      <p class="p">The record of JSON format must meet the json definition:Left and right curly braces ({})as
-        a record delimiter; and the string data type must be contained in doublequotation marks;and
-        escape character is defined as the backslash(\).。</p>
-
-    </div>
-
-    <div class="section"><h2 class="title sectiontitle">Options</h2>
+    <div class="section"><h2 class="title sectiontitle">sdbimprt自动判断的类型：</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d17848e316" class="stentry">Params</th>
+          <th valign="bottom" align="left" id="d17679e330" class="stentry">csv数据</th>
 
-          <th valign="bottom" align="left" id="d17848e319" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d17679e333" class="stentry">sdbimprt自动判断的类型</th>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">--help</td>
-
-          <td valign="top" headers="d17848e319" class="stentry">return the basic help and usage information</td>
+          <th valign="bottom" align="left" id="d17679e336" class="stentry">实际数据</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">--hostname,-h</td>
+          <td valign="top" headers="d17679e330" class="stentry">123</td>
 
-          <td valign="top" headers="d17848e319" class="stentry">import data from SequoiaDB of the specified hostname.In default,the
-            <strong class="ph b">sdbload</strong> try to connect to local hostname.</td>
+          <td valign="top" headers="d17679e333" class="stentry">数值</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">123</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --svcname,-s
+          <td valign="top" headers="d17679e330" class="stentry">123.1</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">数值</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">123.1</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">+123</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">数值</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">123</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">-123</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">数值</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">-123</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">2E+2</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">数值</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">200</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">-2E+2</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">数值</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">-200</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">0123</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">数值</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">123</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">"123"</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">字符串</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">123</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">123a</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">字符串</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">123a</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">"ab""c"</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">字符串</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">ab"c</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">"{a:1}"</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">字符串</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">{a:1}</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">"true"</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">字符串</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">true</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">"false"</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">字符串</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">false</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">"null"</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">字符串</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">null</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">true</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">布尔</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">true</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">false</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">布尔</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">false</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e330" class="stentry">null</td>
+
+          <td valign="top" headers="d17679e333" class="stentry">空</td>
+
+          <td valign="top" headers="d17679e336" class="stentry">null</td>
+
+        </tr>
+</table>
+
+    </div>
+    
+    <p class="p">从1.8版本开始支持指定类型和默认值：</p>
+
+    <p class="p">语法：field [type] [default &lt;default value ]</p>
+
+    <p class="p">支援数据类型（type）： int(integer)， long， bool(boolean)， double， string， null</p>
+
+    <p class="p">支援特殊数据类型：timestamp， date</p>
+
+    <div class="p">例子：<pre class="pre codeblock">name string default "Jack", age int default 18, phone string</pre>
+ </div>
+  
+    <div class="section"><h2 class="title sectiontitle">指定的类型与数据：</h2>
+      
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d17679e577" class="stentry">指定的类型</th>
+
+          <th valign="bottom" align="left" id="d17679e580" class="stentry">支援的数据类型</th>
+
+          <th valign="bottom" align="left" id="d17679e583" class="stentry">注意</th>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e577" class="stentry">int(interger)</td>
+
+          <td valign="top" headers="d17679e580" class="stentry">int，string，bool</td>
+
+          <td valign="top" headers="d17679e583" class="stentry">bool类型，true转换1，false转换0
           </td>
 
-          <td valign="top" headers="d17848e319" class="stentry">specify port.In default,the <strong class="ph b">sdbload</strong> try to connect to the host which port
-            number is 11810.</td>
-
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">--user,-u
+          <td valign="top" headers="d17679e577" class="stentry">long</td>
+
+          <td valign="top" headers="d17679e580" class="stentry">long，string，int，bool</td>
+
+          <td valign="top" headers="d17679e583" class="stentry">bool类型，true转换1，false转换0
           </td>
 
-          <td valign="top" headers="d17848e319" class="stentry">database username.</td>
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d17679e577" class="stentry">bool(boolean)</td>
+
+          <td valign="top" headers="d17679e580" class="stentry">bool，string，int，long</td>
+
+          <td valign="top" headers="d17679e583" class="stentry">int和long类型，0转换false，不等于0转换true</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">--password,-w
-          </td>
+          <td valign="top" headers="d17679e577" class="stentry">double</td>
 
-          <td valign="top" headers="d17848e319" class="stentry">database password.</td>
+          <td valign="top" headers="d17679e580" class="stentry">double，string，int</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">--delchar,-a</td>
-
-          <td valign="top" headers="d17848e319" class="stentry">specify the character delimiter." " " is default,"csv" format effective.</td>
+          <td valign="top" headers="d17679e583" class="stentry"> </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --delfield,-e
-          </td>
+          <td valign="top" headers="d17679e577" class="stentry">string</td>
 
-          <td valign="top" headers="d17848e319" class="stentry">specify the field delimiter. "," is default,"csv" format effective. </td>
+          <td valign="top" headers="d17679e580" class="stentry">int，long，bool，double，string，timestamp，date，null</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --delrecord,-r
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">specify the record delimiter."\n" is default,"csv" format effective.</td>
+          <td valign="top" headers="d17679e583" class="stentry"> </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --csname,-c
-          </td>
+          <td valign="top" headers="d17679e577" class="stentry">timestamp</td>
 
-          <td valign="top" headers="d17848e319" class="stentry">specify the collectionspace name of exported data.</td>
+          <td valign="top" headers="d17679e580" class="stentry">string，long</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --clname,-l
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">specify the collection name of exported data.</td>
+          <td valign="top" headers="d17679e583" class="stentry">如果数据是string，如“2014-01-01-10.30.00.000000”，“1388543400000”，如果是long，如1388543400000，这两种格式是正确的，数值代表的是毫秒单位</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --file
-          </td>
+          <td valign="top" headers="d17679e577" class="stentry">date</td>
 
-          <td valign="top" headers="d17848e319" class="stentry">specify the imported file name. </td>
+          <td valign="top" headers="d17679e580" class="stentry">string，long</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --model
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">specify the data capture mode, the default "io","io" or "hdfs" pattern can be.</td>
+          <td valign="top" headers="d17679e583" class="stentry">如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的秒单位</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">--libpath</td>
+          <td valign="top" headers="d17679e577" class="stentry">null</td>
 
-          <td valign="top" headers="d17848e319" class="stentry">Specified load library path, hafs mode is active.</td>
+          <td valign="top" headers="d17679e580" class="stentry"> </td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --sourcehost
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">Specifies the data source to connect the server's host name, hafs mode is active.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --sourceport
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">Specifies the data source to connect the service side of the port, hdfs mode is active.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --sourceuser
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">specify the collection data source server user name, hdfs mode is active.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --type 
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">specify the import data file type, default "csv", "json" or "csv" type can be.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --fields 
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">specify the import data filed names."csv" formats.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --headerline
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">Specifies whether the first row of imported data as field names."false" is default,"csv" format effective. </td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --sparse
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">Specify the import data, automatically add the field name."ture" is default,"csv" format effective.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">
-            --extra
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">Specify the import data, automatically add value."false" is default,"csv" format effective.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d17848e316" class="stentry">--linepriority
-          </td>
-
-          <td valign="top" headers="d17848e319" class="stentry">Current delimiter default priority is: record delimiter &gt; character delimiter &gt; field delimiter, the default value is ture; If set to false, 
-            then the priority of the separator: character deliiter &gt; record delimiter &gt; field delimiter.</td>
+          <td valign="top" headers="d17679e583" class="stentry">指定了数据类型为null，那么无论数据是什么，都是null</td>
 
         </tr>
 </table>
 
     </div>
 
-    <div class="note note"><span class="notetitle">Note:</span> Linepriority parameters need to be particularly concerned, if set properly, it may fail to import the data.<div class="fig fignone"/>
-When the record contains "record separator" 
-      and linepriority is true, the tool will give priority in accordance with the "record separator" resolution, which led to the import fails. For example: 
-      If the record is {"name":"Mike\n"}, the false linepriority mode should be selected.
-    </div>
+    <p class="p">数据类型是可选的，不填则程序自动判断类型，判断以上面表格为准。</p>
+    
+    <p class="p">数据类型优先级：</p>
 
-    <div class="section"><h2 class="title sectiontitle">Usage</h2>
-      
-      <p class="p"> In the following sample,sdbload will import data into local database which port is 11810,
-        and collectionspace name is <em class="ph i">foo</em>,collection name is<em class="ph i"> bar</em>,and import file is<em class="ph i">
-          test.json</em> with asynchronous loading.</p>
+    <p class="p">1.不指定数据类型（不支援特殊数据类型）：程序自动判断类型，优先级是null &gt; bool &gt; int &gt; double &gt; long &gt; string</p>
 
-      <pre class="pre codeblock">sdbload –h localhost -s 11810 –-file test.json –c foo –l bar –type json</pre>
+    <p class="p">2.指定数据类型：优先级是指定的类型 &gt; 支援的类型（参考指定的类型与数据表格） &gt; null</p>
 
-    </div>
-
+    <p class="p">3.指定数据类型，并且带默认值：优先级是指定的类型 &gt; 支援的类型（参考指定的类型与数据表格） &gt; 默认值 &gt; null</p>
+    
   </div>
 
 <div class="related-links"/>

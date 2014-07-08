@@ -65,7 +65,7 @@ void displaySyntax ( CHAR *pCommand )
    cout&lt;&lt;"Syntax:"&lt;&lt;pCommand&lt;&lt;" &lt;host>&lt;name>&lt;servicename>\
  &lt;username>&lt;password>"&lt;&lt;endl ;
  }</codeblock><p>In
-            Linux,you can compile and link the dynamic library "libsdbcpp.so" like this:
+            Linux, you can compile and link the dynamic library "libsdbcpp.so" like this:
             </p><codeblock>$ gcc -o connect connect.cpp -I <i>&lt;PATH&gt;</i>/sequoiadb/client/CPP/include -lsdbcpp -L <i>&lt;PATH&gt;</i>/sequoiadb/client/CPP/lib
 Execution results:
 $ ./connect localhost 11810 "" ""

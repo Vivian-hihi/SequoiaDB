@@ -4,14 +4,9 @@
   <title>Java Driver</title>
   <body>
     <section>
-      <title>Java Client Interface</title>
-      <p>Add jar package in Eclipse: sequoiadb.jar</p>
-    </section>
-    <section>
-      <title>Functions by Java Client Interface</title>
-      <p>Java client interface provide manipulations including database connection, data inserting,
-        deleting, altering and querying, index creating and deleting, collection creating and
-        deleting, collection space creating and deleting, etc.</p>
+      <title>概述</title>   
+      <p>SequoiaDB Java driver provides an interface database operations, and cluster operations. Includes the following seven levels of operation: database, collection space, collection, cursor, replica group, node, domain.</p>
+      <p>There are two driving Java class instances. A database operation, another operation for the cluster. </p>
       <ul>
         <li>
           <p>Class sample</p>
