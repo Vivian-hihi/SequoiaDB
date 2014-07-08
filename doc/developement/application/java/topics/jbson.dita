@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_4zc_xds_r4">
+  <title>Java BSON 使用</title>
+  <body>
+    <p></p>
+    <section>
+      <title>Java BSON 数据类型</title>
+      <p>目前，SequoiaDB支持多种BSON数据类型。详情请查看数据库概念 - 数据库 - 文档一节。</p>
+    </section>
+    <section>
+      <title>Java 构造BSON数据类型</title>
+      <parml>
+        <plentry>
+          <pt>整数/符浮点数</pt>
+          <pd>java bson构造整数/符浮点数类型<codeblock>// {a:123, b:3.14}
+BSONObject obj = new BasicBSONObject();
+obj.put("a", 123);
+obj.put("b", 3.14);</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>字符串</pt>
+          <pd>java bson构造字符串类型<codeblock>// {a:"hi"}
+BSONObject obj = new BasicBSONObject();
+obj.put("a", "hi");</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>空类型</pt>
+          <pd>java bson构造空类型<codeblock>// {a:null}
+BSONObject obj = new BasicBSONObject();
+obj.put("a", null);</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>对象</pt>
+          <pd>java bson构造嵌套对象类型<codeblock>// {b:{a:1}}
+BSONObject subObj = new BasicBSONObject();
+subObj.put("a", 1);
+BSONObject obj = new BasicBSONObject();
+obj.put("b", subObj);</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>数组</pt>
+          <pd>java bson使用org.bson.types.BasicBSONList来构造数组类型<codeblock>// {a:[0,1,2]}
+BSONObject obj = new BasicBSONObject();
+BSONObject arr = new BasicBSONList();
+arr.put("0", 0);
+arr.put("1", 1);
+arr.put("2", 2);
+obj.put("a", arr);</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>布尔</pt>
+          <pd>java bson构造布尔类型<codeblock>// {a:true, b:false}
+BSONObject obj = new BasicBSONObject();
+obj.put("a", true);
+obj.put("b", false);</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>对象ID</pt>
+          <pd>java bson使用org.bson.types.ObjectId来生成每条记录的"_id"字段内容。Java bson12字节的ObjectId与数据库概念一节介绍的对象ID略有不同，目前，Java ObjectId的12字节内容由三部分组成：4字节精确到秒的时间戳，4字节系统（物理机）标示，4字节由随机数起始的序列号。默认情况下，数据库为每条记录生成一个字段名为"_id"的唯一对象ID。<codeblock>BSONObject obj = new BasicBSONObject();
+ObjectId id1 = new ObjectId();
+ObjectId id2 = new ObjectId("53bb5667c5d061d6f579d0bb");
+obj.put("_id", id1);</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>正则表达式</pt>
+          <pd>java bson使用java.util.regex.Pattern来构造正则表达式数据类型。<codeblock>BSONObject matcher = new BasicBSONObject();
+Pattern obj = Pattern.compile("^2001",Pattern.CASE_INSENSITIVE);
+matcher.put("serial_num", obj);
+BSONObject modifier = new BasicBSONObject("$set", new BasicBSONObject("count",1000));
+cl.update(matcher, modifier, null);</codeblock></pd>
+          <pd>以上使用正则了表达式构造了一个匹配条件，将序列号以"2001"开头的记录的"count"字段内容改为1000。</pd>
+          <pd><note><p></p>以上使用Patten构造的matcher，使用toString()方法，内容为：<codeblock>{ "serial_num" : { "$options" : "i" , "$regex" : "^2001"}}</codeblock>通过以下bson构造方式也可以得到相同的内容：<codeblock>BSONObject matcher2 = new BasicBSONObject();
+BSONObject obj2 = new BasicBSONObject();
+obj2.put("$regex","^2001");
+obj2.put("$options","i");		
+matcher2.put("serial_num", obj2);</codeblock>但是，通过后者构造出的matcher2的数据类型是一个普通的对象嵌套类型，而不是正则表达式类型。</note></pd>          
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>日期</pt>
+          <pd>java bson使用java.util.Date来构造日期类型。<codeblock>BSONObject obj = new BasicBSONObject();
+Date now = new Date();
+obj.put("date", now);</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>二进制</pt>
+          <pd>java bson使用org.bson.types.Binary来构造二进制类型。<codeblock>BSONObject obj = new BasicBSONObject();
+String str = "hello world";
+byte[] arr = str.getBytes();
+Binary bindata = new Binary(arr);
+obj.put("bindata", bindata);</codeblock></pd>
+        </plentry>
+      </parml>
+      <parml>
+        <plentry>
+          <pt>时间戳</pt>
+          <pd>java bson使用org.bson.types.BSONTimestamp来构造时间戳类型<codeblock>int sec = 1404189030 ; // 2014-07-01 12:30:30
+BSONObject obj = new BasicBSONObject();
+BSONTimestamp ts = new BSONTimestamp(sec, 0);
+obj.put("timestamp", ts);</codeblock></pd>
+        </plentry>
+      </parml>
+    </section>
+  </body>
+</topic>
