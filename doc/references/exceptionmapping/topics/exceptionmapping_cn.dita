@@ -3,7 +3,7 @@
 <topic id="references_exception">
    <title>Error Code List</title>
    <body>
-      <simpletable frame="all" relcolwidth="5.25* 1.0*" id="references_exceptionmapping_table">
+      <simpletable frame="all" relcolwidth="5.25* 1.2*" id="references_exceptionmapping_table">
          <sthead>
             <stentry>Description</stentry>
             <stentry>Error Code</stentry>
@@ -845,7 +845,7 @@
             <stentry>-209</stentry>
          </strow>
          <strow>
-            <stentry>集合不存在分区键索引,不能按百分比分区</stentry>
+            <stentry>集合不存在分区键索引，不能按百分比分区</stentry>
             <stentry>-210</stentry>
          </strow>
          <strow>
@@ -889,7 +889,7 @@
             <stentry>-220</stentry>
          </strow>
          <strow>
-            <stentry>load错误,进行回滚</stentry>
+            <stentry>load错误，进行回滚</stentry>
             <stentry>-221</stentry>
          </strow>
          <strow>

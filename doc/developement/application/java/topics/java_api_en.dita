@@ -6,32 +6,32 @@
     <p>This part is related to Java API document.</p>
     <p><xref href="..\..\..\..\java\html\index.html" format="html">Java API</xref></p>
     <section>
-      <title>历史更新情况：</title>
+      <title>History Updates:</title>
       <p><b>Version1.8</b></p>
-      <p>1、Sequoiadb类新添加的接口：</p><codeblock>isValid，判断当前连接是否有效
-createCollectionSpace，提供一个BSONObject的选项，使创建集合空间更加灵活
-backupOffline，离线备份支持更多的选项
-evalJS，执行js代码
-createDomain，创建域
-getDomain，获取域
-dropDomain,删除域
-isDomainExist，域是否存在
-listDomain，列出所有域</codeblock>
-      <p>2、DBCollection类新添加的接口：</p><codeblock>alterCollection，修改集合（表）属性
-setMainKeys，设置主键。此接口只与save接口配合使用，它设置的主键并不对其他接口起作用
-save，可使用默认的主键"_id"或者指定其他主键，同时插入或更新多条记录</codeblock>
-      <p>3、添加Domain类用于与域相关的操作</p>
-      <p>4、SequoiadbDatasource类新添加的接口：</p><codeblock>SequoiadbDatasource，可提供多个地址的构造器，便于机器负载均衡
-getIdleConnNum，获取当前可用的连接数量
-getUsedConnNum，获取当前已使用的连接数量
-getNormalAddrNum，获取当前正常的地址数量
-getAbnormalAddrNum，获取当前异常的地址数量
+      <p>1. New APIs in Sequoiadb Class:</p><codeblock>isValid, checks whether the current connection is valid or not
+createCollectionSpace, a BSONObject parameter is provided to make the creating of a collection space more flexible
+backupOffline, more options are supported by backupOffline()
+evalJS, evaluates JavaScript codes
+createDomain, creates a domain
+getDomain, gets a domain
+dropDomain, drops a domain
+isDomainExist, checks whether a domain exists or not
+listDomain, enumerates and lists the domains</codeblock>
+      <p>2. New APIs in DBCollection Class:</p><codeblock>alterCollection, alters the attributes of a collection
+setMainKeys, sets the main keys of a collection. This API only works with save(), the main keys set by it have no effects on other APIs
+save, uses the default main key "_id" or other specified main keys to insert one or more records</codeblock>
+      <p>3. A Domain Class is added to support the domain-related operations</p>
+      <p>4. New APIs in SequoiadbDatasource Class:</p><codeblock>SequoiadbDatasource, a new constructor supports multiple connecting addresses in order to realize a better load balancing
+getIdleConnNum, gets the number of currently idle connections
+getUsedConnNum, gets the number of currently used connections
+getNormalAddrNum, gets the number of currently normal connections
+getAbnormalAddrNum, gets the number of currently abnormal connections
 </codeblock>
-      <p>5、SequoiadbOption类新添加接口：</p><codeblock>setRecaptureConnPeriod，设置周期检测异常地址是否重新可用的时间
-getRecaptureConnPeriod，获取周期检测异常地址是否重新可用的时间</codeblock>
+      <p>5. New APIs in SequoiadbOption class:</p><codeblock>setRecaptureConnPeriod, sets the recapture connection period
+getRecaptureConnPeriod, gets the recapture connection period</codeblock>
       <p><b>Version1.6</b></p>
-      <p>1、添加类Node来取代原来的类ReplicaGroup。类ReplicaNode以及与它们相关的方法将在version2.x中被弃用。</p>
-      <p>详情请查看相关API。</p>
+      <p>1. Add a class Node to replace the original class ReplicaNode. Class ReplicaNode and methods associated with it will be abandoned in the version 2.x.</p>
+      <p>For details, please see the relevant API.</p>
     </section>
   </body>
 </topic>
