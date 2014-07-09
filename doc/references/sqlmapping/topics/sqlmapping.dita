@@ -50,37 +50,24 @@
           <stentry>相关链接</stentry>
         </sthead>
         <strow>
-          <stentry>create table student (<p>id not null,</p><p>stu_id varchar(50), age
-              number</p><p>primary key(id) )</p></stentry>
-          <stentry>在第一次做插入操作时隐式创建集合，如果未指定_id字段，_id字段自动添加<p>db.collectionspace.student({stu_id:"01",age:20})</p><p>当然你也可以明确的创建一个集合</p><p>db.collectionspace.createCL("student")</p></stentry>
-          <stentry>
-            <xref href="../../methods/topics/dbinsert.dita">insert() ,</xref>
-              <xref href="../../methods/topics/createCL.dita">createCL()</xref>
-            
-          </stentry>
+          <stentry>create table student (id not null, stu_id varchar(50), age number primary key(id))</stentry>
+          <stentry>在第一次做插入操作时隐式创建集合，如果未指定_id字段，_id字段自动添加db.collectionspace.student({stu_id:"01",age:20})，当然你也可以明确的创建一个集合db.collectionspace.createCL("student")</stentry>
+          <stentry><xref href="../../methods/topics/dbinsert.dita">insert()</xref>,<xref href="../../methods/topics/createCL.dita">createCL()</xref></stentry>
         </strow>
         <strow>
           <stentry>alter table student add name varchar(50)</stentry>
-          <stentry>集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$set向文档记录添加不存在的字段。<p>db.collectionspace.student.update({},{$set:{name:"Tom"}})</p></stentry>
-          <stentry><xref href="../../methods/topics/dbupdate.dita">update() ,</xref>
-              <xref href="../../console/topics/gset.dita">$set</xref>
-            </stentry>
+          <stentry>集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$set向文档记录添加不存在的字段。db.collectionspace.student.update({},{$set:{name:"Tom"}})</stentry>
+          <stentry><xref href="../../methods/topics/dbupdate.dita">update()</xref>,<xref href="../../console/topics/gset.dita">$set</xref></stentry>
         </strow>
         <strow>
-          <stentry>alter table student drop column name                                 </stentry>
-          <stentry>集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$unset向文档记录删除存在的字段。<p>db.collectionspace.student.update({},{$unset:{name:"Tom"}})</p></stentry>
-          <stentry><xref href="../../methods/topics/dbupdate.dita">update() ,</xref>
-               <xref href="../../console/topics/unset.dita">$unset</xref>
-            </stentry>
+          <stentry>alter table student drop column name</stentry>
+          <stentry>集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$unset向文档记录删除存在的字段。db.collectionspace.student.update({},{$unset:{name:"Tom"}})</stentry>
+          <stentry><xref href="../../methods/topics/dbupdate.dita">update()</xref>,<xref href="../../console/topics/unset.dita">$unset</xref></stentry>
         </strow>
         <strow>
-          <stentry>create index index_stu_id<p>on student (stu_id)</p></stentry>
-          <stentry>db.collectionspace.student.createIndex<p>("index_stu_id",{stu_id:-1})</p></stentry>
-          <stentry>
-            <xref href="../../methods/topics/createIndex.dita">createIndex() ,</xref>
-              <xref href="../../../administration/concepts/database/topics/index.dita"
-                >index</xref>
-            </stentry>
+          <stentry>create index index_stu_id on student (stu_id)</stentry>
+          <stentry>db.collectionspace.student.createIndex("index_stu_id",{stu_id:-1})</stentry>
+          <stentry><xref href="../../methods/topics/createIndex.dita">createIndex()</xref>,<xref href="../../../administration/concepts/database/topics/index.dita">index</xref></stentry>
         </strow>
         <strow>
           <stentry>drop table student</stentry>
@@ -122,20 +109,17 @@
           <stentry><xref href="../../methods/topics/find.dita">find()</xref></stentry>
         </strow>
         <strow>
-          <stentry>select stu_id,age from student</stentry>
+          <stentry>select stu_id, age from student</stentry>
           <stentry>db.collectionspace.student.find({},{stu_id:"01",age:20})</stentry>
           <stentry><xref href="../../methods/topics/find.dita">find()</xref></stentry>
         </strow>
         <strow>
-          <stentry>select * from student where age>25</stentry>
+          <stentry>select * from student where age > 25</stentry>
           <stentry>db.collectionspace.student.find({age:{$gt:25}})</stentry>
-          <stentry><xref href="../../methods/topics/find.dita">find()</xref>
-            <p>
-              <xref href="../../console/topics/gt.dita">$gt</xref>
-            </p></stentry>
+          <stentry><xref href="../../methods/topics/find.dita">find()</xref>,<xref href="../../console/topics/gt.dita">$gt</xref></stentry>
         </strow>
         <strow>
-          <stentry>select age from student where age=25 and stu_id="01"</stentry>
+          <stentry>select age from student where age = 25 and stu_id= "01"</stentry>
           <stentry>db.collectionspace.student.find({age:25,stu_id="01"},{age:25})</stentry>
           <stentry><xref href="../../methods/topics/find.dita">find()</xref></stentry>
         </strow>
@@ -147,9 +131,7 @@
         <strow>
           <stentry>select count(stu_id) from student</stentry>
           <stentry>db.collectionspace.student.count({stu_id:{$exists:1}})</stentry>
-          <stentry><xref href="../../methods/topics/dbcount.dita">count() ,</xref>
-              <xref href="../../console/topics/exists.dita">$exists</xref>
-            </stentry>
+          <stentry><xref href="../../methods/topics/dbcount.dita">count()</xref>,<xref href="../../console/topics/exists.dita">$exists</xref></stentry>
         </strow>
       </simpletable>
     </section>
@@ -164,24 +146,20 @@
           <stentry>相关链接</stentry>
         </sthead>
         <strow>
-          <stentry>update student set age=25 where stu_id="01"</stentry>
+          <stentry>update student set age = 25 where stu_id = "01"</stentry>
           <stentry>db.collectionspace.student.update({stu_id:"01"},{$set:{age:25}})</stentry>
-          <stentry><xref href="../../methods/topics/dbupdate.dita">update() ,</xref>
-            <xref href="../../console/topics/gset.dita">$set</xref>
-          </stentry>
+          <stentry><xref href="../../methods/topics/dbupdate.dita">update()</xref>,<xref href="../../console/topics/gset.dita">$set</xref></stentry>
         </strow>
         <strow>
-          <stentry>update student set age=age+2 where stu_id="01"</stentry>
+          <stentry>update student set age = age + 2 where stu_id = "01"</stentry>
           <stentry>db.collectionspace.student.update({stu_id:"01"},{$inc:{age:2}})</stentry>
-          <stentry><xref href="../../methods/topics/dbupdate.dita">update() ,</xref>
-            <xref href="../../console/topics/inc.dita">$inc</xref>
-          </stentry>
+          <stentry><xref href="../../methods/topics/dbupdate.dita">update()</xref>,<xref href="../../console/topics/inc.dita">$inc</xref></stentry>
         </strow>
       </simpletable>
     </section>
     
     <section>
-      <title>delete</title>
+      <title>Delete</title>
       <p>下表给出了各种SQL语句在表级上的删除记录操作和SequoiaDB上相应的操作：</p>
       <simpletable id="sqlmapping_delete_table">
         <sthead>
@@ -190,16 +168,14 @@
           <stentry>相关链接</stentry>
         </sthead>
         <strow>
-          <stentry>delete from student where age=20</stentry>
+          <stentry>delete from student where age = 20</stentry>
           <stentry>db.collectionspace.student.remove({age:20})</stentry>
-          <stentry><xref href="../../methods/topics/remove.dita">remove()</xref>
-          </stentry>
+          <stentry><xref href="../../methods/topics/remove.dita">remove()</xref></stentry>
         </strow>
         <strow>
           <stentry>delete from student</stentry>
           <stentry>db.collectionspace.student.remove()</stentry>
-          <stentry><xref href="../../methods/topics/remove.dita">remove()</xref>
-          </stentry>
+          <stentry><xref href="../../methods/topics/remove.dita">remove()</xref></stentry>
         </strow>
       </simpletable>
     </section>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C++ API"/>
-<meta name="description" content="This part is related to the C++ API document. C++ API 历史更新情况： Version1.8 1、sdb类新添加的接口： connect，可提供多个地址，接口随机选择一个有效的地址连接。 createCollectionSpace，提供一个BSONObject的选项，使创建集合空间更加灵活 backupOffline，离线备份支持更多的选项 ..."/>
+<meta name="description" content="This part is related to the C++ API document. C++ API History Updates: Version1.8 1. New APIs in sdb Class: connect, multiple connection address can be provided, one of the random valid addresses will ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/CPP/topics/cpp_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_3q1_c1z_3k"/>
@@ -40,23 +40,23 @@
 
     <p class="p"><a class="xref" href="../../../../cpp/html/index.html">C++ API</a></p>
 
-    <div class="section"><h2 class="title sectiontitle">历史更新情况：</h2>
+    <div class="section"><h2 class="title sectiontitle">History Updates:</h2>
       
       <p class="p"><strong class="ph b">Version1.8</strong></p>
 
-      <p class="p">1、sdb类新添加的接口：</p>
-<pre class="pre codeblock">connect，可提供多个地址，接口随机选择一个有效的地址连接。
-createCollectionSpace，提供一个BSONObject的选项，使创建集合空间更加灵活
-backupOffline，离线备份支持更多的选项
-createDomain，创建域
-getDomain，获取域
-dropDomain,删除域
-listDomain，列出所有域</pre>
+      <p class="p">1. New APIs in sdb Class:</p>
+<pre class="pre codeblock">connect, multiple connection address can be provided, one of the random valid addresses will be used to connect to database
+createCollectionSpace, a BSON parameter is provided to make the creating of a collection space more flexible
+backupOffline, more options are supported by backupOffline()
+createDomain, creates a domain
+getDomain, gets a domain
+dropDomain, drops a domain
+listDomain, enumerates and lists the domains</pre>
 
-      <p class="p">2、sdbCollection类新添加的接口：</p>
-<pre class="pre codeblock">alterCollection，修改集合（表）属性</pre>
+      <p class="p">2. New APIs in sdbCollection Class:</p>
+<pre class="pre codeblock">alterCollection, alters the attributes of a domain</pre>
 
-      <p class="p">3、添加Domain类用于与域相关的操作</p>
+      <p class="p">3. A Domain Class is added to support the domain-related operations</p>
 
       <p class="p"><strong class="ph b">Version1.6</strong></p>
 

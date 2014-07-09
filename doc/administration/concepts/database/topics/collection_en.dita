@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/topic.dtd">
-<topic id="administration_concepts_database_collection" xml:lang="zh-cn">
+<topic id="administration_concepts_database_collection" >
   <title>Collection</title>
   <body>
     <section><title>Concept</title>
@@ -40,10 +40,10 @@
       </strow>
     </simpletable>
     </section>
-  </body>
+  </body>  
   <related-links >
     <link href="document_en.dita" format="dita" type="topic"/>
     <link href="collectionspace_en.dita" format="dita" type="topic"/>
     <link href="index_en.dita" format="dita" type="topic"/>
-  </related-links>
+  </related-links>  
 </topic>

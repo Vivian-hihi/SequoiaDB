@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Software Requirement"/>
-<meta name="description" content="Linux System requirement System configuration requirement Configuration Item Configuration method Verification method Set hostname Log in the system in the role of root, open &#34;/etc/hosts&#34; with the ..."/>
+<meta name="description" content="Linux System requirement System configuration requirement Configuration Item Configuration method Verification method Set hostname 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）； 对于SUSE： ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../installation/system_require/topics/system_require_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_xwd_kfy_wj"/>
@@ -41,42 +41,52 @@
       <ul class="ul">
         <li class="li">System configuration requirement <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d76659e24" class="stentry">Configuration Item</th>
+              <th valign="bottom" align="left" id="d78329e24" class="stentry">Configuration Item</th>
 
-              <th valign="bottom" align="left" id="d76659e27" class="stentry">Configuration method</th>
+              <th valign="bottom" align="left" id="d78329e27" class="stentry">Configuration method</th>
 
-              <th valign="bottom" align="left" id="d76659e30" class="stentry">Verification method</th>
+              <th valign="bottom" align="left" id="d78329e30" class="stentry">Verification method</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d76659e24" class="stentry">Set hostname</td>
+              <td valign="top" headers="d78329e24" class="stentry">Set hostname</td>
 
-              <td valign="top" headers="d76659e27" class="stentry">
-                <ul class="ul">
-                  <li class="li">Log in the system in the role of root, open "/etc/hosts" with the command "vi
-                    /etc/hosts"</li>
+              <td valign="top" headers="d78329e27" class="stentry"> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<p class="p"/>
+<ul class="ul">
+                <li class="li">对于SUSE：<p class="p">2.打开/etc/HOSTNAME文件；</p>
+<p class="p">  vi /etc/HOSTNAME</p>
 
-                  <li class="li">Change hostname as follow: <p class="p">  Change "127.0.0.1   localhost " </p>
-<p class="p">  into
-                      "127.0.0.1   localhost sdbserver1". (Here, "sdbserver1" is the hostname)
-                    </p>
+                  <p class="p">3.修改文件内容，配置为主机名称；</p>
+<p class="p">  sdbserver1  （主机名称）</p>
+<p class="p">4.按:wq保存退出；</p>
 </li>
 
-                  <li class="li">Save and exit </li>
+                <li class="li">对于RedHat：<p class="p">2.打开/etc/sysconfig/network文件；</p>
+<p class="p">  vi
+                  /etc/sysconfig/network</p>
+<p class="p">3.将HOSTNAME一行修改为
+                    HOSTNAME=sdbserver1，其中sdbserver1为新主机名；</p>
+ <p class="p">4.按 :wq 保存退出；</p>
+</li>
 
-                </ul>
+                <li class="li">对于Ubuntu：<p class="p">2.打开/etc/hostname文件；</p>
+<p class="p">  vi /etc/hostname</p>
+<p class="p">3.修改文件内容，配置为主机名称；</p>
+<p class="p">sdbserver1</p>
+ 4.按 :wq 保存退出；</li>
 
-              </td>
+              </ul>
+</td>
 
-              <td valign="top" headers="d76659e30" class="stentry">Check with "ping sdbserver1". </td>
+              <td valign="top" headers="d78329e30" class="stentry">执行 hostname 命令，确认打印信息是否为 “sdbserver1” </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d76659e24" class="stentry">
+              <td valign="top" headers="d78329e24" class="stentry">
                 Enable server nodes to visit each other through hostname
               </td>
 
-              <td valign="top" headers="d76659e27" class="stentry">
+              <td valign="top" headers="d78329e27" class="stentry">
                 <ul class="ul">
                   <li class="li">Log in the system in the role of root, open "/etc/hosts" with the command "vi
                     /etc/hosts"</li>
@@ -94,7 +104,8 @@
 
               </td>
 
-              <td valign="top" headers="d76659e30" class="stentry">Check with "ping sdbserver2"</td>
+              <td valign="top" headers="d78329e30" class="stentry">Check with "ping sdbserver1"<p class="p"/>
+Check with "ping sdbserver2"</td>
 
             </tr>
 </table>
@@ -103,18 +114,18 @@
         <li class="li"><p class="p">Close the firewall</p>
  <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d76659e102" class="stentry">Configuration Item </th>
+            <th valign="bottom" align="left" id="d78329e129" class="stentry">Configuration Item </th>
 
-            <th valign="bottom" align="left" id="d76659e105" class="stentry">Configuration method</th>
+            <th valign="bottom" align="left" id="d78329e132" class="stentry">Configuration method</th>
 
-            <th valign="bottom" align="left" id="d76659e108" class="stentry">Verification method</th>
+            <th valign="bottom" align="left" id="d78329e135" class="stentry">Verification method</th>
 
           </tr>
 <tr class="strow"/>
 <tr class="strow">
-            <td valign="top" headers="d76659e102" class="stentry"> Close the firewall</td>
+            <td valign="top" headers="d78329e129" class="stentry"> Close the firewall</td>
 
-            <td valign="top" headers="d76659e105" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
+            <td valign="top" headers="d78329e132" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
 <ul class="ul">
               <li class="li">For SUSE：<p class="p">1.SuSEfirewall2 stop；</p>
 
@@ -131,7 +142,7 @@
             </ul>
 </td>
 
-            <td valign="top" headers="d76659e108" class="stentry"><ul class="ul">
+            <td valign="top" headers="d78329e135" class="stentry"><ul class="ul">
               <li class="li">For SUSE：<p class="p"> chkconfig -list | grep fire；</p>
 
               </li>

@@ -19,15 +19,14 @@
     <section>
       <title>Installation steps</title>
       <p><b>Explaination</b></p>
-      <p>&nbsp;&nbsp;(1)Here we take sequoiadb-1.0.0-linux-x86_64-installer.run as the sample
+      <p>&nbsp;&nbsp;(1) Here we take sequoiadb-1.0.0-linux-x86_64-installer.run as the sample
         installation package.</p>
-      <p>&nbsp;&nbsp;(2)The steps are introduced through command lines. In GUI installation, users
+      <p>&nbsp;&nbsp;(2) The steps are introduced through command lines. In GUI installation, users
         can install server program accoding to image wizard prompts.</p>
-      <p>&nbsp;&nbsp;If there are more than one server, users should repeatedly install server
-        program on them one by one according to the following steps.</p>
+      <note>If there are more than one server, users should repeatedly install server program on them one by one according to the following steps.</note>
       <ul>
-        <li>Refer <xref href="../../system_require/topics/software_en.dita">System configuration
-            requirement </xref> to configure Host Name and change the system kernel params</li>
+        <li><p>Refer <xref href="../../system_require/topics/software_en.dita">System configuration
+          requirement </xref> to configure Host Name and change the system kernel params.</p></li>
         <li>Run installation program<p>
             <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text</codeblock>
           </p></li>

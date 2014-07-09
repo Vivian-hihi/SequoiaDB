@@ -76,7 +76,7 @@
       </simpletable>
     </section>-->
     <section><title>Other node field information</title>
-      <simpletable frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_collections_data_table">
+      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_collections_data_table"-->
         <sthead>
           <stentry>Field Name</stentry>
           <stentry>Type</stentry>

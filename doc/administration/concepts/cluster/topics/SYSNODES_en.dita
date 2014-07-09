@@ -93,7 +93,7 @@
         <strow>
           <stentry>Service</stentry>
           <stentry>Array</stentry>
-          <stentry>Server name. Every logical node corresponds to 4 services. Every service contains its type and server name (it may be port number of server name in service files). The types are as follow:
+          <stentry>Server name. Every logical node corresponds to 4 services. Every service contains its type and server name (it may be port number of server name in service files). The types <fig></fig>are as follow:
             <ul>
               <li>0：direct service, corresponds to database argument svcname</li>
               <li>1：replicate service, corresponds to database argument replname</li>

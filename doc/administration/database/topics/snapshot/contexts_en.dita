@@ -4,12 +4,9 @@
   <title>Context Snapshot</title>
   <body>
     <section><title>Description</title>
-      <p>Context snapshot contains all the contexts corresponding to all the sessions in current
-        data node.</p>
-      <p>A session is a record. If a session contains one or more contexts, the Contextd array field
-        generate a for each of the contexts.</p>
-      <note>The manipulation of snapshot will generate a context, so the result set will contains at
-        least one context of current snapshot.</note>
+      <p>Context snapshot contains all the contexts corresponding to all the sessions in current data node.</p>
+      <p>A session is a record. If a session contains one or more contexts, the Contextd array field generate a for each of the contexts.</p>
+      <note>The manipulation of snapshot will generate a context, so the result set will contains at least one context of current snapshot.</note>
     </section>
     <section><title>Sign</title>
       <p>SDB_SNAP_CONTEXTS</p>
@@ -39,12 +36,7 @@
           <stentry>Contexts.DataRead</stentry>
           <stentry>Long integer</stentry>
           <stentry>Data that is read</stentry>
-        </strow>
-        <strow>
-          <stentry>Contexts.DataRead</stentry>
-          <stentry>Long integer</stentry>
-          <stentry>Data that is read</stentry>
-        </strow>
+        </strow>        
         <strow>
           <stentry>Contexts.IndexRead</stentry>
           <stentry>Long integer</stentry>

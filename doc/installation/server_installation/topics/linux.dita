@@ -14,8 +14,8 @@
       </ul>
     </section>
     <note>SequoiaDB的安装向导需要的参数不接受非英文字符。</note>
-    <section><title>安装步骤</title><p><b>说明：</b></p><p>&nbsp;&nbsp;（1）产品包名字以
-    sequoiadb-1.0.0-linux-x86_64-installer.run为例；</p><p>&nbsp;&nbsp;（2）步骤以命令行方式进行介绍，图形界面按照图像向导提示完成。</p>
+    <section><title>安装步骤</title><p><b>说明：</b></p><p>&nbsp;&nbsp;（1）产品包名字以sequoiadb-1.0.0-linux-x86_64-installer.run为例；</p>
+      <p>&nbsp;&nbsp;（2）步骤以命令行方式进行介绍，图形界面按照图像向导提示完成。</p>
       <note>如果有多台服务器，每台机器都需要重复如下步骤安装服务器程序。</note>
       <ul>
           <li><p>参照<xref href="../../system_require/topics/software.dita"

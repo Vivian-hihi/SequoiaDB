@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_concepts_cluster_replset">
-  <title>Repleset</title>
+  <title>ReplicaGroup</title>
   <body>
     <section><title>Concept</title>
-      <p>Replset is also named as replication group. A replset may contain one or more data nodes
+      <p>ReplicaGroup is also named as replication group. A replset may contain one or more data nodes
         (or catalog node).The data replicattion between nodes is asynchronous log file
         replication,which ensures data consistence. </p>
       <p>All the nodes in a replset contacts with each other through replication service port

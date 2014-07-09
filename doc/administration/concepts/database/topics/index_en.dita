@@ -76,7 +76,7 @@
         <li><p>Unique index, index name is "record_id_index", index field is forward "product_key" and reverse
             "record_key".</p>
           <codeblock>{ "name" : "record_id_index", "key" : { "product_key" : 1, "record_key" : -1 }, "unique" : true }</codeblock>
-          <p>In <xref href="../../../../developement/basics/topics/delete_en.dita"/>this index, there
+          <p>In this index, there
             are no two records with the same "product_key" and the same "record_key". (But if either
             of them is the same, it is still regarded as an unique index).</p></li>
         <li><p>Enforced unique index. The index name is "test index". The index field is ascending "test case

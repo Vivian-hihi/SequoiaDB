@@ -3,6 +3,10 @@
 <topic id="topic_z2j_r4y_wj">
   <title>Configuration and startup of cluster mode</title>
   <body>
+    <note>
+      When configuring a cluster mode, make sure that the mapping between the server and the host name is correct, details, refer to the <xref href="../../system_require/topics/software_en.dita">system configuration needs</xref> to ensure 
+      that the communication between the nodes, the nodes of the firewall is turned off.
+    </note>
     <p><b>Instruction：</b>
     </p>
     <p>&nbsp;&nbsp;(1) This section will introduce the steps of configuration and startup by taking

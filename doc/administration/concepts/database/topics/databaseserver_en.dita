@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_concepts_database_database">
-  <title>Database server</title>
+  <title>Database Server</title>
   <body>
     <section><title>Concept</title>
     <p>Database server provides software services for the purpose of managing information securely

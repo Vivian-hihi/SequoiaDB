@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_list_groups">
-  <title> Replset list</title>
+  <title> ReplicaGroup list</title>
   <body>
     <section>
       <title>Description</title>
-      <p>Replset list contains information of all shards in th current cluster.</p>
+      <p>ReplicaGroup list contains information of all shards in th current cluster.</p>
     </section>
     <section>
       <title>Sign</title>
@@ -27,18 +27,18 @@
         <strow>
           <stentry>Group.dbpath</stentry>
           <stentry>String</stentry>
-          <stentry>The path of data file of nodes in replset </stentry>
+          <stentry>The path of data file of nodes in replica group </stentry>
         </strow>
         <strow>
           <stentry>Group.HostName</stentry>
           <stentry>String</stentry>
-          <stentry>Host name of node in replset</stentry>
+          <stentry>Host name of node in replica group</stentry>
         </strow>
         <strow>
           <stentry>Group.Service.Type</stentry>
           <stentry>Integer</stentry>
           <stentry>
-            Service type of node in replset
+            Service type of node in replica group
             <ul>
               <li>0：direct-connection service, corresponding to database parameter
                 <i>svcname</i></li>
@@ -51,23 +51,22 @@
         <strow>
           <stentry>Group.Service.Name</stentry>
           <stentry>String</stentry>
-          <stentry>Service name of node in replset. Service name may be port number or host name in
-            service file.</stentry>
+          <stentry>Service name of node in replica group. Service name may be port number or host name in service file.</stentry>
         </strow>
         <strow>
           <stentry>Group.NodeID</stentry>
           <stentry>Integer</stentry>
-          <stentry>Node ID in replset</stentry>
+          <stentry>Node ID in replica group</stentry>
         </strow>
         <strow>
           <stentry>GroupID</stentry>
           <stentry>Integer</stentry>
-          <stentry>Replset ID</stentry>
+          <stentry>Replica group ID</stentry>
         </strow>
         <strow>
           <stentry>GroupName</stentry>
           <stentry>String</stentry>
-          <stentry>Replset name</stentry>
+          <stentry>Replica group name</stentry>
         </strow>
         <strow>
           <stentry>PrimaryNode</stentry>
@@ -78,7 +77,7 @@
           <stentry>Role</stentry>
           <stentry>Integer</stentry>
           <stentry>
-            Replset role.It can be:
+            Replica group role.It can be:
             <ul>
               <li>0：data node </li>
               <li>2：catalog node</li>
@@ -89,7 +88,7 @@
           <stentry>Status</stentry>
           <stentry>String</stentry>
           <stentry>
-            Status of replset
+            Status of replica group
             <ul>
               <li>1：active repleset</li>
               <li>0：unactive repleset</li>

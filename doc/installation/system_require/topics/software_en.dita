@@ -14,17 +14,15 @@
             </sthead>
             <strow>
               <stentry>Set hostname</stentry>
-              <stentry>
-                <ul>
-                  <li>Log in the system in the role of root, open "/etc/hosts" with the command "vi
-                    /etc/hosts"</li>
-                  <li>Change hostname as follow: <p>  Change "127.0.0.1   localhost " </p><p>  into
-                      "127.0.0.1   localhost sdbserver1". (Here, "sdbserver1" is the hostname)
-                    </p></li>
-                  <li>Save and exit </li>
-                </ul>
-              </stentry>
-              <stentry>Check with "ping sdbserver1". </stentry>
+              <stentry> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<p></p><ul>
+                <li>对于SUSE：<p>2.打开/etc/HOSTNAME文件；</p><p>  vi /etc/HOSTNAME</p>
+                  <p>3.修改文件内容，配置为主机名称；</p><p>  sdbserver1  （主机名称）</p><p>4.按:wq保存退出；</p></li>
+                <li>对于RedHat：<p>2.打开/etc/sysconfig/network文件；</p><p>  vi
+                  /etc/sysconfig/network</p><p>3.将HOSTNAME一行修改为
+                    HOSTNAME=sdbserver1，其中sdbserver1为新主机名；</p> <p>4.按 :wq 保存退出；</p></li>
+                <li>对于Ubuntu：<p>2.打开/etc/hostname文件；</p><p>  vi /etc/hostname</p><p>3.修改文件内容，配置为主机名称；</p><p>sdbserver1</p> 4.按 :wq 保存退出；</li>
+              </ul></stentry>
+              <stentry>执行 hostname 命令，确认打印信息是否为 “sdbserver1” </stentry>
             </strow>
             <strow>
               <stentry>
@@ -40,7 +38,7 @@
                   <li>3 .Save and exit</li>
                 </ul>
               </stentry>
-              <stentry>Check with "ping sdbserver2"</stentry>
+              <stentry>Check with "ping sdbserver1"<p></p>Check with "ping sdbserver2"</stentry>
             </strow>
         </simpletable></li>
         <li><p>Close the firewall</p> <p/><simpletable>

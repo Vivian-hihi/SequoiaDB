@@ -134,7 +134,7 @@ return：{
       </p>
       <ul>
         <li>
-          <p><xref href="../../../references/methods/topics/csort_en.dita"></xref>sort(&lt;sort>)</p>
+          <p>cursor.sort(&lt;sort>)</p>
           <p>The method of sort() is used to order by the specified field, syntax:
             sort({"field1":1|-1,"field2":1|-1,...}), '1' stand for Ascending,'-1' stand for
             Descending. If the the method of <i>find </i>doesn't specity the content of sel
@@ -146,15 +146,15 @@ return：{
             <codeblock>db.foo.bar.find(null,{name:""}).sort({age:1})  //this operation actually can't reach the purpose of sorting.</codeblock>
           </p>
         </li>
-        <li><xref href="../../../references/methods/topics/hint_en.dita"/>hint(&lt;hint>)<p>add indexes
+        <li>cursor.hint(&lt;hint>)<p>add indexes
             to speed up the query speed, assuming there is a index named 'testIndex':</p><p>
             <codeblock>db.foo.bar.find().hint({"":"testIndex"})</codeblock>
           </p></li>
-        <li><xref href="../../../references/methods/topics/climit_en.dita"/>limit(&lt;num>)<p>limit the
+        <li>cursor.limit(&lt;num>)<p>limit the
             number of records in the result set:</p><p>
             <codeblock>db.foo.bar.find().limit(3) //return the first three records in the result set</codeblock>
           </p></li>
-        <li><xref href="../../../references/methods/topics/cskip_en.dita"/>skip(&lt;num>)<p>the skip()
+        <li>cursor.skip(&lt;num>)<p>the skip()
             method controls the point of the results set, that is skipping the first 'num' records,
             begin to return from the 'num+1' records:</p><p>
             <codeblock>db.foo.bar.find().skip(5)  //skipping the first 5 records in the <i>bar</i> collection</codeblock>
@@ -165,8 +165,10 @@ return：{
 <!--<xref href="../../../references/methods/topics/deleteCurrent_en.dita">db.foo.bar.find().deleteCurrent()</xref> //delete the record that the current cursor point to-->
 <xref href="../../../references/methods/topics/next_en.dita">db.foo.bar.find().next()</xref> //return the next record that the current cursor point to 
 <!--<xref href="../../../references/methods/topics/updateCurrent_en.dita">db.foo.bar.find().updateCurrent()</xref> //update the record that the current cursor point to--> 
-<xref href="../../../references/methods/topics/dbcount_en.dita">db.foo.bar.find().count()</xref>//return the number of records that the current cursor point to 
+<xref href="../../../references/methods/topics/dbcount_en.dita">db.foo.bar.find().count()</xref>//return the number of records that the current cursor point to
+            
 <xref href="../../../references/methods/topics/csize_en.dita">db.foo.bar.find().size()</xref> //return the distance from the current cursor to the final cursor
+            
 <xref href="../../../references/methods/topics/toArray_en.dita">db.foo.bar.find().toArray()</xref> //return the result sets with array form</codeblock></p>
         </li>
       </ul>

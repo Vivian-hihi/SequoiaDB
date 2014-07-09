@@ -30,6 +30,11 @@
             metadata alteration on the collection.</stentry>
         </strow>
         <strow>
+          <stentry>ReplSize</stentry>
+          <stentry>Integer</stentry>
+          <stentry>The minimum replica group, to ensure that any write operation must be copied to at least return after a specified number of nodes success.</stentry>
+        </strow>
+        <strow>
           <stentry>ShardingKey</stentry>
           <stentry>Object</stentry>
           <stentry>ShardingKey is in sharding collections. It contains one or more fields. The field
