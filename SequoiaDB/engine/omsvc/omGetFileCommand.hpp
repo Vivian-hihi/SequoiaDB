@@ -266,10 +266,14 @@ namespace engine
          virtual INT32  doCommand() ;
 
       protected:
+         INT32          readConfTemplate( string businessType, string file, 
+                                          list<BSONObj> &clusterTypeList ) ;
+
+      protected:
 
    } ;
    
-   class omConfigBusinessCommand : public omQueryBusinessCommand
+   class omConfigBusinessCommand : public omQueryBusinessTemplateCommand
    {
       public:
          omConfigBusinessCommand(  restAdaptor *pRestAdaptor, 
@@ -291,6 +295,11 @@ namespace engine
                                         BSONObj &bsonConfigItem ) ;
          INT32          _getTemplateInfo( BSONObj &bsonTemplate, 
                                           BSONObj &bsonHostInfo ) ;
+         INT32          _fullFillTemplate( BSONObj &bsonTemplate ) ;
+         INT32          _getPropertyNameValue( BSONObj &bsonTemplate, 
+                                               string propertyName, 
+                                               string &value ) ;
+         INT32          _reCheckHostInfo( BSONObj &bsonHostInfo ) ;
 
    } ;
 
