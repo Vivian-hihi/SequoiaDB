@@ -393,6 +393,13 @@ namespace engine
       {
          _expectLSN = _pDPSCB->expectLsn() ;
       }
+
+      if ( CLS_BUCKET_NORMAL != _status )
+      {
+         PD_LOG( PDERROR, "Bucket status is %d, can't push data", _status ) ;
+         return SDB_CLS_REPLAY_LOG_FAILED ;
+      }
+
       return _pushData( index, pData, len, TRUE, TRUE ) ;
    }
 
@@ -410,12 +417,6 @@ namespace engine
          PD_LOG( PDERROR, "UnitID[%u] is more than bucket size[%u]",
                  index, _bucketSize ) ;
          rc = SDB_SYS ;
-         goto error ;
-      }
-      else if ( CLS_BUCKET_NORMAL != _status )
-      {
-         PD_LOG( PDERROR, "Bucket status is %d, can't push data", _status ) ;
-         rc = SDB_CLS_REPLAY_LOG_FAILED ;
          goto error ;
       }
 
