@@ -1196,6 +1196,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR__FLUSHPAGE );
       SDB_ASSERT ( page, "page can't be NULL" ) ;
+      UINT32 length = 0 ;
       // note in tearDown it may call _flushPage with non-full page
       page->lock();
       page->unlock();
@@ -1207,8 +1208,9 @@ namespace engine
       }
       SDB_ASSERT ( shutdown || page->getLength() == DPS_DEFAULT_PAGE_SIZE,
                    "page can't be partial during flush except shutdown" ) ;
+      length = page->getLength() ;
       page->clear();
-      _idleSize.add( page->getLength() );
+      _idleSize.add( length );
       _queSize.dec() ;
       _allocateEvent.signalAll() ;
 
