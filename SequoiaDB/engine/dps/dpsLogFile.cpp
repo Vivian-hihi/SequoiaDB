@@ -434,8 +434,8 @@ namespace engine
                                &writtenLen ) ;
          if ( rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to write into file, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to write into file, rc = %d", rc ) ;
+            SDB_ASSERT( FALSE, "Write file can't be failed" ) ;
             goto error;
          }
          written += (UINT32)writtenLen ;
