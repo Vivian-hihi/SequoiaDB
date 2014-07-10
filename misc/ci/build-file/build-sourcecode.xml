@@ -4,16 +4,16 @@
 <!-- @param ${choise.jdk5} : choise the jdk version , default is jdk6 , if you choise jdk5,enter true-->
 
 <project name="build-srccode" default="mk-release">
-	
-	
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
 	<property environment="env" />
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<property name="RELEASE_DIR" value="${WORKSPACE}/release" />
-	<!--PYTHONPATH is for power machine-->
 	<property name="PYTHONPATH" value="/usr/local/lib64/scons-2.3.0" />
-	<!--PATH_BUILDER is for power machine-->
 	<property name="PATH_BUILDER" value="/opt/installbuilder-9.0.1/bin/" />
-
 	<property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
 	<property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
 
@@ -26,18 +26,7 @@
 		
 		<property file="${CODE_DIR}/misc/ci/ci.build.properties" />	
   	</target>
-	
-	
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
-		</classpath>
-	</taskdef>
-<!-- 	<taskdef resource="net/sf/antcontrib/antlib.xml" classpath="/usr/share/java/ant-contrib.jar"/> -->
-  
-	
 
-  
 	<target name="compile-src" depends="ready">
 		<property name="java.driver.jar.name" value="sequoiadb.jar" />
 		<echo message="Begin to compile source code..." />		
@@ -60,15 +49,10 @@
 		<echo message="exec scons ${compile.arg.line}  --all -j 4" />
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
 			<arg line="${compile.arg.line} --all -j 4" />
-			<!--env key="PYTHONPATH" path="${env.PYTHONPATH}:${PYTHONPATH}" /-->
 		</exec>
 
-		<!--exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/java" failonerror="true">
-			<arg line="${compile.arg.line}" />
-		</exec-->
-		
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/java/build_driver.xml" >
-		   <!--property name="is.debug" value="${compile.debug}" /-->
+		   <property name="is.debug" value="${compile.debug}" />
 		   <property name="JDK.VERIONS.5" value="${choise.jdk5}" />
 		   <property name="base.dir" value="${WORKSPACE}/sequoiadb/driver/java" />
 		</ant>
@@ -79,8 +63,8 @@
 			<property name="open.source.hive_connector.filename" value="${open.source.hive_connector.filename}" />
 			<property name="cdh.hive_connector.filename" value="${cdh.hive_connector.filename}" />
 		</ant>
-		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
 
+		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
 		<echo>
 			/usr/bin/gcc  ${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include
 		</echo>
@@ -96,7 +80,6 @@
 		<echo message="Begin to make driver package.." />
 		<property name="DRIVER.DIR" value="${RELEASE_DIR}/driver" />
 
-
 		<if>
 			<equals arg1="${compile.debug}" arg2="true" />
 			<then>
@@ -111,21 +94,24 @@
 		<mkdir dir="${DRIVER.DIR}/java" />
 		<mkdir dir="${DRIVER.DIR}/CSharp"/>
 		<mkdir dir="${DRIVER.DIR}/include" />
-    <mkdir dir="${DRIVER.DIR}/lib/phplib" />
+    	<mkdir dir="${DRIVER.DIR}/lib/phplib" />
 		<mkdir dir="${DRIVER.DIR}/lib" />
+		<mkdir dir="${DRIVER.DIR}/python" />
 		<!--mkdir dir="${DRIVER.DIR}/samples" /-->
 
 		<copy todir="${DRIVER.DIR}/lib">
 			<fileset dir="${CODE_DIR}/client/lib/" includes="*" />
 		</copy>
-
 		<copy todir="${DRIVER.DIR}/include">
 			<fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
 		</copy>
-    <copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
+    	<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
-    <copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
+    	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
+    	<copy todir="${DRIVER.DIR}/python">
+    		<fileset dir="${CODE_DIR}/driver/python/" include="**/*" />
+    	</copy>
 
 	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
 		<for list="${test-type-list}" param="php.version">
@@ -135,6 +121,15 @@
 				</antcall>
 			</sequential>
 		</for>
+
+		<!-- python driver -->
+		<exec executable="/usr/local/bin/python2.7" dir="${DRIVER.DIR}/python/pysequoiadb" failonerror="true">
+			<arg line="python setup.py install" />
+		</exec>
+		<copy todir="${DRIVER.DIR}/python/pysequoiadb">
+			<fileset dir="${DRIVER.DIR}/python/pysequoiadb/build/lib.linux-x86_64-2.7/" includes="**/*" />
+		</copy>
+		<delete dir="${DRIVER.DIR}/python/pysequoiadb/build" failonerror="true"/>
 
 		<tar destfile="${RELEASE_DIR}/${project.name}-driver-${project.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="driver/**" compression="gzip" />
 
@@ -155,15 +150,12 @@
 		
 		<copy file="${CODE_DIR}/driver/php5/build/${build.result.dir}/libsequoiadb.so" tofile="${DRIVER.DIR}/lib/phplib/libsdbphp-${php.version}.so" />
 		<copy file="${CODE_DIR}/driver/php5/build/${build.result.dir}/libsequoiadb.so" tofile="${RELEASE_DIR}/sequoiadb/lib/phplib/libsdbphp-${php.version}.so" />
-		
  	</target>
   
 	<target name="mk-release" depends="mk-driver,compile-src">
 		<echo message="Begin to make relase package ..." />
 
-
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/bin" />
-		
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/include" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/samples" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/java/jdk" />
@@ -175,7 +167,7 @@
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/log" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/www" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/tools/server/php" />
-
+		<mkdir dir="${RELEASE_DIR}/sequoiadb/python" />
 
 		<if>
 			<equals arg1="${compile.debug}" arg2="true" />
@@ -187,55 +179,35 @@
 			</else>
 		</if>
 
-		<!--copy file="${CODE_DIR}/build/linux2/${build.result.dir}/engine/sequoiadb" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/shell/engine/sdb" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/shell/engine/sdbbp" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbcm" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbstart" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbstop" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdblist" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/engine/sdbinspt" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbcmart" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbcmtop" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/engine/sdbpdlog" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbimprt" todir="${RELEASE_DIR}/sequoiadb/bin" />
-		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbexprt" todir="${RELEASE_DIR}/sequoiadb/bin" />
-    	<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbload" todir="${RELEASE_DIR}/sequoiadb/bin" /-->
 	    <copy todir="${RELEASE_DIR}/sequoiadb/bin" >
 	       <fileset dir="${CODE_DIR}/bin">
 	       	<include name="**/*" />
 	       	<exclude name="lib*" />
 	       </fileset>
 	    </copy>
-
-
 		<copy todir="${RELEASE_DIR}/sequoiadb/lib">
 			<fileset dir="${CODE_DIR}/client/lib/" includes="**/*" />
+		</copy>	
+		<copy todir="${RELEASE_DIR}/tools/sdbsupport">
+			<fileset dir="${CODE_DIR}/tools/sdbsupport" includes="**/*" />
 		</copy>
-		
-		<copy todir="${RELEASE_DIR}/sequoiadb/tools/sdbsupport">
-			<fileset dir="${CODE_DIR}/tools/sdbsupport/" includes="**/*" />
-		</copy>
-
-
 		<copy todir="${RELEASE_DIR}/sequoiadb/include/">
 			<fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
 		</copy>
-
-
 		<copy todir="${RELEASE_DIR}/sequoiadb/www">
 			<fileset dir="${CODE_DIR}/client/admin/admintpl" />
 		</copy>
-
 		<copy todir="${RELEASE_DIR}/sequoiadb/samples">
 			<fileset dir="${CODE_DIR}/client/samples/" />
 		</copy>
-
 		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sdbcs.dll" />
 
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${RELEASE_DIR}/sequoiadb/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
+		<copy todir="${RELEASE_DIR}/sequoiadb/python">
+			<fileset dir="${RELEASE_DIR}/driver/python/" includes="**/*" />
+		</copy>
 		
 		
 		<if>
@@ -305,17 +277,10 @@
 		<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_server.xml" todir="${RELEASE_DIR}/" />
 		<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_en.lng" todir="${RELEASE_DIR}/" />
 		<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_zh.lng" todir="${RELEASE_DIR}/" />
-	  
-	  <!--exec dir="${RELEASE_DIR}" executable="export PATH=$PATH:'${PATH_BUILDER}'" /-->
-		<!--exec dir="${RELEASE_DIR}" executable="/opt/installbuilder-8.5.2/bin/builder"-->
-		
-		<touch file="${RELEASE_DIR}/license_empty.txt" />
+
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">
 			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
-		
-
-		<!--tar destfile="${RELEASE_DIR}/${project.name}-${project.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb/**" compression="gzip" /-->
 
 		<echo message="Make relase package completed." />
 	</target>

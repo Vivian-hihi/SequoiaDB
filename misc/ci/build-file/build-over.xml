@@ -3,8 +3,7 @@
 <!--@param ${BUILD_NUMBER}:  The build number. this param pass by jenkins-->
 
 <project name="copy_tar_build" default="copy_tar_build">
-	<property file="${WORKSPACE}/sequoiadb/misc/ci/ci.build.properties" />
-	
+	<property file="${WORKSPACE}/sequoiadb/misc/ci/ci.build.properties" />	
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
@@ -24,7 +23,6 @@
 		<copy file="${release.path}/${software.package.name}" tofile="${release.path}/${software.package.name}.${BUILD_NUMBER}" />
 		<copy file="${release.path}/${driver.package.name}" tofile="${release.path}/${driver.package.name}.${BUILD_NUMBER}" />
 
-		<!--rename src="${WORKSPACE}/${deploy.tar.file.name}" dest="${WORKSPACE}/${BUILD_NUMBER}.${deploy.tar.file.name}" /-->
 		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${release.path}/${software.package.name}.${BUILD_NUMBER} TODIRECTORY ${copy_tar} TOMACHINE ${target.deploy_tar_gz.ip}" />
 		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${release.path}/${software.package.name}.${BUILD_NUMBER} TODIRECTORY ${copy_tar} TOMACHINE ${target.deploy_tar_gz.ip}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
 			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
@@ -47,22 +45,22 @@
 		</exec>
 
 		<if>
-				<equals arg1="${compile.debug}" arg2="false" />
-				<then>
-						<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci/build.version" comment="true">
-								<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
-								<entry key="BUILD.INSTALL.FILENAME" value="${software.package.name}" type="string" />
-								<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />								
-								<entry key="RELEASE.NUMBER" value="${BUILD_NUMBER}" type="string"/>								
-						</propertyfile>
-				</then>
-				<else>
-						<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci/build.version" comment="true">
-								<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
-								<entry key="BUILD.INSTALL.FILENAME" value="${software.package.name}" type="string" />
-								<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />							
-						</propertyfile>
-				</else>
+			<equals arg1="${compile.debug}" arg2="false" />
+			<then>
+				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci/build.version" comment="true">
+					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
+					<entry key="BUILD.INSTALL.FILENAME" value="${software.package.name}" type="string" />
+					<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />								
+					<entry key="RELEASE.NUMBER" value="${BUILD_NUMBER}" type="string"/>			
+				</propertyfile>
+			</then>
+			<else>
+				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci/build.version" comment="true">
+					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
+					<entry key="BUILD.INSTALL.FILENAME" value="${software.package.name}" type="string" />
+					<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />							
+				</propertyfile>
+			</else>
 		</if>
 
 		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${WORKSPACE}/sequoiadb/misc/ci/build.version TODIRECTORY ${copy_tar} TOMACHINE LOCAL" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
@@ -79,9 +77,7 @@
 		</exec>
 
 		<delete file="${release.path}/${software.package.name}.${BUILD_NUMBER}" />
-		
-		<delete file="${release.path}/${driver.package.name}.${BUILD_NUMBER}" />
-		
+		<delete file="${release.path}/${driver.package.name}.${BUILD_NUMBER}" />		
 	</target>
 
 </project>
