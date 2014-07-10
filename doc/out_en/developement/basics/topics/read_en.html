@@ -218,7 +218,7 @@ return：{
 
       <ul class="ul">
         <li class="li">
-          <p class="p"><a class="xref" href="../../../references/methods/topics/csort_en.html">cursor.sort()</a>sort(&lt;sort&gt;)</p>
+          <p class="p">cursor.sort(&lt;sort&gt;)</p>
 
           <p class="p">The method of sort() is used to order by the specified field, syntax:
             sort({"field1":1|-1,"field2":1|-1,...}), '1' stand for Ascending,'-1' stand for
@@ -236,7 +236,7 @@ return：{
 
         </li>
 
-        <li class="li"><a class="xref" href="../../../references/methods/topics/hint_en.html">cursor.hint()</a>hint(&lt;hint&gt;)<p class="p">add indexes
+        <li class="li">cursor.hint(&lt;hint&gt;)<p class="p">add indexes
             to speed up the query speed, assuming there is a index named 'testIndex':</p>
 <div class="p">
             <pre class="pre codeblock">db.foo.bar.find().hint({"":"testIndex"})</pre>
@@ -244,7 +244,7 @@ return：{
           </div>
 </li>
 
-        <li class="li"><a class="xref" href="../../../references/methods/topics/climit_en.html">cursor.limit()</a>limit(&lt;num&gt;)<p class="p">limit the
+        <li class="li">cursor.limit(&lt;num&gt;)<p class="p">limit the
             number of records in the result set:</p>
 <div class="p">
             <pre class="pre codeblock">db.foo.bar.find().limit(3) //return the first three records in the result set</pre>
@@ -252,7 +252,7 @@ return：{
           </div>
 </li>
 
-        <li class="li"><a class="xref" href="../../../references/methods/topics/cskip_en.html">cursor.skip()</a>skip(&lt;num&gt;)<p class="p">the skip()
+        <li class="li">cursor.skip(&lt;num&gt;)<p class="p">the skip()
             method controls the point of the results set, that is skipping the first 'num' records,
             begin to return from the 'num+1' records:</p>
 <div class="p">
@@ -268,8 +268,10 @@ return：{
 
 <a class="xref" href="../../../references/methods/topics/next_en.html">db.foo.bar.find().next()</a> //return the next record that the current cursor point to 
  
-<a class="xref" href="../../../references/methods/topics/dbcount_en.html">db.foo.bar.find().count()</a>//return the number of records that the current cursor point to 
+<a class="xref" href="../../../references/methods/topics/dbcount_en.html">db.foo.bar.find().count()</a>//return the number of records that the current cursor point to
+            
 <a class="xref" href="../../../references/methods/topics/csize_en.html">db.foo.bar.find().size()</a> //return the distance from the current cursor to the final cursor
+            
 <a class="xref" href="../../../references/methods/topics/toArray_en.html">db.foo.bar.find().toArray()</a> //return the result sets with array form</pre>
 </div>
 

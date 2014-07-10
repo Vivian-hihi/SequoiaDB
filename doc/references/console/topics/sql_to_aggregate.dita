@@ -59,9 +59,7 @@
       <strow>
         <stentry>select product_id, sum(price) as total from table group by product_id</stentry>
         <stentry>db.cs.table.aggregate({$group:{_id:"$product_id",product_id:{$first:"$product_id"},total:{$sum:"$price"}}})</stentry>
-        <stentry>
-          对表table中的记录按product_id字段分组；<fig></fig>求每个分组中字段price值的累加和，并重命名为total。
-        </stentry>
+        <stentry>对表table中的记录按product_id字段分组；<fig></fig>求每个分组中字段price值的累加和，并重命名为total。</stentry>
       </strow>
       <strow>
         <stentry>select product_id, sum(price) as total from table group by product_id order by total</stentry>
@@ -81,7 +79,7 @@
       <strow>
         <stentry>select product_id, sum(price) as total from table where product_type_id = 1001 group by product_id</stentry>
         <stentry>db.cs.table.aggregate({$match:{product_type_id:1001}},{$group:{_id:"$product_id",product_id:{$first:"$product_id"},total:{$sum:"$price"}}})</stentry>
-        <stentry>选择符合条件product_type_id=1001的记录；<fig></fig>对选出的记录按product_id进行分组；<fig></fig>对每个分组中的price字段值就和，并重命名为total。</stentry>
+        <stentry>选择符合条件product_type_id = 1001的记录；<fig></fig>对选出的记录按product_id进行分组；<fig></fig>对每个分组中的price字段值就和，并重命名为total。</stentry>
       </strow>
       <strow>
         <stentry>select product_id, sum(price) as total from table where product_type_id = 1001 group by product_id having total > 1000</stentry>

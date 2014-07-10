@@ -9,7 +9,6 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$and"/>
 <meta name="description" content="语法 {$and:[{&lt;表达式1&gt;}，{&lt;表达式2&gt;},...,{&lt;表达式N&gt;}]} 描述 $and是一个逻辑“与”操作。它的作用是选择满足所有表达式（&lt;表达式1&gt;，&lt;表达式2&gt;,...,&lt;表达式N&gt;）的记录， 但是如果第一个表达式（&lt;表达式1&gt;）的计算结果为false，SequoiaDB将不会再执行后面的表达式。 示例 选择集合bar下age字段值为20，price字段值小于10的记录 db ..."/>
-<meta name="DC.Relation" scheme="URI" content="../topics/select.html"/>
 <meta name="DC.Relation" scheme="URI" content="pall.html"/>
 <meta name="DC.Relation" scheme="URI" content="por.html"/>
 <meta name="DC.Relation" scheme="URI" content="inc.html"/>
@@ -36,7 +35,7 @@
 <body onload="highlightSearchTerm()" id="references_console_add"><a name="references_console_add"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../topics/select.html" title="匹配符"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">匹配符</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="console.html" title="操作符">操作符</a> / <a class="navheader_parent_path" href="../topics/select.html" title="匹配符">匹配符</a></td></tr></tbody></table>
+                    --></script></span></div></td><td width="50%"/></tr></tbody></table>
 
   <h1 class="title topictitle1">$and</h1>
 
@@ -98,7 +97,7 @@ db.foo.bar.update({$inc:{salary:200}},{age:{$lt:20,$exists:1}})</pre>
 <div><a class="navheader_parent_path" href="../../methods/topics/dbupdate.html" title="db.collectionspace.collection.update()">db.collectionspace.collection.update()</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../topics/select.html" title="匹配符"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">匹配符</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

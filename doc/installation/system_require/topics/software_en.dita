@@ -14,15 +14,13 @@
             </sthead>
             <strow>
               <stentry>Set hostname</stentry>
-              <stentry> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<p></p><ul>
-                <li>对于SUSE：<p>2.打开/etc/HOSTNAME文件；</p><p>  vi /etc/HOSTNAME</p>
-                  <p>3.修改文件内容，配置为主机名称；</p><p>  sdbserver1  （主机名称）</p><p>4.按:wq保存退出；</p></li>
-                <li>对于RedHat：<p>2.打开/etc/sysconfig/network文件；</p><p>  vi
-                  /etc/sysconfig/network</p><p>3.将HOSTNAME一行修改为
-                    HOSTNAME=sdbserver1，其中sdbserver1为新主机名；</p> <p>4.按 :wq 保存退出；</p></li>
-                <li>对于Ubuntu：<p>2.打开/etc/hostname文件；</p><p>  vi /etc/hostname</p><p>3.修改文件内容，配置为主机名称；</p><p>sdbserver1</p> 4.按 :wq 保存退出；</li>
+              <stentry> 1. Log in with root privileges, perform hostname sdbserver1(sdbserver1 hostname can be modified as needed);<p></p><ul>
+                <li>For SUSE: <p>2. Open the /etc/HOSTNAME file;</p><p>  vi /etc/HOSTNAME</p>
+                  <p>3. Modify file contents, configured as a hostname;</p><p>  sdbserver1  (hostname)</p><p>4. Press :wq to save and exit;</p></li>
+                <li>For RedHat: <p>2. Open the /etc/sysconfig/network file;</p><p>  vi /etc/sysconfig/network</p><p>3. HOSTNAME line will modify the HOSTNAME=sdbserver1, which sdbserver1 new hostname;</p> <p>4. Press :wq to save and exit;</p></li>
+                <li>For Ubuntu：<p>2. Open the /etc/hostname file;</p><p>  vi /etc/hostname</p><p>3. Modify file contents, configured as a hostname;</p><p>sdbserver1</p>4. Press :wq to save and exit;</li>
               </ul></stentry>
-              <stentry>执行 hostname 命令，确认打印信息是否为 “sdbserver1” </stentry>
+              <stentry>Execute hostname command to verify whether the information is printed "sdbserver1" </stentry>
             </strow>
             <strow>
               <stentry>

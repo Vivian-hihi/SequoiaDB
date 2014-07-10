@@ -4,19 +4,19 @@
   <title>Domain</title>
   <body>
     <section><title>Concept</title>
-      <p>域（Domain）是由若干个复制组（Replica Group）组成的逻辑单元。每个域都可以根据定义好的策略自动管理所属数据，如数据切片和数据隔离等。</p>
-      <p>当域中的复制组为0个时，称作空域。空域中不能创建集合空间。</p>
-      <p>一个复制组可以属于多个域。</p>
-      <p>在逻辑上存在一个系统域称作“SYSDOMAIN”。当前系统所有复制组都属于系统域。用户创建域时不能使用“SYSDOMAIN”作为域名，也不能直接操作系统域。</p>
-      <p>域拥有除名称外的以下属性：</p>
+      <p>Domain is the logical unit composed of several replica group composed. Each domain can automatically manage data based on defined policies belongs, such as data slice and data isolation.</p>
+      <p>When the replica group domain is 0 when called airspace. Airspace can not create a collection space.</p>
+      <p>A replica group can belong to multiple domains.</p>
+      <p>There is a system known as domain "SYSDOMAIN" logically. The current system all replica groups are part of the system domain. When you create a domain user can not use the "SYSDOMAIN" as a domain name, it can not directly operate the system domain.</p>
+      <p>Domain has the following attributes in addition to names:</p>
       <simpletable>
         <sthead>
-          <stentry>属性名</stentry>
-          <stentry>描述</stentry>          
+          <stentry>Property name</stentry>
+          <stentry>Description</stentry>          
         </sthead>
         <strow>
           <stentry>AutoSplit</stentry>
-          <stentry>当此属性为True时，在该域上创建的散列分区集合会被自动切分至包含的所有复制组上。</stentry>          
+          <stentry>When this property is True, hash partitions on the domain to create a collection of all the replica group will be automatic segmentation to contain.</stentry>          
         </strow>        
       </simpletable>
     </section>

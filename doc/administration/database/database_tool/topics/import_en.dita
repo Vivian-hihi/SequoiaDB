@@ -173,161 +173,159 @@
       <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
     <section>
-      <title>sdbimprt自动判断的类型：</title>
+      <title>Data types automatically detected by sdbimprt:</title>
       <simpletable>
         <sthead>
-          <stentry>csv数据</stentry>
-          <stentry>sdbimprt自动判断的类型</stentry>
-          <stentry>实际数据</stentry>
+          <stentry>CSV data</stentry>
+          <stentry>Data types automatically detected by sdbimprt</stentry>
+          <stentry>Actual data</stentry>
         </sthead>
         <strow>
           <stentry>123</stentry>
-          <stentry>数值</stentry>
+          <stentry>number</stentry>
           <stentry>123</stentry>
         </strow>
         <strow>
           <stentry>123.1</stentry>
-          <stentry>数值</stentry>
+          <stentry>number</stentry>
           <stentry>123.1</stentry>
         </strow>
         <strow>
           <stentry>+123</stentry>
-          <stentry>数值</stentry>
+          <stentry>number</stentry>
           <stentry>123</stentry>
         </strow>
         <strow>
           <stentry>-123</stentry>
-          <stentry>数值</stentry>
+          <stentry>number</stentry>
           <stentry>-123</stentry>
         </strow>
         <strow>
           <stentry>2E+2</stentry>
-          <stentry>数值</stentry>
+          <stentry>number</stentry>
           <stentry>200</stentry>
         </strow>
         <strow>
           <stentry>-2E+2</stentry>
-          <stentry>数值</stentry>
+          <stentry>number</stentry>
           <stentry>-200</stentry>
         </strow>
         <strow>
           <stentry>0123</stentry>
-          <stentry>数值</stentry>
+          <stentry>number</stentry>
           <stentry>123</stentry>
         </strow>
         <strow>
           <stentry>"123"</stentry>
-          <stentry>字符串</stentry>
+          <stentry>string</stentry>
           <stentry>123</stentry>
         </strow>
         <strow>
           <stentry>123a</stentry>
-          <stentry>字符串</stentry>
+          <stentry>string</stentry>
           <stentry>123a</stentry>
         </strow>
         <strow>
           <stentry>"ab""c"</stentry>
-          <stentry>字符串</stentry>
+          <stentry>string</stentry>
           <stentry>ab"c</stentry>
         </strow>
         <strow>
           <stentry>"{a:1}"</stentry>
-          <stentry>字符串</stentry>
+          <stentry>string</stentry>
           <stentry>{a:1}</stentry>
         </strow>
         <strow>
           <stentry>"true"</stentry>
-          <stentry>字符串</stentry>
+          <stentry>string</stentry>
           <stentry>true</stentry>
         </strow>
         <strow>
           <stentry>"false"</stentry>
-          <stentry>字符串</stentry>
+          <stentry>string</stentry>
           <stentry>false</stentry>
         </strow>
         <strow>
           <stentry>"null"</stentry>
-          <stentry>字符串</stentry>
+          <stentry>string</stentry>
           <stentry>null</stentry>
         </strow>
         <strow>
           <stentry>true</stentry>
-          <stentry>布尔</stentry>
+          <stentry>boolean</stentry>
           <stentry>true</stentry>
         </strow>
         <strow>
           <stentry>false</stentry>
-          <stentry>布尔</stentry>
+          <stentry>boolean</stentry>
           <stentry>false</stentry>
         </strow>
         <strow>
           <stentry>null</stentry>
-          <stentry>空</stentry>
+          <stentry>null</stentry>
           <stentry>null</stentry>
         </strow>
       </simpletable>
     </section>    
-    <p>从1.8版本开始支持指定类型和默认值：</p>
-    <p>语法：field [type] [default &lt;default value ]</p>
-    <p>支援数据类型（type）： int(integer)， long， bool(boolean)， double， string， null</p>
-    <p>支援特殊数据类型：timestamp， date</p>
-    <p>例子：<codeblock>name string default "Jack", age int default 18, phone string</codeblock> </p>  
+    <p>Data types and default values can be specified since version 1.8.</p>
+    <p>Syntax: field [type] [default &lt;default value ]</p>
+    <p>Supported data types: int(integer), long, bool(boolean), double, string, null</p>
+    <p>Supported special data types: timestamp, date</p>
+    <p>Example:<codeblock>name string default "Jack", age int default 18, phone string</codeblock> </p>  
     <section>
-      <title>指定的类型与数据：</title>
+      <title>Data and Specified types:</title>
       <simpletable>
         <sthead>
-          <stentry>指定的类型</stentry>
-          <stentry>支援的数据类型</stentry>
-          <stentry>注意</stentry>
+          <stentry>Specified types</stentry>
+          <stentry>Supported data type</stentry>
+          <stentry>Note</stentry>
         </sthead>
         <strow>
           <stentry>int(interger)</stentry>
-          <stentry>int，string，bool</stentry>
-          <stentry>bool类型，true转换1，false转换0
-          </stentry>
+          <stentry>int, string, bool</stentry>
+          <stentry>bool type, true converts to 1, false converts to 0</stentry>
         </strow>
         <strow>
           <stentry>long</stentry>
-          <stentry>long，string，int，bool</stentry>
-          <stentry>bool类型，true转换1，false转换0
-          </stentry>
+          <stentry>long, string, int, bool</stentry>
+          <stentry>bool type,true converts to 1, false converts to 0</stentry>
         </strow>
         <strow>
           <stentry>bool(boolean)</stentry>
-          <stentry>bool，string，int，long</stentry>
-          <stentry>int和long类型，0转换false，不等于0转换true</stentry>
+          <stentry>bool, string, int, long</stentry>
+          <stentry>int and long type, 0 converts to false, any number other than 0 converts to true</stentry>
         </strow>
         <strow>
           <stentry>double</stentry>
-          <stentry>double，string，int</stentry>
+          <stentry>double, string, int</stentry>
           <stentry></stentry>
         </strow>
         <strow>
           <stentry>string</stentry>
-          <stentry>int，long，bool，double，string，timestamp，date，null</stentry>
+          <stentry>int, long, bool, double, string, timestamp, date, null</stentry>
           <stentry></stentry>
         </strow>
         <strow>
           <stentry>timestamp</stentry>
-          <stentry>string，long</stentry>
-          <stentry>如果数据是string，如“2014-01-01-10.30.00.000000”，“1388543400000”，如果是long，如1388543400000，这两种格式是正确的，数值代表的是毫秒单位</stentry>
+          <stentry>string, long</stentry>
+          <stentry>string type, like "2014-01-01-10.30.00.000000", "1388543400000"; long type, like 1388543400000, both types are correct, <fig></fig>the valuesare in the miliseconds</stentry>
         </strow>
         <strow>
           <stentry>date</stentry>
-          <stentry>string，long</stentry>
-          <stentry>如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的秒单位</stentry>
+          <stentry>string, long</stentry>
+          <stentry>string type, like "2014-01-01", "1388543400"; long type, like 1388543400, both types are correct, the values are in seconds</stentry>
         </strow>
         <strow>
           <stentry>null</stentry>
           <stentry></stentry>
-          <stentry>指定了数据类型为null，那么无论数据是什么，都是null</stentry>
+          <stentry>if the data type is specified as null, then the data will be a null no matters what it really is.</stentry>
         </strow>        
       </simpletable>
     </section>
-    <p>数据类型是可选的，不填则程序自动判断类型，判断以上面表格为准。</p>    
-    <p>数据类型优先级：</p>
-    <p>1.不指定数据类型（不支援特殊数据类型）：程序自动判断类型，优先级是null > bool > int > double > long > string</p>
-    <p>2.指定数据类型：优先级是指定的类型 > 支援的类型（参考指定的类型与数据表格） > null</p>
-    <p>3.指定数据类型，并且带默认值：优先级是指定的类型 > 支援的类型（参考指定的类型与数据表格） > 默认值 > null</p>    
+    <p>The data type is optional.If the data type is not specified by the user; it will be automatically detected and determined in the standard shown in the above table.</p>    
+    <p>Data type priority:</p>
+    <p>1. When data types are not specified (special data type are not supported): data types will be automatically detected, the priority is in the order of: null > bool > int > double > long > string</p>
+    <p>2. When data types are specified: Priority is in the order of: Specified data type > supported data type > null</p>
+    <p>3. When data types and default values are specified: Priority is in the order of: Specified data type > supported data type > default value > null</p>    
   </body>
 </topic>
