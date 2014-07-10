@@ -123,7 +123,7 @@
 		</for>
 
 		<!-- python driver -->
-		<exec executable="/usr/local/bin/python2.7" dir="${DRIVER.DIR}/python/pysequoiadb" failonerror="true">
+		<exec executable="/usr/bin/python" dir="${DRIVER.DIR}/python/pysequoiadb" failonerror="true">
 			<arg line="python setup.py install" />
 		</exec>
 		<copy todir="${DRIVER.DIR}/python/pysequoiadb">
