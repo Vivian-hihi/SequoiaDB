@@ -24,11 +24,11 @@ pythondir += os.sep
 print sys.platform
 pwd = os.getcwd()
 path = os.path.abspath(os.path.join(pwd, os.pardir, os.pardir, os.pardir)) + os.sep
-      
+
 if sys.platform == 'win32':
    thirdparty = path + "thirdparty" + os.sep
    path = path + "SequoiaDB" + os.sep + "engine" + os.sep
-   source = [ 
+   source = [
       path + "client/clientcpp.cpp",
       path + "oss/oss.cpp",
       path + "oss/ossUtil.cpp",
@@ -95,7 +95,7 @@ else:
    include = [
       path + 'client/include',
       path + 'SequoiaDB/engine/include', ]
-             
+
    lib = [
       path + 'client/lib', ]
 
@@ -111,7 +111,7 @@ else:
       '-fPIC',
       '-ldl',
       '-ggdb', ]
-      
+
    link = [
       'staticsdbcpp', ]
 
@@ -134,7 +134,7 @@ module2 = Extension( 'sdbcl',
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module2cppfiles )   
+                     sources            = module2cppfiles )
 
 module3cppfiles=source;
 module3cppfiles.append('pycollectionspace.cpp')
@@ -144,7 +144,7 @@ module3 = Extension( 'sdbcs',
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module3cppfiles )                             
+                     sources            = module3cppfiles )
 
 module4cppfiles=source;
 module4cppfiles.append('pyreplicagroup.cpp')
@@ -154,7 +154,7 @@ module4 = Extension( 'sdbreplicagroup',
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module4cppfiles )  
+                     sources            = module4cppfiles )
 
 module5cppfiles=source;
 module5cppfiles.append('pyreplicanode.cpp')
@@ -164,17 +164,17 @@ module5 = Extension( 'sdbreplicanode',
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module5cppfiles )  
+                     sources            = module5cppfiles )
 
 module6cppfiles=source;
-module6cppfiles.append('pycursor.cpp')               
+module6cppfiles.append('pycursor.cpp')
 module6 = Extension( 'sdbcursor',
                      define_macros      = compile,
                      extra_compile_args = compile_options,
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module6cppfiles )  
+                     sources            = module6cppfiles )
 
 ext_modules = [
             module1,
@@ -182,13 +182,13 @@ ext_modules = [
             module3,
             module4,
             module5,
-            module6, ] 
+            module6, ]
 
-extra_opts = {}                                                         
+extra_opts = {}
 extra_opts['ext_modules'] = ext_modules
 setup(name = 'sdbclient',
       version = '1.0',
-      author = 'SequoiaDB Ltd',
+      author = 'SequoiaDB Inc.',
       description = 'This is a sequoiadb python driver use adapter package',
       url = 'http://www.sequoiadb.com',
       long_description = '''
