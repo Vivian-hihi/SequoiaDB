@@ -124,7 +124,7 @@
 
 		<!-- python driver -->
 		<exec executable="/usr/bin/python" dir="${DRIVER.DIR}/python/pysequoiadb" failonerror="true">
-			<arg line="python setup.py install" />
+			<arg line=" setup.py install" />
 		</exec>
 		<copy todir="${DRIVER.DIR}/python/pysequoiadb">
 			<fileset dir="${DRIVER.DIR}/python/pysequoiadb/build/lib.linux-x86_64-2.7/" includes="**/*" />
