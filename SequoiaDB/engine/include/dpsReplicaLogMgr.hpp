@@ -82,6 +82,7 @@ namespace engine
       UINT32                     _pageNum;
       BOOLEAN                    _restoreFlag ;
       ossAutoEvent               _allocateEvent ;
+      _ossAtomic32               _queSize ;
 
       dpsTransCB                 *_transCB ;
       dpsEventHandler            *_pEventHander ;

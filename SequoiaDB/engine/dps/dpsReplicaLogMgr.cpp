@@ -68,7 +68,7 @@ namespace engine
 
    _dpsReplicaLogMgr::_dpsReplicaLogMgr()
    :_logger(this), _pages(NULL), _idleSize(0), _totalSize(0),
-    _work(0), _pageNum(0)
+    _work(0), _pageNum(0), _queSize(0)
    {
       _begin = 0 ;
       _rollFlag = FALSE ;
@@ -546,8 +546,8 @@ namespace engine
          goto error ;
       }
 
-      //wait queue empty
-      while ( !_queue.empty() )
+      // wait queue empty
+      while ( !_queSize.compare( 0 ) )
       {
          ossSleep ( 100 ) ;
       }
@@ -963,6 +963,7 @@ namespace engine
             if ( !_restoreFlag )
             {
                _queue.push ( page ) ;
+               _queSize.inc() ;
             }
             else
             {
@@ -1173,6 +1174,7 @@ namespace engine
          _work = _incPageID ( _work ) ;
          // fill the rest to '0'
          ossMemset( page->mb()->writePtr(), 0, page->getLastSize() ) ;
+         _queSize.inc() ;
          rc = _flushPage( page, TRUE );
          if ( rc )
          {
@@ -1205,8 +1207,9 @@ namespace engine
       }
       SDB_ASSERT ( shutdown || page->getLength() == DPS_DEFAULT_PAGE_SIZE,
                    "page can't be partial during flush except shutdown" ) ;
-      _idleSize.add( page->getLength() );
       page->clear();
+      _idleSize.add( page->getLength() );
+      _queSize.dec() ;
       _allocateEvent.signalAll() ;
 
    done :
