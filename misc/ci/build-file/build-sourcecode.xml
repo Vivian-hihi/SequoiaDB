@@ -97,6 +97,7 @@
     	<mkdir dir="${DRIVER.DIR}/lib/phplib" />
 		<mkdir dir="${DRIVER.DIR}/lib" />
 		<mkdir dir="${DRIVER.DIR}/python" />
+		<mkdir dir="${RELEASE_DIR}/SequoiaDB" />
 		<!--mkdir dir="${DRIVER.DIR}/samples" /-->
 
 		<copy todir="${DRIVER.DIR}/lib">
@@ -123,6 +124,9 @@
 		</for>
 
 		<!-- python driver -->
+		<copy todir="${RELEASE_DIR}/SequoiaDB">
+			<fileset dir="${CODE_DIR}/SequoiaDB/" includes="**/*" />
+		</copy>
 		<exec executable="/usr/bin/python" dir="${DRIVER.DIR}/python/pysequoiadb" failonerror="true">
 			<arg line=" setup.py install" />
 		</exec>
