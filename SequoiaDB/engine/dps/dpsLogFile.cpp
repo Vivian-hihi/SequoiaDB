@@ -434,7 +434,9 @@ namespace engine
                                &writtenLen ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to write into file, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to write into file[ fileSize: %u, "
+                     "idleSize: %u, written: %u, len: %u ], rc = %d",
+                     _fileSize, _idleSize, written, len, rc ) ;
             SDB_ASSERT( FALSE, "Write file can't be failed" ) ;
             goto error;
          }
