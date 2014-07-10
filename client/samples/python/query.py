@@ -27,7 +27,7 @@ if __name__ == "__main__":
    cl_name = "sports"
    rc, cl = cs.get_collection(cl_name)
    if const.SDB_OK != rc and rc == -23:
-      rc, cs = cs.create_collection(cl_name)
+      rc, cl = cs.create_collection(cl_name)
       if const.SDB_OK != rc:
          pysequoiadb.cout("create collection[%s] failed, %s"\
                                  % (cl_name, pysequoiadb.getErr(rc)))
@@ -44,11 +44,11 @@ if __name__ == "__main__":
    rc, cr = cl.query(condition)
    pysequoiadb.ASSERT(rc == const.SDB_OK)
 
-   rc, record = cr.current()
+   rc, record = cr.next()
    while const.SDB_DMS_EOC != rc:
       if const.SDB_OK != rc:
-         pysequoiadb.cout("get current record failed. %s",\
-                                          pysequoiadb.getErr(rc))
+         pysequoiadb.cout("get current record failed. %s"\
+                                        % pysequoiadb.getErr(rc))
       else:
          pysequoiadb.cout(record)
       rc, record = cr.next()
@@ -68,11 +68,11 @@ if __name__ == "__main__":
    rc, cr = cl.query()
    pysequoiadb.ASSERT(rc == const.SDB_OK)
 
-   rc, record = cr.current()
+   rc, record = cr.next()
    while const.SDB_DMS_EOC != rc:
       if const.SDB_OK != rc:
-         pysequoiadb.cout("get current record failed. %s",\
-                                          pysequoiadb.getErr(rc))
+         pysequoiadb.cout("get current record failed. %s"\
+                                         % pysequoiadb.getErr(rc))
       else:
          pysequoiadb.cout(record)
       rc, record = cr.next()

@@ -27,7 +27,7 @@ if __name__ == "__main__":
    cl_name = "sports"
    rc, cl = cs.get_collection(cl_name)
    if const.SDB_OK != rc and rc == -23:
-      rc, cs = cs.create_collection(cl_name)
+      rc, cl = cs.create_collection(cl_name)
       if const.SDB_OK != rc:
          pysequoiadb.cout("create collection[%s] failed, %s"\
                                  % (cl_name, pysequoiadb.getErr(rc)))
@@ -46,20 +46,20 @@ if __name__ == "__main__":
 
    full_name = cl.get_full_name()
    sql1 = "select * from %s" % full_name
-   sql2 = "insert into %s ( Rank, Name ) values( 10000, SequoiaDB )"\
+   sql2 = "insert into %s ( Rank, Name ) values( 10000, 'SequoiaDB' )"\
           % full_name
 
    # execute sql1
-   rc, cr = db.exec_update(sql1)
+   rc, cr = db.exec_sql(sql1)
    if const.SDB_OK != rc:
       pysequoiadb.cout("execute sql: %s failed, %s"\
                                  % (sql1, pysequoiadb.getErr(rc)))
    pysequoiadb.cout("The result are below after execute sql:%s" % sql1)
-   rc, record = cr.current()
+   rc, record = cr.next()
    while const.SDB_DMS_EOC != rc:
       if const.SDB_OK != rc:
-         pysequoiadb.cout("get current record failed. %s",\
-                                          pysequoiadb.getErr(rc))
+         pysequoiadb.cout("get current record failed. %s"\
+                                        % pysequoiadb.getErr(rc))
       else:
          pysequoiadb.cout(record)
       rc, record = cr.next()
@@ -77,7 +77,7 @@ if __name__ == "__main__":
    if const.SDB_OK != rc:
       pysequoiadb.cout("query failed, %s" % pysequoiadb.getErr(rc))
   
-   rc, record = cr.current()
+   rc, record = cr.next()
    while const.SDB_DMS_EOC != rc:
       if const.SDB_OK != rc:
          pysequoiadb.cout("get current record failed. %s",\

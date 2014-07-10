@@ -27,7 +27,7 @@ if __name__ == "__main__":
    cl_name = "sports"
    rc, cl = cs.get_collection(cl_name)
    if const.SDB_OK != rc and rc == -23:
-      rc, cs = cs.create_collection(cl_name)
+      rc, cl = cs.create_collection(cl_name)
       if const.SDB_OK != rc:
          pysequoiadb.cout("create collection[%s] failed, %s"\
                                  % (cl_name, pysequoiadb.getErr(rc)))
