@@ -110,7 +110,7 @@
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
     	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
     	<copy todir="${DRIVER.DIR}/python">
-    		<fileset dir="${CODE_DIR}/driver/python/" include="**/*" />
+    		<fileset dir="${CODE_DIR}/driver/python/" includes="**/*" />
     	</copy>
 
 	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
