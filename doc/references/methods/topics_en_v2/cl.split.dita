@@ -21,11 +21,11 @@
       <parml>
         <plentry>
           <pt>source group (string)</pt>
-          <pd>The source Replica Group.</pd>
+          <pd>The source replica group.</pd>
         </plentry>
         <plentry>
           <pt>target group (string)</pt>
-          <pd>The target Replica Group.</pd>
+          <pd>The target replica group.</pd>
         </plentry>
         <plentry>
           <pt>percent(0~100) (double)</pt>

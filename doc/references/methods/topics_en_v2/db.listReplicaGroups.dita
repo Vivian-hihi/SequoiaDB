@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>listReplicaGroups - List Replica Groups.</p>
+      <p>listReplicaGroups - List replica groups.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,11 +17,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>List Replica Groups.</p>      
+      <p>List replica groups.</p>      
     </section>    
     <section>
       <title>Examples</title>
-      Return the information of every Replica Group:
+      Return the information of every replica group:
       <codeblock>> db.listReplicaGroups()
 Return: {
   "Group": [
@@ -82,7 +82,7 @@ Return: {
     "$oid": "517b2fc33d7e6f820fc0eb57"
   }
   }</codeblock>
-      This ReplicaGroup has 2 nodes: 11800 and 11850. Node 11850 is the master node.
+      This replica group has 2 nodes: 11800 and 11850. Node 11850 is the master node.
     </section>
   </body>
   <related-links>

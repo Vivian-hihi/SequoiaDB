@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-createRG - Create a ReplicaGroup.
+createRG - Create a replica group.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,12 +25,12 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Create a ReplicaGroup. When creating a ReplicaGroup, the system
-will automatically generate a "groupID" for a ReplicaGroup.
+Create a replica group. When creating a replica group, the system
+will automatically generate a "groupID" for a replica group.
 .sp 2
 \fBname (string)\fR
 .br
-       ReplicaGroup name. All ReplicaGroup names are unique to
+       Replica group name. All replica group names are unique to
        each other in a database instance.
 .sp 2
        \fBFormat\fR
@@ -39,7 +39,7 @@ will automatically generate a "groupID" for a ReplicaGroup.
               "name", which is in the type of string. It should
               not be null.
 .br
-              (<"ReplicaGroup name">)
+              (<"replica group name">)
 .sp 2
 
 .sp 2
@@ -51,6 +51,6 @@ will automatically generate a "groupID" for a ReplicaGroup.
 .SH "Examples"
 
 .sp 2
-Create a ReplicaGroup named "group".
+Create a replica group named "group".
 .sp 2
 db.createRG("group")

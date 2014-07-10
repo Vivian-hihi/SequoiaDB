@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-startRG - Start a specified ReplicaGroup.
+startRG - Start a specified replica group.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,34 +25,34 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Start a specified ReplicaGroup. A node can only be created after
+Start a specified replica group. A node can only be created after
 a replica group is already started. This method is equivalent to
 rg.start().
 .sp 2
 \fBname (string)\fR
 .br
-       The name of a ReplicaGroup.
+       The name of a replica group.
 .sp 2
        \fBFormat\fR
 .br
               The method "db.startRG()" contains a parameter
               called "name". The type of it is string. It is the
-              name of the ReplicaGroup which is about to be
+              name of the replica group which is about to be
               started.
 .br
-              ("<ReplicaGroup name>")
+              ("<replica group name>")
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  Exception will occur when the specified ReplicaGroup
+   *  Exception will occur when the specified replica group
    doesn't exist or it has been started.
 .SH "Examples"
 
 .sp 2
 
 .sp 2
-The following command starts a ReplicaGroup called "group":
+The following command starts a replica group called "group":
 .sp 2
 db.startRG("group")

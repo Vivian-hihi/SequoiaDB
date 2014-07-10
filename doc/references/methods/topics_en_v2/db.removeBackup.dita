@@ -21,7 +21,7 @@
       <parml>
         <plentry>
           <pt>options (json object)</pt>
-          <pd>Set the backup name, specify the ReplicaGroup, the backup path and other parameters.
+          <pd>Set the backup name, specify the replica group, the backup path and other parameters.
             <parml>
               <plentry>
                 <pt>GroupID</pt>

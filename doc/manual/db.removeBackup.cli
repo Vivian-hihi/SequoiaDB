@@ -29,7 +29,7 @@ Delete the database backup.
 .sp 2
 \fBoptions (json object)\fR
 .br
-       Set the backup name, specify the ReplicaGroup, the backup
+       Set the backup name, specify the replica group, the backup
        path and other parameters.
 .sp 2
        \fBGroupID\fR

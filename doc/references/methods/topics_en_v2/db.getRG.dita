@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getRG - Return the reference of a ReplicaGroup.</p>
+      <p>getRG - Return the reference of a replica group.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,20 +17,20 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return the reference of a ReplicaGroup.</p>
+      <p>Return the reference of a replica group.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>ReplicaGroup name. ReplicaGroup names are unique to each other in a database instance.</pd>
+          <pd>Replica group name. Replica group names are unique to each other in a database instance.</pd>
         </plentry>
         <plentry>
           <pt>id (int)</pt>
-          <pd>ReplicaGroup id. The system will automatically generate a ReplicaGroup id.
+          <pd>Replica group id. The system will automatically generate a replica group id.
             <parml>
               <plentry>
                 <pt>Format</pt>
                 <pd>getRG() has two parameters "name" and "id". The value of "name" should be a string, the value of "id" is a int. If the replica group specified by "name" or "id" does not exist, an exception will occur.</pd>
-                <pd>("&lt;ReplicaGroup name>"|&lt;id>)</pd>
+                <pd>("&lt;replica group name>"|&lt;id>)</pd>
               </plentry>
             </parml>
           </pd>          
@@ -42,9 +42,9 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Specify the value of the "name", the command will return the corresponding reference of the Replica Group named "rg1".</p>
+      <p>Specify the value of the "name", the command will return the corresponding reference of the replica group named "rg1".</p>
       <codeblock>db.getRG("rg1")</codeblock>
-      <p>Specify the value of the "id", the command will return the corresponding reference of the Replica Group named "rg1".</p>
+      <p>Specify the value of the "id", the command will return the corresponding reference of the replica group named "rg1".</p>
       <codeblock>db.getRG("1000")</codeblock>
     </section>
   </body>

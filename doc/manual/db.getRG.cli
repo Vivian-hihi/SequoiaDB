@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getRG - Return the reference of a ReplicaGroup.
+getRG - Return the reference of a replica group.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,17 +25,17 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Return the reference of a ReplicaGroup.
+Return the reference of a replica group.
 .sp 2
 \fBname (string)\fR
 .br
-       ReplicaGroup name. ReplicaGroup names are unique to each
+       Replica group name. Replica group names are unique to each
        other in a database instance.
 .sp 2
 \fBid (int)\fR
 .br
-       ReplicaGroup id. The system will automatically generate a
-       ReplicaGroup id.
+       Replica group id. The system will automatically generate a
+       replica group id.
 .sp 2
        \fBFormat\fR
 .br
@@ -45,7 +45,7 @@ Return the reference of a ReplicaGroup.
               "name" or "id" does not exist, an exception will
               occur.
 .br
-              ("<ReplicaGroup name>"|<id>)
+              ("<replica group name>"|<id>)
 .sp 2
 
 .sp 2
@@ -57,11 +57,11 @@ Return the reference of a ReplicaGroup.
 
 .sp 2
 Specify the value of the "name", the command will return the
-corresponding reference of the Replica Group named "rg1".
+corresponding reference of the replica group named "rg1".
 .sp 2
 db.getRG("rg1")
 .sp 2
 Specify the value of the "id", the command will return the
-corresponding reference of the Replica Group named "rg1".
+corresponding reference of the replica group named "rg1".
 .sp 2
 db.getRG("1000")

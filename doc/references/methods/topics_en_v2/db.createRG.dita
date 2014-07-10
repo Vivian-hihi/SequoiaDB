@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>createRG - Create a ReplicaGroup.</p>
+      <p>createRG - Create a replica group.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,16 +17,16 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Create a ReplicaGroup. When creating a ReplicaGroup, the system will automatically generate a "groupID" for a ReplicaGroup.</p>
+      <p>Create a replica group. When creating a replica group, the system will automatically generate a "groupID" for a replica group.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>ReplicaGroup name. All ReplicaGroup names are unique to each other in a database instance.
+          <pd>Replica group name. All replica group names are unique to each other in a database instance.
             <parml>
               <plentry>
                 <pt>Format</pt>
                 <pd>The method "createRG()" contains the parameter "name", which is in the type of string. It should not be null.</pd>
-                <pd>(&lt;"ReplicaGroup name">)</pd>
+                <pd>(&lt;"replica group name">)</pd>
               </plentry>
             </parml>
           </pd>          
@@ -38,7 +38,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Create a ReplicaGroup named "group".</p>
+      <p>Create a replica group named "group".</p>
       <codeblock>db.createRG("group")</codeblock>
     </section>
   </body>

@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>createNode - Create a node in a ReplicaGroup.</p>
+      <p>createNode - Create a node in a replica group.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Create a node in a ReplicaGroup.</p>
+      <p>Create a node in a replica group.</p>
       <parml>
         <plentry>
           <pt>host (string)</pt>

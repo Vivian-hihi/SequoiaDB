@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-createCataRG - Create a new catalog ReplicaGroup.
+createCataRG - Create a new catalog replica group.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,7 +25,7 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Create a new catalog ReplicaGroup, create and start a catalog
+Create a new catalog replica group, create and start a catalog
 node at the same time.
 .sp 2
 \fBhost (string)\fR

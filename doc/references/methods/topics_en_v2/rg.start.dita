@@ -17,12 +17,12 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Start the replica group. After a ReplicaGroup is started, operations like creating nodes can be
+      <p>Start the replica group. After a replica group is started, operations like creating nodes can be
         executed. Users can start specified node with the method db.startRG(&lt;name>).</p>            
     </section>    
     <section>
       <title>Examples</title>
-      <p>Start ReplicaGroup:</p>
+      <p>Start replica group:</p>
       <codeblock>rg.start() //Equivalent to db.startRG("group")</codeblock>     
     </section>
   </body>

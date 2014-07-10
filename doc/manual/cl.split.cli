@@ -37,11 +37,11 @@ terminate and return after finishing the data split.
 .sp 2
 \fBsource group (string)\fR
 .br
-       The source Replica Group.
+       The source replica group.
 .sp 2
 \fBtarget group (string)\fR
 .br
-       The target Replica Group.
+       The target replica group.
 .sp 2
 \fBpercent(0~100) (double)\fR
 .br

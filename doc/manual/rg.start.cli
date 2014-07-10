@@ -25,12 +25,12 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Start the replica group. After a ReplicaGroup is started,
+Start the replica group. After a replica group is started,
 operations like creating nodes can be executed. Users can start
 specified node with the method db.startRG(<name>).
 .SH "Examples"
 
 .sp 2
-Start ReplicaGroup:
+Start replica group:
 .sp 2
 rg.start() //Equivalent to db.startRG("group")
