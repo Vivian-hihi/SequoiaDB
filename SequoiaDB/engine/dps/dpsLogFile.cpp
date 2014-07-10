@@ -440,6 +440,8 @@ namespace engine
          }
          written += (UINT32)writtenLen ;
          _idleSize -= (UINT32)writtenLen ;
+
+         SDB_ASSERT( _idleSize <= _fileSize, "Idle size must <= file size" ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB__DPSLOGFILE_WRITE, rc );
