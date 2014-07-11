@@ -80,7 +80,7 @@ srcFile = [
 	  path + "/temp/pdFunctionList.cpp",
 	  path + "/temp/numbers.c",
 	  path + "/temp/bson.c",
-      path + "/temp/encoding.c"
+      path + "/temp/encoding.c",
 	  path + "/temp/base64c.c",
 	  path + "/temp/cJSON.c",
 	  path + "/temp/jstobs.c",
