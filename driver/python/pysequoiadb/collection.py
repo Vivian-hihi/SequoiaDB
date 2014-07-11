@@ -484,7 +484,7 @@ class collection(object):
       unique = 0
       enforce = 0
       bson_index_def = None;
-      bson_index_def = bson.BSONOBJ.encode(index_def)
+      bson_index_def = bson.BSON.encode(index_def)
       if is_unique:
          unique = 1
 

@@ -110,7 +110,7 @@ else:
       '-shared',
       '-fPIC',
       '-ldl',
-      '-ggdb', ]
+      '-g', ]
 
    link = [
       'staticsdbcpp', ]

@@ -7,60 +7,60 @@ clientFiles = [
       ]
 
 clFiles = [
-	  "pysequoiadb/pycollection.cpp",
-	  ]
+   "pysequoiadb/pycollection.cpp",
+   ]
 
 csFiles = [
-	  "pysequoiadb/pycollectionspace.cpp",
-	  ]
+   "pysequoiadb/pycollectionspace.cpp",
+   ]
 
 cursorFiles = [
-	  "pysequoiadb/pycursor.cpp",
-	  ]
+   "pysequoiadb/pycursor.cpp",
+   ]
 
 replicagrouplFiles = [
-	   "pysequoiadb/pyreplicagroup.cpp",
-	  ]
+   "pysequoiadb/pyreplicagroup.cpp",
+   ]
 
 replicanodelFiles = [
-	  "pysequoiadb/pyreplicanode.cpp",
-	  ]
+   "pysequoiadb/pyreplicanode.cpp",
+   ]
 
 clientcppFiles = [
-      root_dir + "/SequoiaDB/engine/client/clientcpp.cpp"
-      ]
+   root_dir + "/SequoiaDB/engine/client/clientcpp.cpp"
+   ]
 
 #for threadsafe build, we should add this into clientLibFiles
 clientThreadSafe = [
-      root_dir + "/SequoiaDB/engine/oss/ossLatch.cpp"
-      ]
+   root_dir + "/SequoiaDB/engine/oss/ossLatch.cpp"
+   ]
 
 clientLibFiles = [
-      root_dir + "/SequoiaDB/engine/oss/oss.cpp",
-      root_dir + "/SequoiaDB/engine/oss/ossUtil.cpp",
-	  root_dir + "/SequoiaDB/engine/oss/ossMem.cpp",
-	  root_dir + "/SequoiaDB/engine/oss/ossVer.cpp",
-	  root_dir + "/SequoiaDB/engine/oss/ossSocket.cpp",
-	  root_dir + "/SequoiaDB/engine/oss/ossPrimitiveFileOp.cpp",
-      root_dir + "/SequoiaDB/engine/pd/pd.cpp",
-      root_dir + "/SequoiaDB/engine/pd/pdTrace.cpp",
-	  root_dir + "/SequoiaDB/engine/pd/pdFunctionList.cpp",
-	  root_dir + "/SequoiaDB/engine/client/bson/numbers.c",
-	  root_dir + "/SequoiaDB/engine/client/bson/bson.c",
-      root_dir + "/SequoiaDB/engine/client/bson/encoding.c",
-	  root_dir + "/SequoiaDB/engine/client/base64c.c",
-	  root_dir + "/SequoiaDB/engine/client/cJSON.c",
-	  root_dir + "/SequoiaDB/engine/client/jstobs.c",
-	  root_dir + "/SequoiaDB/engine/client/common.c",
-	  root_dir + "/SequoiaDB/engine/util/fromjson.cpp",
-      root_dir + "/SequoiaDB/engine/util/json2rawbson.c",
-	  root_dir + "/SequoiaDB/engine/util/utilStr.cpp",
-	  root_dir + "/SequoiaDB/engine/bson/bsonobj.cpp",
-      root_dir + "/SequoiaDB/engine/bson/oid.cpp",
-	  root_dir + "/SequoiaDB/engine/bson/md5.c",
-      root_dir + "/SequoiaDB/engine/bson/base64.cpp",
-      root_dir + "/SequoiaDB/engine/bson/nonce.cpp",
-	  ]
+   root_dir + "/SequoiaDB/engine/oss/oss.cpp",
+   root_dir + "/SequoiaDB/engine/oss/ossUtil.cpp",
+   root_dir + "/SequoiaDB/engine/oss/ossMem.cpp",
+   root_dir + "/SequoiaDB/engine/oss/ossVer.cpp",
+   root_dir + "/SequoiaDB/engine/oss/ossSocket.cpp",
+   root_dir + "/SequoiaDB/engine/oss/ossPrimitiveFileOp.cpp",
+   root_dir + "/SequoiaDB/engine/pd/pd.cpp",
+   root_dir + "/SequoiaDB/engine/pd/pdTrace.cpp",
+   root_dir + "/SequoiaDB/engine/pd/pdFunctionList.cpp",
+   root_dir + "/SequoiaDB/engine/client/bson/numbers.c",
+   root_dir + "/SequoiaDB/engine/client/bson/bson.c",
+   root_dir + "/SequoiaDB/engine/client/bson/encoding.c",
+   root_dir + "/SequoiaDB/engine/client/base64c.c",
+   root_dir + "/SequoiaDB/engine/client/cJSON.c",
+   root_dir + "/SequoiaDB/engine/client/jstobs.c",
+   root_dir + "/SequoiaDB/engine/client/common.c",
+   root_dir + "/SequoiaDB/engine/util/fromjson.cpp",
+   root_dir + "/SequoiaDB/engine/util/json2rawbson.c",
+   root_dir + "/SequoiaDB/engine/util/utilStr.cpp",
+   root_dir + "/SequoiaDB/engine/bson/bsonobj.cpp",
+   root_dir + "/SequoiaDB/engine/bson/oid.cpp",
+   root_dir + "/SequoiaDB/engine/bson/md5.c",
+   root_dir + "/SequoiaDB/engine/bson/base64.cpp",
+   root_dir + "/SequoiaDB/engine/bson/nonce.cpp",
+   ]
 
 env.Execute(Mkdir(root_dir + "/temp"))
 env.Execute(Mkdir(root_dir + "/temp/bson"))
@@ -69,32 +69,32 @@ for file in clientcppFiles:
 for file in clientLibFiles:
    env.Execute(Copy(root_dir + "/temp", file))
 srcFile = [
-	  path + "/temp/clientcpp.cpp",
-      path + "/temp/oss.cpp",
-      path + "/temp/ossUtil.cpp",
-	  path + "/temp/ossMem.cpp",
-	  path + "/temp/ossVer.cpp",
-	  path + "/temp/ossSocket.cpp",
-	  path + "/temp/ossPrimitiveFileOp.cpp",
-      path + "/temp/pd.cpp",
-      path + "/temp/pdTrace.cpp",
-	  path + "/temp/pdFunctionList.cpp",
-	  path + "/temp/bson/numbers.c",
-	  path + "/temp/bson/bson.c",
-      path + "/temp/bson/encoding.c",
-	  path + "/temp/base64c.c",
-	  path + "/temp/cJSON.c",
-	  path + "/temp/jstobs.c",
-	  path + "/temp/common.c",
-	  path + "/temp/fromjson.cpp",
-      path + "/temp/json2rawbson.c",
-	  path + "/temp/utilStr.cpp",
-	  path + "/temp/bsonobj.cpp",
-      path + "/temp/oid.cpp",
-	  path + "/temp/md5.c",
-      path + "/temp/base64.cpp",
-      path + "/temp/nonce.cpp",
-      ]
+   path + "/temp/clientcpp.cpp",
+   path + "/temp/oss.cpp",
+   path + "/temp/ossUtil.cpp",
+   path + "/temp/ossMem.cpp",
+   path + "/temp/ossVer.cpp",
+   path + "/temp/ossSocket.cpp",
+   path + "/temp/ossPrimitiveFileOp.cpp",
+   path + "/temp/pd.cpp",
+   path + "/temp/pdTrace.cpp",
+   path + "/temp/pdFunctionList.cpp",
+   path + "/temp/bson/numbers.c",
+   path + "/temp/bson/bson.c",
+   path + "/temp/bson/encoding.c",
+   path + "/temp/base64c.c",
+   path + "/temp/cJSON.c",
+   path + "/temp/jstobs.c",
+   path + "/temp/common.c",
+   path + "/temp/fromjson.cpp",
+   path + "/temp/json2rawbson.c",
+   path + "/temp/utilStr.cpp",
+   path + "/temp/bsonobj.cpp",
+   path + "/temp/oid.cpp",
+   path + "/temp/md5.c",
+   path + "/temp/base64.cpp",
+   path + "/temp/nonce.cpp",
+   ]
 
 env.SharedLibrary('sdbclient',[ clientFiles, srcFile ])
 env.SharedLibrary('sdbcl',[ clFiles, srcFile ])
