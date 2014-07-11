@@ -48,9 +48,6 @@ clientLibFiles = [
       root_dir + "/SequoiaDB/engine/pd/pd.cpp",
       root_dir + "/SequoiaDB/engine/pd/pdTrace.cpp",
 	  root_dir + "/SequoiaDB/engine/pd/pdFunctionList.cpp",
-	  root_dir + "/SequoiaDB/engine/client/bson/numbers.c",
-	  root_dir + "/SequoiaDB/engine/client/bson/bson.c",
-      root_dir + "/SequoiaDB/engine/client/bson/encoding.c",
 	  root_dir + "/SequoiaDB/engine/client/base64c.c",
 	  root_dir + "/SequoiaDB/engine/client/cJSON.c",
 	  root_dir + "/SequoiaDB/engine/client/jstobs.c",
@@ -64,6 +61,13 @@ clientLibFiles = [
       root_dir + "/SequoiaDB/engine/bson/base64.cpp",
       root_dir + "/SequoiaDB/engine/bson/nonce.cpp",
 	  ]
+clientLibFiles2 = [
+      root_dir + "/SequoiaDB/engine/client/bson/numbers.c",
+      root_dir + "/SequoiaDB/engine/client/bson/bson.h",
+      root_dir + "/SequoiaDB/engine/client/bson/encoding.h",
+      root_dir + "/SequoiaDB/engine/client/bson/bson.c",
+      root_dir + "/SequoiaDB/engine/client/bson/encoding.c"
+      ]
 
 env.Execute(Mkdir(root_dir + "/temp"))
 env.Execute(Mkdir(root_dir + "/temp/bson"))
@@ -71,6 +75,8 @@ for file in clientcppFiles:
    env.Execute(Copy(root_dir + "/temp", file))
 for file in clientLibFiles:
    env.Execute(Copy(root_dir + "/temp", file))
+for file in clientLibFiles2:
+   env.Execute(Copy(root_dir + "/temp/bson", file))
 srcFile = [
 	  root_dir + "/temp/clientcpp.cpp",
       root_dir + "/temp/oss.cpp",
