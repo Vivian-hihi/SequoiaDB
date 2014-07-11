@@ -35,9 +35,13 @@ clientThreadSafe = [
       ]
 
 clientLibFiles = [
+      root_dir + "/SequoiaDB/engine/oss/oss.c",
       root_dir + "/SequoiaDB/engine/oss/oss.cpp",
+      root_dir + "/SequoiaDB/engine/oss/ossUtil.c",
       root_dir + "/SequoiaDB/engine/oss/ossUtil.cpp",
+      root_dir + "/SequoiaDB/engine/oss/ossMem.c",
 	  root_dir + "/SequoiaDB/engine/oss/ossMem.cpp",
+	  root_dir + "/SequoiaDB/engine/oss/ossVer.c",
 	  root_dir + "/SequoiaDB/engine/oss/ossVer.cpp",
 	  root_dir + "/SequoiaDB/engine/oss/ossSocket.cpp",
 	  root_dir + "/SequoiaDB/engine/oss/ossPrimitiveFileOp.cpp",
