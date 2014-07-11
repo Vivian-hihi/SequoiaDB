@@ -17,11 +17,11 @@ cursorFiles = [
 	  "pysequoiadb/pycursor.cpp",
 	  ]
 
-replicagrouplFiles = [
+replicagroupFiles = [
 	   "pysequoiadb/pyreplicagroup.cpp",
 	  ]
 
-replicanodelFiles = [
+replicanodeFiles = [
 	  "pysequoiadb/pyreplicanode.cpp",
 	  ]
 
