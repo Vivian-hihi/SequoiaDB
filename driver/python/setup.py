@@ -24,11 +24,11 @@ pythondir += os.sep
 print sys.platform
 pwd = os.getcwd()
 path = os.path.abspath(os.path.join(pwd, os.pardir, os.pardir)) + os.sep
-      
+
 if sys.platform == 'win32':
    thirdparty = path + "thirdparty" + os.sep
    path = path + "SequoiaDB" + os.sep + "engine" + os.sep
-   source = [ 
+   source = [
       path + "client/clientcpp.cpp",
       path + "oss/oss.cpp",
       path + "oss/ossUtil.cpp",
@@ -95,7 +95,7 @@ else:
    include = [
       path + 'client/include',
       path + 'SequoiaDB/engine/include', ]
-             
+
    lib = [
       path + 'client/lib', ]
 
@@ -110,8 +110,9 @@ else:
       '-shared',
       '-fPIC',
       '-ldl',
-      '-ggdb', ]
-      
+      '-ggdb',
+      '-O3', ]
+
    link = [
       'staticsdbcpp', ]
 
