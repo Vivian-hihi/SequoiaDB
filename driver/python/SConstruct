@@ -122,7 +122,6 @@ add_option( "language" , "description language" , 1 , False )
 
 debugBuild = has_option( "debugBuildAndLogging" )
 language = has_option ( "language" )
-isDebug = has_option ( "dd" )
 
 if language is None:
    os.system ( "scons -C ../../misc/autogen" )
