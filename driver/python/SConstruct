@@ -124,7 +124,7 @@ def get_variant_dir():
 
 add_option( "dd", "debug build no optimization, additional debug logging, etc..." , 0 , True , "debugBuildAndLogging" )
 add_option( "language" , "description language" , 1 , False )
-add_option( "pythonversion", "debug build no optimization, additional debug logging, etc..." , 1 , False , "pyversion" )
+add_option( "pythonver", "debug build no optimization, additional debug logging, etc..." , 1 , False , "pyversion" )
 
 debugBuild = has_option( "debugBuildAndLogging" )
 language = get_option ( "language" )
@@ -138,7 +138,7 @@ if ( has_option( "pyversion" ) ) :
    pyversion  = get_option ( 'pyversion' )
    python_dir = join(root_dir,'thirdparty/python/' + 'python' + pyversion)
 else:
-   print "Please input the version information,For example: 'scons --pyversion=2.7' "
+   print "Please input the version information,For example: 'scons --pythonver=2.7' "
    exit(0)
     
 
