@@ -134,7 +134,7 @@
 		</exec>
 		-->
 		
-		<stafTools workType="copy"
+<!-- 		<stafTools workType="copy"
 			workDir="${copy.log.path}"
 			workHost="LOCAL"
 			saveDir="${copy.log.path}"
@@ -147,7 +147,7 @@
 		<stafTools workType="shell"
 			workHost="${save.testLog.hostname}"
 			common="/usr/bin/find ${save.testLog.dir} -mtime +1 -delete;"
-			workDir="${save.testLog.dir}" />
+			workDir="${save.testLog.dir}" /> -->
 	</target>
 
 </project>

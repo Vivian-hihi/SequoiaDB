@@ -96,7 +96,7 @@
 		<mkdir dir="${DRIVER.DIR}/include" />
     	<mkdir dir="${DRIVER.DIR}/lib/phplib" />
 		<mkdir dir="${DRIVER.DIR}/lib" />
-		<mkdir dir="${DRIVER.DIR}/python" />
+<!-- 		<mkdir dir="${DRIVER.DIR}/python" /> -->
 		<mkdir dir="${RELEASE_DIR}/SequoiaDB" />
 		<!--mkdir dir="${DRIVER.DIR}/samples" /-->
 
@@ -110,9 +110,9 @@
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
     	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
-    	<copy todir="${DRIVER.DIR}/python">
+<!--     	<copy todir="${DRIVER.DIR}/python">
     		<fileset dir="${CODE_DIR}/driver/python/" includes="**/*" />
-    	</copy>
+    	</copy> -->
 
 	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
 		<for list="${test-type-list}" param="php.version">
@@ -124,7 +124,7 @@
 		</for>
 
 		<!-- python driver -->
-		<copy todir="${RELEASE_DIR}/SequoiaDB">
+<!-- 		<copy todir="${RELEASE_DIR}/SequoiaDB">
 			<fileset dir="${CODE_DIR}/SequoiaDB/" includes="**/*" />
 		</copy>
 		<exec executable="/usr/bin/python" dir="${DRIVER.DIR}/python/pysequoiadb" failonerror="true">
@@ -133,7 +133,7 @@
 		<copy todir="${DRIVER.DIR}/python/pysequoiadb">
 			<fileset dir="${DRIVER.DIR}/python/pysequoiadb/build/lib.linux-x86_64-2.7/" includes="**/*" />
 		</copy>
-		<delete dir="${DRIVER.DIR}/python/pysequoiadb/build" failonerror="true"/>
+		<delete dir="${DRIVER.DIR}/python/pysequoiadb/build" failonerror="true"/> -->
 
 		<tar destfile="${RELEASE_DIR}/${project.name}-driver-${project.version}-${os.and.platform}.tar.gz" basedir="${RELEASE_DIR}" includes="driver/**" compression="gzip" />
 
@@ -171,7 +171,7 @@
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/log" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/www" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/tools/server/php" />
-		<mkdir dir="${RELEASE_DIR}/sequoiadb/python" />
+<!-- 		<mkdir dir="${RELEASE_DIR}/sequoiadb/python" /> -->
 
 		<if>
 			<equals arg1="${compile.debug}" arg2="true" />
@@ -209,9 +209,9 @@
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${RELEASE_DIR}/sequoiadb/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
-		<copy todir="${RELEASE_DIR}/sequoiadb/python">
+<!-- 		<copy todir="${RELEASE_DIR}/sequoiadb/python">
 			<fileset dir="${RELEASE_DIR}/driver/python/" includes="**/*" />
-		</copy>
+		</copy> -->
 		
 		
 		<if>

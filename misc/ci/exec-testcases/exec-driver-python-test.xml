@@ -1,0 +1,29 @@
+<!--@param ${testcase.path}: The path where test case direcotry.-->
+<!--@param ${reports.path}: The path where test case direcotry.-->
+<!--@param ${deploy.case.fullname}: The run in which env -->
+<!--@param ${python-bin.dir} : The python-bin's director-->
+<!--@param ${pythonunit.phar.dir} : The pythonunit.pythonar's director-->
+
+<project name="exec-driver-python-test" default="exec-driver-python-test">
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+	<property name="coordport" value="50000" />
+	<property name="dataport" value="21100" />
+
+	<target name="clean-env" depends="">
+		<delete dir="${reports.path}" failonerror="false" />
+		<mkdir dir="${reports.path}" />
+	</target>
+
+	<target name="test-one-case" depends="">
+		<echo message="test one case is TestPySequoiadb.py" />
+
+		<exec executable="/usr/bin/python" failonerror="false" dir="${testcase.path}">
+			<arg line=" -h ${hostName} -p ${coordport} -d ${dataport}" />
+		</exec>
+	</target>
+
+</project>
