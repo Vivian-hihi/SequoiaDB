@@ -119,6 +119,7 @@ def get_variant_dir():
 
 add_option( "dd", "debug build no optimization, additional debug logging, etc..." , 0 , True , "debugBuildAndLogging" )
 add_option( "language" , "description language" , 1 , False )
+add_option( "pythonversion", "debug build no optimization, additional debug logging, etc..." , 1 , False , "pyversion" )
 
 debugBuild = has_option( "debugBuildAndLogging" )
 language = get_option ( "language" )
@@ -127,6 +128,15 @@ if language is None:
    os.system ( "scons -C ../../misc/autogen" )
 else:
    os.system ( "scons -C ../../misc/autogen --language=" + language )
+
+#if ( has_option( "pyversion" ) ) :
+#   pyversion = get_option ( 'pyversion' )
+#   main_dir = join(root_dir,'thirdparty/python/' + 'python' + pyversion + '/main')
+#   Zend_dir = join(root_dir,'thirdparty/php/' + 'python' + pyversion + '/Zend')
+#else:
+#   print "Please input the version information,For example: 'scons --phpversion=5.3.10' "
+#   exit(0)
+    
 
 variantDir = get_variant_dir()
 env = Environment( BUILD_DIR=variantDir )
@@ -195,7 +205,7 @@ elif guess_os == "linux":
     else:
         env.Append( CPPFLAGS=" -O3")
 
-env.Append( CPPPATH=[main_dir, TSRM_dir, Zend_dir, root_dir,source_dir,ext_dir,client_include,boost_dir,common_include_dir,bson_include_dir]  )
+env.Append( CPPPATH=[client_include,boost_dir,common_include_dir,bson_include_dir]  )
 
 Export("env")
 Export("root_dir")
