@@ -22,7 +22,8 @@ bson_util_dir      = join(root_dir, 'SequoiaDB/engine/bson/util')
 boost_dir          = join(root_dir, 'thirdparty/boost')
 boost_lib_dir      = join(boost_dir, 'lib')
 util_dir           = join(root_dir, 'SequoiaDB/engine/util')
-engine_dir         = join(root_dir, 'SequoiaDB/engine/client/bson')
+engine_dir         = join(root_dir, 'SequoiaDB/engine')
+client_bson_dir    = join(root_dir, 'SequoiaDB/engine/client/bson')
 
 options = {}
 options_topass = {}
@@ -212,7 +213,7 @@ elif guess_os == "linux":
     else:
         env.Append( CPPFLAGS=" -O3")
 
-env.Append( CPPPATH=[client_include,boost_dir,common_include_dir,bson_include_dir, python_dir, bson_util_dir, util_dir, engine_dir ]  )
+env.Append( CPPPATH=[client_include,boost_dir,common_include_dir,bson_include_dir, python_dir, bson_util_dir, util_dir, engine_dir, client_bson_dir ]  )
 
 Export("env")
 Export("root_dir")
