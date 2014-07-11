@@ -63,6 +63,7 @@ clientLibFiles = [
 	  ]
 
 env.Execute(Mkdir(root_dir + "/temp"))
+env.Execute(Mkdir(root_dir + "/temp/bson"))
 for file in clientcppFiles:
    env.Execute(Copy(root_dir + "/temp", file))
 for file in clientLibFiles:
@@ -77,9 +78,9 @@ srcFile = [
       path + "/temp/pd.cpp",
       path + "/temp/pdTrace.cpp",
 	  path + "/temp/pdFunctionList.cpp",
-	  path + "/temp/numbers.c",
-	  path + "/temp/bson.c",
-      path + "/temp/encoding.c",
+	  path + "/temp/bson/numbers.c",
+	  path + "/temp/bson/bson.c",
+      path + "/temp/bson/encoding.c",
 	  path + "/temp/base64c.c",
 	  path + "/temp/cJSON.c",
 	  path + "/temp/jstobs.c",

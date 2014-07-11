@@ -145,8 +145,8 @@ else:
 variantDir = get_variant_dir()
 env = Environment( BUILD_DIR=variantDir )
 
-env.Append ( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
-env.Append ( CPPDEFINES=[ "SDB_CLIENT" ] )
+#env.Append ( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
+#env.Append ( CPPDEFINES=[ "SDB_CLIENT" ] )
 if guess_os == "win32":
     # check VC compiler
     for pathdir in env['ENV']['PATH'].split(os.pathsep):
