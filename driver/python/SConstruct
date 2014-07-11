@@ -21,7 +21,7 @@ bson_include_dir   = join(root_dir, 'SequoiaDB/engine/bson')
 boost_dir          = join(root_dir, 'thirdparty/boost')
 boost_lib_dir      = join(boost_dir, 'lib')
 python_dir         = join(pythondir, 'include')
-python_lib         = joib(pythondir, 'lib')
+python_lib         = join(pythondir, 'lib')
 
 options = {}
 options_topass = {}
