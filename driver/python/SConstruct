@@ -3,11 +3,13 @@
 import platform
 import os
 import re
+import sys
 from os.path import join, dirname, abspath
 
 # get root dir
 path = dirname(File('SConstruct').rfile().abspath)
 root_dir = os.path.abspath(os.path.join(path, os.pardir, os.pardir, os.pardir))
+
 pythonpath = sys.executable
 pythondir = pythonpath[0:pythonpath.rfind(os.sep)]
 pythondir += os.sep
