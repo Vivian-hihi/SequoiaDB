@@ -48,7 +48,7 @@ clientLibFiles = [
 	  root_dir + "/SequoiaDB/engine/pd/pdFunctionList.cpp",
 	  root_dir + "/SequoiaDB/engine/client/bson/numbers.c",
 	  root_dir + "/SequoiaDB/engine/client/bson/bson.c",
-      root_dir + "/SequoiaDB/engine/client/bson/encoding.c"
+      root_dir + "/SequoiaDB/engine/client/bson/encoding.c",
 	  root_dir + "/SequoiaDB/engine/client/base64c.c",
 	  root_dir + "/SequoiaDB/engine/client/cJSON.c",
 	  root_dir + "/SequoiaDB/engine/client/jstobs.c",
