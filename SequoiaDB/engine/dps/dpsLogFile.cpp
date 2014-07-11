@@ -65,6 +65,17 @@ namespace engine
       _file = NULL;
    }
 
+   string _dpsLogFile::toString() const
+   {
+      stringstream ss ;
+      ss << "FileSize: " << _fileSize
+         << ", IdleSize: " << _idleSize
+         << ", LogID" << _logHeader._logID
+         << ", FirstLSNV: " << _logHeader._firstLSN.version
+         << ", FirstLSNO: " << _logHeader._firstLSN.offset ;
+      return ss.str() ;
+   }
+
    DPS_LSN _dpsLogFile::getFirstLSN ( BOOLEAN mustExist )
    {
       if ( _logHeader._logID != DPS_INVALID_LOG_FILE_ID
@@ -420,35 +431,51 @@ namespace engine
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB__DPSLOGFILE_WRITE );
 
-      SINT64 writtenLen = 0;
-      UINT32 written = 0 ;
-      SDB_ASSERT ( len <= _idleSize, "length is creater than idle size" ) ;
-      while ( written < len )
+      if ( len <= _idleSize && _idleSize <= _fileSize )
       {
-         // write data into the file
-         // _fileSize - _idleSize is the offset for the current position
-         rc = ossSeekAndWrite( _file,
-                               DPS_LOG_HEAD_LEN + _fileSize - _idleSize + written,
-                               &content[written],
-                               len - written,
-                               &writtenLen ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to write into file[ fileSize: %u, "
-                     "idleSize: %u, written: %u, len: %u ], rc = %d",
-                     _fileSize, _idleSize, written, len, rc ) ;
-            SDB_ASSERT( FALSE, "Write file can't be failed" ) ;
-            goto error;
-         }
-         written += (UINT32)writtenLen ;
-         _idleSize -= (UINT32)writtenLen ;
+         SINT64 writtenLen = 0 ;
+         UINT32 written = 0 ;
 
-         SDB_ASSERT( _idleSize <= _fileSize, "Idle size must <= file size" ) ;
+         while ( written < len )
+         {
+            // write data into the file
+            // _fileSize - _idleSize is the offset for the current position
+            rc = ossSeekAndWrite( _file, DPS_LOG_HEAD_LEN + _fileSize -
+                                  _idleSize + written, &content[written],
+                                  len - written, &writtenLen ) ;
+            if ( SDB_OK == rc )
+            {
+               written += (UINT32)writtenLen ;
+               _idleSize -= (UINT32)writtenLen ;
+            }
+            else
+            {
+               PD_LOG ( PDERROR, "Failed to write page data into file[%s], "
+                        "written: %u, len: %u ], rc = %d",
+                        toString().c_str(), written, len, rc ) ;
+               goto error;
+            }
+         }
       }
+      else if ( len > _idleSize )
+      {
+         PD_LOG( PDERROR, "Write page data failed, len[%u] grater than "
+                 "idle size in log file[%s]", len, toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Wrong idle in log file[%s]", toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB__DPSLOGFILE_WRITE, rc );
       return rc;
    error:
+      ossPanic() ;
       goto done;
    }
 

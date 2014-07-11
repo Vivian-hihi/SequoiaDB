@@ -74,6 +74,20 @@ namespace engine
       _mb = NULL;
       unlock();
    }
+
+   string _dpsLogPage::toString() const
+   {
+      stringstream ss ;
+      ss << "PageNumber: " << _pageNumber
+         << ", StartPage: " << _startPage
+         << ", BeginLSNV" << _beginLSN.version
+         << ", BeginLSNO" << _beginLSN.offset
+         << ", Length: " << getLength()
+         << ", Size: " << getBufSize()
+         << ", IdleSize: " << getLastSize() ;
+      return ss.str() ;
+   }
+
 /*
    // insert something into the log page
    INT32 _dpsLogPage::insert( const CHAR *src, UINT32 len )

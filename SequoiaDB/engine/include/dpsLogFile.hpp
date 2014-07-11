@@ -44,6 +44,9 @@
 #include "ossIO.hpp"
 #include "ossUtil.hpp"
 #include "dpsLogDef.hpp"
+#include <string>
+
+using namespace std ;
 
 namespace engine
 {
@@ -117,6 +120,9 @@ namespace engine
       {
          _idleSize = size ;
       }
+
+      string toString() const ;
+
    public:
       // initialize file
       INT32 init ( const CHAR *path, UINT32 fileSize, UINT32 fileNum ) ;

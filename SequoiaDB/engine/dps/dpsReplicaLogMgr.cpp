@@ -206,8 +206,17 @@ namespace engine
          //reset the idle size
          UINT32 fileIdleSize = file->getIdleSize() +
                               (&_pages[_work])->getLength() ;
-         SDB_ASSERT ( fileIdleSize % DPS_DEFAULT_PAGE_SIZE == 0 ,
-                      "impossible" ) ;
+         if ( fileIdleSize % DPS_DEFAULT_PAGE_SIZE != 0 )
+         {
+            PD_LOG( PDERROR, "File[%s] idle size[%u] is not multi-times of "
+                    "page size, cur page info[%u, %s]",
+                    file->toString().c_str(), fileIdleSize,
+                    _work, (&_pages[_work])->toString().c_str() ) ;
+            rc = SDB_SYS ;
+            SDB_ASSERT( FALSE, "Idle size error" ) ;
+            goto error ;
+         }
+
          file->idleSize ( fileIdleSize ) ;
       }
 
@@ -247,8 +256,7 @@ namespace engine
          locked = TRUE ;
       }
 
-      if ( block.isRow() &&
-           _lsn.offset != head._lsn)
+      if ( block.isRow() && _lsn.offset != head._lsn)
       {
          PD_LOG( PDERROR, "lsn[%lld] of row is not equal to lsn[%lld] of local",
                  head._lsn, _lsn.offset) ;
@@ -505,9 +513,14 @@ namespace engine
                       (CHAR*)&header ) ;
          if ( SDB_OK != rc || offset != header._lsn )
          {
-            PD_LOG ( PDERROR, "move pages failed[rc:%d], header[lsn:%lld, "
-                     "preLsn:%lld, length:%d, type:%d]", rc, header._lsn,
-                     header._preLsn, header._length, header._type ) ;
+            PD_LOG ( PDERROR, "Move pages failed[rc:%d], header[lsn:%lld, "
+                     "preLsn:%lld, length:%d, type:%d], offset: %lld",
+                     rc, header._lsn, header._preLsn, header._length,
+                     header._type, offset ) ;
+            if ( SDB_OK == rc )
+            {
+               rc = SDB_DPS_CORRUPTED_LOG ;
+            }
             goto error ;
          }
          _currentLsn.offset = header._preLsn ;
@@ -592,8 +605,16 @@ namespace engine
          _dpsLogFile *file = _logger.getWorkLogFile() ;
          UINT32 fileIdleSize = file->getIdleSize() +
                                (&_pages[_work])->getLength() ;
-         SDB_ASSERT ( fileIdleSize % DPS_DEFAULT_PAGE_SIZE == 0 ,
-                      "impossible" ) ;
+         if ( fileIdleSize % DPS_DEFAULT_PAGE_SIZE != 0 )
+         {
+            PD_LOG( PDERROR, "File[%s] idle size[%u] is not multi-times of "
+                    "page size, cur page info[%u, %s]",
+                    file->toString().c_str(), fileIdleSize,
+                    _work, (&_pages[_work])->toString().c_str() ) ;
+            rc = SDB_SYS ;
+            SDB_ASSERT( FALSE, "Idle size error" ) ;
+            goto error ;
+         }
          file->idleSize ( fileIdleSize ) ;
       }
 

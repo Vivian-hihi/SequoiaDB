@@ -45,6 +45,10 @@
 #include "dpsMessageBlock.hpp"
 #include "ossRWMutex.hpp"
 #include "dpsLogDef.hpp"
+#include <string>
+
+using namespace std ;
+
 namespace engine
 {
    const INT8 DPS_LSN_START_FROM_HEAD = 0;
@@ -65,6 +69,8 @@ namespace engine
          _dpsLogPage( UINT32 size );
 
          ~_dpsLogPage();
+
+         string toString() const ;
 
       public:
          OSS_INLINE UINT32 getLastSize() const
