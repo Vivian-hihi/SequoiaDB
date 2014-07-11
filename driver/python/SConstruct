@@ -8,6 +8,9 @@ from os.path import join, dirname, abspath
 # get root dir
 path = dirname(File('SConstruct').rfile().abspath)
 root_dir = os.path.abspath(os.path.join(path, os.pardir, os.pardir, os.pardir))
+pythonpath = sys.executable
+pythondir = pythonpath[0:pythonpath.rfind(os.sep)]
+pythondir += os.sep
 
 client_include_dir = join(root_dir, 'client/CPP/include')
 client_include     = join(root_dir, 'SequoiaDB/engine/include')
@@ -15,6 +18,8 @@ common_include_dir = join(root_dir, 'SequoiaDB/engine/client')
 bson_include_dir   = join(root_dir, 'SequoiaDB/engine/bson')
 boost_dir          = join(root_dir, 'thirdparty/boost')
 boost_lib_dir      = join(boost_dir, 'lib')
+python_dir         = join(pythondir, 'include')
+python_lib         = joib(pythondir, 'lib')
 
 options = {}
 options_topass = {}
