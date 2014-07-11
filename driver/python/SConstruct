@@ -118,6 +118,7 @@ def get_variant_dir():
     return s
 
 add_option( "dd", "debug build no optimization, additional debug logging, etc..." , 0 , True , "debugBuildAndLogging" )
+add_option( "language" , "description language" , 1 , False )
 
 debugBuild = has_option( "debugBuildAndLogging" )
 language = has_option ( "language" )
