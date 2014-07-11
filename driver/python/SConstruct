@@ -217,5 +217,4 @@ env.Append( CPPPATH=[root_dir, client_include,boost_dir,common_include_dir,bson_
 
 Export("env")
 Export("root_dir")
-Export("path")
 env.SConscript( 'SConscript', variant_dir=variantDir, duplicate=False )
