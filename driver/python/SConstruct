@@ -20,9 +20,6 @@ common_include_dir = join(root_dir, 'SequoiaDB/engine/client')
 bson_include_dir   = join(root_dir, 'SequoiaDB/engine/bson')
 boost_dir          = join(root_dir, 'thirdparty/boost')
 boost_lib_dir      = join(boost_dir, 'lib')
-python_dir         = join(pythondir, 'include')
-print python_dir
-python_lib         = join(pythondir, 'lib')
 
 options = {}
 options_topass = {}
@@ -137,13 +134,12 @@ if language is None:
 else:
    os.system ( "scons -C ../../misc/autogen --language=" + language )
 
-#if ( has_option( "pyversion" ) ) :
-#   pyversion = get_option ( 'pyversion' )
-#   main_dir = join(root_dir,'thirdparty/python/' + 'python' + pyversion + '/main')
-#   Zend_dir = join(root_dir,'thirdparty/php/' + 'python' + pyversion + '/Zend')
-#else:
-#   print "Please input the version information,For example: 'scons --phpversion=5.3.10' "
-#   exit(0)
+if ( has_option( "pyversion" ) ) :
+   pyversion  = get_option ( 'pyversion' )
+   python_dir = join(root_dir,'thirdparty/python/' + 'python' + pyversion)
+else:
+   print "Please input the version information,For example: 'scons --pyversion=2.7' "
+   exit(0)
     
 
 variantDir = get_variant_dir()
