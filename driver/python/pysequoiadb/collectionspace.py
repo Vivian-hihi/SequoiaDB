@@ -18,7 +18,10 @@
 try:
    import sdbcs
 except ImportError:
-   raise Exception("cannot find C module file: sdbcs")
+   try:
+      import libsdbcs
+   except ImportError:
+      raise Exception("cannot find C module file: sdbcs")
 
 import bson
 import pysequoiadb

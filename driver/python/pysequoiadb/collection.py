@@ -18,7 +18,10 @@
 try:
    import sdbcl
 except ImportError:
-   raise Exception("cannot find C module file: sdbcl")
+   try:
+      import libsdbcl
+   except ImportError:
+      raise Exception("cannot find C module file: sdbcl")
 
 import bson
 from bson.objectid import ObjectId

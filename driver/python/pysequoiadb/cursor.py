@@ -15,7 +15,10 @@
 try:
    import sdbcursor
 except ImportError:
-   raise Exception("cannot find C module file: sdbcursor")
+   try:
+      import libsdbcursor
+   except ImportError:
+      raise Exception("cannot find C module file: sdbcursor")
 
 import bson
 import pysequoiadb

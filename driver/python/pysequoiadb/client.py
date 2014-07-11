@@ -22,7 +22,10 @@ import random
 try:
    import sdbclient
 except ImportError:
-   raise Exception("cannot find C module file: sdbclient")
+   try:
+      import libsdbclient
+   except ImportError:
+      raise Exception("cannot find C module file: sdbclient")
 
 import bson
 import pysequoiadb
@@ -112,7 +115,7 @@ class client(object):
          pysequoiadb.cout("Attempt to connect to host:[%s], port:[%d],\
                            user:[%s], password:[%s] failed."\
                            % (self.__host, _port, _user, _psw))
-         pysequoiadb.cout("Error: %s", pysequoiadb.getErr(rc))
+         pysequoiadb.cout("Error: %s" % pysequoiadb.getErr(rc))
          sdbclient.disconnect(self._client)
 
    def __del__(self):
