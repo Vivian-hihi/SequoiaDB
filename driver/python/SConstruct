@@ -213,7 +213,7 @@ elif guess_os == "linux":
     else:
         env.Append( CPPFLAGS=" -O3")
 
-env.Append( CPPPATH=[client_include,boost_dir,common_include_dir,bson_include_dir, python_dir, bson_util_dir, util_dir, engine_dir, client_bson_dir ]  )
+env.Append( CPPPATH=[root_dir, client_include,boost_dir,common_include_dir,bson_include_dir, python_dir, bson_util_dir, util_dir, engine_dir, client_bson_dir ]  )
 
 Export("env")
 Export("root_dir")
