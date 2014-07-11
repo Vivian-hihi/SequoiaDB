@@ -271,7 +271,7 @@
 			 />
 		
 		<copy todir="${RELEASE_DIR}/sequoiadb/license">
-			<fileset dir="${CODE_DIR}/license" />
+			<fileset dir="${CODE_DIR}/license" includes="**/*" />
 		</copy>
 
 		<delete includeemptydirs="true">
