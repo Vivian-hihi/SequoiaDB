@@ -69,7 +69,7 @@ for file in clientcppFiles:
 for file in clientLibFiles:
    env.Execute(Copy(root_dir + "/temp", file))
 srcFile = [
-	  path + "/temp/clientcpp.cpp"
+	  path + "/temp/clientcpp.cpp",
       path + "/temp/oss.cpp",
       path + "/temp/ossUtil.cpp",
 	  path + "/temp/ossMem.cpp",
