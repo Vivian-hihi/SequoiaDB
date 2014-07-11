@@ -8,7 +8,7 @@ from os.path import join, dirname, abspath
 
 # get root dir
 path = dirname(File('SConstruct').rfile().abspath)
-root_dir = os.path.abspath(os.path.join(path, os.pardir, os.pardir, os.pardir))
+root_dir = os.path.abspath(os.path.join(path, os.pardir, os.pardir))
 
 pythonpath = sys.executable
 pythondir = pythonpath[0:pythonpath.rfind(os.sep)]
@@ -21,6 +21,7 @@ bson_include_dir   = join(root_dir, 'SequoiaDB/engine/bson')
 boost_dir          = join(root_dir, 'thirdparty/boost')
 boost_lib_dir      = join(boost_dir, 'lib')
 python_dir         = join(pythondir, 'include')
+print python_dir
 python_lib         = join(pythondir, 'lib')
 
 options = {}
@@ -212,7 +213,7 @@ elif guess_os == "linux":
     else:
         env.Append( CPPFLAGS=" -O3")
 
-env.Append( CPPPATH=[client_include,boost_dir,common_include_dir,bson_include_dir]  )
+env.Append( CPPPATH=[client_include,boost_dir,common_include_dir,bson_include_dir, python_dir]  )
 
 Export("env")
 Export("root_dir")
