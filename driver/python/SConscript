@@ -1,7 +1,6 @@
 Import("env")
+Import("path")
 Import("root_dir")
-Import("testBuild")
-Import("clienttestBuild")
 
 clientFiles = [
       "pysequoiadb/pyclient.cpp",
