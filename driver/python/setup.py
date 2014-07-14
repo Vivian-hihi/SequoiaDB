@@ -188,10 +188,8 @@ extra_opts = {}
 extra_opts['ext_modules'] = ext_modules
 setup(name = 'SequoiaDB',
       version = '1.0',
-      author = 'SequoiaDB Ltd',
+      author = 'SequoiaDB Inc.',
+      license = 'AGPL',
       description = 'This is a sequoiadb python driver use adapter package',
       url = 'http://www.sequoiadb.com',
-      long_description = '''
-           use sequoiadb python driver must install this module.
-           ''',
       **extra_opts)
