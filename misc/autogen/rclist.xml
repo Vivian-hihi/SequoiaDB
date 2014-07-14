@@ -2131,7 +2131,7 @@
       </code>
 
       <code>
-         <name>SDB_OMA_DIFF_VER_AGENT_IS_RUNNING</name>
+         <name>SDB_OMA_DIFF_VER_AGT_IS_RUNNING</name>
          <description>
             <en>different version agent has been running</en>
             <cn>不同版本的OMAgent已运行</cn>
