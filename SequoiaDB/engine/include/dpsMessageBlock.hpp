@@ -41,6 +41,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "ossUtil.h"
 #include "pd.hpp"
 
 
@@ -91,6 +92,11 @@ namespace engine
          _length = offset;
          SDB_ASSERT( _length <= _size , "out of mem!" ) ;
          return;
+      }
+
+      OSS_INLINE void invalidateData()
+      {
+         ossMemset( _write, 0, idleSize() ) ;
       }
 
       OSS_INLINE const CHAR *readPtr() const

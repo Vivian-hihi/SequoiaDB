@@ -421,6 +421,7 @@ namespace engine
             else
             {
                _files[_work]->idleSize ( _logFileSz - fileOffset ) ;
+               _files[_work]->invalidateData() ;
             }
             _logicalWork = _files[_work]->header()._logID ;
             break ;

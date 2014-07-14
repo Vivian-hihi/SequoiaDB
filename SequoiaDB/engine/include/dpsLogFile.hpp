@@ -152,6 +152,8 @@ namespace engine
          return FALSE ;
       }
 
+      INT32 invalidateData() ;
+
    private:
       void _initHead( UINT32 logID )
       {

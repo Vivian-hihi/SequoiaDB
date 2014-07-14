@@ -483,6 +483,7 @@ namespace engine
          while ( i < _pageNum )
          {
             (&_pages[i])->setBeginLSN( invalidLsn ) ;
+            (&_pages[i])->mb()->writePtr ( 0 ) ;
             ++i ;
          }
 
@@ -528,6 +529,7 @@ namespace engine
       }
 
       (&_pages[_work])->mb()->writePtr ( pageOffset ) ;
+      (&_pages[_work])->mb()->invalidateData() ;
       _idleSize.init ( _totalSize - pageOffset ) ;
 
       _lsn.offset = offset ;

@@ -451,7 +451,7 @@ namespace engine
             else
             {
                PD_LOG ( PDERROR, "Failed to write page data into file[%s], "
-                        "written: %u, len: %u ], rc = %d",
+                        "written: %u, len: %u, rc = %d",
                         toString().c_str(), written, len, rc ) ;
                goto error;
             }
@@ -522,6 +522,57 @@ namespace engine
    INT32 _dpsLogFile::close()
    {
       return ossClose( *_file );
+   }
+
+   INT32 _dpsLogFile::invalidateData()
+   {
+      INT32 rc = SDB_OK ;
+      dpsLogRecordHeader header ;
+      const CHAR *pData = ( const CHAR* )&header ;
+      UINT32 len = sizeof( header ) ;
+      UINT32 idleSize = _idleSize ;
+
+      if ( 0 == idleSize )
+      {
+         goto done ;
+      }
+      else if ( len <= idleSize && idleSize <= _fileSize )
+      {
+         SINT64 writtenLen = 0 ;
+         UINT32 written = 0 ;
+
+         while ( written < len )
+         {
+            // write data into the file
+            // _fileSize - _idleSize is the offset for the current position
+            rc = ossSeekAndWrite( _file, DPS_LOG_HEAD_LEN + _fileSize -
+                                  idleSize + written, &pData[written],
+                                  len - written, &writtenLen ) ;
+            if ( SDB_OK == rc )
+            {
+               written += (UINT32)writtenLen ;
+               idleSize -= (UINT32)writtenLen ;
+            }
+            else
+            {
+               PD_LOG ( PDERROR, "Failed to write dummy data to file[%s], "
+                        "written: %u, len: %u, idleSize: %u , rc = %d",
+                        toString().c_str(), written, len, idleSize, rc ) ;
+               goto error;
+            }
+         }
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Wrong idle in log file[%s]", toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc;
+   error:
+      goto done;
    }
 
 }
