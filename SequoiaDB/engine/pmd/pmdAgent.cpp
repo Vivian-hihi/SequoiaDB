@@ -1550,8 +1550,7 @@ namespace engine
       // we will detect "disconnect" request inside the loop
       while ( !disconnect )
       {
-         //clean interrupt flag
-         cb->resetInterrupt () ;
+         // clear info
          cb->resetInfo ( EDU_INFO_ERROR ) ;
 
          // first we receive the length of message
@@ -1570,6 +1569,9 @@ namespace engine
             probe = 20 ;
             goto error ;
          }
+
+         //clean interrupt flag
+         cb->resetInterrupt () ;
 
          // always check if the request is sysinfo request
          // note sysinfo request got very different message type. The first 4

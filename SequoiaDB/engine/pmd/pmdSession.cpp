@@ -353,7 +353,6 @@ namespace engine
 
       while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
       {
-         _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
 
          // recv msg
@@ -367,6 +366,9 @@ namespace engine
             }
             break ;
          }
+
+         // clear interrupt flag
+         _pEDUCB->resetInterrupt() ;
 
          // if system info msg
          if ( msgSize == (UINT32)MSG_SYSTEM_INFO_LEN )
