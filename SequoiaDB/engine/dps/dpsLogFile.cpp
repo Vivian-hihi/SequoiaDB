@@ -70,7 +70,7 @@ namespace engine
       stringstream ss ;
       ss << "FileSize: " << _fileSize
          << ", IdleSize: " << _idleSize
-         << ", LogID" << _logHeader._logID
+         << ", LogID: " << _logHeader._logID
          << ", FirstLSNV: " << _logHeader._firstLSN.version
          << ", FirstLSNO: " << _logHeader._firstLSN.offset ;
       return ss.str() ;
