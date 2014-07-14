@@ -6851,3 +6851,36 @@ done:
 error:
    goto done ;
 }
+
+SDB_EXPORT INT32 sdbInterruptSession( sdbConnectionHandle cHandle,
+                                      SINT64 sessionID )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN result = TRUE ;
+   BOOLEAN bsoninit = FALSE ;
+   bson query ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+
+   BSON_INIT( query ) ;
+   BSON_APPEND( query, FIELD_NAME_SESSIONID, sessionID, long ) ;
+   BSON_FINISH( query ) ;
+   rc = _runCommand ( connection->_sock, &connection->_pSendBuffer,
+                     &connection->_sendBufferSize,
+                     &connection->_pReceiveBuffer,
+                     &connection->_receiveBufferSize,
+                     connection->_endianConvert,
+                     (CMD_ADMIN_PREFIX CMD_NAME_INTERRUPT_SESSION),
+                     &result, &query, NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   BSON_DESTROY( query ) ;
+   return rc ;
+error:
+   goto done ;
+}
+

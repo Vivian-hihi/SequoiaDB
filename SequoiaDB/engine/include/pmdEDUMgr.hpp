@@ -385,6 +385,8 @@ namespace engine
 
       INT32    forceUserEDU ( EDUID eduID ) ;
 
+      INT32 interruptUserEDU( EDUID eduID ) ;
+
       INT32    interruptWritingEDUS() { return _interruptWritingEDUs() ; }
       UINT32   getWritingEDUCount() { return _getWritingEDUCount() ; }
 

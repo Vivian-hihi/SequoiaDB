@@ -370,6 +370,7 @@
 #define CMD_NAME_UNLINK_CL                   "unlink collection"
 #define CMD_NAME_SETSESS_ATTR                "set session attribute"
 #define CMD_NAME_INVALIDATE_CACHE            "invalidate cache"
+#define CMD_NAME_INTERRUPT_SESSION           "interrupt session"
 
 #if defined (_DEBUG)
 #define CMD_NAME_DEBUG_QUERY                 "debug query"

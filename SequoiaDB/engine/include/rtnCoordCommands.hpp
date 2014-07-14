@@ -117,6 +117,7 @@ namespace engine
    #define COORD_CMD_LIST_CS_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN
    #define COORD_CMD_LIST_CL_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN
    #define COORD_CMD_INVALIDATE_CACHE         CMD_ADMIN_PREFIX CMD_NAME_INVALIDATE_CACHE
+   #define COORD_CMD_INTERRUPT_SESSION        CMD_ADMIN_PREFIX CMD_NAME_INTERRUPT_SESSION
 
 #if defined (_DEBUG)
    #define COORD_CMD_DEBUG_QUERY              CMD_ADMIN_PREFIX CMD_NAME_DEBUG_QUERY
@@ -1220,6 +1221,15 @@ namespace engine
    } ;
 
    class rtnCoordCMDInvalidateCache : public rtnCoordCMDOnMultiNodes
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj ) ;
+   } ;
+
+   class rtnCoordCMDInterruptSession : public rtnCoordCommand
    {
    public:
       INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,

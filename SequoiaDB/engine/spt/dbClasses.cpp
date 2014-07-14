@@ -3595,6 +3595,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "setSessionAttr",
                                    "msg",
                                    "invalidateCache",
+                                   "interruptSession",
                                    "help"
    };
    JSBool   in = JS_FALSE ;
@@ -6365,16 +6366,16 @@ static JSBool sdb_invalidate_cache( JSContext *cx, uintN argc, jsval *vp )
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "/o" , &conditionObj ) ;
-   REPORT ( ret , "Sdb.invalidateCataCache: wrong arguments" ) ;
+   REPORT ( ret , "Sdb.invalidateCataCache(): wrong arguments" ) ;
 
    if ( NULL != conditionObj )
    {
       ret = objToBson( cx, conditionObj, &condition ) ;
-      REPORT ( ret , "Sdb.invalidateCataCache: failed to convert object" ) ;
+      REPORT ( ret , "Sdb.invalidateCataCache(): failed to convert object" ) ;
    }
 
    rc = sdbInvalidateCache( *connection, condition ) ;
-   REPORT_RC ( SDB_OK == rc , "Sdb.invalidateCataCache" , rc ) ;
+   REPORT_RC ( SDB_OK == rc , "Sdb.invalidateCataCache()" , rc ) ;
 
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
 done:
@@ -6382,6 +6383,59 @@ done:
    PD_TRACE_EXIT( SDB_SDB_INVALIDATE_CACHE ) ;
    return ret ;
 error:
+   goto done ;
+}
+
+PD_TRACE_DECLARE_FUNCTION( SDB_SDB_INTERRUPT_SESSION, "sdb_interrupt_session" )
+static JSBool sdb_interrupt_session( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_SDB_INTERRUPT_SESSION ) ;
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle *connection = NULL ;
+   SINT64 sessionID = -1 ;
+   CHAR *sessionStr = NULL ;
+   BOOLEAN ret = TRUE ;
+   jsval *argv = JS_ARGV ( cx , vp ) ;
+
+   connection = (sdbConnectionHandle *)
+                 JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.interruptSession(): no connection handle" ) ;
+
+   if ( 1 != argc )
+   {
+      REPORT ( ret , "Sdb.interruptSession(): wrong arguments" ) ;
+   }
+   else if ( JSVAL_IS_INT(argv[0]) )
+   {
+      sessionID = JSVAL_TO_INT( argv[0] ) ;
+   }
+   else if ( JSVAL_IS_STRING(argv[0]) )
+   {
+      sessionStr = JS_EncodeString ( cx, JSVAL_TO_STRING ( argv[0] ) ) ;
+      VERIFY( sessionStr ) ;
+      sessionID = ossAtoll( sessionStr ) ;
+   }
+   else
+   {
+      ret = FALSE ;
+      REPORT ( ret , "Sdb.interruptSession(): wrong arguments" ) ;
+   }
+
+   if ( sessionID <= 0 )
+   {
+      ret = FALSE ;
+      REPORT ( ret , "Sdb.interruptSession(): wrong arguments" ) ;
+   }
+
+   rc = sdbInterruptSession( *connection, sessionID ) ;
+   REPORT_RC ( SDB_OK == rc , "Sdb.interruptSession()" , rc ) ;
+   JS_SET_RVAL( cx , vp , JSVAL_VOID ) ;
+done:
+   SAFE_JS_FREE( cx, sessionStr ) ;
+   PD_TRACE_EXIT( SDB_SDB_INTERRUPT_SESSION ) ;
+   return ret ;
+error:
+   ret = FALSE ;
    goto done ;
 }
 
@@ -6427,6 +6481,7 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getDomain", sdb_get_domain, 1, 0 ),
    JS_FS ( "listDomains", sdb_list_domains, 0, 0 ),
    JS_FS ( "invalidateCache", sdb_invalidate_cache, 0, 0 ),
+   JS_FS ( "interruptSession", sdb_interrupt_session, 0, 0 ),
    JS_FS_END
 } ;
 

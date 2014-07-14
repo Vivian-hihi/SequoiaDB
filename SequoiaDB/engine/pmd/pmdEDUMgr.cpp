@@ -242,6 +242,35 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdEDUMgr::interruptUserEDU( EDUID eduID )
+   {
+      INT32 rc = SDB_OK ;
+      if ( isSystemEDU( eduID ) )
+      {
+         PD_LOG( PDERROR, "can not interrupt a system edu:%lld",
+                 eduID ) ;
+         rc = SDB_PMD_FORCE_SYSTEM_EDU ;
+         goto error ;
+      }
+
+      {
+      std::map<EDUID, pmdEDUCB*>::iterator it ;
+      EDUMGR_XLOCK
+      for ( it = _runQueue.begin () ; it != _runQueue.end () ; ++it )
+      {
+         if ( (*it).second->getID () == eduID )
+         {
+            (*it).second->interrupt() ;
+            break ;
+         }
+      }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR__FORCEIOSVC, "_pmdEDUMgr::_forceIOService" )
    INT32 _pmdEDUMgr::_forceIOService ()
    {

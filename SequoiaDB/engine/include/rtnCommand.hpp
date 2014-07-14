@@ -95,6 +95,7 @@ namespace engine
 #define NAME_LINK_COLLECTION                 CMD_NAME_LINK_CL
 #define NAME_UNLINK_COLLECTION               CMD_NAME_UNLINK_CL
 #define NAME_INVALIDATE_CACHE                CMD_NAME_INVALIDATE_CACHE
+#define NAME_INTERRUPT_SESSION               CMD_NAME_INTERRUPT_SESSION
 
 // the commands that does not supported by data nodes or standalone mode
 #define NAME_CREATE_GROUP                    CMD_NAME_CREATE_GROUP
@@ -214,7 +215,8 @@ namespace engine
 
       CMD_REMOVE_BACKUP                      = 210,
 
-      CMD_INVALIDATE_CACHE              = 220,      
+      CMD_INVALIDATE_CACHE                   = 220,
+      CMD_INTERRUPT_SESSION                  = 221,
 #if defined (_DEBUG)
       // all debug commands goes into here
       CMD_DEBUG_QUERY                        = 65534,
@@ -1454,6 +1456,30 @@ namespace engine
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
    } ;
+
+   class _rtnInterruptSession : public _rtnCommand
+   {
+   DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnInterruptSession() ;
+      virtual ~_rtnInterruptSession() ;
+
+   public:
+      virtual const CHAR * name () { return NAME_INTERRUPT_SESSION ; }
+      virtual RTN_COMMAND_TYPE type () { return CMD_INTERRUPT_SESSION ; }
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff ) ;
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL  ) ;
+
+   private:
+      EDUID _sessionID ;
+   } ;
+   typedef class _rtnInterruptSession rtnInterruptSession ;
 }
 
 const UINT32 pdGetTraceFunctionListNum();

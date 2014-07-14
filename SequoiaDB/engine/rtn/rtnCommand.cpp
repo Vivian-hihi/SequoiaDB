@@ -2676,6 +2676,70 @@ namespace engine
       return  SDB_OK ;
    }
 
+   _rtnInterruptSession::_rtnInterruptSession()
+   :_sessionID( OSS_INVALID_PID )
+   {
+
+   }
+
+   _rtnInterruptSession::~_rtnInterruptSession()
+   {
+
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnInterruptSession )
+   INT32 _rtnInterruptSession::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                                      const CHAR *pMatcherBuff,
+                                      const CHAR *pSelectBuff,
+                                      const CHAR *pOrderByBuff,
+                                      const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj obj( pMatcherBuff ) ;
+         BSONElement sessionID = obj.getField( FIELD_NAME_SESSIONID ) ;
+         if ( !sessionID.isNumber() )
+         {
+            PD_LOG( PDERROR, "session id should be a number:%s",
+                    obj.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         _sessionID = sessionID.Long() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnInterruptSession::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                      _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                      INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUMgr *mgr = pmdGetKRCB()->getEDUMgr() ;
+      rc = mgr->interruptUserEDU( _sessionID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to interrupt edu:%lld, rc:%d",
+                 _sessionID, rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 
 
