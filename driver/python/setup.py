@@ -21,7 +21,6 @@ pythonpath = sys.executable
 pythondir = pythonpath[0:pythonpath.rfind(os.sep)]
 pythondir += os.sep
 
-print sys.platform
 pwd = os.getcwd()
 path = os.path.abspath(os.path.join(pwd, os.pardir, os.pardir)) + os.sep
 
