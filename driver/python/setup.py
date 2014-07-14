@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from distutils.core import setup, Extension
+from distutils.core import Extension, setup
 import sys
 import os
 import platform
@@ -24,7 +24,10 @@ pythondir += os.sep
 pwd = os.getcwd()
 path = os.path.abspath(os.path.join(pwd, os.pardir, os.pardir)) + os.sep
 
+windows = False
+
 if sys.platform == 'win32':
+   windows = True
    thirdparty = path + "thirdparty" + os.sep
    path = path + "SequoiaDB" + os.sep + "engine" + os.sep
    source = [
@@ -118,7 +121,7 @@ else:
 
 module1cppfiles = source;
 module1cppfiles.append('pysequoiadb/pyclient.cpp')
-module1 = Extension( 'sdbclient',
+module1 = Extension( 'pysequoiadb.sdbclient',
                      define_macros      = compile,
                      extra_compile_args = compile_options,
                      include_dirs       = include,
@@ -128,7 +131,7 @@ module1 = Extension( 'sdbclient',
 
 module2cppfiles=source;
 module2cppfiles.append('pysequoiadb/pycollection.cpp')
-module2 = Extension( 'sdbcl',
+module2 = Extension( 'pysequoiadb.sdbcl',
                      define_macros      = compile,
                      extra_compile_args =compile_options,
                      include_dirs       = include,
@@ -138,7 +141,7 @@ module2 = Extension( 'sdbcl',
 
 module3cppfiles=source;
 module3cppfiles.append('pysequoiadb/pycollectionspace.cpp')
-module3 = Extension( 'sdbcs',
+module3 = Extension( 'pysequoiadb.sdbcs',
                      define_macros      = compile,
                      extra_compile_args = compile_options,
                      include_dirs       = include,
@@ -148,7 +151,7 @@ module3 = Extension( 'sdbcs',
 
 module4cppfiles=source;
 module4cppfiles.append('pysequoiadb/pyreplicagroup.cpp')
-module4 = Extension( 'sdbreplicagroup',
+module4 = Extension( 'pysequoiadb.sdbreplicagroup',
                      define_macros      = compile,
                      extra_compile_args = compile_options,
                      include_dirs       = include,
@@ -158,7 +161,7 @@ module4 = Extension( 'sdbreplicagroup',
 
 module5cppfiles=source;
 module5cppfiles.append('pysequoiadb/pyreplicanode.cpp')
-module5 = Extension( 'sdbreplicanode',
+module5 = Extension( 'pysequoiadb.sdbreplicanode',
                      define_macros      = compile,
                      extra_compile_args = compile_options,
                      include_dirs       = include,
@@ -168,7 +171,7 @@ module5 = Extension( 'sdbreplicanode',
 
 module6cppfiles=source;
 module6cppfiles.append('pysequoiadb/pycursor.cpp')
-module6 = Extension( 'sdbcursor',
+module6 = Extension( 'pysequoiadb.sdbcursor',
                      define_macros      = compile,
                      extra_compile_args = compile_options,
                      include_dirs       = include,
@@ -176,15 +179,25 @@ module6 = Extension( 'sdbcursor',
                      library_dirs       = lib,
                      sources            = module6cppfiles )
 
+module_bson = Extension( 'bson._cbson',
+                         include_dirs       = ['bson'],
+                         sources            = ['bson/_cbsonmodule.c',
+                                               'bson/time64.c',
+                                               'bson/buffer.c',
+                                               'bson/encoding_helpers.c'] )
+
 ext_modules = [
             module1,
             module2,
             module3,
             module4,
             module5,
-            module6, ]
+            module6,
+            module_bson, ]
 
-extra_opts = {}
+
+
+extra_opts = {"packages":["bson", "pysequoiadb"],}
 extra_opts['ext_modules'] = ext_modules
 setup(name = 'SequoiaDB',
       version = '1.0',
@@ -192,4 +205,5 @@ setup(name = 'SequoiaDB',
       license = 'AGPL',
       description = 'This is a sequoiadb python driver use adapter package',
       url = 'http://www.sequoiadb.com',
+      data_files = ['pysequoiadb/err.prop', 'pysequoiadb/sdb*.so'],
       **extra_opts)
