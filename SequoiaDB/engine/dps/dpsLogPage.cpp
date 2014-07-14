@@ -79,7 +79,7 @@ namespace engine
    {
       stringstream ss ;
       ss << "PageNumber: " << _pageNumber
-         << ", StartPage: " << _startPage
+         << ", StartPage: " << (INT32)_startPage
          << ", BeginLSNV" << _beginLSN.version
          << ", BeginLSNO" << _beginLSN.offset
          << ", Length: " << getLength()
