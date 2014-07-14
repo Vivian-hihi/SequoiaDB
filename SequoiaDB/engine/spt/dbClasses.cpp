@@ -6399,11 +6399,11 @@ static JSBool sdb_interrupt_session( JSContext *cx, uintN argc, jsval *vp )
 
    connection = (sdbConnectionHandle *)
                  JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
-   REPORT ( connection , "Sdb.interruptSession(): no connection handle" ) ;
+   REPORT ( connection , "Sdb.interrupt(): no connection handle" ) ;
 
    if ( 1 != argc )
    {
-      REPORT ( ret , "Sdb.interruptSession(): wrong arguments" ) ;
+      REPORT ( ret , "Sdb.interrupt(): wrong arguments" ) ;
    }
    else if ( JSVAL_IS_INT(argv[0]) )
    {
@@ -6418,17 +6418,17 @@ static JSBool sdb_interrupt_session( JSContext *cx, uintN argc, jsval *vp )
    else
    {
       ret = FALSE ;
-      REPORT ( ret , "Sdb.interruptSession(): wrong arguments" ) ;
+      REPORT ( ret , "Sdb.interrupt(): wrong arguments" ) ;
    }
 
    if ( sessionID <= 0 )
    {
       ret = FALSE ;
-      REPORT ( ret , "Sdb.interruptSession(): wrong arguments" ) ;
+      REPORT ( ret , "Sdb.interrupt(): wrong arguments" ) ;
    }
 
    rc = sdbInterruptSession( *connection, sessionID ) ;
-   REPORT_RC ( SDB_OK == rc , "Sdb.interruptSession()" , rc ) ;
+   REPORT_RC ( SDB_OK == rc , "Sdb.interrupt()" , rc ) ;
    JS_SET_RVAL( cx , vp , JSVAL_VOID ) ;
 done:
    SAFE_JS_FREE( cx, sessionStr ) ;
