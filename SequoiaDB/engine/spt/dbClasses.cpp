@@ -3595,7 +3595,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "setSessionAttr",
                                    "msg",
                                    "invalidateCache",
-                                   "interruptSession",
+                                   "interrupt",
                                    "help"
    };
    JSBool   in = JS_FALSE ;
@@ -6481,7 +6481,7 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getDomain", sdb_get_domain, 1, 0 ),
    JS_FS ( "listDomains", sdb_list_domains, 0, 0 ),
    JS_FS ( "invalidateCache", sdb_invalidate_cache, 0, 0 ),
-   JS_FS ( "interruptSession", sdb_interrupt_session, 0, 0 ),
+   JS_FS ( "interrupt", sdb_interrupt_session, 0, 0 ),
    JS_FS_END
 } ;
 
