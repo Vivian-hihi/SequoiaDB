@@ -134,7 +134,7 @@ module2 = Extension( 'sdbcl',
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module2cppfiles )   
+                     sources            = module2cppfiles )
 
 module3cppfiles=source;
 module3cppfiles.append('pysequoiadb/pycollectionspace.cpp')
@@ -144,7 +144,7 @@ module3 = Extension( 'sdbcs',
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module3cppfiles )                             
+                     sources            = module3cppfiles )
 
 module4cppfiles=source;
 module4cppfiles.append('pysequoiadb/pyreplicagroup.cpp')
@@ -154,7 +154,7 @@ module4 = Extension( 'sdbreplicagroup',
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module4cppfiles )  
+                     sources            = module4cppfiles )
 
 module5cppfiles=source;
 module5cppfiles.append('pysequoiadb/pyreplicanode.cpp')
@@ -164,17 +164,17 @@ module5 = Extension( 'sdbreplicanode',
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module5cppfiles )  
+                     sources            = module5cppfiles )
 
 module6cppfiles=source;
-module6cppfiles.append('pysequoiadb/pycursor.cpp')               
+module6cppfiles.append('pysequoiadb/pycursor.cpp')
 module6 = Extension( 'sdbcursor',
                      define_macros      = compile,
                      extra_compile_args = compile_options,
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
-                     sources            = module6cppfiles )  
+                     sources            = module6cppfiles )
 
 ext_modules = [
             module1,
@@ -182,11 +182,11 @@ ext_modules = [
             module3,
             module4,
             module5,
-            module6, ] 
+            module6, ]
 
-extra_opts = {}                                                         
+extra_opts = {}
 extra_opts['ext_modules'] = ext_modules
-setup(name = 'sdbclient',
+setup(name = 'SequoiaDB',
       version = '1.0',
       author = 'SequoiaDB Ltd',
       description = 'This is a sequoiadb python driver use adapter package',
