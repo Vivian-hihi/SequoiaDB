@@ -70,17 +70,17 @@
           <strow>
             <stentry><xref href="and.dita">$and</xref></stentry>
             <stentry>与</stentry>
-            <stentry>db.foo.bar.find({$and:{age:20,name:"Tom"}})</stentry>
+            <stentry>db.foo.bar.find({$and:{age:20},{name:"Tom"}})</stentry>
           </strow>
           <strow>
             <stentry><xref href="not.dita">$not</xref></stentry>
             <stentry>非</stentry>
-            <stentry>db.foo.bar.find({$not:{age:20,name:"Tom"}})</stentry>
+            <stentry>db.foo.bar.find({$not:{age:20},{name:"Tom"}})</stentry>
           </strow>
           <strow>
             <stentry><xref href="por.dita">$or</xref></stentry>
             <stentry>或</stentry>
-            <stentry>db.foo.bar.find({$or:{age:20,name:"Tom"}})</stentry>
+            <stentry>db.foo.bar.find({$or:{age:20},{name:"Tom"}})</stentry>
           </strow>
           <strow>
             <stentry><xref href="type.dita">$type</xref></stentry>

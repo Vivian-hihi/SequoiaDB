@@ -70,17 +70,17 @@
           <strow>
             <stentry><xref href="and_en.dita">$and</xref></stentry>
             <stentry>And</stentry>
-            <stentry>db.foo.bar.find({$and:{age:20,name:"Tom"}})</stentry>
+            <stentry>db.foo.bar.find({$and:{age:20},{name:"Tom"}})</stentry>
           </strow>
           <strow>
             <stentry><xref href="not_en.dita">$not</xref></stentry>
             <stentry>Not</stentry>
-            <stentry>db.foo.bar.find({$not:{age:20,name:"Tom"}})</stentry>
+            <stentry>db.foo.bar.find({$not:{age:20},{name:"Tom"}})</stentry>
           </strow>
           <strow>
             <stentry><xref href="por_en.dita">$or</xref></stentry>
             <stentry>Or</stentry>
-            <stentry>db.foo.bar.find({$or:{age:20,name:"Tom"}})</stentry>
+            <stentry>db.foo.bar.find({$or:{age:20},{name:"Tom"}})</stentry>
           </strow>
           <strow>
             <stentry><xref href="type_en.dita">$type</xref></stentry>

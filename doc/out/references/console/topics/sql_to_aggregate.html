@@ -120,10 +120,8 @@
 
         <td valign="top" headers="d74178e101" class="stentry">db.cs.table.aggregate({$group:{_id:"$product_id",product_id:{$first:"$product_id"},total:{$sum:"$price"}}})</td>
 
-        <td valign="top" headers="d74178e104" class="stentry">
-          对表table中的记录按product_id字段分组；<div class="fig fignone"/>
-求每个分组中字段price值的累加和，并重命名为total。
-        </td>
+        <td valign="top" headers="d74178e104" class="stentry">对表table中的记录按product_id字段分组；<div class="fig fignone"/>
+求每个分组中字段price值的累加和，并重命名为total。</td>
 
       </tr>
 <tr class="strow">
@@ -160,7 +158,7 @@
 
         <td valign="top" headers="d74178e101" class="stentry">db.cs.table.aggregate({$match:{product_type_id:1001}},{$group:{_id:"$product_id",product_id:{$first:"$product_id"},total:{$sum:"$price"}}})</td>
 
-        <td valign="top" headers="d74178e104" class="stentry">选择符合条件product_type_id=1001的记录；<div class="fig fignone"/>
+        <td valign="top" headers="d74178e104" class="stentry">选择符合条件product_type_id = 1001的记录；<div class="fig fignone"/>
 对选出的记录按product_id进行分组；<div class="fig fignone"/>
 对每个分组中的price字段值就和，并重命名为total。</td>
 
