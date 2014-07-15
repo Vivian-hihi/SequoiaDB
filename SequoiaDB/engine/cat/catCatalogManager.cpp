@@ -2920,6 +2920,13 @@ namespace engine
          goto error ;
       }
 
+     if ( CAT_MASK_COMPRESSED & mask )
+     {
+        rc = SDB_INVALIDARG ;
+        PD_LOG( PDERROR, "can not alter attribute \"compressed\"" ) ;
+        goto error ;
+     }
+
       alterInfo._version = catSet.getVersion() ;
       ++alterInfo._version ;
 
