@@ -96,10 +96,17 @@ if sys.platform == 'win32':
 else:
    include = [
       path + 'client/include',
-      path + 'SequoiaDB/engine/include', ]
+      path + 'client/CPP/include',
+      path + 'SequoiaDB/engine',
+      path + 'SequoiaDB/engine/include',
+      path + 'SequoiaDB/engine/client',
+      path + 'SequoiaDB/engine/bson',
+      path + 'SequoiaDB/engine/util',
+      path + 'thirdparty/boost', ]
 
    lib = [
-      path + 'client/lib', ]
+      path + 'client/lib',
+      path + 'thirdparty/boost/lib', ]
 
    source = [
       path + "SequoiaDB/engine/oss/ossVer.cpp", ]
