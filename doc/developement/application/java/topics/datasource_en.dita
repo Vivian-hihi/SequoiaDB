@@ -24,7 +24,7 @@ urls.add("ubuntu-dev3:11810");
 nwOpt.setConnectTimeout(500);                       // set connection timeout(ms)
 nwOpt.setMaxAutoConnectRetryTime(0);	              // set maximum auto-connection-retry times
 		
-// 以下设置的都是SequoiadbOption的默认值
+// The following are the default setups of SequoiadbOption.
 dsOpt.setMaxConnectionNum(500);                     // set the maximum number of connections in the pool
 dsOpt.setInitConnectionNum(10);                     // Initialize the connection pool, set the initial connection number
 dsOpt.setDeltaIncCount(10) ;                        // when no connections are available in the pool, increases the maximum number of connections

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Tips when using shell"/>
-<meta name="description" content="Sequoiadb shell has built-in help documents. It can be read through the command of help.另外，参考手册SequoiaDB JavaScript方法一节中，有各方法的详细使用介绍。 Help 查看使用介绍： &gt; help() var db = new Sdb() connect to database use ..."/>
+<meta name="description" content="Sequoiadb shell has built-in help documents. It can be read through the command of help. In addition, reference manuals SequoiaDB JavaScript methods section, a detailed description of each method to ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../developement/console/topics/console_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="developement_console_knack"/>
@@ -36,10 +36,10 @@
   <h1 class="title topictitle1">Tips when using shell</h1>
 
   <div class="body">
-    <p class="p">Sequoiadb shell has built-in help documents. It can be read through the command of help.另外，参考手册SequoiaDB JavaScript方法一节中，有各方法的详细使用介绍。</p>
+    <p class="p">Sequoiadb shell has built-in help documents. It can be read through the command of help. In addition, reference manuals SequoiaDB JavaScript methods section, a detailed description of each method to use.</p>
 
     <ul class="ul">
-      <li class="li">Help<p class="p">查看使用介绍：</p>
+      <li class="li">Help<p class="p">See Use description:</p>
 
         <pre class="pre codeblock">&gt; help()
    var db = new Sdb()                     connect to database use default host 'localhost' and default port 11810
@@ -62,7 +62,7 @@
    quit                                   exit
    Takes 0.2993s.</pre>
 
-        <div class="note note"><span class="notetitle">Note:</span> <p class="p">SequoiaDB shell主要包括database(db)、collection space(cs)、collection(cl)、cursor(cur)、replica group(rg)、node(nd)、domain(dm)这7大级别的操作。用户需要理解各级别之间的关系。各级别都有使用帮助命令如下所示：</p>
+        <div class="note note"><span class="notetitle">Note:</span> <p class="p">SequoiaDB shell主要包括database(db), collection space(cs), collection(cl), cursor(cur), replica group(rg), node(nd), domain(dm)这7大级别的操作。用户需要理解各级别之间的关系。各级别都有使用帮助命令如下所示：</p>
 </div>
 </li>
             
@@ -101,7 +101,7 @@
 
       <li class="li">Cursor Help<p class="p">cursor级别主要包括对返回记录（数据）的操作。</p>
 
-        <p class="p">在shell命令中，与sequoiadb引擎交互时，若有记录（数据）返回，都是以游标（cursor）的方式呈现。例如，当使用db.foo.bar.<a class="xref" href="../../../references/methods/topics/find.html">find()</a>方法执行数据库查询操作，将返回一个游标对象，所有查询结果将放在这个游标中。通常的使用方法如下：</p>
+        <p class="p">在shell命令中，与sequoiadb引擎交互时，若有记录（数据）返回，都是以游标（cursor）的方式呈现。例如，当使用db.foo.bar.<a class="xref" href="../../../references/methods/topics_en_v2/cl.find.html">find()</a>方法执行数据库查询操作，将返回一个游标对象，所有查询结果将放在这个游标中。通常的使用方法如下：</p>
 
         <pre class="pre codeblock">db.foo.bar.find()</pre>
 <p class="p">或者</p>

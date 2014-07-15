@@ -20,6 +20,8 @@
      <topicref href="topics/getCS.dita"/>
      <topicref href="topics/getDomain.dita"/>
      <topicref href="topics/getRG.dita"/>
+     <topicref href="topics/interrupt.dita"/>
+     <topicref href="topics/invalidateCache.dita"/>     
      <topicref href="topics/dblist.dita"/>
      <topicref href="listBackup.dita"/>
      <topicref href="topics/listCollections.dita"/>
@@ -63,7 +65,7 @@
      
      <topicref href="topics/cclose.dita"/>
      <topicref href="topics/ccurrent.dita"/>
-     <!--<topicref href="topics/explain.dita"/>-->
+     <topicref href="topics/explain.dita"/>
      <topicref href="topics/hint.dita"/>
      <topicref href="topics/climit.dita"/>
      <topicref href="topics/next.dita"/>

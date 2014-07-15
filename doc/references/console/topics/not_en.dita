@@ -8,8 +8,7 @@
     </section>
     <section>
       <title>Description</title>
-      <p>The opration "$not" is a logcal "not". It select records that don't match "(&lt;expression
-        1>&lt;expression 2>,...,&lt;expression N>)".</p>
+      <p>The opration "$not" is a logcal "not". Its role is choose not to match expression(&lt;expression 1>&lt;expression 2>,...,&lt;expression N>) records. As long as it does not meet any one of these expressions, recording will return.</p>
     </section>
     <section><title>Sample</title>
       <ul>
