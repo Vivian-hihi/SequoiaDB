@@ -7,15 +7,15 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="SQL to sequoiadb shell to C++"/>
-<meta name="description" content="Sequoiadb的查询用json（bson）对象表示，下表以例子的形式显示了sql语句、sequoiadb shell语句和sequoiadb C++驱动程序语法之间的对照。 SQL sequoiadb shell C++ Driver insert into students(a,b) values(1,-1) db.foo.bar.insert({a:1,b:-1}) ..."/>
+<meta name="DC.Title" content="SQL to SequoiaDB shell to C++"/>
+<meta name="description" content="SequoiaDB的查询用json（bson）对象表示，下表以例子的形式显示了SQL语句、SequoiaDB shell语句和SequoiaDB C++驱动程序语法之间的对照。 SQL SequoiaDB shell C++ Driver insert into students(a,b) values(1,-1) db.foo.bar.insert({a:1,b:-1}) ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../CPP/topics/cpp.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../references/sqlmapping/topics/sqlmapping.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="application_cpp_sql"/>
 <link rel="stylesheet" type="text/css" href="../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../assets/webhelp_topic.css"/>
-<title>SQL to sequoiadb shell to C++</title>
+<title>SQL to SequoiaDB shell to C++</title>
 <script type="text/javascript" src="../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../../index.html";
     var ratingFile = "";
@@ -32,38 +32,38 @@
 <body onload="highlightSearchTerm()" id="application_cpp_sql"><a name="application_cpp_sql"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../CPP/topics/cpp.html" title="C++驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C++驱动</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application.html" title="SequoiaDB应用程序开发">SequoiaDB应用程序开发</a> / <a class="navheader_parent_path" href="../../CPP/topics/cpp.html" title="C++驱动">C++驱动</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../CPP/topics/cpp.html" title="C++ 驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C++ 驱动</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application.html" title="SequoiaDB应用程序开发">SequoiaDB应用程序开发</a> / <a class="navheader_parent_path" href="../../CPP/topics/cpp.html" title="C++ 驱动">C++ 驱动</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">SQL to sequoiadb shell to C++</h1>
+  <h1 class="title topictitle1">SQL to SequoiaDB shell to C++</h1>
 
   <div class="body">
-    <p class="p">Sequoiadb的查询用json（bson）对象表示，下表以例子的形式显示了sql语句、sequoiadb shell语句和sequoiadb C++驱动程序语法之间的对照。</p>
+    <p class="p">SequoiaDB的查询用json（bson）对象表示，下表以例子的形式显示了SQL语句、SequoiaDB shell语句和SequoiaDB C++驱动程序语法之间的对照。</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d1796e17" class="stentry">SQL</th>
+        <th valign="bottom" align="left" id="d1987e17" class="stentry">SQL</th>
 
-        <th valign="bottom" align="left" id="d1796e20" class="stentry">sequoiadb shell</th>
+        <th valign="bottom" align="left" id="d1987e20" class="stentry">SequoiaDB shell</th>
 
-        <th valign="bottom" align="left" id="d1796e23" class="stentry">C++ Driver</th>
+        <th valign="bottom" align="left" id="d1987e23" class="stentry">C++ Driver</th>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">insert into students(a,b) values(1,-1) </td>
+        <td valign="top" headers="d1987e17" class="stentry">insert into students(a,b) values(1,-1) </td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.insert({a:1,b:-1}) </td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.insert({a:1,b:-1}) </td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj = BSON( “a”&lt;&lt;1&lt;&lt;”b”&lt;&lt;-1
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj = BSON( “a”&lt;&lt;1&lt;&lt;”b”&lt;&lt;-1
             ) ;</p>
 <p class="p"> collection.insert( obj ) ; </p>
  </td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">select a,b from students </td>
+        <td valign="top" headers="d1987e17" class="stentry">select a,b from students </td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.find(null,{a:"",b:""})</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.find(null,{a:"",b:""})</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">
+        <td valign="top" headers="d1987e23" class="stentry">
           sdbCollection collection ;
           <p class="p">sdbCursor cursor ;</p>
 
@@ -79,11 +79,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">select * from students</td>
+        <td valign="top" headers="d1987e17" class="stentry">select * from students</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.find()</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.find()</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">
+        <td valign="top" headers="d1987e23" class="stentry">
           sdbCollection collection ;
           <p class="p">sdbCursor cursor ;</p>
 
@@ -93,11 +93,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">select * from students where age=20</td>
+        <td valign="top" headers="d1987e17" class="stentry">select * from students where age=20</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.find({age:20})</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.find({age:20})</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
 <p class="p">BSONObj condition
             ;</p>
 <p class="p">condition = BSON(“age”&lt;&lt;20) ;</p>
@@ -107,11 +107,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">select * from students where age=20 order by name</td>
+        <td valign="top" headers="d1987e17" class="stentry">select * from students where age=20 order by name</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.find({age:20}).sort({name:1})</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.find({age:20}).sort({name:1})</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
 <p class="p">BSONObj obj ;</p>
 <p class="p">BSONObj
             condition ;</p>
@@ -125,11 +125,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">select * from students where age&gt;20 and age&lt;30</td>
+        <td valign="top" headers="d1987e17" class="stentry">select * from students where age&gt;20 and age&lt;30</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.find({age:{$gt:20,$lt:30}})</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.find({age:{$gt:20,$lt:30}})</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
 <p class="p">BSONObj condition
             ;</p>
 <p class="p">condition = BSON(“age”&lt;&lt;BSON(“$gt”&lt;&lt;20&lt;&lt;” $lt”&lt;&lt;30))
@@ -139,11 +139,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">create index testIndex on students(name)</td>
+        <td valign="top" headers="d1987e17" class="stentry">create index testIndex on students(name)</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.createIndex("testIndex",{name:1},false)</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.createIndex("testIndex",{name:1},false)</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj ;</p>
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj ;</p>
 <p class="p">obj = BSON( “name”&lt;&lt;1 )
             ;</p>
  <p class="p">collection.createIndex ( &amp;obj, “testIndex”, FALSE, FALSE ) </p>
@@ -151,11 +151,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">select * from students limit 20 skip 10</td>
+        <td valign="top" headers="d1987e17" class="stentry">select * from students limit 20 skip 10</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.find().limit(20).skip(10)</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.find().limit(20).skip(10)</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj ;</p>
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj ;</p>
 <p class="p">sdbCursor cursor ;</p>
  <p class="p">collection
           .query (cursor,obj, obj, obj, obj, 10, 20 ) ; </p>
@@ -163,11 +163,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">select count(*) from students where age&gt;20</td>
+        <td valign="top" headers="d1987e17" class="stentry">select count(*) from students where age&gt;20</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.find({age:{$gt:20}}).count()</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.find({age:{$gt:20}}).count()</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ; <p class="p">SINT64 count = 0 ;</p>
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ; <p class="p">SINT64 count = 0 ;</p>
 <p class="p">BSONObj condition
             ;</p>
 <p class="p">Condition = BSON( “age”&lt;&lt;BSON(“$gt”&lt;&lt;20)) ;</p>
@@ -177,11 +177,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">update students set a=a+2 where b=-1</td>
+        <td valign="top" headers="d1987e17" class="stentry">update students set a=a+2 where b=-1</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.update({$set:{a:2}},{b:-1})</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.update({$set:{a:2}},{b:-1})</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ; <p class="p">BSONObj condition = BSON( “b”&lt;&lt;1 )
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ; <p class="p">BSONObj condition = BSON( “b”&lt;&lt;1 )
             ;</p>
 <p class="p">BSONObj rule = BSON( “$set”&lt;&lt;BSON(“a”&lt;&lt;2) );</p>
 <p class="p">BSONObj obj ;</p>
@@ -191,11 +191,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d1796e17" class="stentry">delete from students where a=1</td>
+        <td valign="top" headers="d1987e17" class="stentry">delete from students where a=1</td>
 
-        <td valign="top" headers="d1796e20" class="stentry">db.foo.bar.remove({a:1})</td>
+        <td valign="top" headers="d1987e20" class="stentry">db.foo.bar.remove({a:1})</td>
 
-        <td valign="top" headers="d1796e23" class="stentry">sdbCollection collection ; <p class="p">BSONObj condition = BSON(“a”&lt;&lt;1) ;</p>
+        <td valign="top" headers="d1987e23" class="stentry">sdbCollection collection ; <p class="p">BSONObj condition = BSON(“a”&lt;&lt;1) ;</p>
 
           <p class="p">collection.del ( condition ) ;</p>
  </td>
@@ -206,10 +206,10 @@
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="../../../../references/sqlmapping/topics/sqlmapping.html" title="SQL to sequoiadb 映射表">SQL to sequoiadb 映射表</a></div>
+<div><a class="navheader_parent_path" href="../../../../references/sqlmapping/topics/sqlmapping.html" title="SQL to SequoiaDB 映射表">SQL to SequoiaDB 映射表</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../CPP/topics/cpp.html" title="C++驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C++驱动</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../CPP/topics/cpp.html" title="C++ 驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C++ 驱动</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -218,7 +218,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.5
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

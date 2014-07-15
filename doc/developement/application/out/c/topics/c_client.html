@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C 驱动"/>
-<meta name="description" content="概述 C客户端程序主要提供了数据库的连接，数据的增删改查，索引的创建删除，以及集合与集合空间的创建删除操作。 更多参考C在线API 。 句柄 C客户端驱动的句柄分为两类。一类用于数据库操作，另一类用于集群操作。 数据库操作句柄 SequoiaDB数据库中的数据存放分为三个级别：   1）数据库   2）集合空间   3）集合 ..."/>
+<meta name="description" content="概述 C客户端程序主要提供了数据库，集合空间，集合，游标，副本组，节点，域这7个级别的操作。 更多参考C在线API 。 句柄 C客户端驱动的句柄分为两类。一类用于数据库操作，另一类用于集群操作。 数据库操作句柄 SequoiaDB数据库中的数据存放分为三个级别：   1）数据库   2）集合空间   3）集合 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../C/topics/c.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_kmr_n2s_wj"/>
@@ -31,14 +31,14 @@
 <body onload="highlightSearchTerm()" id="topic_kmr_n2s_wj"><a name="topic_kmr_n2s_wj"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../C/topics/c.html" title="C驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C驱动</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application.html" title="SequoiaDB应用程序开发">SequoiaDB应用程序开发</a> / <a class="navheader_parent_path" href="../../C/topics/c.html" title="C驱动">C驱动</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../C/topics/c.html" title="C 驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C 驱动</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application.html" title="SequoiaDB应用程序开发">SequoiaDB应用程序开发</a> / <a class="navheader_parent_path" href="../../C/topics/c.html" title="C 驱动">C 驱动</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">C 驱动</h1>
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">概述</h2>
     
-    <p class="p">C客户端程序主要提供了数据库的连接，数据的增删改查，索引的创建删除，以及集合与集合空间的创建删除操作。<a class="xref" href="../../../../c/html/index.html">更多参考C在线API</a>。</p>
+      <p class="p">C客户端程序主要提供了数据库，集合空间，集合，游标，副本组，节点，域这7个级别的操作。<a class="xref" href="../../../../c/html/index.html">更多参考C在线API</a>。</p>
 
     </div>
 
@@ -51,42 +51,42 @@
 <p class="p">  1）数据库</p>
 <p class="p">   2）集合空间</p>
 <p class="p">   3）集合
-            </p>
-<p class="p">每一个数据库中的集合空间没有物理上限，每个集合空间在单系统内存放为一个单独的文件，因此集合空间的数量取决于磁盘和内存的大小。每个集合空间可以包含最多4096个集合。每个集合可以包含多条记录。在一台物理系统内，每个集合空间最大256GB。对比关系型数据库，可以把记录看作关系型数据库的“行”；把集合看作关系型数据库的“表”。因此，在数据库操作中，可用3个句柄分别代表连接、集合空间、对象，另1个句柄代表游标： </p>
+        </p>
+<p class="p">每一个数据库中的集合空间没有物理上限，每个集合空间在单系统内存放为一个单独的文件，因此集合空间的数量取决于磁盘和内存的大小。每个集合空间可以包含最多4096个集合。每个集合可以包含多条记录。在一台物理系统内，每个集合空间最大256GB。对比关系型数据库，可以把记录看作关系型数据库的“行”；把集合看作关系型数据库的“表”。因此，在数据库操作中，可用3个句柄分别代表连接、集合空间、集合，另1个句柄代表游标： </p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
-              <td valign="top" class="stentry">Sequoiadb </td>
+              <td valign="top" class="stentry">sdbConnectionHandle </td>
 
-              <td valign="top" class="stentry">数据库实例 </td>
+              <td valign="top" class="stentry">数据库连接句柄 </td>
 
               <td valign="top" class="stentry">代表一个单独的数据库连接 </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">CollectionSpace </td>
+              <td valign="top" class="stentry">sdbCSHandle </td>
 
-              <td valign="top" class="stentry">集合空间实例 </td>
+              <td valign="top" class="stentry">集合空间句柄 </td>
 
               <td valign="top" class="stentry">代表一个单独的集合空间 </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">DBCollection</td>
+              <td valign="top" class="stentry">sdbCollectionHandle</td>
 
-              <td valign="top" class="stentry">集合实例</td>
+              <td valign="top" class="stentry">集合句柄</td>
 
               <td valign="top" class="stentry">代表一个单独的集合</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">DBCursor</td>
+              <td valign="top" class="stentry">sdbCursorHandle</td>
 
-              <td valign="top" class="stentry">游标实例</td>
+              <td valign="top" class="stentry">游标句柄</td>
 
               <td valign="top" class="stentry">代表一个查询产生的结果集</td>
 
             </tr>
 </table>
-<p class="p">C客户端程序需要使用不同的句柄进行操作。譬如读取数据的操作需要游标句柄，而创建表空间则需要数据库连接句柄。</p>
+<p class="p">C客户端程序需要使用不同的句柄进行操作。譬如读取数据的操作需要游标句柄，而创建集合空间则需要数据库连接句柄。</p>
 <div class="note note"><span class="notetitle">Note:</span> 
             <div class="p">
               <ul class="ul">
@@ -103,36 +103,46 @@
           </div>
 </li>
 
-        <li class="li">集群操作句柄 <p class="p">SequoiaDB数据库中的集群操作分为两个级别：</p>
+        <li class="li">集群操作句柄 <p class="p">SequoiaDB数据库中的集群操作分为三个级别：</p>
 <p class="p">  1）分区组 </p>
 <p class="p">  2）数据节点 </p>
+<p class="p">  3）域 </p>
 <div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">分区组包三种类型：协调分区组、编目分区组、数据分区组。</p>
+          <p class="p">分区组包二种类型：编目分区组、数据分区组。</p>
 
-          </div>
-<p class="p">分区组实例和数据节点实例可以用以下两类句柄表示。</p>
+        </div>
+<p class="p">分区组实例，数据节点实例，域实例可以用以下句柄表示。</p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
-                <td valign="top" class="stentry"> sdbReplicaSetHandle </td>
+              <td valign="top" class="stentry"> sdbReplicaGroupHandle </td>
 
-                <td valign="top" class="stentry"> 分区组句柄 </td>
+              <td valign="top" class="stentry"> 分区组句柄 </td>
 
-                <td valign="top" class="stentry"> 代表一个单独的分区组 </td>
+              <td valign="top" class="stentry"> 代表一个单独的分区组 </td>
 
-              </tr>
+            </tr>
 <tr class="strow">
-                <td valign="top" class="stentry"> sdbReplicaNodeHandle </td>
+              <td valign="top" class="stentry"> sdbNodeHandle </td>
 
-                <td valign="top" class="stentry"> 数据节点句柄 </td>
+              <td valign="top" class="stentry"> 数据节点句柄 </td>
 
-                <td valign="top" class="stentry"> 代表一个单独的数据节点 </td>
+              <td valign="top" class="stentry"> 代表一个单独的数据节点 </td>
 
-              </tr>
+            </tr>
+<tr class="strow">
+            <td valign="top" class="stentry"> sdbDomainHandle </td>
+
+            <td valign="top" class="stentry"> 域句柄 </td>
+
+            <td valign="top" class="stentry"> 代表一个单独的域 </td>
+
+          </tr>
 </table>
 <p class="p">与集群相关的操作需要使用分区组及数据节点句柄。</p>
-<p class="p">sdbReplicaSetHandle的实例用于管理分区组。其操作包括启动、停止分区组，获取分区组中节点的状态、名称信息、数目信息。
-            </p>
-<p class="p">sdbReplicaNodeHandle的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。
+<p class="p">sdbReplicaGroupHandle的实例用于管理分区组。其操作包括启动、停止分区组，获取分区组中节点的状态、名称信息、数目信息。
           </p>
+<p class="p">sdbNodeHandle的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。</p>
+
+          <p class="p">sdbDomainHandle的实例用于修改、获取域信息。</p>
 </li>
 
       </ul>
@@ -154,7 +164,7 @@
   </div>
 
 <div class="related-links"/>
-<div class="navfooter"><a class="link" href="../../C/topics/c.html" title="C驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C驱动</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../C/topics/c.html" title="C 驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C 驱动</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -163,7 +173,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.5
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

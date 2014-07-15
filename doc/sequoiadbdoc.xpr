@@ -371,7 +371,15 @@
                     <file name="developement/application/PHP/php.ditamap"/>
                 </folder>
                 <folder name="Python">
-                    <folder name="topics"/>
+                    <folder name="topics">
+                        <file name="developement/application/Python/topics/py_api.dita"/>
+                        <file name="developement/application/Python/topics/pybasic.dita"/>
+                        <file name="developement/application/Python/topics/pybuilt.dita"/>
+                        <file name="developement/application/Python/topics/pydrive.dita"/>
+                        <file name="developement/application/Python/topics/pysql.dita"/>
+                        <file name="developement/application/Python/topics/python.dita"/>
+                    </folder>
+                    <file name="developement/application/Python/python.ditamap"/>
                 </folder>
                 <folder name="topics">
                     <file name="developement/application/topics/application_en.dita"/>
