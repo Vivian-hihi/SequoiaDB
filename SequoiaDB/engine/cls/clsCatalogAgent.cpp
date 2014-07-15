@@ -193,12 +193,13 @@ namespace engine
    note: _clsCatalogItem implement
    */
    _clsCatalogItem::_clsCatalogItem ( BOOLEAN saveName,
-                                       BOOLEAN isSubCl )
+                                      BOOLEAN isSubCl )
    {
       _groupID = 0 ;
       _saveName = saveName ;
       _isHash  = FALSE ;
       _isSubCl = isSubCl ;
+      _isLast = FALSE ;
    }
 
    _clsCatalogItem::~_clsCatalogItem ()
@@ -1687,6 +1688,7 @@ namespace engine
               _isObjAllMaxKey( rit->second->getUpBound() ) )
          {
             _lastItem = rit->second ;
+            _lastItem->_isLast = TRUE ;
          }
          else
          {

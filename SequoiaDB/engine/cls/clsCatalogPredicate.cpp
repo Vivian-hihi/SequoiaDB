@@ -188,7 +188,8 @@ namespace engine
    INT32 clsCatalogPredicateTree::_matches ( BSONObjIterator itrSK,
                                              BSONObjIterator itrLB,
                                              BSONObjIterator itrUB,
-                                             BOOLEAN &result )
+                                             BOOLEAN &result,
+                                             BOOLEAN isCloseInterval )
    {
       INT32 rc = SDB_OK ;
       UINT32 ssKeyPos = 0 ;
@@ -202,7 +203,7 @@ namespace engine
 
       if ( !itrSK.more() )
       {
-         result = TRUE ;
+         result = isCloseInterval ? TRUE : FALSE ;
          goto done ;
       }
 
@@ -252,7 +253,7 @@ namespace engine
          }
          else if ( rsCmp == 0 )
          {
-            rc = _matches( itrSK, itrLB, itrUB, result ) ;
+            rc = _matches( itrSK, itrLB, itrUB, result, TRUE ) ;
             goto done ;
          }
 
@@ -267,7 +268,7 @@ namespace engine
          }
          else if ( rsCmp == 0 )
          {
-            rc = _matches( itrSK, itrLB, itrUB, result ) ;
+            rc = _matches( itrSK, itrLB, itrUB, result, isCloseInterval ) ;
             goto done ;
          }
       }
@@ -296,7 +297,7 @@ namespace engine
          BSONObjIterator itrLB( pCatalogItem->getLowBound() ) ;
          BSONObjIterator itrUB( pCatalogItem->getUpBound() ) ;
 
-         rc = _matches( itrSK, itrLB, itrUB, rsTmp ) ;
+         rc = _matches( itrSK, itrLB, itrUB, rsTmp, pCatalogItem->isLast() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to match catalog item, rc: %d",
                       rc ) ;
 

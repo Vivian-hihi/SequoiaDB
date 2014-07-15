@@ -109,7 +109,9 @@ namespace engine
          INT32    updateItem ( const BSONObj &obj, BOOLEAN isSharding,
                                BOOLEAN isHash ) ;
          BSONObj  toBson () ;
-         std::string getSubClName(){ return _subCLName; };
+         std::string getSubClName(){ return _subCLName; } ;
+         BOOLEAN  isLast() const { return _isLast ; }
+
       private:
          BSONObj           _lowBound ;
          BSONObj           _upBound ;
@@ -119,6 +121,8 @@ namespace engine
          string            _groupName ;
          string            _subCLName ;
          BOOLEAN           _isSubCl ;
+
+         BOOLEAN           _isLast ;
 
          friend class _clsCatalogSet ;
    };

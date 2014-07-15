@@ -46,7 +46,8 @@ namespace engine
       INT32 _matches( bson::BSONObjIterator itrSK,
                       bson::BSONObjIterator itrLB,
                       bson::BSONObjIterator itrUB,
-                      BOOLEAN & result ) ;
+                      BOOLEAN & result,
+                      BOOLEAN isCloseInterval ) ;
 
    private:
       // forbid copy constructor
