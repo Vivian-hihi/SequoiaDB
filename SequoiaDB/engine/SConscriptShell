@@ -198,7 +198,7 @@ shellEnv.Install( '#/bin', sdb )
 
 #Shell Backend  Executable
 sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml","ssh2", "util2"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml","ssh2", "util2", "spt2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdbbp )

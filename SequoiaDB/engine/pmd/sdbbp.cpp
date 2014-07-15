@@ -13,6 +13,14 @@
 #include <string>
 #include "sptCommon.hpp"
 #include "utilPipe.hpp"
+#include "sptApi.hpp"
+#include "sptUsrSsh.hpp"
+#include "sptUsrCmd.hpp"
+#include "sptUsrFile.hpp"
+#include "sptUsrSystem.hpp"
+#include "sptSPScope.hpp"
+#include "../spt/js_in_cpp.hpp"
+
 
 using std::string ;
 using namespace engine ;
@@ -20,6 +28,8 @@ using namespace engine ;
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
 #endif
+
+JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
 
 extern INT32 gShellReturnCode ;
 // caller should free output in the case of success
@@ -128,7 +138,7 @@ error :
 }
 
 PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERDAEMONMODE, "enterDaemonMode" )
-INT32 enterDaemonMode ( Scope * scope ,
+INT32 enterDaemonMode ( sptScope *scope ,
                         const OSSPID & shpid ,
                         const CHAR * waitName ,
                         const CHAR * f2bName ,
@@ -142,6 +152,8 @@ INT32 enterDaemonMode ( Scope * scope ,
    int            fd          = -1 ;
    FILE *         newStdout   = NULL ;
    CHAR *         result      = NULL ;
+   bson::BSONObj rval ;
+   bson::BSONObj detail ;
 
    OSSNPIPE f2bPipe ;
    OSSNPIPE b2fPipe ;
@@ -202,10 +214,9 @@ INT32 enterDaemonMode ( Scope * scope ,
          exit = TRUE ;
 
       if ( ! exit )
-         scope->evaluate ( code , 0 , "(sdbbp)" , 1 , &result ) ;
+         scope->eval( code, ossStrlen( code ), "(sdbbp)", 1,
+                      SPT_EVAL_FLAG_PRINT, rval, detail ) ;
       SAFE_OSS_FREE ( code ) ;
-      if ( result && result[0] != '\0' )
-         ossPrintf ( "%s"OSS_NEWLINE, result ) ;
       // shell always have gShellReturnCode defined
       ossPrintf ( " %d", gShellReturnCode ) ;
       result = NULL ;
@@ -234,14 +245,14 @@ PD_TRACE_DECLARE_FUNCTION ( SDB_SDBBP_MAIN, "main" )
 int main ( int argc , const char * argv[] )
 {
    PD_TRACE_ENTRY ( SDB_SDBBP_MAIN );
-   ScriptEngine *    engine   = NULL ;
-   Scope *           scope    = NULL ;
    INT32             rc       = SDB_OK ;
    OSSPID            shpid    = OSS_INVALID_PID ;
    OSSPID            bppid    = OSS_INVALID_PID ;
    CHAR waitName[128] ;
    CHAR f2bName[128] ;
    CHAR b2fName[128] ;
+   engine::sptContainer container ;
+   engine::sptScope *scope = NULL ;
 
    if ( ! freopen ( "sdbbp.log" , "a" , stdout ) )
    {
@@ -266,19 +277,38 @@ int main ( int argc , const char * argv[] )
    SH_VERIFY_RC
 
    // will purge engine in done:
-   engine = ScriptEngine::globalScriptEngine() ;
-   SH_VERIFY_COND ( engine , SDB_SYS )
+   scope = container.newScope() ;
+   SH_VERIFY_COND ( scope , SDB_SYS ) ;
 
-   // scope is freed in done:
-   scope = engine->newScope() ;
-   SH_VERIFY_COND ( scope , SDB_SYS )
+   if ( !InitDbClasses( ((engine::sptSPScope *)scope)->getContext(),
+                       ((engine::sptSPScope *)scope)->getGlobalObj() ) )
+   {
+      PD_LOG( PDERROR, "failed to init dbclass" ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = scope->loadUsrDefObj<_sptUsrSsh>() ;
+   SH_VERIFY_RC
+
+   rc = scope->loadUsrDefObj<_sptUsrCmd>() ;
+   SH_VERIFY_RC
+
+   rc = scope->loadUsrDefObj<_sptUsrFile>() ;
+   SH_VERIFY_RC
+
+   rc = scope->loadUsrDefObj<_sptUsrSystem>() ;
+   SH_VERIFY_RC
+
+   rc = evalInitScripts2( scope ) ;
+   SH_VERIFY_RC
 
    rc = enterDaemonMode ( scope , shpid , waitName , f2bName , b2fName ) ;
    SH_VERIFY_RC
 
 done :
+   scope->shutdown() ;
    SAFE_OSS_DELETE ( scope ) ;
-   ScriptEngine::purgeGlobalScriptEngine() ;
    PD_TRACE_EXITRC ( SDB_SDBBP_MAIN, rc );
    return rc ;
 error :
