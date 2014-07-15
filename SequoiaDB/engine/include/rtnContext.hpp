@@ -986,7 +986,7 @@ namespace engine
    private:
       _rtnQueryOptions _options ;
       BSONObj _explainOptions ;
-      _rtnContextData *_contextOfQuery ;
+      INT64 _queryContextID ;
 
       /// info before explain
       BSONObj _beginMon ;
@@ -998,6 +998,7 @@ namespace engine
       INT64 _recordNum ;
 
       _pmdEDUCB *_cbOfQuery ;
+
       BSONObjBuilder _builder ;
       BOOLEAN _explained ;
       

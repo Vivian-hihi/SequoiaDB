@@ -4620,7 +4620,7 @@ namespace engine
    _rtnContextExplain::_rtnContextExplain( INT64 contextID,
                                            UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
-    _contextOfQuery( NULL ),
+    _queryContextID( -1 ),
     _recordNum( 0 ),
     _cbOfQuery( NULL ),
     _explained( FALSE )
@@ -4630,13 +4630,12 @@ namespace engine
 
    _rtnContextExplain::~_rtnContextExplain()
    {
-      if ( NULL != _contextOfQuery &&
-           -1 != _contextOfQuery->contextID() )
+      if ( -1 != _queryContextID )
       {
-         sdbGetRTNCB()->contextDelete( _contextOfQuery->contextID(),
+         sdbGetRTNCB()->contextDelete( _queryContextID,
                                        _cbOfQuery ) ;
-          _contextOfQuery = NULL ;
-          _cbOfQuery = NULL ;
+         _queryContextID = -1 ;
+         _cbOfQuery = NULL ;
       }
    }
 
@@ -4702,14 +4701,6 @@ namespace engine
 
       _explained = TRUE ;
    done:
-      if ( NULL != _contextOfQuery &&
-           -1 != _contextOfQuery->contextID() )
-      {
-         sdbGetRTNCB()->contextDelete( _contextOfQuery->contextID(),
-                                       _cbOfQuery ) ;
-          _contextOfQuery = NULL ;
-          _cbOfQuery = NULL ;
-      }
       PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__PREPAREDATA, rc ) ;
       return rc ;
    error:
@@ -4727,29 +4718,28 @@ namespace engine
       _optAccessPlan *plan = NULL ;
       CHAR hostName[OSS_MAX_HOSTNAME + 1] = { 0 } ;
       stringstream ss ;
+      _rtnContextData *contextOfQuery = NULL ;
 
       rc = rtnQuery( _options._fullName, _options._selector,
                      _options._query, _options._orderBy,
                      _options._hint, _options._flag,
                      cb, _options._skip, _options._limit,
                      sdbGetDMSCB(), sdbGetRTNCB(),
-                     queryContextID, &_contextOfQuery ) ;
+                     queryContextID, &contextOfQuery ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to query data:%d", rc ) ;
          goto error ;
       }
 
-      _cbOfQuery = cb ;
-
-      if ( NULL == _contextOfQuery )
+      if ( NULL == contextOfQuery )
       {
          PD_LOG( PDERROR, "can not get the context of query" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      plan = _contextOfQuery->getPlan() ;
+      plan = contextOfQuery->getPlan() ;
       if ( NULL == plan )
       {
          PD_LOG( PDERROR, "plan should not be NULL" ) ;
@@ -4781,11 +4771,18 @@ namespace engine
          goto error ;
       }
 
+      _queryContextID = queryContextID ;
+      _cbOfQuery = cb ;
       ossGetCurrentTime( _beginTime ) ;
    done:
       PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN, rc ) ;
       return rc ;
    error:
+      if ( -1 != queryContextID )
+      {
+         sdbGetRTNCB()->contextDelete( queryContextID,
+                                       cb ) ;
+      }
       goto done ;
    }
 
@@ -4852,19 +4849,20 @@ namespace engine
       /// 'limit' and 'skip'.
       while ( TRUE )
       {
-         rc = rtnGetMore( _contextOfQuery->contextID(),
+         rc = rtnGetMore( _queryContextID,
                           -1, ctxBuf, startingPos, cb,
                           sdbGetRTNCB() ) ;
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_OK ;
-            _contextOfQuery = NULL ;
+            _queryContextID = -1 ;  /// context has been freed in getmore.
             break ;
          }
          else if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to get more from context[%lld],"
-                    "rc:%d ", _contextOfQuery->contextID() ) ;
+            PD_LOG( PDERROR, "failed to get more from context[%lld]"
+                    ", rc:%d", _queryContextID, rc ) ;
+            _queryContextID = -1 ;
             goto error ;
          }
          else
@@ -4880,7 +4878,7 @@ namespace engine
                else if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "failed to get more from buf of context[%lld],"
-                    "rc:%d ", _contextOfQuery->contextID() ) ;
+                    "rc:%d ", _queryContextID, rc ) ;
                   goto error ;
                }
                else
