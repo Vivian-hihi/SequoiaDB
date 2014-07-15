@@ -3506,7 +3506,7 @@ SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
    // check handle
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    // check arguments
-   if ( !pSourceGroup || !pTargetGroup || !pSplitCondition || !taskID
+   if ( !pSourceGroup || !pTargetGroup || !pSplitCondition || !taskID ||
         !cs->_collectionFullName[0] )
    {
       rc = SDB_INVALIDARG ;
