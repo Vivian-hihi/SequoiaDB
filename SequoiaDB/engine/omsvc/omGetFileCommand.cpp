@@ -34,6 +34,7 @@
 #include "omDef.hpp"
 #include "rtn.hpp"
 #include "omManager.hpp"
+#include "omConfigGenerator.hpp"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -2007,18 +2008,15 @@ namespace engine
             
             contextID = -1 ;
             PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
-            //TODO clear pre_http_body
             _sendErrorRes2Web( rc, "Failed to retreive record" ) ;
             goto error ;
          }
 
          BSONObj record( buffObj.data() ) ;
-         //TODO change keys
          rc = _restAdaptor->appendHttpBody( _restSession, record.objdata(), 
                                             record.objsize(), 1 ) ;
          if ( rc )
          {
-            //TODO clear pre_http_body
             _sendErrorRes2Web( rc, "Failed to appendHttpBody" ) ;
             goto error ;
          }
@@ -2149,11 +2147,11 @@ namespace engine
       ptree ptList ;
       ptree::iterator ite ;
 
-      read_xml( file.c_str(), pt ) ;
-      ptList = pt.get_child( OM_XML_CLUSTER_TYPE_LIST ) ;
       try
       {
-         ite = ptList.begin() ;
+         read_xml( file.c_str(), pt ) ;
+         ptList = pt.get_child( OM_XML_CLUSTER_TYPE_LIST ) ;
+         ite    = ptList.begin() ;
          for( ; ite != ptList.end() ; ite++ )
          {
             BSONObjBuilder oneClusterTypeBulider ;
@@ -2180,6 +2178,7 @@ namespace engine
                string edit         = "" ;
                string desc         = "" ;
                string level        = "" ;
+               string webName      = "" ;
                name         = propertyIte->second.get<string>( 
                                                 OM_XMLATTR_PROPERTY_NAME ) ;
                type         = propertyIte->second.get<string>( 
@@ -2196,6 +2195,8 @@ namespace engine
                                                 OM_XMLATTR_PROPERTY_DESC ) ;
                level        = propertyIte->second.get<string>( 
                                                 OM_XMLATTR_PROPERTY_LEVEL ) ;
+               webName      = propertyIte->second.get<string>( 
+                                                OM_XMLATTR_PROPERTY_WEBNAME ) ;
                builder.append( OM_BSON_PROPERTY_NAME, name ) ;
                builder.append( OM_BSON_PROPERTY_TYPE, type ) ;
                builder.append( OM_BSON_PROPERTY_DEFAULT, defaultValue ) ;
@@ -2204,6 +2205,7 @@ namespace engine
                builder.append( OM_BSON_PROPERTY_EDIT, edit ) ;
                builder.append( OM_BSON_PROPERTY_DESC, desc ) ;
                builder.append( OM_BSON_PROPERTY_LEVEL, level ) ;
+               builder.append( OM_BSON_PROPERTY_WEBNAME, webName ) ;
                temp = builder.obj() ;
                arrayBuilder.append( temp ) ;
             }
@@ -2226,7 +2228,108 @@ namespace engine
    error:
       goto done ;
    }
-   
+
+   INT32 omQueryBusinessTemplateCommand::_readConfDetail( string file, 
+                                                       BSONObj &bsonConfDetail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONArrayBuilder arrayBuilder ;
+      BSONObjBuilder confDetailBuilder ;
+      ptree pt ;
+      ptree ptList ;
+      ptree::iterator ite ;
+      try
+      {
+         read_xml( file.c_str(), pt ) ;
+         ptList = pt.get_child( OM_XML_CONFIG ) ;
+         ite    = ptList.begin() ;
+         for( ; ite != ptList.end() ; ite++ )
+         {
+            BSONObjBuilder builder ;
+            BSONObj temp ;
+            string name         = "" ;
+            string type         = "" ;
+            string defaultValue = "" ;
+            string valid        = "" ;
+            string display      = "" ;
+            string edit         = "" ;
+            string desc         = "" ;
+            string level        = "" ;
+            string webName      = "" ;
+            name         = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_NAME ) ;
+            type         = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_TYPE ) ;
+            defaultValue = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_DEFAULT ) ;
+            valid        = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_VALID ) ;
+            display      = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_DISPLAY ) ;
+            edit         = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_EDIT ) ;
+            desc         = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_DESC ) ;
+            level        = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_LEVEL ) ;
+            webName      = ite->second.get<string>( 
+                                             OM_XMLATTR_PROPERTY_WEBNAME ) ;
+            builder.append( OM_BSON_PROPERTY_NAME, name ) ;
+            builder.append( OM_BSON_PROPERTY_TYPE, type ) ;
+            builder.append( OM_BSON_PROPERTY_DEFAULT, defaultValue ) ;
+            builder.append( OM_BSON_PROPERTY_VALID, valid ) ;
+            builder.append( OM_BSON_PROPERTY_DISPLAY, display ) ;
+            builder.append( OM_BSON_PROPERTY_EDIT, edit ) ;
+            builder.append( OM_BSON_PROPERTY_DESC, desc ) ;
+            builder.append( OM_BSON_PROPERTY_LEVEL, level ) ;
+            builder.append( OM_BSON_PROPERTY_WEBNAME, webName ) ;
+            temp = builder.obj() ;
+            arrayBuilder.append( temp ) ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         goto error ;
+      }
+
+      confDetailBuilder.append( OM_BSON_PROPERTY_ARRAY, arrayBuilder.arr() ) ;
+      bsonConfDetail = confDetailBuilder.obj() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+//   INT32 omQueryBusinessTemplateCommand::doCommand()
+//   {
+//      BSONObjBuilder opBuilder ;
+//      BSONObj test ;
+//      opBuilder.append( "inner1", "inner1" ) ;
+//      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+//      test = opBuilder.obj() ;
+
+//      BSONObjBuilder opBuilder2 ;
+//      opBuilder2.append("k1", "v1" ) ;
+//      opBuilder2.append("k2", "v2" ) ;
+//      opBuilder2.append("k3", "v3" ) ;
+//      opBuilder2.append("k4", "v4" ) ;
+//      opBuilder2.append("object", test ) ;
+//      BSONObj test2 = opBuilder2.obj() ;
+
+//      BSONObjBuilder patternBuilder ;
+//      patternBuilder.append("k1", "") ;
+//      patternBuilder.append("k4", "") ;
+//      patternBuilder.append("object", "") ;
+//      patternBuilder.append("inner1", "") ;
+//      BSONObj result = test2.extractFields( patternBuilder.obj() ) ;
+//      
+//      
+//      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+//      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+//      return SDB_OK ;
+//   }
+
    INT32 omQueryBusinessTemplateCommand::doCommand()
    {
       INT32 rc                  = SDB_OK ;
@@ -2343,6 +2446,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string businessType ;
       string clusterType ;
+      string businessName ;
       string file ;
       list<BSONObj> clusterTypeList ;
       list<BSONObj>::iterator iterList ;
@@ -2353,6 +2457,7 @@ namespace engine
 
       businessType = bsonTemplate.getStringField( OM_BSON_BUSINESS_TYPE ) ;
       clusterType  = bsonTemplate.getStringField( OM_BSON_CLUSTER_TYPE ) ;
+      businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
 
       file = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
              + businessType + OM_TEMPLATE_FILE_NAME ;
@@ -2387,6 +2492,7 @@ namespace engine
 
       builder.append( OM_BSON_BUSINESS_TYPE, businessType ) ;
       builder.append( OM_BSON_CLUSTER_TYPE, clusterType ) ;
+      builder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
       /*{
            "Property": [ { "Name": "replica_num", "Type": "int", "Default": "1", 
                            "Valid": "1", "Display": "edit box", "Edit": "false", 
@@ -2434,9 +2540,239 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigBusinessCommand::_reCheckHostInfo( BSONObj &bsonHostInfo )
+   INT32 omConfigBusinessCommand::_getHostConfig( string hostName, 
+                                                  string businessName, 
+                                                  BSONObj &config )
    {
-      return SDB_OK ;
+      BSONObjBuilder confBuilder ;
+      BSONArrayBuilder arrayBuilder ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID        = -1 ;
+      INT32 rc                = SDB_OK ;
+
+      BSONObjBuilder condBuilder ;
+      condBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, hostName ) ;
+      // condBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
+      BSONObj condition = condBuilder.obj() ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, condition, order, 
+                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s, rc=%d", 
+                 OM_CS_DEPLOY_CL_HOST, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         BSONObj tmpConf ;
+         string BusinessName ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            
+            contextID = -1 ;
+            PD_LOG( PDERROR, "Failed to retreive record, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         /*
+            {
+               "HostName":"h1", "BusinessName":"b1", 
+               "Config":
+               [{"dbpath":"","svcname":"11810", ...}
+                  , ...
+               ]
+            }
+         */
+         BSONObj result( buffObj.data() ) ;
+         BusinessName = result.getStringField( 
+                                             OM_CONFIGURE_FIELD_BUSINESSNAME ) ;
+         tmpConf = result.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
+         {
+            BSONObjIterator iter( tmpConf ) ;
+            while ( iter.more() )
+            {  
+               BSONObjBuilder innerBuilder ;
+               BSONElement ele     = iter.next() ;
+               
+               innerBuilder.appendElements( ele.embeddedObject() ) ;
+               innerBuilder.append( OM_BSON_BUSINESS_NAME, BusinessName ) ;
+               arrayBuilder.append( innerBuilder.obj() ) ;
+            }
+         }
+      }
+
+      /*
+         {
+            "Config":
+            [{"BusinessName":"b1","dbpath":"","svcname":"11810", ...}
+               , ...
+            ]
+         }
+      */
+      confBuilder.append( OM_BSON_FIELD_CONFIG, arrayBuilder.arr() ) ;
+      config = confBuilder.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*input parameter: 
+     bsonHostInfo
+     {
+        "HostInfo":[{"Name":"host1"}, ...]
+     }
+
+     output parameter:
+     bsonHostInfo
+     {
+        "HostInfo":[{"HostName":"host1", "ClusterName":"c1", 
+                     "Disk":[{"Name":"dev", "Mount":"/mnt", ... }, ...],
+                     "Config":[{"dbpath":"","svcname":"11810", ...}, ...]
+                    , ...
+                   ]
+     }
+      
+     */
+   INT32 omConfigBusinessCommand::_reCheckHostInfo( string clusterName, 
+                                                    string businessName ,
+                                                    BSONObj &bsonHostInfo )
+   {
+      BSONObj condition ;
+      BSONObj result ;
+      BSONArrayBuilder ArrBuilder ;
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BOOLEAN isRecordFetched = false ;
+      SINT64 contextID        = -1 ;
+      INT32 rc                = SDB_OK ;
+
+      BSONObjBuilder condBuilder ;
+      condBuilder.append( OM_HOST_FIELD_CLUSTERNAME, clusterName ) ;
+      if ( !bsonHostInfo.isEmpty() )
+      {
+         BSONArrayBuilder innArrBuilder ;
+         BSONObj hosts ;
+         hosts = bsonHostInfo.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
+         {
+            BSONObjIterator iter( hosts ) ;
+            while ( iter.more() )
+            {
+               string hostName ;
+               BSONObjBuilder builder ;
+               BSONObj oneHost ;
+               BSONObj tmp ;
+               BSONElement ele ;
+
+               ele      = iter.next() ;
+               // {"HostName":"host1", ...}
+               oneHost  = ele.embeddedObject() ;
+               hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+               builder.append( OM_HOST_FIELD_NAME, hostName ) ;
+               tmp      = builder.obj() ;
+               innArrBuilder.append( tmp ) ;
+             }
+          }
+
+          condBuilder.append( "$or", innArrBuilder.arr() ) ;
+      }
+
+      condition = condBuilder.obj() ;
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, condition, order, hint, 0, 
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s, rc=%d", 
+                 OM_CS_DEPLOY_CL_HOST, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         BSONObjBuilder resultBuilder ;
+         BSONObj config ;
+         string hostName ;
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            
+            contextID = -1 ;
+            PD_LOG( PDERROR, "Failed to retreive record, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         /*
+            result= {"HostName":"host1", "ClusterName":"c1", 
+                     "Disk":[{"Name":"dev", "Mount":"/mnt", ... }, ...]
+                     , ...  }
+         */
+         BSONObj result( buffObj.data() ) ;
+         resultBuilder.appendElements( result ) ;
+         hostName = result.getStringField( OM_HOST_FIELD_NAME ) ;
+         rc       = _getHostConfig( hostName, businessName, config ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get host config, rc=%d", rc ) ;
+            goto error ;
+         }
+         
+         resultBuilder.appendElements( config ) ;
+
+         /*
+            result= {"HostName":"host1", "ClusterName":"c1", 
+                     "Disk":[{"Name":"dev", "Mount":"/mnt", ... }, ...],
+                     "Config":[{"BusinessName":"b1","dbpath":"",
+                                "svcname":"11810", ... }, ...]
+                     , ...  }
+         */
+         result = resultBuilder.obj() ;
+         ArrBuilder.append( result ) ;
+         isRecordFetched = TRUE ;
+      }
+
+      if ( !isRecordFetched )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "host is not exist:host=%s", 
+                 condition.toString().c_str() ) ;
+         goto error ;
+      }
+
+      bsonBuilder.append( OM_BSON_FIELD_HOST_INFO, ArrBuilder.arr() ) ;
+      bsonHostInfo = bsonBuilder.obj() ;
+      
+   done:
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      goto done ;
    }
 
    INT32 omConfigBusinessCommand::_getTemplateInfo( BSONObj &bsonTemplate, 
@@ -2444,10 +2780,14 @@ namespace engine
    {
       INT32 rc          = SDB_OK ;
       const CHAR *pInfo = NULL ;
+      string clusterName ;
+      string businessName ;
       BSONObj bsonInfo ;
       BSONObjBuilder templateBuilder ;
+      BSONObjBuilder filterBuilder ;
+      BSONObj filter ;
       BSONObjBuilder hostInfoBuilder ;
-      _restAdaptor->getQuery(_restSession, OM_REST_TEMPLATE_INFO, 
+      _restAdaptor->getQuery( _restSession, OM_REST_TEMPLATE_INFO, 
                              &pInfo ) ;
       if ( NULL == pInfo )
       {
@@ -2469,28 +2809,18 @@ namespace engine
          goto error ;
       }
 
-      {
-         BSONObjIterator iter( bsonInfo ) ;
-         while ( iter.more() )
-         {
-            BSONElement beTmp = iter.next() ;
-            const CHAR *pFieldName = beTmp.fieldName();
-            if ( ossStrcasecmp( OM_BSON_FIELD_HOST_INFO, pFieldName) == 0 )
-            {
-               hostInfoBuilder.append( beTmp ) ;
-            }
-            else
-            {
-               hostInfoBuilder.append( beTmp ) ;
-            }
-         }
-      }
+      clusterName  = bsonInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      _clusterName = clusterName ;
+      businessName = bsonInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
+
+      filterBuilder.append( OM_BSON_FIELD_HOST_INFO, "" ) ;
+      filter       = filterBuilder.obj() ;
       /*{
-           "ClusterName":"c1","BusinessType":"sequoiadb", 
+           "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
            "ClusterType": "standalone", 
            "Property": [ { "Name": "replica_num", "Value":"" }, ...] 
         } */
-      bsonTemplate = templateBuilder.obj() ;
+      bsonTemplate = bsonInfo.filterFieldsUndotted( filter, false ) ;
       rc = _fullFillTemplate( bsonTemplate ) ;
       if ( SDB_OK != rc )
       {
@@ -2500,7 +2830,7 @@ namespace engine
       }
       // after fullFillTemplate, bsonTemplate add more details:
       /*{
-           "ClusterName":"c1","BusinessType":"sequoiadb", 
+           "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
            "ClusterType": "standalone", 
            "Property": [ { "Name": "replica_num", "Type": "int", "Default": "1", 
                            "Valid": "1", "Display": "edit box", "Edit": "false", 
@@ -2510,14 +2840,22 @@ namespace engine
         } */
 
       /*{
-           "HostInfo":[{"Name":"host1"}, ...]}
+           "HostInfo":[{"HostName":"host1"}, ...]}
         }*/
-      bsonHostInfo = hostInfoBuilder.obj() ;
-      rc = _reCheckHostInfo( bsonHostInfo ) ;
+      bsonHostInfo = bsonInfo.filterFieldsUndotted( filter, true ) ;
+      /*{
+           "HostInfo":[{"HostName":"host1", "ClusterName":"c1", 
+                        "Disk":[{"Name":"dev", "Mount":"/mnt", ... }, ...],
+                        "Config":[{"BusinessName":"b1","dbpath":"","svcname":"11810", ...}, ...]
+                       }
+                       , ...
+                      ]
+        }*/
+      rc = _reCheckHostInfo( clusterName, businessName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "reCheckHostInfo failed:rc=%d", rc ) ;
-         _sendErrorRes2Web( rc, "reCheckHostInfo faild" ) ;
+         _sendErrorRes2Web( rc, "get host info faild" ) ;
          goto error ;
       }
 
@@ -2528,84 +2866,80 @@ namespace engine
    }
 
    INT32 omConfigBusinessCommand::_getConfigDetail( const BSONObj &bsonTemplate, 
-                                                  BSONObj &bsonConfigItem )
+                                                  BSONObj &bsonConfDetail )
    {
       INT32 rc = SDB_OK ;
-      string configItemFile = "" ;
+      string confDetailFile = "" ;
       string businessType ;
-      BSONObjBuilder configItemBuilder ;
-      BSONArrayBuilder arrayBuilder ;
 
-      businessType = bsonTemplate.getStringField( OM_BSON_CLUSTER_TYPE ) ;
+      businessType = bsonTemplate.getStringField( OM_REST_BUSINESS_TYPE ) ;
       if ( businessType.length() == 0 )
       {
-         string errorInfo = string( OM_BSON_CLUSTER_TYPE ) + " is null" ;
+         string errorInfo = string( OM_REST_BUSINESS_TYPE ) + " is null" ;
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
          _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
          goto error ;
       }
-      configItemFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
+      confDetailFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
                        + businessType + OM_CONFIG_ITEM_FILE_NAME ;
-      try
+
+      rc = _readConfDetail(confDetailFile, bsonConfDetail ) ;
+      if( SDB_OK != rc )
       {
-         ptree pt ;
-         read_xml( configItemFile.c_str(), pt ) ;
-         ptree ptList = pt.get_child( OM_XML_CONFIG ) ;
-         ptree::iterator ite = ptList.begin() ;
-         for( ; ite != ptList.end() ; ite++ )
-         {
-            BSONObjBuilder builder ;
-            BSONObj temp ;
-            string name         = "" ;
-            string type         = "" ;
-            string defaultValue = "" ;
-            string valid        = "" ;
-            string display      = "" ;
-            string edit         = "" ;
-            string desc         = "" ;
-            string level        = "" ;
-            name         = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_NAME ) ;
-            type         = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_TYPE ) ;
-            defaultValue = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_DEFAULT ) ;
-            valid        = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_VALID ) ;
-            display      = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_DISPLAY ) ;
-            edit         = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_EDIT ) ;
-            desc         = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_DESC ) ;
-            level        = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_LEVEL ) ;
-            builder.append( OM_BSON_PROPERTY_NAME, name ) ;
-            builder.append( OM_BSON_PROPERTY_TYPE, type ) ;
-            builder.append( OM_BSON_PROPERTY_DEFAULT, defaultValue ) ;
-            builder.append( OM_BSON_PROPERTY_VALID, valid ) ;
-            builder.append( OM_BSON_PROPERTY_DISPLAY, display ) ;
-            builder.append( OM_BSON_PROPERTY_EDIT, edit ) ;
-            builder.append( OM_BSON_PROPERTY_DESC, desc ) ;
-            builder.append( OM_BSON_PROPERTY_LEVEL, level ) ;
-            temp = builder.obj() ;
-            arrayBuilder.append( temp ) ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_DMS_RECORD_NOTEXIST ;
-         _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, e.what() ) ;
+         string errorInfo = string( "read configure failed:file=" ) 
+                            + confDetailFile ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
          goto error ;
       }
 
-      configItemBuilder.append( OM_BSON_PROPERTY_ARRAY, arrayBuilder.arr() ) ;
-      bsonConfigItem = configItemBuilder.obj() ;
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   void omConfigBusinessCommand::_addProperties( BSONObjBuilder &builder, 
+                                                 const BSONObj &bsonTemplate, 
+                                                 const BSONObj &bsonConfDetail )
+   {
+      BSONArrayBuilder arrayBuilder ;
+      BSONObj tmp ;
+
+      tmp = bsonTemplate.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
+      BSONObjIterator iter( tmp ) ;
+      while ( iter.more() )
+      {
+         BSONElement ele ;
+         BSONObj oneProperty ;
+         string propertyName ;
+
+         ele          = iter.next() ;
+         oneProperty  = ele.embeddedObject() ;
+         propertyName = oneProperty.getStringField( OM_BSON_PROPERTY_NAME ) ;
+         if ( propertyName.compare( OM_TEMPLATE_USER_NAME ) == 0
+              || propertyName.compare( OM_TEMPLATE_USER_PASSWD ) == 0 
+              || propertyName.compare( OM_TEMPLATE_USER_GROUP ) == 0)
+         {
+            arrayBuilder.append( oneProperty ) ;
+         }
+      }
+
+      tmp = bsonConfDetail.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
+      BSONObjIterator iter2( tmp ) ;
+      while ( iter2.more() )
+      {
+         BSONElement ele ;
+         BSONObj oneProperty ;
+         string propertyName ;
+
+         ele          = iter2.next() ;
+         oneProperty  = ele.embeddedObject() ;
+         arrayBuilder.append( oneProperty ) ;
+      }
+
+      builder.append( OM_BSON_PROPERTY_ARRAY, arrayBuilder.arr() ) ;
    }
 
    INT32 omConfigBusinessCommand::_generateConfig( 
@@ -2615,11 +2949,34 @@ namespace engine
                                                 BSONObj &bsonConfig )
    {
       INT32 rc = SDB_OK ;
+      omConfigGenerator confGenerator ;
+      BSONObjBuilder builder ;
+      BSONObj tmpConf ;
+      /* tmpConf:
+         {
+            "Config":
+            [
+              {"HostName":"host1","SdbUser":"sdbadmin", "SdbPasswd":"sdbadmin",
+               "SdbUserGroup":"sdbadmin_group","DataGroupName":"",
+               "DBPath": "/home/db2/coord/11830", "SvcName": "11830", ... 
+              }, ...
+            ]
+         }
+      */
+      rc = confGenerator.generateSDBConfig( bsonTemplate, bsonConfigItem, 
+                                            bsonHostInfo, tmpConf ) ;
       if ( SDB_OK != rc )
       {
+         string errorInfo = confGenerator.getErrorDetail() ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
          goto error ;
       }
-      
+
+      builder.appendElements( tmpConf ) ;
+      builder.append( OM_BSON_FIELD_CLUSTER_NAME, _clusterName ) ;
+      _addProperties( builder, bsonTemplate, bsonConfigItem ) ;
+      bsonConfig = builder.obj() ;
+
    done:
       return rc ;
    error:
@@ -2634,15 +2991,12 @@ namespace engine
       BSONObj bsonConfigDetail ;
       BSONObj bsonConfig ;
       BSONObjBuilder opBuilder ;
-      //TODO: bsonTemplate只包含Name和Value,须从本地load其它字段
       rc = _getTemplateInfo( bsonTemplate, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get config info failed" ) ;
          goto error ;
       }
-
-      //TODO:  bsonHostInfo为空时, 需要从数据库中获取
       
       rc = _getConfigDetail( bsonTemplate, bsonConfigDetail ) ;
       if ( SDB_OK != rc )
@@ -2656,7 +3010,6 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "generate config failed" ) ;
-         _sendErrorRes2Web( rc, "generate config failed" ) ;
          goto error ;
       }
 
@@ -2671,6 +3024,27 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   // *****************CheckBusinessConfigReq *****************************
+   CheckBusinessConfigReq::CheckBusinessConfigReq( restAdaptor *pRestAdaptor, 
+                                                   pmdRestSession *pRestSession, 
+                                                   const CHAR *pRootPath, 
+                                                   const CHAR *pSubPath )
+                          :omQueryBusinessTemplateCommand( pRestAdaptor, 
+                                                           pRestSession, 
+                                                           pRootPath,
+                                                           pSubPath)
+   {
+   }
+
+   CheckBusinessConfigReq::~CheckBusinessConfigReq()
+   {
+   }
+
+   INT32 CheckBusinessConfigReq::doCommand()
+   {
+      return SDB_OK ;
    }
 
    // *****************omGetFileCommand *****************************
@@ -2855,6 +3229,5 @@ namespace engine
 
       return true ;
    }
-
 }
 

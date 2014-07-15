@@ -43,21 +43,8 @@ namespace engine
    #define OM_GENERATOR_DOT    ","
    #define OM_GENERATOR_LINE   "-"
 
-   #define OM_TEMPLATE_REPLICA_NUM     "replica_num"
-   #define OM_TEMPLATE_DATAGROUP_NUM   "data_group_num"
-   #define OM_TEMPLATE_CATALOG_NUM     "catalog_num"
-   #define OM_TEMPLATE_COORD_NUM       "coord_num"
-   #define OM_TEMPLATE_USER_NAME       "user_name"
-   #define OM_TEMPLATE_USER_PASSWD     "user_passwd"
-   #define OM_TEMPLATE_USER_GROUP      "user_group"
-
-
    #define OM_CONF_DETAIL_DBPATH       "dbpath"
    #define OM_CONF_DETAIL_SVCNAME      "svcname"
-   #define OM_CONF_DETAIL_REPLNAME     "replname"
-   #define OM_CONF_DETAIL_SHARDNAME    "shardname"
-   #define OM_CONF_DETAIL_CATALOGNAME  "catalogname"
-   #define OM_CONF_DETAIL_HTTPNAME     "httpname"
    #define OM_CONF_DETAIL_DIAGLEVEL    "diaglevel"
    #define OM_CONF_DETAIL_ROLE         "role"
    #define OM_CONF_DETAIL_LOGFSIZE     "logfilesz"
@@ -66,6 +53,26 @@ namespace engine
    #define OM_CONF_DETAIL_PREINSTANCE  "preferedinstance"
    #define OM_CONF_DETAIL_PCNUM        "numpagecleaners"
    #define OM_CONF_DETAIL_PCINTERVAL   "pagecleaninterval"
+
+   // extend configure
+   #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
+   
+   #define OM_DG_NAME_PATTERN          "DATAGROUP"
+
+   #define OM_CLUSTER_TYPE_STANDALONE  "standalone"
+   #define OM_CLUSTER_TYPE_CLUSTER     "cluster"
+
+   #define OM_NODE_TYPE_STANDALONE     "standalone"
+   #define OM_NODE_TYPE_COORD          "coord"
+   #define OM_NODE_TYPE_CATALOG        "catalog"
+   #define OM_NODE_TYPE_DATA           "data"
+
+   #define OM_SVCNAME_STEP             (10)
+   #define OM_PATH_LENGTH              (256)
+   #define OM_INT32_LENGTH             (20)
+
+   #define OM_CONF_VALUE_INT_TYPE      "int"
+
 
    static INT32 getBsonStringField( const BSONObj &bsonTemplate, 
                                     const string &fieldName, string &value ) ;
@@ -90,10 +97,6 @@ namespace engine
    {
       dbPath            = "" ;
       svcName           = -1 ;
-      replName          = -1 ;
-      shardName         = -1 ;
-      catalogName       = -1 ;
-      httpName          = -1 ;
       dialevel          = -1 ;
       role              = "" ;
       logFileSize       = -1 ;
@@ -102,18 +105,22 @@ namespace engine
       preferedInstance  = "" ;
       numPageCleaner    = -1 ;
       pageCleanInterval = -1 ;
+      dataGroupID       = "" ;
+      sdbUserName       = "" ;
+      sdbPasswd         = "" ;
+      sdbUserGroup      = "" ;
+
+      user              = "" ;
+      passwd            = "" ;
    }
 
-   rangeValidator::rangeValidator( string singleRange ) 
+   rangeValidator::rangeValidator( string type, const CHAR *value ) 
    {
-      rangeValidator( singleRange, singleRange, TRUE ) ;
-   }
-
-   rangeValidator::rangeValidator( string begin, string end, BOOLEAN isClosed )
-   {
-      _isClosed = isClosed ;
-      _begin    = begin ;
-      _end      = end ;
+      _isClosed   = TRUE ;
+      _begin      = value ;
+      _end        = value ;
+      _isValidAll = FALSE ;
+      _type       = type ;
 
       omStringTrim( _begin ) ;
       omStringTrim( _end ) ;
@@ -123,6 +130,41 @@ namespace engine
          /* if range is empty, all the value is valid */
          _isValidAll = TRUE ;
       }
+   }
+
+   rangeValidator::rangeValidator( string type, const CHAR *begin, 
+                                   const CHAR *end, BOOLEAN isClosed )
+   {
+      _isClosed   = isClosed ;
+      _begin      = begin ;
+      _end        = end ;
+      _isValidAll = FALSE ;
+      _type       = type ;
+
+      omStringTrim( _begin ) ;
+      omStringTrim( _end ) ;
+
+      if ( ( _begin.length() == 0 ) && ( _end.length() == 0 ) )
+      {
+         /* if range is empty, all the value is valid */
+         _isValidAll = TRUE ;
+      }
+   }
+
+   rangeValidator::~rangeValidator()
+   {
+   }
+
+   INT32 rangeValidator::_compare( string left, string right )
+   {
+      if ( _type.compare( OM_CONF_VALUE_INT_TYPE ) == 0 )
+      {
+         INT32 leftInt  = ossAtoi( left.c_str() ) ;
+         INT32 rightInt = ossAtoi( right.c_str() ) ;
+         return ( leftInt - rightInt ) ;
+      }
+
+      return left.compare( right ) ;
    }
 
    BOOLEAN rangeValidator::isValid( const string &value )
@@ -135,7 +177,7 @@ namespace engine
          return TRUE ;
       }
 
-      compareEnd   = value.compare( _end ) ;
+      compareEnd   = _compare( value, _end ) ;
       if ( _isClosed )
       {
          if ( compareEnd == 0 )
@@ -144,7 +186,7 @@ namespace engine
          }
       }
 
-      compareBegin = value.compare( _begin ) ;
+      compareBegin = _compare( value, _begin ) ;
       if ( compareBegin >= 0 && compareEnd < 0 )
       {
          return TRUE ;
@@ -182,12 +224,12 @@ namespace engine
 
       if( string::npos != posTmp )
       {
-         rv = new rangeValidator( tmpValue.substr( 0, posTmp ), 
-                                  tmpValue.substr( posTmp + 1 ) ) ;
+         rv = new rangeValidator( _type, tmpValue.substr( 0, posTmp ).c_str(), 
+                                  tmpValue.substr( posTmp + 1 ).c_str() ) ;
       }
       else
       {
-         rv = new rangeValidator( tmpValue ) ;
+         rv = new rangeValidator( _type, tmpValue.c_str() ) ;
       }
 
       _validatorList.push_back( rv ) ;
@@ -197,7 +239,52 @@ namespace engine
    {
       string::size_type pos1 ;
       string::size_type pos2 ;
+      string tmp ;
       INT32 rc = SDB_OK ;
+
+      rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_TYPE, _type ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get field failed:field=%s", OM_BSON_PROPERTY_TYPE ) ;
+         goto error ;
+      }
+      rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_WEBNAME, _webName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get field failed:field=%s", 
+                 OM_BSON_PROPERTY_WEBNAME ) ;
+         goto error ;
+      }
+ 
+      rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_DISPLAY, _display ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get field failed:field=%s", 
+                 OM_BSON_PROPERTY_DISPLAY ) ;
+         goto error ;
+      }
+
+      rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_EDIT, _edit ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get field failed:field=%s", OM_BSON_PROPERTY_EDIT ) ;
+         goto error ;
+      }
+
+      rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_DESC, _desc ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get field failed:field=%s", OM_BSON_PROPERTY_DESC ) ;
+         goto error ;
+      }
+
+      rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_LEVEL, _level ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get field failed:field=%s", 
+                 OM_BSON_PROPERTY_LEVEL ) ;
+         goto error ;
+      }
 
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_NAME, _name ) ;
       if ( SDB_OK != rc )
@@ -233,7 +320,8 @@ namespace engine
          pos2 = _valid.find( OM_GENERATOR_DOT, pos1 ) ;
       }
 
-      _addRange( _valid.substr( pos1 ) ) ;
+      tmp = _valid.substr( pos1 ) ;
+      _addRange( tmp ) ;
 
       if ( !isValid( _defaultValue ) )
       {
@@ -287,6 +375,49 @@ namespace engine
       return _valid ;
    }
 
+   INT32 omDiskInfo::getNodeCount( string role )
+   {
+      if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
+      {
+         return standAloneCount ;
+      }
+
+      if ( role.compare( OM_NODE_TYPE_COORD ) == 0 )
+      {
+         return coordCount ;
+      }
+
+      if ( role.compare( OM_NODE_TYPE_CATALOG ) == 0 )
+      {
+         return catalogCount ;
+      }
+
+      if ( role.compare( OM_NODE_TYPE_DATA ) == 0 )
+      {
+         return dataCount ;
+      }
+
+      return 0 ;
+   }
+
+   void omDiskInfo::init()
+   {
+      diskName        = "" ;
+      mountPath       = "" ;
+      totalSize       = 0 ;
+      freeSize        = 0 ;
+      isUsed          = FALSE ;
+      standAloneCount = 0 ;
+      coordCount      = 0 ;
+      catalogCount    = 0 ;
+      dataCount       = 0 ;
+   }
+
+   INT32 omDiskInfo::getNodeCount()
+   {
+      return ( standAloneCount + coordCount + catalogCount + dataCount ) ;
+   }
+
    omHostInfo::omHostInfo()
    {
    }
@@ -295,21 +426,202 @@ namespace engine
    {
    }
 
-   INT32 omHostInfo::init( const BSONObj &oneHost, 
-                           map<string, omConfigItem*> *confDetailMap )
+   /*
+     {
+        HostInfo:{"SdbUser":"sdbadmin", "SdbPasswd":"sdbadmin", 
+                  "SdbGroup":"sdbadmin_group"}
+        Config:[
+                 {"dbpath":"", svcname:"11810", ...}
+                 ...
+               ]
+     }
+   */
+   INT32 omHostInfo::_initNodeInfo( const BSONObj &config )
+   {
+      BSONElement element ;
+      NODEINFOLIST_ITER iter ;
+      INT32 rc = SDB_OK ;
+      if ( config.isEmpty() )
+      {
+         goto done ;
+      }
+
+      element  = config.getField( OM_BSON_FIELD_CONFIG ) ;
+      if ( element.eoo() || Array != element.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "field is not array type:field=%s,type=%d", 
+                 OM_BSON_FIELD_DISK, element.type() ) ;
+         goto error ;
+      }
+      {
+         BSONObjIterator i( element.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            string tmpSvcName ;
+            omNodeInfo node ;
+            BSONElement ele = i.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "array's element is invalid:element=%s", 
+                       ele.toString().c_str() ) ;
+               goto error ;
+            }
+
+            BSONObj oneNode = ele.embeddedObject() ;
+            node.dbPath     = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
+            node.role       = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+            tmpSvcName      = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+            node.svcName    = ossAtoi( tmpSvcName.c_str() ) ;
+            
+            node.businessName  = oneNode.getStringField( 
+                                                   OM_BSON_BUSINESS_NAME ) ;
+            node.dataGroupName = oneNode.getStringField( 
+                                                   OM_CONF_DETAIL_EX_DG_NAME ) ;
+            _nodeInfoList.push_back( node ) ;
+         }
+      }
+   
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void omHostInfo::_increaseNodeCount( string dbpath, string role, 
+                                        set<string> &usedDiskSet )
+   {
+      DISKINFO_ITER iterDisk ;
+      iterDisk = _diskList.begin() ;
+      while ( iterDisk != _diskList.end() )
+      {
+         string::size_type pathPos ;
+         pathPos = dbpath.find( iterDisk->mountPath ) ;
+         if ( pathPos != string::npos )
+         {
+            iterDisk->isUsed = TRUE ;
+            // record the unique disk path
+            usedDiskSet.insert( iterDisk->mountPath ) ;
+            break ;
+         }
+
+         iterDisk++ ;
+      }
+
+      SDB_ASSERT( iterDisk != _diskList.end(), "" ) ;
+
+      // calculate the role count
+      if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
+      {
+         _nodeCounter.standAloneCount++ ;
+         iterDisk->standAloneCount++ ;
+      }
+      else if ( role.compare( OM_NODE_TYPE_COORD ) == 0 )
+      {
+         _nodeCounter.coordCount++ ;
+         iterDisk->coordCount++ ;
+      }
+      else if ( role.compare( OM_NODE_TYPE_CATALOG ) == 0 )
+      {
+         _nodeCounter.catalogCount++ ;
+         iterDisk->catalogCount++ ;
+      }
+      else if ( role.compare( OM_NODE_TYPE_DATA ) == 0 )
+      {
+         _nodeCounter.dataCount++ ;
+         iterDisk->dataCount++ ;
+      }
+      else
+      {
+         SDB_ASSERT(FALSE, "node type error") ;
+      }
+   }
+
+   INT32 omHostInfo::_initCounter()
+   {
+      CONFIGITEMMAP_ITER iterMap ;
+      NODEINFOLIST_ITER iterNodeInfo ;
+      string defaultSvcName ;
+      INT32 maxSvcName ;
+      INT32 maxGroupID = 0;
+      set<string> usedDiskSet ;
+
+      iterMap           = _pConfDetailMap->find( OM_CONF_DETAIL_SVCNAME ) ;
+      SDB_ASSERT( iterMap != _pConfDetailMap->end(), "" ) ;
+      defaultSvcName    = iterMap->second->getDefaultValue() ;
+      maxSvcName        = ossAtoi( defaultSvcName.c_str() ) ;
+
+      iterNodeInfo = _nodeInfoList.begin() ;
+      while ( iterNodeInfo != _nodeInfoList.end() )
+      {
+         // get the maxSvcName
+         if ( maxSvcName < iterNodeInfo->svcName )
+         {
+            maxSvcName = iterNodeInfo->svcName ;
+         }
+
+         // if business is not the same , do not count the node info
+         if ( _businessName.compare( iterNodeInfo->businessName ) != 0 )
+         {
+            iterNodeInfo++ ;
+            continue ;
+         }
+
+         // get the max group id
+         string::size_type pos = 0 ;
+         pos = iterNodeInfo->dataGroupName.find( OM_DG_NAME_PATTERN ) ;
+         if ( pos != string::npos )
+         {
+            string groupID ;
+            INT32 id ;
+            string::size_type start = pos + ossStrlen( OM_DG_NAME_PATTERN ) ;
+            groupID = iterNodeInfo->dataGroupName.substr( start ) ;
+            id      = ossAtoi( groupID.c_str() ) ;
+            if ( id > maxGroupID )
+            {
+               maxGroupID = id ;
+            }
+         }
+
+         _increaseNodeCount( iterNodeInfo->dbPath, iterNodeInfo->role, 
+                             usedDiskSet ) ;
+
+         iterNodeInfo++ ;
+      }
+
+      _availableSvcName = maxSvcName ;
+      if ( _nodeInfoList.size() != 0 )
+      {
+         _availableSvcName += OM_SVCNAME_STEP ;
+      }
+
+      _nodeCounter.unUsedDiskCount = _nodeCounter.diskCount - 
+                                                          usedDiskSet.size() ;
+      _availableGroupID = maxGroupID + 1 ; 
+
+      return SDB_OK ;
+   }
+
+   INT32 omHostInfo::init( const BSONObj &oneHost, const BSONObj &config,
+                           map<string, omConfigItem*> *confDetailMap, 
+                           string businessName )
    {
       INT32 rc = SDB_OK ;
       BSONElement hostElement ;
       CONFIGITEMMAP_ITER iter ;
       string minValue ;
 
-      _diskCount       = 0 ;
-      _unusedDiskCount = 0 ;
-      _standAloneCount = 0 ;
-      _coordCount      = 0 ;
-      _catalogCount    = 0 ;
-      _dataCount       = 0 ;
+      _nodeCounter.diskCount       = 0 ;
+      _nodeCounter.unUsedDiskCount = 0 ;
+      _nodeCounter.standAloneCount = 0 ;
+      _nodeCounter.coordCount      = 0 ;
+      _nodeCounter.catalogCount    = 0 ;
+      _nodeCounter.dataCount       = 0 ;
       _pConfDetailMap = confDetailMap ;
+      _businessName   = businessName ;
+      _diskList.clear() ;
+      _nodeInfoList.clear() ;
 
       rc = getBsonStringField( oneHost, OM_BSON_FIELD_HOST_IP, _ip ) ;
       if ( SDB_OK != rc )
@@ -347,7 +659,7 @@ namespace engine
                        ele.toString().c_str() ) ;
                goto error ;
             }
-
+            disk.init() ;
             BSONObj oneDisk = ele.embeddedObject() ;
             getBsonStringField( oneDisk, OM_BSON_FIELD_DISK_NAME, 
                                 disk.diskName );
@@ -362,43 +674,187 @@ namespace engine
                           ? TRUE : FALSE ;
             _diskList.push_back( disk ) ;
 
-            _diskCount++ ;
-            _unusedDiskCount++ ;
+            _nodeCounter.diskCount++ ;
          }
       }
 
-      iter = _pConfDetailMap->find( OM_CONF_DETAIL_SVCNAME ) ;
-      SDB_ASSERT( iter != _pConfDetailMap->end(), "" ) ;
-      minValue          = iter->second->getMinValidValue() ;
-      _availableSvcName = ossAtoi( minValue.c_str() ) ;
+      rc = _initNodeInfo( config ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_initNodeInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _initCounter() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_initCounter failed:rc=%d", rc ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
    error:
-      _pConfDetailMap = NULL ;
-      _diskList.clear() ;
       goto done ;
    }
 
-   INT32 omHostInfo::assign( string role )
+   /*
+      rule1: the less the better which disk contains role's count
+   */
+   INT32 omHostInfo::assign( string role, string dataGroupID, 
+                             sdbConfDetail &confDetail )
    {
+      CHAR dbPath[OM_PATH_LENGTH] ;
+      omNodeInfo nodeInfo;
+      DISKINFO_ITER bestIter ;
+      DISKINFO_ITER iter = _diskList.begin() ;
+      bestIter = iter ;
+      iter++ ;
+      while ( iter != _diskList.end() )
+      {
+         INT32 roleCount ;
+         INT32 bestRoleCount ;
+         INT32 nodeCount ;
+         INT32 bestNodeCount ;
+         roleCount     = iter->getNodeCount( role ) ;
+         bestRoleCount = bestIter->getNodeCount( role ) ;
+         if ( roleCount != bestRoleCount  )
+         {
+            if ( roleCount < bestRoleCount )
+            {
+               bestIter = iter ;
+            }
+
+            iter++;
+            continue ;
+         }
+
+         nodeCount     = iter->getNodeCount() ;
+         bestNodeCount = bestIter->getNodeCount() ;
+         if ( nodeCount != bestNodeCount  )
+         {
+            if ( nodeCount < bestNodeCount )
+            {
+               bestIter = iter ;
+            }
+
+            iter++;
+            continue ;
+         }
+
+         iter++ ;
+      }
+
+      confDetail.hostName = _hostName ;
+      confDetail.diskName = bestIter->diskName ;
+      confDetail.svcName  = _availableSvcName ;
+      _availableSvcName   += OM_SVCNAME_STEP ;
+      confDetail.role     = role ;
+      ossSnprintf( dbPath, OM_PATH_LENGTH, "%s/%s/%d", 
+                   bestIter->mountPath.c_str(),
+                   confDetail.role.c_str(), confDetail.svcName ) ;
+      confDetail.dbPath  = string( dbPath ) ;
+      bestIter->isUsed       = TRUE ;
+      if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
+      {
+         _nodeCounter.standAloneCount++ ;
+         bestIter->standAloneCount++ ;
+      }
+      else if ( role.compare( OM_NODE_TYPE_COORD ) == 0 )
+      {
+         _nodeCounter.standAloneCount++ ;
+         bestIter->coordCount++ ;
+      }
+      else if ( role.compare( OM_NODE_TYPE_CATALOG ) == 0 )
+      {
+         _nodeCounter.standAloneCount++ ;
+         bestIter->catalogCount++ ;
+      }
+      else if ( role.compare( OM_NODE_TYPE_DATA ) == 0 )
+      {
+         confDetail.dataGroupID = dataGroupID ;
+         _nodeCounter.standAloneCount++ ;
+         bestIter->dataCount++ ;
+      }
+
+      nodeInfo.dataGroupName = confDetail.dataGroupID ;
+      nodeInfo.role          = confDetail.role ;
+      nodeInfo.dbPath        = confDetail.dbPath ;
+      nodeInfo.svcName       = confDetail.svcName ;
+      _nodeInfoList.push_back( nodeInfo ) ;
       
-      return 0 ;
+      
+      return SDB_OK ;
+   }
+
+   INT32 omHostInfo::getAvailableGroupID()
+   {
+      return _availableGroupID ;
    }
    
    INT32 omHostInfo::getNodeCount( string role )
    {
-      return _coordCount ;
+      return _nodeCounter.getNodeCount( role ) ;
+   }
+
+   INT32 omHostInfo::getNodeCount()
+   {
+      return _nodeCounter.getNodeCount() ;
    }
 
    INT32 omHostInfo::getDiskCount()
    {
-      return _diskCount ;
+      return _nodeCounter.getDiskCount() ;
    }
 
    INT32 omHostInfo::getUnusedDiskCount()
    {
-      return _unusedDiskCount ;
+      return _nodeCounter.getUnusedDiskCount() ;
+   }
+
+   void omHostInfo::getNodeInfo( hostNodeCounter &nodeCounter )
+   {
+      nodeCounter = _nodeCounter ;
+   }
+
+   INT32 hostNodeCounter::getNodeCount( string role )
+   {
+      if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
+      {
+         return standAloneCount ;
+      }
+
+      if ( role.compare( OM_NODE_TYPE_COORD ) == 0 )
+      {
+         return coordCount ;
+      }
+
+      if ( role.compare( OM_NODE_TYPE_CATALOG ) == 0 )
+      {
+         return catalogCount ;
+      }
+
+      if ( role.compare( OM_NODE_TYPE_DATA ) == 0 )
+      {
+         return dataCount ;
+      }
+
+      return 0 ;
+   }
+
+   INT32 hostNodeCounter::getNodeCount()
+   {
+      return ( standAloneCount + coordCount + catalogCount + dataCount ) ;
+   }
+
+   INT32 hostNodeCounter::getDiskCount()
+   {
+      return diskCount ;
+   }
+
+   INT32 hostNodeCounter::getUnusedDiskCount()
+   {
+      return unUsedDiskCount ;
    }
 
    omConfigGenerator::omConfigGenerator()
@@ -410,22 +866,49 @@ namespace engine
       _clear() ;
    }
 
-   INT32 omConfigGenerator::_parseHostInfo( const BSONObj &bsonHostInfo )
+   /*
+   bsonTemplate:
    {
-      INT32 rc = SDB_OK ;
-      //TODO:
-      omHostInfo host ;
-      host.init( bsonHostInfo, &_confDetailMap ) ;
-      return SDB_OK ;
+      "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
+      "ClusterType": "standalone", 
+      "Property":[{"Name":"replicanum", "Type":"int", "Default":"1", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
    }
-
+   bsonConfigDetails:
+   {
+      "Property":[{"Name":"dbpath", "Type":"path", "Default":"/opt/sequoiadb", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   bsonHostInfo:
+   { 
+     "HostInfo":[
+                   {
+                      "HostName":"host1", "ClusterName":"c1", 
+                      "Disk":{"Name":"/dev/sdb", Size:"", Mount:"", Used:""},
+                      "Config":[{"BusinessName":"b2","dbpath":"", svcname:"", 
+                                 "role":"", ... }, ...]
+                   }
+                    , ... 
+                ]
+   }
+   */
    INT32 omConfigGenerator::generateSDBConfig( const BSONObj &bsonTemplate, 
                                                const BSONObj &bsonConfigDetails, 
                                                const BSONObj &bsonHostInfo, 
                                                BSONObj &bsonConfig )
    {
       INT32 rc = SDB_OK ;
-      rc = _parseTemplate( bsonTemplate ) ;
+
+      _clear() ;
+
+      _businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      rc            = _parseTemplate( bsonTemplate ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get template failed:rc=%d", rc ) ;
@@ -439,7 +922,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _parseHostInfo( bsonHostInfo ) ;
+      rc = _parseHostInfo( _businessName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get template failed:rc=%d", rc ) ;
@@ -480,16 +963,28 @@ namespace engine
 
    void omConfigGenerator::_clear() 
    {
-      CONFIGITEMMAP_ITER iter = _confDetailMap.begin() ;
+      CONFIGITEMMAP_ITER iter     = _confDetailMap.begin() ;
       while ( iter != _confDetailMap.end() )
       {
          omConfigItem *old = iter->second ;
-         delete old ;
-
          _confDetailMap.erase( iter++ ) ;
+
+         delete old ;
+         old = NULL ;
+      }
+
+      HOSTINFOLIST_ITER iterList  = _hostInfoList.begin() ;
+      while ( iterList != _hostInfoList.end() )
+      {
+         omHostInfo *host = *iterList ;
+         _hostInfoList.erase( iterList++ ) ;
+
+         delete host ;
+         host = NULL ;
       }
 
       _confTemplate.init() ;
+      _errorDetail = "" ;
    }
 
    INT32 omConfigGenerator::_setTemplateValue( const BSONObj &templateItem ) 
@@ -522,6 +1017,10 @@ namespace engine
       {
          _confTemplate.replicaNum   = ossAtoi( itemValue.c_str() ) ;
       }
+//      else if ( itemName.compare( OM_TEMPLATE_DATA_NUM ) == 0 )
+//      {
+//         _confTemplate.dataNum = ossAtoi( itemValue.c_str() ) ;
+//      }
       else if ( itemName.compare( OM_TEMPLATE_DATAGROUP_NUM ) == 0 )
       {
          _confTemplate.dataGroupNum = ossAtoi( itemValue.c_str() ) ;
@@ -559,7 +1058,7 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          _errorDetail = string("Template value is invalid:item=") 
-                        + OM_BSON_PROPERTY_NAME + ",value=" 
+                        + item.getItemName() + ",value=" 
                         + itemValue.c_str() ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
@@ -625,7 +1124,6 @@ namespace engine
       string tmpValue = "" ;
       BSONObj properyItem ;
       BSONElement propertyElement ;
-      _confTemplate.init() ;
       rc = getBsonStringField( bsonTemplate, OM_BSON_BUSINESS_TYPE, 
                                _confTemplate.businessType ) ;
       if ( SDB_OK != rc )
@@ -661,14 +1159,6 @@ namespace engine
          while ( i.more() )
          {
             BSONElement ele = i.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "array's element is invalid:element=%s", 
-                       ele.toString().c_str() ) ;
-               goto error ;
-            }
-            
             BSONObj oneProperty = ele.embeddedObject() ;
             rc = _setTemplateValue( oneProperty ) ;
             if ( SDB_OK != rc )
@@ -685,6 +1175,9 @@ namespace engine
          PD_LOG( PDERROR, "miss template configur item" ) ;
          goto error ;
       }
+
+      _confTemplate.dataNum = _confTemplate.dataGroupNum * 
+                                                      _confTemplate.replicaNum ;
 
    done:
       return rc ;
@@ -709,6 +1202,51 @@ namespace engine
       }
 
       itemName  = pItem->getItemName() ;
+      itemValue = pItem->getDefaultValue() ;
+      if ( itemName.compare( OM_CONF_DETAIL_DBPATH ) == 0 )
+      {
+         _confDetailSample.dbPath      = itemValue ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_SVCNAME ) == 0 )
+      {
+         _confDetailSample.svcName     = ossAtoi( itemValue.c_str() ) ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_DIAGLEVEL ) == 0 )
+      {
+         _confDetailSample.dialevel    = ossAtoi( itemValue.c_str() ) ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_ROLE ) == 0 )
+      {
+         _confDetailSample.role        = itemValue ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_LOGFSIZE ) == 0 )
+      {
+         _confDetailSample.logFileSize = ossAtoi( itemValue.c_str() ) ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_LOGFNUM ) == 0 )
+      {
+         _confDetailSample.logFileNum  = ossAtoi( itemValue.c_str() ) ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_TRANSACTION ) == 0 )
+      {
+         _confDetailSample.transaction = ((itemValue.compare("true") == 0) ?
+                                              TRUE : FALSE) ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_PREINSTANCE ) == 0 )
+      {
+         _confDetailSample.preferedInstance  = itemValue ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_PCNUM ) == 0 )
+      {
+         _confDetailSample.numPageCleaner    = ossAtoi( itemValue.c_str() ) ;
+      }
+      else if ( itemName.compare( OM_CONF_DETAIL_PCINTERVAL ) == 0 )
+      {
+         _confDetailSample.pageCleanInterval = ossAtoi( itemValue.c_str() ) ;
+      }
+
+      _confDetailSample.dataGroupID = "" ;
+      
       _addToItemMap( itemName, pItem ) ;
       pItem = NULL ;
 
@@ -735,34 +1273,6 @@ namespace engine
       if ( iter == _confDetailMap.end() )
       {
          _errorDetail = string( OM_CONF_DETAIL_SVCNAME ) 
-                        + " have not been set" ;
-         return FALSE ;
-      }
-      iter = _confDetailMap.find( OM_CONF_DETAIL_REPLNAME ) ;
-      if ( iter == _confDetailMap.end() )
-      {
-         _errorDetail = string( OM_CONF_DETAIL_REPLNAME ) 
-                        + " have not been set" ;
-         return FALSE ;
-      }
-      iter = _confDetailMap.find( OM_CONF_DETAIL_SHARDNAME ) ;
-      if ( iter == _confDetailMap.end() )
-      {
-         _errorDetail = string( OM_CONF_DETAIL_SHARDNAME ) 
-                        + " have not been set" ;
-         return FALSE ;
-      }
-      iter = _confDetailMap.find( OM_CONF_DETAIL_CATALOGNAME ) ;
-      if ( iter == _confDetailMap.end() )
-      {
-         _errorDetail = string( OM_CONF_DETAIL_CATALOGNAME ) 
-                        + " have not been set" ;
-         return FALSE ;
-      }
-      iter = _confDetailMap.find( OM_CONF_DETAIL_HTTPNAME ) ;
-      if ( iter == _confDetailMap.end() )
-      {
-         _errorDetail = string( OM_CONF_DETAIL_HTTPNAME ) 
                         + " have not been set" ;
          return FALSE ;
       }
@@ -830,7 +1340,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONElement propertyElement ;
-      _clear() ;
 
       propertyElement = bsonConfigDetails.getField( OM_BSON_PROPERTY_ARRAY ) ;
       if ( propertyElement.eoo() || Array != propertyElement.type() )
@@ -847,14 +1356,6 @@ namespace engine
          while ( i.more() )
          {
             BSONElement ele = i.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "array's element is invalid:element=%s", 
-                       ele.toString().c_str() ) ;
-               goto error ;
-            }
-            
             BSONObj oneProperty = ele.embeddedObject() ;
             rc = _setConfDetailValue( oneProperty ) ;
             if ( SDB_OK != rc )
@@ -865,6 +1366,9 @@ namespace engine
          }
       }
 
+      _confDetailSample.sdbUserName  = _confTemplate.userName ;
+      _confDetailSample.sdbPasswd    = _confTemplate.userPasswd ;
+      _confDetailSample.sdbUserGroup = _confTemplate.userGroup ;
       if ( !_isAllConfDetailSet() )
       {
          rc = SDB_INVALIDARG ;
@@ -879,13 +1383,356 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigGenerator::_generateConfig( const BSONObj &bsonConfig )
+   /*
+   bsonHostInfo:
+   { 
+     "HostInfo":[
+                   {
+                      "HostName":"host1", "ClusterName":"c1", 
+                      "Disk":{"Name":"/dev/sdb", Size:"", Mount:"", Used:""},
+                      "Config":[{"dbpath":"", svcname:"", "role":"", ... }, ...]
+                   }
+                    , ... 
+                ]
+   }
+   */
+   INT32 omConfigGenerator::_parseHostInfo( string businessName ,
+                                            const BSONObj &bsonHostInfo )
    {
       INT32 rc = SDB_OK ;
-      if ( SDB_OK != rc )
+      BSONObjBuilder builder ;
+      BSONObj confFilter ;
+      builder.append( OM_BSON_FIELD_CONFIG, "" ) ;
+      confFilter = builder.obj() ;
+      
+      BSONObj hosts ;
+      hosts = bsonHostInfo.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       {
+         BSONObjIterator iter( hosts ) ;
+         while ( iter.more() )
+         {
+            BSONObj oneHostConf ;
+            BSONElement ele ;
+            BSONObj oneHost ;
+            BSONObj config ;
+            omHostInfo *host = NULL  ;
+
+            ele              = iter.next() ;
+            oneHostConf      = ele.embeddedObject() ;
+            host             = new omHostInfo() ;
+            config  = oneHostConf.filterFieldsUndotted( confFilter, true ) ;
+            oneHost = oneHostConf.filterFieldsUndotted( confFilter, false ) ;
+            rc = host->init( oneHost, config, &_confDetailMap, businessName ) ;
+            if ( SDB_OK != rc )
+            {
+               _errorDetail = string( "initial host failed" ) ;
+               PD_LOG( PDERROR, "initial host failed:rc=%d", rc ) ;
+               delete host ;
+               goto error ;
+            }
+
+            _hostInfoList.push_back( host ) ;
+          }
+       }
+
+   done:
+      return rc ;
+   error:
+      _clear() ;
+      goto done ;
+   }
+
+   /*
+      get best host rule:
+          rule1: the less the better which host contains specify role's count
+          rule2: the more the better which host contains unused disk's count
+          rule3: the less the better which host contains node's count
+                 ( all the roles )
+   */
+   omHostInfo* omConfigGenerator::_getBestHost( string role )
+   {
+      HOSTINFOLIST_ITER iter ;
+      omHostInfo *pHostInfo = NULL ;
+
+      iter = _hostInfoList.begin() ;
+      if ( iter == _hostInfoList.end() )
+      {
+         PD_LOG( PDERROR, "hostinfo is null!" ) ;
          goto error ;
       }
+
+      pHostInfo = *iter ;
+      iter++ ;
+      while ( iter != _hostInfoList.end() )
+      {
+         omHostInfo *pTmp = NULL ;  
+         INT32 roleCount ;
+         INT32 nodeCount ;
+         INT32 unUsedDiskCount ;
+
+         INT32 bestRoleCount ;
+         INT32 bestNodeCount ;
+         INT32 bestUnUsedDiskCount ;
+
+         pTmp          = *iter ;
+         roleCount     = pTmp->getNodeCount( role ) ;
+         bestRoleCount = pHostInfo->getNodeCount( role );
+         if ( roleCount != bestRoleCount )
+         {
+            if ( roleCount < bestRoleCount )
+            {
+               // rule1
+               pHostInfo = pTmp ;
+            }
+
+            iter++ ;
+            continue ;
+         }
+
+         unUsedDiskCount     = pTmp->getUnusedDiskCount() ;
+         bestUnUsedDiskCount = pHostInfo->getUnusedDiskCount() ;
+         if ( unUsedDiskCount != bestUnUsedDiskCount )
+         {
+            if ( unUsedDiskCount > bestUnUsedDiskCount )
+            {
+               pHostInfo = pTmp ;
+            }
+
+            iter++ ;
+            continue ;
+         }
+
+         nodeCount     = pTmp->getNodeCount() ;
+         bestNodeCount = pHostInfo->getNodeCount() ;
+         if ( nodeCount != bestNodeCount )
+         {
+            if ( nodeCount < bestNodeCount )
+            {
+               pHostInfo = pTmp ;
+            }
+
+            iter++ ;
+            continue ;
+         }
+
+         iter++ ;
+      }
+
+   done:
+      return pHostInfo ;
+   error:
+      pHostInfo = NULL ;
+      goto done ;
+   }
+   
+   INT32 omConfigGenerator::_generateStandAloneConfig( 
+                                               list<sdbConfDetail> &configList )
+   {
+      INT32 rc = SDB_OK ;
+      sdbConfDetail details ;
+      omHostInfo *host = _getBestHost( OM_NODE_TYPE_STANDALONE ) ;
+      if ( NULL == host )
+      {
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "_getBestHost failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      details = _confDetailSample ;
+      host->assign( OM_NODE_TYPE_STANDALONE, "", details ) ;
+      configList.push_back( details ) ;
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omConfigGenerator::_getAvailableGroupID()
+   {
+      HOSTINFOLIST_ITER iter ;
+      INT32 availableGroupID = 0 ;
+      iter = _hostInfoList.begin() ;
+      while ( iter != _hostInfoList.end() )
+      {
+         INT32 tmpID ;
+         omHostInfo *pHostInfo = *iter ;
+         tmpID = pHostInfo->getAvailableGroupID() ;
+         if ( tmpID > availableGroupID )
+         {
+            availableGroupID = tmpID ;
+         }
+
+         iter++ ;
+      }
+
+      return availableGroupID ;
+   }
+
+   string omConfigGenerator::_calculateGroupID( INT32 baseGroupdID, 
+                                                INT32 dataIndex,
+                                                INT32 maxDataNumber, 
+                                                INT32 maxGroupNumber )
+   {
+      CHAR groupID[ OM_INT32_LENGTH ] ;
+      INT32 step = dataIndex / maxDataNumber ;
+      if ( step > maxGroupNumber )
+      {
+         step = maxGroupNumber ;
+      }
+
+      ossSnprintf( groupID, OM_INT32_LENGTH, "%s%d", OM_DG_NAME_PATTERN, 
+                   ( baseGroupdID + step ) ) ;
+      return string(groupID) ;
+   }
+
+   INT32 omConfigGenerator::_generateClusterConfig( 
+                                               list<sdbConfDetail> &configList )
+   {
+      INT32 rc = SDB_OK ;
+      sdbConfDetail details ;
+      INT32 coordCount   = 0 ;
+      INT32 catalogCount = 0 ;
+      INT32 dataCount    = 0 ;
+      INT32 baseGroupID  = 0 ;
+
+      while ( coordCount < _confTemplate.coordNum )
+      {
+         omHostInfo *host = _getBestHost( OM_NODE_TYPE_COORD ) ;
+         if ( NULL == host )
+         {
+            rc = SDB_DMS_RECORD_NOTEXIST ;
+            PD_LOG( PDERROR, "_getBestHost failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         details = _confDetailSample ;
+         host->assign( OM_NODE_TYPE_COORD, "", details ) ;
+         configList.push_back( details ) ;
+         coordCount++ ;
+      }
+
+      while ( catalogCount < _confTemplate.catalogNum )
+      {
+         omHostInfo *host = _getBestHost( OM_NODE_TYPE_CATALOG) ;
+         if ( NULL == host )
+         {
+            rc = SDB_DMS_RECORD_NOTEXIST ;
+            PD_LOG( PDERROR, "_getBestHost failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         details = _confDetailSample ;
+         host->assign( OM_NODE_TYPE_CATALOG, "", details ) ;
+         configList.push_back( details ) ;
+         catalogCount++ ;
+      }
+
+      baseGroupID = _getAvailableGroupID() ;
+      while ( dataCount < _confTemplate.dataNum )
+      {
+         string groupID ;
+         omHostInfo *host = _getBestHost( OM_NODE_TYPE_DATA ) ;
+         if ( NULL == host )
+         {
+            rc = SDB_DMS_RECORD_NOTEXIST ;
+            PD_LOG( PDERROR, "_getBestHost failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         details = _confDetailSample ;
+         groupID = _calculateGroupID( baseGroupID, dataCount, 
+                                      _confTemplate.dataNum, 
+                                      _confTemplate.dataGroupNum ) ;
+         host->assign( OM_NODE_TYPE_DATA, groupID, details ) ;
+         configList.push_back( details ) ;
+         dataCount++ ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+   INT32 omConfigGenerator::_generateConfig( BSONObj &bsonConfig )
+   {
+      INT32 rc = SDB_OK ;
+      list<sdbConfDetail> configList ;
+      list<sdbConfDetail>::iterator iter ;
+      BSONObjBuilder confBuilder ;
+      BSONArrayBuilder arrBuilder ;
+      if ( ossStrcasecmp( _confTemplate.clusterType.c_str(), 
+                          OM_CLUSTER_TYPE_STANDALONE ) == 0 )
+      {
+         rc = _generateStandAloneConfig( configList ) ;
+      }
+      else if ( ossStrcasecmp( _confTemplate.clusterType.c_str(), 
+                               OM_CLUSTER_TYPE_CLUSTER ) == 0 )
+      {
+         rc = _generateClusterConfig( configList ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( "unrecognized cluster type:type=%s" )
+                        + _confTemplate.clusterType ;
+         PD_LOG( PDERROR, "unrecognized cluster type:type=%s", 
+                 _confTemplate.clusterType.c_str() ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "generate config failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      iter = configList.begin() ;
+      while( iter != configList.end() )
+      {
+         CHAR tmp[OM_INT32_LENGTH] = "" ;
+         BSONObjBuilder builder ;
+         builder.append( OM_BSON_FIELD_HOST_NAME, iter->hostName ) ;
+         builder.append( OM_TEMPLATE_USER_NAME, iter->sdbUserName ) ;
+         builder.append( OM_TEMPLATE_USER_PASSWD, iter->sdbPasswd ) ;
+         builder.append( OM_TEMPLATE_USER_GROUP, iter->sdbUserGroup ) ;
+         builder.append( OM_CONF_DETAIL_EX_DG_NAME, iter->dataGroupID ) ;
+         builder.append( OM_CONF_DETAIL_DBPATH, iter->dbPath ) ;
+         
+         ossItoa( iter->svcName, tmp, OM_INT32_LENGTH ) ;
+         builder.append( OM_CONF_DETAIL_SVCNAME, tmp ) ;
+
+         ossItoa( iter->dialevel, tmp, OM_INT32_LENGTH ) ;
+         builder.append( OM_CONF_DETAIL_DIAGLEVEL, tmp ) ;
+         builder.append( OM_CONF_DETAIL_ROLE, iter->role ) ;
+
+         ossItoa( iter->logFileSize, tmp, OM_INT32_LENGTH ) ;
+         builder.append( OM_CONF_DETAIL_LOGFSIZE, tmp ) ;
+
+         ossItoa( iter->logFileNum, tmp, OM_INT32_LENGTH ) ;
+         builder.append( OM_CONF_DETAIL_LOGFNUM, tmp ) ;
+
+         string transaction = iter->transaction ? "true" : "false" ;
+         builder.append( OM_CONF_DETAIL_TRANSACTION, transaction ) ;
+         builder.append( OM_CONF_DETAIL_PREINSTANCE, iter->preferedInstance ) ;
+
+         ossItoa( iter->numPageCleaner, tmp, OM_INT32_LENGTH ) ;
+         builder.append( OM_CONF_DETAIL_PCNUM, tmp ) ;
+
+         ossItoa( iter->pageCleanInterval, tmp, OM_INT32_LENGTH ) ;
+         builder.append( OM_CONF_DETAIL_PCINTERVAL, tmp ) ;
+
+         arrBuilder.append( builder.obj() ) ;
+         iter++ ;
+      }
+
+      confBuilder.append( OM_BSON_FIELD_CONFIG, arrBuilder.arr() ) ;
+      confBuilder.append( OM_BSON_BUSINESS_NAME, _businessName ) ;
+      confBuilder.append( OM_BSON_BUSINESS_TYPE, _confTemplate.businessType ) ;
+      confBuilder.append( OM_BSON_CLUSTER_TYPE, _confTemplate.clusterType ) ;
+      bsonConfig = confBuilder.obj() ;
+
    done:
       return rc ;
    error:

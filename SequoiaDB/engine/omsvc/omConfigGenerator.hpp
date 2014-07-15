@@ -41,12 +41,21 @@ using namespace bson;
 
 namespace engine
 {
+   #define OM_TEMPLATE_REPLICA_NUM     "replicanum"
+   #define OM_TEMPLATE_DATAGROUP_NUM   "datagroupnum"
+   #define OM_TEMPLATE_CATALOG_NUM     "catalognum"
+   #define OM_TEMPLATE_COORD_NUM       "coordnum"
+   #define OM_TEMPLATE_USER_NAME       "username"
+   #define OM_TEMPLATE_USER_PASSWD     "userpasswd"
+   #define OM_TEMPLATE_USER_GROUP      "usergroup"
+
    class sdbConfTemplate
    {
       public:
          string businessType ;
          string clusterType ;
          INT32 replicaNum ;
+         INT32 dataNum ;
          INT32 dataGroupNum ;
          INT32 catalogNum ;
          INT32 coordNum ;
@@ -61,20 +70,25 @@ namespace engine
    class sdbConfDetail
    {
       public:
-         string dbPath ;
-         int svcName ;
-         int replName ;
-         int shardName ;
-         int catalogName ;
-         int httpName ;
-         int dialevel ;
-         string role ;
-         int logFileSize ;
-         int logFileNum ;
-         BOOLEAN transaction ;
-         string preferedInstance ;
-         int numPageCleaner ;
-         int pageCleanInterval ;
+         string   dbPath ;
+         INT32    svcName ;
+         INT32    dialevel ;
+         string   role ;
+         INT32    logFileSize ;
+         INT32    logFileNum ;
+         BOOLEAN  transaction ;
+         string   preferedInstance ;
+         INT32    numPageCleaner ;
+         INT32    pageCleanInterval ;
+
+         string   dataGroupID ;
+         string   sdbUserName ;  /* sequoiadb's user */
+         string   sdbPasswd ;    /* sequoiadb's passwd */
+         string   sdbUserGroup ; /* sequoiadb's user group */
+         string   hostName ;
+         string   diskName ;
+         string   user ;         /* root user */ 
+         string   passwd ;       /* root passwd */
 
       public:
          void init() ;
@@ -83,14 +97,19 @@ namespace engine
    class rangeValidator
    {
       public:
-         rangeValidator( string singleRange ) ;
-         rangeValidator( string begin, string end, BOOLEAN isClosed = TRUE ) ;
+         rangeValidator( string type, const CHAR *value ) ;
+         rangeValidator( string type, const CHAR *begin, const CHAR *end, 
+                         BOOLEAN isClosed = TRUE ) ;
+         ~rangeValidator() ;
 
       public:
          BOOLEAN     isValid( const string &value ) ;
          string      getMinValidValue() ;
 
       private:
+         INT32       _compare( string left, string right ) ;
+      private:
+         string      _type ;
          BOOLEAN     _isClosed ;
          BOOLEAN     _isValidAll ;
          string      _begin ;
@@ -116,24 +135,56 @@ namespace engine
 
       private:
          string      _name ;
-         //string      _type ;
+         string      _type ;
          string      _defaultValue ;
          string      _valid ;
-         //string      _display ;
-         //string      _edit ;
-         //string      _desc ;
-         //string      _level ;
+         string      _webName ;
+         string      _display ;
+         string      _edit ;
+         string      _desc ;
+         string      _level ;
          list<rangeValidator *> _validatorList ;
          typedef list<rangeValidator *>::iterator VALIDATORLIST_ITER ;
    } ;
 
+   struct omNodeInfo
+   {
+      string role ;
+      string dbPath ;
+      string dataGroupName ;
+      string businessName ;
+      INT32  svcName ;
+   } ;
+
    struct omDiskInfo
    {
-      string diskName ;
-      string mountPath ;
-      UINT64 totalSize ;
-      UINT64 freeSize ;
+      string  diskName ;
+      string  mountPath ;
+      UINT64  totalSize ;
+      UINT64  freeSize ;
       BOOLEAN isUsed ;
+      INT32   standAloneCount ;
+      INT32   coordCount ;
+      INT32   catalogCount ;
+      INT32   dataCount ;
+      void    init() ;
+      INT32   getNodeCount( string role ) ;
+      INT32   getNodeCount() ;
+   } ;
+
+   struct hostNodeCounter
+   {
+      INT32    unUsedDiskCount ;
+      INT32    diskCount ;
+      INT32    standAloneCount ;
+      INT32    coordCount ;
+      INT32    catalogCount ;
+      INT32    dataCount ;
+
+      INT32    getNodeCount( string role ) ;
+      INT32    getNodeCount() ;
+      INT32    getDiskCount() ;
+      INT32    getUnusedDiskCount() ;
    } ;
    
    class omHostInfo
@@ -143,30 +194,42 @@ namespace engine
          ~omHostInfo() ;
 
       public:
-         INT32      init( const BSONObj &hostInfo, 
-                          map<string, omConfigItem*> *confDetailMap ) ;
-         INT32      assign( string role ) ;
+         INT32      init( const BSONObj &hostInfo, const BSONObj &config,
+                          map<string, omConfigItem*> *confDetailMap,
+                          string businessName ) ;
+         INT32      assign( string role, string dataGroupID, 
+                            sdbConfDetail &confDetail) ;
+         INT32      getAvailableGroupID() ;
          INT32      getNodeCount( string role ) ;
          INT32      getNodeCount() ;
          INT32      getDiskCount() ;
          INT32      getUnusedDiskCount() ;
+         void       getNodeInfo( hostNodeCounter &nodeCounter ) ;
 
       private:
-         INT32            _unusedDiskCount ;
-         INT32            _diskCount ;
-         INT32            _standAloneCount ;
-         INT32            _coordCount ;
-         INT32            _catalogCount ;
-         INT32            _dataCount ;
+         INT32      _initNodeInfo( const BSONObj &config ) ;
+         INT32      _initCounter() ;
+         void       _increaseNodeCount( string dbpath, string role, 
+                                        set<string> &usedDiskSet ) ;
+
+      private:
+         hostNodeCounter  _nodeCounter ;
          string           _ip ;
          string           _hostName ;
-
          INT32            _availableSvcName ;
+         INT32            _availableGroupID ;
+         string           _businessName ;    
+         /* save the businessName to handle this situation: 
+               two business are install in the same host.
+         */ 
 
          map<string, omConfigItem*> *_pConfDetailMap ;
 
          list<omDiskInfo> _diskList ;
          typedef list<omDiskInfo>::iterator DISKINFO_ITER ;
+
+         list<omNodeInfo> _nodeInfoList ;
+         typedef list<omNodeInfo>::iterator NODEINFOLIST_ITER ;
    } ;
 
    class omConfigGenerator
@@ -176,32 +239,46 @@ namespace engine
          virtual ~omConfigGenerator() ;
 
       public:
-         INT32      generateSDBConfig( const BSONObj &bsonTemplate, 
-                                       const BSONObj &bsonConfigDetails, 
-                                       const BSONObj &bsonHostInfo, 
-                                       BSONObj &bsonConfig ) ;
+         INT32       generateSDBConfig( const BSONObj &bsonTemplate, 
+                                        const BSONObj &bsonConfigDetails, 
+                                        const BSONObj &bsonHostInfo, 
+                                        BSONObj &bsonConfig ) ;
 
-         string     getErrorDetail() ;
+         string      getErrorDetail() ;
 
       private:
-         INT32      _parseTemplate( const BSONObj &bsonTemplate ) ;
-         INT32      _parseHostInfo( const BSONObj &bsonHostInfo ) ;
-         void       _addToItemMap( const string &itemName, 
-                                   omConfigItem* pItem ) ;
-         INT32      _parseConfigDetail( const BSONObj &bsonConfigDetails ) ;
-         INT32      _generateConfig( const BSONObj &bsonConfig ) ;
-         void       _clear() ;
-         INT32      _setTemplateValue( const BSONObj &templateItem ) ;
-         BOOLEAN    _isAllTemplateSet() ;
-         INT32      _setConfDetailValue( const BSONObj &oneProperty ) ;
-         BOOLEAN    _isAllConfDetailSet() ;
+         INT32       _parseTemplate( const BSONObj &bsonTemplate ) ;
+         INT32       _parseHostInfo( string businessName, 
+                                     const BSONObj &bsonHostInfo ) ;
+         void        _addToItemMap( const string &itemName, 
+                                    omConfigItem* pItem ) ;
+         INT32       _parseConfigDetail( const BSONObj &bsonConfigDetails ) ;
+         INT32       _generateConfig( BSONObj &bsonConfig ) ;
+         INT32       _getAvailableGroupID() ;
+         string      _calculateGroupID( INT32 baseGroupdID, INT32 dataIndex,
+                                        INT32 maxDataNumber, 
+                                        INT32 maxGroupNumber ) ;
+         INT32       _generateClusterConfig( list<sdbConfDetail> &configList ) ;
+         omHostInfo* _getBestHost( string role ) ;
+         INT32       _generateStandAloneConfig( 
+                                             list<sdbConfDetail> &configList ) ;
+         void        _clear() ;
+         INT32       _setTemplateValue( const BSONObj &templateItem ) ;
+         BOOLEAN     _isAllTemplateSet() ;
+         INT32       _setConfDetailValue( const BSONObj &oneProperty ) ;
+         BOOLEAN     _isAllConfDetailSet() ;
 
 
       private:
          sdbConfTemplate               _confTemplate ;
+         sdbConfDetail                 _confDetailSample ;
          string                        _errorDetail ;
+         string                        _businessName ;
          map<string, omConfigItem*>    _confDetailMap ;
-
+         // typedef map<string, omConfigItem*>::value_type CONFIGITEMMAP_TYPE ;
+         // typedef map<string, omConfigItem*>::iterator CONFIGITEMMAP_ITER ;
+         list<omHostInfo*>             _hostInfoList ;
+         typedef list<omHostInfo*>::iterator HOSTINFOLIST_ITER ;
    } ;
 
    typedef map<string, omConfigItem*>::value_type CONFIGITEMMAP_TYPE ;

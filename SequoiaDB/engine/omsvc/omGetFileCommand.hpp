@@ -238,10 +238,10 @@ namespace engine
    class omQueryBusinessCommand : public omCreateClusterCommand
    {
       public:
-         omQueryBusinessCommand(  restAdaptor *pRestAdaptor, 
-                                  pmdRestSession *pRestSession, 
-                                  const CHAR *pRootPath, 
-                                  const CHAR *pSubPath ) ;
+         omQueryBusinessCommand( restAdaptor *pRestAdaptor, 
+                                 pmdRestSession *pRestSession, 
+                                 const CHAR *pRootPath, 
+                                 const CHAR *pSubPath ) ;
          virtual ~omQueryBusinessCommand() ;
 
       public:
@@ -256,10 +256,10 @@ namespace engine
    class omQueryBusinessTemplateCommand : public omQueryBusinessCommand
    {
       public:
-         omQueryBusinessTemplateCommand(  restAdaptor *pRestAdaptor, 
-                                          pmdRestSession *pRestSession, 
-                                          const CHAR *pRootPath, 
-                                          const CHAR *pSubPath ) ;
+         omQueryBusinessTemplateCommand( restAdaptor *pRestAdaptor, 
+                                         pmdRestSession *pRestSession, 
+                                         const CHAR *pRootPath, 
+                                         const CHAR *pSubPath ) ;
          virtual ~omQueryBusinessTemplateCommand() ;
 
       public:
@@ -268,6 +268,8 @@ namespace engine
       protected:
          INT32          readConfTemplate( string businessType, string file, 
                                           list<BSONObj> &clusterTypeList ) ;
+         INT32          _readConfDetail( string file, 
+                                         BSONObj &bsonConfDetail ) ;
 
       protected:
 
@@ -276,10 +278,10 @@ namespace engine
    class omConfigBusinessCommand : public omQueryBusinessTemplateCommand
    {
       public:
-         omConfigBusinessCommand(  restAdaptor *pRestAdaptor, 
-                                   pmdRestSession *pRestSession, 
-                                   const CHAR *pRootPath, 
-                                   const CHAR *pSubPath ) ;
+         omConfigBusinessCommand( restAdaptor *pRestAdaptor, 
+                                  pmdRestSession *pRestSession, 
+                                  const CHAR *pRootPath, 
+                                  const CHAR *pSubPath ) ;
          virtual ~omConfigBusinessCommand() ;
 
       public:
@@ -291,16 +293,39 @@ namespace engine
                                          const BSONObj &bsonHostInfo, 
                                          const BSONObj &bsonConfigItem, 
                                          BSONObj &bsonConfig ) ;
+         void           _addProperties( BSONObjBuilder &builder, 
+                                        const BSONObj &bsonTemplate, 
+                                        const BSONObj &bsonConfDetail ) ;
          INT32          _getConfigDetail( const BSONObj &bsonTemplate, 
-                                        BSONObj &bsonConfigItem ) ;
+                                        BSONObj &bsonConfDetail ) ;
          INT32          _getTemplateInfo( BSONObj &bsonTemplate, 
                                           BSONObj &bsonHostInfo ) ;
          INT32          _fullFillTemplate( BSONObj &bsonTemplate ) ;
          INT32          _getPropertyNameValue( BSONObj &bsonTemplate, 
                                                string propertyName, 
                                                string &value ) ;
-         INT32          _reCheckHostInfo( BSONObj &bsonHostInfo ) ;
+         INT32          _reCheckHostInfo( string clusterName, 
+                                          string businessName,
+                                          BSONObj &bsonHostInfo ) ;
+         INT32          _getHostConfig( string hostName, string businessName, 
+                                        BSONObj &config ) ;
 
+      private:
+         string         _clusterName ;
+
+   } ;
+
+   class CheckBusinessConfigReq : public omQueryBusinessTemplateCommand
+   {
+      public:
+         CheckBusinessConfigReq( restAdaptor *pRestAdaptor, 
+                                 pmdRestSession *pRestSession, 
+                                 const CHAR *pRootPath, 
+                                 const CHAR *pSubPath ) ;
+         virtual ~CheckBusinessConfigReq() ;
+
+      public:
+         virtual INT32  doCommand() ;
    } ;
 
    class omGetFileCommand : public omCommandInterface

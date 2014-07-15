@@ -75,7 +75,7 @@ namespace engine
    // deploy.host                            
    #define OM_CS_DEPLOY_CL_HOST              OM_CS_DEPLOY".SYSHOST"
    
-   #define OM_HOST_FIELD_NAME                "Name"
+   #define OM_HOST_FIELD_NAME                "HostName"
    #define OM_HOST_FIELD_CLUSTERNAME         "ClusterName"
    #define OM_HOST_FIELD_IP                  "IP"
    #define OM_HOST_FIELD_USER                "User"
@@ -207,6 +207,8 @@ namespace engine
    #define  OM_BSON_FIELD_PORT               "Port"
    #define  OM_BSON_FIELD_SERVICE            "Service"
    #define  OM_BSON_FIELD_SAFETY             "Safety"
+   //
+   #define  OM_BSON_FIELD_CONFIG             "Config"
    // *****************************************************************
 
    // ***************om rest add_host_req******************************
@@ -235,6 +237,7 @@ namespace engine
 
    #define  OM_BSON_BUSINESS_LIST            "BusinessList"
    #define  OM_BSON_BUSINESS_TYPE            "BusinessType"
+   #define  OM_BSON_BUSINESS_NAME            "BusinessName"
    #define  OM_BSON_BUSINESS_DESC            "BusinessDesc"
    // *****************************************************************
 
@@ -252,6 +255,7 @@ namespace engine
    #define  OM_XMLATTR_PROPERTY_EDIT         "<xmlattr>.edit"
    #define  OM_XMLATTR_PROPERTY_DESC         "<xmlattr>.desc"
    #define  OM_XMLATTR_PROPERTY_LEVEL        "<xmlattr>.level"
+   #define  OM_XMLATTR_PROPERTY_WEBNAME      "<xmlattr>.webname"
 
    #define  OM_REST_BUSINESS_TYPE            "BusinessType"
 
@@ -265,19 +269,36 @@ namespace engine
    #define  OM_BSON_PROPERTY_EDIT            "Edit"
    #define  OM_BSON_PROPERTY_DESC            "Desc"
    #define  OM_BSON_PROPERTY_LEVEL           "Level"
+   #define  OM_BSON_PROPERTY_WEBNAME         "WebName"
 
    // *****************************************************************
 
    // om rest config_business_req
    #define  OM_CONFIG_BUSINESS_REQ           "ConfigBusinessReq"
 
-   #define  OM_CONFIG_ITEM_FILE_NAME         "_configitem.xml"
+   #define  OM_CONFIG_ITEM_FILE_NAME         "_config.xml"
    #define  OM_XML_CONFIG                    "config"
 
    #define  OM_REST_TEMPLATE_INFO            "TemplateInfo"
    #define  OM_REST_CONFIG_INFO              "ConfigInfo"
 
    #define  OM_BSON_PROPERTY_VALUE           "Value"
+
+   #define  OM_BSON_FIELD_SDBUSER            "SdbUser"
+   #define  OM_BSON_FIELD_SDBPASSWD          "SdbPasswd"
+   #define  OM_BSON_FIELD_SDBUSERGROUP       "SdbUserGroup"
+   #define  OM_BSON_FIELD_DATAGROUPNAME      "DataGroupName"
+
+   #define  OM_BSON_FIELD_DBPATH             "DBPath"
+   #define  OM_BSON_FIELD_SVCNAME            "SvcName"
+   #define  OM_BSON_FIELD_DIAGLEVEL          "DiagLevel"
+   #define  OM_BSON_FIELD_ROLE               "Role"
+   #define  OM_BSON_FIELD_LOGFSIZE           "LogfileSize"
+   #define  OM_BSON_FIELD_LOGFNUM            "LogfileNum"
+   #define  OM_BSON_FIELD_TRANSACTION        "TransactionOn"
+   #define  OM_BSON_FIELD_PREINSTANCE        "PreferedInstance"
+   #define  OM_BSON_FIELD_PCNUM              "NumpageCleaners"
+   #define  OM_BSON_FIELD_PCINTERVAL         "PageCleanInterval"
    
    // *****************************************************************
    
