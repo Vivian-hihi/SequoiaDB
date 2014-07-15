@@ -370,6 +370,9 @@
                     <file name="developement/application/PHP/php_en.ditamap"/>
                     <file name="developement/application/PHP/php.ditamap"/>
                 </folder>
+                <folder name="Python">
+                    <folder name="topics"/>
+                </folder>
                 <folder name="topics">
                     <file name="developement/application/topics/application_en.dita"/>
                     <file name="developement/application/topics/application.dita"/>
