@@ -58,7 +58,8 @@ namespace engine
 
       if ( 0 < _descs.count( desc->getJSClassName() ))
       {
-         PD_LOG( PDERROR, "%s has already been registered" ) ;
+         PD_LOG( PDERROR, "%s has already been registered",
+                 desc->getJSClassName()) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
