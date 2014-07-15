@@ -133,7 +133,7 @@ module2cppfiles=source;
 module2cppfiles.append('pysequoiadb/pycollection.cpp')
 module2 = Extension( 'pysequoiadb.sdbcl',
                      define_macros      = compile,
-                     extra_compile_args =compile_options,
+                     extra_compile_args = compile_options,
                      include_dirs       = include,
                      libraries          = link,
                      library_dirs       = lib,
@@ -195,15 +195,25 @@ ext_modules = [
             module6,
             module_bson, ]
 
-
-
-extra_opts = {"packages":["bson", "pysequoiadb"],}
+extra_opts = {}
+extra_opts['packages'] = [ 'bson', 'pysequoiadb']
+extra_opts['package_dir']={ 'pysequoiadb':'pysequoiadb', 'bson':'bson'}
+extra_opts['package_data'] = { 'pysequoiadb':['err.prop'],
+                               'bson':[ 'buffer.h',
+                                        'buffer.c',
+                                        '_cbsonmodule.h',
+                                        '_cbsonmodule.c',
+                                        'encoding_helpers.h',
+                                        'encoding_helpers.c',
+                                        'time64.h',
+                                        'time64.c',
+                                        'time64_config.h',
+                                        'time64_limits.h', ],}
 extra_opts['ext_modules'] = ext_modules
-setup(name = 'SequoiaDB',
+setup(name = 'pysequoiadb',
       version = '1.0',
       author = 'SequoiaDB Inc.',
       license = 'AGPL',
       description = 'This is a sequoiadb python driver use adapter package',
       url = 'http://www.sequoiadb.com',
-      data_files = ['pysequoiadb/err.prop', 'pysequoiadb/sdb*.so'],
       **extra_opts)
