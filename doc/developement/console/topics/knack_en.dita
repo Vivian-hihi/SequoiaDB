@@ -3,9 +3,9 @@
 <topic id="developement_console_knack">
   <title>Tips when using shell</title>
   <body>
-    <p>Sequoiadb shell has built-in help documents. It can be read through the command of help.另外，参考手册SequoiaDB JavaScript方法一节中，有各方法的详细使用介绍。</p>
+    <p>Sequoiadb shell has built-in help documents. It can be read through the command of help. In addition, reference manuals SequoiaDB JavaScript methods section, a detailed description of each method to use.</p>
     <ul>
-      <li>Help<p>查看使用介绍：</p>
+      <li>Help<p>See Use description:</p>
         <codeblock>> help()
    var db = new Sdb()                     connect to database use default host 'localhost' and default port 11810
    var db = new Sdb('localhost',11810)    connect to database use specified host and port
@@ -26,7 +26,7 @@
    history -c                             clear the history
    quit                                   exit
    Takes 0.2993s.</codeblock>
-        <note><p>SequoiaDB shell主要包括database(db)、collection space(cs)、collection(cl)、cursor(cur)、replica group(rg)、node(nd)、domain(dm)这7大级别的操作。用户需要理解各级别之间的关系。各级别都有使用帮助命令如下所示：</p></note></li>            
+        <note><p>SequoiaDB shell主要包括database(db), collection space(cs), collection(cl), cursor(cur), replica group(rg), node(nd), domain(dm)这7大级别的操作。用户需要理解各级别之间的关系。各级别都有使用帮助命令如下所示：</p></note></li>            
       <li>Database Help <p>database级别主要包括用管理户组，集合空间，副本组，域，快照，存储过程，备份，事务，sql，及错误跟踪等操作。</p>
         <p>假设已经连接上数据库，并取得database的javascript对象db。</p>
         <p>查看database所有方法：</p><codeblock>db.help()</codeblock>
@@ -40,7 +40,7 @@
         <p>查看collection所有方法：</p><codeblock>db.foo.bar.help()</codeblock>
         <p>查看collection具体方法：</p><codeblock>db.foo.bar.help("method")</codeblock></li>
       <li>Cursor Help<p>cursor级别主要包括对返回记录（数据）的操作。</p>
-        <p>在shell命令中，与sequoiadb引擎交互时，若有记录（数据）返回，都是以游标（cursor）的方式呈现。例如，当使用db.foo.bar.<xref href="../../../references/methods/topics/find.dita">find()</xref>方法执行数据库查询操作，将返回一个游标对象，所有查询结果将放在这个游标中。通常的使用方法如下：</p>
+        <p>在shell命令中，与sequoiadb引擎交互时，若有记录（数据）返回，都是以游标（cursor）的方式呈现。例如，当使用db.foo.bar.<xref href="../../../references/methods/topics_en_v2/cl.find.dita">find()</xref>方法执行数据库查询操作，将返回一个游标对象，所有查询结果将放在这个游标中。通常的使用方法如下：</p>
         <codeblock>db.foo.bar.find()</codeblock><p>或者</p><codeblock>var cur = db.foo.bar.find()</codeblock>
         <p>前者直接将所有结果显示在屏幕上，后者将结果放到游标中。</p>
         <p>查看cursor所有方法：</p><codeblock>db.foo.bar.find().help()</codeblock><p>或者</p><codeblock>cur.help()</codeblock>
