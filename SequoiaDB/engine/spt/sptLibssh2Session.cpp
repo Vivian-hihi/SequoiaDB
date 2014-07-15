@@ -376,7 +376,7 @@ namespace engine
       OSSFILE file ;
       INT64 fileSize = 0 ;
 
-      rc = ossOpen( local, OSS_READONLY, OSS_DEFAULTFILE, file ) ;
+      rc = ossOpen( local, OSS_READONLY | OSS_SHAREREAD, OSS_RU, file ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open file: %s, rc: %d", local, rc ) ;
