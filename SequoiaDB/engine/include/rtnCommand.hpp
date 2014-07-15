@@ -1437,7 +1437,7 @@ namespace engine
 
    } ;
 
-   class _rtnInvalidateCache : public _rtnCoordOnly
+   class _rtnInvalidateCache : public _rtnCommand
    {
       DECLARE_CMD_AUTO_REGISTER()
    public:
