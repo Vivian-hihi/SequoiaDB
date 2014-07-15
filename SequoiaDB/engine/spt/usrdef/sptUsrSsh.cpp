@@ -74,6 +74,7 @@ JS_MAPPING_END()
       string host ;
       string usr ;
       string passwd ;
+      string errmsg ;
 
       rc = arg.getString( 0, host ) ;
       if ( SDB_OK != rc )
@@ -113,6 +114,7 @@ JS_MAPPING_END()
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open ssh session:%d", rc ) ;
+         _session->getLastError( errmsg ) ;
          goto error ;
       }
 
@@ -121,7 +123,14 @@ JS_MAPPING_END()
       return rc ;
    error:
       SAFE_OSS_DELETE( _session ) ;
-      detail = BSON( SPT_ERR << "new Ssh(); false" ) ;
+      if ( !errmsg.empty() )
+      {
+         detail = BSON( SPT_ERR << errmsg ) ;
+      }
+      else
+      {
+         detail = BSON( SPT_ERR << "failed to ssh to specified host" ) ;
+      }
       goto done ;      
    }
 

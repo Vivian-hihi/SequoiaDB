@@ -65,6 +65,7 @@ namespace engine
       if ( NULL == _session )
       {
          PD_LOG( PDERROR, "failed to init libssh2 session" ) ;
+         _errmsg.assign("failed to init libssh2 session" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -74,6 +75,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to do handshake with remote:%d", rc ) ;
          rc = SDB_SYS ;
+         _getLastError( _errmsg ) ;
          goto error ;
       }
 
@@ -82,6 +84,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to do handle shake with remote:%d", rc ) ;
          rc = SDB_SYS ;
+         _getLastError( _errmsg ) ;
          goto error ;
       }
 
@@ -109,6 +112,7 @@ namespace engine
       if ( NULL == _channel )
       {
          PD_LOG( PDERROR, "failed to open channel in sesison" ) ;
+         _getLastError( _errmsg ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -117,6 +121,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd on remote node:%d", rc ) ;
+         _getLastError( _errmsg ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -286,16 +291,25 @@ namespace engine
 
    void _sptLibssh2Session::getLastError( std::string &errMsg )
    {
+      errMsg = _errmsg ;
+      _errmsg.clear() ;
+      return ; 
+   }
+
+   void _sptLibssh2Session::_getLastError( std::string &errMsg )
+   {
       CHAR *msg = NULL ;
       INT32 errLen = 0 ;
 
       /// we do not want to own the mem. set want_buf = 0.
-      libssh2_session_last_error( _session, &msg, &errLen, 0 ) ;
-      if ( NULL != msg )
+      if ( NULL != _session )
       {
-         errMsg.assign( msg ) ;
+         libssh2_session_last_error( _session, &msg, &errLen, 0 ) ;
+         if ( NULL != msg )
+         {
+            errMsg.assign( msg ) ;
+         }
       }
-
       return ;
    }
 
