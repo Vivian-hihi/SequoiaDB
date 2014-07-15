@@ -3506,7 +3506,7 @@ SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
    // check handle
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
    // check arguments
-   if ( !pSourceGroup || !pTargetGroup || !pSplitCondition ||
+   if ( !pSourceGroup || !pTargetGroup || !pSplitCondition || !taskID
         !cs->_collectionFullName[0] )
    {
       rc = SDB_INVALIDARG ;
@@ -3566,7 +3566,7 @@ SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
    {
       goto error ;
    }
-   if ( taskID || BSON_LONG == bson_find ( &it, &result, FIELD_NAME_TASKID ) )
+   if ( BSON_LONG == bson_find ( &it, &result, FIELD_NAME_TASKID ) )
    {
       *taskID = bson_iterator_long ( &it ) ;
    }
