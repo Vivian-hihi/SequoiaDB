@@ -507,8 +507,16 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                   "failed to allocate context(rc=%d)",
                   rc ) ;
-      rc = pContext->open( boOrderBy, pQuery->numToReturn,
-                           pQuery->numToSkip ) ;
+
+      if ( FLG_QUERY_EXPLAIN & pQuery->flags )
+      {
+         rc = pContext->open( BSONObj(), -1, 0 ) ;
+      }
+      else
+      {
+         rc = pContext->open( boOrderBy, pQuery->numToReturn,
+                              pQuery->numToSkip ) ;
+      }
       PD_RC_CHECK( rc, PDERROR,
                   "open context failed(rc=%d)", rc ) ;
       pQuery->header.routeID.value = 0;
