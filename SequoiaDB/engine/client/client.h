@@ -36,67 +36,39 @@ SDB_EXTERN_C_START
 /** 0 means using database's default pagesize, it 64k now */
 #define SDB_PAGESIZE_DEFAULT      0
 
-/*
-#define SDB_SNAP_CONTEXTS         0
-#define SDB_SNAP_CONTEXTS_CURRENT 1
-#define SDB_SNAP_SESSIONS         2
-#define SDB_SNAP_SESSIONS_CURRENT 3
-#define SDB_SNAP_COLLECTIONS      4
-#define SDB_SNAP_COLLECTIONSPACES 5
-#define SDB_SNAP_DATABASE         6
-#define SDB_SNAP_SYSTEM           7
-#define SDB_SNAP_CATALOG          8
-*/
-
 enum SDB_SNAP_TYPE
 {
-   SDB_SNAP_CONTEXTS = 0     ,
-   SDB_SNAP_CONTEXTS_CURRENT , 
-   SDB_SNAP_SESSIONS         ,
-   SDB_SNAP_SESSIONS_CURRENT ,
-   SDB_SNAP_COLLECTIONS      ,
-   SDB_SNAP_COLLECTIONSPACES ,
-   SDB_SNAP_DATABASE         ,
-   SDB_SNAP_SYSTEM           ,
-   SDB_SNAP_CATALOG          ,
+   SDB_SNAP_CONTEXTS = 0     , /**< Get the snapshot of all the contexts */
+   SDB_SNAP_CONTEXTS_CURRENT , /**< Get the snapshot of current context */
+   SDB_SNAP_SESSIONS         , /**< Get the snapshot of all the sessions */
+   SDB_SNAP_SESSIONS_CURRENT , /**< Get the snapshot of current session */
+   SDB_SNAP_COLLECTIONS      , /**< Get the snapshot of all the collections */
+   SDB_SNAP_COLLECTIONSPACES , /**< Get the snapshot of all the collection spaces */
+   SDB_SNAP_DATABASE         , /**< Get the snapshot of the database */
+   SDB_SNAP_SYSTEM           , /**< Get the snapshot of the system */
+   SDB_SNAP_CATALOG          , /**< Get the snapshot of the catalog */
    
-   SDB_SNAP_BUFF
+   SDB_SNAP_END /**< Not a snapshot type, just use to mark the end of current enum */
 };
 
 enum SDB_LIST_TYPE
 {
-   SDB_LIST_CONTEXTS = 0     ,
-   SDB_LIST_CONTEXTS_CURRENT ,
-   SDB_LIST_SESSIONS         ,
-   SDB_LIST_SESSIONS_CURRENT ,
-   SDB_LIST_COLLECTIONS      ,
-   SDB_LIST_COLLECTIONSPACES ,
-   SDB_LIST_STORAGEUNITS     ,
-   SDB_LIST_GROUPS           ,
-   SDB_LIST_STOREPROCEDURES  ,
-   SDB_LIST_DOMAINS          ,
-   SDB_LIST_TASKS            ,
-   SDB_LIST_CS_IN_DOMAIN     ,
-   SDB_LIST_CL_IN_DOMAIN     ,
+   SDB_LIST_CONTEXTS = 0     , /**< Get the list of the contexts */
+   SDB_LIST_CONTEXTS_CURRENT , /**< Get the list of current context */
+   SDB_LIST_SESSIONS         , /**< Get the list of the sessions */
+   SDB_LIST_SESSIONS_CURRENT , /**< Get the list of current session */
+   SDB_LIST_COLLECTIONS      , /**< Get the list of the collections */
+   SDB_LIST_COLLECTIONSPACES , /**< Get the list of the collecion spaces */
+   SDB_LIST_STORAGEUNITS     , /**< Get the list of the storage units */
+   SDB_LIST_GROUPS           , /**< Get the list of the replica groups ( only applicable in sharding env ) */
+   SDB_LIST_STOREPROCEDURES  , /**< Get the list of the stored procedures ( only applicable in sharding env ) */
+   SDB_LIST_DOMAINS          , /**< Get the list of the domains ( only applicable in sharding env ) */
+   SDB_LIST_TASKS            , /**< Get the list of the tasks ( only applicable in sharding env ) */
+   SDB_LIST_CS_IN_DOMAIN     , /**< Get the list of the collection spaces in specified domain */
+   SDB_LIST_CL_IN_DOMAIN     , /**< Get the list of the collections in specified domain */
 
-   SDB_LIST_BUFF
+   SDB_LIST_END /**< Not a list type, just use to mark the end of current enum */
 };
-
-/*
-#define SDB_LIST_CONTEXTS         0
-#define SDB_LIST_CONTEXTS_CURRENT 1
-#define SDB_LIST_SESSIONS         2
-#define SDB_LIST_SESSIONS_CURRENT 3
-#define SDB_LIST_COLLECTIONS      4
-#define SDB_LIST_COLLECTIONSPACES 5
-#define SDB_LIST_STORAGEUNITS     6
-#define SDB_LIST_GROUPS           7
-#define SDB_LIST_STOREPROCEDURES  8
-#define SDB_LIST_DOMAINS          9
-#define SDB_LIST_TASKS            10
-#define SDB_LIST_CS_IN_DOMAIN     11
-#define SDB_LIST_CL_IN_DOMAIN     12
-*/
 
 #define SDB_INVALID_HANDLE       ((ossValuePtr) 0)
 typedef ossValuePtr sdbConnectionHandle   ;

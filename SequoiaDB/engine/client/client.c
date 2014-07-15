@@ -1435,7 +1435,7 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
    } ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-   if ( snapType >= SDB_SNAP_BUFF || snapType < SDB_SNAP_CONTEXTS )
+   if ( snapType >= SDB_SNAP_END || snapType < SDB_SNAP_CONTEXTS )
    {
       rc = SDB_INVALIDARG ;
        goto error ;
@@ -1639,7 +1639,7 @@ SDB_EXPORT INT32 sdbGetList ( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-   if ( listType >= SDB_LIST_BUFF || listType < SDB_LIST_CONTEXTS )
+   if ( listType >= SDB_LIST_END|| listType < SDB_LIST_CONTEXTS )
    {
       rc = SDB_INVALIDARG ;
      goto error ;
