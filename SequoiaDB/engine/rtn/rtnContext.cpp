@@ -2241,9 +2241,9 @@ namespace engine
       pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
       pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
 
-      SAFE_OSS_DELETE( _keyGen ) ;
 
       killSubContexts( cb ) ;
+      SAFE_OSS_DELETE( _keyGen ) ;
    }
 
    void _rtnContextCoord::killSubContexts( pmdEDUCB * cb )
