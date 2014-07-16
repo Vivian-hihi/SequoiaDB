@@ -45,7 +45,7 @@ scp -rf /opt/sequoiadb/conf /home/sequoiadb_conf_bak</codeblock></li>
     </ul><p><note>分别在所有数据库服务器上执行完上述操作后，再执行以下操作：</note></p>
       <b>安装新版本</b>
       <ul>
-        <li><p>具体安装步骤参见《SequoiaDB服务器安装》章节</p></li>
+        <li><p>具体安装步骤参见<xref href="../../../installation/server_installation/topics/monitoring.dita">《SequoiaDB服务器安装》</xref>章节</p></li>
         <li><p>待新版本安装成功后，执行以下命令删除备份文件：<codeblock>rm -rf /home/sequoiadb_bak
 rm -rf /home/sequoiadb_conf_bak</codeblock></p></li>
       </ul>      

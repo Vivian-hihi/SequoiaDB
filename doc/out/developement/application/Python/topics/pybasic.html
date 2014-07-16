@@ -38,7 +38,7 @@
   <div class="body">
     <p class="p">本节介绍使用C程序运行SequoiaDB。首先安装SequoiaDB，<a class="xref" href="../../../../installation/server_installation/topics/server_installation.html">安装信息请查看安装页面</a>。</p>
 
-    <p class="p">这里介绍如何使用Python客户端驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到/sequoiadb/client/samples/python下获取相应的完整的代码。<a class="xref" href="../../../../../python/html/index.html">更多查看Python API</a></p>
+    <p class="p">这里介绍如何使用Python客户端驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到/sequoiadb/client/samples/python下获取相应的完整的代码。<a class="xref" href="../../../../python/html/index.html">更多查看Python API</a></p>
 
     <div class="section"><h2 class="title sectiontitle">数据库操作</h2>
       
@@ -95,10 +95,6 @@ rc, cs = cs.create_collection(cl_name)
 if const.SDB_OK != rc:
    pysequoiadb.cout("create collection[%s] failed, %s" % (cl_name, pysequoiadb.getErr(rc)))
 </pre>
-<div class="note note"><span class="notetitle">Note:</span> 
-  <p class="p">在创建集合“bar”时并没有附加分区、压缩等信息，详情请查阅<a class="xref" href="../../../../../Python/html/index.html">Python API</a></p>
-
-</div>
 </li>
 
         <li class="li">插入数据（insert）<p class="p"/>
@@ -108,7 +104,7 @@ record = {"name":"Tom", "age":24}
 # 接着，把此dict对象插入集合中
 rc, oid = cl.insert ( record ) ;
 if const.SDB_OK != rc:
-pysequoiadb.cout("insert record: %s failed, %s" % (record, pysequoiadb.getErr(rc)))</pre>
+   pysequoiadb.cout("insert record: %s failed, %s" % (record, pysequoiadb.getErr(rc)))</pre>
 
           <p class="p">record为输入参数，为要插入的数据。dict对象将会被转换成bson插入到集合中。oid是插入该记录，返回的bson结构的objectid。</p>
 </li>

@@ -89,17 +89,7 @@
 
           <p class="p">Python客户端需要使用不同的实例进行操作。譬如读取数据的操作需要游标实例，而创建表空间则需要数据库实例。</p>
 
-        <div class="note note"><span class="notetitle">Note:</span> <div class="p"><ul class="ul">
-          <li class="li">对于每一个连接，其产生的集合空间，集合，与游标句柄公用一个套接字。因此在多线程系统中，必须确保每个线程不会同时针对同一套接字，在同一时间发送或接收数据。</li>
-
-          <li class="li">一般来说，不建议使用多个线程共同操作一个连接句柄与其产生的其它句柄。</li>
-
-          <li class="li">如果每个线程使用自己的连接句柄以及其它产生的句柄，则可以保证线程安全。</li>
-
-        </ul>
-</div>
-</div>
-</li>
+        </li>
 
         <li class="li">集群操作实例<p class="p">SequoiaDB数据库中的集群操作分为两个级别：1）分区组 2）数据节点 </p>
 <div class="note note"><span class="notetitle">Note:</span> 

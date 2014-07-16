@@ -4,7 +4,7 @@
   <title>C++ 开发基础</title>
   <body>
     <p>这里介绍如何使用C++客户端驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到/sequoiadb/client/samples/CPP下获取相应的完整的代码。
-      <xref href="..\..\..\..\..\cpp\html\index.html" format="html">更多查看C++ API</xref></p>
+      <xref href="..\..\..\..\cpp\html\index.html" format="html">更多查看C++ API</xref></p>
   <section>
     <title>数据库操作</title>
     <ul>
@@ -77,7 +77,7 @@ rc = connection.createCollectionSpace ( "foo",
                                        SDB_PAGESIZE_4K, collectionspace ) ;
 // 在新建立的集合空间中创建集合“bar”
 rc = collectionspace.createCollection ( "bar", collection ) ;</codeblock><p>以上创建了一个名字为“foo”的集合空间和一个名字为"bar"的集合，集合空间内的集合的数据页大小为4k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。</p><note>
-            <p>在创建集合“bar”时并没有附加分区、压缩等信息，详情请查阅<xref href="..\..\..\..\..\cpp\html\index.html"
+            <p>在创建集合“bar”时并没有附加分区、压缩等信息，详情请查阅<xref href="..\..\..\..\cpp\html\index.html"
                 format="html">C++ API</xref></p>
           </note></li>
       <li>插入数据：insert
