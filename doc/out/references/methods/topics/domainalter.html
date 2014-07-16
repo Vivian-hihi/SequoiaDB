@@ -43,23 +43,23 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d100847e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d101815e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d100847e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d101815e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d100847e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d101815e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d100847e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d101815e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100847e26" class="stentry">options</td>
+          <td valign="top" headers="d101815e26" class="stentry">options</td>
 
-          <td valign="top" headers="d100847e29" class="stentry">Json对象</td>
+          <td valign="top" headers="d101815e29" class="stentry">Json对象</td>
 
-          <td valign="top" headers="d100847e32" class="stentry">需要修改的属性列表。</td>
+          <td valign="top" headers="d101815e32" class="stentry">需要修改的属性列表。</td>
 
-          <td valign="top" headers="d100847e35" class="stentry">是</td>
+          <td valign="top" headers="d101815e35" class="stentry">是</td>
 
         </tr>
 </table>
@@ -70,27 +70,27 @@
       <p class="p">目前通过options可设置域的属性有：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d100847e67" class="stentry">属性名</th>
+          <th valign="bottom" align="left" id="d101815e67" class="stentry">属性名</th>
 
-          <th valign="bottom" align="left" id="d100847e70" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d101815e70" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d100847e73" class="stentry">格式</th>
+          <th valign="bottom" align="left" id="d101815e73" class="stentry">格式</th>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100847e67" class="stentry">Groups</td>
+          <td valign="top" headers="d101815e67" class="stentry">Groups</td>
 
-          <td valign="top" headers="d100847e70" class="stentry">包含的复制组。</td>
+          <td valign="top" headers="d101815e70" class="stentry">包含的复制组。</td>
 
-          <td valign="top" headers="d100847e73" class="stentry">Groups:['data1','data2']</td>
+          <td valign="top" headers="d101815e73" class="stentry">Groups:['data1','data2']</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100847e67" class="stentry">AutoSplit</td>
+          <td valign="top" headers="d101815e67" class="stentry">AutoSplit</td>
 
-          <td valign="top" headers="d100847e70" class="stentry">自动切分。</td>
+          <td valign="top" headers="d101815e70" class="stentry">自动切分。</td>
 
-          <td valign="top" headers="d100847e73" class="stentry">AutoSplit:true|false</td>
+          <td valign="top" headers="d101815e73" class="stentry">AutoSplit:true|false</td>
 
         </tr>
 </table>
@@ -114,7 +114,7 @@
           <div class="p"><pre class="pre codeblock">&gt; var domain = db.createDomain('mydomain',['data1','data2'],{AutoSplit:true})</pre>
 </div>
 
-          <p class="p">从域中删除一个复制组，添加另一个复制组。</p>
+          <p class="p">从域中删除一个复制组data2，添加另一个复制组data3，最后域中包含data1和data3两个复制组。</p>
 
           <div class="p"><pre class="pre codeblock">&gt; domain.alter({Groups:['data1','data3']})</pre>
 </div>
