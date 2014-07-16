@@ -112,7 +112,6 @@ namespace engine
       if ( NULL == _channel )
       {
          PD_LOG( PDERROR, "failed to open channel in sesison" ) ;
-         _getLastError( _errmsg ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -121,7 +120,6 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd on remote node:%d", rc ) ;
-         _getLastError( _errmsg ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -155,6 +153,7 @@ namespace engine
       _clearChannel() ;
       return rc ;
    error:
+      _getLastError( _errmsg ) ;
       goto done ;
    }
 
@@ -226,6 +225,7 @@ namespace engine
       _clearChannel() ;
       return rc ;
    error:
+      _getLastError( _errmsg ) ;
       goto done ;
    }
 
@@ -256,6 +256,7 @@ namespace engine
       _clearChannel() ;
       return rc ;
    error:
+      _getLastError( _errmsg ) ;
       goto done ;
    }
 
