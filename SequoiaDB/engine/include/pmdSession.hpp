@@ -33,91 +33,18 @@
 #ifndef PMD_SESSION_HPP_
 #define PMD_SESSION_HPP_
 
-#include "core.hpp"
-#include "oss.hpp"
-#include "ossSocket.hpp"
-#include "sdbInterface.hpp"
+#include "pmdSessionBase.hpp"
 #include "msg.h"
 #include "pmdDef.hpp"
 #include "rtnContext.hpp"
 
 #include <map>
-#include <string>
 #include "../bson/bson.h"
 
 using namespace bson ;
 
 namespace engine
 {
-
-   class _pmdEDUCB ;
-
-   /*
-      _pmdSession define
-   */
-   class _pmdSession : public _ISession
-   {
-      typedef std::multimap<INT32,CHAR*>     CATCH_MAP ;
-      typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
-
-      typedef std::map<CHAR*,INT32>          ALLOC_MAP ;
-      typedef ALLOC_MAP::iterator            ALLOC_MAP_IT ;
-
-      public:
-         _pmdSession( SOCKET fd ) ;
-         virtual ~_pmdSession() ;
-
-         virtual void            clear() ;
-
-         virtual const CHAR*     sessionName() const ;
-
-      public:
-         UINT64      sessionID () const { return _eduID ; }
-         EDUID       eduID () const { return _eduID ; }
-         _pmdEDUCB*  eduCB () const { return _pEDUCB ; }
-         ossSocket*  socket () { return &_socket ; }
-
-         void        attach( _pmdEDUCB * cb ) ;
-         void        detach() ;
-
-         CHAR*       getBuff( INT32 len ) ;
-         INT32       getBuffLen () const { return _buffLen ; }
-
-         INT32       allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
-         void        releaseBuff( CHAR *pBuff, INT32 buffLen ) ;
-         INT32       reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
-
-         void        disconnect() ;
-         INT32       sendData( const CHAR *pData, INT32 size,
-                               INT32 timeout = -1,
-                               BOOLEAN block = TRUE,
-                               INT32 *pSentLen = NULL,
-                               INT32 flags = 0 ) ;
-         INT32       recvData( CHAR *pData, INT32 size,
-                               INT32 timeout = -1,
-                               BOOLEAN block = TRUE,
-                               INT32 *pRecvLen = NULL,
-                               INT32 flags = 0 ) ;
-         INT32       sniffData( INT32 timeout = OSS_ONE_SEC ) ;
-
-      protected:
-
-         BOOLEAN     _allocFromCatch( INT32 len, CHAR **ppBuff,
-                                      INT32 &buffLen ) ;
-
-      protected:
-
-         _pmdEDUCB                        *_pEDUCB ;
-         EDUID                            _eduID ;
-         ossSocket                        _socket ;
-         std::string                      _sessionName ;
-
-      protected:
-         CHAR                             *_pBuff ;
-         INT32                            _buffLen ;
-
-   } ;
-   typedef _pmdSession pmdSession ;
 
    class _SDB_DMSCB ;
    class _dpsLogWrapper ;
