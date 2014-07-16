@@ -340,12 +340,17 @@ namespace engine
                                                            _wwwRootPath.c_str(), 
                                                            pFilePath ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) 
-                      == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) == 0 )
          {
             commandIf = new omConfigBusinessCommand( pAdptor, this, 
                                                      _wwwRootPath.c_str(), 
                                                      pFilePath ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_CHECK_CONFIG_REQ) == 0 )
+         {
+            commandIf = new omCheckBusinessConfigReq( pAdptor, this, 
+                                                      _wwwRootPath.c_str(), 
+                                                      pFilePath ) ;
          }
          else
          {

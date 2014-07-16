@@ -1142,7 +1142,7 @@ namespace engine
          PD_LOG( PDERROR, "receive unexpected response:rc=%d", rc ) ;
          goto error ;
       }
-
+      //TODO agent·µ»ØÁÙÊ±¶Ë¿ÚºÅ
       rc = result.getIntField( OM_REST_RES_RETCODE ) ;
 
    done:
@@ -1164,8 +1164,7 @@ namespace engine
    // create the requet for all the hosts in hostInfoList
    INT32 omCheckHostCommand::_addCheckHostReq( omManager *om,
                                                pmdRemoteSession *remoteSession,
-                                               list<BSONObj> &hostInfoList,
-                                               list<BSONObj> &hostResult ) 
+                                               list<BSONObj> &hostInfoList ) 
    {
       INT32 rc = SDB_OK ;
       list<BSONObj>::iterator ite = hostInfoList.begin() ;
@@ -1237,7 +1236,7 @@ namespace engine
          PD_LOG( PDERROR, "addSession failed" ) ;
          goto error ;
       }
-      rc = _addCheckHostReq( om, remoteSession, hostInfoList, hostResult ) ;
+      rc = _addCheckHostReq( om, remoteSession, hostInfoList ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "addCheckHostReq failed:rc=%d", rc ) ;
@@ -1335,6 +1334,7 @@ namespace engine
 
    INT32 omCheckHostCommand::_uninstallAgent( list<BSONObj> &hostInfoList )
    {
+      //TODO: send directly exit command to the remote hosts
       INT32 rc          = SDB_OK ;
       CHAR *pContent    = NULL ;
       INT32 contentSize = 0 ;
@@ -2137,7 +2137,7 @@ namespace engine
       read the "property", so we ignore the first element to read 
       the next elements
    */
-   INT32 omQueryBusinessTemplateCommand::readConfTemplate( 
+   INT32 omQueryBusinessTemplateCommand::_readConfTemplate( 
                                                 string businessType, 
                                                 string file, 
                                                 list<BSONObj> &clusterTypeList ) 
@@ -2353,7 +2353,7 @@ namespace engine
 
       templateFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
                      + pBusinessType + OM_TEMPLATE_FILE_NAME ;
-      rc = readConfTemplate( pBusinessType, templateFile, clusterTypeList ) ;
+      rc = _readConfTemplate( pBusinessType, templateFile, clusterTypeList ) ;
       if ( SDB_OK != rc )
       {
          string errorInfo = string( "read template file failed:file=" ) 
@@ -2441,7 +2441,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omConfigBusinessCommand::_fullFillTemplate( BSONObj &bsonTemplate )
+   INT32 omConfigBusinessCommand::_fillTemplateInfo( BSONObj &bsonTemplate )
    {
       INT32 rc = SDB_OK ;
       string businessType ;
@@ -2461,7 +2461,7 @@ namespace engine
 
       file = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
              + businessType + OM_TEMPLATE_FILE_NAME ;
-      rc = readConfTemplate( businessType, file, clusterTypeList ) ;
+      rc = _readConfTemplate( businessType, file, clusterTypeList ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "read template file failed:file=%s:rc=%d", 
@@ -2541,7 +2541,6 @@ namespace engine
    }
 
    INT32 omConfigBusinessCommand::_getHostConfig( string hostName, 
-                                                  string businessName, 
                                                   BSONObj &config )
    {
       BSONObjBuilder confBuilder ;
@@ -2634,7 +2633,7 @@ namespace engine
    /*input parameter: 
      bsonHostInfo
      {
-        "HostInfo":[{"Name":"host1"}, ...]
+        "HostInfo":[{"HostName":"host1"}, ...]
      }
 
      output parameter:
@@ -2648,9 +2647,8 @@ namespace engine
      }
       
      */
-   INT32 omConfigBusinessCommand::_reCheckHostInfo( string clusterName, 
-                                                    string businessName ,
-                                                    BSONObj &bsonHostInfo )
+   INT32 omConfigBusinessCommand::_fillHostInfo( string clusterName, 
+                                                 BSONObj &bsonHostInfo )
    {
       BSONObj condition ;
       BSONObj result ;
@@ -2733,7 +2731,7 @@ namespace engine
          BSONObj result( buffObj.data() ) ;
          resultBuilder.appendElements( result ) ;
          hostName = result.getStringField( OM_HOST_FIELD_NAME ) ;
-         rc       = _getHostConfig( hostName, businessName, config ) ;
+         rc       = _getHostConfig( hostName, config ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to get host config, rc=%d", rc ) ;
@@ -2781,7 +2779,6 @@ namespace engine
       INT32 rc          = SDB_OK ;
       const CHAR *pInfo = NULL ;
       string clusterName ;
-      string businessName ;
       BSONObj bsonInfo ;
       BSONObjBuilder templateBuilder ;
       BSONObjBuilder filterBuilder ;
@@ -2811,7 +2808,6 @@ namespace engine
 
       clusterName  = bsonInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
       _clusterName = clusterName ;
-      businessName = bsonInfo.getStringField( OM_BSON_BUSINESS_NAME ) ;
 
       filterBuilder.append( OM_BSON_FIELD_HOST_INFO, "" ) ;
       filter       = filterBuilder.obj() ;
@@ -2821,10 +2817,10 @@ namespace engine
            "Property": [ { "Name": "replica_num", "Value":"" }, ...] 
         } */
       bsonTemplate = bsonInfo.filterFieldsUndotted( filter, false ) ;
-      rc = _fullFillTemplate( bsonTemplate ) ;
+      rc           = _fillTemplateInfo( bsonTemplate ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "fullFillTemplate failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "_fillTemplateInfo failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, "template format error" ) ;
          goto error ;
       }
@@ -2851,10 +2847,10 @@ namespace engine
                        , ...
                       ]
         }*/
-      rc = _reCheckHostInfo( clusterName, businessName, bsonHostInfo ) ;
+      rc = _fillHostInfo( clusterName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "reCheckHostInfo failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "_fillHostInfo failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, "get host info faild" ) ;
          goto error ;
       }
@@ -2904,6 +2900,11 @@ namespace engine
                                                  const BSONObj &bsonTemplate, 
                                                  const BSONObj &bsonConfDetail )
    {
+      BSONObjBuilder valueCondBuilder ;
+      BSONObj valueCondition ;
+      valueCondBuilder.append( OM_BSON_PROPERTY_VALUE, "" ) ;
+      valueCondition = valueCondBuilder.obj() ;
+
       BSONArrayBuilder arrayBuilder ;
       BSONObj tmp ;
 
@@ -2918,10 +2919,13 @@ namespace engine
          ele          = iter.next() ;
          oneProperty  = ele.embeddedObject() ;
          propertyName = oneProperty.getStringField( OM_BSON_PROPERTY_NAME ) ;
+         
          if ( propertyName.compare( OM_TEMPLATE_USER_NAME ) == 0
               || propertyName.compare( OM_TEMPLATE_USER_PASSWD ) == 0 
               || propertyName.compare( OM_TEMPLATE_USER_GROUP ) == 0)
          {
+            oneProperty = oneProperty.filterFieldsUndotted( valueCondition, 
+                                                            FALSE ) ;
             arrayBuilder.append( oneProperty ) ;
          }
       }
@@ -3027,24 +3031,215 @@ namespace engine
    }
 
    // *****************CheckBusinessConfigReq *****************************
-   CheckBusinessConfigReq::CheckBusinessConfigReq( restAdaptor *pRestAdaptor, 
+   omCheckBusinessConfigReq::omCheckBusinessConfigReq( restAdaptor *pRestAdaptor, 
                                                    pmdRestSession *pRestSession, 
                                                    const CHAR *pRootPath, 
                                                    const CHAR *pSubPath )
-                          :omQueryBusinessTemplateCommand( pRestAdaptor, 
-                                                           pRestSession, 
-                                                           pRootPath,
-                                                           pSubPath)
+                            :omConfigBusinessCommand( pRestAdaptor, 
+                                                      pRestSession, pRootPath,
+                                                      pSubPath)
    {
    }
 
-   CheckBusinessConfigReq::~CheckBusinessConfigReq()
+   omCheckBusinessConfigReq::~omCheckBusinessConfigReq()
    {
    }
 
-   INT32 CheckBusinessConfigReq::doCommand()
+   INT32 omCheckBusinessConfigReq::_extractHostInfo( 
+                                                   const BSONObj &bsonConfValue, 
+                                                   BSONObj &bsonHostInfo )
    {
-      return SDB_OK ;
+      string clusterName ;
+      clusterName = bsonConfValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+
+      BSONObjBuilder conditionBuilder ;
+      conditionBuilder.append( OM_BSON_FIELD_HOST_NAME, "" ) ;
+      BSONObj condition = conditionBuilder.obj() ;
+
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBuilder ;
+      BSONObj config = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      {
+         BSONObjIterator iter( config ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj oneNode = ele.embeddedObject() ;
+            BSONObj host = oneNode.filterFieldsUndotted(condition, true );
+            arrayBuilder.append( host ) ;
+         }
+      }
+
+      builder.append( OM_BSON_FIELD_HOST_INFO, arrayBuilder.arr() ) ;
+      bsonHostInfo = builder.obj() ;
+
+      INT32 rc = SDB_OK ;
+      rc = _fillHostInfo( clusterName, bsonHostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_fillHostInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omCheckBusinessConfigReq::_combineConfDetail( string businessType, 
+                                                       string clusterType, 
+                                                       BSONObj &bsonAllConf )
+   {
+      INT32 rc = SDB_OK ;
+      string confTemplateFile ;
+      string confDetailFile ;
+      list<BSONObj> bsonTemplateList ;
+      list<BSONObj>::iterator iterList ;
+      BSONObj bsonTemplate ;
+      BSONObj bsonConfDetail ;
+      BSONObj properties ;
+      BSONArrayBuilder arrayBuilder ;
+      BSONObjBuilder builder ;
+      confTemplateFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
+                         + businessType + OM_TEMPLATE_FILE_NAME ;
+      rc = _readConfTemplate( businessType, confTemplateFile, 
+                              bsonTemplateList ) ;
+      if ( SDB_OK != rc )
+      {
+         string errorInfo = string( "read template file failed:file=" ) 
+                            + confTemplateFile ;
+         PD_LOG( PDERROR, "%s:rc=%d", errorInfo.c_str(), rc ) ;
+         _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      iterList = bsonTemplateList.begin() ;
+      while ( iterList != bsonTemplateList.end() )
+      {
+         string tmpClusterType = iterList->getStringField( 
+                                                       OM_BSON_CLUSTER_TYPE ) ;
+         if ( tmpClusterType.compare( clusterType ) == 0 )
+         {
+            bsonTemplate = *iterList ;
+            break ;
+         }
+         iterList++ ;
+      }
+
+      if ( iterList == bsonTemplateList.end() )
+      {
+         rc = SDB_INVALIDARG ;
+         string errorInfo = string( "clusterType is not exsit:type=" ) 
+                            + clusterType ;
+         _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, errorInfo.c_str() ) ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      confDetailFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
+                       + businessType + OM_CONFIG_ITEM_FILE_NAME ;
+      rc = _readConfDetail( confDetailFile, bsonConfDetail ) ;
+      if ( SDB_OK != rc )
+      {
+         string errorInfo = string( "read config file failed:file=" ) 
+                            + confDetailFile ;
+         PD_LOG( PDERROR, "%s:rc=%d", errorInfo.c_str(), rc ) ;
+         _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      properties = bsonTemplate.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
+      {
+         BSONObjIterator iter( properties ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele     = iter.next() ;
+            arrayBuilder.append( ele ) ;
+         }
+      }
+
+      properties = bsonConfDetail.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
+      {
+         BSONObjIterator iter( properties ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele     = iter.next() ;
+            arrayBuilder.append( ele ) ;
+         }
+      }
+
+      builder.append( OM_BSON_PROPERTY_ARRAY, arrayBuilder.arr() ) ;
+      bsonAllConf = builder.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omCheckBusinessConfigReq::doCommand()
+   {
+      INT32 rc          = SDB_OK ;
+      const CHAR *pInfo = NULL ;
+      omConfigGenerator confGenerator ;
+      BSONObj bsonConfValue ;
+      BSONObj bsonHostInfo ;
+      BSONObj bsonAllConf ;
+      string businessType ;
+      string clusterType ;
+      _restAdaptor->getQuery( _restSession, OM_REST_CONFIG_INFO, &pInfo ) ;
+      if ( NULL == pInfo )
+      {
+         string errorInfo = "rest field:" + string( OM_REST_CONFIG_INFO )
+                            + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pInfo, bsonConfValue ) ;
+      if ( SDB_OK != rc )
+      {
+         string errorInfo = "rest field:" + string( OM_REST_TEMPLATE_INFO )
+                            + "is invalid" ;
+         PD_LOG( PDERROR, "fromjson failed:rc=%d,src=%s", rc, pInfo ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      businessType = bsonConfValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      clusterType  = bsonConfValue.getStringField( OM_BSON_CLUSTER_TYPE ) ;
+      rc = _combineConfDetail( businessType, clusterType, bsonAllConf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_combineConfDetail failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _extractHostInfo( bsonConfValue, bsonHostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get host info failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, "get host info failed" ) ;
+         goto error ;
+      }
+
+      rc = confGenerator.checkSDBConfig( bsonConfValue, bsonAllConf, 
+                                         bsonHostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         string errorInfo = confGenerator.getErrorDetail() ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // *****************omGetFileCommand *****************************

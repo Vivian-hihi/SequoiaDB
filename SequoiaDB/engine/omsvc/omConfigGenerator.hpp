@@ -49,6 +49,9 @@ namespace engine
    #define OM_TEMPLATE_USER_PASSWD     "userpasswd"
    #define OM_TEMPLATE_USER_GROUP      "usergroup"
 
+   // extend configure
+   #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
+
    class sdbConfTemplate
    {
       public:
@@ -244,6 +247,10 @@ namespace engine
                                         const BSONObj &bsonHostInfo, 
                                         BSONObj &bsonConfig ) ;
 
+         INT32       checkSDBConfig( const BSONObj &bsonConfValue,
+                                     const BSONObj &bsonAllconf, 
+                                     const BSONObj &bsonHostInfo ) ;
+
          string      getErrorDetail() ;
 
       private:
@@ -267,6 +274,9 @@ namespace engine
          BOOLEAN     _isAllTemplateSet() ;
          INT32       _setConfDetailValue( const BSONObj &oneProperty ) ;
          BOOLEAN     _isAllConfDetailSet() ;
+
+         INT32       _checkConfValue( const BSONObj &bsonConfValue ) ;
+         INT32       _parseAllConf( const BSONObj &bsonAllConf ) ;
 
 
       private:

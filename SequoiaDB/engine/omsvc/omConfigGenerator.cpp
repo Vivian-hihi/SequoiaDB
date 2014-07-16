@@ -53,9 +53,6 @@ namespace engine
    #define OM_CONF_DETAIL_PREINSTANCE  "preferedinstance"
    #define OM_CONF_DETAIL_PCNUM        "numpagecleaners"
    #define OM_CONF_DETAIL_PCINTERVAL   "pagecleaninterval"
-
-   // extend configure
-   #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
    
    #define OM_DG_NAME_PATTERN          "DATAGROUP"
 
@@ -867,6 +864,161 @@ namespace engine
    }
 
    /*
+   bsonConfValue:
+   {
+      "BusinessType":"sequoiadb", "BusinessName":"b1", "ClusterType":"cluster", 
+      "ClusterName":"c1", 
+      "Config":
+      [
+         {"HostName": "host1", "username": "sdbadmin", "userpasswd": "sdbadmin", 
+          "usergroup": "sdbadmin_group", "datagroupname": "", 
+          "dbpath": "/home/db2/standalone/11830", "svcname": "11830", ...}
+         ,...
+      ]
+   }
+   bsonAllconf:
+   {
+      "Property":[{"Name":"dbpath", "Type":"path", "Default":"/opt/sequoiadb", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   bsonHostInfo:
+   {
+     "HostInfo":[
+                   {
+                      "HostName":"host1", "ClusterName":"c1", 
+                      "Disk":{"Name":"/dev/sdb", Size:"", Mount:"", Used:""},
+                      "Config":[{"BusinessName":"b2","dbpath":"", svcname:"", 
+                                 "role":"", ... }, ...]
+                   }
+                    , ... 
+                ]
+   }
+   */
+   INT32 omConfigGenerator::checkSDBConfig( const BSONObj &bsonConfValue,
+                                            const BSONObj &bsonAllConf, 
+                                            const BSONObj &bsonHostInfo )
+   {
+      INT32 rc = SDB_OK ;
+      _clear() ;
+      _businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      rc = _parseHostInfo( _businessName, bsonHostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get template failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _parseAllConf( bsonAllConf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get _parseAllConf failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _checkConfValue( bsonConfValue ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get _checkConfValue failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omConfigGenerator::_checkConfValue( const BSONObj &bsonConfValue )
+   {
+      INT32 rc = SDB_OK ;
+      string businessName ;
+      string clusterName ;
+
+      businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      clusterName  = bsonConfValue.getStringField( 
+                                                  OM_BSON_FIELD_CLUSTER_NAME ) ;
+
+      BSONObj config = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      BSONObjIterator NodeIter( config ) ;
+      while ( NodeIter.more() )
+      {
+         BSONElement ele = NodeIter.next() ;
+         BSONObj oneNode = ele.embeddedObject() ;
+         string hostName = oneNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         string dbPath   = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
+         string svcName  = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+         //omHostInfo *pHost = _getHost( hostName ) ;
+         //TODO: check hostName/dbPath/svcName
+         BSONObjIterator itemIter( oneNode ) ;
+         while ( itemIter.more() )
+         {
+            BSONElement itemEle = itemIter.next() ;
+            string fieldName    = itemEle.fieldName() ;
+            string value        = itemEle.String() ;
+            if ( fieldName.compare( OM_BSON_FIELD_HOST_NAME ) != 0 )
+            {
+               omConfigItem *pItem = NULL ;
+               CONFIGITEMMAP_ITER iter = _confDetailMap.find( fieldName ) ;
+               if ( iter == _confDetailMap.end() )
+               {
+                  rc = SDB_DMS_RECORD_NOTEXIST ;
+                  _errorDetail = string( "can't find the config:name=" ) 
+                                 + fieldName ;
+                  PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+                  goto error ;
+               }
+
+               pItem = iter->second ;
+               if ( pItem->isValid( value ) )
+               {
+                  rc = SDB_INVALIDARG ;
+                  _errorDetail = string( "config value is invalid:name=" )
+                                 + fieldName + " value=" + value ;
+                  PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+                  goto error ;
+               }
+            }
+         }
+      }
+
+      // 1 判断各个值的合法性
+      // 2 判断host是否存在
+      // 3 判断dbpath所在的磁盘是否存在, dbpath是否冲突
+      // 4 判断端口是否冲突 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omConfigGenerator::_parseAllConf( const BSONObj &bsonAllConf )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj property ;
+
+      property = bsonAllConf.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
+      BSONObjIterator i( property ) ;
+      while ( i.more() )
+      {
+         BSONElement ele = i.next() ;
+         BSONObj oneProperty = ele.embeddedObject() ;
+         rc = _setConfDetailValue( oneProperty ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "_setConfDetailValue failed:rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
    bsonTemplate:
    {
       "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
@@ -1257,6 +1409,7 @@ namespace engine
       {
          delete pItem ;
       }
+      _clear() ;
       goto done ;
    }
 
@@ -1339,20 +1492,11 @@ namespace engine
                                         const BSONObj &bsonConfigDetails )
    {
       INT32 rc = SDB_OK ;
-      BSONElement propertyElement ;
+      BSONObj property ;
 
-      propertyElement = bsonConfigDetails.getField( OM_BSON_PROPERTY_ARRAY ) ;
-      if ( propertyElement.eoo() || Array != propertyElement.type() )
+      property = bsonConfigDetails.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
       {
-         rc = SDB_INVALIDARG ;
-         _errorDetail = string( "configDetails miss bson array field=" ) 
-                        + OM_BSON_PROPERTY_ARRAY ;
-         PD_LOG( PDERROR, "field is not array type:field=%s,type=%d", 
-                 OM_BSON_PROPERTY_ARRAY, propertyElement.type() ) ;
-         goto error ;
-      }
-      {
-         BSONObjIterator i( propertyElement.embeddedObject() ) ;
+         BSONObjIterator i( property ) ;
          while ( i.more() )
          {
             BSONElement ele = i.next() ;

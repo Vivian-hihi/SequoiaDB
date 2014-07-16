@@ -181,8 +181,7 @@ namespace engine
          INT32           _installAgent( list<BSONObj> &hostInfoList ) ;
          INT32           _addCheckHostReq( omManager *om,
                                            pmdRemoteSession *remoteSession,
-                                           list<BSONObj> &hostInfoList,
-                                           list<BSONObj> &hostResult ) ;
+                                           list<BSONObj> &hostInfoList ) ;
          INT32           _checkHostEnv( list<BSONObj> &hostInfoList, 
                                         list<BSONObj> &hostResult ) ;
          INT32           _uninstallAgent( list<BSONObj> &hostInfoList ) ;
@@ -266,7 +265,7 @@ namespace engine
          virtual INT32  doCommand() ;
 
       protected:
-         INT32          readConfTemplate( string businessType, string file, 
+         INT32          _readConfTemplate( string businessType, string file, 
                                           list<BSONObj> &clusterTypeList ) ;
          INT32          _readConfDetail( string file, 
                                          BSONObj &bsonConfDetail ) ;
@@ -288,6 +287,9 @@ namespace engine
          virtual INT32  doCommand() ;
 
       protected:
+         INT32          _fillHostInfo( string clusterName,
+                                       BSONObj &bsonHostInfo ) ;
+
       private:
          INT32          _generateConfig( const BSONObj &bsonTemplate, 
                                          const BSONObj &bsonHostInfo, 
@@ -300,32 +302,35 @@ namespace engine
                                         BSONObj &bsonConfDetail ) ;
          INT32          _getTemplateInfo( BSONObj &bsonTemplate, 
                                           BSONObj &bsonHostInfo ) ;
-         INT32          _fullFillTemplate( BSONObj &bsonTemplate ) ;
+         INT32          _fillTemplateInfo( BSONObj &bsonTemplate ) ;
          INT32          _getPropertyNameValue( BSONObj &bsonTemplate, 
                                                string propertyName, 
                                                string &value ) ;
-         INT32          _reCheckHostInfo( string clusterName, 
-                                          string businessName,
-                                          BSONObj &bsonHostInfo ) ;
-         INT32          _getHostConfig( string hostName, string businessName, 
-                                        BSONObj &config ) ;
+         INT32          _getHostConfig( string hostName, BSONObj &config ) ;
 
       private:
          string         _clusterName ;
 
    } ;
 
-   class CheckBusinessConfigReq : public omQueryBusinessTemplateCommand
+   class omCheckBusinessConfigReq : public omConfigBusinessCommand
    {
       public:
-         CheckBusinessConfigReq( restAdaptor *pRestAdaptor, 
+         omCheckBusinessConfigReq( restAdaptor *pRestAdaptor, 
                                  pmdRestSession *pRestSession, 
                                  const CHAR *pRootPath, 
                                  const CHAR *pSubPath ) ;
-         virtual ~CheckBusinessConfigReq() ;
+         virtual ~omCheckBusinessConfigReq() ;
 
       public:
          virtual INT32  doCommand() ;
+
+      private:
+         INT32          _combineConfDetail( string businessType, 
+                                            string clusterType, 
+                                            BSONObj &bsonConfDetail ) ;
+         INT32          _extractHostInfo( const BSONObj &bsonConfValue, 
+                                          BSONObj &bsonHostInfo ) ;
    } ;
 
    class omGetFileCommand : public omCommandInterface

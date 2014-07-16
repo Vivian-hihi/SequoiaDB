@@ -174,6 +174,8 @@ namespace engine
    #define  OM_BSON_FIELD_HOST_USER          "User"
    #define  OM_BSON_FIELD_HOST_PASSWD        "Passwd"
    #define  OM_BSON_FIELD_HOST_SSHPORT       "SshPort"
+
+   //TODO agent端口号从配置中获取
    #define  OM_BSON_FIELD_HOST_AGENTPORT     "AgentPort"
 
    // milliseconds
@@ -280,7 +282,6 @@ namespace engine
    #define  OM_XML_CONFIG                    "config"
 
    #define  OM_REST_TEMPLATE_INFO            "TemplateInfo"
-   #define  OM_REST_CONFIG_INFO              "ConfigInfo"
 
    #define  OM_BSON_PROPERTY_VALUE           "Value"
 
@@ -300,6 +301,12 @@ namespace engine
    #define  OM_BSON_FIELD_PCNUM              "NumpageCleaners"
    #define  OM_BSON_FIELD_PCINTERVAL         "PageCleanInterval"
    
+   // *****************************************************************
+
+   // om rest check_config_req
+   #define  OM_CHECK_CONFIG_REQ              "CheckBusinessConfReq"
+
+   #define  OM_REST_CONFIG_INFO              "ConfigInfo"
    // *****************************************************************
    
    // milliseconds
