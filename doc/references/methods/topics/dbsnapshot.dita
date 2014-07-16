@@ -20,7 +20,8 @@
         <strow>
           <stentry>snapType</stentry>
           <stentry>枚举</stentry>
-          <stentry>快照类型。</stentry>
+          <stentry><xref href="../../../administration/database/topics/monitoring.dita"
+            >快照类型</xref>。</stentry>
           <stentry>是</stentry>
         </strow>
         <strow>
