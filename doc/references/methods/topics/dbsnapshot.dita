@@ -30,7 +30,7 @@
           <stentry>选择条件，只返回cond字段指定的节点或分区组的快照信息，为null时，返回整个集群的快照信息。</stentry>
           <stentry>否</stentry>
         </strow>
-        <!--<strow>
+        <strow>
           <stentry>sel</stentry>
           <stentry>json对象</stentry>
           <stentry>选择返回字段名。为null时，返回所有的字段名。</stentry>
@@ -41,7 +41,7 @@
           <stentry>json对象</stentry>
           <stentry>对返回的记录按选定的字段排序。1为升序；-1为降序。</stentry>
           <stentry>否</stentry>
-        </strow>-->
+        </strow>
       </simpletable>
       
     </section>
@@ -50,7 +50,7 @@
       <codeblock>{"snapType":"&lt;快照类型>",["cond":"{"字段名1":{"操作符1":"值1"},"字段名2":{"操作符2":"值2"}...}"]}</codeblock>
       <note>
         <ul>
-          <li>snapType字段的值为0到7</li>
+          <li>snapType字段的值请参考快照类型</li>
           <li>sel参数是一个json结构，字段名的值一般指定为空串。如果指定为如下结构：{"字段名1":"值1","字段名2":"值2",...}，对于记录中存在所选字段名的话，设定的值其实无效；对于记录中不存在所选字段名的话，返回{"字段名1":"值1","字段名2":"值2",...}</li>
           <li>字段的值是数组的话，我们用“.”操作符引用数组内的元素。并加上双引号（""）</li>
         </ul>
@@ -59,7 +59,7 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>指定snapType的值为0：<codeblock>db.snapshot(0)</codeblock></p>
+          <p>指定snapType的值为SDB_SNAP_CONTEXTS：<codeblock>db.snapshot(SDB_SNAP_CONTEXTS)</codeblock></p>
           <p> 返回整个集群的上下文快照：</p>
           <codeblock>{
   "SessionID": "vmsvr1-cent-x64-1:11820:22",
@@ -105,8 +105,8 @@
 }</codeblock>
         </li>
         <li><p>通过组名或组ID查询某个分区组的快照信息，如：</p>
-          <p><codeblock>db.snapshot(0,{GroupName:'data1'})</codeblock>返回组名为“data1”的分区组快照信息
-            <codeblock>db.snapshot(0,{GroupID:1000})</codeblock>返回组ID为“1000”的分区组快照信息</p>
+          <p><codeblock>db.snapshot(SDB_SNAP_CONTEXTS,{GroupName:'data1'})</codeblock>返回组名为“data1”的分区组快照信息
+            <codeblock>db.snapshot(SDB_SNAP_CONTEXTS,{GroupID:1000})</codeblock>返回组ID为“1000”的分区组快照信息</p>
           <codeblock>{
   "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
@@ -136,8 +136,8 @@
   ]
 }</codeblock></li>
         <li><p>通过“组名+主机名+服务名”或“组ID+节点ID”查询某个节点的快照信息，如：</p>
-          <p><codeblock>db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</codeblock>
-            <codeblock>db.snapshot(0,{GroupID:1000,NodeID:1001})</codeblock></p>
+          <p><codeblock>db.snapshot(SDB_SNAP_CONTEXTS,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</codeblock>
+            <codeblock>db.snapshot(SDB_SNAP_CONTEXTS,{GroupID:1000,NodeID:1001})</codeblock></p>
           <codeblock>{
   "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
@@ -153,7 +153,7 @@
   ]
   }</codeblock></li>
         <li><p>通过“主机名+服务名”查询某个节点的快照信息，如：</p>
-          <p><codeblock>db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</codeblock>
+          <p><codeblock>db.snapshot(SDB_SNAP_CONTEXTS,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</codeblock>
             </p>
           <!--<codeblock>{
   "SessionID": "vmsvr1-cent-x64-1:51000:22",

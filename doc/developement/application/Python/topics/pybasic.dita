@@ -37,9 +37,9 @@ del db</codeblock>
           <p>以下创建了一个名字为“foo”的集合空间和一个名字为“bar”的集合，集合空间内的集合的数据页大小 为16k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。</p>          
           <codeblock># 连接到数据库
 try:
-db = client()
+   db = client()
 except SequoiaDBError :
-pysequoiadb.cout('Cannot allocate client')
+   pysequoiadb.cout('Cannot allocate client')
 
 # success to connect to db
 cs_name = 'foo'
@@ -51,7 +51,7 @@ if const.SDB_OK != rc:
 cl_name = 'bar'
 rc, cs = cs.create_collection(cl_name)
 if const.SDB_OK != rc:
-pysequoiadb.cout("create collection[%s] failed, %s" % (cl_name, pysequoiadb.getErr(rc)))
+   pysequoiadb.cout("create collection[%s] failed, %s" % (cl_name, pysequoiadb.getErr(rc)))
 </codeblock><note>
   <p>在创建集合“bar”时并没有附加分区、压缩等信息，详情请查阅<xref href="..\..\..\..\..\Python\html\index.html" format="html">Python API</xref></p>
 </note></li>

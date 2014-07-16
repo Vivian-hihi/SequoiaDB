@@ -51,7 +51,7 @@
 ["sel":"{"字段名1":"","字段名2":"",...}"],["sort":"{"字段名1":-1|1,"字段名2":1|-1,...}"]}</codeblock>
       <note>
         <ul>
-          <li>listType字段的值为0到7</li>
+          <li>listType字段的值请参考列表类型。</li>
           <li>sel参数是一个json结构，字段名的值一般指定为空串。如果指定为如下结构：{"字段名1":"值1","字段名2":"值2",...}，对于记录中存在所选字段名的话，设定的值其实无效；对于记录中不存在所选字段名的话，返回{"字段名1":"值1","字段名2":"值2",...}</li>
           <li>字段的值是数组的话，我们用"."操作符引用数组内的元素。并加上双引号("")</li>
         </ul>
@@ -60,7 +60,7 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>指定listType的值为0：<codeblock>db.list(0)</codeblock></p>
+          <p>指定listType的值为SDB_LIST_CONTEXTS：<codeblock>db.list(SDB_LIST_CONTEXTS)</codeblock></p>
           <p>返回：</p>
           <codeblock>     {
         "SessionID": 4,

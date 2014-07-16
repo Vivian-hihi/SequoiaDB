@@ -13,13 +13,13 @@
       <strow>
         <stentry>insert into students(a,b) values(1,-1) </stentry>
         <stentry>db.foo.bar.insert({a:1,b:-1}) </stentry>
-        <stentry>cl = collection()<p>obj = ( "a":1, "b":-1 )</p><p>cl.insert( obj )</p></stentry>
+        <stentry>cl = collection()<p>obj = { "a":1, "b":-1 }</p><p>cl.insert( obj )</p></stentry>
       </strow>
       <strow>
         <stentry>select a,b from students </stentry>
         <stentry>db.foo.bar.find(null,{a:"",b:""})</stentry>
         <stentry>cl = collection()<p>obj = {}</p>
-          <p>selected = ( "a":"","b":"" )</p>
+          <p>selected = { "a":"","b":"" }</p>
           <p>rc, cr = cl.query(obj, selected )</p></stentry>
       </strow>
       <strow>
@@ -31,7 +31,7 @@
       <strow>
         <stentry>select * from students where age=20</stentry>
         <stentry>db.foo.bar.find({age:20})</stentry>
-        <stentry>cl = collection()<p>condition =("age":20)</p><p>rc, cr = cl.query ( condition ) </p></stentry>
+        <stentry>cl = collection()<p>condition ={"age":20}</p><p>rc, cr = cl.query ( condition ) </p></stentry>
       </strow>
       <strow>
         <stentry>select * from students where age=20 order by name</stentry>
