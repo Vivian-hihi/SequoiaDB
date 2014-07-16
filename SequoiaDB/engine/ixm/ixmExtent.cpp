@@ -2290,11 +2290,11 @@ namespace engine
       SINT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__KEYFIND );
       monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
-      SDB_ASSERT ( l < h, "low must be less than high" ) ;
+      SDB_ASSERT ( l <= h, "low must be less than high" ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
       while ( TRUE )
       {
-         if ( l+1 == h )
+         if ( l+1 >= h )
          {
             bestIxmRID._extent = _me ;
             bestIxmRID._slot = (direction>0)?h:l ;
