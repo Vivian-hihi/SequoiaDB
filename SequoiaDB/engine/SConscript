@@ -60,6 +60,7 @@ ossFiles = [
 pmdFiles = [
       "pmd/pmd.cpp",
       "pmd/pmdEDU.cpp",
+	  "pmd/pmdSessionBase.cpp",
       "pmd/pmdSession.cpp",
       "pmd/pmdRemoteSession.cpp",
       "pmd/pmdEDUMgr.cpp",
