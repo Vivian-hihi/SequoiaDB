@@ -1,16 +1,21 @@
-#include "omagentSession.cpp"
+#include "omagentSession.hpp"
+#include "omagentHelper.hpp"
+#include "msgMessage.hpp"
+#include "omagentTest.hpp"
+#include "../bson/bson.h"
 
 using namespace engine ;
 
 namespace CLSMGR
 {
    _omagentSession::_omagentSession( SOCKET fd )
-   :pmdSession( fd )
+//   :pmdSession( fd )
    {
+//ossPrintf("1, in omagent session constructor.\n");
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
    }
 
-   _omagentSession:~_omagentSession()
+   _omagentSession::~_omagentSession()
    {
    }
 
@@ -20,18 +25,27 @@ namespace CLSMGR
       UINT32 msgSize    = 0 ;
       CHAR *pBuff       = NULL ;
       INT32 buffSize    = 0 ;
-   ossPrintf( "in omagentSession, run"OSS_NEWLINE ) ;
+      CHAR *pBuffer     = NULL ;
+      INT32 bufferSize  = 0 ;
 
-      const CHAR* cmd = "$scan host" ;
-      MsgOpQuery qmsg ;
-      qmsg.header.messageLength = sizeof(MsgOpQuery) + ossStrlen( cmd ) + 1 ;
-      ossMemcpy ( qmsg.name, cmd, ossStrlen( cmd ) + 1 ) ;
+      rc = testScanHost ( &pBuffer, &bufferSize ) ;
+//      rc = testInstallRemoteAgent ( &pBuffer, &bufferSize ) ;
+//      rc = testInstallAgentProcess ( &pBuffer, &bufferSize ) ;
+/**********************************/
 
-      rc = _processMsg( (MsgHeader *)qmsg ) ;
-      ossPrintf( "rc is: %d\n", rc ) ;
+      rc = _processMsg( (MsgHeader *)pBuffer ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to process omsvc's message, rc = %d", rc ) ;
+         goto error ;
+      }
 
 
    done:
+      if ( pBuffer )
+      {
+         SDB_OSS_FREE ( pBuffer ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -40,8 +54,8 @@ namespace CLSMGR
    INT32 _omagentSession::_processMsg( MsgHeader *msg )
    {
       INT32 rc          = SDB_OK ;
-//      const CHAR *pBody = NULL ;
-      CHAR pBody[4096] = {0} ;
+//      omagentObjBuff objBuff ;
+      CHAR* pBody = NULL ;
       INT32 bodyLen     = 0 ;
 
       // build reply msg header
@@ -52,15 +66,20 @@ namespace CLSMGR
       }
       // process msg
       rc = _processOPMsg( msg, &pBody, bodyLen,
-                          _replyHeader.numReturned,
-                          _replyHeader.startFrom ) ;
+                          _replyHeader.numReturned ) ;
       if ( rc )
       {
          ossPrintf("rc is : %d\n", rc) ;
       }
+
+      BSONObj temp( pBody ) ;
       ossPrintf( "result :\n" ) ;
-      ossPrintf( "pBody is : %s\n", pBody ) ;
+      ossPrintf( "pBody is : %s\n", temp.toString().c_str() ) ;
       ossPrintf( "bodyLen is : %d\n", bodyLen ) ;
+      ossPrintf( "numReturned is : %d\n", _replyHeader.numReturned ) ;
+
+/***************************************************/
+
 /*
       if ( _needReply )
       {
@@ -77,13 +96,20 @@ namespace CLSMGR
          INT32 rcTmp = _reply( &_replyHeader, pBody, bodyLen ) ;
          if ( rcTmp )
          {
-            ossPrintf ( "Session[%s] failed to send response for omsvc, rc: %d"OSS_NEWLINE,
-                        sessionName(), rcTmp ) ;
+            PD_LOG ( PDERROR, "Session[%s] failed to send response for omsvc, rc: %d",
+                     sessionName(), rcTmp ) ;
          }
       }
 */
-      rc = SDB_OK ;
+   done:
+      if ( NULL  != pBody )
+      {
+         SDB_OSS_FREE( pBody ) ;
+         pBody = NULL ;
+      }
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _omagentSession::_reply( MsgOpReply *responseMsg,
@@ -93,20 +119,20 @@ namespace CLSMGR
       INT32 rc = SDB_OK ;
 
       // response header
-      rc = sendData( (const CHAR*)responseMsg, sizeof(MsgOpReply) ) ;
+//      rc = sendData( (const CHAR*)responseMsg, sizeof(MsgOpReply) ) ;
       if ( rc )
       {
-         ossPrintf( "Session[%s] failed to send response header for omsvc, rc: %d"OSS_NEWLINE,
+         PD_LOG( PDERROR, "Session[%s] failed to send response header for omsvc, rc: %d",
                  sessionName(), rc ) ;
          goto error ;
       }
       // response body
       if ( pBody )
       {
-         rc = sendData( pBody, bodyLen ) ;
+//         rc = sendData( pBody, bodyLen ) ;
          if ( rc )
          {
-            ossPrintf( "Session[%s] failed to send response body, rc: %d"OSS_NEWLINE,
+            PD_LOG( PDERROR, "Session[%s] failed to send response body, rc: %d",
                     sessionName(), rc ) ;
             goto error ;
          }
@@ -118,11 +144,13 @@ namespace CLSMGR
       goto done ;
    }
 
-   INT32 _omagentSession::_processOPMsg( MsgHeader *msg, const CHAR **ppBody,
+
+   INT32 _omagentSession::_processOPMsg( MsgHeader *msg, CHAR **ppBody,
                                          INT32 &bodyLen, INT32 &returnNum )
+//   INT32 _omagentSession::_processOPMsg( MsgHeader *msg, omagentObjBuff &objBuff )
    {
       INT32 rc = SDB_OK ;
-      omagentObjBuff objBuff ;
+//      omagentObjBuff objBuff ;
 
       if ( NULL == ppBody )
       {
@@ -133,11 +161,11 @@ namespace CLSMGR
       switch( msg->opCode )
       {
          case MSG_BS_QUERY_REQ :
-            rc = _onQueryReqMsg( msg, objBuff ) ;
+            rc = _onQueryReqMsg( msg, ppBody, bodyLen, returnNum ) ;
             break ;
          default :
-            ossPrintf( "Session[%s] recv unknow msg from omsvc[type:[%d]%d, "
-                    "len: %d, tid: %d, routeID: %d.%d.%d, reqID: %lld]"OSS_NEWLINE,
+            PD_LOG( PDERROR, "Session[%s] recv unknow msg from omsvc[type:[%d]%d, "
+                    "len: %d, tid: %d, routeID: %d.%d.%d, reqID: %lld]",
                     sessionName(), IS_REPLY_TYPE(msg->opCode),
                     GET_REQUEST_TYPE(msg->opCode), msg->messageLength, msg->TID,
                     msg->routeID.columns.groupID, msg->routeID.columns.nodeID,
@@ -150,25 +178,44 @@ namespace CLSMGR
       {
          goto error ;
       }
-
+/*
       bodyLen = objBuff.size() ;
-      recordNum = objBuff.recordNum() ;
+      returnNum = objBuff.recordNum() ;
       if ( bodyLen > 0 )
          ossMemcpy( *ppBody, objBuff.data(), bodyLen ) ;
+*/
    done:
       return rc ;
    error:
-      if ( _needRollbak )
+      if ( _needRollback )
       {
 //         INT32 rcTmp = _omagentRollbak() ;
-         ossPrintf( "Something wrong, need to rollback"OSS_NEWLINE ) ;
+         PD_LOG( PDEVENT, "Something wrong, need to rollback" ) ;
          _needRollback = FALSE ;
       }
       goto done ;
    }
 
+   INT32 _omagentSession::_buildReplyHeader( MsgHeader *msg )
+   {
+      // set reply header ( except flags, length )
+      _replyHeader.contextID          = -1 ;
+      _replyHeader.numReturned        = 0 ;
+      _replyHeader.startFrom          = 0 ;
+      _replyHeader.header.opCode      = MAKE_REPLY_TYPE(msg->opCode) ;
+      _replyHeader.header.requestID   = msg->requestID ;
+      _replyHeader.header.TID         = msg->TID ;
+      _replyHeader.header.routeID.value     = 0 ;
+
+      return SDB_OK ;
+   }
+
+/*
    INT32 _omagentSession::_onQueryReqMsg( MsgHeader *msg,
                                           omagentObjBuff &objBuff )
+*/
+   INT32 _omagentSession::_onQueryReqMsg( MsgHeader *msg, CHAR **ppBody,
+                                          INT32 &bodyLen, INT32 &returnNum )
    {
       INT32 rc                  = SDB_OK ;
       INT32 flags               = 0 ;
@@ -181,7 +228,7 @@ namespace CLSMGR
       SINT64 numToReturn        = -1 ;
       _omagentCommand *pCommand = NULL ;
 
-      ossPrintf ( "omsvc request received"OSS_NEWLINE ) ;
+      PD_LOG ( PDEVENT, "omsvc request received" ) ;
       // extract command
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQuery,
@@ -189,20 +236,20 @@ namespace CLSMGR
                              &pHintBuffer ) ;
       if ( rc )
       {
-         ossPrintf ( "Session[%s] extract omsvc's command msg failed, rc: %d"OSS_NEWLINE,
-                     sessionName(), rc ) ;
+         PD_LOG ( PDERROR, "Session[%s] extract omsvc's command msg failed, rc: %d",
+                  sessionName(), rc ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
       // is command
       if ( omagentIsCommand ( pCollectionName ) )
       {
-         ossPrintf( "omagent receive command: %s"OSS_NEWLINE, pCollectionName ) ;
+         PD_LOG( PDEVENT, "omagent receive command: %s", pCollectionName ) ;
          rc = omagentParseCommand ( pCollectionName, &pCommand ) ;
          if ( SDB_OK != rc )
          {
-            ossPrintf( "Failed to parse omsvc's command[%s] [rc:%d]"OSS_NEWLINE,
-                       pCollectionName, rc ) ;
+            PD_LOG( PDERROR, "Failed to parse omsvc's command[%s] [rc:%d]",
+                    pCollectionName, rc ) ;
             goto error ;
          }
          rc = omagentInitCommand( pCommand, flags, numToSkip, numToReturn,
@@ -210,11 +257,13 @@ namespace CLSMGR
                                   pHintBuffer ) ;
          if ( SDB_OK != rc )
          {
+            PD_LOG( PDERROR, "Failed to init omsvc's command for omagent, rc = %d", rc ) ;
             goto error ;
          }
-         rc = rtnRunCommand( pCommand, objBuff ) ;
+         rc = omagentRunCommand( pCommand, ppBody, bodyLen, returnNum ) ;
          if ( SDB_OK != rc )
          {
+            PD_LOG( PDERROR, "Failed to run omsvc's command, rc = %d", rc ) ;
             goto error ;
          }
       }
@@ -223,11 +272,9 @@ namespace CLSMGR
       {
          omagentReleaseCommand( &pCommand ) ;
       }
-      ossPrintf( "Making reply package for omsvc, err = %d"OSS_NEWLINE, rc ) ;
-
       return rc ;
    error:
-      goto error ;
+    goto done ;
    }
 
 } // namespace CLSMGR

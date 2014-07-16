@@ -1,22 +1,19 @@
 #include "core.hpp"
 #include "ossUtil.hpp"
+#include "ossTypes.hpp"
 #include "msgMessage.hpp"
+#include "pd.hpp"
 #include "omagent.hpp"
+#include "sptUsrSsh.hpp"
+#include "sptUsrCmd.hpp"
+#include "sptUsrFile.hpp"
+#include "sptUsrSystem.hpp"
 
 namespace CLSMGR
 {
-   // _omagentObjBuff
+   BOOLEAN hasLoadClass = FALSE ;
 /*
-   _omagentObjBuff::_omagentObjBuf ( _omagentObjBuff &right )
-   {
-
-   }
-
-   _omagentObjBuff& _omagentObjBuff::operator= ( _omagentObjBuff &right )
-   {
-
-   }
-*/
+   // _omagentObjBuff
    _omagentObjBuff::~_omagentObjBuff ()
    {
       if ( _pBuff )
@@ -48,104 +45,109 @@ namespace CLSMGR
    error:
      goto done ;
    }
-
-/*
-   omagent control func
 */
 
-   BOOLEAN omagentIsCommand ( const CHAR *name )
-   {
-      if ( name && '$' == name[0] )
-      {
-         return TRUE ;
-      }
-      return FALSE ;
-   }
-
-   INT32 omagentParseCommand ( const CHAR *name, _omagentCommand **ppCommand )
-   {
-      INT32 rc = SDB_INVALIDARG ;
-      if ( ppCommand && omagentIsCommand ( name ) )
-      {
-         *ppCommand = getOmagentCmdBuilder()->create ( &name[1] ) ;
-         if ( *ppCommand )
-         {
-            rc = SDB_OK ;
-         }
-      }
-      return rc ;
-   }
-
-
-   INT32 omagentInitCommand ( _omagentCommand *pCommand ,INT32 flags,
-                              INT64 numToSkip,
-                              INT64 numToReturn, const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff, const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff )
+   // get spider monkey engine
+   _sptScope* getSptScope ()
    {
       INT32 rc = SDB_OK ;
-      if ( !pCommand )
+      _sptContainer container ;
+      static _sptScope *scope = container.newScope( SPT_SCOPE_TYPE_SP ) ;
+      SDB_ASSERT( scope, "Failed to get spt scope" ) ;
+      if ( !hasLoadClass )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         rc = scope->loadUsrDefObj<_sptUsrSsh>() ;
+         PD_LOG( PDERROR, "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
+         rc = scope->loadUsrDefObj<_sptUsrCmd>() ;
+         PD_LOG( PDERROR, "Failed to load class _sptUsrCmd, rc = %d", rc ) ;
+         rc = scope->loadUsrDefObj<_sptUsrFile>() ;
+         PD_LOG( PDERROR, "Failed to load class _sptUsrFile, rc = %d", rc ) ;
+         rc = scope->loadUsrDefObj<_sptUsrSystem>() ;
+         PD_LOG( PDERROR, "Failed to load class _sptUsrSystem, rc = %d", rc ) ;
+         hasLoadClass = TRUE ;
       }
-      try
-      {
-         pCommand->init ( flags, numToSkip, numToReturn, pMatcherBuff,
-                          pSelectBuff, pOrderByBuff, pHintBuff ) ;
-      }
-      catch ( std::exception &e )
-      {
-            ossPrintf ( "omagent init command[%s] exception[%s]"OSS_NEWLINE,
-                        pCommand->name(), e.what() ) ;
-            rc = SDB_INVALIDARG ;
-      }
-   done:
+      return scope ;
+   }
+
+   // get bson field
+   INT32 omagentGetIntElement ( const BSONObj &obj, const CHAR *fieldName,
+                                INT32 &value )
+   {
+      SINT32 rc = SDB_OK ;
+      SDB_ASSERT ( fieldName, "field name can't be NULL" ) ;
+      BSONElement ele = obj.getField ( fieldName ) ;
+      PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
+                 "Can't locate field '%s': %s",
+                 fieldName,
+                 obj.toString().c_str() ) ;
+      PD_CHECK ( ele.isNumber(), SDB_INVALIDARG, error, PDDEBUG,
+                 "Unexpected field type : %s, supposed to be Integer",
+                 obj.toString().c_str()) ;
+      value = ele.numberInt() ;
+   done :
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
-   INT32 omagentRunCommand ( _omagentCommand *pCommand, omagentObjBuff &objBuff )
+   INT32 omagentGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
+                                   const CHAR **value )
    {
       INT32 rc = SDB_OK ;
-      if ( !pCommand )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      try
-      {
-         rc = pCommand->doit ( objBuff ) ;
-      }
-      catch ( std::exception &e )
-      {
-            ossPrintf ( "omagent run command[%s] exception[%s]"OSS_NEWLINE,
-                        pCommand->name(), e.what() ) ;
-            rc = SDB_INVALIDARG ;
-      }
-
-      if ( SDB_OK != rc  )
-      {
-         ossPrintf ( "omagent run command[%s] failed[rc=%d]"OSS_NEWLINE,
-                     pCommand->name(), rc ) ;
-      }
-
-   done:
+      SDB_ASSERT ( fieldName && value, "field name and value can't be NULL" ) ;
+      BSONElement ele = obj.getField ( fieldName ) ;
+      PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
+                 "Can't locate field '%s': %s",
+                 fieldName,
+                 obj.toString().c_str() ) ;
+      PD_CHECK ( String == ele.type(), SDB_INVALIDARG, error, PDDEBUG,
+                 "Unexpected field type : %s, supposed to be String",
+                 obj.toString().c_str()) ;
+      *value = ele.valuestr() ;
+   done :
       return rc ;
-   error:
+   error :
       goto done ;
    }
 
-   INT32 omagentReleaseCommand ( _omagentCommand **ppCommand )
+   INT32 omagentGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
+                                BSONObj &value )
    {
-     INT32 rc = SDB_OK ;
-      if ( ppCommand && *ppCommand )
-      {
-         getRtnCmdBuilder()->release( *ppCommand ) ;
-         *ppCommand = NULL ;
-      }
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT ( fieldName , "field name can't be NULL" ) ;
+      BSONElement ele = obj.getField ( fieldName ) ;
+      PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
+                 "Can't locate field '%s': %s",
+                 fieldName,
+                 obj.toString().c_str() ) ;
+      PD_CHECK ( Object == ele.type(), SDB_INVALIDARG, error, PDDEBUG,
+                 "Unexpected field type : %s, supposed to be Object",
+                 obj.toString().c_str()) ;
+      value = ele.embeddedObject() ;
+   done :
       return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 omagentGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
+                                    BOOLEAN &value )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT ( fieldName , "field name can't be NULL" ) ;
+      BSONElement ele = obj.getField ( fieldName ) ;
+      PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
+                 "Can't locate field '%s': %s",
+                 fieldName,
+                 obj.toString().c_str() ) ;
+      PD_CHECK ( Bool == ele.type(), SDB_INVALIDARG, error, PDDEBUG,
+                 "Unexpected field type : %s, supposed to be Bool",
+                 obj.toString().c_str()) ;
+      value = ele.boolean() ;
+   done :
+      return rc ;
+   error :
+      goto done ;
    }
 
 }
