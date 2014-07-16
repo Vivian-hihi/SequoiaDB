@@ -3,6 +3,7 @@
 <topic id="topic_tlf_gty_wj">
   <title>卸载</title>
   <body>
+    <section><title>完全卸载</title>
     <note>集群环境需要在每台数据执行如下操作：</note>
     <ul>
       <li><p>以root身份登陆数据库服务器</p></li>
@@ -31,6 +32,23 @@ vm.dirty_expire_centisecs = 50000
 vm.vfs_cache_pressure = 200
 vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB></codeblock>
       </li>
-    </ul>
+    </ul></section>
+    <section><title>升级卸载</title>
+      <p><b>卸载旧版本</b></p>
+    <ul>
+      <li><p>以root身份登陆数据库服务器</p></li>
+      <li>执行如下命令停止SequoiaDB配置服务程序<codeblock>service sdbcm stop</codeblock></li>
+      <li>执行如下命令停止SequoiaDB数据库服务程序<codeblock>/opt/sequoiadb/bin/sdbstop</codeblock></li>
+      <li>执行如下命令命令备份SequoiaDB执行程序以及配置文件<codeblock>scp /opt/sequoiadb/bin/sequoiadb /home/sequoiadb_bak
+scp -rf /opt/sequoiadb/conf /home/sequoiadb_conf_bak</codeblock></li>
+      <li>执行如下命令卸载SequoiaDB软件<codeblock>/opt/sequoiadb/uninstall</codeblock></li>      
+    </ul><p><note>分别在所有数据库服务器上执行完上述操作后，再执行以下操作：</note></p>
+      <b>安装新版本</b>
+      <ul>
+        <li><p>具体安装步骤参见《SequoiaDB服务器安装》章节</p></li>
+        <li><p>待新版本安装成功后，执行以下命令删除备份文件：<codeblock>rm -rf /home/sequoiadb_bak
+rm -rf /home/sequoiadb_conf_bak</codeblock></p></li>
+      </ul>      
+    </section>
   </body>
 </topic>

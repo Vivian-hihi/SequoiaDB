@@ -79,9 +79,9 @@ del db</pre>
           
           <pre class="pre codeblock"># 连接到数据库
 try:
-db = client()
+   db = client()
 except SequoiaDBError :
-pysequoiadb.cout('Cannot allocate client')
+   pysequoiadb.cout('Cannot allocate client')
 
 # success to connect to db
 cs_name = 'foo'
@@ -93,7 +93,7 @@ if const.SDB_OK != rc:
 cl_name = 'bar'
 rc, cs = cs.create_collection(cl_name)
 if const.SDB_OK != rc:
-pysequoiadb.cout("create collection[%s] failed, %s" % (cl_name, pysequoiadb.getErr(rc)))
+   pysequoiadb.cout("create collection[%s] failed, %s" % (cl_name, pysequoiadb.getErr(rc)))
 </pre>
 <div class="note note"><span class="notetitle">Note:</span> 
   <p class="p">在创建集合“bar”时并没有附加分区、压缩等信息，详情请查阅<a class="xref" href="../../../../../Python/html/index.html">Python API</a></p>

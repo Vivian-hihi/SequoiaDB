@@ -1,13 +1,13 @@
-#Tue Nov 19 14:06:26 CST 2013
+#Wed Jul 16 15:07:11 CST 2014
 copytosourcelist=
-hreftargetslist=uninstall_en.xml
+hreftargetslist=uninstall.xml
 fullditatopicfile=fullditatopic.list
 fullditamapandtopicfile=fullditamapandtopic.list
-fullditatopiclist=uninstall_en.xml
-fullditamapandtopiclist=uninstall_en.xml
+fullditatopiclist=uninstall.xml
+fullditamapandtopiclist=uninstall.xml
 hrefditatopicfile=hrefditatopic.list
 hrefditatopiclist=
-user.input.file=uninstall_en.xml
+user.input.file=uninstall.xml
 subtargetsfile=subtargets.list
 fullditamapfile=fullditamap.list
 copytotarget2sourcemapfile=copytotarget2sourcemap.list
@@ -37,7 +37,7 @@ codereffile=coderef.list
 keylist=
 codereflist=
 user.input.file.listfile=usr.input.file.list
-user.input.dir=C\:\\sequoiadb\\doc\\installation\\uninstall\\topics
+user.input.dir=E\:\\sequoiadb\\doc\\installation\\uninstall\\topics
 uplevels=
 tempdirToinputmapdir.relative.value=
 conrefpushfile=conrefpush.list

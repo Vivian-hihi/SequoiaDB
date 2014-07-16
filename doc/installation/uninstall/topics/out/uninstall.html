@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="卸载"/>
-<meta name="description" content="集群环境需要在每台数据执行如下操作： 以root身份登陆数据库服务器； 执行如下命令停止SequoiaDB配置服务程序： service sdbcm stop 执行如下命令停止SequoiaDB数据库服务程序： /opt/sequoiadb/bin/sdbstop 执行如下命令卸载SequoiaDB软件： /opt/sequoiadb/uninstall 回退系统配置参数： 1.删除配置文件 ..."/>
+<meta name="description" content="完全卸载 集群环境需要在每台数据执行如下操作： 以root身份登陆数据库服务器 执行如下命令停止SequoiaDB配置服务程序 service sdbcm stop 执行如下命令停止SequoiaDB数据库服务程序 /opt/sequoiadb/bin/sdbstop 执行如下命令卸载SequoiaDB软件 /opt/sequoiadb/uninstall 回退系统配置参数 1.删除配置文件 ..."/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_tlf_gty_wj"/>
 <link rel="stylesheet" type="text/css" href="commonltr.css"/>
@@ -35,24 +35,25 @@
   <h1 class="title topictitle1">卸载</h1>
 
   <div class="body">
+    <div class="section"><h2 class="title sectiontitle">完全卸载</h2>
     <div class="note note"><span class="notetitle">Note:</span> 集群环境需要在每台数据执行如下操作：</div>
 
     <ul class="ul">
-      <li class="li"><p class="p">以root身份登陆数据库服务器；</p>
+      <li class="li"><p class="p">以root身份登陆数据库服务器</p>
 </li>
 
-      <li class="li">执行如下命令停止SequoiaDB配置服务程序：<pre class="pre codeblock">service sdbcm stop</pre>
+      <li class="li">执行如下命令停止SequoiaDB配置服务程序<pre class="pre codeblock">service sdbcm stop</pre>
 </li>
 
-      <li class="li">执行如下命令停止SequoiaDB数据库服务程序：<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstop</pre>
+      <li class="li">执行如下命令停止SequoiaDB数据库服务程序<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstop</pre>
 </li>
 
-      <li class="li">执行如下命令卸载SequoiaDB软件：<pre class="pre codeblock">/opt/sequoiadb/uninstall</pre>
+      <li class="li">执行如下命令卸载SequoiaDB软件<pre class="pre codeblock">/opt/sequoiadb/uninstall</pre>
 </li>
 
-      <li class="li">回退系统配置参数：
+      <li class="li">回退系统配置参数
           <p class="p">1.删除配置文件
-          /etc/security/limits.conf 中的如下配置参数</p>
+          /etc/security/limits.conf 中的如下配置参数：</p>
 <pre class="pre codeblock"> •	&lt;#domain&gt;      &lt;type&gt;    &lt;item&gt;       &lt;value&gt;
  •	*               soft      core       0
  •	*               soft      data       unlimited
@@ -60,7 +61,7 @@
  •	*               soft      rss        unlimited
  •      *               soft      as         unlimited</pre>
 
-        <p class="p">2.删除配置文件 /etc/sysctl.conf中的如下配置参数
+        <p class="p">2.删除配置文件 /etc/sysctl.conf中的如下配置参数：
         </p>
 <pre class="pre codeblock">vm.swappiness = 0
 vm.dirty_ratio = 100
@@ -72,6 +73,45 @@ vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;</pre>
       </li>
 
     </ul>
+</div>
+
+    <div class="section"><h2 class="title sectiontitle">升级卸载旧版本</h2>
+      <p class="p"><strong class="ph b">卸载旧版本</strong></p>
+
+    <ul class="ul">
+      <li class="li"><p class="p">以root身份登陆数据库服务器</p>
+</li>
+
+      <li class="li">执行如下命令停止SequoiaDB配置服务程序<pre class="pre codeblock">service sdbcm stop</pre>
+</li>
+
+      <li class="li">执行如下命令停止SequoiaDB数据库服务程序<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstop</pre>
+</li>
+
+      <li class="li">执行如下命令命令备份SequoiaDB执行程序以及配置文件<pre class="pre codeblock">scp /opt/sequoiadb/bin/sequoiadb /home/sequoiadb_bak
+scp -rf /opt/sequoiadb/conf /home/sequoiadb_conf_bak</pre>
+</li>
+
+      <li class="li">执行如下命令卸载SequoiaDB软件<pre class="pre codeblock">/opt/sequoiadb/uninstall</pre>
+</li>
+      
+    </ul>
+<div class="p"><div class="note note"><span class="notetitle">Note:</span> 分别在所有数据库服务器上执行完上述操作后，再执行以下操作：</div>
+</div>
+
+      <strong class="ph b">安装新版本</strong>
+      <ul class="ul">
+        <li class="li"><p class="p">具体安装步骤参见《SequoiaDB服务器安装》章节</p>
+</li>
+
+        <li class="li"><div class="p">待新版本安装成功后，执行以下命令删除备份文件：<pre class="pre codeblock">rm -rf /home/sequoiadb_bak
+rm -rf /home/sequoiadb_conf_bak</pre>
+</div>
+</li>
+
+      </ul>
+      
+    </div>
 
   </div>
 
@@ -84,7 +124,7 @@ vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.5
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>
