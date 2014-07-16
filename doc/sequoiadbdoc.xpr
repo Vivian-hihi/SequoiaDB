@@ -576,6 +576,12 @@
                 <file name="installation/uninstall/uninstall_en.ditamap"/>
                 <file name="installation/uninstall/uninstall.ditamap"/>
             </folder>
+            <folder name="upgrade">
+                <folder name="topics">
+                    <file name="installation/upgrade/topics/upgrade.dita"/>
+                </folder>
+                <file name="installation/upgrade/upgrade.ditamap"/>
+            </folder>
             <folder name="web_manage">
                 <folder name="topics">
                     <file name="installation/web_manage/topics/linux_en.dita"/>

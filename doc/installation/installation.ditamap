@@ -17,5 +17,6 @@
   <anchorref href="configuration_start/configuration_start.ditamap"/>
   <topicref href="topics/testEM.dita"></topicref>
   <anchorref href="uninstall/uninstall.ditamap"/>
+  <anchorref href="upgrade/upgrade.ditamap"/>
  </topicref>
 </map>
