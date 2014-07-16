@@ -112,6 +112,7 @@ namespace engine
       if ( NULL == _channel )
       {
          PD_LOG( PDERROR, "failed to open channel in sesison" ) ;
+         _getLastError( _errmsg ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -119,6 +120,7 @@ namespace engine
       rc = libssh2_channel_exec( _channel, cmd ) ;
       if ( SDB_OK != rc )
       {
+         _getLastError( _errmsg ) ;
          PD_LOG( PDERROR, "failed to exec cmd on remote node:%d", rc ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -153,7 +155,6 @@ namespace engine
       _clearChannel() ;
       return rc ;
    error:
-      _getLastError( _errmsg ) ;
       goto done ;
    }
 
@@ -169,6 +170,7 @@ namespace engine
       readSize = 0 ;
       if ( libssh2_channel_eof( _channel ) )
       {
+         _getLastError( _errmsg ) ;
          PD_LOG( PDDEBUG, "get eof from the channel" ) ;
          goto done ;
       }
@@ -225,7 +227,6 @@ namespace engine
       _clearChannel() ;
       return rc ;
    error:
-      _getLastError( _errmsg ) ;
       goto done ;
    }
 
@@ -256,7 +257,6 @@ namespace engine
       _clearChannel() ;
       return rc ;
    error:
-      _getLastError( _errmsg ) ;
       goto done ;
    }
 
@@ -270,6 +270,7 @@ namespace engine
          rc = libssh2_channel_close( _channel ) ;
          if ( SDB_OK != rc )
          {
+            _getLastError( _errmsg ) ;
             PD_LOG( PDERROR, "failed to close channel:%d", rc ) ;
             goto error ;
          }
@@ -328,6 +329,7 @@ namespace engine
          }
          else
          {
+            _getLastError( _errmsg ) ;
             PD_LOG( PDERROR, "failed to send data:%lld", once ) ;
             rc = SDB_SYS ;
             goto error ;
@@ -360,6 +362,7 @@ namespace engine
          }
          else
          {
+            _getLastError( _errmsg ) ;
             PD_LOG( PDERROR, "failed to recv data:%lld", once ) ;
             rc = SDB_SYS ;
             goto error ;
@@ -395,6 +398,7 @@ namespace engine
       _channel = libssh2_scp_send64( _session, dst, 0755, fileSize, 0, 0 ) ;
       if ( NULL == _channel )
       {
+         _getLastError( _errmsg ) ;
          PD_LOG( PDERROR, "failed to create scp channel" ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -465,6 +469,7 @@ namespace engine
       _channel = libssh2_scp_recv( _session, remote, &sb ) ;
       if ( NULL == _channel )
       {
+         _getLastError( _errmsg ) ;
          PD_LOG( PDERROR, "failed to crate scp recv channel" ) ;
          rc = SDB_SYS ;
          goto error ;
