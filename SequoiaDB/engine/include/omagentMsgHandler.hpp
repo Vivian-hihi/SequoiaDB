@@ -33,23 +33,27 @@
 #ifndef OMAGENT_MSG_HANDLER_HPP_
 #define OMAGENT_MSG_HANDLER_HPP_
 
+#include "netDef.hpp"
+#include "netRouteAgent.hpp"
 #include "netMsgHandler.hpp"
+
+using namespace engine;
 
 namespace CLSMGR
 {
    class _omagentMsgHandler : public _netMsgHandler
    {
-   		public:
-   		   _omagentMsgHandler () ;
-   		   virtual ~_omagentMsgHandler () ;
-   		   
-   		   virtual INT32 handleMsg ( const NET_HANDLE &handle,
-   		                             const _MsgHeader *header,
-   		                             const CHAR *msg ) ;
-            virtual INT32 handleClose ( const NET_HANDLE *handle,
-                                        _MsgRouteID id ) ;                                      
-   }
-};
+      public:
+         _omagentMsgHandler () ;
+         virtual ~_omagentMsgHandler () ;
+
+         virtual INT32 handleMsg ( const NET_HANDLE &handle,
+                                   const _MsgHeader *header,
+                                   const CHAR *msg ) ;
+         virtual INT32 handleClose ( const NET_HANDLE *handle,
+                                     _MsgRouteID id ) ;
+   };
+}
 
 
 #endif // OMAGENT_MSG_HANDLER_HPP_
