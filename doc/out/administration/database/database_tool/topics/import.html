@@ -411,89 +411,125 @@
 
     <div class="p">例子：<pre class="pre codeblock">name string default "Jack", age int default 18, phone string</pre>
  </div>
-  
+
+    <p class="p">数据类型是可选的，不填则程序自动判断类型，判断以上面表格为准。</p>
+
+    <div class="section"><h2 class="title sectiontitle">用法</h2>
+      <div class="p">在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型 是csv，导入文件为test.csv。
+        <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields name string default "Jack", age int default 18, phone string</pre>
+
+        <div class="note note"><span class="notetitle">Note:</span> 指定字段可以用命令行指定，也可以在导入文件的首行指定。如果在命令行指定了--fields，--headerline设为true，导入工具将会优先使用命令行的指定字段并且跳过导入文件的首行。</div>
+</div>
+
+      <ul class="ul">
+        <li class="li"><p class="p">例子一：导入文件是csv，文件名是test.csv，导入至集合空间foo的集合bar中。</p>
+<p class="p">以下是导入文件的内容：</p>
+
+          <pre class="pre codeblock">"Jack",18,"China"
+"Mike",20,"USA"</pre>
+<p class="p">导入命令：</p>
+
+        <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar –fields 'name string default "Anonymous", age int, country'</pre>
+</li>
+
+        <li class="li"><p class="p">例子二：导入文件是csv，文件名是test.csv，导入至集合空间foo的集合bar中。</p>
+<p class="p">以下是导入文件的内容：</p>
+
+          <pre class="pre codeblock">name, age, country
+"Jack",18,"China"
+"Mike",20,"USA"</pre>
+<p class="p">导入命令：</p>
+
+          <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar –fields 'name string default "Anonymous", age int, country' --headerline true</pre>
+</li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> <p class="p">由于例子二首行已经指定字段，但是要重新指定字段，那么在命令行中设置--headerline true，并且设置--fields 'name string default "Anonymous", age int, country'，那么导入工具会使用--fields为指定字段并忽略文件首行的字段了。</p>
+</div>
+      
+    </div>
+    
     <div class="section"><h2 class="title sectiontitle">指定的类型与数据：</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d13950e564" class="stentry">指定的类型</th>
+          <th valign="bottom" align="left" id="d13950e616" class="stentry">指定的类型</th>
 
-          <th valign="bottom" align="left" id="d13950e567" class="stentry">支援的数据类型</th>
+          <th valign="bottom" align="left" id="d13950e619" class="stentry">支援的数据类型</th>
 
-          <th valign="bottom" align="left" id="d13950e570" class="stentry">注意</th>
+          <th valign="bottom" align="left" id="d13950e622" class="stentry">注意</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13950e564" class="stentry">int(integer)</td>
+          <td valign="top" headers="d13950e616" class="stentry">int(integer)</td>
 
-          <td valign="top" headers="d13950e567" class="stentry">int，string，bool</td>
+          <td valign="top" headers="d13950e619" class="stentry">int，string，bool</td>
 
-          <td valign="top" headers="d13950e570" class="stentry">bool类型，true转换1，false转换0
+          <td valign="top" headers="d13950e622" class="stentry">bool类型，true转换1，false转换0
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13950e564" class="stentry">long</td>
+          <td valign="top" headers="d13950e616" class="stentry">long</td>
 
-          <td valign="top" headers="d13950e567" class="stentry">long，string，int，bool</td>
+          <td valign="top" headers="d13950e619" class="stentry">long，string，int，bool</td>
 
-          <td valign="top" headers="d13950e570" class="stentry">bool类型，true转换1，false转换0
+          <td valign="top" headers="d13950e622" class="stentry">bool类型，true转换1，false转换0
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13950e564" class="stentry">bool(boolean)</td>
+          <td valign="top" headers="d13950e616" class="stentry">bool(boolean)</td>
 
-          <td valign="top" headers="d13950e567" class="stentry">bool，string，int，long</td>
+          <td valign="top" headers="d13950e619" class="stentry">bool，string，int，long</td>
 
-          <td valign="top" headers="d13950e570" class="stentry">int和long类型，0转换false，不等于0转换true</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13950e564" class="stentry">double</td>
-
-          <td valign="top" headers="d13950e567" class="stentry">double，string，int</td>
-
-          <td valign="top" headers="d13950e570" class="stentry"> </td>
+          <td valign="top" headers="d13950e622" class="stentry">int和long类型，0转换false，不等于0转换true</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13950e564" class="stentry">string</td>
+          <td valign="top" headers="d13950e616" class="stentry">double</td>
 
-          <td valign="top" headers="d13950e567" class="stentry">int，long，bool，double，string，timestamp，date，null</td>
+          <td valign="top" headers="d13950e619" class="stentry">double，string，int</td>
 
-          <td valign="top" headers="d13950e570" class="stentry"> </td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13950e564" class="stentry">timestamp</td>
-
-          <td valign="top" headers="d13950e567" class="stentry">string，long</td>
-
-          <td valign="top" headers="d13950e570" class="stentry">如果数据是string，如“2014-01-01-10.30.00.000000”，“1388543400000”，如果是long，如1388543400000，这两种格式是正确的，数值代表的是毫秒单位</td>
+          <td valign="top" headers="d13950e622" class="stentry"> </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13950e564" class="stentry">date</td>
+          <td valign="top" headers="d13950e616" class="stentry">string</td>
 
-          <td valign="top" headers="d13950e567" class="stentry">string，long</td>
+          <td valign="top" headers="d13950e619" class="stentry">int，long，bool，double，string，timestamp，date，null</td>
 
-          <td valign="top" headers="d13950e570" class="stentry">如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的秒单位</td>
+          <td valign="top" headers="d13950e622" class="stentry"> </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13950e564" class="stentry">null</td>
+          <td valign="top" headers="d13950e616" class="stentry">timestamp</td>
 
-          <td valign="top" headers="d13950e567" class="stentry"> </td>
+          <td valign="top" headers="d13950e619" class="stentry">string，long</td>
 
-          <td valign="top" headers="d13950e570" class="stentry">指定了数据类型为null，那么无论数据是什么，都是null</td>
+          <td valign="top" headers="d13950e622" class="stentry">如果数据是string，如“2014-01-01-10.30.00.000000”，“1388543400000”，如果是long，如1388543400000，这两种格式是正确的，数值代表的是毫秒单位</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13950e616" class="stentry">date</td>
+
+          <td valign="top" headers="d13950e619" class="stentry">string，long</td>
+
+          <td valign="top" headers="d13950e622" class="stentry">如果数据是string，如“2014-01-01”，“1388543400”，如果是long，如1388543400，这两种格式是正确的，数值代表的秒单位</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13950e616" class="stentry">null</td>
+
+          <td valign="top" headers="d13950e619" class="stentry"> </td>
+
+          <td valign="top" headers="d13950e622" class="stentry">指定了数据类型为null，那么无论数据是什么，都是null</td>
 
         </tr>
 </table>
 
     </div>
-
-    <p class="p">数据类型是可选的，不填则程序自动判断类型，判断以上面表格为准。</p>
-    
+        
     <p class="p">数据类型优先级：</p>
 
     <p class="p">1.不指定数据类型（不支援特殊数据类型）：程序自动判断类型，优先级是null &gt; bool &gt; int &gt; double &gt; long &gt; string</p>
