@@ -67,8 +67,8 @@ SDB_EXTERN_C_START
      int len = getEnBase64Size ( strLen ) ;
      char *out = (char *)malloc( len ) ;
      memset( out, 0, len ) ;
-     base64Encode( str, out, len ) ;
-     print ( out ) ;
+     base64Encode( str, strLen, out, len ) ;
+     printf( "out is: %s\n", out ) ;
      free( out ) ;
     \endcode
 */
@@ -87,7 +87,7 @@ SDB_EXPORT int base64Encode ( const char *s, int in_size, char *out, int out_siz
      char *out = (char *)malloc( len ) ;
      memset( out, 0, len ) ;
      base64Decode( str, out, len ) ;
-     print ( out ) ;
+     printf( "out is: %s\n", out ) ;
      free( out ) ;
    \endcode
 */
