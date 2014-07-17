@@ -61,7 +61,6 @@ namespace engine
       // clear the predicateSet
       _predicateSet.clear() ;
 
-      _logicType = CLS_CATA_LOGIC_INVALID;
       PD_TRACE_EXIT ( SDB_CLSCATAPREDICATETREE_CLEAR );
    }
 
