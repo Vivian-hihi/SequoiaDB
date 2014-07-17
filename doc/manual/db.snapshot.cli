@@ -30,8 +30,7 @@ current status of system.
 .sp 2
 \fBsnapType (list)\fR
 .br
-       Snapshot type, the value of snapshot type is in the range
-       from 0 to 7.
+       Snapshot type.Please refer to Snapshot.
 .sp 2
 \fBcond (json object)\fR
 .br
@@ -39,6 +38,16 @@ current status of system.
        of the nodes and replica groups that match the selecting
        conditions specified in the 'cond' field. When the field
        is null, return the cluster's information.
+.sp 2
+\fBsel (json object)\fR
+.br
+       Selects the returned field. Returns all the fields when it
+       is null.
+.sp 2
+\fBsort (json object)\fR
+.br
+       Sorts the returned records according to the selected
+       fields. 1 for ascending order, -1 for descending order.
 .sp 2
        \fBFormat\fR
 .br
@@ -55,7 +64,8 @@ current status of system.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  The value of snapType is in the range from 0 to 7.
+   *  For more details on the value of snapType, please refer to
+   Snapshot.
 .sp 2
    *  The parameter "sel" is a json object. The value of field is
    often specified as a null string. If the parameters are
@@ -70,9 +80,9 @@ current status of system.
 .SH "Examples"
 
 .sp 2
-Set the value of "snapType" as 0:
+Set the value of "snapType" as SDB_SNAP_CONTEXTS:
 .sp 2
-db.snapshot(0)
+db.snapshot(SDB_SNAP_CONTEXTS)
 .sp 2
 Returns context snapshot of the entire cluster:
 .sp 2
@@ -163,11 +173,11 @@ Returns context snapshot of the entire cluster:
 Get the snapshot of the specified replica group by group name or
 group ID, for example:
 .sp 2
-db.snapshot(0,{GroupName:'data1'})
+db.snapshot(SDB_SNAP_CONTEXTS,{GroupName:'data1'})
 .sp 2
 Return the snapshot of a group named "data1".
 .sp 2
-db.snapshot(0,{GroupID:1000})
+db.snapshot(SDB_SNAP_CONTEXTS,{GroupID:1000})
 .sp 2
 Return the snapshot of a replica group with a group ID of 1000.
 .sp 2
@@ -230,9 +240,9 @@ Return the snapshot of a replica group with a group ID of 1000.
 Get the snapshot of a node by specifying "group name + host name
 + service name" or "group ID + node ID", for example:
 .sp 2
-db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})
+db.snapshot(SDB_SNAP_CONTEXTS,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})
 .sp 2
-db.snapshot(0,{GroupID:1000,NodeID:1001})
+db.snapshot(SDB_SNAP_CONTEXTS,{GroupID:1000,NodeID:1001})
 .sp 2
 {
 .br
@@ -265,4 +275,4 @@ db.snapshot(0,{GroupID:1000,NodeID:1001})
 Get the snapshot of a node by specifying "host name + service
 name", for example:
 .sp 2
-db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})
+db.snapshot(SDB_SNAP_CONTEXTS,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})
