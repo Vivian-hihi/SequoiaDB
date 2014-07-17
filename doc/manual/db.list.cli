@@ -30,7 +30,7 @@ system status.
 .sp 2
 \fBlistType (Enumeration)\fR
 .br
-       The value of it is in the range from 0 to 7.
+       listType, Please refer to List.
 .sp 2
 \fBcond (json object)\fR
 .br
@@ -67,7 +67,8 @@ system status.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  The value of "listType" is in the range from 0 to 7.
+   *  For more details on the value of "listType", please refer
+   to List .
 .sp 2
    *  The value of "sel" is in the type of json object. The value
    of field is often specified as a null string. If the
@@ -83,11 +84,11 @@ system status.
 .SH "Examples"
 
 .sp 2
-Specify the value of "listType" as 0：
+Specify the value of "listType" as SDB_LIST_CONTEXTS:
 .sp 2
-db.list(0)
+db.list(SDB_LIST_CONTEXTS)
 .sp 2
-Return ：
+Return:
 .sp 2
      {
 .br
@@ -97,11 +98,11 @@ Return ：
 .br
         } ...
 .sp 2
-Specify the value of "listType" as 6：
+Specify the value of "listType" as SDB_LIST_STORAGEUNITS:
 .sp 2
-db.list(6)
+db.list(SDB_LIST_STORAGEUNITS)
 .sp 2
-Return：
+Return:
 .sp 2
     {
 .br
@@ -123,7 +124,7 @@ Return：
 .br
         } 
 .sp 2
-db.list(6,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})
+db.list(SDB_LIST_STORAGEUNITS,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name:1})
 .sp 2
 Return the records that contain the value of "Logical ID" greater
 than 1. Each record just returns two fields: "Name" and "ID". The
