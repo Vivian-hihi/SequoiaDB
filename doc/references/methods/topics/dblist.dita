@@ -69,7 +69,7 @@
       } ...</codeblock>
         </li>
         <li>
-          <p>指定listType的值为6：<codeblock>db.list(6)</codeblock></p>
+          <p>指定listType的值为SDB_LIST_STORAGEUNITS：<codeblock>db.list(SDB_LIST_STORAGEUNITS)</codeblock></p>
           <p>返回：</p>
           <codeblock>    {
         "Name": "foo", 
@@ -84,7 +84,7 @@
         </li>
         <li>
           <p>
-            <codeblock>db.list(6,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})</codeblock>
+            <codeblock>db.list(SDB_LIST_STORAGEUNITS,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})</codeblock>
           </p>
           <p>返回符合条件Logical ID大于1的记录，并且每条记录只返回Name和ID这两个字段，记录按Name字段的值升序排序</p>
           <codeblock>      {
