@@ -138,7 +138,7 @@
         </li>
 
         <li class="li">
-          <div class="p">指定listType的值为6：<pre class="pre codeblock">db.list(6)</pre>
+          <div class="p">指定listType的值为SDB_LIST_STORAGEUNITS：<pre class="pre codeblock">db.list(SDB_LIST_STORAGEUNITS)</pre>
 </div>
 
           <p class="p">返回：</p>
@@ -158,7 +158,7 @@
 
         <li class="li">
           <div class="p">
-            <pre class="pre codeblock">db.list(6,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})</pre>
+            <pre class="pre codeblock">db.list(SDB_LIST_STORAGEUNITS,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})</pre>
 
           </div>
 
@@ -176,7 +176,6 @@
         </li>
 
       </ul>
-
 
     </div>
 
@@ -198,7 +197,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>
