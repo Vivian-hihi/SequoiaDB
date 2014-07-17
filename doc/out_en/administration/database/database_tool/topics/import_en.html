@@ -271,150 +271,188 @@
 
     </div>
 
+    <p class="p">The data type is optional.If the data type is not specified by the user; it will be automatically detected and determined in the standard shown in the above table.</p>
+
+    <div class="section"><h2 class="title sectiontitle">用法</h2>
+      <div class="p">在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型 是csv，导入文件为test.csv。
+        <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Jack", age int default 18, phone string'</pre>
+
+        <div class="note note"><span class="notetitle">Note:</span> 指定字段可以用命令行指定，也可以在导入文件的首行指定。如果在命令行指定了--fields，--headerline设为true，导入工具将会优先使用命令行的指定字段并且跳过导入文件的首行。</div>
+</div>
+
+      <ul class="ul">
+        <li class="li"><p class="p">例子一：导入文件是csv，文件名是test.csv，导入至集合空间foo的集合bar中。</p>
+<p class="p">以下是导入文件的内容：</p>
+
+          <pre class="pre codeblock">"Jack",18,"China"
+"Mike",20,"USA"</pre>
+<p class="p">导入命令：</p>
+
+          <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Anonymous", age int, country'</pre>
+</li>
+
+        <li class="li"><p class="p">例子二：导入文件是csv，文件名是test.csv，导入至集合空间foo的集合bar中。</p>
+<p class="p">以下是导入文件的内容：</p>
+
+          <pre class="pre codeblock">name, age, country
+"Jack",18,"China"
+"Mike",20,"USA"</pre>
+<p class="p">导入命令：</p>
+
+          <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Anonymous", age int, country' --headerline true</pre>
+</li>
+        
+      </ul>
+
+      <div class="note note"><span class="notetitle">Note:</span> <p class="p">由于例子二首行已经指定字段，但是要重新指定字段，那么在命令行中设置--headerline true，并且设置--fields 'name string default "Anonymous", age int, country'，那么导入工具会使用--fields为指定字段并忽略文件首行的字段了。</p>
+</div>
+      
+    </div>
+   
     <div class="section"><h2 class="title sectiontitle">Data types automatically detected by sdbimprt:</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d18117e328" class="stentry">CSV data</th>
+          <th valign="bottom" align="left" id="d18117e380" class="stentry">CSV data</th>
 
-          <th valign="bottom" align="left" id="d18117e331" class="stentry">Data types automatically detected by sdbimprt</th>
+          <th valign="bottom" align="left" id="d18117e383" class="stentry">Data types automatically detected by sdbimprt</th>
 
-          <th valign="bottom" align="left" id="d18117e334" class="stentry">Actual data</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">123</td>
-
-          <td valign="top" headers="d18117e331" class="stentry">number</td>
-
-          <td valign="top" headers="d18117e334" class="stentry">123</td>
+          <th valign="bottom" align="left" id="d18117e386" class="stentry">Actual data</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">123.1</td>
+          <td valign="top" headers="d18117e380" class="stentry">123</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">number</td>
+          <td valign="top" headers="d18117e383" class="stentry">number</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">123.1</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">+123</td>
-
-          <td valign="top" headers="d18117e331" class="stentry">number</td>
-
-          <td valign="top" headers="d18117e334" class="stentry">123</td>
+          <td valign="top" headers="d18117e386" class="stentry">123</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">-123</td>
+          <td valign="top" headers="d18117e380" class="stentry">123.1</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">number</td>
+          <td valign="top" headers="d18117e383" class="stentry">number</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">-123</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">2E+2</td>
-
-          <td valign="top" headers="d18117e331" class="stentry">number</td>
-
-          <td valign="top" headers="d18117e334" class="stentry">200</td>
+          <td valign="top" headers="d18117e386" class="stentry">123.1</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">-2E+2</td>
+          <td valign="top" headers="d18117e380" class="stentry">+123</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">number</td>
+          <td valign="top" headers="d18117e383" class="stentry">number</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">-200</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">0123</td>
-
-          <td valign="top" headers="d18117e331" class="stentry">number</td>
-
-          <td valign="top" headers="d18117e334" class="stentry">123</td>
+          <td valign="top" headers="d18117e386" class="stentry">123</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">"123"</td>
+          <td valign="top" headers="d18117e380" class="stentry">-123</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">string</td>
+          <td valign="top" headers="d18117e383" class="stentry">number</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">123</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">123a</td>
-
-          <td valign="top" headers="d18117e331" class="stentry">string</td>
-
-          <td valign="top" headers="d18117e334" class="stentry">123a</td>
+          <td valign="top" headers="d18117e386" class="stentry">-123</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">"ab""c"</td>
+          <td valign="top" headers="d18117e380" class="stentry">2E+2</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">string</td>
+          <td valign="top" headers="d18117e383" class="stentry">number</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">ab"c</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">"{a:1}"</td>
-
-          <td valign="top" headers="d18117e331" class="stentry">string</td>
-
-          <td valign="top" headers="d18117e334" class="stentry">{a:1}</td>
+          <td valign="top" headers="d18117e386" class="stentry">200</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">"true"</td>
+          <td valign="top" headers="d18117e380" class="stentry">-2E+2</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">string</td>
+          <td valign="top" headers="d18117e383" class="stentry">number</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">true</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">"false"</td>
-
-          <td valign="top" headers="d18117e331" class="stentry">string</td>
-
-          <td valign="top" headers="d18117e334" class="stentry">false</td>
+          <td valign="top" headers="d18117e386" class="stentry">-200</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">"null"</td>
+          <td valign="top" headers="d18117e380" class="stentry">0123</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">string</td>
+          <td valign="top" headers="d18117e383" class="stentry">number</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">null</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">true</td>
-
-          <td valign="top" headers="d18117e331" class="stentry">boolean</td>
-
-          <td valign="top" headers="d18117e334" class="stentry">true</td>
+          <td valign="top" headers="d18117e386" class="stentry">123</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">false</td>
+          <td valign="top" headers="d18117e380" class="stentry">"123"</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">boolean</td>
+          <td valign="top" headers="d18117e383" class="stentry">string</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">false</td>
+          <td valign="top" headers="d18117e386" class="stentry">123</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e328" class="stentry">null</td>
+          <td valign="top" headers="d18117e380" class="stentry">123a</td>
 
-          <td valign="top" headers="d18117e331" class="stentry">null</td>
+          <td valign="top" headers="d18117e383" class="stentry">string</td>
 
-          <td valign="top" headers="d18117e334" class="stentry">null</td>
+          <td valign="top" headers="d18117e386" class="stentry">123a</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e380" class="stentry">"ab""c"</td>
+
+          <td valign="top" headers="d18117e383" class="stentry">string</td>
+
+          <td valign="top" headers="d18117e386" class="stentry">ab"c</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e380" class="stentry">"{a:1}"</td>
+
+          <td valign="top" headers="d18117e383" class="stentry">string</td>
+
+          <td valign="top" headers="d18117e386" class="stentry">{a:1}</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e380" class="stentry">"true"</td>
+
+          <td valign="top" headers="d18117e383" class="stentry">string</td>
+
+          <td valign="top" headers="d18117e386" class="stentry">true</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e380" class="stentry">"false"</td>
+
+          <td valign="top" headers="d18117e383" class="stentry">string</td>
+
+          <td valign="top" headers="d18117e386" class="stentry">false</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e380" class="stentry">"null"</td>
+
+          <td valign="top" headers="d18117e383" class="stentry">string</td>
+
+          <td valign="top" headers="d18117e386" class="stentry">null</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e380" class="stentry">true</td>
+
+          <td valign="top" headers="d18117e383" class="stentry">boolean</td>
+
+          <td valign="top" headers="d18117e386" class="stentry">true</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e380" class="stentry">false</td>
+
+          <td valign="top" headers="d18117e383" class="stentry">boolean</td>
+
+          <td valign="top" headers="d18117e386" class="stentry">false</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e380" class="stentry">null</td>
+
+          <td valign="top" headers="d18117e383" class="stentry">null</td>
+
+          <td valign="top" headers="d18117e386" class="stentry">null</td>
 
         </tr>
 </table>
@@ -435,84 +473,82 @@
     <div class="section"><h2 class="title sectiontitle">Data and Specified types:</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d18117e575" class="stentry">Specified types</th>
+          <th valign="bottom" align="left" id="d18117e627" class="stentry">Specified types</th>
 
-          <th valign="bottom" align="left" id="d18117e578" class="stentry">Supported data type</th>
+          <th valign="bottom" align="left" id="d18117e630" class="stentry">Supported data type</th>
 
-          <th valign="bottom" align="left" id="d18117e581" class="stentry">Note</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e575" class="stentry">int(interger)</td>
-
-          <td valign="top" headers="d18117e578" class="stentry">int, string, bool</td>
-
-          <td valign="top" headers="d18117e581" class="stentry">bool type, true converts to 1, false converts to 0</td>
+          <th valign="bottom" align="left" id="d18117e633" class="stentry">Note</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e575" class="stentry">long</td>
+          <td valign="top" headers="d18117e627" class="stentry">int(interger)</td>
 
-          <td valign="top" headers="d18117e578" class="stentry">long, string, int, bool</td>
+          <td valign="top" headers="d18117e630" class="stentry">int, string, bool</td>
 
-          <td valign="top" headers="d18117e581" class="stentry">bool type,true converts to 1, false converts to 0</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e575" class="stentry">bool(boolean)</td>
-
-          <td valign="top" headers="d18117e578" class="stentry">bool, string, int, long</td>
-
-          <td valign="top" headers="d18117e581" class="stentry">int and long type, 0 converts to false, any number other than 0 converts to true</td>
+          <td valign="top" headers="d18117e633" class="stentry">bool type, true converts to 1, false converts to 0</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e575" class="stentry">double</td>
+          <td valign="top" headers="d18117e627" class="stentry">long</td>
 
-          <td valign="top" headers="d18117e578" class="stentry">double, string, int</td>
+          <td valign="top" headers="d18117e630" class="stentry">long, string, int, bool</td>
 
-          <td valign="top" headers="d18117e581" class="stentry"> </td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d18117e575" class="stentry">string</td>
-
-          <td valign="top" headers="d18117e578" class="stentry">int, long, bool, double, string, timestamp, date, null</td>
-
-          <td valign="top" headers="d18117e581" class="stentry"> </td>
+          <td valign="top" headers="d18117e633" class="stentry">bool type,true converts to 1, false converts to 0</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e575" class="stentry">timestamp</td>
+          <td valign="top" headers="d18117e627" class="stentry">bool(boolean)</td>
 
-          <td valign="top" headers="d18117e578" class="stentry">string, long</td>
+          <td valign="top" headers="d18117e630" class="stentry">bool, string, int, long</td>
 
-          <td valign="top" headers="d18117e581" class="stentry">string type, like "2014-01-01-10.30.00.000000", "1388543400000"; long type, like 1388543400000, both types are correct, <div class="fig fignone"/>
+          <td valign="top" headers="d18117e633" class="stentry">int and long type, 0 converts to false, any number other than 0 converts to true</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e627" class="stentry">double</td>
+
+          <td valign="top" headers="d18117e630" class="stentry">double, string, int</td>
+
+          <td valign="top" headers="d18117e633" class="stentry"> </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e627" class="stentry">string</td>
+
+          <td valign="top" headers="d18117e630" class="stentry">int, long, bool, double, string, timestamp, date, null</td>
+
+          <td valign="top" headers="d18117e633" class="stentry"> </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d18117e627" class="stentry">timestamp</td>
+
+          <td valign="top" headers="d18117e630" class="stentry">string, long</td>
+
+          <td valign="top" headers="d18117e633" class="stentry">string type, like "2014-01-01-10.30.00.000000", "1388543400000"; long type, like 1388543400000, both types are correct, <div class="fig fignone"/>
 the valuesare in the miliseconds</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e575" class="stentry">date</td>
+          <td valign="top" headers="d18117e627" class="stentry">date</td>
 
-          <td valign="top" headers="d18117e578" class="stentry">string, long</td>
+          <td valign="top" headers="d18117e630" class="stentry">string, long</td>
 
-          <td valign="top" headers="d18117e581" class="stentry">string type, like "2014-01-01", "1388543400"; long type, like 1388543400, both types are correct, the values are in seconds</td>
+          <td valign="top" headers="d18117e633" class="stentry">string type, like "2014-01-01", "1388543400"; long type, like 1388543400, both types are correct, the values are in seconds</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d18117e575" class="stentry">null</td>
+          <td valign="top" headers="d18117e627" class="stentry">null</td>
 
-          <td valign="top" headers="d18117e578" class="stentry"> </td>
+          <td valign="top" headers="d18117e630" class="stentry"> </td>
 
-          <td valign="top" headers="d18117e581" class="stentry">if the data type is specified as null, then the data will be a null no matters what it really is.</td>
+          <td valign="top" headers="d18117e633" class="stentry">if the data type is specified as null, then the data will be a null no matters what it really is.</td>
 
         </tr>
 </table>
 
     </div>
-
-    <p class="p">The data type is optional.If the data type is not specified by the user; it will be automatically detected and determined in the standard shown in the above table.</p>
-    
+       
     <p class="p">Data type priority:</p>
 
     <p class="p">1. When data types are not specified (special data type are not supported): data types will be automatically detected, the priority is in the order of: null &gt; bool &gt; int &gt; double &gt; long &gt; string</p>
@@ -533,7 +569,7 @@ the valuesare in the miliseconds</td>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

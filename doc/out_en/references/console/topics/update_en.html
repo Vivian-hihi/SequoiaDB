@@ -48,134 +48,134 @@
     <div class="section">
       <div class="p">
         <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d112217e18" class="stentry">update operator</th>
+            <th valign="bottom" align="left" id="d112375e18" class="stentry">update operator</th>
 
-            <th valign="bottom" align="left" id="d112217e21" class="stentry">description</th>
+            <th valign="bottom" align="left" id="d112375e21" class="stentry">description</th>
 
-            <th valign="bottom" align="left" id="d112217e24" class="stentry">information</th>
+            <th valign="bottom" align="left" id="d112375e24" class="stentry">information</th>
 
-            <th valign="bottom" align="left" id="d112217e27" class="stentry">samples</th>
+            <th valign="bottom" align="left" id="d112375e27" class="stentry">samples</th>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="inc_en.html">$inc</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="inc_en.html">$inc</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry"> increase</td>
+            <td valign="top" headers="d112375e21" class="stentry"> increase</td>
 
-            <td valign="top" headers="d112217e24" class="stentry">add the given value to the value of specified field</td>
+            <td valign="top" headers="d112375e24" class="stentry">add the given value to the value of specified field</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$inc:{age:25}})</p>
 
             </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="gset_en.html">$set</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="gset_en.html">$set</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry">set the specified field</td>
+            <td valign="top" headers="d112375e21" class="stentry">set the specified field</td>
 
-            <td valign="top" headers="d112217e24" class="stentry">set the given value to the specified field</td>
+            <td valign="top" headers="d112375e24" class="stentry">set the given value to the specified field</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$set:{age:10}})</p>
 
             </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="unset_en.html">$unset</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="unset_en.html">$unset</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry">delete the specified field</td>
+            <td valign="top" headers="d112375e21" class="stentry">delete the specified field</td>
 
-            <td valign="top" headers="d112217e24" class="stentry">delete the specified field of object</td>
+            <td valign="top" headers="d112375e24" class="stentry">delete the specified field of object</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$unset:{age:""}})</p>
 
             </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="gaddtoset_en.html">$addtoset</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="gaddtoset_en.html">$addtoset</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry">add to set</td>
+            <td valign="top" headers="d112375e21" class="stentry">add to set</td>
 
-            <td valign="top" headers="d112217e24" class="stentry">if the given element doesn't exist in the array,then added,otherwise
+            <td valign="top" headers="d112375e24" class="stentry">if the given element doesn't exist in the array,then added,otherwise
               skipped.the object field must be array type</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$addtoset:{array:[3,4,5]}})</p>
 
             </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="pop_en.html">$pop</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="pop_en.html">$pop</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry">pull the last of N values in the array</td>
+            <td valign="top" headers="d112375e21" class="stentry">pull the last of N values in the array</td>
 
-            <td valign="top" headers="d112217e24" class="stentry"> pull the last of N values in the array,the object field must be array type(if
+            <td valign="top" headers="d112375e24" class="stentry"> pull the last of N values in the array,the object field must be array type(if
               N less than 0 means that delete the first of -N values from the beginning of
               array).</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$pop:{array:2}})</p>
 
             </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="gpull_en.html">$pull</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="gpull_en.html">$pull</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry">pull values</td>
+            <td valign="top" headers="d112375e21" class="stentry">pull values</td>
 
-            <td valign="top" headers="d112217e24" class="stentry">pull the specified value from the object array，the object element must be
+            <td valign="top" headers="d112375e24" class="stentry">pull the specified value from the object array，the object element must be
               array.</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$pull:{array:2}})</p>
 
             </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="gpull_all_en.html">$pull_all</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="gpull_all_en.html">$pull_all</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry">pull array</td>
+            <td valign="top" headers="d112375e21" class="stentry">pull array</td>
 
-            <td valign="top" headers="d112217e24" class="stentry">pull each of the elements in the specified array from the object array.the
+            <td valign="top" headers="d112375e24" class="stentry">pull each of the elements in the specified array from the object array.the
               object element must be array type.</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$pull_all:{array:[2,3,4}})</p>
 
             </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="gpush_en.html">$push</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="gpush_en.html">$push</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry">push values </td>
+            <td valign="top" headers="d112375e21" class="stentry">push values </td>
 
-            <td valign="top" headers="d112217e24" class="stentry">push the value to the object array,the object element must be array
+            <td valign="top" headers="d112375e24" class="stentry">push the value to the object array,the object element must be array
               type.</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$push:{array:2}})</p>
 
             </td>
 
           </tr>
 <tr class="strow">
-            <td valign="top" headers="d112217e18" class="stentry"><a class="xref" href="gpush_all_en.html">$push_all</a></td>
+            <td valign="top" headers="d112375e18" class="stentry"><a class="xref" href="gpush_all_en.html">$push_all</a></td>
 
-            <td valign="top" headers="d112217e21" class="stentry">push array</td>
+            <td valign="top" headers="d112375e21" class="stentry">push array</td>
 
-            <td valign="top" headers="d112217e24" class="stentry">push each of values in the specified array to the object array,the object
+            <td valign="top" headers="d112375e24" class="stentry">push each of values in the specified array to the object array,the object
               element must be array type.</td>
 
-            <td valign="top" headers="d112217e27" class="stentry">
+            <td valign="top" headers="d112375e27" class="stentry">
               <p class="p">db.foo.bar.update({$push_all:{array:[2,3,4}})</p>
 
             </td>
@@ -202,7 +202,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>
