@@ -309,6 +309,12 @@ INT32 csvParser::_parseValue( _valueData &valueData,
       }
       break ;
    case CSV_TYPE_BOOL:
+      rc = _value2str( pBuffer, size,
+                      &pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _string2bool( valueData.varBool,
                          pBuffer,
                          size ) ;
@@ -360,6 +366,12 @@ INT32 csvParser::_parseValue( _valueData &valueData,
       }
       break ;
    case CSV_TYPE_DOUBLE:
+      rc = _value2str( pBuffer, size,
+                      &pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _string2double( valueData.varDouble,
                            pBuffer,
                            size ) ;
