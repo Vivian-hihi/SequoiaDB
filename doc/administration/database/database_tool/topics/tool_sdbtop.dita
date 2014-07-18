@@ -41,9 +41,38 @@
       <title>用法</title>
       <p>在下面的例子，sdbtop使用配置文件为“/opt/sequoiadb/conf/samples/sdbtop.xml”，监控主机名为sdbserver3，端口服务名为11810，用户名为test，密码为test的数据库集群中的一个节点。</p>
       <codeblock>sdbtop -c /opt/sequoiadb/conf/sdbtop.xml  -i sdbserver3 -s 11810 -u test -p test</codeblock>
+      <p>接着进入主窗口：</p><codeblock>refresh= 3 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
+displayMode: ABSOLUTE                      Main Window                     snapshotModeInput: NULL
+hostname: sdbserver3                                                           filtering Number: 0
+servicename: 11810                                             sortingWay: NULL sortingField: NULL
+usrName: test                                                        Refresh: F5, Quit: q, Help: h
+
+ #####  ######  ######  ####### ####### ######   For help type h or ...
+#       #     # #     #    #    #     # #     #  sdbtop -h: usage
+#       #     # #     #    #    #     # #     #
+ #####  #     # ######     #    #     # ######
+      # #     # #     #    #    #     # #
+      # #     # #     #    #    #     # #
+ #####  ######  ######     #    ####### #
+
+SDB Interactive Snapshot Monitor V2.0
+Use these keys to navigate:
+  m   -  Main Window            s   -  Sessions               c   -  CollectionSpaces
+  t   -  System                 d   -  Database               G   -  GLOBAL_SNAPSHOT
+  g   -  GROUP_SNAPSHOT         n   -  NODE_SNAPSHOT          r   -  reset refreshInterval
+  A   -  Ascending order        D   -  Descending order       C   -  filter condition
+  Q   -  no filter condition    N   -  filter number          W   -  no filter number
+
+
+
+
+
+
+Licensed Materials - Property of SequoiaDB
+Copyright SequoiaDB Corp. 2013-2014 All Rights Reserved.</codeblock>
     </section>
-    <section>
-      <title>主窗口按键说明</title>
+    <note>在主窗口中按‘<b>h</b>’键可以查看所有工具支持的按键</note>
+    <ul><li><p>主窗口按键说明</p>
       <simpletable>
         <sthead>
           <stentry>参数</stentry>
@@ -142,8 +171,7 @@
           <stentry>切换数据计算的模式（绝对值，平均值，差值三个模式）</stentry>
         </strow>        
       </simpletable>
-    </section>
-    <ul>
+    </li>    
       <li>
         <p>例子一：</p>
         <p>1. 进入主窗口后，按‘s’键，列出数据库节点的所有会话信息</p>

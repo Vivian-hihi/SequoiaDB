@@ -40,30 +40,30 @@
     <p class="p">SequoiaDB的查询用json（bson）对象表示，下表以例子的形式显示了SQL语句、SequoiaDB shell语句和SequoiaDB C++驱动程序语法之间的对照。</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d39632e17" class="stentry">SQL</th>
+        <th valign="bottom" align="left" id="d39665e17" class="stentry">SQL</th>
 
-        <th valign="bottom" align="left" id="d39632e20" class="stentry">SequoiaDB shell</th>
+        <th valign="bottom" align="left" id="d39665e20" class="stentry">SequoiaDB shell</th>
 
-        <th valign="bottom" align="left" id="d39632e23" class="stentry">C++ Driver</th>
+        <th valign="bottom" align="left" id="d39665e23" class="stentry">C++ Driver</th>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">insert into students(a,b) values(1,-1) </td>
+        <td valign="top" headers="d39665e17" class="stentry">insert into students(a,b) values(1,-1) </td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.insert({a:1,b:-1}) </td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.insert({a:1,b:-1}) </td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj = BSON( “a”&lt;&lt;1&lt;&lt;”b”&lt;&lt;-1
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj = BSON( “a”&lt;&lt;1&lt;&lt;”b”&lt;&lt;-1
             ) ;</p>
 <p class="p"> collection.insert( obj ) ; </p>
  </td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">select a,b from students </td>
+        <td valign="top" headers="d39665e17" class="stentry">select a,b from students </td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.find(null,{a:"",b:""})</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.find(null,{a:"",b:""})</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">
+        <td valign="top" headers="d39665e23" class="stentry">
           sdbCollection collection ;
           <p class="p">sdbCursor cursor ;</p>
 
@@ -79,11 +79,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">select * from students</td>
+        <td valign="top" headers="d39665e17" class="stentry">select * from students</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.find()</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.find()</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">
+        <td valign="top" headers="d39665e23" class="stentry">
           sdbCollection collection ;
           <p class="p">sdbCursor cursor ;</p>
 
@@ -93,11 +93,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">select * from students where age=20</td>
+        <td valign="top" headers="d39665e17" class="stentry">select * from students where age=20</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.find({age:20})</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.find({age:20})</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
 <p class="p">BSONObj condition
             ;</p>
 <p class="p">condition = BSON(“age”&lt;&lt;20) ;</p>
@@ -107,11 +107,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">select * from students where age=20 order by name</td>
+        <td valign="top" headers="d39665e17" class="stentry">select * from students where age=20 order by name</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.find({age:20}).sort({name:1})</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.find({age:20}).sort({name:1})</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
 <p class="p">BSONObj obj ;</p>
 <p class="p">BSONObj
             condition ;</p>
@@ -125,11 +125,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">select * from students where age&gt;20 and age&lt;30</td>
+        <td valign="top" headers="d39665e17" class="stentry">select * from students where age&gt;20 and age&lt;30</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.find({age:{$gt:20,$lt:30}})</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.find({age:{$gt:20,$lt:30}})</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ;<p class="p">sdbCursor cursor ;</p>
 <p class="p">BSONObj condition
             ;</p>
 <p class="p">condition = BSON(“age”&lt;&lt;BSON(“$gt”&lt;&lt;20&lt;&lt;” $lt”&lt;&lt;30))
@@ -139,11 +139,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">create index testIndex on students(name)</td>
+        <td valign="top" headers="d39665e17" class="stentry">create index testIndex on students(name)</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.createIndex("testIndex",{name:1},false)</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.createIndex("testIndex",{name:1},false)</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj ;</p>
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj ;</p>
 <p class="p">obj = BSON( “name”&lt;&lt;1 )
             ;</p>
  <p class="p">collection.createIndex ( &amp;obj, “testIndex”, FALSE, FALSE ) </p>
@@ -151,11 +151,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">select * from students limit 20 skip 10</td>
+        <td valign="top" headers="d39665e17" class="stentry">select * from students limit 20 skip 10</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.find().limit(20).skip(10)</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.find().limit(20).skip(10)</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj ;</p>
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ;<p class="p">BSONObj obj ;</p>
 <p class="p">sdbCursor cursor ;</p>
  <p class="p">collection
           .query (cursor,obj, obj, obj, obj, 10, 20 ) ; </p>
@@ -163,11 +163,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">select count(*) from students where age&gt;20</td>
+        <td valign="top" headers="d39665e17" class="stentry">select count(*) from students where age&gt;20</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.find({age:{$gt:20}}).count()</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.find({age:{$gt:20}}).count()</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ; <p class="p">SINT64 count = 0 ;</p>
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ; <p class="p">SINT64 count = 0 ;</p>
 <p class="p">BSONObj condition
             ;</p>
 <p class="p">Condition = BSON( “age”&lt;&lt;BSON(“$gt”&lt;&lt;20)) ;</p>
@@ -177,11 +177,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">update students set a=a+2 where b=-1</td>
+        <td valign="top" headers="d39665e17" class="stentry">update students set a=a+2 where b=-1</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.update({$set:{a:2}},{b:-1})</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.update({$set:{a:2}},{b:-1})</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ; <p class="p">BSONObj condition = BSON( “b”&lt;&lt;1 )
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ; <p class="p">BSONObj condition = BSON( “b”&lt;&lt;1 )
             ;</p>
 <p class="p">BSONObj rule = BSON( “$set”&lt;&lt;BSON(“a”&lt;&lt;2) );</p>
 <p class="p">BSONObj obj ;</p>
@@ -191,11 +191,11 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d39632e17" class="stentry">delete from students where a=1</td>
+        <td valign="top" headers="d39665e17" class="stentry">delete from students where a=1</td>
 
-        <td valign="top" headers="d39632e20" class="stentry">db.foo.bar.remove({a:1})</td>
+        <td valign="top" headers="d39665e20" class="stentry">db.foo.bar.remove({a:1})</td>
 
-        <td valign="top" headers="d39632e23" class="stentry">sdbCollection collection ; <p class="p">BSONObj condition = BSON(“a”&lt;&lt;1) ;</p>
+        <td valign="top" headers="d39665e23" class="stentry">sdbCollection collection ; <p class="p">BSONObj condition = BSON(“a”&lt;&lt;1) ;</p>
 
           <p class="p">collection.del ( condition ) ;</p>
  </td>
