@@ -17,7 +17,7 @@
         </strow>
         <strow>
           <stentry>--confpath, -c </stentry>
-          <stentry>sdbtop的配置文件，sdbtop界面形态以及输出字段都依赖该文件 </stentry>
+          <stentry>sdbtop的配置文件，sdbtop界面形态以及输出字段都依赖该文件（缺省使用默认配置文件）</stentry>
         </strow>
         <strow>
           <stentry>--hostname, -i </stentry>
@@ -39,7 +39,7 @@
     </section>
     <section>
       <title>用法</title>
-      <p>在下面的例子，sdbtop使用配置文件为“/opt/sequoiadb/conf/samples/sdbtop.xml”，监控主机名为sdbserver3，端口服务名为11810，用户名为test，密码为test的数据库集群中的一个节点。</p>
+      <p>在下面的例子，sdbtop使用配置文件为“/opt/sequoiadb/conf/sdbtop.xml”，监控主机名为sdbserver3，端口服务名为11810，用户名为test，密码为test的数据库集群中的一个节点。</p>
       <codeblock>sdbtop -c /opt/sequoiadb/conf/sdbtop.xml  -i sdbserver3 -s 11810 -u test -p test</codeblock>
       <p>接着进入主窗口：</p><codeblock>refresh= 3 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                      Main Window                     snapshotModeInput: NULL
@@ -47,13 +47,13 @@ hostname: sdbserver3                                                           f
 servicename: 11810                                             sortingWay: NULL sortingField: NULL
 usrName: test                                                        Refresh: F5, Quit: q, Help: h
 
- #####  ######  ######  ####### ####### ######   For help type h or ...
+ #####  ######  ######  #######  #####  ######   For help type h or ...
 #       #     # #     #    #    #     # #     #  sdbtop -h: usage
 #       #     # #     #    #    #     # #     #
  #####  #     # ######     #    #     # ######
       # #     # #     #    #    #     # #
       # #     # #     #    #    #     # #
- #####  ######  ######     #    ####### #
+ #####  ######  ######     #     #####  #
 
 SDB Interactive Snapshot Monitor V2.0
 Use these keys to navigate:
@@ -175,7 +175,7 @@ Copyright SequoiaDB Corp. 2013-2014 All Rights Reserved.</codeblock>
       <li>
         <p>例子一：</p>
         <p>1. 进入主窗口后，按‘s’键，列出数据库节点的所有会话信息</p>
-        <codeblock>refresh= 2 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
+        <codeblock>refresh= 3 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                        Sessions                      snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0
 servicename: 11810                                             sortingWay: NULL sortingField: NULL
