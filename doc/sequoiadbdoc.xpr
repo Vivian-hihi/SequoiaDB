@@ -169,6 +169,7 @@
                             <file name="administration/database/database_tool/topics/import.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspt_en.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspt.dita"/>
+                            <file name="administration/database/database_tool/topics/tool_sdbtop.dita"/>
                         </folder>
                     </folder>
                     <folder name="list">

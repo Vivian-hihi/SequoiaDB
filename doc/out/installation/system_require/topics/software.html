@@ -41,18 +41,18 @@
       <ul class="ul">
         <li class="li">配置主机名 <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d57549e24" class="stentry">配置项 </th>
+              <th valign="bottom" align="left" id="d58675e24" class="stentry">配置项 </th>
 
-              <th valign="bottom" align="left" id="d57549e27" class="stentry">配置方法</th>
+              <th valign="bottom" align="left" id="d58675e27" class="stentry">配置方法</th>
 
-              <th valign="bottom" align="left" id="d57549e30" class="stentry">验证方法</th>
+              <th valign="bottom" align="left" id="d58675e30" class="stentry">验证方法</th>
 
             </tr>
 <tr class="strow"/>
 <tr class="strow">
-              <td valign="top" headers="d57549e24" class="stentry"> 配置主机名</td>
+              <td valign="top" headers="d58675e24" class="stentry"> 配置主机名</td>
 
-              <td valign="top" headers="d57549e27" class="stentry"> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<p class="p"/>
+              <td valign="top" headers="d58675e27" class="stentry"> 1.使用root权限登陆，执行hostname sdbserver1（sdbserver1为主机名称，可根据需要修改。）；<p class="p"/>
 <ul class="ul">
                   <li class="li">对于SUSE：<p class="p">2.打开/etc/HOSTNAME文件；</p>
 <p class="p">  vi /etc/HOSTNAME</p>
@@ -79,15 +79,15 @@
                 </ul>
 </td>
 
-              <td valign="top" headers="d57549e30" class="stentry"> 执行 hostname 命令，确认打印信息是否为 “sdbserver1” </td>
+              <td valign="top" headers="d58675e30" class="stentry"> 执行 hostname 命令，确认打印信息是否为 “sdbserver1” </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d57549e24" class="stentry">
+              <td valign="top" headers="d58675e24" class="stentry">
                 配置物理机之间通过主机名可连接
               </td>
 
-              <td valign="top" headers="d57549e27" class="stentry">
+              <td valign="top" headers="d58675e27" class="stentry">
                 <ul class="ul">
                   <li class="li">使用root权限，打开/etc/hosts文件 <p class="p">  vi /etc/hosts</p>
 </li>
@@ -104,7 +104,7 @@
 
               </td>
 
-              <td valign="top" headers="d57549e30" class="stentry"><p class="p">1. ping sdbserver1（本机主机名）可以ping通</p>
+              <td valign="top" headers="d58675e30" class="stentry"><p class="p">1. ping sdbserver1（本机主机名）可以ping通</p>
 2. ping sdbserver2（远端主机名）可以ping通</td>
 
             </tr>
@@ -115,18 +115,18 @@
         <li class="li"><p class="p">关闭防火墙</p>
  <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d57549e135" class="stentry">配置项 </th>
+            <th valign="bottom" align="left" id="d58675e135" class="stentry">配置项 </th>
 
-            <th valign="bottom" align="left" id="d57549e138" class="stentry">配置方法</th>
+            <th valign="bottom" align="left" id="d58675e138" class="stentry">配置方法</th>
 
-            <th valign="bottom" align="left" id="d57549e141" class="stentry">验证方法</th>
+            <th valign="bottom" align="left" id="d58675e141" class="stentry">验证方法</th>
 
           </tr>
 <tr class="strow"/>
 <tr class="strow">
-            <td valign="top" headers="d57549e135" class="stentry"> 关闭防火墙</td>
+            <td valign="top" headers="d58675e135" class="stentry"> 关闭防火墙</td>
 
-            <td valign="top" headers="d57549e138" class="stentry">关闭防火墙操作，需要管理员权限。<p class="p"/>
+            <td valign="top" headers="d58675e138" class="stentry">关闭防火墙操作，需要管理员权限。<p class="p"/>
 <ul class="ul">
               <li class="li">对于SUSE：<p class="p">1.SuSEfirewall2 stop；</p>
 
@@ -143,7 +143,7 @@
             </ul>
 </td>
 
-            <td valign="top" headers="d57549e141" class="stentry"><ul class="ul">
+            <td valign="top" headers="d58675e141" class="stentry"><ul class="ul">
               <li class="li">对于SUSE：<p class="p"> chkconfig -list | grep fire；</p>
 
                 </li>

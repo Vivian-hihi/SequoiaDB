@@ -79,7 +79,7 @@
 
             <li class="li">CollectionSpace Help<p class="p">collection space级别主要包括对集合管理的操作。</p>
 
-                <p class="p">假设存在名字为"foo"的集合空间。</p>
+                <p class="p">假设存在名字为“foo”的集合空间。</p>
 
                 <p class="p">查看collection space所有方法：</p>
 <pre class="pre codeblock">db.foo.help()</pre>
@@ -90,7 +90,7 @@
 
             <li class="li">Collection Help<p class="p">collection级别主要包括CRUD，索引管理，数据切分，垂直分区表管理等操作。</p>
 
-                <p class="p">假设在集合空间"foo"中存在名字为"bar"的集合。</p>
+                <p class="p">假设在集合空间“foo”中存在名字为“bar”的集合。</p>
 
                 <p class="p">查看collection所有方法：</p>
 <pre class="pre codeblock">db.foo.bar.help()</pre>
@@ -124,7 +124,7 @@
 
             <li class="li">Replica Group Help<p class="p">replica group级别主要包括对数据节点的管理的操作。</p>
 
-                <p class="p">假设数据库中存在名字为"group1"的副本组，通过var rg = db.getRG("group1")获取一个关于副本组的javascript对象rg。</p>
+                <p class="p">假设数据库中存在名字为“group1”的副本组，通过var rg = db.getRG("group1")获取一个关于副本组的javascript对象rg。</p>
 
                 <p class="p">查看replica group所有方法：</p>
 <pre class="pre codeblock">rg.help()</pre>
@@ -135,7 +135,7 @@
 
             <li class="li">Node Help<p class="p">node级别主要包括对数据节点状态信息获取的操作。</p>
 
-                <p class="p">假设在副本组"group1"中创建一个数据节点，var rn = rg.createNode("ubuntu-dev1", 51000, "/opt/sequoiadb/database/data/51000")，获取一个关于数据节点的javascript对象rn。</p>
+                <p class="p">假设在副本组“group1”中创建一个数据节点，var rn = rg.createNode("ubuntu-dev1", 51000, "/opt/sequoiadb/database/data/51000")，获取一个关于数据节点的javascript对象rn。</p>
 
                 <p class="p">查看node所有方法：</p>
 <pre class="pre codeblock">rn.help()</pre>
@@ -146,7 +146,7 @@
 
             <li class="li">Domain Help<p class="p">domain级别主要包括对域更改及获取域信息的操作。</p>
 
-                <p class="p">假设在数据库中创建一个名字为"domain1"的域，var dm = db.createDomain("domain1",["group1","group2"],{AutoSplit:true})，获取一个关于域的javascript对象dm。</p>
+                <p class="p">假设在数据库中创建一个名字为“domain1”的域，var dm = db.createDomain("domain1",["group1","group2"],{AutoSplit:true})，获取一个关于域的javascript对象dm。</p>
 
                 <p class="p">查看domain所有方法：</p>
 <pre class="pre codeblock">dm.help()</pre>
