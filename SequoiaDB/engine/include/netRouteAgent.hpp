@@ -165,27 +165,6 @@ namespace engine
 
    typedef class _netRouteAgent netRouteAgent ;
 
-   /*
-      _netMsgAssister define
-   */
-   class _netMsgAssister : public SDBObject
-   {
-      typedef std::map<void*, NET_HANDLE>       MAP_MSGNET ;
-      typedef MAP_MSGNET::iterator              MAP_MSGNET_IT ;
-
-      public:
-         _netMsgAssister() ;
-         ~_netMsgAssister() ;
-
-         void pushMsgHandle ( void * msg, NET_HANDLE handle ) ;
-         NET_HANDLE peekMsgHandle ( void * msg ) ;
-
-      private:
-         MAP_MSGNET                    _mapMsg2NetHandle ;
-         ossSpinXLatch                 _msg2NetLatch ;
-         
-   } ;
-   typedef _netMsgAssister netMsgAssister ;
 }
 
 #endif // NETROUTEAGENT_HPP_

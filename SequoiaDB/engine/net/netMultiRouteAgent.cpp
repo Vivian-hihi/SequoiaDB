@@ -22,7 +22,7 @@ namespace engine
       _pNetWork = pNetWork;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSENDWITHOUTSESSION, "netMultiRouteAgent::syncSendWithoutSession" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSENDWITHOUTSESSION, "netMultiRouteAgent::syncSendWithoutSession" )
    INT32 netMultiRouteAgent::syncSendWithoutCheck( const MsgRouteID &id, void *header,
                                                    UINT64 &reqID, pmdEDUCB *pEduCB,
                                                    void *body, UINT32 bodyLen )
@@ -64,7 +64,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_NETMLTRTAGT_SYNCSENDWITHOUTSESSION, rc );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSEND, "netMultiRouteAgent::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSEND, "netMultiRouteAgent::syncSend" )
    INT32 netMultiRouteAgent::syncSend( const MsgRouteID &id, void *header, UINT64 &reqID,
                                        pmdEDUCB *pEduCB, void *body, UINT32 bodyLen )
    {
@@ -116,7 +116,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSEND2, "netMultiRouteAgent::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_SYNCSEND2, "netMultiRouteAgent::syncSend" )
    INT32 netMultiRouteAgent::syncSend( const MsgRouteID &id, MsgHeader *header,
                                        const netIOVec &iov, UINT64 &reqID,
                                        pmdEDUCB *pEduCB )
@@ -161,7 +161,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_MULTSYNCSND, "netMultiRouteAgent::multiSyncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_MULTSYNCSND, "netMultiRouteAgent::multiSyncSend" )
    void netMultiRouteAgent::multiSyncSend( const ROUTE_SET &routeSet,
                                            void *header )
    {
@@ -194,7 +194,7 @@ namespace engine
       return _pNetWork->updateRoute( id, pHost, pService );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_HNDCLS, "netMultiRouteAgent::handleClose" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_HNDCLS, "netMultiRouteAgent::handleClose" )
    void netMultiRouteAgent::handleClose( const NET_HANDLE &handle,
                                          MsgRouteID id )
    {
@@ -212,7 +212,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_NETMLTRTAGT_HNDCLS );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_HNDMSG, "netMultiRouteAgent::handleMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_HNDMSG, "netMultiRouteAgent::handleMsg" )
    INT32 netMultiRouteAgent::handleMsg( const NET_HANDLE &handle,
                                         const _MsgHeader *header,
                                         const CHAR *msg )
@@ -235,7 +235,8 @@ namespace engine
          if ( _sessionMap.end() != it )
          {
             it->second->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                                TRUE, pMsgRsp ) );
+                                                PMD_EDU_MEM_ALLOC,
+                                                pMsgRsp ) ) ;
          }
          else
          {
@@ -268,7 +269,7 @@ namespace engine
       return _pReqID->inc();
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_ADDSESS, "netMultiRouteAgent::addSession" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_ADDSESS, "netMultiRouteAgent::addSession" )
    INT32 netMultiRouteAgent::addSession( pmdEDUCB *pEduCB )
    {
       INT32 rc = SDB_OK ;
@@ -291,7 +292,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_GETSESS, "netMultiRouteAgent::getSession" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_GETSESS, "netMultiRouteAgent::getSession" )
    CoordSession *netMultiRouteAgent::getSession( UINT32 tID )
    {
       PD_TRACE_ENTRY ( SDB_NETMLTRTAGT_GETSESS );
@@ -307,7 +308,7 @@ namespace engine
       return pSession;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_DELSESS, "netMultiRouteAgent::delSession" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_DELSESS, "netMultiRouteAgent::delSession" )
    void netMultiRouteAgent::delSession( UINT32 tID )
    {
       PD_TRACE_ENTRY ( SDB_NETMLTRTAGT_DELSESS );
@@ -339,7 +340,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_NETMLTRTAGT_DELSESS );
    }
    
-   PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_ISSUBSESSCONN, "netMultiRouteAgent::isSubSessionConnected" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_NETMLTRTAGT_ISSUBSESSCONN, "netMultiRouteAgent::isSubSessionConnected" )
    BOOLEAN netMultiRouteAgent::isSubSessionConnected( UINT32 tID,
                                                       const MsgRouteID &ID )
    {

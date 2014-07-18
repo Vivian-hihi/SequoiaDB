@@ -456,7 +456,7 @@ namespace engine
    void dpsLockBucket::wakeUp( _pmdEDUCB *eduCB )
    {
       eduCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_LOCKWAKEUP,
-                                     FALSE, NULL ));
+                                     PMD_EDU_MEM_NONE, NULL ));
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_WAKEUP );
    }
 

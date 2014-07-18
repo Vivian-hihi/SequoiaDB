@@ -44,17 +44,8 @@ namespace engine
                break;
             }
 
-            rc = pNodeMgr->processEvent( event );
-            if ( event._Data != NULL )
-            {
-               EvntCatalogInternalEvent *pEvent =
-                  (EvntCatalogInternalEvent *)event._Data;
-               if ( pEvent->data != NULL )
-               {
-                  SDB_OSS_FREE( pEvent->data );
-               }
-               SDB_OSS_FREE( pEvent );
-            }
+            rc = pNodeMgr->processEvent( event ) ;
+            pmdEduEventRelase( event, cb ) ;
          }
       }
 

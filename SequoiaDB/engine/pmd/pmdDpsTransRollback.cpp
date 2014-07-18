@@ -24,10 +24,7 @@ namespace engine
             {
                rc = rtnTransRollbackAll( cb );
             }
-            if ( event._Data != NULL && event._release )
-            {
-               SDB_OSS_FREE( event._Data );
-            }
+            pmdEduEventRelase( event, cb ) ;
          }
       }
       rc = SDB_OK ;

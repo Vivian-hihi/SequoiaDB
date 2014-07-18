@@ -147,10 +147,6 @@ namespace engine
          INT32    clearAllData () ;
          INT32    invalidateCata ( const CHAR *name ) ;
 
-         //msg to net handle assist function
-         void        pushMsgHandle ( void *msg, NET_HANDLE handle ) ;
-         NET_HANDLE  peekMsgHandle ( void *msg ) ;
-
       protected:
          _clsSession* getSession( INT32 type, UINT64 sessionID,
                                   INT32 startType = CLS_SESSION_PASSIVE,
@@ -244,8 +240,6 @@ namespace engine
 
          VEC_EVENTHANDLER              _vecEventHandler ;
          ossSpinSLatch                 _handlerLatch ;
-
-         netMsgAssister                _msgAssister ;
 
          UINT64                        _regTimerID ;
          UINT64                        _oneSecTimerID ;

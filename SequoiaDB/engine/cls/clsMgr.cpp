@@ -543,11 +543,6 @@ namespace engine
       return _shdObj.clearAllData () ;
    }
 
-   void _clsMgr::pushMsgHandle ( void * msg, NET_HANDLE handle )
-   {
-      _msgAssister.pushMsgHandle( msg, handle ) ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_INVDATACAT, "_clsMgr::invalidateCata" )
    INT32 _clsMgr::invalidateCata( const CHAR * name )
    {
@@ -579,11 +574,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
-
-   NET_HANDLE _clsMgr::peekMsgHandle ( void * msg )
-   {
-      return _msgAssister.peekMsgHandle( msg ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_STARTINSN, "_clsMgr::startInnerSession" )

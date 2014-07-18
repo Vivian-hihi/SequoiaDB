@@ -28,7 +28,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_DISCONN, "CoordSession::disConnect" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_DISCONN, "CoordSession::disConnect" )
    INT32 CoordSession::disConnect( const MsgRouteID &routeID )
    {
       INT32 rc = SDB_OK;
@@ -53,10 +53,13 @@ namespace engine
             pMsg->header.messageLength = sizeof(MsgOpReply);
             pMsg->header.opCode = MSG_COOR_REMOTE_DISC;
             pMsg->header.routeID = routeID;
-            pMsg->header.requestID = pmdGetKRCB()->getCoordCB()->getRouteAgent()->reqIDNew();
+            pMsg->header.requestID = pmdGetKRCB()->getCoordCB(
+               )->getRouteAgent()->reqIDNew();
             pMsg->flags = SDB_COORD_REMOTE_DISC;
             pMsg->numReturned = 0;
-            _pEduCB->postEvent ( pmdEDUEvent(PMD_EDU_EVENT_MSG, TRUE, pMsg) );
+            _pEduCB->postEvent ( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                              PMD_EDU_MEM_ALLOC,
+                                              pMsg ) ) ;
          }
          else
          {
@@ -69,7 +72,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_CHECKREMOTEROUTEID, "CoordSession::checkRemoteRouteID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_CHECKREMOTEROUTEID, "CoordSession::checkRemoteRouteID" )
    INT32 CoordSession::checkRemoteRouteID( const MsgRouteID & routeID )
    {
       INT32 rc = SDB_OK;
@@ -186,7 +189,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_GETALLSR, "CoordSession::getAllSessionRoute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_GETALLSR, "CoordSession::getAllSessionRoute" )
    void CoordSession::getAllSessionRoute( ROUTE_SET & routeSet )
    {
       PD_TRACE_ENTRY ( SDB_COORDSN_GETALLSR );
@@ -208,7 +211,7 @@ namespace engine
       _pEduCB->postEvent( data );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_ISSUBSNCONN, "CoordSession::isSubsessionConnected" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_ISSUBSNCONN, "CoordSession::isSubsessionConnected" )
    BOOLEAN CoordSession::isSubsessionConnected( const MsgRouteID &routeID )
    {
       PD_TRACE_ENTRY ( SDB_COORDSN_ISSUBSNCONN );
@@ -234,7 +237,7 @@ namespace engine
       _lastNodeMap.erase(groupID);
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_GETLASTND, "CoordSession::getLastNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_GETLASTND, "CoordSession::getLastNode" )
    MsgRouteID CoordSession::getLastNode( UINT32 groupID )
    {
       PD_TRACE_ENTRY ( SDB_COORDSN_GETLASTND );

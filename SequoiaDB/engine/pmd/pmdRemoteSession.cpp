@@ -72,10 +72,12 @@ namespace engine
       _pmdRemoteSession implement
    */
    _pmdRemoteSession::_pmdRemoteSession( netRouteAgent *pAgent,
+                                         INT64 timeout,
                                          IRemoteSessionHandler *pHandle )
    {
       _pAgent        = pAgent ;
       _pHandle       = pHandle ;
+      _pEDUCB        = NULL ;
    }
 
    _pmdRemoteSession::~_pmdRemoteSession()
@@ -209,26 +211,93 @@ namespace engine
    */
    _pmdRemoteSessionMgr::_pmdRemoteSessionMgr()
    {
+      _pAgent = NULL ;
    }
 
    _pmdRemoteSessionMgr::~_pmdRemoteSessionMgr()
    {
+      SDB_ASSERT( _mapSessions.size() == 0, "Session must be Zero" ) ;
+
+      // release session
+      MAP_REMOTE_SESSION_IT it = _mapSessions.begin() ;
+      while ( it != _mapSessions.end() )
+      {
+         SDB_OSS_DEL it->second ;
+         ++it ;
+      }
+      _mapSessions.clear() ;
+
+      _pAgent = NULL ;
    }
 
    INT32 _pmdRemoteSessionMgr::init( netRouteAgent * pAgent )
    {
+      if ( !pAgent )
+      {
+         return SDB_INVALIDARG ;
+      }
+      _pAgent = pAgent ;
+
       return SDB_OK ;
    }
 
    INT32 _pmdRemoteSessionMgr::fini()
    {
+      SDB_ASSERT( _mapSessions.size() == 0, "Session must be Zero" ) ;
       return SDB_OK ;
    }
 
    INT32 _pmdRemoteSessionMgr::pushMessage( const NET_HANDLE &handle,
                                             const MsgHeader *pMsg )
    {
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *pEDUCB = NULL ;
+      MAP_REMOTE_SESSION_IT it ;
+
+      ossScopedLock lock( &_mapLatch, SHARED ) ;
+
+      it = _mapSessions.find( pMsg->TID ) ;
+      if ( it != _mapSessions.end() )
+      {
+         CHAR *pNewBuff = NULL ;
+         INT32 buffLen = 0 ;
+
+         pEDUCB = it->second->getEDUCB() ;
+
+         // assign memory
+         rc = pEDUCB->allocBuff( pMsg->messageLength, &pNewBuff, buffLen ) ;
+         if ( SDB_OK == rc )
+         {
+            // copy data
+            ossMemcpy( pNewBuff, pMsg, pMsg->messageLength ) ;
+            // push to edu queue
+            pEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                            PMD_EDU_MEM_SELF,
+                                            pNewBuff, (UINT64)handle ) ) ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Failed to alloc memory[size: %d] for msg["
+                    "opCode: (%d)%u, TID: %d, ReqID: %llu, NodeID: %u.%u.%u]",
+                    pMsg->messageLength, IS_REPLY_TYPE(pMsg->opCode),
+                    GET_REQUEST_TYPE(pMsg->opCode), pMsg->TID,
+                    pMsg->requestID, pMsg->routeID.columns.groupID,
+                    pMsg->routeID.columns.nodeID,
+                    pMsg->routeID.columns.serviceID ) ;
+         }
+      }
+      else
+      {
+         PD_LOG( PDWARNING, "Can't find remote session[TID=%d] for msg["
+                 "opCode: (%d)%u, ReqID: %llu, NodeID: %u.%u.%u, Len: %u]",
+                 pMsg->TID, IS_REPLY_TYPE(pMsg->opCode),
+                 GET_REQUEST_TYPE(pMsg->opCode), pMsg->requestID,
+                 pMsg->routeID.columns.groupID, pMsg->routeID.columns.nodeID,
+                 pMsg->routeID.columns.serviceID, pMsg->messageLength ) ;
+         rc = SDB_INVALIDARG ;
+      }
+
+      return rc ;
    }
 
    void _pmdRemoteSessionMgr::handleClose( const NET_HANDLE &handle,
@@ -240,16 +309,59 @@ namespace engine
                                                        INT64 timeout,
                                                        IRemoteSessionHandler *pHandle )
    {
-      return NULL ;
+      pmdRemoteSession *pSession = NULL ;
+      MAP_REMOTE_SESSION_IT it ;
+
+      ossScopedLock lock( &_mapLatch, EXCLUSIVE ) ;
+      it = _mapSessions.find( cb->getTID() ) ;
+      if ( it != _mapSessions.end() )
+      {
+         // already exist
+         pSession = it->second ;
+         goto done ;
+      }
+
+      pSession = SDB_OSS_NEW _pmdRemoteSession( _pAgent, timeout, pHandle ) ;
+      if ( pSession )
+      {
+         pSession->attachCB( cb ) ;
+         _mapSessions[ cb->getTID() ] = pSession ;
+      }
+
+   done:
+      return pSession ;
    }
 
    pmdRemoteSession* _pmdRemoteSessionMgr::getSession( UINT32 tid )
    {
-      return NULL ;
+      pmdRemoteSession *pSession = NULL ;
+      MAP_REMOTE_SESSION_IT it ;
+
+      ossScopedLock lock( &_mapLatch, SHARED ) ;
+      it = _mapSessions.find( tid ) ;
+      if ( it != _mapSessions.end() )
+      {
+         pSession = it->second ;
+      }
+
+      return pSession ;
    }
 
    void _pmdRemoteSessionMgr::removeSession( UINT32 tid )
    {
+      ossScopedLock lock( &_mapLatch, EXCLUSIVE ) ;
+      MAP_REMOTE_SESSION_IT it = _mapSessions.find( tid ) ;
+      if ( it != _mapSessions.end() )
+      {
+         SDB_OSS_DEL it->second ;
+         _mapSessions.erase( it ) ;
+      }
+   }
+
+   UINT32 _pmdRemoteSessionMgr::sessionCount()
+   {
+      ossScopedLock lock( &_mapLatch, SHARED ) ;
+      return (UINT32)_mapSessions.size() ;
    }
 
 }

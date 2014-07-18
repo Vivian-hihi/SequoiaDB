@@ -83,8 +83,10 @@ namespace engine
       ossEvent* getAttachEvent() { return &_attachEvent ; }
 
    private :
-      INT32 catBuildMsgEvent ( const NET_HANDLE &handle, const MsgHeader *pMsg,
-                               EvntCatalogInternalEvent *&pEvent ) ;
+      INT32 catBuildMsgEvent ( const NET_HANDLE &handle,
+                               const MsgHeader *pMsg,
+                               pmdEDUCB *cb,
+                               pmdEDUEvent &event ) ;
       INT32 processGetMoreMsg ( const NET_HANDLE &handle, const CHAR *pMsg ) ;
       INT32 processQueryDataGrp( const NET_HANDLE &handle, const CHAR *pMsg ) ;
       INT32 processQueryCollections( const NET_HANDLE &handle,
@@ -99,7 +101,7 @@ namespace engine
       INT32 processCheckRouteID( const NET_HANDLE &handle, const CHAR *pMsg ) ;
       INT32 processQueryDomain ( const NET_HANDLE &handle, const CHAR *pMsg ) ;
 
-      INT32 processMsg( void *pMsg ) ;
+      INT32 processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 _ensureMetadata() ;
       INT32 _createSysIndex ( const CHAR *pCollection,
                               const CHAR *pIndex,

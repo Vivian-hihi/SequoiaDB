@@ -41,7 +41,6 @@ namespace engine
 {
    class _pmdRemoteSessionMgr ;
    class _pmdEDUCB ;
-   class _netMsgAssister ;
 
    /*
       _omMsgHandler define
@@ -52,7 +51,7 @@ namespace engine
          _omMsgHandler( _pmdRemoteSessionMgr *pRSManager ) ;
          virtual ~_omMsgHandler() ;
 
-         void  attach( _pmdEDUCB *cb, _netMsgAssister *pMsgAssist ) ;
+         void  attach( _pmdEDUCB *cb ) ;
          void  detach() ;
 
          virtual INT32 handleMsg( const NET_HANDLE &handle,
@@ -63,7 +62,6 @@ namespace engine
       protected:
          _pmdRemoteSessionMgr                *_pRSManager ;
          _pmdEDUCB                           *_pMainCB ;
-         _netMsgAssister                     *_pMsgAssist ;
 
    } ;
    typedef _omMsgHandler omMsgHandler ;

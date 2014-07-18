@@ -148,8 +148,9 @@ namespace engine
 
    // message process functions
    protected:
-      INT32 processMsg( void *pMsg ) ;
-      INT32 processCommandMsg( void *pMsg, BOOLEAN writable ) ;
+      INT32 processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
+                               BOOLEAN writable ) ;
 
       INT32 processCmdCreateCL( const CHAR *pQuery,
                                 CHAR **ppReplyBody,
@@ -172,8 +173,9 @@ namespace engine
                                        INT32 version = -1 ) ;
       INT32 processCmdDropCollectionSpace ( const CHAR *pQuery ) ;
 
-      INT32 processQueryCatalogue ( void *pMsg );
-      INT32 processQueryTask ( void *pMsg ) ;
+      INT32 processQueryCatalogue ( const NET_HANDLE &handle,
+                                    MsgHeader *pMsg ) ;
+      INT32 processQueryTask ( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 processAlterCollection ( void *pMsg,
                                      CHAR **ppReplyBody,
                                      UINT32 &replyBodyLen,

@@ -489,6 +489,8 @@ namespace engine
    INT32 pmdSend ( const CHAR *pBuffer, INT32 sendSize,
                    ossSocket *sock, pmdEDUCB *cb ) ;
 
+   void  pmdEduEventRelase( pmdEDUEvent &event, pmdEDUCB *cb ) ;
+
 }
 
 #endif // PMDEDU_HPP__

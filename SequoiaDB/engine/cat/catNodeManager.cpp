@@ -162,28 +162,27 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PROCESSMSG, "catNodeManager::processMsg" )
-   INT32 catNodeManager::processMsg( void *pMsg )
+   INT32 catNodeManager::processMsg( const NET_HANDLE &handle,
+                                     MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg;
-      MsgHeader *pHeader = (MsgHeader *)(pEvent->data);
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_PROCESSMSG ) ;
-      PD_TRACE1 ( SDB_CATNODEMGR_PROCESSMSG,
-                  PD_PACK_INT ( pHeader->opCode ) ) ;
-      switch ( pHeader->opCode )
+      PD_TRACE1 ( SDB_CATNODEMGR_PROCESSMSG, PD_PACK_INT ( pMsg->opCode ) ) ;
+
+      switch ( pMsg->opCode )
       {
       case MSG_CAT_REG_REQ:
-            rc = processRegReq(pMsg);
+            rc = processRegReq( handle, pMsg ) ;
             break;
 
       case MSG_CAT_CATGRP_REQ:
       case MSG_CAT_NODEGRP_REQ:
       case MSG_CAT_GRP_REQ:
-            rc = processGrpReq(pMsg);
+            rc = processGrpReq( handle, pMsg ) ;
             break;
 
       case MSG_CAT_PAIMARY_CHANGE:
-            rc = processPrimaryChange(pMsg);
+            rc = processPrimaryChange( handle, pMsg ) ;
             break;
 
       // command message entry, should dispatch in the entry function
@@ -192,18 +191,19 @@ namespace engine
       case MSG_CAT_CREATE_NODE_REQ :
       case MSG_CAT_UPDATE_NODE_REQ :
       case MSG_CAT_DEL_NODE_REQ :
-            rc = processCommandMsg( pMsg, TRUE ) ;
+            rc = processCommandMsg( handle, pMsg, TRUE ) ;
             break;
       case MSG_CAT_RM_GROUP_REQ:
-            rc = processRemoveGrp(pMsg) ;
+            rc = processRemoveGrp( handle, pMsg ) ;
             break ;
       case MSG_CAT_ACTIVE_GROUP_REQ:
-            rc = processActiveGrp(pMsg);
+            rc = processActiveGrp( handle, pMsg ) ;
             break;
       default:
             rc = SDB_UNKNOWN_MESSAGE;
-            PD_LOG(PDWARNING,
-                  "received unknown message (MessageType = %d)", pHeader->opCode );
+            PD_LOG( PDWARNING, "Received unknown message (opCode: [%d]%u )",
+                    IS_REPLY_TYPE(pMsg->opCode),
+                    GET_REQUEST_TYPE(pMsg->opCode) ) ;
             break;
       }
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_PROCESSMSG, rc ) ;
@@ -211,14 +211,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PRIMARYCHANGE, "catNodeManager::processPrimaryChange" )
-   INT32 catNodeManager::processPrimaryChange(void *pMsg)
+   INT32 catNodeManager::processPrimaryChange( const NET_HANDLE &handle,
+                                               MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_PRIMARYCHANGE ) ;
       UINT32 w = _majoritySize() ;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg;
-      MsgCatPrimaryChange *pRequest
-                     = (MsgCatPrimaryChange *)(pEvent->data);
+      MsgCatPrimaryChange *pRequest = (MsgCatPrimaryChange *)pMsg ;
       UINT32 groupID = pRequest->newPrimary.columns.groupID;
       UINT16 nodeID = pRequest->newPrimary.columns.nodeID;
       PD_TRACE2 ( SDB_CATNODEMGR_PRIMARYCHANGE,
@@ -285,9 +284,8 @@ namespace engine
 
    done:
       msgReply.header.res = rc ;
-      PD_TRACE1 ( SDB_CATNODEMGR_PRIMARYCHANGE,
-                  PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend(pEvent->handle, &msgReply ) ;
+      PD_TRACE1 ( SDB_CATNODEMGR_PRIMARYCHANGE, PD_PACK_INT ( rc ) ) ;
+      rc = _pCatCB->netWork()->syncSend( handle, &msgReply ) ;
       if ( rc )
       {
 	      PD_LOG( PDERROR, "failed to send response(primary-change)(rc=%d)",
@@ -300,18 +298,17 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GRPREQ, "catNodeManager::processGrpReq" )
-   INT32 catNodeManager::processGrpReq( void *pMsg )
+   INT32 catNodeManager::processGrpReq( const NET_HANDLE &handle,
+                                        MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_GRPREQ ) ;
       MsgCatGroupRes *pMsgRsp = NULL ;
       SINT32 msgLen = 0 ;
 
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg ;
-      MsgCatGroupReq *pGrpReq = (MsgCatGroupReq *)(pEvent->data) ;
+      MsgCatGroupReq *pGrpReq = (MsgCatGroupReq *)pMsg ;
       UINT32 groupID = pGrpReq->id.columns.groupID ;
-      PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ,
-                  PD_PACK_UINT ( groupID ) ) ;
+      PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ, PD_PACK_UINT ( groupID ) ) ;
 
       BSONObj boGroupInfo ;
       PD_CHECK( ( ( pmdIsPrimary() && SDB_CAT_MODULE_ACTIVE == _status ) ||
@@ -352,7 +349,7 @@ namespace engine
                  boGroupInfo.objsize() );
       PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ,
                   PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( pEvent->handle, pMsgRsp ) ;
+      rc = _pCatCB->netWork()->syncSend( handle, pMsgRsp ) ;
       PD_LOG( PDDEBUG, "Response the group request(succeed)" ) ;
 
    done:
@@ -363,9 +360,8 @@ namespace engine
       }
       return rc ;
    error:
-      PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ,
-                  PD_PACK_INT ( rc ) ) ;
-      rc = _sendFailedRsp( pEvent->handle, rc, &(pGrpReq->header) ) ;
+      PD_TRACE1 ( SDB_CATNODEMGR_GRPREQ, PD_PACK_INT ( rc ) ) ;
+      rc = _sendFailedRsp( handle, rc, &(pGrpReq->header) ) ;
       PD_LOG( PDDEBUG, "Response the group request(failed)" ) ;
       goto done;
    }
@@ -390,32 +386,32 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_REGREQ, "catNodeManager::processRegReq" )
-   INT32 catNodeManager::processRegReq(void *pMsg)
+   INT32 catNodeManager::processRegReq( const NET_HANDLE &handle,
+                                        MsgHeader *pMsg )
    {
-      INT32 rc = SDB_OK;
-      INT32 nodeRole = SDB_ROLE_DATA;
-      BSONObj boReq;
-      MsgCatRegisterRsp *pMsgRsp = NULL;
+      INT32 rc = SDB_OK ;
+      INT32 nodeRole = SDB_ROLE_DATA ;
+      BSONObj boReq ;
+      MsgCatRegisterRsp *pMsgRsp = NULL ;
       SINT32 msgLen = 0;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg;
-      MsgCatRegisterReq *pRegReq = (MsgCatRegisterReq *)( pEvent->data );
+      MsgCatRegisterReq *pRegReq = (MsgCatRegisterReq *)pMsg ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_REGREQ ) ;
       BSONObj boNodeInfo;
       try
       {
          boReq = BSONObj( ( CHAR *)pRegReq + sizeof(MsgCatRegisterReq));
-         PD_LOG( PDEVENT,
-            "get register request:%s", boReq.toString().c_str());
+         PD_LOG( PDEVENT, "get register request:%s", boReq.toString().c_str());
          BSONElement beRole = boReq.getField( FIELD_NAME_ROLE );
          PD_CHECK( beRole.isNumber(), SDB_INVALIDARG, error,
-               PDERROR, "failed to get the field(%s)", FIELD_NAME_ROLE );
+                   PDERROR, "failed to get the field(%s)",
+                   FIELD_NAME_ROLE ) ;
          nodeRole = beRole.number();
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_SYS, SDB_SYS, error, PDERROR,
-            "failed to process register-request, received unexpected error:%s",
-            e.what() );
+                   "Failed to process register-request, received "
+                   "unexpected error:%s", e.what() );
       }
       PD_CHECK( ( ( pmdIsPrimary() && SDB_CAT_MODULE_ACTIVE == _status )
                 || SDB_ROLE_CATALOG == nodeRole ), SDB_CLS_NOT_PRIMARY,
@@ -426,8 +422,7 @@ namespace engine
       rc = getNodeInfo( boReq, boNodeInfo );
       if ( rc )
       {
-         PD_LOG ( PDERROR,
-                  "failed to get node-info:%s (rc=%d)",
+         PD_LOG ( PDERROR, "Failed to get node-info:%s (rc=%d)",
                   boReq.toString().c_str(), rc );
          rc = SDB_CAT_AUTH_FAILED;
          goto error;
@@ -437,8 +432,8 @@ namespace engine
       msgLen = sizeof( MsgCatRegisterRsp ) + boNodeInfo.objsize();
       pMsgRsp = (MsgCatRegisterRsp *)SDB_OSS_MALLOC( msgLen );
       PD_CHECK( pMsgRsp!=NULL, SDB_OOM, error, PDERROR,
-         "failed to build response(group-info request), malloc failed(size=%d)",
-         msgLen );
+                "failed to build response(group-info request), malloc "
+                "failed(size=%d)", msgLen );
       pMsgRsp->header.res = SDB_OK;
       pMsgRsp->header.header.messageLength = msgLen;
       pMsgRsp->header.header.opCode = MAKE_REPLY_TYPE(pRegReq->header.opCode);
@@ -446,10 +441,9 @@ namespace engine
       pMsgRsp->header.header.routeID.value = 0;
       pMsgRsp->header.header.TID = pRegReq->header.TID;
       ossMemcpy((CHAR *)pMsgRsp+sizeof(MsgCatRegisterRsp), boNodeInfo.objdata(),
-               boNodeInfo.objsize() );
-      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ,
-                  PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( pEvent->handle, pMsgRsp );
+                boNodeInfo.objsize() );
+      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ, PD_PACK_INT ( rc ) ) ;
+      rc = _pCatCB->netWork()->syncSend( handle, pMsgRsp );
       SDB_OSS_FREE( pMsgRsp );
    done:
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_REGREQ, rc ) ;
@@ -462,17 +456,17 @@ namespace engine
       msgRsp.header.header.requestID = pRegReq->header.requestID;
       msgRsp.header.header.routeID.value = 0;
       msgRsp.header.header.TID = pRegReq->header.TID;
-      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ,
-                  PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( pEvent->handle, &msgRsp );
+      PD_TRACE1 ( SDB_CATNODEMGR_REGREQ, PD_PACK_INT ( rc ) ) ;
+      rc = _pCatCB->netWork()->syncSend( handle, &msgRsp );
       goto done;
    }
 
-   INT32 catNodeManager::processCommandMsg( void * pMsg, BOOLEAN writable )
+   INT32 catNodeManager::processCommandMsg( const NET_HANDLE &handle,
+                                            MsgHeader *pMsg,
+                                            BOOLEAN writable )
    {
       INT32 rc = SDB_OK ;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg ;
-      MsgOpQuery *pQueryReq = (MsgOpQuery *)( pEvent->data ) ;
+      MsgOpQuery *pQueryReq = (MsgOpQuery *)pMsg ;
 
       MsgOpReply replyHeader ;
       CHAR       *replyData = NULL ;
@@ -497,7 +491,7 @@ namespace engine
       _fillRspHeader( &(replyHeader.header), &(pQueryReq->header) ) ;
 
       // extract msg
-      rc = msgExtractQuery( pEvent->data, &flag, &pCMDName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                             &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
@@ -542,15 +536,13 @@ namespace engine
       // send reply
       if ( 0 == replyDataLen )
       {
-         rc = _pCatCB->netWork()->syncSend( pEvent->handle,
-                                            (void*)&replyHeader ) ;
+         rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
       }
       else
       {
          replyHeader.header.messageLength += replyDataLen ;
          replyHeader.numReturned = returnNum ;
-         rc = _pCatCB->netWork()->syncSend( pEvent->handle,
-                                            &(replyHeader.header),
+         rc = _pCatCB->netWork()->syncSend( handle, &(replyHeader.header),
                                             (void*)replyData, replyDataLen ) ;
       }
       if ( replyData )
@@ -745,12 +737,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PREMOVEGRP, "catNodeManager::processRemoveGrp" )
-   INT32 catNodeManager::processRemoveGrp(void *pMsg)
+   INT32 catNodeManager::processRemoveGrp( const NET_HANDLE &handle,
+                                           MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
-      EvntCatalogInternalEvent *pEvent
-                        = (EvntCatalogInternalEvent *)pMsg;
-      MsgOpQuery *pQueryReq = (MsgOpQuery *)(pEvent->data);
+      MsgOpQuery *pQueryReq = (MsgOpQuery *)pMsg ;
       MsgOpReply replyHeader;
       const CHAR *strGroupName = NULL ;
       INT32 flag;
@@ -779,9 +770,9 @@ namespace engine
                   "request" );
          goto error;
       }
-      rc = msgExtractQuery( pEvent->data, &flag, &pCMDName, &numToSkip,
-                        &numToReturn, &pQuery, &pFieldSelector,
-                        &pOrderBy, &pHint );
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
+                            &numToReturn, &pQuery, &pFieldSelector,
+                            &pOrderBy, &pHint ) ;
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR, "Failed to parse remove group request(rc=%d)",
@@ -833,7 +824,7 @@ namespace engine
       replyHeader.flags = rc;
       PD_TRACE1 ( SDB_CATNODEMGR_PREMOVEGRP,
                   PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend( pEvent->handle, &replyHeader );
+      rc = _pCatCB->netWork()->syncSend( handle, &replyHeader );
       PD_TRACE_EXITRC( SDB_CATNODEMGR_PCREATEGRP, rc ) ;
       return rc ;
    error:
@@ -841,12 +832,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVEGRP, "catNodeManager::processActiveGrp" )
-   INT32 catNodeManager::processActiveGrp( void *pMsg )
+   INT32 catNodeManager::processActiveGrp( const NET_HANDLE &handle,
+                                           MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
-      EvntCatalogInternalEvent *pEvent
-                           = (EvntCatalogInternalEvent *)pMsg ;
-      MsgOpQuery *pQueryMsg = (MsgOpQuery *)(pEvent->data) ;
+      MsgOpQuery *pQueryMsg = (MsgOpQuery *)pMsg ;
       MsgOpReply replyHeader ;
       CHAR *pBuffer = NULL ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_ACTIVEGRP ) ;
@@ -868,7 +858,7 @@ namespace engine
          CHAR *pFieldSelector = NULL ;
          CHAR *pOrderBy = NULL ;
          CHAR *pHint = NULL ;
-         rc = msgExtractQuery( pEvent->data, &flag, &pCMDName, &numToSkip,
+         rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                                &numToReturn, &pQuery, &pFieldSelector,
                                &pOrderBy, &pHint );
          if ( rc != SDB_OK )
@@ -935,13 +925,13 @@ namespace engine
          replyHeader.startFrom = 0;
          PD_TRACE1 ( SDB_CATNODEMGR_ACTIVEGRP,
                      PD_PACK_INT ( rc ) ) ;
-         rc = _pCatCB->netWork()->syncSend( pEvent->handle, &replyHeader );
+         rc = _pCatCB->netWork()->syncSend( handle, &replyHeader );
       }
       else
       {
          PD_TRACE1 ( SDB_CATNODEMGR_ACTIVEGRP,
                      PD_PACK_INT ( rc ) ) ;
-         rc = _pCatCB->netWork()->syncSend( pEvent->handle, pBuffer );
+         rc = _pCatCB->netWork()->syncSend( handle, pBuffer );
       }
       if ( NULL != pBuffer )
       {

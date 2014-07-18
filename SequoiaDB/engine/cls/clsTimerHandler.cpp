@@ -53,7 +53,7 @@ namespace engine
       _pClsMgr = NULL ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSTMHD_HDTMOUT, "_clsTimerHandler::handleTimeout" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSTMHD_HDTMOUT, "_clsTimerHandler::handleTimeout" )
    void _clsTimerHandler::handleTimeout( const UINT32 &millisec,
                                          const UINT32 &id )
    {
@@ -78,8 +78,9 @@ namespace engine
             eventMsg->timeoutMsg.occurTime = ts.time ;
             eventMsg->timeoutMsg.timerID = ossPack32To64( type(), id ) ;
 
-            _pMgrCB->postEvent( pmdEDUEvent (PMD_EDU_EVENT_TIMEOUT, 
-               TRUE, (void*)eventMsg) ) ;
+            _pMgrCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT, 
+                                              PMD_EDU_MEM_ALLOC,
+                                              (void*)eventMsg ) ) ;
          }
       }
       PD_TRACE_EXIT ( SDB__CLSTMHD_HDTMOUT ) ;

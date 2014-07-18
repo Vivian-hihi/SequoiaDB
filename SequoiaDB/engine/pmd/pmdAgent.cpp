@@ -1125,11 +1125,8 @@ namespace engine
             }
 
             //Relase memory
-            if ( event._Data && event._release )
-            {
-               SDB_OSS_FREE ( event._Data ) ;
-               event.reset () ;
-            }
+            pmdEduEventRelase( event, cb ) ;
+            event.reset () ;
          }
          else
          {
@@ -1206,11 +1203,8 @@ namespace engine
             }
 
             //Relase memory
-            if ( event._Data && event._release )
-            {
-               SDB_OSS_FREE ( event._Data ) ;
-               event.reset () ;
-            }
+            pmdEduEventRelase( event, cb ) ;
+            event.reset () ;
          }
          else
          {

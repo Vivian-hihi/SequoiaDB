@@ -61,6 +61,16 @@ namespace engine
    } ;
 
    /*
+      pmdEDUMemTypes define
+   */
+   enum pmdEDUMemTypes
+   {
+      PMD_EDU_MEM_NONE     = 0,   // Memory is not unknow
+      PMD_EDU_MEM_ALLOC    = 1,   // Memory is by SDB_OSS_MALLOC
+      PMD_EDU_MEM_SELF     = 2    // Memory is by pmdEDU::allocBuff
+   } ;
+
+   /*
       PMD_EVENT_MESSAGES define, for different event
    */
    union PMD_EVENT_MESSAGES
@@ -84,23 +94,23 @@ namespace engine
    public :
       pmdEDUEventTypes  _eventType ;
       UINT64            _userData ;
-      BOOLEAN           _release ;  // can release flag
+      pmdEDUMemTypes    _dataMemType ;
       void              *_Data ;
 
       _pmdEDUEvent ( pmdEDUEventTypes type = PMD_EDU_EVENT_NONE,
-                     BOOLEAN release = FALSE,
+                     pmdEDUMemTypes dataMemType = PMD_EDU_MEM_NONE,
                      void *data = NULL,
                      UINT64 userData = 0 )
       {
-         _reset ( type, release, data, userData ) ;
+         _reset ( type, dataMemType, data, userData ) ;
       }
       _pmdEDUEvent( const _pmdEDUEvent &rhs )
       {
-         _reset ( rhs._eventType, rhs._release, rhs._Data, rhs._userData ) ;
+         _reset ( rhs._eventType, rhs._dataMemType, rhs._Data, rhs._userData ) ;
       }
       _pmdEDUEvent& operator=( const _pmdEDUEvent &rhs )
       {
-         _reset( rhs._eventType, rhs._release, rhs._Data, rhs._userData ) ;
+         _reset( rhs._eventType, rhs._dataMemType, rhs._Data, rhs._userData ) ;
          return *this ;
       }
       void reset ()
@@ -110,12 +120,12 @@ namespace engine
 
    protected:
       void _reset ( pmdEDUEventTypes type = PMD_EDU_EVENT_NONE,
-                    BOOLEAN release = FALSE,
+                    pmdEDUMemTypes dataMemType = PMD_EDU_MEM_NONE,
                     void *data = NULL,
                     UINT64 userData = 0 )
       {
          _eventType  = type ;
-         _release    = release ;
+         _dataMemType= dataMemType ;
          _Data       = data ;
          _userData   = userData ;
       }

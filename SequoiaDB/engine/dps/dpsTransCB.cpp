@@ -248,7 +248,7 @@ namespace engine
       if ( PMD_INVALID_EDUID != eduID )
       {
          rc = pEduMgr->postEDUPost( eduID, PMD_EDU_EVENT_ACTIVE,
-                                    FALSE, NULL ) ;
+                                    PMD_EDU_MEM_NONE, NULL ) ;
       }
       else
       {

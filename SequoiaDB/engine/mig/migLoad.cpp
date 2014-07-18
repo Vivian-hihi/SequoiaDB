@@ -298,10 +298,7 @@ namespace engine
             success += workerRe->success ;
             failure += workerRe->failure ;
             ++i ;
-            if ( event._release )
-            {
-               SAFE_OSS_DELETE ( workerRe ) ;
-            }
+            pmdEduEventRelase( event, eduCB ) ;
          }
       }
       PD_TRACE_EXITRC ( SDB__MIGLOADJSONPS__STOPWAIT, rc );
@@ -711,7 +708,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MIGWORKER__IMPORT, "migWorker::importData" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MIGWORKER__IMPORT, "migWorker::importData" )
    INT32 migWorker::importData ( EDUID masterEDUID,
                                  dmsStorageUnit *su,
                                  UINT16 collectionID,
@@ -820,7 +817,7 @@ namespace engine
       }
       workRe->rc = rc ;
       rc = eduMgr->postEDUPost ( masterEDUID, PMD_EDU_EVENT_MSG,
-                                 TRUE, workRe ) ;
+                                 PMD_EDU_MEM_ALLOC, workRe ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to postEDUPost, rc=%d", rc ) ;

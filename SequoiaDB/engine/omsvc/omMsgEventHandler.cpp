@@ -44,7 +44,6 @@ namespace engine
    {
       _pRSManager       = pRSManager ;
       _pMainCB          = NULL ;
-      _pMsgAssist       = NULL ;
    }
 
    _omMsgHandler::~_omMsgHandler()
@@ -52,16 +51,14 @@ namespace engine
       _pRSManager       = NULL ;
    }
 
-   void _omMsgHandler::attach( _pmdEDUCB * cb, _netMsgAssister *pMsgAssist )
+   void _omMsgHandler::attach( _pmdEDUCB * cb )
    {
       _pMainCB    = cb ;
-      _pMsgAssist = pMsgAssist ;
    }
 
    void _omMsgHandler::detach()
    {
       _pMainCB    = NULL ;
-      _pMsgAssist = NULL ;
    }
 
    INT32 _omMsgHandler::handleMsg( const NET_HANDLE &handle,
@@ -75,10 +72,10 @@ namespace engine
       // main cb msg
       if ( header->TID == 0 )
       {
-         SDB_ASSERT( _pMainCB && _pMsgAssist, "Main cb can't be NULL" ) ;
-         if ( !_pMainCB || !_pMsgAssist )
+         SDB_ASSERT( _pMainCB, "Main cb can't be NULL" ) ;
+         if ( !_pMainCB )
          {
-            PD_LOG( PDERROR, "Main cb or MsgAssit handler is null when recv "
+            PD_LOG( PDERROR, "Main cb handler is null when recv "
                     "msg[opCode:%d]", header->opCode ) ;
             rc = SDB_SYS ;
             goto error ;
@@ -94,10 +91,10 @@ namespace engine
             goto error ;
          }
          ossMemcpy( pNewMsg, msg, header->messageLength ) ;
-         // store handle
-         _pMsgAssist->pushMsgHandle( pNewMsg, handle ) ;
          // push event
-         _pMainCB->postEvent( pmdEDUEvent(PMD_EDU_EVENT_MSG, TRUE, pNewMsg) ) ;
+         _pMainCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                           PMD_EDU_MEM_SELF,
+                                           pNewMsg, (UINT64)handle ) ) ;
       }
       // session msg
       else
@@ -175,7 +172,8 @@ namespace engine
          eventMsg->timeoutMsg.timerID = id ;
 
          _pMainCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT, 
-                                            TRUE, (void*)eventMsg) ) ;
+                                            PMD_EDU_MEM_ALLOC,
+                                            (void*)eventMsg) ) ;
       }
    }
 

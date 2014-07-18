@@ -407,7 +407,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_PSTEDUPST, "_pmdEDUMgr::postEDUPost" )
    INT32 _pmdEDUMgr::postEDUPost ( EDUID eduID, pmdEDUEventTypes type,
-                                   BOOLEAN release , void *pData )
+                                   pmdEDUMemTypes dataMemType , void *pData )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_PSTEDUPST );
@@ -431,7 +431,7 @@ namespace engine
          }
       }
       eduCB = ( *it ).second ;
-      eduCB->postEvent( pmdEDUEvent ( type, release, pData ) ) ;
+      eduCB->postEvent( pmdEDUEvent ( type, dataMemType, pData ) ) ;
    done :
       PD_TRACE_EXITRC ( SDB__PMDEDUMGR_PSTEDUPST, rc );
       return rc ;
@@ -619,7 +619,8 @@ namespace engine
       *eduid = eduID ;
       //The edu is start, need post a resum event
       eduCB->clear() ;
-      eduCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_RESUME, FALSE, arg ) ) ;
+      eduCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_RESUME,
+                                     PMD_EDU_MEM_NONE, arg ) ) ;
       _mutex.release () ;
       /*************** END CRITICAL SECTION **********************/
 
@@ -688,7 +689,8 @@ namespace engine
       // post RESUME event BEFORE agent starts!
       // we have to do this BEFORE starting the agent thread because we need to
       // make sure the agent is always picking up RESUME event at first
-      cb ->postEvent( pmdEDUEvent( PMD_EDU_EVENT_RESUME, FALSE, arg ) ) ;
+      cb ->postEvent( pmdEDUEvent( PMD_EDU_EVENT_RESUME, PMD_EDU_MEM_NONE,
+                                   arg ) ) ;
       _mutex.release () ;
       /***********END CRITICAL SECTION****************/
 

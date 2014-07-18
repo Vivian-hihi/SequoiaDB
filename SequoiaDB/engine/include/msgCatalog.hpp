@@ -186,18 +186,6 @@ namespace engine
    } ;
    typedef class _MsgCatPrimaryChangeRes MsgCatPrimaryChangeRes ;
 
-
-   class _EvntCatalogInternalEvent : public SDBObject
-   {
-   public:
-      NET_HANDLE  handle;
-      CHAR*       data;
-   private :
-      _EvntCatalogInternalEvent ( _EvntCatalogInternalEvent const & ) ;
-      _EvntCatalogInternalEvent& operator=( _EvntCatalogInternalEvent const & ) ;
-   } ;
-   typedef class _EvntCatalogInternalEvent EvntCatalogInternalEvent;
-
    typedef MsgOpQuery MsgCatQueryCatReq;
 
    // the reply take a catalogue record which is a bson-obj:
@@ -220,4 +208,4 @@ namespace engine
 }
 #pragma pack()
 
-#endif
+#endif // MSGCATALOG_HPP__

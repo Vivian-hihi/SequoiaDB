@@ -72,7 +72,7 @@ namespace engine
             else if ( PMD_EDU_EVENT_MSG == eventData._eventType )
             {
                //restore handle
-               pClsCB->dispatchMsg( pClsCB->peekMsgHandle ( eventData._Data),
+               pClsCB->dispatchMsg( (NET_HANDLE)eventData._userData,
                                     (MsgHeader*)(eventData._Data) ) ;
             }
             else
@@ -81,11 +81,8 @@ namespace engine
             }
 
             //Relase memory
-            if ( eventData._Data && eventData._release )
-            {
-               SDB_OSS_FREE ( eventData._Data ) ;
-               eventData.reset () ;
-            }
+            pmdEduEventRelase( eventData, cb ) ;
+            eventData.reset () ;
          }
       }
 
@@ -129,7 +126,7 @@ namespace engine
             else if ( PMD_EDU_EVENT_MSG == eventData._eventType )
             {
                //restore handle
-               pShdCB->dispatchMsg( pClsCB->peekMsgHandle ( eventData._Data),
+               pShdCB->dispatchMsg( (NET_HANDLE)eventData._userData,
                                     (MsgHeader*)(eventData._Data) ) ;
             }
             else
@@ -138,11 +135,8 @@ namespace engine
             }
 
             //Relase memory
-            if ( eventData._Data && eventData._release )
-            {
-               SDB_OSS_FREE ( eventData._Data ) ;
-               eventData.reset () ;
-            }
+            pmdEduEventRelase( eventData, cb ) ;
+            eventData.reset () ;
          }
       }
 

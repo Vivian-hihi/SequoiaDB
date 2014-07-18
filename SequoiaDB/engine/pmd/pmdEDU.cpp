@@ -218,10 +218,7 @@ namespace engine
       pmdEDUEvent data ;
       while ( _queue.try_pop( data ) )
       {
-         if ( data._release && data._Data )
-         {
-            SDB_OSS_FREE ( data._Data ) ;
-         }
+         pmdEduEventRelase( data, this ) ;
       }
       _processEventCount = 0 ;
       _Name[0] = 0 ;
@@ -1006,9 +1003,9 @@ namespace engine
          }
 
          // release the event data
-         if ( !isForced && event._Data && event._release )
+         if ( !isForced )
          {
-            SDB_OSS_FREE ( event._Data ) ;
+            pmdEduEventRelase( event, cb ) ;
             event.reset () ;
          }
 
@@ -1175,6 +1172,26 @@ namespace engine
 #endif // SDB_ENGINE
       PD_TRACE_EXITRC ( SDB_PMDSEND, rc );
       return rc ;
+   }
+
+   void pmdEduEventRelase( pmdEDUEvent &event, pmdEDUCB *cb )
+   {
+      if ( event._Data && event._dataMemType != PMD_EDU_MEM_NONE )
+      {
+         if ( PMD_EDU_MEM_ALLOC == event._dataMemType )
+         {
+            SDB_OSS_FREE( event._Data ) ;
+         }
+         else if ( PMD_EDU_MEM_SELF == event._dataMemType )
+         {
+            SDB_ASSERT( cb, "cb can't be NULL" ) ;
+            if ( cb )
+            {
+               cb->releaseBuff( (CHAR *)event._Data ) ;
+            }
+         }
+         event._Data = NULL ;
+      }
    }
 
 }

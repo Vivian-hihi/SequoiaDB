@@ -174,7 +174,7 @@ namespace engine
       PD_TRACE1 ( SDB_CATMAINCT_POSTMSG,
                   PD_PACK_INT ( header->opCode ) ) ;
 
-      EvntCatalogInternalEvent *pEvent = NULL ;
+      pmdEDUEvent event ;
 
       if ( MSG_CAT_CATALOGUE_BEGIN < (UINT32)header->opCode &&
            (UINT32)header->opCode < MSG_CAT_CATALOGUE_END )
@@ -184,10 +184,9 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         rc = catBuildMsgEvent ( handle, header, pEvent ) ;
+         rc = catBuildMsgEvent ( handle, header, _pCataMgrCB, event ) ;
          PD_RC_CHECK( rc, PDERROR, "failed to build the event(rc=%d)", rc );
-         _pCataMgrCB->postEvent(pmdEDUEvent ( PMD_EDU_EVENT_MSG,
-                                              TRUE, (void *)pEvent ) ) ;
+         _pCataMgrCB->postEvent( event ) ;
       }
       else if  ( MSG_CAT_NODE_BEGIN < (UINT32)header->opCode &&
                  (UINT32)header->opCode < MSG_CAT_NODE_END )
@@ -197,10 +196,9 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         rc = catBuildMsgEvent ( handle, header, pEvent ) ;
+         rc = catBuildMsgEvent ( handle, header, _pNodeMgrCB, event ) ;
          PD_RC_CHECK( rc, PDERROR, "failed to build the event(rc=%d)", rc );
-         _pNodeMgrCB->postEvent(pmdEDUEvent ( PMD_EDU_EVENT_MSG,
-                                              TRUE, (void *)pEvent ) ) ;
+         _pNodeMgrCB->postEvent( event ) ;
       }
       else
       {
@@ -211,14 +209,6 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CATMAINCT_POSTMSG, rc ) ;
       return rc;
    error:
-      if ( pEvent != NULL )
-      {
-         if ( pEvent->data != NULL )
-         {
-            SDB_OSS_FREE ( pEvent->data );
-         }
-         SDB_OSS_FREE ( pEvent );
-      }
       PD_LOG ( PDERROR, "Failed to process message(MessageType = %d, rc=%d)",
                header->opCode, rc ) ;
       goto done;
@@ -462,34 +452,39 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_BUILDMSGEVENT, "catMainController::catBuildMsgEvent" )
    INT32 catMainController::catBuildMsgEvent ( const NET_HANDLE &handle,
                                                const MsgHeader *pMsg,
-                                             EvntCatalogInternalEvent *&pEvent )
+                                               pmdEDUCB *cb,
+                                               pmdEDUEvent &event )
    {
       INT32 rc = SDB_OK ;
-      MsgHeader *pEventData = NULL ;
+      CHAR *pEventData = NULL ;
+      INT32 buffLen = 0 ;
+      pmdEDUMemTypes memType = PMD_EDU_MEM_NONE ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_BUILDMSGEVENT ) ;
-      // caller is responsible to free memory
-      pEvent = (EvntCatalogInternalEvent *)SDB_OSS_MALLOC (
-               sizeof(EvntCatalogInternalEvent));
-      if ( NULL == pEvent )
+
+      if ( cb )
       {
-         rc = SDB_OOM ;
-         PD_LOG ( PDERROR, "malloc failed(size = %d)",
-                  sizeof(EvntCatalogInternalEvent) ) ;
-         goto error ;
+         cb->allocBuff( pMsg->messageLength, &pEventData, buffLen ) ;
+         memType = PMD_EDU_MEM_SELF ;
       }
-      pEventData = (MsgHeader *)SDB_OSS_MALLOC( pMsg->messageLength ) ;
+      else
+      {
+         pEventData = (CHAR *)SDB_OSS_MALLOC( pMsg->messageLength ) ;
+         memType = PMD_EDU_MEM_ALLOC ;
+      }
+
       if ( NULL == pEventData )
       {
          rc = SDB_OOM;
-         PD_LOG ( PDERROR, "malloc failed(size = %d)",
-                  pMsg->messageLength ) ;
-         SDB_OSS_FREE ( pEvent ) ;
-         pEvent = NULL ;
+         PD_LOG ( PDERROR, "malloc failed(size = %d)", pMsg->messageLength ) ;
          goto error ;
       }
-      ossMemcpy( (void *)pEventData, pMsg, pMsg->messageLength );
-      pEvent->handle = handle;
-      pEvent->data = (CHAR *)pEventData;
+      ossMemcpy( (void *)pEventData, pMsg, pMsg->messageLength ) ;
+
+      event._Data = pEventData ;
+      event._dataMemType = memType ;
+      event._eventType = PMD_EDU_EVENT_MSG ;
+      event._userData = (UINT64)handle ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT_BUILDMSGEVENT, rc ) ;
       return rc ;
@@ -854,10 +849,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 catMainController::processMsg( void *pMsg )
+   INT32 catMainController::processMsg( const NET_HANDLE &handle,
+                                        MsgHeader *pMsg )
    {
       MsgHeader *pHeader = (MsgHeader *)pMsg ;
-      PD_LOG ( PDERROR, "received unknown message: %d", pHeader->opCode ) ;
+      PD_LOG ( PDERROR, "received unknown message: (%d)%u",
+               IS_REPLY_TYPE(pHeader->opCode),
+               GET_REQUEST_TYPE(pHeader->opCode) ) ;
       return SDB_UNKNOWN_MESSAGE ;
    }
 

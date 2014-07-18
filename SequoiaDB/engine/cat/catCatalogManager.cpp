@@ -291,12 +291,12 @@ namespace engine
 
    // this function is for catalog collection check
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYCATALOG, "catCatalogueManager::processQueryCatalogue" )
-   INT32 catCatalogueManager::processQueryCatalogue ( void *pMsg )
+   INT32 catCatalogueManager::processQueryCatalogue ( const NET_HANDLE &handle,
+                                                      MsgHeader *pMsg )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_QUERYCATALOG ) ;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent*)pMsg;
-      MsgCatQueryCatReq *pCatReq       = (MsgCatQueryCatReq*)(pEvent->data);
+      MsgCatQueryCatReq *pCatReq       = (MsgCatQueryCatReq*)pMsg ;
       MsgOpReply *pReply               = NULL;
 
       // make sure we are on catalog primary
@@ -362,7 +362,7 @@ namespace engine
    done :
       if ( SDB_OK == rc && NULL != pReply )
       {
-         rc = _pCatCB->netWork()->syncSend ( pEvent->handle, pReply );
+         rc = _pCatCB->netWork()->syncSend ( handle, pReply );
          SDB_OSS_FREE ( pReply );
       }
       else
@@ -378,7 +378,7 @@ namespace engine
          replyMsg.contextID            = -1 ;
          PD_TRACE1 ( SDB_CATALOGMGR_QUERYCATALOG,
                      PD_PACK_INT ( rc ) ) ;
-         rc = _pCatCB->netWork()->syncSend ( pEvent->handle, &replyMsg );
+         rc = _pCatCB->netWork()->syncSend ( handle, &replyMsg );
       }
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_QUERYCATALOG, rc ) ;
       return rc ;
@@ -426,12 +426,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYTASK, "catCatalogueManager::processQueryTask" )
-   INT32 catCatalogueManager::processQueryTask ( void *pMsg )
+   INT32 catCatalogueManager::processQueryTask ( const NET_HANDLE &handle,
+                                                 MsgHeader *pMsg )
    {
       INT32 rc                         = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_QUERYTASK ) ;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg ;
-      MsgCatQueryTaskReq *pTaskRequest = (MsgCatQueryTaskReq*)(pEvent->data) ;
+      MsgCatQueryTaskReq *pTaskRequest = (MsgCatQueryTaskReq*)pMsg ;
       MsgCatQueryTaskRes *pReply       = NULL ;
       INT32 flag                       = 0 ;
       SINT64 numToSkip                 = 0 ;
@@ -494,7 +494,7 @@ namespace engine
    done :
       if ( SDB_OK == rc && pReply )
       {
-         rc = _pCatCB->netWork()->syncSend ( pEvent->handle, pReply );
+         rc = _pCatCB->netWork()->syncSend ( handle, pReply );
       }
       else
       {
@@ -509,7 +509,7 @@ namespace engine
          replyMsg.flags                = rc;
          replyMsg.contextID            = -1 ;
          PD_TRACE1 ( SDB_CATALOGMGR_QUERYTASK, PD_PACK_INT ( rc ) ) ;
-         rc = _pCatCB->netWork()->syncSend ( pEvent->handle, &replyMsg );
+         rc = _pCatCB->netWork()->syncSend ( handle, &replyMsg );
       }
       if ( pReply )
       {
@@ -1714,16 +1714,15 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSMSG, "catCatalogueManager::processMsg" )
-   INT32 catCatalogueManager::processMsg( void *pMsg )
+   INT32 catCatalogueManager::processMsg( const NET_HANDLE &handle,
+                                          MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg;
-      MsgHeader *pHeader = (MsgHeader *)(pEvent->data);
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_PROCESSMSG ) ;
       PD_TRACE1 ( SDB_CATALOGMGR_PROCESSMSG,
-                  PD_PACK_INT ( pHeader->opCode ) ) ;
+                  PD_PACK_INT ( pMsg->opCode ) ) ;
 
-      switch ( pHeader->opCode )
+      switch ( pMsg->opCode )
       {
       // command dispatch, need the second dispath in the function
       case MSG_CAT_CREATE_COLLECTION_REQ :
@@ -1748,24 +1747,25 @@ namespace engine
       case MSG_CAT_ALTER_DOMAIN_REQ :
       case MSG_CAT_ALTER_COLLECTION_REQ:
          {
-            rc = processCommandMsg( pMsg, TRUE ) ;
+            rc = processCommandMsg( handle, pMsg, TRUE ) ;
             break;
          }
       case MSG_CAT_QUERY_CATALOG_REQ:
          {
-            rc = processQueryCatalogue( pMsg );
+            rc = processQueryCatalogue( handle, pMsg ) ;
             break;
          }
       case MSG_CAT_QUERY_TASK_REQ:
          {
-            rc = processQueryTask ( pMsg ) ;
+            rc = processQueryTask ( handle, pMsg ) ;
             break ;
          }
       default:
          {
             rc = SDB_UNKNOWN_MESSAGE;
-            PD_LOG(PDWARNING,
-                  "received unknown message (MessageType = %d)", pHeader->opCode );
+            PD_LOG( PDWARNING, "received unknown message (opCode: [%d]%u)",
+                    IS_REPLY_TYPE(pMsg->opCode),
+                    GET_REQUEST_TYPE(pMsg->opCode) ) ;
             break;
          }
       }
@@ -1774,11 +1774,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSCOMMANDMSG, "catCatalogueManager::processCommandMsg" )
-   INT32 catCatalogueManager::processCommandMsg( void * pMsg, BOOLEAN writable )
+   INT32 catCatalogueManager::processCommandMsg( const NET_HANDLE &handle,
+                                                 MsgHeader *pMsg,
+                                                 BOOLEAN writable )
    {
       INT32 rc = SDB_OK ;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg ;
-      MsgOpQuery *pQueryReq = (MsgOpQuery *)( pEvent->data ) ;
+      MsgOpQuery *pQueryReq = (MsgOpQuery *)pMsg ;
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_PROCESSCOMMANDMSG ) ;
       MsgOpReply replyHeader ;
@@ -1814,7 +1815,7 @@ namespace engine
       }
 
       // extract msg
-      rc = msgExtractQuery( pEvent->data, &flag, &pCMDName, &numToSkip,
+      rc = msgExtractQuery( (CHAR*)pMsg, &flag, &pCMDName, &numToSkip,
                             &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
@@ -1904,15 +1905,13 @@ namespace engine
       // send reply
       if ( 0 == replyDataLen )
       {
-         rc = _pCatCB->netWork()->syncSend( pEvent->handle,
-                                            (void*)&replyHeader ) ;
+         rc = _pCatCB->netWork()->syncSend( handle, (void*)&replyHeader ) ;
       }
       else
       {
          replyHeader.header.messageLength += replyDataLen ;
          replyHeader.numReturned = returnNum ;
-         rc = _pCatCB->netWork()->syncSend( pEvent->handle,
-                                            &(replyHeader.header),
+         rc = _pCatCB->netWork()->syncSend( handle, &(replyHeader.header),
                                             (void*)replyData, replyDataLen ) ;
       }
       if ( replyData )

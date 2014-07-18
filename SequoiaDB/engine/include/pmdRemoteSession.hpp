@@ -162,8 +162,13 @@ namespace engine
    {
       public:
          _pmdRemoteSession( netRouteAgent *pAgent,
+                            INT64 timeout = -1,
                             IRemoteSessionHandler *pHandle = NULL ) ;
          virtual ~_pmdRemoteSession() ;
+
+         void attachCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
+         void detachCB() { _pEDUCB = NULL ; }
+         _pmdEDUCB* getEDUCB() { return _pEDUCB ; }
 
          MAP_SUB_SESSION* getSubSessions() ;
          pmdSubSession* addSubSession( UINT64 nodeID ) ;
@@ -194,6 +199,7 @@ namespace engine
          MAP_SUB_SESSION               _mapSubSession ;
          IRemoteSessionHandler         *_pHandle ;
          netRouteAgent                 *_pAgent ;
+         _pmdEDUCB                     *_pEDUCB ;
 
    } ;
    typedef _pmdRemoteSession pmdRemoteSession ;
@@ -207,6 +213,9 @@ namespace engine
    */
    class _pmdRemoteSessionMgr : public SDBObject
    {
+      typedef map< UINT32, pmdRemoteSession* >        MAP_REMOTE_SESSION ;
+      typedef MAP_REMOTE_SESSION::iterator            MAP_REMOTE_SESSION_IT ;
+
       public:
          _pmdRemoteSessionMgr() ;
          ~_pmdRemoteSessionMgr() ;
@@ -227,8 +236,13 @@ namespace engine
          pmdRemoteSession* getSession( UINT32 tid ) ;
          void              removeSession( UINT32 tid ) ;
 
+         UINT32            sessionCount() ;
+
       protected:
-         
+         netRouteAgent              *_pAgent ;
+         MAP_REMOTE_SESSION         _mapSessions ;
+         ossSpinSLatch              _mapLatch ;
+
    } ;
    typedef _pmdRemoteSessionMgr pmdRemoteSessionMgr ;
 

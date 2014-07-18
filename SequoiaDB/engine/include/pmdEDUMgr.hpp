@@ -345,7 +345,8 @@ namespace engine
        *   SDB_SYS ( given EDU ID can't be found )
        */
       INT32    postEDUPost ( EDUID eduID, pmdEDUEventTypes type,
-                             BOOLEAN release = FALSE, void *pData = NULL ) ;
+                             pmdEDUMemTypes dataMemType = PMD_EDU_MEM_NONE,
+                             void *pData = NULL ) ;
 
 
       /*

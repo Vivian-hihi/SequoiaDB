@@ -54,7 +54,7 @@ namespace engine
       _pShardCB  = NULL ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_CPMSG, "_clsMsgHandler::copyMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_CPMSG, "_clsMsgHandler::copyMsg" )
    void * _clsMsgHandler::copyMsg ( const CHAR* msg, UINT32 length )
    {
       PD_TRACE_ENTRY ( SDB__CLSMSGHND_CPMSG );
@@ -70,7 +70,7 @@ namespace engine
 
    //In this function, there is a singal thread at the same time,
    //So, can not use mutex
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDMSG, "_clsMsgHandler::handleMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDMSG, "_clsMsgHandler::handleMsg" )
    INT32 _clsMsgHandler::handleMsg( const NET_HANDLE & handle, 
                                     const _MsgHeader * header, 
                                     const CHAR * msg)
@@ -100,7 +100,7 @@ namespace engine
       _pClsMgr->handleSessionClose( type(), handle ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDSNMSG, "_clsMsgHandler::handleSessionMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDSNMSG, "_clsMsgHandler::handleSessionMsg" )
    INT32 _clsMsgHandler::handleSessionMsg (  const NET_HANDLE &handle,
                                              const _MsgHeader *header,
                                              const CHAR *msg )
@@ -173,7 +173,9 @@ namespace engine
          goto error;
       }
 
-      pSession->eduCB()->postEvent( pmdEDUEvent(PMD_EDU_EVENT_MSG, FALSE, newMsg) ) ;
+      pSession->eduCB()->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                                 PMD_EDU_MEM_NONE,
+                                                 newMsg ) ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB__CLSMSGHND_HNDSNMSG, rc );
@@ -207,7 +209,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDCLSMSG, "_clsMsgHandler::handleClsMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDCLSMSG, "_clsMsgHandler::handleClsMsg" )
    INT32 _clsMsgHandler::handleClsMsg( const NET_HANDLE &handle,
                                        const _MsgHeader *header,
                                        const CHAR *msg )
@@ -226,8 +228,6 @@ namespace engine
       }
 
       newHeader = ( MsgHeader * )newMsg ;
-      //store handle
-      _pClsMgr->pushMsgHandle ( newMsg, handle ) ;
 
       if ( _pShardCB && ( MSG_CAT_NODEGRP_RES == (UINT32)newHeader->opCode ||
            MSG_CAT_QUERY_CATALOG_RSP == (UINT32)newHeader->opCode ||
@@ -235,13 +235,17 @@ namespace engine
            ( MSG_CAT_CATGRP_RES == (UINT32)newHeader->opCode &&
              _pShardCB->getTID() != (UINT32)newHeader->requestID ) ) )
       {
-         _pShardCB->postEvent( pmdEDUEvent(PMD_EDU_EVENT_MSG, TRUE, newMsg) );
+         _pShardCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                            PMD_EDU_MEM_ALLOC,
+                                            newMsg, (UINT64)handle ) ) ;
       }
       else
       {
          //store type to TID and dispatch restore
          newHeader->TID = (UINT32)type() ;
-         _pMgrEDUCB->postEvent( pmdEDUEvent(PMD_EDU_EVENT_MSG, TRUE, newMsg) );
+         _pMgrEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                             PMD_EDU_MEM_ALLOC,
+                                             newMsg, (UINT64)handle ) );
       }
 
    done:

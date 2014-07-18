@@ -36,8 +36,11 @@ namespace engine
 
    // message process functions
    protected:
-      INT32 processMsg( void *pMsg ) ;
-      INT32 processCommandMsg( void *pMsg, BOOLEAN writable ) ;
+      INT32 processMsg( const NET_HANDLE &handle,
+                        MsgHeader *pMsg ) ;
+
+      INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
+                               BOOLEAN writable ) ;
 
       INT32 processCmdCreateGrp( const CHAR *pQuery ) ;
       INT32 processCmdCreateDomain( const CHAR *pQuery ) ;
@@ -45,21 +48,25 @@ namespace engine
       INT32 processCmdUpdateNode( const CHAR *pQuery, const CHAR *pSelector ) ;
       INT32 processCmdDelNode( const CHAR *pQuery ) ;
 
-      INT32 processGrpReq(void *pMsg);
-      INT32 processRegReq(void *pMsg);
-      INT32 processPrimaryChange(void *pMsg);
-      INT32 processRemoveGrp(void *pMsg) ;
-      INT32 processActiveGrp(void *pMsg);
+      INT32 processGrpReq( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 processRegReq( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 processPrimaryChange( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 processRemoveGrp( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 processActiveGrp( const NET_HANDLE &handle, MsgHeader *pMsg );
 
       INT32 readCataConf();
-      INT32 parseCatalogConf( CHAR *pData, const SINT64 sDataSize, SINT64 &sParseBytes );
+      INT32 parseCatalogConf( CHAR *pData, const SINT64 sDataSize,
+                              SINT64 &sParseBytes );
       INT32 parseLine( const CHAR *pLine, BSONObj &obj );
-      INT32 generateGroupInfo( bson::BSONObj &boConf, bson::BSONObj &boGroupInfo );
+      INT32 generateGroupInfo( bson::BSONObj &boConf,
+                               bson::BSONObj &boGroupInfo );
       INT32 saveGroupInfo ( bson::BSONObj &boGroupInfo, INT16 w );
       INT32 parseIDInfo( bson::BSONObj &obj );
-      INT32 getNodeInfo( const bson::BSONObj &boReq, bson::BSONObj &boNodeInfo );
+      INT32 getNodeInfo( const bson::BSONObj &boReq,
+                         bson::BSONObj &boNodeInfo );
       INT32 removeGrp( const CHAR *groupName ) ;
-      INT32 activeGrp( const std::string &strGroupName, bson::BSONObj &boGroupInfo );
+      INT32 activeGrp( const std::string &strGroupName,
+                       bson::BSONObj &boGroupInfo );
 
       INT32 _count( const CHAR *collection, const BSONObj &matcher,
                     UINT64 &count ) ;
@@ -109,7 +116,7 @@ namespace engine
       sdbCatalogueCB             *_pCatCB;
       pmdEDUCB                   *_pEduCB;
       _clsMgr                    *_pClsCB;
-   };
+   } ;
 }
 
-#endif
+#endif // CATNODEMANAGER_HPP__

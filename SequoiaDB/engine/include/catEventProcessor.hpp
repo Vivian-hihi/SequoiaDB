@@ -43,6 +43,8 @@
 #include "oss.hpp"
 #include "pd.hpp"
 #include "pmdEDU.hpp"
+#include "msg.h"
+#include "netDef.hpp"
 
 namespace engine
 {
@@ -57,7 +59,7 @@ namespace engine
       }
       virtual INT32 processEvent( pmdEDUEvent &event )
       {
-         INT32 rc = SDB_MAX_ERROR;
+         INT32 rc = SDB_MAX_ERROR ;
          switch ( event._eventType )
          {
          case PMD_EDU_EVENT_ACTIVE:
@@ -69,7 +71,8 @@ namespace engine
                break;
 
          case PMD_EDU_EVENT_MSG:
-               rc = processMsg(event._Data);
+               rc = processMsg( (NET_HANDLE)event._userData,
+                                (MsgHeader*)event._Data ) ;
                break;
 
          default:
@@ -85,7 +88,8 @@ namespace engine
       virtual INT32 deactive() = 0 ;
 
    private:
-      virtual INT32 processMsg(void *pMsg) = 0 ;
+      virtual INT32 processMsg( const NET_HANDLE &handle,
+                                MsgHeader *pMsg ) = 0 ;
 
    } ;
 

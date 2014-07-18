@@ -331,14 +331,10 @@ namespace engine
 
          if ( pmdEvent._eventType != PMD_EDU_EVENT_MSG )
          {
-            PD_LOG ( PDWARNING,
-                     "received unknown event(eventType:%d)",
-                     pmdEvent._eventType );
-            if ( pmdEvent._Data && pmdEvent._release )
-            {
-               SDB_OSS_FREE ( pmdEvent._Data ) ;
-               pmdEvent.reset () ;
-            }
+            PD_LOG ( PDWARNING, "received unknown event(eventType:%d)",
+                     pmdEvent._eventType ) ;
+            pmdEduEventRelase( pmdEvent, cb ) ;
+            pmdEvent.reset () ;
             continue;
          }
          MsgHeader *pMsg = (MsgHeader *)(pmdEvent._Data);
