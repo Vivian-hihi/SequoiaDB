@@ -45,7 +45,7 @@ obj.put("_id", id1);</codeblock></li>
 Pattern obj = Pattern.compile("^2001",Pattern.CASE_INSENSITIVE);
 matcher.put("serial_num", obj);
 BSONObject modifier = new BasicBSONObject("$set", new BasicBSONObject("count",1000));
-cl.update(matcher, modifier, null);</codeblock>以上使用正则表达式构造了一个匹配条件，将序列号以"2001"开头的记录的"count"字段内容改为1000。<note><p></p>以上使用Patten构造的bson matcher，当使用matcher.toString()，内容为：<codeblock>{ "serial_num" : { "$options" : "i" , "$regex" : "^2001"}}</codeblock>通过以下bson构造方式也可以得到相同的内容：<codeblock>BSONObject matcher2 = new BasicBSONObject();
+cl.update(matcher, modifier, null);</codeblock>以上使用正则表达式构造了一个匹配条件，将序列号以“2001”开头的记录的“count”字段内容改为“1000”。<note><p></p>以上使用Patten构造的bson matcher，当使用matcher.toString()，内容为：<codeblock>{ "serial_num" : { "$options" : "i" , "$regex" : "^2001"}}</codeblock>通过以下bson构造方式也可以得到相同的内容：<codeblock>BSONObject matcher2 = new BasicBSONObject();
 BSONObject obj2 = new BasicBSONObject();
 obj2.put("$regex","^2001");
 obj2.put("$options","i");		
@@ -58,7 +58,7 @@ String str = "hello world";
 byte[] arr = str.getBytes();
 Binary bindata = new Binary(arr);
 obj.put("bindata", bindata);</codeblock></li>
-        <li><p>时间戳</p>java bson使用org.bson.types.BSONTimestamp来构造时间戳类型<codeblock>int sec = 1404189030 ; // 2014-07-01 12:30:30
+        <li><p>时间戳</p>java bson使用org.bson.types.BSONTimestamp来构造时间戳类型。<codeblock>int sec = 1404189030 ; // 2014-07-01 12:30:30
 BSONObject obj = new BasicBSONObject();
 BSONTimestamp ts = new BSONTimestamp(sec, 0);
 obj.put("timestamp", ts);</codeblock></li>

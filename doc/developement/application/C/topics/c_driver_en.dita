@@ -76,8 +76,8 @@ connect success!</codeblock><note>
 INT32 rc  = SDB_OK ;
 bson obj ;
 bson_init( &amp;obj ) ;
-bson_append_string( &amp;obj, “name”, “tom” ) ;
-bson_append_int( &amp;obj, “age”, 24 ) ;
+bson_append_string( &amp;obj, "name", "tom" ) ;
+bson_append_int( &amp;obj, "age", 24 ) ;
 rc = bson_finish( &amp;obj ) ;
 if ( rc != SDB_OK )
 printf("Error.");

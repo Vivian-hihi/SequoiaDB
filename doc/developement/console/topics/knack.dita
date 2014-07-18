@@ -32,11 +32,11 @@
                 <p>查看database所有方法：</p><codeblock>db.help()</codeblock>
                 <p>查看database具体方法：</p><codeblock>db.help("method")</codeblock></li>
             <li>CollectionSpace Help<p>collection space级别主要包括对集合管理的操作。</p>
-                <p>假设存在名字为"foo"的集合空间。</p>
+                <p>假设存在名字为“foo”的集合空间。</p>
                 <p>查看collection space所有方法：</p><codeblock>db.foo.help()</codeblock>
                 <p>查看collection space具体方法：</p><codeblock>db.foo.help("method")</codeblock></li>
             <li>Collection Help<p>collection级别主要包括CRUD，索引管理，数据切分，垂直分区表管理等操作。</p>
-                <p>假设在集合空间"foo"中存在名字为"bar"的集合。</p>
+                <p>假设在集合空间“foo”中存在名字为“bar”的集合。</p>
                 <p>查看collection所有方法：</p><codeblock>db.foo.bar.help()</codeblock>
                 <p>查看collection具体方法：</p><codeblock>db.foo.bar.help("method")</codeblock></li>
             <li>Cursor Help<p>cursor级别主要包括对返回记录（数据）的操作。</p>
@@ -47,15 +47,15 @@
                 <p>查看cursor具体方法：</p><codeblock>db.foo.bar.find().help("method")</codeblock><p>或者</p><codeblock>cur.help("method")</codeblock>
                 <p>类似于find()返回游标的方法，还有list，snapshot等等。</p></li>
             <li>Replica Group Help<p>replica group级别主要包括对数据节点的管理的操作。</p>
-                <p>假设数据库中存在名字为"group1"的副本组，通过var rg = db.getRG("group1")获取一个关于副本组的javascript对象rg。</p>
+                <p>假设数据库中存在名字为“group1”的副本组，通过var rg = db.getRG("group1")获取一个关于副本组的javascript对象rg。</p>
                 <p>查看replica group所有方法：</p><codeblock>rg.help()</codeblock>
                 <p>查看replica group具体方法：</p><codeblock>rg.help("method")</codeblock></li>
             <li>Node Help<p>node级别主要包括对数据节点状态信息获取的操作。</p>
-                <p>假设在副本组"group1"中创建一个数据节点，var rn = rg.createNode("ubuntu-dev1", 51000, "/opt/sequoiadb/database/data/51000")，获取一个关于数据节点的javascript对象rn。</p>
+                <p>假设在副本组“group1”中创建一个数据节点，var rn = rg.createNode("ubuntu-dev1", 51000, "/opt/sequoiadb/database/data/51000")，获取一个关于数据节点的javascript对象rn。</p>
                 <p>查看node所有方法：</p><codeblock>rn.help()</codeblock>
                 <p>查看node具体方法：</p><codeblock>rn.help("method")</codeblock></li>
             <li>Domain Help<p>domain级别主要包括对域更改及获取域信息的操作。</p>
-                <p>假设在数据库中创建一个名字为"domain1"的域，var dm = db.createDomain("domain1",["group1","group2"],{AutoSplit:true})，获取一个关于域的javascript对象dm。</p>
+                <p>假设在数据库中创建一个名字为“domain1”的域，var dm = db.createDomain("domain1",["group1","group2"],{AutoSplit:true})，获取一个关于域的javascript对象dm。</p>
                 <p>查看domain所有方法：</p><codeblock>dm.help()</codeblock>
                 <p>查看domain具体方法：</p><codeblock>dm.help("method")</codeblock></li>    
         </ul>

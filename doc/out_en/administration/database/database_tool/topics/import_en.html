@@ -273,38 +273,38 @@
 
     <p class="p">The data type is optional.If the data type is not specified by the user; it will be automatically detected and determined in the standard shown in the above table.</p>
 
-    <div class="section"><h2 class="title sectiontitle">用法</h2>
-      <div class="p">在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型 是csv，导入文件为test.csv。
+    <div class="section"><h2 class="title sectiontitle">Usage</h2>
+      <div class="p">In the following example, sdbimprt imports the data into corresponding collection space "foo" and collection "bar" of the local database which connected with the port 11810, with an import type of cvs and import file of test.csv.
         <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Jack", age int default 18, phone string'</pre>
 
-        <div class="note note"><span class="notetitle">Note:</span> 指定字段可以用命令行指定，也可以在导入文件的首行指定。如果在命令行指定了--fields，--headerline设为true，导入工具将会优先使用命令行的指定字段并且跳过导入文件的首行。</div>
+        <div class="note note"><span class="notetitle">Note:</span> The field can be either specified in the command line or in the first line of the import file. If --fields is specified and --headerline is set to true in the command line, the import tool will use the command line's specified field in the first priority and skip the first line of the import file.</div>
 </div>
 
       <ul class="ul">
-        <li class="li"><p class="p">例子一：导入文件是csv，文件名是test.csv，导入至集合空间foo的集合bar中。</p>
-<p class="p">以下是导入文件的内容：</p>
+        <li class="li"><p class="p">Example 1: The import file type is cvs, and the file name is test.cvs. Import the data into collection "bar" of collection space "foo".</p>
+<p class="p">The following words are the content of the import file:</p>
 
           <pre class="pre codeblock">"Jack",18,"China"
 "Mike",20,"USA"</pre>
-<p class="p">导入命令：</p>
+<p class="p">import command:</p>
 
           <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Anonymous", age int, country'</pre>
 </li>
 
-        <li class="li"><p class="p">例子二：导入文件是csv，文件名是test.csv，导入至集合空间foo的集合bar中。</p>
-<p class="p">以下是导入文件的内容：</p>
+        <li class="li"><p class="p">Example 2: The import type is cvs, and the file name is test.cvs. Import the data into collection "bar" of collection space "foo".</p>
+<p class="p">The following words are the content of the import file:</p>
 
           <pre class="pre codeblock">name, age, country
 "Jack",18,"China"
 "Mike",20,"USA"</pre>
-<p class="p">导入命令：</p>
+<p class="p">import command:</p>
 
           <pre class="pre codeblock">sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Anonymous", age int, country' --headerline true</pre>
 </li>
         
       </ul>
 
-      <div class="note note"><span class="notetitle">Note:</span> <p class="p">由于例子二首行已经指定字段，但是要重新指定字段，那么在命令行中设置--headerline true，并且设置--fields 'name string default "Anonymous", age int, country'，那么导入工具会使用--fields为指定字段并忽略文件首行的字段了。</p>
+      <div class="note note"><span class="notetitle">Note:</span> <p class="p">Because the fields are specified in the first line of the file in Example 2. If the fields need to be specified again, and set "--headerline true" in the command line, and set "-fields 'name string default "Anonymous", age int, country'", then the import tool will use the field names in the command line and skip the first line of the import file.</p>
 </div>
       
     </div>

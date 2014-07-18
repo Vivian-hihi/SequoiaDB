@@ -220,8 +220,6 @@
                     <file name="administration/database/topics/log_en.dita"/>
                     <file name="administration/database/topics/log.dita"/>
                     <file name="administration/database/topics/monitoring_en.dita"/>
-                    <file name="administration/database/topics/monitoring_system_en.dita"/>
-                    <file name="administration/database/topics/monitoring_system.dita"/>
                     <file name="administration/database/topics/monitoring.dita"/>
                     <file name="administration/database/topics/runtime_configuration_en.dita"/>
                     <file name="administration/database/topics/runtime_configuration.dita"/>

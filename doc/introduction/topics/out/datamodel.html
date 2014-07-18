@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="数据模型"/>
-<meta name="description" content="SequoiaDB数据库使用JSON数据模型，而非传统的关系型数据模型。 JSON数据结构的全称为JavaScript Object Notation，是一种轻量级的数据交换格式，非常易于人阅读和编写，同时也易于机器生成和解析。 它基于JavaScript Programming Language, Standard ECMA-262 3rd Edition – December ..."/>
+<meta name="description" content="SequoiaDB 数据库使用 JSON 数据模型，而非传统的关系型数据模型。 JSON数据结构的全称为 JavaScript Object Notation，是一种轻量级的数据交换格式，非常易于人阅读和编写，同时也易于机器生成和解析。 它基于 JavaScript Programming Language, Standard ECMA-262 3rd Edition – December ..."/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="sequoiadb_datamodel"/>
 <link rel="stylesheet" type="text/css" href="commonltr.css"/>
@@ -35,22 +35,22 @@
   <h1 class="title topictitle1">数据模型</h1>
 
   <div class="body">
-    <p class="p">SequoiaDB数据库使用JSON数据模型，而非传统的关系型数据模型。</p>
+    <p class="p">SequoiaDB 数据库使用 JSON 数据模型，而非传统的关系型数据模型。</p>
 
-    <p class="p">JSON数据结构的全称为JavaScript Object Notation，是一种轻量级的数据交换格式，非常易于人阅读和编写，同时也易于机器生成和解析。</p>
+    <p class="p">JSON数据结构的全称为 JavaScript Object Notation，是一种轻量级的数据交换格式，非常易于人阅读和编写，同时也易于机器生成和解析。</p>
 
-    <p class="p">它基于JavaScript Programming Language, Standard ECMA-262 3rd Edition – December 1999的一个子集，为纯文本格式，支持嵌套结构与数组。</p>
+    <p class="p">它基于 JavaScript Programming Language, Standard ECMA-262 3rd Edition – December 1999 的一个子集，为纯文本格式，支持嵌套结构与数组。</p>
 
     <p class="p">JSON建构基于两种结构：</p>
 
     <a name="sequoiadb_datamodel__sequoiadb_datamodel_jsonstruct"><!-- --></a><ul class="ul" id="sequoiadb_datamodel__sequoiadb_datamodel_jsonstruct">
-      <li class="li">键值对集合 —— 在键值对集合结构中，每一个数据元素拥有一个名称与一个数值。数值可以包含数字，字符串等常用结构，或嵌套JSON对象和数组。</li>
+      <li class="li">键值对集合 —— 在键值对集合结构中，每一个数据元素拥有一个名称与一个数值。数值可以包含数字，字符串等常用结构，或嵌套 JSON 对象和数组。</li>
 
-      <li class="li">数组 —— 在数组中的每一个元素不包含元素名，其值可以为数字，字符串等常用结构，或者嵌套JSON对象和数组。</li>
+      <li class="li">数组 —— 在数组中的每一个元素不包含元素名，其值可以为数字，字符串等常用结构，或者嵌套 JSON 对象和数组。</li>
 
     </ul>
 
-    <p class="p">JSON具有如下形式：</p>
+    <p class="p">JSON 具有如下形式：</p>
 
     <a name="sequoiadb_datamodel__sequoiadb_datamodel_jsonmodel"><!-- --></a><ul class="ul" id="sequoiadb_datamodel__sequoiadb_datamodel_jsonmodel">
       <li class="li"><p class="p">对象是一个无序的“键值对”集合，以“{”（左大括号）开始，“}”（右大括号）结束。每一个元素名后跟一个“:”（冒号）；而元素之间使用“,”（逗号）分隔；</p>
@@ -63,7 +63,7 @@
         <p class="p"><a name="sequoiadb_datamodel__sequoiadb_datamodel_jsonstruct_img2"><!-- --></a><img class="image" id="sequoiadb_datamodel__sequoiadb_datamodel_jsonstruct_img2" src="../images/sequoiadb_datamodel_jsonstruct_img2.jpg"/></p>
 </li>
 
-      <li class="li"><p class="p">值可以为由双引号包裹的字符串，数值，对象，数组，true，false，null，以及SequoiaDB数据库特有的数据结构（例如日期，时间等）组成。</p>
+      <li class="li"><p class="p">值可以为由双引号包裹的字符串，数值，对象，数组，true，false，null，以及 SequoiaDB 数据库特有的数据结构（例如日期，时间等）组成。</p>
 
         <p class="p"><a name="sequoiadb_datamodel__sequoiadb_datamodel_jsonstruct_img3"><!-- --></a><img class="image" id="sequoiadb_datamodel__sequoiadb_datamodel_jsonstruct_img3" src="../images/sequoiadb_datamodel_jsonstruct_img3.jpg"/></p>
 </li>
@@ -85,7 +85,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Tips when using shell"/>
-<meta name="description" content="Sequoiadb shell has built-in help documents. It can be read through the command of help. In addition, reference manuals SequoiaDB JavaScript methods section, a detailed description of each method to ..."/>
+<meta name="description" content="SequoiaDB shell has built-in help documents. It can be accessed by the help() command. For more details on each method, please refer to the SeuoiaDB JavaScript Method List in the Reference section of ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../developement/console/topics/console_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="developement_console_knack"/>
@@ -36,7 +36,7 @@
   <h1 class="title topictitle1">Tips when using shell</h1>
 
   <div class="body">
-    <p class="p">Sequoiadb shell has built-in help documents. It can be read through the command of help. In addition, reference manuals SequoiaDB JavaScript methods section, a detailed description of each method to use.</p>
+    <p class="p">SequoiaDB shell has built-in help documents. It can be accessed by the help() command. For more details on each method, please refer to the SeuoiaDB JavaScript Method List in the Reference section of SequoiaDB Information Center.</p>
 
     <ul class="ul">
       <li class="li">Help<p class="p">See Use description:</p>
@@ -62,102 +62,102 @@
    quit                                   exit
    Takes 0.2993s.</pre>
 
-        <div class="note note"><span class="notetitle">Note:</span> <p class="p">SequoiaDB shell主要包括database(db), collection space(cs), collection(cl), cursor(cur), replica group(rg), node(nd), domain(dm)这7大级别的操作。用户需要理解各级别之间的关系。各级别都有使用帮助命令如下所示：</p>
+        <div class="note note"><span class="notetitle">Note:</span> <p class="p">SequoiaDB shell mainly includes 7 levels of operations: database (db), collection space (cs), collection (cl), cursor (cur), replica group (rg), node (nd), and domain (dm). Users need to understand the relationship between different levels. The operations of each level have its own help command:</p>
 </div>
 </li>
             
-      <li class="li">Database Help <p class="p">database级别主要包括用管理户组，集合空间，副本组，域，快照，存储过程，备份，事务，sql，及错误跟踪等操作。</p>
+      <li class="li">Database Help <p class="p">Database level's main operations are user group management, collection space, replica group, domain, snapshot, storage process, backup, transaction, SQL, and error tracing.</p>
 
-        <p class="p">假设已经连接上数据库，并取得database的javascript对象db。</p>
+        <p class="p">Assume the database has been connected, and there is a javascript object named db which is an instance of the database.</p>
 
-        <p class="p">查看database所有方法：</p>
+        <p class="p">Check all the methods of a database:</p>
 <pre class="pre codeblock">db.help()</pre>
 
-        <p class="p">查看database具体方法：</p>
+        <p class="p">Check a specific method of a database:</p>
 <pre class="pre codeblock">db.help("method")</pre>
 </li>
 
-      <li class="li">CollectionSpace Help<p class="p">collection space级别主要包括对集合管理的操作。</p>
+      <li class="li">CollectionSpace Help<p class="p">Collection Space level's main operation is the management on the collections.</p>
 
-        <p class="p">假设存在名字为"foo"的集合空间。</p>
+        <p class="p">Assume there is a collection space named "foo".</p>
 
-        <p class="p">查看collection space所有方法：</p>
+        <p class="p">Check all the methods of a collection space:</p>
 <pre class="pre codeblock">db.foo.help()</pre>
 
-        <p class="p">查看collection space具体方法：</p>
+        <p class="p">Check a specific method of a collection space:</p>
 <pre class="pre codeblock">db.foo.help("method")</pre>
 </li>
 
-      <li class="li">Collection Help<p class="p">collection级别主要包括CRUD，索引管理，数据切分，垂直分区表管理等操作。</p>
+      <li class="li">Collection Help<p class="p">Collection level's main operations are CRUD, index management, data sharding, and management on the vertical partition table.</p>
 
-        <p class="p">假设在集合空间"foo"中存在名字为"bar"的集合。</p>
+        <p class="p">Assume "foo" hypothesis in the set space exists in name as "bar" collection.</p>
 
-        <p class="p">查看collection所有方法：</p>
+        <p class="p">Check all the methods of a collection:</p>
 <pre class="pre codeblock">db.foo.bar.help()</pre>
 
-        <p class="p">查看collection具体方法：</p>
+        <p class="p">Check a specific method of a collection:</p>
 <pre class="pre codeblock">db.foo.bar.help("method")</pre>
 </li>
 
-      <li class="li">Cursor Help<p class="p">cursor级别主要包括对返回记录（数据）的操作。</p>
+      <li class="li">Cursor Help<p class="p">Cursor level's main operations are on the returned data.</p>
 
-        <p class="p">在shell命令中，与sequoiadb引擎交互时，若有记录（数据）返回，都是以游标（cursor）的方式呈现。例如，当使用db.foo.bar.<a class="xref" href="../../../references/methods/topics_en_v2/cl.find.html">find()</a>方法执行数据库查询操作，将返回一个游标对象，所有查询结果将放在这个游标中。通常的使用方法如下：</p>
+        <p class="p">All the data are returned in the form of cursor when interacting with SequoiaDB engine in the shell command. For example, when execute a query using db.foo.bar.<a class="xref" href="../../../references/methods/topics_en_v2/cl.find.html">find()</a> method, a cursor object will be returned with all the query results in it.</p>
 
         <pre class="pre codeblock">db.foo.bar.find()</pre>
-<p class="p">或者</p>
+<p class="p">or</p>
 <pre class="pre codeblock">var cur = db.foo.bar.find()</pre>
 
-        <p class="p">前者直接将所有结果显示在屏幕上，后者将结果放到游标中。</p>
+        <p class="p">The first one directly display all the results on the screen, the second one put the results into a cursor.</p>
 
-        <p class="p">查看cursor所有方法：</p>
+        <p class="p">Check all the methods of a cursor:</p>
 <pre class="pre codeblock">db.foo.bar.find().help()</pre>
-<p class="p">或者</p>
+<p class="p">or</p>
 <pre class="pre codeblock">cur.help()</pre>
 
-        <p class="p">查看cursor具体方法：</p>
+        <p class="p">Check a specific method of a cursor:</p>
 <pre class="pre codeblock">db.foo.bar.find().help("method")</pre>
-<p class="p">或者</p>
+<p class="p">or</p>
 <pre class="pre codeblock">cur.help("method")</pre>
 
-        <p class="p">类似于find()返回游标的方法，还有list，snapshot等等。</p>
+        <p class="p">The methods similar to find() that also return cursor are list(), snapshot(), etc.</p>
 </li>
 
-      <li class="li">Replica Group Help<p class="p">replica group级别主要包括对数据节点的管理的操作。</p>
+      <li class="li">Replica Group Help<p class="p">Replica group level's main operation is the management on the data node.</p>
 
-        <p class="p">假设数据库中存在名字为"group1"的副本组，通过var rg = db.getRG("group1")获取一个关于副本组的javascript对象rg。</p>
+        <p class="p">Assume there is a replica group named "group1" in the database, a javascript object named rg which is a instance of a replica group is obtained by using "var rg = db.getRG("group1")" command.</p>
 
-        <p class="p">查看replica group所有方法：</p>
+        <p class="p">Check all the methods of a replica group:</p>
 <pre class="pre codeblock">rg.help()</pre>
 
-        <p class="p">查看replica group具体方法：</p>
+        <p class="p">Check a specific method of a replica group:</p>
 <pre class="pre codeblock">rg.help("method")</pre>
 </li>
 
-      <li class="li">Node Help<p class="p">node级别主要包括对数据节点状态信息获取的操作。</p>
+      <li class="li">Node Help<p class="p">Node level's main operation is the obtaining of the status information of data nodes.</p>
 
-        <p class="p">假设在副本组"group1"中创建一个数据节点，var rn = rg.createNode("ubuntu-dev1", 51000, "/opt/sequoiadb/database/data/51000")，获取一个关于数据节点的javascript对象rn。</p>
+        <p class="p">Assume creating a data node in the replica group named "group1" using "var rn = rg.createNode("ubuntu-dev1", 51000, "/opt/sequoiadb/database/data/51000")", a javascript object named rn which is an instance of the data node will be obtained.</p>
 
-        <p class="p">查看node所有方法：</p>
+        <p class="p">Check all the methods of a node:</p>
 <pre class="pre codeblock">rn.help()</pre>
 
-        <p class="p">查看node具体方法：</p>
+        <p class="p">Check all the moethds of a node:</p>
 <pre class="pre codeblock">rn.help("method")</pre>
 </li>
 
-      <li class="li">Domain Help<p class="p">domain级别主要包括对域更改及获取域信息的操作。</p>
+      <li class="li">Domain Help<p class="p">Domain level's main operations are the modification of domains and the obtaining of the domain information.</p>
 
-        <p class="p">假设在数据库中创建一个名字为"domain1"的域，var dm = db.createDomain("domain1",["group1","group2"],{AutoSplit:true})，获取一个关于域的javascript对象dm。</p>
+        <p class="p">Assume creating a domain named "domain1" in the database using "var dm = db.createDomain("domain1",["group1","group2"],{AutoSplit:true})" command, a javascript object named dm which is an instance of domain will be obtained.</p>
 
-        <p class="p">查看domain所有方法：</p>
+        <p class="p">Check all the methods of a domain:</p>
 <pre class="pre codeblock">dm.help()</pre>
 
-        <p class="p">查看domain具体方法：</p>
+        <p class="p">Check a specific method of a domain:</p>
 <pre class="pre codeblock">dm.help("method")</pre>
 </li>
     
     </ul>
 
-    <div class="note note"><span class="notetitle">Note:</span> 以man page方式显示帮助文档功能是随SequoiaDB1.8版本发布的，若使用1.8版本以下的sdb shell客户端，将不具备上述的help("method")功能。另外，应该确保/opt/sequoiadb/doc/manual目录下有相关方法的troff文件，否则，无法显示相应的man page介绍。</div>
+    <div class="note note"><span class="notetitle">Note:</span> SequoiaDB's man page was added in Version 1.8. The previous versions do not support the help("method") function. Moreover, please make sure that there is a "troff" file under /opt/sequoiadb/doc/manual directory; otherwise, man page will not be displayed.</div>
 
     <p class="p">Please visit <a class="xref" href="https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources">https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources</a> to check all the automatically generated javascript function API documents provide by shell.</p>
 

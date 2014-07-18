@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/topic.dtd">
 <topic id="sequoiadb_introduction">
-  <title>SequoiaDB数据库概述</title>
+  <title>SequoiaDB 数据库概述</title>
   <body>
-    <p>SequoiaDB数据库是一款新型企业级分布式非关系型数据库，帮助企业用户降低IT成本，并对大数据的存储与分析提供了一个坚实，可靠，高效与灵活的底层平台。</p>
+    <p>SequoiaDB 数据库是一款新型企业级分布式非关系型数据库，帮助企业用户降低IT成本，并对大数据的存储与分析提供了一个坚实，可靠，高效与灵活的底层平台。</p>
     <section>
       <title>优势</title>
       <ul id="sequoiadb_introduction_advantages">
