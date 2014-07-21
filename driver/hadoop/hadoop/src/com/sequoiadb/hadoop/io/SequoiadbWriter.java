@@ -4,14 +4,18 @@ package com.sequoiadb.hadoop.io;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
+
+import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.hadoop.util.SdbConnAddr;
@@ -29,8 +33,21 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 		super();
 		this.sequoiadb = new Sequoiadb(sdbConnAddr.getHost(),
 				sdbConnAddr.getPort(), null, null);
-		this.dbCollection = sequoiadb.getCollectionSpace(collectionSpaceName)
-				.getCollection(collectionName);
+		log.info("collectionSpaceName:"+collectionSpaceName+"---collectionName:"+collectionName);
+		
+		CollectionSpace space=null;
+		if(sequoiadb.isCollectionSpaceExist(collectionSpaceName)){
+			space = sequoiadb.getCollectionSpace(collectionSpaceName);	
+		}else{
+			sequoiadb.createCollectionSpace(collectionSpaceName);
+		}
+		
+		if(space.isCollectionExist(collectionName)){
+			this.dbCollection=space.getCollection(collectionName);
+		}else{
+			this.dbCollection=space.createCollection(collectionName);
+		}
+		
 		this.lstBsonBuffer = new ArrayList<BSONObject>(bulkNum);
 		this.bulkNum = bulkNum;
 
@@ -68,7 +85,7 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 			}
 		}
 
-		if (key != null !(key instanceof NullWritable)) {
+		if (key != null && !(key instanceof NullWritable)) {
 			if (key instanceof Text) {
 				bson.put("_id", new ObjectId(((Text) key).toString()));
 			} else if (key instanceof ObjectId) {

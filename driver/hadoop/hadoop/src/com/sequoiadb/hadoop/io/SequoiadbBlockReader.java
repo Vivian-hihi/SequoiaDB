@@ -33,7 +33,7 @@ import com.sequoiadb.hadoop.split.SdbBlockSplit;
  * @version 1.0.0
  * 
  */
-public class SequoiadbBlockReader extends RecordReader<Object, BSONObject> {
+public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
 	private static final Log log = LogFactory
 			.getLog(SequoiadbBlockReader.class);
     private BSONObject current;
@@ -82,9 +82,9 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONObject> {
 	}
 
 	@Override
-	public BSONObject getCurrentValue() throws IOException,
+	public BSONWritable getCurrentValue() throws IOException,
 			InterruptedException {
-		return this.current;
+		return new BSONWritable(this.current);
 	}
 
 	@Override

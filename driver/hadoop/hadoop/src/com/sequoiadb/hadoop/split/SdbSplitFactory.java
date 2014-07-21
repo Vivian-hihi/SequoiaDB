@@ -15,6 +15,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
 
 import com.sequoiadb.base.DBCollection;
@@ -70,6 +71,7 @@ public class SdbSplitFactory {
 			try {
 				sdb = new Sequoiadb(sdbConnAddrs[i].getHost(),
 						sdbConnAddrs[i].getPort(), null, null);
+				sdb.setSessionAttr(new BasicBSONObject("PreferedInstanc","S"));
 				break;
 			} catch (BaseException e) {
 				lastException = e;

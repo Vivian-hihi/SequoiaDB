@@ -39,7 +39,7 @@ import com.sequoiadb.hadoop.util.SequoiadbConfigUtil;
  * 
  */
 public class SequoiadbInputFormat extends
-		InputFormat<Object, BSONObject> implements Configurable {
+		InputFormat<Object, BSONWritable> implements Configurable {
 	private static final Log log = LogFactory
 			.getLog(SequoiadbInputFormat.class);
 
@@ -52,7 +52,7 @@ public class SequoiadbInputFormat extends
 	}
 
 	@Override
-	public RecordReader<Object, BSONObject> createRecordReader(
+	public RecordReader<Object, BSONWritable> createRecordReader(
 			InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
 			throws IOException, InterruptedException {
 		if (inputSplit instanceof SdbBlockSplit) {

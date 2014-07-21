@@ -7,7 +7,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.BSONObject;
 
-public class SequoiadbIndexReader  extends RecordReader<Object, BSONObject>{
+public class SequoiadbIndexReader  extends RecordReader<Object, BSONWritable>{
 	
 	public SequoiadbIndexReader(InputSplit inputSplit,String collectionSpaceName,String collectionName){
 		
@@ -26,7 +26,7 @@ public class SequoiadbIndexReader  extends RecordReader<Object, BSONObject>{
 	}
 
 	@Override
-	public BSONObject getCurrentValue() throws IOException,
+	public BSONWritable getCurrentValue() throws IOException,
 			InterruptedException {
 		// TODO Auto-generated method stub
 		return null;
