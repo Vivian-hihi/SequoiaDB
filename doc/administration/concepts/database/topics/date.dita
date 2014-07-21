@@ -3,14 +3,17 @@
 <topic id="administration_concepts_database_date">
   <title>日期</title>
   <body>
-    <section><title>概念</title>
-      <p>SequoiaDB中的日期使用YYYY-MM-DD的形式存取，在存储时将其转换为4字节的整数。</p>
+    <section>
+      <title>概念</title>
+      <p>SequoiaDB 中的日期使用 YYYY-MM-DD 的形式存取，在存储时将其转换为4字节的整数。</p>
     </section>
-    <section><title>格式</title>
+    <section>
+      <title>格式</title>
       <p>日期的表达形式如下：</p>
-      <codeblock>{ "$date" : "&lt;YYYY-MM-DD&gt;" }</codeblock>
+      <codeblock>{ "$date" : "&lt;YYYY-MM-DD>" }</codeblock>
     </section>
-    <section><title>示例</title>
+    <section>
+      <title>示例</title>
       <p>例如：</p>
       <codeblock>{ "createTime" : { "$date" : "2012-05-12" } }</codeblock>
     </section>

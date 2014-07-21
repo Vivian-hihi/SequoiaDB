@@ -3,16 +3,17 @@
 <topic id="administration_concepts_database_collectionspace">
   <title>集合空间</title>
   <body>
-    <section><title>概念</title>
-    <p>集合空间（Collection Space）是数据库中存放集合的物理对象。任何一个集合必须属于一个且仅一个集合空间。</p>
-    <p>集合空间名最大长度127字节，为UTF-8编码。一个集合空间中可以包含不超过4096个集合；每个数据节点可以包含不超过4096个集合空间。</p>
-    <p>每一个集合空间在数据节点均对应一个文件，文件名格式为“&lt;集合空间名&gt;.1”。</p>
+    <section>
+      <title>概念</title>
+      <p>集合空间（Collection Space）是数据库中存放集合的物理对象。任何一个集合必须属于一个且仅一个集合空间。</p>
+      <p>集合空间名最大长度127字节，为 UTF-8 编码。一个集合空间中可以包含不超过4096个集合；每个数据节点可以包含不超过4096个集合空间。</p>
+      <p>每一个集合空间在数据节点均对应一个文件，文件名格式为“&lt;集合空间名>.1”。</p>
     </section>
-    <section><title>数据页</title>
-     <p>集合空间将文件划分为若干个固定大小的数据页（Page），在创建集合空间时用户可以指定数据页大小，且创建后不可更改。</p>
+    <section>
+      <title>数据页</title>
+      <p>集合空间将文件划分为若干个固定大小的数据页（Page），在创建集合空间时用户可以指定数据页大小，且创建后不可更改。</p>
       <p>每个数据节点中，单个集合空间可以访问16777216个数据页。因此对应不同数据页大小，单分区中集合空间容量上限为：</p>
-     <simpletable><!-- frame="all" relcolwidth="1.0* 1.0*"
-       id="administration_concepts_database_collectionspace_table1">-->
+     <simpletable>
        <sthead>
          <stentry>数据页大小（字节）</stentry>
          <stentry>集合空间最大容量（GB）</stentry>
@@ -39,7 +40,8 @@
        </strow>
      </simpletable>
     </section>
-    <section><title>数据块</title>
+    <section>
+      <title>数据块</title>
       <p>一个或多个数据页组成数据块。集合空间中的每个集合由零个或以上的数据块构成，每个数据块的大小由用户数据长度自动调整。集合中的文档不可跨多个数据块存放。</p>
       <p>集合空间中的数据块存放方式如下图所示：</p>
       <p><image href="../images/collectionspace_extent.jpg" id="administration_concepts_database_collectionspace_img1"/></p>

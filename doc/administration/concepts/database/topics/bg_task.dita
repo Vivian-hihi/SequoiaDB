@@ -3,7 +3,7 @@
 <topic id="topic_ldc_nyk_5n">
   <title>后台任务</title>
   <body>
-    <p>后台任务是SequoiaDB中的一种特殊任务类型，一般用于将特定用户操作置于后台异步执行。在快照中，后台任务的类型（Type）为“Task”。</p>
+    <p>后台任务是 SequoiaDB 中的一种特殊任务类型，一般用于将特定用户操作置于后台异步执行。在快照中，后台任务的类型（Type）为“Task”。</p>
     <p>后台任务类型列表：</p>
     <simpletable>
       <sthead>
@@ -16,11 +16,11 @@
       </strow>
       <strow>
         <stentry>Job[PageCleaner]</stentry>
-        <stentry>脏页清除任务，用于异步将未写入磁盘的脏页刷入磁盘。可以使用-numpagecleaners控制脏页清除任务数量，默认为1。</stentry>
+        <stentry>脏页清除任务，用于异步将未写入磁盘的脏页刷入磁盘。可以使用 -numpagecleaners 控制脏页清除任务数量，默认为1。</stentry>
       </strow>
       <strow>
         <stentry>Job[Prefetch]</stentry>
-        <stentry>预取任务，用于在等待客户端接收下一个操作请求时，在后台执行用户接下来可能发生的操作。可以使用-maxprefpool控制最大预取任务的数量。</stentry>
+        <stentry>预取任务，用于在等待客户端接收下一个操作请求时，在后台执行用户接下来可能发生的操作。可以使用 -maxprefpool 控制最大预取任务的数量。</stentry>
       </strow>
       <strow>
         <stentry>CreateIndex</stentry>
