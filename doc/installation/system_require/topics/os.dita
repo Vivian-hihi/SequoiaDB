@@ -11,33 +11,21 @@
         </sthead>
         <strow>
           <stentry>Linux</stentry>
-          <stentry> 
-            <ul>
+          <stentry><ul>
             <li>Red Hat Enterprise Linux (RHEL) 6</li>
             <li>SUSE Linux Enterprise Server (SLES) 11 Service Pack 1 </li>
             <li>SUSE Linux Enterprise Server (SLES) 11 Service Pack 2 </li>
             <li>Ubuntu 12</li>
-            <li>CentOS 6</li></ul></stentry>
+            <li>CentOS 6</li></ul>
+          </stentry>
         </strow>
-        <!--<strow>
-          <stentry >&nbsp;&nbsp;&nbsp;Windows&nbsp;&nbsp;</stentry>
-          <stentry>
-            <ul>
-              
-              <li>Windows Server 2003 DataCenter Edition(32位 和 64位)</li>  
-              <li>Windows Server 2003 Enterprise Edition(32位 和 64位) </li>
-              <li>Windows Server 2003 Standard Edition(32位 和 64位) </li>
-              <li>Windows Server 2008 DataCenter Edition(32位 和 64位) </li>
-              <li>Windows Server 2008 Enterprise Edition(32位 和 64位) </li>
-              <li>Windows Server 2008 Standard Edition(32位 和 64位)</li></ul></stentry>
-        </strow>-->
         <strow>
           <stentry>Power PC Linux</stentry>
-          <stentry>
-            <ul>
+          <stentry><ul>
               <li>Red Hat Enterprise Linux (RHEL) 6</li>
               <li>SUSE Linux Enterprise Server (SLES)11 Service Pack 1</li>
-              <li>SUSE Linux Enterprise Server (SLES)11 Service Pack 2</li></ul></stentry>
+              <li>SUSE Linux Enterprise Server (SLES)11 Service Pack 2</li></ul>
+          </stentry>
         </strow>
       </simpletable>
     </p>
