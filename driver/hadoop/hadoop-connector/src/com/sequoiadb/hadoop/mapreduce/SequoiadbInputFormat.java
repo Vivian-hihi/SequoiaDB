@@ -56,9 +56,11 @@ public class SequoiadbInputFormat extends
 			InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
 			throws IOException, InterruptedException {
 		if (inputSplit instanceof SdbBlockSplit) {
-			return new SequoiadbBlockReader(inputSplit,collectionSpaceName,collectionName);
+//			return new SequoiadbBlockReader(inputSplit,collectionSpaceName,collectionName);
+			return new SequoiadbBlockReader(inputSplit, this.conf);
 		} else if (inputSplit instanceof SdbIndexSplit) {
-			return new SequoiadbIndexReader(inputSplit,collectionSpaceName,collectionName);
+//			return new SequoiadbIndexReader(inputSplit,collectionSpaceName,collectionName);
+			return new SequoiadbIndexReader(inputSplit, this.conf);
 		} else {
 			throw new IllegalArgumentException(
 					"the type of inputSplit is wrong,only support SdbBlockSplit and SdbIndexSplit");
@@ -69,8 +71,7 @@ public class SequoiadbInputFormat extends
 	@Override
 	public List<InputSplit> getSplits(JobContext jobContext)
 			throws IOException, InterruptedException {
-		List<InputSplit>  inputSplits = SdbSplitFactory.getSplits(jobContext, collectionSpaceName,
-				collectionName);
+		List<InputSplit>  inputSplits = SdbSplitFactory.getSplits(jobContext);
 		log.info("inputSplits.size"+inputSplits.size());
 		return inputSplits;
 	}
@@ -84,8 +85,8 @@ public class SequoiadbInputFormat extends
 	@Override
 	public void setConf(Configuration configuration) {
 		this.conf=configuration;
-		this.collectionName=SequoiadbConfigUtil.getInCollectionName(conf);
-		this.collectionSpaceName=SequoiadbConfigUtil.getInCollectionSpaceName(conf);
+//		this.collectionName=SequoiadbConfigUtil.getInCollectionName(conf);
+//		this.collectionSpaceName=SequoiadbConfigUtil.getInCollectionSpaceName(conf);
 	}
 
 }

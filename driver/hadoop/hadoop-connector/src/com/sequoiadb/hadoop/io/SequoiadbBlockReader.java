@@ -7,17 +7,21 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.bson.types.BasicBSONList;
+import org.bson.util.JSON;
+
 import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.hadoop.split.SdbBlockSplit;
+import com.sequoiadb.hadoop.util.SequoiadbConfigUtil;
 
 /**
  * 
@@ -34,8 +38,7 @@ import com.sequoiadb.hadoop.split.SdbBlockSplit;
  * 
  */
 public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
-	private static final Log log = LogFactory
-			.getLog(SequoiadbBlockReader.class);
+	private static final Log log = LogFactory.getLog(SequoiadbBlockReader.class);
     private BSONObject current;
     private final SdbBlockSplit sdbBlockSplit;
     private final Sequoiadb sequoiadb;
@@ -43,17 +46,24 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
     private long seen = 0;
     private long total;
 	
-    public SequoiadbBlockReader(InputSplit inputSplit,String collectionSpaceName,String collectionName){
+//    public SequoiadbBlockReader(InputSplit inputSplit,String collectionSpaceName,String collectionName){
+      public SequoiadbBlockReader(InputSplit inputSplit, Configuration conf){
     	if(inputSplit==null||!(inputSplit instanceof SdbBlockSplit)){
     		throw new IllegalArgumentException("the inputsplit is not SdbBlockSplit" );
     	}
+    	String collectionName = SequoiadbConfigUtil.getInCollectionName(conf);
+		String collectionSpaceName = SequoiadbConfigUtil.getInCollectionSpaceName(conf);
+		String queryStr = SequoiadbConfigUtil.getQueryString(conf);
+		String selectorStr = SequoiadbConfigUtil.getSelectorString(conf);
+		String orderbyStr = SequoiadbConfigUtil.getOrderbyString(conf);
+		
     	this.sdbBlockSplit=(SdbBlockSplit)inputSplit;
     	   	
     	if(sdbBlockSplit.getSdbAddr()==null){
     		throw new IllegalArgumentException(" the SdbBlockSplit.sdbaddr is null");
     	}
     	
-    	this.sequoiadb=new Sequoiadb(this.sdbBlockSplit.getSdbAddr().getHost(), this.sdbBlockSplit.getSdbAddr().getPort(),null,null);
+    	this.sequoiadb = new Sequoiadb(this.sdbBlockSplit.getSdbAddr().getHost(), this.sdbBlockSplit.getSdbAddr().getPort(),null,null);
 
     	CollectionSpace collectionSpace=sequoiadb.getCollectionSpace(collectionSpaceName);
     	if(collectionSpace==null){
@@ -71,9 +81,32 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
     	BasicBSONList blocks=new BasicBSONList();
     	blocks.add(this.sdbBlockSplit.getDataBlockId());
     	meta.put("Datablocks",blocks);
-    	meta.put("ScanType",this.sdbBlockSplit.getScanType());  	
+    	meta.put("ScanType",this.sdbBlockSplit.getScanType());
     	hint.put("$Meta", meta);
-    	this.cursor=dbCollection.query(null,null,null,hint,0,-1);	
+    	BSONObject queryBson = null;
+    	BSONObject selectorBson = null;
+    	BSONObject orderbyBson = null;
+
+    	
+    	if ( queryStr != null && !queryStr.equalsIgnoreCase("null") ){
+    		queryBson = (BSONObject) JSON.parse( queryStr );
+    		log.info( "queryBson = " + queryBson.toString() );
+    	}
+    	if ( selectorStr != null && !selectorStr.equalsIgnoreCase("null") ){
+    		
+    		selectorBson = (BSONObject) JSON.parse( selectorStr );
+    		log.info( "selectorBson = " + selectorBson.toString() );
+    	}
+    	if ( orderbyStr != null && !orderbyStr.equalsIgnoreCase("null") ){
+    		orderbyBson = (BSONObject) JSON.parse(orderbyStr);
+    		log.info( "orderbyBson = " + orderbyBson.toString() );
+    	}
+    	this.cursor=dbCollection.query( queryBson, 
+    			                        selectorBson,
+    			                        orderbyBson,
+    			                        hint,
+    			                        0,
+    			                        -1);	
     }
     
 	@Override
@@ -108,7 +141,7 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
             	log.debug("this inputsplit read over");
                 return false;
             }
-            this.current =this.cursor.getNext();
+            this.current = this.cursor.getNext();
             this.seen++;
             return true;
 	}

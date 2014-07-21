@@ -18,10 +18,11 @@ import com.sequoiadb.hadoop.util.SequoiadbConfigUtil;
 public class SequoiadbOutputFormat extends OutputFormat implements Configurable {
 	private static final Log log = LogFactory
 			.getLog(SequoiadbInputFormat.class);
+	private static final int BULKINSERTNUMBER = 512;
 
 	private String collectionSpaceName;
 	private String collectionName;
-	private int    bulkNum;
+	private int bulkNum;
 	private SdbConnAddr[] sdbConnAddr;
 
 	public SequoiadbOutputFormat() {
@@ -116,8 +117,16 @@ public class SequoiadbOutputFormat extends OutputFormat implements Configurable 
 		this.collectionSpaceName = SequoiadbConfigUtil
 				.getOutCollectionSpaceName(conf);
 		String bulkNumStr = SequoiadbConfigUtil.getOutputBulknum(conf);
+		
 		if (bulkNumStr != null) {
-			this.bulkNum = Integer.valueOf(bulkNumStr);
+			try{
+				this.bulkNum = Integer.valueOf(bulkNumStr);
+			}catch( Exception e ){
+				log.warn(e.toString());
+				this.bulkNum = BULKINSERTNUMBER;
+			}
+		}else{
+			this.bulkNum = BULKINSERTNUMBER;
 		}
 
 		// Process coord url string;

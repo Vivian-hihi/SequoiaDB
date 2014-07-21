@@ -26,7 +26,7 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 	private DBCollection dbCollection;
 	private Sequoiadb sequoiadb;
 	private List<BSONObject> lstBsonBuffer = null;
-	private int       bulkNum;
+	private int bulkNum;
 
 	public SequoiadbWriter(String collectionSpaceName, String collectionName,
 			SdbConnAddr sdbConnAddr, int bulkNum) {

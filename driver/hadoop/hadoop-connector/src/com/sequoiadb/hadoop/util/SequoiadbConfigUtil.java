@@ -51,7 +51,10 @@ public class SequoiadbConfigUtil {
 
 	public static final String JOB_OUT_COLLECTIONSPACE = "sequoiadb.out.collectionspace";
 	public static final String JOB_OUT_COLLECTION = "sequoiadb.out.collect";
-
+	                                               
+	public static final String JOB_QUERY_STRING = "sequoiadb.query.json";
+	public static final String JOB_SELECTOR_STRING = "sequoiadb.selector.json";
+	public static final String JOB_ORDERBY_STRING = "sequoiadb.orderby.json";
 	//Bulk insert number
 	public static final String JOB_OUT_BULKNUM = "sequoiadb.out.bulknum";
 
@@ -140,4 +143,16 @@ public class SequoiadbConfigUtil {
 	public static String getOutCollectionName(Configuration conf) {
 		return conf.get(JOB_OUT_COLLECTION, null);
 	}
+	
+	public static String getQueryString( Configuration conf ){
+		return conf.get(JOB_QUERY_STRING, null);
+	}
+	
+	public static String getSelectorString( Configuration conf ){
+		return conf.get(JOB_SELECTOR_STRING, null);
+	}
+	
+	public static String getOrderbyString( Configuration conf){
+		return conf.get(JOB_ORDERBY_STRING, null);
+	} 
 }

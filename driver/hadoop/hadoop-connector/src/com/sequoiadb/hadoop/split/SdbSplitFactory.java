@@ -52,9 +52,9 @@ public class SdbSplitFactory {
 	 * @exception
 	 * @since 1.0.0
 	 */
-	public static List<InputSplit> getSplits(JobContext jobContext,
-			String collectionSpaceName, String collectionName) {
-
+//	public static List<InputSplit> getSplits(JobContext jobContext,
+//			String collectionSpaceName, String collectionName) {
+	public static List<InputSplit> getSplits(JobContext jobContext) {
 		System.out.println(jobContext.getClass().getName());
 
 		Configuration conf = jobContext.getConfiguration();
@@ -63,6 +63,9 @@ public class SdbSplitFactory {
 		System.out.println(urls);
 		SdbConnAddr[] sdbConnAddrs = SequoiadbConfigUtil.getAddrList(urls);
 
+		String collectionName = SequoiadbConfigUtil.getInCollectionName(conf);
+		String collectionSpaceName = SequoiadbConfigUtil.getInCollectionSpaceName(conf);
+		
 		log.debug("test sdbConnAddrs whether it can connect or not ");
 		Sequoiadb sdb = null;
 		BaseException lastException = null;
@@ -99,7 +102,7 @@ public class SdbSplitFactory {
 		List<InputSplit> splits = new ArrayList<InputSplit>();
 		while (cursor.hasNext()) {
 			BSONObject obj = cursor.getNext();
-			log.info("meta record:" + obj.toString());
+			log.info(" record:" + obj.toString());
 
 			String hostname = (String) obj.get("HostName");
 			int port = Integer.parseInt((String) obj.get("ServiceName"));
