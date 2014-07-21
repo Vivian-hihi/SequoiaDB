@@ -29,6 +29,7 @@
 	
 	<target name="compile" depends="copySrc,copyJar" >
 		<javac srcdir="${build.dir}/src" destdir="${build.dir}/classes" fork="yes">
+			<compilerarg line="-encoding UTF-8"/>
 			<classpath>
 				<fileset dir="${build.dir}/lib" includes="*.jar"  />
 			</classpath>
