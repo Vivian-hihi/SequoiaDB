@@ -3,14 +3,15 @@
 <topic id="administration_concepts_cluster_node">
   <title>节点</title>
   <body>
-    <section><title>概念</title>
-      <p>在SequoiaDB集群环境中，数据库节点分为物理节点与逻辑节点。</p>
+    <section>
+      <title>概念</title>
+      <p>在 SequoiaDB 集群环境中，数据库节点分为物理节点与逻辑节点。</p>
       <dl>
         <dlentry>
           <dt>逻辑节点</dt>
           <dd>
             <p>逻辑节点即一个单独的数据库服务，代表一个最基本的数据库服务单元。</p>
-            <p>在Windows与Unix操作系统中，一个逻辑节点即一个SequoiaDB进程。一台计算机中可以运行多个逻辑节点。</p>
+            <p>在 Windows 与 Unix 操作系统中，一个逻辑节点即一个 SequoiaDB 进程。一台计算机中可以运行多个逻辑节点。</p>
           </dd>
         </dlentry>
         <dlentry>

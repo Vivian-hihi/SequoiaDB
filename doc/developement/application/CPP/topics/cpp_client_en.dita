@@ -3,11 +3,7 @@
 <topic id="topic_kmr_n2s_wj_en">
   <title>C++ Driver</title>
   <body>
-    <p>C++ client-driven provide interfaces of database operations and cluster operations.Database
-      operations include database connection、create or drop users、data CRUD、create or drop indexes
-      and collectionspace and collections、get or reset snapshots,etc.cluster operations contain all
-      kinds of managing replicaset and data node,such as starting or stopping replicasets、starting
-      or stopping data nodes、getting master nodes、slave nodes or collection shardings,etc.</p>
+    <p>C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 7 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain.</p>
     <p><xref href="..\..\..\..\cpp\html\index.html" format="html">For more please refer to online C++ API</xref>。</p>
     <section><title>C++ Class Instances</title>C++ Client-Driven has two class instances.One is used
       to operate database,the other is used to operate cluster.<ul>
@@ -38,30 +34,35 @@
           </simpletable><p> C++ client-driven application operate with different instances.For
             example,reading data will use Cursor instance,then creating collectionspace uses
             database connection instance. </p></li>
-        <li> Cluster Operation Instance <p>There are two degrees of cluster operation in
-            SequoiaDB:</p><p>  1) ReplicaSets</p><p>  2) Data Node</p><note>
-            <p>ReplicaSets contain three tpyes:Coord ReplicaSets,Catalog ReplicaSet,Data ReplicaSet.
-            </p>
-          </note><p> ReplicaSet instances and Data Node instances can be represented by the
-            following two types of classes. </p><p>
+        <li> Cluster Operation Instance <p>There are three degrees of cluster operation in
+          SequoiaDB:</p><p>  1) ReplicaGroups</p><p>  2) Data Node</p><p>  3) Domain</p><note>
+            <p>ReplicaGroups contain three tpyes: Coord ReplicaGroups, Catalog ReplicaGroup, Data ReplicaGroup.</p>
+          </note><p> ReplicaGroup instances, Data Node instances and domain instancescan be represented by the
+            following three types of classes. </p><p>
             <simpletable>
               <strow>
-                <stentry> sdbShard </stentry>
-                <stentry> ReplicaSet class</stentry>
-                <stentry> It represents a stand-alone ReplicaSet </stentry>
+                <stentry> sdbReplicaGroup </stentry>
+                <stentry> Replica group class</stentry>
+                <stentry> It represents a stand-alone ReplicaGroup </stentry>
               </strow>
               <strow>
-                <stentry> sdbShardNode </stentry>
+                <stentry> sdbNode </stentry>
                 <stentry> data node clsaa </stentry>
                 <stentry> It represents a stand-alone Data Node </stentry>
               </strow>
+              <strow>
+                <stentry> sdbDomain </stentry>
+                <stentry> domain clsaa </stentry>
+                <stentry> It represents a stand-alone Domain </stentry>
+              </strow>
             </simpletable>
-          </p> Cluster-related operations need to use ReplicaSet instance and Data Node instance.
-            <p>The sdbShard instants is to manage replicasets,including starting and stopping
-            replicasets,getting the status,name-information and number-information of nodes in the
-            replicaset. </p><p>The sdbShardNode instants is to manage Data Nodes,including starting
-            and stopping the specified data node,getting the specified data node instants and
-            maste-slave data node instants and address-information of data node. </p></li>
+          </p> Cluster-related operations need to use ReplicaGroup instance and Data Node instance.
+            <p>The sdbReplicaGroup instants is to manage replica groups, including starting and stopping
+            replicagroups, getting the status, name-information and number-information of nodes in the
+            replicagroup. </p><p>The sdbNode instants is to manage Data Nodes, including starting
+            and stopping the specified data node, getting the specified data node instants and
+            maste-slave data node instants and address-information of data node. </p>
+        <p>The sdbDomain used in the management domain, The modification of the domain, obtain the domain information such as operation.</p></li>
       </ul></section>
     <section><title>Error Information</title> Every function has a returned-value.If a function is
       successfully invoked,then return SDB_OK,else return error information.If the returned-value is

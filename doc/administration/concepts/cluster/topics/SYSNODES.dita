@@ -3,14 +3,15 @@
 <topic id="administration_concepts_cluster_node_catalog_sysnodes">
   <title>SYSNODES集合</title>
   <body>
-    <section><title>所属集合空间</title>
+    <section>
+      <title>所属集合空间</title>
       <p>SYSCAT</p>
     </section>
-    <section><title>概念</title>
-      <p>SYSNODES集合中包含了该集群中所有的节点与复制组信息。每个复制组保存为一个文档。</p>
+    <section>
+      <title>概念</title>
+      <p>SYSNODES 集合中包含了该集群中所有的节点与复制组信息。每个复制组保存为一个文档。</p>
       <p>每个文档包含以下字段：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
-        id="administration_concepts_cluster_node_catalog_sysnodes_table1">-->
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -24,12 +25,12 @@
         <strow>
           <stentry>GroupID</stentry>
           <stentry>整数</stentry>
-          <stentry>复制组ID，该ID在集群中唯一。</stentry>
+          <stentry>复制组 ID，该 ID 在集群中唯一。</stentry>
         </strow>
         <strow>
           <stentry>PrimaryNode</stentry>
           <stentry>整数</stentry>
-          <stentry>该复制组内主节点ID。</stentry>
+          <stentry>该复制组内主节点 ID。</stentry>
         </strow>
         <strow>
           <stentry>Role</stentry>
@@ -62,9 +63,8 @@
           <stentry>复制组中节点信息，见下表：</stentry>
         </strow>
       </simpletable>
-      <p>复制组中如果存在一个以上节点，则每个节点作为一个对象存放在Group字段数组中，每个对象的信息如下：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
-        id="administration_concepts_cluster_node_catalog_sysnodes_table2">-->
+      <p>复制组中如果存在一个以上节点，则每个节点作为一个对象存放在 Group 字段数组中，每个对象的信息如下：</p>
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -83,25 +83,25 @@
         <strow>
           <stentry>NodeID</stentry>
           <stentry>整数</stentry>
-          <stentry>节点ID，该ID在集群中唯一。</stentry>
+          <stentry>节点 ID，该 ID 在集群中唯一。</stentry>
         </strow>
         <strow>
           <stentry>Service</stentry>
           <stentry>数组</stentry>
-          <stentry>服务名，每个逻辑节点对应4个服务名，每个服务名包括其类型与服务名（可以为端口号或services文件中的服务名）。类型如下：
+          <stentry>服务名，每个逻辑节点对应4个服务名，每个服务名包括其类型与服务名（可以为端口号或 services 文件中的服务名）。类型如下：
             <ul>
-              <li>0：直连服务，对应数据库参数svcname</li>
-              <li>1：复制服务，对应数据库参数replname</li>
-              <li>2：复制服务，对应数据库参数shardname</li>
-              <li>3：编目服务，对应数据库参数catalogname</li>
+              <li>0：直连服务，对应数据库参数 svcname</li>
+              <li>1：复制服务，对应数据库参数 replname</li>
+              <li>2：复制服务，对应数据库参数 shardname</li>
+              <li>3：编目服务，对应数据库参数 catalogname</li>
             </ul>
           </stentry>
         </strow>
       </simpletable>
       <note>
         <p>编目复制组名固定为“SYSCatalogGroup”，复制组ID固定为1。</p>
-        <p>数据复制组ID由1000起始。</p>
-        <p>数据节点ID由1000起始。</p>
+        <p>数据复制组 ID 由1000起始。</p>
+        <p>数据节点 ID 由1000起始。</p>
       </note>
     </section>
     <section>

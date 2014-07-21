@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="文档"/>
-<meta name="description" content="概念 SequoiaDB中的文档为JSON格式，一般又被称为记录。在数据库内部使用BSON，即二进制的方式存放JSON数据。 一般来说，一条文档由一个或多个字段构成，每个字段分为键值与数值两个部分，如下为包含两个字段的文档： { &#34;姓名&#34; : &#34;张三&#34;, &#34;性别&#34; : &#34;男&#34; } ..."/>
+<meta name="description" content="概念 SequoiaDB 中的文档为 JSON 格式，一般又被称为记录。在数据库内部使用 BSON，即二进制的方式存放 JSON 数据。 一般来说，一条文档由一个或多个字段构成，每个字段分为键值与数值两个部分，如下为包含两个字段的文档： { &#34;姓名&#34; : &#34;张三&#34;, &#34;性别&#34; : &#34;男&#34; } BSON 文档可能有多个同名的字段，但是，大多数 SequoiaDB ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/database/topics/database.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/database/topics/array.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/database/topics/objectid.html"/>
@@ -45,137 +45,139 @@
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">概念</h2>
-    <p class="p">SequoiaDB中的文档为JSON格式，一般又被称为记录。在数据库内部使用BSON，即二进制的方式存放JSON数据。</p>
+      
+      <p class="p">SequoiaDB 中的文档为 JSON 格式，一般又被称为记录。在数据库内部使用 BSON，即二进制的方式存放 JSON 数据。</p>
 
-    <p class="p">一般来说，一条文档由一个或多个字段构成，每个字段分为键值与数值两个部分，如下为包含两个字段的文档：</p>
+      <p class="p">一般来说，一条文档由一个或多个字段构成，每个字段分为键值与数值两个部分，如下为包含两个字段的文档：</p>
 
-    <p class="p">{ "姓名" : "张三", "性别" : "男" }</p>
+      <p class="p">{ "姓名" : "张三", "性别" : "男" }</p>
 
-      <div class="note note"><span class="notetitle">Note:</span> <p class="p">BSON文档可能有多个同名的字段，但是，大多数SequoiaDB接口不支持重复的字段名，如果需要操作的文档有多个同名的字段，请参阅驱动程序了解更多信息。</p>
+      <div class="note note"><span class="notetitle">Note:</span> 
+        <p class="p">BSON 文档可能有多个同名的字段，但是，大多数 SequoiaDB 接口不支持重复的字段名，如果需要操作的文档有多个同名的字段，请参阅驱动程序了解更多信息。</p>
 
-        <p class="p">SequoiaDB内部程序创建的一些文档可能含有重名的字段，但是不会向现有的用户文档添加重名的键。</p>
+        <p class="p">SequoiaDB 内部程序创建的一些文档可能含有重名的字段，但是不会向现有的用户文档添加重名的键。</p>
 
       </div>
-
+      
     </div>
 
     <div class="section"><h2 class="title sectiontitle">字段类型</h2>
       
-     <p class="p">每个字段的键值为字符串，而数值则可以为数字，字符串，嵌套JSON，嵌套数组等对象。SequoiaDB所支持的数值类型见下表：</p>
+      <p class="p">每个字段的键值为字符串，而数值则可以为数字，字符串，嵌套 JSON，嵌套数组等对象。SequoiaDB 所支持的数值类型见下表：</p>
 
-     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-         <th valign="bottom" align="left" id="d11012e44" class="stentry">数值类型</th>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d11067e46" class="stentry">数值类型</th>
 
-         <th valign="bottom" align="left" id="d11012e47" class="stentry">定义</th>
+          <th valign="bottom" align="left" id="d11067e49" class="stentry">定义</th>
 
-         <th valign="bottom" align="left" id="d11012e50" class="stentry">用例</th>
+          <th valign="bottom" align="left" id="d11067e52" class="stentry">用例</th>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">整数</td>
+          <td valign="top" headers="d11067e46" class="stentry">整数</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">整数，范围-2147483648至2147483647</td>
+          <td valign="top" headers="d11067e49" class="stentry">整数，范围-2147483648至2147483647</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : 123 }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : 123 }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">长整数</td>
+          <td valign="top" headers="d11067e46" class="stentry">长整数</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">整数，范围-9223372036854775808至9223372036854775807。<div class="fig fignone"/>
-如果用户指定的数值无法适用于整数，则SequoiaDB自动将其转化为长整数。</td>
+          <td valign="top" headers="d11067e49" class="stentry">整数，范围-9223372036854775808至9223372036854775807。<div class="fig fignone"/>
+如果用户指定的数值无法适用于整数，则 SequoiaDB 自动将其转化为长整数。</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : 3000000000 }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : 3000000000 }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">浮点数</td>
+          <td valign="top" headers="d11067e46" class="stentry">浮点数</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">浮点数，范围1.7E-308至1.7E+308</td>
+          <td valign="top" headers="d11067e49" class="stentry">浮点数，范围1.7E-308至1.7E+308</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : 123.456 }或{ "key" : 123e+50 }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : 123.456 } 或 { "key" : 123e+50 }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">字符串</td>
+          <td valign="top" headers="d11067e46" class="stentry">字符串</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">双引号包含的字符串</td>
+          <td valign="top" headers="d11067e49" class="stentry">双引号包含的字符串</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : "value" }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : "value" }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">对象ID（OID）</td>
+          <td valign="top" headers="d11067e46" class="stentry">对象 ID（OID）</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">十二字节对象ID</td>
+          <td valign="top" headers="d11067e49" class="stentry">十二字节对象 ID</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : { "$oid" : "123abcd00ef12358902300ef" } }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : { "$oid" : "123abcd00ef12358902300ef" } }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">布尔</td>
+          <td valign="top" headers="d11067e46" class="stentry">布尔</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">true或者false</td>
+          <td valign="top" headers="d11067e49" class="stentry">true 或者 false</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : true }或{ "key" : false }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : true } 或 { "key" : false }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">日期</td>
+          <td valign="top" headers="d11067e46" class="stentry">日期</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">YYYY-MM-DD的日期形式</td>
+          <td valign="top" headers="d11067e49" class="stentry">YYYY-MM-DD 的日期形式</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : { "$date" : "2012-01-01" } }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : { "$date" : "2012-01-01" } }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">时间戳</td>
+          <td valign="top" headers="d11067e46" class="stentry">时间戳</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">YYYY-MM-DD-HH.mm.ss.ffffff的形式存取</td>
+          <td valign="top" headers="d11067e49" class="stentry">YYYY-MM-DD-HH.mm.ss.ffffff 的形式存取</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : { "$timestamp" : "2012-01-01-13.14.26.124233" } }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : { "$timestamp" : "2012-01-01-13.14.26.124233" } }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">二进制数据</td>
+          <td valign="top" headers="d11067e46" class="stentry">二进制数据</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">Base64形式的二进制数据</td>
+          <td valign="top" headers="d11067e49" class="stentry">Base64 形式的二进制数据</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">正则表达式</td>
+          <td valign="top" headers="d11067e46" class="stentry">正则表达式</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">正则表达式</td>
+          <td valign="top" headers="d11067e49" class="stentry">正则表达式</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : { "$regex" : "^张", "$options" : "i" } }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : { "$regex" : "^张", "$options" : "i" } }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">对象</td>
+          <td valign="top" headers="d11067e46" class="stentry">对象</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">嵌套JSON文档对象</td>
+          <td valign="top" headers="d11067e49" class="stentry">嵌套 JSON 文档对象</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : { "subobj" : "value" } }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : { "subobj" : "value" } }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">数组</td>
+          <td valign="top" headers="d11067e46" class="stentry">数组</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">嵌套数组对象</td>
+          <td valign="top" headers="d11067e49" class="stentry">嵌套数组对象</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : [ "abc", 0, "def" ] }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : [ "abc", 0, "def" ] }</td>
 
-       </tr>
+        </tr>
 <tr class="strow">
-         <td valign="top" headers="d11012e44" class="stentry">空</td>
+          <td valign="top" headers="d11067e46" class="stentry">空</td>
 
-         <td valign="top" headers="d11012e47" class="stentry">null</td>
+          <td valign="top" headers="d11067e49" class="stentry">null</td>
 
-         <td valign="top" headers="d11012e50" class="stentry">{ "key" : null }</td>
+          <td valign="top" headers="d11067e52" class="stentry">{ "key" : null }</td>
 
-       </tr>
+        </tr>
 </table>
 
     </div>
@@ -197,7 +199,7 @@
       <a name="administration_concepts_database_document__administration_concepts_database_misc"><!-- --></a><ul class="ul" id="administration_concepts_database_document__administration_concepts_database_misc">
         <li class="li">每个文档的最大尺寸为16MB</li>
 
-        <li class="li">文档中必须包括“_id”字段，如果用户没有提供该字段，系统会自动生成一个对象ID类型的字段</li>
+        <li class="li">文档中必须包括“_id”字段，如果用户没有提供该字段，系统会自动生成一个对象 ID 类型的字段</li>
 
         <li class="li">“_id”字段在集合内唯一</li>
 

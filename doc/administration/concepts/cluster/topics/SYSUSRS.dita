@@ -3,14 +3,15 @@
 <topic id="administration_concepts_cluster_node_catalog_sysusrs">
   <title>SYSUSRS集合</title>
   <body>
-    <section><title>所属集合空间</title>
+    <section>
+      <title>所属集合空间</title>
       <p>SYSAUTH</p>
     </section>
-    <section><title>概念</title>
-      <p>SYSUSRS集合中包含了该集群中所有注册用户的信息。每个用户保存为一个文档。</p>
+    <section>
+      <title>概念</title>
+      <p>SYSUSRS 集合中包含了该集群中所有注册用户的信息。每个用户保存为一个文档。</p>
       <p>每个文档包含以下字段：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
-        id="administration_concepts_cluster_node_catalog_sysnodes_table1">-->
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -24,7 +25,7 @@
         <strow>
           <stentry>Password</stentry>
           <stentry>字符串</stentry>
-          <stentry>对用户密码进行MD5散列的结果。</stentry>
+          <stentry>对用户密码进行 MD5 散列的结果。</stentry>
         </strow>
       </simpletable>
       <note>

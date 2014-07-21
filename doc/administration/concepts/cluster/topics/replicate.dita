@@ -3,9 +3,10 @@
 <topic id="administration_concepts_cluster_replset_replicate">
   <title>复制</title>
   <body>
-    <section><title>概念</title>
+    <section>
+      <title>概念</title>
       <p>数据复制为分区组中节点之间的相互同步的机制。</p>
-      <p>在数据节点和编目节点中，任何数据增删改操作均会写入日志。SequoiaDB会首先将日志写入日志缓冲区，然后将其异步写入本地磁盘。</p>
+      <p>在数据节点和编目节点中，任何数据增删改操作均会写入日志。SequoiaDB 会首先将日志写入日志缓冲区，然后将其异步写入本地磁盘。</p>
       <p>每个数据复制会在两个节点间进行：</p>
       <dl>
         <dlentry>

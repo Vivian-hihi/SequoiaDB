@@ -3,7 +3,8 @@
 <topic id="administration_concepts_cluster_node_coord">
   <title>协调节点</title>
   <body>
-    <section><title>概念</title>
+    <section>
+      <title>概念</title>
       <p>协调节点为一种逻辑节点，其中并不保存任何用户数据信息。</p>
       <p>协调节点作为数据请求部分的协调者，本身并不参与数据的匹配与读写操作，而仅仅是将请求分发到所需要处理的数据节点。</p>
       <p>一般来说，协调节点的处理流程如下：</p>

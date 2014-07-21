@@ -9,9 +9,8 @@
     </section>
     <section>
       <title>概念</title>
-      <p>STOREPROCEDURES集合中包含了所有的存储过程函数，每一个函数保存为一个文档，每个文档包含以下字段：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
-        id="administration_concepts_cluster_node_catalog_sysnodes_table1">-->
+      <p>STOREPROCEDURES 集合中包含了所有的存储过程函数，每一个函数保存为一个文档，每个文档包含以下字段：</p>
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -31,7 +30,7 @@
           <stentry>funcType</stentry>
           <stentry>整数</stentry>
           <stentry>函数类型<ul>
-              <li>0：代表javascript函数</li>
+              <li>0：代表 JavaScript 函数</li>
             </ul>其他类型暂无</stentry>
         </strow>
       </simpletable>

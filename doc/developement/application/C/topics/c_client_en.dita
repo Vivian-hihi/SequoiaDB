@@ -3,13 +3,11 @@
 <topic id="topic_kmr_n2s_wj_en">
   <title>C Driver</title>
   <body>
-    <p>C client application is mainly to provide database connection,data CRUD and create or drop
-      indexes,collectionspaces, collections.<xref href="..\..\..\..\..\c\html\index.html" format="html"
+    <p>C client application is mainly to provide database connection, collectionspaces, collections, cursor, replica group, node, domain.<xref href="..\..\..\..\..\c\html\index.html" format="html"
         >More refer to the online C API</xref>。</p>
     <section>
       <title>Handle</title>
-      <p>The handle of C client-driven is divided into two types.One is used to operate
-        databases,the other is used to operate clusters.</p>
+      <p>The handle of C client-driven is divided into two types. One is used to operate databases, the other is used to operate clusters.</p>
       <ul>
         <li>Database Operation Handle <p>There are 3 degrees of data in SequoiaDB:</p><p>&nbsp;1)
             Database</p><p>&nbsp;2) Collection space</p><p>&nbsp;3) Collection</p><p>Logically,
@@ -20,7 +18,7 @@
             collection space is at most 256GB.</p><p>Compared with relation database, we can regard
             record as line in relation database. We can regard collection as table in relation
             database. </p><p>So in client, there are 3 Handles representing
-            connection,collectionspace and collection. The other Handle represents cursor:</p><simpletable>
+            connection, collectionspace and collection. The other Handle represents cursor:</p><simpletable>
             <strow>
               <stentry>sdbConnectionHandle </stentry>
               <stentry>Database instance </stentry>
@@ -41,8 +39,8 @@
               <stentry>Cursor instance </stentry>
               <stentry>It represents a result set of a query</stentry>
             </strow>
-          </simpletable><p>C client-driven application operate with different handles.For
-            example,reading data will use Cursor Handle,then creating collectionspace uses database
+          </simpletable><p>C client-driven application operate with different handles. For
+            example, reading data will use Cursor Handle, then creating collectionspace uses database
             connection Handle.</p><note>
             <p>1. As for a connection, in its collection space, collections share one socket. So in
               mutiple-thread system, the system should guarantee that the socket can be used merely
@@ -52,29 +50,34 @@
             <p> 3、If each thread merely use its own connection instance and other instances it
               generates, it is thread-safe. </p>
           </note></li>
-        <li>Cluster Operation Handle<p>There are two degrees of cluster operation in
-            SequoiaDB:</p><p>&nbsp;&nbsp;1) ReplicaSets</p><p>&nbsp;&nbsp;2) Data Node</p><note>
-            <p>ReplicaSet contain two tpyes:Catalog ReplicaSet,Data
-              ReplicaSet.</p>
-          </note><p>ReplicaSet instances and Data Node instances can be represented by the following
-            two types of Handles.<simpletable>
+        <li>Cluster Operation Handle<p>There are three degrees of cluster operation in
+          SequoiaDB:</p><p>&nbsp;&nbsp;1) Replica Group</p><p>&nbsp;&nbsp;2) Data Node</p><p>&nbsp;&nbsp;3) Domain</p><note>
+            <p>Replica group contain two tpyes: Catalog ReplicaGroup, Data ReplicaGroup.</p>
+          </note><p>ReplicaGroup instances and Data Node instances can be represented by the following
+            three types of Handles.<simpletable>
               <strow>
-                <stentry> sdbShardHandle </stentry>
-                <stentry>ReplicaSet Handle </stentry>
-                <stentry> It represents a stand-alone ReplicaSet </stentry>
+                <stentry> sdbReplicaGroupHandle </stentry>
+                <stentry>ReplicaGroup Handle </stentry>
+                <stentry> It represents a stand-alone ReplicaGroup </stentry>
               </strow>
               <strow>
                 <stentry> sdbNodeHandle </stentry>
                 <stentry>Data Node Handle </stentry>
                 <stentry> It represents a stand-alone Data Node</stentry>
               </strow>
+              <strow>
+                <stentry> sdbDomainHandle </stentry>
+                <stentry>Domain Handle </stentry>
+                <stentry> It represents a stand-alone Domain</stentry>
+              </strow>
             </simpletable></p><p>Cluster-related operations need to use ReplicaSet Handle and Data
-            Node Handle.</p><p>The sdbShardHandle instants is to manage replicasets,including
-            starting and stopping replicasets,getting the status,name-information and
-            number-information of nodes in the replicaset. </p><p>The sdbNodeHandle instants is to
+            Node Handle.</p><p>The sdbReplicaGroupHandle instants is to manage replica groups, including
+            starting and stopping replica groups, getting the status, name-information and
+            number-information of nodes in the replica group. </p><p>The sdbNodeHandle instants is to
             manage Data Nodes,including starting and stopping the specified data node,getting the
             specified data node instants and maste-slave data node instants and address-information
-            of data node. </p></li>
+            of data node. </p><p>The sdbDomainHandle is used to modify, obtain the domain information.</p>
+        </li>
       </ul>
     </section>
     <section>

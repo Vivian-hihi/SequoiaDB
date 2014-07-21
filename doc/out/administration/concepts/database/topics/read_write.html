@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="读写分离"/>
-<meta name="description" content="写请求处理 所有写请求都只会发往主节点，如果没有主节点则当前复制组不可处理写请求。 读请求处理 ..."/>
+<meta name="description" content="写请求处理 所有写请求都只会发往主节点，如果没有主节点则当前复制组不可处理写请求。 读请求处理 读请求会按照会话（连接）随机选择组内任意一个节点（对外透明），或按照当前会话（连接）配置的优先实例策略选取相应复制组的数据节点。在一次会话中如果上一次查询（包括 query 和 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/database/topics/database.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_gz5_rfn_2l"/>
@@ -44,7 +44,7 @@
 
     <div class="section"><h2 class="title sectiontitle">读请求处理</h2>
       
-      <p class="p">读请求会按照会话（连接）随机选择组内任意一个节点（对外透明），或按照当前会话（连接）配置的优先实例策略选取相应复制组的数据节点。在一次会话中如果上一次查询（包括query和fetch）返回成功，则下一次查询不会重选节点；如果上一次查询发生失败，则下一次查询将重选节点。如果没有可用节点则返回失败。一次查询中不会重选节点。</p>
+      <p class="p">读请求会按照会话（连接）随机选择组内任意一个节点（对外透明），或按照当前会话（连接）配置的优先实例策略选取相应复制组的数据节点。在一次会话中如果上一次查询（包括 query 和 fetch）返回成功，则下一次查询不会重选节点；如果上一次查询发生失败，则下一次查询将重选节点。如果没有可用节点则返回失败。一次查询中不会重选节点。</p>
 
     </div>
 

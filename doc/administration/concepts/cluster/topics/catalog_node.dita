@@ -3,12 +3,13 @@
 <topic id="administration_concepts_cluster_node_catalog">
   <title>编目节点</title>
   <body>
-    <section><title>概念</title>
+    <section>
+      <title>概念</title>
       <p>编目节点为一种逻辑节点，其中保存了数据库的元数据信息，而不保存其他用户数据。</p>
       <p>编目节点中包含4个集合空间：</p>
       <ul>
-        <li><p>SYSCAT系统编目集合空间，包含4个系统集合：</p>
-          <simpletable><!-- frame="all" relcolwidth="1.0* 2.23*" id="administration_concepts_cluster_node_catalog_table1">-->
+        <li><p>SYSCAT 系统编目集合空间，包含4个系统集合：</p>
+          <simpletable>
             <sthead>
               <stentry>集合名</stentry>
               <stentry>描述</stentry>
@@ -31,10 +32,9 @@
             </strow>
           </simpletable>
         </li>
-        <li><p>SYSTEMP系统临时集合空间，可以创建最多4096个临时集合</p>
-        </li>
-        <li><p>SYSAUTH系统认证集合空间，包含一个用户集合，保存当前系统中所有的用户信息</p>
-          <simpletable><!-- frame="all" relcolwidth="1.0* 2.23*" id="administration_concepts_cluster_node_catalog_table2">-->
+        <li><p>SYSTEMP 系统临时集合空间，可以创建最多4096个临时集合</p></li>
+        <li><p>SYSAUTH 系统认证集合空间，包含一个用户集合，保存当前系统中所有的用户信息</p>
+          <simpletable>
             <sthead>
               <stentry>集合名</stentry>
               <stentry>描述</stentry>
@@ -45,8 +45,8 @@
             </strow>
           </simpletable>
         </li>
-        <li><p>SYSPROCEDURES系统存储过程集合空间，包含一个集合，用于存储所有的存储过程函数信息</p>
-          <simpletable><!-- id="simpletable_tmf_tz2_5l">-->
+        <li><p>SYSPROCEDURES 系统存储过程集合空间，包含一个集合，用于存储所有的存储过程函数信息</p>
+          <simpletable>
             <sthead>
               <stentry>集合名</stentry>
               <stentry>描述</stentry>

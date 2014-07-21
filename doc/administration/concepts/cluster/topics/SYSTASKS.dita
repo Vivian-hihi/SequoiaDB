@@ -3,14 +3,14 @@
 <topic id="administration_concepts_cluster_node_catalog_systasks">
   <title>SYSTASKS集合</title>
   <body>
-    <section><title>所属集合空间</title>
+    <section>
+      <title>所属集合空间</title>
       <p>SYSCAT</p>
     </section>
     <section><title>概念</title>
-      <p>SYSTASKS集合中包含了该集群中所有正在运行的后台任务信息。每个任务保存为一个文档。</p>
+      <p>SYSTASKS 集合中包含了该集群中所有正在运行的后台任务信息。每个任务保存为一个文档。</p>
       <p>每个文档包含以下字段：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
-        id="administration_concepts_cluster_node_catalog_systasks_table1">-->
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -51,10 +51,10 @@
         </strow>
       </simpletable>
     </section>
-    <section><title>数据切分</title>
+    <section>
+      <title>数据切分</title>
       <p>对于数据切分操作，每个文档还存在以下字段：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
-        id="administration_concepts_cluster_node_catalog_systasks_table2">-->
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
