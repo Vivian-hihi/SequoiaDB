@@ -87,7 +87,9 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
     	BSONObject selectorBson = null;
     	BSONObject orderbyBson = null;
 
-    	
+    	log.info("queryStr = " + queryStr);
+    	log.info("selectorStr = " + selectorStr);
+    	log.info("orderbyStr = " + orderbyStr);
     	if ( queryStr != null && !queryStr.equalsIgnoreCase("null") ){
     		queryBson = (BSONObject) JSON.parse( queryStr );
     		log.info( "queryBson = " + queryBson.toString() );
