@@ -37,7 +37,7 @@
 
 #include "core.hpp"
 
-class JSContext ;
+struct JSContext ;
 struct JSObject ;
 
 namespace engine
