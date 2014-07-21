@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hadoop-connector" default="jar" basedir=".">
+	<property name="build.dir"  value="${basedir}/build"/>
+
+	
+	<target name="init">
+		<delete dir="${build.dir}" />
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.dir}/src" />
+		<mkdir dir="${build.dir}/classes" />
+		<mkdir dir="${build.dir}/lib" />
+		<mkdir dir="${build.dir}/dest" />
+	</target>
+
+	
+	<target name="copySrc" depends="init">
+		<copy todir="${build.dir}/src">
+			<fileset dir="."  includes="**/*.java"></fileset>
+		</copy>
+	</target>
+	
+	<target name="copyJar"  depends="init">
+		<copy todir="${build.dir}/lib">
+			<fileset dir="${basedir}/hadoop${hadoop.version}"  includes="**/*.jar"></fileset>
+			<fileset dir="${basedir}/lib" includes="**/*.jar"></fileset>
+		</copy>
+	</target>
+	
+	
+	<target name="compile" depends="copySrc,copyJar" >
+		<javac srcdir="${build.dir}/src" destdir="${build.dir}/classes" fork="yes">
+			<classpath>
+				<fileset dir="${build.dir}/lib" includes="*.jar"  />
+			</classpath>
+		</javac>	
+	</target>
+
+	<target name="jar" depends="compile">
+		<tstamp>
+			<format property="tstamp" pattern="dd/MM/yyy HH:mm:ss" />
+		</tstamp>
+
+		<jar file="${build.dir}/dest/hadoop-connector.jar" basedir="${build.dir}/classes">
+			<manifest>
+				<attribute name="Version" value="1.0" />
+				<attribute name="Build-Timestamp" value="${tstamp}" />
+			</manifest>
+		</jar>
+		
+
+	</target>
+</project>
