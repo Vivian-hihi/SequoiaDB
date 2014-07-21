@@ -10,7 +10,8 @@ sptFiles = [
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
       "spt/sptParseTroff.cpp",
-      "spt/sptConvertorHelper.cpp"
+      "spt/sptConvertorHelper.cpp",
+	  "spt/sptUtil.cpp"
       ]
 
 spt2Files = [
@@ -20,7 +21,6 @@ spt2Files = [
       "spt/sptScope.cpp",
       "spt/sptSPArguments.cpp",
       "spt/sptSPScope.cpp",
-      "spt/sptUtil.cpp",
       "spt/sptConvertor2.cpp",
       "spt/sptBsonobj.cpp",
       "spt/sptLibssh2Session.cpp",
