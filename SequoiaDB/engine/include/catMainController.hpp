@@ -85,7 +85,6 @@ namespace engine
    private :
       INT32 catBuildMsgEvent ( const NET_HANDLE &handle,
                                const MsgHeader *pMsg,
-                               pmdEDUCB *cb,
                                pmdEDUEvent &event ) ;
       INT32 processGetMoreMsg ( const NET_HANDLE &handle, const CHAR *pMsg ) ;
       INT32 processQueryDataGrp( const NET_HANDLE &handle, const CHAR *pMsg ) ;

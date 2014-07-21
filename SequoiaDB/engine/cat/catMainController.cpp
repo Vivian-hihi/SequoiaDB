@@ -184,7 +184,7 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         rc = catBuildMsgEvent ( handle, header, _pCataMgrCB, event ) ;
+         rc = catBuildMsgEvent ( handle, header, event ) ;
          PD_RC_CHECK( rc, PDERROR, "failed to build the event(rc=%d)", rc );
          _pCataMgrCB->postEvent( event ) ;
       }
@@ -196,7 +196,7 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         rc = catBuildMsgEvent ( handle, header, _pNodeMgrCB, event ) ;
+         rc = catBuildMsgEvent ( handle, header, event ) ;
          PD_RC_CHECK( rc, PDERROR, "failed to build the event(rc=%d)", rc );
          _pNodeMgrCB->postEvent( event ) ;
       }
@@ -452,26 +452,14 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_BUILDMSGEVENT, "catMainController::catBuildMsgEvent" )
    INT32 catMainController::catBuildMsgEvent ( const NET_HANDLE &handle,
                                                const MsgHeader *pMsg,
-                                               pmdEDUCB *cb,
                                                pmdEDUEvent &event )
    {
       INT32 rc = SDB_OK ;
       CHAR *pEventData = NULL ;
       INT32 buffLen = 0 ;
-      pmdEDUMemTypes memType = PMD_EDU_MEM_NONE ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_BUILDMSGEVENT ) ;
 
-      if ( cb )
-      {
-         cb->allocBuff( pMsg->messageLength, &pEventData, buffLen ) ;
-         memType = PMD_EDU_MEM_SELF ;
-      }
-      else
-      {
-         pEventData = (CHAR *)SDB_OSS_MALLOC( pMsg->messageLength ) ;
-         memType = PMD_EDU_MEM_ALLOC ;
-      }
-
+      pEventData = (CHAR *)SDB_OSS_MALLOC( pMsg->messageLength ) ;
       if ( NULL == pEventData )
       {
          rc = SDB_OOM;
@@ -481,7 +469,7 @@ namespace engine
       ossMemcpy( (void *)pEventData, pMsg, pMsg->messageLength ) ;
 
       event._Data = pEventData ;
-      event._dataMemType = memType ;
+      event._dataMemType = PMD_EDU_MEM_ALLOC ;
       event._eventType = PMD_EDU_EVENT_MSG ;
       event._userData = (UINT64)handle ;
 
