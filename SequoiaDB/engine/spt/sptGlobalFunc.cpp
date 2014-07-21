@@ -45,12 +45,12 @@ JS_MAPPING_END()
 
    static OSS_THREAD_LOCAL CHAR *errmsg ;
 
-   OSS_FORCE_INLINE const CHAR *getErrMsg()
+   const CHAR *getErrMsg()
    {
       return errmsg ;
    }
 
-   OSS_FORCE_INLINE void setErrmsg( const CHAR *err )
+   void setErrmsg( const CHAR *err )
    {
       if ( NULL != errmsg )
       {
