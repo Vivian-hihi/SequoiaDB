@@ -19,6 +19,17 @@ namespace CLSMGR
 
    INT32 testInstallAgentProcess ( CHAR **ppBuffer, INT32 *bufferSize ) ;
 
+   INT32 testRemoveAgentProcess ( CHAR **ppBuffer, INT32 *bufferSize ) ;
+
+   INT32 testStopAgentProcess ( CHAR **ppBuffer, INT32 *bufferSize ) ;
+
+   INT32 testGetHostInfo ( CHAR **ppBuffer, INT32 *bufferSize ) ;
+
+   INT32 testRegHosts ( CHAR **ppBuffer, INT32 *bufferSize ) ;
+
+   INT32 testGetHostName ( CHAR **ppBuffer, INT32 *bufferSize ) ;
+
+
 }
 
 

@@ -11,6 +11,7 @@
 #include "omagent.hpp"
 #include "omagentMsgDef.hpp"
 #include <map>
+#include <string>
 
 using namespace engine ;
 using namespace bson ;
@@ -46,15 +47,17 @@ namespace CLSMGR
                               const CHAR *pOrderByBuff,
                               const CHAR *pHintBuff ) = 0 ;
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) = 0 ;
-//      protected:
-//         static _sptScope *scope ;
+
+     protected:
+         _sptScope *_scope ;
+         const CHAR *_jsFileName ;
+         CHAR *_fileBuff ;
+         UINT32 _buffSize ;
+         UINT32 _readSize ;
+         std::vector<BSONObj> _hosts ;
+         std::string _content ;
+
    };
-/*
-         _sptContainer container ;
-         scope = container.newScope( SPT_SCOPE_TYPE_SP ) ;
-*/
-//   _sptContainer container ;
-//   _sptScope* _omagentCommand::scope = NULL ;
 
    typedef _omagentCommand* (*OA_NEW_FUNC) () ;
 
@@ -112,13 +115,7 @@ namespace CLSMGR
 
    // get omagent command builder
    _omagentCmdBuilder* getOmagentCmdBuilder() ;
-/*
-   // spiderMonkey engine
-   _sptScope* getScope()
-   {
 
-   }
-*/
    // _omagentAddHost
    class _omagentAddHost : public _omagentCommand
    {
@@ -137,11 +134,6 @@ namespace CLSMGR
                               const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-      private:
-         _sptScope *_scope ;
-         CHAR *_fileBuff ;
-         UINT32 _buffSize ;
-         UINT32 _readSize ;
 
    };
 
@@ -175,36 +167,7 @@ namespace CLSMGR
          std::string _content ;
 
    };
-/*
-   // _omagentInstallRemoteAgent
-   class _omagentInstallRemoteAgent : public _omagentCommand
-   {
-      DECLARE_OACMD_AUTO_REGISTER ()
 
-      public:
-         _omagentInstallRemoteAgent () ;
-         ~_omagentInstallRemoteAgent () ;
-
-         virtual const CHAR* name () { return "install remote agent" ; }
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-     private:
-         _sptScope *_scope ;
-         const CHAR *_jsFileName ;
-         CHAR *_fileBuff ;
-         UINT32 _buffSize ;
-         UINT32 _readSize ;
-         std::vector<BSONObj> _hosts ;
-         std::string _content ;
-
-   } ;
-*/
    // _omagentInstallRemoteAgent
    class _omagentInstallRemoteAgent : public _omagentCommand
    {
@@ -228,14 +191,6 @@ namespace CLSMGR
                                       const CHAR *pPasswork, BSONObj &result ) ;
 
          CHAR* getVersion() { return "1.0" ; }
-     private:
-         _sptScope *_scope ;
-         const CHAR *_jsFileName ;
-         CHAR *_fileBuff ;
-         UINT32 _buffSize ;
-         UINT32 _readSize ;
-         std::vector<BSONObj> _hosts ;
-         std::string _content ;
 
    } ;
 
@@ -260,19 +215,10 @@ namespace CLSMGR
          INT32 check ( const CHAR *pIp, const CHAR *pUserName,
                        const CHAR *pPassword, BSONObj &result ) ;
 
-     private:
-         _sptScope *_scope ;
-         const CHAR *_jsFileName ;
-         CHAR *_fileBuff ;
-         UINT32 _buffSize ;
-         UINT32 _readSize ;
-         std::vector<BSONObj> _hosts ;
-         std::string _content ;
-
    } ;
 
 
-   // _omagentCheckRemoteAgentProcess
+   // _omagentInstallAgentProcess
    class _omagentInstallAgentProcess : public _omagentCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
@@ -290,14 +236,117 @@ namespace CLSMGR
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
 
-     private:
-         _sptScope *_scope ;
-         const CHAR *_jsFileName ;
-         CHAR *_fileBuff ;
-         UINT32 _buffSize ;
-         UINT32 _readSize ;
-         std::vector<BSONObj> _hosts ;
-         std::string _content ;
+   } ;
+
+   // _omagentRemoveAgentProcess
+   class _omagentRemoveAgentProcess : public _omagentCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omagentRemoveAgentProcess () ;
+         ~_omagentRemoveAgentProcess () ;
+
+         virtual const CHAR* name () { return "remove agent process" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+
+   } ;
+
+   // _omagentStopAgentProcess
+   class _omagentStopAgentProcess : public _omagentCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omagentStopAgentProcess () ;
+         ~_omagentStopAgentProcess () ;
+
+         virtual const CHAR* name () { return "stop agent process" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+
+   } ;
+
+
+   // _omagentGetHostInfo
+   class _omagentGetHostInfo : public _omagentCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omagentGetHostInfo () ;
+         ~_omagentGetHostInfo () ;
+
+         virtual const CHAR* name () { return "get host info" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+
+   } ;
+
+   // _omagentRegHosts
+   class _omagentRegHosts : public _omagentCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omagentRegHosts () ;
+         ~_omagentRegHosts () ;
+
+         virtual const CHAR* name () { return "reg hosts info" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+
+      private:
+         INT32 _getHostsTableInfo () ;
+
+         INT32 _getContentForJS ( const CHAR *pIp, std::vector<string> &hostsInfo ) ;
+
+         std::map<string, string> _hostsTableInfo ;
+
+   } ;
+
+
+   // _omagentGetHostNames
+   class _omagentGetHostNames : public _omagentCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omagentGetHostNames () ;
+         ~_omagentGetHostNames () ;
+
+         virtual const CHAR* name () { return "get host name" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+
+         INT32 getHostName( const CHAR *pIp, const CHAR *pUserName,
+                            const CHAR *pPassword, BSONObj &result ) ;
 
    } ;
 
