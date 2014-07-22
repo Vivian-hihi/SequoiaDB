@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_j3r_5jy_wj">
-  <title>SequoiaDB服务器安装</title>
+  <title>SequoiaDB 服务器安装</title>
   <body>
     <p>操作系统可用的安装方式一览表</p>
     <simpletable>
@@ -16,9 +16,11 @@
         <stentry>是</stentry>
       </strow>
     </simpletable>
-    <section><title>向导安装方式</title><p>向导安装是一个在Linux和Windows上适用的GUI安装程序。向导提供了易于使用的界面，用于安装产品和支持出示设置。</p>在Linux上，需要X Server来显示GUI图形界面；如果没有X Server，可以使用字符界面进行安装。 </section>
-  <p>
-    <xref href="linux.dita">Linux版本的安装</xref>
-  </p>
+    <section>
+      <title>向导安装方式</title>
+      <p>向导安装是一个在 Linux 和 Windows 上适用的 GUI 安装程序。向导提供了易于使用的界面，用于安装产品和支持出示设置。</p>
+      <p>在 Linux 上，需要 X Server 来显示 GUI 图形界面；如果没有 X Server，可以使用字符界面进行安装。</p>
+    </section>
+    <p><xref href="linux.dita">Linux 版本的安装</xref></p>
   </body>
 </topic>
