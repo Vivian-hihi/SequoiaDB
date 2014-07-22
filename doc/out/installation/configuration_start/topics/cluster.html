@@ -51,7 +51,7 @@
         <div class="p">在每台数据库服务器上检查 SequoiaDB 配置服务状态：<pre class="pre codeblock">service sdbcm status</pre>
 </div>
 
-        <div class="p">确认系统提示“sdbcm is running ”表示服务正在运行，否则请执行如下命令重新配置服务程序：<pre class="pre codeblock">service sdbcm start</pre>
+        <div class="p">确认系统提示“sdbcm is running”表示服务正在运行，否则请执行如下命令重新配置服务程序：<pre class="pre codeblock">service sdbcm start</pre>
 </div>
 </li>
 
@@ -117,7 +117,7 @@ dbpath=/opt/sequoiadb/database/coord</pre>
 &gt;dataRG.createNode("sdbserver2", 11820, "/opt/sequoiadb/database/data/11820")
 &gt;dataRG.createNode("sdbserver3", 11820, "/opt/sequoiadb/database/data/11820")</pre>
 </div>
-<div class="note note"><span class="notetitle">Note:</span> 创建节点的第一个参数必须为“主机名”，而不能是主机的IP。</div>
+<div class="note note"><span class="notetitle">Note:</span> 创建节点的第一个参数必须为“主机名”，而不能是主机的 IP。</div>
 
         <div class="p">3. 启动数据节点组<pre class="pre codeblock">&gt;dataRG.start()</pre>
 </div>
@@ -133,23 +133,22 @@ dbpath=/opt/sequoiadb/database/coord</pre>
         <div class="p">2. 拷贝协调节点样例配置文件<pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
 </div>
 
-        <div class="p">3. 修改配置文件<pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf
-修改内容
+        <div class="p">3. 修改配置文件<pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
+修改内容<pre class="pre codeblock">
 # database path
-dbpath=/opt/sequoiadb/database/coord  该参数为数据库放置路径，可根据需要修改，请确保路径已经存在（不存在请手工创建）
+dbpath=/opt/sequoiadb/database/coord</pre>
+该参数为数据库放置路径，可根据需要修改，请确保路径已经存在（不存在请手工创建）</div>
 
-将如下行：
-# catalog addr (hostname1:servicename1,hostname2:servicename2,...)
-#catalogaddr=
-修改
-# catalog addr (hostname1:servicename1,hostname2:servicename2,...)
-catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803  该参数为 Catalog 服务地址和端口</pre>
-</div>
+          <div class="p">将如下行：<pre class="pre codeblock"># catalog addr (hostname1:servicename1,hostname2:servicename2,...)
+#catalogaddr=</pre>
+修改<pre class="pre codeblock"># catalog addr (hostname1:servicename1,hostname2:servicename2,...)
+catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803</pre>
+该参数为 Catalog 服务地址和端口</div>
 
         <p class="p">4. 按 :wq，保存退出 vi</p>
 
-        <div class="p">5. 创建数据文件存放路径<pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/coord  路径为上一步骤配置的路径</pre>
-</div>
+        <div class="p">5. 创建数据文件存放路径<pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/coord</pre>
+路径为上一步骤配置的路径</div>
 
         <div class="p">6. 启动协调节点进程<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</pre>
 </div>
