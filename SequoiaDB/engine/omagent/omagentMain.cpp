@@ -17,7 +17,6 @@ INT32 main( INT32 argc, CHAR **argv )
    sdbEnablePD( dialogFile ) ;
    setPDLevel( PDDEBUG ) ;
    PD_LOG( PDEVENT, "Start omagent..." ) ;
-
    omagentSession oas( (SOCKET)10 ) ;
    rc = oas.run() ;
 

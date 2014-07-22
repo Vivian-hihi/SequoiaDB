@@ -28,9 +28,14 @@ namespace CLSMGR
       CHAR *pBuffer     = NULL ;
       INT32 bufferSize  = 0 ;
 
-      rc = testScanHost ( &pBuffer, &bufferSize ) ;
+//      rc = testScanHost ( &pBuffer, &bufferSize ) ;
 //      rc = testInstallRemoteAgent ( &pBuffer, &bufferSize ) ;
 //      rc = testInstallAgentProcess ( &pBuffer, &bufferSize ) ;
+//      rc = testRemoveAgentProcess ( &pBuffer, &bufferSize ) ;
+//      rc = testStopAgentProcess ( &pBuffer, &bufferSize ) ;
+//      rc = testGetHostInfo ( &pBuffer, &bufferSize ) ;
+      rc = testRegHosts ( &pBuffer, &bufferSize ) ;
+//      rc = testGetHostName ( &pBuffer, &bufferSize ) ;
 /**********************************/
 
       rc = _processMsg( (MsgHeader *)pBuffer ) ;
