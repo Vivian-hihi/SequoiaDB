@@ -150,6 +150,9 @@
 		<exec executable="scons" dir="${python.dir}/..">
 			<arg line=" " />
 		</exec>
+		<exec executable="/bin/chmod" dir="${python.dir}">
+			<arg line=" u+x ${python.tar}" />
+		</exec>
 		<exec executable="/bin/tar" dir="${python.dir}">
 			<arg line=" -xvf ${python.tar}" />
 		</exec>
