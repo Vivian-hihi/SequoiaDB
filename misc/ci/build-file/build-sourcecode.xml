@@ -158,7 +158,6 @@
  	</target>
   
 	<target name="mk-release" depends="mk-driver,compile-src">
-		<property name="DRIVER.DIR">
 		<property name="DRIVER.DIR" value="${RELEASE_DIR}/driver" />
 
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/bin" />
