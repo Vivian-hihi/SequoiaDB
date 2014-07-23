@@ -66,12 +66,11 @@ namespace engine
                                    const CHAR *msg )
    {
       INT32 rc = SDB_OK ;
-      CHAR *pNewMsg = NULL ;
-      INT32 newBuffLen = 0 ;
 
       // main cb msg
       if ( header->TID == 0 )
       {
+         CHAR *pNewMsg = NULL ;
          SDB_ASSERT( _pMainCB, "Main cb can't be NULL" ) ;
          if ( !_pMainCB )
          {
@@ -80,20 +79,22 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         // copy msg
-         rc = _pMainCB->allocBuff( header->messageLength, &pNewMsg,
-                                   newBuffLen ) ;
-         if ( rc )
+         pNewMsg = (CHAR*)SDB_OSS_MALLOC( header->messageLength + 1 ) ;
+         if ( !pNewMsg )
          {
+            rc = SDB_OOM ;
             PD_LOG( PDERROR, "Failed to alloc memory for msg[opCode: %d, "
                     "len: %d], rc: %d", header->opCode, header->messageLength,
                     rc ) ;
             goto error ;
          }
+
+         // copy msg
          ossMemcpy( pNewMsg, msg, header->messageLength ) ;
+         pNewMsg[ header->messageLength ] = 0 ;
          // push event
          _pMainCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                           PMD_EDU_MEM_SELF,
+                                           PMD_EDU_MEM_ALLOC,
                                            pNewMsg, (UINT64)handle ) ) ;
       }
       // session msg
@@ -112,10 +113,6 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( pNewMsg )
-      {
-         _pMainCB->releaseBuff( pNewMsg ) ;
-      }
       goto done ;
    }
 
@@ -171,7 +168,7 @@ namespace engine
          eventMsg->timeoutMsg.occurTime = ts.time ;
          eventMsg->timeoutMsg.timerID = id ;
 
-         _pMainCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT, 
+         _pMainCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT,
                                             PMD_EDU_MEM_ALLOC,
                                             (void*)eventMsg) ) ;
       }
