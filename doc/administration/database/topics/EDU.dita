@@ -3,17 +3,19 @@
 <topic id="administration_database_EDU">
   <title>引擎调度单元</title>
   <body>
-    <section><title>概念</title>
-      <p>引擎调度单元（Engine Dispatchable Unit）是SequoiaDB数据库中任务运行的载体，一般来说一个EDU意味着一个单独的线程。</p>
-      <p>每个EDU可以用来执行用户的请求，或者执行系统内部的维护任务。</p>
-      <p>EDU之间相互独立，不同EDU单独负责不同的用户会话。一个用户会话与一个EDU，在一个数据节点中相互绑定。</p>
-      <p>每个EDU拥有一个进程内唯一的64位整数标示，称作“EDU ID”。</p>
-      <p>EDU可以分为用户EDU与系统EDU，分别代表执行用户任务的线程，与执行系统任务的线程。</p>
+    <section>
+      <title>概念</title>
+      <p>引擎调度单元（Engine Dispatchable Unit）是 SequoiaDB 数据库中任务运行的载体，一般来说一个 EDU 意味着一个单独的线程。</p>
+      <p>每个 EDU 可以用来执行用户的请求，或者执行系统内部的维护任务。</p>
+      <p>EDU 之间相互独立，不同 EDU 单独负责不同的用户会话。一个用户会话与一个 EDU，在一个数据节点中相互绑定。</p>
+      <p>每个 EDU 拥有一个进程内唯一的64位整数标示，称作“EDU ID”。</p>
+      <p>EDU 可以分为用户 EDU 与系统 EDU，分别代表执行用户任务的线程，与执行系统任务的线程。</p>
     </section>
-    <section><title>用户EDU</title>
-      <p>用户EDU为执行用户任务的线程，一般又叫作代理（Agent）线程。</p>
-      <p>在SequoiaDB中，主要存在下列代理线程类型：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_EDU_user">-->
+    <section>
+      <title>用户 EDU</title>
+      <p>用户 EDU 为执行用户任务的线程，一般又叫作代理（Agent）线程。</p>
+      <p>在 SequoiaDB 中，主要存在下列代理线程类型：</p>
+      <simpletable>
         <sthead>
           <stentry>名称</stentry>
           <stentry>类型</stentry>
@@ -22,12 +24,12 @@
         <strow>
           <stentry>Agent</stentry>
           <stentry>代理</stentry>
-          <stentry>代理线程负责由svcname服务传入的请求，一般来说该请求由用户直接传入</stentry>
+          <stentry>代理线程负责由 svcname 服务传入的请求，一般来说该请求由用户直接传入</stentry>
         </strow>
         <strow>
           <stentry>ShardAgent</stentry>
           <stentry>分区代理</stentry>
-          <stentry>分区代理线程负责由shardname服务传入的请求，一般来说该请求由协调节点传入数据节点</stentry>
+          <stentry>分区代理线程负责由 shardname 服务传入的请求，一般来说该请求由协调节点传入数据节点</stentry>
         </strow>
         <strow>
           <stentry>CoordAgent</stentry>
@@ -37,20 +39,19 @@
         <strow>
           <stentry>ReplAgent</stentry>
           <stentry>复制代理</stentry>
-          <stentry>复制代理线程负责由replname服务传入的请求，一般来说该请求由数据主节点传向从节点，多作用于非协调节点</stentry>
+          <stentry>复制代理线程负责由 replname 服务传入的请求，一般来说该请求由数据主节点传向从节点，多作用于非协调节点</stentry>
         </strow>
         <strow>
           <stentry>HTTPAgent</stentry>
-          <stentry>HTTP代理</stentry>
-          <stentry>HTTP代理线程负责由httpname服务传入的REST请求，一般来说该请求由用户直接传入</stentry>
+          <stentry>HTTP 代理</stentry>
+          <stentry>HTTP 代理线程负责由 httpname 服务传入的 REST 请求，一般来说该请求由用户直接传入</stentry>
         </strow>
       </simpletable>
     </section>
-    <section><title>系统EDU</title>
-      <p>系统EDU为系统内部维护数据结构及一致性的线程，一般来说对用户完全透明。</p>
-      <p>在SequoiaDB中，存在但不局限于下列系统EDU：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.01* 1.0* 2.0*"
-        id="administration_database_EDU_system">-->
+    <section><title>系统 EDU</title>
+      <p>系统 EDU 为系统内部维护数据结构及一致性的线程，一般来说对用户完全透明。</p>
+      <p>在 SequoiaDB 中，存在但不局限于下列系统 EDU：</p>
+      <simpletable>
         <sthead>
           <stentry>名称</stentry>
           <stentry>类型</stentry>
@@ -59,27 +60,27 @@
         <strow>
           <stentry>TCPListener</stentry>
           <stentry>服务监听</stentry>
-          <stentry>该线程负责监听svcname服务，并启动Agent代理线程</stentry>
+          <stentry>该线程负责监听 svcname 服务，并启动 Agent 代理线程</stentry>
         </strow>
         <strow>
           <stentry>HTTPListener</stentry>
-          <stentry>HTTP监听</stentry>
-          <stentry>该线程负责监听httpname服务，并启动Agent代理线程</stentry>
+          <stentry>HTTP 监听</stentry>
+          <stentry>该线程负责监听 httpname 服务，并启动 Agent 代理线程</stentry>
         </strow>
         <strow>
           <stentry>Cluster</stentry>
           <stentry>集群管理</stentry>
-          <stentry>集群管理线程用于维护集群的基本框架，启动ReplReader与ShardReader线程</stentry>
+          <stentry>集群管理线程用于维护集群的基本框架，启动 ReplReader 与 ShardReader 线程</stentry>
         </strow>
         <strow>
           <stentry>ReplReader</stentry>
           <stentry>复制监听</stentry>
-          <stentry>复制监听线程负责由replname服务传入的请求，并启动ReplAgent代理线程</stentry>
+          <stentry>复制监听线程负责由 replname 服务传入的请求，并启动 ReplAgent 代理线程</stentry>
         </strow>
         <strow>
           <stentry>ShardReader</stentry>
           <stentry>分区监听</stentry>
-          <stentry>分区监听线程负责由shardname服务传入的请求，并启动ShardAgent代理线程</stentry>
+          <stentry>分区监听线程负责由 shardname 服务传入的请求，并启动 ShardAgent 代理线程</stentry>
         </strow>
         <strow>
           <stentry>LogWriter</stentry>
@@ -88,8 +89,8 @@
         </strow>
         <strow>
           <stentry>WindowsListener</stentry>
-          <stentry>Windows事件监听</stentry>
-          <stentry>Windows环境特有，用于监听Windows中SequoiaDB定义事件</stentry>
+          <stentry>Windows 事件监听</stentry>
+          <stentry>Windows 环境特有，用于监听 Windows 中 SequoiaDB 定义事件</stentry>
         </strow>
         <strow>
           <stentry>Task</stentry>
@@ -114,7 +115,7 @@
         <strow>
           <stentry>CatalogNetwork</stentry>
           <stentry>编目网络监听</stentry>
-          <stentry>编目网络监听线程用于监听编目服务catalogname下的请求</stentry>
+          <stentry>编目网络监听线程用于监听编目服务 catalogname 下的请求</stentry>
         </strow>
         <strow>
           <stentry>CoordNetwork</stentry>
@@ -123,8 +124,9 @@
         </strow>
       </simpletable>
     </section>
-    <section><title>监控</title>
-      <p>用户可以使用<xref href="snapshot/sessions.dita">会话快照</xref>监控系统与用户EDU。</p>
+    <section>
+      <title>监控</title>
+      <p>用户可以使用<xref href="snapshot/sessions.dita">会话快照</xref>监控系统与用户 EDU。</p>
     </section>
   </body>
   <related-links>

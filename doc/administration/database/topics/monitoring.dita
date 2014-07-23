@@ -3,17 +3,18 @@
 <topic id="administration_database_monitoring">
   <title>监控</title>
   <body>
-    <section><title>概念</title>
-      <p>监控是一种监视当前系统状态的方式。在SequoiaDB中，用户可以使用快照（SNAPSHOT）与列表（LIST）命令进行系统监控。</p>
+    <section>
+      <title>概念</title>
+      <p>监控是一种监视当前系统状态的方式。在 SequoiaDB 中，用户可以使用快照（SNAPSHOT）与列表（LIST）命令进行系统监控。</p>
       <note>如果在集群环境下查询快照，连接协调节点就可以获取。</note>
-      <p>连接协调节点，默认是获取整个集群的快照信息，如：snapshot(SDB_SNAP_SYSTEM )。</p>
-      <p>要获取指定分区组的快照信息，使用条件查询，如：snapshot(SDB_SNAP_SYSTEM,{ GroupName: "group1" } )</p>
-      <p>要获取指定节点的快照信息，如：snapshot(SDB_SNAP_SYSTEM,{ HostName: "host1", svcname: "11820' } )</p>
+      <p>连接协调节点，默认是获取整个集群的快照信息，如：<codeblock>snapshot(SDB_SNAP_SYSTEM )</codeblock>。</p>
+      <p>要获取指定分区组的快照信息，使用条件查询，如：<codeblock>snapshot(SDB_SNAP_SYSTEM,{ GroupName: "group1" } )</codeblock></p>
+      <p>要获取指定节点的快照信息，如：<codeblock>snapshot(SDB_SNAP_SYSTEM,{ HostName: "host1", svcname: "11820' } )</codeblock></p>
     </section>
-    <section><title>快照</title>
+    <section>
+      <title>快照</title>
       <p>快照是一种得到系统当前状态的命令，主要分为以下类型：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.0* 3*"
-        id="administration_database_monitoring_snapshot_table">-->
+      <simpletable>
         <sthead>
           <stentry>快照标示</stentry>
           <stentry>快照类型</stentry>          
@@ -66,10 +67,10 @@
         </strow>
       </simpletable>
     </section>
-    <section><title>列表</title>
+    <section>
+      <title>列表</title>
       <p>列表是一种轻量级的得到系统当前状态的命令，主要分为以下类型：</p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.0* 3*"
-        id="administration_database_monitoring_list_table">-->
+      <simpletable>
         <sthead>
           <stentry>列表标示</stentry>
           <stentry>列表类型</stentry>

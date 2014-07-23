@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>描述</title>
-      <p>分区组列表列出当前集群中的所有分区信息 。</p>
+      <p>分区组列表列出当前集群中的所有分区信息。</p>
     </section>
     <section>
       <title>标示</title>
@@ -17,8 +17,7 @@
     </section>
     <section>
       <title>字段信息</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*"
-        id="administration_database_monitoring_snapshot_sessions_table">-->
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -27,7 +26,7 @@
         <strow>
           <stentry>Group.dbpath</stentry>
           <stentry>字符串</stentry>
-          <stentry>分区组中节点的数据文件存放路径 </stentry>
+          <stentry>分区组中节点的数据文件存放路径</stentry>
         </strow>
         <strow>
           <stentry>Group.HostName</stentry>
@@ -37,28 +36,29 @@
         <strow>
           <stentry>Group.Service.Type</stentry>
           <stentry>整数</stentry>
-          <stentry>分区组中节点的服务类型 <ul>
-              <li>0：直连服务，对应数据库参数svcname</li>
-              <li>1：复制服务，对应数据库参数replname</li>
-              <li>2：分区服务，对应数据库参数shardname</li>
-              <li>3：编目服务，对应数据库参数catalogname</li>
+          <stentry>分区组中节点的服务类型
+            <ul>
+              <li>0：直连服务，对应数据库参数 svcname</li>
+              <li>1：复制服务，对应数据库参数 replname</li>
+              <li>2：分区服务，对应数据库参数 shardname</li>
+              <li>3：编目服务，对应数据库参数 catalogname</li>
             </ul>
           </stentry>
         </strow>
         <strow>
           <stentry>Group.Service.Name</stentry>
           <stentry>字符串</stentry>
-          <stentry>分区组中节点的服务名，服务名可以为端口号，或services文件中的服务名</stentry>
+          <stentry>分区组中节点的服务名，服务名可以为端口号，或 services 文件中的服务名</stentry>
         </strow>
         <strow>
           <stentry>Group.NodeID</stentry>
           <stentry>整数</stentry>
-          <stentry>分区组中节点的ID</stentry>
+          <stentry>分区组中节点的 ID</stentry>
         </strow>
         <strow>
           <stentry>GroupID</stentry>
           <stentry>整数</stentry>
-          <stentry>分区组ID</stentry>
+          <stentry>分区组 ID</stentry>
         </strow>
         <strow>
           <stentry>GroupName</stentry>
@@ -68,12 +68,13 @@
         <strow>
           <stentry>PrimaryNode</stentry>
           <stentry>整数</stentry>
-          <stentry>主节点ID</stentry>
+          <stentry>主节点 ID</stentry>
         </strow>
         <strow>
           <stentry>Role</stentry>
           <stentry>整数</stentry>
-          <stentry> 分区组角色，可以为： <ul>
+          <stentry> 分区组角色，可以为：
+            <ul>
               <li>0：数据节点</li>
               <li>2：编目节点</li>
             </ul></stentry>
@@ -81,7 +82,8 @@
         <strow>
           <stentry>Status</stentry>
           <stentry>字符串</stentry>
-          <stentry> 分区组状态 <ul>
+          <stentry> 分区组状态
+            <ul>
               <li>1：已激活分区组</li>
               <li>0：未激活分区组</li>
               <li>不存在：未激活分区组</li>

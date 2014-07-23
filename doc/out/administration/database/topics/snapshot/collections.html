@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="集合快照"/>
-<meta name="description" content="描述 集合快照列出当前数据库节点中所有的非临时集合（协调节点中列出用户集合），每个集合为一条记录。 标示 SDB_SNAP_COLLECTIONS 适用节点 全部 字段信息 由于数据节点与编目节点保存的集合信息不同，集合快照在协调节点与其它节点所返回的结构有所不同： 非协调节点字段信息 字段名 类型 描述 Name 字符串 集合完整名 Details.ID 整数 ..."/>
+<meta name="description" content="描述 集合快照列出当前数据库节点中所有的非临时集合（协调节点中列出用户集合），每个集合为一条记录。 标示 SDB_SNAP_COLLECTIONS 适用节点 全部 字段信息 由于数据节点与编目节点保存的集合信息不同，集合快照在协调节点与其它节点所返回的结构有所不同： 非协调节点字段信息 字段名 类型 描述 Name 字符串 集合完整名 Details.ID 整数 集合 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/database/topics/snapshot/snapshot.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="administration_database_monitoring_snapshot_collections"/>
@@ -37,80 +37,85 @@
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">描述</h2>
+      
       <p class="p">集合快照列出当前数据库节点中所有的非临时集合（协调节点中列出用户集合），每个集合为一条记录。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">标示</h2>
+      
       <p class="p">SDB_SNAP_COLLECTIONS</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">适用节点</h2>
+      
       <p class="p">全部</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">字段信息</h2>
+      
       <p class="p">由于数据节点与编目节点保存的集合信息不同，集合快照在协调节点与其它节点所返回的结构有所不同：</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">非协调节点字段信息</h2>
+      
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d26422e50" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d26463e55" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d26422e53" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d26463e58" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d26422e56" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d26422e50" class="stentry">Name</td>
-
-          <td valign="top" headers="d26422e53" class="stentry">字符串</td>
-
-          <td valign="top" headers="d26422e56" class="stentry">集合完整名</td>
+          <th valign="bottom" align="left" id="d26463e61" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e50" class="stentry">Details.ID</td>
+          <td valign="top" headers="d26463e55" class="stentry">Name</td>
 
-          <td valign="top" headers="d26422e53" class="stentry">整数</td>
+          <td valign="top" headers="d26463e58" class="stentry">字符串</td>
 
-          <td valign="top" headers="d26422e56" class="stentry">集合ID，范围0-4095，集合空间内唯一</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d26422e50" class="stentry">Details.LogicalID</td>
-
-          <td valign="top" headers="d26422e53" class="stentry">整数</td>
-
-          <td valign="top" headers="d26422e56" class="stentry">集合逻辑ID</td>
+          <td valign="top" headers="d26463e61" class="stentry">集合完整名</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e50" class="stentry">Details.Sequence</td>
+          <td valign="top" headers="d26463e55" class="stentry">Details.ID</td>
 
-          <td valign="top" headers="d26422e53" class="stentry">整数</td>
+          <td valign="top" headers="d26463e58" class="stentry">整数</td>
 
-          <td valign="top" headers="d26422e56" class="stentry">序列号</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d26422e50" class="stentry">Details.Indexes</td>
-
-          <td valign="top" headers="d26422e53" class="stentry">整数</td>
-
-          <td valign="top" headers="d26422e56" class="stentry">该集合所包含的索引数量</td>
+          <td valign="top" headers="d26463e61" class="stentry">集合 ID，范围0-4095，集合空间内唯一</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e50" class="stentry">Details.Status</td>
+          <td valign="top" headers="d26463e55" class="stentry">Details.LogicalID</td>
 
-          <td valign="top" headers="d26422e53" class="stentry">字符串</td>
+          <td valign="top" headers="d26463e58" class="stentry">整数</td>
 
-          <td valign="top" headers="d26422e56" class="stentry">集合当前状态
+          <td valign="top" headers="d26463e61" class="stentry">集合逻辑 ID</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d26463e55" class="stentry">Details.Sequence</td>
+
+          <td valign="top" headers="d26463e58" class="stentry">整数</td>
+
+          <td valign="top" headers="d26463e61" class="stentry">序列号</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d26463e55" class="stentry">Details.Indexes</td>
+
+          <td valign="top" headers="d26463e58" class="stentry">整数</td>
+
+          <td valign="top" headers="d26463e61" class="stentry">该集合所包含的索引数量</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d26463e55" class="stentry">Details.Status</td>
+
+          <td valign="top" headers="d26463e58" class="stentry">字符串</td>
+
+          <td valign="top" headers="d26463e61" class="stentry">集合当前状态
             <ul class="ul">
               <li class="li">Free：空闲</li>
 
@@ -132,19 +137,19 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e50" class="stentry">NodeName</td>
+          <td valign="top" headers="d26463e55" class="stentry">NodeName</td>
 
-          <td valign="top" headers="d26422e53" class="stentry">字符串</td>
+          <td valign="top" headers="d26463e58" class="stentry">字符串</td>
 
-          <td valign="top" headers="d26422e56" class="stentry">节点名（主机名+端口号）</td>
+          <td valign="top" headers="d26463e61" class="stentry">节点名（主机名+端口号）</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e50" class="stentry">GroupName</td>
+          <td valign="top" headers="d26463e55" class="stentry">GroupName</td>
 
-          <td valign="top" headers="d26422e53" class="stentry">字符串</td>
+          <td valign="top" headers="d26463e58" class="stentry">字符串</td>
 
-          <td valign="top" headers="d26422e56" class="stentry">节点所在分区组名（仅在集群模式下显示）</td>
+          <td valign="top" headers="d26463e61" class="stentry">节点所在分区组名（仅在集群模式下显示）</td>
 
         </tr>
 </table>
@@ -152,69 +157,71 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">协调节点字段信息</h2>
+      
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d26422e193" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d26463e199" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d26422e196" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d26463e202" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d26422e199" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d26422e193" class="stentry">Name</td>
-
-          <td valign="top" headers="d26422e196" class="stentry">字符串</td>
-
-          <td valign="top" headers="d26422e199" class="stentry">集合完整名</td>
+          <th valign="bottom" align="left" id="d26463e205" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e193" class="stentry">Details.GroupName</td>
+          <td valign="top" headers="d26463e199" class="stentry">Name</td>
 
-          <td valign="top" headers="d26422e196" class="stentry">字符串</td>
+          <td valign="top" headers="d26463e202" class="stentry">字符串</td>
 
-          <td valign="top" headers="d26422e199" class="stentry">节点所在分区组名 </td>
+          <td valign="top" headers="d26463e205" class="stentry">集合完整名</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d26463e199" class="stentry">Details.GroupName</td>
+
+          <td valign="top" headers="d26463e202" class="stentry">字符串</td>
+
+          <td valign="top" headers="d26463e205" class="stentry">节点所在分区组名 </td>
 
         </tr>
 <tr class="strow"/>
 <tr class="strow">
-          <td valign="top" headers="d26422e193" class="stentry">Details.Group.ID</td>
+          <td valign="top" headers="d26463e199" class="stentry">Details.Group.ID</td>
 
-          <td valign="top" headers="d26422e196" class="stentry">整数</td>
+          <td valign="top" headers="d26463e202" class="stentry">整数</td>
 
-          <td valign="top" headers="d26422e199" class="stentry">集合ID，范围0~4096，集合空间内唯一</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d26422e193" class="stentry">Details.Group.LogicalID</td>
-
-          <td valign="top" headers="d26422e196" class="stentry">整数</td>
-
-          <td valign="top" headers="d26422e199" class="stentry">集合逻辑ID </td>
+          <td valign="top" headers="d26463e205" class="stentry">集合 ID，范围0~4096，集合空间内唯一</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e193" class="stentry">Details.Group.Sequence</td>
+          <td valign="top" headers="d26463e199" class="stentry">Details.Group.LogicalID</td>
 
-          <td valign="top" headers="d26422e196" class="stentry">整数</td>
+          <td valign="top" headers="d26463e202" class="stentry">整数</td>
 
-          <td valign="top" headers="d26422e199" class="stentry">序列号</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d26422e193" class="stentry">Details.Group.Indexes</td>
-
-          <td valign="top" headers="d26422e196" class="stentry">整数</td>
-
-          <td valign="top" headers="d26422e199" class="stentry">该集合所包含的索引数量 </td>
+          <td valign="top" headers="d26463e205" class="stentry">集合逻辑 ID </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e193" class="stentry">Details.Group.Status</td>
+          <td valign="top" headers="d26463e199" class="stentry">Details.Group.Sequence</td>
 
-          <td valign="top" headers="d26422e196" class="stentry">字符串</td>
+          <td valign="top" headers="d26463e202" class="stentry">整数</td>
 
-          <td valign="top" headers="d26422e199" class="stentry">集合当前状态 <a name="administration_database_monitoring_snapshot_collections__ul_cmj_t45_ql"><!-- --></a><ul class="ul" id="administration_database_monitoring_snapshot_collections__ul_cmj_t45_ql">
+          <td valign="top" headers="d26463e205" class="stentry">序列号</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d26463e199" class="stentry">Details.Group.Indexes</td>
+
+          <td valign="top" headers="d26463e202" class="stentry">整数</td>
+
+          <td valign="top" headers="d26463e205" class="stentry">该集合所包含的索引数量 </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d26463e199" class="stentry">Details.Group.Status</td>
+
+          <td valign="top" headers="d26463e202" class="stentry">字符串</td>
+
+          <td valign="top" headers="d26463e205" class="stentry">集合当前状态
+            <a name="administration_database_monitoring_snapshot_collections__ul_cmj_t45_ql"><!-- --></a><ul class="ul" id="administration_database_monitoring_snapshot_collections__ul_cmj_t45_ql">
               <li class="li">Free：空闲</li>
 
               <li class="li">Normal：正常</li>
@@ -230,15 +237,16 @@
               <li class="li"> Offline Reorg Rebuild Phase：离线重组重建索引阶段 </li>
 
             </ul>
-</td>
+
+          </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d26422e193" class="stentry">Details.Group.NodeName</td>
+          <td valign="top" headers="d26463e199" class="stentry">Details.Group.NodeName</td>
 
-          <td valign="top" headers="d26422e196" class="stentry">字符串</td>
+          <td valign="top" headers="d26463e202" class="stentry">字符串</td>
 
-          <td valign="top" headers="d26422e199" class="stentry">节点名（主机名+端口）</td>
+          <td valign="top" headers="d26463e205" class="stentry">节点名（主机名+端口）</td>
 
         </tr>
 </table>
@@ -246,6 +254,7 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">非协调节点示例</h2>
+      
       <pre class="pre codeblock">&gt; db.snapshot(SDB_SNAP_COLLECTIONS)
 {
   "Name": "foo.bar",
@@ -265,6 +274,7 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">协调节点示例</h2>
+      
       <pre class="pre codeblock">&gt; coord.snapshot(SDB_SNAP_COLLECTIONS)
 {
   "Name": "susefoo.susebar",

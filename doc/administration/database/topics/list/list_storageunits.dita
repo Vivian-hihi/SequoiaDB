@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>描述</title>
-      <p>  存储单元列表列出当前数据库节点的全部存储单元信息。</p>
+      <p>存储单元列表列出当前数据库节点的全部存储单元信息。</p>
     </section>
     <section>
       <title>标示</title>
@@ -17,8 +17,7 @@
     </section>
     <section>
       <title>字段信息</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*"
-        id="administration_database_monitoring_snapshot_sessions_table">-->
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -32,17 +31,17 @@
         <strow>
           <stentry>ID</stentry>
           <stentry>整数</stentry>
-          <stentry>该集合空间ID</stentry>
+          <stentry>该集合空间 ID</stentry>
         </strow>
         <strow>
           <stentry>LogicalID</stentry>
           <stentry>字符串</stentry>
-          <stentry>集合空间逻辑ID，为递增顺序</stentry>
+          <stentry>集合空间逻辑 ID，为递增顺序</stentry>
         </strow>
         <strow>
           <stentry>PageSize</stentry>
           <stentry>整数 </stentry>
-          <stentry>集合空间数据页大小 </stentry>
+          <stentry>集合空间数据页大小</stentry>
         </strow>
         <strow>
           <stentry>Sequence</stentry>

@@ -3,19 +3,23 @@
 <topic id="administration_database_monitoring_snapshot_contexts_current">
   <title>当前上下文快照</title>
   <body>
-    <section><title>描述</title>
+    <section>
+      <title>描述</title>
       <p>当前上下文快照列出数据库节点中，当前连接所对应的会话中的上下文。</p>
-      <p>返回一条记录，其中Contexts数组字段中包含当前会话中所有的上下文。</p>
+      <p>返回一条记录，其中 Contexts 数组字段中包含当前会话中所有的上下文。</p>
       <note>快照操作自身需产生一个上下文，因此结果集中至少包含一个上下文。</note>
     </section>
-    <section><title>标示</title>
+    <section>
+      <title>标示</title>
       <p>SDB_SNAP_CONTEXTS_CURRENT</p>
     </section>
-    <section><title>适用节点</title>
+    <section>
+      <title>适用节点</title>
       <p>数据、编目</p>
     </section>
-    <section><title>字段信息</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.0*" id="administration_database_monitoring_snapshot_contexts_current_table">-->
+    <section>
+      <title>字段信息</title>
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -24,13 +28,13 @@
         <strow>
           <stentry>SessionID</stentry>
           <stentry>字符串</stentry>
-          <stentry>会话ID（Hostname:Port:ID）</stentry>
+          <stentry>会话 ID（Hostname:Port:ID）</stentry>
         </strow>
         <strow/>
         <strow>
           <stentry>Contexts.ContextID</stentry>
           <stentry>长整数</stentry>
-          <stentry>上下文ID</stentry>
+          <stentry>上下文 ID</stentry>
         </strow>
         <strow>
           <stentry>Contexts.DataRead</stentry>
@@ -53,9 +57,9 @@
           <stentry>创建时间</stentry>
         </strow>
       </simpletable>
-    </section>
-    
-    <section><title>示例</title>
+    </section>    
+    <section>
+      <title>示例</title>
       <codeblock>> db.snapshot(SDB_SNAP_CONTEXTS_CURRENT)
 {
   "SessionID": vmsvr2-suse-x64:11820:28,

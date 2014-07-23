@@ -3,18 +3,21 @@
 <topic id="administration_database_monitoring_snapshot_system">
   <title>操作系统快照</title>
   <body>
-    <section><title>描述</title>
+    <section>
+      <title>描述</title>
       <p>操作系统快照列出当前数据库节点所在操作系统中主要的状态与性能监控参数，输出一条记录。</p>
     </section>
-    <section><title>标示</title>
+    <section>
+      <title>标示</title>
       <p>SDB_SNAP_SYSTEM</p>
     </section>
-    <section><title>适用节点</title>
+    <section>
+      <title>适用节点</title>
       <p>全部节点</p>
     </section>
-    <section><title>字段信息</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.99*"
-        id="administration_database_monitoring_snapshot_system_table">-->
+    <section>
+      <title>字段信息</title>
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -28,7 +31,7 @@
         <strow>
           <stentry>ServiceName</stentry>
           <stentry>字符串</stentry>
-          <stentry>svcname所指定的服务名，与HostName共同作为一个逻辑节点的标示</stentry>
+          <stentry>svcname 所指定的服务名，与 HostName 共同作为一个逻辑节点的标示</stentry>
         </strow>
         <strow>
           <stentry>NodeName</stentry>
@@ -48,38 +51,37 @@
         <strow>
           <stentry>ServiceStatus</stentry>
           <stentry>布尔</stentry>
-          <stentry>是否为可提供服务状态。一些特殊状态，例如<xref href="../../../concepts/cluster/topics/sync.dita"
-              >全量同步</xref>会使该状态为false</stentry>
+          <stentry>是否为可提供服务状态。一些特殊状态，例如<xref href="../../../concepts/cluster/topics/sync.dita">全量同步</xref>会使该状态为 false</stentry>
         </strow>
         <strow>
           <stentry>CurrentLSN.Offset</stentry>
           <stentry>长整数</stentry>
-          <stentry>当前LSN的偏移</stentry>
+          <stentry>当前 LSN 的偏移</stentry>
         </strow>
         <strow>
           <stentry>CurrentLSN.Version</stentry>
           <stentry>整数</stentry>
-          <stentry>当前LSN的版本号 <b>重要：该字段及以上字段仅在数据节点和编目节点显示，协调节点不显示</b></stentry>
+          <stentry>当前 LSN 的版本号 <b>重要：该字段及以上字段仅在数据节点和编目节点显示，协调节点不显示</b></stentry>
         </strow>
         <strow>
           <stentry>CPU.User</stentry>
           <stentry>浮点数</stentry>
-          <stentry>操作系统启动后所消耗的总用户CPU（秒）</stentry>
+          <stentry>操作系统启动后所消耗的总用户 CPU（秒）</stentry>
         </strow>
         <strow>
           <stentry>CPU.Sys</stentry>
           <stentry>浮点数</stentry>
-          <stentry>操作系统启动后所消耗的总系统CPU（秒）</stentry>
+          <stentry>操作系统启动后所消耗的总系统 CPU（秒）</stentry>
         </strow>
         <strow>
           <stentry>CPU.Idle</stentry>
           <stentry>浮点数</stentry>
-          <stentry>操作系统启动后所消耗的总空闲CPU（秒）</stentry>
+          <stentry>操作系统启动后所消耗的总空闲 CPU（秒）</stentry>
         </strow>
         <strow>
           <stentry>CPU.Other</stentry>
           <stentry>浮点数</stentry>
-          <stentry>操作系统启动后所消耗的总其它CPU（秒）</stentry>
+          <stentry>操作系统启动后所消耗的总其它 CPU（秒）</stentry>
         </strow>
         <strow>
           <stentry>Memory.LoadPercent</stentry>
@@ -148,7 +150,8 @@
         </strow>
       </simpletable>
     </section>
-    <section><title>示例</title>
+    <section>
+      <title>示例</title>
       <codeblock>> db.snapshot(SDB_SNAP_SYSTEM)
 {
   "NodeName": "vmsvr2-suse-x64:11820",

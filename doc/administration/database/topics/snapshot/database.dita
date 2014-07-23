@@ -3,17 +3,21 @@
 <topic id="administration_database_monitoring_snapshot_database">
   <title>数据库快照</title>
   <body>
-    <section><title>描述</title>
+    <section>
+      <title>描述</title>
       <p>数据库快照列出当前数据库节点中主要的状态与性能监控参数，输出一条记录。</p>
     </section>
-    <section><title>标示</title>
+    <section>
+      <title>标示</title>
       <p>SDB_SNAP_DATABASE</p>
     </section>
-    <section><title>适用节点</title>
+    <section>
+      <title>适用节点</title>
       <p>所有节点</p>
     </section>
-    <section><title>字段信息</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_database_table">-->
+    <section>
+      <title>字段信息</title>
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
@@ -27,7 +31,7 @@
         <strow>
           <stentry>ServiceName</stentry>
           <stentry>字符串</stentry>
-          <stentry>svcname所指定的服务名，与HostName共同作为一个逻辑节点的标示</stentry>
+          <stentry>svcname 所指定的服务名，与 HostName 共同作为一个逻辑节点的标示</stentry>
         </strow>
         <strow>
           <stentry>NodeName</stentry>
@@ -47,17 +51,17 @@
         <strow>
           <stentry>ServiceStatus</stentry>
           <stentry>布尔</stentry>
-          <stentry>是否为可提供服务状态。一些特殊状态，例如<xref href="../../../concepts/cluster/topics/sync.dita">全量同步</xref>会使该状态为false</stentry>
+          <stentry>是否为可提供服务状态。一些特殊状态，例如<xref href="../../../concepts/cluster/topics/sync.dita">全量同步</xref>会使该状态为 false</stentry>
         </strow>
         <strow>
           <stentry>CurrentLSN.Offset</stentry>
           <stentry>长整数</stentry>
-          <stentry>当前LSN的偏移</stentry>
+          <stentry>当前 LSN 的偏移</stentry>
         </strow>
         <strow>
           <stentry>CurrentLSN.Version</stentry>
           <stentry>整数</stentry>
-          <stentry>当前LSN的版本号</stentry>
+          <stentry>当前 LSN 的版本号</stentry>
         </strow>
         <strow>
           <stentry>Version.Major</stentry>
@@ -77,17 +81,17 @@
         <strow>
           <stentry>CurrentActiveSessions</stentry>
           <stentry>整数</stentry>
-          <stentry>当前活动会话，该数量包括用户EDU与系统EDU</stentry>
+          <stentry>当前活动会话，该数量包括用户 EDU 与系统 EDU</stentry>
         </strow>
         <strow>
           <stentry>CurrentIdleSessions</stentry>
           <stentry>整数</stentry>
-          <stentry>当前非活动会话，一般来说非活动会话意味着EDU存在线程池中等待分配</stentry>
+          <stentry>当前非活动会话，一般来说非活动会话意味着 EDU 存在线程池中等待分配</stentry>
         </strow>
         <strow>
           <stentry>CurrentSystemSessions</stentry>
           <stentry>整数</stentry>
-          <stentry>当前系统会话，为当前活动用户EDU数量</stentry>
+          <stentry>当前系统会话，为当前活动用户 EDU 数量</stentry>
         </strow>
         <strow>
           <stentry>CurrentContexts</stentry>
@@ -207,12 +211,12 @@
         <strow>
           <stentry>UserCPU</stentry>
           <stentry>浮点数</stentry>
-          <stentry>用户CPU（秒）</stentry>
+          <stentry>用户 CPU（秒）</stentry>
         </strow>
         <strow>
           <stentry>SysCPU</stentry>
           <stentry>浮点数</stentry>
-          <stentry>系统CPU（秒）</stentry>
+          <stentry>系统 CPU（秒）</stentry>
         </strow>
         <strow>
           <stentry>ErrNodes.NodeName</stentry>
@@ -226,7 +230,8 @@
         </strow>
       </simpletable>
     </section>
-    <section><title>示例</title>
+    <section>
+      <title>示例</title>
       <codeblock>> db.snapshot(SDB_SNAP_DATABASE)
 {
   "NodeName": "vmsvr2-suse-x64:11820",

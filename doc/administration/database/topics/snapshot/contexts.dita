@@ -3,34 +3,37 @@
 <topic id="administration_database_monitoring_snapshot_contexts">
   <title>上下文快照</title>
   <body>
-    <section><title>描述</title>
+    <section>
+      <title>描述</title>
       <p>上下文快照列出当前数据库节点中所有的会话所对应的上下文。</p>
-      <p>每一个会话为一条记录，如果一个会话中包括一个或一个以上的上下文时，其Contexts数组字段对每个上下文产生一个对象。</p>
+      <p>每一个会话为一条记录，如果一个会话中包括一个或一个以上的上下文时，其 Contexts 数组字段对每个上下文产生一个对象。</p>
       <note>快照操作自身需产生一个上下文，因此结果集中至少会返回一个当前快照的上下文信息。</note>
     </section>
-    <section><title>标示</title>
+    <section>
+      <title>标示</title>
       <p>SDB_SNAP_CONTEXTS</p>
     </section>
-    <section><title>适用节点</title>
+    <section>
+      <title>适用节点</title>
       <p>数据、编目</p>
     </section>
-    <section><title>字段信息</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.0*" id="administration_database_monitoring_snapshot_contexts_table">-->
+    <section>
+      <title>字段信息</title>
+      <simpletable>
         <sthead>
           <stentry>字段名</stentry>
           <stentry>类型</stentry>
           <stentry>描述</stentry>
         </sthead>
-        <strow/>
         <strow>
           <stentry>SessionID</stentry>
           <stentry>字符串</stentry>
-          <stentry>会话ID（主机名：端口号：ID）</stentry>
+          <stentry>会话 ID（主机名：端口号：ID）</stentry>
         </strow>
         <strow>
           <stentry>Contexts.ContextID</stentry>
           <stentry>长整数</stentry>
-          <stentry>上下文ID</stentry>
+          <stentry>上下文 ID</stentry>
         </strow>
         <strow>
           <stentry>Contexts.DataRead</stentry>
@@ -53,9 +56,9 @@
           <stentry>创建时间</stentry>
         </strow>
       </simpletable>
-    </section>
-    
-    <section><title>示例</title>
+    </section>    
+    <section>
+      <title>示例</title>
       <codeblock>> db.snapshot(SDB_SNAP_CONTEXTS)
 {
   "SessionID": "vmsvr2-suse-x64:11820:28",
