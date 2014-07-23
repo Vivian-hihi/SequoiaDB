@@ -99,7 +99,7 @@ public class SequoiadbOutputFormat extends OutputFormat implements Configurable 
 		log.debug("Select coord address:" + localAddrList.get(i).toString());
 
 		return new SequoiadbWriter(collectionSpaceName, collectionName,
-				localAddrList.get(i), bulkNum);
+				localAddrList.get(i), bulkNum, "bulkinsert");
 	}
 
 	private Configuration conf;
@@ -123,6 +123,7 @@ public class SequoiadbOutputFormat extends OutputFormat implements Configurable 
 				this.bulkNum = Integer.valueOf(bulkNumStr);
 			}catch( Exception e ){
 				log.warn(e.toString());
+				log.warn("bulkNum use " + BULKINSERTNUMBER);
 				this.bulkNum = BULKINSERTNUMBER;
 			}
 		}else{

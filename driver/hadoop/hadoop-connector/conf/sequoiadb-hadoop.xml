@@ -40,7 +40,6 @@
   <property>
     <name>sequoiadb.query.json</name>
     <value>{"CREDENT_NO": "0002652309B"}</value>
-    
     <description>default:null;JSON type</description>
   </property>
   <property>
@@ -48,10 +47,5 @@
     <value>{"CREDENT_NO":null,"ROLE":null}</value>
     <description>default:null;JSON type</description>
   </property>
-  <property>
-    <name>sequoiadb.orderby.json</name>
-    <value>null</value>
-    <description>default:null;JSON type</description>
-  </property>
-  
+
 </configuration>

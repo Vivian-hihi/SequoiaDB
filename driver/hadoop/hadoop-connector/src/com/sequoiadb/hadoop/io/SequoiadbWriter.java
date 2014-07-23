@@ -27,9 +27,11 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 	private Sequoiadb sequoiadb;
 	private List<BSONObject> lstBsonBuffer = null;
 	private int bulkNum;
+	private String writeType = null;
 
+	// this function for SequoiadbOutputFormat.class
 	public SequoiadbWriter(String collectionSpaceName, String collectionName,
-			SdbConnAddr sdbConnAddr, int bulkNum) {
+			SdbConnAddr sdbConnAddr, int bulkNum, String writeType) {
 		super();
 		this.sequoiadb = new Sequoiadb(sdbConnAddr.getHost(),
 				sdbConnAddr.getPort(), null, null);
@@ -50,15 +52,54 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 		
 		this.lstBsonBuffer = new ArrayList<BSONObject>(bulkNum);
 		this.bulkNum = bulkNum;
-
+		if ( writeType.equalsIgnoreCase("bulkinsert") || writeType.equalsIgnoreCase("upsert") ){
+			this.writeType = writeType;
+		}else{
+			log.warn("writeType != bulkinsert and writeType != upsert,use default value");
+			this.writeType = "upsert";
+		}
+		log.info("writeType = " + this.writeType);
+	}
+	
+	// this function for SequoiadbMergeFormat.class
+	public SequoiadbWriter(String collectionSpaceName, String collectionName,
+			SdbConnAddr sdbConnAddr, String writeType) {
+		super();
+		this.sequoiadb = new Sequoiadb(sdbConnAddr.getHost(),
+				sdbConnAddr.getPort(), null, null);
+		log.info("collectionSpaceName:"+collectionSpaceName+"---collectionName:"+collectionName);
+		
+		CollectionSpace space=null;
+		if(sequoiadb.isCollectionSpaceExist(collectionSpaceName)){
+			space = sequoiadb.getCollectionSpace(collectionSpaceName);	
+		}else{
+			sequoiadb.createCollectionSpace(collectionSpaceName);
+		}
+		
+		if(space.isCollectionExist(collectionName)){
+			this.dbCollection=space.getCollection(collectionName);
+		}else{
+			this.dbCollection=space.createCollection(collectionName);
+		}
+		
+		
+		if ( writeType.equalsIgnoreCase("bulkinsert") || writeType.equalsIgnoreCase("upsert") ){
+			this.writeType = writeType;
+		}else{
+			log.warn("writeType != bulkinsert and writeType != upsert,use default value");
+			this.writeType = "upsert";
+		}
+		log.info("writeType = " + this.writeType);
 	}
 
 	@Override
 	public void close(TaskAttemptContext arg0) throws IOException,
 			InterruptedException {
-		if(lstBsonBuffer.size()>0){
-			this.dbCollection.bulkInsert(lstBsonBuffer, DBCollection.FLG_INSERT_CONTONDUP);
-			lstBsonBuffer.clear();
+		if( this.writeType.equalsIgnoreCase("bulkinsert") ){
+			if(lstBsonBuffer.size()>0){
+				this.dbCollection.bulkInsert(lstBsonBuffer, DBCollection.FLG_INSERT_CONTONDUP);
+				lstBsonBuffer.clear();
+			}
 		}
 		if (this.sequoiadb != null) {
 			this.sequoiadb.disconnect();
@@ -95,12 +136,18 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 			}
 		}
 		
-		if (lstBsonBuffer.size() < bulkNum) {
-			log.info(bson);
-			lstBsonBuffer.add(bson);
-		} else {
-			this.dbCollection.bulkInsert(lstBsonBuffer, DBCollection.FLG_INSERT_CONTONDUP);
-			lstBsonBuffer.clear();
+		if ( this.writeType.equalsIgnoreCase("bulkinsert") ){
+			if (lstBsonBuffer.size() < bulkNum) {
+//				log.info(bson);
+				lstBsonBuffer.add(bson);
+			} else {
+				this.dbCollection.bulkInsert(lstBsonBuffer, DBCollection.FLG_INSERT_CONTONDUP);
+				lstBsonBuffer.clear();
+			}
+		}else if ( this.writeType.equalsIgnoreCase("upsert") ){
+			BSONObject bson_rule = new BasicBSONObject();
+			bson_rule.put("$set", bson);
+			this.dbCollection.upsert(null, bson_rule, null);
 		}
 	}
 }

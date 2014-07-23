@@ -55,7 +55,7 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
 		String collectionSpaceName = SequoiadbConfigUtil.getInCollectionSpaceName(conf);
 		String queryStr = SequoiadbConfigUtil.getQueryString(conf);
 		String selectorStr = SequoiadbConfigUtil.getSelectorString(conf);
-		String orderbyStr = SequoiadbConfigUtil.getOrderbyString(conf);
+//		String orderbyStr = SequoiadbConfigUtil.getOrderbyString(conf);
 		
     	this.sdbBlockSplit=(SdbBlockSplit)inputSplit;
     	   	
@@ -89,7 +89,7 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
 
     	log.info("queryStr = " + queryStr);
     	log.info("selectorStr = " + selectorStr);
-    	log.info("orderbyStr = " + orderbyStr);
+//    	log.info("orderbyStr = " + orderbyStr);
     	if ( queryStr != null && !queryStr.equalsIgnoreCase("null") ){
     		queryBson = (BSONObject) JSON.parse( queryStr );
     		log.info( "queryBson = " + queryBson.toString() );
@@ -99,10 +99,10 @@ public class SequoiadbBlockReader extends RecordReader<Object, BSONWritable> {
     		selectorBson = (BSONObject) JSON.parse( selectorStr );
     		log.info( "selectorBson = " + selectorBson.toString() );
     	}
-    	if ( orderbyStr != null && !orderbyStr.equalsIgnoreCase("null") ){
-    		orderbyBson = (BSONObject) JSON.parse(orderbyStr);
-    		log.info( "orderbyBson = " + orderbyBson.toString() );
-    	}
+//    	if ( orderbyStr != null && !orderbyStr.equalsIgnoreCase("null") ){
+//    		orderbyBson = (BSONObject) JSON.parse(orderbyStr);
+//    		log.info( "orderbyBson = " + orderbyBson.toString() );
+//    	}
     	this.cursor=dbCollection.query( queryBson, 
     			                        selectorBson,
     			                        orderbyBson,
