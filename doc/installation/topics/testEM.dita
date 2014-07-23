@@ -3,8 +3,8 @@
 <topic id="topic_rtm_2ts_n4">
   <title>测试环境</title>
   <body>
-    <p>1.进入SequoiaDB shell控制台</p><codeblock>/opt/sequoiadb/bin/sdb</codeblock>
-    <p>2.创建一个新的sdb连接</p><codeblock>db = new Sdb("localhost",11810);</codeblock>
+    <p>1.进入 SequoiaDB Shell 控制台</p><codeblock>/opt/sequoiadb/bin/sdb</codeblock>
+    <p>2.创建一个新的 sdb 连接</p><codeblock>db = new Sdb("localhost",11810);</codeblock>
     <p>3.创建集合空间</p><codeblock>db.createCS("foo");</codeblock>
     <p>4.创建集合</p><codeblock>db.foo.createCL("bar");</codeblock>
     <p>5.写入记录</p><codeblock>db.foo.bar.insert({"name":"sequoiadb"});</codeblock>

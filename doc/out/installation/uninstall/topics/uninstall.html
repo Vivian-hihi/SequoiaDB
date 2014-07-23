@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="卸载"/>
-<meta name="description" content="集群环境需要在每台数据执行如下操作： 以root身份登陆数据库服务器 执行如下命令停止SequoiaDB配置服务程序 service sdbcm stop 执行如下命令停止SequoiaDB数据库服务程序 /opt/sequoiadb/bin/sdbstop 执行如下命令卸载SequoiaDB软件 /opt/sequoiadb/uninstall 回退系统配置参数 1.删除配置文件 ..."/>
+<meta name="description" content="集群环境需要在每台数据执行如下操作： 以 root 身份登陆数据库服务器 执行如下命令停止 SequoiaDB 配置服务程序 service sdbcm stop 执行如下命令停止 SequoiaDB 数据库服务程序 /opt/sequoiadb/bin/sdbstop 执行如下命令卸载 SequoiaDB 软件 /opt/sequoiadb/uninstall 回退系统配置参数 1. ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../installation/topics/install_overview.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_tlf_gty_wj"/>
@@ -39,21 +39,20 @@
     <div class="note note"><span class="notetitle">Note:</span> 集群环境需要在每台数据执行如下操作：</div>
 
     <ul class="ul">
-      <li class="li"><p class="p">以root身份登陆数据库服务器</p>
+      <li class="li"><p class="p">以 root 身份登陆数据库服务器</p>
 </li>
 
-      <li class="li">执行如下命令停止SequoiaDB配置服务程序<pre class="pre codeblock">service sdbcm stop</pre>
+      <li class="li">执行如下命令停止 SequoiaDB 配置服务程序<pre class="pre codeblock">service sdbcm stop</pre>
 </li>
 
-      <li class="li">执行如下命令停止SequoiaDB数据库服务程序<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstop</pre>
+      <li class="li">执行如下命令停止 SequoiaDB 数据库服务程序<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstop</pre>
 </li>
 
-      <li class="li">执行如下命令卸载SequoiaDB软件<pre class="pre codeblock">/opt/sequoiadb/uninstall</pre>
+      <li class="li">执行如下命令卸载 SequoiaDB 软件<pre class="pre codeblock">/opt/sequoiadb/uninstall</pre>
 </li>
 
       <li class="li">回退系统配置参数
-          <p class="p">1.删除配置文件
-          /etc/security/limits.conf 中的如下配置参数：</p>
+        <p class="p">1. 删除配置文件 /etc/security/limits.conf 中的如下配置参数：</p>
 <pre class="pre codeblock"> •	&lt;#domain&gt;      &lt;type&gt;    &lt;item&gt;       &lt;value&gt;
  •	*               soft      core       0
  •	*               soft      data       unlimited
@@ -61,16 +60,14 @@
  •	*               soft      rss        unlimited
  •      *               soft      as         unlimited</pre>
 
-        <p class="p">2.删除配置文件 /etc/sysctl.conf中的如下配置参数：
-        </p>
+        <p class="p">2. 删除配置文件 /etc/sysctl.conf 中的如下配置参数：</p>
 <pre class="pre codeblock">vm.swappiness = 0
 vm.dirty_ratio = 100
 vm.dirty_background_ratio = 10
 vm.dirty_expire_centisecs = 50000
 vm.vfs_cache_pressure = 200
 vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB&gt;</pre>
-
-      </li>
+</li>
 
     </ul>
    
