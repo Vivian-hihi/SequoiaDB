@@ -53,11 +53,18 @@ namespace engine
         _netMsgHandler(){}
         virtual ~_netMsgHandler(){}
       public:
-        virtual INT32 handleMsg( const NET_HANDLE &handle,
-                                 const _MsgHeader *header,
-                                 const CHAR *msg ) = 0 ;
+        virtual INT32   handleMsg( const NET_HANDLE &handle,
+                                   const _MsgHeader *header,
+                                   const CHAR *msg ) = 0 ;
 
-        virtual void handleClose( const NET_HANDLE &handle, _MsgRouteID id )
+        virtual void    handleClose( const NET_HANDLE &handle,
+                                     _MsgRouteID id )
+        {
+        }
+
+        virtual void    handleConnect( const NET_HANDLE &handle,
+                                       _MsgRouteID id,
+                                       BOOLEAN isPositive )
         {
         }
    } ;
