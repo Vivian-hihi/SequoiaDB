@@ -182,19 +182,21 @@ namespace engine
          goto error ;
       }
       {
-      NET_EH eh( ev ) ;
-      rc = eh->syncConnect( hostName, serviceName ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+         NET_EH eh( ev ) ;
+         rc = eh->syncConnect( hostName, serviceName ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
 
-      eh->id( id ) ;
-      _mtx.get() ;
-      NET_INSERT_OPPO( eh ) ;
-      NET_INSERT_ROUTE( eh ) ;
-      _mtx.release() ;
-      eh->asyncRead() ;
+         eh->id( id ) ;
+         _mtx.get() ;
+         NET_INSERT_OPPO( eh ) ;
+         NET_INSERT_ROUTE( eh ) ;
+         _mtx.release() ;
+         // callback: handleConnect
+         _handler->handleConnect( eh->handle(), id, TRUE ) ;
+         eh->asyncRead() ;
       }
 
    done:
@@ -664,6 +666,8 @@ namespace engine
       _mtx.get() ;
       NET_INSERT_OPPO(eh) ;
       _mtx.release() ;
+      // callback: handleConnect
+      _handler->handleConnect( eh->handle(), eh->id(), FALSE ) ;
       _asyncAccept() ;
       eh->asyncRead() ;
       PD_TRACE_EXIT ( SDB__NETFRAME__APTCALLBCK );
