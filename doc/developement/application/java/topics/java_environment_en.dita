@@ -20,7 +20,7 @@
         <li>Click on "Add JARs.." button, select Add sequoiadb.jar to the project.</li>
         <li>Click "OK" to complete environment configuration.</li>
       </ol>
-      <p><xref href="base_operations.dita">Please refer here for more</xref></p>
+      <p><xref href="jbase_operations_en.dita">Please refer here for more</xref></p>
     </section>
   </body>
 </topic>

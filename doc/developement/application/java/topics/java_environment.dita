@@ -20,7 +20,7 @@
         <li>点击“Add JARs..”按钮，选择添加sequoiadb.jar到工程中；</li>
         <li>点击“OK”完成环境配置；</li>
       </ol>
-      <p><xref href="base_operations.dita">更多操作请参考这里</xref></p>
+      <p><xref href="jbase_operations.dita">更多操作请参考这里</xref></p>
     </section>
   </body>
 </topic>

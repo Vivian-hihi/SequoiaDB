@@ -68,7 +68,7 @@
               <strow>
                 <stentry> sdbDomainHandle </stentry>
                 <stentry>Domain Handle </stentry>
-                <stentry> It represents a stand-alone Domain</stentry>
+                <stentry>It represents a stand-alone Domain</stentry>
               </strow>
             </simpletable></p><p>Cluster-related operations need to use ReplicaSet Handle and Data
             Node Handle.</p><p>The sdbReplicaGroupHandle instants is to manage replica groups, including
@@ -82,20 +82,10 @@
     </section>
     <section>
       <title>Error Information</title>
-      <p>Every function has a returned-value.If a function is successfully invoked,then return
-        SDB_OK,else return error information.If the returned-value is less than 0,it is database
-        error,if greater than 0,is system error.For the database errors,you can find the error code
-        in the file of <i>ossErr.h</i>.For the system errors,error code can be finded in the file of
-          <i>/usr/include/errno.h</i>.It can also use <i>getErr()</i> method to get error
-        information in Sequoiadb shell. </p>
-      <codeblock>(nofile):0 uncaught exception: -34
-> getErr(-34)
-collection space not exist</codeblock>
-      <p>In the client-driven application,you can find the error information in the file
-          <i>ossErr.h</i> by the function returned-value<i> rc</i>.SDB_OK stands for operating
-        successfully.</p>
-      <codeblock>INT32 rc = SDB_OK ;
-rc = sdbDisconnect( connection ) ;</codeblock>
+      <p>Each function has its returned value, the definition of the returned value is:</p>      
+      <p>SDB_OK (value is 0): Execution succeeds.</p>
+      <p>&lt; 0: Database error, the detailed error description can be found in the include/ossErr.h directory of the C driver development kit.</p>
+      <p>> 0: System error, please check the related error code information.</p>
     </section>
   </body>
 </topic>

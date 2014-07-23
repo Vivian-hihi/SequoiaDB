@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>sdbexprt</title>
-      <p>sdbexprt是一个实用的工具。它可以从SequoiaDB数据库导出一个JSON格式或者CSV格式的数据存储文件。</p>
+      <p>sdbexprt 是一个实用的工具。它可以从 SequoiaDB 数据库导出一个 JSON 格式或者 CSV 格式的数据存储文件。</p>
     </section>
     <section>
       <title>选项</title>

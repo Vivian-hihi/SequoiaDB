@@ -24,4 +24,7 @@
       <p>.NET Framework 4.0</p>
     </section>
   </body>
+  <related-links>
+    <link href="csdb.dita"></link>
+  </related-links>
 </topic>
