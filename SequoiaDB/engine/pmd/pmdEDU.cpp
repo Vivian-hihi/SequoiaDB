@@ -174,6 +174,9 @@ namespace engine
       _pTransNodeMap    = NULL ;
       _transRC          = SDB_OK ;
 
+      _curRequestID     = 1 ;
+      _minRequestID     = 0 ;
+
       _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) ) ;
 #endif // SDB_ENGINE
 
@@ -323,13 +326,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISINT, "_pmdEDUCB::isInterrupted" )
-   BOOLEAN _pmdEDUCB::isInterrupted ()
+   BOOLEAN _pmdEDUCB::isInterrupted ( BOOLEAN onlyFlag )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_ISINT );
       BOOLEAN ret = FALSE ;
 
       // mask interrupt while doing rollback
-      if ( _isDoRollback )
+      if ( !onlyFlag && _isDoRollback )
       {
          goto done;
       }
@@ -338,7 +341,7 @@ namespace engine
          ret = TRUE ;
          goto done ;
       }
-      else if ( _pClientSock )
+      else if ( !onlyFlag && _pClientSock )
       {
          INT32 receivedLen ;
          MsgHeader header ;
