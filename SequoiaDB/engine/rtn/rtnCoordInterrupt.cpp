@@ -44,11 +44,11 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINTERRUPT_EXECUTE, "rtnCoordInterrupt::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINTERRUPT_EXECUTE, "rtnCoordInterrupt::execute" )
    INT32 rtnCoordInterrupt::execute( CHAR * pReceiveBuffer, SINT32 packSize,
-                        CHAR * * ppResultBuffer, pmdEDUCB * cb,
-                        MsgOpReply & replyHeader,
-                        BSONObj **ppErrorObj )
+                                     CHAR * * ppResultBuffer, pmdEDUCB * cb,
+                                     MsgOpReply & replyHeader,
+                                     BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOINTERRUPT_EXECUTE ) ;
@@ -65,13 +65,6 @@ namespace engine
       pmdKRCB *pKrcb = pmdGetKRCB();
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
 
-      // delete all opened contexts when received the interrupt message
-      {
-         SINT64 contextID = -1 ;
-         while ( -1 != (contextID = cb->contextPeek() ))
-            pRtncb->contextDelete( contextID, NULL ) ;
-      }
-
       // send interrut message to all sub-session
       CoordSession *pSession = cb->getCoordSession();
       if ( pSession )
@@ -80,6 +73,14 @@ namespace engine
          pSession->getAllSessionRoute( routeSet );
          SendInterrupt( cb, routeSet );
       }
+
+      // delete all opened contexts when received the interrupt message
+      {
+         SINT64 contextID = -1 ;
+         while ( -1 != (contextID = cb->contextPeek() ))
+            pRtncb->contextDelete( contextID, NULL ) ;
+      }
+
       PD_TRACE_EXITRC ( SDB_RTNCOINTERRUPT_EXECUTE, rc ) ;
       return rc;
    }
