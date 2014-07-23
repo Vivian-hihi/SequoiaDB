@@ -4,6 +4,7 @@ package com.sequoiadb.hadoop.io;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,6 +23,44 @@ import com.sequoiadb.hadoop.util.SdbConnAddr;
 
 public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 	private static final Log log = LogFactory.getLog(SequoiadbWriter.class);
+	
+	static class BsonDeal{
+		private BSONObject bson;
+		public BsonDeal( BSONObject _bson ){
+			this.bson = _bson;
+		}
+		public void setBson( BSONObject _bson ){
+			this.bson = _bson;
+		}
+		public BSONObject getBson(){
+			return this.bson;
+		}
+		public BSONObject getBsonWithoutId(){
+			BSONObject newBson = new BasicBSONObject();
+			Set keySet = this.bson.keySet();
+			java.util.Iterator it = keySet.iterator();
+			while( it.hasNext() ){
+				String key=it.next().toString();
+				if ( key.equalsIgnoreCase("_id") ){
+					continue;
+				}
+				newBson.put(key, this.bson.get(key));
+			}
+			return newBson;
+		}
+		public ObjectId getBsonId(){
+			
+			Set keySet = this.bson.keySet();
+			java.util.Iterator it = keySet.iterator();
+			while( it.hasNext() ){
+				String key=it.next().toString();
+				if ( key.equalsIgnoreCase("_id") ){
+					return (ObjectId) this.bson.get("_id");
+				}
+			}
+			return null;
+		}
+	}
 
 	private DBCollection dbCollection;
 	private Sequoiadb sequoiadb;
@@ -125,7 +164,7 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 				}
 			}
 		}
-
+		
 		if (key != null && !(key instanceof NullWritable)) {
 			if (key instanceof Text) {
 				bson.put("_id", new ObjectId(((Text) key).toString()));
@@ -145,9 +184,14 @@ public class SequoiadbWriter<K, V> extends RecordWriter<K, V> {
 				lstBsonBuffer.clear();
 			}
 		}else if ( this.writeType.equalsIgnoreCase("upsert") ){
+			BsonDeal bsonDeal = new BsonDeal( bson );
+			bson = bsonDeal.getBsonWithoutId();
+			
 			BSONObject bson_rule = new BasicBSONObject();
+			BSONObject bson_query = new BasicBSONObject();
+			bson_query.put("_id", bsonDeal.getBsonId());
 			bson_rule.put("$set", bson);
-			this.dbCollection.upsert(null, bson_rule, null);
+			this.dbCollection.upsert(bson_query, bson_rule, null);
 		}
 	}
 }
