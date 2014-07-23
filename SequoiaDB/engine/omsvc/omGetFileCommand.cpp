@@ -705,7 +705,7 @@ namespace engine
       SINT32 numReturned = 0 ;
       vector<BSONObj> objVec ;
 
-      rc = remoteSession->waitReply( TRUE, &subSessionVec, -1 ) ;
+      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "wait reply failed:rc=%d", rc ) ;
@@ -903,7 +903,7 @@ namespace engine
       if ( NULL != remoteSession )
       {
          remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( _cb->getTID() ) ;
+         om->getRSManager()->removeSession( remoteSession ) ;
       }
       
       return rc; 
@@ -1076,7 +1076,7 @@ namespace engine
       if ( NULL != remoteSession )
       {
          remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( _cb->getTID() ) ;
+         om->getRSManager()->removeSession( remoteSession ) ;
       }
 
       return rc ;
@@ -1154,7 +1154,7 @@ namespace engine
       if ( NULL != remoteSession )
       {
          remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( _cb->getTID() ) ;
+         om->getRSManager()->removeSession( remoteSession ) ;
       }
       return rc ;
    error:
@@ -1244,7 +1244,7 @@ namespace engine
       }
 
       remoteSession->sendMsg() ;
-      rc = remoteSession->waitReply( true, &subSessionVec, -1 ) ;
+      rc = remoteSession->waitReply( true, &subSessionVec ) ;
       if ( SDB_OK != rc && SDB_TIMEOUT != rc )
       {
          PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
@@ -1307,24 +1307,20 @@ namespace engine
    done:
       if ( NULL != remoteSession )
       {
-         MAP_SUB_SESSION *subSessions = remoteSession->getSubSessions() ;
-         if ( NULL != subSessions )
+         pmdSubSession *pSubSession = NULL ;
+         pmdSubSessionItr itr = remoteSession->getSubSessionItr() ;
+         while ( itr.more() )
          {
-            MAP_SUB_SESSION_IT it = subSessions->begin() ;
-            while ( it != subSessions->end() )
+            pSubSession = itr.next() ;
+            MsgHeader *pMsg = pSubSession->getReqMsg() ;
+            if ( NULL != pMsg )
             {
-               MsgHeader *pMsg = it->second.getReqMsg() ;
-               if ( NULL != pMsg )
-               {
-                  SDB_OSS_FREE( pMsg ) ;
-               }
-
-               it++ ;
+               SDB_OSS_FREE( pMsg ) ;
             }
          }
 
          remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( _cb->getTID() ) ;
+         om->getRSManager()->removeSession( remoteSession ) ;
       }
 
       return rc ;
@@ -1388,7 +1384,7 @@ namespace engine
       if ( NULL != remoteSession )
       {
          remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( _cb->getTID() ) ;
+         om->getRSManager()->removeSession( remoteSession ) ;
       }
       return rc ;
    error:
@@ -1753,7 +1749,7 @@ namespace engine
       if ( NULL != remoteSession )
       {
          remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( _cb->getTID() ) ;
+         om->getRSManager()->removeSession( remoteSession ) ;
       }
       return rc ;
    error:
@@ -1898,7 +1894,7 @@ namespace engine
       if ( NULL != remoteSession )
       {
          remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( _cb->getTID() ) ;
+         om->getRSManager()->removeSession( remoteSession ) ;
       }
       return ;
    error:

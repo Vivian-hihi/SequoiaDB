@@ -36,6 +36,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "msg.h"
+#include "pmdDef.hpp"
 #include "netRouteAgent.hpp"
 
 #include <map>
@@ -51,6 +52,7 @@ namespace engine
 
    class _pmdRemoteSession ;
    class _pmdRemoteSessionMgr ;
+   class _pmdRemoteSessionSite ;
    class _pmdEDUCB ;
 
    /*
@@ -75,22 +77,19 @@ namespace engine
    } ;
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
 
-
-   /*
-      define
-   */
-   class _pmdRemoteSessionMgr ;
-
    /*
       _pmdSubSession define
    */
    class _pmdSubSession : public SDBObject
    {
       friend class _pmdRemoteSession ;
+      friend class _pmdRemoteSessionSite ;
 
       public:
          _pmdSubSession() ;
          ~_pmdSubSession() ;
+
+         _pmdRemoteSession* parent() { return _parent ; }
 
          void        clearReplyInfo() ;
 
@@ -119,7 +118,7 @@ namespace engine
 
          void        setReqMsg( MsgHeader *pReqMsg ) { _pReqMsg = pReqMsg ; }
          MsgHeader*  getReqMsg() { return _pReqMsg ; }
-         MsgHeader*  getRspMsg() { return _pRspMsg ; }
+         MsgHeader*  getRspMsg() { return ( MsgHeader* )_event._Data ; }
 
          UINT64      getNodeID() const { return _nodeID ; }
          UINT64      getReqID() const { return _reqID ; }
@@ -134,13 +133,15 @@ namespace engine
          }
 
       protected:
+         void        setParent( _pmdRemoteSession *parent ) { _parent = parent ; }
          void        setNodeID( UINT64 nodeID ) { _nodeID = nodeID ; }
          void        setReqID( UINT64 reqID ) { _reqID = reqID ; }
          void        disconnect() { _isDisconnect = TRUE ; }
          void        setSendResult( BOOLEAN isSend ) { _isSend = isSend ; }
-         void        setRspMsg( MsgHeader *pRspMsg ) { _pRspMsg = pRspMsg ; }
+         void        processEvent( pmdEDUEvent &event ) ;
 
       protected:
+         _pmdRemoteSession          *_parent ;
          UINT64                     _nodeID ;
          UINT64                     _reqID ;
          BOOLEAN                    _isSend ;
@@ -148,6 +149,7 @@ namespace engine
 
          MsgHeader                  *_pReqMsg ;
          netIOVec                   _ioDatas ;
+         pmdEDUEvent                _event ;
          MsgHeader                  *_pRspMsg ;
 
          BOOLEAN                    _isProcessed ;
@@ -158,8 +160,31 @@ namespace engine
    typedef map< UINT64, pmdSubSession >            MAP_SUB_SESSION ;
    typedef MAP_SUB_SESSION::iterator               MAP_SUB_SESSION_IT ;
 
-   typedef set< UINT64 >                           SET_SUB_SESSIONID ;
+   typedef map< UINT64, pmdSubSession* >           MAP_SUB_SESSIONPTR ;
+   typedef MAP_SUB_SESSIONPTR::iterator            MAP_SUB_SESSIONPTR_IT ;
+
    typedef vector< pmdSubSession* >                VEC_SUB_SESSIONPTR ;
+
+   typedef set< UINT64 >                           SET_SUB_SESSIONID ;
+
+   /*
+      _pmdSubSessionItr define
+   */
+   class _pmdSubSessionItr : public SDBObject
+   {
+      public:
+         _pmdSubSessionItr( MAP_SUB_SESSION *pSessions ) ;
+         ~_pmdSubSessionItr() ;
+
+         BOOLEAN more() ;
+         pmdSubSession* next() ;
+
+      private:
+         MAP_SUB_SESSION            *_pSessions ;
+         MAP_SUB_SESSION_IT         _curPos ;
+
+   } ;
+   typedef _pmdSubSessionItr pmdSubSessionItr ;
 
    /*
       _pmdRemoteSession define
@@ -167,6 +192,7 @@ namespace engine
    class _pmdRemoteSession : public SDBObject
    {
       friend class _pmdRemoteSessionMgr ;
+      friend class _pmdRemoteSessionSite ;
 
       public:
          virtual ~_pmdRemoteSession() ;
@@ -174,18 +200,19 @@ namespace engine
          _pmdEDUCB* getEDUCB() { return _pEDUCB ; }
          UINT64     sessionID() const { return _sessionID ; }
 
-         MAP_SUB_SESSION* getSubSessions() ;
+         void setTimeout( INT64 timeout ) ;
+
+         pmdSubSessionItr getSubSessionItr() ;
          pmdSubSession* addSubSession( UINT64 nodeID ) ;
          pmdSubSession* getSubSession( UINT64 nodeID ) ;
          void           delSubSession( UINT64 nodeID ) ;
-         INT32          disconnSubSession( UINT64 nodeID ) ;
          void           clearSubSession() ;
 
          UINT32         getSubSessionCount() ;
          UINT32         getReplyCount( BOOLEAN exceptProcessed = FALSE ) ;
          UINT32         getSucReplyCount() ;
 
-         BOOLEAN        isTimeout() ;
+         BOOLEAN        isTimeout() const ;
          BOOLEAN        isAllReply() ;
 
       public:
@@ -196,30 +223,65 @@ namespace engine
          INT32    sendMsg( INT32 *pSucNum = NULL, INT32 *pTotalNum = NULL ) ;
          INT32    sendMsg( UINT64 nodeID ) ;
 
+         INT32    waitReply1( BOOLEAN waitAll = FALSE,
+                              MAP_SUB_SESSIONPTR *pSubs = NULL ) ;
          INT32    waitReply( BOOLEAN waitAll = FALSE,
-                             VEC_SUB_SESSIONPTR *pVecSubs = NULL,
-                             INT64 millisec = -1 ) ;
+                             VEC_SUB_SESSIONPTR *pSubs = NULL ) ;
+
+      protected:
+         void     addPending( pmdSubSession *pSubSession ) ;
+
       private:
          _pmdRemoteSession( netRouteAgent *pAgent,
                             UINT64 sessionID,
+                            _pmdRemoteSessionSite *pSite,
                             INT64 timeout = -1,
                             IRemoteSessionHandler *pHandle = NULL ) ;
          void attachCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
          void detachCB() { _pEDUCB = NULL ; }
          void reset( UINT64 sessionID,
+                     _pmdRemoteSessionSite *pSite,
                      INT64 timeout = -1,
                      IRemoteSessionHandler *pHandle = NULL ) ;
          void clear() ;
 
       protected:
          MAP_SUB_SESSION               _mapSubSession ;
+         MAP_SUB_SESSIONPTR            _mapPendingSubSession ;
          IRemoteSessionHandler         *_pHandle ;
+         _pmdRemoteSessionSite         *_pSite ;
          netRouteAgent                 *_pAgent ;
          _pmdEDUCB                     *_pEDUCB ;
          UINT64                        _sessionID ;
+         INT64                         _milliTimeout ; // ms
 
    } ;
    typedef _pmdRemoteSession pmdRemoteSession ;
+
+   /*
+      _pmdRemoteSessionSite define
+   */
+   class _pmdRemoteSessionSite : public SDBObject
+   {
+      friend class _pmdRemoteSession ;
+      public:
+         _pmdRemoteSessionSite() ;
+         ~_pmdRemoteSessionSite() ;
+
+         void setEduCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
+         _pmdEDUCB* eduCB() { return _pEDUCB ; }
+
+      protected:
+         INT32    processEvent( pmdEDUEvent &event,
+                                MAP_SUB_SESSION &mapSessions,
+                                pmdSubSession **ppSub ) ;
+
+      private:
+         MAP_SUB_SESSIONPTR               _mapReq2SubSession ;
+         _pmdEDUCB                        *_pEDUCB ;
+
+   } ;
+   typedef _pmdRemoteSessionSite pmdRemoteSessionSite ;
 
    /*
       _pmdRemoteSessionMgr define
@@ -231,7 +293,7 @@ namespace engine
 
       typedef vector< pmdRemoteSession* >             VEC_REMOTE_SESSION ;
 
-      typedef map< UINT32, _pmdEDUCB* >               MAP_TID_2_EDU ;
+      typedef map< UINT32, pmdRemoteSessionSite >     MAP_TID_2_EDU ;
       typedef MAP_TID_2_EDU::iterator                 MAP_TID_2_EDU_IT ;
 
       public:
@@ -243,6 +305,7 @@ namespace engine
 
          void        registerEDU( _pmdEDUCB *cb ) ;
          void        unregEUD( _pmdEDUCB *cb ) ;
+         pmdRemoteSessionSite* getSite( _pmdEDUCB *cb ) ;
 
          INT32       pushMessage( const NET_HANDLE &handle,
                                   const MsgHeader *pMsg ) ;

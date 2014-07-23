@@ -49,10 +49,10 @@ namespace engine
    */
    _pmdSubSession::_pmdSubSession()
    {
+      _parent           = NULL ;
       _nodeID           = 0 ;
       _reqID            = 0 ;
       _pReqMsg          = NULL ;
-      _pRspMsg          = NULL ;
       _isSend           = FALSE ;
       _isDisconnect     = TRUE ;
 
@@ -62,14 +62,53 @@ namespace engine
 
    _pmdSubSession::~_pmdSubSession()
    {
+      _parent = NULL ;
    }
 
    void _pmdSubSession::clearReplyInfo()
    {
-      _pRspMsg       = NULL ;
       _isProcessed   = FALSE ;
       _processResult = SDB_OK ;
       _isDisconnect  = FALSE ;
+   }
+
+   void _pmdSubSession::processEvent( pmdEDUEvent &event )
+   {
+      // TODO:XUJIANHUI
+      // NEED TO RELEASE THE DUP EVENT
+   }
+
+   /*
+      _pmdSubSessionItr implement
+   */
+   _pmdSubSessionItr::_pmdSubSessionItr( MAP_SUB_SESSION *pSessions )
+   :_pSessions( pSessions )
+   {
+      if ( _pSessions )
+      {
+         _curPos = _pSessions->begin() ;
+      }
+   }
+
+   _pmdSubSessionItr::~_pmdSubSessionItr()
+   {
+      _pSessions = NULL ;
+   }
+
+   BOOLEAN _pmdSubSessionItr::more()
+   {
+      if ( !_pSessions || _curPos == _pSessions->end() )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   pmdSubSession* _pmdSubSessionItr::next()
+   {
+      pmdSubSession *pSubSession = &(_curPos->second) ;
+      ++_curPos ;
+      return pSubSession ;
    }
 
    /*
@@ -77,6 +116,7 @@ namespace engine
    */
    _pmdRemoteSession::_pmdRemoteSession( netRouteAgent *pAgent,
                                          UINT64 sessionID,
+                                         _pmdRemoteSessionSite *pSite,
                                          INT64 timeout,
                                          IRemoteSessionHandler *pHandle )
    {
@@ -84,24 +124,36 @@ namespace engine
       _pHandle       = pHandle ;
       _pEDUCB        = NULL ;
       _sessionID     = sessionID ;
+      _pSite         = pSite ;
+
+      setTimeout( timeout ) ;
    }
 
    _pmdRemoteSession::~_pmdRemoteSession()
    {
       _pAgent        = NULL ;
       _pHandle       = NULL ;
+      _pSite         = NULL ;
    }
 
    void _pmdRemoteSession::clear()
    {
-      // TODO:XUJIANHUI
+      _mapPendingSubSession.clear() ;
+      _mapSubSession.clear() ;
+      _pHandle          = NULL ;
+      _pSite            = NULL ;
    }
 
    void _pmdRemoteSession::reset( UINT64 sessionID,
+                                  _pmdRemoteSessionSite *pSite,
                                   INT64 timeout ,
                                   IRemoteSessionHandler *pHandle )
    {
-      // TODO:XUJIANHUI
+      _sessionID        = sessionID ;
+      _pSite            = pSite ;
+      _pHandle          = pHandle ;
+
+      setTimeout( timeout ) ;
    }
 
    pmdSubSession* _pmdRemoteSession::getSubSession( UINT64 nodeID )
@@ -116,48 +168,59 @@ namespace engine
 
    void _pmdRemoteSession::delSubSession( UINT64 nodeID )
    {
+      _mapPendingSubSession.erase( nodeID ) ;
       _mapSubSession.erase( nodeID ) ;
-   }
-
-   INT32 _pmdRemoteSession::disconnSubSession( UINT64 nodeID )
-   {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
    }
 
    void _pmdRemoteSession::clearSubSession()
    {
+      _mapPendingSubSession.clear() ;
       _mapSubSession.clear() ;
    }
 
    UINT32 _pmdRemoteSession::getSubSessionCount()
    {
-      return 0 ;
+      return _mapSubSession.size() ;
    }
 
    UINT32 _pmdRemoteSession::getReplyCount( BOOLEAN exceptProcessed )
    {
+      // TODO:XUJIANHUI
       return 0 ;
    }
 
    UINT32 _pmdRemoteSession::getSucReplyCount()
    {
+      // TODO:XUJIANHUI
       return 0 ;
    }
 
-   BOOLEAN _pmdRemoteSession::isTimeout()
+   BOOLEAN _pmdRemoteSession::isTimeout() const
    {
-      return FALSE ;
+      return _milliTimeout <= 0 ? TRUE : FALSE ;
    }
 
    BOOLEAN _pmdRemoteSession::isAllReply()
    {
+      // TODO:XUJIANHUI
       return FALSE ;
    }
 
-   MAP_SUB_SESSION* _pmdRemoteSession::getSubSessions()
+   void _pmdRemoteSession::setTimeout( INT64 timeout )
    {
-      return &_mapSubSession ;
+      if ( timeout <= 0 )
+      {
+         _milliTimeout = 0x7FFFFFFFFFFFFFFF ;
+      }
+      else
+      {
+         _milliTimeout = timeout ;
+      }
+   }
+
+   pmdSubSessionItr _pmdRemoteSession::getSubSessionItr()
+   {
+      return pmdSubSessionItr( &_mapSubSession ) ;
    }
 
    pmdSubSession* _pmdRemoteSession::addSubSession( UINT64 nodeID )
@@ -166,6 +229,7 @@ namespace engine
       if ( subSession.getNodeID() != nodeID )
       {
          subSession.setNodeID( nodeID ) ;
+         subSession.setParent( this ) ;
       }
       return &subSession ;
    }
@@ -220,12 +284,236 @@ namespace engine
    }
 
    INT32 _pmdRemoteSession::waitReply( BOOLEAN waitAll,
-                                       VEC_SUB_SESSIONPTR *pVecSubs,
-                                       INT64 millisec )
+                                       VEC_SUB_SESSIONPTR *pSubs )
    {
       INT32 rc = SDB_OK ;
 
+      if ( !pSubs )
+      {
+         rc = waitReply1( waitAll, NULL ) ;
+      }
+      else
+      {
+         MAP_SUB_SESSIONPTR mapSessionPtrs ;
+         INT32 rc = waitReply1( waitAll, &mapSessionPtrs ) ;
+         if ( SDB_OK == rc )
+         {
+            MAP_SUB_SESSIONPTR_IT it = mapSessionPtrs.begin() ;
+            while ( it != mapSessionPtrs.end() )
+            {
+               pSubs->push_back( it->second ) ;
+               ++it ;
+            }
+         }
+      }
+
+      return rc ;
+   }
+
+   INT32 _pmdRemoteSession::waitReply1( BOOLEAN waitAll,
+                                        MAP_SUB_SESSIONPTR *pSubs )
+   {
+      INT32 rc                      = SDB_OK ;
+      pmdEDUEvent event ;
+      INT64 timeout                 = OSS_ONE_SEC ;
+      UINT32 replyNum               = 0 ;
+      pmdSubSession *pSubSession    = NULL ;
+
+      // if pending sessions is not empty
+      if ( _mapPendingSubSession.size() > 0 )
+      {
+         if ( pSubs )
+         {
+            MAP_SUB_SESSIONPTR_IT itPending = _mapPendingSubSession.begin() ;
+            while ( itPending != _mapPendingSubSession.end() )
+            {
+               (*pSubs)[ itPending->first ] = itPending->second ;
+               ++itPending ;
+               ++replyNum ;
+            }
+         }
+         else
+         {
+            replyNum = _mapPendingSubSession.size() ;
+         }
+         _mapPendingSubSession.clear() ;
+      }
+
+      while ( !isAllReply() )
+      {
+         if ( _pEDUCB->isForced() ||
+              ( _pEDUCB->isInterrupted() && !_pEDUCB->isDisconnected() ) )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         if ( !waitAll && replyNum > 0 )
+         {
+            timeout = 1 ;
+         }
+         else
+         {
+            timeout = _milliTimeout < OSS_ONE_SEC ?
+                      _milliTimeout : OSS_ONE_SEC ;
+         }
+
+         // wait event
+         if ( !_pEDUCB->waitEvent( event, timeout ) )
+         {
+            _milliTimeout -= timeout ;
+            if ( 0 == replyNum || waitAll )
+            {
+               if ( _milliTimeout <= 0 )
+               {
+                  rc = SDB_TIMEOUT ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               if ( _milliTimeout <= 0 )
+               {
+                  _milliTimeout = 1 ;
+               }
+               goto done ;
+            }
+            continue ;
+         }
+
+         if ( PMD_EDU_EVENT_MSG != event._eventType )
+         {
+            PD_LOG( PDWARNING, "Session[%s] recv unknonw event[type: %d]",
+                    _pEDUCB->toString().c_str(), event._eventType ) ;
+            pmdEduEventRelase( event, _pEDUCB ) ;
+            event.reset() ;
+            continue ;
+         }
+
+         pSubSession = NULL ;
+         rc = _pSite->processEvent( event, _mapSubSession, &pSubSession ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to process event, rc: %d", rc ) ;
+
+         if ( pSubSession )
+         {
+            ++replyNum ;
+            if ( pSubs )
+            {
+               (*pSubs)[ pSubSession->getNodeID() ] = pSubSession ;
+            }
+         }
+      }
+
    done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _pmdRemoteSession::addPending( pmdSubSession *pSubSession )
+   {
+      _mapPendingSubSession[ pSubSession->getNodeID() ] = pSubSession ;
+   }
+
+   /*
+      _pmdRemoteSessionSite implement
+   */
+   _pmdRemoteSessionSite::_pmdRemoteSessionSite()
+   {
+      _pEDUCB = NULL ;
+   }
+
+   _pmdRemoteSessionSite::~_pmdRemoteSessionSite()
+   {
+      _pEDUCB = NULL ;
+   }
+
+   INT32 _pmdRemoteSessionSite::processEvent( pmdEDUEvent &event,
+                                              MAP_SUB_SESSION &mapSessions,
+                                              pmdSubSession **ppSub )
+   {
+      INT32 rc = SDB_OK ;
+      MAP_SUB_SESSION_IT it ;
+      MAP_SUB_SESSIONPTR_IT itPtr ;
+      MsgHeader *pReply = NULL ;
+      UINT64 nodeID = 0 ;
+
+      SDB_ASSERT( ppSub, "ppSub can't be NULL" ) ;
+
+      if ( !event._Data )
+      {
+         PD_LOG( PDWARNING, "Session[%s] msg event data is NULL",
+                 _pEDUCB->toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      pReply = ( MsgHeader* )event._Data ;
+      nodeID = pReply->routeID.value ;
+
+      // if is MSG_BS_DISCONNECT, the remote node is disconnect
+      if ( MSG_BS_DISCONNECT == pReply->opCode )
+      {
+         itPtr = _mapReq2SubSession.begin() ;
+         while ( itPtr != _mapReq2SubSession.end() )
+         {
+            if ( pReply->requestID < itPtr->first )
+            {
+               break ;
+            }
+            else if ( itPtr->second->getNodeID() == nodeID )
+            {
+               itPtr->second->processEvent( event ) ;
+               if ( !*ppSub && ( it = mapSessions.find( nodeID ) ) !=
+                    mapSessions.end() &&
+                    &(it->second) == itPtr->second )
+               {
+                  *ppSub = &(it->second) ;
+               }
+               else
+               {
+                  itPtr->second->parent()->addPending( itPtr->second ) ;
+               }
+               // remove from request id map
+               _mapReq2SubSession.erase( itPtr++ ) ;
+               continue ;
+            }
+            ++itPtr ;
+         }
+      }
+      else
+      {
+         itPtr = _mapReq2SubSession.find( pReply->requestID ) ;
+         if ( itPtr != _mapReq2SubSession.end() )
+         {
+            itPtr->second->processEvent( event ) ;
+            if ( !*ppSub && ( it = mapSessions.find( nodeID ) ) !=
+                 mapSessions.end() &&
+                 &(it->second) == itPtr->second )
+            {
+               *ppSub = &(it->second) ;
+            }
+            else
+            {
+               itPtr->second->parent()->addPending( itPtr->second ) ;
+            }
+            // remove from request id map
+            _mapReq2SubSession.erase( itPtr ) ;
+         }
+         else
+         {
+            PD_LOG( PDWARNING, "Session[%s] recv expired msg[opCode: (%d)%u, "
+                    "ReqID: %lld, Len: %d, NodeID: %u.%u.%u]",
+                    _pEDUCB->toString().c_str(), IS_REPLY_TYPE(pReply->opCode),
+                    GET_REQUEST_TYPE(pReply->opCode), pReply->requestID,
+                    pReply->messageLength, pReply->routeID.columns.groupID,
+                    pReply->routeID.columns.nodeID,
+                    pReply->routeID.columns.serviceID ) ;
+         }
+      }
+
+   done:
+      pmdEduEventRelase( event, _pEDUCB ) ;
       return rc ;
    error:
       goto done ;
@@ -288,13 +576,26 @@ namespace engine
    void _pmdRemoteSessionMgr::registerEDU( _pmdEDUCB * cb )
    {
       ossScopedLock lock( &_edusLatch, EXCLUSIVE ) ;
-      _mapTID2EDU[ cb->getTID() ] = cb ;
+      pmdRemoteSessionSite &site = _mapTID2EDU[ cb->getTID() ] ;
+      site.setEduCB( cb ) ;
    }
 
    void _pmdRemoteSessionMgr::unregEUD( _pmdEDUCB * cb )
    {
       ossScopedLock lock( &_edusLatch, EXCLUSIVE ) ;
       _mapTID2EDU.erase( cb->getTID() ) ;
+   }
+
+   pmdRemoteSessionSite* _pmdRemoteSessionMgr::getSite( _pmdEDUCB * cb )
+   {
+      pmdRemoteSessionSite *pSite = NULL ;
+      ossScopedLock lock( &_edusLatch, SHARED ) ;
+      MAP_TID_2_EDU_IT it = _mapTID2EDU.find( cb->getTID() ) ;
+      if ( it != _mapTID2EDU.end() )
+      {
+         pSite = &(it->second) ;
+      }
+      return pSite ;
    }
 
    INT32 _pmdRemoteSessionMgr::pushMessage( const NET_HANDLE &handle,
@@ -310,7 +611,7 @@ namespace engine
       if ( it != _mapTID2EDU.end() )
       {
          CHAR *pNewBuff = NULL ;
-         pEDUCB = it->second ;
+         pEDUCB = it->second.eduCB() ;
 
          // assign memory
          pNewBuff = ( CHAR* )SDB_OSS_MALLOC( pMsg->messageLength + 1 ) ;
@@ -362,7 +663,7 @@ namespace engine
          MAP_TID_2_EDU_IT it = _mapTID2EDU.begin() ;
          while ( it != _mapTID2EDU.end() )
          {
-            cb = it->second ;
+            cb = it->second.eduCB() ;
             pMsg = ( MsgOpReply* )SDB_OSS_MALLOC( sizeof( MsgOpReply ) ) ;
             if ( pMsg )
             {
@@ -390,6 +691,13 @@ namespace engine
    {
       pmdRemoteSession *pSession = NULL ;
       UINT64 sessionID = 0 ;
+      pmdRemoteSessionSite *pSite = getSite( cb ) ;
+      if ( !pSite )
+      {
+         PD_LOG( PDERROR, "Session[%s] is not registered for remote session",
+                 cb->toString().c_str() ) ;
+         return NULL ;
+      }
 
       ossScopedLock lock( &_mapLatch, EXCLUSIVE ) ;
 
@@ -399,12 +707,12 @@ namespace engine
       if ( !_idleSessions.empty() )
       {
          pSession = _idleSessions.back() ;
-         pSession->reset( sessionID, timeout, pHandle ) ;
+         pSession->reset( sessionID, pSite, timeout, pHandle ) ;
          _idleSessions.pop_back() ;
       }
       else
       {
-         pSession = SDB_OSS_NEW _pmdRemoteSession( _pAgent, sessionID,
+         pSession = SDB_OSS_NEW _pmdRemoteSession( _pAgent, sessionID, pSite,
                                                    timeout, pHandle ) ;
          if ( !pSession )
          {
