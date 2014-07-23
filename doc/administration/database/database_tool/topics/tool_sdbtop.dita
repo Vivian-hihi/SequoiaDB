@@ -3,43 +3,50 @@
 <topic id="topic_bvt_f2m_54">
   <title>数据库性能监控工具 — sdbtop</title>
   <body>
-    <p>sdbtop是一个SequoiaDB数据库的性能监控工具。通过它，可以监控和查看集群中各个节点的监视信息。</p>    
+    <p>sdbtop 是一个 SequoiaDB 数据库的性能监控工具。通过它，可以监控和查看集群中各个节点的监视信息。</p>    
     <section>
       <title>选项</title>
       <simpletable>
         <sthead>
           <stentry>参数</stentry>
+          <stentry>缩写</stentry>
           <stentry>描述</stentry>
         </sthead>
         <strow>
-          <stentry>--help, -h </stentry>
-          <stentry>返回基本帮助和用法文本 </stentry>
+          <stentry>--help</stentry>
+          <stentry>-h</stentry>
+          <stentry>返回基本帮助和用法文本</stentry>
         </strow>
         <strow>
-          <stentry>--confpath, -c </stentry>
-          <stentry>sdbtop的配置文件，sdbtop界面形态以及输出字段都依赖该文件（缺省使用默认配置文件）</stentry>
+          <stentry>--confpath</stentry>
+          <stentry>-c</stentry>
+          <stentry>sdbtop 的配置文件，sdbtop 界面形态以及输出字段都依赖该文件（缺省使用默认配置文件）</stentry>
         </strow>
         <strow>
-          <stentry>--hostname, -i </stentry>
-          <stentry>指定需要监控的主机名 </stentry>
+          <stentry>--hostname</stentry>
+          <stentry>-i</stentry>
+          <stentry>指定需要监控的主机名</stentry>
         </strow>
         <strow>
-          <stentry>--servicename, -s </stentry>
-          <stentry>指定监控的端口服务名 </stentry>
+          <stentry>--servicename</stentry>
+          <stentry>-s</stentry>
+          <stentry>指定监控的端口服务名</stentry>
         </strow>
         <strow>
-          <stentry>--usrname, -u </stentry>
-          <stentry>数据库用户名 </stentry>
+          <stentry>--usrname</stentry>
+          <stentry>-u</stentry>
+          <stentry>数据库用户名</stentry>
         </strow>
         <strow>
-          <stentry>--password,  -p </stentry>
-          <stentry>数据库密码 </stentry>
+          <stentry>--password</stentry>
+          <stentry>-p</stentry>
+          <stentry>数据库密码</stentry>
         </strow>
       </simpletable>
     </section>
     <section>
       <title>用法</title>
-      <p>在下面的例子，sdbtop使用配置文件为“/opt/sequoiadb/conf/sdbtop.xml”，监控主机名为sdbserver3，端口服务名为11810，用户名为test，密码为test的数据库集群中的一个节点。</p>
+      <p>在下面的例子，sdbtop 使用配置文件为“/opt/sequoiadb/conf/sdbtop.xml”，监控主机名为 sdbserver3，端口服务名为11810，用户名为 test，密码为 test 的数据库集群中的一个节点。</p>
       <codeblock>sdbtop -c /opt/sequoiadb/conf/sdbtop.xml  -i sdbserver3 -s 11810 -u test -p test</codeblock>
       <p>接着进入主窗口：</p><codeblock>refresh= 3 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                      Main Window                     snapshotModeInput: NULL
@@ -104,11 +111,11 @@ Copyright SequoiaDB Corp. 2013-2014 All Rights Reserved.</codeblock>
         </strow>
         <strow>
           <stentry>g</stentry>
-          <stentry>group_snapshot,指定监控某个数据节点组</stentry>
+          <stentry>group_snapshot，指定监控某个数据节点组</stentry>
         </strow>
         <strow>
           <stentry>n</stentry>
-          <stentry>node_snapshot,列出指定的数据库节点的监视信息</stentry>
+          <stentry>node_snapshot，列出指定的数据库节点的监视信息</stentry>
         </strow>
         <strow>
           <stentry>r</stentry>
@@ -148,7 +155,7 @@ Copyright SequoiaDB Corp. 2013-2014 All Rights Reserved.</codeblock>
         </strow>
         <strow>
           <stentry>Enter</stentry>
-          <stentry>返回上一次监视界面，（在已进入help帮助输出中有效）</stentry>
+          <stentry>返回上一次监视界面，（在已进入 help 帮助输出中有效）</stentry>
         </strow>
         <strow>
           <stentry>F5</stentry>
@@ -237,7 +244,7 @@ usrName: test                                                        Refresh: F5
  20  sdbserver3:11820:6                10737 Task               Job[Prefetcher]
  21  sdbserver3:11820:7                10738 Task               Job[Prefetcher]
  22  sdbserver3:11820:8                10739 Task               Job[Prefetcher]</codeblock>
-        <p>4. 按‘A’键，并输入‘TID’，列表结果按照TID进行顺序排序</p>
+        <p>4. 按‘A’键，并输入‘TID’，列表结果按照 TID 进行顺序排序</p>
         <codeblock>refresh= 2 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                        Sessions                      snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0
@@ -270,7 +277,7 @@ usrName: test                                                        Refresh: F5
  please input the displayName which need order by asc : TID</codeblock>
         <p>5. 按‘N’键，并输入1，列表中将原来行号为1的记录过滤不显示</p>
         <p>6. 按‘W’键，返回没有按行号进行过滤前的列表信息</p>
-        <p>7. 按‘C’键，并输入‘TID：10732”进行筛选，则只显示TID值为10732的记录</p>
+        <p>7. 按‘C’键，并输入‘TID：10732”进行筛选，则只显示 TID 值为10732的记录</p>
         <codeblock>refresh= 2 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                        Sessions                      snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0

@@ -37,90 +37,112 @@
       <simpletable>
         <sthead>
           <stentry>参数</stentry>
+          <stentry>缩写</stentry>
           <stentry>描述</stentry>
         </sthead>
         <strow>
-          <stentry>--help,-h</stentry>
+          <stentry>--help</stentry>
+          <stentry>-h</stentry>
           <stentry>返回基本帮助和用法文本。</stentry>
         </strow>
         <strow>
           <stentry>--version</stentry>
+          <stentry></stentry>
           <stentry>返回版本信息。</stentry>
         </strow>
         <strow>
-          <stentry>--hostname,-s</stentry>
+          <stentry>--hostname</stentry>
+          <stentry>-s</stentry>
           <stentry>从指定主机名的 SequoiaDB 中导入数据。默认情况下 sdbimprt 尝试连接到本地主机。 </stentry>
         </strow>
         <strow>
-          <stentry>--svcname,-p</stentry>
+          <stentry>--svcname</stentry>
+          <stentry>-p</stentry>
           <stentry>指定的端口号。默认情况下 sdbimprt 尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
-          <stentry>--user,-u</stentry>
+          <stentry>--user</stentry>
+          <stentry>-u</stentry>
           <stentry>数据库用户名。</stentry>
         </strow>
         <strow>
-          <stentry>--password,-w</stentry>
+          <stentry>--password</stentry>
+          <stentry>-w</stentry>
           <stentry>数据库密码。</stentry>
         </strow>
         <strow>
-          <stentry>--delchar,-a</stentry>
+          <stentry>--delchar</stentry>
+          <stentry>-a</stentry>
           <stentry>指定字符分隔符。默认是（"）， csv 格式有效。</stentry>
         </strow>
         <strow>
-          <stentry>--delfield,-e</stentry>
+          <stentry>--delfield</stentry>
+          <stentry>-e</stentry>
           <stentry>指定字段分隔符。默认是（,），csv 格式有效。</stentry>
         </strow>
         <strow>
-          <stentry>--delrecord,-r</stentry>
+          <stentry>--delrecord</stentry>
+          <stentry>-r</stentry>
           <stentry>指定记录分隔符。默认是（\n），csv 格式有效。</stentry>
         </strow>
         <strow>
-          <stentry>--csname,-c</stentry>
+          <stentry>--csname</stentry>
+          <stentry>-c</stentry>
           <stentry>指定导入数据的集合空间名。</stentry>
         </strow>
         <strow>
-          <stentry>--clname,-l</stentry>
+          <stentry>--clname</stentry>
+          <stentry>-l</stentry>
           <stentry>指定导入数据的集合名。</stentry>
         </strow>
         <strow>
-          <stentry>--insertnum,-n</stentry>
+          <stentry>--insertnum</stentry>
+          <stentry>-n</stentry>
           <stentry>批量导入记录，如果设置1，使用普通方式导入，如果大于1，则使用批量方式，设置范围是1-100000。 </stentry>
         </strow>
         <strow>
           <stentry>--file</stentry>
+          <stentry></stentry>
           <stentry>指定要导入的文件名。</stentry>
         </strow>
         <strow>
           <stentry>--type</stentry>
+          <stentry></stentry>
           <stentry>指定的导入数据格式。默认 csv，数据格式可以是 csv 或是 json。</stentry>
         </strow>
         <strow>
           <stentry>--fields</stentry>
+          <stentry></stentry>
           <stentry>指定导入数据的字段名。csv 格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--headerline</stentry>
+          <stentry></stentry>
           <stentry>指定导入数据首行是否作为字段名，默认 false，csv 格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--sparse</stentry>
+          <stentry></stentry>
           <stentry>指定导入数据时，自动添加字段名，默认 true，csv 格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--extra</stentry>
+          <stentry></stentry>
           <stentry>指定导入数据时，自动添加值，默认 false，csv 格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--linepriority</stentry>
+          <stentry></stentry>
           <stentry>当前分隔符默认的优先级为：记录分隔符，字符分隔符，字段分隔符，默认值是 true；如果设置为 false，那么分隔符的优先级为：字符分隔符，记录分隔符，字段分隔符。</stentry>
         </strow>
         <strow>
           <stentry>--force</stentry>
+          <stentry></stentry>
           <stentry>如果数据中有非 utf8 的数据，强制导入数据，默认 false。</stentry>
         </strow>
         <strow>
           <stentry>--errorstop</stentry>
+          <stentry></stentry>
           <stentry>如果遇到错误就停止。默认 false。</stentry>
         </strow>
       </simpletable>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="数据迁移 — 导出"/>
-<meta name="description" content="sdbexprt sdbexprt 是一个实用的工具。它可以从 SequoiaDB 数据库导出一个 JSON 格式或者 CSV 格式的数据存储文件。 选项 参数 描述 --help,-h 返回基本帮助和用法文本。 --version 返回版本信息。 --hostname,-s 从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。 --svcname,-p ..."/>
+<meta name="description" content="sdbexprt sdbexprt 是一个实用的工具。它可以从 SequoiaDB 数据库导出一个 JSON 格式或者 CSV 格式的数据存储文件。 选项 参数 缩写 描述 --help -h 返回基本帮助和用法文本。 --version 返回版本信息。 --hostname -s 从指定主机名的 SequoiaDB 中导出数据。默认情况下 sdbexprt 尝试连接到本地主机。 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/database/database_tool/topics/database_tool.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_jvq_px5_hk"/>
@@ -47,117 +47,138 @@
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
           <th valign="bottom" align="left" id="d13436e28" class="stentry">参数</th>
 
-          <th valign="bottom" align="left" id="d13436e31" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d13436e31" class="stentry">缩写</th>
+
+          <th valign="bottom" align="left" id="d13436e34" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--help,-h</td>
+          <td valign="top" headers="d13436e28" class="stentry">--help</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">返回基本帮助和用法文本。</td>
+          <td valign="top" headers="d13436e31" class="stentry">-h</td>
+
+          <td valign="top" headers="d13436e34" class="stentry">返回基本帮助和用法文本。</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d13436e28" class="stentry">--version</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">返回版本信息。</td>
+          <td valign="top" headers="d13436e31" class="stentry"> </td>
+
+          <td valign="top" headers="d13436e34" class="stentry">返回版本信息。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--hostname,-s</td>
+          <td valign="top" headers="d13436e28" class="stentry">--hostname</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。
+          <td valign="top" headers="d13436e31" class="stentry">-s</td>
+
+          <td valign="top" headers="d13436e34" class="stentry">从指定主机名的 SequoiaDB 中导出数据。默认情况下 sdbexprt 尝试连接到本地主机。
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--svcname,-p
-          </td>
+          <td valign="top" headers="d13436e28" class="stentry">--svcname</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</td>
+          <td valign="top" headers="d13436e31" class="stentry">-p</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--user,-u
-          </td>
-
-          <td valign="top" headers="d13436e31" class="stentry">数据库用户名。</td>
+          <td valign="top" headers="d13436e34" class="stentry">指定的端口号。默认情况下 sdbexprt 尝试连接到端口号11810的主机。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--password,-w
-          </td>
+          <td valign="top" headers="d13436e28" class="stentry">--user</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">数据库密码。</td>
+          <td valign="top" headers="d13436e31" class="stentry">-u</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--delchar,-a
-          </td>
-
-          <td valign="top" headers="d13436e31" class="stentry">指定字符分隔符。默认是（"），csv格式有效。</td>
+          <td valign="top" headers="d13436e34" class="stentry">数据库用户名。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--delfield,-e
-          </td>
+          <td valign="top" headers="d13436e28" class="stentry">--password</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">指定字段分隔符。默认是（,），csv格式有效。</td>
+          <td valign="top" headers="d13436e31" class="stentry">-w</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--delrecord,-r
-          </td>
-
-          <td valign="top" headers="d13436e31" class="stentry">指定记录分隔符。默认是（\n）。 </td>
+          <td valign="top" headers="d13436e34" class="stentry">数据库密码。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--csname,-c
-          </td>
+          <td valign="top" headers="d13436e28" class="stentry">--delchar</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">指定导出数据的集合空间名。</td>
+          <td valign="top" headers="d13436e31" class="stentry">-a</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--clname,-l
-          </td>
-
-          <td valign="top" headers="d13436e31" class="stentry">指定导出数的集合名。</td>
+          <td valign="top" headers="d13436e34" class="stentry">指定字符分隔符。默认是（"），csv 格式有效。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--fields
-          </td>
+          <td valign="top" headers="d13436e28" class="stentry">--delfield</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">指定一个或多个字段来导出数据，使用逗号分隔多个字段。csv格式有效。</td>
+          <td valign="top" headers="d13436e31" class="stentry">-e</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--included
-          </td>
-
-          <td valign="top" headers="d13436e31" class="stentry">指定是否导出字段名到csv首行，默认true，csv格式有效。</td>
+          <td valign="top" headers="d13436e34" class="stentry">指定字段分隔符。默认是（,），csv 格式有效。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--file
-          </td>
+          <td valign="top" headers="d13436e28" class="stentry">--delrecord</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">指定要导出的文件名。</td>
+          <td valign="top" headers="d13436e31" class="stentry">-r</td>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--type
-          </td>
-
-          <td valign="top" headers="d13436e31" class="stentry">指定的导出数据格式。默认csv，数据格式可以是csv或json。</td>
+          <td valign="top" headers="d13436e34" class="stentry">指定记录分隔符。默认是（\n）。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13436e28" class="stentry">--errorstop
-          </td>
+          <td valign="top" headers="d13436e28" class="stentry">--csname</td>
 
-          <td valign="top" headers="d13436e31" class="stentry">如果遇到错误就停止，默认false。</td>
+          <td valign="top" headers="d13436e31" class="stentry">-c</td>
+
+          <td valign="top" headers="d13436e34" class="stentry">指定导出数据的集合空间名。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13436e28" class="stentry">--clname</td>
+
+          <td valign="top" headers="d13436e31" class="stentry">-l</td>
+
+          <td valign="top" headers="d13436e34" class="stentry">指定导出数的集合名。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13436e28" class="stentry">--fields</td>
+
+          <td valign="top" headers="d13436e31" class="stentry"> </td>
+
+          <td valign="top" headers="d13436e34" class="stentry">指定一个或多个字段来导出数据，使用逗号分隔多个字段。csv 格式有效。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13436e28" class="stentry">--included</td>
+
+          <td valign="top" headers="d13436e31" class="stentry"> </td>
+
+          <td valign="top" headers="d13436e34" class="stentry">指定是否导出字段名到 csv 首行，默认 true，csv 格式有效。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13436e28" class="stentry">--file</td>
+
+          <td valign="top" headers="d13436e31" class="stentry"> </td>
+
+          <td valign="top" headers="d13436e34" class="stentry">指定要导出的文件名。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13436e28" class="stentry">--type</td>
+
+          <td valign="top" headers="d13436e31" class="stentry"> </td>
+
+          <td valign="top" headers="d13436e34" class="stentry">指定的导出数据格式。默认 csv，数据格式可以是 csv 或 json。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13436e28" class="stentry">--errorstop</td>
+
+          <td valign="top" headers="d13436e31" class="stentry"> </td>
+
+          <td valign="top" headers="d13436e34" class="stentry">如果遇到错误就停止，默认 false。</td>
 
         </tr>
 </table>
@@ -166,7 +187,7 @@
 
     <div class="section"><h2 class="title sectiontitle">用法</h2>
       
-      <p class="p">在下面的例子，sdbexprt从本地数据库端口11810中导出集合空间foo的集合bar的数据，导出类型是csv，导出文件为contact，导出字段是field1和field2。</p>
+      <p class="p">在下面的例子，sdbexprt 从本地数据库端口11810中导出集合空间 foo 的集合 bar 的数据，导出类型是 csv，导出文件为 contact，导出字段是 field1 和 field2。</p>
 
       <pre class="pre codeblock">sdbexprt -s localhost -p 11810 --type csv --file contace --fields field1,field2 -c foo -l bar</pre>
 

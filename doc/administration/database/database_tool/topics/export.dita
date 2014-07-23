@@ -12,92 +12,95 @@
       <simpletable>
         <sthead>
           <stentry>参数</stentry>
+          <stentry>缩写</stentry>
           <stentry>描述</stentry>
         </sthead>
         <strow>
-          <stentry>--help,-h</stentry>
+          <stentry>--help</stentry>
+          <stentry>-h</stentry>
           <stentry>返回基本帮助和用法文本。</stentry>
         </strow>
         <strow>
           <stentry>--version</stentry>
+          <stentry></stentry>
           <stentry>返回版本信息。</stentry>
         </strow>
         <strow>
-          <stentry>--hostname,-s</stentry>
-          <stentry>从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。
+          <stentry>--hostname</stentry>
+          <stentry>-s</stentry>
+          <stentry>从指定主机名的 SequoiaDB 中导出数据。默认情况下 sdbexprt 尝试连接到本地主机。
           </stentry>
         </strow>
         <strow>
-          <stentry>--svcname,-p
-          </stentry>
-          <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</stentry>
+          <stentry>--svcname</stentry>
+          <stentry>-p</stentry>
+          <stentry>指定的端口号。默认情况下 sdbexprt 尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
-          <stentry>--user,-u
-          </stentry>
+          <stentry>--user</stentry>
+          <stentry>-u</stentry>
           <stentry>数据库用户名。</stentry>
         </strow>
         <strow>
-          <stentry>--password,-w
-          </stentry>
+          <stentry>--password</stentry>
+          <stentry>-w</stentry>
           <stentry>数据库密码。</stentry>
-        </strow>
-        
+        </strow>        
         <strow>
-          <stentry>--delchar,-a
-          </stentry>
-          <stentry>指定字符分隔符。默认是（"），csv格式有效。</stentry>
-        </strow>
-        <strow>
-          <stentry>--delfield,-e
-          </stentry>
-          <stentry>指定字段分隔符。默认是（,），csv格式有效。</stentry>
+          <stentry>--delchar</stentry>
+          <stentry>-a</stentry>
+          <stentry>指定字符分隔符。默认是（"），csv 格式有效。</stentry>
         </strow>
         <strow>
-          <stentry>--delrecord,-r
-          </stentry>
-          <stentry>指定记录分隔符。默认是（\n）。 </stentry>
+          <stentry>--delfield</stentry>
+          <stentry>-e</stentry>
+          <stentry>指定字段分隔符。默认是（,），csv 格式有效。</stentry>
         </strow>
         <strow>
-          <stentry>--csname,-c
-          </stentry>
+          <stentry>--delrecord</stentry>
+          <stentry>-r</stentry>
+          <stentry>指定记录分隔符。默认是（\n）。</stentry>
+        </strow>
+        <strow>
+          <stentry>--csname</stentry>
+          <stentry>-c</stentry>
           <stentry>指定导出数据的集合空间名。</stentry>
         </strow>
         <strow>
-          <stentry>--clname,-l
-          </stentry>
+          <stentry>--clname</stentry>
+          <stentry>-l</stentry>
           <stentry>指定导出数的集合名。</stentry>
         </strow>        
         <strow>
-          <stentry>--fields
-          </stentry>
-          <stentry>指定一个或多个字段来导出数据，使用逗号分隔多个字段。csv格式有效。</stentry>
+          <stentry>--fields</stentry>
+          <stentry></stentry>
+          <stentry>指定一个或多个字段来导出数据，使用逗号分隔多个字段。csv 格式有效。</stentry>
         </strow>
         <strow>
-          <stentry>--included
-          </stentry>
-          <stentry>指定是否导出字段名到csv首行，默认true，csv格式有效。</stentry>
+          <stentry>--included</stentry>
+          <stentry></stentry>
+          <stentry>指定是否导出字段名到 csv 首行，默认 true，csv 格式有效。</stentry>
         </strow>
         <strow>
-          <stentry>--file
-          </stentry>
+          <stentry>--file</stentry>
+          <stentry></stentry>
           <stentry>指定要导出的文件名。</stentry>
         </strow>
         <strow>
-          <stentry>--type
-          </stentry>
-          <stentry>指定的导出数据格式。默认csv，数据格式可以是csv或json。</stentry>
+          <stentry>--type</stentry>
+          <stentry></stentry>
+          <stentry>指定的导出数据格式。默认 csv，数据格式可以是 csv 或 json。</stentry>
         </strow>
         <strow>
-          <stentry>--errorstop
-          </stentry>
-          <stentry>如果遇到错误就停止，默认false。</stentry>
+          <stentry>--errorstop</stentry>
+          <stentry></stentry>
+          <stentry>如果遇到错误就停止，默认 false。</stentry>
         </strow>
       </simpletable>
     </section>
     <section>
       <title>用法</title>
-      <p>在下面的例子，sdbexprt从本地数据库端口11810中导出集合空间foo的集合bar的数据，导出类型是csv，导出文件为contact，导出字段是field1和field2。</p>
+      <p>在下面的例子，sdbexprt 从本地数据库端口11810中导出集合空间 foo 的集合 bar 的数据，导出类型是 csv，导出文件为 contact，导出字段是 field1 和 field2。</p>
       <codeblock>sdbexprt -s localhost -p 11810 --type csv --file contace --fields field1,field2 -c foo -l bar</codeblock>
     </section>
   </body>
