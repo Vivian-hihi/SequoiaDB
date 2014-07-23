@@ -1080,6 +1080,16 @@ namespace engine
       {
          if ( cb->waitEvent( event, OSS_ONE_SEC ) )
          {
+            // if interrupted, kill all context
+            if ( cb->isInterrupted( TRUE ) )
+            {
+               // delete all context
+               INT64 contextID = -1 ;
+               while ( -1 != ( contextID = cb->contextPeek() ) )
+               {
+                  sdbGetRTNCB()->contextDelete( contextID, NULL ) ;
+               }
+            }
             cb->resetInterrupt() ;
             cb->resetInfo( EDU_INFO_ERROR ) ;
 
@@ -1155,11 +1165,22 @@ namespace engine
 
       while ( !cb->isDisconnected() )
       {
-         cb->resetInterrupt() ;
          cb->resetInfo( EDU_INFO_ERROR ) ;
 
          if ( cb->waitEvent( event, OSS_ONE_SEC ) )
          {
+            // if interrupted, kill all context
+            if ( cb->isInterrupted( TRUE ) )
+            {
+               // delete all context
+               INT64 contextID = -1 ;
+               while ( -1 != ( contextID = cb->contextPeek() ) )
+               {
+                  sdbGetRTNCB()->contextDelete( contextID, NULL ) ;
+               }
+            }
+            cb->resetInterrupt() ;
+
             if ( PMD_EDU_EVENT_TERM == event._eventType )
             {
                PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),
@@ -1472,6 +1493,7 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       SDB_ROLE dbrole = krcb->getDBRole () ;
+      rtnCoordOperator *pInterrupt = NULL ;
 
       // create socket
       ossSocket sock ( &s, PMD_AGENT_SOCKET_DFT_TIMEOUT ) ;
@@ -1506,11 +1528,12 @@ namespace engine
 
       if ( SDB_ROLE_COORD == dbrole )
       {
-         netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->getCoordCB()->getRouteAgent();
+         CoordCB *pCoordCB = krcb->getCoordCB() ;
+         pInterrupt = pCoordCB->getProcesserFactory(
+            )->getOperator( MSG_BS_INTERRUPTE ) ;
+         netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
          rc = pRouteAgent->addSession( cb );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to add session(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR,"failed to add session(rc=%d)", rc );
       }
       mondbcb->addReceiveNum () ;
 
@@ -1563,9 +1586,6 @@ namespace engine
             probe = 20 ;
             goto error ;
          }
-
-         //clean interrupt flag
-         cb->resetInterrupt () ;
 
          // always check if the request is sysinfo request
          // note sysinfo request got very different message type. The first 4
@@ -1647,6 +1667,28 @@ namespace engine
             goto error ;
          }
 
+         // if interrupted, kill all context
+         if ( cb->isInterrupted( TRUE ) )
+         {
+            if ( pInterrupt )
+            {
+               pInterrupt->execute( pReceiveBuffer, packetLength, NULL,
+                                    cb, replyHeader, NULL ) ;
+            }
+            else
+            {
+               // delete all context
+               INT64 contextID = -1 ;
+               while ( -1 != ( contextID = cb->contextPeek() ) )
+               {
+                  sdbGetRTNCB()->contextDelete( contextID, NULL ) ;
+               }
+            }
+         }
+
+         //clean interrupt flag
+         cb->resetInterrupt () ;
+
          // increase process event count
          cb->incEventCount () ;
 
@@ -1691,6 +1733,11 @@ namespace engine
             if ( SDB_APP_INTERRUPT == rc )
             {
                PD_LOG ( PDINFO, "Agent is interrupt" ) ;
+               if ( pInterrupt )
+               {
+                  pInterrupt->execute( pReceiveBuffer, packetLength, NULL,
+                                       cb, replyHeader, NULL ) ;
+               }
             }
             else if ( SDB_DMS_EOC != rc )
             {
