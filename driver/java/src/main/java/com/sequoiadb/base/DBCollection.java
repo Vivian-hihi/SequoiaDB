@@ -194,6 +194,7 @@ public class DBCollection {
 		}
 		
 		int message_length = SDBMessageHelper.buildInsertRequest(insert_buffer, collectionFullName, insertor);
+
 		connection.sendMessage(insert_buffer.array(), message_length);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
@@ -1353,9 +1354,10 @@ public class DBCollection {
 			insert_buffer.clear();
 		}
 
-		int messageLength = SDBMessageHelper.buildAggrRequest(
-				insert_buffer, collectionFullName, obj);
-
+		int messageLength = SDBMessageHelper.buildAggrRequest(insert_buffer,
+				                                              collectionFullName,
+				                                              obj);
+		
 		connection.sendMessage(insert_buffer.array(), messageLength);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);

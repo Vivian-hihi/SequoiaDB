@@ -2,6 +2,7 @@ package com.sequoiadb.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteOrder;
 //import java.nio.ByteBuffer;
 
 import org.apache.mina.core.buffer.IoBuffer;
@@ -45,7 +46,8 @@ public class ByteOutputBuffer1 extends OutputBuffer {
 
 	@Override
 	public void writeIntBE(int x) {
-		int xBE = swapInt32(x);
+		ByteOrder order = ioBuffer.order();
+		int xBE = ByteOrder.LITTLE_ENDIAN == order ? swapInt32(x) : x;
 		ioBuffer.putInt(xBE);
 	}
 

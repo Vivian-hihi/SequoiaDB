@@ -332,7 +332,7 @@ public class SDBMessageHelper {
 			throw new BaseException("SDB_INVALIDARG");
 		}
 	}
-
+	
 	public static byte[] buildDeleteRequest(SDBMessage sdbMessage,
 			boolean endianConvert) throws BaseException {
 		try {
@@ -526,7 +526,7 @@ public class SDBMessageHelper {
 			throw new BaseException("SDB_INVALIDARG");
 		}
 	}
-
+	
 	/*
 	 * public static int buildAggrRequest(ByteBuffer bulk_buffer, String
 	 * collectionFullName, List<BSONObject> insertor) throws BaseException {
@@ -534,7 +534,8 @@ public class SDBMessageHelper {
 	 * }
 	 */
 	public static int buildAggrRequest(IoBuffer bulk_buffer,
-			String collectionFullName, List<BSONObject> insertor)
+			                           String collectionFullName,
+			                           List<BSONObject> insertor)
 			throws BaseException {
 		try {
 			int messageLength = SDBMessageHelper.MESSAGE_OPINSERT_LENGTH - 1;
@@ -862,7 +863,6 @@ public class SDBMessageHelper {
 
 		return objList;
 	}
-
 
 	public static int bsonObjectToByteBuffer(IoBuffer byteBuffer,
 			BSONObject obj) {
