@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_hzs_twv_2m">
-  <title>aggregate</title>
+  <title>Aggregate</title>
   <body>
     <p>Aggregation framework provides for the collection of raw data records for statistical computing. By using the aggregation framework, users can extract 
     data directly from the collection of statistical records and obtain the required result. Aggregation framework provides a collection of user interface 

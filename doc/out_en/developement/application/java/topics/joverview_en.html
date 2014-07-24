@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Java Driver"/>
-<meta name="description" content="概述 SequoiaDB Java driver provides an interface database operations, and cluster operations. Includes the following seven levels of operation: database, collection space, collection, cursor, replica ..."/>
+<meta name="description" content="Outline SequoiaDB Java driver provides an interface database operations, and cluster operations. Includes the following seven levels of operation: database, collection space, collection, cursor, ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/java/topics/java_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_2ny_sdd_wj"/>
@@ -36,7 +36,7 @@
   <h1 class="title topictitle1">Java Driver</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">概述</h2>
+    <div class="section"><h2 class="title sectiontitle">Outline</h2>
          
       <p class="p">SequoiaDB Java driver provides an interface database operations, and cluster operations. Includes the following seven levels of operation: database, collection space, collection, cursor, replica group, node, domain.</p>
 
@@ -102,30 +102,68 @@
 </table>
 
             <div class="note note"><span class="notetitle">Note:</span> 
-              <p class="p">1. As for a connection, in its collection space, collections share one socket. So
-                in mutiple-thread system, the system should guarantee that the socket can be used
-                merely by one thread whenever.</p>
-
-              <p class="p">2. Generally, it is not recommended to manipulate a connection instance and other
-                instance, which it generates, with more than threads.</p>
-
-              <p class="p">3. If each thread merely use its own connection instance and other instances it
-              generates, it is thread-safe.</p>
+              <p class="p">SequoiaDB only builds one Socket connection, and it does not lock the network operation internally. If more threads are needed to connect the database, each thread must create a new Sequoiadb object by itself respectively, and also the CollectionSpace/DBColltion/DBCursor objects belong to each Sequoiadb.</p>
 
             </div>
-
           
         </li>
 
-        <li class="li">
-          <p class="p">Exception</p>
+        <li class="li">Cluster Operation
+          <p class="p">SequoiaDB database mainly has three levels of cluster operations:</p>
+<p class="p">1)	Replica Group</p>
+<p class="p">2) Data Node</p>
+<p class="p">3)	Domain</p>
 
-          <p class="p">Every interface may throw com.sequoiadb.exception.BaseException and
-            java.lang.Exception, repectively corresponding to exceptions returned by database engine
-            and client local exception. The information of BaseException can be read from its
-            attributes: errorCode，errorType and errorDescription.</p>
+          <div class="note note"><span class="notetitle">Note:</span> There are two types of replica group: Catalog Replica Group and Data Replica Group.</div>
 
-        </li>
+          <p class="p">Replica group instance and data node instance can be represented by the instance of the following three classes.</p>
+
+          <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
+              <td valign="top" class="stentry">ReplicaGroup</td>
+
+              <td valign="top" class="stentry">Replica group class</td>
+
+              <td valign="top" class="stentry">Each instance stands for a single replica group</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" class="stentry">Node</td>
+
+              <td valign="top" class="stentry">Data node class</td>
+
+              <td valign="top" class="stentry">Each instance stands for a single data node</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" class="stentry">Domain</td>
+
+              <td valign="top" class="stentry">Domain class</td>
+
+              <td valign="top" class="stentry">Each instance stands for a domain which</td>
+
+            </tr>
+</table>
+
+          <p class="p">Replica group and data node instances are needed for the cluster-related operations.</p>
+
+          <p class="p">A ReplicaGroup instance is used to manipulate the replica groups. Its operations include start/stop the replica groups, get the status, name, and amount of the nodes in the replica groups.</p>
+
+          <p class="p">A Node instance is used to manipulate the node. Its operations include start/stop the node, get the specified node instances, obtain the master-slave node example, get data node address information.</p>
+
+          <p class="p">A sdbDomain instance is used to manipulate the domain. Its operations include modify the domains, and get the information of the domains.</p>
+</li>
+
+      </ul>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">Error Information</h2>
+      
+      <ul class="ul">
+        <li class="li"><p class="p">When excecution exceptions occur, most APIs will throw com.sequoiadb.exception.BaseExceptio or java.lang.Exception, correspond to the exception info returned from the database engine or returned from local client respectively.</p>
+</li>
+
+        <li class="li">BaseException’s exception detailed info can be gotten by the class’s getErrorType(), getErrorCode() and getMessage() methods.</li>
 
       </ul>
 

@@ -17,7 +17,7 @@
           <p>5.编写包含如下内容PHP测试脚本，包存为test.php文件，并放在在Web服务目录下<codeblock>&lt;?php phpinfo(); ?></codeblock></p>
           <p>6.通过浏览器打开<i>http://localhost/test.php</i>，在打开的页面中查看是否包含SequoiaDB模块。</p></li>
         <li>Windows
-          <p>暂未提供windows驱动开发包</p>
+          <p>暂未提供Windows驱动开发包</p>
         </li>
       </ul>
     </section>

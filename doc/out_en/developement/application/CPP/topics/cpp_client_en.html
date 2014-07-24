@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C++ Driver"/>
-<meta name="description" content="C++ client-driven provide interfaces of database operations and cluster operations.Database operations include database connection、create or drop users、data CRUD、create or drop indexes and ..."/>
+<meta name="description" content="C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 7 lvevls: database operation, collection spaces, collections, cursor, replica group, ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/CPP/topics/cpp_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_kmr_n2s_wj_en"/>
@@ -36,11 +36,7 @@
   <h1 class="title topictitle1">C++ Driver</h1>
 
   <div class="body">
-    <p class="p">C++ client-driven provide interfaces of database operations and cluster operations.Database
-      operations include database connection、create or drop users、data CRUD、create or drop indexes
-      and collectionspace and collections、get or reset snapshots,etc.cluster operations contain all
-      kinds of managing replicaset and data node,such as starting or stopping replicasets、starting
-      or stopping data nodes、getting master nodes、slave nodes or collection shardings,etc.</p>
+    <p class="p">C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 7 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain.</p>
 
     <p class="p"><a class="xref" href="../../../../cpp/html/index.html">For more please refer to online C++ API</a>。</p>
 
@@ -92,65 +88,69 @@
             database connection instance. </p>
 </li>
 
-        <li class="li"> Cluster Operation Instance <p class="p">There are two degrees of cluster operation in
-            SequoiaDB:</p>
-<p class="p">  1) ReplicaSets</p>
+        <li class="li"> Cluster Operation Instance <p class="p">There are three degrees of cluster operation in
+          SequoiaDB:</p>
+<p class="p">  1) ReplicaGroups</p>
 <p class="p">  2) Data Node</p>
+<p class="p">  3) Domain</p>
 <div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">ReplicaSets contain three tpyes:Coord ReplicaSets,Catalog ReplicaSet,Data ReplicaSet.
-            </p>
+            <p class="p">ReplicaGroups contain three tpyes: Coord ReplicaGroups, Catalog ReplicaGroup, Data ReplicaGroup.</p>
 
           </div>
-<p class="p"> ReplicaSet instances and Data Node instances can be represented by the
-            following two types of classes. </p>
+<p class="p"> ReplicaGroup instances, Data Node instances and domain instancescan be represented by the
+            following three types of classes. </p>
 <div class="p">
             <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
-                <td valign="top" class="stentry"> sdbShard </td>
+                <td valign="top" class="stentry"> sdbReplicaGroup </td>
 
-                <td valign="top" class="stentry"> ReplicaSet class</td>
+                <td valign="top" class="stentry"> Replica group class</td>
 
-                <td valign="top" class="stentry"> It represents a stand-alone ReplicaSet </td>
+                <td valign="top" class="stentry"> It represents a stand-alone ReplicaGroup </td>
 
               </tr>
 <tr class="strow">
-                <td valign="top" class="stentry"> sdbShardNode </td>
+                <td valign="top" class="stentry"> sdbNode </td>
 
                 <td valign="top" class="stentry"> data node clsaa </td>
 
                 <td valign="top" class="stentry"> It represents a stand-alone Data Node </td>
 
               </tr>
+<tr class="strow">
+                <td valign="top" class="stentry"> sdbDomain </td>
+
+                <td valign="top" class="stentry"> domain clsaa </td>
+
+                <td valign="top" class="stentry"> It represents a stand-alone Domain </td>
+
+              </tr>
 </table>
 
           </div>
- Cluster-related operations need to use ReplicaSet instance and Data Node instance.
-            <p class="p">The sdbShard instants is to manage replicasets,including starting and stopping
-            replicasets,getting the status,name-information and number-information of nodes in the
-            replicaset. </p>
-<p class="p">The sdbShardNode instants is to manage Data Nodes,including starting
-            and stopping the specified data node,getting the specified data node instants and
+ Cluster-related operations need to use ReplicaGroup instance and Data Node instance.
+            <p class="p">The sdbReplicaGroup instants is to manage replica groups, including starting and stopping
+            replicagroups, getting the status, name-information and number-information of nodes in the
+            replicagroup. </p>
+<p class="p">The sdbNode instants is to manage Data Nodes, including starting
+            and stopping the specified data node, getting the specified data node instants and
             maste-slave data node instants and address-information of data node. </p>
+
+        <p class="p">The sdbDomain used in the management domain, The modification of the domain, obtain the domain information such as operation.</p>
 </li>
 
       </ul>
 </div>
 
-    <div class="section"><h2 class="title sectiontitle">Error Information</h2> Every function has a returned-value.If a function is
-      successfully invoked,then return SDB_OK,else return error information.If the returned-value is
-      less than 0,it is database error,if greater than 0,is system error.For the database errors,you
-      can find the error code in the file of <em class="ph i">ossErr.h</em>.For the system errors,error code can be
-      finded in the file of <em class="ph i">/usr/include/errno.h</em>.It can also use <em class="ph i">getErr()</em> method to
-      get error information in Sequoiadb shell.
-        <pre class="pre codeblock">(nofile):0 uncaught exception: -34
-&gt; getErr(-34)
-collection space not exist</pre>
-<p class="p">In
-        the client-driven application,you can find the error information in the file <em class="ph i">ossErr.h</em>
-        by the function returned-value<em class="ph i"> rc</em>.SDB_OK stands for operating successfully.
-      </p>
-<pre class="pre codeblock">INT32 rc = SDB_OK ;
-rc = sdbDisconnect( connection ) ;</pre>
-</div>
+    <div class="section"><h2 class="title sectiontitle">Error Information</h2>
+      <p class="p">Each function has its returned value, the definition of the returned value is:</p>
+
+      <p class="p">SDB_OK (value is 0): Execution succeeds.</p>
+
+      <p class="p">&lt; 0: Database error, the detailed error description can be found in the include/ossErr.h directory of the C++ driver development kit.</p>
+
+      <p class="p">&gt; 0: System error, please check the related error code information.</p>
+
+    </div>
 
   </div>
 
