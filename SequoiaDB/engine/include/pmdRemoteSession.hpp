@@ -92,29 +92,13 @@ namespace engine
          _pmdRemoteSession* parent() { return _parent ; }
 
          void        clearReplyInfo() ;
+         void        clearRequestInfo() ;
 
          netIOVec*   getIODatas() { return &_ioDatas ; }
          void        clearIODatas() { _ioDatas.clear() ; }
-         void        addIODatas( const netIOVec &ioVec )
-         {
-            for ( UINT32 i = 0 ; i < ioVec.size() ; ++i )
-            {
-               _ioDatas.push_back( ioVec[ i ] ) ;
-            }
-         }
-         void        addIOData( const netIOV &io )
-         {
-            _ioDatas.push_back( io ) ;
-         }
-         UINT32      getIODataLen()
-         {
-            UINT32 len = 0 ;
-            for ( UINT32 i = 0 ; i < _ioDatas.size() ; ++i )
-            {
-               len += _ioDatas[ i ].iovLen ;
-            }
-            return len ;
-         }
+         void        addIODatas( const netIOVec &ioVec ) ;
+         void        addIOData( const netIOV &io ) ;
+         UINT32      getIODataLen() ;
 
          void        setReqMsg( MsgHeader *pReqMsg ) { _pReqMsg = pReqMsg ; }
          MsgHeader*  getReqMsg() { return _pReqMsg ; }
@@ -125,12 +109,11 @@ namespace engine
 
          BOOLEAN     isDisconnect() const { return _isDisconnect ; }
          BOOLEAN     isSend() const { return _isSend ; }
+         BOOLEAN     hasReply() const { /* TODO:XUJIANHUI */ return FALSE ; }
+         BOOLEAN     isProcessed() const { /* TODO:XUJIANHUI */ return FALSE ; }
+         INT32       getProcessRet() const { return _processResult ; }
 
-         void        setProcessInfo( INT32 processResult )
-         {
-            _processResult = processResult ;
-            _isProcessed   = TRUE ;
-         }
+         void        setProcessInfo( INT32 processResult ) ;
 
       protected:
          void        setParent( _pmdRemoteSession *parent ) { _parent = parent ; }
@@ -150,7 +133,6 @@ namespace engine
          MsgHeader                  *_pReqMsg ;
          netIOVec                   _ioDatas ;
          pmdEDUEvent                _event ;
-         MsgHeader                  *_pRspMsg ;
 
          BOOLEAN                    _isProcessed ;
          INT32                      _processResult ;
@@ -168,19 +150,41 @@ namespace engine
    typedef set< UINT64 >                           SET_SUB_SESSIONID ;
 
    /*
+      PMD_SUB_SESSION_FILTER define
+   */
+   enum PMD_SSITR_FILTER
+   {
+      PMD_SSITR_ALL           = 0,     // all sub sessions
+      PMD_SSITR_UNSENT,                // not send
+      PMD_SSITR_SENT,                  // send req succeed
+      PMD_SSITR_UNREPLY,               // send req, but not reply
+      PMD_SSITR_REPLY,                 // send req, and recv reply succeed
+      PMD_SSITR_UNPROCESSED,           // recv reply, but not processed
+      PMD_SSITR_PROCESSED,             // recv reply, and processed
+      PMD_SSITR_PROCESS_SUC,           // has process, and result = SDB_OK
+      PMD_SSITR_PROCESS_FAIL,          // has process, but result != SDB_OK
+      PMD_SSITR_DISCONNECT             // send, but disconnect
+   } ;
+
+   /*
       _pmdSubSessionItr define
    */
    class _pmdSubSessionItr : public SDBObject
    {
       public:
-         _pmdSubSessionItr( MAP_SUB_SESSION *pSessions ) ;
+         _pmdSubSessionItr( MAP_SUB_SESSION *pSessions,
+                            PMD_SSITR_FILTER filter = PMD_SSITR_ALL ) ;
          ~_pmdSubSessionItr() ;
 
          BOOLEAN more() ;
          pmdSubSession* next() ;
 
+      protected:
+         void _findPos() ;
+
       private:
          MAP_SUB_SESSION            *_pSessions ;
+         PMD_SSITR_FILTER           _filter ;
          MAP_SUB_SESSION_IT         _curPos ;
 
    } ;
@@ -202,15 +206,15 @@ namespace engine
 
          void setTimeout( INT64 timeout ) ;
 
-         pmdSubSessionItr getSubSessionItr() ;
+         pmdSubSessionItr getSubSessionItr( PMD_SSITR_FILTER filter =
+                                            PMD_SSITR_ALL ) ;
          pmdSubSession* addSubSession( UINT64 nodeID ) ;
          pmdSubSession* getSubSession( UINT64 nodeID ) ;
          void           delSubSession( UINT64 nodeID ) ;
          void           clearSubSession() ;
 
-         UINT32         getSubSessionCount() ;
-         UINT32         getReplyCount( BOOLEAN exceptProcessed = FALSE ) ;
-         UINT32         getSucReplyCount() ;
+         UINT32         getSubSessionCount( PMD_SSITR_FILTER filter =
+                                            PMD_SSITR_ALL ) ;
 
          BOOLEAN        isTimeout() const ;
          BOOLEAN        isAllReply() ;

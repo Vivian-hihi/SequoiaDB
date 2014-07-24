@@ -72,6 +72,40 @@ namespace engine
       _isDisconnect  = FALSE ;
    }
 
+   void _pmdSubSession::clearRequestInfo()
+   {
+      // TODO:XUJIANHUI
+   }
+
+   void _pmdSubSession::addIODatas( const netIOVec &ioVec )
+   {
+      for ( UINT32 i = 0 ; i < ioVec.size() ; ++i )
+      {
+         _ioDatas.push_back( ioVec[ i ] ) ;
+      }
+   }
+
+   void _pmdSubSession::addIOData( const netIOV &io )
+   {
+      _ioDatas.push_back( io ) ;
+   }
+
+   UINT32 _pmdSubSession::getIODataLen()
+   {
+      UINT32 len = 0 ;
+      for ( UINT32 i = 0 ; i < _ioDatas.size() ; ++i )
+      {
+         len += _ioDatas[ i ].iovLen ;
+      }
+      return len ;
+   }
+
+   void _pmdSubSession::setProcessInfo( INT32 processResult )
+   {
+      _processResult = processResult ;
+      _isProcessed   = TRUE ;
+   }
+
    void _pmdSubSession::processEvent( pmdEDUEvent &event )
    {
       // TODO:XUJIANHUI
@@ -81,12 +115,14 @@ namespace engine
    /*
       _pmdSubSessionItr implement
    */
-   _pmdSubSessionItr::_pmdSubSessionItr( MAP_SUB_SESSION *pSessions )
-   :_pSessions( pSessions )
+   _pmdSubSessionItr::_pmdSubSessionItr( MAP_SUB_SESSION *pSessions,
+                                         PMD_SSITR_FILTER filter )
+   :_pSessions( pSessions ), _filter( filter )
    {
       if ( _pSessions )
       {
          _curPos = _pSessions->begin() ;
+         _findPos() ;
       }
    }
 
@@ -95,19 +131,76 @@ namespace engine
       _pSessions = NULL ;
    }
 
+   void _pmdSubSessionItr::_findPos()
+   {
+      if ( PMD_SSITR_ALL != _filter )
+      {
+         pmdSubSession *pSub = NULL ;
+         while ( _curPos != _pSessions->end() )
+         {
+            pSub = &(_curPos->second) ;
+            if ( PMD_SSITR_UNSENT == _filter && !pSub->isSend() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_SENT == _filter && pSub->isSend() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_UNREPLY == _filter && pSub->isSend() &&
+                      !pSub->hasReply() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_REPLY == _filter && pSub->isSend() &&
+                      pSub->hasReply() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_UNPROCESSED == _filter && pSub->hasReply() &&
+                      !pSub->isProcessed() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_PROCESSED == _filter && pSub->hasReply() &&
+                      pSub->isProcessed() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_PROCESS_SUC == _filter && pSub->hasReply() &&
+                      pSub->isProcessed() && SDB_OK == pSub->getProcessRet() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_PROCESS_FAIL == _filter && pSub->hasReply() &&
+                      pSub->isProcessed() && SDB_OK != pSub->getProcessRet() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_DISCONNECT == _filter && pSub->isSend() &&
+                      pSub->isDisconnect() )
+            {
+               break ;
+            }
+            ++_curPos ;
+         }
+      }
+   }
+
    BOOLEAN _pmdSubSessionItr::more()
    {
       if ( !_pSessions || _curPos == _pSessions->end() )
       {
-         return TRUE ;
+         return FALSE ;
       }
-      return FALSE ;
+      return TRUE ;
    }
 
    pmdSubSession* _pmdSubSessionItr::next()
    {
       pmdSubSession *pSubSession = &(_curPos->second) ;
       ++_curPos ;
+      _findPos() ;
       return pSubSession ;
    }
 
@@ -178,21 +271,24 @@ namespace engine
       _mapSubSession.clear() ;
    }
 
-   UINT32 _pmdRemoteSession::getSubSessionCount()
+   UINT32 _pmdRemoteSession::getSubSessionCount( PMD_SSITR_FILTER filter )
    {
-      return _mapSubSession.size() ;
-   }
-
-   UINT32 _pmdRemoteSession::getReplyCount( BOOLEAN exceptProcessed )
-   {
-      // TODO:XUJIANHUI
-      return 0 ;
-   }
-
-   UINT32 _pmdRemoteSession::getSucReplyCount()
-   {
-      // TODO:XUJIANHUI
-      return 0 ;
+      UINT32 count = 0 ;
+      if ( PMD_SSITR_ALL == filter )
+      {
+         count = _mapSubSession.size() ;
+      }
+      else
+      {
+         pmdSubSessionItr itr = getSubSessionItr( filter ) ;
+         
+         while ( itr.more() )
+         {
+            itr.next() ;
+            ++count ;
+         }
+      }
+      return count ;
    }
 
    BOOLEAN _pmdRemoteSession::isTimeout() const
@@ -202,8 +298,22 @@ namespace engine
 
    BOOLEAN _pmdRemoteSession::isAllReply()
    {
-      // TODO:XUJIANHUI
-      return FALSE ;
+      BOOLEAN ret = TRUE ;
+      pmdSubSession *pSub = NULL ;
+      MAP_SUB_SESSION_IT it = _mapSubSession.begin() ;
+      while ( it != _mapSubSession.end() )
+      {
+         pSub = &(it->second) ;
+         ++it ;
+         // send msg, but not reply
+         if ( pSub->isSend() && !pSub->hasReply() )
+         {
+            ret = FALSE ;
+            break ;
+         }
+      }
+
+      return ret ;
    }
 
    void _pmdRemoteSession::setTimeout( INT64 timeout )
@@ -218,9 +328,9 @@ namespace engine
       }
    }
 
-   pmdSubSessionItr _pmdRemoteSession::getSubSessionItr()
+   pmdSubSessionItr _pmdRemoteSession::getSubSessionItr( PMD_SSITR_FILTER filter )
    {
-      return pmdSubSessionItr( &_mapSubSession ) ;
+      return pmdSubSessionItr( &_mapSubSession, filter ) ;
    }
 
    pmdSubSession* _pmdRemoteSession::addSubSession( UINT64 nodeID )
@@ -276,6 +386,17 @@ namespace engine
    INT32 _pmdRemoteSession::sendMsg( UINT64 nodeID )
    {
       INT32 rc = SDB_OK ;
+      pmdSubSession *pSub = getSubSession( nodeID ) ;
+
+      if ( !pSub )
+      {
+         PD_LOG( PDERROR, "Session[%s] can't find sub session[%lld]",
+                 _pEDUCB->toString().c_str(), nodeID ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // if has io vec
 
    done:
       return rc ;
@@ -316,6 +437,7 @@ namespace engine
       INT32 rc                      = SDB_OK ;
       pmdEDUEvent event ;
       INT64 timeout                 = OSS_ONE_SEC ;
+      UINT32 totalUnReplyNum        = 0 ;
       UINT32 replyNum               = 0 ;
       pmdSubSession *pSubSession    = NULL ;
 
@@ -339,7 +461,8 @@ namespace engine
          _mapPendingSubSession.clear() ;
       }
 
-      while ( !isAllReply() )
+      totalUnReplyNum = getSubSessionCount( PMD_SSITR_UNREPLY ) ;
+      while ( totalUnReplyNum > 0 )
       {
          if ( _pEDUCB->isForced() ||
               ( _pEDUCB->isInterrupted() && !_pEDUCB->isDisconnected() ) )
@@ -397,6 +520,7 @@ namespace engine
          if ( pSubSession )
          {
             ++replyNum ;
+            --totalUnReplyNum ;
             if ( pSubs )
             {
                (*pSubs)[ pSubSession->getNodeID() ] = pSubSession ;
