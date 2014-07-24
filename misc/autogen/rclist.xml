@@ -2137,6 +2137,22 @@
             <cn>不同版本的OMAgent已运行</cn>
          </description>
       </code>
+      
+      <code>
+         <name>SDB_OM_TASK_NOT_EXIST</name>
+         <description>
+            <en>task is not exist</en>
+            <cn>查询任务时没有找到对应的任务信息</cn>
+         </description>
+      </code>
+      
+      <code>
+         <name>SDB_OM_TASK_ROLLBACK</name>
+         <description>
+            <en>task is rolling back</en>
+            <cn>任务正在回滚</cn>
+         </description>
+      </code>
 
 
    </codelist>

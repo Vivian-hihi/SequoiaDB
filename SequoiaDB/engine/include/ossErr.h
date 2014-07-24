@@ -299,4 +299,8 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_BUT_FAILED_ON_DATA          -261  /**< successfully done on catalog, but sth wrong happened when did it on data group. */
 #define SDB_CAT_NO_GROUP_IN_DOMAIN      -262  /**< domain does not have any groups at all */
 #define SDB_OM_PASSWD_CHANGE_SUGGUEST   -263  /**< suggest sdb om's user to change the passwd */
+#define SDB_COORD_NOT_ALL_DONE          -264  /**< not all nodes returned ok */
+#define SDB_OMA_DIFF_VER_AGT_IS_RUNNING -265  /**< different version agent has been running */
+#define SDB_OM_TASK_NOT_EXIST           -266  /**< task is not exist */
+#define SDB_OM_TASK_ROLLBACK            -267  /**< task is rolling back */
 #endif /* OSSERR_HPP_ */

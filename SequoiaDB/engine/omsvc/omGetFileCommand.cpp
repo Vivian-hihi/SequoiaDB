@@ -203,6 +203,8 @@ namespace engine
    // *****************omCreateClusterCommand *****************************
    omCreateClusterCommand::omCreateClusterCommand( restAdaptor *pRestAdaptor, 
                                                  pmdRestSession *pRestSession )
+                          :omCheckSessionCommand( pRestAdaptor, 
+                                                  pRestSession )
    {
       _restAdaptor = pRestAdaptor ;
       _restSession = pRestSession ;
@@ -3545,8 +3547,7 @@ namespace engine
       rc = om->saveInstallTask( _localAgentHost, _localAgentService, result, 
                                 bsonConfValue ) ;
       SDB_ASSERT( ( SDB_OK == rc ), "" ) ;
-      //TODO 增加定时器
-      
+      //TODO start timer
    done:
       _clearSession( om, remoteSession ) ;
       return rc ;
@@ -3734,6 +3735,126 @@ namespace engine
       _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // **************omQueryInstallProgress*************************
+   omQueryInstallProgress::omQueryInstallProgress( restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+                          :omCreateClusterCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omQueryInstallProgress::~omQueryInstallProgress()
+   {
+   }
+
+   INT32 omQueryInstallProgress::doCommand()
+   {
+      INT32 status ;
+      string taskID ;
+      bool isAllFinished ;
+      string detail ;
+      BSONObj progress ;
+
+      BSONObj restTask ;
+      string restTaskID ;
+      INT32 rc          = SDB_OK ;
+      const CHAR *pTask = NULL ;
+      _restAdaptor->getQuery( _restSession, OM_REST_TASK_INFO, &pTask ) ;
+      if ( NULL == pTask )
+      {
+         string errorInfo = "rest field:" + string( OM_REST_TASK_INFO )
+                            + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pTask, restTask ) ;
+      if ( SDB_OK != rc )
+      {
+         string errorInfo = "rest field:" + string( OM_REST_TASK_INFO )
+                            + "is invalid" ;
+         PD_LOG( PDERROR, "fromjson failed:rc=%d,src=%s", rc, pTask ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      sdbGetOMManager()->lockInstallTask() ;
+//      {
+//      BSONObjBuilder tmpTestBuilder ;
+//      BSONObj tmpTest ;
+//      tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
+//      tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
+//      tmpTestBuilder.append( OM_BSON_TASKID, "ad" ) ;
+//      tmpTestBuilder.append( OM_BSON_ISFINISHED, false ) ;
+//      {
+//         BSONObjBuilder haha ;
+//         haha.append( OM_BSON_ITEM_NAME, "coord" ) ;
+//         haha.append( OM_BSON_TOTAL_COUNT, 4 ) ;
+//         haha.append( OM_BSON_INSTALLED_COUNT, 2 ) ;
+//         haha.append( OM_BSON_ITEM_DESC, "xx" ) ;
+//         BSONObj bsonHaha = haha.obj() ;
+//         BSONArrayBuilder arrayBuilder ;
+//         arrayBuilder.append( bsonHaha ) ;
+//         tmpTestBuilder.appendArray( OM_BSON_TASK_PROGRESS, arrayBuilder.arr() ) ;
+//      }
+//      tmpTest = tmpTestBuilder.obj() ;
+//      sdbGetOMManager()->saveInstallTask( "", "", tmpTest, BSONObj() ) ;
+//      }
+      sdbGetOMManager()->getInstallTask( status, taskID, isAllFinished, detail,
+                                         progress ) ;
+      sdbGetOMManager()->unlockInstallTask() ;
+
+      restTaskID = restTask.getStringField( OM_BSON_TASKID ) ;
+      if ( OM_TASK_STATUS_IDLE == status )
+      {
+         rc = SDB_OM_TASK_NOT_EXIST ;
+         string errorInfo = "task is not exist:task=" + restTaskID ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+      }
+      else
+      {
+         BSONObjBuilder opBuilder ;
+         INT32 restRC = SDB_OK ;
+         if ( taskID.compare( restTaskID ) != 0 )
+         {
+            rc = SDB_OM_TASK_NOT_EXIST ;
+            string errorInfo = "task is not exist:task=" + restTaskID ;
+            PD_LOG( PDERROR, "%s,rc=%d", errorInfo.c_str(), rc ) ;
+            _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+            goto error ;
+         }
+
+         if ( OM_TASK_STATUS_DOING == status )
+         {
+            restRC = SDB_OK ;
+         }
+         else if ( OM_TASK_STATUS_ERROR_ROLLBACK == status )
+         {
+            restRC = SDB_OM_TASK_ROLLBACK ;
+         }
+         else
+         {
+            //OM_TASK_STATUS_ERROR_FINISH/OM_TASK_STATUS_FINISH
+            SDB_ASSERT( isAllFinished, "" ) ;
+            restRC = SDB_OK ;
+         }
+
+         opBuilder.append( OM_REST_RES_RETCODE, restRC ) ;
+         opBuilder.append( OM_REST_RES_DETAIL, detail ) ;
+         opBuilder.append( OM_BSON_TASKID, taskID ) ;
+         opBuilder.append( OM_BSON_ISFINISHED, isAllFinished ) ;
+         opBuilder.appendArray( OM_BSON_TASK_PROGRESS, progress ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      }
+      
    done:
       return rc ;
    error:

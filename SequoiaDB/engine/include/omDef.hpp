@@ -327,12 +327,16 @@ namespace engine
 
    // om query install progress
    #define  OM_QUERY_INSTALL_PROGRESS        "QueryInstallProgress"
+
+   #define  OM_REST_TASK_INFO                "Task"
+   
    #define  OM_BSON_TASKID                   "TaskID"
    #define  OM_BSON_ISFINISHED               "isAllFinish"
    #define  OM_BSON_TASK_PROGRESS            "Progress"
    #define  OM_BSON_ITEM_NAME                "Name"
    #define  OM_BSON_TOTAL_COUNT              "TotalCount"
    #define  OM_BSON_INSTALLED_COUNT          "InstalledCount"
+   #define  OM_BSON_ITEM_DESC                "Desc"
 
    
    // milliseconds

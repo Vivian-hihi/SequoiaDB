@@ -466,7 +466,7 @@ namespace engine
    {
       BSONObjBuilder builder ;
       INT32 rc = SDB_OK ;
-      if ( _isInstallTaskExist() )
+      if ( isInstallTaskExist() )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "previou task have not yet finished:task=%s",  
@@ -479,7 +479,7 @@ namespace engine
       _omTaskInfo._agentSvcName  = agentService ;
       _omTaskInfo._detail        = taskInfo.getStringField( 
                                                        OM_REST_RES_DETAIL ) ;
-      _omTaskInfo._isAllFinished = taskInfo.getStringField( 
+      _omTaskInfo._isAllFinished = taskInfo.getBoolField( 
                                                        OM_BSON_ISFINISHED ) ;
       _omTaskInfo._progress      = taskInfo.getObjectField( 
                                                        OM_BSON_TASK_PROGRESS ) ;
@@ -492,7 +492,7 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN _omManager::_isInstallTaskExist( )
+   BOOLEAN _omManager::isInstallTaskExist( )
    {
       if ( OM_TASK_STATUS_DOING == _omTaskInfo._status
            || OM_TASK_STATUS_ERROR_ROLLBACK == _omTaskInfo._status )
@@ -513,28 +513,20 @@ namespace engine
       //TODO: unlock
    }
 
-   BOOLEAN _omManager::isInstallTaskExist( )
-   {
-      //TODO add lock
-      BOOLEAN isExist = _isInstallTaskExist( ) ;
-      
-      //
-      return isExist ;
-   }
-
    void _omManager::getInstallTask( INT32 &status, string &taskID, 
-                                    bool &isAllFinshed, string &detail, 
+                                    bool &isAllFinished, string &detail, 
                                     BSONObj &progress )
    {
-      status       = _omTaskInfo._status ;
-      taskID       = _omTaskInfo._taskID ;
-      isAllFinshed = _omTaskInfo._isAllFinished ;
-      detail       = _omTaskInfo._detail ;
-      progress     = _omTaskInfo._progress ;
+      status        = _omTaskInfo._status ;
+      taskID        = _omTaskInfo._taskID ;
+      isAllFinished = _omTaskInfo._isAllFinished ;
+      detail        = _omTaskInfo._detail ;
+      progress      = _omTaskInfo._progress ;
    }
 
    void _omManager::finishInstallTask( BSONObj &taskDetail )
    {
+      _omTaskInfo._isAllFinished = true ;
       if ( OM_TASK_STATUS_ERROR_ROLLBACK == _omTaskInfo._status )
       {
          _omTaskInfo._status = OM_TASK_STATUS_ERROR_FINISH ;

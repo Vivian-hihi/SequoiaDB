@@ -79,12 +79,12 @@ namespace engine
       public:
          virtual INT32   doCommand() ;
          
-      private:
+      protected:
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
    };
 
-   class omCreateClusterCommand : public omCommandInterface
+   class omCreateClusterCommand : public omCheckSessionCommand
    {
       public:
          omCreateClusterCommand( restAdaptor *pRestAdaptor, 
@@ -102,10 +102,6 @@ namespace engine
          INT32           _getClusterInfo( string &clusterName, string &desc,
                                           string &sdbUsr, string &sdbPasswd,
                                           string &sdbUsrGroup) ;
-         
-      protected:
-         restAdaptor*    _restAdaptor ;
-         pmdRestSession* _restSession ;
    };
 
    class omQueryClusterCommand : public omCreateClusterCommand 
@@ -363,6 +359,17 @@ namespace engine
          string         _localAgentHost ;
          string         _localAgentService ;
    } ;
+
+   class omQueryInstallProgress : public omCreateClusterCommand
+   {
+      public:
+         omQueryInstallProgress( restAdaptor *pRestAdaptor, 
+                               pmdRestSession *pRestSession ) ;
+         virtual ~omQueryInstallProgress() ;
+
+      public:
+         virtual INT32  doCommand() ;
+   };
 
    class omGetFileCommand : public omCommandInterface
    {

@@ -139,7 +139,7 @@ namespace engine
                                             BSONObj &taskInfo, 
                                             const BSONObj &confValue ) ;
          void              getInstallTask( INT32 &status, string &taskID, 
-                                           bool &isAllFinshed, string &detail, 
+                                           bool &isAllFinished, string &detail, 
                                            BSONObj &progress ) ;
          void              rollBackTask( BSONObj &result ) ;
          void              finishInstallTask( BSONObj &result ) ;
@@ -161,7 +161,6 @@ namespace engine
 
          INT32             _createCollection ( const CHAR *pCollection,
                                                pmdEDUCB *cb ) ;
-         BOOLEAN           _isInstallTaskExist( ) ;
          void              _clearSession( _pmdEDUCB *cb, 
                                           pmdRemoteSession *remoteSession) ;
          INT32             _sendMsgToLocalAgent( 
