@@ -29,7 +29,7 @@
         </plentry>
         <plentry>
           <pt>sel (json object)</pt>
-          <pd>Select fields to be returned. When it is null, return all records.</pd>
+          <pd>Select fields to be returned. When it is null, return all the fields.</pd>
         </plentry>
         <plentry>
           <pt>sort (json object)</pt>
