@@ -45,6 +45,11 @@ namespace engine
 
    #define OM_CONF_DETAIL_DBPATH       "dbpath"
    #define OM_CONF_DETAIL_SVCNAME      "svcname"
+//   #define OM_CONF_DETAIL_REPLNAME     "replName"
+//   #define OM_CONF_DETAIL_SHARDNAME    "shardname"
+//   #define OM_CONF_DETAIL_CLNAME       "catalogname"
+//   #define OM_CONF_DETAIL_HTTPNAME     "httpname"
+//   #define OM_CONF_DETAIL_CLADDRESS    "catalogaddr"
    #define OM_CONF_DETAIL_DIAGLEVEL    "diaglevel"
    #define OM_CONF_DETAIL_ROLE         "role"
    #define OM_CONF_DETAIL_LOGFSIZE     "logfilesz"
@@ -85,9 +90,6 @@ namespace engine
       dataGroupNum = -1 ;
       catalogNum   = -1 ;
       coordNum     = -1 ;
-      userName     = "" ;
-      userPasswd   = "" ;
-      userGroup    = "" ;
    }
 
    void sdbConfDetail::init() 
@@ -103,9 +105,6 @@ namespace engine
       numPageCleaner    = -1 ;
       pageCleanInterval = -1 ;
       dataGroupID       = "" ;
-      sdbUserName       = "" ;
-      sdbPasswd         = "" ;
-      sdbUserGroup      = "" ;
 
       user              = "" ;
       passwd            = "" ;
@@ -425,8 +424,6 @@ namespace engine
 
    /*
      {
-        HostInfo:{"SdbUser":"sdbadmin", "SdbPasswd":"sdbadmin", 
-                  "SdbGroup":"sdbadmin_group"}
         Config:[
                  {"dbpath":"", svcname:"11810", ...}
                  ...
@@ -486,8 +483,7 @@ namespace engine
       goto done ;
    }
 
-   void omHostInfo::_increaseNodeCount( string dbpath, string role, 
-                                        set<string> &usedDiskSet )
+   void omHostInfo::_increaseNodeCount( string dbpath, string role )
    {
       DISKINFO_ITER iterDisk ;
       iterDisk = _diskList.begin() ;
@@ -499,7 +495,7 @@ namespace engine
          {
             iterDisk->isUsed = TRUE ;
             // record the unique disk path
-            usedDiskSet.insert( iterDisk->mountPath ) ;
+            _usedDiskSet.insert( iterDisk->mountPath ) ;
             break ;
          }
 
@@ -542,7 +538,6 @@ namespace engine
       string defaultSvcName ;
       INT32 maxSvcName ;
       INT32 maxGroupID = 0;
-      set<string> usedDiskSet ;
 
       iterMap           = _pConfDetailMap->find( OM_CONF_DETAIL_SVCNAME ) ;
       SDB_ASSERT( iterMap != _pConfDetailMap->end(), "" ) ;
@@ -581,8 +576,7 @@ namespace engine
             }
          }
 
-         _increaseNodeCount( iterNodeInfo->dbPath, iterNodeInfo->role, 
-                             usedDiskSet ) ;
+         _increaseNodeCount( iterNodeInfo->dbPath, iterNodeInfo->role ) ;
 
          iterNodeInfo++ ;
       }
@@ -594,7 +588,7 @@ namespace engine
       }
 
       _nodeCounter.unUsedDiskCount = _nodeCounter.diskCount - 
-                                                          usedDiskSet.size() ;
+                                                          _usedDiskSet.size() ;
       _availableGroupID = maxGroupID + 1 ; 
 
       return SDB_OK ;
@@ -751,7 +745,7 @@ namespace engine
                    bestIter->mountPath.c_str(),
                    confDetail.role.c_str(), confDetail.svcName ) ;
       confDetail.dbPath  = string( dbPath ) ;
-      bestIter->isUsed       = TRUE ;
+      bestIter->isUsed   = TRUE ;
       if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
       {
          _nodeCounter.standAloneCount++ ;
@@ -814,6 +808,76 @@ namespace engine
       nodeCounter = _nodeCounter ;
    }
 
+   string omHostInfo::getHostName()
+   {
+      return _hostName ;
+   }
+
+   BOOLEAN omHostInfo::isDiskExist( string dbPath )
+   {
+      DISKINFO_ITER iter = _diskList.begin() ;
+      while ( iter != _diskList.end() )
+      {
+         string::size_type pos = dbPath.find( iter->mountPath ) ;
+         if ( pos != string::npos )
+         {
+            return TRUE ;
+         }
+
+         iter++ ;
+      }
+
+      return FALSE ;
+   }
+
+   BOOLEAN omHostInfo::isSvcNameConflict( string svcName )
+   {
+      INT32 iSvcName = ossAtoi( svcName.c_str() ) ;
+      NODEINFOLIST_ITER iter = _nodeInfoList.begin() ;
+      while ( iter != _nodeInfoList.end() )
+      {
+         if ( iter->svcName > iSvcName )
+         {
+            if ( ( iter->svcName - iSvcName ) < OM_SVCNAME_STEP )
+            {
+               return TRUE ;
+            }
+         }
+         else
+         {
+            if ( ( iSvcName - iter->svcName ) < OM_SVCNAME_STEP )
+            {
+               return TRUE ;
+            }
+         }
+
+         iter++ ;
+      }
+
+      return FALSE ;
+   }
+
+   INT32 omHostInfo::addNode( const BSONObj &oneNode )
+   {
+      omNodeInfo node ;
+      node.dbPath        = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
+      SDB_ASSERT( isDiskExist( node.dbPath ), "disk is not exist" ) ;
+
+      node.role          = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+
+      string tmpSvcName  = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+      SDB_ASSERT( !isSvcNameConflict( tmpSvcName ), "svc conflict" ) ;
+
+      node.svcName       = ossAtoi( tmpSvcName.c_str() ) ;
+      node.businessName  = oneNode.getStringField( 
+                                             OM_BSON_BUSINESS_NAME ) ;
+      node.dataGroupName = oneNode.getStringField( 
+                                             OM_CONF_DETAIL_EX_DG_NAME ) ;
+      _nodeInfoList.push_back( node ) ;
+
+      return SDB_OK ;
+   }
+
    INT32 hostNodeCounter::getNodeCount( string role )
    {
       if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
@@ -870,8 +934,7 @@ namespace engine
       "ClusterName":"c1", 
       "Config":
       [
-         {"HostName": "host1", "username": "sdbadmin", "userpasswd": "sdbadmin", 
-          "usergroup": "sdbadmin_group", "datagroupname": "", 
+         {"HostName": "host1", "datagroupname": "", 
           "dbpath": "/home/db2/standalone/11830", "svcname": "11830", ...}
          ,...
       ]
@@ -903,18 +966,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       _clear() ;
-      _businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
-      rc = _parseHostInfo( _businessName, bsonHostInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "get template failed:rc=%d", rc ) ;
-         goto error ;
-      }
 
       rc = _parseAllConf( bsonAllConf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get _parseAllConf failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      rc = _parseHostInfo( _businessName, bsonHostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get template failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -931,6 +995,18 @@ namespace engine
       goto done ;
    }
 
+   omHostInfo *omConfigGenerator::_getHost( string hostName )
+   {
+      omHostInfo *pHost = NULL ;
+      HOSTINFOMAP_ITER iter = _hostInfoMap.find( hostName ) ;
+      if ( iter != _hostInfoMap.end() )
+      {
+         pHost = iter->second ;
+      }
+
+      return pHost ;
+   }
+
    INT32 omConfigGenerator::_checkConfValue( const BSONObj &bsonConfValue )
    {
       INT32 rc = SDB_OK ;
@@ -945,13 +1021,38 @@ namespace engine
       BSONObjIterator NodeIter( config ) ;
       while ( NodeIter.more() )
       {
-         BSONElement ele = NodeIter.next() ;
-         BSONObj oneNode = ele.embeddedObject() ;
-         string hostName = oneNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         string dbPath   = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
-         string svcName  = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
-         //omHostInfo *pHost = _getHost( hostName ) ;
-         //TODO: check hostName/dbPath/svcName
+         BSONElement ele   = NodeIter.next() ;
+         BSONObj oneNode   = ele.embeddedObject() ;
+         string hostName   = oneNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         string dbPath     = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
+         string svcName    = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+         omHostInfo *pHost = _getHost( hostName ) ;
+         if ( NULL == pHost )
+         {
+            rc = SDB_DMS_RECORD_NOTEXIST ;
+            _errorDetail = string( "host is not exist:host=" ) + hostName ;
+            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            goto error ;
+         }
+
+         if ( !pHost->isDiskExist( dbPath ) )
+         {
+            rc = SDB_DMS_RECORD_NOTEXIST ;
+            _errorDetail = string( OM_CONF_DETAIL_DBPATH ) 
+                           + "'s disk is not exist:" + dbPath ;
+            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            goto error ;
+         }
+
+         if ( pHost->isSvcNameConflict( svcName ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorDetail = string( OM_CONF_DETAIL_SVCNAME ) + 
+                           " is conflict:" + svcName ;
+            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            goto error ;
+         }
+
          BSONObjIterator itemIter( oneNode ) ;
          while ( itemIter.more() )
          {
@@ -972,7 +1073,7 @@ namespace engine
                }
 
                pItem = iter->second ;
-               if ( pItem->isValid( value ) )
+               if ( !pItem->isValid( value ) )
                {
                   rc = SDB_INVALIDARG ;
                   _errorDetail = string( "config value is invalid:name=" )
@@ -982,12 +1083,9 @@ namespace engine
                }
             }
          }
-      }
 
-      // 1 判断各个值的合法性
-      // 2 判断host是否存在
-      // 3 判断dbpath所在的磁盘是否存在, dbpath是否冲突
-      // 4 判断端口是否冲突 
+         pHost->addNode( oneNode ) ;
+      }
    done:
       return rc ;
    error:
@@ -1125,11 +1223,11 @@ namespace engine
          old = NULL ;
       }
 
-      HOSTINFOLIST_ITER iterList  = _hostInfoList.begin() ;
-      while ( iterList != _hostInfoList.end() )
+      HOSTINFOMAP_ITER iterHost  = _hostInfoMap.begin() ;
+      while ( iterHost != _hostInfoMap.end() )
       {
-         omHostInfo *host = *iterList ;
-         _hostInfoList.erase( iterList++ ) ;
+         omHostInfo *host = iterHost->second ;
+         _hostInfoMap.erase( iterHost++ ) ;
 
          delete host ;
          host = NULL ;
@@ -1169,10 +1267,6 @@ namespace engine
       {
          _confTemplate.replicaNum   = ossAtoi( itemValue.c_str() ) ;
       }
-//      else if ( itemName.compare( OM_TEMPLATE_DATA_NUM ) == 0 )
-//      {
-//         _confTemplate.dataNum = ossAtoi( itemValue.c_str() ) ;
-//      }
       else if ( itemName.compare( OM_TEMPLATE_DATAGROUP_NUM ) == 0 )
       {
          _confTemplate.dataGroupNum = ossAtoi( itemValue.c_str() ) ;
@@ -1184,18 +1278,6 @@ namespace engine
       else if ( itemName.compare( OM_TEMPLATE_COORD_NUM ) == 0 )
       {
          _confTemplate.coordNum     = ossAtoi( itemValue.c_str() ) ;
-      }
-      else if ( itemName.compare( OM_TEMPLATE_USER_NAME ) == 0 )
-      {
-         _confTemplate.userName     = itemValue ;
-      }
-      else if ( itemName.compare( OM_TEMPLATE_USER_PASSWD ) == 0 )
-      {
-         _confTemplate.userPasswd   = itemValue ;
-      }
-      else if ( itemName.compare( OM_TEMPLATE_USER_GROUP ) == 0 )
-      {
-         _confTemplate.userGroup    = itemValue ;
       }
 
       rc = item.init( templateItem ) ;
@@ -1245,24 +1327,6 @@ namespace engine
       else if ( _confTemplate.coordNum == -1 )
       {
          _errorDetail = string( OM_TEMPLATE_COORD_NUM ) 
-                        + " have not been set" ;
-         return FALSE ;
-      }
-      else if ( _confTemplate.userName.length() == 0 )
-      {
-         _errorDetail = string( OM_TEMPLATE_USER_NAME ) 
-                        + " have not been set" ;
-         return FALSE ;
-      }
-      else if ( _confTemplate.userPasswd.length() == 0 )
-      {
-         _errorDetail = string( OM_TEMPLATE_USER_PASSWD ) 
-                        + " have not been set" ;
-         return FALSE ;
-      }
-      else if ( _confTemplate.userGroup.length() == 0 )
-      {
-         _errorDetail = string( OM_TEMPLATE_USER_GROUP ) 
                         + " have not been set" ;
          return FALSE ;
       }
@@ -1510,9 +1574,6 @@ namespace engine
          }
       }
 
-      _confDetailSample.sdbUserName  = _confTemplate.userName ;
-      _confDetailSample.sdbPasswd    = _confTemplate.userPasswd ;
-      _confDetailSample.sdbUserGroup = _confTemplate.userGroup ;
       if ( !_isAllConfDetailSet() )
       {
          rc = SDB_INVALIDARG ;
@@ -1575,7 +1636,8 @@ namespace engine
                goto error ;
             }
 
-            _hostInfoList.push_back( host ) ;
+            _hostInfoMap.insert( HOSTINFOMAP_TYPE( host->getHostName(), 
+                                                   host ) ) ;
           }
        }
 
@@ -1595,19 +1657,19 @@ namespace engine
    */
    omHostInfo* omConfigGenerator::_getBestHost( string role )
    {
-      HOSTINFOLIST_ITER iter ;
+      HOSTINFOMAP_ITER iter ;
       omHostInfo *pHostInfo = NULL ;
 
-      iter = _hostInfoList.begin() ;
-      if ( iter == _hostInfoList.end() )
+      iter = _hostInfoMap.begin() ;
+      if ( iter == _hostInfoMap.end() )
       {
          PD_LOG( PDERROR, "hostinfo is null!" ) ;
          goto error ;
       }
 
-      pHostInfo = *iter ;
+      pHostInfo = iter->second ;
       iter++ ;
-      while ( iter != _hostInfoList.end() )
+      while ( iter != _hostInfoMap.end() )
       {
          omHostInfo *pTmp = NULL ;  
          INT32 roleCount ;
@@ -1618,7 +1680,7 @@ namespace engine
          INT32 bestNodeCount ;
          INT32 bestUnUsedDiskCount ;
 
-         pTmp          = *iter ;
+         pTmp          = iter->second ;
          roleCount     = pTmp->getNodeCount( role ) ;
          bestRoleCount = pHostInfo->getNodeCount( role );
          if ( roleCount != bestRoleCount )
@@ -1694,13 +1756,13 @@ namespace engine
 
    INT32 omConfigGenerator::_getAvailableGroupID()
    {
-      HOSTINFOLIST_ITER iter ;
+      HOSTINFOMAP_ITER iter ;
       INT32 availableGroupID = 0 ;
-      iter = _hostInfoList.begin() ;
-      while ( iter != _hostInfoList.end() )
+      iter = _hostInfoMap.begin() ;
+      while ( iter != _hostInfoMap.end() )
       {
          INT32 tmpID ;
-         omHostInfo *pHostInfo = *iter ;
+         omHostInfo *pHostInfo = iter->second ;
          tmpID = pHostInfo->getAvailableGroupID() ;
          if ( tmpID > availableGroupID )
          {
@@ -1838,9 +1900,6 @@ namespace engine
          CHAR tmp[OM_INT32_LENGTH] = "" ;
          BSONObjBuilder builder ;
          builder.append( OM_BSON_FIELD_HOST_NAME, iter->hostName ) ;
-         builder.append( OM_TEMPLATE_USER_NAME, iter->sdbUserName ) ;
-         builder.append( OM_TEMPLATE_USER_PASSWD, iter->sdbPasswd ) ;
-         builder.append( OM_TEMPLATE_USER_GROUP, iter->sdbUserGroup ) ;
          builder.append( OM_CONF_DETAIL_EX_DG_NAME, iter->dataGroupID ) ;
          builder.append( OM_CONF_DETAIL_DBPATH, iter->dbPath ) ;
          

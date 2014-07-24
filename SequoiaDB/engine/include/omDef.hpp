@@ -68,6 +68,9 @@ namespace engine
    
    #define OM_CLUSTER_FIELD_NAME             "Name"
    #define OM_CLUSTER_FIELD_DESC             "Desc"
+   #define OM_CLUSTER_FIELD_SDBUSER          "SdbUser"
+   #define OM_CLUSTER_FIELD_SDBPASSWD        "SdbPasswd"
+   #define OM_CLUSTER_FIELD_SDBUSERGROUP     "SdbUserGroup"
 
    #define OM_CS_DEPLOY_CL_CLUSTERIDX1       "{name:\"SYSDEPLOY_CLUSTER_IDX1\",key: {"\
                                              OM_CLUSTER_FIELD_NAME":1}, unique: true, enforced: true } "
@@ -145,6 +148,14 @@ namespace engine
    
    #define  OM_BSON_FIELD_CLUSTER_NAME       "ClusterName"
    #define  OM_BSON_FIELD_CLUSTER_DESC       "Desc"
+   #define  OM_BSON_FIELD_SDB_USER           "SdbUser"
+   #define  OM_BSON_FIELD_SDB_PASSWD         "SdbPasswd"
+   #define  OM_BSON_FIELD_SDB_USERGROUP      "SdbUserGroup"
+
+   #define  OM_DEFAULT_SDB_USER              "sdbadmin"
+   #define  OM_DEFAULT_SDB_PASSWD            "sdbadmin"
+   #define  OM_DEFAULT_SDB_USERGROUP         "sdbadmin_group"
+   
    // *****************************************************************
 
    // *********************om rest query_cluster_req*******************
@@ -176,7 +187,7 @@ namespace engine
    #define  OM_BSON_FIELD_HOST_SSHPORT       "SshPort"
 
    //TODO agent端口号从配置中获取
-   #define  OM_BSON_FIELD_HOST_AGENTPORT     "AgentPort"
+   #define  OM_BSON_FIELD_AGENT_PORT         "AgentPort"
 
    // milliseconds
    #define  OM_WAIT_SCAN_RES_INTERVAL        (10000)
@@ -189,6 +200,7 @@ namespace engine
    #define  OM_BASIC_CHECK_REQ               "BasicCheckReq"
    #define  OM_INSTALL_REMOTE_AGENT          "InstallRemoteAgentReq"
    #define  OM_CHECK_REMOTE_HOST             "CheckRemoteHostReq"
+   #define  OM_AGENT_EXIT_REQ                "AgentExitReq"
    #define  OM_UNINSTALL_REMOTE_AGENT        "UninstallRemoteAgentReq"
 
    #define  OM_BSON_FIELD_OS                 "OS"
@@ -211,6 +223,9 @@ namespace engine
    #define  OM_BSON_FIELD_SAFETY             "Safety"
    //
    #define  OM_BSON_FIELD_CONFIG             "Config"
+
+   
+   #define  OM_WAIT_AGENT_RES_INTERVAL        (5000)
    // *****************************************************************
 
    // ***************om rest add_host_req******************************
@@ -285,9 +300,6 @@ namespace engine
 
    #define  OM_BSON_PROPERTY_VALUE           "Value"
 
-   #define  OM_BSON_FIELD_SDBUSER            "SdbUser"
-   #define  OM_BSON_FIELD_SDBPASSWD          "SdbPasswd"
-   #define  OM_BSON_FIELD_SDBUSERGROUP       "SdbUserGroup"
    #define  OM_BSON_FIELD_DATAGROUPNAME      "DataGroupName"
 
    #define  OM_BSON_FIELD_DBPATH             "DBPath"
@@ -303,14 +315,35 @@ namespace engine
    
    // *****************************************************************
 
-   // om rest check_config_req
-   #define  OM_CHECK_CONFIG_REQ              "CheckBusinessConfReq"
+   // om rest install_business_req
+   #define  OM_INSTALL_BUSINESS_REQ          "AddBusinessReq"
+
+   #define  OM_ROLLBACK_INSTALL_REQ          "RollbackInstallReq"
 
    #define  OM_REST_CONFIG_INFO              "ConfigInfo"
+
+   #define  OM_BSON_TASKID                   "TaskID"
    // *****************************************************************
+
+   // om query install progress
+   #define  OM_QUERY_INSTALL_PROGRESS        "QueryInstallProgress"
+   #define  OM_BSON_TASKID                   "TaskID"
+   #define  OM_BSON_ISFINISHED               "isAllFinish"
+   #define  OM_BSON_TASK_PROGRESS            "Progress"
+   #define  OM_BSON_ITEM_NAME                "Name"
+   #define  OM_BSON_TOTAL_COUNT              "TotalCount"
+   #define  OM_BSON_INSTALLED_COUNT          "InstalledCount"
+
    
    // milliseconds
    #define  OM_WAIT_EVENT_INTERVAL           (500)
+
+
+
+   // agent default localhost
+   #define  OM_DEFAULT_LOCAL_HOST            "localhost"
+   // agent default port
+   #define  OM_AGENT_DEFAULT_PORT            "11791"
    
    
 }

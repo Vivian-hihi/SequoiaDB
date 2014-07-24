@@ -41,6 +41,8 @@
 
 #include <string>
 
+using namespace bson ;
+
 namespace engine
 {
 

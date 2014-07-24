@@ -45,9 +45,6 @@ namespace engine
    #define OM_TEMPLATE_DATAGROUP_NUM   "datagroupnum"
    #define OM_TEMPLATE_CATALOG_NUM     "catalognum"
    #define OM_TEMPLATE_COORD_NUM       "coordnum"
-   #define OM_TEMPLATE_USER_NAME       "username"
-   #define OM_TEMPLATE_USER_PASSWD     "userpasswd"
-   #define OM_TEMPLATE_USER_GROUP      "usergroup"
 
    // extend configure
    #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
@@ -62,9 +59,6 @@ namespace engine
          INT32 dataGroupNum ;
          INT32 catalogNum ;
          INT32 coordNum ;
-         string userName ;
-         string userPasswd ;
-         string userGroup ;
 
       public:
          void init() ;
@@ -85,9 +79,6 @@ namespace engine
          INT32    pageCleanInterval ;
 
          string   dataGroupID ;
-         string   sdbUserName ;  /* sequoiadb's user */
-         string   sdbPasswd ;    /* sequoiadb's passwd */
-         string   sdbUserGroup ; /* sequoiadb's user group */
          string   hostName ;
          string   diskName ;
          string   user ;         /* root user */ 
@@ -209,11 +200,16 @@ namespace engine
          INT32      getUnusedDiskCount() ;
          void       getNodeInfo( hostNodeCounter &nodeCounter ) ;
 
+         string     getHostName() ;
+
+         BOOLEAN    isDiskExist( string dbPath ) ;
+         BOOLEAN    isSvcNameConflict( string svcName ) ;
+         INT32      addNode( const BSONObj &config ) ;
+
       private:
          INT32      _initNodeInfo( const BSONObj &config ) ;
          INT32      _initCounter() ;
-         void       _increaseNodeCount( string dbpath, string role, 
-                                        set<string> &usedDiskSet ) ;
+         void       _increaseNodeCount( string dbpath, string role ) ;
 
       private:
          hostNodeCounter  _nodeCounter ;
@@ -233,6 +229,8 @@ namespace engine
 
          list<omNodeInfo> _nodeInfoList ;
          typedef list<omNodeInfo>::iterator NODEINFOLIST_ITER ;
+
+         set<string> _usedDiskSet ;
    } ;
 
    class omConfigGenerator
@@ -275,6 +273,7 @@ namespace engine
          INT32       _setConfDetailValue( const BSONObj &oneProperty ) ;
          BOOLEAN     _isAllConfDetailSet() ;
 
+         omHostInfo *_getHost( string hostName ) ;
          INT32       _checkConfValue( const BSONObj &bsonConfValue ) ;
          INT32       _parseAllConf( const BSONObj &bsonAllConf ) ;
 
@@ -287,8 +286,9 @@ namespace engine
          map<string, omConfigItem*>    _confDetailMap ;
          // typedef map<string, omConfigItem*>::value_type CONFIGITEMMAP_TYPE ;
          // typedef map<string, omConfigItem*>::iterator CONFIGITEMMAP_ITER ;
-         list<omHostInfo*>             _hostInfoList ;
-         typedef list<omHostInfo*>::iterator HOSTINFOLIST_ITER ;
+         map<string, omHostInfo*>      _hostInfoMap ;
+         typedef map<string, omHostInfo*>::iterator HOSTINFOMAP_ITER ;
+         typedef map<string, omHostInfo*>::value_type HOSTINFOMAP_TYPE ;
    } ;
 
    typedef map<string, omConfigItem*>::value_type CONFIGITEMMAP_TYPE ;

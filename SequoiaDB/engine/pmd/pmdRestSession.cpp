@@ -317,20 +317,20 @@ namespace engine
          else if ( ossStrcasecmp( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
          {
             commandIf = new omScanHostCommand( pAdptor, this, 
-                                               "localhost", 
-                                               "1" ) ;
+                                               OM_DEFAULT_LOCAL_HOST, 
+                                               OM_AGENT_DEFAULT_PORT ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
          {
             commandIf = new omCheckHostCommand( pAdptor, this, 
-                                                "localhost", 
-                                                "1" ) ;
+                                                OM_DEFAULT_LOCAL_HOST, 
+                                                OM_AGENT_DEFAULT_PORT ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
          {
             commandIf = new omAddHostCommand( pAdptor, this, 
-                                              "localhost", 
-                                              "1" ) ;
+                                              OM_DEFAULT_LOCAL_HOST, 
+                                              OM_AGENT_DEFAULT_PORT ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_REQ ) == 0 )
          {
@@ -357,11 +357,13 @@ namespace engine
                                                      _wwwRootPath.c_str(), 
                                                      pFilePath ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_CHECK_CONFIG_REQ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_INSTALL_BUSINESS_REQ) == 0 )
          {
-            commandIf = new omCheckBusinessConfigReq( pAdptor, this, 
-                                                      _wwwRootPath.c_str(), 
-                                                      pFilePath ) ;
+            commandIf = new omInstallBusinessReq( pAdptor, this, 
+                                                  _wwwRootPath.c_str(), 
+                                                  pFilePath, 
+                                                  OM_DEFAULT_LOCAL_HOST, 
+                                                  OM_AGENT_DEFAULT_PORT ) ;
          }
          else
          {
@@ -374,7 +376,7 @@ namespace engine
             goto error ;
          }
       }
-       
+
    done:
       return commandIf ;
    error:

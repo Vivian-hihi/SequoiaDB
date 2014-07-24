@@ -57,6 +57,37 @@ namespace engine
 {
    class _pmdEDUCB ;
 
+   #define OM_TASK_STATUS_IDLE            0
+   #define OM_TASK_STATUS_DOING           1
+   #define OM_TASK_STATUS_ERROR_ROLLBACK  2
+   #define OM_TASK_STATUS_ERROR_FINISH    3
+   #define OM_TASK_STATUS_FINISH          4
+   struct omTaskInfo
+   {
+      string  _agentHostName ;
+      string  _agentSvcName ;
+
+      string  _taskID ;
+      bool    _isAllFinished ;
+      string  _detail ;
+      BSONObj _progress ;
+      INT32   _status ;
+
+      BSONObj _confValue ;
+
+      omTaskInfo()
+      {
+         _agentHostName = "" ;
+         _agentSvcName  = "" ;
+         _taskID        = "" ;
+         _isAllFinished = false ;
+         _progress      = BSONObj() ;
+         _status        = OM_TASK_STATUS_IDLE ;
+         _detail        = "" ;
+         _confValue     = BSONObj() ;
+      };
+   };
+
    /*
       _omManager define
    */
@@ -100,6 +131,21 @@ namespace engine
 
          INT32             authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
 
+         BOOLEAN           isInstallTaskExist( ) ;
+         void              lockInstallTask() ;
+         void              unlockInstallTask() ;
+         INT32             saveInstallTask( string agentHost, 
+                                            string agentService ,
+                                            BSONObj &taskInfo, 
+                                            const BSONObj &confValue ) ;
+         void              getInstallTask( INT32 &status, string &taskID, 
+                                           bool &isAllFinshed, string &detail, 
+                                           BSONObj &progress ) ;
+         void              rollBackTask( BSONObj &result ) ;
+         void              finishInstallTask( BSONObj &result ) ;
+         void              checkTaskStatus( string taskID ) ;
+         void              updateInstallTask( BSONObj &taskDetail ) ;
+
       protected:
 
          string            _makeID( restSessionInfo *pSessionInfo ) ;
@@ -115,6 +161,14 @@ namespace engine
 
          INT32             _createCollection ( const CHAR *pCollection,
                                                pmdEDUCB *cb ) ;
+         BOOLEAN           _isInstallTaskExist( ) ;
+         void              _clearSession( _pmdEDUCB *cb, 
+                                          pmdRemoteSession *remoteSession) ;
+         INT32             _sendMsgToLocalAgent( 
+                                                pmdRemoteSession *remoteSession, 
+                                                MsgHeader *pMsg ) ;
+         INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
+                                              BSONObj &result ) ;
 
       private:
          vector< CHAR* >                        _vecFixBuf ;
@@ -142,6 +196,7 @@ namespace engine
          SDB_RTNCB*                             _pRtnCB ;
 
          string                                 _wwwRootPath ;
+         omTaskInfo                             _omTaskInfo ;
 
    } ;
 
