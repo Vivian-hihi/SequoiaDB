@@ -42,9 +42,13 @@
 #include "../bson/bson.h"
 #include "../bson/oid.h"
 #include <vector>
+#include <string>
 using namespace bson;
 using namespace std;
+
 INT32 extractRC ( BSONObj &obj ) ;
+string routeID2String( MsgRouteID routeID ) ;
+string routeID2String( UINT64 nodeID ) ;
 
 /*
  * Create Update Message in ppBuffer

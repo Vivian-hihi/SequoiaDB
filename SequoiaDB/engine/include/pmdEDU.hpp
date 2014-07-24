@@ -340,8 +340,6 @@ namespace engine
       }
       UINT64 getCurRequestID() const { return _curRequestID ; }
       UINT64 incCurRequestID() { return ++_curRequestID ; }
-      UINT64 getMinRequestID() const { return _minRequestID ; }
-      void  setMinRequestID( UINT64 reqID ) { _minRequestID = reqID ; }
 
       // transaction related
       void  setTransID( DPS_TRANS_ID transID ) { _curTransID = transID ; }
@@ -438,7 +436,6 @@ namespace engine
       UINT32                  _lsnNumber ;
 
       UINT64                  _curRequestID ;
-      UINT64                  _minRequestID ;
 
       // transaction related variables
       DPS_LSN_OFFSET          _relatedTransLSN ;

@@ -53,14 +53,8 @@ namespace engine
    class _pmdRemoteSession ;
    class _pmdRemoteSessionMgr ;
    class _pmdRemoteSessionSite ;
+   class _pmdSubSession ;
    class _pmdEDUCB ;
-
-   /*
-      PMD_RS_PROCESS_CODE define
-   */
-   enum PMD_RS_PROCESS_CODE
-   {
-   } ;
 
    /*
       _IRemoteSessionHandler define
@@ -72,7 +66,9 @@ namespace engine
          virtual ~_IRemoteSessionHandler() {}
 
       public:
-         virtual PMD_RS_PROCESS_CODE   onRecvReply() = 0 ;
+         virtual INT32  onSendFailed( _pmdRemoteSession *pSession,
+                                      _pmdSubSession **ppSub,
+                                      INT32 flag ) = 0 ;
 
    } ;
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
@@ -104,7 +100,8 @@ namespace engine
          MsgHeader*  getReqMsg() { return _pReqMsg ; }
          MsgHeader*  getRspMsg() { return ( MsgHeader* )_event._Data ; }
 
-         UINT64      getNodeID() const { return _nodeID ; }
+         UINT64      getNodeIDUInt() const { return _nodeID.value ; }
+         MsgRouteID  getNodeID() const { return _nodeID ; }
          UINT64      getReqID() const { return _reqID ; }
 
          BOOLEAN     isDisconnect() const { return _isDisconnect ; }
@@ -117,15 +114,14 @@ namespace engine
 
       protected:
          void        setParent( _pmdRemoteSession *parent ) { _parent = parent ; }
-         void        setNodeID( UINT64 nodeID ) { _nodeID = nodeID ; }
+         void        setNodeID( UINT64 nodeID ) { _nodeID.value = nodeID ; }
          void        setReqID( UINT64 reqID ) { _reqID = reqID ; }
-         void        disconnect() { _isDisconnect = TRUE ; }
          void        setSendResult( BOOLEAN isSend ) { _isSend = isSend ; }
          void        processEvent( pmdEDUEvent &event ) ;
 
       protected:
          _pmdRemoteSession          *_parent ;
-         UINT64                     _nodeID ;
+         MsgRouteID                 _nodeID ;
          UINT64                     _reqID ;
          BOOLEAN                    _isSend ;
          BOOLEAN                    _isDisconnect ;
@@ -220,12 +216,35 @@ namespace engine
          BOOLEAN        isAllReply() ;
 
       public:
+         /*
+            Send by sub session map and use the pSrcMsg.
+            If the sub has sent, will not send.
+            if send failed, will to call the handle callback
+         */
          INT32    sendMsg( MsgHeader *pSrcMsg, INT32 *pSucNum = NULL,
                            INT32 *pTotalNum = NULL ) ;
+
+         /*
+            Send only to the subs and use the pSrcMsg.
+            If this subs not exist, will added.
+            If the subs has sent, will not send again.
+            If failed, will to call the handle callback functions
+         */
          INT32    sendMsg( MsgHeader *pSrcMsg, SET_SUB_SESSIONID &subs,
-                           INT32 *pSucNum = NULL, INT32 *pTotalNUm = NULL ) ;
+                           INT32 *pSucNum = NULL, INT32 *pTotalNum = NULL ) ;
+
+         /*
+            Send by sub session map, if the sub has sent, will not send.
+            if send failed, will to call the handle callback
+         */
          INT32    sendMsg( INT32 *pSucNum = NULL, INT32 *pTotalNum = NULL ) ;
+
+         /*
+            Send to specail sub session, if the sub has sent, will not send.
+            if send failed, doesn't to call the handle callback
+         */
          INT32    sendMsg( UINT64 nodeID ) ;
+         INT32    sendMsg( pmdSubSession *pSub ) ;
 
          INT32    waitReply1( BOOLEAN waitAll = FALSE,
                               MAP_SUB_SESSIONPTR *pSubs = NULL ) ;
@@ -279,6 +298,7 @@ namespace engine
          INT32    processEvent( pmdEDUEvent &event,
                                 MAP_SUB_SESSION &mapSessions,
                                 pmdSubSession **ppSub ) ;
+         void     addSubSession( pmdSubSession *pSub ) ;
 
       private:
          MAP_SUB_SESSIONPTR               _mapReq2SubSession ;

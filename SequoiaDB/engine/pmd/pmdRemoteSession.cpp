@@ -32,6 +32,7 @@
 
 #include "pmdRemoteSession.hpp"
 #include "pmdEDU.hpp"
+#include "msgMessage.hpp"
 
 #include "../bson/bson.h"
 
@@ -50,7 +51,7 @@ namespace engine
    _pmdSubSession::_pmdSubSession()
    {
       _parent           = NULL ;
-      _nodeID           = 0 ;
+      _nodeID.value     = MSG_INVALID_ROUTEID ;
       _reqID            = 0 ;
       _pReqMsg          = NULL ;
       _isSend           = FALSE ;
@@ -336,7 +337,7 @@ namespace engine
    pmdSubSession* _pmdRemoteSession::addSubSession( UINT64 nodeID )
    {
       pmdSubSession &subSession = _mapSubSession[ nodeID ] ;
-      if ( subSession.getNodeID() != nodeID )
+      if ( subSession.getNodeIDUInt() != nodeID )
       {
          subSession.setNodeID( nodeID ) ;
          subSession.setParent( this ) ;
@@ -348,10 +349,80 @@ namespace engine
                                      INT32 *pTotalNum )
    {
       INT32 rc = SDB_OK ;
+      VEC_SUB_SESSIONPTR vecFailedSession ;
+      vector< INT32 > vecFailedFlag ;
+      pmdSubSession *pSub = NULL ;
 
-      MAP_SUB_SESSION_IT it = _mapSubSession.begin() ;
-      while ( it != _mapSubSession.end() )
+      if ( pTotalNum )
       {
+         *pTotalNum = 0 ;
+      }
+      if ( pSucNum )
+      {
+         *pSucNum = 0 ;
+      }
+
+      pmdSubSessionItr itr = getSubSessionItr( PMD_SSITR_UNSENT ) ;
+      while ( itr.more() )
+      {
+         pSub = itr.next() ;
+         if ( pSrcMsg )
+         {
+            pSub->clearIODatas() ;
+            pSub->setReqMsg( pSrcMsg ) ;
+         }
+         rc = sendMsg( pSub ) ;
+
+         if ( pTotalNum )
+         {
+            ++(*pTotalNum) ;
+         }
+         if ( SDB_OK == rc && pSucNum )
+         {
+            ++(*pSucNum) ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            vecFailedSession.push_back( pSub ) ;
+            vecFailedFlag.push_back( rc ) ;
+
+            if ( !pSucNum && !_pHandle )
+            {
+               goto error ;
+            }
+         }
+      }
+
+      if ( !_pHandle )
+      {
+         if ( vecFailedFlag.size() > 0 )
+         {
+            rc = vecFailedFlag[ 0 ] ;
+            goto error ;
+         }
+         goto done ;
+      }
+      else
+      {
+         INT32 rcTmp = SDB_OK ;
+         UINT64 nodeID = 0 ;
+         // process failed
+         for ( UINT32 i = 0 ; i < vecFailedSession.size() ; ++i )
+         {
+            pSub = vecFailedSession[ i ] ;
+            nodeID = pSub->getNodeIDUInt() ;
+            rcTmp = vecFailedFlag[ i ] ;
+            rc = _pHandle->onSendFailed( this, &pSub, rcTmp ) ;
+            PD_RC_CHECK( rc, PDERROR, "Session[%s] send msg to node[%s] "
+                         "failed[rc: %d] and processed failed[rc: %d]",
+                         _pEDUCB->toString().c_str(),
+                         routeID2String(nodeID).c_str(),
+                         rcTmp, rc ) ;
+            if ( pSucNum )
+            {
+               ++(*pSucNum) ;
+            }
+         }
       }
 
    done:
@@ -363,9 +434,95 @@ namespace engine
    INT32 _pmdRemoteSession::sendMsg( MsgHeader *pSrcMsg,
                                      SET_SUB_SESSIONID &subs,
                                      INT32 *pSucNum,
-                                     INT32 *pTotalNUm )
+                                     INT32 *pTotalNum )
    {
       INT32 rc = SDB_OK ;
+      pmdSubSession *pSub = NULL ;
+      VEC_SUB_SESSIONPTR vecFailedSession ;
+      vector< INT32 > vecFailedFlag ;
+      SET_SUB_SESSIONID::iterator it = subs.begin() ;
+      UINT64 nodeID = 0 ;
+
+      if ( pTotalNum )
+      {
+         *pTotalNum = 0 ;
+      }
+      if ( pSucNum )
+      {
+         *pSucNum = 0 ;
+      }
+
+      while ( it != subs.end() )
+      {
+         nodeID = *it ;
+         ++it ;
+         pSub = addSubSession( nodeID ) ;
+         if ( pSub )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "Session[%s] failed to add sub session[%s]",
+                    _pEDUCB->toString().c_str(),
+                    routeID2String(nodeID).c_str() ) ;
+            goto error ;
+         }
+         if ( pSub->isSend() )
+         {
+            continue ;
+         }
+         pSub->clearIODatas() ;
+         pSub->setReqMsg( pSrcMsg ) ;
+         rc = sendMsg( pSub ) ;
+
+         if ( pTotalNum )
+         {
+            ++(*pTotalNum) ;
+         }
+         if ( SDB_OK == rc && pSucNum )
+         {
+            ++(*pSucNum) ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            vecFailedSession.push_back( pSub ) ;
+            vecFailedFlag.push_back( rc ) ;
+
+            if ( !pSucNum && !_pHandle )
+            {
+               goto error ;
+            }
+         }
+      }
+
+      if ( !_pHandle )
+      {
+         if ( vecFailedFlag.size() > 0 )
+         {
+            rc = vecFailedFlag[ 0 ] ;
+            goto error ;
+         }
+         goto done ;
+      }
+      else
+      {
+         INT32 rcTmp = SDB_OK ;
+         // process failed
+         for ( UINT32 i = 0 ; i < vecFailedSession.size() ; ++i )
+         {
+            pSub = vecFailedSession[ i ] ;
+            nodeID = pSub->getNodeIDUInt() ;
+            rcTmp = vecFailedFlag[ i ] ;
+            rc = _pHandle->onSendFailed( this, &pSub, rcTmp ) ;
+            PD_RC_CHECK( rc, PDERROR, "Session[%s] send msg to node[%s] "
+                         "failed[rc: %d] and processed failed[rc: %d]",
+                         _pEDUCB->toString().c_str(),
+                         routeID2String(nodeID).c_str(),
+                         rcTmp, rc ) ;
+            if ( pSucNum )
+            {
+               ++(*pSucNum) ;
+            }
+         }
+      }
 
    done:
       return rc ;
@@ -375,7 +532,21 @@ namespace engine
 
    INT32 _pmdRemoteSession::sendMsg( INT32 *pSucNum, INT32 *pTotalNum )
    {
+      return sendMsg( NULL, pSucNum, pTotalNum ) ;
+   }
+
+   INT32 _pmdRemoteSession::sendMsg( UINT64 nodeID )
+   {
       INT32 rc = SDB_OK ;
+      pmdSubSession *pSub = getSubSession( nodeID ) ;
+      if ( !pSub )
+      {
+         PD_LOG( PDERROR, "Session[%s] can't find sub session[%s]",
+                 _pEDUCB->toString().c_str(), routeID2String(nodeID).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      rc = sendMsg( pSub ) ;
 
    done:
       return rc ;
@@ -383,20 +554,63 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdRemoteSession::sendMsg( UINT64 nodeID )
+   INT32 _pmdRemoteSession::sendMsg( pmdSubSession *pSub )
    {
       INT32 rc = SDB_OK ;
-      pmdSubSession *pSub = getSubSession( nodeID ) ;
 
       if ( !pSub )
       {
-         PD_LOG( PDERROR, "Session[%s] can't find sub session[%lld]",
-                 _pEDUCB->toString().c_str(), nodeID ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else if ( !pSub->getReqMsg() )
+      {
+         PD_LOG( PDERROR, "Session[%s] request msg header is NULL",
+                 _pEDUCB->toString().c_str() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
-      // if has io vec
+      // has send msg
+      if ( pSub->isSend() )
+      {
+         PD_LOG( PDDEBUG, "Session[%s] has already send msg to "
+                 "node[%s]", _pEDUCB->toString().c_str(),
+                 routeID2String(pSub->getNodeID()).c_str() ) ;
+         goto done ;
+      }
+
+      pSub->setReqID( _pEDUCB->incCurRequestID() ) ;
+      pSub->getReqMsg()->requestID = pSub->getReqID() ;
+      pSub->getReqMsg()->routeID.value = MSG_INVALID_ROUTEID ;
+      pSub->getReqMsg()->TID = _pEDUCB->getTID() ;
+
+      // prepare send
+      if ( pSub->getIODatas()->size() > 0 )
+      {
+         pSub->getReqMsg()->messageLength = sizeof( MsgHeader ) +
+                                            pSub->getIODataLen() ;
+         rc = _pAgent->syncSendv( pSub->getNodeID(), pSub->getReqMsg(),
+                                  *(pSub->getIODatas()) ) ;
+      }
+      else
+      {
+         rc = _pAgent->syncSend( pSub->getNodeID(),
+                                 (void*)pSub->getReqMsg() ) ;
+      }
+
+      if ( SDB_OK == rc )
+      {
+         pSub->setSendResult( TRUE ) ;
+         // add to request map
+         _pSite->addSubSession( pSub ) ;
+      }
+      else
+      {
+         PD_RC_CHECK( rc, PDERROR, "Session[%s] send msg to node[%s] failed, "
+                      "rc: %d", _pEDUCB->toString().c_str(),
+                      routeID2String(pSub->getNodeID()).c_str(), rc ) ;
+      }
 
    done:
       return rc ;
@@ -523,7 +737,7 @@ namespace engine
             --totalUnReplyNum ;
             if ( pSubs )
             {
-               (*pSubs)[ pSubSession->getNodeID() ] = pSubSession ;
+               (*pSubs)[ pSubSession->getNodeIDUInt() ] = pSubSession ;
             }
          }
       }
@@ -536,7 +750,7 @@ namespace engine
 
    void _pmdRemoteSession::addPending( pmdSubSession *pSubSession )
    {
-      _mapPendingSubSession[ pSubSession->getNodeID() ] = pSubSession ;
+      _mapPendingSubSession[ pSubSession->getNodeIDUInt() ] = pSubSession ;
    }
 
    /*
@@ -550,6 +764,11 @@ namespace engine
    _pmdRemoteSessionSite::~_pmdRemoteSessionSite()
    {
       _pEDUCB = NULL ;
+   }
+
+   void _pmdRemoteSessionSite::addSubSession( pmdSubSession *pSub )
+   {
+      _mapReq2SubSession[ pSub->getReqID() ] = pSub ;
    }
 
    INT32 _pmdRemoteSessionSite::processEvent( pmdEDUEvent &event,
@@ -585,7 +804,7 @@ namespace engine
             {
                break ;
             }
-            else if ( itPtr->second->getNodeID() == nodeID )
+            else if ( itPtr->second->getNodeIDUInt() == nodeID )
             {
                itPtr->second->processEvent( event ) ;
                if ( !*ppSub && ( it = mapSessions.find( nodeID ) ) !=
@@ -627,12 +846,11 @@ namespace engine
          else
          {
             PD_LOG( PDWARNING, "Session[%s] recv expired msg[opCode: (%d)%u, "
-                    "ReqID: %lld, Len: %d, NodeID: %u.%u.%u]",
+                    "ReqID: %lld, Len: %d, NodeID: %s]",
                     _pEDUCB->toString().c_str(), IS_REPLY_TYPE(pReply->opCode),
                     GET_REQUEST_TYPE(pReply->opCode), pReply->requestID,
-                    pReply->messageLength, pReply->routeID.columns.groupID,
-                    pReply->routeID.columns.nodeID,
-                    pReply->routeID.columns.serviceID ) ;
+                    pReply->messageLength,
+                    routeID2String(pReply->routeID).c_str() ) ;
          }
       }
 
@@ -752,22 +970,19 @@ namespace engine
          else
          {
             PD_LOG( PDERROR, "Failed to alloc memory[size: %d] for msg["
-                    "opCode: (%d)%u, TID: %d, ReqID: %llu, NodeID: %u.%u.%u]",
+                    "opCode: (%d)%u, TID: %d, ReqID: %llu, NodeID: %s]",
                     pMsg->messageLength, IS_REPLY_TYPE(pMsg->opCode),
                     GET_REQUEST_TYPE(pMsg->opCode), pMsg->TID,
-                    pMsg->requestID, pMsg->routeID.columns.groupID,
-                    pMsg->routeID.columns.nodeID,
-                    pMsg->routeID.columns.serviceID ) ;
+                    pMsg->requestID, routeID2String(pMsg->routeID).c_str() ) ;
          }
       }
       else
       {
          PD_LOG( PDWARNING, "Can't find remote session[TID=%d] for msg["
-                 "opCode: (%d)%u, ReqID: %llu, NodeID: %u.%u.%u, Len: %u]",
+                 "opCode: (%d)%u, ReqID: %llu, NodeID: %s, Len: %u]",
                  pMsg->TID, IS_REPLY_TYPE(pMsg->opCode),
                  GET_REQUEST_TYPE(pMsg->opCode), pMsg->requestID,
-                 pMsg->routeID.columns.groupID, pMsg->routeID.columns.nodeID,
-                 pMsg->routeID.columns.serviceID, pMsg->messageLength ) ;
+                 routeID2String(pMsg->routeID).c_str(), pMsg->messageLength ) ;
          rc = SDB_INVALIDARG ;
       }
 

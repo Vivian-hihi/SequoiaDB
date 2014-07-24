@@ -83,6 +83,19 @@ error :
    goto done ;
 }
 
+string routeID2String( MsgRouteID routeID )
+{
+   stringstream ss ;
+   ss << routeID.columns.groupID << "." << routeID.columns.nodeID
+      << "." << routeID.columns.serviceID ;
+   return ss.str() ;
+}
+
+string routeID2String( UINT64 nodeID )
+{
+   return routeID2String( *(MsgRouteID*)&nodeID ) ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDUPMSG, "msgBuildUpdateMsg" )
 INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
