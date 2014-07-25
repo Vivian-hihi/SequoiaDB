@@ -41,7 +41,7 @@
          <case value="driver-python">
          	<echo message="...test python driver..."/>
          	  <sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
-	         	  	<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/python_testcases" />
+	         	  	<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/build" />
 	         	  	<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 	         	  	<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
          	  </sdbtest>
