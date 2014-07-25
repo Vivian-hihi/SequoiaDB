@@ -73,13 +73,13 @@
 <tr class="strow">
           <td valign="top" headers="d52649e31" class="stentry">EnsureInc</td>
 
-          <td valign="top" headers="d52649e34" class="stentry">备份方式，true表示增量备份，false表示全量备份，缺省为false。</td>
+          <td valign="top" headers="d52649e34" class="stentry">备份方式，true 表示增量备份，false 表示全量备份，缺省为 false。</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d52649e31" class="stentry">OverWrite</td>
 
-          <td valign="top" headers="d52649e34" class="stentry">对于同名备份是否覆盖，true表示覆盖，false表示不覆盖，如果同名则报错；缺少为true。</td>
+          <td valign="top" headers="d52649e34" class="stentry">对于同名备份是否覆盖，true 表示覆盖，false 表示不覆盖，如果同名则报错；缺省为 true。</td>
 
         </tr>
 <tr class="strow">
@@ -89,44 +89,43 @@
 
         </tr>
 </table>
-</div>
 
+    </div>
     
     <div class="section"><h2 class="title sectiontitle">备份整个数据库</h2>
       
-      <p class="p">1.连接到协调节点</p>
+      <p class="p">1. 连接到协调节点</p>
 <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
 &gt; var db = new Sdb("localhost",11810);</pre>
 
-      <p class="p">2.执行备份命令</p>
+      <p class="p">2. 执行备份命令</p>
 <pre class="pre codeblock">&gt; db.backupOffline({Name:"backupName",Description:"backup for all"})</pre>
       
     </div>
 
     <div class="section"><h2 class="title sectiontitle">备份指定组的数据库</h2>
       
-      <p class="p">1.连接到协调节点</p>
+      <p class="p">1. 连接到协调节点</p>
 <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
 &gt; var db = new Sdb("localhost",11810);</pre>
 
-      <p class="p">2.执行备份命令</p>
+      <p class="p">2. 执行备份命令</p>
 <pre class="pre codeblock">&gt; db.backupOffline({Name:"backupName",Description:"backup group1",GroupName:"datagroup1"})</pre>
       
     </div>
 
     <div class="section"><h2 class="title sectiontitle">备份指定节点的数据库</h2>
       
-      <p class="p">1.连接到指定节点</p>
+      <p class="p">1. 连接到指定节点</p>
 <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
 &gt; var dbdata = new Sdb("hostname1","servicename1");</pre>
 
-      <p class="p">2.执行备份命令</p>
+      <p class="p">2. 执行备份命令</p>
 <pre class="pre codeblock">&gt; dbdata.backupOffline({Name:"backupName",Description:"backup data node"}))</pre>
       
     </div>
  
-    <div class="note note"><span class="notetitle">Note:</span> catalog编目组的名称固定为SYSCatalogGroup</div>
-
+    <div class="note note"><span class="notetitle">Note:</span> catalog 编目组的名称固定为 SYSCatalogGroup</div>
     
   </div>
 
@@ -139,7 +138,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>
