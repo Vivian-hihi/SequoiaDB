@@ -18,7 +18,7 @@
 		<mkdir dir="${reports.path}" />
 	</target>
 
-	<target name="test-one-case" depends="clean-env">
+	<target name="exec-driver-python-test" depends="clean-env">
 
 		<echo message="test one case is TestPySequoiadb.py" />
 		<copy todir="${install.path}/sequoiadb/python">
