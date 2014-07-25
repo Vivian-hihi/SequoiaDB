@@ -73,7 +73,7 @@ Sequoiadb
               
                 <dt class="dt pt dlterm">PageSize</dt>
 
-                <dd class="dd pd">Size of data page. The default value is 65536B.</dd>
+                <dd class="dd pd">Size of a data page. The default value is 65536B.</dd>
 
                 <dd class="dd pd">PageSize:&lt;int32&gt;</dd>
 
@@ -94,13 +94,13 @@ Sequoiadb
       </dl>
       
       <div class="note note"><span class="notetitle">Note:</span> 
-        <ul class="ul"><li class="li">The parameter "name" should not be null string. It should not contain "." or "$". The length of it should not be greater than 127B.</li>
+        <ul class="ul"><li class="li">The parameter "name" should not be a null string. It should not contain "." or "$". The length of it should not be greater than 127B.</li>
 
-          <li class="li">Collection space names should be unique to each other in a database object.</li>
+          <li class="li">Collection space names should be unique to each other in a database instance.</li>
 
-          <li class="li">When creating a collection space, users can specify the size of data page. It is unchangable afterward. The default value of it is 65536B.</li>
+          <li class="li">When creating a collection space, users can specify the size of data page. It is unchangeable afterward. The default value of it is 65536B.</li>
 
-          <li class="li">PageSize can only be one of the following six:0,4096,8192,16384,32768,and 65536. The default value is 0.</li>
+          <li class="li">PageSize can only be one of the following six: 0, 4096, 8192, 16384, 32768, and 65536. The default value is 0.</li>
 
           <li class="li">Domain must already exist, and cannot be SYSDOMAIN.</li>
 
@@ -113,11 +113,11 @@ Sequoiadb
     
     <div class="section"><h2 class="title sectiontitle">Examples</h2>
       
-      <p class="p">Create a collection space named "foo" without specifying the size of data page.</p>
+      <p class="p">Create a collection space named "foo" without specifying the size of data page, so its default page size will be 65536B.</p>
 
       <pre class="pre codeblock">db.createCS("foo")</pre>
 
-      <p class="p">Create a collection space named "foo", set 4096B for PageSize and "mydomain" for Domain.</p>
+      <p class="p">Create a collection space named "foo", specify the size of the data page as 4096 and its domain as "mydomain".</p>
 
       <pre class="pre codeblock">db.createCS("foo",{PageSize:4096,Domain:"mydomain"})</pre>
 
@@ -138,7 +138,7 @@ Sequoiadb
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

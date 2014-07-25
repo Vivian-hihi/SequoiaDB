@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.snapshot()"/>
-<meta name="description" content="NAME snapshot - It lists snapshots. SYNOPSIS snapshot ( &lt;snapType&gt; , [cond] , [sel] , [sort] ) CATEGORY Sequoiadb DESCRIPTION It lists snapshots. Snapshot is a kind of command used to get the current ..."/>
+<meta name="description" content="NAME snapshot - It lists snapshots. SYNOPSIS snapshot ( &lt;snapType&gt; , [cond] , [sel] , [sort] ) CATEGORY Sequoiadb DESCRIPTION It lists snapshots. Snapshot() is a command used to get the current status ..."/>
 <meta name="DC.Relation" scheme="URI" content="db.listReplicaGroups.html"/>
 <meta name="DC.Relation" scheme="URI" content="db.resetSnapshot.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -58,24 +58,36 @@ Sequoiadb
 
     <div class="section"><h2 class="title sectiontitle">DESCRIPTION</h2>
        
-      <p class="p">It lists snapshots. Snapshot is a kind of command used to get the current status of system.</p>
+      <p class="p">It lists snapshots. Snapshot() is a command used to get the current status of system.</p>
 
       <dl class="dl parml">
         
-          <dt class="dt pt dlterm">snapType (List)</dt>
+          <dt class="dt pt dlterm">snapType (list)</dt>
 
-          <dd class="dd pd">Snapshot type, the value of snapshot type is in the range from 0 to 7.</dd>
+          <dd class="dd pd">Snapshot type.Please refer to Snapshot.</dd>
 
         
         
           <dt class="dt pt dlterm">cond (json object)</dt>
 
-          <dd class="dd pd">Selection criteria, only to return snapshot information con field specifies the node or partition group to null, returns the entire snapshot information.        
-            <dl class="dl parml">
+          <dd class="dd pd">Selecting condition. Only return the snapshot information of the nodes and replica groups that match the selecting conditions specified in the 'cond' field. When the field is null, return the cluster's information.</dd>
+
+        
+        
+          <dt class="dt pt dlterm">sel (json object)</dt>
+
+          <dd class="dd pd">Selects the returned field. Returns all the fields when it is null.</dd>
+
+        
+        
+          <dt class="dt pt dlterm">sort (json object)</dt>
+
+          <dd class="dd pd">Sorts the returned records according to the selected fields. 1 for ascending order, -1 for descending order.
+        <dl class="dl parml">
               
                 <dt class="dt pt dlterm">Format</dt>
 
-                <dd class="dd pd">The defination of the method "snapshot()" contains four fields: snapType, cond, sel, sort. The type of "snapType" is enumeration. Other fields are json objects. The format is as follow:</dd>
+                <dd class="dd pd">Snapshot() has four parameters: snapType, cond, sel, sort. The type of "snapType" is enumeration. Other fields are json objects. The format is as follow:</dd>
 
                 <dd class="dd pd">{"snapType":"&lt;snapshot type&gt;",["cond":"{"Field name 1":{"operation 1":"value 1"},"Field name 2":{"Operation 2":"value 2"}...}"]}</dd>
 
@@ -88,15 +100,11 @@ Sequoiadb
       </dl>
 
       <div class="note note"><span class="notetitle">Note:</span> 
-        <ul class="ul"><li class="li">The value of snapType is in the range from 0 to 7.</li>
+        <ul class="ul"><li class="li">For more details on the value of snapType, please refer to Snapshot.</li>
 
-          <li class="li">The parameter "sel" is a json object. The value of field name is specified as null
-            string. It is defined as: {"Field name 1":"value 1","Field name 2":"value 2",...}.If the
-            records contain the specified field names, the values are invalid. If the records don't
-            contain specified fields, it returns "{"Field name 1":"value 1", "Field name 2":"value
-            2"}".</li>
+          <li class="li">The parameter "sel" is a json object. The value of field is often specified as a null string. If the parameters are specified in this format: "{"field name 1": "value 1", "field name 2":"value 2",...}", for the fields that do exist in the records, the value of these fields is actually useless; for the fields that do not exist in the records, "{"field name 1": "value 1", "field name 2":"value 2",...}" will be returned.</li>
 
-          <li class="li">If the value of a field is in the type of array. We invoke the elements in it through "." and double quotations.</li>
+          <li class="li">If the value of a field is in the type of array. Elements are invoked by "."(dot) and double quotations.</li>
 
         </ul>
 </div>
@@ -105,7 +113,7 @@ Sequoiadb
     
     <div class="section"><h2 class="title sectiontitle">Examples</h2>
       
-      <div class="p">Set the value of "snapType" as 0:<pre class="pre codeblock">db.snapshot(0)</pre>
+      <div class="p">Set the value of "snapType" as SDB_SNAP_CONTEXTS:<pre class="pre codeblock">db.snapshot(SDB_SNAP_CONTEXTS)</pre>
 </div>
 
       <p class="p">Returns context snapshot of the entire cluster:</p>
@@ -153,12 +161,12 @@ Sequoiadb
   ]
   }</pre>
 
-      <p class="p">A partition group snapshot information inquiry by group name or group ID, such as:</p>
+      <p class="p">Get the snapshot of the specified replica group by group name or group ID, for example:</p>
 
-      <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1'})</pre>
-Returns group called "data1" partition group snapshot information.
-        <pre class="pre codeblock">db.snapshot(0,{GroupID:1000})</pre>
-Partition group snapshot return group ID is "1000" message.</div>
+      <div class="p"><pre class="pre codeblock">db.snapshot(SDB_SNAP_CONTEXTS,{GroupName:'data1'})</pre>
+Return the snapshot of a group named "data1".
+        <pre class="pre codeblock">db.snapshot(SDB_SNAP_CONTEXTS,{GroupID:1000})</pre>
+Return the snapshot of a replica group with a group ID of 1000.</div>
 
       <pre class="pre codeblock">{
   "SessionID": "vmsvr1-cent-x64-1:11820:22",
@@ -189,11 +197,11 @@ Partition group snapshot return group ID is "1000" message.</div>
   ]
   }</pre>
 
-      <p class="p">By "group name + host name + service name" or "group ID + Node ID" check snapshot information of a node, such as:</p>
+      <p class="p">Get the snapshot of a node by specifying "group name + host name + service name" or "group ID + node ID", for example:</p>
 
-      <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
+      <div class="p"><pre class="pre codeblock">db.snapshot(SDB_SNAP_CONTEXTS,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
 
-        <pre class="pre codeblock">db.snapshot(0,{GroupID:1000,NodeID:1001})</pre>
+        <pre class="pre codeblock">db.snapshot(SDB_SNAP_CONTEXTS,{GroupID:1000,NodeID:1001})</pre>
 </div>
 
       <pre class="pre codeblock">{
@@ -211,9 +219,9 @@ Partition group snapshot return group ID is "1000" message.</div>
   ]
   }</pre>
 
-      <p class="p">By "host name + service name" check snapshot information of a node, such as:</p>
+      <p class="p">Get the snapshot of a node by specifying "host name + service name", for example:</p>
 
-      <div class="p"><pre class="pre codeblock">db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
+      <div class="p"><pre class="pre codeblock">db.snapshot(SDB_SNAP_CONTEXTS,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
 
       </div>
 
@@ -235,7 +243,7 @@ Partition group snapshot return group ID is "1000" message.</div>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

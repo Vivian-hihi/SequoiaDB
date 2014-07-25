@@ -63,7 +63,7 @@ Sequoiadb
         
           <dt class="dt pt dlterm">listType (Enumeration)</dt>
 
-          <dd class="dd pd">The value of it is in the range from 0 to 7.</dd>
+          <dd class="dd pd">listType, Please refer to List.</dd>
 
         
         
@@ -75,7 +75,7 @@ Sequoiadb
         
           <dt class="dt pt dlterm">sel (json object)</dt>
 
-          <dd class="dd pd">Select fields to be returned. When it is null, return all records.</dd>
+          <dd class="dd pd">Select fields to be returned. When it is null, return all the fields.</dd>
 
         
         
@@ -99,9 +99,9 @@ Sequoiadb
       </dl>
       
       <div class="note note"><span class="notetitle">Note:</span> 
-        <ul class="ul"><li class="li">The value of "listType" is in the range from 0 to 7.</li>
+        <ul class="ul"><li class="li">For more details on the value of "listType", please refer to List .</li>
 
-          <li class="li">The value of "sel" is in the type of json object. The value of each field in it is always null string. If it is specified as "{"field name 1": "value 1", "field name 2":"value 2",...}", the values of existing fields are invalid. As for fields that doesn't exist, it will return "{"field name 1": "value 1", "field name 2":"value 2",...}".</li>
+          <li class="li">The value of "sel" is in the type of json object. The value of field is often specified as a null string. If the parameters are specified in this format: "{"field name 1": "value 1", "field name 2":"value 2",...}", for the fields that do exist in the records, the value of these fields is actually useless; for the fields that do not exist in the records, "{"field name 1": "value 1", "field name 2":"value 2",...}" will be returned.</li>
 
           <li class="li">If a value of a field is in the type of array, users can use "." to invoke it and add double quotation.</li>
 
@@ -112,20 +112,20 @@ Sequoiadb
     
     <div class="section"><h2 class="title sectiontitle">Examples</h2>
       
-      <div class="p">Specify the value of "listType" as 0：<pre class="pre codeblock">db.list(0)</pre>
+      <div class="p">Specify the value of "listType" as SDB_LIST_CONTEXTS:<pre class="pre codeblock">db.list(SDB_LIST_CONTEXTS)</pre>
 </div>
 
-      <p class="p">Return ：</p>
+      <p class="p">Return:</p>
 
       <pre class="pre codeblock">     {
         "SessionID": 4,
         "Contexts": [ 0 ]
         } ...</pre>
 
-      <div class="p">Specify the value of "listType" as 6：<pre class="pre codeblock">db.list(6)</pre>
+      <div class="p">Specify the value of "listType" as SDB_LIST_STORAGEUNITS:<pre class="pre codeblock">db.list(SDB_LIST_STORAGEUNITS)</pre>
 </div>
 
-      <p class="p">Return：</p>
+      <p class="p">Return:</p>
 
       <pre class="pre codeblock">    {
         "Name": "foo", 
@@ -139,13 +139,11 @@ Sequoiadb
         } </pre>
 
       <div class="p">
-        <pre class="pre codeblock">db.list(6,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})</pre>
+        <pre class="pre codeblock">db.list(SDB_LIST_STORAGEUNITS,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name:1})</pre>
 
       </div>
 
-      <p class="p">Return records that contains the value of "Logical" greater than 1. Each record just
-        return the 2 fields: Name and ID. The values of "Name" in these records are in ascending
-        order.  </p>
+      <p class="p">Return the records that contain the value of "Logical ID" greater than 1. Each record just returns two fields: "Name" and "ID". The values of "Name" in these records are sorted in ascending order.</p>
 
       <pre class="pre codeblock">      {
         "ID": 4091,
@@ -174,7 +172,7 @@ Sequoiadb
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

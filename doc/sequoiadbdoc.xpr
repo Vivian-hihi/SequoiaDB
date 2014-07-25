@@ -418,7 +418,6 @@
                 <folder name="topics">
                     <file name="developement/console/topics/console_en.dita"/>
                     <file name="developement/console/topics/console.dita"/>
-                    <file name="developement/console/topics/javascript_en.dita"/>
                     <file name="developement/console/topics/knack_en.dita"/>
                     <file name="developement/console/topics/knack.dita"/>
                     <file name="developement/console/topics/shell_en.dita"/>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.createRG()"/>
-<meta name="description" content="NAME createRG - Create a ReplicaGroup. SYNOPSIS db.createRG ( &lt;name&gt; ) CATEGORY Sequoiadb DESCRIPTION Create a ReplicaGroup. When creating a ReplicaGroup, the system will automatically generate a ..."/>
+<meta name="description" content="NAME createRG - Create a replica group. SYNOPSIS db.createRG ( &lt;name&gt; ) CATEGORY Sequoiadb DESCRIPTION Create a replica group. When creating a replica group, the system will automatically generate a ..."/>
 <meta name="DC.Relation" scheme="URI" content="db.getCS.html"/>
 <meta name="DC.Relation" scheme="URI" content="db.getRG.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -39,7 +39,7 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">NAME</h2>
       
-      <p class="p">createRG - Create a ReplicaGroup.</p>
+      <p class="p">createRG - Create a replica group.</p>
 
     </div>
 
@@ -57,20 +57,20 @@ Sequoiadb
 
     <div class="section"><h2 class="title sectiontitle">DESCRIPTION</h2>
        
-      <p class="p">Create a ReplicaGroup. When creating a ReplicaGroup, the system will automatically generate a "groupID" for a ReplicaGroup.</p>
+      <p class="p">Create a replica group. When creating a replica group, the system will automatically generate a "groupID" for a replica group.</p>
 
       <dl class="dl parml">
         
           <dt class="dt pt dlterm">name (string)</dt>
 
-          <dd class="dd pd">ReplicaGroup name. All ReplicaGroup names are unique to each other in a database object.
+          <dd class="dd pd">Replica group name. All replica group names are unique to each other in a database instance.
             <dl class="dl parml">
               
                 <dt class="dt pt dlterm">Format</dt>
 
-                <dd class="dd pd">The method "createRG()" contains the parameter "name", which is in the type od string. It should not be null.</dd>
+                <dd class="dd pd">The method "createRG()" contains the parameter "name", which is in the type of string. It should not be null.</dd>
 
-                <dd class="dd pd">(&lt;"ReplicaGroup name"&gt;)</dd>
+                <dd class="dd pd">(&lt;"replica group name"&gt;)</dd>
 
               
             </dl>
@@ -81,7 +81,7 @@ Sequoiadb
       </dl>
       
       <div class="note note"><span class="notetitle">Note:</span> 
-        <ul class="ul"><li class="li">ReplicaGroup is not null string. It should not contains "." or "$". The length of it should not be greater than 127B.</li>
+        <ul class="ul"><li class="li">The value of the "name" cannot be a null string. It should not contain "." or "$". The length of it should not be greater than 127B.</li>
 
         </ul>
 </div>
@@ -90,7 +90,7 @@ Sequoiadb
     
     <div class="section"><h2 class="title sectiontitle">Examples</h2>
       
-      <p class="p">Create a ReplicaGroup named "group".</p>
+      <p class="p">Create a replica group named "group".</p>
 
       <pre class="pre codeblock">db.createRG("group")</pre>
 
@@ -112,7 +112,7 @@ Sequoiadb
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

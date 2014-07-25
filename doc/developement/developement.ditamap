@@ -4,7 +4,6 @@
  <topicref href="topics/developement.dita">
   <anchorref href="console/console.ditamap"/>
   <anchorref href="basics/basics.ditamap"/>
-  <!--<anchorref href="aggregate/aggregate.ditamap"/>-->
   <anchorref href="application/application.ditamap"/>
   <anchorref href="sdbcm/sdbcm.ditamap"/>
  </topicref>

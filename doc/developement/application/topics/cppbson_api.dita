@@ -3,8 +3,7 @@
   <topic id="topic_2kt_wjd_kk_cpp_bson">
     <title>C++ BSON API</title>
     <body>
-      <p>此部分是相关C++ BSON的API文档。</p>
+      <p>此部分是相关 C++ BSON 的 API 文档。</p>
       <p><xref href="..\..\..\bsoncpp\html\index.html" format="html">C++ BSON API</xref></p> 
     </body>
   </topic>
-  
