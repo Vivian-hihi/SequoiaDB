@@ -800,8 +800,7 @@ namespace engine
       totalUnReplyNum = getSubSessionCount( PMD_SSITR_UNREPLY ) ;
       while ( totalUnReplyNum > 0 )
       {
-         if ( _pEDUCB->isForced() ||
-              ( _pEDUCB->isInterrupted() && !_pEDUCB->isDisconnected() ) )
+         if ( _pEDUCB->isInterrupted() )
          {
             rc = SDB_APP_INTERRUPT ;
             goto error ;
