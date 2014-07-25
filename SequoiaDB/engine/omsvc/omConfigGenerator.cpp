@@ -206,7 +206,7 @@ namespace engine
       while ( ite != _validatorList.end() )
       {
          rangeValidator *pRV = *ite ;
-         delete pRV ;
+         SDB_OSS_DEL pRV ;
 
          _validatorList.erase( ite++ ) ;
       }
@@ -220,12 +220,13 @@ namespace engine
 
       if( string::npos != posTmp )
       {
-         rv = new rangeValidator( _type, tmpValue.substr( 0, posTmp ).c_str(), 
-                                  tmpValue.substr( posTmp + 1 ).c_str() ) ;
+         rv = SDB_OSS_NEW rangeValidator( _type,
+                                          tmpValue.substr(0,posTmp).c_str(), 
+                                          tmpValue.substr(posTmp+1).c_str() ) ;
       }
       else
       {
-         rv = new rangeValidator( _type, tmpValue.c_str() ) ;
+         rv = SDB_OSS_NEW rangeValidator( _type, tmpValue.c_str() ) ;
       }
 
       _validatorList.push_back( rv ) ;
@@ -1204,7 +1205,7 @@ namespace engine
       if ( iter != _confDetailMap.end() )
       {
          omConfigItem *old = iter->second ;
-         delete old ;
+         SDB_OSS_DEL old ;
          _confDetailMap.erase( iter ) ;
       }
 
@@ -1219,7 +1220,7 @@ namespace engine
          omConfigItem *old = iter->second ;
          _confDetailMap.erase( iter++ ) ;
 
-         delete old ;
+         SDB_OSS_DEL old ;
          old = NULL ;
       }
 
@@ -1229,7 +1230,7 @@ namespace engine
          omHostInfo *host = iterHost->second ;
          _hostInfoMap.erase( iterHost++ ) ;
 
-         delete host ;
+         SDB_OSS_DEL host ;
          host = NULL ;
       }
 
@@ -1408,7 +1409,7 @@ namespace engine
       INT32 rc           = SDB_OK ;
       omConfigItem *pItem = NULL ;;
 
-      pItem = new omConfigItem() ;
+      pItem = SDB_OSS_NEW omConfigItem() ;
       rc    = pItem->init( oneProperty ) ;
       if ( SDB_OK != rc )
       {
@@ -1471,7 +1472,7 @@ namespace engine
    error:
       if ( NULL != pItem )
       {
-         delete pItem ;
+         SDB_OSS_DEL pItem ;
       }
       _clear() ;
       goto done ;
@@ -1624,7 +1625,7 @@ namespace engine
 
             ele              = iter.next() ;
             oneHostConf      = ele.embeddedObject() ;
-            host             = new omHostInfo() ;
+            host             = SDB_OSS_NEW omHostInfo() ;
             config  = oneHostConf.filterFieldsUndotted( confFilter, true ) ;
             oneHost = oneHostConf.filterFieldsUndotted( confFilter, false ) ;
             rc = host->init( oneHost, config, &_confDetailMap, businessName ) ;
@@ -1632,7 +1633,7 @@ namespace engine
             {
                _errorDetail = string( "initial host failed" ) ;
                PD_LOG( PDERROR, "initial host failed:rc=%d", rc ) ;
-               delete host ;
+               SDB_OSS_DEL host ;
                goto error ;
             }
 

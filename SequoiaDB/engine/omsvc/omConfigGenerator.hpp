@@ -49,7 +49,7 @@ namespace engine
    // extend configure
    #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
 
-   class sdbConfTemplate
+   class sdbConfTemplate : public SDBObject
    {
       public:
          string businessType ;
@@ -64,7 +64,7 @@ namespace engine
          void init() ;
    } ;
 
-   class sdbConfDetail
+   class sdbConfDetail : public SDBObject
    {
       public:
          string   dbPath ;
@@ -88,7 +88,7 @@ namespace engine
          void init() ;
    } ;
 
-   class rangeValidator
+   class rangeValidator : public SDBObject
    {
       public:
          rangeValidator( string type, const CHAR *value ) ;
@@ -110,7 +110,7 @@ namespace engine
          string      _end ;
    } ;
 
-   class omConfigItem
+   class omConfigItem : public SDBObject
    {
       public:
          omConfigItem() ;
@@ -141,7 +141,7 @@ namespace engine
          typedef list<rangeValidator *>::iterator VALIDATORLIST_ITER ;
    } ;
 
-   struct omNodeInfo
+   struct omNodeInfo : public SDBObject
    {
       string role ;
       string dbPath ;
@@ -150,7 +150,7 @@ namespace engine
       INT32  svcName ;
    } ;
 
-   struct omDiskInfo
+   struct omDiskInfo : public SDBObject
    {
       string  diskName ;
       string  mountPath ;
@@ -166,7 +166,7 @@ namespace engine
       INT32   getNodeCount() ;
    } ;
 
-   struct hostNodeCounter
+   struct hostNodeCounter : public SDBObject
    {
       INT32    unUsedDiskCount ;
       INT32    diskCount ;
@@ -181,7 +181,7 @@ namespace engine
       INT32    getUnusedDiskCount() ;
    } ;
    
-   class omHostInfo
+   class omHostInfo : public SDBObject
    {
       public:
          omHostInfo() ;
@@ -233,7 +233,7 @@ namespace engine
          set<string> _usedDiskSet ;
    } ;
 
-   class omConfigGenerator
+   class omConfigGenerator : public SDBObject
    {
       public:
          omConfigGenerator() ;

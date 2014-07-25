@@ -401,7 +401,7 @@ namespace engine
 
    };
 
-   class restFileController
+   class restFileController : public SDBObject
    {
       public:
          static restFileController* getTransferInstance() ;

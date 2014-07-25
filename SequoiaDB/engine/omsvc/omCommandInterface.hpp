@@ -41,7 +41,7 @@
 
 namespace engine
 {
-   class omCommandInterface
+   class omCommandInterface : public SDBObject
    {
       public:
          omCommandInterface() ;

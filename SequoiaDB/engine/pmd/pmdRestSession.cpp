@@ -45,13 +45,15 @@ using namespace bson ;
 namespace engine
 {
    static void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor, 
-                           pmdRestSession *pRestSession, pmdEDUCB* pEduCB ) ;
+                                  pmdRestSession *pRestSession,
+                                  pmdEDUCB* pEduCB ) ;
 
    void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor, 
-                           pmdRestSession *pRestSession, pmdEDUCB* pEduCB )
+                           pmdRestSession *pRestSession,
+                           pmdEDUCB* pEduCB )
    {
       BSONObj _errorInfo = pmdGetErrorBson( rc, pEduCB->getInfo( 
-                              EDU_INFO_ERROR ) ) ;
+                                            EDU_INFO_ERROR ) ) ;
       pAdptor->setOPResult( pRestSession, rc, _errorInfo ) ;
       pAdptor->sendResponse( pRestSession, HTTP_OK ) ;
    }
@@ -65,7 +67,7 @@ namespace engine
       _pFixBuff         = NULL ;
       _pSessionInfo     = NULL ;
 
-      _wwwRootPath      = "./www" ;
+      _wwwRootPath      = pmdGetOptionCB()->getWWWPath() ;
    }
 
    _pmdRestSession::~_pmdRestSession()
@@ -153,7 +155,7 @@ namespace engine
             // if 'SessionID' exist, attach the sessionInfo
             if ( pSessionID )
             {
-               PD_LOG( PDEVENT, "OM: session_id=%s", pSessionID ) ;
+               PD_LOG( PDINFO, "Rest session: %s", pSessionID ) ;
                _pSessionInfo = sdbGetOMManager()->attachSessionInfo(
                                   pSessionID ) ;
             }
@@ -241,7 +243,7 @@ namespace engine
    done:
       if ( NULL != pOmCommand )
       {
-         delete pOmCommand ;
+         SDB_OSS_DEL pOmCommand ;
       }
       return SDB_OK ;
 
@@ -261,8 +263,9 @@ namespace engine
       if ( COM_GETFILE == command )
       {
          PD_LOG( PDEVENT, "OM: getfile command:file=%s", pFilePath ) ;
-         commandIf = new omGetFileCommand( pAdptor, this, 
-                                           _wwwRootPath.c_str(), pFilePath ) ;
+         commandIf = SDB_OSS_NEW omGetFileCommand( pAdptor, this,
+                                                   _wwwRootPath.c_str(),
+                                                   pFilePath ) ;
       }
       else 
       {
@@ -299,76 +302,75 @@ namespace engine
          
          if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
          {
-            commandIf = new omAuthCommand( pAdptor, this, 
-                                           _wwwRootPath.c_str() ) ;
+            commandIf = SDB_OSS_NEW omAuthCommand( pAdptor, this, 
+                                                   _wwwRootPath.c_str() ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
          {
-            commandIf = new omCheckSessionCommand( pAdptor, this ) ;
+            commandIf = SDB_OSS_NEW omCheckSessionCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CREATE_CLUSTER_REQ ) == 0 )
          {
-            commandIf = new omCreateClusterCommand( pAdptor, this ) ;
+            commandIf = SDB_OSS_NEW omCreateClusterCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_CLUSTER_REQ ) == 0 )
          {
-            commandIf = new omQueryClusterCommand( pAdptor, this ) ;
+            commandIf = SDB_OSS_NEW omQueryClusterCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
          {
-            commandIf = new omScanHostCommand( pAdptor, this, 
-                                               OM_DEFAULT_LOCAL_HOST, 
-                                               OM_AGENT_DEFAULT_PORT ) ;
+            commandIf = SDB_OSS_NEW omScanHostCommand( pAdptor, this, 
+                                                       OM_DEFAULT_LOCAL_HOST, 
+                                                       OM_AGENT_DEFAULT_PORT ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
          {
-            commandIf = new omCheckHostCommand( pAdptor, this, 
-                                                OM_DEFAULT_LOCAL_HOST, 
-                                                OM_AGENT_DEFAULT_PORT ) ;
+            commandIf = SDB_OSS_NEW omCheckHostCommand( pAdptor, this, 
+                                                        OM_DEFAULT_LOCAL_HOST, 
+                                                        OM_AGENT_DEFAULT_PORT ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
          {
-            commandIf = new omAddHostCommand( pAdptor, this, 
-                                              OM_DEFAULT_LOCAL_HOST, 
-                                              OM_AGENT_DEFAULT_PORT ) ;
+            commandIf = SDB_OSS_NEW omAddHostCommand( pAdptor, this, 
+                                                      OM_DEFAULT_LOCAL_HOST, 
+                                                      OM_AGENT_DEFAULT_PORT ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_REQ ) == 0 )
          {
-            commandIf = new omQueryHostCommand( pAdptor, this ) ;
+            commandIf = SDB_OSS_NEW omQueryHostCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_REQ ) == 0 )
          {
-            commandIf = new omQueryBusinessCommand( pAdptor, this, 
-                                                    _wwwRootPath.c_str(), 
-                                                    pFilePath ) ;
+            commandIf = SDB_OSS_NEW omQueryBusinessCommand( pAdptor, this, 
+                                                            _wwwRootPath.c_str(), 
+                                                            pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, 
                                   OM_QUERY_BUSINESS_TEMPLATE_REQ ) == 0 )
          {
-            commandIf = new omQueryBusinessTemplateCommand(
-                                                           pAdptor, 
-                                                           this, 
-                                                           _wwwRootPath.c_str(), 
-                                                           pFilePath ) ;
+            commandIf = SDB_OSS_NEW omQueryBusinessTemplateCommand( pAdptor, 
+                                                                    this, 
+                                                                    _wwwRootPath.c_str(), 
+                                                                    pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) == 0 )
          {
-            commandIf = new omConfigBusinessCommand( pAdptor, this, 
-                                                     _wwwRootPath.c_str(), 
-                                                     pFilePath ) ;
+            commandIf = SDB_OSS_NEW omConfigBusinessCommand( pAdptor, this, 
+                                                             _wwwRootPath.c_str(), 
+                                                             pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_INSTALL_BUSINESS_REQ) == 0 )
          {
-            commandIf = new omInstallBusinessReq( pAdptor, this, 
-                                                  _wwwRootPath.c_str(), 
-                                                  pFilePath, 
-                                                  OM_DEFAULT_LOCAL_HOST, 
-                                                  OM_AGENT_DEFAULT_PORT ) ;
+            commandIf = SDB_OSS_NEW omInstallBusinessReq( pAdptor, this, 
+                                                          _wwwRootPath.c_str(), 
+                                                          pFilePath, 
+                                                          OM_DEFAULT_LOCAL_HOST, 
+                                                          OM_AGENT_DEFAULT_PORT ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, 
                                   OM_QUERY_INSTALL_PROGRESS ) == 0 )
          {
-            commandIf = new omQueryInstallProgress( pAdptor, this ) ;
+            commandIf = SDB_OSS_NEW omQueryInstallProgress( pAdptor, this ) ;
          }
          else
          {
