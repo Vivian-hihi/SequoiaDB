@@ -142,7 +142,7 @@ namespace engine
 
          void              restoreSession( restSessionInfo *pSessionInfo ) ;
          void              saveSession( restSessionInfo &sessionInfo ) ;
-         bool              isAuthOK() ;
+         BOOLEAN           isAuthOK() ;
          const CHAR*       getSessionID() ;
 
       protected:

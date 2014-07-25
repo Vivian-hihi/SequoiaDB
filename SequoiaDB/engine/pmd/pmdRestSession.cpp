@@ -44,7 +44,7 @@ using namespace bson ;
 
 namespace engine
 {
-   static void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor, 
+   static void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor,
                                   pmdRestSession *pRestSession,
                                   pmdEDUCB* pEduCB ) ;
 
@@ -181,13 +181,12 @@ namespace engine
             {
                _sendOpError2Web( rc, pAdptor, this, _pEDUCB ) ;
             }
-            
             break ;
          }
-         
+
          // increase process event count
          _pEDUCB->incEventCount() ;
-         
+
          // activate edu
          if ( SDB_OK != ( rc = pEDUMgr->activateEDU( _pEDUCB ) ) )
          {
@@ -202,7 +201,7 @@ namespace engine
          {
             break ;
          }
-         
+
          // wait edu
          if ( SDB_OK != ( rc = pEDUMgr->waitEDU( _pEDUCB ) ) )
          {
@@ -210,7 +209,7 @@ namespace engine
                     sessionName(), rc ) ;
             break ;
          }
-         
+
          // release body msg
          releaseBuff( pFilePath, bodySize ) ;
          rc = SDB_OK ;
@@ -427,17 +426,17 @@ namespace engine
    {
    }
 
-   bool _pmdRestSession::isAuthOK()
+   BOOLEAN _pmdRestSession::isAuthOK()
    {
       if ( NULL != _pSessionInfo )
       {
          if ( _pSessionInfo->_authOK )
          {
-            return true ;
+            return TRUE ;
          }
       }
 
-      return false ;
+      return FALSE ;
    }
 
    const CHAR* _pmdRestSession::getSessionID()
