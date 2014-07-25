@@ -1152,6 +1152,14 @@ namespace engine
       }
    }
 
+   void _pmdRemoteSessionMgr::handleConnect( const NET_HANDLE &handle,
+                                             _MsgRouteID id,
+                                             BOOLEAN isPositive )
+   {
+      // TODO:XUJIANHUI
+      // CHECK REMOTE ID, AND SEND HOST+SERVCIE TO PEER
+   }
+
    pmdRemoteSession* _pmdRemoteSessionMgr::addSession( _pmdEDUCB * cb,
                                                         INT64 timeout,
                                                         IRemoteSessionHandler *pHandle )

@@ -58,6 +58,9 @@ namespace engine
                                   const _MsgHeader *header,
                                   const CHAR *msg ) ;
          virtual void  handleClose( const NET_HANDLE &handle, _MsgRouteID id ) ;
+         virtual void  handleConnect( const NET_HANDLE &handle,
+                                      _MsgRouteID id,
+                                      BOOLEAN isPositive ) ;
 
       protected:
          _pmdRemoteSessionMgr                *_pRSManager ;

@@ -367,6 +367,9 @@ namespace engine
                                   const MsgHeader *pMsg ) ;
          void        handleClose( const NET_HANDLE &handle,
                                   const _MsgRouteID &id ) ;
+         void        handleConnect( const NET_HANDLE &handle,
+                                    _MsgRouteID id,
+                                    BOOLEAN isPositive ) ;
 
       public:
 

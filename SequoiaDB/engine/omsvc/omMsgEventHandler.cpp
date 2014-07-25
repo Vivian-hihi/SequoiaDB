@@ -123,6 +123,15 @@ namespace engine
       _pRSManager->handleClose( handle, id ) ;
    }
 
+   void _omMsgHandler::handleConnect( const NET_HANDLE &handle,
+                                      _MsgRouteID id,
+                                      BOOLEAN isPositive )
+   {
+      SDB_ASSERT( _pRSManager, "Remote session manager can't be NULL" ) ;
+
+      _pRSManager->handleConnect( handle, id, isPositive ) ;
+   }
+
    /*
       _omTimerHandler implement
    */
