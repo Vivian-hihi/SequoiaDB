@@ -166,6 +166,14 @@ namespace engine
 
    INT32 _pmdController::deactive ()
    {
+      if ( _pTcpListener )
+      {
+         _pTcpListener->close() ;
+      }
+      if ( _pHttpListener )
+      {
+         _pHttpListener->close() ;
+      }
       return SDB_OK ;
    }
 
