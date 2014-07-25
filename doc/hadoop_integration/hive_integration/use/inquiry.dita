@@ -3,7 +3,7 @@
 <topic id="topic_jhr_tvv_xl">
   <title>查询数据</title>
   <body>
-    <!--<p>Topic paragraph</p>-->
+    <p>查询数据</p>
     <codeblock>hive> select * from new_tab;
 OK
 0       false   0.0     ALGERIA

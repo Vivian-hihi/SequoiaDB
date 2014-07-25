@@ -49,67 +49,67 @@
       <p class="p">每个文档包含以下字段：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d2422e34" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d2493e34" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d2422e37" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d2493e37" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d2422e40" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d2422e34" class="stentry">Name</td>
-
-          <td valign="top" headers="d2422e37" class="stentry">字符串</td>
-
-          <td valign="top" headers="d2422e40" class="stentry">集合的完整名，为&lt;集合空间&gt;.&lt;集合名&gt;形式。</td>
+          <th valign="bottom" align="left" id="d2493e40" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2422e34" class="stentry">Version</td>
+          <td valign="top" headers="d2493e34" class="stentry">Name</td>
 
-          <td valign="top" headers="d2422e37" class="stentry">整数</td>
+          <td valign="top" headers="d2493e37" class="stentry">字符串</td>
 
-          <td valign="top" headers="d2422e40" class="stentry">集合的版本号，由1起始，每次对该集合的元数据变更会造成版本号+1。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d2422e34" class="stentry">ReplSize</td>
-
-          <td valign="top" headers="d2422e37" class="stentry">整数</td>
-
-          <td valign="top" headers="d2422e40" class="stentry">最小复制组，确保任何写操作必须被复制到至少指定数量的节点后返回成功。</td>
+          <td valign="top" headers="d2493e40" class="stentry">集合的完整名，为&lt;集合空间&gt;.&lt;集合名&gt;形式。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2422e34" class="stentry">ShardingKey</td>
+          <td valign="top" headers="d2493e34" class="stentry">Version</td>
 
-          <td valign="top" headers="d2422e37" class="stentry">对象</td>
+          <td valign="top" headers="d2493e37" class="stentry">整数</td>
 
-          <td valign="top" headers="d2422e40" class="stentry">分区键，在分区集合中存在。对象包含一个或多个字段，字段名为分区字段名，数值为1或者-1，代表对该列正向或逆向排序。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d2422e34" class="stentry">ShardingType</td>
-
-          <td valign="top" headers="d2422e37" class="stentry">字符串</td>
-
-          <td valign="top" headers="d2422e40" class="stentry">分区类型，在分区集合中存在。分区类型有：范围分区（Range）和散列分区（Hash）两种。</td>
+          <td valign="top" headers="d2493e40" class="stentry">集合的版本号，由1起始，每次对该集合的元数据变更会造成版本号+1。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2422e34" class="stentry">Partition</td>
+          <td valign="top" headers="d2493e34" class="stentry">ReplSize</td>
 
-          <td valign="top" headers="d2422e37" class="stentry">整数</td>
+          <td valign="top" headers="d2493e37" class="stentry">整数</td>
 
-          <td valign="top" headers="d2422e40" class="stentry">散列分区的分区大小值，必须为2的幂。</td>
+          <td valign="top" headers="d2493e40" class="stentry">最小复制组，确保任何写操作必须被复制到至少指定数量的节点后返回成功。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2422e34" class="stentry">CataInfo</td>
+          <td valign="top" headers="d2493e34" class="stentry">ShardingKey</td>
 
-          <td valign="top" headers="d2422e37" class="stentry">数组</td>
+          <td valign="top" headers="d2493e37" class="stentry">对象</td>
 
-          <td valign="top" headers="d2422e40" class="stentry">集合所在的逻辑节点信息。在单分区集合中，该数组仅包含一个元素，代表该集合所在的分区组。在多分区集合中，该数组中包含一个或多个元素，代表该集合中的每一个取值<div class="fig fignone"/>
+          <td valign="top" headers="d2493e40" class="stentry">分区键，在分区集合中存在。对象包含一个或多个字段，字段名为分区字段名，数值为1或者-1，代表对该列正向或逆向排序。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d2493e34" class="stentry">ShardingType</td>
+
+          <td valign="top" headers="d2493e37" class="stentry">字符串</td>
+
+          <td valign="top" headers="d2493e40" class="stentry">分区类型，在分区集合中存在。分区类型有：范围分区（Range）和散列分区（Hash）两种。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d2493e34" class="stentry">Partition</td>
+
+          <td valign="top" headers="d2493e37" class="stentry">整数</td>
+
+          <td valign="top" headers="d2493e40" class="stentry">散列分区的分区大小值，必须为2的幂。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d2493e34" class="stentry">CataInfo</td>
+
+          <td valign="top" headers="d2493e37" class="stentry">数组</td>
+
+          <td valign="top" headers="d2493e40" class="stentry">集合所在的逻辑节点信息。在单分区集合中，该数组仅包含一个元素，代表该集合所在的分区组。在多分区集合中，该数组中包含一个或多个元素，代表该集合中的每一个取值<div class="fig fignone"/>
 范围所在的分区组。每个取值范围包括 LowBound 与 UpBound，代表其下限与上限，闭合关系为左闭右开。</td>
 
         </tr>

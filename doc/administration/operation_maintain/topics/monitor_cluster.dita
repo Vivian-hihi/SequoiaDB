@@ -4,11 +4,9 @@
   <title>监控集群</title>
   <body>
     <ol>
-      <li>连接到协调节点
-        <codeblock>$ /opt/sequoiadb/bin/sdb
+      <li>连接到协调节点<codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;</codeblock></li>
-      <li>得到集群状态
-        <codeblock>> db.listReplicaGroups()
+      <li>得到集群状态<codeblock>> db.listReplicaGroups()
 {
   "Group": [
     {

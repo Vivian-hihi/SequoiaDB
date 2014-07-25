@@ -29,63 +29,36 @@
         </strow>
         <strow>
           <stentry>EnsureInc</stentry>
-          <stentry>备份方式，true表示增量备份，false表示全量备份，缺省为false。</stentry>
+          <stentry>备份方式，true 表示增量备份，false 表示全量备份，缺省为 false。</stentry>
         </strow>
         <strow>
           <stentry>OverWrite</stentry>
-          <stentry>对于同名备份是否覆盖，true表示覆盖，false表示不覆盖，如果同名则报错；缺少为true。</stentry>
+          <stentry>对于同名备份是否覆盖，true 表示覆盖，false 表示不覆盖，如果同名则报错；缺省为 true。</stentry>
         </strow>        
         <strow>
           <stentry>GroupName</stentry>
           <stentry>对指定组进行备份，缺省为对全系统备份，当需要对多个组进行备份可以指定为数组类型，如：["datagroup1","datagroup2"]。</stentry>
         </strow>              
-      </simpletable></section>
-    <!--<p>离线备份参数说明</p><lines>Name：备份名称，缺省则以当前时间格式命名，如”2013-11-13-15:00:00”
-Description：备份用户描述信息
-Path：本次备份的指定路径，缺省为配置参数“bkuppath”中指定的路径
-EnsureInc：备份方式，true表示增量备份，false表示全量备份，缺省为false
-OverWrite：对于同名备份是否覆盖，true表示覆盖，false表示不覆盖，如果同名则报错；缺少为true
-GroupName：对指定组进行备份，缺省为对全系统备份，当需要对多个组进行备份可以指定为数组类型，如：["datagroup1","datagroup2"]</lines>-->
+      </simpletable>
+    </section>    
     <section>
       <title>备份整个数据库</title>
-      <p>1.连接到协调节点</p><codeblock>$ /opt/sequoiadb/bin/sdb
+      <p>1. 连接到协调节点</p><codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost",11810);</codeblock>
-      <p>2.执行备份命令</p><codeblock>> db.backupOffline({Name:"backupName",Description:"backup for all"})</codeblock>      
+      <p>2. 执行备份命令</p><codeblock>> db.backupOffline({Name:"backupName",Description:"backup for all"})</codeblock>      
     </section>
     <section>
       <title>备份指定组的数据库</title>
-      <p>1.连接到协调节点</p><codeblock>$ /opt/sequoiadb/bin/sdb
+      <p>1. 连接到协调节点</p><codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost",11810);</codeblock>
-      <p>2.执行备份命令</p><codeblock>> db.backupOffline({Name:"backupName",Description:"backup group1",GroupName:"datagroup1"})</codeblock>      
+      <p>2. 执行备份命令</p><codeblock>> db.backupOffline({Name:"backupName",Description:"backup group1",GroupName:"datagroup1"})</codeblock>      
     </section>
     <section>
       <title>备份指定节点的数据库</title>
-      <p>1.连接到指定节点</p><codeblock>$ /opt/sequoiadb/bin/sdb
+      <p>1. 连接到指定节点</p><codeblock>$ /opt/sequoiadb/bin/sdb
 > var dbdata = new Sdb("hostname1","servicename1");</codeblock>
-      <p>2.执行备份命令</p><codeblock>> dbdata.backupOffline({Name:"backupName",Description:"backup data node"}))</codeblock>      
+      <p>2. 执行备份命令</p><codeblock>> dbdata.backupOffline({Name:"backupName",Description:"backup data node"}))</codeblock>      
     </section> 
-    <note>catalog编目组的名称固定为SYSCatalogGroup</note>
-    <!--<ol>
-      <li>连接到协调节点
-        <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;</codeblock></li>
-      <li>得到分区组
-      <codeblock>> datagroup = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
-      <li>得到一个备节点
-      <codeblock>> datanode = datagroup.getSlave() ;</codeblock></li>
-      <li>连接到备节点并得到快照信息并确认其状态为备节点
-        <codeblock>> datanode.connect().snapshot(SDB_SNAP_DATABASE)
-{
-  "NodeName": "vmsvr1-rhel-x64:51000",
-  "HostName": "vmsvr1-rhel-x64",
-  "ServiceName": "51000",
-  "GroupName": "foo",
-  "IsPrimary": false,  //确认该状态为false
-  "ServiceStatus": true,</codeblock></li>
-      <li>停止该节点
-      <codeblock>> datanode.stop()</codeblock></li>
-      <li>对每个组执行步骤2-5，记录各个组所停止的节点。<codeblock></codeblock></li>
-      <li>使用文件系统拷贝命令，将每个停止的数据组所在的目录进行拷贝并归档。</li>
-    </ol>-->
+    <note>catalog 编目组的名称固定为 SYSCatalogGroup</note>    
   </body>
 </topic>

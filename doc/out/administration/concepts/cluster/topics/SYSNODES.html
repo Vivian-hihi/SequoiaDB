@@ -49,43 +49,43 @@
       <p class="p">每个文档包含以下字段：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d3220e34" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d3291e34" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d3220e37" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d3291e37" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d3220e40" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3220e34" class="stentry">GroupName</td>
-
-          <td valign="top" headers="d3220e37" class="stentry">字符串</td>
-
-          <td valign="top" headers="d3220e40" class="stentry">复制组名。</td>
+          <th valign="bottom" align="left" id="d3291e40" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3220e34" class="stentry">GroupID</td>
+          <td valign="top" headers="d3291e34" class="stentry">GroupName</td>
 
-          <td valign="top" headers="d3220e37" class="stentry">整数</td>
+          <td valign="top" headers="d3291e37" class="stentry">字符串</td>
 
-          <td valign="top" headers="d3220e40" class="stentry">复制组 ID，该 ID 在集群中唯一。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3220e34" class="stentry">PrimaryNode</td>
-
-          <td valign="top" headers="d3220e37" class="stentry">整数</td>
-
-          <td valign="top" headers="d3220e40" class="stentry">该复制组内主节点 ID。</td>
+          <td valign="top" headers="d3291e40" class="stentry">复制组名。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3220e34" class="stentry">Role</td>
+          <td valign="top" headers="d3291e34" class="stentry">GroupID</td>
 
-          <td valign="top" headers="d3220e37" class="stentry">整数</td>
+          <td valign="top" headers="d3291e37" class="stentry">整数</td>
 
-          <td valign="top" headers="d3220e40" class="stentry">复制组角色，可以为： <ul class="ul">
+          <td valign="top" headers="d3291e40" class="stentry">复制组 ID，该 ID 在集群中唯一。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d3291e34" class="stentry">PrimaryNode</td>
+
+          <td valign="top" headers="d3291e37" class="stentry">整数</td>
+
+          <td valign="top" headers="d3291e40" class="stentry">该复制组内主节点 ID。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d3291e34" class="stentry">Role</td>
+
+          <td valign="top" headers="d3291e37" class="stentry">整数</td>
+
+          <td valign="top" headers="d3291e40" class="stentry">复制组角色，可以为： <ul class="ul">
               <li class="li">0：数据节点</li>
 
               <li class="li">2：编目节点</li>
@@ -96,11 +96,11 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3220e34" class="stentry">Status</td>
+          <td valign="top" headers="d3291e34" class="stentry">Status</td>
 
-          <td valign="top" headers="d3220e37" class="stentry">整数</td>
+          <td valign="top" headers="d3291e37" class="stentry">整数</td>
 
-          <td valign="top" headers="d3220e40" class="stentry">
+          <td valign="top" headers="d3291e40" class="stentry">
             <ul class="ul">
               <li class="li">1：已激活复制组</li>
 
@@ -114,19 +114,19 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3220e34" class="stentry">Version</td>
+          <td valign="top" headers="d3291e34" class="stentry">Version</td>
 
-          <td valign="top" headers="d3220e37" class="stentry">整数</td>
+          <td valign="top" headers="d3291e37" class="stentry">整数</td>
 
-          <td valign="top" headers="d3220e40" class="stentry">版本号，由1起始，任何对该复制组的操作均会对其+1。</td>
+          <td valign="top" headers="d3291e40" class="stentry">版本号，由1起始，任何对该复制组的操作均会对其+1。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3220e34" class="stentry">Group</td>
+          <td valign="top" headers="d3291e34" class="stentry">Group</td>
 
-          <td valign="top" headers="d3220e37" class="stentry">数组</td>
+          <td valign="top" headers="d3291e37" class="stentry">数组</td>
 
-          <td valign="top" headers="d3220e40" class="stentry">复制组中节点信息，见下表：</td>
+          <td valign="top" headers="d3291e40" class="stentry">复制组中节点信息，见下表：</td>
 
         </tr>
 </table>
@@ -134,43 +134,43 @@
       <p class="p">复制组中如果存在一个以上节点，则每个节点作为一个对象存放在 Group 字段数组中，每个对象的信息如下：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d3220e159" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d3291e159" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d3220e162" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d3291e162" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d3220e165" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3220e159" class="stentry">HostName</td>
-
-          <td valign="top" headers="d3220e162" class="stentry">字符串</td>
-
-          <td valign="top" headers="d3220e165" class="stentry">节点所在的系统名，需要完全匹配该节点所在操作系统中“hostname”命令的输出。</td>
+          <th valign="bottom" align="left" id="d3291e165" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3220e159" class="stentry">dbpath</td>
+          <td valign="top" headers="d3291e159" class="stentry">HostName</td>
 
-          <td valign="top" headers="d3220e162" class="stentry">字符串</td>
+          <td valign="top" headers="d3291e162" class="stentry">字符串</td>
 
-          <td valign="top" headers="d3220e165" class="stentry">数据库路径，为节点所在的物理节点中对应的绝对路径。</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3220e159" class="stentry">NodeID</td>
-
-          <td valign="top" headers="d3220e162" class="stentry">整数</td>
-
-          <td valign="top" headers="d3220e165" class="stentry">节点 ID，该 ID 在集群中唯一。</td>
+          <td valign="top" headers="d3291e165" class="stentry">节点所在的系统名，需要完全匹配该节点所在操作系统中“hostname”命令的输出。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3220e159" class="stentry">Service</td>
+          <td valign="top" headers="d3291e159" class="stentry">dbpath</td>
 
-          <td valign="top" headers="d3220e162" class="stentry">数组</td>
+          <td valign="top" headers="d3291e162" class="stentry">字符串</td>
 
-          <td valign="top" headers="d3220e165" class="stentry">服务名，每个逻辑节点对应4个服务名，每个服务名包括其类型与服务名（可以为端口号或 services 文件中的服务名）。类型如下：
+          <td valign="top" headers="d3291e165" class="stentry">数据库路径，为节点所在的物理节点中对应的绝对路径。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d3291e159" class="stentry">NodeID</td>
+
+          <td valign="top" headers="d3291e162" class="stentry">整数</td>
+
+          <td valign="top" headers="d3291e165" class="stentry">节点 ID，该 ID 在集群中唯一。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d3291e159" class="stentry">Service</td>
+
+          <td valign="top" headers="d3291e162" class="stentry">数组</td>
+
+          <td valign="top" headers="d3291e165" class="stentry">服务名，每个逻辑节点对应4个服务名，每个服务名包括其类型与服务名（可以为端口号或 services 文件中的服务名）。类型如下：
             <ul class="ul">
               <li class="li">0：直连服务，对应数据库参数 svcname</li>
 

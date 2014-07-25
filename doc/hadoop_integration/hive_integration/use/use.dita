@@ -4,8 +4,8 @@
   <title>使用方法</title>
   <body>
     <ul>
-      <li><xref href="./create.dita">创建基于SequoiaDB的表</xref></li>
-      <li><xref href="./insert.dita">从HDFS文件中导入数据到SequoiaDB表</xref></li>
+      <li><xref href="./create.dita">创建基于 SequoiaDB 的表</xref></li>
+      <li><xref href="./insert.dita">从 HDFS 文件中导入数据到 SequoiaDB 表</xref></li>
       <li><xref href="./inquiry.dita">查询数据</xref></li>
     </ul>
   </body>

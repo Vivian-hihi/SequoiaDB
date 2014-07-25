@@ -1127,7 +1127,6 @@
             <file name="references/references_en.ditamap"/>
             <file name="references/references.ditamap"/>
         </folder>
-        <file name="administration/operation_maintain/topics/data_backup.dita"/>
         <file name="sequoiadbdoc_en.ditamap"/>
         <file name="sequoiadbdoc.css"/>
         <file name="sequoiadbdoc.ditamap"/>

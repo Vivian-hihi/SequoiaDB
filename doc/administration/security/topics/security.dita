@@ -3,10 +3,10 @@
 <topic id="topic_security">
   <title>系统安全</title>
   <body>
-    <section><title>概要说明</title>
-    <p>可以通过安全功能来指定登陆系统的权限。如果没有合法的用户名及密码则无法访问数据库。</p>
-    </section>
-    
+    <section>
+      <title>概要说明</title>
+      <p>可以通过安全功能来指定登陆系统的权限。如果没有合法的用户名及密码则无法访问数据库。</p>
+    </section>    
     <section>
       <title>详细说明</title>
       <p>1. 系统启动时默关闭安全功能。只有在至少创建一个用户后，安全功能才自动激活。</p>

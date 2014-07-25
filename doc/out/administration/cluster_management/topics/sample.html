@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="案例"/>
-<meta name="description" content="案例一：新增主机，在当前数据分区中新增一个数据副本节点 当前环境： 配置项 配置情况 主机 包含一台主机： 主机一：OS为suse 11 SP2 64位，主机名为vmsvr1-suse-x64，IP为192.168.1.10 编目分区组 分区组包含一个编目节点，服务端口为11800 数据分区组 一个数据分区组，组名为datagroup1，其中包含一个数据节点： ..."/>
+<meta name="description" content="案例一：新增主机，在当前数据分区中新增一个数据副本节点 当前环境： 配置项 配置情况 主机 包含一台主机： 主机一：OS 为 SUSE 11 SP2 64位，主机名为 vmsvr1-suse-x64，IP 为192.168.1.10 编目分区组 分区组包含一个编目节点，服务端口为11800 数据分区组 一个数据分区组，组名为 datagroup1，其中包含一个数据节点： 数据节点一：服务主机名为 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/cluster_management/topics/cluster_management.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_syz_qkx_tk"/>
@@ -39,83 +39,78 @@
     <div class="section"><h2 class="title sectiontitle">案例一：新增主机，在当前数据分区中新增一个数据副本节点</h2>
       
       <ul class="ul">
-        <li class="li">当前环境： <p class="p"/>
-<table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d1404e24" class="stentry">配置项</th>
+        <li class="li">当前环境：<p class="p"/>
 
-              <th valign="bottom" align="left" id="d1404e27" class="stentry">配置情况</th>
+          <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+              <th valign="bottom" align="left" id="d1475e25" class="stentry">配置项</th>
 
-            </tr>
-<tr class="strow">
-              <td valign="top" headers="d1404e24" class="stentry">主机</td>
-
-              <td valign="top" headers="d1404e27" class="stentry">包含一台主机：<div class="fig fignone"/>
-
-                主机一：OS为suse 11 SP2 64位，主机名为vmsvr1-suse-x64，IP为192.168.1.10
-              </td>
+              <th valign="bottom" align="left" id="d1475e28" class="stentry">配置情况</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d1404e24" class="stentry">编目分区组 </td>
+              <td valign="top" headers="d1475e25" class="stentry">主机</td>
 
-              <td valign="top" headers="d1404e27" class="stentry">分区组包含一个编目节点，服务端口为11800</td>
-
-            </tr>
-<tr class="strow">
-              <td valign="top" headers="d1404e24" class="stentry">数据分区组</td>
-
-              <td valign="top" headers="d1404e27" class="stentry">一个数据分区组，组名为datagroup1，其中包含一个数据节点：<div class="fig fignone"/>
- 数据节点一：服务主机名为vmsvr1-suse-x64，端口为11820 </td>
+              <td valign="top" headers="d1475e28" class="stentry">包含一台主机：<div class="fig fignone"/>
+主机一：OS 为 SUSE 11 SP2 64位，主机名为 vmsvr1-suse-x64，IP 为192.168.1.10</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d1404e24" class="stentry">协调节点</td>
+              <td valign="top" headers="d1475e25" class="stentry">编目分区组</td>
 
-              <td valign="top" headers="d1404e27" class="stentry">一个协调节点，端口为11810</td>
+              <td valign="top" headers="d1475e28" class="stentry">分区组包含一个编目节点，服务端口为11800</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" headers="d1475e25" class="stentry">数据分区组</td>
+
+              <td valign="top" headers="d1475e28" class="stentry">一个数据分区组，组名为 datagroup1，其中包含一个数据节点：<div class="fig fignone"/>
+数据节点一：服务主机名为 vmsvr1-suse-x64，端口为11820</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" headers="d1475e25" class="stentry">协调节点</td>
+
+              <td valign="top" headers="d1475e28" class="stentry">一个协调节点，端口为11810</td>
 
             </tr>
 </table>
 <p class="p"/>
 </li>
 
-        <li class="li">调整后的预期结果 <p class="p"/>
-<table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d1404e80" class="stentry">配置项</th>
+        <li class="li">调整后的预期结果<p class="p"/>
 
-              <th valign="bottom" align="left" id="d1404e83" class="stentry">配置情况</th>
+          <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+              <th valign="bottom" align="left" id="d1475e82" class="stentry">配置项</th>
 
-            </tr>
-<tr class="strow">
-              <td valign="top" headers="d1404e80" class="stentry">主机</td>
-
-              <td valign="top" headers="d1404e83" class="stentry">
-                包含两台主机：<div class="fig fignone"/>
-
-                主机一：OS为suse 11 SP2 64位，主机名为vmsvr1-suse-x64，IP为192.168.1.10<div class="fig fignone"/>
-
-                主机二：OS为suse 11 SP2 64位，主机名为vmsvr2-suse-x64，IP为192.168.1.11
-              </td>
+              <th valign="bottom" align="left" id="d1475e85" class="stentry">配置情况</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d1404e80" class="stentry">编目分区组 </td>
+              <td valign="top" headers="d1475e82" class="stentry">主机</td>
 
-              <td valign="top" headers="d1404e83" class="stentry">分区组包含一个编目节点，服务端口为11800</td>
-
-            </tr>
-<tr class="strow">
-              <td valign="top" headers="d1404e80" class="stentry">数据分区组</td>
-
-              <td valign="top" headers="d1404e83" class="stentry"> 一个数据分区组，组名为datagroup1，其中包含两个数据节点：<div class="fig fignone"/>
-
-                数据节点一：服务主机名为vmsvr1-suse-x64，端口为11820<div class="fig fignone"/>
- 数据节点二：服务主机名为vmsvr2-suse-x64，端口为11820 </td>
+              <td valign="top" headers="d1475e85" class="stentry">包含两台主机：<div class="fig fignone"/>
+主机一：OS 为 SUSE 11 SP2 64位，主机名为 vmsvr1-suse-x64，IP 为192.168.1.10<div class="fig fignone"/>
+主机二：OS 为 SUSE 11 SP2 64位，主机名为 vmsvr2-suse-x64，IP 为192.168.1.11</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d1404e80" class="stentry">协调节点</td>
+              <td valign="top" headers="d1475e82" class="stentry">编目分区组 </td>
 
-              <td valign="top" headers="d1404e83" class="stentry">一个协调节点，端口为11810</td>
+              <td valign="top" headers="d1475e85" class="stentry">分区组包含一个编目节点，服务端口为11800</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" headers="d1475e82" class="stentry">数据分区组</td>
+
+              <td valign="top" headers="d1475e85" class="stentry"> 一个数据分区组，组名为 datagroup1，其中包含两个数据节点：<div class="fig fignone"/>
+数据节点一：服务主机名为 vmsvr1-suse-x64，端口为11820<div class="fig fignone"/>
+数据节点二：服务主机名为 vmsvr2-suse-x64，端口为11820</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" headers="d1475e82" class="stentry">协调节点</td>
+
+              <td valign="top" headers="d1475e85" class="stentry">一个协调节点，端口为11810</td>
 
             </tr>
 </table>
@@ -129,58 +124,59 @@
     <div class="section"><h2 class="title sectiontitle">操作步骤</h2>
       
       <ul class="ul">
-        <li class="li">步骤一：配置新增的主机 <p class="p">1.安装操作系统 SUSE 11 SP2 64位（保持与原系统一致）； </p>
-<p class="p">2.使用root用户登录系统； </p>
+        <li class="li">步骤一：配置新增的主机
+          <p class="p">1. 安装操作系统 SUSE 11 SP2 64位（保持与原系统一致）；</p>
 
-          <p class="p">3.配置IP地址为 192.168.1.11； </p>
-<div class="p">4.执行如下命令，配置主机名为 vmsvr2-suse-x64：
-            <pre class="pre codeblock">hostname vmsvr2-suse-x64</pre>
- 修改 /etc/hosts文件，新增两行：
-            <pre class="pre codeblock">192.168.1.10 vmsvr1-suse-x64 
-192.168.1.11 vmsvr2-suse-x64</pre>
+          <p class="p">2. 使用 root 用户登录系统；</p>
 
-            按:wq保存退出； </div>
-<div class="p">5.执行如下命令，检查主机配置是否生效：
-            <pre class="pre codeblock">ping vmsvr1-suse-x64   //检查是否ping通；
-ping vmsvr2-suse-x64   //检查是否ping通；</pre>
+          <p class="p">3. 配置 IP 地址为 192.168.1.11；</p>
+
+          <div class="p">4. 执行如下命令，配置主机名为 vmsvr2-suse-x64：<pre class="pre codeblock">hostname vmsvr2-suse-x64</pre>
+修改 /etc/hosts文件，新增两行：<pre class="pre codeblock">192.168.1.10 vmsvr1-suse-x64 
+          192.168.1.11 vmsvr2-suse-x64</pre>
+按 :wq 保存退出；</div>
+
+          <div class="p">5. 执行如下命令，检查主机配置是否生效：<pre class="pre codeblock">ping vmsvr1-suse-x64   //检查是否 ping 通；
+          ping vmsvr2-suse-x64   //检查是否 ping 通；</pre>
 </div>
-<p class="p">6.配置系统内核参数：</p>
-<p class="p">打开/etc/profile文件，在该文件末尾增加如下行：</p>
-<div class="p"><pre class="pre codeblock">ulimit -Sf unlimited  //文件大小限制 
-ulimit -St unlimited  //CPU 时间限制 
-ulimit -Sv unlimited  //虚拟内存限制 
-ulimit -Sn 64000      //文件个数限制 
-ulimit -Sm unlimited  //内存大小限制 
-ulimit -Su 32000      //线程个数限制</pre>
 
-            按:wq保存退出；</div>
-<p class="p">执行source /etc/profile，使得配置生效；
-            </p>
-<div class="p">7.执行如下命令，检查系统内核参数配置是否生效：<pre class="pre codeblock">ulimit -a; 查看配置是否正确； </pre>
+          <p class="p">6. 配置系统内核参数：</p>
+
+          <p class="p">打开 /etc/profile 文件，在该文件末尾增加如下行：</p>
+<div class="p"><pre class="pre codeblock">ulimit -Sf unlimited   //文件大小限制 
+ulimit -St unlimited   //CPU时间限制 
+ulimit -Sv unlimited   //虚拟内存限制 
+ulimit -Sn 64000       //文件个数限制 
+ulimit -Sm unlimited   //内存大小限制 
+ulimit -Su 32000       //线程个数限制</pre>
+按 :wq 保存退出；</div>
+<p class="p">执行 source /etc/profile，使得配置生效；</p>
+
+          <div class="p">7. 执行如下命令，检查系统内核参数配置是否生效：<pre class="pre codeblock">ulimit -a;   //查看配置是否正确；</pre>
 </div>
 </li>
 
         <li class="li">步骤二：配置原集群的主机
-            <p class="p">修改原主机vmsvr1-suse-x64的/etc/hosts配置文件，在配置文件中新增一行：</p>
+          <p class="p">修改原主机 vmsvr1-suse-x64 的 /etc/hosts 配置文件，在配置文件中新增一行：</p>
 <pre class="pre codeblock">192.168.1.11   vmsvr2-suse-x64</pre>
-<p class="p">按:wq保存退出；</p>
+<p class="p">按 :wq 保存退出；</p>
 </li>
 
-        <li class="li">步骤三：在新增主机上安装SequoiaDB软件 <p class="p">参考<a class="xref" href="../../../installation/server_installation/topics/linux.html">SequoiaDB服务器安装</a>一节进行软件安装。</p>
+        <li class="li">步骤三：在新增主机上安装SequoiaDB软件<p class="p">参考<a class="xref" href="../../../installation/server_installation/topics/linux.html"> SequoiaDB 服务器安装</a>一节进行软件安装。</p>
 </li>
 
-        <li class="li">步骤四：在当前分区中新增数据节点 <p class="p">1.在vmsvr2-suse-x64上执行如下命令，启动sequoaidb
-            shell命令行：</p>
+        <li class="li">步骤四：在当前分区中新增数据节点
+          <p class="p">1. 在 vmsvr2-suse-x64 上执行如下命令，启动SequoaiDB Shell命令行：</p>
 <pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
-<p class="p">2.在Sequoiadb
-            shell命令行中，执行如下命令在当前数据分区组新增一副本节点：</p>
+
+          <p class="p">2. 在SequoiaDB Shell命令行中，执行如下命令在当前数据分区组新增一副本节点：</p>
 <pre class="pre codeblock">&gt; var db = new Sdb("localhost",11810)
 &gt; var datarg = db.getRG("datagroup1")
 &gt; node=rg.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")
-&gt; node.start()      </pre>
-<p class="p">3.在Sequoiadb
-            Shell命令行中，执行如下命令检查分区组配置情况，可以看到数据组新增了一个数据节点：</p>
-<pre class="pre codeblock">&gt;db.listReplicaGroups();
+&gt; node.start()</pre>
+
+          <p class="p">3. 在SequoiaDB Shell命令行中，执行如下命令检查分区组配置情况，可以看到数据组新增了一个数据节点：</p>
+<pre class="pre codeblock">&gt; db.listReplicaGroups();
 …
 {
   "Group": [
@@ -239,8 +235,7 @@ ulimit -Su 32000      //线程个数限制</pre>
     "$oid": "51d673c1fde96799fbac6aad"
   }
 }</pre>
-
-        </li>
+</li>
 
       </ul>
 

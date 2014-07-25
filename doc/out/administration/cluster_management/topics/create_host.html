@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="集群中新增主机"/>
-<meta name="description" content="如果需要在数据库集群中新增一台主机（物理机或者虚拟机），用于部署编目节点或者数据节点，则必须需要按照如下步骤配置好主机系统： 1．安装好与其他主机相同的操作系统，并配置好IP地址； 2．按照 系统配置需求 一节配置好主机名/内核参数，并将其他的主机名和IP对应关系加入到/etc/hosts中； ..."/>
+<meta name="description" content="如果需要在数据库集群中新增一台主机（物理机或者虚拟机），用于部署编目节点或者数据节点，则必须需要按照如下步骤配置好主机系统： 1. 安装好与其他主机相同的操作系统，并配置好IP地址； 2. 按照 系统配置需求 一节配置好主机名/内核参数，并将其他的主机名和 IP 对应关系加入到 /etc/hosts 中； 3. 修改每台集群主机上 /etc/hosts ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/cluster_management/topics/cluster_management.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_xln_p1x_tk"/>
@@ -38,15 +38,15 @@
   <div class="body">
     <p class="p">如果需要在数据库集群中新增一台主机（物理机或者虚拟机），用于部署编目节点或者数据节点，则必须需要按照如下步骤配置好主机系统：</p>
 
-    <p class="p">1．安装好与其他主机相同的操作系统，并配置好IP地址；</p>
+    <p class="p">1. 安装好与其他主机相同的操作系统，并配置好IP地址；</p>
 
-    <p class="p">2．按照<a class="xref" href="../../../installation/system_require/topics/software.html">系统配置需求</a>一节配置好主机名/内核参数，并将其他的主机名和IP对应关系加入到/etc/hosts中； </p>
+    <p class="p">2. 按照<a class="xref" href="../../../installation/system_require/topics/software.html">系统配置需求</a>一节配置好主机名/内核参数，并将其他的主机名和 IP 对应关系加入到 /etc/hosts 中；</p>
 
-    <p class="p">3．修改每台集群主机上/etc/hosts文件，将新增的主机IP地址与主机对应关系加入到/etc/hosts文件中；</p>
+    <p class="p">3. 修改每台集群主机上 /etc/hosts 文件，将新增的主机IP地址与主机对应关系加入到 /etc/hosts 文件中；</p>
 
-    <p class="p">4．按照<a class="xref" href="../../../installation/system_require/topics/software.html">系统配置需求</a>一节验证配置的正确性； </p>
+    <p class="p">4. 按照<a class="xref" href="../../../installation/system_require/topics/software.html">系统配置需求</a>一节验证配置的正确性；</p>
 
-    <p class="p">5．按照<a class="xref" href="../../../installation/server_installation/topics/linux.html">SequoiaDB服务器安装</a>一节，安装SequoiaDB软件。安装时，注意配置管理服务端口与现有系统的端口保持一致。 </p>
+    <p class="p">5. 按照<a class="xref" href="../../../installation/server_installation/topics/linux.html"> SequoiaDB 服务器安装</a>一节，安装 SequoiaDB 软件。安装时，注意配置管理服务端口与现有系统的端口保持一致。</p>
 
   </div>
 

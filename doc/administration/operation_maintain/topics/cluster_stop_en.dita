@@ -13,9 +13,8 @@
         <li>Get partition group
           <codeblock>> dataRG = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
         <li>Get the data node
-          <codeblock>> datanode = dataRG.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
-        <li>Stop node
-          <codeblock>> datanode.stop() ;</codeblock></li>
+          <codeblock>> dataNode = dataRG.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
+        <li>Stop node <codeblock>> dataNode.stop() ;</codeblock></li>
       </ol>
     </section>
     <section>
