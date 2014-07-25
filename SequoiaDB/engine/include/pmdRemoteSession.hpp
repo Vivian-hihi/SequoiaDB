@@ -87,37 +87,53 @@ namespace engine
 
          _pmdRemoteSession* parent() { return _parent ; }
 
-         void        clearReplyInfo() ;
+         // Req Msg
+         void        setReqMsg( MsgHeader *pReqMsg,
+                                pmdEDUMemTypes memType = PMD_EDU_MEM_NONE ) ;
+         void        setReqMsgMemType( pmdEDUMemTypes memType ) { _memType = memType ; }
+         MsgHeader*  getReqMsg() { return _pReqMsg ; }
+         pmdEDUMemTypes getReqMemType() const { return _memType ; }
          void        clearRequestInfo() ;
 
+         // IOVec
          netIOVec*   getIODatas() { return &_ioDatas ; }
          void        clearIODatas() { _ioDatas.clear() ; }
          void        addIODatas( const netIOVec &ioVec ) ;
          void        addIOData( const netIOV &io ) ;
          UINT32      getIODataLen() ;
 
-         void        setReqMsg( MsgHeader *pReqMsg ) { _pReqMsg = pReqMsg ; }
-         MsgHeader*  getReqMsg() { return _pReqMsg ; }
-         MsgHeader*  getRspMsg() { return ( MsgHeader* )_event._Data ; }
+         // Reply
+         MsgHeader*  getRspMsg( BOOLEAN owned = FALSE ) ;
+         void        clearReplyInfo() ;
 
+         // Other
          UINT64      getNodeIDUInt() const { return _nodeID.value ; }
          MsgRouteID  getNodeID() const { return _nodeID ; }
          UINT64      getReqID() const { return _reqID ; }
+         void        setUserData( UINT64 userData ) { _userData = userData ; }
+         UINT64      getUserData() const { return _userData ; }
 
+         // Process
+         void        setProcessInfo( INT32 processResult ) ;
+         BOOLEAN     isProcessed() const { return _isProcessed ; }
+         INT32       getProcessRet() const { return _processResult ; }
+         void        clearProcessInfo() ;
+
+         // Status
          BOOLEAN     isDisconnect() const { return _isDisconnect ; }
          BOOLEAN     isSend() const { return _isSend ; }
-         BOOLEAN     hasReply() const { /* TODO:XUJIANHUI */ return FALSE ; }
-         BOOLEAN     isProcessed() const { /* TODO:XUJIANHUI */ return FALSE ; }
-         INT32       getProcessRet() const { return _processResult ; }
-
-         void        setProcessInfo( INT32 processResult ) ;
+         BOOLEAN     hasReply() const { return _event._Data ? TRUE : FALSE ; }
+         void        clearSend() { _isSend = FALSE ; }
 
       protected:
          void        setParent( _pmdRemoteSession *parent ) { _parent = parent ; }
          void        setNodeID( UINT64 nodeID ) { _nodeID.value = nodeID ; }
          void        setReqID( UINT64 reqID ) { _reqID = reqID ; }
-         void        setSendResult( BOOLEAN isSend ) { _isSend = isSend ; }
+         void        setSendResult( BOOLEAN isSend ) ;
          void        processEvent( pmdEDUEvent &event ) ;
+
+         BOOLEAN     isNeedToDel() const { return _needToDel ; }
+         void        setNeedToDel( BOOLEAN needToDel ) { _needToDel = needToDel ; }
 
       protected:
          _pmdRemoteSession          *_parent ;
@@ -127,11 +143,15 @@ namespace engine
          BOOLEAN                    _isDisconnect ;
 
          MsgHeader                  *_pReqMsg ;
+         pmdEDUMemTypes             _memType ;
          netIOVec                   _ioDatas ;
-         pmdEDUEvent                _event ;
 
+         pmdEDUEvent                _event ;
          BOOLEAN                    _isProcessed ;
          INT32                      _processResult ;
+
+         UINT64                     _userData ;
+         BOOLEAN                    _needToDel ;
    } ;
    typedef _pmdSubSession pmdSubSession ;
 
@@ -143,7 +163,7 @@ namespace engine
 
    typedef vector< pmdSubSession* >                VEC_SUB_SESSIONPTR ;
 
-   typedef set< UINT64 >                           SET_SUB_SESSIONID ;
+   typedef set< UINT64 >                           SET_NODEID ;
 
    /*
       PMD_SUB_SESSION_FILTER define
@@ -151,7 +171,7 @@ namespace engine
    enum PMD_SSITR_FILTER
    {
       PMD_SSITR_ALL           = 0,     // all sub sessions
-      PMD_SSITR_UNSENT,                // not send
+      PMD_SSITR_UNSENT,                // not send or send failed
       PMD_SSITR_SENT,                  // send req succeed
       PMD_SSITR_UNREPLY,               // send req, but not reply
       PMD_SSITR_REPLY,                 // send req, and recv reply succeed
@@ -221,7 +241,9 @@ namespace engine
             If the sub has sent, will not send.
             if send failed, will to call the handle callback
          */
-         INT32    sendMsg( MsgHeader *pSrcMsg, INT32 *pSucNum = NULL,
+         INT32    sendMsg( MsgHeader *pSrcMsg,
+                           pmdEDUMemTypes memType = PMD_EDU_MEM_NONE,
+                           INT32 *pSucNum = NULL,
                            INT32 *pTotalNum = NULL ) ;
 
          /*
@@ -230,14 +252,18 @@ namespace engine
             If the subs has sent, will not send again.
             If failed, will to call the handle callback functions
          */
-         INT32    sendMsg( MsgHeader *pSrcMsg, SET_SUB_SESSIONID &subs,
-                           INT32 *pSucNum = NULL, INT32 *pTotalNum = NULL ) ;
+         INT32    sendMsg( MsgHeader *pSrcMsg,
+                           SET_NODEID &subs,
+                           pmdEDUMemTypes memType = PMD_EDU_MEM_NONE,
+                           INT32 *pSucNum = NULL,
+                           INT32 *pTotalNum = NULL ) ;
 
          /*
             Send by sub session map, if the sub has sent, will not send.
             if send failed, will to call the handle callback
          */
-         INT32    sendMsg( INT32 *pSucNum = NULL, INT32 *pTotalNum = NULL ) ;
+         INT32    sendMsg( INT32 *pSucNum = NULL,
+                           INT32 *pTotalNum = NULL ) ;
 
          /*
             Send to specail sub session, if the sub has sent, will not send.
@@ -294,14 +320,20 @@ namespace engine
          void setEduCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
          _pmdEDUCB* eduCB() { return _pEDUCB ; }
 
+         const SET_NODEID& getAllNodeSet() { return _setNodeID ; }
+         const SET_NODEID* getAllNodeSetPtr() { return &_setNodeID ; }
+
       protected:
          INT32    processEvent( pmdEDUEvent &event,
                                 MAP_SUB_SESSION &mapSessions,
                                 pmdSubSession **ppSub ) ;
          void     addSubSession( pmdSubSession *pSub ) ;
+         void     delSubSession( UINT64 reqID ) ;
+         void     addNodeID( UINT64 nodeID ) { _setNodeID.insert( nodeID ) ; }
 
       private:
          MAP_SUB_SESSIONPTR               _mapReq2SubSession ;
+         SET_NODEID                       _setNodeID ;
          _pmdEDUCB                        *_pEDUCB ;
 
    } ;

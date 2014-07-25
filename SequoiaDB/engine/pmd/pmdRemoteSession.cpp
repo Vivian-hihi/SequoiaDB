@@ -56,9 +56,12 @@ namespace engine
       _pReqMsg          = NULL ;
       _isSend           = FALSE ;
       _isDisconnect     = TRUE ;
+      _memType          = PMD_EDU_MEM_NONE ;
 
       _isProcessed      = FALSE ;
       _processResult    = SDB_OK ;
+      _userData         = 0 ;
+      _needToDel        = FALSE ;
    }
 
    _pmdSubSession::~_pmdSubSession()
@@ -68,14 +71,32 @@ namespace engine
 
    void _pmdSubSession::clearReplyInfo()
    {
-      _isProcessed   = FALSE ;
-      _processResult = SDB_OK ;
       _isDisconnect  = FALSE ;
+
+      if ( _event._Data && PMD_EDU_MEM_NONE != _event._eventType )
+      {
+         pmdEduEventRelase( _event, _parent->getEDUCB() ) ;
+      }
+      _event.reset() ;
    }
 
    void _pmdSubSession::clearRequestInfo()
    {
-      // TODO:XUJIANHUI
+      _ioDatas.clear() ;
+
+      if ( _pReqMsg )
+      {
+         if ( PMD_EDU_MEM_ALLOC == _memType )
+         {
+            SDB_OSS_FREE( (void*)_pReqMsg ) ;
+         }
+         else if ( PMD_EDU_MEM_SELF == _memType )
+         {
+            _parent->getEDUCB()->releaseBuff( (CHAR*)_pReqMsg ) ;
+         }
+         _pReqMsg = NULL ;
+      }
+      _memType = PMD_EDU_MEM_NONE ;
    }
 
    void _pmdSubSession::addIODatas( const netIOVec &ioVec )
@@ -101,16 +122,75 @@ namespace engine
       return len ;
    }
 
+   void _pmdSubSession::setReqMsg( MsgHeader *pReqMsg,
+                                   pmdEDUMemTypes memType )
+   {
+      clearRequestInfo() ;
+      _pReqMsg = pReqMsg ;
+      _memType = memType ;
+   }
+
+   MsgHeader* _pmdSubSession::getRspMsg( BOOLEAN owned )
+   {
+      if ( owned )
+      {
+         _event._dataMemType = PMD_EDU_MEM_NONE ;
+      }
+      return (MsgHeader*)_event._Data ;
+   }
+
    void _pmdSubSession::setProcessInfo( INT32 processResult )
    {
       _processResult = processResult ;
       _isProcessed   = TRUE ;
    }
 
+   void _pmdSubSession::clearProcessInfo()
+   {
+      _isProcessed   = FALSE ;
+      _processResult = SDB_OK ;
+   }
+
+   void _pmdSubSession::setSendResult( BOOLEAN isSend )
+   {
+      _isSend = isSend ;
+      if ( isSend )
+      {
+         _isDisconnect = FALSE ;
+         _needToDel    = TRUE ;
+      }
+   }
+
    void _pmdSubSession::processEvent( pmdEDUEvent &event )
    {
-      // TODO:XUJIANHUI
-      // NEED TO RELEASE THE DUP EVENT
+      MsgHeader *pRsp = ( MsgHeader* )event._Data ;
+
+      clearReplyInfo() ;
+
+      if ( MSG_BS_DISCONNECT == pRsp->opCode )
+      {
+         _isDisconnect = TRUE ;
+      }
+
+      _event = event ;
+      if ( PMD_EDU_MEM_NONE == event._dataMemType )
+      {
+         _event._Data = SDB_OSS_MALLOC( pRsp->messageLength ) ;
+         if ( _event._Data )
+         {
+            ossMemcpy( _event._Data, pRsp, pRsp->messageLength ) ;
+            _event._dataMemType = PMD_EDU_MEM_ALLOC ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Failed to alloc memory[size: %d]",
+                    pRsp->messageLength ) ;
+         }
+      }
+      else
+      {
+         event._dataMemType = PMD_EDU_MEM_NONE ;
+      }
    }
 
    /*
@@ -153,8 +233,7 @@ namespace engine
             {
                break ;
             }
-            else if ( PMD_SSITR_REPLY == _filter && pSub->isSend() &&
-                      pSub->hasReply() )
+            else if ( PMD_SSITR_REPLY == _filter && pSub->hasReply() )
             {
                break ;
             }
@@ -163,22 +242,23 @@ namespace engine
             {
                break ;
             }
-            else if ( PMD_SSITR_PROCESSED == _filter && pSub->hasReply() &&
-                      pSub->isProcessed() )
+            else if ( PMD_SSITR_PROCESSED == _filter && pSub->isProcessed() )
             {
                break ;
             }
-            else if ( PMD_SSITR_PROCESS_SUC == _filter && pSub->hasReply() &&
-                      pSub->isProcessed() && SDB_OK == pSub->getProcessRet() )
+            else if ( PMD_SSITR_PROCESS_SUC == _filter &&
+                      pSub->isProcessed() &&
+                      SDB_OK == pSub->getProcessRet() )
             {
                break ;
             }
-            else if ( PMD_SSITR_PROCESS_FAIL == _filter && pSub->hasReply() &&
-                      pSub->isProcessed() && SDB_OK != pSub->getProcessRet() )
+            else if ( PMD_SSITR_PROCESS_FAIL == _filter &&
+                      pSub->isProcessed() &&
+                      SDB_OK != pSub->getProcessRet() )
             {
                break ;
             }
-            else if ( PMD_SSITR_DISCONNECT == _filter && pSub->isSend() &&
+            else if ( PMD_SSITR_DISCONNECT == _filter &&
                       pSub->isDisconnect() )
             {
                break ;
@@ -263,12 +343,30 @@ namespace engine
    void _pmdRemoteSession::delSubSession( UINT64 nodeID )
    {
       _mapPendingSubSession.erase( nodeID ) ;
-      _mapSubSession.erase( nodeID ) ;
+      MAP_SUB_SESSION_IT it = _mapSubSession.find( nodeID ) ;
+      if ( it != _mapSubSession.end() )
+      {
+         if ( it->second.isNeedToDel() )
+         {
+            _pSite->delSubSession( it->second.getReqID() ) ;
+         }
+         _mapSubSession.erase( it ) ;
+      }
    }
 
    void _pmdRemoteSession::clearSubSession()
    {
       _mapPendingSubSession.clear() ;
+
+      MAP_SUB_SESSION_IT it = _mapSubSession.begin() ;
+      while ( it != _mapSubSession.end() )
+      {
+         if ( it->second.isNeedToDel() )
+         {
+            _pSite->delSubSession( it->second.getReqID() ) ;
+         }
+         ++it ;
+      }
       _mapSubSession.clear() ;
    }
 
@@ -341,11 +439,14 @@ namespace engine
       {
          subSession.setNodeID( nodeID ) ;
          subSession.setParent( this ) ;
+         _pSite->addNodeID( nodeID ) ;
       }
       return &subSession ;
    }
 
-   INT32 _pmdRemoteSession::sendMsg( MsgHeader * pSrcMsg, INT32 *pSucNum,
+   INT32 _pmdRemoteSession::sendMsg( MsgHeader * pSrcMsg,
+                                     pmdEDUMemTypes memType,
+                                     INT32 *pSucNum,
                                      INT32 *pTotalNum )
    {
       INT32 rc = SDB_OK ;
@@ -368,7 +469,6 @@ namespace engine
          pSub = itr.next() ;
          if ( pSrcMsg )
          {
-            pSub->clearIODatas() ;
             pSub->setReqMsg( pSrcMsg ) ;
          }
          rc = sendMsg( pSub ) ;
@@ -377,11 +477,19 @@ namespace engine
          {
             ++(*pTotalNum) ;
          }
-         if ( SDB_OK == rc && pSucNum )
+         if ( SDB_OK == rc )
          {
-            ++(*pSucNum) ;
+            if ( pSucNum )
+            {
+               ++(*pSucNum) ;
+            }
+            if ( pSrcMsg && PMD_EDU_MEM_NONE != memType )
+            {
+               pSub->setReqMsgMemType( memType ) ;
+               memType = PMD_EDU_MEM_NONE ;
+            }
          }
-         else if ( SDB_OK != rc )
+         else
          {
             vecFailedSession.push_back( pSub ) ;
             vecFailedFlag.push_back( rc ) ;
@@ -432,7 +540,8 @@ namespace engine
    }
 
    INT32 _pmdRemoteSession::sendMsg( MsgHeader *pSrcMsg,
-                                     SET_SUB_SESSIONID &subs,
+                                     SET_NODEID &subs,
+                                     pmdEDUMemTypes memType,
                                      INT32 *pSucNum,
                                      INT32 *pTotalNum )
    {
@@ -440,7 +549,7 @@ namespace engine
       pmdSubSession *pSub = NULL ;
       VEC_SUB_SESSIONPTR vecFailedSession ;
       vector< INT32 > vecFailedFlag ;
-      SET_SUB_SESSIONID::iterator it = subs.begin() ;
+      SET_NODEID::iterator it = subs.begin() ;
       UINT64 nodeID = 0 ;
 
       if ( pTotalNum )
@@ -469,7 +578,6 @@ namespace engine
          {
             continue ;
          }
-         pSub->clearIODatas() ;
          pSub->setReqMsg( pSrcMsg ) ;
          rc = sendMsg( pSub ) ;
 
@@ -477,9 +585,17 @@ namespace engine
          {
             ++(*pTotalNum) ;
          }
-         if ( SDB_OK == rc && pSucNum )
+         if ( SDB_OK == rc )
          {
-            ++(*pSucNum) ;
+            if ( pSucNum )
+            {
+               ++(*pSucNum) ;
+            }
+            if ( pSrcMsg && memType != PMD_EDU_MEM_NONE )
+            {
+               pSub->setReqMsgMemType( memType ) ;
+               memType = PMD_EDU_MEM_NONE ;
+            }
          }
          else if ( SDB_OK != rc )
          {
@@ -532,7 +648,7 @@ namespace engine
 
    INT32 _pmdRemoteSession::sendMsg( INT32 *pSucNum, INT32 *pTotalNum )
    {
-      return sendMsg( NULL, pSucNum, pTotalNum ) ;
+      return sendMsg( NULL, PMD_EDU_MEM_NONE, pSucNum, pTotalNum ) ;
    }
 
    INT32 _pmdRemoteSession::sendMsg( UINT64 nodeID )
@@ -557,6 +673,7 @@ namespace engine
    INT32 _pmdRemoteSession::sendMsg( pmdSubSession *pSub )
    {
       INT32 rc = SDB_OK ;
+      UINT64 oldReqID = 0 ;
 
       if ( !pSub )
       {
@@ -580,6 +697,7 @@ namespace engine
          goto done ;
       }
 
+      oldReqID = pSub->getReqID() ;
       pSub->setReqID( _pEDUCB->incCurRequestID() ) ;
       pSub->getReqMsg()->requestID = pSub->getReqID() ;
       pSub->getReqMsg()->routeID.value = MSG_INVALID_ROUTEID ;
@@ -601,6 +719,10 @@ namespace engine
 
       if ( SDB_OK == rc )
       {
+         if ( pSub->isNeedToDel() )
+         {
+            _pSite->delSubSession( oldReqID ) ;
+         }
          pSub->setSendResult( TRUE ) ;
          // add to request map
          _pSite->addSubSession( pSub ) ;
@@ -771,6 +893,11 @@ namespace engine
       _mapReq2SubSession[ pSub->getReqID() ] = pSub ;
    }
 
+   void _pmdRemoteSessionSite::delSubSession( UINT64 reqID )
+   {
+      _mapReq2SubSession.erase( reqID ) ;
+   }
+
    INT32 _pmdRemoteSessionSite::processEvent( pmdEDUEvent &event,
                                               MAP_SUB_SESSION &mapSessions,
                                               pmdSubSession **ppSub )
@@ -807,6 +934,7 @@ namespace engine
             else if ( itPtr->second->getNodeIDUInt() == nodeID )
             {
                itPtr->second->processEvent( event ) ;
+               itPtr->second->setNeedToDel( FALSE ) ;
                if ( !*ppSub && ( it = mapSessions.find( nodeID ) ) !=
                     mapSessions.end() &&
                     &(it->second) == itPtr->second )
@@ -830,6 +958,7 @@ namespace engine
          if ( itPtr != _mapReq2SubSession.end() )
          {
             itPtr->second->processEvent( event ) ;
+            itPtr->second->setNeedToDel( FALSE ) ;
             if ( !*ppSub && ( it = mapSessions.find( nodeID ) ) !=
                  mapSessions.end() &&
                  &(it->second) == itPtr->second )
