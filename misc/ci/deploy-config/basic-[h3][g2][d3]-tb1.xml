@@ -120,7 +120,7 @@
 		
 		<basename property="antFileName" file="${ant.file}" suffix=".xml" />
 		<!--property name="test-type-list" value="basic" /-->
-		<property name="test-type-list" value="basic,python" />
+		<property name="test-type-list" value="driver-python" />
 		<for list="${test-type-list}" param="test-type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
