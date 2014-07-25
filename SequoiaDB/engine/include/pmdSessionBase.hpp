@@ -89,11 +89,6 @@ namespace engine
 
       protected:
 
-         BOOLEAN     _allocFromCatch( INT32 len, CHAR **ppBuff,
-                                      INT32 &buffLen ) ;
-
-      protected:
-
          _pmdEDUCB                        *_pEDUCB ;
          EDUID                            _eduID ;
          ossSocket                        _socket ;
