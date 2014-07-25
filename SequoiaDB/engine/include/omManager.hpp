@@ -115,6 +115,9 @@ namespace engine
          MsgRouteID     updateAgentInfo( const CHAR *pHost,
                                          const CHAR *pService ) ;
          MsgRouteID     getAgentIDByHost( const CHAR *pHost ) ;
+         INT32          getHostInfoByID( MsgRouteID routeID,
+                                         string &host,
+                                         string &servcie ) ;
          INT32          sendMsgToAgent( const CHAR *pHost,
                                         MsgHeader *pMsg ) ;
 
