@@ -69,6 +69,8 @@ namespace engine
          INT32 update( const _MsgRouteID &oldID,
                        const _MsgRouteID &newID ) ;
 
+         void  del( const _MsgRouteID &id, BOOLEAN &hasDel ) ;
+
          void clear() ;
 
          OSS_INLINE void setLocal( const _MsgRouteID &id )

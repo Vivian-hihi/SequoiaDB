@@ -730,8 +730,8 @@ namespace engine
       MsgRouteID localAgentID ;
       INT32 rc = SDB_OK ;
 
-      localAgentID = om->updateAgentInfo( _localAgentHost.c_str(), 
-                                          _localAgentService.c_str() ) ;
+      localAgentID = om->updateAgentInfo( _localAgentHost, 
+                                          _localAgentService ) ;
       if ( NULL == remoteSession->addSubSession( localAgentID.value ) )
       {
          rc = SDB_OOM ;
@@ -1240,8 +1240,7 @@ namespace engine
          agentIP   = ite->getStringField( OM_BSON_FIELD_HOST_IP ) ;
          agentHost = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
          agentPort = ite->getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
-         routeID   = om->updateAgentInfo( agentHost.c_str(), 
-                                          agentPort.c_str() ) ;
+         routeID   = om->updateAgentInfo( agentHost, agentPort ) ;
          subSession = remoteSession->addSubSession( routeID.value ) ;
          if ( NULL == subSession )
          {
@@ -1398,8 +1397,7 @@ namespace engine
          agentIP   = ite->getStringField( OM_BSON_FIELD_HOST_IP ) ;
          agentHost = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
          agentPort = ite->getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
-         routeID   = om->updateAgentInfo( agentHost.c_str(), 
-                                          agentPort.c_str() ) ;
+         routeID   = om->updateAgentInfo( agentHost, agentPort ) ;
          subSession = remoteSession->addSubSession( routeID.value ) ;
          if ( NULL == subSession )
          {
@@ -3467,8 +3465,8 @@ namespace engine
       MsgRouteID localAgentID ;
       INT32 rc = SDB_OK ;
 
-      localAgentID = om->updateAgentInfo( _localAgentHost.c_str(), 
-                                          _localAgentService.c_str() ) ;
+      localAgentID = om->updateAgentInfo( _localAgentHost, 
+                                          _localAgentService ) ;
       if ( NULL == remoteSession->addSubSession( localAgentID.value ) )
       {
          rc = SDB_OOM ;

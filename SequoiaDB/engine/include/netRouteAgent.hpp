@@ -143,14 +143,16 @@ namespace engine
                           const netIOVec &iov ) ;
 
          INT32 updateRoute( const _MsgRouteID &id,
-                           const CHAR *host,
-                           const CHAR *service ) ;
+                            const CHAR *host,
+                            const CHAR *service ) ;
 
          INT32 updateRoute( const _MsgRouteID &id,
                             const _netRouteNode &node ) ;
 
          INT32 updateRoute( const _MsgRouteID &oldID,
                             const _MsgRouteID &newID ) ;
+
+         void  delRoute( const _MsgRouteID &id ) ;
 
          INT64 netIn() ;
 

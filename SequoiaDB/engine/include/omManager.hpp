@@ -36,6 +36,7 @@
 #include "omDef.hpp"
 #include "ossLatch.hpp"
 #include "pmdRestSession.hpp"
+#include "clsObjBase.hpp"
 #include "restAdaptor.hpp"
 #include "sdbInterface.hpp"
 #include "pmdEDU.hpp"
@@ -62,6 +63,10 @@ namespace engine
    #define OM_TASK_STATUS_ERROR_ROLLBACK  2
    #define OM_TASK_STATUS_ERROR_FINISH    3
    #define OM_TASK_STATUS_FINISH          4
+
+   /*
+      omTaskInfo define
+   */
    struct omTaskInfo
    {
       string  _agentHostName ;
@@ -89,10 +94,28 @@ namespace engine
    };
 
    /*
+      omAgentInfo define
+   */
+   struct omAgentInfo
+   {
+      UINT64   _id ;
+      string   _host ;
+      string   _service ;
+   } ;
+
+   /*
       _omManager define
    */
-   class _omManager : public _IControlBlock
+   class _omManager : public _clsObjBase, public _IControlBlock
    {
+      DECLARE_OBJ_MSG_MAP()
+
+      typedef map< UINT64, omAgentInfo* >    MAP_ID2HOSTPTR ;
+      typedef MAP_ID2HOSTPTR::iterator       MAP_ID2HOSTPTR_IT ;
+
+      typedef map< string, omAgentInfo >     MAP_HOST2ID ;
+      typedef MAP_HOST2ID::iterator          MAP_HOST2ID_IT ;
+
       public:
          _omManager() ;
          virtual ~_omManager() ;
@@ -112,14 +135,14 @@ namespace engine
 
          // comm interface
          netRouteAgent* getRouteAgent() ;
-         MsgRouteID     updateAgentInfo( const CHAR *pHost,
-                                         const CHAR *pService ) ;
-         MsgRouteID     getAgentIDByHost( const CHAR *pHost ) ;
+         MsgRouteID     updateAgentInfo( const string &host,
+                                         const string &service ) ;
+         MsgRouteID     getAgentIDByHost( const string &host ) ;
          INT32          getHostInfoByID( MsgRouteID routeID,
                                          string &host,
-                                         string &servcie ) ;
-         INT32          sendMsgToAgent( const CHAR *pHost,
-                                        MsgHeader *pMsg ) ;
+                                         string &service ) ;
+         void           delAgent( MsgRouteID routeID ) ;
+         void           delAgent( const string &host ) ;
 
          restSessionInfo*  attachSessionInfo( const string &id ) ;
          void              detachSessionInfo( restSessionInfo *pSessionInfo ) ;
@@ -151,6 +174,7 @@ namespace engine
 
       protected:
 
+         MsgRouteID        _incNodeID() ;
          string            _makeID( restSessionInfo *pSessionInfo ) ;
 
          void              _add2UserMap( const string &user,
@@ -179,6 +203,10 @@ namespace engine
          map<string, restSessionInfo*>          _mapSessions ;
          map<string, vector<restSessionInfo*> > _mapUser2Sessions ;
          UINT32                                 _sequence ;
+
+         MAP_ID2HOSTPTR                         _mapID2Host ;
+         MAP_HOST2ID                            _mapHost2ID ;
+         MsgRouteID                             _hwRouteID ;
 
          ossSpinSLatch                          _omLatch ;
 

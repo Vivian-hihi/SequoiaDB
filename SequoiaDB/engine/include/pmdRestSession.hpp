@@ -152,10 +152,12 @@ namespace engine
       protected:
          virtual INT32     _onAuth( MsgHeader *msg ) ;
 
-         INT32             _processRestMsg( HTTP_PARSE_COMMON command, const CHAR *pFilePath ) ;
+         INT32             _processRestMsg( HTTP_PARSE_COMMON command,
+                                            const CHAR *pFilePath ) ;
 
       private:
-         omCommandInterface *_createCommand( HTTP_PARSE_COMMON command, const CHAR *pFilePath ) ;
+         omCommandInterface *_createCommand( HTTP_PARSE_COMMON command,
+                                             const CHAR *pFilePath ) ;
 
       protected:
          httpConnection    _restConn ;

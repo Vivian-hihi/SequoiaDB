@@ -47,7 +47,7 @@ namespace engine
       clear() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_ROUTE, "_netRoute::route" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_ROUTE, "_netRoute::route" )
    INT32 _netRoute::route( const _MsgRouteID &id,
                            CHAR *host,
                            CHAR *service )
@@ -84,7 +84,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_ROUTE2, "_netRoute::route" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_ROUTE2, "_netRoute::route" )
    INT32 _netRoute::route( const _MsgRouteID &id,
                            _netRouteNode &node )
    {
@@ -113,7 +113,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE, "_netRoute::update" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE, "_netRoute::update" )
    INT32 _netRoute::update( const _MsgRouteID &id,
                             const CHAR *host,
                             const CHAR *service,
@@ -164,7 +164,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE2, "_netRoute::update" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE2, "_netRoute::update" )
    INT32 _netRoute::update ( const _MsgRouteID &oldID,
                              const _MsgRouteID &newID )
    {
@@ -199,7 +199,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE3, "_netRoute::update" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE3, "_netRoute::update" )
    INT32 _netRoute::update( const _MsgRouteID &id,
                             const _netRouteNode &node )
    {
@@ -231,7 +231,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_CLEAR, "_netRoute::clear" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_CLEAR, "_netRoute::clear" )
    void _netRoute::clear()
    {
       PD_TRACE_ENTRY ( SDB__NETRT_CLEAR );
@@ -240,4 +240,17 @@ namespace engine
       _mtx.release() ;
       PD_TRACE_EXIT ( SDB__NETRT_CLEAR );
    }
+
+   void _netRoute::del( const _MsgRouteID &id, BOOLEAN &hasDel )
+   {
+      hasDel = FALSE ;
+      ossScopedLock lock( &_mtx, EXCLUSIVE ) ;
+      map<UINT64, _netRouteNode>::iterator it = _route.find( id.value ) ;
+      if ( it != _route.end() )
+      {
+         _route.erase( it ) ;
+         hasDel = TRUE ;
+      }
+   }
+
 }

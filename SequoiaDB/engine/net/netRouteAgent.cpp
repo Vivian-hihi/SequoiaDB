@@ -69,8 +69,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_UPRT2, "_netRouteAgent::updateRoute" )
    INT32 _netRouteAgent::updateRoute( const _MsgRouteID &id,
-                                     const CHAR *host,
-                                     const CHAR *service )
+                                      const CHAR *host,
+                                      const CHAR *service )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN newAdd = FALSE ;
@@ -112,6 +112,16 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _netRouteAgent::delRoute( const _MsgRouteID &id )
+   {
+      BOOLEAN hasDel = FALSE ;
+      _route.del( id, hasDel ) ;
+      if ( hasDel )
+      {
+         _frame.close( id ) ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_LSTN, "_netRouteAgent::listen" )

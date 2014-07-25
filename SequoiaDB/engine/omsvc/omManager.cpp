@@ -46,6 +46,13 @@ namespace engine
 {
 
    /*
+      Message Map
+   */
+   BEGIN_OBJ_MSG_MAP( _omManager, _clsObjBase )
+      
+   END_OBJ_MSG_MAP()
+
+   /*
       implement om manager
    */
    _omManager::_omManager()
@@ -57,6 +64,11 @@ namespace engine
       _maxRestBodySize     = OM_REST_MAX_BODY_SIZE ;
       _restTimeout         = REST_TIMEOUT ;
       _sequence            = 1 ;
+
+      _hwRouteID.value     = MSG_INVALID_ROUTEID ;
+      _hwRouteID.columns.groupID = 2 ;
+      _hwRouteID.columns.nodeID  = 0 ;
+      _hwRouteID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
 
       _pKrcb               = NULL ;
       _pDmsCB              = NULL ;
@@ -88,6 +100,7 @@ namespace engine
                     rc ) ;
       
       rc = _restAdptor.init( _fixBufSize, _maxRestBodySize, _restTimeout ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init rest adptor, rc: %d", rc ) ;
 
    done:
       return rc;
@@ -214,11 +227,17 @@ namespace engine
       // set to primary
       pmdSetPrimary( TRUE ) ;
 
+      // TODO:XUJIANHUI
+      // STARTUP EDU
+      // SET TIMER
+
       return SDB_OK ;
    }
 
    INT32 _omManager::deactive ()
    {
+      // TODO:XUJIANHUI
+      // CLOSE TIMER
       return SDB_OK ;
    }
 
@@ -247,6 +266,9 @@ namespace engine
       }
       _mapSessions.clear() ;
       _mapUser2Sessions.clear() ;
+
+      _mapID2Host.clear() ;
+      _mapHost2ID.clear() ;
 
       return SDB_OK ;
    }
@@ -442,29 +464,108 @@ namespace engine
       return &_netAgent ;
    }
 
-   MsgRouteID _omManager::updateAgentInfo( const CHAR *pHost,
-                                           const CHAR *pService )
+   MsgRouteID _omManager::_incNodeID()
+   {
+      ++_hwRouteID.columns.nodeID ;
+      if ( 0 == _hwRouteID.columns.nodeID )
+      {
+         _hwRouteID.columns.nodeID = 1 ;
+         ++_hwRouteID.columns.groupID ;
+      }
+      return _hwRouteID ;
+   }
+
+   MsgRouteID _omManager::updateAgentInfo( const string &host,
+                                           const string &service )
    {
       MsgRouteID nodeID ;
+      ossScopedLock lock( &_omLatch, EXCLUSIVE ) ;
+      MAP_HOST2ID_IT it = _mapHost2ID.find( host ) ;
+      if ( it != _mapHost2ID.end() )
+      {
+         omAgentInfo &info = it->second ;
+         nodeID.value = info._id ;
+         _mapID2Host.erase( info._id ) ;
+         _netAgent.updateRoute( nodeID, host.c_str(), service.c_str() ) ;
+         info._host = host ;
+         info._service = service ;
+      }
+      else
+      {
+         nodeID = _incNodeID() ;
+         omAgentInfo &info = _mapHost2ID[ host ] ;
+         info._id = nodeID.value ;
+         info._host = host ;
+         info._service = service ;
+         _mapID2Host[ info._id ] = &info ;
+         _netAgent.updateRoute( nodeID, host.c_str(), service.c_str() ) ;
+      }
+
       return nodeID ;
    }
 
-   MsgRouteID _omManager::getAgentIDByHost( const CHAR *pHost )
+   MsgRouteID _omManager::getAgentIDByHost( const string &host )
    {
       MsgRouteID nodeID ;
+      nodeID.value = MSG_INVALID_ROUTEID ;
+      ossScopedLock lock( &_omLatch, SHARED ) ;
+      MAP_HOST2ID_IT it = _mapHost2ID.find( host ) ;
+      if ( it != _mapHost2ID.end() )
+      {
+         nodeID.value = it->second._id ;
+      }
       return nodeID ;
    }
 
    INT32 _omManager::getHostInfoByID( MsgRouteID routeID, string &host,
-                                      string &servcie )
+                                      string &service )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      omAgentInfo *pInfo = NULL ;
+
+      ossScopedLock lock( &_omLatch, SHARED ) ;
+      MAP_ID2HOSTPTR_IT it = _mapID2Host.find( routeID.value ) ;
+      if ( it != _mapID2Host.end() )
+      {
+         pInfo = it->second ;
+         host = pInfo->_host ;
+         service = pInfo->_service ;
+      }
+      else
+      {
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+      }
+
+      return rc ;
    }
 
-   INT32 _omManager::sendMsgToAgent( const CHAR * pHost, MsgHeader *pMsg )
+   void _omManager::delAgent( const string &host )
    {
-      return SDB_OK ;
+      ossScopedLock lock( &_omLatch, EXCLUSIVE ) ;
+      MAP_HOST2ID_IT it = _mapHost2ID.find( host ) ;
+      if ( it != _mapHost2ID.end() )
+      {
+         MsgRouteID nodeID ;
+         nodeID.value = it->second._id ;
+         _mapID2Host.erase( it->second._id ) ;
+         _netAgent.delRoute( nodeID ) ;
+         _mapHost2ID.erase( it ) ;
+      }
+   }
+
+   void _omManager::delAgent( MsgRouteID routeID )
+   {
+      ossScopedLock lock( &_omLatch, EXCLUSIVE ) ;
+      MAP_ID2HOSTPTR_IT it = _mapID2Host.find( routeID.value ) ;
+      if ( it != _mapID2Host.end() )
+      {
+         MsgRouteID nodeID ;
+         nodeID.value = it->first ;
+         string host = it->second->_host ;
+         _netAgent.delRoute( nodeID ) ;
+         _mapID2Host.erase( it ) ;
+         _mapHost2ID.erase( host ) ;
+      }
    }
 
    INT32 _omManager::saveInstallTask( string agentHost, string agentService ,
