@@ -517,6 +517,7 @@ namespace engine
             builder.append( OM_BSON_FIELD_HOST_NAME, 
                             ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
             builder.append( OM_REST_RES_RETCODE, SDB_IXM_DUP_KEY ) ;
+            builder.append( OM_REST_RES_DETAIL, "host is exist" ) ;
             tmp = builder.obj() ;
             hostResult.push_back( tmp ) ;
 
@@ -778,6 +779,14 @@ namespace engine
          goto error ;
       }
 
+      if ( subSessionVec[0]->isDisconnect() )
+      {
+         rc = SDB_UNEXPECTED_RESULT ;
+         PD_LOG(PDERROR, "session disconected:id=%s,rc=%d", 
+                routeID2String(subSessionVec[0]->getNodeID()).c_str(), rc ) ;
+         goto error ;
+      }
+
       pRspMsg = subSessionVec[0]->getRspMsg() ;
       if ( NULL == pRspMsg )
       {
@@ -976,6 +985,22 @@ namespace engine
    }
 
    void omCheckHostCommand::_eraseFromList( list<BSONObj> &hostInfoList, 
+                                            const string &hostName )
+   {
+      list<BSONObj>::iterator ite = hostInfoList.begin() ;
+      while ( ite != hostInfoList.end() )
+      {
+         string tmpHostName = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         if ( tmpHostName.compare( hostName ) == 0 )
+         {
+            hostInfoList.erase( ite ) ;
+            return ;
+         }
+         ite++ ;
+      }
+   }
+
+   void omCheckHostCommand::_eraseFromList( list<BSONObj> &hostInfoList, 
                                             BSONObj &oneHost )
    {
       list<BSONObj>::iterator ite = hostInfoList.begin() ;
@@ -990,7 +1015,6 @@ namespace engine
          }
          ite++ ;
       }
-
    }
 
    // check ping and ssh
@@ -1277,7 +1301,7 @@ namespace engine
       }
 
       remoteSession->sendMsg() ;
-      rc = remoteSession->waitReply( true, &subSessionVec ) ;
+      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
       if ( SDB_OK != rc && SDB_TIMEOUT != rc )
       {
          PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
@@ -1293,6 +1317,14 @@ namespace engine
          SINT32 numReturned        = 0 ;
          MsgHeader* pRspMsg        = NULL ;
          pmdSubSession *subSession = subSessionVec[i] ;
+         if ( subSession->isDisconnect() )
+         {
+            rc = SDB_UNEXPECTED_RESULT ;
+            PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
+                   routeID2String(subSession->getNodeID()).c_str(), rc ) ;
+            continue ;
+         }
+
          pRspMsg = subSession->getRspMsg() ;
          if ( NULL == pRspMsg )
          {
@@ -1332,6 +1364,7 @@ namespace engine
          builder.append( OM_BSON_FIELD_HOST_NAME,
                          ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
          builder.append( OM_REST_RES_RETCODE, SDB_TIMEOUT ) ;
+         builder.append( OM_REST_RES_DETAIL, "timeout" ) ;
 
          tmp = builder.obj() ;
          hostResult.push_back( tmp ) ;
@@ -1425,7 +1458,7 @@ namespace engine
       }
 
       remoteSession->sendMsg() ;
-      remoteSession->waitReply( true, &subSessionVec ) ;
+      remoteSession->waitReply( TRUE, &subSessionVec ) ;
    done:
       _clearSession( om, remoteSession ) ;
       return rc ;
@@ -3388,6 +3421,14 @@ namespace engine
          goto error ;
       }
 
+      if ( subSessionVec[0]->isDisconnect() )
+      {
+         rc = SDB_UNEXPECTED_RESULT ;
+         PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
+                routeID2String(subSessionVec[0]->getNodeID()).c_str(), rc ) ;
+         goto error ;
+      }
+
       pRspMsg = subSessionVec[0]->getRspMsg() ;
       if ( NULL == pRspMsg )
       {
@@ -3855,9 +3896,9 @@ namespace engine
       }
 
       sdbGetOMManager()->getTaskWriteLock() ;
-      _testSaveTask() ;
-      _testUpdateTask() ;
-      _testFinishTask() ;
+//      _testSaveTask() ;
+//      _testUpdateTask() ;
+//      _testFinishTask() ;
       sdbGetOMManager()->getInstallTask( status, taskID, isAllFinished, detail,
                                          progress ) ;
       sdbGetOMManager()->releaseTaskWriteLock() ;

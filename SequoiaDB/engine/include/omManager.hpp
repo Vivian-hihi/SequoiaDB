@@ -199,7 +199,7 @@ namespace engine
 
          string                                 _wwwRootPath ;
          omTaskInfo                             _omTaskInfo ;
-         ossSpinSLatch                          _spinSlatch ;
+         ossSpinSLatch                          _taskLatch ;
 
    } ;
 

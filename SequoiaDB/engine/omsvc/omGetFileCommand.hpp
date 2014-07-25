@@ -187,6 +187,8 @@ namespace engine
          INT32           _uninstallAgent( list<BSONObj> &hostInfoList ) ;
          void            _eraseFromList( list<BSONObj> &hostInfoList, 
                                          BSONObj &oneHost ) ;
+         void            _eraseFromList( list<BSONObj> &hostInfoList, 
+                                         const string &hostName ) ;
 
          INT32           _notifyAgentExit( list<BSONObj> &hostInfoList ) ;
          INT32           _addAgentExitReq( omManager *om,

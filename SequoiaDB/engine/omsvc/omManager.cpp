@@ -512,12 +512,12 @@ namespace engine
 
    void _omManager::getTaskWriteLock()
    {
-      _spinSlatch.get() ;
+      _taskLatch.get() ;
    }
 
    void _omManager::releaseTaskWriteLock()
    {
-      _spinSlatch.release() ;
+      _taskLatch.release() ;
    }
 
    void _omManager::getInstallTask( INT32 &status, string &taskID, 
@@ -667,6 +667,14 @@ namespace engine
          rc = SDB_UNEXPECTED_RESULT ;
          PD_LOG( PDERROR, "unexpected session size:size=%d", 
                  subSessionVec.size() ) ;
+         goto error ;
+      }
+
+      if ( subSessionVec[0]->isDisconnect() )
+      {
+         rc = SDB_UNEXPECTED_RESULT ;
+         PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
+                routeID2String(subSessionVec[0]->getNodeID()).c_str(), rc ) ;
          goto error ;
       }
 
