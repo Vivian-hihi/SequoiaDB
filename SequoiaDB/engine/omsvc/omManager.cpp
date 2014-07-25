@@ -503,14 +503,14 @@ namespace engine
       return FALSE ;
    }
 
-   void _omManager::lockInstallTask()
+   void _omManager::getTaskWriteLock()
    {
-      //TODO: lock
+      _spinSlatch.get() ;
    }
 
-   void _omManager::unlockInstallTask()
+   void _omManager::releaseTaskWriteLock()
    {
-      //TODO: unlock
+      _spinSlatch.release() ;
    }
 
    void _omManager::getInstallTask( INT32 &status, string &taskID, 
@@ -545,8 +545,11 @@ namespace engine
 
    void _omManager::updateInstallTask( BSONObj &taskDetail )
    {
-      _omTaskInfo._progress = taskDetail.getObjectField( 
+      if ( OM_TASK_STATUS_DOING == _omTaskInfo._status )
+      {
+         _omTaskInfo._progress = taskDetail.getObjectField( 
                                                        OM_BSON_TASK_PROGRESS ) ;
+      }
    }
 
    void _omManager::rollBackTask( BSONObj &result )

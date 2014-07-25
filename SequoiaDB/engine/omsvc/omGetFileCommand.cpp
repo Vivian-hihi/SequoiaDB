@@ -3703,7 +3703,7 @@ namespace engine
 
       _compeleteConfValue( bsonHostInfo, bsonConfValue ) ;
 
-      sdbGetOMManager()->lockInstallTask() ;
+      sdbGetOMManager()->getTaskWriteLock() ;
       if ( sdbGetOMManager()->isInstallTaskExist() )
       {
          rc = SDB_INVALIDARG ;
@@ -3718,7 +3718,7 @@ namespace engine
          PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
          _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
 
-         sdbGetOMManager()->unlockInstallTask() ;
+         sdbGetOMManager()->releaseTaskWriteLock() ;
          goto error ;
       }
 
@@ -3726,10 +3726,10 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_applyInstallRequest failed:rc=%d", rc ) ;
-         sdbGetOMManager()->unlockInstallTask() ;
+         sdbGetOMManager()->releaseTaskWriteLock() ;
          goto error ;
       }
-      sdbGetOMManager()->unlockInstallTask() ;
+      sdbGetOMManager()->releaseTaskWriteLock() ;
 
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
@@ -3750,6 +3750,75 @@ namespace engine
 
    omQueryInstallProgress::~omQueryInstallProgress()
    {
+   }
+
+   void omQueryInstallProgress::_testSaveTask()
+   {
+      BSONObjBuilder tmpTestBuilder ;
+      BSONObj tmpTest ;
+      tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
+      tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
+      tmpTestBuilder.append( OM_BSON_TASKID, "ad" ) ;
+      tmpTestBuilder.append( OM_BSON_ISFINISHED, false ) ;
+      {
+         BSONObjBuilder haha ;
+         haha.append( OM_BSON_ITEM_NAME, "coord" ) ;
+         haha.append( OM_BSON_TOTAL_COUNT, 4 ) ;
+         haha.append( OM_BSON_INSTALLED_COUNT, 2 ) ;
+         haha.append( OM_BSON_ITEM_DESC, "xx" ) ;
+         BSONObj bsonHaha = haha.obj() ;
+         BSONArrayBuilder arrayBuilder ;
+         arrayBuilder.append( bsonHaha ) ;
+         tmpTestBuilder.appendArray( OM_BSON_TASK_PROGRESS, arrayBuilder.arr() ) ;
+      }
+      tmpTest = tmpTestBuilder.obj() ;
+      sdbGetOMManager()->saveInstallTask( "", "", tmpTest, BSONObj() ) ;
+   }
+
+   void omQueryInstallProgress::_testUpdateTask()
+   {
+      BSONObjBuilder tmpTestBuilder ;
+      BSONObj tmpTest ;
+      tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
+      tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
+      tmpTestBuilder.append( OM_BSON_TASKID, "ad" ) ;
+      tmpTestBuilder.append( OM_BSON_ISFINISHED, false ) ;
+      {
+         BSONObjBuilder haha ;
+         haha.append( OM_BSON_ITEM_NAME, "coord" ) ;
+         haha.append( OM_BSON_TOTAL_COUNT, 4 ) ;
+         haha.append( OM_BSON_INSTALLED_COUNT, 3 ) ;
+         haha.append( OM_BSON_ITEM_DESC, "xx" ) ;
+         BSONObj bsonHaha = haha.obj() ;
+         BSONArrayBuilder arrayBuilder ;
+         arrayBuilder.append( bsonHaha ) ;
+         tmpTestBuilder.appendArray( OM_BSON_TASK_PROGRESS, arrayBuilder.arr() ) ;
+      }
+      tmpTest = tmpTestBuilder.obj() ;
+      sdbGetOMManager()->updateInstallTask( tmpTest ) ;
+   }
+
+   void omQueryInstallProgress::_testFinishTask()
+   {
+      BSONObjBuilder tmpTestBuilder ;
+      BSONObj tmpTest ;
+      tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
+      tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
+      tmpTestBuilder.append( OM_BSON_TASKID, "ad" ) ;
+      tmpTestBuilder.append( OM_BSON_ISFINISHED, true ) ;
+      {
+         BSONObjBuilder haha ;
+         haha.append( OM_BSON_ITEM_NAME, "coord" ) ;
+         haha.append( OM_BSON_TOTAL_COUNT, 4 ) ;
+         haha.append( OM_BSON_INSTALLED_COUNT, 4 ) ;
+         haha.append( OM_BSON_ITEM_DESC, "xx" ) ;
+         BSONObj bsonHaha = haha.obj() ;
+         BSONArrayBuilder arrayBuilder ;
+         arrayBuilder.append( bsonHaha ) ;
+         tmpTestBuilder.appendArray( OM_BSON_TASK_PROGRESS, arrayBuilder.arr() ) ;
+      }
+      tmpTest = tmpTestBuilder.obj() ;
+      sdbGetOMManager()->finishInstallTask( tmpTest ) ;
    }
 
    INT32 omQueryInstallProgress::doCommand()
@@ -3785,31 +3854,13 @@ namespace engine
          goto error ;
       }
 
-      sdbGetOMManager()->lockInstallTask() ;
-//      {
-//      BSONObjBuilder tmpTestBuilder ;
-//      BSONObj tmpTest ;
-//      tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
-//      tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
-//      tmpTestBuilder.append( OM_BSON_TASKID, "ad" ) ;
-//      tmpTestBuilder.append( OM_BSON_ISFINISHED, false ) ;
-//      {
-//         BSONObjBuilder haha ;
-//         haha.append( OM_BSON_ITEM_NAME, "coord" ) ;
-//         haha.append( OM_BSON_TOTAL_COUNT, 4 ) ;
-//         haha.append( OM_BSON_INSTALLED_COUNT, 2 ) ;
-//         haha.append( OM_BSON_ITEM_DESC, "xx" ) ;
-//         BSONObj bsonHaha = haha.obj() ;
-//         BSONArrayBuilder arrayBuilder ;
-//         arrayBuilder.append( bsonHaha ) ;
-//         tmpTestBuilder.appendArray( OM_BSON_TASK_PROGRESS, arrayBuilder.arr() ) ;
-//      }
-//      tmpTest = tmpTestBuilder.obj() ;
-//      sdbGetOMManager()->saveInstallTask( "", "", tmpTest, BSONObj() ) ;
-//      }
+      sdbGetOMManager()->getTaskWriteLock() ;
+      _testSaveTask() ;
+      _testUpdateTask() ;
+      _testFinishTask() ;
       sdbGetOMManager()->getInstallTask( status, taskID, isAllFinished, detail,
                                          progress ) ;
-      sdbGetOMManager()->unlockInstallTask() ;
+      sdbGetOMManager()->releaseTaskWriteLock() ;
 
       restTaskID = restTask.getStringField( OM_BSON_TASKID ) ;
       if ( OM_TASK_STATUS_IDLE == status )

@@ -132,8 +132,8 @@ namespace engine
          INT32             authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
 
          BOOLEAN           isInstallTaskExist( ) ;
-         void              lockInstallTask() ;
-         void              unlockInstallTask() ;
+         void              getTaskWriteLock() ;
+         void              releaseTaskWriteLock() ;
          INT32             saveInstallTask( string agentHost, 
                                             string agentService ,
                                             BSONObj &taskInfo, 
@@ -196,6 +196,7 @@ namespace engine
 
          string                                 _wwwRootPath ;
          omTaskInfo                             _omTaskInfo ;
+         ossSpinSLatch                          _spinSlatch ;
 
    } ;
 

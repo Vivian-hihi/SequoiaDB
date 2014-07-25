@@ -369,6 +369,10 @@ namespace engine
 
       public:
          virtual INT32  doCommand() ;
+      private:
+         void           _testSaveTask() ;
+         void           _testUpdateTask() ;
+         void           _testFinishTask() ;
    };
 
    class omGetFileCommand : public omCommandInterface

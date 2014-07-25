@@ -1802,6 +1802,10 @@ namespace engine
       INT32 dataCount    = 0 ;
       INT32 baseGroupID  = 0 ;
 
+      if ( _confTemplate.coordNum == 0 )
+      {
+         _confTemplate.coordNum = ( INT32 )_hostInfoMap.size() ;
+      }
       while ( coordCount < _confTemplate.coordNum )
       {
          omHostInfo *host = _getBestHost( OM_NODE_TYPE_COORD ) ;
