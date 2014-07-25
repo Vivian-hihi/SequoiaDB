@@ -10,20 +10,34 @@
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
 	</taskdef>
-	<property name="coordport" value="50000" />
-	<property name="dataport" value="21100" />
+	<property file="${ci.properties.path}" />
 
 	<target name="clean-env" depends="">
+		<echo message="reports.path=${reports.path}" />
 		<delete dir="${reports.path}" failonerror="false" />
 		<mkdir dir="${reports.path}" />
 	</target>
 
-	<target name="test-one-case" depends="">
-		<echo message="test one case is TestPySequoiadb.py" />
+	<target name="test-one-case" depends="clean-env">
 
-		<exec executable="/usr/bin/python" failonerror="false" dir="${testcase.path}">
-			<arg line=" -h ${hostName} -p ${coordport} -d ${dataport}" />
+		<echo message="test one case is TestPySequoiadb.py" />
+		<copy todir="${install.path}/sequoiadb/python">
+			<fileset dir="${testcase.path}" includes="**/*.py" />
+		</copy>
+
+		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;testcase name=&quot;TestPySequoiadb.py&quot; &gt;&#10;" />
+		<exec executable="/usr/bin/python" failonerror="false" dir="${install.path}/sequoiadb/python" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
+			<arg line=" TestPySequoiadb.py" />
 		</exec>
+		<if>
+			<not>
+				<equals arg1="${ret.code}" arg2="0" />
+			</not>
+			<then>
+				 <echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;failure command=&quot;python TestPySequoiadb.py&quot; dir=&quot;${install.path}/sequoiadb/python&quot; returncode=&quot;${ret.code};&quot; errormessage=&apos;${error.output} &apos; screen=&quot; ${screen.output}&quot; /&gt;&#10;" />
+			</then>
+		</if>
+		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;/testcase&gt;&#10;" />
 	</target>
 
 </project>
