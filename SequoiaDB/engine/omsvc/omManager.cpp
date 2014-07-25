@@ -455,6 +455,13 @@ namespace engine
       return nodeID ;
    }
 
+   INT32 _omManager::getHostInfoByID( MsgRouteID routeID, string &host,
+                                      string &servcie )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
    INT32 _omManager::sendMsgToAgent( const CHAR * pHost, MsgHeader *pMsg )
    {
       return SDB_OK ;
