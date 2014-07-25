@@ -58,7 +58,7 @@ namespace engine
    #define OM_CONF_DETAIL_PREINSTANCE  "preferedinstance"
    #define OM_CONF_DETAIL_PCNUM        "numpagecleaners"
    #define OM_CONF_DETAIL_PCINTERVAL   "pagecleaninterval"
-   
+
    #define OM_DG_NAME_PATTERN          "DATAGROUP"
 
    #define OM_CLUSTER_TYPE_STANDALONE  "standalone"
@@ -251,7 +251,7 @@ namespace engine
                  OM_BSON_PROPERTY_WEBNAME ) ;
          goto error ;
       }
- 
+
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_DISPLAY, _display ) ;
       if ( SDB_OK != rc )
       {
@@ -337,7 +337,7 @@ namespace engine
    {
       return _defaultValue ;
    }
-   
+
    string omConfigItem::getItemName()
    {
       return _name ;
@@ -468,7 +468,7 @@ namespace engine
             node.role       = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
             tmpSvcName      = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
             node.svcName    = ossAtoi( tmpSvcName.c_str() ) ;
-            
+
             node.businessName  = oneNode.getStringField( 
                                                    OM_BSON_BUSINESS_NAME ) ;
             node.dataGroupName = oneNode.getStringField( 
@@ -476,7 +476,7 @@ namespace engine
             _nodeInfoList.push_back( node ) ;
          }
       }
-   
+
    done:
       return rc ;
    error:
@@ -773,8 +773,8 @@ namespace engine
       nodeInfo.dbPath        = confDetail.dbPath ;
       nodeInfo.svcName       = confDetail.svcName ;
       _nodeInfoList.push_back( nodeInfo ) ;
-      
-      
+
+
       return SDB_OK ;
    }
 
@@ -782,7 +782,7 @@ namespace engine
    {
       return _availableGroupID ;
    }
-   
+
    INT32 omHostInfo::getNodeCount( string role )
    {
       return _nodeCounter.getNodeCount( role ) ;
@@ -1462,7 +1462,7 @@ namespace engine
       }
 
       _confDetailSample.dataGroupID = "" ;
-      
+
       _addToItemMap( itemName, pItem ) ;
       pItem = NULL ;
 
@@ -1551,7 +1551,7 @@ namespace engine
 
       return TRUE ;
    }
-   
+
    INT32 omConfigGenerator::_parseConfigDetail( 
                                         const BSONObj &bsonConfigDetails )
    {
@@ -1609,7 +1609,7 @@ namespace engine
       BSONObj confFilter ;
       builder.append( OM_BSON_FIELD_CONFIG, "" ) ;
       confFilter = builder.obj() ;
-      
+
       BSONObj hosts ;
       hosts = bsonHostInfo.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       {
@@ -1730,7 +1730,7 @@ namespace engine
       pHostInfo = NULL ;
       goto done ;
    }
-   
+
    INT32 omConfigGenerator::_generateStandAloneConfig( 
                                                list<sdbConfDetail> &configList )
    {
@@ -1747,7 +1747,7 @@ namespace engine
       details = _confDetailSample ;
       host->assign( OM_NODE_TYPE_STANDALONE, "", details ) ;
       configList.push_back( details ) ;
-      
+
    done:
       return rc ;
    error:
@@ -1860,7 +1860,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 omConfigGenerator::_generateConfig( BSONObj &bsonConfig )
    {
       INT32 rc = SDB_OK ;
@@ -1902,7 +1902,7 @@ namespace engine
          builder.append( OM_BSON_FIELD_HOST_NAME, iter->hostName ) ;
          builder.append( OM_CONF_DETAIL_EX_DG_NAME, iter->dataGroupID ) ;
          builder.append( OM_CONF_DETAIL_DBPATH, iter->dbPath ) ;
-         
+
          ossItoa( iter->svcName, tmp, OM_INT32_LENGTH ) ;
          builder.append( OM_CONF_DETAIL_SVCNAME, tmp ) ;
 

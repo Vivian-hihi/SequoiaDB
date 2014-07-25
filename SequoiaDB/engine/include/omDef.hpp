@@ -65,7 +65,7 @@ namespace engine
 
    // deploy.cluster
    #define OM_CS_DEPLOY_CL_CLUSTER           OM_CS_DEPLOY".SYSCLUSTER"
-   
+
    #define OM_CLUSTER_FIELD_NAME             "Name"
    #define OM_CLUSTER_FIELD_DESC             "Desc"
    #define OM_CLUSTER_FIELD_SDBUSER          "SdbUser"
@@ -77,7 +77,7 @@ namespace engine
 
    // deploy.host                            
    #define OM_CS_DEPLOY_CL_HOST              OM_CS_DEPLOY".SYSHOST"
-   
+
    #define OM_HOST_FIELD_NAME                "HostName"
    #define OM_HOST_FIELD_CLUSTERNAME         "ClusterName"
    #define OM_HOST_FIELD_IP                  "IP"
@@ -99,11 +99,11 @@ namespace engine
 
    #define OM_CS_DEPLOY_CL_HOSTIDX2          "{name:\"SYSDEPLOY_HOST_IDX2\",key: {"\
                                              OM_HOST_FIELD_IP":1}, unique: true, enforced: true } "
-   
+
 
    // deploy.business
    #define OM_CS_DEPLOY_CL_BUSINESS          OM_CS_DEPLOY".SYSBUSINESS"
-    
+
    #define OM_BUSINESS_FIELD_NAME            "Name"
    #define OM_BUSINESS_FIELD_TYPE            "Type"
    #define OM_BUSINESS_FIELD_CLUSTERNAME     "ClusterName"
@@ -125,7 +125,7 @@ namespace engine
    #define  OM_REST_LOGIN_HTML               "login.html"
    #define  OM_REST_INDEX_HTML               "index.html"
    #define  OM_REST_FAVICON_ICO              "favicon.ico"
-   
+
    #define  OM_REST_REDIRECT_LOGIN           "<!DOCTYPE html><html><head>"\
                                              "<meta http-equiv=\"refresh\" content=\"0;url="\
                                              OM_REST_LOGIN_HTML"\"></head></html>"
@@ -133,7 +133,7 @@ namespace engine
    #define  OM_REST_REDIRECT_INDEX           "<!DOCTYPE html><html><head>"\
                                              "<meta http-equiv=\"refresh\" content=\"0;url="\
                                              OM_REST_INDEX_HTML"\"></head></html>"
-   
+
    #define  OM_REST_RES_RETCODE              "rc"
    #define  OM_REST_RES_DETAIL               "detail"
    #define  OM_REST_RES_LOCAL                "local"
@@ -145,7 +145,7 @@ namespace engine
    #define  OM_CREATE_CLUSTER_REQ            "CreateClusterReq"
 
    #define  OM_REST_CLUSTER_INFO             "ClusterInfo"
-   
+
    #define  OM_BSON_FIELD_CLUSTER_NAME       "ClusterName"
    #define  OM_BSON_FIELD_CLUSTER_DESC       "Desc"
    #define  OM_BSON_FIELD_SDB_USER           "SdbUser"
@@ -155,7 +155,7 @@ namespace engine
    #define  OM_DEFAULT_SDB_USER              "sdbadmin"
    #define  OM_DEFAULT_SDB_PASSWD            "sdbadmin"
    #define  OM_DEFAULT_SDB_USERGROUP         "sdbadmin_group"
-   
+
    // *****************************************************************
 
    // *********************om rest query_cluster_req*******************
@@ -164,7 +164,7 @@ namespace engine
 
    // *********************om rest login_req***************************
    #define  OM_LOGIN_REQ                     "LoginReq"
-   
+
    #define  OM_REST_FIELD_LOGIN_NAME         "User"
    #define  OM_REST_FIELD_LOGIN_PASSWD       "Passwd"
    #define  OM_REST_FIELD_TIMESTAMP          "Timestamp"
@@ -195,7 +195,7 @@ namespace engine
 
    // *********************om rest check_host_req**********************
    #define  OM_CHECK_HOST_REQ                "CheckHostReq"
-   
+
    // sub command with agent
    #define  OM_BASIC_CHECK_REQ               "BasicCheckReq"
    #define  OM_INSTALL_REMOTE_AGENT          "InstallRemoteAgentReq"
@@ -224,7 +224,7 @@ namespace engine
    //
    #define  OM_BSON_FIELD_CONFIG             "Config"
 
-   
+
    #define  OM_WAIT_AGENT_RES_INTERVAL        (5000)
    // *****************************************************************
 
@@ -232,7 +232,7 @@ namespace engine
    #define  OM_ADD_HOST_REQ                  "AddHostReq"
 
    #define  OM_ROLLBACK_TRANSACTION_REQ      "RollbackTransactionReq"
-   
+
    #define  OM_BSON_FIELD_INSTALL_PATH       "InstallPath"
    #define  OM_BSON_FIELD_TRANSACTION_ID     "TransactionID"
    // *****************************************************************
@@ -312,7 +312,7 @@ namespace engine
    #define  OM_BSON_FIELD_PREINSTANCE        "PreferedInstance"
    #define  OM_BSON_FIELD_PCNUM              "NumpageCleaners"
    #define  OM_BSON_FIELD_PCINTERVAL         "PageCleanInterval"
-   
+
    // *****************************************************************
 
    // om rest install_business_req
@@ -329,7 +329,7 @@ namespace engine
    #define  OM_QUERY_INSTALL_PROGRESS        "QueryInstallProgress"
 
    #define  OM_REST_TASK_INFO                "Task"
-   
+
    #define  OM_BSON_TASKID                   "TaskID"
    #define  OM_BSON_ISFINISHED               "isAllFinish"
    #define  OM_BSON_TASK_PROGRESS            "Progress"
@@ -338,7 +338,7 @@ namespace engine
    #define  OM_BSON_INSTALLED_COUNT          "InstalledCount"
    #define  OM_BSON_ITEM_DESC                "Desc"
 
-   
+
    // milliseconds
    #define  OM_WAIT_EVENT_INTERVAL           (500)
 
@@ -348,8 +348,8 @@ namespace engine
    #define  OM_DEFAULT_LOCAL_HOST            "localhost"
    // agent default port
    #define  OM_AGENT_DEFAULT_PORT            "11791"
-   
-   
+
+
 }
 
 #endif // OM_DEF_HPP__

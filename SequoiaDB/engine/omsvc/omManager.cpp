@@ -592,13 +592,12 @@ namespace engine
          goto error ;
       }
 
-      _omTaskInfo._status        = OM_TASK_STATUS_ERROR_ROLLBACK ;
-      _omTaskInfo._detail        = result.getStringField( 
-                                                       OM_REST_RES_DETAIL ) ;
+      _omTaskInfo._status   = OM_TASK_STATUS_ERROR_ROLLBACK ;
+      _omTaskInfo._detail   = result.getStringField( OM_REST_RES_DETAIL ) ;
+      _omTaskInfo._progress = result.getObjectField( OM_BSON_TASK_PROGRESS ) ;
       _omTaskInfo._isAllFinished = result.getStringField( 
                                                        OM_BSON_ISFINISHED ) ;
-      _omTaskInfo._progress      = result.getObjectField( 
-                                                       OM_BSON_TASK_PROGRESS ) ;
+
    done:
       _clearSession( cb, remoteSession ) ;
       return;

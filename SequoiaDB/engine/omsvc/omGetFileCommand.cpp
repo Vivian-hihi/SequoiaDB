@@ -72,7 +72,7 @@ namespace engine
    void omAuthCommand::_sendErrorRes2Web( INT32 rc, const CHAR* detail )
    {
       BSONObjBuilder bsonBuilder ;
-      
+
       bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
       if ( NULL != detail )
       {
@@ -120,7 +120,7 @@ namespace engine
          {
             _sendErrorRes2Web( rc, "system error" ) ;
          }
-         
+
          goto error ;
       }
 
@@ -136,7 +136,7 @@ namespace engine
       {
          sdbGetOMManager()->releaseSessionInfo( _restSession->getSessionID() ) ;
       }
-      
+
       sessionInfo = sdbGetOMManager()->newSessionInfo(pUserName, 
                                                       socket->getLocalIP() ) ;
       if ( NULL == sessionInfo )
@@ -153,7 +153,7 @@ namespace engine
                                       sessionInfo->_id.c_str() ) ;
       _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-      
+
    done:
       return SDB_OK ;
 
@@ -171,7 +171,7 @@ namespace engine
 
    omCheckSessionCommand::~omCheckSessionCommand()
    {
-      
+
    }
 
    INT32 omCheckSessionCommand::doCommand()
@@ -327,7 +327,7 @@ namespace engine
       resBuilder.append( OM_BSON_FIELD_CLUSTER_NAME, clusterName.c_str() ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, resBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-      
+
    done:
       return SDB_OK ;
    error:
@@ -338,7 +338,7 @@ namespace engine
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj tmp ;
-      
+
       bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
       if ( NULL != detail )
       {
@@ -398,7 +398,7 @@ namespace engine
                rc = SDB_OK ;
                break ;
             }
-            
+
             contextID = -1 ;
             PD_LOG( PDERROR, "Failed to retreive record, rc=%d", rc ) ;
             _sendErrorRes2Web( rc, "Failed to retreive record" ) ;
@@ -420,12 +420,12 @@ namespace engine
             goto error ;
          }
       }
-      
+
       bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
       result = bsonBuilder.obj() ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-      
+
    done:
       return SDB_OK ;
    error:
@@ -459,14 +459,14 @@ namespace engine
    {
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
-      
+
       list<BSONObj>::iterator ite = hostInfoList.begin() ;
       while ( ite != hostInfoList.end() )
       {
          arrayBuilder.append( *ite ) ;
          ite++ ;
       }
-      
+
       builder.appendArray( arrayKeyName.c_str(), arrayBuilder.arr() );
       result = builder.obj() ;
 
@@ -519,7 +519,7 @@ namespace engine
             builder.append( OM_REST_RES_RETCODE, SDB_IXM_DUP_KEY ) ;
             tmp = builder.obj() ;
             hostResult.push_back( tmp ) ;
-            
+
             hostInfoList.erase( ite++ ) ;
             continue ;
          }
@@ -527,7 +527,7 @@ namespace engine
          ite++ ;
       }
    }
-   
+
    bool omScanHostCommand::_isHostExist( BSONObj &host )
    {
       BSONObjBuilder bsonBuilder ;
@@ -569,7 +569,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
          }
-         
+
          // notice: if rc != SDB_OK, contextID is deleted in rtnGetMore
          return false ;
       }
@@ -591,7 +591,7 @@ namespace engine
       BSONObj bsonHostInfo ;
       BSONElement element ;
 
-      
+
       _restAdaptor->getQuery(_restSession, OM_REST_FIELD_HOST_INFO, 
                              &pHostInfo ) ;
       if ( NULL == pHostInfo )
@@ -657,7 +657,7 @@ namespace engine
                _sendErrorRes2Web( rc, "array's element is invalid" ) ;
                goto error ;
             }
-            
+
             BSONObj oneHost = ele.embeddedObject() ;
             if ( !oneHost.hasField( OM_BSON_FIELD_HOST_IP ) 
                     || !oneHost.hasField( OM_BSON_FIELD_HOST_NAME ) )
@@ -814,7 +814,7 @@ namespace engine
                                             list<BSONObj> &bsonResult )
    {
       INT32 rc           = SDB_OK ;
-      
+
       BSONElement agentRCElement ;
       BSONElement hostElement ;
 
@@ -860,7 +860,7 @@ namespace engine
                _sendErrorRes2Web( rc, "array's element is invalid" ) ;
                goto error ;
             }
-            
+
             BSONObj oneHost = ele.embeddedObject() ;
             bsonResult.push_back( oneHost ) ;
          }
@@ -990,7 +990,7 @@ namespace engine
          }
          ite++ ;
       }
-      
+
    }
 
    // check ping and ssh
@@ -1096,7 +1096,7 @@ namespace engine
                _sendErrorRes2Web( rc, "array's element is invalid" ) ;
                goto error ;
             }
-            
+
             BSONObj oneHost = ele.embeddedObject() ;
             rcElement = oneHost.getField( OM_REST_RES_RETCODE ) ;
             if ( rcElement.eoo() || NumberInt != rcElement.type())
@@ -1257,7 +1257,7 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
       VEC_SUB_SESSIONPTR subSessionVec ;
       list<BSONObj>::iterator ite ;
-      
+
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
@@ -1405,7 +1405,7 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
       VEC_SUB_SESSIONPTR subSessionVec ;
       list<BSONObj>::iterator ite ;
-      
+
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
@@ -1443,14 +1443,14 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
       BSONObj bsonRequest ;
       VEC_SUB_SESSIONPTR subSessionVec ;
-      
+
       if ( hostInfoList.size() == 0 )
       {
          goto done ;
       }
 
       _notifyAgentExit( hostInfoList ) ;
-      
+
       _generateArray( hostInfoList, OM_REST_FIELD_HOST_INFO, bsonRequest ) ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, OM_UNINSTALL_REMOTE_AGENT, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
@@ -1524,7 +1524,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 omCheckHostCommand::doCommand()
    {
       list<BSONObj> hostInfoList ;
@@ -1575,7 +1575,7 @@ namespace engine
                                          localAgentHost, localAgentService )
    {
    }
-   
+
    omAddHostCommand::~omAddHostCommand()
    {
    }
@@ -1593,7 +1593,7 @@ namespace engine
       BSONObj bsonHostInfo ;
       BSONElement element ;
 
-      
+
       _restAdaptor->getQuery(_restSession, OM_REST_FIELD_HOST_INFO, 
                              &pHostInfo ) ;
       if ( NULL == pHostInfo )
@@ -1665,7 +1665,7 @@ namespace engine
                _sendErrorRes2Web( rc, "array's element is invalid" ) ;
                goto error ;
             }
-            
+
             BSONObj oneHost = ele.embeddedObject() ;
             if ( !oneHost.hasField( OM_BSON_FIELD_HOST_IP ) 
                     || !oneHost.hasField( OM_BSON_FIELD_HOST_NAME ) )
@@ -1709,7 +1709,7 @@ namespace engine
             hostInfo.push_back( tmp ) ;
          }
       }
-      
+
    done:
       return rc ;
    error:
@@ -1735,7 +1735,7 @@ namespace engine
          _sendErrorRes2Web( rc, "get sdb's user info failed" ) ;
          goto error ;
       }
-      
+
       ite = hostInfoList.begin() ;
       while ( ite != hostInfoList.end() )
       {
@@ -1811,7 +1811,7 @@ namespace engine
                        clusterName.c_str(), rc ) ;
                goto error ;
             }
-            
+
             contextID = -1 ;
             PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
             goto error ;
@@ -1833,7 +1833,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 omAddHostCommand::_addHost( string clusterName, 
                                      list<BSONObj> &hostInfoList, 
                                      INT32 &transationID )
@@ -1928,9 +1928,9 @@ namespace engine
          _sendErrorRes2Web( rc, "receive unexpected response" ) ;
          goto error ;
       }
-      
+
       transationID = result.getIntField( OM_REST_RES_RETCODE ) ;
-      
+
    done:
       _clearSession( om, remoteSession ) ;
       return rc ;
@@ -2125,7 +2125,7 @@ namespace engine
                       : omCreateClusterCommand( pRestAdaptor, pRestSession )
    {
    }
- 
+
    omQueryHostCommand::~omQueryHostCommand()
    {  
    }
@@ -2183,7 +2183,7 @@ namespace engine
                rc = SDB_OK ;
                break ;
             }
-            
+
             contextID = -1 ;
             PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
             _sendErrorRes2Web( rc, "Failed to retreive record" ) ;
@@ -2342,7 +2342,7 @@ namespace engine
             oneClusterTypeBulider.append( OM_BSON_BUSINESS_TYPE, 
                                           businessType ) ;
             ptree::iterator propertyIte = clusterType.begin() ;
-            
+
             propertyIte++ ;
             for( ; propertyIte != clusterType.end() ; propertyIte++ )
             {
@@ -2548,7 +2548,7 @@ namespace engine
                                        iter->objsize(), 1 ) ;
          iter++ ;
       }
-      
+
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
@@ -2612,7 +2612,7 @@ namespace engine
       rc = SDB_INVALIDARG ;
       PD_LOG( PDERROR, "propery is not found:name=%s", propertyName.c_str() ) ;
       goto error ;
-      
+
    done:
       return rc ;
    error:
@@ -2758,7 +2758,7 @@ namespace engine
                rc = SDB_OK ;
                break ;
             }
-            
+
             contextID = -1 ;
             PD_LOG( PDERROR, "Failed to retreive record, rc=%d", rc ) ;
             goto error ;
@@ -2783,7 +2783,7 @@ namespace engine
             {  
                BSONObjBuilder innerBuilder ;
                BSONElement ele     = iter.next() ;
-               
+
                innerBuilder.appendElements( ele.embeddedObject() ) ;
                innerBuilder.append( OM_BSON_BUSINESS_NAME, BusinessName ) ;
                arrayBuilder.append( innerBuilder.obj() ) ;
@@ -2823,7 +2823,7 @@ namespace engine
                     , ...
                    ]
      }
-      
+
      */
    INT32 omConfigBusinessCommand::_fillHostInfo( string clusterName, 
                                                  BSONObj &bsonHostInfo )
@@ -2895,7 +2895,7 @@ namespace engine
                rc = SDB_OK ;
                break ;
             }
-            
+
             contextID = -1 ;
             PD_LOG( PDERROR, "Failed to retreive record, rc=%d", rc ) ;
             goto error ;
@@ -2915,7 +2915,7 @@ namespace engine
             PD_LOG( PDERROR, "Failed to get host config, rc=%d", rc ) ;
             goto error ;
          }
-         
+
          resultBuilder.appendElements( config ) ;
 
          /*
@@ -2940,7 +2940,7 @@ namespace engine
 
       bsonBuilder.append( OM_BSON_FIELD_HOST_INFO, ArrBuilder.arr() ) ;
       bsonHostInfo = bsonBuilder.obj() ;
-      
+
    done:
       return rc ;
    error:
@@ -3155,7 +3155,7 @@ namespace engine
          PD_LOG( PDERROR, "get config info failed" ) ;
          goto error ;
       }
-      
+
       rc = _getConfigDetail( bsonTemplate, bsonConfigDetail ) ;
       if ( SDB_OK != rc )
       {
@@ -3418,7 +3418,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 omInstallBusinessReq::_sendMsgToLocalAgent( omManager *om,
                                                 pmdRemoteSession *remoteSession, 
                                                 MsgHeader *pMsg )
@@ -3595,7 +3595,7 @@ namespace engine
          BSONObj oneHost  = ele.embeddedObject() ;
 
          host.hostName    = oneHost.getStringField( OM_HOST_FIELD_NAME ) ;
-         
+
          host.user        = oneHost.getStringField( OM_HOST_FIELD_USER ) ;
          host.passwd      = oneHost.getStringField( 
                                                 OM_HOST_FIELD_PASSWORD ) ;
@@ -3854,7 +3854,7 @@ namespace engine
          _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       }
-      
+
    done:
       return rc ;
    error:
@@ -3865,18 +3865,18 @@ namespace engine
    omGetFileCommand::omGetFileCommand( restAdaptor *pRestAdaptor, 
                                        pmdRestSession *pRestSession, 
                                        const CHAR *pRootPath,
-                                       const CHAR *pSubPath)
+                                       const CHAR *pSubPath )
    {
       _restAdaptor = pRestAdaptor ;
       _restSession = pRestSession ;
       _rootPath    = pRootPath ;
       _subPath     = pSubPath ;
    }
-   
+
    omGetFileCommand::~omGetFileCommand()
    {
    }
-   
+
    INT32 omGetFileCommand::doCommand() 
    {
       INT32 rc                      = SDB_OK ;
@@ -3887,7 +3887,7 @@ namespace engine
 
       transfer = restFileController::getTransferInstance() ;
       transfer->getTransferedPath(_subPath.c_str(), realSubPath) ;
-      
+
       rc = _getFileContent( _rootPath + realSubPath, &pContent, 
                             contentLength ) ;
       if ( SDB_OK != rc )
@@ -3904,7 +3904,7 @@ namespace engine
                     realSubPath.c_str(), rc ) ;
             _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
          }
-         
+
          goto error ;
       }
 
@@ -3918,7 +3918,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 omGetFileCommand::undoCommand()
    {
       return SDB_OK ;

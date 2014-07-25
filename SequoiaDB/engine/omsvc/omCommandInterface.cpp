@@ -60,12 +60,12 @@ namespace engine
    {
       return SDB_OK ;
    }
-   
+
    bool omCommandInterface::isFetchAgentResponse( UINT64 requestID )
    {
       return false ;
    }
-   
+
    INT32 omCommandInterface::doAgentResponse ( MsgHeader* pAgentResponse )
    {
       return SDB_OK ;
