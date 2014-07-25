@@ -34,7 +34,7 @@
 				<equals arg1="${ret.code}" arg2="0" />
 			</not>
 			<then>
-				 <echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;failure command=&quot;python TestPySequoiadb.py&quot; dir=&quot;${install.path}/sequoiadb/python&quot; returncode=&quot;${ret.code};&quot; &gt;&#10;&lt;![CDATA[errormessage=${error.output} ]]&gt;&#10; &lt;screen=&quot; ${screen.output}&quot; /&gt;&#10;" />
+				 <echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;failure command=&quot;python TestPySequoiadb.py&quot; dir=&quot;${install.path}/sequoiadb/python&quot; returncode=&quot;${ret.code};&quot; &gt;&#10;&lt;![CDATA[errormessage=${error.output} ]]&gt;&#10; &lt;screen error=&quot; ${screen.output}&quot; /&gt;&#10;" />
 			</then>
 		</if>
 		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;/testcase&gt;&#10;" />
