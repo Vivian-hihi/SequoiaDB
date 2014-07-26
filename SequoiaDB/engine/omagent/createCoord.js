@@ -1,0 +1,42 @@
+/* *****************************************************************************
+@description: create coord
+@modify list:
+   2014-7-26 Zhaobo Tan  Init
+***************************************************************************** */
+// todo:windows
+if ( typeof(COORD_HOSTNAME) == "undefined" ) { HOSTNAME = "localhost" ; }
+if ( typeof(COORD_SERVICE) == "undefined" ) { SERVICE = "11810" ; }
+if ( typeof(DB_USERNAME) == "undefined" ) { SERVICE = "" ; }
+if ( typeof(DB_PASSWORD) == "undefined" ) { SERVICE = "" ; }
+if ( typeof(INSTALL_HOSTNAME) == "undefined" ) { HOSTNAME = "localhost" ; }
+if ( typeof(INSTALL_SERVICE) == "undefined" ) { SERVICE = "11810" ; }
+if ( typeof(INSTALL_PATH) == "undefined" ) { INSTALL_PATH = "/opt/sequoiadb/database/coord/11810" ; }
+if ( typeof(CONFIG) == "undefined" ) { CONFIG = "{}" ; }
+
+var objRet = new Object() ;
+
+objRet.Rc = 0 ;
+objRet.Detail = "" ;
+
+function main()
+{
+   try
+   {
+      // connect to coord
+      var db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
+      // create cataRG
+      var coord = db.createCoord( INSTALL_HOSTNAME, INSTALL_SERVICE,
+                                  INSTALL_PATH, CONFIG ) ;
+      return objRet ;
+   }
+   catch ( e )
+   {
+      objRet.Rc = e ;
+      objRet.Detail = getLastErrMsg() ;
+      return objRet ;
+   }
+}
+
+// execute
+   main() ;
+
