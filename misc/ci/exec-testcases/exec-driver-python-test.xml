@@ -25,7 +25,7 @@
 			<fileset dir="${testcase.path}" includes="**/*.py" />
 		</copy>
 
-		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;testcase hostname=&quot;${host.NAME}&quot;name=&quot;TestPySequoiadb.py&quot; &gt;&#10;" />
+		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;testcase hostname=&quot;${host.NAME}&quot; name=&quot;TestPySequoiadb.py&quot; &gt;&#10;" />
 		<exec executable="/usr/bin/python" failonerror="false" dir="${install.path}/sequoiadb/python" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
 			<arg line=" TestPySequoiadb.py" />
 		</exec>
