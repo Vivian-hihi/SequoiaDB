@@ -4,12 +4,12 @@
   <title>cursor.next()</title>
   <body>
     <section><title>cursor.next()</title>
-      <p>返回当前游标指向的下一条记录。更多查看<xref href="ccurrent.dita">cursor.current()</xref>方法。</p>
+      <p>返回当前游标指向的下一条记录。更多查看 <xref href="ccurrent.dita">cursor.current()</xref> 方法。</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li>
-          <p>选择集合bar下age大于10的记录，返回当前游标指向的下一条记录。</p>
+          <p>选择集合 bar 下 age 大于10的记录，返回当前游标指向的下一条记录。</p>
           <p><codeblock>db.foo.bar.find({age:{<xref href="../../console/topics/gt.dita">$gt</xref>:10}}).next()</codeblock></p>
         </li>
       </ul>
@@ -17,7 +17,6 @@
   </body>
   <related-links>
     <link href="ccurrent.dita" format="dita" type="topic"></link>
-    <!--<link href="updateCurrent.dita" format="dita" type="topic"></link>-->
     <link href="find.dita" format="dita" type="topic"></link>
     <link href="../../console/topics/gt.dita" format="dita" type="topic"></link>
   </related-links>

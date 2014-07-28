@@ -8,12 +8,12 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$gte"/>
-<meta name="description" content="语法 {&lt;字段名&gt;：{$gte:&lt;值&gt;}} 描述 $gte选择满足&#34;字段名&#34;的值大于等于(&gt;=)指定&#34;值&#34;的记录。 示例 选择查询集合空间foo下集合bar中字段名为age的值大于等于20的记录。 db.foo.bar.find({age:{$gte:20}}) $gte匹配嵌套对象中的字段名。使用 update() 方法更新嵌套对象service中的ID字段值大于 ..."/>
+<meta name="description" content="语法 {&lt;字段名&gt;：{$gte:&lt;值&gt;}} 描述 $gte选择满足“字段名”的值大于等于（&gt;=）指定“值”的记录。 示例 选择查询集合空间foo下集合bar中字段名为age的值大于等于20的记录。 db.foo.bar.find({age:{$gte:20}}) $gte匹配嵌套对象中的字段名。使用 update() ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../console/topics/select.html"/>
 <meta name="DC.Relation" scheme="URI" content="gt.html"/>
-<meta name="DC.Relation" scheme="URI" content="lt.html"/>
+<meta name="DC.Relation" scheme="URI" content="plt.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../methods/topics/find.html"/>
-<meta name="DC.Relation" scheme="URI" content="../../methods/topics/update.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../methods/topics/dbupdate.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="references_console_gte"/>
 <link rel="stylesheet" type="text/css" href="../../commonltr.css"/>
@@ -47,7 +47,7 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">描述</h2>
-      <p class="p">$gte选择满足"字段名"的值大于等于(&gt;=)指定"值"的记录。</p>
+      <p class="p">$gte选择满足“字段名”的值大于等于（&gt;=）指定“值”的记录。</p>
 
     </div>
 
@@ -61,11 +61,9 @@
         </li>
 
         <li class="li">
-          <p class="p">$gte匹配嵌套对象中的字段名。使用<a class="xref" href="../../methods/topics/update.html">update()</a>方法更新嵌套对象service中的ID字段值大于</p>
+          <p class="p">$gte匹配嵌套对象中的字段名。使用<a class="xref" href="../../methods/topics/dbupdate.html">update()</a>方法更新嵌套对象service中的ID字段值大于等于2的记录，将这些记录的age字段值设定为25。</p>
 
-          <p class="p">等于2的记录，将这些记录的age字段值设定为25  。</p>
-
-          <pre class="pre codeblock">db.foo.bar.update({<a class="xref" href="set.html">$set</a>:{age:25}},{"service.ID":{$gte:2}})</pre>
+          <pre class="pre codeblock">db.foo.bar.update({<a class="xref" href="gset.html">$set</a>:{age:25}},{"service.ID":{$gte:2}})</pre>
 
         </li>
 
@@ -77,9 +75,9 @@
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
 <div><a class="navheader_parent_path" href="gt.html" title="$gt">$gt</a></div>
-<div><a class="navheader_parent_path" href="lt.html" title="$lt">$lt</a></div>
+<div><a class="navheader_parent_path" href="plt.html" title="$lt">$lt</a></div>
 <div><a class="navheader_parent_path" href="../../methods/topics/find.html" title="db.collectionspace.collection.find()">db.collectionspace.collection.find()</a></div>
-<div><a class="navheader_parent_path" href="../../methods/topics/update.html" title="db.collectionspace.collection.update()">db.collectionspace.collection.update()</a></div>
+<div><a class="navheader_parent_path" href="../../methods/topics/dbupdate.html" title="db.collectionspace.collection.update()">db.collectionspace.collection.update()</a></div>
 </div>
 </div>
 <div class="navfooter"><a class="link" href="../../console/topics/select.html" title="匹配符"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">匹配符</span></a>  <script type="text/javascript"><!--         
@@ -91,7 +89,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>

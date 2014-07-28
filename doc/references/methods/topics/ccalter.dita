@@ -16,13 +16,13 @@
         </sthead>        
         <strow>
           <stentry>options</stentry>
-          <stentry>Json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>修改的属性。</stentry>
           <stentry>是</stentry>
         </strow>
       </simpletable>      
     </section>
-    <section><title>options中可选的属性格式</title>
+    <section><title>options 中可选的属性格式</title>
       <simpletable>
         <sthead>
           <stentry>属性名</stentry>
@@ -41,20 +41,20 @@
         </strow>
         <strow>
           <stentry>ShardingType</stentry>
-          <stentry>分区方式，默认为range分区。</stentry>
+          <stentry>分区方式，默认为 range 分区。</stentry>
           <stentry>ShardingType:"hash"|"range"</stentry>
         </strow>
         <strow>
           <stentry>Partition</stentry>
-          <stentry>分区数，hash分区时填写，代表了hash分区的个数。其值必须是2的幂。范围在[2^3,2^20]。</stentry>
+          <stentry>分区数，hash 分区时填写，代表了 hash 分区的个数。其值必须是2的幂。范围在[2^3,2^20]。</stentry>
           <stentry>Partition:&lt;分区数></stentry>
         </strow>
       </simpletable>      
       <note>
         <ul>
-          <li>ShardingKey，ShardingType，Partition的使用方式见db.collectionspace.createCL()。</li>
+          <li>ShardingKey，ShardingType，Partition 的使用方式见 db.collectionspace.createCL()。</li>
           <li>分区集合不能修改与分区相关的属性。</li>
-          <li>修改为分区集合后需要手动进行split。</li>          
+          <li>修改为分区集合后需要手动进行 split。</li>          
         </ul>
       </note>
     </section>

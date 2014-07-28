@@ -8,13 +8,13 @@
     </section>
     <section><title>语法</title>
       <p><codeblock>create collection &lt;cs_name>.&lt;cl_name></codeblock></p>
-      <p>&lt;cs_name>：数据库中的集合空间名称</p>
+      <p>&lt;cs_name>：数据库中的集合空间名称。</p>
       <p>&lt;cl_name>：集合名，集合名长度不能超过127Byte，并且不能为空，在同一个集合空间中不能存在相同的集合名。</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li><p>在集合空间foo下创建集合bar。</p>
-          <p><codeblock>db.execUpdate("create collection foo.bar") //等价于db.foo.createCL("bar")</codeblock></p>
+          <p><codeblock>db.execUpdate("create collection foo.bar") //等价于 db.foo.createCL("bar")</codeblock></p>
         </li>
       </ul>
     </section>

@@ -3,11 +3,11 @@
 <topic id="topic_pww_bs1_yl">
   <title>sql first()</title>
   <body>
-    <section><title>first()函数</title>
+    <section><title>first() 函数</title>
       <p>选择范围内第一条数据。</p>
     </section>
     <section><title>语法</title>
-      <p><codeblock>first（field name）</codeblock></p>
+      <p><codeblock>first(field name)</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>

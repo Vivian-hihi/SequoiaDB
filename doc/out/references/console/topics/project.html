@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$project"/>
-<meta name="description" content="描述 $project 类似SQL中的select语句，通过使用 $project 操作可以从记录中筛选出所需字段，字段名的值如果为1，表示选出，为0表示不选；还可以实现字段的重命名。 如果记录不存在所选字段，则以如下格式输出： &#34;field&#34;:null ，field为不存在的字段名。对嵌套对象使用点操作符（.）引用字段名。 示例 使用 $project 快速地从结果集中选取所需字段 db ..."/>
+<meta name="description" content="描述 $project 类似 SQL 中的 select 语句，通过使用 $project 操作可以从记录中筛选出所需字段，字段名的值如果为1，表示选出，为0表示不选；还可以实现字段的重命名。 如果记录不存在所选字段，则以如下格式输出： &#34;field&#34;:null ，field 为不存在的字段名。对嵌套对象使用点操作符（.）引用字段名。 示例 使用 $project 快速地从结果集中选取所需字段 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/console/topics/aggregate.html"/>
 <meta name="DC.Relation" scheme="URI" content="match.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -39,29 +39,29 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">描述</h2>
       
-      <p class="p"><strong class="ph b">$project</strong>类似SQL中的select语句，通过使用<strong class="ph b">$project</strong>操作可以从记录中筛选出所需字段，字段名的值如果为1，表示选出，为0表示不选；还可以实现字段的重命名。</p>
+      <p class="p"><strong class="ph b">$project</strong> 类似 SQL 中的 select 语句，通过使用 <strong class="ph b">$project</strong> 操作可以从记录中筛选出所需字段，字段名的值如果为1，表示选出，为0表示不选；还可以实现字段的重命名。</p>
 
-      <div class="note note"><span class="notetitle">Note:</span> 如果记录不存在所选字段，则以如下格式输出：<strong class="ph b">"field":null</strong>，field为不存在的字段名。对嵌套对象使用点操作符（.）引用字段名。</div>
+      <div class="note note"><span class="notetitle">Note:</span> 如果记录不存在所选字段，则以如下格式输出：<strong class="ph b">"field":null</strong>，field 为不存在的字段名。对嵌套对象使用点操作符（.）引用字段名。</div>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       
       <ul class="ul">
-        <li class="li">使用<strong class="ph b">$project</strong>快速地从结果集中选取所需字段
+        <li class="li">使用 <strong class="ph b">$project</strong> 快速地从结果集中选取所需字段
             <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $project : {title: 0,author: 1}})</pre>
-<p class="p">此操作是选出author字段，而title字段在结果集中不输出。</p>
+<p class="p">此操作是选出 author 字段，而 title 字段在结果集中不输出。</p>
 </li>
 
-        <li class="li">使用<strong class="ph b">$project</strong>重命名字段名，如下：
+        <li class="li">使用 <strong class="ph b">$project</strong> 重命名字段名，如下：
             <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $project : {author: 1,name:"$studentName",dep:"$info.department"}})</pre>
-<p class="p">此操作将字段名studentName重命名为name输出，将info对象中的子对象department字段重命名为dep。对嵌套对象，字段引用使用点操作符（.）指向。</p>
+<p class="p">此操作将字段名 studentName 重命名为 name 输出，将 info 对象中的子对象 department 字段重命名为 dep。对嵌套对象，字段引用使用点操作符（.）指向。</p>
 </li>
 
-        <li class="li">下面的示例使用$project选择输出字段，然后使用<a class="xref" href="match.html">$match</a>按条件匹配记录
+        <li class="li">下面的示例使用 $project 选择输出字段，然后使用 <a class="xref" href="match.html">$match</a> 按条件匹配记录
             <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $project: {score:1,author:1}},{<a class="xref" href="match.html">$match</a>:{score:{$gt:80}}})</pre>
-<div class="p">此操作使用$project输出所有记录的score和author字段值，然后按$match输出匹配条件的记录。
-              <div class="note note"><span class="notetitle">Note:</span> 由于$project选取了输出字段名，所以<a class="xref" href="match.html">$match</a>中字段名必须是$project中选出的字段名。</div>
+<div class="p">此操作使用 $project 输出所有记录的 score 和 author 字段值，然后按 $match 输出匹配条件的记录。
+              <div class="note note"><span class="notetitle">Note:</span> 由于 $project 选取了输出字段名，所以 <a class="xref" href="match.html">$match</a> 中字段名必须是 $project 中选出的字段名。</div>
 </div>
 
         </li>
@@ -69,7 +69,6 @@
       </ul>
 
     </div>
-
     
   </div>
 

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C# 驱动"/>
-<meta name="description" content="概述 SequoiaDB C#驱动提供了数据库操作和集群操作的接口。数据库操作包括数据库的连接，用户的创建删除，数据的增删改查，索引的创建删除，快照的获取与重置，以及集合与集合空间的创建删除操作等操作。 集群操作包括管理分区组和数据节点的各种操作，譬如启动、停止分区组，启动、停止数据节点，获取主从数据节点，集合分区等。 c#类实例 C#驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。 ..."/>
+<meta name="description" content="概述 SequoiaDB C# 驱动提供了数据库操作和集群操作的接口。数据库操作包括数据库的连接，用户的创建删除，数据的增删改查，索引的创建删除，快照的获取与重置，以及集合与集合空间的创建删除操作等操作。集群操作包括管理分区组和数据节点的各种操作，譬如启动，停止分区组，启动，停止数据节点，获取主从数据节点，集合分区等。 C# 类实例 C# 驱动的有两种类实例。一种用于 数据库操作 ，另一种用于 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/CS/topics/cs.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="application_cs_driver"/>
@@ -38,27 +38,21 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">概述</h2>
       
-        <p class="p">SequoiaDB
-                C#驱动提供了数据库操作和集群操作的接口。数据库操作包括数据库的连接，用户的创建删除，数据的增删改查，索引的创建删除，快照的获取与重置，以及集合与集合空间的创建删除操作等操作。
-                集群操作包括管理分区组和数据节点的各种操作，譬如启动、停止分区组，启动、停止数据节点，获取主从数据节点，集合分区等。</p>
+        <p class="p">SequoiaDB C# 驱动提供了数据库操作和集群操作的接口。数据库操作包括数据库的连接，用户的创建删除，数据的增删改查，索引的创建删除，快照的获取与重置，以及集合与集合空间的创建删除操作等操作。集群操作包括管理分区组和数据节点的各种操作，譬如启动，停止分区组，启动，停止数据节点，获取主从数据节点，集合分区等。</p>
         
     </div>
 
-      
-      
-      <div class="section"><h2 class="title sectiontitle">c#类实例</h2>
+      <div class="section"><h2 class="title sectiontitle">C# 类实例</h2>
           
-          <p class="p">C#驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。</p>
+          <p class="p">C# 驱动的有两种类实例。一种用于<strong class="ph b">数据库操作</strong>，另一种用于<strong class="ph b">集群操作</strong>。</p>
 
           <ul class="ul">
-              <li class="li">数据库操作实例
-          <p class="lines">SequoiaDB数据库中的数据存放分为三个级别：<br/>
-  1）数据库<br/>
-  2）集合空间<br/>
-  3）集合</p>
+              <li class="li">数据库操作实例<p class="p">SequoiaDB 数据库中的数据存放分为三个级别：</p>
+<p class="p"><strong class="ph b">1）数据库</strong></p>
+<p class="p"><strong class="ph b">2）集合空间</strong></p>
+<p class="p"><strong class="ph b">3）集合 </strong></p>
 
-
-          <p class="p">因此，在数据库操作中，可分别用3个类代表连接、集合空间、集合实例，另1个类代表游标。</p>
+                  <p class="p">因此，在数据库操作中，可用3个类来分别表示连接，集合空间，集合实例，另1个类表示游标实例：</p>
 
           <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
                   <td valign="top" class="stentry">SequoiaDB</td>
@@ -94,13 +88,11 @@
               </tr>
 </table>
 
-                  <p class="p">c#驱动需要使用不同的实例进行操作。譬如读取数据的操作需要游标实例，而创建表空间则需要数据库实例。</p>
+                  <p class="p">C# 驱动需要使用不同的实例进行操作。譬如读取数据的操作需要游标实例，而创建表空间则需要数据库实例。</p>
 
               </li>
 
-              <li class="li">集群操作实例 <p class="lines">SequoiaDB数据库中的集群操作分为两个级别：<br/>
-  1）分区组<br/>
-  2）数据节点</p>
+              <li class="li">集群操作实例<p class="p">SequoiaDB 数据库中的集群操作分为两个级别：1）分区组 2）数据节点</p>
 
                     <div class="note note"><span class="notetitle">Note:</span> 分区组包含三种类型：协调分区组，编目分区组，数据分区组。</div>
 
@@ -124,11 +116,11 @@
                         </tr>
 </table>
 
-                    <p class="p">无疑与集群相关的操作需要使用分区组及数据节点实例。</p>
+                  <p class="p">无疑与集群相关的操作需要使用分区组及数据节点实例。</p>
 
-                  <p class="p">ReplicaGroup的实例用于管理分区组。其操作包括启动、停止分区组，获取分区组中节点的状态、名称信息、数目信息。</p>
+                  <p class="p">ReplicaGroup 的实例用于管理分区组。其操作包括启动，停止分区组，获取分区组中节点的状态，名称信息，数目信息。</p>
 
-                    <p class="p">Node的实例用于管理节点。其操作包括启动、停止指定的节点，获取指定节点实例，获取主从节点实例，获取数据节点地址信息。</p>
+                  <p class="p">Node 的实例用于管理节点。其操作包括启动，停止指定的节点，获取指定节点实例，获取主从节点实例，获取数据节点地址信息。</p>
 </li>
 
           </ul>
@@ -137,17 +129,15 @@
       
       <div class="section"><h2 class="title sectiontitle">线程安全性</h2>
           
-          <p class="p">对于每一个连接，其产生的集合空间，集合公用一个套接字。因此在多线程系统中，必须确保每个线程不会同时针对同一套接字，在同一时间发送或接收数据。
-一般来说，不建议使用多个线程共同操作一个连接实例与其产生的其它实例。如果每个线程使用自己的连接实例以及其它产生的实例，则可以保证线程安全。</p>
+          <p class="p">对于每一个连接，其产生的集合空间，集合公用一个套接字。因此在多线程系统中，必须确保每个线程不会同时针对同一套接字，在同一时间发送或接收数据。一般来说，不建议使用多个线程共同操作一个连接实例与其产生的其它实例。如果每个线程使用自己的连接实例以及其它产生的实例，则可以保证线程安全。</p>
           
       </div>
 
       <div class="section"><h2 class="title sectiontitle">错误信息</h2>
           
-          <p class="p">每一个接口都会抛出SequoiaDB.BaseException和System.Exception异常，分别对应于数据库引擎返回的异常信息和客户端本地的异常信息，其中BaseException的异常信息可以通过该异常类的ErrorCode，ErrorType和Message属性获得。</p>
+          <p class="p">每一个接口都会抛出 SequoiaDB.BaseException 和 System.Exception 异常，分别对应于数据库引擎返回的异常信息和客户端本地的异常信息，其中 BaseException 的异常信息可以通过该异常类的 ErrorCode，ErrorType 和 Message 属性获得。</p>
           
       </div>
-      
  
   </div>
 

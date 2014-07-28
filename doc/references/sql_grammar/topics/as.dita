@@ -3,7 +3,7 @@
 <topic id="references_sql_as">
   <title>sql as</title>
   <body>
-    <section><title>as </title>
+    <section><title>as 语句</title>
       <p>用于为集合名或者字段名指定别名（alias）。</p>
     </section>
     <section><title>语法</title>

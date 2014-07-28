@@ -5,14 +5,14 @@
   <body>
     <section>
       <title>描述</title>
-      <p>记录分组后，使用<b>$addtoset</b>将指定字段值添加到数组中，相同的字段值只会添加一次。对嵌套对象使用点操作符（.）引用字段名。</p>
+      <p>记录分组后，使用 <b>$addtoset</b> 将指定字段值添加到数组中，相同的字段值只会添加一次。对嵌套对象使用点操作符（.）引用字段名。</p>
     </section>
     <section>
       <title>示例</title>
       <ul>
         <li>如下操作对记录分组后将指定字段值添加到数组中输出
           <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$dep",dep:{<xref href="jfirst.dita"><b>$first</b></xref>:"$dep"},addtoset_major:{$addtoset:"$major"}}})</codeblock>
-          <p>此操作对记录按dep字段值进行分组，并使用<xref href="jfirst.dita"><b>$first</b></xref>输出每个组第一条记录的dep字段，输出字段名为Dep；又将major字段的值使用<b>$addtoset</b>放入数组中返回，输出字段名为addtoset_major，如下：
+          <p>此操作对记录按 dep 字段值进行分组，并使用 <xref href="jfirst.dita"><b>$first</b></xref> 输出每个组第一条记录的 dep 字段，输出字段名为 Dep；又将 major 字段的值使用 <b>$addtoset</b> 放入数组中返回，输出字段名为 addtoset_major，如下：
           </p><codeblock>{
   "Dep": "物电学院",
   "addtoset_major": [

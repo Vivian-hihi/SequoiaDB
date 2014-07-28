@@ -17,7 +17,7 @@
         <li><p>本例会删除集合中的所有记录：</p>
           <p><codeblock>db.execUpdate("delete from foo.bar") </codeblock></p>
         </li>
-        <li>本例会删除符合条件age&lt;10的记录：<codeblock>db.execUpdate("delete from foo.bar where age&lt;10")</codeblock></li>
+        <li>本例会删除符合条件 age &lt;10 的记录：<codeblock>db.execUpdate("delete from foo.bar where age&lt;10")</codeblock></li>
       </ul>
     </section>
   </body>

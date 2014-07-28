@@ -7,8 +7,7 @@
       <p>统计指定集合空间下指定集合的记录总数。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 5.9* 1.0*"
-        id="references_method_count_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -17,7 +16,7 @@
         </sthead>
         <strow>
           <stentry>cond</stentry>
-          <stentry>json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>选择条件。为空时，统计集合下所有的记录总数；不为空时，统计符合条件的记录总数。</stentry>
           <stentry>否</stentry>
         </strow>
@@ -25,17 +24,16 @@
       
     </section>
     <section><title>格式</title>
-      <p>count()方法的定义格式包含cond字段，它是一个JSON对象。</p>
-      <p><codeblock>{[{"字段名1":{<xref href="../../console/topics/console.dita">"匹配符1"</xref>:"值1"},"字段名2":{"匹配符2":"值2"},...}]}</codeblock></p>
-      
+      <p>count() 方法的定义格式包含 cond 字段，它是一个 JSON 对象。</p>
+      <p><codeblock>{[{"字段名1":{<xref href="../../console/topics/console.dita">"匹配符1"</xref>:"值1"},"字段名2":{"匹配符2":"值2"},...}]}</codeblock></p>      
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>统计集合bar所有的记录数，即不指定参数cond</p>
+        <li><p>统计集合 bar 所有的记录数，即不指定参数 cond</p>
             <codeblock>db.foo.bar.count()</codeblock>
         </li>
         <li>
-          <p>统计符合条件name字段的值为“Tom”且age字段的值大于25的记录数</p>
+          <p>统计符合条件 name 字段的值为“Tom”且 age 字段的值大于25的记录数</p>
           <codeblock>db.foo.bar.count({name:"Tom",age:{$gt:25}})</codeblock>
         </li>
       </ul>

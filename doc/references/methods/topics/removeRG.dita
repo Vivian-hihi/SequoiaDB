@@ -7,8 +7,7 @@
       <p>删除数据库中指定的分区组。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.08* 5.78* 1.1*"
-        id="references_method_createRG_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -25,7 +24,7 @@
       
     </section>
     <section><title>格式</title>
-      <p> removeRG() 方法的定义格式只有name字段，name的值是字符串型，必填。</p>
+      <p> removeRG() 方法的定义格式只有 name 字段，name 的值是字符串型，必填。</p>
       <p><codeblock>(&lt;"分区组名">)</codeblock></p>
       <note>
         <ul><li>分区组名必须存在。</li></ul>

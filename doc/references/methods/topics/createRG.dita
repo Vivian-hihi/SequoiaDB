@@ -4,11 +4,10 @@
   <title>db.createRG()</title>
   <body>
     <section><title>db.createRG(&lt;name>)</title>
-      <p>新建一个分区组。创建后系统自动为分区组分配一个GroupId。</p>
+      <p>新建一个分区组。创建后系统自动为分区组分配一个 GroupId。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.08* 5.78* 1.1*"
-        id="references_method_createRG_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -21,21 +20,19 @@
           <stentry>分区组名，同一个数据库对象中，分区组名唯一。</stentry>
           <stentry>是</stentry>
         </strow>
-      </simpletable>
-      
+      </simpletable>      
     </section>
     <section><title>格式</title>
-      <p> createRG() 方法的定义格式只有name字段，name的值是字符串型，必填。</p>
+      <p> createRG() 方法的定义格式只有 name 字段，name 的值是字符串型，必填。</p>
       <p><codeblock>(&lt;"分区组名">)</codeblock></p>
       <note>
-        <ul><li>分区组名不能是空串、含点（.）或者美元符号（$），并且长度不能超过127B。</li></ul>
+        <ul><li>分区组名不能是空串，含点（.）或者美元符号（$），并且长度不能超过127B。</li></ul>
       </note>
     </section>
     <section><title>示例</title>
       <ul>
         <li><p>新建名为“group”的分区组</p>
-          <p><codeblock>db.createRG("group")</codeblock></p></li>
-        
+          <p><codeblock>db.createRG("group")</codeblock></p></li>        
       </ul>     
     </section>
   </body>

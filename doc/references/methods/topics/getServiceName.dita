@@ -8,8 +8,9 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li>返回节点名为node的服务器名 <codeblock>> node.getServiceName()
-返回：11800</codeblock></li>
+        <li>返回节点名为 node 的服务器名<codeblock>> node.getServiceName()
+返回：
+11800</codeblock></li>
       </ul>
     </section>
   </body>

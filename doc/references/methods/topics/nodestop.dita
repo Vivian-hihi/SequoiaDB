@@ -8,13 +8,11 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li>停止当前名称为node的节点 。<codeblock>node.stop()</codeblock></li>
+        <li>停止当前名称为 node 的节点 。<codeblock>node.stop()</codeblock></li>
       </ul>
     </section>
   </body>
   <related-links>
-    
-    <!--<link href="nodestop.dita"></link>-->
     <link href="nodeconnect.dita"></link>
   </related-links>
 </topic>

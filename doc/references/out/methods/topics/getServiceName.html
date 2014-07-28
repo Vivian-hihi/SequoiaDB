@@ -8,8 +8,10 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="node.getServiceName()"/>
-<meta name="description" content="node.getServiceName(参数) 参数描述 属性 描述 是否必填 格式 示例"/>
+<meta name="description" content="node.getServiceName() 返回节点的服务器名。 示例 返回节点名为node的服务器名 &gt; node.getServiceName() 返回：11800"/>
 <meta name="DC.Relation" scheme="URI" content="../../methods/topics/methodlist.html"/>
+<meta name="DC.Relation" scheme="URI" content="getHostName.html"/>
+<meta name="DC.Relation" scheme="URI" content="getNodeDetail.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="references_method_getServiceName"/>
 <link rel="stylesheet" type="text/css" href="../../commonltr.css"/>
@@ -31,63 +33,34 @@
 <body onload="highlightSearchTerm()" id="references_method_getServiceName"><a name="references_method_getServiceName"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法">Sequoiadb javascript方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">node.getServiceName()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">node.getServiceName(参数)</h2>
-      <p class="p"/>
-
-    </div>
-
-    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
-      <a name="references_method_getServiceName__references_method_getServiceName_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_method_getServiceName__references_method_getServiceName_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d22067e25" class="stentry" width="12.5%">属性</th>
-
-          <th valign="bottom" align="left" id="d22067e28" class="stentry" width="75%">描述</th>
-
-          <th valign="bottom" align="left" id="d22067e31" class="stentry" width="12.5%">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d22067e25" class="stentry"> </td>
-
-          <td valign="top" headers="d22067e28" class="stentry"> </td>
-
-          <td valign="top" headers="d22067e31" class="stentry"> </td>
-
-        </tr>
-</table>
-
-      
-    </div>
-
-    <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p"/>
-
-      <p class="p"/>
-
-      <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p"/>
-
-        <p class="p"/>
-
-      </div>
+    <div class="section"><h2 class="title sectiontitle">node.getServiceName()</h2>
+      <p class="p">返回节点的服务器名。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
-      <p class="p"/>
+      <ul class="ul">
+        <li class="li">返回节点名为node的服务器名 <pre class="pre codeblock">&gt; node.getServiceName()
+返回：11800</pre>
+</li>
 
-      <p class="p"/>
+      </ul>
 
     </div>
 
   </div>
 
-<div class="related-links"/>
-<div class="navfooter"><a class="link" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript方法</span></a>  <script type="text/javascript"><!--         
+  <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
+<div><a class="navheader_parent_path" href="getHostName.html" title="node.getHostName()">node.getHostName()</a></div>
+<div><a class="navheader_parent_path" href="getNodeDetail.html" title="node.getNodeDetail()">node.getNodeDetail()</a></div>
+</div>
+</div>
+<div class="navfooter"><a class="link" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -96,7 +69,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>

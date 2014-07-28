@@ -3,8 +3,8 @@
 <topic id="topic_4mk_ytq_t4">
   <title>db.interrupt()</title>
   <body>
-    <section><title>db.invalidateCache([options])</title>
-      <p>db.interrupt(&lt;sessionID>)</p>
+    <section><title>db.interrupt (&lt;sessionID>)</title>
+      <p>终止指定会话的当前操作。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>
@@ -21,27 +21,12 @@
           <stentry>是</stentry>
         </strow>        
       </simpletable>      
-    </section>
-    <section><!--<title>格式</title>
-      <p>目前通过options可设置域的属性有：</p>
-      <simpletable>
-        <sthead>
-          <stentry>属性名</stentry>
-          <stentry>描述</stentry>
-          <stentry>格式</stentry>
-        </sthead>
-        <strow>
-          <stentry>Groups</stentry>
-          <stentry>需要清除缓存的目标。</stentry>
-          <stentry></stentry>
-        </strow>        
-      </simpletable>-->     
+    </section>       
       <note>
         <ul>
           <li>只有用户会话可以被终止。</li>
         </ul>
-      </note>
-    </section>
+      </note>    
     <section><title>示例</title>
       <ul>
         <li><p>终止编号为100的会话。</p>

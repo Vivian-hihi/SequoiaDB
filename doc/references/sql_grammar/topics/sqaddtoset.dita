@@ -3,11 +3,11 @@
 <topic id="topic_pdc_q51_yl">
   <title>sql addtoset()</title>
   <body>
-    <section><title>addtoset()函数</title>
+    <section><title>addtoset() 函数</title>
       <p>将多个记录中的字段合并为一个没有重复值的数组。</p>
     </section>
     <section><title>语法</title>
-      <p><codeblock>addtoset（field name）</codeblock></p>
+      <p><codeblock>addtoset(field name)</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>

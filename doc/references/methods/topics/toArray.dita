@@ -9,7 +9,7 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>以数组的形式返回集合bar中age字段值大于5的记录。</p>
+          <p>以数组的形式返回集合 bar 中 age 字段值大于5的记录。</p>
           <p><codeblock>db.foo.bar.find({age:{<xref href="../../console/topics/gt.dita">$gt</xref>:10}}).toArray()</codeblock></p>
           <codeblock>返回：{
   "_id": {
@@ -28,8 +28,7 @@
     "$oid": "516a76a1c9565daf06040000"
   },
   "age": 15
-}
-</codeblock>
+}</codeblock>
         </li>
       </ul>
     </section>

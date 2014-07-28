@@ -40,7 +40,7 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">描述</h2>
       
-      <p class="p">记录分组后，使用<strong class="ph b">$addtoset</strong>将指定字段值添加到数组中，相同的字段值只会添加一次。对嵌套对象使用点操作符（.）引用字段名。</p>
+      <p class="p">记录分组后，使用 <strong class="ph b">$addtoset</strong> 将指定字段值添加到数组中，相同的字段值只会添加一次。对嵌套对象使用点操作符（.）引用字段名。</p>
 
     </div>
 
@@ -50,7 +50,7 @@
         <li class="li">如下操作对记录分组后将指定字段值添加到数组中输出
           <pre class="pre codeblock">db.collectionspace.collection.aggregate({$group:{_id:"$dep",dep:{<a class="xref" href="jfirst.html"><strong class="ph b">$first</strong></a>:"$dep"},addtoset_major:{$addtoset:"$major"}}})</pre>
 
-          <p class="p">此操作对记录按dep字段值进行分组，并使用<a class="xref" href="jfirst.html"><strong class="ph b">$first</strong></a>输出每个组第一条记录的dep字段，输出字段名为Dep；又将major字段的值使用<strong class="ph b">$addtoset</strong>放入数组中返回，输出字段名为addtoset_major，如下：
+          <p class="p">此操作对记录按 dep 字段值进行分组，并使用 <a class="xref" href="jfirst.html"><strong class="ph b">$first</strong></a> 输出每个组第一条记录的 dep 字段，输出字段名为 Dep；又将 major 字段的值使用 <strong class="ph b">$addtoset</strong> 放入数组中返回，输出字段名为 addtoset_major，如下：
           </p>
 <pre class="pre codeblock">{
   "Dep": "物电学院",

@@ -12,12 +12,11 @@
 select &lt;field1_name,field2_name,...> from &lt;cs_name>.&lt;cl_name></codeblock></p>
       <p>&lt;cs_name>：集合空间名</p>
       <p>&lt;cl_name>：集合名</p>
-      <p>&lt;field_name>：字段名</p>
-    
+      <p>&lt;field_name>：字段名</p>    
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>本例会选择指定的字段名返回，如果某条符合条件的记录没有指定的字段名，那么返回它的值为null：</p>
+        <li><p>本例会选择指定的字段名返回，如果某条符合条件的记录没有指定的字段名，那么返回它的值为 null：</p>
           <p><codeblock>db.exec("select age,name from foo.bar") 
 结果：
 {
@@ -56,11 +55,9 @@ select &lt;field1_name,field2_name,...> from &lt;cs_name>.&lt;cl_name></codebloc
 }...     </codeblock></li>
       </ul>
       <note>
-        <p>1.可以选择类似<xref href="where.dita">where</xref>、<xref href="group_by.dita">group
-            by</xref>、<xref href="order_by.dita">order by</xref>、<xref href="sqlimit.dita"
-            >limit</xref>、<xref href="offset.dita">offset</xref>的关键字对要选择的记录做控制。</p>
-        <p>2.如果查询源不为集合，则本层查询中所有字段均需要引用别名（*除外），例如：select T.a , T.b from (select * from foo.bar) as T where T.a&lt;10</p>
-        <p>3.子查询必须包含别名，子查询中出现的别名只作用于上一层。</p>
+        <p>1. 可以选择类似 <xref href="where.dita">where</xref>，<xref href="group_by.dita">group by</xref>，<xref href="order_by.dita">order by</xref>，<xref href="sqlimit.dita">limit</xref>，<xref href="offset.dita">offset</xref> 的关键字对要选择的记录做控制。</p>
+        <p>2. 如果查询源不为集合，则本层查询中所有字段均需要引用别名（*除外），例如：<codeblock>select T.a , T.b from (select * from foo.bar) as T where T.a&lt;10</codeblock></p>
+        <p>3. 子查询必须包含别名，子查询中出现的别名只作用于上一层。</p>
       </note>
     </section>
   </body>

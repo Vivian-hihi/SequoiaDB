@@ -2,18 +2,11 @@
 <!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">
 <map title="Installation">
  <topicref href="topics/install_overview.dita">
-  <!--topicref href="linux_recommended_configuration/topics/linux_recommended_configuration.dita">
-   <topicref href="linux_recommended_configuration/topics/ulimit.dita"/>
-   <topicref href="linux_recommended_configuration/topics/vm.dita"/>
-   <topicref href="linux_recommended_configuration/topics/dire_stru.dita"/>
-   <topicref href="linux_recommended_configuration/topics/fallback_mechanism.dita"/>
-  </topicref-->
   <anchorref href="deploy/deploy.ditamap"/>
   <anchorref href="system_require/system_require.ditamap"/>
   <topicref href="topics/install_media.dita"></topicref>
   <anchorref href="server_installation/server_installation.ditamap"/>
   <topicref href="topics/start_web.dita"></topicref>
-  <!--anchorref href="web_manage/web_manage.ditamap"/-->
   <anchorref href="configuration_start/configuration_start.ditamap"/>
   <topicref href="topics/testEM.dita"></topicref>
   <anchorref href="uninstall/uninstall.ditamap"/>

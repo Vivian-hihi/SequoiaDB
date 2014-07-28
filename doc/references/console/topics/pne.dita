@@ -7,16 +7,15 @@
       <p><codeblock>{&lt;字段名>：{$ne:&lt;值>}}</codeblock></p>
     </section>
     <section><title>描述</title>
-      <p>$ne选择满足“字段名”的值不等于（!=）指定“值”的记录。</p>
+      <p>$ne 选择满足“字段名”的值不等于（!=）指定“值”的记录。</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li>
-          <p>返回集合<i>bar</i>中<i>age</i>字段值等于<i>20</i>的记录。</p>
+          <p>返回集合 <i>bar</i> 中 <i>age</i> 字段值等于 <i>20</i> 的记录。</p>
           <codeblock>db.foo.bar.find({age:{$ne:20}})</codeblock>
         </li>
-        <li>$ne匹配嵌套对象中的字段名。使用<xref href="../../methods/topics/dbupdate.dita"
-            ><i>update()</i></xref>方法更新嵌套对象<i>service</i>中的<i>type</i>字段值不等于15的记录，将这些记录的<i>age</i>字段值设定为25。
+        <li>$ne 匹配嵌套对象中的字段名。使用 <xref href="../../methods/topics/dbupdate.dita"><i>update()</i></xref> 方法更新嵌套对象 <i>service</i> 中的 <i>type</i> 字段值不等于15的记录，将这些记录的 <i>age</i> 字段值设定为25。
           <codeblock>db.foo.bar.update({<xref href="gset.dita">$set</xref>:{age:25}},{"service.type":{$ne:15}})</codeblock></li>
       </ul>
     </section>

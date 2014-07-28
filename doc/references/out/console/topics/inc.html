@@ -8,11 +8,11 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$inc"/>
-<meta name="description" content="语法 {$inc:{&lt;字段名1&gt;:&lt;值1&gt;,&lt;字段名2&gt;:&lt;值2&gt;,...}} 描述 $inc操作是给指定&#34;&lt;字段名&gt;&#34;增加指定的&#34;&lt;值&gt;&#34;。如果原记录中没有指定的字段名，那将字段名和值填充到记录中； 如果原记录中存在指定的字段名，那么将字段名的值加上指定的值。 示例 选择集合bar下age字段值大于15的记录，然后更新这些记录，将age字段的值增加5、ID的值添加1。 db.foo.bar ..."/>
+<meta name="description" content="语法 {$inc:{&lt;字段名1&gt;:&lt;值1&gt;,&lt;字段名2&gt;:&lt;值2&gt;,...}} 描述 $inc操作是给指定“&lt;字段名&gt;”增加指定的“&lt;值&gt;”。如果原记录中没有指定的字段名，那将字段名和值填充到记录中；如果原记录中存在指定的字段名，那么将字段名的值加上指定的值。 示例 选择集合bar下age字段值大于15的记录，然后更新这些记录，将age字段的值增加5、ID的值添加1。 db.foo.bar ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../console/topics/update.html"/>
-<meta name="DC.Relation" scheme="URI" content="regex.html"/>
-<meta name="DC.Relation" scheme="URI" content="set.html"/>
-<meta name="DC.Relation" scheme="URI" content="../../methods/topics/update.html"/>
+<meta name="DC.Relation" scheme="URI" content="pregex.html"/>
+<meta name="DC.Relation" scheme="URI" content="gset.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../methods/topics/dbupdate.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="references_console_inc"/>
 <link rel="stylesheet" type="text/css" href="../../commonltr.css"/>
@@ -45,9 +45,7 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">描述</h2>
-      <p class="p">$inc操作是给指定"&lt;字段名&gt;"增加指定的"&lt;值&gt;"。如果原记录中没有指定的字段名，那将字段名和值填充到记录中；</p>
-
-      <p class="p">如果原记录中存在指定的字段名，那么将字段名的值加上指定的值。</p>
+      <p class="p">$inc操作是给指定“&lt;字段名&gt;”增加指定的“&lt;值&gt;”。如果原记录中没有指定的字段名，那将字段名和值填充到记录中；如果原记录中存在指定的字段名，那么将字段名的值加上指定的值。</p>
 
     </div>
 
@@ -75,9 +73,9 @@
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="regex.html" title="$regex">$regex</a></div>
-<div><a class="navheader_parent_path" href="set.html" title="$set">$set</a></div>
-<div><a class="navheader_parent_path" href="../../methods/topics/update.html" title="db.collectionspace.collection.update()">db.collectionspace.collection.update()</a></div>
+<div><a class="navheader_parent_path" href="pregex.html" title="$regex">$regex</a></div>
+<div><a class="navheader_parent_path" href="gset.html" title="$set">$set</a></div>
+<div><a class="navheader_parent_path" href="../../methods/topics/dbupdate.html" title="db.collectionspace.collection.update()">db.collectionspace.collection.update()</a></div>
 </div>
 </div>
 <div class="navfooter"><a class="link" href="../../console/topics/update.html" title="更新符"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">更新符</span></a>  <script type="text/javascript"><!--         
@@ -89,7 +87,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>

@@ -8,11 +8,11 @@
     </section>
     <section><title>语法</title>
       <p><codeblock>count(field_name) as &lt;alisa_name></codeblock></p>
-      <note>1.使用count函数对字段名计数，必须使用别名。</note>
+      <note>1. 使用 count 函数对字段名计数，必须使用别名。</note>
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>对集合bar中age字段进行计数：</p>
+        <li><p>对集合 bar 中 age 字段进行计数：</p>
           <p><codeblock>db.exec("select count(age) as 数量 from foo.bar")</codeblock></p>
         </li>
       </ul>

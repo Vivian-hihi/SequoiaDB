@@ -11,7 +11,7 @@
         <li>
           <p>插入10条记录</p>
           <p><codeblock>for(i = 0; i &lt; 10; i++) { db.foo.bar.insert({a:i}) }</codeblock></p>
-          <p>查询集合foo.bar的所有记录</p>
+          <p>查询集合 foo.bar 的所有记录</p>
           <p><codeblock>var cur = db.foo.bar.find()</codeblock></p>
           <p>使用游标取出一条记录</p>
           <p><codeblock>cur.next()</codeblock></p>

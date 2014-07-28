@@ -3,7 +3,7 @@
 <topic id="application_java_sql">
   <title>SQL to SequoiaDB shell to Java</title>
   <body>
-    <p>SequoiaDB的查询用json（bson）对象表示，下表以例子的形式显示了SQL语句、SequoiaDB shell语句和SequoiaDB Java驱动程序语法之间的对照。</p>
+    <p>SequoiaDB 的查询用 json（bson）对象表示，下表以例子的形式显示了 SQL 语句，SequoiaDB shell 语句和 SequoiaDB Java 驱动程序语法之间的对照。</p>
    <simpletable>
      <sthead>
        <stentry>SQL</stentry>
@@ -11,12 +11,12 @@
        <stentry>Java Driver</stentry>
      </sthead>
      <strow>
-       <stentry>insert into students(a,b) values(1,-1)   </stentry>
-       <stentry>db.foo.bar.insert({a:1,b:-1})       </stentry>
+       <stentry>insert into students(a,b) values(1,-1)</stentry>
+       <stentry>db.foo.bar.insert({a:1,b:-1})</stentry>
        <stentry>bar.insert("{'a':1,'b':-1}")</stentry>
      </strow>
      <strow>
-       <stentry>select a,b from students </stentry>
+       <stentry>select a,b from students</stentry>
        <stentry>db.foo.bar.find(null,{a:"",b:""})</stentry>
        <stentry>bar.query("", "{'a':'','b':''}", "", "")</stentry>
      </strow>

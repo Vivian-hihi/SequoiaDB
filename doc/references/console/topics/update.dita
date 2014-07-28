@@ -5,7 +5,7 @@
   <body>
     <section>
       <p>
-        <simpletable><!-- id="references_console_update_table" relcolwidth="1.0* 1.11* 3.7* 2.36*">-->
+        <simpletable>
           <sthead>
             <stentry>更新符</stentry>
             <stentry>描述</stentry>
@@ -29,15 +29,7 @@
             <stentry> 删除指定字段</stentry>
             <stentry>删除对象中的指定字段</stentry>
             <stentry> db.foo.bar.update({$unset:{age:""}}) </stentry>
-          </strow>
-          <!--  
-            <row>
-            <entry><xref href="rename.dita">$rename</xref></entry>
-            <entry/>
-            <entry/>
-            <entry/>
-            </row>
-          -->
+          </strow>          
           <strow>
             <stentry><xref href="gaddtoset.dita">$addtoset</xref></stentry>
             <stentry>加入集合 </stentry>
@@ -46,8 +38,8 @@
           </strow>
           <strow>
             <stentry><xref href="pop.dita">$pop</xref></stentry>
-            <stentry> 消除数组中最后N 个数值</stentry>
-            <stentry> 删除数组中最后 N 个数值，目标字段必须为数组（如果 N 小于 0 意味着从数组起始删除第 -N 个数值） 。</stentry>
+            <stentry> 消除数组中最后 N 个数值</stentry>
+            <stentry> 删除数组中最后 N 个数值，目标字段必须为数组（如果 N 小于0意味着从数组起始删除第 -N 个数值） 。</stentry>
             <stentry> db.foo.bar.update({$pop:{array:2}}) </stentry>
           </strow>
           <strow>

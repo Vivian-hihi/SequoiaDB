@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_methodlist">
-  <title>SequoiaDB JavaScript方法</title>
+  <title>SequoiaDB JavaScript 方法</title>
   <body>
-    <p>SequoiaDB是一种面向文档型的非关系型数据库，使用<xref href="../../../introduction/topics/datamodel.dita"
-        >JSON</xref>数据模型。 <ul>
-        <li>如果需要匹配嵌套对象中的元素，可以使用“.”（ASCII码0x2E）将所有的父元素名与子元素名连接。例如下列对象：
+    <p>SequoiaDB 是一种面向文档型的非关系型数据库，使用 <xref href="../../../introduction/topics/datamodel.dita">JSON</xref> 数据模型。
+      <ul>
+        <li>如果需要匹配嵌套对象中的元素，可以使用“.”（ASCII 码 0x2E）将所有的父元素名与子元素名连接。例如下列对象：
           <codeblock>{ name:"tom",address:{ street:{ street1:"1024 Wall Street",street2:"University Drive"},zipcode: 100000 } }</codeblock>
-          如果需要匹配所有存在address元素中的street元素里面的street1元素，则可以使用：
+          如果需要匹配所有存在 address 元素中的 street 元素里面的 street1 元素，则可以使用：
           <codeblock>{ "address.street.street1":{ <xref href="../../console/topics/exists.dita">$exists</xref> : 1 } }</codeblock></li>
-        <li>如果对象中存在数组，对数组中每一个元素的引用使用“0”， “1”， “2”……等标记第一个，第二个，第三个……元素。例如包含数组的对象：
+        <li>如果对象中存在数组，对数组中每一个元素的引用使用“0”，“1”，“2”……等标记第一个，第二个，第三个……元素。例如包含数组的对象：
           <codeblock>{ name: "tom", phone: [ "13175824", 1528345] }</codeblock> 可以使用下列匹配条件进行数组中元素匹配：
           <codeblock>{ "phone.0 ":"13175824" }</codeblock></li>
       </ul></p>
-    <section><title>数据库操作方法</title>
+    <section>
+      <title>数据库操作方法</title>
       <p>
-        <simpletable 
-        id="references_method_databasemethod_table">
+        <simpletable id="references_method_databasemethod_table">
         <sthead>
           <stentry>方法名</stentry>
           <stentry>描述</stentry>
@@ -135,17 +135,17 @@
           </strow>
           <strow>
             <stentry><xref href="eval.dita">db.eval()</xref></stentry>
-            <stentry>调用存储过程函数或直接使用javaScript语句</stentry>
+            <stentry>调用存储过程函数或直接使用 JavaScript 语句</stentry>
             <stentry>db.eval('db.foo.bar')</stentry>
           </strow>
           <strow>
             <stentry><xref href="exec.dita">db.exec()</xref></stentry>
-            <stentry>执行SQL Select语句</stentry>
+            <stentry>执行 SQL Select 语句</stentry>
             <stentry>db.exec("select * from foo.bar")</stentry>
           </strow>
           <strow>
             <stentry><xref href="execUpdate.dita">db.execUpdate()</xref></stentry>
-            <stentry>扫行SQL其它语句</stentry>
+            <stentry>扫行 SQL 其它语句</stentry>
             <stentry>db.execUpdate("insert into foo.bar(name,age) values('test',20)")</stentry>
           </strow>
           <strow>
@@ -217,8 +217,7 @@
       </p>
     </section>
     <section><title>集合空间方法</title>
-      <simpletable 
-        id="references_method_spacemethod_table">
+      <simpletable id="references_method_spacemethod_table">
         <sthead>
           <stentry>方法名</stentry>
           <stentry>描述</stentry>
@@ -236,14 +235,13 @@
       </strow>
       <strow>
         <stentry><xref href="getCL.dita">db.collectionspace.getCL()</xref></stentry>
-        <stentry>获取集合的引用            </stentry>
+        <stentry>获取集合的引用</stentry>
         <stentry>db.foo.getCL("bar")</stentry>
       </strow>
     </simpletable>
     </section>
     <section><title>集合方法</title>
-      <simpletable 
-        id="references_method_collectionmethod_table">
+      <simpletable id="references_method_collectionmethod_table">
         <sthead>
           <stentry>方法名</stentry>
           <stentry>描述</stentry>
@@ -251,12 +249,12 @@
         </sthead>
         <strow>
           <stentry><xref href="ccalter.dita">db.collectionspace.collection.alter()</xref></stentry>
-          <stentry>修改集合的属性           </stentry>
+          <stentry>修改集合的属性</stentry>
           <stentry>db.foo.bar.alter({ShardingKey:{a:1},ShardingType:"hash"})</stentry>
         </strow>
         <strow>
           <stentry><xref href="dbinsert.dita">db.collectionspace.collection.insert()</xref></stentry>
-          <stentry>向集合中插入记录           </stentry>
+          <stentry>向集合中插入记录</stentry>
           <stentry>db.foo.bar.insert({name:"Tom",age:20,phone:[123,345]})</stentry>
         </strow>
         <strow>
@@ -431,7 +429,7 @@
     </section>
 
     <section>
-      <title>Cursor方法</title>
+      <title>Cursor 方法</title>
       <simpletable>
         <sthead>
           <stentry>方法名</stentry>

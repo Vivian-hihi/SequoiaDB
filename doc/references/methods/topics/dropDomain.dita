@@ -23,7 +23,7 @@
       </simpletable>      
     </section>
     <section><title>格式</title>
-      <p>dropDomain() 方法的定义格式必须指定name参数，并且name的值在系统中存在，否则操作异常。</p>
+      <p>dropDomain() 方法的定义格式必须指定 name 参数，并且 name 的值在系统中存在，否则操作异常。</p>
       <codeblock>{"name":"&lt;域名>"}</codeblock>       
       <note>
         <ul>

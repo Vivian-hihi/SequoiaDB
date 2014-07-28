@@ -4,14 +4,13 @@
   <title>db.execUpdate()</title>
   <body>
     <section><title>db.execUpdate(&lt;other sql>)</title>
-      <p>执行SQL的其它语句</p>
+      <p>执行 SQL 的其它语句</p>
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>向集合my.my中插入新的记录</p>
+        <li><p>向集合 my.my 中插入新的记录</p>
           <p><codeblock>db.execUpdate("insert into my.my(name,age) values('zhangshang', 30) ")</codeblock></p></li>
-      </ul>
-      
+      </ul>      
     </section>
   </body>
 </topic>

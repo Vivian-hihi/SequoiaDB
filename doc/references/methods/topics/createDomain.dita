@@ -22,20 +22,20 @@
         </strow>
         <strow>
           <stentry>groups</stentry>
-          <stentry>Json数组</stentry>
+          <stentry>Json 数组</stentry>
           <stentry>域包含的复制组。</stentry>
           <stentry>是</stentry>
         </strow>
         <strow>
           <stentry>options</stentry>
-          <stentry>Json对象</stentry>
-          <stentry>在创建域时可以通过options设置其他属性。</stentry>
+          <stentry>Json 对象</stentry>
+          <stentry>在创建域时可以通过 options 设置其他属性。</stentry>
           <stentry>否</stentry>
         </strow>
       </simpletable>      
     </section>
     <section><title>格式</title>
-      <p>目前通过options可设置域的属性有：</p>
+      <p>目前通过 options 可设置域的属性有：</p>
       <simpletable>
         <sthead>
           <stentry>属性名</stentry>
@@ -50,7 +50,7 @@
       </simpletable> 
       <note>
         <ul>
-          <li>AutoSplit只作用于散列分区集合。</li>
+          <li>AutoSplit 只作用于散列分区集合。</li>
           <li>不能在空域（不包含复制组）创建集合空间。</li>
         </ul>
       </note>

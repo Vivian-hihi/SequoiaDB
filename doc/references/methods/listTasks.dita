@@ -16,19 +16,19 @@
         </sthead>        
         <strow>
           <stentry>cond</stentry>
-          <stentry>Json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>任务过滤条件</stentry>
           <stentry>否</stentry>
         </strow>
         <strow>
           <stentry>sel</stentry>
-          <stentry>Json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>任务选择字段</stentry>
           <stentry>否</stentry>
         </strow>
         <strow>
           <stentry>hint</stentry>
-          <stentry>Json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>保留项</stentry>
           <stentry>否</stentry>
         </strow>

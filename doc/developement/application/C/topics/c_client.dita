@@ -5,7 +5,7 @@
   <body>
     <section>
     <title>概述</title>
-      <p>C 客户端程序主要提供了数据库，集合空间，集合，游标，副本组，节点，域这7个级别的操作。<xref href="..\..\..\..\c\html\index.html" format="html">更多参考 C 在线 API</xref>。</p>
+      <p>C 客户端程序主要提供了数据库，集合空间，集合，游标，副本组，节点，域这7个级别的操作。更多参考 <xref href="..\..\..\..\c\html\index.html" format="html">C 在线 API</xref></p>
     </section>
     <section>
       <title>句柄</title>

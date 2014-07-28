@@ -12,11 +12,11 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>选择集合bar下age字段的值是20或25的记录。</p>
+          <p>选择集合 bar 下 age 字段的值是20或25的记录。</p>
           <codeblock>db.foo.bar.find({age:{$in:[20,25]}})</codeblock>
         </li>
         <li>
-          <p>$in匹配嵌套数组对象中的元素。选择集合bar中数组对象name存在元素“Tom”或“Mike”的记录，并将这些记录的age字段删除。</p>
+          <p>$in 匹配嵌套数组对象中的元素。选择集合 bar 中数组对象 name 存在元素“Tom”或“Mike”的记录，并将这些记录的 age 字段删除。</p>
           <codeblock>db.foo.bar.update({<xref href="unset.dita">$unset</xref>:{age:""}},{name:{$in:["Tom","Mike"]}})</codeblock>
         </li>
       </ul>

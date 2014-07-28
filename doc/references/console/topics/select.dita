@@ -35,14 +35,7 @@
             <stentry><xref href="pne.dita">$ne</xref></stentry>
             <stentry>不等于</stentry>
             <stentry>db.foo.bar.find({age:{$ne:20}})</stentry>
-          </strow>
-          <!--  
-            <row>
-            <entry><xref href="mod.dita">$mod</xref></entry>
-            <entry>取模</entry>
-            <entry/>
-            </row>
-          -->
+          </strow>          
           <strow>
             <stentry><xref href="pin.dita">$in</xref></stentry>
             <stentry>集合内存在</stentry>

@@ -3,11 +3,11 @@
 <topic id="topic_r2d_fv1_yl">
   <title>sql buildobj()</title>
   <body>
-    <section><title>buildobj()函数</title>
+    <section><title>buildobj() 函数</title>
       <p>将记录中多个字段合并为一个对象。</p>
     </section>
     <section><title>语法</title>
-      <p><codeblock>buildobj（field name1，fieldname2，...）</codeblock></p>
+      <p><codeblock>buildobj(field name1,fieldname2,...)</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>

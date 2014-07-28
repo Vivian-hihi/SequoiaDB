@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$min"/>
-<meta name="description" content="描述 记录分组后，取分组中指定字段的最小值返回，对嵌套对象使用点操作符（.）引用字段名。 示例 对记录分组后，返回分组中指定字段的最小值 db.collectionspace.collection.aggregate({$group:{_id:&#34;$dep&#34;,min_score:{$min:&#34;$score&#34;},Name:{$last:&#34;$info.name&#34;}}}) ..."/>
+<meta name="description" content="描述 记录分组后，取分组中指定字段的最小值返回，对嵌套对象使用点操作符（.）引用字段名。 示例 对记录分组后，返回分组中指定字段的最小值 db.collectionspace.collection.aggregate({$group:{_id:&#34;$dep&#34;,min_score:{$min:&#34;$score&#34;},Name:{$last:&#34;$info.name&#34;}}}) 此操作对记录按 dep ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/console/topics/jgroup.html"/>
 <meta name="DC.Relation" scheme="URI" content="jmax.html"/>
 <meta name="DC.Relation" scheme="URI" content="javg.html"/>
@@ -48,7 +48,8 @@
       
       <ul class="ul">
         <li class="li">对记录分组后，返回分组中指定字段的最小值<pre class="pre codeblock">db.collectionspace.collection.aggregate({$group:{_id:"$dep",min_score:{$min:"$score"},Name:{$last:"$info.name"}}})</pre>
-此操作对记录按dep字段分组，使用<strong class="ph b">$min</strong>返回每个分组中score字段的最小值，输出字段名为min_score，又使用<a class="xref" href="jlast.html"><strong class="ph b">$last</strong></a>取每个分组中最后一条记录嵌套对象name字段值，输出字段名为Name。记录返回如下：<pre class="pre codeblock">{
+
+          此操作对记录按 dep 字段分组，使用 <strong class="ph b">$min</strong> 返回每个分组中 score 字段的最小值，输出字段名为 min_score，又使用 <a class="xref" href="jlast.html"><strong class="ph b">$last</strong></a> 取每个分组中最后一条记录嵌套对象 name 字段值，输出字段名为 Name。记录返回如下：<pre class="pre codeblock">{
   "min_score": 72,
   "Name": "Kate"
 }

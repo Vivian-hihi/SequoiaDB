@@ -4,7 +4,7 @@
   <title>db.collectionspace.collection.attachCL()</title>
   <body>
     <section><title>db.collectionspace.collection.attachCL(&lt;subCLFullName>, &lt;options>)</title>
-      <p>在主分区集合下挂载子分区集合</p>
+      <p>在主分区集合下挂载子分区集合。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>
@@ -22,7 +22,7 @@
         </strow>
         <strow>
           <stentry>options</stentry>
-          <stentry>json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>分区范围，包含两个字段“LowBound”（区间左值）以及“UpBound”（区间右值），例如：{LowBound:{a:0},UpBound:{a:100}表示取字段“a”的范围区间：[0, 100)</stentry>
           <stentry>是</stentry>
         </strow>        

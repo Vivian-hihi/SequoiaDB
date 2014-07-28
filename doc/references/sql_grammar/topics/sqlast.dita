@@ -3,11 +3,11 @@
 <topic id="topic_y4c_xs1_yl">
   <title>sql last()</title>
   <body>
-    <section><title>last()函数</title>
+    <section><title>last() 函数</title>
       <p>选择范围内最后一条数据。</p>
     </section>
     <section><title>语法</title>
-      <p><codeblock>last（field name）</codeblock></p>
+      <p><codeblock>last(field name)</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>

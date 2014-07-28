@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="sql right outer join"/>
-<meta name="description" content="right outer join 语句 right outer join会从右边的集合名（collection2_name）中返回所有的记录，即使在左边的集合名（collection1_name）中没有匹配的记录。 语法 &lt;collection1_name | (select_set1) as &lt;alias1_name&gt; right outer join &lt;collection2_name | ..."/>
+<meta name="description" content="right outer join 语句 right outer join 会从右边的集合名（collection2_name）中返回所有的记录，即使在左边的集合名（collection1_name）中没有匹配的记录。 语法 &lt;collection1_name | (select_set1) as &lt;alias1_name&gt; right outer join &lt;collection2_name | ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/sql_grammar/topics/sql_grammar_list.html"/>
 <meta name="DC.Relation" scheme="URI" content="left_join.html"/>
 <meta name="DC.Relation" scheme="URI" content="sqsum.html"/>
@@ -39,7 +39,7 @@
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">right outer join 语句</h2>
-      <p class="p">right outer join会从右边的集合名（collection2_name）中返回所有的记录，即使在左边的集合名（collection1_name）中没有匹配的记录。</p>
+      <p class="p">right outer join 会从右边的集合名（collection2_name）中返回所有的记录，即使在左边的集合名（collection1_name）中没有匹配的记录。</p>
 
     </div>
 
@@ -54,7 +54,7 @@ right outer join
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li"><p class="p">有员工信息表foo.emp和部门信息表foo.dept，查询员工号emp_no&lt;10所在的部门名dept_name：</p>
+        <li class="li"><p class="p">有员工信息表 foo.emp 和部门信息表 foo.dept，查询员工号 emp_no &lt; 10 所在的部门名 dept_name：</p>
 
           <div class="p"><pre class="pre codeblock">db.exec("select E.emp_no,D.dept_name from foo.emp as E right outer join foo.dept as D on E.dept_no=D.dept_no where E.emp_no&lt;10")</pre>
 </div>

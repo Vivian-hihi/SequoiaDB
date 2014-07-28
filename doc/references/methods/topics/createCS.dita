@@ -7,8 +7,7 @@
       <p>在数据库对象中创建集合空间。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.04* 1.1* 5.7* 1.0*"
-        id="references_method_createCS_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -23,13 +22,13 @@
         </strow>
         <strow>
           <stentry>options</stentry>
-          <stentry>Json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>集合空间可选属性。</stentry>
           <stentry>否</stentry>
         </strow>
       </simpletable>      
     </section>
-    <section><title>options格式</title>
+    <section><title>options 格式</title>
       <simpletable>
         <sthead>
           <stentry>属性名</stentry>
@@ -49,22 +48,22 @@
       </simpletable>      
       <note>
         <ul>
-          <li>name字段的值不能是空串、含点（.）或者美元符号（$）。且长度不超过127B。</li>
+          <li>name 字段的值不能是空串，含点（.）或者美元符号（$）。且长度不超过127B。</li>
           <li>同一个数据库对象集合空间名必须唯一。</li>
           <li>在创建集合空间时用户可以指定数据页大小，指定后不可更改。如果不指定默认为65536B。</li>
-          <li>pageSize只能选填0，4096，8192，16384，32768，65536之一，0即为默认值65536。</li>
-          <li>所属域必须已经存在，且不能为SYSDOMAIN。</li>
-          <li>为兼容较早版本接口，db.createCS(&lt;name>,[PageSize])同样可以工作。</li>
+          <li>PageSize 只能选填0，4096，8192，16384，32768，65536之一，0即为默认值65536。</li>
+          <li>所属域必须已经存在，且不能为 SYSDOMAIN。</li>
+          <li>为兼容较早版本接口，db.createCS(&lt;name>,[PageSize]) 同样可以工作。</li>
         </ul>
       </note>
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>创建名为foo的集合空间，不指定数据页大小，即数据页大小为默认值65536B</p>
+        <li><p>创建名为 foo 的集合空间，不指定数据页大小，即数据页大小为默认值65536B</p>
           <p><codeblock>db.createCS("foo")</codeblock></p>
         </li>
         <li>
-          <p>创建名为foo的集合空间，指定数据页大小为4096B，所属域为“mydomain”</p>
+          <p>创建名为 foo 的集合空间，指定数据页大小为4096B，所属域为“mydomain”</p>
           <p><codeblock>db.createCS("foo",{PageSize:4096,Domain:"mydomain"})</codeblock></p>
         </li>
       </ul>

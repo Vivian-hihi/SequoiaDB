@@ -12,15 +12,14 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>选择集合bar中存在字段age的记录</p>
+          <p>选择集合 bar 中存在字段 age 的记录</p>
           <p><codeblock>db.foo.bar.find({age:{$exists:1}})</codeblock></p>
         </li>
         <li>
-          <p>选择集合bar中嵌套对象content不存在name字段的记录</p>
+          <p>选择集合 bar 中嵌套对象 content 不存在 name 字段的记录</p>
           <p><codeblock>db.foo.bar.find({"content.name":{$exists:0}})</codeblock></p>
         </li>
-      </ul>
-      
+      </ul>      
     </section>
   </body>
   <related-links>

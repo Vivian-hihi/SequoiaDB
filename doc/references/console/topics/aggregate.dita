@@ -18,7 +18,7 @@
           </strow>
           <strow>
             <stentry><xref href="match.dita">$match</xref></stentry>
-            <stentry>实现从集合中选择匹配条件的记录，相当与SQL语句的where</stentry>
+            <stentry>实现从集合中选择匹配条件的记录，相当与 SQL 语句的 where</stentry>
             <stentry>{$match:{field:{$lte:value}}}</stentry>
           </strow>
           <strow>
@@ -33,7 +33,7 @@
           </strow>
           <strow>
             <stentry><xref href="jgroup.dita">$group</xref></stentry>
-            <stentry>实现对记录的分组，类似与SQL的group by语句，“_id”指定分组字段</stentry>
+            <stentry>实现对记录的分组，类似与 SQL 的 group by 语句，“_id”指定分组字段</stentry>
             <stentry>{$group:{_id:"$field"}}</stentry>
           </strow>
           <strow>
@@ -43,7 +43,7 @@
           </strow>
         </simpletable>
       </p>
-      <p>$group聚集符支持以下聚集函数：  <simpletable>
+      <p><b>$group 聚集符支持以下聚集函数：</b><simpletable>
         <sthead>
           <stentry> 函数名 </stentry>
           <stentry> 描述 </stentry>

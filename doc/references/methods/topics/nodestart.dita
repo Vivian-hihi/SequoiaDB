@@ -8,7 +8,7 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li>启动当前名称为node的节点 。<codeblock>node.start()</codeblock></li>
+        <li>启动当前名称为 node 的节点 。<codeblock>node.start()</codeblock></li>
       </ul>
     </section>
   </body>

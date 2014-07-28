@@ -22,11 +22,11 @@
           <stentry>是</stentry>
         </strow>
       </simpletable>
-      <p>removeProcedure()方法的定义，只有一个字符串类型的参数名function name，它的值必须已存在，否则异常。</p>
+      <p>removeProcedure() 方法的定义，只有一个字符串类型的参数名 function name，它的值必须已存在，否则异常。</p>
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>删除sum函数</p><codeblock>db.removeProcedure("sum")</codeblock>必须保证待删除函数的函数名和定义时的一致。诸如db.removeProcedure('sum')的调用将返回失败。</li>
+        <li><p>删除 sum 函数</p><codeblock>db.removeProcedure("sum")</codeblock>必须保证待删除函数的函数名和定义时的一致。诸如 db.removeProcedure('sum') 的调用将返回失败。</li>
       </ul>
     </section>
   </body>

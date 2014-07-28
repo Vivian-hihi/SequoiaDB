@@ -62,23 +62,27 @@
 
       <p class="p"><strong class="ph b">SequoiaDB 和 MapReduce 的配置：</strong></p>
 
-      <p class="p">    sequoiadb-hadoop.xml 是配置文件，放在你编写的 mapreduce 工程的源码根目录下面。</p>
+      <p class="p">    sequoiadb-hadoop.xml 是配置文件，放在你编写的 MapReduce 工程的源码根目录下面。</p>
 
-      <p class="p">    sequoiadb.input.url：指定作为输入的 sequoiadb 的 url 路径，格式为：hostname1:port1,hostname2:port2,</p>
+      <p class="p">    sequoiadb.input.url：指定作为输入的 SequoiaDB 的 URL 路径，格式为：hostname1:port1,hostname2:port2,</p>
 
       <p class="p">    sequoiadb.in.collectionspace：指定作为输入的集合空间。</p>
 
       <p class="p">    sequoiadb.in.collection：指定作为输入的集合。</p>
 
-      <p class="p">    sequoiadb.output.url：指定作为输出的 sequoiadb 的 url 路径。</p>
+      <p class="p">    sequoiadb.output.url：指定作为输出的 SequoiaDB 的 URL 路径。</p>
 
       <p class="p">    sequoiadb.out.collectionspace：指定作为输出的集合空间。</p>
 
       <p class="p">    sequoiadb.out.collection：指定作为输出的集合。</p>
 
-      <p class="p">    sequoiadb.out.bulknum：指定每次向 sequoiadb 写入的记录条数，对写入性能进行优化。</p>
+      <p class="p">    sequoiadb.out.bulknum：指定每次向 SequoiaDB 写入的记录条数，对写入性能进行优化。</p>
 
-      <p class="p">下面是读取 hdfs 文件，处理后写入到 sequoiadb 中去：</p>
+      <p class="p"><strong class="ph b">示例</strong></p>
+
+      <ul class="ul">
+        <li class="li">      
+      <p class="p">1. 下面是读取 HDFS 文件，处理后写入到 SequoiaDB 中去：</p>
 
       <pre class="pre codeblock">public class HdfsSequoiadbMR {
     static class MobileMapper extends  Mapper&lt;LongWritable,Text,Text,IntWritable&gt;{
@@ -125,7 +129,7 @@
         job.setJarByClass(HdfsSequoiadbMR.class);
         job.setJobName("HdfsSequoiadbMR");
         job.setInputFormatClass(TextInputFormat.class);
-        job.setOutputFormatClass(SequoiadbOutputFormat.class); //reduce 输出写入到 sequoiadb 中
+        job.setOutputFormatClass(SequoiadbOutputFormat.class); //reduce 输出写入到 SequoiaDB 中
         TextInputFormat.setInputPaths(job, new Path(args[0]));
 
         job.setMapperClass(MobileMapper.class);    
@@ -140,8 +144,9 @@
         job.waitForCompletion(true);
     }
 }</pre>
+</li>
 
-      <p class="p">第二个例子，读取 sequoiadb 中数据处理后写入到 hdfs 中。</p>
+      <li class="li"><p class="p">2. 读取 SequoiaDB 中数据处理后写入到 HDFS 中。</p>
 
       <pre class="pre codeblock">public class SequoiadbHdfsMR {
     /**
@@ -205,6 +210,9 @@
         job.waitForCompletion(true);
     }
 }</pre>
+</li>
+
+      </ul>
 
       <p class="p">配置信息：</p>
 

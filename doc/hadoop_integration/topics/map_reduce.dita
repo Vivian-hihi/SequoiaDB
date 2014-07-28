@@ -27,7 +27,10 @@
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.collectionspace：指定作为输出的集合空间。</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.collection：指定作为输出的集合。</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.bulknum：指定每次向 SequoiaDB 写入的记录条数，对写入性能进行优化。</p>
-      <p>下面是读取 HDFS 文件，处理后写入到 SequoiaDB 中去：</p>
+      <p><b>示例</b></p>
+      <ul>
+        <li>      
+      <p>1. 下面是读取 HDFS 文件，处理后写入到 SequoiaDB 中去：</p>
       <codeblock>public class HdfsSequoiadbMR {
     static class MobileMapper extends  Mapper&lt;LongWritable,Text,Text,IntWritable>{
         private static final IntWritable ONE=new IntWritable(1);
@@ -87,8 +90,8 @@
         
         job.waitForCompletion(true);
     }
-}</codeblock>
-      <p>第二个例子，读取 SequoiaDB 中数据处理后写入到 HDFS 中。</p>
+}</codeblock></li>
+      <li><p>2. 读取 SequoiaDB 中数据处理后写入到 HDFS 中。</p>
       <codeblock>public class SequoiadbHdfsMR {
     /**
      * 
@@ -150,7 +153,8 @@
         
         job.waitForCompletion(true);
     }
-}</codeblock>
+}</codeblock></li>
+      </ul>
       <p>配置信息：</p>
       <codeblock>&lt;?xml version="1.0" encoding="UTF-8"?>
 &lt;configuration>

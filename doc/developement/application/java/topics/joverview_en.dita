@@ -65,7 +65,7 @@
               <stentry>Each instance stands for a single data node</stentry>
             </strow>
             <strow>
-              <stentry>Domain</stentry>
+              <stentry>sdbDomain</stentry>
               <stentry>Domain class</stentry>
               <stentry>Each instance stands for a domain which</stentry>
             </strow>

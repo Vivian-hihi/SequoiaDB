@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.collection.count()"/>
-<meta name="description" content="db.collectionspace.collection.count([cond]) 统计指定集合空间下指定集合的记录总数。 参数描述 参数名 参数类型 描述 是否必填 cond json对象 选择条件。为空时，统计集合下所有的记录总数；不为空时，统计符合条件的记录总数。 否 格式 count()方法的定义格式包含cond字段，它是一个JSON对象。 {[{&#34;字段名1&#34;:{ &#34;匹配符1&#34; ..."/>
+<meta name="description" content="db.collectionspace.collection.count([cond]) 统计指定集合空间下指定集合的记录总数。 参数描述 参数名 参数类型 描述 是否必填 cond Json 对象 选择条件。为空时，统计集合下所有的记录总数；不为空时，统计符合条件的记录总数。 否 格式 count() 方法的定义格式包含 cond 字段，它是一个 JSON 对象。 {[{&#34;字段名1&#34;:{ ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
 <meta name="DC.Relation" scheme="URI" content="dropCS.html"/>
 <meta name="DC.Relation" scheme="URI" content="dbinsert.html"/>
@@ -36,7 +36,7 @@
 <body onload="highlightSearchTerm()" id="references_method_count"><a name="references_method_count"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法">SequoiaDB JavaScript方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">db.collectionspace.collection.count()</h1>
 
@@ -48,23 +48,23 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d100861e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d101251e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d100861e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d101251e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d100861e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d101251e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d100861e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d101251e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100861e26" class="stentry">cond</td>
+          <td valign="top" headers="d101251e26" class="stentry">cond</td>
 
-          <td valign="top" headers="d100861e29" class="stentry">json对象</td>
+          <td valign="top" headers="d101251e29" class="stentry">Json 对象</td>
 
-          <td valign="top" headers="d100861e32" class="stentry">选择条件。为空时，统计集合下所有的记录总数；不为空时，统计符合条件的记录总数。</td>
+          <td valign="top" headers="d101251e32" class="stentry">选择条件。为空时，统计集合下所有的记录总数；不为空时，统计符合条件的记录总数。</td>
 
-          <td valign="top" headers="d100861e35" class="stentry">否</td>
+          <td valign="top" headers="d101251e35" class="stentry">否</td>
 
         </tr>
 </table>
@@ -73,24 +73,23 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p">count()方法的定义格式包含cond字段，它是一个JSON对象。</p>
+      <p class="p">count() 方法的定义格式包含 cond 字段，它是一个 JSON 对象。</p>
 
       <div class="p"><pre class="pre codeblock">{[{"字段名1":{<a class="xref" href="../../console/topics/console.html">"匹配符1"</a>:"值1"},"字段名2":{"匹配符2":"值2"},...}]}</pre>
 </div>
-
       
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li"><p class="p">统计集合bar所有的记录数，即不指定参数cond</p>
+        <li class="li"><p class="p">统计集合 bar 所有的记录数，即不指定参数 cond</p>
 
             <pre class="pre codeblock">db.foo.bar.count()</pre>
 
         </li>
 
         <li class="li">
-          <p class="p">统计符合条件name字段的值为“Tom”且age字段的值大于25的记录数</p>
+          <p class="p">统计符合条件 name 字段的值为“Tom”且 age 字段的值大于25的记录数</p>
 
           <pre class="pre codeblock">db.foo.bar.count({name:"Tom",age:{$gt:25}})</pre>
 
@@ -110,7 +109,7 @@
 <div><a class="navheader_parent_path" href="../../../administration/concepts/database/topics/collectionspace.html" title="集合空间">集合空间</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

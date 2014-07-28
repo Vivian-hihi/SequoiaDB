@@ -3,7 +3,7 @@
 <topic id="topic_y14_42s_wj">
   <title>C 开发基础</title>
   <body>
-     <p>本节介绍使用 C 程序运行 SequoiaDB。首先安装 SequoiaDB，安装信息请查看<xref href="../../../../installation/server_installation/topics/server_installation.dita">SequoiaDB 服务器安装</xref>章节。</p>
+     <p>本节介绍使用 C 程序运行 SequoiaDB。首先安装 SequoiaDB，安装信息请查看 <xref href="../../../../installation/server_installation/topics/server_installation.dita">SequoiaDB 服务器安装</xref>章节。</p>
      <p>这里介绍如何使用 C 客户端驱动接口编写使用 SequoiaDB 数据库的程序。为了简单起见，下面的例子不全部是完整的代码，只起示例性作用。可到 /sequoiadb/client/samples/C 下获取相应的完整的代码。</p>
      <section>
         <title>数据库操作</title>
@@ -69,7 +69,7 @@ sdbConnectionHandle connection    = 0 ;
 rc = sdbCreateCollectionSpace ( connection, "foo", SDB_PAGESIZE_4K, &amp;collectionspace ) ;  
 // 在新建立的集合空间中创建集合"bar"
 rc = sdbCreateCollection ( collectionspace, "bar", &amp;collection ) ;</codeblock>
-              <note>在创建集合“bar”时并没有附加分区、压缩等信息，关于创建集合的更详细情况，请参考详情请查阅<xref href="..\..\..\..\..\c\html\index.html" format="html"> C API</xref></note>
+              <note>在创建集合“bar”时并没有附加分区、压缩等信息，关于创建集合的更详细情况，请参考详情请查阅 <xref href="..\..\..\..\..\c\html\index.html" format="html">C API</xref></note>
            </li>
            <li>插入数据<p>SequoiaDB 存储数据采用 BSON 的格式，BSON 是一种类似 JSON 的二进制对象。保存数据库中的数据，首先必须创建 bson 对象。下面会将{name:"Tom",age:24}插入到集合中。</p>
               <codeblock>// 首先，我们需要创建一个插入的 bson 对象。

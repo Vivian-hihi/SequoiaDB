@@ -7,8 +7,7 @@
       <p>Return the quotation of specified index.</p>
     </section>
     <section><title>Parameter description</title>
-      <simpletable><!-- frame="all" relcolwidth="1.05* 1.0* 4.55* 1.03*"
-        id="references_method_getIndex_table">-->
+      <simpletable>
         <sthead>
           <stentry>Parameter name</stentry>
           <stentry>Parameter type</stentry>

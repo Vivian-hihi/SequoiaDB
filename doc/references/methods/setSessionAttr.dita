@@ -16,7 +16,7 @@
         </sthead>        
         <strow>
           <stentry>options</stentry>
-          <stentry>Json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>会话属性选项</stentry>
           <stentry>是</stentry>
         </strow>        
@@ -31,7 +31,7 @@
         </sthead>        
         <strow>
           <stentry>PreferedInstance</stentry>
-          <stentry>会话读操作优先选取的数据库实例标识；取值"m"/"M"/"s"/"S"/"a"/"A"/1-7， 分别表示master/slave/anyone/node1-node7</stentry>
+          <stentry>会话读操作优先选取的数据库实例标识；取值"m"/"M"/"s"/"S"/"a"/"A"/1-7， 分别表示 master/slave/anyone/node1-node7</stentry>
           <stentry>PreferedInstance:"M"</stentry>
         </strow>        
       </simpletable>      

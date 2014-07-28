@@ -11,7 +11,8 @@
      <title>示例</title>
      <ul>
        <li>对记录分组后，输出每个分组第一条记录的指定字段值
-          <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$dep",Dep:{$first:"$dep"},Name:{$first:"$info.name"}}})</codeblock>此操作对记录按dep字段分组，取每个分组中第一条记录的dep字段值和嵌套对象name字段值，输出字段名分别为Dep和Name，记录返回如下：<codeblock>{
+          <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$dep",Dep:{$first:"$dep"},Name:{$first:"$info.name"}}})</codeblock>
+         此操作对记录按 dep 字段分组，取每个分组中第一条记录的 dep 字段值和嵌套对象 name 字段值，输出字段名分别为 Dep 和 Name，记录返回如下：<codeblock>{
   "Dep": "物电学院",
   "Name": "Lily"
 }

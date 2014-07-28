@@ -54,13 +54,12 @@ select &lt;field1_name,field2_name,...&gt; from &lt;cs_name&gt;.&lt;cl_name&gt;<
       <p class="p">&lt;cl_name&gt;：集合名</p>
 
       <p class="p">&lt;field_name&gt;：字段名</p>
-
     
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li"><p class="p">本例会选择指定的字段名返回，如果某条符合条件的记录没有指定的字段名，那么返回它的值为null：</p>
+        <li class="li"><p class="p">本例会选择指定的字段名返回，如果某条符合条件的记录没有指定的字段名，那么返回它的值为 null：</p>
 
           <div class="p"><pre class="pre codeblock">db.exec("select age,name from foo.bar") 
 结果：
@@ -106,12 +105,12 @@ select &lt;field1_name,field2_name,...&gt; from &lt;cs_name&gt;.&lt;cl_name&gt;<
       </ul>
 
       <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p">1.可以选择类似<a class="xref" href="where.html">where</a>、<a class="xref" href="group_by.html">group
-            by</a>、<a class="xref" href="order_by.html">order by</a>、<a class="xref" href="sqlimit.html">limit</a>、<a class="xref" href="offset.html">offset</a>的关键字对要选择的记录做控制。</p>
+        <p class="p">1. 可以选择类似 <a class="xref" href="where.html">where</a>，<a class="xref" href="group_by.html">group by</a>，<a class="xref" href="order_by.html">order by</a>，<a class="xref" href="sqlimit.html">limit</a>，<a class="xref" href="offset.html">offset</a> 的关键字对要选择的记录做控制。</p>
 
-        <p class="p">2.如果查询源不为集合，则本层查询中所有字段均需要引用别名（*除外），例如：select T.a , T.b from (select * from foo.bar) as T where T.a&lt;10</p>
+        <div class="p">2. 如果查询源不为集合，则本层查询中所有字段均需要引用别名（*除外），例如：<pre class="pre codeblock">select T.a , T.b from (select * from foo.bar) as T where T.a&lt;10</pre>
+</div>
 
-        <p class="p">3.子查询必须包含别名，子查询中出现的别名只作用于上一层。</p>
+        <p class="p">3. 子查询必须包含别名，子查询中出现的别名只作用于上一层。</p>
 
       </div>
 

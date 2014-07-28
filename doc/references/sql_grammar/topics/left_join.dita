@@ -4,7 +4,7 @@
   <title>sql left outer join</title>
   <body>
     <section><title>left outer join 语句</title>
-      <p>left outer join会从左边的集合名（collection1_name）中返回所有的记录，即使在右边的集合名（collection2_name）中没有匹配的记录。</p>
+      <p>left outer join 会从左边的集合名（collection1_name）中返回所有的记录，即使在右边的集合名（collection2_name）中没有匹配的记录。</p>
     </section>
     <section><title>语法</title>
       <p><codeblock>&lt;collection1_name | (select_set1) as &lt;alias1_name>
@@ -14,7 +14,7 @@ left outer join
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>有员工信息表foo.emp和部门信息表foo.dept，查询员工号emp_no所在的部门名dept_name：</p>
+        <li><p>有员工信息表 foo.emp 和部门信息表 foo.dept，查询员工号 emp_no 所在的部门名 dept_name：</p>
           <p><codeblock>db.exec("select E.emp_no,D.dept_name from foo.emp as E left outer join foo.dept as D on E.dept_no=D.dept_no where D.dept_no&lt;4")</codeblock></p>
         </li>
       </ul>

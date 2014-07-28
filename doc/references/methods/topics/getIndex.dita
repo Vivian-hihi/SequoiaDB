@@ -7,8 +7,7 @@
       <p>返回指定索引的引用。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.11* 5.66* 1.21*"
-        id="references_method_getIndex_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -21,11 +20,10 @@
           <stentry>索引名，同一个集合中的索引名必须唯一。</stentry>
           <stentry>是</stentry>
         </strow>
-      </simpletable>
-      
+      </simpletable>      
     </section>
     <section><title>格式</title>
-      <p> getIndex()方法的定义格式必须包含name字段。其中name的值必须为字符串。</p>
+      <p> getIndex() 方法的定义格式必须包含 name 字段。其中 name 的值必须为字符串。</p>
       <p>
         <codeblock>{"name":"&lt;索引名>"}</codeblock>
       </p>
@@ -33,19 +31,16 @@
         <p>
           <ul>
             <li>在做返回索引引用操作时，索引名必须在集合中存在。</li>
-            <li>索引名不能是空串、含点（.）或者美元符号（$），且长度不超过127B。</li>
+            <li>索引名不能是空串，含点（.）或者美元符号（$），且长度不超过127B。</li>
           </ul>
         </p>
       </note>
     </section>
     <section><title>示例</title>
-
         <ul>
-          <li><p>返回集合bar下名为ageIndex索引的引用，假设ageIndex已存在。</p>
+          <li><p>返回集合 bar 下名为 ageIndex 索引的引用，假设 ageIndex 已存在。</p>
             <codeblock>db.foo.bar.getIndex("ageIndex")</codeblock></li>
-        </ul>
-      
-      
+        </ul>      
     </section>
   </body>
   <related-links>

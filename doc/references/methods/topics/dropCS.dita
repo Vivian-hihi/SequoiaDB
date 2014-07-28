@@ -7,8 +7,7 @@
       <p>在数据库对象中删除指定的集合空间。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.16* 5.7* 1.13*"
-        id="references_method_dropCS_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -25,11 +24,11 @@
       
     </section>
     <section><title>格式</title>
-      <p>删除集合空间的定义格式只有name字段，name的值为string类型，指定的集合空间名必须要在数据库对象中存在，否则操作异常。</p>
+      <p>删除集合空间的定义格式只有 name 字段，name 的值为 string 类型，指定的集合空间名必须要在数据库对象中存在，否则操作异常。</p>
       <p><codeblock>("&lt;集合空间名>")</codeblock></p>
       <note>
         <ul>
-          <li>name字段的值不能使空串、含点（.），或者美元符号（$）。且长度不超过127B。</li>
+          <li>name字段的值不能使空串，含点（.），或者美元符号（$）。且长度不超过127B。</li>
           <li>集合空间在数据库对象中存在。</li>
         </ul>
       </note>
@@ -37,7 +36,7 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>删除名为foo的集合空间，假定foo已存在</p>
+          <p>删除名为 foo 的集合空间，假定 foo 已存在</p>
           <p><codeblock>db.dropCS("foo")</codeblock></p>
         </li>
       </ul>

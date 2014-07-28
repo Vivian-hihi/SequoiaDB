@@ -7,8 +7,7 @@
       <p>枚举所有的存储过程函数。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 5.9* 1.0*"
-        id="references_method_count_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -17,12 +16,12 @@
         </sthead>
         <strow>
           <stentry>cond</stentry>
-          <stentry>json</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>条件为空时，枚举所有的函数，不为空时，枚举符合条件函数。</stentry>
           <stentry>是</stentry>
         </strow>
       </simpletable>
-      <p>listProcedures()方法的定义，只有一个json对象类型的参数名cond，输入值时返回符合指定值的函数，否则的话返回所有的函数。</p>
+      <p>listProcedures() 方法的定义，只有一个 Json 对象类型的参数名 cond，输入值时返回符合指定值的函数，否则的话返回所有的函数。</p>
     </section>
     <section><title>示例</title>
       <ul>
@@ -38,7 +37,7 @@
 ...</codeblock>
         </li>
         <li>
-          <p>指定返回函数名为sum的记录</p>
+          <p>指定返回函数名为 sum 的记录</p>
           <codeblock>>db.listProcedures({name:"sum"})
 { "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
     return x + y;

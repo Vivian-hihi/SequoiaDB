@@ -4,7 +4,7 @@
   <title>db.cancelTask()</title>
   <body>
     <section><title>db.cancelTask(&lt;id>,[isAsync])</title>
-      <p>  取消任务</p>
+      <p>取消任务</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>
@@ -17,7 +17,7 @@
         <strow>
           <stentry>id</stentry>
           <stentry>整数</stentry>
-          <stentry>任务ID</stentry>
+          <stentry>任务 ID</stentry>
           <stentry>是</stentry>
         </strow>
         <strow>

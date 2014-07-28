@@ -16,14 +16,14 @@
         </sthead>
         <strow>
           <stentry>options</stentry>
-          <stentry>Json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>需要修改的属性列表。</stentry>
           <stentry>是</stentry>
         </strow>        
       </simpletable>      
     </section>
     <section><title>格式</title>
-      <p>目前通过options可设置域的属性有：</p>
+      <p>目前通过 options 可设置域的属性有：</p>
       <simpletable>
         <sthead>
           <stentry>属性名</stentry>
@@ -44,7 +44,7 @@
       <note>
         <ul>
           <li>删除复制组前必须保证其不包含任何数据。</li>
-          <li>AutoSplit的更改不对之前创建的集合和集合空间产生影响。</li>
+          <li>AutoSplit 的更改不对之前创建的集合和集合空间产生影响。</li>
         </ul>
       </note>
     </section>
@@ -52,18 +52,17 @@
       <ul>
         <li><p>首先创建一个域，包含两个复制组，开启自动切分。</p>
           <p><codeblock>> var domain = db.createDomain('mydomain',['data1','data2'],{AutoSplit:true})</codeblock></p>
-          <p>从域中删除一个复制组data2，添加另一个复制组data3，最后域中包含data1和data3两个复制组。</p>
+          <p>从域中删除一个复制组 data2，添加另一个复制组 data3，最后域中包含 data1 和 data3 两个复制组。</p>
           <p><codeblock>> domain.alter({Groups:['data1','data3']})</codeblock></p>
         </li>
-        <li><p>首先创建一个域，包含一个复制组，复制组中包含表foo.bar。</p>
+        <li><p>首先创建一个域，包含一个复制组，复制组中包含表 foo.bar。</p>
           <p><codeblock>> var domain = db.createDomain('mydomain',['group1'])</codeblock></p>
-          <p>从域中删除原复制组，添加另一个复制组，将因把拥有数据的group1从域中删除而报错。</p>
+          <p>从域中删除原复制组，添加另一个复制组，将因把拥有数据的 group1 从域中删除而报错。</p>
           <p><codeblock>> domain.alter({Groups:['group2']})
 (nofile):0 uncaught exception: -256
 > getErr(-256)
 Domain is not empty</codeblock></p>
-  
-</li>        
+          </li>        
       </ul>
     </section>
   </body>

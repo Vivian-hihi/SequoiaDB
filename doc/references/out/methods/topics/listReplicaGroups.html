@@ -8,10 +8,10 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.listReplicaGroups()"/>
-<meta name="description" content="db.listReplicaGroups() 枚举分片组 示例"/>
+<meta name="description" content="db.listReplicaGroups() 枚举分区组。 示例 返回所有分区组信息，命令如下： &gt; db.listReplicaGroups() 返回：{ &#34;Group&#34;: [ { &#34;dbpath&#34;: &#34;/opt/sequoiadb/data/11800&#34;, &#34;HostName&#34;: &#34;vmsvr2-suse-x64&#34;, &#34;Service&#34;: [ { &#34;Type&#34;: 0, &#34;Name&#34;: ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../methods/topics/methodlist.html"/>
 <meta name="DC.Relation" scheme="URI" content="listCollections.html"/>
-<meta name="DC.Relation" scheme="URI" content="snapshot.html"/>
+<meta name="DC.Relation" scheme="URI" content="dbsnapshot.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="references_method_listReplicaGroups"/>
 <link rel="stylesheet" type="text/css" href="../../commonltr.css"/>
@@ -33,27 +33,94 @@
 <body onload="highlightSearchTerm()" id="references_method_listReplicaGroups"><a name="references_method_listReplicaGroups"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法">Sequoiadb javascript方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">db.listReplicaGroups()</h1>
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">db.listReplicaGroups()</h2>
-      <p class="p">枚举分片组</p>
+      <p class="p">枚举分区组。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">返回所有分区组信息，命令如下：
+          <pre class="pre codeblock">&gt; db.listReplicaGroups()
+返回：{
+  "Group": [
+    {
+      "dbpath": "/opt/sequoiadb/data/11800",
+      "HostName": "vmsvr2-suse-x64",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "11800"
+        },
+        {
+          "Type": 1,
+          "Name": "11801"
+        },
+        {
+          "Type": 2,
+          "Name": "11802"
+        },
+        {
+          "Type": 3,
+          "Name": "11803"
+        }
+      ],
+      "NodeID": 1000
+    },
+    {
+      "dbpath": "/opt/sequoiadb/data/11850",
+      "HostName": "vmsvr2-suse-x64",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "11850"
+        },
+        {
+          "Type": 1,
+          "Name": "11851"
+        },
+        {
+          "Type": 2,
+          "Name": "11852"
+        },
+        {
+          "Type": 3,
+          "Name": "11853"
+        }
+      ],
+      "NodeID": 1001
+    }
+  ],
+  "GroupID": 1001,
+  "GroupName": "group",
+  "PrimaryNode": 1001,
+  "Role": 0,
+  "Status": 1,
+  "Version": 5,
+  "_id": {
+    "$oid": "517b2fc33d7e6f820fc0eb57"
+  }
+  }</pre>
+
+            这个分区组有有两个节点：11800和11850，其中11850为主节点。<a class="xref" href="../../../administration/database/topics/list/list_groups.html">分区组详细信息请点击这里</a></li>
+
+      </ul>
+
     </div>
 
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
 <div><a class="navheader_parent_path" href="listCollections.html" title="db.listCollections()">db.listCollections()</a></div>
-<div><a class="navheader_parent_path" href="snapshot.html" title="db.snapshot()">db.snapshot()</a></div>
+<div><a class="navheader_parent_path" href="dbsnapshot.html" title="db.snapshot()">db.snapshot()</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript方法</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -62,7 +129,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>

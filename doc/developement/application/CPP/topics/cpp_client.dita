@@ -4,34 +4,37 @@
   <title>C++ 驱动</title>
   <body>
     <section>
-      <title>概述</title>
-    
-      <p>C++客户端驱动提供了数据库操作和集群操作的接口。主要包括以下7个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域。</p>
-      <p><xref href="..\..\..\..\cpp\html\index.html" format="html">更多参考C++在线API</xref>。</p></section>
-    <section><title>C++类实例</title><p>C++客户端驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。</p><ul>
-        <li>数据库操作实例 <p>SequoiaDB数据库中的数据存放分为三个级别：</p><p>&nbsp;&nbsp;1）数据库</p><p> &nbsp;&nbsp;2）集合空间</p><p> &nbsp;&nbsp;3）集合 </p>
-          <p>因此，在数据库操作中，可用3个类来分别表示连接、集合空间、集合实例，另1个类表示游标实例：</p><simpletable>
+      <title>概述</title>    
+      <p>C++ 客户端驱动提供了数据库操作和集群操作的接口。主要包括以下7个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域。更多参考 <xref href="..\..\..\..\cpp\html\index.html" format="html">C++ 在线 API</xref></p>
+    </section>
+    <section>
+      <title>C++ 类实例</title>
+      <p>C++ 客户端驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。</p>
+      <ul>
+        <li>数据库操作实例<p>SequoiaDB 数据库中的数据存放分为三个级别：</p><p>&nbsp;&nbsp;1）数据库</p><p> &nbsp;&nbsp;2）集合空间</p><p> &nbsp;&nbsp;3）集合 </p>
+          <p>因此，在数据库操作中，可用3个类来分别表示连接，集合空间，集合实例，另1个类表示游标实例：</p><simpletable>
             <strow>
-              <stentry>Sdb </stentry>
-              <stentry>数据库类 </stentry>
-              <stentry>连接实例代表一个单独的数据库连接      </stentry>
+              <stentry>Sdb</stentry>
+              <stentry>数据库类</stentry>
+              <stentry>连接实例代表一个单独的数据库连接</stentry>
             </strow>
             <strow>
-              <stentry>sdbCollectionSpace </stentry>
-              <stentry>集合空间类      </stentry>
-              <stentry>集合空间实例代表一个单独的集合空间  </stentry>
+              <stentry>sdbCollectionSpace</stentry>
+              <stentry>集合空间类</stentry>
+              <stentry>集合空间实例代表一个单独的集合空间</stentry>
             </strow>
             <strow>
               <stentry>sdbCollection</stentry>
               <stentry>集合类</stentry>
-              <stentry>集合实例代表一个单独的集合 </stentry>
+              <stentry>集合实例代表一个单独的集合</stentry>
             </strow>
             <strow>
               <stentry>sdbCursor</stentry>
               <stentry>游标类</stentry>
-              <stentry>游标实例代表一个查询产生的游标 </stentry>
+              <stentry>游标实例代表一个查询产生的游标</stentry>
             </strow>
-          </simpletable><p> C++ 客户端需要使用不同的实例进行操作。譬如读取数据的操作需要游标实例，而创建表空间则需要数据库实例。</p><note>
+          </simpletable><p>C++ 客户端需要使用不同的实例进行操作。譬如读取数据的操作需要游标实例，而创建表空间则需要数据库实例。</p>
+          <note>
             <p>
               <ul>
                 <li>对于每一个连接，其产生的集合空间，集合，与游标句柄公用一个套接字。因此在多线程系统中，必须确保每个线程不会同时针对同一套接字，在同一时间发送或接收数据。</li>
@@ -39,38 +42,42 @@
                 <li>如果每个线程使用自己的连接句柄以及其它产生的句柄，则可以保证线程安全。</li>
               </ul>
             </p>
-          </note></li>
-      <li>集群操作实例<p>SequoiaDB数据库中的集群操作分为三个级别：</p><p>&nbsp;&nbsp;1）分区组 </p><p>&nbsp;&nbsp;2）数据节点 </p><p>&nbsp;&nbsp;3）域 </p><note>
-            <p>分区组包两种类型：编目分区组、数据分区组。</p>
-      </note><p>分区组实例，数据节点实例，域实例可以用以下三种类的实例表示。</p><p>
+          </note>
+        </li>
+        <li>集群操作实例<p>SequoiaDB 数据库中的集群操作分为三个级别：</p><p>&nbsp;&nbsp;1）分区组 </p><p>&nbsp;&nbsp;2）数据节点 </p><p>&nbsp;&nbsp;3）域 </p>
+          <note><p>分区组包两种类型：编目分区组，数据分区组。</p></note>
+          <p>分区组实例，数据节点实例，域实例可以用以下三种类的实例表示。</p>
+          <p>
             <simpletable>
               <strow>
-                <stentry> sdbReplicaGroup </stentry>
-                <stentry> 分区组类</stentry>
-                <stentry> 分区组实例代表一个单独的分区组 </stentry>
+                <stentry>sdbReplicaGroup</stentry>
+                <stentry>分区组类</stentry>
+                <stentry>分区组实例代表一个单独的分区组</stentry>
               </strow>
               <strow>
-                <stentry> sdbNode </stentry>
-                <stentry> 数据节点类 </stentry>
-                <stentry> 数据节点实例代表一个单独的数据节点 </stentry>
+                <stentry>sdbNode</stentry>
+                <stentry>数据节点类</stentry>
+                <stentry>数据节点实例代表一个单独的数据节点</stentry>
               </strow>
               <strow>
-                <stentry> sdbDomain </stentry>
-                <stentry> 域类 </stentry>
-                <stentry> 域实例代表一个管理若干个分区组的域 </stentry>
+                <stentry>sdbDomain</stentry>
+                <stentry>域类</stentry>
+                <stentry>域实例代表一个管理若干个分区组的域</stentry>
               </strow>
             </simpletable>
-          </p><p>与集群相关的操作需要使用分区组及数据节点实例。</p>
-        <p>sdbReplicaGroup的实例用于管理分区组。其操作包括启动、停止分区组，获取分区组中节点的状态、名称信息、数目信息。</p>
-          <p>sdbNode的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。</p>
-        <p>sdbDomain的实例用于管理域。其包括修改域，获取域信息等操作。</p></li>
-      </ul></section>
+          </p>
+          <p>与集群相关的操作需要使用分区组及数据节点实例。</p>
+          <p>sdbReplicaGroup 的实例用于管理分区组。其操作包括启动，停止分区组，获取分区组中节点的状态，名称信息，数目信息。</p>
+          <p>sdbNode 的实例用于管理数据节点。其操作包括启动，停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。</p>
+          <p>sdbDomain 的实例用于管理域。其包括修改域，获取域信息等操作。</p></li>
+      </ul>
+    </section>
     <section>
       <title>错误信息</title>
-      <p>每个函数都有返回值,返回值的定义如下： </p>
+      <p>每个函数都有返回值，返回值的定义如下： </p>
       <p>SDB_OK（数据值为0）：表示执行成功； </p>
-      <p>&lt;0 ：表示数据库错误，具体的错误描述在C驱动开发包中include/ossErr.h文件中可以找到； </p>
-      <p>>0 ：表示系统错误，请查阅相关系统的错误码信息。</p>
+      <p>&lt; 0 ：表示数据库错误，具体的错误描述在 C++ 驱动开发包中 include/ossErr.h 文件中可以找到； </p>
+      <p>> 0 ：表示系统错误，请查阅相关系统的错误码信息。</p>
     </section>
   </body>
 </topic>

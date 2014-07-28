@@ -12,8 +12,8 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>创建名为foo的集合空间</p>
-          <p><codeblock>db.execUpdate("create collectionspace foo") //等价于db.createCS("foo")</codeblock></p>
+        <li><p>创建名为 foo 的集合空间</p>
+          <p><codeblock>db.execUpdate("create collectionspace foo") //等价于 db.createCS("foo")</codeblock></p>
         </li>
       </ul>
     </section>

@@ -35,14 +35,14 @@
         </strow>
         <strow>
           <stentry>primary key （指定任何唯一的列作为主键）</stentry>
-          <stentry>primary key （在SequoiaDB中，primary key是自动创建到记录的_id字段名中）</stentry>
+          <stentry>primary key （在 SequoiaDB 中，primary key 是自动创建到记录的 _id 字段名中）</stentry>
         </strow>
       </simpletable>
     </section>
     
     <section>
-      <title>Create和Alter</title>
-      <p>下表列出了各种SQL语句表级别的操作和在SequoiaDB中对应的操作：</p>
+      <title>Create 和 Alter</title>
+      <p>下表列出了各种 SQL 语句表级别的操作和在 SequoiaDB 中对应的操作：</p>
       <simpletable id="sqlpping_ceate_table" >
         <sthead>
           <stentry>SQL 语句</stentry>
@@ -51,17 +51,17 @@
         </sthead>
         <strow>
           <stentry>create table student (id not null, stu_id varchar(50), age number primary key(id))</stentry>
-          <stentry>在第一次做插入操作时隐式创建集合，如果未指定_id字段，_id字段自动添加db.collectionspace.student({stu_id:"01",age:20})，当然你也可以明确的创建一个集合db.collectionspace.createCL("student")</stentry>
+          <stentry>在第一次做插入操作时隐式创建集合，如果未指定 _id 字段，_id 字段自动添加 db.collectionspace.student({stu_id:"01",age:20})，当然你也可以明确的创建一个集合 db.collectionspace.createCL("student")</stentry>
           <stentry><xref href="../../methods/topics/dbinsert.dita">insert()</xref>,<xref href="../../methods/topics/createCL.dita">createCL()</xref></stentry>
         </strow>
         <strow>
           <stentry>alter table student add name varchar(50)</stentry>
-          <stentry>集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$set向文档记录添加不存在的字段。db.collectionspace.student.update({},{$set:{name:"Tom"}})</stentry>
+          <stentry>集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是 update() 方法可以使用 $set 向文档记录添加不存在的字段。db.collectionspace.student.update({},{$set:{name:"Tom"}})</stentry>
           <stentry><xref href="../../methods/topics/dbupdate.dita">update()</xref>,<xref href="../../console/topics/gset.dita">$set</xref></stentry>
         </strow>
         <strow>
           <stentry>alter table student drop column name</stentry>
-          <stentry>集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$unset向文档记录删除存在的字段。db.collectionspace.student.update({},{$unset:{name:"Tom"}})</stentry>
+          <stentry>集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是 update() 方法可以使用 $unset 向文档记录删除存在的字段。db.collectionspace.student.update({},{$unset:{name:"Tom"}})</stentry>
           <stentry><xref href="../../methods/topics/dbupdate.dita">update()</xref>,<xref href="../../console/topics/unset.dita">$unset</xref></stentry>
         </strow>
         <strow>
@@ -79,7 +79,7 @@
     
     <section>
       <title>Insert</title>
-      <p>下表给出了各种SQL语句在表级上的插入操作和SequoiaDB上相应的操作：</p>
+      <p>下表给出了各种 SQL 语句在表级上的插入操作和 SequoiaDB 上相应的操作：</p>
       <simpletable id="sqlmapping_insert_table" >
         <sthead>
           <stentry>SQL 语句</stentry>
@@ -96,7 +96,7 @@
     
     <section>
       <title>Select</title>
-      <p>下表给出了各种SQL语句在表级上的读操作和SequoiaDB上相应的操作：</p>
+      <p>下表给出了各种 SQL 语句在表级上的读操作和 SequoiaDB 上相应的操作：</p>
       <simpletable><!-- id="sqlmapping_read_table" frame="all" relcolwidth="1.0* 1.6* 1.0*">-->
         <sthead>
           <stentry>SQL 语句</stentry>
@@ -138,7 +138,7 @@
     
     <section>
       <title>Update</title>
-      <p>下表给出了各种SQL语句在表级上的更新操作和SequoiaDB上相应的操作：</p>
+      <p>下表给出了各种 SQL 语句在表级上的更新操作和 SequoiaDB 上相应的操作：</p>
       <simpletable id="sqlmapping_update_table" >
         <sthead>
           <stentry>SQL 语句</stentry>
@@ -160,7 +160,7 @@
     
     <section>
       <title>Delete</title>
-      <p>下表给出了各种SQL语句在表级上的删除记录操作和SequoiaDB上相应的操作：</p>
+      <p>下表给出了各种 SQL 语句在表级上的删除记录操作和 SequoiaDB 上相应的操作：</p>
       <simpletable id="sqlmapping_delete_table">
         <sthead>
           <stentry>SQL 语句</stentry>

@@ -32,17 +32,16 @@
       
     </section>
     <section><title>格式</title>
-      <p> dropUsr() 方法的定义格式name和password两个参数，两个参数都是字符串类型。 </p>
+      <p> dropUsr() 方法的定义格式 name 和 password 两个参数，两个参数都是字符串类型。 </p>
       <p><codeblock>("&lt;用户名>","&lt;密码>")</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>
         <li>
-          <p>删除用户名为root，密码为admin的数据库权限。</p>
+          <p>删除用户名为 root，密码为 admin 的数据库权限。</p>
           <p><codeblock>db.dropUsr("root","admin")</codeblock></p>
         </li>
-      </ul>
-      
+      </ul>      
     </section>
   </body>
   <related-links>

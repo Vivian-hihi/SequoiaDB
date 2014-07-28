@@ -16,7 +16,7 @@
         </sthead>
         <strow>
           <stentry>options</stentry>
-          <stentry>Json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>设定备份名，指定复制组，备份方式等参数</stentry>
           <stentry>否</stentry>
         </strow>       
@@ -32,7 +32,7 @@
         </sthead>
         <strow>
           <stentry>GroupID</stentry>
-          <stentry>指定备份的复制组ID，缺省为所有复制组</stentry>
+          <stentry>指定备份的复制组 ID，缺省为所有复制组</stentry>
           <stentry>GroupID:1000 或 GroupID:[1000, 1001]</stentry>
         </strow>
         <strow>
@@ -47,12 +47,12 @@
         </strow>
         <strow>
           <stentry>Path</stentry>
-          <stentry>备份路径，缺省为配置参数指定的备份路径。该路径支持通配符（%g/%G: group name, %h/%H: host name, %s/%S:service name）</stentry>
+          <stentry>备份路径，缺省为配置参数指定的备份路径。<fig></fig>该路径支持通配符（%g/%G: group name, %h/%H: host name, %s/%S:service name）</stentry>
           <stentry>Path:"/opt/sequoiadb/backup/%g"</stentry>
         </strow>
         <strow>
           <stentry>IsSubDir</stentry>
-          <stentry>上述Path参数所配置的路径是否为配置参数指定的备份路径的子目录，缺省为false</stentry>
+          <stentry>上述 Path 参数所配置的路径是否为配置参数指定的备份路径的子目录，缺省为 false</stentry>
           <stentry>IsSubDir:false</stentry>
         </strow>
         <strow>
@@ -62,7 +62,7 @@
         </strow>
         <strow>
           <stentry>EnableDataDir</stentry>
-          <stentry>是否开启日期子目录功能，如果开启则会自动根据当前日期创建“YYYY-MM-DD”的子目录，缺省为false</stentry>
+          <stentry>是否开启日期子目录功能，如果开启则会自动根据当前日期创建“YYYY-MM-DD”的子目录，缺省为 false</stentry>
           <stentry>EnableDataDir:false</stentry>
         </strow>
         <strow>
@@ -72,12 +72,12 @@
         </strow>
         <strow>
           <stentry>EnsureInc</stentry>
-          <stentry>是否开启增量备份，缺省为false</stentry>
+          <stentry>是否开启增量备份，缺省为 false</stentry>
           <stentry>EnsureInc:false</stentry>
         </strow>
         <strow>
           <stentry>OverWrite</stentry>
-          <stentry>存在同名备份是否覆盖，缺省为false</stentry>
+          <stentry>存在同名备份是否覆盖，缺省为 false</stentry>
           <stentry>OverWrite:false</stentry>
         </strow>
       </simpletable>      
@@ -87,8 +87,7 @@
       <ul>
         <li><p>对整个数据库进行全量备份</p>
           <p><codeblock>db.backupOffline({Name:"FullBackup1"})</codeblock></p></li>
-      </ul>
-      
+      </ul>      
     </section>
   </body>
 </topic>

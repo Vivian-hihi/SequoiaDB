@@ -4,11 +4,10 @@
   <title>db.collectionspace.collection.remove()</title>
   <body>
     <section><title>db.collectionspace.collection.remove([cond],[hint])</title>
-      <p>删除集合中的记录</p>
+      <p>删除集合中的记录。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.28* 5.8* 1.12*"
-        id="references_method_remove_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -17,21 +16,20 @@
         </sthead>
         <strow>
           <stentry>cond</stentry>
-          <stentry>json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>选择条件。为空时，删除所有记录，不为空时，删除符合条件的记录。 </stentry>
           <stentry>否</stentry>
         </strow>
         <strow>
           <stentry>hint</stentry>
-          <stentry>json对象</stentry>
+          <stentry>Json 对象</stentry>
           <stentry>指定访问计划。</stentry>
           <stentry>否</stentry>
         </strow>
-      </simpletable>
-      
+      </simpletable>      
     </section>
     <section><title>格式</title>
-      <p>cond参数是一个json的对象。当它的内容为空（例如{}）时，删除集合下所有的记录。hint参数是一个包含一个单一元素的json对象，该元素的字段名会被忽略，而其字段值则指定为需要访问索引的名称，当字段值为null时，则遍历集合中所有的记录。</p>
+      <p>cond 参数是一个Json 的对象。当它的内容为空（例如{}）时，删除集合下所有的记录。hint 参数是一个包含一个单一元素的 Json 对象，该元素的字段名会被忽略，而其字段值则指定为需要访问索引的名称，当字段值为 null 时，则遍历集合中所有的记录。</p>
       <p><codeblock>{[{"字段名1":{<xref href="../../console/topics/console.dita">"匹配符1"</xref>:"值1","字段名2":{"匹配符2":"值2"},...}],[{"":"索引名"|null}]}</codeblock></p>
     </section>
     <section><title>示例</title>
@@ -41,9 +39,9 @@
             <codeblock>db.foo.bar.remove()</codeblock>
           </li>
           <li>
-            <p>按访问计划删除匹配cond条件的记录</p>
+            <p>按访问计划删除匹配 cond 条件的记录</p>
             <codeblock>db.foo.bar.remove({age:{<xref href="../../console/topics/gte.dita">$gte</xref>:20}},{"":"myIndex"})</codeblock>
-            <p>此操作按照索引名为“myIndex”的索引遍历集合中的记录，在遍历得到的记录中删除符合条件age字段值大于等于20的记录。</p>
+            <p>此操作按照索引名为“myIndex”的索引遍历集合中的记录，在遍历得到的记录中删除符合条件 age 字段值大于等于20的记录。</p>
           </li>
         </ul>   
     </section>

@@ -3,11 +3,11 @@
 <topic id="topic_21n_vv1_yl">
   <title>sql mergearrayset()</title>
   <body>
-    <section><title>mergearrayset()函数</title>
+    <section><title>mergearrayset() 函数</title>
       <p>将多个数组字段合并为一个不包含重复字段的数组。</p>
     </section>
     <section><title>语法</title>
-      <p><codeblock>mergearrayset（field name）</codeblock></p>
+      <p><codeblock>mergearrayset(field name)</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>

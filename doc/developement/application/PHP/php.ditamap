@@ -5,12 +5,7 @@
   <topicref href="topics/php_start.dita"/>
   <topicref href="topics/phpenvironment.dita"/>
   <topicref href="topics/pbase_operations.dita"/>
-  <!--topicref href="topics/phpbuilt.dita"/-->
-  <!--topicref href="topics/phpclient.dita"/-->
-  
-  
   <topicref href="topics/phpsql.dita"/>
   <topicref href="topics/php_api.dita"/>
- </topicref>
- 
+ </topicref> 
 </map>

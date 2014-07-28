@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="sql create collection"/>
-<meta name="description" content="create collection 语句 用于创建集合，必须指定集合所在的集合空间。 语法 create collection &lt;cs_name&gt;.&lt;cl_name&gt; &lt;cs_name&gt;：数据库中的集合空间名称 &lt;cl_name&gt;：集合名，集合名长度不能超过127Byte，并且不能为空，在同一个集合空间中不能存在相同的集合名。 示例 在集合空间foo下创建集合bar。 db ..."/>
+<meta name="description" content="create collection 语句 用于创建集合，必须指定集合所在的集合空间。 语法 create collection &lt;cs_name&gt;.&lt;cl_name&gt; &lt;cs_name&gt;：数据库中的集合空间名称。 &lt;cl_name&gt;：集合名，集合名长度不能超过127Byte，并且不能为空，在同一个集合空间中不能存在相同的集合名。 示例 在集合空间foo下创建集合bar。 db ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/sql_grammar/topics/sql_grammar_list.html"/>
 <meta name="DC.Relation" scheme="URI" content="drop_cs.html"/>
 <meta name="DC.Relation" scheme="URI" content="drop_cl.html"/>
@@ -47,7 +47,7 @@
       <div class="p"><pre class="pre codeblock">create collection &lt;cs_name&gt;.&lt;cl_name&gt;</pre>
 </div>
 
-      <p class="p">&lt;cs_name&gt;：数据库中的集合空间名称</p>
+      <p class="p">&lt;cs_name&gt;：数据库中的集合空间名称。</p>
 
       <p class="p">&lt;cl_name&gt;：集合名，集合名长度不能超过127Byte，并且不能为空，在同一个集合空间中不能存在相同的集合名。</p>
 
@@ -57,7 +57,7 @@
       <ul class="ul">
         <li class="li"><p class="p">在集合空间foo下创建集合bar。</p>
 
-          <div class="p"><pre class="pre codeblock">db.execUpdate("create collection foo.bar") //等价于db.foo.createCL("bar")</pre>
+          <div class="p"><pre class="pre codeblock">db.execUpdate("create collection foo.bar") //等价于 db.foo.createCL("bar")</pre>
 </div>
 
         </li>

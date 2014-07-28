@@ -14,8 +14,8 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>删除集合空间foo中集合bar下名为test_index的索引名</p>
-          <p><codeblock>db.execUpdate("drop index test_index on foo.bar") //等价于db.foo.bar.dropIndex("test_index")</codeblock></p>
+        <li><p>删除集合空间 foo 中集合 bar 下名为 test_index 的索引名</p>
+          <p><codeblock>db.execUpdate("drop index test_index on foo.bar") //等价于 db.foo.bar.dropIndex("test_index")</codeblock></p>
         </li>
       </ul>
     </section>

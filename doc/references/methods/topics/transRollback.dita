@@ -10,8 +10,7 @@
       <ul>
         <li><p>事务回滚命令：</p>
           <p><codeblock>db.transRollback() </codeblock></p></li>
-      </ul>
-      
+      </ul>      
     </section>
   </body>
   <related-links>

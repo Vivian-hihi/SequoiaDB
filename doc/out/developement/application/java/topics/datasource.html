@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="Java datasource 介绍"/>
-<meta name="description" content="Java驱动的datasource提供给用户一个快速获取有效连接实例的途径。 连接池用法 使用类SequoiadbDatasource的getConnection方法从连接池中获取一个连接，使用close方法把取出的连接放回连接池。 当连接池使用的连接数到达连接上限时，下一个请求连接的操作将会等待一段时间，若在规定的时间内无空闲的连接可用， ..."/>
+<meta name="DC.Title" content="Java Datasource 介绍"/>
+<meta name="description" content="Java 驱动的 Datasource 提供给用户一个快速获取有效连接实例的途径。 连接池用法 使用类 SequoiadbDatasource 的 getConnection 方法从连接池中获取一个连接，使用 close 方法把取出的连接放回连接池。当连接池使用的连接数到达连接上限时，下一个请求连接的操作将会等待一段时间，若在规定的时间内无空闲的连接可用，将抛出异常。类 ConfigOptions ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/java/topics/java.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_4sr_xcp_q4"/>
 <link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
-<title>Java datasource 介绍</title>
+<title>Java Datasource 介绍</title>
 <script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../../index.html";
     var ratingFile = "";
@@ -33,16 +33,14 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../../developement/application/java/topics/java.html" title="Java 驱动"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Java 驱动</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application.html" title="SequoiaDB 应用程序开发">SequoiaDB 应用程序开发</a> / <a class="navheader_parent_path" href="../../../../developement/application/java/topics/java.html" title="Java 驱动">Java 驱动</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">Java datasource 介绍</h1>
+  <h1 class="title topictitle1">Java Datasource 介绍</h1>
 
   <div class="body">
-    <p class="p">Java驱动的datasource提供给用户一个快速获取有效连接实例的途径。</p>
+    <p class="p">Java 驱动的 Datasource 提供给用户一个快速获取有效连接实例的途径。</p>
 
     <div class="section"><h2 class="title sectiontitle">连接池用法</h2>
       
-      <p class="p">使用类SequoiadbDatasource的getConnection方法从连接池中获取一个连接，使用close方法把取出的连接放回连接池。
-当连接池使用的连接数到达连接上限时，下一个请求连接的操作将会等待一段时间，若在规定的时间内无空闲的连接可用，
-将抛出异常。类ConfigOptions可以设置连接的各项参数。类SequoiadbOption中可以设置连接池的各种参数。</p>
+      <p class="p">使用类 SequoiadbDatasource 的 getConnection 方法从连接池中获取一个连接，使用 close 方法把取出的连接放回连接池。当连接池使用的连接数到达连接上限时，下一个请求连接的操作将会等待一段时间，若在规定的时间内无空闲的连接可用，将抛出异常。类 ConfigOptions 可以设置连接的各项参数。类 SequoiadbOption 中可以设置连接池的各种参数。</p>
 
       <p class="p">详情请查看相关API介绍。</p>
 
@@ -63,7 +61,7 @@ urls.add("ubuntu-dev3:11810");
 nwOpt.setConnectTimeout(500);                       // 设置若连接失败，超时时间（ms）
 nwOpt.setMaxAutoConnectRetryTime(0);	            // 设置若连接失败，重试次数
 		
-// 以下设置的都是SequoiadbOption的默认值
+// 以下设置的都是 SequoiadbOption 的默认值
 dsOpt.setMaxConnectionNum(500);                     // 设置连接池最大连接数
 dsOpt.setInitConnectionNum(10);                     // 初始化连接池时，创建连接的数量
 dsOpt.setDeltaIncCount(10) ;                        // 当池中没有可用连接时，增加连接的数量

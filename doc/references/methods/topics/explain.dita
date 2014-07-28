@@ -81,12 +81,12 @@
         <strow>
           <stentry>UsrCpu</stentry>
           <stentry>float64</stentry>
-          <stentry>用户态cpu使用时间（秒）</stentry>
+          <stentry>用户态 CPU 使用时间（秒）</stentry>
         </strow>
         <strow>
           <stentry>SysCpu</stentry>
           <stentry>float64</stentry>
-          <stentry>内核态cpu使用时间（秒）</stentry>
+          <stentry>内核态 CPU 使用时间（秒）</stentry>
         </strow>
         <strow>
           <stentry>SubCollections</stentry>
@@ -97,12 +97,12 @@
     </section>
     <section>
       <title>格式</title>      
-      <note>如果集合经过split分布在多个复制组，访问计划会按照一组一记录的方式返回。</note>
+      <note>如果集合经过 split 分布在多个复制组，访问计划会按照一组一记录的方式返回。</note>
     </section>
     <section><title>示例</title>
       <ul>
         <li>
-          <p>foo.bar是一个水平分区集合，分布在三个复制组上。</p>
+          <p>foo.bar 是一个水平分区集合，分布在三个复制组上。</p>
           <p><codeblock>db.foo.bar.find().sort({b:1}).explain()</codeblock></p>
           返回：
           <codeblock>{

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C++ 开发基础"/>
-<meta name="description" content="这里介绍如何使用C++客户端驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到/sequoiadb/client/samples/CPP下获取相应的完整的代码。 更多查看C++ API 数据库操作 连接数据库：Connecting connect.cpp演示如何连接到数据库。文件应当包含“client ..."/>
+<meta name="description" content="这里介绍如何使用 C++ 客户端驱动接口编写使用 SequoiaDB 数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到 /sequoiadb/client/samples/CPP 下获取相应的完整的代码。更多查看 C++ API 数据库操作 连接数据库：Connecting connect.cpp 演示如何连接到数据库。文件应当包含“client ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/CPP/topics/cpp.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_hsx_hlt_zj"/>
@@ -36,14 +36,13 @@
   <h1 class="title topictitle1">C++ 开发基础</h1>
 
   <div class="body">
-    <p class="p">这里介绍如何使用C++客户端驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到/sequoiadb/client/samples/CPP下获取相应的完整的代码。
-      <a class="xref" href="../../../../cpp/html/index.html">更多查看C++ API</a></p>
+    <p class="p">这里介绍如何使用 C++ 客户端驱动接口编写使用 SequoiaDB 数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到 /sequoiadb/client/samples/CPP 下获取相应的完整的代码。更多查看 <a class="xref" href="../../../../cpp/html/index.html">C++ API</a></p>
 
   <div class="section"><h2 class="title sectiontitle">数据库操作</h2>
     
     <ul class="ul">
       <li class="li">连接数据库：Connecting
-            <p class="p">connect.cpp演示如何连接到数据库。文件应当包含“client.hpp”头文件及使用命名空间sdbclient。</p>
+        <p class="p">connect.cpp 演示如何连接到数据库。文件应当包含“client.hpp”头文件及使用命名空间 sdbclient。</p>
 <pre class="pre codeblock">#include &lt;iostream&gt;
 #include "client.hpp"
 
@@ -94,48 +93,49 @@ void displaySyntax ( CHAR *pCommand )
 {
    cout&lt;&lt;"Syntax:"&lt;&lt;pCommand" &lt;hostname&gt; &lt;servicename&gt;\
    usernamepassword"endl ;
-}</pre>
-<p class="p">在linux下，可以如下编译及链接动态链接库文件libsdbcpp.so:
-            </p>
-<pre class="pre codeblock">$g++ -o connect connect.cpp -I &lt;PATH&gt;/sdbdriver/include -lsdbcpp -L &lt;PATH&gt;/sdbdriver/lib  
+   }</pre>
+
+        <p class="p">在 Linux下，可以如下编译及链接动态链接库文件 libsdbcpp.so:</p>
+
+        <pre class="pre codeblock">$g++ -o connect connect.cpp -I &lt;PATH&gt;/sdbdriver/include -lsdbcpp -L &lt;PATH&gt;/sdbdriver/lib  
 执行结果如下：
 $ ./connect localhost 11810 "" ""
 Connect success!</pre>
 
         <div class="note note"><span class="notetitle">Note:</span> 
-          <p class="p">本例程连接到本地数据库的11810端口，使用的是空的用户名和密码。用户需要根据自己的实际情况配置参数。譬如，./connect localhost 11810
-              “sequoiadb” “sequoiadb”。当数据库已经创建用户时，应该使用正确的用户及密码连接到数据库，否则连接失败。 </p>
+          <p class="p">本例程连接到本地数据库的11810端口，使用的是空的用户名和密码。用户需要根据自己的实际情况配置参数。譬如，./connect localhost 11810 "sequoiadb" "sequoiadb"。当数据库已经创建用户时，应该使用正确的用户及密码连接到数据库，否则连接失败。</p>
 
-          </div>
-</li>
+        </div>
 
-      <li class="li">创建集合空间和集合
-            <pre class="pre codeblock">// 首先，定义集合空间、集合对象。
+      </li>
+
+      <li class="li">创建集合空间和集合<pre class="pre codeblock">// 首先，定义集合空间，集合对象。
 sdbCollectionSpace collectionspace ;
 sdbCollection collection ;
-// 创建集合空间“foo”
-rc = connection.createCollectionSpace ( "foo",
-                                       SDB_PAGESIZE_4K, collectionspace ) ;
-// 在新建立的集合空间中创建集合“bar”
+// 创建集合空间"foo"
+rc = connection.createCollectionSpace ( "foo", SDB_PAGESIZE_4K, collectionspace ) ;
+// 在新建立的集合空间中创建集合"bar"
 rc = collectionspace.createCollection ( "bar", collection ) ;</pre>
-<p class="p">以上创建了一个名字为“foo”的集合空间和一个名字为"bar"的集合，集合空间内的集合的数据页大小为4k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。</p>
-<div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">在创建集合“bar”时并没有附加分区、压缩等信息，详情请查阅<a class="xref" href="../../../../cpp/html/index.html">C++ API</a></p>
 
-          </div>
-</li>
+        <p class="p">以上创建了一个名字为“foo”的集合空间和一个名字为“bar”的集合，集合空间内的集合的数据页大小为4k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。</p>
 
-      <li class="li">插入数据：insert
-            <pre class="pre codeblock">// 首先，需要创建一个插入的bson对象。
+        <div class="note note"><span class="notetitle">Note:</span> 
+          <p class="p">在创建集合“bar”时并没有附加分区，压缩等信息，详情请查阅<a class="xref" href="../../../../cpp/html/index.html">C++ API</a></p>
+
+        </div>
+
+      </li>
+
+      <li class="li">插入数据：insert<pre class="pre codeblock">// 首先，需要创建一个插入的 bson 对象。
 BSONObj obj ;
 obj = BSON ( "name" &lt;&lt; "tom" &lt;&lt; "age" &lt;&lt; 24 ) ;
-// 接着，把此bson对象插入集合中
+// 接着，把此 bson 对象插入集合中
 collection.insert ( obj ) ;</pre>
-<p class="p">obj为输入参数，为要插入的数据。</p>
+
+        <p class="p">obj 为输入参数，为要插入的数据。</p>
 </li>
 
-      <li class="li">查询：query
-            <pre class="pre codeblock">// 定义一个游标对象
+      <li class="li">查询：query<pre class="pre codeblock">// 定义一个游标对象
 sdbCursor cursor ;
 …
 // 查询所有记录，并把查询结果放在游标对象中
@@ -144,46 +144,50 @@ collection.query ( cursor ) ;
 while( !( rc=cursor.next( obj ) ) 
 {
     cout &lt;&lt; obj.toString() &lt;&lt; endl ;
-}</pre>
-<p class="p">查询操作需要一个游标对象存放查询的结果到本地。要获得查询的结果需要使用游标操作。本例使用了游标操作的next接口，表示从查询结果中取到一条记录。此示例中没有设置查询条件、筛选条件、排序情况、及仅使用默认索引。</p>
-</li>
+    }</pre>
 
-      <li class="li">创建索引：index
-            <pre class="pre codeblock">#define INDEX_NAME "index"
+        <p class="p">查询操作需要一个游标对象存放查询的结果到本地。要获得查询的结果需要使用游标操作。本例使用了游标操作的 next 接口，表示从查询结果中取到一条记录。此示例中没有设置查询条件，筛选条件，排序情况，及仅使用默认索引。</p>
+
+      </li>
+
+      <li class="li">创建索引：index<pre class="pre codeblock">#define INDEX_NAME "index"
 …
-// 首先创建一BSONObj对象包含将要创建的索引的信息
+// 首先创建一 BSONObj 对象包含将要创建的索引的信息
 BSONObj obj ;
 obj = BSON ( "name" &lt;&lt; 1 &lt;&lt; "age" &lt;&lt; -1 ) ;
 // 创建一个以"name"为升序，"age"为降序的索引
-collection.createIndex ( obj, INDEX_NAME, FALSE, FALSE ) ;    </pre>
-<p class="p">集合对象collection中创建一个以"name"为升序，"age"为降序的索引。</p>
-</li>
+collection.createIndex ( obj, INDEX_NAME, FALSE, FALSE ) ;</pre>
 
-      <li class="li">更新：update
-            <pre class="pre codeblock">// 先创建一个包含更新规则的BSONObj对象
+        <p class="p">集合对象 collection 中创建一个以"name"为升序，"age"为降序的索引。</p>
+
+      </li>
+
+      <li class="li">更新：update<pre class="pre codeblock">// 先创建一个包含更新规则的 BSONObj 对象
 BSONObj rule = BSON ( "$set" &lt;&lt; BSON ( "age" &lt;&lt; 19 ) ) ;
 // 打印出更新规则
 cout &lt;&lt; rule.toString() &lt;&lt; endl ;
 // 更新记录
 collection.update( rule ) ;</pre>
-<p class="p">在集合对象collection中更新了记录。实例中没有指定数据匹配规则，所以此示例将更新集合中所有的集合。</p>
-</li>
+
+        <p class="p">在集合对象 collection 中更新了记录。实例中没有指定数据匹配规则，所以此示例将更新集合中所有的集合。</p>
+
+      </li>
 
     </ul>
 
-  </div>
+    </div>
 
     <div class="section"><h2 class="title sectiontitle">集群操作</h2>
       
       <ul class="ul">
         <li class="li">分区组操作
-            <p class="p">分区组操作包括创建分区组（sdb:createReplicaGroup）、得到分区组实例（sdb:getReplicaGroup）、启动分区组所有数据节点（sdbReplicaGroup::start）、停止分区组所有数据节点（sdbReplicaGroup::stop）等。</p>
+          <p class="p">分区组操作包括创建分区组（sdb:createReplicaGroup），得到分区组实例（sdb:getReplicaGroup），启动分区组所有数据节点（sdbReplicaGroup::start），停止分区组所有数据节点（sdbReplicaGroup::stop）等。</p>
 
           <p class="p">以下为分区组操作示例性的例子。真正的应用应包括错误检测等。
           </p>
 <pre class="pre codeblock">// 定义一个分区组实例
 sdbReplicaGroup rg  ;
-// 定义一个空的map 对象表示创建数据节点没有更多的配置内容
+// 定义一个空的 map 对象表示创建数据节点没有更多的配置内容
 map&lt;string,string&gt; config ;
 …
 // 先建立一个编目分区组
@@ -196,14 +200,12 @@ rg.createNode ( HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, config ) ;
 …
 // 启动分区组
 rg.start () ;</pre>
-</li>
 
-        <li class="li">数据节点操作 <p class="p">数据节点操作包括创建数据节点（sdbReplicaGroup::createNode）、得到主数据节点（sdbReplicaGroup::
-            getMaster）、得到从数据节点（sdbReplicaGroup::
-            getSlave）、启动数据节点（sdbNode::start）、停止数据节点（sdb::Stop）等。</p>
-<p class="p">
-            以下为数据节点操作示例性的例子。真正的应用应包括错误检测等。
-          </p>
+        </li>
+
+        <li class="li">数据节点操作<p class="p">数据节点操作包括创建数据节点（sdbReplicaGroup::createNode），得到主数据节点（sdbReplicaGroup::getMaster），得到从数据节点（sdbReplicaGroup::getSlave），启动数据节点（sdbNode::start），停止数据节点（sdb::Stop）等。</p>
+
+          <p class="p">以下为数据节点操作示例性的例子。真正的应用应包括错误检测等。</p>
 <pre class="pre codeblock">// 定义一个数据节点实例
 sdbNode masternode ;
 sdbNode slavenode ;
@@ -212,7 +214,8 @@ sdbNode slavenode ;
 rg.getMaster( masternode ) ;
 //获取从数据节点
 rg.getSlave( slavenode ) ;</pre>
-</li>
+
+        </li>
 
       </ul>
 

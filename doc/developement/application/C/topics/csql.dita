@@ -113,8 +113,9 @@
         <stentry>db.foo.bar.remove({a:1})</stentry>
         <stentry>const char *r ="{a:1}" ;
           <p>// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
-          <p>jsonToBson ( &amp;condition, r ) ;</p><p>// collection为集合bar的句柄</p>sdbDelete ( collection, &amp;
-          condition , NULL ) ; </stentry>
+          <p>jsonToBson ( &amp;condition, r ) ;</p>
+          <p>// collection 为集合 bar 的句柄</p>
+          sdbDelete ( collection, &amp; condition , NULL ) ;</stentry>
       </strow>
     </simpletable>
   </body>

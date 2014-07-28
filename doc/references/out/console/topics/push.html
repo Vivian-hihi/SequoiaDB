@@ -8,8 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$push"/>
-<meta name="description" content="语法 {$push:{&lt;字段名1&gt;:&lt;值1&gt;,&lt;字段名2&gt;:&lt;值2&gt;,...}} 描述 $push 将给定数值(&lt;值1&gt;)插入到目标数组(&lt;字段名1&gt;)中，操作对象必须为数组类型的字段。如果记录中不存在指定的字段 名，将指定的字段名以数组对象的形式推入到记录中并填充其指定的数值；如果记录中存在指定的字段名，且字段名存在 指定的数值，指定的数值也会被推入到记录中。 示例 ..."/>
-<meta name="DC.Relation" scheme="URI" content="../../console/topics/update.html"/>
+<meta name="description" content="语法 {$push:{&lt;字段名1&gt;:&lt;值1&gt;,&lt;字段名2&gt;:&lt;值2&gt;,...}} 描述 $push 将给定数值（&lt;值1&gt;）插入到目标数组（&lt;字段名1&gt;）中，操作对象必须为数组类型的字段。如果记录中不存在指定的字段名，将指定的字段名以数组对象的形式推入到记录中并填充其指定的数值；如果记录中存在指定的字段名，且字段名存在指定的数值，指定的数值也会被推入到记录中。 示例 ..."/>
 <meta name="DC.Relation" scheme="URI" content="pull_all.html"/>
 <meta name="DC.Relation" scheme="URI" content="push_all.html"/>
 <meta name="DC.Relation" scheme="URI" content="exists.html"/>
@@ -35,7 +34,7 @@
 <body onload="highlightSearchTerm()" id="references_console_push"><a name="references_console_push"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../console/topics/update.html" title="更新符"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">更新符</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="console.html" title="操作符">操作符</a> / <a class="navheader_parent_path" href="../../console/topics/update.html" title="更新符">更新符</a></td></tr></tbody></table>
+                    --></script></span></div></td><td width="50%"/></tr></tbody></table>
 
   <h1 class="title topictitle1">$push</h1>
 
@@ -47,11 +46,7 @@
 
     <div class="section"><h2 class="title sectiontitle">描述</h2>
       
-      <p class="p">$push 将给定数值(&lt;值1&gt;)插入到目标数组(&lt;字段名1&gt;)中，操作对象必须为数组类型的字段。如果记录中不存在指定的字段</p>
-
-      <p class="p">名，将指定的字段名以数组对象的形式推入到记录中并填充其指定的数值；如果记录中存在指定的字段名，且字段名存在</p>
-
-      <p class="p">指定的数值，指定的数值也会被推入到记录中。</p>
+      <p class="p">$push 将给定数值（&lt;值1&gt;）插入到目标数组（&lt;字段名1&gt;）中，操作对象必须为数组类型的字段。如果记录中不存在指定的字段名，将指定的字段名以数组对象的形式推入到记录中并填充其指定的数值；如果记录中存在指定的字段名，且字段名存在指定的数值，指定的数值也会被推入到记录中。</p>
 
     </div>
 
@@ -63,9 +58,7 @@
           <div class="p"><pre class="pre codeblock">db.foo.bar.update({$push:{arr:1}})</pre>
 </div>
 
-          <p class="p">此操作后，记录更新为：{arr[1,2,4,1],age:10,name:["Tom","Mike"]}。虽然原来arr中有元素1，使用$push操作符，还是会将元</p>
-
-          <p class="p">素1推入到arr数组对象中</p>
+          <p class="p">此操作后，记录更新为：{arr[1,2,4,1],age:10,name:["Tom","Mike"]}。虽然原来arr中有元素1，使用$push操作符，还是会将元素1推入到arr数组对象中</p>
 
         </li>
 
@@ -75,9 +68,7 @@
           <div class="p"><pre class="pre codeblock">db.foo.bar.update({$push:{name:"Tom"}},{name:{<a class="xref" href="exists.html">$exixts</a>:0}})</pre>
 </div>
 
-          <p class="p">此操作后，记录更新为：{arr[1,2],age:20,name:["Tom"]}。原记录中不存在数组对象name，使用$push操作符，会将name以数组</p>
-
-          <p class="p">对象的形式推入到记录中。</p>
+          <p class="p">此操作后，记录更新为：{arr[1,2],age:20,name:["Tom"]}。原记录中不存在数组对象name，使用$push操作符，会将name以数组对象的形式推入到记录中。</p>
 
         </li>
 
@@ -95,7 +86,7 @@
 <div><a class="navheader_parent_path" href="../../methods/topics/update.html" title="db.collectionspace.collection.update()">db.collectionspace.collection.update()</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../console/topics/update.html" title="更新符"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">更新符</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -104,7 +95,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>

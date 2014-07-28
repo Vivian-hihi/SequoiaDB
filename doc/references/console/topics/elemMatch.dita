@@ -13,11 +13,9 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>
-            嵌套json对象匹配
-          </p>
+          <p>嵌套 JSON 对象匹配</p>
           <p><codeblock>db.foo.bar.find({content:{$elemMatch:{name:"Tom",phone:123}}})</codeblock></p>
-          <p>字段content是一个json嵌套对象，此操作匹配content内字段name值为“Tom”，phone值为123的记录。</p>
+          <p>字段 content 是一个 JSON 嵌套对象，此操作匹配 content 内字段 name 值为“Tom”，phone 值为123的记录。</p>
         </li>
       </ul>
     </section>

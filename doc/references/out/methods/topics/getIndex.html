@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.collection.getIndex()"/>
-<meta name="description" content="db.collectionspace.collection.getIndex(&lt;name&gt;) 返回指定索引的引用 参数描述 参数名 参数类型 描述 是否必填 name sreing 索引名，同一个集合中的索引名必须唯一。 是 格式 getIndex()方法的定义格式必须包含name字段。其中name的值必须为字符串。 {&#34;name&#34;:&#34;&lt;索引名&gt;&#34;} ..."/>
+<meta name="description" content="db.collectionspace.collection.getIndex(&lt;name&gt;) 返回指定索引的引用。 参数描述 参数名 参数类型 描述 是否必填 name strsing 索引名，同一个集合中的索引名必须唯一。 是 格式 getIndex()方法的定义格式必须包含name字段。其中name的值必须为字符串。 {&#34;name&#34;:&#34;&lt;索引名&gt;&#34;} ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../methods/topics/methodlist.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/database/topics/index.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/database/topics/collection.html"/>
@@ -36,35 +36,35 @@
 <body onload="highlightSearchTerm()" id="references_method_getIndex"><a name="references_method_getIndex"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法">Sequoiadb javascript方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">db.collectionspace.collection.getIndex()</h1>
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.getIndex(&lt;name&gt;)</h2>
-      <p class="p">返回指定索引的引用</p>
+      <p class="p">返回指定索引的引用。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
-      <a name="references_method_getIndex__references_method_getIndex_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_method_getIndex__references_method_getIndex_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d20530e26" class="stentry" width="11.135857461024498%">参数名</th>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d46668e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d20530e29" class="stentry" width="12.360801781737194%">参数类型</th>
+          <th valign="bottom" align="left" id="d46668e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d20530e32" class="stentry" width="63.02895322939866%">描述</th>
+          <th valign="bottom" align="left" id="d46668e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d20530e35" class="stentry" width="13.474387527839642%">是否必填</th>
+          <th valign="bottom" align="left" id="d46668e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d20530e26" class="stentry">name</td>
+          <td valign="top" headers="d46668e26" class="stentry">name</td>
 
-          <td valign="top" headers="d20530e29" class="stentry">sreing</td>
+          <td valign="top" headers="d46668e29" class="stentry">strsing</td>
 
-          <td valign="top" headers="d20530e32" class="stentry">索引名，同一个集合中的索引名必须唯一。</td>
+          <td valign="top" headers="d46668e32" class="stentry">索引名，同一个集合中的索引名必须唯一。</td>
 
-          <td valign="top" headers="d20530e35" class="stentry">是</td>
+          <td valign="top" headers="d46668e35" class="stentry">是</td>
 
         </tr>
 </table>
@@ -85,7 +85,7 @@
           <ul class="ul">
             <li class="li">在做返回索引引用操作时，索引名必须在集合中存在。</li>
 
-            <li class="li">索引名不能是空串、含点(.)或者美元符号($)，且长度不超过127B。</li>
+            <li class="li">索引名不能是空串、含点（.）或者美元符号（$），且长度不超过127B。</li>
 
           </ul>
 
@@ -119,7 +119,7 @@
 <div><a class="navheader_parent_path" href="listIndexes.html" title="db.collectionspace.collection.listIndexes()">db.collectionspace.collection.listIndexes()</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript方法</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -128,7 +128,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>

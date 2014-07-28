@@ -8,12 +8,13 @@
     </section>
     <section><title>语法</title>
       <p><codeblock>drop collection &lt;cs_name>.&lt;cl_name></codeblock></p>
-      <p>&lt;cs_name>参数为数据库中的集合空间名，集合空间名必须在数据库中存在；&lt;cl_name>为集合名，集合名也必须在指定的集合空间中存在。</p>
+      <p>&lt;cs_name>：数据库中的集合空间名，集合空间名必须在数据库中存在；</p>
+      <p>&lt;cl_name>：集合名，集合名也必须在指定的集合空间中存在。</p>
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>删除集合空间foo中的集合bar</p>
-          <p><codeblock>db.execUpdate("drop collection foo.bar") //等价于db.foo.dropCL("bar")</codeblock></p>
+        <li><p>删除集合空间 foo 中的集合 bar</p>
+          <p><codeblock>db.execUpdate("drop collection foo.bar") //等价于 db.foo.dropCL("bar")</codeblock></p>
         </li>
       </ul>
     </section>

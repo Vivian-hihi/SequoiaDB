@@ -3,7 +3,9 @@
 <topic id="references_method_getDetail">
   <title>rg.getDetail()</title>
   <body>
-    <section><title>rg.getDetail()</title>返回分区组的信息。</section>
+    <section><title>rg.getDetail()</title>
+      <p>返回分区组的信息。</p>
+    </section>
     <section><title>示例</title>
      <ul>
        <li>

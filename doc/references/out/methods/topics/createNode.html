@@ -8,8 +8,10 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="rg.createNode()"/>
-<meta name="description" content="rg.createNode(参数) 参数描述 属性 描述 是否必填 格式 示例"/>
+<meta name="description" content="rg.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]) 在分区组中创建节点。 只有在分区组启动之后，才能创建节点操作。 参数描述 参数名 参数类型 描述 是否必填 host string 指定节点的主机名。 是 service string 节点端口号。 是 dbpath string 节点路径。 是 config Json ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../methods/topics/methodlist.html"/>
+<meta name="DC.Relation" scheme="URI" content="rgstart.html"/>
+<meta name="DC.Relation" scheme="URI" content="removeNode.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="references_method_getNode"/>
 <link rel="stylesheet" type="text/css" href="../../commonltr.css"/>
@@ -31,31 +33,68 @@
 <body onload="highlightSearchTerm()" id="references_method_getNode"><a name="references_method_getNode"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法">Sequoiadb javascript方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">rg.createNode()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">rg.createNode(参数)</h2>
-      <p class="p"/>
+    <div class="section"><h2 class="title sectiontitle">rg.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</h2>
+      <p class="p">在分区组中创建节点。</p>
+
+      <div class="note note"><span class="notetitle">Note:</span> <p class="p">只有在分区组启动之后，才能创建节点操作。</p>
+</div>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <a name="references_method_getNode__references_method_createNode_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_method_getNode__references_method_createNode_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d16863e25" class="stentry" width="12.5%">属性</th>
+          <th valign="bottom" align="left" id="d34416e30" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d16863e28" class="stentry" width="75%">描述</th>
+          <th valign="bottom" align="left" id="d34416e33" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d16863e31" class="stentry" width="12.5%">是否必填</th>
+          <th valign="bottom" align="left" id="d34416e36" class="stentry">描述</th>
+
+          <th valign="bottom" align="left" id="d34416e39" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d16863e25" class="stentry"> </td>
+          <td valign="top" headers="d34416e30" class="stentry">host </td>
 
-          <td valign="top" headers="d16863e28" class="stentry"> </td>
+          <td valign="top" headers="d34416e33" class="stentry">string                   </td>
 
-          <td valign="top" headers="d16863e31" class="stentry"> </td>
+          <td valign="top" headers="d34416e36" class="stentry">指定节点的主机名。 </td>
+
+          <td valign="top" headers="d34416e39" class="stentry">是                   </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d34416e30" class="stentry">service</td>
+
+          <td valign="top" headers="d34416e33" class="stentry">string</td>
+
+          <td valign="top" headers="d34416e36" class="stentry">节点端口号。</td>
+
+          <td valign="top" headers="d34416e39" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d34416e30" class="stentry">dbpath</td>
+
+          <td valign="top" headers="d34416e33" class="stentry">string</td>
+
+          <td valign="top" headers="d34416e36" class="stentry">节点路径。</td>
+
+          <td valign="top" headers="d34416e39" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d34416e30" class="stentry">config</td>
+
+          <td valign="top" headers="d34416e33" class="stentry">Json</td>
+
+          <td valign="top" headers="d34416e36" class="stentry">节点配置信息，如配置日志大小，是否打开事务等，具体可参考<a class="xref" href="../../../administration/database/topics/runtime_configuration.html">数据库配置</a>。</td>
+
+          <td valign="top" headers="d34416e39" class="stentry">否</td>
 
         </tr>
 </table>
@@ -64,30 +103,34 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p"/>
-
-      <p class="p"/>
-
-      <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p"/>
-
-        <p class="p"/>
-
-      </div>
+      <div class="p">rg.createNode()方法的定义格式有四个参数：host、service、dbpath、config，如上表所示，前三个参数的类型都是字符串型，必填；最后一个是Json对象，选填。<pre class="pre codeblock">("&lt;主机名&gt;","&lt;端口号&gt;","&lt;节点路径&gt;,"[{&lt;configParam&gt;:value,...}])</pre>
+</div>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
-      <p class="p"/>
+      <ul class="ul">
+        <li class="li">在分区组group中创建一个端口号为11800的节点，指定日志文件大小为64MB<pre class="pre codeblock">rg.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</pre>
+</li>
 
-      <p class="p"/>
+      </ul>
+
+      <div class="p"><div class="note note"><span class="notetitle">Note:</span> 
+        <p class="p">在一个分区组中能创建多个节点，但是连个节点的端口号必须相差5以上。因为系统为每个节点后台控制了5个通信接口。</p>
+
+      </div>
+</div>
 
     </div>
 
   </div>
 
-<div class="related-links"/>
-<div class="navfooter"><a class="link" href="../../methods/topics/methodlist.html" title="Sequoiadb javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript方法</span></a>  <script type="text/javascript"><!--         
+  <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
+<div><a class="navheader_parent_path" href="rgstart.html" title="rg.start()">rg.start()</a></div>
+<div><a class="navheader_parent_path" href="removeNode.html" title="rg.removeNode()">rg.removeNode()</a></div>
+</div>
+</div>
+<div class="navfooter"><a class="link" href="../../methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
@@ -96,7 +139,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>

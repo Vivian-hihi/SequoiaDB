@@ -8,11 +8,11 @@
     </section>
     <section><title>语法</title>
       <p><codeblock>max(field_name) as &lt;alisa_name></codeblock></p>
-      <note>1.使用max函数返回字段名的最大值时，必须使用别名。</note>
+      <note>1. 使用 max 函数返回字段名的最大值时，必须使用别名。</note>
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>对集合bar中age字段返回最大值：</p>
+        <li><p>对集合 bar 中 age 字段返回最大值：</p>
           <p><codeblock>db.exec("select max(age) as 最大年龄 from foo.bar")</codeblock></p>
         </li>
       </ul>

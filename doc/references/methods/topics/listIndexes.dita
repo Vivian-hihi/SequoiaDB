@@ -8,7 +8,7 @@
     </section>
     <section><title>示例</title>
         <ul>
-          <li><p>返回集合bar下的所有索引信息</p>
+          <li><p>返回集合 bar 下的所有索引信息</p>
             <codeblock>db.foo.bar.listIndexes()</codeblock></li>         
         </ul>
     </section>
@@ -18,6 +18,5 @@
     <link href="../../../administration/concepts/database/topics/collection.dita" format="dita" type="topic"></link>
     <link href="../../../administration/concepts/database/topics/collectionspace.dita" format="dita" type="topic"></link>
     <link href="getIndex.dita" format="dita" type="topic"></link>
-    <!--<link href="rename.dita" format="dita" type="topic"></link>-->
   </related-links>
 </topic>

@@ -7,8 +7,7 @@
       <p>删除集合中指定的<xref href="../../../administration/concepts/database/topics/index.dita">索引</xref>。</p>
     </section>
     <section><title>参数描述</title><p></p>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.15* 5.75* 1.08*"
-        id="references_method_dropIndex_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -25,7 +24,7 @@
       
     </section>
     <section><title>格式</title>
-      <p> dropIndex()方法的定义格式必须包含name字段。其中name的值必须为字符串。</p>
+      <p> dropIndex() 方法的定义格式必须包含 name 字段。其中 name 的值必须为字符串。</p>
       <p>
         <codeblock>{"name":"&lt;索引名>"}</codeblock>
       </p>
@@ -33,17 +32,16 @@
         <p>
           <ul>
             <li>做删除索引操作时，索引名必须在集合中存在。</li>
-            <li>索引名不能是空串、含点（.）或者美元符号（$），且长度不超过127B。</li>
+            <li>索引名不能是空串，含点（.）或者美元符号（$），且长度不超过127B。</li>
           </ul>
         </p>
       </note>
     </section>
     <section><title>示例</title>
         <ul>
-          <li><p>删除集合bar下名为ageIndex的索引，假设ageIndex已存在。</p>
+          <li><p>删除集合 bar 下名为 ageIndex 的索引，假设 ageIndex 已存在。</p>
             <codeblock>db.foo.bar.dropIndex("ageIndex")</codeblock></li>
-        </ul>
-     
+        </ul>     
     </section>
   </body>
   <related-links>

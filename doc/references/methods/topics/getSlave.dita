@@ -10,7 +10,8 @@
       <ul>
         <li><p>返回分区组的从节点</p>
           <codeblock>> rg.getSlave()
-返回：vmsvr2-suse-x64:11800</codeblock></li>
+返回：
+vmsvr2-suse-x64:11800</codeblock></li>
       </ul>
     </section>
   </body>

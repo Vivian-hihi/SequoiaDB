@@ -18,10 +18,10 @@ insert into &lt;cs_name>.&lt;cl_name> &lt;select_set></codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>本例会向集合bar中插入一条新的数据，字段名为age和name，对应的值分别为（25,"Tom"）：</p>
+        <li><p>本例会向集合 bar 中插入一条新的数据，字段名为 age 和 name，对应的值分别为（25，“Tom”）：</p>
           <p><codeblock>db.execUpdate("insert into foo.bar(age,name) values(25,\"Tom\")")</codeblock></p>
         </li>
-        <li> 本例会向集合bar中插入批量的数据，这些数据为集合small中的查询结果集：
+        <li> 本例会向集合 bar 中插入批量的数据，这些数据为集合 small 中的查询结果集：
           <codeblock>db.execUpdate("insert into foo.bar select * from big.small")</codeblock></li>
       </ul>
     </section>

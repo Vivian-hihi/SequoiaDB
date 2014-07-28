@@ -7,8 +7,7 @@
       <p>删除指定集合空间下指定的集合。</p>
     </section>
     <section><title>参数描述</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 5.3* 1.05*"
-        id="references_method_dropCL_table">-->
+      <simpletable>
         <sthead>
           <stentry>参数名</stentry>
           <stentry>参数类型</stentry>
@@ -25,11 +24,11 @@
       
     </section>
     <section><title>格式</title>
-      <p> dropCL() 方法的定义格式必须指定name参数，并且name的值在集合空间中存在，否则操作异常。 </p>
+      <p> dropCL() 方法的定义格式必须指定 name 参数，并且 name 的值在集合空间中存在，否则操作异常。 </p>
       <p><codeblock>{"name":"&lt;集合名>"}</codeblock></p>
       <note>
         <ul>
-          <li>name 的值不能是空串、含点（.）或者美元符号（$），并且长度不能超过127B，否则操作失败</li>
+          <li>name 的值不能是空串，含点（.）或者美元符号（$），并且长度不能超过127B，否则操作失败</li>
           <li>集合名必须在集合空间中存在，否则操作异常</li>
         </ul>
       </note>
@@ -37,11 +36,10 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>删除集合空间foo下的集合bar。假定集合存在</p>
+          <p>删除集合空间 foo 下的集合 bar。假定集合存在</p>
           <p><codeblock>db.foo.dropCL("bar")</codeblock></p>
         </li>
-      </ul>
-      
+      </ul>      
     </section>
   </body>
   <related-links>
@@ -51,4 +49,3 @@
     <link href="../../../administration/concepts/database/topics/collectionspace.dita" format="dita" type="topic"></link>
   </related-links>
 </topic>
-

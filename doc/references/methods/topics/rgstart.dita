@@ -4,15 +4,13 @@
   <title>rg.start()</title>
   <body>
     <section><title>rg.start()</title>
-      <p>启动分区组。分区组启动之后才能创建节点及其他操作。也可以使用方法<xref href="startRG.dita"
-        >db.startRG(&lt;name>)</xref>)启动指定的节点。</p>
+      <p>启动分区组。分区组启动之后才能创建节点及其他操作。也可以使用方法 <xref href="startRG.dita">db.startRG(&lt;name>)</xref>) 启动指定的节点。</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li><p>启动分区组命令：</p>
-          <p><codeblock>rg.start() //等价于db.startRG("group")</codeblock></p></li>
-      </ul>
-      
+          <p><codeblock>rg.start() //等价于 db.startRG("group")</codeblock></p></li>
+      </ul>      
     </section>
   </body>
   <related-links>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.createProcedure()"/>
-<meta name="description" content="db.createProcedure(&lt;code&gt;) 在数据库对象中创建存储过程。 参数描述 参数名 参数类型 描述 是否必填 code 自定义函数 标准函数定义，不是字符串类型，在输入参数时不能使用引号。 是 格式 createProcedure()方法的定义格式包含code参数，参数值为标准函数定义。 createProcedure(&lt;code&gt;) 说明： ..."/>
+<meta name="description" content="db.createProcedure(&lt;code&gt;) 在数据库对象中创建存储过程。 参数描述 参数名 参数类型 描述 是否必填 code 自定义函数 标准函数定义，不是字符串类型，在输入参数时不能使用引号。 是 格式 createProcedure() 方法的定义格式包含 code 参数，参数值为标准函数定义。 createProcedure(&lt;code&gt;) 说明： ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
 <meta name="DC.Relation" scheme="URI" content="listProcedures.html"/>
 <meta name="DC.Relation" scheme="URI" content="removeProcedure.html"/>
@@ -33,7 +33,7 @@
 <body onload="highlightSearchTerm()" id="topic_rlh_vcw_ql"><a name="topic_rlh_vcw_ql"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法">SequoiaDB JavaScript方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1"> db.createProcedure() </h1>
 
@@ -45,23 +45,23 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d97304e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d97694e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d97304e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d97694e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d97304e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d97694e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d97304e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d97694e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97304e26" class="stentry">code</td>
+          <td valign="top" headers="d97694e26" class="stentry">code</td>
 
-          <td valign="top" headers="d97304e29" class="stentry">自定义函数</td>
+          <td valign="top" headers="d97694e29" class="stentry">自定义函数</td>
 
-          <td valign="top" headers="d97304e32" class="stentry">标准函数定义，不是字符串类型，在输入参数时不能使用引号。 </td>
+          <td valign="top" headers="d97694e32" class="stentry">标准函数定义，不是字符串类型，在输入参数时不能使用引号。 </td>
 
-          <td valign="top" headers="d97304e35" class="stentry">是</td>
+          <td valign="top" headers="d97694e35" class="stentry">是</td>
 
         </tr>
 </table>
@@ -70,19 +70,17 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p">createProcedure()方法的定义格式包含code参数，参数值为标准函数定义。</p>
+      <p class="p">createProcedure() 方法的定义格式包含 code 参数，参数值为标准函数定义。</p>
 
       <div class="p"><pre class="pre codeblock">createProcedure(&lt;code&gt;)</pre>
 </div>
 
       <div class="p"><strong class="ph b">说明：</strong><a name="topic_rlh_vcw_ql__ul_p2q_bmw_ql"><!-- --></a><ul class="ul" id="topic_rlh_vcw_ql__ul_p2q_bmw_ql">
-          <li class="li"> 推荐直接使用存储过程中已初始化全局的db，如：<strong class="ph b">db.createProcedure( function getAll(){return
-              db.foo.bar.find();} )</strong> 。但如果需要鉴权，则全局db失效。需要自己初始化db。</li>
+          <li class="li">推荐直接使用存储过程中已初始化全局的 db，如：<strong class="ph b">db.createProcedure( function getAll(){return db.foo.bar.find();} )</strong> 。但如果需要鉴权，则全局 db 失效。需要自己初始化 db。</li>
 
-          <li class="li"> 自己初始化db的形式为<strong class="ph b">var db=new Sdb()</strong>。如果需要加入用户名和密码，为<strong class="ph b">var db=new Sdb('usrname','passwd')</strong> 。这里需要注意的时，存储过程只能运行在已连接上的db，不提供远程连接其他db的方法。在不需要鉴权的情况下，即使如<strong class="ph b">var db
-              = new Sdb('hostname', 'servicename')</strong> 语句正常执行。得到的db仍然是本地db。</li>
+          <li class="li">自己初始化 db 的形式为 <strong class="ph b">var db = new Sdb()</strong>。如果需要加入用户名和密码，为 <strong class="ph b">var db = new Sdb('usrname','passwd')</strong> 。这里需要注意的时，存储过程只能运行在已连接上的 db，不提供远程连接其他 db 的方法。在不需要鉴权的情况下，即使如 <strong class="ph b">var db = new Sdb('hostname', 'servicename')</strong> 语句正常执行。得到的 db 仍然是本地 db。</li>
 
-          <li class="li"> db角色必须为协调节点。standalone模式不提供存储过程功能。</li>
+          <li class="li">db 角色必须为协调节点。standalone 模式不提供存储过程功能。</li>
 
         </ul>
 </div>
@@ -94,13 +92,13 @@
       <a name="topic_rlh_vcw_ql__ul_rnt_h4w_ql"><!-- --></a><ul class="ul" id="topic_rlh_vcw_ql__ul_rnt_h4w_ql">
         <li class="li"><p class="p">函数定义</p>
 
-          <p class="p">1.函数必须包含函数名。不能使用如：<strong class="ph b">function(x,y){return x+y;}</strong></p>
+          <p class="p">1. 函数必须包含函数名。不能使用如：<strong class="ph b">function(x,y){return x+y;}</strong></p>
 
-          <p class="p">2.在函数定义时可以调用其他函数甚至是不存在的函数。但需要保证运行时所有函数已存在。</p>
+          <p class="p">2. 在函数定义时可以调用其他函数甚至是不存在的函数。但需要保证运行时所有函数已存在。</p>
 
-          <p class="p">3.函数名全局唯一。不提供重载。 </p>
+          <p class="p">3. 函数名全局唯一。不提供重载。 </p>
 
-          <p class="p">4.每个函数均在全系统可用。随意删除一个存储过程可能导致他人运行失败。</p>
+          <p class="p">4. 每个函数均在全系统可用。随意删除一个存储过程可能导致他人运行失败。</p>
 </li>
 
         <li class="li">函数参数 <p class="p">native type of JS</p>
@@ -109,7 +107,7 @@
         <li class="li">函数输出 <p class="p">函数中所有标准输出，标准错误会被屏蔽。同时不建议在函数定义或执行时加入输出语句。大量的输出可能会导致存储过程运行失败</p>
 </li>
 
-        <li class="li">函数返回值 <p class="p">函数返回值可以是除db以外任意类型数据。如：<strong class="ph b">function getCL(){return db.foo.bar;}</strong></p>
+        <li class="li">函数返回值 <p class="p">函数返回值可以是除 db 以外任意类型数据。如：<strong class="ph b">function getCL(){return db.foo.bar;}</strong></p>
 </li>
 
       </ul>
@@ -118,11 +116,11 @@
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li"><p class="p">创建sum函数</p>
+        <li class="li"><p class="p">创建 sum 函数</p>
 
           <pre class="pre codeblock">db.createProcedure(function sum(x,y){return x+y;})</pre>
 
-          <p class="p">创建之后可以使用<a class="xref" href="listProcedures.html">db.listProcedures()</a>查看函数信息。</p>
+          <p class="p">创建之后可以使用 <a class="xref" href="listProcedures.html">db.listProcedures()</a> 查看函数信息。</p>
 
         </li>
 
@@ -137,7 +135,7 @@
 <div><a class="navheader_parent_path" href="removeProcedure.html" title="removeProcedure.html">removeProcedure.html</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript方法</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

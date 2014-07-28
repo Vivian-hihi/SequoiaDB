@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_25h_znr_fm">
-  <title>With MapReduce Integration</title>  
+  <title>Integration with MapReduce</title>  
   <body>
     <section>
       <title>Build Hadoop Environment</title>
@@ -27,7 +27,11 @@
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.collectionspace: Specify the collection space which acts as an output target.</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.collection: Specify the collection which acts as an output target.</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;sequoiadb.out.bulknum: Specify the number of records that are written into SequoiaDB for each time in order to optimize the write performance.</p>
-      <p>The following codes read and process the data form HDFS files, and then write the result into SequoiaDB.</p>
+      <p><b>Examples</b></p>
+      <ul>
+        <li>
+      
+      <p>1. The following codes read and process the data form HDFS files, and then write the result into SequoiaDB.</p>
       <codeblock>public class HdfsSequoiadbMR {
     static class MobileMapper extends  Mapper&lt;LongWritable,Text,Text,IntWritable>{
         private static final IntWritable ONE=new IntWritable(1);
@@ -87,8 +91,8 @@
         
         job.waitForCompletion(true);
     }
-}</codeblock>
-      <p>The second example reads and processes the data from SequoiaDB, and then writes the result into HDFS.</p>
+}</codeblock></li>
+      <li><p>2. Reads and processes the data from SequoiaDB, and then writes the result into HDFS.</p>
       <codeblock>public class SequoiadbHdfsMR {
     /**
      * 
@@ -150,7 +154,8 @@
         
         job.waitForCompletion(true);
     }
-}</codeblock>
+}</codeblock></li>
+      </ul>
       <p>configuration file:</p>
       <codeblock>&lt;?xml version="1.0" encoding="UTF-8"?>
 &lt;configuration>

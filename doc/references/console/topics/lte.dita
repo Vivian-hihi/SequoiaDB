@@ -7,17 +7,16 @@
       <p><codeblock>{&lt;字段名>：{$lte:&lt;值>}}</codeblock></p>
     </section>
     <section><title>描述</title>
-      <p>$lte选择满足“字段名”的值小于等于（&lt;=）指定“值”的记录。</p>
+      <p>$lte 选择满足“字段名”的值小于等于（&lt;=）指定“值”的记录。</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li>
-          <p>选择查询集合空间foo下集合bar中字段名为age的值小于等于20的记录。</p>
+          <p>选择查询集合空间 foo 下集合 bar 中字段名为 age 的值小于等于20的记录。</p>
           <codeblock>db.foo.bar.find({age:{$lte:20}})</codeblock>
         </li>
         <li>
-          <p>$lte匹配一个嵌套对象中的字段名。使用<xref href="../../methods/topics/dbupdate.dita"
-            >update()</xref>方法更新嵌套对象service中的ID字段值小于等于2的记录，将这些记录的age字段值设定为25。</p>
+          <p>$lte 匹配一个嵌套对象中的字段名。使用 <xref href="../../methods/topics/dbupdate.dita">update()</xref> 方法更新嵌套对象 service 中的 ID 字段值小于等于2的记录，将这些记录的 age 字段值设定为25。</p>
           <codeblock>db.foo.bar.update({<xref href="gset.dita">$set</xref>:{age:25}},{"service.ID":{$lte:2}})</codeblock>
         </li>
       </ul>

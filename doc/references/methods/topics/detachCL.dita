@@ -4,7 +4,7 @@
   <title>db.collectionspace.collection.detachCL()</title>
   <body>
     <section><title>db.collectionspace.collection.detachCL(&lt;subCLFullName>)</title>
-      <p>从主分区集合中分离出子分区集合</p>
+      <p>从主分区集合中分离出子分区集合。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>

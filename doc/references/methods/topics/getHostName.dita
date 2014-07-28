@@ -8,8 +8,9 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li>返回节点名称为node的主机名 <codeblock>> node.getHostName()
-返回：vmsvr2-suse-x64</codeblock></li>
+        <li>返回节点名称为 node 的主机名 <codeblock>> node.getHostName()
+返回：
+vmsvr2-suse-x64</codeblock></li>
       </ul>
     </section>
   </body>

@@ -5,17 +5,17 @@
   <body>
     <section>
       <title>描述</title>
-      <p><b>$group</b>实现对结果集的分组，类似SQL中的group by语句。首先指定分组键（_id） ，通过“_id”来标识分组字段，分组字段可以是单个，也可以是多个，格式如下：</p>
+      <p><b>$group</b> 实现对结果集的分组，类似 SQL 中的 group by 语句。首先指定分组键（_id） ，通过“_id”来标识分组字段，分组字段可以是单个，也可以是多个，格式如下：</p>
       <codeblock>单个分组键：{_id:"$field"}
 多个分组键：{_id:{field1:"$field1",field2:"$field2",...}}</codeblock>
-      <note>使用<b>$group</b>必须指定_id字段，当_id的值为null时，即{_id:null}，表示不分组。对嵌套对象使用点操作符（.）引用字段名。</note>
+      <note>使用 <b>$group</b> 必须指定 _id 字段，当 _id 的值为 null 时，即 {_id:null}，表示不分组。对嵌套对象使用点操作符（.）引用字段名。</note>
     </section>
     <section>
       <title>示例</title>
       <ul>
-        <li>$group使用如下
-            <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$major",avg_score:{<xref href="javg.dita">$avg</xref>:"$score",Major:{<xref href="jfirst.dita">$first</xref>:"$major"}}})</codeblock><p>该操作表示从集合collection中读取记录，并按major字段进行分组。
-            在返回的结果集中，取各分组的第一条记录的major字段，重命名为Major；对各分组中的score字段值求平均值，重命名为avg_score。返回如下所示：<codeblock>{
+        <li>$group 使用如下
+            <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$major",avg_score:{<xref href="javg.dita">$avg</xref>:"$score",Major:{<xref href="jfirst.dita">$first</xref>:"$major"}}})</codeblock>
+          <p>该操作表示从集合 collection 中读取记录，并按 major 字段进行分组。在返回的结果集中，取各分组的第一条记录的 major 字段，重命名为 Major；对各分组中的 score 字段值求平均值，重命名为 avg_score。返回如下所示：<codeblock>{
   "avg_score": 82,
   "major": "光学"
 }
@@ -25,7 +25,7 @@
 }</codeblock></p></li>
       </ul>
     </section>
-    <section><title>$group支持的聚集函数：</title>
+    <section><title>$group 支持的聚集函数：</title>
       <p> <simpletable>
         <sthead>
           <stentry> 函数名 </stentry>
@@ -79,10 +79,8 @@
           </stentry>
           <stentry> 取分组中字段值的总和</stentry>
         </strow>
-      </simpletable></p>
-      
-    </section>
-   
+      </simpletable></p>      
+    </section>   
   </body>
   <related-links>
     <link href="match.dita" format="dita" type="topic"></link>

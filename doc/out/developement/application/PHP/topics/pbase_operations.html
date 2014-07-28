@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="PHP 开发基础"/>
-<meta name="description" content="这里介绍如何使用PHP驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录/client/samples/php下获取相应的完整的代码。 更多查看PHP API 数据操作 连接数据库 //创建SequoiaDB对象 $db = new Sequoiadb(); //连接数据库 $array = $db -&gt; ..."/>
+<meta name="description" content="这里介绍如何使用 PHP 驱动接口编写使用 SequoiaDB 数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录 /client/samples/php 下获取相应的完整的代码。更多查看 PHP API 数据操作 连接数据库 //创建 SequoiaDB 对象 $db = new Sequoiadb(); //连接数据库 $array = $db -&gt; ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/PHP/topics/php.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_1hq_zyv_jl"/>
@@ -36,18 +36,18 @@
   <h1 class="title topictitle1">PHP 开发基础</h1>
 
   <div class="body">
-    <p class="p">这里介绍如何使用PHP驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录/client/samples/php下获取相应的完整的代码。<a class="xref" href="../../../../php/html/index.html">更多查看PHP API</a></p>
+    <p class="p">这里介绍如何使用 PHP 驱动接口编写使用 SequoiaDB 数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录 /client/samples/php 下获取相应的完整的代码。更多查看 <a class="xref" href="../../../../php/html/index.html">PHP API</a></p>
 
     <div class="section"><h2 class="title sectiontitle">数据操作</h2>
       
       <ul class="ul">
         <li class="li">连接数据库
-          <pre class="pre codeblock">//创建SequoiaDB对象
+          <pre class="pre codeblock">//创建 SequoiaDB 对象
 $db = new Sequoiadb();
 //连接数据库
 $array = $db -&gt; connect("localhost:11810");
-//检验连接结果，返回的默认是php数组类型，数据是array(0){"errno"=&gt;0}
-//如果errno为0，那么连接成功
+//检验连接结果，返回的默认是 php 数组类型，数据是 array(0){"errno"=&gt;0}
+//如果 errno 为0，那么连接成功
 if($array['errno'] !=0 )
 { 
   exit();
@@ -55,10 +55,10 @@ if($array['errno'] !=0 )
 </li>
 
         <li class="li">选择集合空间
-          <pre class="pre codeblock">//选择名称为“foo”的集合空间，如果不存在，则自动创建
-//返回SequoiaCS对象
+          <pre class="pre codeblock">//选择名称为"foo"的集合空间，如果不存在，则自动创建
+//返回 SequoiaCS 对象
 $cs = $db -&gt; selectCs("foo");
-//检验结果，如果成功返回对象，失败返回NULL
+//检验结果，如果成功返回对象，失败返回 NULL
 if( empty($cs) )
 { 
   exit();
@@ -66,10 +66,10 @@ if( empty($cs) )
 </li>
 
         <li class="li">选择集合
-          <pre class="pre codeblock">//选择名称为“big”的集合，如果不存在，则自动创建
-//返回SequoiaCollection对象
+          <pre class="pre codeblock">//选择名称为"big"的集合，如果不存在，则自动创建
+//返回 SequoiaCollection 对象
 $cl = $cs -&gt; selectCollection("big");
-//检验结果，如果成功返回对象，失败返回NULL
+//检验结果，如果成功返回对象，失败返回 NULL
 if( empty($cl) )
 { 
   exit();
@@ -77,7 +77,7 @@ if( empty($cl) )
 </li>
 
         <li class="li">插入
-          <pre class="pre codeblock">//插入json
+          <pre class="pre codeblock">//插入 json
 $arr = $cl -&gt; insert("{test:1}");
 //检测结果
 if($array['errno'] !=0 )
@@ -95,7 +95,7 @@ if($arr['errno'] !=0 )
 
         <li class="li">查询
           <pre class="pre codeblock">//查询集合中的所有记录
-//返回SequoiaCursor对象
+//返回 SequoiaCursor 对象
 $cursor = $cl -&gt; find();
 //遍历所有记录
 while($record = $cursor -&gt; getNext())
@@ -105,7 +105,7 @@ while($record = $cursor -&gt; getNext())
 </li>
 
         <li class="li">更新
-          <pre class="pre codeblock">//修改集合中的多有记录，把字段test的值修改为0
+          <pre class="pre codeblock">//修改集合中的多有记录，把字段 test 的值修改为0
 $arr = $cl -&gt; update("{$set:{test:0}}");
 //检测结果
 if($arr['errno'] !=0 )
@@ -127,16 +127,15 @@ if($arr['errno'] !=0 )
       </ul>
 
     </div>
-
     
     <div class="section"><h2 class="title sectiontitle">集群操作</h2>
       
       <ul class="ul">
         <li class="li">选择组
-          <pre class="pre codeblock">//选择名称为“group”的组，如果不存在，则自动创建
-//返回SequoiaGroup对象
+          <pre class="pre codeblock">//选择名称为"group"的组，如果不存在，则自动创建
+//返回 SequoiaGroup 对象
 $group = $db -&gt; selectGroup("group");
-//检验结果，如果成功返回对象，失败返回NULL
+//检验结果，如果成功返回对象，失败返回 NULL
 if( empty($group) )
 { 
   exit();
@@ -156,8 +155,8 @@ If ( $arr['errno'] != 0 )
 </li>
 
         <li class="li">选择节点
-          <pre class="pre codeblock">//获取名称为“node”的节点
-//返回SequoiaNode对象
+          <pre class="pre codeblock">//获取名称为"node"的节点
+//返回 SequoiaNode 对象
 $node = $group -&gt; getNode( 'node') ;
 //检查对象是否空
 If ( empty( $node ) )

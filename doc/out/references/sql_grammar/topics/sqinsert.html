@@ -63,14 +63,14 @@ insert into &lt;cs_name&gt;.&lt;cl_name&gt; &lt;select_set&gt;</pre>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li"><p class="p">本例会向集合bar中插入一条新的数据，字段名为age和name，对应的值分别为（25,"Tom"）：</p>
+        <li class="li"><p class="p">本例会向集合 bar 中插入一条新的数据，字段名为 age 和 name，对应的值分别为（25，“Tom”）：</p>
 
           <div class="p"><pre class="pre codeblock">db.execUpdate("insert into foo.bar(age,name) values(25,\"Tom\")")</pre>
 </div>
 
         </li>
 
-        <li class="li"> 本例会向集合bar中插入批量的数据，这些数据为集合small中的查询结果集：
+        <li class="li"> 本例会向集合 bar 中插入批量的数据，这些数据为集合 small 中的查询结果集：
           <pre class="pre codeblock">db.execUpdate("insert into foo.bar select * from big.small")</pre>
 </li>
 

@@ -3,11 +3,11 @@
 <topic id="topic_ghj_mt1_yl">
   <title>sql push()</title>
   <body>
-    <section><title>push()函数</title>
+    <section><title>push() 函数</title>
       <p>将多个记录中的字段合并为一个数组。</p>
     </section>
     <section><title>语法</title>
-      <p><codeblock>push（field name）</codeblock></p>
+      <p><codeblock>push(field name)</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>

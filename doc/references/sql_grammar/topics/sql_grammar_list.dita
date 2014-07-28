@@ -3,8 +3,8 @@
 <topic id="references_sql_methodlist">
   <title>SQL 语法</title>
   <body>
-    <p>SequoiaDB是一种面向文档型的非关系型数据库，在本节中主要介绍如何使用SQL访问和处理SequoiaDB数据库系统中的数据。</p>
-    <note>SequoiaDB中，SQL语句不区分大小写。</note>
+    <p>SequoiaDB 是一种面向文档型的非关系型数据库，在本节中主要介绍如何使用 SQL 访问和处理 SequoiaDB 数据库系统中的数据。</p>
+    <note>SequoiaDB 中，SQL 语句不区分大小写。</note>
     <section><title>SQL语法表</title>
       <p>
         <simpletable 
@@ -178,7 +178,6 @@
           </strow>
         </simpletable>
       </p>
-    </section>
-    
+    </section>    
   </body>
 </topic>

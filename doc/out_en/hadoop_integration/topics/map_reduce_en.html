@@ -78,7 +78,12 @@
 
       <p class="p">    sequoiadb.out.bulknum: Specify the number of records that are written into SequoiaDB for each time in order to optimize the write performance.</p>
 
-      <p class="p">The following codes read and process the data form HDFS files, and then write the result into SequoiaDB.</p>
+      <p class="p"><strong class="ph b">Examples</strong></p>
+
+      <ul class="ul">
+        <li class="li">
+      
+      <p class="p">1. The following codes read and process the data form HDFS files, and then write the result into SequoiaDB.</p>
 
       <pre class="pre codeblock">public class HdfsSequoiadbMR {
     static class MobileMapper extends  Mapper&lt;LongWritable,Text,Text,IntWritable&gt;{
@@ -140,8 +145,9 @@
         job.waitForCompletion(true);
     }
 }</pre>
+</li>
 
-      <p class="p">The second example reads and processes the data from SequoiaDB, and then writes the result into HDFS.</p>
+      <li class="li"><p class="p">2. Reads and processes the data from SequoiaDB, and then writes the result into HDFS.</p>
 
       <pre class="pre codeblock">public class SequoiadbHdfsMR {
     /**
@@ -204,7 +210,10 @@
         
         job.waitForCompletion(true);
     }
-}</pre>
+    }</pre>
+</li>
+
+      </ul>
 
       <p class="p">configuration file:</p>
 
@@ -254,7 +263,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>

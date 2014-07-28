@@ -5,17 +5,16 @@
   <body>
     <section>
       <title>描述</title>
-      <p><b>$limit</b>实现在结果集中限制返回的记录条数。如果指定的记录条数大于实际的记录总数，那么返回实际的记录总数。</p>
+      <p><b>$limit</b> 实现在结果集中限制返回的记录条数。如果指定的记录条数大于实际的记录总数，那么返回实际的记录总数。</p>
     </section>
    <section>
      <title>示例</title>
      <ul>
        <li>限制返回结果集中的前10条记录
-            <codeblock>db.collectionspace.collection.aggregate( { $limit : 10 } ) </codeblock><p>该操作表示集合collection中读取前10条记录。</p>
+            <codeblock>db.collectionspace.collection.aggregate( { $limit : 10 } ) </codeblock><p>该操作表示集合 collection 中读取前10条记录。</p>
         </li>
      </ul>
-   </section>
-   
+   </section>   
   </body>
   <related-links>
     <link href="jgroup.dita" format="dita" type="topic"></link>

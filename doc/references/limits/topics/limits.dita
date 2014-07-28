@@ -15,7 +15,7 @@
         </strow>
         <strow>
           <stentry>文档最大长度</stentry>
-          <stentry>转为BSON结构后16777168字节</stentry>
+          <stentry>转为 BSON 结构后16777168字节</stentry>
         </strow>
         <strow>
           <stentry>字段名</stentry>
@@ -87,7 +87,7 @@
         </strow>
         <strow>
           <stentry>索引定义总长度（包括索引名，索引键名等）</stentry>
-          <stentry>转为BSON后小于等于数据页大小-48字节</stentry>
+          <stentry>转为 BSON 后小于等于数据页大小-48字节</stentry>
         </strow>
         <strow>
           <stentry>复合索引</stentry>
@@ -131,11 +131,11 @@
         </strow>
         <strow>
           <stentry>创建节点</stentry>
-          <stentry>必须使用hostname，而不是IP地址</stentry>
+          <stentry>必须使用 hostname，而不是 IP 地址</stentry>
         </strow>
         <strow>
           <stentry>网络</stentry>
-          <stentry>集群中所有系统必须能够使用hostname互相访问</stentry>
+          <stentry>集群中所有系统必须能够使用 hostname 互相访问</stentry>
         </strow>
         <strow>
           <stentry>主节点选举条件</stentry>
@@ -159,7 +159,7 @@
         </strow>
         <strow>
           <stentry>_id</stentry>
-          <stentry>分区集合中_id仅保证分区组内唯一，不保证全局唯一</stentry>
+          <stentry>分区集合中 _id 仅保证分区组内唯一，不保证全局唯一</stentry>
         </strow>
         <strow>
           <stentry>唯一索引</stentry>
@@ -175,7 +175,7 @@
         </sthead>
         <strow>
           <stentry>线程安全</stentry>
-          <stentry> 每个连接对象与其下属的子对象为非线程安全不同连接对象之间为线程安全 </stentry>
+          <stentry>每个连接对象与其下属的子对象为非线程安全不同连接对象之间为线程安全 </stentry>
         </strow>
       </simpletable>
     </section>

@@ -3,7 +3,7 @@
 <topic id="topic_xzb_bgr_t4">
   <title>Python 驱动</title>
   <body>
-    <p>本节介绍Python的相关驱动信息。 </p>
+    <p>本节介绍 Python 的相关驱动信息。 </p>
     <p><xref href="pydrive.dita">Python 驱动</xref></p>
     <p><xref href="pybuilt.dita">Python 开发环境搭建</xref></p>
     <p><xref href="pybasic.dita">Python 开发基础</xref></p>    
