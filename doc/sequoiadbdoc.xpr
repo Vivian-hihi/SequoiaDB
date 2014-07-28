@@ -169,6 +169,7 @@
                             <file name="administration/database/database_tool/topics/import.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspt_en.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspt.dita"/>
+                            <file name="administration/database/database_tool/topics/tool_sdbtop_en.dita"/>
                             <file name="administration/database/database_tool/topics/tool_sdbtop.dita"/>
                         </folder>
                     </folder>
@@ -371,13 +372,20 @@
                 </folder>
                 <folder name="Python">
                     <folder name="topics">
+                        <file name="developement/application/Python/topics/py_api_en.dita"/>
                         <file name="developement/application/Python/topics/py_api.dita"/>
+                        <file name="developement/application/Python/topics/pybasic_en.dita"/>
                         <file name="developement/application/Python/topics/pybasic.dita"/>
+                        <file name="developement/application/Python/topics/pybuilt_en.dita"/>
                         <file name="developement/application/Python/topics/pybuilt.dita"/>
+                        <file name="developement/application/Python/topics/pydrive_en.dita"/>
                         <file name="developement/application/Python/topics/pydrive.dita"/>
+                        <file name="developement/application/Python/topics/pysql_en.dita"/>
                         <file name="developement/application/Python/topics/pysql.dita"/>
+                        <file name="developement/application/Python/topics/python_en.dita"/>
                         <file name="developement/application/Python/topics/python.dita"/>
                     </folder>
+                    <file name="developement/application/Python/python_en.ditamap"/>
                     <file name="developement/application/Python/python.ditamap"/>
                 </folder>
                 <folder name="topics">
@@ -576,8 +584,10 @@
             </folder>
             <folder name="upgrade">
                 <folder name="topics">
+                    <file name="installation/upgrade/topics/upgrade_en.dita"/>
                     <file name="installation/upgrade/topics/upgrade.dita"/>
                 </folder>
+                <file name="installation/upgrade/upgrade_en.ditamap"/>
                 <file name="installation/upgrade/upgrade.ditamap"/>
             </folder>
             <folder name="web_manage">

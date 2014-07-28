@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$match"/>
-<meta name="description" content="描述 $match 与find()方法中的 cond 参数完全相同，通过 $match 可以实现从集合中选择匹配条件的记录。 $match的语法规则请参考读取操作 find() 方法的 cond 参数介绍。 示例 下面的示例使用 $match 执行简单的匹配 db.collectionspace.collection ..."/>
+<meta name="description" content="描述 $match 与 find() 方法中的 cond 参数完全相同，通过 $match 可以实现从集合中选择匹配条件的记录。 $match 的语法规则请参考读取操作 find() 方法的 cond 参数介绍。 示例 下面的示例使用 $match 执行简单的匹配 db.collectionspace.collection ..."/>
 <meta name="DC.Relation" scheme="URI" content="project.html"/>
 <meta name="DC.Relation" scheme="URI" content="group.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -39,30 +39,28 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">描述</h2>
       
-      <p class="p"><strong class="ph b">$match</strong>与find()方法中的<strong class="ph b">cond</strong>参数完全相同，通过<strong class="ph b">$match</strong>可以实现从集合中选择匹配条件的记录。</p>
+      <p class="p"><strong class="ph b">$match</strong> 与 find() 方法中的 <strong class="ph b">cond</strong> 参数完全相同，通过 <strong class="ph b">$match</strong> 可以实现从集合中选择匹配条件的记录。</p>
 
-      <p class="p">$match的语法规则请参考读取操作<a class="xref" href="../../../developement/basics/topics/read.html">find()</a>方法的<strong class="ph b">cond</strong>参数介绍。</p>
+      <p class="p">$match 的语法规则请参考读取操作 <a class="xref" href="../../../developement/basics/topics/read.html">find()</a> 方法的 <strong class="ph b">cond</strong> 参数介绍。</p>
 
     </div>
 
 <div class="section"><h2 class="title sectiontitle">示例</h2>
   
   <ul class="ul">
-    <li class="li">下面的示例使用<strong class="ph b">$match</strong>执行简单的匹配
+    <li class="li">下面的示例使用 <strong class="ph b">$match</strong> 执行简单的匹配
             <pre class="pre codeblock">db.collectionspace.collection.aggregate({$match:{$and:[{score:80},{"info.name":{$exists:1}}]}})</pre>
-<p class="p">该操作表示从集合collection中返回符合条件score等于80且info对象中的子对象name字段存在的记录。</p>
+<p class="p">该操作表示从集合 collection 中返回符合条件 score 等于80且 info 对象中的子对象 name 字段存在的记录。</p>
 </li>
 
-    <li class="li">下面的示例使用<strong class="ph b">$match</strong>匹配符合条件的记录，然后使用<a class="xref" href="jgroup.html"><strong class="ph b">$group</strong></a>对结果集分组
-            ，最后使用<a class="xref" href="project.html"><strong class="ph b">$project</strong></a>输出结果集中指定的字段名<pre class="pre codeblock">db.collectionspace.collection.aggregate({$match:{$and:[{score:80},{"info.name":{$exists:1}}]}},{$group:{_id:"$major"}},{$project:{major:1,dep:1}})</pre>
-<p class="p">该操作首先集合collection中返回符合条件score等于80且info对象中的子对象name字段存在的记录，然后按major字段进行分组，最后选择输出结果集中的major和dep字段。</p>
+    <li class="li">下面的示例使用 <strong class="ph b">$match</strong> 匹配符合条件的记录，然后使用 <a class="xref" href="jgroup.html"><strong class="ph b">$group</strong></a>对结果集分组，最后使用 <a class="xref" href="project.html"><strong class="ph b">$project</strong></a> 输出结果集中指定的字段名<pre class="pre codeblock">db.collectionspace.collection.aggregate({$match:{$and:[{score:80},{"info.name":{$exists:1}}]}},{$group:{_id:"$major"}},{$project:{major:1,dep:1}})</pre>
+<p class="p">该操作首先集合 collection 中返回符合条件 score 等于80且 info 对象中的子对象 name 字段存在的记录，然后按 major 字段进行分组，最后选择输出结果集中的 major 和 dep 字段。</p>
 
         </li>
 
   </ul>
 
 </div>
-
    
   </div>
 
@@ -80,7 +78,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

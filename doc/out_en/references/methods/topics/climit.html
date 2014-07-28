@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="cursor.limit()"/>
-<meta name="description" content="cursor.limit(&lt;num&gt;) 控制结果集返回记录的条数。 参数描述 参数名 参数类型 描述 是否必填 num int 自定义返回结果集的记录条数。 否 格式 cousor.limit()方法的定义格式包含num参数，它是int类型。如果不设定num的内容，相当于返回所有的结果集记录。如果想返回结果集的前5条记录，可是设置num的值为5。 示例 ..."/>
+<meta name="description" content="cursor.limit(&lt;num&gt;) 控制结果集返回记录的条数。 参数描述 参数名 参数类型 描述 是否必填 num int 自定义返回结果集的记录条数。 否 格式 cousor.limit() 方法的定义格式包含 num 参数，它是 int 类型。如果不设定 num 的内容，相当于返回所有的结果集记录。如果想返回结果集的前5条记录，可是设置 num 的值为5。 示例 选择集合 bar 下 ..."/>
 <meta name="DC.Relation" scheme="URI" content="hint.html"/>
 <meta name="DC.Relation" scheme="URI" content="cskip.html"/>
 <meta name="DC.Relation" scheme="URI" content="find.html"/>
@@ -46,39 +46,38 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <a name="references_methods_limit__references_method_limit_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_methods_limit__references_method_limit_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d122496e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d129372e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d122496e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d129372e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d122496e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d129372e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d122496e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d129372e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d122496e26" class="stentry">num         </td>
+          <td valign="top" headers="d129372e26" class="stentry">num</td>
 
-          <td valign="top" headers="d122496e29" class="stentry">int                </td>
+          <td valign="top" headers="d129372e29" class="stentry">int</td>
 
-          <td valign="top" headers="d122496e32" class="stentry">自定义返回结果集的记录条数。        </td>
+          <td valign="top" headers="d129372e32" class="stentry">自定义返回结果集的记录条数。</td>
 
-          <td valign="top" headers="d122496e35" class="stentry">否</td>
+          <td valign="top" headers="d129372e35" class="stentry">否</td>
 
         </tr>
 </table>
-
       
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p">cousor.limit()方法的定义格式包含num参数，它是int类型。如果不设定num的内容，相当于返回所有的结果集记录。如果想返回结果集的前5条记录，可是设置num的值为5。</p>
+      <p class="p">cousor.limit() 方法的定义格式包含 num 参数，它是 int 类型。如果不设定 num 的内容，相当于返回所有的结果集记录。如果想返回结果集的前5条记录，可是设置 num 的值为5。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
         <li class="li">
-          <p class="p">选择集合bar下age字段值大于10的记录，控制返回前面10条记录。</p>
+          <p class="p">选择集合 bar 下 age 字段值大于10的记录，控制返回前面10条记录。</p>
 
           <div class="p"><pre class="pre codeblock">db.foo.bar.find({age:{<a class="xref" href="../../console/topics/gt.html">$gt</a>:10}}).limit(10)</pre>
 </div>
@@ -91,7 +90,6 @@
         <p class="p">如果结果集的记录数小于10，按实际的记录数返回，如果结果集的记录数大于10，则返回前10条。</p>
 
       </div>
-
       
     </div>
 
@@ -113,7 +111,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

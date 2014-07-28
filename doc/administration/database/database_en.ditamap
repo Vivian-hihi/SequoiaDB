@@ -56,6 +56,7 @@
          <topicref href="database_tool/topics//import_en.dita"/>
          <topicref href="database_tool/topics/export_en.dita"/>
          <topicref href="database_tool/topics/sdbinspt_en.dita"/>
+         <topicref href="database_tool/topics/tool_sdbtop_en.dita"/>
      </topicref>
  </topicref>
 </map>

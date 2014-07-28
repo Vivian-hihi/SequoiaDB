@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.collection.insert()"/>
-<meta name="description" content="db.collectionspace.collection.insert(&lt;doc|docs&gt;,[flag]) 向指定集合中插入记录。如果集合空间或集合不存在，首先需要手动创建一个集合空间，如db.createCS(&#34;foo&#34;)，再在该集合空间下手动创建集合，如db.foo.createCL(&#34;bar&#34;)。然后在集合中插入记录。 参数描述 参数名 参数类型 描述 是否必填 doc|docs ..."/>
+<meta name="description" content="db.collectionspace.collection.insert(&lt;doc|docs&gt;,[flag]) 向指定集合中插入记录。如果集合空间或集合不存在，首先需要手动创建一个集合空间，如 db.createCS(&#34;foo&#34;)，再在该集合空间下手动创建集合，如 db.foo.createCL(&#34;bar&#34;)。然后在集合中插入记录。 参数描述 参数名 参数类型 描述 是否必填 doc|docs ..."/>
 <meta name="DC.Relation" scheme="URI" content="dbcount.html"/>
 <meta name="DC.Relation" scheme="URI" content="find.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/database/topics/collection.html"/>
@@ -40,57 +40,55 @@
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.insert(&lt;doc|docs&gt;,[flag])</h2>
-      <p class="p">向指定集合中插入记录。如果集合空间或集合不存在，首先需要手动创建一个集合空间，如db.createCS("foo")，再在该集合空间下手动创建集合，如db.foo.createCL("bar")。然后在集合中插入记录。</p>
+      <p class="p">向指定集合中插入记录。如果集合空间或集合不存在，首先需要手动创建一个集合空间，如 db.createCS("foo")，再在该集合空间下手动创建集合，如 db.foo.createCL("bar")。然后在集合中插入记录。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2><p class="p"/>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d128185e27" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d135863e27" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d128185e30" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d135863e30" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d128185e33" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d135863e33" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d128185e36" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d128185e27" class="stentry">doc|docs</td>
-
-          <td valign="top" headers="d128185e30" class="stentry">json对象</td>
-
-          <td valign="top" headers="d128185e33" class="stentry">文档记录。doc为一条记录，docs为多条记录。</td>
-
-          <td valign="top" headers="d128185e36" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d135863e36" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d128185e27" class="stentry">flag</td>
+          <td valign="top" headers="d135863e27" class="stentry">doc|docs</td>
 
-          <td valign="top" headers="d128185e30" class="stentry">Int</td>
+          <td valign="top" headers="d135863e30" class="stentry">Json 对象</td>
 
-          <td valign="top" headers="d128185e33" class="stentry">可取SDB_INSERT_RETURN_ID或者SDB_INSERT_CONTONDUP。<div class="fig fignone"/>
+          <td valign="top" headers="d135863e33" class="stentry">文档记录。doc 为一条记录，docs 为多条记录。</td>
+
+          <td valign="top" headers="d135863e36" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d135863e27" class="stentry">flag</td>
+
+          <td valign="top" headers="d135863e30" class="stentry">Int</td>
+
+          <td valign="top" headers="d135863e33" class="stentry">可取 SDB_INSERT_RETURN_ID 或者 SDB_INSERT_CONTONDUP。<div class="fig fignone"/>
 前者在插入单条记录时有效，表示插入记录后返回记录中“_id”字段内容；后者在插入多条记录时有效，表示在插入的记录中，若存在“_id”字段内容重复的记录时，将跳过<div class="fig fignone"/>
 这些存在重复“_id”的记录继续插入后面记录。默认情况下，当存在重复“_id”字段内容的记录时，将停止插入后面的记录。</td>
 
-          <td valign="top" headers="d128185e36" class="stentry">否</td>
+          <td valign="top" headers="d135863e36" class="stentry">否</td>
 
         </tr>
 </table>
-
       
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p"> insert() 方法的定义格式包含doc|docs和flag两个字段。</p>
+      <p class="p"> insert() 方法的定义格式包含 doc|docs 和 flag 两个字段。</p>
 
       <div class="p">doc：<pre class="pre codeblock">{"&lt; 字段名 1&gt;":"&lt; 值 &gt;","&lt; 字段名 2&gt;":"&lt; 值 &gt;",…}</pre>
 </div>
 
-      <div class="p">
-        docs：<pre class="pre codeblock">{ [
+      <div class="p">docs：<pre class="pre codeblock">{ [
   {"&lt; 字段名 1&gt;":"&lt; 值 &gt;","&lt; 字段名 2&gt;":"&lt; 值 &gt;",…},
   {"&lt; 字段名 1&gt;":"&lt; 值 &gt;","&lt; 字段名 2&gt;":"&lt; 值 &gt;",…},...
  ] }</pre>
@@ -98,7 +96,7 @@
 
       <div class="note note"><span class="notetitle">Note:</span> 
         <div class="p"><ul class="ul">
-          <li class="li">如果插入的记录不指定_id字段时，sequoiadb会自动为记录添加一个_id字段来标识记录的唯一性。</li>
+          <li class="li">如果插入的记录不指定 _id 字段时，SequoiaDB 会自动为记录添加一个 _id 字段来标识记录的唯一性。</li>
 
         </ul>
 </div>
@@ -110,22 +108,22 @@
     <div class="section"><h2 class="title sectiontitle">示例</h2>
         <ul class="ul">
           <li class="li">
-            <p class="p">不指定_id字段，插入一条记录。</p>
+            <p class="p">不指定 _id 字段，插入一条记录。</p>
 
             <pre class="pre codeblock">db.foo.bar.insert({name:"Tom",age:20})</pre>
 
-            <p class="p">此操作是向集合bar中插入一条新的记录，name字段的值为“Tom”，age字段的值为20，_id字段被唯一创建：</p>
+            <p class="p">此操作是向集合 bar 中插入一条新的记录，name 字段的值为“Tom”，age 字段的值为20，_id 字段被唯一创建：</p>
 
             <pre class="pre codeblock">{ "_id": { "$oid": "515152ba49af395200000000" }, "name": "Tom", "age": 20 }</pre>
 
           </li>
 
           <li class="li">
-            <p class="p">插入一条带有_id字段的记录。</p>
+            <p class="p">插入一条带有 _id 字段的记录。</p>
 
             <pre class="pre codeblock">db.foo.bar.insert({_id:10,age:20})</pre>
 
-            <p class="p">此操作是向集合bar中插入一条新的记录，_id字段的值为10，age字段的值为20：</p>
+            <p class="p">此操作是向集合 bar 中插入一条新的记录，_id 字段的值为10，age 字段的值为20：</p>
 
             <pre class="pre codeblock">{ "_id": 10, "age": 20 }</pre>
 
@@ -136,11 +134,11 @@
 
             <pre class="pre codeblock">db.foo.bar.insert([{_id:20,name:"Mike",age:15},{name:"John",age:25,phone:123}])</pre>
 
-            <p class="p">此操作将会在集合bar中插入两条记录：</p>
+            <p class="p">此操作将会在集合 bar 中插入两条记录：</p>
 
-            <p class="p">1）其中一条记录_id字段的值为20，name字段的值为“Mike”，age字段的值为15。</p>
+            <p class="p">1）其中一条记录 _id 字段的值为20，name 字段的值为“Mike”，age 字段的值为15。</p>
 
-            <p class="p">2）一条记录系统自动为_id字段生成唯一值，name字段的值为“John”，age字段的值为25，phone字段的值为123。</p>
+            <p class="p">2）一条记录系统自动为 _id 字段生成唯一值，name 字段的值为“John”，age 字段的值为25，phone 字段的值为123。</p>
 
             <pre class="pre codeblock">     {
         "_id": 20, 
@@ -161,7 +159,7 @@
 
             <pre class="pre codeblock">db.foo.bar.insert([{_id:1,a:1 },{_id:1,b:2 },{_id:3,c:3}], SDB_INSERT_CONTONDUP)</pre>
 
-            <p class="p">此操作将会在集合bar中插入两条记录：</p>
+            <p class="p">此操作将会在集合 bar 中插入两条记录：</p>
 
             <pre class="pre codeblock">{
 "_id": 1,
@@ -196,7 +194,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

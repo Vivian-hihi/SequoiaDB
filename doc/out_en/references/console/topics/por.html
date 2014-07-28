@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$or"/>
-<meta name="description" content="语法 {$or:[{&lt;表达式1&gt;},{&lt;表达式2&gt;},...,{&lt;表达式N&gt;}]} 描述 $or是一个逻辑“或”操作。它的作用是选择满足表达式（&lt;表达式1&gt;,&lt;表达式2&gt;,...,&lt;表达式N&gt;）其中一个表达式的记录。只要有一个表达式的计算结果为true，记录就会返回。 示例 选择集合bar下name字段值为“Tom”，且age字段值为20或price字段值小于10的记录。 db.foo.bar ..."/>
+<meta name="description" content="语法 {$or:[{&lt;表达式1&gt;},{&lt;表达式2&gt;},...,{&lt;表达式N&gt;}]} 描述 $or 是一个逻辑“或”操作。它的作用是选择满足表达式（&lt;表达式1&gt;,&lt;表达式2&gt;,...,&lt;表达式N&gt;）其中一个表达式的记录。只要有一个表达式的计算结果为 true，记录就会返回。 示例 选择集合 bar 下 name 字段值为“Tom”，且 age 字段值为20或 price 字段值小于10的记录。 db ..."/>
 <meta name="DC.Relation" scheme="URI" content="pall.html"/>
 <meta name="DC.Relation" scheme="URI" content="por.html"/>
 <meta name="DC.Relation" scheme="URI" content="inc.html"/>
@@ -48,21 +48,21 @@
 
     <div class="section"><h2 class="title sectiontitle">描述</h2>
       
-      <p class="p">$or是一个逻辑“或”操作。它的作用是选择满足表达式（&lt;表达式1&gt;,&lt;表达式2&gt;,...,&lt;表达式N&gt;）其中一个表达式的记录。只要有一个表达式的计算结果为true，记录就会返回。</p>
+      <p class="p">$or 是一个逻辑“或”操作。它的作用是选择满足表达式（&lt;表达式1&gt;,&lt;表达式2&gt;,...,&lt;表达式N&gt;）其中一个表达式的记录。只要有一个表达式的计算结果为 true，记录就会返回。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
         <li class="li">
-          <p class="p">选择集合bar下name字段值为“Tom”，且age字段值为20或price字段值小于10的记录。</p>
+          <p class="p">选择集合 bar 下 name 字段值为“Tom”，且 age 字段值为20或 price 字段值小于10的记录。</p>
 
           <pre class="pre codeblock">db.foo.bar.find({name:"Tom",$or:[{age:20},{price:{$lt:10}}]})</pre>
 
         </li>
 
         <li class="li">
-          <p class="p">$or匹配嵌套对象中的字段名。选择age字段值小于20或者嵌套对象snapshot中的type字段值为“system”的记录，并使用<a class="xref" href="inc.html">$inc</a>更新这些记录的salary字段值。</p>
+          <p class="p">$or 匹配嵌套对象中的字段名。选择 age 字段值小于20或者嵌套对象 snapshot 中的 type 字段值为“system”的记录，并使用 <a class="xref" href="inc.html">$inc</a> 更新这些记录的 salary 字段值。</p>
 
           <div class="p"><pre class="pre codeblock">db.foo.bar.update({$inc:{salary:200}},{$or:[{age:{$lt:20}},{"snapshot.type":"system"}]})</pre>
 </div>
@@ -92,7 +92,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

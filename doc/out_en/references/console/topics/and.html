@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$and"/>
-<meta name="description" content="语法 {$and:[{&lt;表达式1&gt;}，{&lt;表达式2&gt;},...,{&lt;表达式N&gt;}]} 描述 $and是一个逻辑“与”操作。它的作用是选择满足所有表达式（&lt;表达式1&gt;，&lt;表达式2&gt;,...,&lt;表达式N&gt;）的记录， 但是如果第一个表达式（&lt;表达式1&gt;）的计算结果为false，SequoiaDB将不会再执行后面的表达式。 示例 选择集合bar下age字段值为20，price字段值小于10的记录 db ..."/>
+<meta name="description" content="语法 {$and:[{&lt;表达式1&gt;}，{&lt;表达式2&gt;},...,{&lt;表达式N&gt;}]} 描述 $and 是一个逻辑“与”操作。它的作用是选择满足所有表达式（&lt;表达式1&gt;，&lt;表达式2&gt;,...,&lt;表达式N&gt;）的记录，但是如果第一个表达式（&lt;表达式1&gt;）的计算结果为 false，SequoiaDB 将不会再执行后面的表达式。 示例 选择集合 bar 下 age 字段值为20，price ..."/>
 <meta name="DC.Relation" scheme="URI" content="pall.html"/>
 <meta name="DC.Relation" scheme="URI" content="por.html"/>
 <meta name="DC.Relation" scheme="URI" content="inc.html"/>
@@ -48,20 +48,19 @@
 
     <div class="section"><h2 class="title sectiontitle">描述</h2>
       
-      <p class="p">$and是一个逻辑“与”操作。它的作用是选择满足所有表达式（&lt;表达式1&gt;，&lt;表达式2&gt;,...,&lt;表达式N&gt;）的记录，
-但是如果第一个表达式（&lt;表达式1&gt;）的计算结果为false，SequoiaDB将不会再执行后面的表达式。</p>
+      <p class="p">$and 是一个逻辑“与”操作。它的作用是选择满足所有表达式（&lt;表达式1&gt;，&lt;表达式2&gt;,...,&lt;表达式N&gt;）的记录，但是如果第一个表达式（&lt;表达式1&gt;）的计算结果为 false，SequoiaDB 将不会再执行后面的表达式。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
         <li class="li">
-          <p class="p">选择集合bar下age字段值为20，price字段值小于10的记录</p>
+          <p class="p">选择集合 bar 下 age 字段值为20，price 字段值小于10的记录</p>
 
           <pre class="pre codeblock">db.foo.bar.find({$and:[{age:20},{price:{$lt:10}}]})</pre>
 
           <div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">Sequoiadb提供了一种隐式的and操作，用逗号（,）隔开个表达式，例如</p>
+            <p class="p">SequoiaDB 提供了一种隐式的 and 操作，用逗号（,）隔开个表达式，例如</p>
 
             <div class="p"><pre class="pre codeblock">db.foo.bar.find({age:20,price:{$lt:10}})</pre>
 </div>
@@ -71,7 +70,7 @@
         </li>
 
         <li class="li">
-          <p class="p">当使用and操作对同一个字段名时，如{age：{$lt:20}}and{age:{$exists:1}}。那么可以用$and操作两个分开的表达式，也可以合并这两个表达式{age:{$lt:20,$exists:1}}。</p>
+          <p class="p">当使用 and 操作对同一个字段名时，如{age：{$lt:20}}and{age:{$exists:1}}。那么可以用 $and 操作两个分开的表达式，也可以合并这两个表达式{age:{$lt:20,$exists:1}}。</p>
 
           <div class="p">
             <pre class="pre codeblock">db.foo.bar.update({$inc:{salary:200}},{$and:[{age:{$lt:20}},{age:{$exists:1}}]})
@@ -79,7 +78,7 @@ db.foo.bar.update({$inc:{salary:200}},{age:{$lt:20,$exists:1}})</pre>
 
           </div>
 
-          <p class="p">两个操作的结果相同，首先查询集合bar下存在age字段并且age的值小于20的记录，然后对这些记录的salary字段的值增加200。</p>
+          <p class="p">两个操作的结果相同，首先查询集合 bar 下存在 age 字段并且 age 的值小于20的记录，然后对这些记录的 salary 字段的值增加200。</p>
 
         </li>
 
@@ -106,7 +105,7 @@ db.foo.bar.update({$inc:{salary:200}},{age:{$lt:20,$exists:1}})</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>

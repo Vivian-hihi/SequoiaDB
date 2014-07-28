@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="cursor.sort()"/>
-<meta name="description" content="cursor.sort(&lt;sort&gt;) 对结果集按指定字段排序。 参数描述 参数名 参数类型 描述 是否必填 sort json对象 对结果集按指定字段排序。字段名的值为1或者-1,1代表升序；-1代表降序。 否 格式 cursor.sort()方法的定义格式包含sort参数，它是一个json对象。如果不设定sort的内容，相当于对返回的结果集不排序。 设定sort参数的话，格式如下： ..."/>
+<meta name="description" content="cursor.sort(&lt;sort&gt;) 对结果集按指定字段排序。 参数描述 参数名 参数类型 描述 是否必填 sort Json 对象 对结果集按指定字段排序。字段名的值为1或者-1,1代表升序；-1代表降序。 否 格式 cursor.sort() 方法的定义格式包含 sort 参数，它是一个 Json 对象。如果不设定 sort 的内容，相当于对返回的结果集不排序。 设定 sort ..."/>
 <meta name="DC.Relation" scheme="URI" content="hint.html"/>
 <meta name="DC.Relation" scheme="URI" content="find.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../console/topics/gt.html"/>
@@ -45,34 +45,33 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <a name="references_methods_sort__references_method_sort_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_methods_sort__references_method_sort_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d126899e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d134577e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d126899e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d134577e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d126899e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d134577e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d126899e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d134577e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d126899e26" class="stentry">sort</td>
+          <td valign="top" headers="d134577e26" class="stentry">sort</td>
 
-          <td valign="top" headers="d126899e29" class="stentry">json对象     </td>
+          <td valign="top" headers="d134577e29" class="stentry">Json 对象</td>
 
-          <td valign="top" headers="d126899e32" class="stentry">对结果集按指定字段排序。字段名的值为1或者-1,1代表升序；-1代表降序。             </td>
+          <td valign="top" headers="d134577e32" class="stentry">对结果集按指定字段排序。字段名的值为1或者-1,1代表升序；-1代表降序。</td>
 
-          <td valign="top" headers="d126899e35" class="stentry">否</td>
+          <td valign="top" headers="d134577e35" class="stentry">否</td>
 
         </tr>
 </table>
-
       
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p">cursor.sort()方法的定义格式包含sort参数，它是一个json对象。如果不设定sort的内容，相当于对返回的结果集不排序。</p>
+      <p class="p">cursor.sort() 方法的定义格式包含 sort 参数，它是一个 Json 对象。如果不设定 sort 的内容，相当于对返回的结果集不排序。</p>
 
-      <p class="p">设定sort参数的话，格式如下：</p>
+      <p class="p">设定 sort 参数的话，格式如下：</p>
 
       <div class="p"><pre class="pre codeblock">{&lt;字段名1&gt;:&lt;-1|1&gt;,&lt;字段名2&gt;:&lt;-1|1&gt;,...}</pre>
 </div>
@@ -82,19 +81,17 @@
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
         <li class="li">
-          <p class="p">返回集合bar中age字段值大于20的记录，设置只返回记录的name和age字段，并按age字段值的升序排序。</p>
+          <p class="p">返回集合 bar 中 age 字段值大于20的记录，设置只返回记录的 name 和 age 字段，并按 age 字段值的升序排序。</p>
 
           <div class="p"><pre class="pre codeblock">db.foo.bar.find({age:{<a class="xref" href="../../console/topics/gt.html">$gt</a>:20}},{age:"",name:""}).sort({age:1})</pre>
 </div>
 
-          <div class="note note"><span class="notetitle">Note:</span> <p class="p">通过<a class="xref" href="find.html">find()</a>方法，我们能任意选择我们想要返回的字段名，在上例中我们选择了返回记录的age和name字段，此时用sort()方法时，只能对记录的age或name字段排序。而如果我们
-择返回记录的所有字段，即不设置find方法的sel参数内容时，那么sort()能对任意字段排序。</p>
+          <div class="note note"><span class="notetitle">Note:</span> <p class="p">通过 <a class="xref" href="find.html">find()</a> 方法，我们能任意选择我们想要返回的字段名，在上例中我们选择了返回记录的 age 和 name 字段，此时用 sort() 方法时，只能对记录的 age 或 name 字段排序。而如果我们选择返回记录的所有字段，即不设置 find 方法的 sel 参数内容时，那么 sort() 能对任意字段排序。</p>
 </div>
 
         </li>
 
       </ul>
-
       
     </div>
 
@@ -115,7 +112,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
           
     </div>
 </body>
