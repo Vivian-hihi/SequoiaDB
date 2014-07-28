@@ -142,7 +142,7 @@ namespace engine
    #define  OM_REST_FIELD_COMMAND            "cmd"
 
    // ***************om rest create_cluster_req***********************
-   #define  OM_CREATE_CLUSTER_REQ            "CreateClusterReq"
+   #define  OM_CREATE_CLUSTER_REQ            "create cluster"
 
    #define  OM_REST_CLUSTER_INFO             "ClusterInfo"
 
@@ -159,11 +159,11 @@ namespace engine
    // *****************************************************************
 
    // *********************om rest query_cluster_req*******************
-   #define  OM_QUERY_CLUSTER_REQ             "QueryClusterReq"
+   #define  OM_QUERY_CLUSTER_REQ             "query cluster"
    // *****************************************************************
 
    // *********************om rest login_req***************************
-   #define  OM_LOGIN_REQ                     "LoginReq"
+   #define  OM_LOGIN_REQ                     "login"
 
    #define  OM_REST_FIELD_LOGIN_NAME         "User"
    #define  OM_REST_FIELD_LOGIN_PASSWD       "Passwd"
@@ -171,11 +171,11 @@ namespace engine
    // *****************************************************************
 
    // *******************om rest check_session_req*********************
-   #define  OM_CHECK_SESSION_REQ             "CheckSessionReq"
+   #define  OM_CHECK_SESSION_REQ             "check session"
    // *****************************************************************
 
    // *********************om rest scan_host_req***********************
-   #define  OM_SCAN_HOST_REQ                 "ScanHostReq"
+   #define  OM_SCAN_HOST_REQ                 "scan host"
 
    #define  OM_REST_FIELD_HOST_INFO          "HostInfo"
 
@@ -194,7 +194,7 @@ namespace engine
    // *****************************************************************
 
    // *********************om rest check_host_req**********************
-   #define  OM_CHECK_HOST_REQ                "CheckHostReq"
+   #define  OM_CHECK_HOST_REQ                "check host"
 
    // sub command with agent
    #define  OM_BASIC_CHECK_REQ               "BasicCheckReq"
@@ -229,7 +229,7 @@ namespace engine
    // *****************************************************************
 
    // ***************om rest add_host_req******************************
-   #define  OM_ADD_HOST_REQ                  "AddHostReq"
+   #define  OM_ADD_HOST_REQ                  "add host"
 
    #define  OM_ROLLBACK_TRANSACTION_REQ      "RollbackTransactionReq"
 
@@ -238,12 +238,12 @@ namespace engine
    // *****************************************************************
 
    // om rest query_host_req
-   #define  OM_QUERY_HOST_REQ                "QueryHostReq"
+   #define  OM_QUERY_HOST_REQ                "query host"
    // *****************************************************************
 
 
    // om rest query_business_list_req
-   #define  OM_QUERY_BUSINESS_REQ            "QueryBusinessListReq"
+   #define  OM_QUERY_BUSINESS_REQ            "query business list"
 
    #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
    #define  OM_BUSINESS_FILE_NAME            "business.xml"
@@ -259,7 +259,7 @@ namespace engine
    // *****************************************************************
 
    // om rest query_business_template_req
-   #define  OM_QUERY_BUSINESS_TEMPLATE_REQ   "QueryBusinessTemplateReq"
+   #define  OM_QUERY_BUSINESS_TEMPLATE_REQ   "query business template"
 
    #define  OM_TEMPLATE_FILE_NAME            "_template.xml"
    #define  OM_XML_CLUSTER_TYPE_LIST         "cluster_type_list"
@@ -291,7 +291,7 @@ namespace engine
    // *****************************************************************
 
    // om rest config_business_req
-   #define  OM_CONFIG_BUSINESS_REQ           "ConfigBusinessReq"
+   #define  OM_CONFIG_BUSINESS_REQ           "config business"
 
    #define  OM_CONFIG_ITEM_FILE_NAME         "_config.xml"
    #define  OM_XML_CONFIG                    "config"
@@ -316,7 +316,7 @@ namespace engine
    // *****************************************************************
 
    // om rest install_business_req
-   #define  OM_INSTALL_BUSINESS_REQ          "AddBusinessReq"
+   #define  OM_INSTALL_BUSINESS_REQ          "add business"
 
    #define  OM_ROLLBACK_INSTALL_REQ          "RollbackInstallReq"
 
@@ -326,7 +326,7 @@ namespace engine
    // *****************************************************************
 
    // om query install progress
-   #define  OM_QUERY_INSTALL_PROGRESS        "QueryInstallProgress"
+   #define  OM_QUERY_INSTALL_PROGRESS        "query install progress"
 
    #define  OM_REST_TASK_INFO                "Task"
 
