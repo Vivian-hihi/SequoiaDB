@@ -36,7 +36,9 @@
 #include "msgDef.h"
 #include "pmdCommon.hpp"
 #include "ossMem.hpp"
+#include "rtnCommand.hpp"
 #include "../omsvc/omGetFileCommand.hpp"
+#include "rtn.hpp"
 
 #include "../bson/bson.h"
 
@@ -58,14 +60,55 @@ namespace engine
       pAdptor->sendResponse( pRestSession, HTTP_OK ) ;
    }
 
+
+   #define PMD_REST_SESSION_SNIFF_TIMEOUT    ( 10 * OSS_ONE_SEC )
+
+   /*
+      _restSessionInfo implement
+   */
+   void _restSessionInfo::releaseMem()
+   {
+      pmdEDUCB::CATCH_MAP_IT it = _catchMap.begin() ;
+      while ( it != _catchMap.end() )
+      {
+         SDB_OSS_FREE( it->second ) ;
+         ++it ;
+      }
+      _catchMap.clear() ;
+   }
+
+   void _restSessionInfo::pushMemToMap( _pmdEDUCB::CATCH_MAP &catchMap )
+   {
+      _pmdEDUCB::CATCH_MAP_IT it = _catchMap.begin() ;
+      while ( it != _catchMap.end() )
+      {
+         catchMap.insert( std::make_pair( it->first, it->second ) ) ;
+         ++it ;
+      }
+      _catchMap.clear() ;
+   }
+
+   void _restSessionInfo::makeMemFromMap( _pmdEDUCB::CATCH_MAP &catchMap )
+   {
+      _pmdEDUCB::CATCH_MAP_IT it = catchMap.begin() ;
+      while ( it != catchMap.end() )
+      {
+         _catchMap.insert( std::make_pair( it->first, it->second ) ) ;
+         ++it ;
+      }
+      catchMap.clear() ;
+   }
+
    /*
       _pmdRestSession implement
    */
    _pmdRestSession::_pmdRestSession( SOCKET fd )
-   :_pmdLocalSession( fd )
+   :_pmdSession( fd )
    {
       _pFixBuff         = NULL ;
       _pSessionInfo     = NULL ;
+      _pRTNCB           = NULL ;
+      _pDPSCB           = NULL ;
 
       _wwwRootPath      = pmdGetOptionCB()->getWWWPath() ;
    }
@@ -81,8 +124,16 @@ namespace engine
 
    UINT64 _pmdRestSession::identifyID()
    {
-      // TODO:XUJIANHUI
+      if ( _pSessionInfo )
+      {
+         return _pSessionInfo->_attr._sessionID ;
+      }
       return 0 ;
+   }
+
+   INT32 _pmdRestSession::getServiceType() const
+   {
+      return CMD_SPACE_SERVICE_LOCAL ;
    }
 
    INT32 _pmdRestSession::run()
@@ -106,10 +157,20 @@ namespace engine
       while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
       {
          // sniff wether has data
-         rc = sniffData() ;
+         rc = sniffData( PMD_REST_SESSION_SNIFF_TIMEOUT ) ;
          if ( SDB_TIMEOUT == rc )
          {
-            continue ;
+            if ( _pSessionInfo )
+            {
+               saveSession() ;
+               sdbGetOMManager()->detachSessionInfo( _pSessionInfo ) ;
+               _pSessionInfo = NULL ;
+               continue ;
+            }
+            else
+            {
+               break ;
+            }
          }
          else if ( rc < 0 )
          {
@@ -144,7 +205,6 @@ namespace engine
             {
                _sendOpError2Web( rc, pAdptor, this, _pEDUCB ) ;
             }
-            
             break ;
          }
          // session is not exist
@@ -163,7 +223,7 @@ namespace engine
             // if session exist, restore
             if ( _pSessionInfo )
             {
-               restoreSession( _pSessionInfo ) ;
+               restoreSession() ;
             }
          }
          // recv body
@@ -182,6 +242,12 @@ namespace engine
                _sendOpError2Web( rc, pAdptor, this, _pEDUCB ) ;
             }
             break ;
+         }
+
+         // update active time
+         if ( _pSessionInfo )
+         {
+            _pSessionInfo->active() ;
          }
 
          // increase process event count
@@ -391,16 +457,45 @@ namespace engine
 
    void _pmdRestSession::_onAttach()
    {
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      _pRTNCB = krcb->getRTNCB() ;
+      _pDPSCB = krcb->getDPSCB() ;
+
+      if ( _pDPSCB && !_pDPSCB->isLogLocal() )
+      {
+         _pDPSCB = NULL ;
+      }
    }
 
    void _pmdRestSession::_onDetach()
    {
-   }
+      // rollback transaction
+      if ( DPS_INVALID_TRANS_ID != eduCB()->getTransID() )
+      {
+         INT32 rc = rtnTransRollback( eduCB(), _pDPSCB ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Session[%s] rollback trans info failed, rc: %d",
+                    sessionName(), rc ) ;
+         }
+      }
 
-   INT32 _pmdRestSession::_onAuth( MsgHeader * msg )
-   {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      // delete all context
+      INT64 contextID = -1 ;
+      while ( -1 != ( contextID = eduCB()->contextPeek() ) )
+      {
+         _pRTNCB->contextDelete( contextID, NULL ) ;
+      }
+
+      eduCB()->setClientSock( NULL ) ;
+
+      // save session info
+      if ( _pSessionInfo )
+      {
+         saveSession() ;
+         sdbGetOMManager()->detachSessionInfo( _pSessionInfo ) ;
+         _pSessionInfo = NULL ;
+      }
    }
 
    INT32 _pmdRestSession::getFixBuffSize() const
@@ -417,13 +512,18 @@ namespace engine
       return _pFixBuff ;
    }
 
-   void _pmdRestSession::restoreSession( restSessionInfo *pSessionInfo )
+   void _pmdRestSession::restoreSession()
    {
-      _pSessionInfo = pSessionInfo ;
+      pmdEDUCB::CATCH_MAP catchMap ;
+      _pSessionInfo->pushMemToMap( catchMap ) ;
+      eduCB()->restoreBuffs( catchMap ) ;
    }
 
-   void _pmdRestSession::saveSession( restSessionInfo &sessionInfo )
+   void _pmdRestSession::saveSession()
    {
+      pmdEDUCB::CATCH_MAP catchMap ;
+      eduCB()->saveBuffs( catchMap ) ;
+      _pSessionInfo->makeMemFromMap( catchMap ) ;
    }
 
    BOOLEAN _pmdRestSession::isAuthOK()
@@ -449,7 +549,7 @@ namespace engine
          }
       }
 
-      return NULL ;
+      return "" ;
    }
 
 }

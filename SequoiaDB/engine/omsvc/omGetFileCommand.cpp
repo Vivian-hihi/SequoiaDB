@@ -156,7 +156,6 @@ namespace engine
 
    done:
       return SDB_OK ;
-
    error:
       goto done ;
    }

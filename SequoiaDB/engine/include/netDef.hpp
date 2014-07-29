@@ -56,6 +56,9 @@ namespace engine
    typedef UINT32 NET_NODE_ID ;
    typedef UINT16 NET_SERVICE_ID ;
 
+   // invalid timer id
+   #define NET_INVALID_TIMER_ID        ( 0 )
+
    /*
       _NET_NODE_STATUS define
    */

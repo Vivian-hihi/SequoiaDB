@@ -270,8 +270,6 @@
 #define FIELD_NAME_DOMAIN_AUTO_SPLIT         "AutoSplit"
 #define FIELD_NAME_DOMAIN_AUTO_REBALANCE     "AutoRebalance"
 
-#define FIELD_NAME_SESSIONID                 "SessionID"
-
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
 #define IXM_FIELD_NAME_UNIQUE                "unique"

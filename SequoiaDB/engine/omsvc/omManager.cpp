@@ -64,6 +64,7 @@ namespace engine
       _maxRestBodySize     = OM_REST_MAX_BODY_SIZE ;
       _restTimeout         = REST_TIMEOUT ;
       _sequence            = 1 ;
+      _checkSessionTimer   = NET_INVALID_TIMER_ID ;
 
       _hwRouteID.value     = MSG_INVALID_ROUTEID ;
       _hwRouteID.columns.groupID = 2 ;
@@ -224,20 +225,40 @@ namespace engine
 
    INT32 _omManager::active ()
    {
+      INT32 rc = SDB_OK ;
+      pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+
       // set to primary
       pmdSetPrimary( TRUE ) ;
 
-      // TODO:XUJIANHUI
-      // STARTUP EDU
-      // SET TIMER
+      // start up edu
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (void*)this, &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start OM Manager edu, rc: %d", rc ) ;
 
-      return SDB_OK ;
+      // register timer
+      _checkSessionTimer = setTimer( 60 * OSS_ONE_SEC ) ;
+      if ( NET_INVALID_TIMER_ID == _checkSessionTimer )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to set timer" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _omManager::deactive ()
    {
-      // TODO:XUJIANHUI
-      // CLOSE TIMER
+      // kill check sessions timer
+      if ( NET_INVALID_TIMER_ID != _checkSessionTimer )
+      {
+         killTimer( _checkSessionTimer ) ;
+         _checkSessionTimer = NET_INVALID_TIMER_ID ;
+      }
       return SDB_OK ;
    }
 
@@ -271,6 +292,26 @@ namespace engine
       _mapHost2ID.clear() ;
 
       return SDB_OK ;
+   }
+
+   UINT32 _omManager::setTimer( UINT32 milliSec )
+   {
+      UINT32 timeID = NET_INVALID_TIMER_ID ;
+      _netAgent.addTimer( milliSec, &_timerHandler, timeID ) ;
+      return timeID ;
+   }
+
+   void _omManager::killTimer( UINT32 timerID )
+   {
+      _netAgent.removeTimer( timerID ) ;
+   }
+
+   void _omManager::onTimer( UINT64 timerID, UINT32 interval )
+   {
+      if ( timerID == _checkSessionTimer )
+      {
+         _checkSession( interval ) ;
+      }
    }
 
    INT32 _omManager::authenticate( BSONObj &obj, pmdEDUCB *cb )
@@ -371,19 +412,66 @@ namespace engine
       }
       _omLatch.release_shared() ;
 
+      if ( pSessionInfo )
+      {
+         pSessionInfo->lock() ;
+      }
+
       return pSessionInfo ;
    }
 
    void _omManager::detachSessionInfo( restSessionInfo * pSessionInfo )
    {
       SDB_ASSERT( pSessionInfo, "Session can't be NULL" ) ;
-      pSessionInfo->_inNum.dec() ;
+
+      if ( pSessionInfo->isLock() )
+      {
+         pSessionInfo->unlock() ;
+         pSessionInfo->_inNum.dec() ;
+      }
    }
 
-   void _omManager::invalidSessionInfo( restSessionInfo *pSessionInfo )
+   void _omManager::_invalidSessionInfo( restSessionInfo *pSessionInfo )
    {
       SDB_ASSERT( pSessionInfo, "Session can't be NULL" ) ;
       pSessionInfo->invalidate() ;
+   }
+
+   void _omManager::_checkSession( UINT32 interval )
+   {
+      map<string, restSessionInfo*>::iterator it  ;
+      restSessionInfo *pInfo = NULL ;
+
+      _omLatch.get() ;
+      it = _mapSessions.begin() ;
+      while ( it != _mapSessions.end() )
+      {
+         pInfo = it->second ;
+         if ( pInfo->isIn() )
+         {
+            ++it ;
+            continue ;
+         }
+
+         if ( pInfo->isValid()  )
+         {
+            pInfo->onTimer( interval ) ;
+            if ( pInfo->isTimeout( OM_REST_SESSION_TIMEOUT ) )
+            {
+               pInfo->invalidate() ;
+            }
+         }
+
+         if ( !pInfo->isValid() )
+         {
+            _delFromUserMap( pInfo->_attr._userName, pInfo ) ;
+            SDB_OSS_DEL pInfo ;
+            _mapSessions.erase( it++ ) ;
+            continue ;
+         }
+         ++it ;
+      }
+      _omLatch.release() ;
    }
 
    restSessionInfo* _omManager::newSessionInfo( const string &userName,
@@ -410,15 +498,46 @@ namespace engine
       // release lock
       _omLatch.release() ;
 
+      if ( newSession )
+      {
+         newSession->lock() ;
+      }
+
    done:
       return newSession ;
    error:
       goto done ;
    }
 
-   void _omManager::releaseSessionInfo (const string &sessionID )
+   void _omManager::releaseSessionInfo ( const string &sessionID )
    {
-      //TODO: delete from _mapSessions & _mapUser2Sessions
+      restSessionInfo *pInfo = NULL ;
+      map<string, restSessionInfo*>::iterator it ;
+
+      _omLatch.get() ;
+      it = _mapSessions.find( sessionID ) ;
+      if ( it != _mapSessions.end() )
+      {
+         pInfo = it->second ;
+         _delFromUserMap( pInfo->_attr._userName, pInfo ) ;
+
+         if ( pInfo->isLock() )
+         {
+            detachSessionInfo( pInfo ) ;
+         }
+
+         // no use
+         if ( !pInfo->isIn() )
+         {
+            SDB_OSS_DEL pInfo ;
+            _mapSessions.erase( it ) ;
+         }
+         else
+         {
+            _invalidSessionInfo( pInfo ) ;
+         }
+      }
+      _omLatch.release() ;
    }
 
    void _omManager::_add2UserMap( const string &user,
@@ -436,8 +555,33 @@ namespace engine
       // the user already exist
       else
       {
-         //vector<restSessionInfo*> &vecSession = it->second ;
          it->second.push_back( pSessionInfo ) ;
+      }
+   }
+
+   void _omManager::_delFromUserMap( const string &user,
+                                     restSessionInfo *pSessionInfo )
+   {
+      map<string, vector<restSessionInfo*> >::iterator it ;
+      it = _mapUser2Sessions.find( user ) ;
+      if ( it != _mapUser2Sessions.end() )
+      {
+         vector<restSessionInfo*> &vecSessions = it->second ;
+         vector<restSessionInfo*>::iterator itVec = vecSessions.begin() ;
+         while ( itVec != vecSessions.end() )
+         {
+            if ( *itVec == pSessionInfo )
+            {
+               vecSessions.erase( itVec ) ;
+               break ;
+            }
+            ++itVec ;
+         }
+
+         if ( vecSessions.size() == 0 )
+         {
+            _mapUser2Sessions.erase( it ) ;
+         }
       }
    }
 

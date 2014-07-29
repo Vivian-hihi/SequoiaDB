@@ -53,6 +53,9 @@ namespace engine
    // max rest body size
    #define OM_REST_MAX_BODY_SIZE             ( 64 * 1024 * 1024 )
 
+   // Session Time out
+   #define OM_REST_SESSION_TIMEOUT           ( 10 * 60 * 1000 )
+
 
    // OM user's table
    #define  OM_DEFAULT_LOGIN_USER            "admin"

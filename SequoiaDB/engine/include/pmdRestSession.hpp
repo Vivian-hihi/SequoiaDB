@@ -33,9 +33,9 @@
 #ifndef PMD_REST_SESSION_HPP_
 #define PMD_REST_SESSION_HPP_
 
-#include "pmdSession.hpp"
+#include "pmdSessionBase.hpp"
 #include "restDefine.hpp"
-#include "ossRWMutex.hpp"
+#include "ossLatch.hpp"
 #include "ossAtomic.hpp"
 #include "../omsvc/omCommandInterface.hpp"
 
@@ -46,19 +46,13 @@ using namespace bson ;
 namespace engine
 {
 
+   class _dpsLogWrapper ;
+   class _SDB_RTNCB ;
+
    /*
       global define
    */
    #define SESSION_USER_NAME_LEN       ( 63 )
-
-   /*
-      Internal memory assistor
-   */
-   typedef struct _sessionMemInfo
-   {
-      INT32                   _size ;
-      _sessionMemInfo         *_next ;
-   } sessionMemInfo ;
 
    /*
       _restSessionInfo define
@@ -74,11 +68,15 @@ namespace engine
 
       // status
       UINT64               _activeTime ;
+      INT64                _timeoutCounter ; // ms
       BOOLEAN              _authOK ;
       ossAtomic32          _inNum ;
-      ossRWMutex           _inRWLock ;
+      ossSpinXLatch        _inLatch ;
+      BOOLEAN              _isLock ;
+
       std::string          _id ;
-      sessionMemInfo       *_pSessionMem ;
+
+      _pmdEDUCB::CATCH_MAP _catchMap ;
 
       _restSessionInfo()
       :_inNum( 0 )
@@ -87,44 +85,70 @@ namespace engine
          _attr._loginTime     = (UINT64)time(NULL) ;
          ossMemset( _attr._userName, 0, sizeof( _attr._userName ) ) ;
          _activeTime          = _attr._loginTime ;
+         _timeoutCounter      = 0 ;
          _authOK              = FALSE ;
-         
-         _pSessionMem         = NULL ;
+         _isLock              = FALSE ;
       }
-
       INT32 getAttrSize()
       {
          return (INT32)sizeof( _attr ) ;
       }
-
-      void releaseMem()
-      {
-         sessionMemInfo *next = _pSessionMem ;
-         while ( _pSessionMem )
-         {
-            next = _pSessionMem->_next ;
-            SDB_OSS_FREE( (CHAR*)_pSessionMem ) ;
-            _pSessionMem = next ;
-         }
-      }
-
       BOOLEAN isValid() const
       {
          return _id.size() == 0 ? FALSE : TRUE ;
       }
-
+      BOOLEAN isIn()
+      {
+         return _inNum.compare( 0 ) ;
+      }
       void invalidate()
       {
          _id     = "" ;
          _authOK = FALSE ;
       }
+      void active()
+      {
+         _activeTime       = (UINT64)time( NULL ) ;
+         _timeoutCounter   = 0 ;
+      }
+      BOOLEAN isTimeout( INT64 timeout ) const
+      {
+         if ( timeout > 0 && _timeoutCounter > timeout )
+         {
+            return TRUE ;
+         }
+         return FALSE ;
+      }
+      void onTimer( UINT32 interval )
+      {
+         _timeoutCounter += interval ;
+      }
+      void lock()
+      {
+         _inLatch.get() ;
+         _isLock = TRUE ;
+      }
+      void unlock()
+      {
+         _inLatch.release() ;
+         _isLock = FALSE ;
+      }
+      BOOLEAN isLock() const
+      {
+         return _isLock ;
+      }
+
+      void releaseMem() ;
+      void pushMemToMap( _pmdEDUCB::CATCH_MAP &catchMap ) ;
+      void makeMemFromMap( _pmdEDUCB::CATCH_MAP &catchMap ) ;
+
    } ;
    typedef _restSessionInfo restSessionInfo ;
 
    /*
       _pmdRestSession define
    */
-   class _pmdRestSession : public _pmdLocalSession
+   class _pmdRestSession : public _pmdSession
    {
       public:
          _pmdRestSession( SOCKET fd ) ;
@@ -132,6 +156,7 @@ namespace engine
 
          virtual INT32     sessionType() const { return PMD_SESSION_REST ; }
          virtual UINT64    identifyID() ;
+         virtual INT32     getServiceType() const ;
 
          virtual INT32     run() ;
 
@@ -140,8 +165,6 @@ namespace engine
          CHAR*             getFixBuff() ;
          INT32             getFixBuffSize () const ;
 
-         void              restoreSession( restSessionInfo *pSessionInfo ) ;
-         void              saveSession( restSessionInfo &sessionInfo ) ;
          BOOLEAN           isAuthOK() ;
          const CHAR*       getSessionID() ;
 
@@ -149,8 +172,10 @@ namespace engine
          virtual void      _onAttach () ;
          virtual void      _onDetach () ;
 
+         void              restoreSession() ;
+         void              saveSession() ;
+
       protected:
-         virtual INT32     _onAuth( MsgHeader *msg ) ;
 
          INT32             _processRestMsg( HTTP_PARSE_COMMON command,
                                             const CHAR *pFilePath ) ;
@@ -166,6 +191,9 @@ namespace engine
          restSessionInfo*  _pSessionInfo ;
 
          string            _wwwRootPath ;
+
+         _SDB_RTNCB        *_pRTNCB ;
+         _dpsLogWrapper    *_pDPSCB ;
 
    } ;
    typedef _pmdRestSession pmdRestSession ;

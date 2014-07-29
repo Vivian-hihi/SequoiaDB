@@ -59,7 +59,7 @@ namespace engine
                          _handler(handler),
                          _acceptor(_ioservice),
                          _handle(1),
-                         _timerID(0),
+                         _timerID( NET_INVALID_TIMER_ID ),
                          _netOut(0),
                          _netIn(0)
    {
@@ -551,8 +551,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_ADDTIMER );
-      _mtx.get() ;
 
+      timerid = NET_INVALID_TIMER_ID ;
+
+      _mtx.get() ;
       _netTimer *t = SDB_OSS_NEW _netTimer( millsec,
                                             ++_timerID,
                                             _ioservice,

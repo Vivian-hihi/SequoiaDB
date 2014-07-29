@@ -129,6 +129,9 @@ namespace engine
          virtual INT32  fini () ;
          virtual void   onConfigChange() {}
 
+         UINT32      setTimer( UINT32 milliSec ) ;
+         void        killTimer( UINT32 timerID ) ;
+
          CHAR*       allocFixBuf() ;
          INT32       getFixBufSize() const { return _fixBufSize ; }
          void        releaseFixBuf( CHAR *pBuff ) ;
@@ -146,7 +149,6 @@ namespace engine
 
          restSessionInfo*  attachSessionInfo( const string &id ) ;
          void              detachSessionInfo( restSessionInfo *pSessionInfo ) ;
-         void              invalidSessionInfo( restSessionInfo *pSessionInfo ) ;
 
          restSessionInfo*  newSessionInfo( const string &userName,
                                            UINT32 localIP ) ;
@@ -173,12 +175,18 @@ namespace engine
          void              updateInstallTask( BSONObj &taskDetail ) ;
 
       protected:
+         virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
 
          MsgRouteID        _incNodeID() ;
          string            _makeID( restSessionInfo *pSessionInfo ) ;
 
          void              _add2UserMap( const string &user,
                                          restSessionInfo *pSessionInfo ) ;
+         void              _delFromUserMap( const string &user,
+                                            restSessionInfo *pSessionInfo ) ;
+
+         void              _invalidSessionInfo( restSessionInfo *pSessionInfo ) ;
+         void              _checkSession( UINT32 interval ) ;
 
          INT32             _initOmTables() ;
          
@@ -196,6 +204,9 @@ namespace engine
          INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
                                               BSONObj &result ) ;
 
+      // Msg functions
+      protected:
+
       private:
          vector< CHAR* >                        _vecFixBuf ;
          const INT32                            _fixBufSize ;
@@ -203,6 +214,7 @@ namespace engine
          map<string, restSessionInfo*>          _mapSessions ;
          map<string, vector<restSessionInfo*> > _mapUser2Sessions ;
          UINT32                                 _sequence ;
+         UINT32                                 _checkSessionTimer ;
 
          MAP_ID2HOSTPTR                         _mapID2Host ;
          MAP_HOST2ID                            _mapHost2ID ;

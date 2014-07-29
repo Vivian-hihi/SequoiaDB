@@ -101,6 +101,7 @@ namespace engine
    */
    class _pmdEDUCB : public SDBObject
    {
+   public:
       typedef std::multimap<INT32,CHAR*>     CATCH_MAP ;
       typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
 
@@ -148,6 +149,8 @@ namespace engine
       INT32       allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
       void        releaseBuff( CHAR *pBuff ) ;
       INT32       reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
+      void        restoreBuffs( CATCH_MAP &catchMap ) ;
+      void        saveBuffs( CATCH_MAP &catchMap ) ;
 
       CHAR*       getCompressBuff( INT32 len ) ;
       INT32       getCompressBuffLen () const { return _compressBuffLen ; }

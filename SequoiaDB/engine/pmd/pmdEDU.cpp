@@ -615,6 +615,55 @@ namespace engine
       goto done ;
    }
 
+   void _pmdEDUCB::restoreBuffs( _pmdEDUCB::CATCH_MAP &catchMap )
+   {
+      CATCH_MAP_IT it = catchMap.begin() ;
+      while ( it != catchMap.end() )
+      {
+         _catchMap.insert( std::make_pair( it->first, it->second ) ) ;
+         _totalCatchSize += it->first ;
+         ++it ;
+      }
+      catchMap.clear() ;
+   }
+
+   void _pmdEDUCB::saveBuffs( _pmdEDUCB::CATCH_MAP &catchMap )
+   {
+      // release buff
+      if ( _pCompressBuff )
+      {
+         releaseBuff( _pCompressBuff ) ;
+         _pCompressBuff = NULL ;
+      }
+      _compressBuffLen = 0 ;
+      if ( _pUncompressBuff )
+      {
+         releaseBuff( _pUncompressBuff ) ;
+         _pUncompressBuff = NULL ;
+      }
+      _uncompressBuffLen = 0 ;
+
+      // clean alloc memory
+      ALLOC_MAP_IT itAlloc = _allocMap.begin() ;
+      while ( itAlloc != _allocMap.end() )
+      {
+         releaseBuff( itAlloc->first ) ;
+         ++itAlloc ;
+      }
+      _allocMap.clear() ;
+
+      // restore catch map
+      CATCH_MAP_IT it = _catchMap.begin() ;
+      while ( it != _catchMap.end() )
+      {
+         _totalCatchSize -= it->first ;
+         _totalMemSize -= it->first ;
+         catchMap.insert( std::make_pair( it->first, it->second ) ) ;
+         ++it ;
+      }
+      _catchMap.clear() ;
+   }
+
    CHAR* _pmdEDUCB::getCompressBuff( INT32 len )
    {
       if ( _compressBuffLen < len )
