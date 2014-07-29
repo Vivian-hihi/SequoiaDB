@@ -37,8 +37,11 @@
 					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
 				</exec>
         
-        
-        <chmod dir="${db.path}/bin" perm="u+x" includes="*" />
+        		<exec executable="shell" dir="." failonerror="true">
+        			<arg line="ps -ef|grep sequoiadb | grep -v grep | awk '{print $2}' | xargs kill" />
+        		</exec>
+
+        		<chmod dir="${db.path}/bin" perm="u+x" includes="*" />
 				<!-- stop db service-->
 				<exec executable="${db.path}/bin/sdbstop" dir="${db.path}/bin" failonerror="true">
 					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
