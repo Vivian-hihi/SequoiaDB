@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_concepts_sharded_collection">
-  <title>Sharded collection</title>
+  <title>Sharded Collection</title>
   <body>
     <section><title>Concept</title>
       <p>Sharded collection is a collection that has defined a sharding key. Sharded collection can

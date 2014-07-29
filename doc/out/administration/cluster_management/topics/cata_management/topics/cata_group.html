@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="新建编目分区组"/>
-<meta name="description" content="如果新增节点涉及到新增主机，则请首先按照在 集群中新增主机 一节完成主机的主机名和参数配置。 一个数据库集群必须有且仅有一个编目分区组，所以新建分区组往往在安装时就已经完成，不需要在安装后执行新建分区组操作。实例见安装指南 集群模式的配置与启动 一节。 操作方法： &gt;db.createReplicaCataGroup(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]) ..."/>
+<meta name="description" content="如果新增节点涉及到新增主机，则请首先按照在 集群中新增主机 一节完成主机的主机名和参数配置。 一个数据库集群必须有且仅有一个编目分区组，所以新建分区组往往在安装时就已经完成，不需要在安装后执行新建分区组操作。实例见安装指南 集群模式的配置与启动 一节。 操作方法： &gt; db.createReplicaCataGroup(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]) ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../../administration/cluster_management/topics/cata_management/topics/cata_management.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_jwh_ncx_tk"/>
@@ -41,7 +41,7 @@
     <p class="p">一个数据库集群必须有且仅有一个编目分区组，所以新建分区组往往在安装时就已经完成，不需要在安装后执行新建分区组操作。实例见安装指南<a class="xref" href="../../../../../installation/configuration_start/topics/cluster.html">集群模式的配置与启动</a>一节。</p>
 
     <p class="p">操作方法：</p>
-<pre class="pre codeblock">&gt;db.createReplicaCataGroup(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</pre>
+<pre class="pre codeblock">&gt; db.createReplicaCataGroup(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</pre>
 
     <p class="p">该命令用于创建编目分区组，同时创建并启动一个编目节点，其中：</p>
 
@@ -51,7 +51,7 @@
 
     <p class="p"><strong class="ph b">dbpath</strong>：数据文件路径，用于存放编目数据文件，请确保数据管理员（安装时创建，默认为 sdbadmin）用户有写权限；</p>
 
-    <p class="p"><strong class="ph b">config</strong>：该参数为可选参数，用于配置更多细节参数，格式必须为 json 格式，参数参见<a class="xref" href="../../../../database/topics/runtime_configuration.html">数据库配置</a> 一节；如需要配置日志大小参数｛logfilesz:64｝。</p>
+    <p class="p"><strong class="ph b">config</strong>：该参数为可选参数，用于配置更多细节参数，格式必须为 json 格式，参数参见<a class="xref" href="../../../../database/topics/runtime_configuration.html">数据库配置</a>一节；如需要配置日志大小参数｛logfilesz:64｝。</p>
 
   </div>
 

@@ -44,6 +44,6 @@
       <codeblock>{ "key" : { "$regex" : "^W", "$options" : "i" } }</codeblock>
     </section>
     <p>Please refer to <xref href="http://perldoc.perl.org/perlre.html" format="html"
-        scope="external">Perl Regex Manual </xref>for more about rules of regex.</p>
+        scope="external">Perl Regex Manual</xref> for more about rules of regex.</p>
   </body>
 </topic>

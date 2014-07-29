@@ -4,7 +4,7 @@
   <title>Full Sync</title>
   <body>
     <section><title>Concept</title>
-      <p>When a new node joins a replset or a broken-down node returns to a replset, it is essential
+      <p>When a new node joins a ReplicaGroup or a broken-down node returns to a ReplicaGroup, it is essential
         to implement full sync to guarantee the consistence of data between the new node and other
         nodes.</p>
       <p>In the process of full sync, two nodes take part in it:</p>
@@ -17,8 +17,8 @@
         </dlentry>
         <dlentry>
           <dt>Target node</dt>
-          <dd>Target node is a new node that joins a replset or a broken-down node that returns to a
-            replset. In full sync, original data on target node is discarded.</dd>
+          <dd>Target node is a new node that joins a ReplicaGroup or a broken-down node that returns to a
+            ReplicaGroup. In full sync, original data on target node is discarded.</dd>
         </dlentry>
       </dl>
       <image href="../../../../introduction/images/sequoiadb_infrastructure_shard3_en.jpg"/>

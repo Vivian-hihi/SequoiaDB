@@ -3,8 +3,8 @@
 <topic id="topic_tmj_1mp_fm">
   <title>Monitor</title>
   <body>
-    <p>This section describes the node and cluster monitoring information</p>
-    <p><xref href="monitor_node_en.dita">Monitoring node status</xref></p>
+    <p>This section describes the node and cluster monitoring information.</p>
+    <p><xref href="monitor_node_en.dita">Monitoring Node Status</xref></p>
     <p><xref href="monitor_cluster_en.dita">Monitoring Cluster</xref></p>
   </body>
 </topic>

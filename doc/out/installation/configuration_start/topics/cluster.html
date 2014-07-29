@@ -85,10 +85,10 @@ dbpath=/opt/sequoiadb/database/coord</pre>
 </div>
 
         <p class="p">2. 连接到协调节点</p>
-<div class="p">在shell 命令中输入：<pre class="pre codeblock">&gt;var db = new Sdb("localhost",11810)</pre>
+<div class="p">在shell 命令中输入：<pre class="pre codeblock">&gt; var db = new Sdb("localhost",11810)</pre>
 其中11810为协调节点端口号</div>
 
-        <div class="p">3. 创建一个编目节点组<pre class="pre codeblock">&gt;db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
+        <div class="p">3. 创建一个编目节点组<pre class="pre codeblock">&gt; db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
 </div>
 
         <p class="p">其中</p>
@@ -98,31 +98,31 @@ dbpath=/opt/sequoiadb/database/coord</pre>
           <div class="note note"><span class="notetitle">Note:</span> 请确保存放路径的权限，如果 SequoiaDB 采用的默认安装，那么给路径赋予 sdbadmin 权限，下同。</div>
 </div>
 
-        <div class="p">4. 等待5秒，开始添加另外两个编目节点<pre class="pre codeblock">&gt;var cataRG = db.getRG("SYSCatalogGroup");
-&gt;var node1 = cataRG.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800")
-&gt;var node2 = cataRG.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</pre>
+        <div class="p">4. 等待5秒，开始添加另外两个编目节点<pre class="pre codeblock">&gt; var cataRG = db.getRG("SYSCatalogGroup");
+&gt; var node1 = cataRG.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800")
+&gt; var node2 = cataRG.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</pre>
 </div>
 
-        <div class="p">5. 启动编目节点组<pre class="pre codeblock">&gt;node1.start()
-&gt;node2.start()</pre>
+        <div class="p">5. 启动编目节点组<pre class="pre codeblock">&gt; node1.start()
+&gt; node2.start()</pre>
 </div>
 <div class="note note"><span class="notetitle">Note:</span> 创建节点的第一个参数必须为“主机名”，而不能使主机的 IP。</div>
 </li>
 
       <li class="li">步骤四：通过命令配置和启动数据节点
-        <div class="p">1. 创建数据节点组<pre class="pre codeblock">&gt;var dataRG = db.createRG("datagroup")</pre>
+        <div class="p">1. 创建数据节点组<pre class="pre codeblock">&gt; var dataRG = db.createRG("datagroup")</pre>
 </div>
 
-        <div class="p">2. 添加数据节点<pre class="pre codeblock">&gt;dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")
-&gt;dataRG.createNode("sdbserver2", 11820, "/opt/sequoiadb/database/data/11820")
-&gt;dataRG.createNode("sdbserver3", 11820, "/opt/sequoiadb/database/data/11820")</pre>
+        <div class="p">2. 添加数据节点<pre class="pre codeblock">&gt; dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")
+&gt; dataRG.createNode("sdbserver2", 11820, "/opt/sequoiadb/database/data/11820")
+&gt; dataRG.createNode("sdbserver3", 11820, "/opt/sequoiadb/database/data/11820")</pre>
 </div>
 <div class="note note"><span class="notetitle">Note:</span> 创建节点的第一个参数必须为“主机名”，而不能是主机的 IP。</div>
 
-        <div class="p">3. 启动数据节点组<pre class="pre codeblock">&gt;dataRG.start()</pre>
+        <div class="p">3. 启动数据节点组<pre class="pre codeblock">&gt; dataRG.start()</pre>
 </div>
 
-        <div class="p">4. 退出 SequoiaDB Shell控制台<pre class="pre codeblock">&gt;quit</pre>
+        <div class="p">4. 退出 SequoiaDB Shell控制台<pre class="pre codeblock">&gt; quit</pre>
 </div>
 </li>
 

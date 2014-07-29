@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_snapshot_collections">
-  <title>Collection Snapshot</title>
+  <title>Collections Snapshot</title>
   <body>
     <section><title>Description</title>
       <p>Collections snapshot contains all the non-temporary collections in current data nodes (It
@@ -33,7 +33,7 @@
         <strow>
           <stentry>Details.ID</stentry>
           <stentry>Integer</stentry>
-          <stentry>Collection ID,Range from 0 to 4095,Unique in collection space</stentry>
+          <stentry>Collection ID,Range from 0 to 4095, Unique in collection space</stentry>
         </strow>
         <strow>
           <stentry>Details.LogicalID</stentry>
@@ -100,7 +100,7 @@
         <strow>
           <stentry>Details.Group.ID</stentry>
           <stentry>Integer</stentry>
-          <stentry>Collection ID,Range 0~4096,Unique in the collectionspace</stentry>
+          <stentry>Collection ID, Range 0~4096, Unique in the collectionspace</stentry>
         </strow>
         <strow>
           <stentry>Details.Group.LogicalID</stentry>

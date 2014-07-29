@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_b52_vrk_fm">
-  <title>Cluster start</title>
+  <title>Cluster Start</title>
   <body>
     <section>
       <title>Restart the operating system</title>
-      <p>The operating system will automatically start the serice starts sdbcm(sequoiadb cluster manager).The service starts, it automatically starts the All physical machines registered in the /opt/sequoiadb/conf/local directory node.Use the command <b>ps –elf | grep
+      <p>The operating system will automatically start the serice starts sdbcm(sequoiadb cluster manager). The service starts, it automatically starts the All physical machines registered in the /opt/sequoiadb/conf/local directory node. Use the command <b>ps –elf | grep
         sequoiadb</b> can see the current node is starting Booted nldes. After starting the process called: sequoiadb (service name) is starting the process name is generallly:</p>
       <p><b>/opt/sequoiadb/bin/sequoiadb –c /opt/sequoiadb/conf/local/(service name)</b></p>
     </section>

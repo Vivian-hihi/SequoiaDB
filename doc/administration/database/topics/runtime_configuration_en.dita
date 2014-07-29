@@ -47,7 +47,7 @@
 					<stentry>--diagpath</stentry>
 					<stentry>--</stentry>
 					<stentry>str</stentry>
-					<stentry>1. It specifies the catalog of diagnostic log.<fig></fig>2. If it is not specified, the default path is &quot;Data file path/diaglog&quot;.</stentry>
+					<stentry>1. It specifies the catalog of diagnostic log.<fig></fig>2. If it is not specified, the default path is &quot;Data file path /diaglog&quot;.</stentry>
 				</strow>
 				<strow>
 					<stentry>--diagnum</stentry>
@@ -101,7 +101,7 @@
 					<stentry>--diaglevel</stentry>
 					<stentry>-v</stentry>
 					<stentry>num</stentry>
-					<stentry>1. It specifies the print level of diagnostic log. Diagnostic log in sequoiaDB, 0-5 respectively represent: SEVERE, ERROR, EVENT,WARNING, INFO, DEBUG.<fig></fig>2. If it is not specified, the default value is &quot;WARNING&quot;.</stentry>
+					<stentry>1. It specifies the print level of diagnostic log. Diagnostic log in sequoiaDB, 0~5 respectively represent: SEVERE, ERROR, EVENT,WARNING, INFO, DEBUG.<fig></fig>2. If it is not specified, the default value is &quot;WARNING&quot;.</stentry>
 				</strow>
 				<strow>
 					<stentry>--role</stentry>
@@ -137,31 +137,31 @@
 					<stentry>--numpreload</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>number of page pre-loaders, default:0, value range:[0,100]</stentry>
+					<stentry>number of page pre-loaders, default: 0, value range: [0,100]</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxprefpool</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>maximum number of prefetchers, default:200, value range:[0,1000]</stentry>
+					<stentry>maximum number of prefetchers, default: 200, value range: [0,1000]</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxsubquery</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>maximum number of query&apos;s sub-query, default:10, min value is 0, max value can&apos;t more than param &apos;maxprefpool&apos;.</stentry>
+					<stentry>maximum number of query&apos;s sub-query, default: 10, min value is 0, max value can&apos;t more than param &apos;maxprefpool&apos;.</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxreplsync</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync.</stentry>
+					<stentry>maximum number of repl-sync, default: 10, value range: [0, 200], 0: disable concurrent repl-sync.</stentry>
 				</strow>
 				<strow>
 					<stentry>--logbuffsize</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>the replica-log&apos;s memory page number,default is 1024, value range:[512,1024000], but total log memory size can&apos;t more than all log file size; a page size is 64KB.</stentry>
+					<stentry>the replica-log&apos;s memory page number,default is 1024, value range: [512, 1024000], but total log memory size can&apos;t more than all log file size; a page size is 64KB.</stentry>
 				</strow>
 				<strow>
 					<stentry>--tmppath</stentry>
@@ -173,19 +173,19 @@
 					<stentry>--sortbuf</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>size of the sorting buf(MB), default:512, min value:128.</stentry>
+					<stentry>size of the sorting buf(MB), default: 512, min value: 128.</stentry>
 				</strow>
 				<strow>
 					<stentry>--hjbuf</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>size of the hash join buf(MB), default:128, min value:64.</stentry>
+					<stentry>size of the hash join buf(MB), default: 128, min value: 64.</stentry>
 				</strow>
 				<strow>
 					<stentry>--syncstrategy</stentry>
 					<stentry>--</stentry>
 					<stentry>str</stentry>
-					<stentry>The control strategy of data sync in repl group, value enumeration: none,keepnormal,keepall, default:keepnormal.</stentry>
+					<stentry>The control strategy of data sync in repl group, value enumeration: none, keepnormal, keepall, default: keepnormal.</stentry>
 				</strow>
 				<strow>
 					<stentry>--preferedinstance</stentry>
@@ -195,7 +195,7 @@
                     M--read and write instance,
                     S--read only instance,
                     A--anyone instance,
-                    1-7--the nth instance.</stentry>
+                    1~7--the nth instance.</stentry>
 				</strow>
 				<strow>
 					<stentry>--numpagecleaners</stentry>

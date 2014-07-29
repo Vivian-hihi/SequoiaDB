@@ -13,7 +13,7 @@
         database is located in the directory.</p>
     <p>Database path contains one or more collection spaces. In a data node or a coord node, there
         should be at least one SYSTEMP system temporary collection space. In a catalog node, there
-        should be at least one SYSTEMP system temporary collection space ,SYSAUTH system permissions collection space, SYSPROCEDURES system stored procedure collections space and one SYSCAT system
+        should be at least one SYSTEMP system temporary collection space, SYSAUTH system permissions collection space, SYSPROCEDURES system stored procedure collections space and one SYSCAT system
         catalog collection space.</p>
     <p>A database engine contains 4096 collection spaces at most.</p>
     </section>

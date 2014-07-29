@@ -20,7 +20,7 @@
         new session is started, identity verification should be fulfilled again.</p>
       <p>5. Users are equal to 1each other. There is no super user. A user can delete any users.</p>
       <p>6. When all users are deleted, security function is closed.</p>
-      <p>7.All passwords are transmitted and stored in the format of cipher text.</p>
+      <p>7. All passwords are transmitted and stored in the format of cipher text.</p>
     </section>
   </body>
 </topic>

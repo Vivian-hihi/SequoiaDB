@@ -78,7 +78,7 @@
           <codeblock>{ "name" : "record_id_index", "key" : { "product_key" : 1, "record_key" : -1 }, "unique" : true }</codeblock>
           <p>In this index, there
             are no two records with the same "product_key" and the same "record_key". (But if either
-            of them is the same, it is still regarded as an unique index).</p></li>
+            of them is the same, it is still regarded as an unique index.)</p></li>
         <li><p>Enforced unique index. The index name is "test index". The index field is ascending "test case
             name".</p>
           <codeblock>{ "name" : "test index", "key" : { "test case name" : 1 }, "unique" : true, "enforced" : true }</codeblock>

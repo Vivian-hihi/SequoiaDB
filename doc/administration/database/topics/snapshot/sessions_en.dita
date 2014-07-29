@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_snapshot_sessions">
-  <title>Session Snapshot</title>
+  <title>Sessions Snapshot</title>
   <body>
     <section><title>Description</title>
-      <p>Session snapshot contains all the sessions between users and system on current database
+      <p>Sessions snapshot contains all the sessions between users and system on current database
         node. Each session is recorded as one record.</p>
     </section>
     <section><title>Sign</title>
       <p>SDB_SNAP_SESSIONS</p>
     </section>
     <section><title>Proper Node</title>
-      <p>data node,catalog node</p>
+      <p>data node, catalog node</p>
     </section>
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_sessions_table">-->

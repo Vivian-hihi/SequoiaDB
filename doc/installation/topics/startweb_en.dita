@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_pyr_psg_2l_en">
-  <title>Start SequoiaDB web service</title>
+  <title>Start SequoiaDB Web Service</title>
   <body>
-    <p>By starting the background Web service of SequoiaDB,can also do operetions to database,and
+    <p>By starting the background Web service of SequoiaDB, can also do operetions to database, and
       convenient for management.</p>
     <!--<section>
       <title>Windows environment</title>
@@ -28,15 +28,15 @@
       <title>Linux environment</title>
       <p><b>Steps：</b></p></section>-->
       <ul>
-        <li>enter the directory:/opt/sequoiadb/bin</li>
+        <li>enter the directory: /opt/sequoiadb/bin</li>
         <li>execute the following command:
           <codeblock>./sdbwsart -S &lt;server name:port></codeblock></li>
       </ul>
-      <p><b>server name</b>:specify the service IP address,such as "192.168.10.10"</p>
-      <p><b>port</b>:specify the service port,such as "8080"</p>
+      <p><b>server name</b>: specify the service IP address, such as "192.168.10.10"</p>
+      <p><b>port</b>: specify the service port, such as "8080"</p>
       <!--<p><b>doc director</b>:specify the root directory that the server pointed,such as
         "/opt/sequoiadb/www/"</p>-->
-      <p>Finally enter "http://192.168.10.10:8080" in the browser,then you can access to the
+      <p>Finally enter "http://192.168.10.10:8080" in the browser, then you can access to the
         database management page.</p>
     
   </body>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="SYSNODES Collection"/>
-<meta name="description" content="Collection Space SYSCAT Concept SYSNODES collection contains information of all the nodes in the cluster and of replset. Information of a replset is saved in a corresponding file. Every file contains ..."/>
+<meta name="description" content="Collection Space SYSCAT Concept SYSNODES collection contains information of all the nodes in the cluster and of ReplicaGroup. Information of a ReplicaGroup is saved in a corresponding file. Every file ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/catalog_node_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="administration_concepts_cluster_node_catalog_sysnodes"/>
@@ -42,8 +42,8 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">Concept</h2>
-      <p class="p">SYSNODES collection contains information of all the nodes in the cluster and of replset.
-        Information of a replset is saved in a corresponding file.</p>
+      <p class="p">SYSNODES collection contains information of all the nodes in the cluster and of ReplicaGroup.
+        Information of a ReplicaGroup is saved in a corresponding file.</p>
 
       <p class="p">Every file contains fields as follow: </p>
 
@@ -60,7 +60,7 @@
 
           <td valign="top" headers="d3299e35" class="stentry">String</td>
 
-          <td valign="top" headers="d3299e38" class="stentry">Replset name.</td>
+          <td valign="top" headers="d3299e38" class="stentry">ReplicaGroup name.</td>
 
         </tr>
 <tr class="strow">
@@ -68,7 +68,7 @@
 
           <td valign="top" headers="d3299e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d3299e38" class="stentry">Replset ID. It is unique in the cluster.</td>
+          <td valign="top" headers="d3299e38" class="stentry">ReplicaGroup ID. It is unique in the cluster.</td>
 
         </tr>
 <tr class="strow">
@@ -76,7 +76,7 @@
 
           <td valign="top" headers="d3299e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d3299e38" class="stentry">The ID of the master node in a replset.</td>
+          <td valign="top" headers="d3299e38" class="stentry">The ID of the master node in a ReplicaGroup.</td>
 
         </tr>
 <tr class="strow">
@@ -84,7 +84,7 @@
 
           <td valign="top" headers="d3299e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d3299e38" class="stentry">The role of a replset. It can be:
+          <td valign="top" headers="d3299e38" class="stentry">The role of a ReplicaGroup. It can be:
             <ul class="ul">
               <li class="li">0: data node</li>
 
@@ -102,11 +102,11 @@
 
           <td valign="top" headers="d3299e38" class="stentry">
             <ul class="ul">
-              <li class="li">1: activate replset</li>
+              <li class="li">1: activate ReplicaGroup</li>
 
-              <li class="li">0: inactive replset</li>
+              <li class="li">0: inactive ReplicaGroup</li>
 
-              <li class="li">not exists: inactive replset</li>
+              <li class="li">not exists: inactive ReplicaGroup</li>
 
             </ul>
 
@@ -119,7 +119,7 @@
           <td valign="top" headers="d3299e35" class="stentry">Integer</td>
 
           <td valign="top" headers="d3299e38" class="stentry">Version number. It starts with 1. It increases by 1 after any execution on the
-            replset.</td>
+            ReplicaGroup.</td>
 
         </tr>
 <tr class="strow">
@@ -127,12 +127,12 @@
 
           <td valign="top" headers="d3299e35" class="stentry">Array</td>
 
-          <td valign="top" headers="d3299e38" class="stentry">It contains information of nodes in a replset,as it is shown as follow:</td>
+          <td valign="top" headers="d3299e38" class="stentry">It contains information of nodes in a ReplicaGroup, as it is shown as follow:</td>
 
         </tr>
 </table>
 
-      <p class="p">If there are more than one node in a replset, each node is store in Group as an object. Each object contains:</p>
+      <p class="p">If there are more than one node in a ReplicaGroup, each node is store in Group as an object. Each object contains:</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
           <th valign="bottom" align="left" id="d3299e156" class="stentry">Field Nmae</th>
@@ -180,7 +180,7 @@ are as follow:
 
               <li class="li">1：replicate service, corresponds to database argument replname</li>
 
-              <li class="li">2：replset service, corresponds to database argument shardname</li>
+              <li class="li">2：replicate service, corresponds to database argument shardname</li>
 
               <li class="li">3：catalog service, corresponds to database argument catalogname</li>
 
@@ -192,9 +192,9 @@ are as follow:
 </table>
 
       <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p">The group name of a catalog replset should be "SYSCatalogGroup". The ID of a catalog replset should be 1.</p>
+        <p class="p">The group name of a catalog ReplicaGroup should be "SYSCatalogGroup". The ID of a catalog ReplicaGroup should be 1.</p>
 
-        <p class="p">Data replset ID starts from 1000.</p>
+        <p class="p">Data ReplicaGroup ID starts from 1000.</p>
 
         <p class="p">Data node ID starts from 1000.</p>
 
@@ -204,7 +204,7 @@ are as follow:
 
     <div class="section"><h2 class="title sectiontitle">Sample</h2>
       
-      <p class="p">A typical catalog replset that contains only one node is:</p>
+      <p class="p">A typical catalog ReplicaGroup that contains only one node is:</p>
 
       <pre class="pre codeblock">{ "Group" : [ 
               { "NodeID" : 2, 
@@ -222,7 +222,7 @@ are as follow:
               "Role" : 2, 
               "Version" : 1 } }</pre>
 
-      <p class="p">A typical data replset that contains only one node is:</p>
+      <p class="p">A typical data ReplicaGroup that contains only one node is:</p>
 
       <pre class="pre codeblock">{ "Group" : [ 
               { "dbpath" : "/home/sequoiadb/sequoiadb/data3", 

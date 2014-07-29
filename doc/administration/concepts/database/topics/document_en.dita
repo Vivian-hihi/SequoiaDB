@@ -10,10 +10,10 @@
         containing 2 fields:</p>
     <p>{ "name" : "Zhangsan", "gender" : "male" }</p>
       <note>
-        <p>BSON documents may have more than one field with the same name;however,most SequoiaDB interfaces represent SequoiaDB 
-with a structure(e.g a hash table) that does not support duplicate field names,if you need to manipulate documents that have more 
-than one fiels with the same name,see your driver's documentation for more information.</p>
-        <p>Some documents created by internal SequoiaDB processes may have duplicate fields,but no SequoiaDB process will ever add duplicate keys to an existing user document.</p>
+        <p>BSON documents may have more than one field with the same name; however, most SequoiaDB interfaces represent SequoiaDB 
+with a structure(e.g a hash table) that does not support duplicate field names, if you need to manipulate documents that have more 
+than one fiels with the same name, see your driver's documentation for more information.</p>
+        <p>Some documents created by internal SequoiaDB processes may have duplicate fields, but no SequoiaDB process will ever add duplicate keys to an existing user document.</p>
       </note>
     </section>
     <section>
@@ -29,19 +29,19 @@ than one fiels with the same name,see your driver's documentation for more infor
         </sthead>
         <strow>
           <stentry>Integer</stentry>
-          <stentry>Integer，range from -2147483648 to 2147483647</stentry>
+          <stentry>Integer, range from -2147483648 to 2147483647</stentry>
           <stentry>{ "key" : 123 }</stentry>
         </strow>
         <strow>
           <stentry>Long</stentry>
-          <stentry>Integer，range from -9223372036854775808 to 9223372036854775807.<fig></fig>If a value is not
+          <stentry>Integer, range from -9223372036854775808 to 9223372036854775807.<fig></fig>If a value is not
             suitible to an Integer, it is automatically transform into Long by SequoiaDB.</stentry>
           <stentry>{ "key" : 3000000000 }</stentry>
         </strow>
         <strow>
           <stentry>Float</stentry>
           <stentry>Float, range from 1.7E-308 to 1.7E+308</stentry>
-          <stentry>{ "key" : 123.456 }or{ "key" : 123e+50 }</stentry>
+          <stentry>{ "key" : 123.456 } or { "key" : 123e+50 }</stentry>
         </strow>
         <strow>
           <stentry>String</stentry>
@@ -56,7 +56,7 @@ than one fiels with the same name,see your driver's documentation for more infor
         <strow>
           <stentry>Bool</stentry>
           <stentry>true or false</stentry>
-          <stentry>{ "key" : true }or{ "key" : false }</stentry>
+          <stentry>{ "key" : true } or { "key" : false }</stentry>
         </strow>
         <strow>
           <stentry>Date</stentry>
@@ -107,10 +107,9 @@ than one fiels with the same name,see your driver's documentation for more infor
     <section>
       <title>Others</title>
       <ul id="administration_concepts_database_misc">
-        <li>The max size of each document is 16MB</li>
-        <li>Document should contains "_id" field. If users do not offer it, syetem will
-          automatically generate a field in the type of object ID.</li>
-        <li>"_id" is unique in a collection</li>
+        <li>The max size of each document is 16MB.</li>
+        <li>Document should contains "_id" field. If users do not offer it, syetem will automatically generate a field in the type of object ID.</li>
+        <li>"_id" is unique in a collection.</li>
         <li>Field name in document should not begin with the character "$".</li>
         <li>Field name in document should not contain ".".</li>
       </ul>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_concepts_cluster_node_catalog_syscollectionspaces">
-  <title>SYSCOLLECTIONSPACES集合</title>
+  <title>SYSCOLLECTIONSPACES 集合</title>
   <body>
     <section>
       <title>所属集合空间</title>

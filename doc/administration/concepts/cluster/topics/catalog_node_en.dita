@@ -5,13 +5,13 @@
   <body>
     <section><title>Concept</title>
       <p>Catalog node is a kind of logical node, which stores the metadata of a database system instead of data of other users.</p>
-      <p>Catalog node includes 3 space collections: </p>
+      <p>Catalog node includes 4 space collections: </p>
       <ul>
         <li><p>SYSCAT system catalog contains 4 system collections:</p>
           <simpletable><!-- frame="all" relcolwidth="1.0* 2.23*" id="administration_concepts_cluster_node_catalog_table1">-->
             <sthead>
-              <stentry>collection name</stentry>
-              <stentry>descripton</stentry>
+              <stentry>Collection Name</stentry>
+              <stentry>Descripton</stentry>
             </sthead>
             <strow>
               <stentry>SYSCOLLECTIONS</stentry>
@@ -31,14 +31,13 @@
             </strow>
           </simpletable>
         </li>
-        <li><p>SYSTEMP system temporary collection space is used to create at most 4096 temporary</p>
-          collections in order to sequence data when users visit the database.</li>
+        <li><p>SYSTEMP system temporary collection space is used to create at most 4096 temporary</p></li>
         <li><p>SYSAUTH system validation collection space contains a user colleciton, which stores information
             of all the users in current system</p>
           <simpletable><!-- frame="all" relcolwidth="1.0* 2.23*" id="administration_concepts_cluster_node_catalog_table2">-->
             <sthead>
-              <stentry>collection name</stentry>
-              <stentry>descripton</stentry>
+              <stentry>Collection Name</stentry>
+              <stentry>Descripton</stentry>
             </sthead>
             <strow>
               <stentry>SYSUSRS</stentry>
@@ -49,8 +48,8 @@
         <li><p>SYSPROCEDURES collection space system stored procedure that contains a collection of all of the stored procedures for storing function information</p>
           <simpletable><!-- frame="all" relcolwidth="1.0* 2.23*" id="administration_concepts_cluster_node_catalog_table2">-->
             <sthead>
-              <stentry>collection name</stentry>
-              <stentry>descripton</stentry>
+              <stentry>Collection Name</stentry>
+              <stentry>Descripton</stentry>
             </sthead>
             <strow>
               <stentry>SYSPROCEDURES</stentry>

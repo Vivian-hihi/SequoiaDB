@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_rrh_35k_fm">
-  <title>Cluster stop</title>
+  <title>Cluster Stop</title>
   <body>
     <section>
       <title>Manually stop a specific node</title>
@@ -10,7 +10,7 @@
         <li>Connect to the coord node
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;</codeblock></li>
-        <li>Get partition group
+        <li>Get replica group
           <codeblock>> dataRG = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
         <li>Get the data node
           <codeblock>> dataNode = dataRG.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
@@ -24,7 +24,7 @@
         <li>Connect to the coord node
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;</codeblock></li>
-        <li>Get partition group
+        <li>Get replica group
           <codeblock>> dataRG = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
         <li>Stop data group <codeblock>> dataRG.stop() ;</codeblock></li>
       </ol>

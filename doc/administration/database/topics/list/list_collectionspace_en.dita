@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_list_collectionspaces">
-  <title>Collection Space List</title>
+  <title>Collection Spaces List</title>
   <body>
     <section><title>Description</title>
-      <p>Collection space list contains all the collection space in the current data node. Each
-        collection space is recorded as one record.</p>
+      <p>Collection spaces list contains all the collection spaces in the current data node. Each
+        collection spaces is recorded as one record.</p>
     </section>
     <section><title>Sign</title>
       <p>SDB_LIST_COLLECTIONSPACES</p>
@@ -14,7 +14,7 @@
       <p>All nodes</p>
     </section>
     <section><title>Field Information</title>
-      <p>Since information stored in data nodes and catalog node is not the same, collection space
+      <p>Since information stored in data nodes and catalog node is not the same, collection spaces
         list will return different structures according to the kind of the node:</p>
     </section>
     <!--<section><title>Coord Node Field Information</title>
@@ -118,7 +118,7 @@
 }</codeblock>
     </section>
     <section><title>Coord node Sample:</title>
-      <codeblock>>db.list(SDB_LIST_COLLECTIONSPACES)
+      <codeblock>> db.list(SDB_LIST_COLLECTIONSPACES)
 {
   "Name": "foo"
 }</codeblock>

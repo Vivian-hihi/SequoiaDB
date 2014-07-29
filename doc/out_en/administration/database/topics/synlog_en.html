@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Sync-Log"/>
-<meta name="description" content="Log Files In SequoiaDB,it with log for data synchronization among data nodes,the log files is in the directory replicalog .The size and number of log file can be configured by setting logfilesz and ..."/>
+<meta name="description" content="Log Files In SequoiaDB, it with log for data synchronization among data nodes, the log files is in the directory replicalog . The size and number of log file can be configured by setting logfilesz and ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/database/topics/log_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_krl_jkn_2l_en"/>
@@ -38,11 +38,11 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">Log Files</h2>
       
-      <p class="p">In SequoiaDB,it with log for data synchronization among data nodes,the log files is in the
-          directory<em class="ph i"> replicalog</em>.The size and number of log file can be configured by setting
-          <em class="ph i">logfilesz</em> and <em class="ph i">logfilenum</em>,default is <em class="ph i">64M</em> and <em class="ph i">20</em>.It can't be
-        modified if the params has entryed into force.(if you want to modify,you must delete all the
-        log files off-line,reconfigure the params and restart SequoiaDB.But this will lead to
+      <p class="p">In SequoiaDB, it with log for data synchronization among data nodes, the log files is in the
+          directory<em class="ph i"> replicalog</em>. The size and number of log file can be configured by setting
+          <em class="ph i">logfilesz</em> and <em class="ph i">logfilenum</em>, default is <em class="ph i">64M</em> and <em class="ph i">20</em>. It can't be
+        modified if the params has entryed into force. (if you want to modify, you must delete all the
+        log files off-line, reconfigure the params and restart SequoiaDB. But this will lead to
         full-sync.)</p>
 
     </div>
@@ -50,12 +50,12 @@
     <div class="section"><h2 class="title sectiontitle">Sync</h2>
       
       <p class="p">All slave nodes in data group will regularly packaged download the logs of other nodes to
-        local for log replaying. Sync source is not limited to the master node.As we are hope the
-        gap of data version in all nodes is in the range of a small window.When in the range of
-        window,all the slave nodes synchronize to master node.But when the data version of some
-        nodes is too larger differ from master node,they will select other slave nodes to
-        synchronize.And if have conficted versions,be based on the current data verson of master
-        node.If the confiction can't be solved,then enter into full-sync.No master node, no sync.
+        local for log replaying. Sync source is not limited to the master node. As we are hope the
+        gap of data version in all nodes is in the range of a small window. When in the range of
+        window, all the slave nodes synchronize to master node. But when the data version of some
+        nodes is too larger differ from master node, they will select other slave nodes to
+        synchronize. And if have conficted versions, be based on the current data verson of master
+        node. If the confiction can't be solved, then enter into full-sync.No master node, no sync.
       </p>
 
     </div>
@@ -70,14 +70,14 @@
 
       <p class="p">3. the data is inconsistent and can't be repaired. </p>
 
-      <div class="note note"><span class="notetitle">Note:</span> After restarting in mormal,If the data version is still in the range of
-        synchronization,then it will not trigger full-sync.</div>
+      <div class="note note"><span class="notetitle">Note:</span> After restarting in mormal, If the data version is still in the range of
+        synchronization, then it will not trigger full-sync.</div>
 
-        <p class="p">the node which experienced full-sync will clear all of local data and logs,and copy all
-        of data in another node(not limit master node) in the group to local,as well as the changed
-        data in sync source.The node in the time of full-sync does not provide services to
-        external,and no master node,no sync.Full-sync will greatly affect the performance of  data
-        group,and even lead to lower the synchronous performance of other slave nodes.So adding
+        <p class="p">the node which experienced full-sync will clear all of local data and logs, and copy all
+        of data in another node(not limit master node) in the group to local, as well as the changed
+        data in sync source. The node in the time of full-sync does not provide services to
+        external, and no master node, no sync. Full-sync will greatly affect the performance of data
+        group, and even lead to lower the synchronous performance of other slave nodes. So adding
         shardings or increating log size to avoid full-sync for proposing.</p>
 
     </div>

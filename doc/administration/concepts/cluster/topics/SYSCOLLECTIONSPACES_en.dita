@@ -44,7 +44,8 @@
       <codeblock>{ "Collection" : [ { "Name" : "foo" } ], 
   "Group" : [ { "GroupID" : 1000 } ], 
   "Name" : "test", 
-  "PageSize" : 4096 }</codeblock>
+  "PageSize" : 4096 }
+}</codeblock>
     </section>
   </body>
 </topic>

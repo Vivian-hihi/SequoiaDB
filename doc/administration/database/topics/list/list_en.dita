@@ -4,20 +4,14 @@
   <title>List</title>
   <body>
     <p>In this section, th following lists will be introduced: </p>
-    <p><xref href="list_contexts_en.dita">Contexts list</xref></p>
-    <p><xref href="list_contexts_current_en.dita">Current session contexts list</xref>
-    </p>
-    <p><xref href="list_sessions_en.dita">Session list</xref>
-    </p>
-    <p><xref href="list_sessions_current_en.dita">Current session list</xref>
-    </p>
-    <p><xref href="list_collections_en.dita">Collection list</xref>
-    </p>
-    <p><xref href="list_collectionspace_en.dita">Collection space list</xref>
-    </p>
-    <p><xref href="list_storageunits_en.dita">Storage units list</xref>
-    </p>
-    <p><xref href="list_groups_en.dita">Replset list</xref>
+    <p><xref href="list_contexts_en.dita">Contexts List</xref></p>
+    <p><xref href="list_contexts_current_en.dita">Current Contexts List</xref></p>
+    <p><xref href="list_sessions_en.dita">Sessions List</xref></p>
+    <p><xref href="list_sessions_current_en.dita">Current Sessions List</xref></p>
+    <p><xref href="list_collections_en.dita">Collections List</xref></p>
+    <p><xref href="list_collectionspace_en.dita">Collection Spaces List</xref></p>
+    <p><xref href="list_storageunits_en.dita">Storage Units List</xref></p>
+    <p><xref href="list_groups_en.dita">Replica Groups List</xref>
     </p>
   </body>
 </topic>

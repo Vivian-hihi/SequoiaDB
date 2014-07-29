@@ -5,9 +5,9 @@
   <body>
     <note>如果新增节点涉及到新增主机，则请首先按照在<xref href="../../create_host.dita">集群中新增主机</xref>一节完成主机的主机名和参数配置。</note>
     <p>一个集群中可以配置多个分区组，最大可配置60,000个分区组。通过增加分区组，可以充分利用物理设备进行水平扩展，理论上 SequoiaDB 可以做到线性的水平扩展能力。</p>
-    <p>操作方法：</p><codeblock>>var dataRG = db.createRG("datagroup1")
->dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   
->dataRG.start()</codeblock>
+    <p>操作方法：</p><codeblock>> var dataRG = db.createRG("datagroup1")
+> dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   
+> dataRG.start()</codeblock>
     <p>第一条命令用于创建数据分区组，与编目分区组不同的是，该操作不会创建任何数据节点，其中参数为数据组名；</p>
     <p>第二条命令用户在数据组中新增一个数据节点，可以根据需要多次执行该命令来创建多个数据节点。</p>
     <p>其中：</p>

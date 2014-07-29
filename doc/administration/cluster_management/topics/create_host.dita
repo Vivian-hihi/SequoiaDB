@@ -8,6 +8,6 @@
     <p>2. 按照<xref href="../../../installation/system_require/topics/software.dita">系统配置需求</xref>一节配置好主机名/内核参数，并将其他的主机名和 IP 对应关系加入到 /etc/hosts 中；</p>
     <p>3. 修改每台集群主机上 /etc/hosts 文件，将新增的主机IP地址与主机对应关系加入到 /etc/hosts 文件中；</p>
     <p>4. 按照<xref href="../../../installation/system_require/topics/software.dita">系统配置需求</xref>一节验证配置的正确性；</p>
-    <p>5. 按照<xref href="../../../installation/server_installation/topics/linux.dita"> SequoiaDB 服务器安装</xref>一节，安装 SequoiaDB 软件。安装时，注意配置管理服务端口与现有系统的端口保持一致。</p>
+    <p>5. 按照 <xref href="../../../installation/server_installation/topics/linux.dita">SequoiaDB 服务器安装</xref>一节，安装 SequoiaDB 软件。安装时，注意配置管理服务端口与现有系统的端口保持一致。</p>
   </body>
 </topic>

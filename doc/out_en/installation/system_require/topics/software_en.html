@@ -41,17 +41,17 @@
       <ul class="ul">
         <li class="li">System configuration requirement <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d85737e24" class="stentry">Configuration Item</th>
+              <th valign="bottom" align="left" id="d85742e24" class="stentry">Configuration Item</th>
 
-              <th valign="bottom" align="left" id="d85737e27" class="stentry">Configuration method</th>
+              <th valign="bottom" align="left" id="d85742e27" class="stentry">Configuration method</th>
 
-              <th valign="bottom" align="left" id="d85737e30" class="stentry">Verification method</th>
+              <th valign="bottom" align="left" id="d85742e30" class="stentry">Verification method</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d85737e24" class="stentry">Set hostname</td>
+              <td valign="top" headers="d85742e24" class="stentry">Set hostname</td>
 
-              <td valign="top" headers="d85737e27" class="stentry"> 1. Log in with root privileges, perform hostname sdbserver1(sdbserver1 hostname can be modified as needed);<p class="p"/>
+              <td valign="top" headers="d85742e27" class="stentry"> 1. Log in with root privileges, perform hostname sdbserver1(sdbserver1 hostname can be modified as needed);<p class="p"/>
 <ul class="ul">
                 <li class="li">For SUSE: <p class="p">2. Open the /etc/HOSTNAME file;</p>
 <p class="p">  vi /etc/HOSTNAME</p>
@@ -67,7 +67,7 @@
  <p class="p">4. Press :wq to save and exit;</p>
 </li>
 
-                <li class="li">For Ubuntu：<p class="p">2. Open the /etc/hostname file;</p>
+                <li class="li">For Ubuntu: <p class="p">2. Open the /etc/hostname file;</p>
 <p class="p">  vi /etc/hostname</p>
 <p class="p">3. Modify file contents, configured as a hostname;</p>
 <p class="p">sdbserver1</p>
@@ -76,15 +76,15 @@
               </ul>
 </td>
 
-              <td valign="top" headers="d85737e30" class="stentry">Execute hostname command to verify whether the information is printed "sdbserver1" </td>
+              <td valign="top" headers="d85742e30" class="stentry">Execute hostname command to verify whether the information is printed "sdbserver1" </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d85737e24" class="stentry">
+              <td valign="top" headers="d85742e24" class="stentry">
                 Enable server nodes to visit each other through hostname
               </td>
 
-              <td valign="top" headers="d85737e27" class="stentry">
+              <td valign="top" headers="d85742e27" class="stentry">
                 <ul class="ul">
                   <li class="li">Log in the system in the role of root, open "/etc/hosts" with the command "vi
                     /etc/hosts"</li>
@@ -96,13 +96,13 @@
 <p class="p"> 192.168.20.202  sdbserver3</p>
 </li>
 
-                  <li class="li">3 .Save and exit</li>
+                  <li class="li">Save and exit</li>
 
                 </ul>
 
               </td>
 
-              <td valign="top" headers="d85737e30" class="stentry">Check with "ping sdbserver1"<p class="p"/>
+              <td valign="top" headers="d85742e30" class="stentry">Check with "ping sdbserver1"<p class="p"/>
 Check with "ping sdbserver2"</td>
 
             </tr>
@@ -112,43 +112,43 @@ Check with "ping sdbserver2"</td>
         <li class="li"><p class="p">Close the firewall</p>
  <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d85737e129" class="stentry">Configuration Item </th>
+            <th valign="bottom" align="left" id="d85742e129" class="stentry">Configuration Item </th>
 
-            <th valign="bottom" align="left" id="d85737e132" class="stentry">Configuration method</th>
+            <th valign="bottom" align="left" id="d85742e132" class="stentry">Configuration method</th>
 
-            <th valign="bottom" align="left" id="d85737e135" class="stentry">Verification method</th>
+            <th valign="bottom" align="left" id="d85742e135" class="stentry">Verification method</th>
 
           </tr>
 <tr class="strow"/>
 <tr class="strow">
-            <td valign="top" headers="d85737e129" class="stentry"> Close the firewall</td>
+            <td valign="top" headers="d85742e129" class="stentry"> Close the firewall</td>
 
-            <td valign="top" headers="d85737e132" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
+            <td valign="top" headers="d85742e132" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
 <ul class="ul">
-              <li class="li">For SUSE：<p class="p">1.SuSEfirewall2 stop；</p>
+              <li class="li">For SUSE:<p class="p">1. SuSEfirewall2 stop;</p>
 
-                <p class="p">2.chkconfig SuSEfirewall2_setup；</p>
+                <p class="p">2. chkconfig SuSEfirewall2_setup;</p>
 </li>
 
-              <li class="li">For RedHat：<p class="p">1.service iptables stop；</p>
-<p class="p">2.chkconfig iptables off；</p>
+              <li class="li">For RedHat:<p class="p">1. service iptables stop;</p>
+<p class="p">2. chkconfig iptables off;</p>
  </li>
 
-              <li class="li">For Ubuntu：<p class="p">1.ufw disable；</p>
+              <li class="li">For Ubuntu:<p class="p">1. ufw disable;</p>
 </li>
 
             </ul>
 </td>
 
-            <td valign="top" headers="d85737e135" class="stentry"><ul class="ul">
-              <li class="li">For SUSE：<p class="p"> chkconfig -list | grep fire；</p>
+            <td valign="top" headers="d85742e135" class="stentry"><ul class="ul">
+              <li class="li">For SUSE:<p class="p"> chkconfig -list | grep fire;</p>
 
               </li>
 
-              <li class="li">For RedHat：<p class="p">service iptables status；</p>
+              <li class="li">For RedHat:<p class="p">service iptables status;</p>
  </li>
 
-              <li class="li">For Ubuntu：<p class="p">ufw status；</p>
+              <li class="li">For Ubuntu:<p class="p">ufw status;</p>
 </li>
 
             </ul>
@@ -177,25 +177,34 @@ Check with "ping sdbserver2"</td>
 *               soft      rss        unlimited
 *               soft      as         unlimited</pre>
 <p class="p"><strong class="ph b">Params
-              Description：</strong></p>
-<p class="p"><strong class="ph b">core</strong>：the "core" file is generated as the time of
-            database failure to troubleshooting.,you had better close the system for
+              Description:</strong></p>
+<p class="p"><strong class="ph b">core</strong>: The "core" file is generated as the time of
+            database failure to troubleshooting, you had better close the system for
               advice.</p>
-<p class="p"><strong class="ph b">data</strong>：The size of data memory that database processes allow to
+<p class="p"><strong class="ph b">data</strong>: The size of data memory that database processes allow to
             allocate.</p>
-<p class="p"><strong class="ph b"> fsize</strong>：The size of file that database processes allow to address. </p>
+<p class="p"><strong class="ph b"> fsize</strong>: The size of file that database processes allow to address. </p>
 <p class="p">
-            <strong class="ph b">rss</strong>：The max size of resident set that database processes allowed.
+            <strong class="ph b">rss</strong>: The max size of resident set that database processes allowed.
               </p>
-<p class="p"><strong class="ph b">as</strong>：The max amount of virtual memory addressing space that database
-                processes allowed. </p>
-<div class="note note"><span class="notetitle">Note:</span> <p class="p">1.Each database server should be configured.</p>
-<p class="p">2.It need to
+<p class="p"><strong class="ph b">as</strong>: The max amount of virtual memory addressing space that database
+              processes allowed. </p>
+
+          Set in the configuration file in /etc/security/limits.d/90-nproc.conf:<div class="p">
+            <pre class="pre codeblock">#&lt;domain&gt;      &lt;type&gt;    &lt;item&gt;     &lt;value&gt;
+*               soft      nproc     unlimited</pre>
+</div>
+
+          <p class="p"><strong class="ph b">Explanation of parameters</strong>:</p>
+
+          <strong class="ph b">nproc</strong>: The database allows the maximum number of threads limits;
+          <div class="note note"><span class="notetitle">Note:</span> <p class="p">1. Each database server should be configured.</p>
+<p class="p">2. It need to
               relogin after changing to be effective.</p>
 </div>
 </li>
 
-        <li class="li">Adjusting kernel params <p class="p">1.Using the following command to output the current
+        <li class="li">Adjusting kernel params <p class="p">1. Using the following command to output the current
             configuration of vm,and be placed on file.
           </p>
 <pre class="pre codeblock">cat /proc/sys/vm/swappiness
@@ -205,7 +214,7 @@ cat /proc/sys/vm/dirty_expire_centisecs
 cat /proc/sys/vm/vfs_cache_pressure
 cat /proc/sys/vm/min_free_kbytes</pre>
 
-          2.Adding the following params to the file of "/etc/sysctl.conf" to adjust kernel params.
+          2. Adding the following params to the file of "/etc/sysctl.conf" to adjust kernel params.
             <pre class="pre codeblock">vm.swappiness = 0
 vm.dirty_ratio = 100
 vm.dirty_background_ratio = 10
@@ -213,7 +222,7 @@ vm.dirty_expire_centisecs = 50000
 vm.vfs_cache_pressure = 200
 vm.min_free_kbytes =  &lt;8% of physical memory size,unit is KB&gt; </pre>
 <div class="note note"><span class="notetitle">Note:</span> When
-            the available physical memory size of database isn't enough 8GB,doesn't need to set
+            the available physical memory size of database isn't enough 8GB, doesn't need to set
             "vm.swappiness = 0".</div>
  3. Executing the following command to be
             effective.<pre class="pre codeblock">/sbin/sysctl -p</pre>
@@ -221,8 +230,8 @@ vm.min_free_kbytes =  &lt;8% of physical memory size,unit is KB&gt; </pre>
             configured.</div>
 </li>
 
-        <li class="li">Database directory structure<p class="p">The users had better put the directory of data,index,and
-            log in different physical disks,to reduce the competition between sequential I/O and
+        <li class="li">Database directory structure<p class="p">The users had better put the directory of data, index, and
+            log in different physical disks, to reduce the competition between sequential I/O and
             random I/O.</p>
 </li>
 

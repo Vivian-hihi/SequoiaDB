@@ -41,6 +41,6 @@
       <p>使用正则表达式进行大小写忽略，匹配以字符“W”起始的字符串，可以使用：</p>
       <codeblock>{ "key" : { "$regex" : "^W", "$options" : "i" } }</codeblock>
     </section>
-    <p>关于正则表达式规则，请参阅<xref href="http://perldoc.perl.org/perlre.html" format="html" scope="external"> Perl 正则表达式手册</xref>。</p>
+    <p>关于正则表达式规则，请参阅 <xref href="http://perldoc.perl.org/perlre.html" format="html" scope="external">Perl 正则表达式手册</xref>。</p>
   </body>
 </topic>

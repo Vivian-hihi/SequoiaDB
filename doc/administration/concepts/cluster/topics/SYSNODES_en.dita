@@ -7,8 +7,8 @@
       <p>SYSCAT</p>
     </section>
     <section><title>Concept</title>
-      <p>SYSNODES collection contains information of all the nodes in the cluster and of replset.
-        Information of a replset is saved in a corresponding file.</p>
+      <p>SYSNODES collection contains information of all the nodes in the cluster and of ReplicaGroup.
+        Information of a ReplicaGroup is saved in a corresponding file.</p>
       <p>Every file contains fields as follow: </p>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.02* 2.24*"
         id="administration_concepts_cluster_node_catalog_sysnodes_table1">-->
@@ -20,22 +20,22 @@
         <strow>
           <stentry>GroupName</stentry>
           <stentry>String</stentry>
-          <stentry>Replset name.</stentry>
+          <stentry>ReplicaGroup name.</stentry>
         </strow>
         <strow>
           <stentry>GroupID</stentry>
           <stentry>Integer</stentry>
-          <stentry>Replset ID. It is unique in the cluster.</stentry>
+          <stentry>ReplicaGroup ID. It is unique in the cluster.</stentry>
         </strow>
         <strow>
           <stentry>PrimaryNode</stentry>
           <stentry>Integer</stentry>
-          <stentry>The ID of the master node in a replset.</stentry>
+          <stentry>The ID of the master node in a ReplicaGroup.</stentry>
         </strow>
         <strow>
           <stentry>Role</stentry>
           <stentry>Integer</stentry>
-          <stentry>The role of a replset. It can be:
+          <stentry>The role of a ReplicaGroup. It can be:
             <ul>
               <li>0: data node</li>
               <li>2: cataloge node</li>
@@ -47,9 +47,9 @@
           <stentry>Integer</stentry>
           <stentry>
             <ul>
-              <li>1: activate replset</li>
-              <li>0: inactive replset</li>
-              <li>not exists: inactive replset</li>
+              <li>1: activate ReplicaGroup</li>
+              <li>0: inactive ReplicaGroup</li>
+              <li>not exists: inactive ReplicaGroup</li>
             </ul>
           </stentry>
         </strow>
@@ -57,15 +57,15 @@
           <stentry>Version</stentry>
           <stentry>Integer</stentry>
           <stentry>Version number. It starts with 1. It increases by 1 after any execution on the
-            replset.</stentry>
+            ReplicaGroup.</stentry>
         </strow>
         <strow>
           <stentry>Group</stentry>
           <stentry>Array</stentry>
-          <stentry>It contains information of nodes in a replset,as it is shown as follow:</stentry>
+          <stentry>It contains information of nodes in a ReplicaGroup, as it is shown as follow:</stentry>
         </strow>
       </simpletable>
-      <p>If there are more than one node in a replset, each node is store in Group as an object. Each object contains:</p>
+      <p>If there are more than one node in a ReplicaGroup, each node is store in Group as an object. Each object contains:</p>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
         id="administration_concepts_cluster_node_catalog_sysnodes_table2">-->
         <sthead>
@@ -97,21 +97,21 @@
             <ul>
               <li>0：direct service, corresponds to database argument svcname</li>
               <li>1：replicate service, corresponds to database argument replname</li>
-              <li>2：replset service, corresponds to database argument shardname</li>
+              <li>2：replicate service, corresponds to database argument shardname</li>
               <li>3：catalog service, corresponds to database argument catalogname</li>
             </ul>
           </stentry>
         </strow>
       </simpletable>
       <note>
-        <p>The group name of a catalog replset should be "SYSCatalogGroup". The ID of a catalog replset should be 1.</p>
-        <p>Data replset ID starts from 1000.</p>
+        <p>The group name of a catalog ReplicaGroup should be "SYSCatalogGroup". The ID of a catalog ReplicaGroup should be 1.</p>
+        <p>Data ReplicaGroup ID starts from 1000.</p>
         <p>Data node ID starts from 1000.</p>
       </note>
     </section>
     <section>
       <title>Sample</title>
-      <p>A typical catalog replset that contains only one node is:</p>
+      <p>A typical catalog ReplicaGroup that contains only one node is:</p>
       <codeblock>{ "Group" : [ 
               { "NodeID" : 2, 
                 "HostName" : "vmsvr1-rhel-x64", 
@@ -127,7 +127,7 @@
               "PrimaryNode" : 2, 
               "Role" : 2, 
               "Version" : 1 } }</codeblock>
-      <p>A typical data replset that contains only one node is:</p>
+      <p>A typical data ReplicaGroup that contains only one node is:</p>
       <codeblock>{ "Group" : [ 
               { "dbpath" : "/home/sequoiadb/sequoiadb/data3", 
                 "HostName" : "vmsvr1-rhel-x64", 

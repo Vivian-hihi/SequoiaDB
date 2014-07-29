@@ -15,7 +15,7 @@
       <p>SDB_LIST_CONTEXTS_CURRENT</p>
     </section>
     <section><title>Proper Node</title>
-      <p>data node,catalog node</p>
+      <p>data node, catalog node</p>
     </section>
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.0*" id="administration_database_monitoring_snapshot_contexts_current_table">-->

@@ -3,9 +3,10 @@
 <topic id="topic_qtj_nb1_ql">
   <title>DataBase Tool</title>
   <body>
-    <p><b>contents：</b></p>
-    <p><xref href="import_en.dita">Data Migration — Import</xref></p>
-    <p><xref href="export_en.dita">Data Migration — Export</xref></p>
-    <p><xref href="sdbinspt_en.dita">Database detecting tool — sdbinspt</xref></p>
+    <p><b>catalog:</b></p>
+    <p><xref href="import_en.dita">Data Migration — sdbimport</xref></p>
+    <p><xref href="export_en.dita">Data Migration — sdbexport</xref></p>
+    <p><xref href="sdbinspt_en.dita">Database Detecting Tool — sdbinspt</xref></p>
+    <p><xref href="tool_sdbtop_en.dita">Database Performance Monitoring Tool — sdbtop</xref></p>
   </body>
 </topic>

@@ -75,7 +75,7 @@
     </section>
     <section>
       <title>协调节点示例</title>
-      <codeblock>>db.list(SDB_LIST_COLLECTIONSPACES)
+      <codeblock>> db.list(SDB_LIST_COLLECTIONSPACES)
 {
   "Name": "foo"
 }</codeblock>

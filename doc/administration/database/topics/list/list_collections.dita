@@ -35,7 +35,7 @@
         <strow>
           <stentry>Details.ID</stentry>
           <stentry>整数</stentry>
-          <stentry>集合 ID，范围0-4095，集合空间内唯一</stentry>
+          <stentry>集合 ID，范围0~4095，集合空间内唯一</stentry>
         </strow>
         <strow>
           <stentry>Details.LogicalID</stentry>
@@ -102,7 +102,7 @@
     </section>
     <section>
       <title>协调节点示例</title>
-      <codeblock>>db.list(SDB_LIST_COLLECTIONS)
+      <codeblock>> db.list(SDB_LIST_COLLECTIONS)
 {
   "Name": "foo.bar"
 }

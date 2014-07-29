@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_snapshot_collectionspaces">
-  <title>Collection Space Snapshot</title>
+  <title>Collection Spaces Snapshot</title>
   <body>
     <section><title>Description</title>
       <p>Collection space snapshot contains all the collection space in the current data node. Each

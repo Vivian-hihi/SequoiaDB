@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_list_groups">
-  <title> ReplicaGroup list</title>
+  <title> Replica Groups List</title>
   <body>
     <section>
       <title>Description</title>
-      <p>ReplicaGroup list contains information of all shards in th current cluster.</p>
+      <p>Replica Groups list contains information of all shards in th current cluster.</p>
     </section>
     <section>
       <title>Sign</title>
@@ -40,11 +40,11 @@
           <stentry>
             Service type of node in replica group
             <ul>
-              <li>0：direct-connection service, corresponding to database parameter
+              <li>0: direct-connection service, corresponding to database parameter
                 <i>svcname</i></li>
-              <li>1：replication service, corresponding to database parameter <i>replname</i></li>
-              <li>2：shard service, corresponding to database parameter <i>shardname</i></li>
-              <li>3：catalog service, corresponding to database parameter catalogname</li>
+              <li>1: replication service, corresponding to database parameter <i>replname</i></li>
+              <li>2: shard service, corresponding to database parameter <i>shardname</i></li>
+              <li>3: catalog service, corresponding to database parameter catalogname</li>
             </ul>
           </stentry>
         </strow>
@@ -79,8 +79,8 @@
           <stentry>
             Replica group role.It can be:
             <ul>
-              <li>0：data node </li>
-              <li>2：catalog node</li>
+              <li>0: data node </li>
+              <li>2: catalog node</li>
             </ul>
           </stentry>
         </strow>
@@ -90,9 +90,9 @@
           <stentry>
             Status of replica group
             <ul>
-              <li>1：active repleset</li>
-              <li>0：unactive repleset</li>
-              <li>does not exist：unactive repleset</li>
+              <li>1: active replica group</li>
+              <li>0: unactive replica group</li>
+              <li>does not exist: unactive replica group</li>
             </ul>
           </stentry>
         </strow>

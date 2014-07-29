@@ -8,11 +8,11 @@
         into an 8-byte integer when it is stored in the database.</p>
     </section>
     <section><title>Format</title>
-      <p>The format of timeline is：</p>
+      <p>The format of timeline is:</p>
       <codeblock>{ "$timestamp" : "&lt;YYYY-MM-DD-HH.mm.ss.ffffff>" }</codeblock>
     </section>
     <section><title>Sample</title>
-      <p>For example：</p>
+      <p>For example:</p>
       <codeblock>{ "createTime" : { "$timestamp" : "2012-05-12-13.15.21.241523" } }</codeblock>
     </section>
   </body>

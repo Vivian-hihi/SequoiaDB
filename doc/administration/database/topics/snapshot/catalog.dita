@@ -36,7 +36,7 @@
         <strow>
           <stentry>ReplSize </stentry>
           <stentry>整数</stentry>
-          <stentry> 执行修改操作时需要同步的副本数。当执行更新、插入、删除记录等操作时，仅当指定副本数的节点都完成操作时才返回操作结果。</stentry>
+          <stentry> 执行修改操作时需要同步的副本数。当执行更新，插入，删除记录等操作时，仅当指定副本数的节点都完成操作时才返回操作结果。</stentry>
         </strow>
         <strow>
           <stentry>ShardingKey </stentry>
@@ -77,7 +77,7 @@
     </section>
     <section>
       <title>示例</title>
-      <codeblock>>db.snapshot(SDB_SNAP_CATALOG)
+      <codeblock>> db.snapshot(SDB_SNAP_CATALOG)
 {
   "_id": {
     "$oid": "5247a2bc60080822db1cfba2"

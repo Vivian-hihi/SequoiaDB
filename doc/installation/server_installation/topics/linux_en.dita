@@ -48,14 +48,13 @@ Please specify the directory where SequoiaDB Server will be installed.
 
 Installation Directory [/opt/sequoiadb]:</codeblock>
           </p></li>
-        <li>After inputting the installation path(installed in <i>/opt/sequoiadb</i> in default)
-          .Then you are prompted to enter a user name which used to run <i>sequoiadb service</i><p>
+        <li>After inputting the installation path(installed in <i>/opt/sequoiadb</i> in default). Then you are prompted to enter a user name which used to run <i>sequoiadb service</i><p>
             <codeblock>Confiture user information
 Please insert the desired username and password
 User Name [sdbadmin]:</codeblock>
           </p></li>
         <li>Pressing <i>enter</i> after inputting the user name(creating <i>sdbadmin</i> user in
-          default).Then system prompts you to enter password and confirmed password
+          default). Then system prompts you to enter password and confirmed password
         <p><codeblock>Password [********] :
 Re-enter [********] :</codeblock></p></li>
         <li><p>After inputing password twice (The default password is sdbadmin), the system will

@@ -4,15 +4,15 @@
   <title>ReplicaGroup</title>
   <body>
     <section><title>Concept</title>
-      <p>ReplicaGroup is also named as replication group. A replset may contain one or more data nodes
+      <p>ReplicaGroup is also named as replication group. A ReplicaGroup may contain one or more data nodes
         (or catalog node).The data replicattion between nodes is asynchronous log file
         replication,which ensures data consistence. </p>
-      <p>All the nodes in a replset contacts with each other through replication service port
+      <p>All the nodes in a ReplicaGroup contacts with each other through replication service port
         (replname parament), and regularly sent heartbeat package to each other to validate their
         states. </p>
-      <p>The structure of replset is as follow: </p>
+      <p>The structure of ReplicaGroup is as follow: </p>
       <image href="../../../../introduction/images/sequoiadb_infrastructure_shard1_en.jpg"/>
-      <p>Each node in a replset has two statuses: </p>
+      <p>Each node in a ReplicaGroup has two statuses: </p>
       <dl>
         <dlentry>
           <dt>Master node</dt>
@@ -28,7 +28,7 @@
             consistence.</dd>
         </dlentry>
       </dl>
-      <p>Replset achieves high usability through data replication, read/write splitting and
+      <p>ReplicaGroup achieves high usability through data replication, read/write splitting and
         vote.</p>
     </section>
   </body>

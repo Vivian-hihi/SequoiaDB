@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_snapshot_sessions_current">
-  <title>Current Session List</title>
+  <title>Current Sessions List</title>
   <body>
     <section><title>Description</title>
-      <p>Current session list contains the current sessions on current database node. Each session
+      <p>Current sessions list contains the current sessions on current database node. Each session
         is recorded as one record.</p>
     </section>
     <section><title>Sign</title>
       <p>SDB_LIST_SESSIONS_CURRENT</p>
     </section>
     <section><title>Proper Node</title>
-      <p>data node,catalog node</p>
+      <p>data node, catalog node</p>
     </section>
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_sessions_current_table">-->
@@ -36,11 +36,11 @@
           <stentry>
             Session status:
             <ul id="ul_5l4_kyj_yj">
-              <li>Creating：creating status</li>
-              <li>Running：running status </li>
-              <li>Waiting：waiting status</li>
-              <li>Idle：idle status of thread pool</li>
-              <li>Destroying：destroying status</li>
+              <li>Creating: creating status</li>
+              <li>Running: running status </li>
+              <li>Waiting: waiting status</li>
+              <li>Idle: idle status of thread pool</li>
+              <li>Destroying: destroying status</li>
             </ul>
           </stentry>
         </strow>

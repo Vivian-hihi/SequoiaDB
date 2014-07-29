@@ -4,7 +4,7 @@
   <title>Replicate</title>
   <body>  
     <section><title>Concept</title>
-      <p>Data replication is synchronously executed between two nodes in a replset.</p>
+      <p>Data replication is synchronously executed between two nodes in a ReplicaGroup.</p>
       <p>Any insertion, deletion or alteration in data nodes or catalog nodes will be recored in a
         log file. SequoiaDB puts the log file in a log cache, and then asynchronously stores it in
         disk memory.</p>
@@ -28,7 +28,7 @@
         package.</p>
       <p>There are 2 statuses in the replication between nodes：</p>
       <ul>
-        <li>PEER：When the log files requested by a target node is still stored in the log cache of
+        <li>PEER: When the log files requested by a target node is still stored in the log cache of
           source node, the status of the two nodes is PEER.</li>
         <li>Remote Catchup: When the log files requested by the target node is not stored in the log
           cache of source node and is still stored in the log file of source node, the status of the

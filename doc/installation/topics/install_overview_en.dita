@@ -3,20 +3,11 @@
 <topic id="topic_qjp_xnx_wj">
   <title>Install Overview</title>
   <body>
-    <p>The basic steps to install Sequoiadb are as follow:</p>
-    <p>
-      <xref href="../deploy/topics/overview_en.dita">Plan Database Deploy</xref></p>
-    <p>
-      <xref href="../system_require/topics/system_require_en.dita">System Requirement of
-        SequoiaDB</xref></p>
-    <p>
-      <xref href="install_media_en.dita">Install Media</xref>
-    </p>
-    <p><xref href="../server_installation/topics/server_installation_en.dita">SequoiaDB server
-        installation </xref>
-    </p>
-    <p><xref href="../configuration_start/topics/configuration_start_en.dita">System configuration and
-        start</xref>
-    </p>
+    <p>The basic steps to install SequoiaDB are as follow:</p>
+    <p><xref href="../deploy/topics/overview_en.dita">Plan Database Deploy</xref></p>
+    <p><xref href="../system_require/topics/system_require_en.dita">System Requirement of SequoiaDB</xref></p>
+    <p><xref href="install_media_en.dita">Install Media</xref></p>
+    <p><xref href="../server_installation/topics/server_installation_en.dita">SequoiaDB Server Installation</xref></p>
+    <p><xref href="../configuration_start/topics/configuration_start_en.dita">System Configuration and Start</xref></p>
   </body>
 </topic>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="监控"/>
-<meta name="description" content="概念 监控是一种监视当前系统状态的方式。在 SequoiaDB 中，用户可以使用快照（SNAPSHOT）与列表（LIST）命令进行系统监控。 如果在集群环境下查询快照，连接协调节点就可以获取。 连接协调节点，默认是获取整个集群的快照信息，如： snapshot(SDB_SNAP_SYSTEM ) 。 要获取指定分区组的快照信息，使用条件查询，如： ..."/>
+<meta name="description" content="概念 监控是一种监视当前系统状态的方式。在 SequoiaDB 中，用户可以使用快照（SNAPSHOT）与列表（LIST）命令进行系统监控。 如果在集群环境下查询快照，连接协调节点就可以获取。 连接协调节点，默认是获取整个集群的快照信息，如： snapshot(SDB_SNAP_SYSTEM ) 要获取指定分区组的快照信息，使用条件查询，如： snapshot(SDB_SNAP_SYSTEM,{ ..."/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="administration_database_monitoring"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
@@ -42,7 +42,7 @@
       <div class="note note"><span class="notetitle">Note:</span> 如果在集群环境下查询快照，连接协调节点就可以获取。</div>
 
       <div class="p">连接协调节点，默认是获取整个集群的快照信息，如：<pre class="pre codeblock">snapshot(SDB_SNAP_SYSTEM )</pre>
-。</div>
+</div>
 
       <div class="p">要获取指定分区组的快照信息，使用条件查询，如：<pre class="pre codeblock">snapshot(SDB_SNAP_SYSTEM,{ GroupName: "group1" } )</pre>
 </div>
@@ -57,83 +57,83 @@
       <p class="p">快照是一种得到系统当前状态的命令，主要分为以下类型：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d31928e51" class="stentry">快照标示</th>
+          <th valign="bottom" align="left" id="d31933e50" class="stentry">快照标示</th>
 
-          <th valign="bottom" align="left" id="d31928e54" class="stentry">快照类型</th>
+          <th valign="bottom" align="left" id="d31933e53" class="stentry">快照类型</th>
           
-          <th valign="bottom" align="left" id="d31928e57" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d31933e56" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/contexts.html">SDB_SNAP_CONTEXTS</a></td>
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/contexts.html">SDB_SNAP_CONTEXTS</a></td>
 
-          <td valign="top" headers="d31928e54" class="stentry">上下文</td>
+          <td valign="top" headers="d31933e53" class="stentry">上下文</td>
 
-          <td valign="top" headers="d31928e57" class="stentry">上下文快照列出当前数据库节点中所有的会话所对应的上下文</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/contexts_current.html">SDB_SNAP_CONTEXTS_CURRENT</a></td>
-
-          <td valign="top" headers="d31928e54" class="stentry">当前会话上下文</td>
-
-          <td valign="top" headers="d31928e57" class="stentry">当前上下文快照列出当前数据库节点中当前会话所对应的上下文</td>
+          <td valign="top" headers="d31933e56" class="stentry">上下文快照列出当前数据库节点中所有的会话所对应的上下文</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/sessions.html">SDB_SNAP_SESSIONS</a></td>
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/contexts_current.html">SDB_SNAP_CONTEXTS_CURRENT</a></td>
 
-          <td valign="top" headers="d31928e54" class="stentry">会话</td>
+          <td valign="top" headers="d31933e53" class="stentry">当前会话上下文</td>
 
-          <td valign="top" headers="d31928e57" class="stentry">会话快照列出当前数据库节点中所有的会话</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/sessions_current.html">SDB_SNAP_SESSIONS_CURRENT</a></td>
-
-          <td valign="top" headers="d31928e54" class="stentry">当前会话</td>
-
-          <td valign="top" headers="d31928e57" class="stentry">当前会话快照列出当前数据库节点中当前的会话</td>
+          <td valign="top" headers="d31933e56" class="stentry">当前上下文快照列出当前数据库节点中当前会话所对应的上下文</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/collections.html">SDB_SNAP_COLLECTIONS</a></td>
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/sessions.html">SDB_SNAP_SESSIONS</a></td>
 
-          <td valign="top" headers="d31928e54" class="stentry">集合</td>
+          <td valign="top" headers="d31933e53" class="stentry">会话</td>
 
-          <td valign="top" headers="d31928e57" class="stentry">集合快照列出当前数据库节点或集群中所有非临时集合</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/collectionspaces.html">SDB_SNAP_COLLECTIONSPACES</a></td>
-
-          <td valign="top" headers="d31928e54" class="stentry">集合空间</td>
-
-          <td valign="top" headers="d31928e57" class="stentry">集合空间快照列出当前数据库节点或集群中所有集合空间（编目集合空间除外）</td>
+          <td valign="top" headers="d31933e56" class="stentry">会话快照列出当前数据库节点中所有的会话</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/database.html">SDB_SNAP_DATABASE</a></td>
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/sessions_current.html">SDB_SNAP_SESSIONS_CURRENT</a></td>
 
-          <td valign="top" headers="d31928e54" class="stentry">数据库</td>
+          <td valign="top" headers="d31933e53" class="stentry">当前会话</td>
 
-          <td valign="top" headers="d31928e57" class="stentry">数据库快照列出当前数据库节点的数据库监视信息</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/system.html">SDB_SNAP_SYSTEM</a></td>
-
-          <td valign="top" headers="d31928e54" class="stentry">系统</td>
-
-          <td valign="top" headers="d31928e57" class="stentry">系统快照列出当前数据库节点的系统监视信息</td>
+          <td valign="top" headers="d31933e56" class="stentry">当前会话快照列出当前数据库节点中当前的会话</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e51" class="stentry"><a class="xref" href="snapshot/catalog.html">SDB_SNAP_CATALOG</a></td>
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/collections.html">SDB_SNAP_COLLECTIONS</a></td>
 
-          <td valign="top" headers="d31928e54" class="stentry">编目信息</td>
+          <td valign="top" headers="d31933e53" class="stentry">集合</td>
 
-          <td valign="top" headers="d31928e57" class="stentry">用于查看编目信息</td>
+          <td valign="top" headers="d31933e56" class="stentry">集合快照列出当前数据库节点或集群中所有非临时集合</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/collectionspaces.html">SDB_SNAP_COLLECTIONSPACES</a></td>
+
+          <td valign="top" headers="d31933e53" class="stentry">集合空间</td>
+
+          <td valign="top" headers="d31933e56" class="stentry">集合空间快照列出当前数据库节点或集群中所有集合空间（编目集合空间除外）</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/database.html">SDB_SNAP_DATABASE</a></td>
+
+          <td valign="top" headers="d31933e53" class="stentry">数据库</td>
+
+          <td valign="top" headers="d31933e56" class="stentry">数据库快照列出当前数据库节点的数据库监视信息</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/system.html">SDB_SNAP_SYSTEM</a></td>
+
+          <td valign="top" headers="d31933e53" class="stentry">系统</td>
+
+          <td valign="top" headers="d31933e56" class="stentry">系统快照列出当前数据库节点的系统监视信息</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d31933e50" class="stentry"><a class="xref" href="snapshot/catalog.html">SDB_SNAP_CATALOG</a></td>
+
+          <td valign="top" headers="d31933e53" class="stentry">编目信息</td>
+
+          <td valign="top" headers="d31933e56" class="stentry">用于查看编目信息</td>
 
         </tr>
 </table>
@@ -145,75 +145,75 @@
       <p class="p">列表是一种轻量级的得到系统当前状态的命令，主要分为以下类型：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d31928e202" class="stentry">列表标示</th>
+          <th valign="bottom" align="left" id="d31933e201" class="stentry">列表标示</th>
 
-          <th valign="bottom" align="left" id="d31928e205" class="stentry">列表类型</th>
+          <th valign="bottom" align="left" id="d31933e204" class="stentry">列表类型</th>
 
-          <th valign="bottom" align="left" id="d31928e208" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d31928e202" class="stentry"><a class="xref" href="list/list_contexts.html">SDB_LIST_CONTEXTS</a></td>
-
-          <td valign="top" headers="d31928e205" class="stentry">上下文</td>
-
-          <td valign="top" headers="d31928e208" class="stentry">上下文列表列出当前数据库节点中所有的会话所对应的上下文</td>
+          <th valign="bottom" align="left" id="d31933e207" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e202" class="stentry"><a class="xref" href="list/list_contexts_current.html">SDB_LIST_CONTEXTS_CURRENT</a></td>
+          <td valign="top" headers="d31933e201" class="stentry"><a class="xref" href="list/list_contexts.html">SDB_LIST_CONTEXTS</a></td>
 
-          <td valign="top" headers="d31928e205" class="stentry">当前会话上下文</td>
+          <td valign="top" headers="d31933e204" class="stentry">上下文</td>
 
-          <td valign="top" headers="d31928e208" class="stentry">当前上下文列表列出当前数据库节点中当前会话所对应的上下文</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d31928e202" class="stentry"><a class="xref" href="list/list_sessions.html">SDB_LIST_SESSIONS</a></td>
-
-          <td valign="top" headers="d31928e205" class="stentry">会话</td>
-
-          <td valign="top" headers="d31928e208" class="stentry">会话列表列出当前数据库节点中所有的会话</td>
+          <td valign="top" headers="d31933e207" class="stentry">上下文列表列出当前数据库节点中所有的会话所对应的上下文</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e202" class="stentry"><a class="xref" href="list/list_sessions_current.html">SDB_LIST_SESSIONS_CURRENT</a></td>
+          <td valign="top" headers="d31933e201" class="stentry"><a class="xref" href="list/list_contexts_current.html">SDB_LIST_CONTEXTS_CURRENT</a></td>
 
-          <td valign="top" headers="d31928e205" class="stentry">当前会话</td>
+          <td valign="top" headers="d31933e204" class="stentry">当前会话上下文</td>
 
-          <td valign="top" headers="d31928e208" class="stentry">当前会话列表列出当前数据库节点中当前的会话</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d31928e202" class="stentry"><a class="xref" href="list/list_collections.html">SDB_LIST_COLLECTIONS</a></td>
-
-          <td valign="top" headers="d31928e205" class="stentry">集合</td>
-
-          <td valign="top" headers="d31928e208" class="stentry">集合列表列出当前数据库节点或集群中所有非临时集合</td>
+          <td valign="top" headers="d31933e207" class="stentry">当前上下文列表列出当前数据库节点中当前会话所对应的上下文</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e202" class="stentry"><a class="xref" href="list/list_collectionspace.html">SDB_LIST_COLLECTIONSPACES</a></td>
+          <td valign="top" headers="d31933e201" class="stentry"><a class="xref" href="list/list_sessions.html">SDB_LIST_SESSIONS</a></td>
 
-          <td valign="top" headers="d31928e205" class="stentry">集合空间</td>
+          <td valign="top" headers="d31933e204" class="stentry">会话</td>
 
-          <td valign="top" headers="d31928e208" class="stentry">集合空间列表列出当前数据库节点或集群中所有集合空间（编目集合空间除外）</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d31928e202" class="stentry"><a class="xref" href="list/list_storageunits.html">SDB_LIST_STORAGEUNITS</a></td>
-
-          <td valign="top" headers="d31928e205" class="stentry">存储单元</td>
-
-          <td valign="top" headers="d31928e208" class="stentry">存储单元列表列出当前数据库节点的全部存储单元信息</td>
+          <td valign="top" headers="d31933e207" class="stentry">会话列表列出当前数据库节点中所有的会话</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d31928e202" class="stentry"><a class="xref" href="list/list_groups.html">SDB_LIST_GROUPS</a></td>
+          <td valign="top" headers="d31933e201" class="stentry"><a class="xref" href="list/list_sessions_current.html">SDB_LIST_SESSIONS_CURRENT</a></td>
 
-          <td valign="top" headers="d31928e205" class="stentry">分区组</td>
+          <td valign="top" headers="d31933e204" class="stentry">当前会话</td>
 
-          <td valign="top" headers="d31928e208" class="stentry">分区组列表列出当前集群中的所有分区信息</td>
+          <td valign="top" headers="d31933e207" class="stentry">当前会话列表列出当前数据库节点中当前的会话</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d31933e201" class="stentry"><a class="xref" href="list/list_collections.html">SDB_LIST_COLLECTIONS</a></td>
+
+          <td valign="top" headers="d31933e204" class="stentry">集合</td>
+
+          <td valign="top" headers="d31933e207" class="stentry">集合列表列出当前数据库节点或集群中所有非临时集合</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d31933e201" class="stentry"><a class="xref" href="list/list_collectionspace.html">SDB_LIST_COLLECTIONSPACES</a></td>
+
+          <td valign="top" headers="d31933e204" class="stentry">集合空间</td>
+
+          <td valign="top" headers="d31933e207" class="stentry">集合空间列表列出当前数据库节点或集群中所有集合空间（编目集合空间除外）</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d31933e201" class="stentry"><a class="xref" href="list/list_storageunits.html">SDB_LIST_STORAGEUNITS</a></td>
+
+          <td valign="top" headers="d31933e204" class="stentry">存储单元</td>
+
+          <td valign="top" headers="d31933e207" class="stentry">存储单元列表列出当前数据库节点的全部存储单元信息</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d31933e201" class="stentry"><a class="xref" href="list/list_groups.html">SDB_LIST_GROUPS</a></td>
+
+          <td valign="top" headers="d31933e204" class="stentry">分区组</td>
+
+          <td valign="top" headers="d31933e207" class="stentry">分区组列表列出当前集群中的所有分区信息</td>
 
         </tr>
 </table>

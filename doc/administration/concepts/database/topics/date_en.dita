@@ -7,8 +7,8 @@
       <p>In SequoiaDB, date is in the format of YYYY-MM-DD. It is transformed into a 4-byte integer
         when it is stored in the database.</p>
     </section>
-    <section><title>Form</title>
-      <p>The format of date is：</p>
+    <section><title>Format</title>
+      <p>The format of date is:</p>
       <codeblock>{ "$date" : "&lt;YYYY-MM-DD&gt;" }</codeblock>
     </section>
     <section><title>Sample</title>

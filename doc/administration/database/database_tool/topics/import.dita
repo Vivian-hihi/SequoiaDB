@@ -98,7 +98,7 @@
         <strow>
           <stentry>--insertnum</stentry>
           <stentry>-n</stentry>
-          <stentry>批量导入记录，如果设置1，使用普通方式导入，如果大于1，则使用批量方式，设置范围是1-100000。 </stentry>
+          <stentry>批量导入记录，如果设置1，使用普通方式导入，如果大于1，则使用批量方式，设置范围是1~100000。 </stentry>
         </strow>
         <strow>
           <stentry>--file</stentry>
@@ -157,7 +157,7 @@
       <title>sdbimprt 自动判断的类型：</title>
       <simpletable>
         <sthead>
-          <stentry>csv 数据</stentry>
+          <stentry>CSV 数据</stentry>
           <stentry>sdbimprt 自动判断的类型</stentry>
           <stentry>实际数据</stentry>
         </sthead>

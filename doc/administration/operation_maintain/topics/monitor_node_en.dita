@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_qhj_lmp_fm">
-  <title>Monitoring node status</title>
+  <title>Monitoring Node Status</title>
   <body>
     <p>Users can use the snapshot monitor the status of each node.</p>
     <ol>
@@ -9,7 +9,7 @@
         <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;
 </codeblock></li>
-      <li>Get partition group <codeblock>datarg = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
+      <li>Get replica group <codeblock>> datarg = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
       <li>Get the data node
         <codeblock>> datanode = datarg.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
       <li>To obtain a snapshot of the node

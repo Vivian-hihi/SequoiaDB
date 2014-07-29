@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_list_contexts">
-  <title>Context List</title>
+  <title>Contexts List</title>
   <body>
     <section>
       <title>Description</title>
-      <p>Context list contains all the contexts corresponding to all the sessions in current data
+      <p>Contexts list contains all the contexts corresponding to all the sessions in current data
         node.</p>
       <p>A session is a record. If a session contains one or more contexts, the Contextd array field
         generate a for each of the contexts.</p>
@@ -15,7 +15,7 @@
       <p>SDB_LIST_CONTEXTS</p>
     </section>
     <section><title>Proper Node</title>
-      <p>data node,catalog node</p>
+      <p>data node, catalog node</p>
     </section>
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.0*" id="administration_database_monitoring_snapshot_contexts_table">-->

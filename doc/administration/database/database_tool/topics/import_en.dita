@@ -16,9 +16,9 @@
       <p>
         <simpletable>
           <sthead>
-            <stentry>usage</stentry>
-            <stentry>default</stentry>
-            <stentry>be equipped</stentry>
+            <stentry>Usage</stentry>
+            <stentry>Default</stentry>
+            <stentry>Be equipped</stentry>
           </sthead>
           <strow>
             <stentry>string delimiter</stentry>
@@ -55,14 +55,14 @@
         </strow>
         <strow>
           <stentry>--hostname,-s                </stentry>
-          <stentry>import data from SequoiaDB of the specified hostname.In default,the
+          <stentry>import data from SequoiaDB of the specified hostname.In default, the
             <b>sdbimprt</b> try to connect to local hostname.</stentry>
         </strow>
         <strow>
           <stentry>
             --svcname,-p
           </stentry>
-          <stentry>specify port.In default,the <b>sdbimprt</b> try to connect to the host which port number is 11810.</stentry>
+          <stentry>specify port. In default, the <b>sdbimprt</b> try to connect to the host which port number is 11810.</stentry>
         </strow>
         <strow>
           <stentry>--user,-u
@@ -76,19 +76,19 @@
         </strow>
         <strow>
           <stentry>--delchar,-a</stentry>
-          <stentry>specify the character delimiter." " " is default,"csv" format effective.</stentry>
+          <stentry>specify the character delimiter. " " " is default, "csv" format effective.</stentry>
         </strow>
         <strow>
           <stentry>
             --delfield,-e
           </stentry>
-          <stentry>specify the field delimiter. "," is default,"csv" format effective. </stentry>
+          <stentry>specify the field delimiter. "," is default, "csv" format effective. </stentry>
         </strow>
         <strow>
           <stentry>
             --delrecord,-r
           </stentry>
-          <stentry>specify the record delimiter."\n" is default,"csv" format effective.</stentry>
+          <stentry>specify the record delimiter. "\n" is default, "csv" format effective.</stentry>
         </strow>
         <strow>
           <stentry>
@@ -105,7 +105,7 @@
         <strow>
           <stentry>--insertnum,-n
           </stentry>
-          <stentry>Batch import records, if you set one, use common way to import, if more than one, use batch mode ,the setting range is 1-100000. </stentry>
+          <stentry>Batch import records, if you set one, use common way to import, if more than one, use batch mode ,the setting range is 1~100000. </stentry>
         </strow>
         <strow>
           <stentry>
@@ -117,31 +117,31 @@
           <stentry>
             --type
           </stentry>
-          <stentry>specify the format of import data.It can be CSV or JSON.</stentry>
+          <stentry>specify the format of import data. It can be CSV or JSON.</stentry>
         </strow>        
         <strow>
           <stentry>
             --fields
           </stentry>
-          <stentry>Specify import data field names."csv" format effective. </stentry>
+          <stentry>Specify import data field names. "csv" format effective. </stentry>
         </strow>
         <strow>
           <stentry>
             --headerline
           </stentry>
-          <stentry>Specifies whether the first row of imported data as field names."false" is default,"csv" format effective. </stentry>
+          <stentry>Specifies whether the first row of imported data as field names. "false" is default, "csv" format effective. </stentry>
         </strow>
         <strow>
           <stentry>
             --sparse
           </stentry>
-          <stentry>Specify the import data, automatically add the field name."ture" is default,"csv" format effective.</stentry>
+          <stentry>Specify the import data, automatically add the field name. "ture" is default, "csv" format effective.</stentry>
         </strow>
         <strow>
           <stentry>
             --extra
           </stentry>
-          <stentry>Specify the import data, automatically add value."false" is default,"csv" format effective.</stentry>
+          <stentry>Specify the import data, automatically add value. "false" is default, "csv" format effective.</stentry>
         </strow>
         <strow>
           <stentry>--linepriority
@@ -167,29 +167,11 @@
     </note>
     <section>
       <title>Usage</title>
-      <p>In the following sample,sdbimprt will import data into local database which port is 11810,
-        and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import type is
-        csv,import file is<i> test.csv</i>.</p>
+      <p>In the following sample, sdbimprt will import data into local database which port is 11810,
+        and collectionspace name is <i>foo</i>, collection name is<i> bar</i>, and import type is
+        csv, import file is<i> test.csv</i>.</p>
       <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
-    <p>The data type is optional.If the data type is not specified by the user; it will be automatically detected and determined in the standard shown in the above table.</p>
-    <section><title>Usage</title>
-      <p>In the following example, sdbimprt imports the data into corresponding collection space "foo" and collection "bar" of the local database which connected with the port 11810, with an import type of cvs and import file of test.csv.
-        <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Jack", age int default 18, phone string'</codeblock>
-        <note>The field can be either specified in the command line or in the first line of the import file. If --fields is specified and --headerline is set to true in the command line, the import tool will use the command line's specified field in the first priority and skip the first line of the import file.</note></p>
-      <ul>
-        <li><p>Example 1: The import file type is cvs, and the file name is test.cvs. Import the data into collection "bar" of collection space "foo".</p><p>The following words are the content of the import file:</p>
-          <codeblock>"Jack",18,"China"
-"Mike",20,"USA"</codeblock><p>import command:</p>
-          <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Anonymous", age int, country'</codeblock></li>
-        <li><p>Example 2: The import type is cvs, and the file name is test.cvs. Import the data into collection "bar" of collection space "foo".</p><p>The following words are the content of the import file:</p>
-          <codeblock>name, age, country
-"Jack",18,"China"
-"Mike",20,"USA"</codeblock><p>import command:</p>
-          <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Anonymous", age int, country' --headerline true</codeblock></li>        
-      </ul>
-      <note><p>Because the fields are specified in the first line of the file in Example 2. If the fields need to be specified again, and set "--headerline true" in the command line, and set "-fields 'name string default "Anonymous", age int, country'", then the import tool will use the field names in the command line and skip the first line of the import file.</p></note>      
-    </section>   
     <section>
       <title>Data types automatically detected by sdbimprt:</title>
       <simpletable>
@@ -289,7 +271,25 @@
     <p>Syntax: field [type] [default &lt;default value ]</p>
     <p>Supported data types: int(integer), long, bool(boolean), double, string, null</p>
     <p>Supported special data types: timestamp, date</p>
-    <p>Example:<codeblock>name string default "Jack", age int default 18, phone string</codeblock> </p>  
+    <p>Example:<codeblock>name string default "Jack", age int default 18, phone string</codeblock> </p> 
+    <p>The data type is optional. If the data type is not specified by the user; it will be automatically detected and determined in the standard shown in the above table.</p>
+    <section><title>Usage</title>
+      <p>In the following example, sdbimprt imports the data into corresponding collection space "foo" and collection "bar" of the local database which connected with the port 11810, with an import type of cvs and import file of test.csv.
+        <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Jack", age int default 18, phone string'</codeblock>
+        <note>The field can be either specified in the command line or in the first line of the import file. If --fields is specified and --headerline is set to true in the command line, the import tool will use the command line's specified field in the first priority and skip the first line of the import file.</note></p>
+      <ul>
+        <li><p>Example 1: The import file type is cvs, and the file name is test.cvs. Import the data into collection "bar" of collection space "foo".</p><p>The following words are the content of the import file:</p>
+          <codeblock>"Jack",18,"China"
+"Mike",20,"USA"</codeblock><p>import command:</p>
+          <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Anonymous", age int, country'</codeblock></li>
+        <li><p>Example 2: The import type is cvs, and the file name is test.cvs. Import the data into collection "bar" of collection space "foo".</p><p>The following words are the content of the import file:</p>
+          <codeblock>name, age, country
+"Jack",18,"China"
+"Mike",20,"USA"</codeblock><p>import command:</p>
+          <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar --fields 'name string default "Anonymous", age int, country' --headerline true</codeblock></li>        
+      </ul>
+      <note><p>Because the fields are specified in the first line of the file in Example 2. If the fields need to be specified again, and set "--headerline true" in the command line, and set "-fields 'name string default "Anonymous", age int, country'", then the import tool will use the field names in the command line and skip the first line of the import file.</p></note>      
+    </section>     
     <section>
       <title>Data and Specified types:</title>
       <simpletable>

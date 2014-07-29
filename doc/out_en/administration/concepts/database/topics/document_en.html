@@ -53,11 +53,11 @@
     <p class="p">{ "name" : "Zhangsan", "gender" : "male" }</p>
 
       <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p">BSON documents may have more than one field with the same name;however,most SequoiaDB interfaces represent SequoiaDB 
-with a structure(e.g a hash table) that does not support duplicate field names,if you need to manipulate documents that have more 
-than one fiels with the same name,see your driver's documentation for more information.</p>
+        <p class="p">BSON documents may have more than one field with the same name; however, most SequoiaDB interfaces represent SequoiaDB 
+with a structure(e.g a hash table) that does not support duplicate field names, if you need to manipulate documents that have more 
+than one fiels with the same name, see your driver's documentation for more information.</p>
 
-        <p class="p">Some documents created by internal SequoiaDB processes may have duplicate fields,but no SequoiaDB process will ever add duplicate keys to an existing user document.</p>
+        <p class="p">Some documents created by internal SequoiaDB processes may have duplicate fields, but no SequoiaDB process will ever add duplicate keys to an existing user document.</p>
 
       </div>
 
@@ -69,117 +69,117 @@ than one fiels with the same name,see your driver's documentation for more infor
         string, nested JSON project, nestd array.etc. SequoiaDB support these types:</p>
 
      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d14512e42" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d14503e42" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d14512e45" class="stentry">Definition</th>
+          <th valign="bottom" align="left" id="d14503e45" class="stentry">Definition</th>
 
-          <th valign="bottom" align="left" id="d14512e48" class="stentry">Sample</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Integer</td>
-
-          <td valign="top" headers="d14512e45" class="stentry">Integer，range from -2147483648 to 2147483647</td>
-
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : 123 }</td>
+          <th valign="bottom" align="left" id="d14503e48" class="stentry">Sample</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Long</td>
+          <td valign="top" headers="d14503e42" class="stentry">Integer</td>
 
-          <td valign="top" headers="d14512e45" class="stentry">Integer，range from -9223372036854775808 to 9223372036854775807.<div class="fig fignone"/>
+          <td valign="top" headers="d14503e45" class="stentry">Integer, range from -2147483648 to 2147483647</td>
+
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : 123 }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14503e42" class="stentry">Long</td>
+
+          <td valign="top" headers="d14503e45" class="stentry">Integer, range from -9223372036854775808 to 9223372036854775807.<div class="fig fignone"/>
 If a value is not
             suitible to an Integer, it is automatically transform into Long by SequoiaDB.</td>
 
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : 3000000000 }</td>
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : 3000000000 }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Float</td>
+          <td valign="top" headers="d14503e42" class="stentry">Float</td>
 
-          <td valign="top" headers="d14512e45" class="stentry">Float, range from 1.7E-308 to 1.7E+308</td>
+          <td valign="top" headers="d14503e45" class="stentry">Float, range from 1.7E-308 to 1.7E+308</td>
 
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : 123.456 }or{ "key" : 123e+50 }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">String</td>
-
-          <td valign="top" headers="d14512e45" class="stentry">String within double quotations</td>
-
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : "value" }</td>
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : 123.456 } or { "key" : 123e+50 }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Object ID（OID）</td>
+          <td valign="top" headers="d14503e42" class="stentry">String</td>
 
-          <td valign="top" headers="d14512e45" class="stentry">12-byte object ID</td>
+          <td valign="top" headers="d14503e45" class="stentry">String within double quotations</td>
 
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : { "$oid" : "123abcd00ef12358902300ef" } }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Bool</td>
-
-          <td valign="top" headers="d14512e45" class="stentry">true or false</td>
-
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : true }or{ "key" : false }</td>
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : "value" }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Date</td>
+          <td valign="top" headers="d14503e42" class="stentry">Object ID（OID）</td>
 
-          <td valign="top" headers="d14512e45" class="stentry">In the format of YYYY-MM-DD</td>
+          <td valign="top" headers="d14503e45" class="stentry">12-byte object ID</td>
 
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : { "$date" : "2012-01-01" } }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Timeline</td>
-
-          <td valign="top" headers="d14512e45" class="stentry">In the format of YYYY-MM-DD-HH.mm.ss.ffffff</td>
-
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : { "$timestamp" : "2012-01-01-13.14.26.124233" } }</td>
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : { "$oid" : "123abcd00ef12358902300ef" } }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Bindata</td>
+          <td valign="top" headers="d14503e42" class="stentry">Bool</td>
 
-          <td valign="top" headers="d14512e45" class="stentry">Base64 binary data</td>
+          <td valign="top" headers="d14503e45" class="stentry">true or false</td>
 
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Regex</td>
-
-          <td valign="top" headers="d14512e45" class="stentry">Regular expression</td>
-
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : { "$regex" : "^Zhang", "$options" : "i" } }</td>
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : true } or { "key" : false }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Object</td>
+          <td valign="top" headers="d14503e42" class="stentry">Date</td>
 
-          <td valign="top" headers="d14512e45" class="stentry">Nested JSON document object</td>
+          <td valign="top" headers="d14503e45" class="stentry">In the format of YYYY-MM-DD</td>
 
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : { "subobj" : "value" } }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">Array</td>
-
-          <td valign="top" headers="d14512e45" class="stentry">Nested array object</td>
-
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : [ "abc", 0, "def" ] }</td>
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : { "$date" : "2012-01-01" } }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d14512e42" class="stentry">NULL</td>
+          <td valign="top" headers="d14503e42" class="stentry">Timeline</td>
 
-          <td valign="top" headers="d14512e45" class="stentry">null</td>
+          <td valign="top" headers="d14503e45" class="stentry">In the format of YYYY-MM-DD-HH.mm.ss.ffffff</td>
 
-          <td valign="top" headers="d14512e48" class="stentry">{ "key" : null }</td>
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : { "$timestamp" : "2012-01-01-13.14.26.124233" } }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14503e42" class="stentry">Bindata</td>
+
+          <td valign="top" headers="d14503e45" class="stentry">Base64 binary data</td>
+
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14503e42" class="stentry">Regex</td>
+
+          <td valign="top" headers="d14503e45" class="stentry">Regular expression</td>
+
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : { "$regex" : "^Zhang", "$options" : "i" } }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14503e42" class="stentry">Object</td>
+
+          <td valign="top" headers="d14503e45" class="stentry">Nested JSON document object</td>
+
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : { "subobj" : "value" } }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14503e42" class="stentry">Array</td>
+
+          <td valign="top" headers="d14503e45" class="stentry">Nested array object</td>
+
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : [ "abc", 0, "def" ] }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14503e42" class="stentry">NULL</td>
+
+          <td valign="top" headers="d14503e45" class="stentry">null</td>
+
+          <td valign="top" headers="d14503e48" class="stentry">{ "key" : null }</td>
 
         </tr>
 </table>
@@ -203,12 +203,11 @@ If a value is not
     <div class="section"><h2 class="title sectiontitle">Others</h2>
       
       <a name="administration_concepts_database_document__administration_concepts_database_misc"><!-- --></a><ul class="ul" id="administration_concepts_database_document__administration_concepts_database_misc">
-        <li class="li">The max size of each document is 16MB</li>
+        <li class="li">The max size of each document is 16MB.</li>
 
-        <li class="li">Document should contains "_id" field. If users do not offer it, syetem will
-          automatically generate a field in the type of object ID.</li>
+        <li class="li">Document should contains "_id" field. If users do not offer it, syetem will automatically generate a field in the type of object ID.</li>
 
-        <li class="li">"_id" is unique in a collection</li>
+        <li class="li">"_id" is unique in a collection.</li>
 
         <li class="li">Field name in document should not begin with the character "$".</li>
 

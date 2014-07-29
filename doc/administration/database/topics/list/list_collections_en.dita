@@ -181,7 +181,7 @@
 }</codeblock>
     </section>
     <section><title>Coord node Sample:</title>
-      <codeblock>>db.list(SDB_LIST_COLLECTIONS)
+      <codeblock>> db.list(SDB_LIST_COLLECTIONS)
 {
   "Name": "foo.bar"
 }

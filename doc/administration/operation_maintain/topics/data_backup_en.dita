@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_z2k_qvk_fm">
-  <title>Data backup</title>
+  <title>Data Backup</title>
   <body>
     <p>The current version, data backup support offline backup, or data backups need to interrupt the insert, update, delete, etc. change operation, only support query operations. 
     Current backup supports two modes: full backup and incremental backup.</p>

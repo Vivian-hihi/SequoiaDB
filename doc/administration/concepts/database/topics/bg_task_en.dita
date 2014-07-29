@@ -7,7 +7,7 @@
     <p>Background task list type:</p>
     <simpletable>
       <sthead>
-        <stentry>Task name</stentry>
+        <stentry>Task Name</stentry>
         <stentry>Description</stentry>
       </sthead>
       <strow>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="分区组中新增节点"/>
-<meta name="description" content="如果新增节点涉及到新增主机，则请首先按照在 集群中新增主机 一节完成主机的主机名和参数配置。 某些分区组可能在创建时设定的副本数较少，随着物理设备的增加，可能需要增加副本数以提高分区组数据可靠性。 操作方法： &gt;var dataRG = db.getRG(&lt;groupname&gt;); &gt;var node1 = dataRG ..."/>
+<meta name="description" content="如果新增节点涉及到新增主机，则请首先按照在 集群中新增主机 一节完成主机的主机名和参数配置。 某些分区组可能在创建时设定的副本数较少，随着物理设备的增加，可能需要增加副本数以提高分区组数据可靠性。 操作方法： &gt; var dataRG = db.getRG(&lt;groupname&gt;); &gt; var node1 = dataRG ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../../administration/cluster_management/topics/data_management/topics/data_management.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_511_w2x_tk"/>
@@ -42,9 +42,9 @@
 
     <p class="p">操作方法：</p>
 
-    <pre class="pre codeblock">&gt;var dataRG = db.getRG(&lt;groupname&gt;);
-&gt;var node1 = dataRG.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
-&gt;node1.start();</pre>
+    <pre class="pre codeblock">&gt; var dataRG = db.getRG(&lt;groupname&gt;);
+&gt; var node1 = dataRG.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
+&gt; node1.start();</pre>
 
     <p class="p">第一条命令用于获取数据分区组，参数 groupname 为数据分区组组名； </p>
 

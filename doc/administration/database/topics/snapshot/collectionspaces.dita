@@ -100,7 +100,7 @@
     </section>
     <section>
       <title>协调节点示例</title>
-      <codeblock>>coord.snapshot(SDB_SNAP_COLLECTIONSPACES)
+      <codeblock>> coord.snapshot(SDB_SNAP_COLLECTIONSPACES)
 {
   "Collection": [
     {

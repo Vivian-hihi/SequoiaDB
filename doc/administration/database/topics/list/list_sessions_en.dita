@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_database_monitoring_list_sessions">
-  <title>Session List</title>
+  <title>Sessions List</title>
   <body>
     <section>
       <title>Description</title>
-      <p>Session list contains all the sessions between users and system on current database node.
+      <p>Sessions list contains all the sessions between users and system on current database node.
         Each session is recorded as one record.</p>
     </section>
     <section>
@@ -14,7 +14,7 @@
     </section>
     <section>
       <title>Proper Node</title>
-      <p>data node,catalog node</p>
+      <p>data node, catalog node</p>
     </section>
     <section>
       <title>Field Information</title>
@@ -41,11 +41,11 @@
           <stentry>
             Session status:
             <ul>
-              <li>Creating：creating status</li>
-              <li>Running：running status </li>
-              <li>Waiting：waiting status</li>
-              <li>Idle：idle status of thread pool</li>
-              <li>Destroying：destroying status</li>
+              <li>Creating: creating status</li>
+              <li>Running: running status </li>
+              <li>Waiting: waiting status</li>
+              <li>Idle: idle status of thread pool</li>
+              <li>Destroying: destroying status</li>
             </ul>
           </stentry>
         </strow>

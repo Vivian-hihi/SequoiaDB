@@ -4,8 +4,8 @@
   <title>Cluster</title>
   <body>
     <p>SequoiaDB cluster is a mode designed to improve the efficience of data request by achieving
-      parallel computing multiplied database servers </p>
-    <p>Using SequoiaDB cluster，a user can get: </p>
+      parallel computing multiplied database servers. </p>
+    <p>Using SequoiaDB cluster, a user can get: </p>
     <section><title>High-qualified Data Visit</title>
       <p>With parallel computing and executing distributed tasks on more than one data server, the
         system saves resource consumption on every nodes, gets higher throughput and improves the

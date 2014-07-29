@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="编目分区组中新增节点"/>
-<meta name="description" content="如果新增节点涉及到新增主机，则请首先按照在 集群中新增主机 一节完成主机的主机名和参数配置。 随着整个集群中的物理设备的扩展，可以通过增加更多的编目节点来提高编目服务的可靠性。 操作方法： &gt;var cataRG = db.getRG(&#34;SYSCatalog&#34;); &gt;var node1 = cataRG.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); ..."/>
+<meta name="description" content="如果新增节点涉及到新增主机，则请首先按照在 集群中新增主机 一节完成主机的主机名和参数配置。 随着整个集群中的物理设备的扩展，可以通过增加更多的编目节点来提高编目服务的可靠性。 操作方法： &gt; var cataRG = db.getRG(&#34;SYSCatalog&#34;); &gt; var node1 = cataRG ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../../administration/cluster_management/topics/cata_management/topics/cata_management.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_myy_ncx_tk"/>
@@ -41,9 +41,9 @@
     <p class="p">随着整个集群中的物理设备的扩展，可以通过增加更多的编目节点来提高编目服务的可靠性。</p>
 
     <p class="p">操作方法：</p>
-<pre class="pre codeblock">&gt;var cataRG = db.getRG("SYSCatalog");
-&gt;var node1 = cataRG.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
-&gt;node1.start()</pre>
+<pre class="pre codeblock">&gt; var cataRG = db.getRG("SYSCatalog");
+&gt; var node1 = cataRG.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
+&gt; node1.start()</pre>
 
     <p class="p">第一条命令用于获取编目分区组，“SYSCatalogGroup”为编目分区组组名；</p>
 

@@ -25,11 +25,11 @@
         </strow>
         <strow>
           <stentry>--hostname,-s</stentry>
-          <stentry>export data from Sequoiadb of the specified hostname.In default,the <b>sdbexprt</b> try to connect to local hostname. </stentry>
+          <stentry>export data from Sequoiadb of the specified hostname. In default, the <b>sdbexprt</b> try to connect to local hostname. </stentry>
         </strow>
         <strow>
           <stentry>--svcname,-p</stentry>
-          <stentry>specify port.In default,the <b>sdbexprt</b> try to connect to the host which port number is 11810.</stentry>
+          <stentry>specify port. In default, the <b>sdbexprt</b> try to connect to the host which port number is 11810.</stentry>
         </strow>
         <strow>
           <stentry>--user,-u</stentry>
@@ -41,7 +41,7 @@
         </strow>        
         <strow>
           <stentry>--delchar,-a</stentry>
-          <stentry>specify the charcater separator.The default is ","csv" formats. </stentry>
+          <stentry>specify the charcater separator. The default is ", "csv" formats. </stentry>
         </strow>
         <strow>
           <stentry>--delfield,-e</stentry>
@@ -49,7 +49,7 @@
         </strow>
         <strow>
           <stentry>--delrecord,-r</stentry>
-          <stentry>specify the record delimiter."\n" is default.</stentry>
+          <stentry>specify the record delimiter. "\n" is default.</stentry>
         </strow>                
         <strow>
           <stentry>--csname,-c</stentry>
@@ -61,12 +61,12 @@
         </strow>
         <strow>
           <stentry>--fields</stentry>
-          <stentry>specify one or more field names to export,separated by commas(,). </stentry>
+          <stentry>specify one or more field names to export, separated by commas(,). </stentry>
         </strow>
         <strow>
           <stentry>--included
           </stentry>
-          <stentry>Specify whether to export to csv first line of field names, default true, csv format is valid.</stentry>
+          <stentry>specify whether to export to csv first line of field names, default true, csv format is valid.</stentry>
         </strow>
         <strow>
           <stentry>
@@ -80,15 +80,15 @@
         </strow>
         <strow>
           <stentry>--errorstop</stentry>
-          <stentry>If you encounter an error stop, default false.</stentry>
+          <stentry>if you encounter an error stop, default false.</stentry>
         </strow>
       </simpletable>
     </section>
     <section>
       <title>Usage</title>
-      <p>In the following sample,sdbexport will export data from the local database which port is
-        11810, and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and export type
-        is csv,export file name is<i> contact</i>,export field are <i>field1</i> and
+      <p>In the following sample, sdbexport will export data from the local database which port is
+        11810, and collectionspace name is <i>foo</i>, collection name is<i> bar</i>, and export type
+        is csv, export file name is<i> contact</i>, export field are <i>field1</i> and
         <i>field2</i>.</p>
       <codeblock>sdbexprt -s localhost -p 11810 --type csv --file contace --fields field1,field2 --c foo -l bar</codeblock>
     </section>

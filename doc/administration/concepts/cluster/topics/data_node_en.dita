@@ -8,7 +8,7 @@
       <p>Data node doesn't contain special catalogue information collection, so before the first
         visit to a collection, it is essential to get metadata information from catalog information
         collection.</p>
-      <p>Under independent mode, a data node ,as an independent service provider, is able to
+      <p>Under independent mode, a data node, as an independent service provider, is able to
         communicate with application and client without visiting any catalogue information
         collection.</p>
     </section>

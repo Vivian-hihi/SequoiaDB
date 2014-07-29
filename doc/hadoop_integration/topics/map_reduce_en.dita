@@ -8,12 +8,12 @@
       <p>We support both Hadoop 1.x and Hadoop 2.x, please install and configure Hadoop first.</p>
     </section>
     <section>
-      <title>2.	Configure Docking Environment</title>
+      <title>Configure Docking Environment</title>
       <p>hadoop-connector.jar and sequoiadb.jar are used for the docking with MapReduce. These two jar files can be found under the hadoop directory of the SequoiaDB installation directory.</p>
       <p>We need to check the classpath of Hadoop first because it may vary in different versions. Enter hadoop classpath, select one directory form the classpath, move haddp-connector.jar and sequoiadb.jar into the directory. Restart the hadoop cluster.</p>
     </section>
     <section>
-      <title>3.	Write MapReduce</title>
+      <title>Write MapReduce</title>
       <p><b>Some important classes in hadoop-connector.jar:</b></p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;SequoiadbInputFormat: reads data from SequoiaDB</p>
       <p>&nbsp;&nbsp;&nbsp;&nbsp;SequoiadbOutputFormat: writes data into SequoiaDB</p>

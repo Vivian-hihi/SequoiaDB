@@ -7,7 +7,7 @@
       <title>概念</title>
       <p>监控是一种监视当前系统状态的方式。在 SequoiaDB 中，用户可以使用快照（SNAPSHOT）与列表（LIST）命令进行系统监控。</p>
       <note>如果在集群环境下查询快照，连接协调节点就可以获取。</note>
-      <p>连接协调节点，默认是获取整个集群的快照信息，如：<codeblock>snapshot(SDB_SNAP_SYSTEM )</codeblock>。</p>
+      <p>连接协调节点，默认是获取整个集群的快照信息，如：<codeblock>snapshot(SDB_SNAP_SYSTEM )</codeblock></p>
       <p>要获取指定分区组的快照信息，使用条件查询，如：<codeblock>snapshot(SDB_SNAP_SYSTEM,{ GroupName: "group1" } )</codeblock></p>
       <p>要获取指定节点的快照信息，如：<codeblock>snapshot(SDB_SNAP_SYSTEM,{ HostName: "host1", svcname: "11820' } )</codeblock></p>
     </section>

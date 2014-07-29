@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="测试环境"/>
-<meta name="description" content="1.进入 SequoiaDB Shell 控制台 /opt/sequoiadb/bin/sdb 2.创建一个新的 sdb 连接 db = new Sdb(&#34;localhost&#34;,11810); 3.创建集合空间 db.createCS(&#34;foo&#34;); 4.创建集合 db.foo.createCL(&#34;bar&#34;); 5.写入记录 db.foo.bar ..."/>
+<meta name="description" content="1. 进入 SequoiaDB Shell 控制台 /opt/sequoiadb/bin/sdb 2. 创建一个新的 sdb 连接 db = new Sdb(&#34;localhost&#34;,11810); 3. 创建集合空间 db.createCS(&#34;foo&#34;); 4. 创建集合 db.foo.createCL(&#34;bar&#34;); 5. 写入记录 db.foo.bar ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../installation/topics/install_overview.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_rtm_2ts_n4"/>
@@ -36,22 +36,22 @@
   <h1 class="title topictitle1">测试环境</h1>
 
   <div class="body">
-    <p class="p">1.进入 SequoiaDB Shell 控制台</p>
+    <p class="p">1. 进入 SequoiaDB Shell 控制台</p>
 <pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
 
-    <p class="p">2.创建一个新的 sdb 连接</p>
+    <p class="p">2. 创建一个新的 sdb 连接</p>
 <pre class="pre codeblock">db = new Sdb("localhost",11810);</pre>
 
-    <p class="p">3.创建集合空间</p>
+    <p class="p">3. 创建集合空间</p>
 <pre class="pre codeblock">db.createCS("foo");</pre>
 
-    <p class="p">4.创建集合</p>
+    <p class="p">4. 创建集合</p>
 <pre class="pre codeblock">db.foo.createCL("bar");</pre>
 
-    <p class="p">5.写入记录</p>
+    <p class="p">5. 写入记录</p>
 <pre class="pre codeblock">db.foo.bar.insert({"name":"sequoiadb"});</pre>
 
-    <p class="p">6.查询结果</p>
+    <p class="p">6. 查询结果</p>
 <pre class="pre codeblock">db.foo.bar.find();
 {
   "_id": {

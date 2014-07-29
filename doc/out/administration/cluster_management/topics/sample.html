@@ -133,11 +133,11 @@
 
           <div class="p">4. 执行如下命令，配置主机名为 vmsvr2-suse-x64：<pre class="pre codeblock">hostname vmsvr2-suse-x64</pre>
 修改 /etc/hosts文件，新增两行：<pre class="pre codeblock">192.168.1.10 vmsvr1-suse-x64 
-          192.168.1.11 vmsvr2-suse-x64</pre>
+192.168.1.11 vmsvr2-suse-x64</pre>
 按 :wq 保存退出；</div>
 
           <div class="p">5. 执行如下命令，检查主机配置是否生效：<pre class="pre codeblock">ping vmsvr1-suse-x64   //检查是否 ping 通；
-          ping vmsvr2-suse-x64   //检查是否 ping 通；</pre>
+ping vmsvr2-suse-x64   //检查是否 ping 通；</pre>
 </div>
 
           <p class="p">6. 配置系统内核参数：</p>
@@ -162,14 +162,14 @@ ulimit -Su 32000       //线程个数限制</pre>
 <p class="p">按 :wq 保存退出；</p>
 </li>
 
-        <li class="li">步骤三：在新增主机上安装SequoiaDB软件<p class="p">参考<a class="xref" href="../../../installation/server_installation/topics/linux.html"> SequoiaDB 服务器安装</a>一节进行软件安装。</p>
+        <li class="li">步骤三：在新增主机上安装 SequoiaDB 软件<p class="p">参考 <a class="xref" href="../../../installation/server_installation/topics/linux.html">SequoiaDB 服务器安装</a>一节进行软件安装。</p>
 </li>
 
         <li class="li">步骤四：在当前分区中新增数据节点
-          <p class="p">1. 在 vmsvr2-suse-x64 上执行如下命令，启动SequoaiDB Shell命令行：</p>
+          <p class="p">1. 在 vmsvr2-suse-x64 上执行如下命令，启动 SequoaiDB Shell 命令行：</p>
 <pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
 
-          <p class="p">2. 在SequoiaDB Shell命令行中，执行如下命令在当前数据分区组新增一副本节点：</p>
+          <p class="p">2. 在 SequoiaDB Shell 命令行中，执行如下命令在当前数据分区组新增一副本节点：</p>
 <pre class="pre codeblock">&gt; var db = new Sdb("localhost",11810)
 &gt; var datarg = db.getRG("datagroup1")
 &gt; node=rg.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")

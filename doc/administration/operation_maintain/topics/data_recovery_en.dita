@@ -3,7 +3,7 @@
 <topic id="topic_mns_2z4_fm">
   <title>Data Recovery</title>
   <body>    
-    <p>Use a partition data recovery backup group. Perform data recovery must ensure that the corresponding group has stopped tunning, data recovery will first clear the original node and log all 
+    <p>Use a replica group data recovery backup. Perform data recovery must ensure that the corresponding group has stopped tunning, data recovery will first clear the original node and log all 
     the data and then restore the data from the backup configuration data and logs.</p>
     <section>
       <title>Data recovery tool Parameter Description</title>
@@ -80,15 +80,15 @@
     <section>
       <title>Recover Data</title>           
     </section>
-    <note>If a partition group that contains multiple data nodes, you must stop the group and recover each data node. If the data is restored to a non-backup data nodes must use -isSelf false 
+    <note>If a replica group that contains multiple data nodes, you must stop the group and recover each data node. If the data is restored to a non-backup data nodes must use --isSelf false 
     configuration parameters, and set the relevant configuration parameters.</note>
     <ol>
       <li>Connect to the coord node
         <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;</codeblock></li>
-      <li>Get partition group <codeblock>> datarg = db.getRG ( "data" ) ;</codeblock></li>
-      <li>Stop partition group <codeblock>> datarg.stop()</codeblock></li>
-      <li>Login via terminal nodes corresponding data partition group, perform data recovery.
+      <li>Get replica group <codeblock>> datarg = db.getRG ( "data" ) ;</codeblock></li>
+      <li>Stop replica group <codeblock>> datarg.stop()</codeblock></li>
+      <li>Login via terminal nodes corresponding data replica group, perform data recovery.
         <codeblock>sdbadmin@vmsvr2-suse-x64-1:/opt/sequoiadb> bin/sdbrestore -p  database/11820/bakfile -n test_bk
 Begin to clean dps logs...
 Begin to clean dms storages...
@@ -109,7 +109,7 @@ drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 15:48 diaglog
 drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 17:39 replicalog
 -rw-r----- 1 sdbadmin sdbadmin 155254784 Nov 13 17:39 test.1.data
 -rw-r----- 1 sdbadmin sdbadmin 151060480 Nov 13 17:39 test.1.idx</codeblock></li>
-      <li>Delete thepartition groups other data, all data nodes (or all the nodes. Data and. Idx files are copied to the other data node's data directory and index directory, and copy all the logs that node 
+      <li>Delete the replica groups other data, all data nodes (or all the nodes. Data and. Idx files are copied to the other data node's data directory and index directory, and copy all the logs that node 
       replicalog to other data nodes log directory, or copy the backup file to another data node, and through the restored tool recovers), restart the system.</li>
     </ol>
   </body>

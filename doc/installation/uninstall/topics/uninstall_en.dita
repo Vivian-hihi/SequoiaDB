@@ -3,6 +3,7 @@
 <topic id="topic_tlf_gty_wj">
   <title>Uninstall</title>
   <body>
+    <note>The cluster environment need to perform the following operations each data:</note>
     <ul>
       <li><p>Log in as root database server</p></li>
       <li>Run the following command to stop SequoiaDB Configuration Service program<codeblock>service sdbcm stop</codeblock></li>
@@ -20,14 +21,14 @@
           server:</p><p>&nbsp;&nbsp;1. Log in database server in the identity of SDB
           administrator</p><p>&nbsp;&nbsp;2. Execute "/opt/sequoiadb/uninstall"
           </p><p>&nbsp;&nbsp;3. Delete the database directory and files</p></li>
-      <li>Fallback the system configuration params--><p>1.delete the params in the file
+      <li>Fallback the system configuration params--><p>1. delete the params in the file
           "/etc/security/limits.conf
           "</p><codeblock> •	&lt;#domain>      &lt;type>    &lt;item>    &lt;value>
  •	*               soft      core       0
  •	*               soft      data       unlimited
  •	*               soft      fsize      unlimited
  •	*               soft      rss        unlimited
-        *               soft      as         unlimited</codeblock><p>2.delete
+        *               soft      as         unlimited</codeblock><p>2. delete
           the params in the file "/etc/sysctl.conf"
         </p><codeblock>vm.swappiness = 0
 vm.dirty_ratio = 100

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_qh4_p4y_wj">
-  <title>Configuration and startup of standalone mode</title>
+  <title>Configuration and Startup of Standalone Mode</title>
   <body>
     <p><b>Explanation:</b>
     </p>
     <p>&nbsp;&nbsp;(1) This section will take the easiest deployment as an example to introduce
       configuration and startup steps.</p>
     <p>&nbsp;&nbsp;(2) The following manipulation supposes that SequoiaDB is installed under the
-      catalog "/opt/sequoiadb".</p><p>&nbsp;&nbsp;(3) All of  "sdb" service processes run as "sdbadmin", please ensure all of the
+      catalog "/opt/sequoiadb".</p><p>&nbsp;&nbsp;(3) All of "sdb" service processes run as "sdbadmin", please ensure all of the
       database files have the "sdbadmin" read and write permissions.</p>
     <ul>
-      <li>switch to "sdbadmin"<codeblock>su sdbadmin </codeblock></li>
+      <li>Switch to "sdbadmin"<codeblock>su sdbadmin </codeblock></li>
       <li>Enter installation catalog (The following content supposes that the default installation
         path is "/opt/sequoiadb")<p>
           <codeblock>cd/opt/sequoiadb</codeblock>

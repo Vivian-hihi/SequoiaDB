@@ -13,11 +13,11 @@
     <simpletable><!-- frame="all" relcolwidth="1.0* 1.99*"
       id="administration_concepts_database_collection_table1">-->
       <sthead>
-        <stentry>field name</stentry>
-        <stentry>description</stentry>
+        <stentry>Field Name</stentry>
+        <stentry>Description</stentry>
       </sthead>
       <strow>
-        <stentry>Sharding Key</stentry>
+        <stentry>ShardingKey</stentry>
         <stentry>Specified sharding key. In collections, the field specified by sharding key is used
             as sharding information of document. Every document is put in its corresponding
             sharding.</stentry>
@@ -30,7 +30,7 @@
         <stentry>ReplSize</stentry>
         <stentry>It specifies the default  replicaiton size in the collection. If its value is less
             than 1, write request will return when one copy is written successfully. If its value is
-            more than 1, write request <fig></fig>will return when the amount of successfully written copies
+            more than 1, write request will return when the amount of successfully written copies
             euqals at least the value of ReplSize.</stentry>
       </strow>
       <strow>

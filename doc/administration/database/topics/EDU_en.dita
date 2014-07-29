@@ -112,7 +112,7 @@
         <strow>
           <stentry>Task</stentry>
           <stentry>Background task </stentry>
-          <stentry>It is a kind of threads that cope with background tasks. For example,<xref
+          <stentry>It is a kind of threads that cope with background tasks. For example, <xref
               href="../../concepts/cluster/topics/split_en.dita">data split</xref></stentry>
         </strow>
         <strow>
@@ -147,7 +147,7 @@
       </simpletable>
     </section>
     <section><title>Monitorinf</title>
-      <p>Users can use<xref href="snapshot/sessions_en.dita">session snapshot</xref> to monitor system
+      <p>Users can use <xref href="snapshot/sessions_en.dita">sessions snapshot</xref> to monitor system
         and user EDU.</p>
     </section>
   </body>

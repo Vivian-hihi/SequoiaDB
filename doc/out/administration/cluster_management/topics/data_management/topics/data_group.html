@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="新增数据分区组"/>
-<meta name="description" content="如果新增节点涉及到新增主机，则请首先按照在 集群中新增主机 一节完成主机的主机名和参数配置。 一个集群中可以配置多个分区组，最大可配置60,000个分区组。通过增加分区组，可以充分利用物理设备进行水平扩展，理论上 SequoiaDB 可以做到线性的水平扩展能力。 操作方法： &gt;var dataRG = db.createRG(&#34;datagroup1&#34;) &gt;dataRG ..."/>
+<meta name="description" content="如果新增节点涉及到新增主机，则请首先按照在 集群中新增主机 一节完成主机的主机名和参数配置。 一个集群中可以配置多个分区组，最大可配置60,000个分区组。通过增加分区组，可以充分利用物理设备进行水平扩展，理论上 SequoiaDB 可以做到线性的水平扩展能力。 操作方法： &gt; var dataRG = db.createRG(&#34;datagroup1&#34;) &gt; dataRG ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../../administration/cluster_management/topics/data_management/topics/data_management.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_ht3_v2x_tk"/>
@@ -41,9 +41,9 @@
     <p class="p">一个集群中可以配置多个分区组，最大可配置60,000个分区组。通过增加分区组，可以充分利用物理设备进行水平扩展，理论上 SequoiaDB 可以做到线性的水平扩展能力。</p>
 
     <p class="p">操作方法：</p>
-<pre class="pre codeblock">&gt;var dataRG = db.createRG("datagroup1")
-&gt;dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   
-&gt;dataRG.start()</pre>
+<pre class="pre codeblock">&gt; var dataRG = db.createRG("datagroup1")
+&gt; dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   
+&gt; dataRG.start()</pre>
 
     <p class="p">第一条命令用于创建数据分区组，与编目分区组不同的是，该操作不会创建任何数据节点，其中参数为数据组名；</p>
 

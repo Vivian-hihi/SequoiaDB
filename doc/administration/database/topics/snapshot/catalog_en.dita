@@ -39,7 +39,7 @@
         <strow>
           <stentry>ShardingType </stentry>
           <stentry>String</stentry>
-          <stentry>Data partition type:<fig></fig>range：Data by partition key range partitioning storage.<fig></fig>hash：Data according to a hash partitioning key to partition storage.</stentry>
+          <stentry>Data partition type:<fig></fig>range: Data by partition key range partitioning storage.<fig></fig>hash: Data according to a hash partitioning key to partition storage.</stentry>
         </strow>
         <strow>
           <stentry>Version </stentry>
@@ -71,7 +71,7 @@
     </section>
     <section>
       <title>Sample</title>
-      <codeblock>>db.snapshot(SDB_SNAP_CATALOG)
+      <codeblock>> db.snapshot(SDB_SNAP_CATALOG)
 {
   "_id": {
     "$oid": "5247a2bc60080822db1cfba2"

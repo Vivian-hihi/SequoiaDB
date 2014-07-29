@@ -13,7 +13,7 @@
       <codeblock>{ Field Name : [ &lt;Value1&gt;, &lt;Value2&gt;, &lt;Value3&gt; ... ] }</codeblock>
     </section>
     <section><title>Sample</title>
-      <p>Array can contain different data types as values. The index of elements start with 0.For
+      <p>Array can contain different data types as values. The index of elements start with 0. For
         example:</p>
       <codeblock>{ "key" : [ "hello", "world" ] }</codeblock>
       <p>The index of "hello" is 0. The subscript value of "world" is 1. The values in an array are
