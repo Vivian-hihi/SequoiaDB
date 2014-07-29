@@ -245,7 +245,7 @@ namespace engine
                    rc ) ;
 
       // start om net
-      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (void*)_netAgent, &eduID ) ;
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (void*)&_netAgent, &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start om net, rc: %d", rc ) ;
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
