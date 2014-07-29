@@ -87,7 +87,7 @@ namespace engine
       }
 
    done:
-      pOMMgr->detachCB( cb ) ;
+      pOMMgr->detachCB() ;
       PD_TRACE_EXITRC ( SDB_PMDOMMGRENTRYPT, rc );
       return rc ;
    error:
