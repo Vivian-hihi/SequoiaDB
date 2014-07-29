@@ -38,21 +38,21 @@ public class DBQuery {
 
 	/**
 	 * @memberof FLG_QUERY_STRINGOUT 0x00000001
-	 * @brief Nornally, query return bson stream, 
-	 *        if add this flag, query return binary data stream
+	 * @brief Normally, query return bson stream, 
+	 *        when this flag is added, query return binary data stream
 	 */
 	public static final int FLG_QUERY_STRINGOUT = 0x00000001;
 	
 	/**
 	 * @memberof FLG_INSERT_CONTONDUP 0x00000080
-	 * @brief Force to use specifed hint to query,
+	 * @brief Force to use specified hint to query,
 	 *        if database have no index assigned by the hint, fail to query
 	 */
 	public static final int FLG_QUERY_FORCE_HINT = 0x00000080;
 	
 	/**
 	 * @memberof FLG_QUERY_PARALLED 0x00000100
-	 * @brief Enable paralled sub querys
+	 * @brief Enable paralled sub query
 	 */
 	public static final int FLG_QUERY_PARALLED = 0x00000100;
 	
