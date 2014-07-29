@@ -107,8 +107,8 @@
 
     <echo message="...Begin to scons the c and c++ test code ..." />
 
-    <delete dir="${WORKSPACE}/client/lib" failonerror="false" />
-    <mkdir dir="${WORKSPACE}/client/lib" />
+    <delete dir="${WORKSPACE}/sequoiadb/client/lib" failonerror="false" />
+    <mkdir dir="${WORKSPACE}/sequoiadb/client/lib" />
 
     <copy todir="${WORKSPACE}/client/lib" failonerror="true">
     	<fileset dir="${static.dir}" includes="**/*.a" />
