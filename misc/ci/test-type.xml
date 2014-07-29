@@ -44,6 +44,8 @@
 	         	  	<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/build" />
 	         	  	<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 	         	  	<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+	         	  	<param name="coord_port" value="50000" />
+	         	  	<param name="data_port" value="21100" />
          	  </sdbtest>
          </case>
          <case value="driver-php" >

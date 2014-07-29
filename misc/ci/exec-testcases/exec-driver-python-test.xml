@@ -27,7 +27,7 @@
 
 		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;testsuite hostname=&quot;${host.NAME}&quot; errors=&quot;0&quot; failures=&quot;0&quot; tests=&quot;1&quot;&gt;&#10;&lt;testcase name=&quot;TestPySequoiadb.py&quot; &gt;&#10;" />
 		<exec executable="/usr/bin/python" failonerror="false" dir="${install.path}/sequoiadb/python" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
-			<arg line=" TestPySequoiadb.py" />
+			<arg line=" -H ${test.machine.no2.basic} -p ${coord_port} -d ${data_port} TestPySequoiadb.py" />
 		</exec>
 		<if>
 			<not>
