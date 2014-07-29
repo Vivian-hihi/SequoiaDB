@@ -4,8 +4,8 @@
   <title>Use</title>
   <body>
     <ul>
-      <li><xref href="./create_en.dita">Create a table based SequoiaDB</xref></li>
-      <li><xref href="./insert_en.dita">Importing data form HDFS files to SequoiaDB table</xref></li>
+      <li><xref href="./create_en.dita">Create a Table Based SequoiaDB</xref></li>
+      <li><xref href="./insert_en.dita">Importing Data form HDFS Files to SequoiaDB Table</xref></li>
       <li><xref href="./inquiry_en.dita">Query Data</xref></li>
     </ul>
   </body>

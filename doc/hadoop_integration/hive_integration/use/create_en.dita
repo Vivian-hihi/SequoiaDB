@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_qhf_qhq_fm">
-  <title>Create a table based SequoiaDB</title>
+  <title>Create a Table Based SequoiaDB</title>
   <body>
     <p>Start hive shell command line window, execute the following command to create the data table.</p>
     <codeblock>hive> create external table sdb_tab(id INT, name STRING, value DOUBLE) stored by 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_l2w_g3q_fm">
-  <title>Importing data form HDFS files to SequoiaDB table</title>
+  <title>Importing Data form HDFS Files to SequoiaDB Table</title>
   <body>
     <codeblock>hive> insert overwrite table sdb_tab select * from hdfs_tab;
 

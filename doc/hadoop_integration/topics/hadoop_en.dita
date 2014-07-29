@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_g24_ymq_fm">
-  <title>SequoiaDB with Hadoop deployment</title>
+  <title>SequoiaDB with Hadoop Deployment</title>
   <body>
     <p>SequoiaDB with Hadoop deployment scenario physically simple as shown below, deployment recommendations are as follows:</p>
     <ul>

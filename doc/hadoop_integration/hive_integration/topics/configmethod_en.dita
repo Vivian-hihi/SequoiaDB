@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_nbk_zfq_fm">
-  <title>Configuration method</title>
+  <title>Configuration Method</title>
   <body>
     <p>1.	Install adn configure Hadoop/Hive environment, start hadoop environment.</p>
     <p>2.	Copy the sequoiadb installation directory (by default in /opt/sequoiadb) of hadoop/hive-sequiadb-{version}.jar and java/sequoiadb.jar two files are copied to the hive/lib installation directory.</p>
