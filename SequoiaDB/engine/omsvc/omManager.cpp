@@ -234,14 +234,21 @@ namespace engine
       // set to primary
       pmdSetPrimary( TRUE ) ;
 
-      // start up edu
+      // start om manager edu
       rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (void*)this, &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start OM Manager edu, rc: %d", rc ) ;
-
+      // register
+      pEDUMgr->regSystemEDU( EDU_TYPE_OMMGR, eduID ) ;
       // wait attach
       rc = _attachEvent.wait( OM_WAIT_CB_ATTACH_TIMEOUT ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait OM Manager edu attach failed, rc: %d",
                    rc ) ;
+
+      // start om net
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (void*)_netAgent, &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start om net, rc: %d", rc ) ;
+      // register
+      pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
 
       // register timer
       _checkSessionTimer = setTimer( 60 * OSS_ONE_SEC ) ;
@@ -260,6 +267,9 @@ namespace engine
 
    INT32 _omManager::deactive ()
    {
+      // stop io
+      _netAgent.stop() ;
+
       // kill check sessions timer
       if ( NET_INVALID_TIMER_ID != _checkSessionTimer )
       {

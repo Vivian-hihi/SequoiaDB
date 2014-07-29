@@ -121,12 +121,15 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_PREFETCHER, FALSE,
                                 pmdPreLoaderEntryPoint,
                                 "PreLoader" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SYNCCLOCK, TRUE,
-                                pmdSyncClockEntryPoint,
-                                "SyncClockWorker" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_OMMGR, TRUE,
                                 pmdOMManagerEntryPoint,
                                 "OMManager" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_OMNET, TRUE,
+                                pmdOMNetEntryPoint,
+                                "OMNet" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SYNCCLOCK, TRUE,
+                                pmdSyncClockEntryPoint,
+                                "SyncClockWorker" ),
 
          // For the end
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_MAXIMUM, FALSE,

@@ -73,8 +73,9 @@ namespace engine
    INT32 pmdWindowsListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
 #endif
    INT32 pmdLoadWorkerEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdOMManagerEntryPoint( pmdEDUCB * cb, void * pData ) ;
+   INT32 pmdOMNetEntryPoint( pmdEDUCB * cb, void * pData ) ;
    INT32 pmdSyncClockEntryPoint( pmdEDUCB *cb, void *arg ) ;
-   INT32 pmdOMManagerEntryPoint(pmdEDUCB * cb, void * pData ) ;
 
 }
 

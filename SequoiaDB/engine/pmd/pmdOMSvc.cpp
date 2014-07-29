@@ -94,5 +94,45 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDOMNETPT, "pmdOMNetEntryPoint" )
+   INT32 pmdOMNetEntryPoint ( pmdEDUCB *cb, void *pData )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB_PMDOMNETPT ) ;
+      pmdEDUMgr *pEDUMgr = cb->getEDUMgr () ;
+      _netRouteAgent *pRouteAgent = (_netRouteAgent *)pData;
+
+      rc = pEDUMgr->activateEDU( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to active EDU[type:%d,ID:%lld]",
+                  cb->getType(), cb->getID() ) ;
+         goto error ;
+      }
+
+      //start run
+      PD_LOG ( PDEVENT, "Run om net..." ) ;
+      try
+      {
+         pEDUMgr->addIOService( pRouteAgent->ioservice() ) ;
+         pRouteAgent->run() ;
+         pEDUMgr->deleteIOService ( pRouteAgent->ioservice() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Exception during start om net session: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      PD_LOG ( PDEVENT, "Stop om net" ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_PMDOMNETPT, rc );
+      return rc;
+   error:
+      goto done;
+   }
+
 }
 
