@@ -163,7 +163,7 @@ static sdbCollectionHandle sdbGetSdbCollection( sdbConnectionHandle connectionHa
 
 static PgTableDesc *sdbGetPgTableDesc( Oid foreignTableId ) ;
 static void initSdbExecState( SdbExecState *sdbExecState ) ;
-static void sdbFreeScanState( SdbExecState *executionState ) ;
+static void sdbFreeScanState( SdbExecState *executionState, bool deleteShared ) ;
 
 static Const *sdbSerializeDocument( sdbbson *document ) ;
 static void sdbDeserializeDocument( Const *constant, sdbbson *document ) ;
@@ -288,16 +288,16 @@ sdbConnectionHandle sdbGetConnectionHandle( const char *host,
 {
    sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
    SdbConnectionPool *pool         = NULL ;
-   INT32 count            = 0 ;
-   INT32 rc               = SDB_OK ;
-   SdbConnection *connect = NULL ;
+   INT32 count                     = 0 ;
+   INT32 rc                        = SDB_OK ;
+   SdbConnection *connect          = NULL ;
    
    /* connection string is address + service + user + password */
    StringInfo connName = makeStringInfo(  ) ;
    appendStringInfo( connName, "%s:%s:%s:%s", host, port, usr, passwd ) ;
    
    /* iterate all connections in pool */
-   pool = sdbGetConnectionPool(  ) ;
+   pool = sdbGetConnectionPool() ;
    for ( count = 0 ; count < pool->numConnections ; ++count )
    {
       if ( strcmp( pool->connList[count].connName, connName->data )== 0 )
@@ -311,20 +311,23 @@ sdbConnectionHandle sdbGetConnectionHandle( const char *host,
    if ( rc )
    {
       ereport( ERROR, ( errcode( ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION ),
-                         errmsg( "unable to establish connection to \"%s:%s\""
-                                  ", rc = %d", host, port, rc ),
-                         errhint( "Make sure remote service is running "
-                                   "and username/password are valid" ) ) ) ;
+                        errmsg( "unable to establish connection to \"%s:%s\""
+                                ", rc = %d", host, port, rc ),
+                        errhint( "Make sure remote service is running "
+                                 "and username/password are valid" ) ) ) ;
       return SDB_INVALID_HANDLE ;
    }
 
    rc = sdbSetConnectionPreference( hConnection, preference_instance ) ;
    if ( rc )
    {
+      sdbDisconnect( hConnection ) ;
       ereport( WARNING, ( errcode( ERRCODE_WITH_CHECK_OPTION_VIOLATION ), 
-         errmsg( "set connection's preference instance failed:rc=%d,preference=%s",
-         rc, preference_instance ),
-         errhint( "Make sure the OPTION_NAME_PREFEREDINSTANCE are valid" ) ) ) ;
+                          errmsg( "set connection's preference instance failed"
+                                  ":rc=%d,preference=%s", rc, 
+                                  preference_instance ),
+                          errhint( "Make sure the OPTION_NAME_PREFEREDINSTANCE " 
+                                   "are valid" ) ) ) ;
    }
    
    /* add connection into pool */
@@ -337,11 +340,11 @@ sdbConnectionHandle sdbGetConnectionHandle( const char *host,
       pNewMem  = ( SdbConnection* )realloc( pNewMem, sizeof( SdbConnection )* poolSize ) ;
       if ( !pNewMem )
       {
-         ereport( ERROR, ( errcode( ERRCODE_FDW_OUT_OF_MEMORY ),
-                            errmsg( "Unable to allocate connection pool" ),
-                            errhint( "Make sure the memory pool or ulimit is "
-                                      "properly configured" ) ) ) ;
          sdbDisconnect( hConnection ) ;
+         ereport( ERROR, ( errcode( ERRCODE_FDW_OUT_OF_MEMORY ),
+                           errmsg( "Unable to allocate connection pool" ),
+                           errhint( "Make sure the memory pool or ulimit is "
+                                    "properly configured" ) ) ) ;
          return SDB_INVALID_HANDLE ;
       }
       
@@ -762,7 +765,7 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
 
 UINT64 sdbCreateBsonRecordAddr(  )
 {
-   sdbbson *p = palloc0( sizeof( sdbbson ) ) ;
+   sdbbson *p = malloc( sizeof( sdbbson ) ) ;
    sdbbson_init( p ) ;
    
    return ( UINT64 )p ;
@@ -808,6 +811,7 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
    rc = sdbbson_finish( &condition ) ;
    if ( SDB_OK != rc )
    {
+      sdbbson_destroy( &condition ) ;
       ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
             errmsg( "sdbbson_finish failed:rc=%d", rc ) ) ) ;
       return ;
@@ -818,6 +822,8 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
    rc = sdbbson_finish( &selector ) ;
    if ( SDB_OK != rc )
    {
+      sdbbson_destroy( &condition ) ;
+      sdbbson_destroy( &selector ) ;
       ereport( ERROR, ( errcode( ERRCODE_FDW_ERROR ), 
             errmsg( "sdbbson_finish failed:rc=%d", rc ) ) ) ;
       return ;
@@ -829,6 +835,8 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
    {
       sdbPrintBson( &condition, WARNING ) ;
       sdbPrintBson( &selector, WARNING ) ;
+      sdbbson_destroy( &condition ) ;
+      sdbbson_destroy( &selector ) ;
       ereport( WARNING, ( errcode( ERRCODE_FDW_ERROR ), 
             errmsg( "sdbGetSnapshot failed:rc=%d", rc ) ) ) ;
       return ;
@@ -838,6 +846,9 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
    rc = sdbNext( cursor, &ShardingKey ) ;
    if( rc )
    {
+      sdbbson_destroy( &condition ) ;
+      sdbbson_destroy( &selector ) ;
+      sdbbson_destroy( &ShardingKey ) ;
       return ;
    }
 
@@ -847,7 +858,6 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
       sdbbson tmpValue ;
       sdbbson_init( &tmpValue ) ;
       sdbbson_iterator_subobject( &ite, &tmpValue ) ;
-      
       sdbbson_iterator_init( &ite, &tmpValue ) ;
       while ( sdbbson_iterator_next( &ite ) )
       {
@@ -857,7 +867,12 @@ void sdbGetColumnKeyInfo( SdbExecState *fdw_state )
                sdbbsonKey, SDB_MAX_KEY_COLUMN_LENGTH - 1 ) ;
          fdw_state->key_num++ ;
       }
-    }
+      sdbbson_destroy( &tmpValue ) ;
+   }
+
+   sdbbson_destroy( &condition ) ;
+   sdbbson_destroy( &selector ) ;
+   sdbbson_destroy( &ShardingKey ) ;
 }
 
 bool sdbIsShardingKeyChanged( SdbExecState *fdw_state, sdbbson *oldBson, 
@@ -897,6 +912,7 @@ bool sdbIsShardingKeyChanged( SdbExecState *fdw_state, sdbbson *oldBson,
                errmsg( "the shardingKey is changed, shardingKey:" ) ) ) ;
          sdbPrintBson( &newSubBson, WARNING ) ;
          sdbbson_destroy( &newSubBson ) ;
+         sdbbson_destroy( &oldSubBson ) ;
          return true ;
       }
       sdbbson_append_element( &oldSubBson, NULL, &oldIte ) ;
@@ -919,6 +935,9 @@ bool sdbIsShardingKeyChanged( SdbExecState *fdw_state, sdbbson *oldBson,
          
          return true ;
       }
+
+      sdbbson_destroy( &newSubBson ) ;
+      sdbbson_destroy( &oldSubBson ) ;
    }
 
    return false ;
@@ -985,12 +1004,12 @@ INT32 sdbRecurOperExprTwoVar( OpExpr *opr_two_argument, SdbExprTreeState *expr_s
          argument1 = ( Var * )lfirst( argumentCell ) ;
          if ( ( argument1->varno != expr_state->foreign_table_index )
           || ( argument1->varlevelsup != 0 ) )
-      	{
+         {
             elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, "
                   "valevelsup=%d", expr_state->foreign_table_index, 
                   argument1->varno, argument1->varlevelsup ) ;
             goto error ;
-      	}
+         }
       }
       else
       {
@@ -1086,11 +1105,11 @@ INT32 sdbRecurOperExpr( OpExpr *opr, SdbExprTreeState *expr_state,
    
    if ( ( var->varno != expr_state->foreign_table_index )
           || ( var->varlevelsup != 0 ) )
-	{
+   {
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
             expr_state->foreign_table_index, var->varno, var->varlevelsup ) ;
       goto error ;
-	}
+   }
    
    columnName = get_relid_attribute_name( expr_state->foreign_table_id, 
                                                 var->varattno ) ;
@@ -1171,11 +1190,11 @@ INT32 sdbRecurScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
    
    if ( ( var->varno != expr_state->foreign_table_index )
           || ( var->varlevelsup != 0 ) )
-	{
+   {
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
             expr_state->foreign_table_index, var->varno, var->varlevelsup ) ;
       goto error ;
-	}
+   }
    
    columnName = get_relid_attribute_name( expr_state->foreign_table_id, 
                                              var->varattno ) ;
@@ -1185,7 +1204,7 @@ INT32 sdbRecurScalarArrayOpExpr( ScalarArrayOpExpr *scalaExpr,
       if ( T_Const == oprarg->type )
       {
          sdbbson temp ;
-			Const *const_val = ( Const * )oprarg ;
+         Const *const_val = ( Const * )oprarg ;
          sdbbson_init( &temp ) ;
          sdbSetBsonValue( &temp, keyName, const_val->constvalue, 
                               const_val->consttype, const_val->consttypmod ) ;
@@ -1228,11 +1247,11 @@ INT32 sdbRecurNullTestExpr( NullTest *ntest, SdbExprTreeState *expr_state,
    sdbbson isNullcondition ;
    AttrNumber columnId ;
    
-	if ( ntest->argisrow )
-	{
+   if ( ntest->argisrow )
+   {
       elog( DEBUG1, "argisrow is true" ) ;
       goto error ;
-	}
+   }
 
    if ( T_Var != ( ( Expr * )( ntest->arg ) )->type )
    {
@@ -1240,33 +1259,33 @@ INT32 sdbRecurNullTestExpr( NullTest *ntest, SdbExprTreeState *expr_state,
       goto error ;
    }
 
-	var = ( Var * )ntest->arg ;
-	if ( ( var->varno != expr_state->foreign_table_index )
+   var = ( Var * )ntest->arg ;
+   if ( ( var->varno != expr_state->foreign_table_index )
           || ( var->varlevelsup != 0 ) )
-	{
+   {
       elog( DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
             expr_state->foreign_table_index, var->varno, var->varlevelsup ) ;
       goto error ;
-	}
+   }
    
    columnId = var->varattno ;
    columnName    = get_relid_attribute_name( expr_state->foreign_table_id,
                                                  columnId ) ;
    sdbbson_init( &isNullcondition ) ;
    switch ( ntest->nulltesttype )
-	{
-		case IS_NULL:
+   {
+      case IS_NULL:
          sdbbson_append_int( &isNullcondition, "$isnull", 1 ) ;
-			break ;
-		case IS_NOT_NULL:
+         break ;
+      case IS_NOT_NULL:
          sdbbson_append_int( &isNullcondition, "$isnull", 0 ) ;
          
-			break ;
+         break ;
       default:
          sdbbson_destroy( &isNullcondition ) ;
          elog( DEBUG1, "nulltesttype error:type=%d", ntest->nulltesttype ) ;
          goto error ;
-	}
+   }
    
    sdbbson_finish( &isNullcondition ) ;
    sdbbson_append_sdbbson( condition, columnName, &isNullcondition ) ;
@@ -1282,24 +1301,24 @@ error:
 INT32 sdbRecurBoolExpr( BoolExpr *boolexpr, SdbExprTreeState *expr_state, sdbbson *condition )
 {
    INT32 rc = SDB_OK ;
-	ListCell *cell ;
+   ListCell *cell ;
    char *key = NULL ;
 
    switch ( boolexpr->boolop )
    {
-		case AND_EXPR:
+      case AND_EXPR:
          key = "$and" ;
-			break ;
+         break ;
          
-		case OR_EXPR:
-			key = "$or" ;
-			break ;
+      case OR_EXPR:
+         key = "$or" ;
+         break ;
          
-		case NOT_EXPR:
-			key = "$not" ;
-			break ;
-		default:
-			elog( DEBUG1, "unsupported boolean expression type:type=%d", 
+      case NOT_EXPR:
+         key = "$not" ;
+         break ;
+      default:
+         elog( DEBUG1, "unsupported boolean expression type:type=%d", 
             boolexpr->boolop ) ;
          goto error ;
    }
@@ -1366,14 +1385,14 @@ INT32 sdbRecurExprTree( Node *node, SdbExprTreeState *expr_state, sdbbson *condi
       }
    }
    else if ( IsA( node, OpExpr ) )
-	{
+   {
       rc = sdbRecurOperExpr( ( OpExpr * )node, expr_state, condition ) ;
       if ( rc != SDB_OK )
       {
          elog( DEBUG1, "sdbRecurOperExpr" ) ;
          goto error ;
       }
-	}
+   }
    else
    {
       elog( DEBUG1, "node type is not supported:type=%d", nodeTag( node ) ) ;
@@ -1399,18 +1418,19 @@ INT32 sdbGenerateFilterCondition ( Oid foreign_id, RelOptInfo *baserel, sdbbson 
    expr_state.foreign_table_index = baserel->relid ;
    expr_state.foreign_table_id    = foreign_id ;
 
+   sdbbson_destroy( condition ) ;
    sdbbson_init( condition ) ;
    foreach( cell, baserel->baserestrictinfo )
-	{
-		RestrictInfo *info =( RestrictInfo * )lfirst( cell ) ;
-		sdbRecurExprTree( ( Node * )info->clause, &expr_state, condition ) ;
+   {
+      RestrictInfo *info =( RestrictInfo * )lfirst( cell ) ;
+      sdbRecurExprTree( ( Node * )info->clause, &expr_state, condition ) ;
       if( expr_state.unsupport_count > 0 )
       {
          sdbbson_destroy( condition ) ;
          sdbbson_init( condition ) ;
          break ;
       }
-	}
+   }
 
    rc = sdbbson_finish( condition ) ;
    if ( SDB_OK != rc )
@@ -2129,7 +2149,7 @@ static Datum sdbColumnValue( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId
 
 /* sdbFreeScanState closes the cursor, connection and collection to SequoiaDB
  */
-void sdbFreeScanState( SdbExecState *executionState )
+void sdbFreeScanState( SdbExecState *executionState, bool deleteShared )
 {
    sdbbson *original = NULL ;
    if( !executionState )
@@ -2140,9 +2160,16 @@ void sdbFreeScanState( SdbExecState *executionState )
    if( SDB_INVALID_HANDLE != executionState->hCollection )
       sdbReleaseCollection( executionState->hCollection ) ;
 
-   original = sdbGetRecordPointer( executionState->bson_record_addr ) ;
-   sdbbson_destroy( original ) ;
-   
+   if ( deleteShared )
+   {
+      if ( 0 != executionState->bson_record_addr )
+      {
+         original = sdbGetRecordPointer( executionState->bson_record_addr ) ;
+         sdbbson_destroy( original ) ;
+         free( original ) ;
+         executionState->bson_record_addr = 0 ;
+      }
+   }
    /* do not free connection since it's in pool */
 done :
    return ;
@@ -2265,9 +2292,11 @@ static void sdbFillTupleSlot( const sdbbson *sdbbsonDocument,
       if( BSON_OBJECT == sdbbsonType )
       {
          sdbbson subObject ;
+         sdbbson_init( &subObject ) ;
          sdbbson_iterator_subobject( &sdbbsonIterator, &subObject ) ;
          sdbFillTupleSlot( &subObject, sdbbsonFullKey,
-                            columnMappingHash, columnValues, columnNulls ) ;
+                           columnMappingHash, columnValues, columnNulls ) ;
+         sdbbson_destroy( &subObject ) ;
          continue ;
       }
       /* match columns for sdbbson key */
@@ -2637,7 +2666,7 @@ static TupleTableSlot * SdbIterateForeignScan( ForeignScanState *scanState )
    {
       if( SDB_DMS_EOC != rc )
       {
-         sdbFreeScanState( executionState ) ;
+         sdbFreeScanState( executionState, true ) ;
          /* if other error happened, let's report them */
          ereport( ERROR,( errcode( ERRCODE_FDW_ERROR ),
                             errmsg( "unable to fetch next record"
@@ -2699,7 +2728,7 @@ static void SdbEndForeignScan( ForeignScanState *scanState )
    SdbExecState *executionState =( SdbExecState * )scanState->fdw_state ;
    if( executionState )
    {
-      sdbFreeScanState( executionState ) ;
+      sdbFreeScanState( executionState, true ) ;
    }
 }
 
@@ -2767,7 +2796,7 @@ static INT32 sdbAcquireSampleRows( Relation relation, INT32 errorLevel,
    fdw_state->pgTableDesc = sdbGetPgTableDesc( foreignTableId ) ;
    if ( NULL == fdw_state->pgTableDesc )
    {
-      sdbFreeScanState( fdw_state ) ;
+      sdbFreeScanState( fdw_state, true ) ;
       ereport( ERROR,( errcode( ERRCODE_FDW_OUT_OF_MEMORY ), 
             errmsg( "Unable to allocate pgTableDesc" ),
             errhint( "Make sure the memory pool or ulimit is properly configured" ) ) ) ;
@@ -2801,7 +2830,7 @@ static INT32 sdbAcquireSampleRows( Relation relation, INT32 errorLevel,
    columnNulls  = ( bool* )palloc0( columnCount * sizeof( bool ) ) ;
    if( !columnValues || !columnNulls )
    {
-      sdbFreeScanState( fdw_state ) ;
+      sdbFreeScanState( fdw_state, true ) ;
       ereport( ERROR,( errcode( ERRCODE_FDW_OUT_OF_MEMORY ),
                          errmsg( "Unable to allocate Var memory" ),
                          errhint( "Make sure the memory pool or ulimit is "
@@ -2823,7 +2852,7 @@ static INT32 sdbAcquireSampleRows( Relation relation, INT32 errorLevel,
          sdbbson_destroy( &recordObj ) ;
          if( SDB_DMS_EOC != rc )
          {
-            sdbFreeScanState( fdw_state ) ;
+            sdbFreeScanState( fdw_state, true ) ;
             /* if other error happened, let's report them */
             ereport( ERROR,( errcode( ERRCODE_FDW_ERROR ),
                                errmsg( "unable to fetch next record"
@@ -2870,7 +2899,7 @@ static INT32 sdbAcquireSampleRows( Relation relation, INT32 errorLevel,
       sdbbson_destroy( &recordObj ) ;
    }
    
-   sdbFreeScanState( fdw_state ) ;
+   sdbFreeScanState( fdw_state, true ) ;
 done :
    MemoryContextDelete( tupleContext ) ;
    pfree( columnValues ) ;
@@ -3219,7 +3248,7 @@ void SdbEndForeignModify( EState *estate, ResultRelInfo *rinfo )
    SdbExecState *fdw_state = ( SdbExecState * )rinfo->ri_FdwState ;
    if ( fdw_state )
    {
-      sdbFreeScanState( fdw_state ) ;
+      sdbFreeScanState( fdw_state, false ) ;
    }
 }
 
