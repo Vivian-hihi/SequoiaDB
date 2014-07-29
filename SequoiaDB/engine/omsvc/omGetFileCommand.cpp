@@ -137,8 +137,8 @@ namespace engine
          sdbGetOMManager()->releaseSessionInfo( _restSession->getSessionID() ) ;
       }
 
-      sessionInfo = sdbGetOMManager()->newSessionInfo(pUserName, 
-                                                      socket->getLocalIP() ) ;
+      sessionInfo = sdbGetOMManager()->newSessionInfo( pUserName, 
+                                                       socket->getLocalIP() ) ;
       if ( NULL == sessionInfo )
       {
          PD_LOG( PDERROR, "new session failed:user=%s, ip=%u", pUserName,
@@ -155,6 +155,12 @@ namespace engine
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
    done:
+      if ( sessionInfo )
+      {
+         // need to detach session
+         sdbGetOMManager()->detachSessionInfo( sessionInfo ) ;
+         sessionInfo = NULL ;
+      }
       return SDB_OK ;
    error:
       goto done ;

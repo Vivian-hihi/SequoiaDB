@@ -45,6 +45,8 @@ using namespace bson ;
 namespace engine
 {
 
+   #define OM_WAIT_CB_ATTACH_TIMEOUT               ( 60 * OSS_ONE_SEC )
+
    /*
       Message Map
    */
@@ -236,6 +238,11 @@ namespace engine
       rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (void*)this, &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start OM Manager edu, rc: %d", rc ) ;
 
+      // wait attach
+      rc = _attachEvent.wait( OM_WAIT_CB_ATTACH_TIMEOUT ) ;
+      PD_RC_CHECK( rc, PDERROR, "Wait OM Manager edu attach failed, rc: %d",
+                   rc ) ;
+
       // register timer
       _checkSessionTimer = setTimer( 60 * OSS_ONE_SEC ) ;
       if ( NET_INVALID_TIMER_ID == _checkSessionTimer )
@@ -292,6 +299,19 @@ namespace engine
       _mapHost2ID.clear() ;
 
       return SDB_OK ;
+   }
+
+   void _omManager::attachCB( _pmdEDUCB *cb )
+   {
+      _msgHandler.attach( cb ) ;
+      _timerHandler.attach( cb ) ;
+      _attachEvent.signalAll() ;
+   }
+
+   void _omManager::detachCB()
+   {
+      _msgHandler.detach() ;
+      _timerHandler.detach() ;
    }
 
    UINT32 _omManager::setTimer( UINT32 milliSec )

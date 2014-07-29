@@ -129,6 +129,9 @@ namespace engine
          virtual INT32  fini () ;
          virtual void   onConfigChange() {}
 
+         void        attachCB( _pmdEDUCB *cb ) ;
+         void        detachCB() ;
+
          UINT32      setTimer( UINT32 milliSec ) ;
          void        killTimer( UINT32 timerID ) ;
 
@@ -221,6 +224,7 @@ namespace engine
          MsgRouteID                             _hwRouteID ;
 
          ossSpinSLatch                          _omLatch ;
+         ossEvent                               _attachEvent ;
 
          restAdaptor                            _restAdptor ;
          pmdRemoteSessionMgr                    _rsManager ;

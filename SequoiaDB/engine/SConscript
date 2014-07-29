@@ -72,6 +72,7 @@ pmdFiles = [
       "pmd/pmdShard.cpp",
       "pmd/pmdCluster.cpp",
       "pmd/pmdRepR.cpp",
+	  "pmd/pmdOMSvc.cpp",
       "pmd/pmdCommon.cpp",
       "pmd/pmdEnv.cpp",
       "pmd/pmdOptionsMgr.cpp",

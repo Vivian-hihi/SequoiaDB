@@ -74,6 +74,7 @@ namespace engine
 #endif
    INT32 pmdLoadWorkerEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdSyncClockEntryPoint( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdOMManagerEntryPoint(pmdEDUCB * cb, void * pData ) ;
 
 }
 
