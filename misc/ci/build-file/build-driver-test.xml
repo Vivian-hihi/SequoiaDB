@@ -54,6 +54,7 @@
 	</target>
 
 	<target name="build-driver-test" depends="clean-driver-test">
+		<property name="static.dir" value="${WORKSPACE}/release/driver/lib" />
 
 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
 
@@ -106,13 +107,20 @@
 
     <echo message="...Begin to scons the c and c++ test code ..." />
 
+    <delete dir="${WORKSPACE}/client/lib" failonerror="false" />
+    <mkdir dir="${WORKSPACE}/client/lib" />
+
+    <copy todir="${WORKSPACE}/client/lib" failonerror="true">
+    	<fileset dir="${static.dir}" includes="**/*.a" />
+    </copy>
+
     <echo message="exec scons ${build.testcases.C} lib_path=${lib.dir}/C/lib include_path=${lib.dir}/C/include " />
 		<exec executable="scons" dir="${build.testcases.C}" failonerror="true">
 			<arg line="--lib_path=${lib.dir}/lib --include_path=${lib.dir}/include" />
 		</exec>
-		<echo message="exec scons ${build.testcases.C} --dd lib_path=${lib.dir}/C/lib include_path=${lib.dir}/C/include " />
+		<echo message="exec scons ${build.testcases.C}/staticlib --dd lib_path=${lib.dir}/C/lib include_path=${lib.dir}/C/include " />
 		<exec executable="scons" dir="${build.testcases.C}/staticlib" failonerror="true">
-			<arg line="--lib_path=${lib.dir}/lib --include_path=${lib.dir}/include" />
+			<arg line="--dd --lib_path=${lib.dir}/lib --include_path=${lib.dir}/include" />
 		</exec>
 		
 		<copy todir="${deploy.path}/hlt/drivers_testcases/C/build">
@@ -123,9 +131,9 @@
 		<exec executable="scons" dir="${build.testcases.CPP}" failonerror="true">
 			<arg line="--lib_path=${lib.dir}/lib --include_path=${lib.dir}/include" />
 		</exec>
-		<echo message="exec scons ${build.testcases.CPP} --dd lib_path=${lib.dir}/CPP/lib include_path=${lib.dir}/CPP/include " />
+		<echo message="exec scons ${build.testcases.CPP}/staticlib --dd lib_path=${lib.dir}/CPP/lib include_path=${lib.dir}/CPP/include " />
 		<exec executable="scons" dir="${build.testcases.CPP}/staticlib" failonerror="true">
-			<arg line="--lib_path=${lib.dir}/lib --include_path=${lib.dir}/include" />
+			<arg line="--dd --lib_path=${lib.dir}/lib --include_path=${lib.dir}/include" />
 		</exec>
 		
 		<copy todir="${deploy.path}/hlt/drivers_testcases/CPP/build">

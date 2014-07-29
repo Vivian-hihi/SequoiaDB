@@ -13,7 +13,7 @@
 
 	<property name="deploy.path" value="${WORKSPACE}/deploy" />
 	<property name="release.path" value="${WORKSPACE}/release" />
-	<property name="build.testcases" value="${WORKSPACE}/sequoiadb/testcases/hlt/" />
+	<property name="build.testcases" value="${WORKSPACE}/sequoiadb/testcases/hlt" />
 	<property name="DRIVER.DIR" value="${WORKSPACE}/release/driver" />
 	
 
@@ -55,7 +55,7 @@
 	<target name="build-driver" depends="build-sample">
 		<echo message="Begin to build the driver test code..." />
 		<ant antfile="${ci.script.path}/build-driver-test.xml" target="build-driver-test">
-			<property name="build.testcases" value="${WORKSPACE}/sequoiadb/testcases/hlt/drivers_testcases/" />
+			<property name="build.testcases" value="${WORKSPACE}/sequoiadb/testcases/hlt/drivers_testcases" />
 			<property name="WORKSPACE" value="${WORKSPACE}" />
 			<property name="lib.dir" value="${WORKSPACE}/release/driver" />
 		</ant>
