@@ -110,7 +110,7 @@
     <delete dir="${WORKSPACE}/sequoiadb/client/lib" failonerror="false" />
     <mkdir dir="${WORKSPACE}/sequoiadb/client/lib" />
 
-    <copy todir="${WORKSPACE}/client/lib" failonerror="true">
+    <copy todir="${WORKSPACE}/sequoiadb/client/lib" failonerror="true">
     	<fileset dir="${static.dir}" includes="**/*.a" />
     </copy>
 
