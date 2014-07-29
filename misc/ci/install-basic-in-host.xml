@@ -37,8 +37,8 @@
 					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
 				</exec>
         
-        		<exec executable="/bin/bash" dir="." failonerror="true">
-        			<arg line="ps -ef|grep sequoiadb | grep -v grep | awk '{print $2}' | xargs kill" />
+        		<exec executable="/bin/ps" dir="." failonerror="true">
+        			<arg line=" -ef|grep sequoiadb | grep -v grep | awk '{print $2}' | xargs kill" />
         		</exec>
 
         		<chmod dir="${db.path}/bin" perm="u+x" includes="*" />
