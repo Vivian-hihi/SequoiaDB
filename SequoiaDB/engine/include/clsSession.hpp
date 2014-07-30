@@ -43,6 +43,9 @@
 #include "ossAtomic.hpp"
 #include "sdbInterface.hpp"
 
+#include <map>
+#include <deque>
+
 namespace engine
 {
 
@@ -197,6 +200,33 @@ namespace engine
 
    };
    typedef _clsSession clsSession ;
+
+   /*
+      _clsSessionMgr define
+   */
+   class _clsSessionMgr : public SDBObject
+   {
+      typedef std::map<UINT64, _clsSession*>          MAPSESSION ;
+      typedef MAPSESSION::iterator                    MAPSESSION_IT ;
+
+      typedef std::map<NET_HANDLE, clsSessionMeta*>   MAPMETA ;
+      typedef MAPMETA::iterator                       MAPMETA_IT ;
+
+      typedef std::deque<_clsSession*>                DEQSESSION ;
+
+      public:
+         _clsSessionMgr() ;
+         ~_clsSessionMgr() ;
+
+         INT32          init() ;
+         INT32          fini() ;
+
+      private:
+         MAPSESSION                 _mapSession ;
+         MAPMETA                    _mapMeta ;
+
+   } ;
+   typedef _clsSessionMgr clsSessionMgr ;
 
 }
 
