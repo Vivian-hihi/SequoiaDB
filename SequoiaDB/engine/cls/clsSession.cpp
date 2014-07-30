@@ -41,7 +41,9 @@
 
 namespace engine
 {
-   // _clsSessionMeta implement
+   /*
+      _clsSessionMeta implement
+   */
    _clsSessionMeta::_clsSessionMeta( const NET_HANDLE handle )
    :_basedHandleNum( 0 )
    {
@@ -52,7 +54,9 @@ namespace engine
    {
    }
 
-   // _clsSession implement
+   /*
+      _clsSession implement
+   */
    BEGIN_OBJ_MSG_MAP( _clsSession, _clsObjBase )
       //ON_MSG
    END_OBJ_MSG_MAP()
@@ -90,8 +94,6 @@ namespace engine
    INT32 _clsSession::attachIn ( pmdEDUCB *cb )
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_ATHIN );
-      _latchOut.try_get () ;
-      _latchIn.release () ;
 
       SDB_ASSERT( cb, "cb can't be NULL" ) ;
 
@@ -102,6 +104,9 @@ namespace engine
       _eduID  = cb->getID() ;
       _pEDUCB->setName( sessionName() ) ;
       _pEDUCB->attachSession( this ) ;
+
+      _latchOut.try_get () ;
+      _latchIn.release () ;
 
       _onAttach () ;
 
@@ -400,6 +405,29 @@ namespace engine
    UINT32 _clsSession::_decBuffPos ( UINT32 pos )
    {
       return pos ? pos - 1 : MAX_BUFFER_ARRAY_SIZE - 1 ;
+   }
+
+   /*
+      _clsSessionMgr implement
+   */
+   _clsSessionMgr::_clsSessionMgr()
+   {
+   }
+
+   _clsSessionMgr::~_clsSessionMgr()
+   {
+   }
+
+   INT32 _clsSessionMgr::init()
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _clsSessionMgr::fini()
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
    }
 
 }
