@@ -40,8 +40,8 @@
       
       <p class="p">SequoiaDB PHP driver provides a PHP interface to database operations, and cluster operations. Database operations, including connectivity, users create 
         a database to delete, add or delete data to the inverstigation, remove the index is created, the snapshot acquisition and replacement, as well as the creation of 
-        collections and collection space deletion operations. Cluster operations including operations management and data nodes partition groups, such as starting, 
-        stopping partition groups, start ,stop data nodes, obtain data from the master node, a collection of films.</p>
+        collections and collection space deletion operations. Cluster operations including operations management and data nodes replica groups, such as starting, 
+        stopping replica groups, start, stop data nodes, obtain data from the master node, a collection of films.</p>
 
       <p class="p">There are two types of driving PHP instance. A <strong class="ph b">database coperation</strong>, another <strong class="ph b">operation for the cluster</strong>.</p>
 
@@ -83,20 +83,20 @@
 </li>
 
         <li class="li">Examples of cluster operation <p class="p">SequoiaDB cluster operations are divided into two
-            levels: 1) partition group 2) data nodes </p>
+          levels: 1) replica group 2) data nodes </p>
 <div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">Partition group package of three types: Coordination partition group, cataloging
-              partition group, the data partition group.</p>
+            <p class="p">Replica group package of three types: Coordination replica group, cataloging
+              replica group, the data replica group.</p>
 
           </div>
-<p class="p">Partition group instance and instance data node instances can be expressed in
+<p class="p">Replica group instance and instance data node instances can be expressed in
             two classes.</p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
               <td valign="top" class="stentry">SequoiaGroup</td>
 
-              <td valign="top" class="stentry">partition group class</td>
+              <td valign="top" class="stentry">Replica group class</td>
 
-              <td valign="top" class="stentry">Partition group instance represents a separate partition group </td>
+              <td valign="top" class="stentry">Replica group instance represents a separate replica group </td>
 
             </tr>
 <tr class="strow">
@@ -108,10 +108,10 @@
 
             </tr>
 </table>
-<p class="p">And requires the use of cluster-related operations and data partition
-            group node instance.</p>
-<p class="p">Ecamples SequoiaGroup for management partition group. Its
-            operations include start, stop partition groups, access to state partition group node
+<p class="p">And requires the use of cluster-related operations and data replica
+              group node instance.</p>
+<p class="p">Ecamples SequoiaGroup for management replica group. Its
+                operations include start, stop replica groups, access to state replica group node
             name information, the number of messages. Examples SequoiaNode for managing node. Its
             operations include start, stop spectfied node for the specified node instance, to obtain
             a master-slave node instance, access to data node address information.</p>

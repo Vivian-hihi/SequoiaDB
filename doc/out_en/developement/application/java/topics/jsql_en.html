@@ -7,15 +7,15 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="SQL to sequoiadb shell to Java"/>
-<meta name="description" content="The query in Sequoiadb is in the format of json(bson). The following table shows examples comparing sql statements, sequoiadb shell statements and sequoiadb java driver application statements. SQL ..."/>
+<meta name="DC.Title" content="SQL to SequoiaDB shell to Java"/>
+<meta name="description" content="The query in SequoiaDB is in the format of json(bson). The following table shows examples comparing sql statements, SequoiaDB shell statements and SequoiaDB java driver application statements. SQL ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/java/topics/java_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../references/sqlmapping/topics/sqlmapping_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="application_java_sql"/>
 <link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
-<title>SQL to sequoiadb shell to Java</title>
+<title>SQL to SequoiaDB shell to Java</title>
 <script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../../index.html";
     var ratingFile = "";
@@ -34,107 +34,107 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../../developement/application/java/topics/java_en.html" title="Java Driver"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Java Driver</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application_en.html" title="SequoiaDB Application Development">SequoiaDB Application Development</a> / <a class="navheader_parent_path" href="../../../../developement/application/java/topics/java_en.html" title="Java Driver">Java Driver</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">SQL to sequoiadb shell to Java</h1>
+  <h1 class="title topictitle1">SQL to SequoiaDB shell to Java</h1>
 
   <div class="body">
-    <p class="p">The query in Sequoiadb is in the format of json(bson). The following table shows examples
-      comparing sql statements, sequoiadb shell statements and sequoiadb java driver application
+    <p class="p">The query in SequoiaDB is in the format of json(bson). The following table shows examples
+      comparing sql statements, SequoiaDB shell statements and SequoiaDB java driver application
       statements.</p>
 
    <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-       <th valign="bottom" align="left" id="d74029e17" class="stentry">SQL</th>
+       <th valign="bottom" align="left" id="d74086e17" class="stentry">SQL</th>
 
-       <th valign="bottom" align="left" id="d74029e20" class="stentry">sequoiadb shell</th>
+       <th valign="bottom" align="left" id="d74086e20" class="stentry">SequoiaDB shell</th>
 
-       <th valign="bottom" align="left" id="d74029e23" class="stentry">java Driver</th>
-
-     </tr>
-<tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">insert into students(a,b) values(1,-1)   </td>
-
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.insert({a:1,b:-1})       </td>
-
-       <td valign="top" headers="d74029e23" class="stentry">bar.insert("{'a':1,'b':-1}")</td>
+       <th valign="bottom" align="left" id="d74086e23" class="stentry">Java Driver</th>
 
      </tr>
 <tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">select a,b from students </td>
+       <td valign="top" headers="d74086e17" class="stentry">insert into students(a,b) values(1,-1)   </td>
 
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.find(null,{a:"",b:""})</td>
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.insert({a:1,b:-1})       </td>
 
-       <td valign="top" headers="d74029e23" class="stentry">bar.query("", "{'a':'','b':''}", "", "")</td>
-
-     </tr>
-<tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">select * from students</td>
-
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.find()</td>
-
-       <td valign="top" headers="d74029e23" class="stentry">bar.query()</td>
+       <td valign="top" headers="d74086e23" class="stentry">bar.insert("{'a':1,'b':-1}")</td>
 
      </tr>
 <tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">select * from students where age=20</td>
+       <td valign="top" headers="d74086e17" class="stentry">select a,b from students </td>
 
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.find({age:20})</td>
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.find(null,{a:"",b:""})</td>
 
-       <td valign="top" headers="d74029e23" class="stentry">bar.query("{'age':20}", "", "", "")</td>
-
-     </tr>
-<tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">select * from students where age=20 order by name</td>
-
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.find({age:20}).sort({name:1})</td>
-
-       <td valign="top" headers="d74029e23" class="stentry">bar.query("{'age':20}", "", "{'name':1}", "")</td>
+       <td valign="top" headers="d74086e23" class="stentry">bar.query("", "{'a':'','b':''}", "", "")</td>
 
      </tr>
 <tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">select * from students where age&gt;20 and age&lt;30</td>
+       <td valign="top" headers="d74086e17" class="stentry">select * from students</td>
 
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.find({age:{$gt:20,$lt:30}})</td>
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.find()</td>
 
-       <td valign="top" headers="d74029e23" class="stentry">bar.query("{'age':{'$gt':20,'$lt':30}}", "", "", "")</td>
-
-     </tr>
-<tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">create index testIndex on students(name)</td>
-
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.createIndex("testIndex",{name:1},false)</td>
-
-       <td valign="top" headers="d74029e23" class="stentry">bar.createIndex("testIndex", "{'name':1}", false, false)</td>
+       <td valign="top" headers="d74086e23" class="stentry">bar.query()</td>
 
      </tr>
 <tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">select * from students limit 20 skip 10</td>
+       <td valign="top" headers="d74086e17" class="stentry">select * from students where age=20</td>
 
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.find().limit(20).skip(10)</td>
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.find({age:20})</td>
 
-       <td valign="top" headers="d74029e23" class="stentry">bar.query("", "", "", "", 10, 20)</td>
-
-     </tr>
-<tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">select count(*) from students where age&gt;20</td>
-
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.find({age:{$gt:20}}).count()</td>
-
-       <td valign="top" headers="d74029e23" class="stentry">bar.getCount("{'age':{'$gt':20}}")</td>
+       <td valign="top" headers="d74086e23" class="stentry">bar.query("{'age':20}", "", "", "")</td>
 
      </tr>
 <tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">update students set a=a+2 where b=-1</td>
+       <td valign="top" headers="d74086e17" class="stentry">select * from students where age=20 order by name</td>
 
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.update({$set:{a:2}},{b:-1})</td>
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.find({age:20}).sort({name:1})</td>
 
-       <td valign="top" headers="d74029e23" class="stentry">bar.update("{'b':-1}", "{'$inc':{'a':2}}", "")</td>
+       <td valign="top" headers="d74086e23" class="stentry">bar.query("{'age':20}", "", "{'name':1}", "")</td>
 
      </tr>
 <tr class="strow">
-       <td valign="top" headers="d74029e17" class="stentry">delete from students where a=1</td>
+       <td valign="top" headers="d74086e17" class="stentry">select * from students where age&gt;20 and age&lt;30</td>
 
-       <td valign="top" headers="d74029e20" class="stentry">db.foo.bar.remove({a:1})</td>
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.find({age:{$gt:20,$lt:30}})</td>
 
-        <td valign="top" headers="d74029e23" class="stentry">bar.delete("{'a':1}")</td>
+       <td valign="top" headers="d74086e23" class="stentry">bar.query("{'age':{'$gt':20,'$lt':30}}", "", "", "")</td>
+
+     </tr>
+<tr class="strow">
+       <td valign="top" headers="d74086e17" class="stentry">create index testIndex on students(name)</td>
+
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.createIndex("testIndex",{name:1},false)</td>
+
+       <td valign="top" headers="d74086e23" class="stentry">bar.createIndex("testIndex", "{'name':1}", false, false)</td>
+
+     </tr>
+<tr class="strow">
+       <td valign="top" headers="d74086e17" class="stentry">select * from students limit 20 skip 10</td>
+
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.find().limit(20).skip(10)</td>
+
+       <td valign="top" headers="d74086e23" class="stentry">bar.query("", "", "", "", 10, 20)</td>
+
+     </tr>
+<tr class="strow">
+       <td valign="top" headers="d74086e17" class="stentry">select count(*) from students where age&gt;20</td>
+
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.find({age:{$gt:20}}).count()</td>
+
+       <td valign="top" headers="d74086e23" class="stentry">bar.getCount("{'age':{'$gt':20}}")</td>
+
+     </tr>
+<tr class="strow">
+       <td valign="top" headers="d74086e17" class="stentry">update students set a=a+2 where b=-1</td>
+
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.update({$set:{a:2}},{b:-1})</td>
+
+       <td valign="top" headers="d74086e23" class="stentry">bar.update("{'b':-1}", "{'$inc':{'a':2}}", "")</td>
+
+     </tr>
+<tr class="strow">
+       <td valign="top" headers="d74086e17" class="stentry">delete from students where a=1</td>
+
+       <td valign="top" headers="d74086e20" class="stentry">db.foo.bar.remove({a:1})</td>
+
+        <td valign="top" headers="d74086e23" class="stentry">bar.delete("{'a':1}")</td>
 
      </tr>
 </table>

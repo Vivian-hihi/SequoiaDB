@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C++ Driver"/>
-<meta name="description" content="C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 7 lvevls: database operation, collection spaces, collections, cursor, replica group, ..."/>
+<meta name="description" content="Outline C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 7 lvevls: database operation, collection spaces, collections, cursor, replica ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/CPP/topics/cpp_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_kmr_n2s_wj_en"/>
@@ -36,12 +36,19 @@
   <h1 class="title topictitle1">C++ Driver</h1>
 
   <div class="body">
+    <div class="section"><h2 class="title sectiontitle">Outline</h2>
+      
     <p class="p">C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 7 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain.</p>
 
     <p class="p"><a class="xref" href="../../../../cpp/html/index.html">For more please refer to online C++ API</a>。</p>
 
-    <div class="section"><h2 class="title sectiontitle">C++ Class Instances</h2>C++ Client-Driven has two class instances.One is used
-      to operate database,the other is used to operate cluster.<ul class="ul">
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">C++ Class Instances</h2>
+      <p class="p">C++ Client-Driven has two class instances. One is used
+      to operate database, the other is used to operate cluster.</p>
+
+      <ul class="ul">
         <li class="li">Database operation instance <p class="p">There are 3 degrees of data in
             SequoiaDB:</p>
 <p class="p"> 1) Database</p>
@@ -126,8 +133,9 @@
               </tr>
 </table>
 
-          </div>
- Cluster-related operations need to use ReplicaGroup instance and Data Node instance.
+            </div>
+<p class="p">Cluster-related operations need to use ReplicaGroup instance and Data Node instance.</p>
+ 
             <p class="p">The sdbReplicaGroup instants is to manage replica groups, including starting and stopping
             replicagroups, getting the status, name-information and number-information of nodes in the
             replicagroup. </p>

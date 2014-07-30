@@ -40,14 +40,14 @@
             
             <p class="p">SequoiaDB C# driver provides an interface database operations, and cluster operations. Database operations, including connectivity, users create 
                 a database to delete, add or delete data to the investigation, remove the index is created, the snapshot acquisition and replacement, as well as 
-                the creation of collections adn collection space deletion operations. Cluster operations including operations management and data nodes partition 
-                groups, such as starting, stopping partition groups, start, stop data nodes, obtain data from the master node, a collection off films.</p>
+                the creation of collections adn collection space deletion operations. Cluster operations including operations management and data nodes replica 
+                groups, such as starting, stopping replica groups, start, stop data nodes, obtain data from the master node, a collection off films.</p>
         
         </div>
 
         
         
-        <div class="section"><h2 class="title sectiontitle">c# class instance</h2>
+        <div class="section"><h2 class="title sectiontitle">C# class instance</h2>
             
             <p class="p">C# class instance two drives. A database operation, another operation for the cluster.</p>
 
@@ -96,27 +96,27 @@
                         </tr>
 </table>
 
-                    <p class="p">c# driver needs to use a different instance to operate. For example, the operation requires a cursor to read the data instances, and 
+                    <p class="p">C# driver needs to use a different instance to operate. For example, the operation requires a cursor to read the data instances, and 
                     create a table space is required database instance.</p>
 
                 </li>
 
-                <li class="li">Wxamples of cluster operation <p class="lines">SequoiaDB database cluseer operations are divided into two levels:<br/>
-  1) partition group<br/>
+                <li class="li">Examples of cluster operation <p class="lines">SequoiaDB database cluseer operations are divided into two levels:<br/>
+  1) Replica Group<br/>
   2) Data Node</p>
 
-                    <div class="note note"><span class="notetitle">Note:</span> partition group contains three types: Coordination partition group,
-                        cataloging partition group, the data partition group.</div>
+                    <div class="note note"><span class="notetitle">Note:</span> Replica group contains three types: Coordination replica group,
+                        cataloging replica group, the data replica group.</div>
 
-                    <p class="p">Partition group instance and instance data node instances can be expressed in
+                    <p class="p">Replica group instance and instance data node instances can be expressed in
                         two classes.</p>
 
                     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
                             <td valign="top" class="stentry">Shard</td>
 
-                            <td valign="top" class="stentry">Partition group class</td>
+                            <td valign="top" class="stentry">Replica group class</td>
 
-                            <td valign="top" class="stentry">Partition group instance represents a separate partition
+                            <td valign="top" class="stentry">Replica group instance represents a separate replica
                                 group</td>
 
                         </tr>
@@ -130,11 +130,11 @@
                         </tr>
 </table>
 
-                    <p class="p">Undoubtedly related to the cluster operation requires the use of partition
+                    <p class="p">Undoubtedly related to the cluster operation requires the use of replica
                         groups and data node instance.</p>
 
-                    <p class="p">Examples Shard for management partition group. Its operations include start,
-                        stop partition groups, access to state partition group node name
+                    <p class="p">Examples Shard for management replica group. Its operations include start,
+                        stop replica groups, access to state replica group node name
                         information, the number of messages.</p>
 
                     <p class="p">Examples Node for managing node. Its operations include start, stop specified
