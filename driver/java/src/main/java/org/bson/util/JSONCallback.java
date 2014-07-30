@@ -59,25 +59,34 @@ public class JSONCallback extends BasicBSONCallback {
 					setRoot(o);
 				}
 			} else if (b.containsField("$date")) {
-
-				if (b.get("$date") instanceof Number) {
-					o = new Date(((Number) b.get("$date")).longValue());
+			    Object dateValue = b.get("$date");
+				if (dateValue instanceof Number) {
+					o = new Date(((Number) dateValue).longValue());
 				} else {
 					SimpleDateFormat format = new SimpleDateFormat(
-							_msDateFormat);
+					        _msDateFormat);
 					format.setCalendar(new GregorianCalendar(
 							new SimpleTimeZone(0, "GMT")));
-					o = format.parse(b.get("$date").toString(),
+					o = format.parse(dateValue.toString(),
 							new ParsePosition(0));
 
 					if (o == null) {
 						// try older format with no ms
 						format = new SimpleDateFormat(_secDateFormat);
-						// format.setCalendar(new GregorianCalendar(new
-						// SimpleTimeZone(0, "GMT")));
-						o = format.parse(b.get("$date").toString(),
+						format.setCalendar(new GregorianCalendar(new
+						    SimpleTimeZone(0, "GMT")));
+						o = format.parse(dateValue.toString(),
 								new ParsePosition(0));
 					}
+
+					if (o == null) {
+                        // try older format with day
+                        format = new SimpleDateFormat(_dayDateFormat);
+                        format.setCalendar(new GregorianCalendar(
+                                new SimpleTimeZone(0, "GMT")));
+                        o = format.parse(dateValue.toString(),
+                                new ParsePosition(0));
+                    }
 				}
 				if (!isStackEmpty()) {
 					cur().put(name, o);
@@ -159,6 +168,7 @@ public class JSONCallback extends BasicBSONCallback {
 
 	public static final String _msDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 	public static final String _secDateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+	public static final String _dayDateFormat = "yyyy-MM-dd";
 
 	public static final String _secTSFormat = "yyyy-MM-dd-HH.mm.ss";
 }
