@@ -202,6 +202,10 @@ namespace engine
 
       _isActive = FALSE ;
 
+      // set quit flag
+      _eduMgr.setQuiesced( TRUE ) ;
+      _eduMgr.setDestroyed( TRUE ) ;
+
       // Deactive all registered cbs
       for ( index = SDB_CB_MAX ; index > 0 ; --index )
       {
