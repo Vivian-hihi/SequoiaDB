@@ -56,18 +56,6 @@ function compile()
 function installSdb()
 {
    echo "==========================Start or Install======================"
-   # stop sequoiadb
-   ret=0
-   while [ $ret -eq 0 ]
-   do
-      outStr=`ps -ef|grep "sequoiadb(" |grep -v grep`
-      ret=$?
-      if [ $ret -eq 0 ] ; then
-         echo "sequoiadb is running, stopping..."
-         killall -e sequoiadb
-         sleep 5
-      fi
-   done
 
    # stop cm
    ret=0
@@ -80,6 +68,19 @@ function installSdb()
          killall -e sdbcmd
          killall -e sdbcm
          sleep 4
+      fi
+   done
+
+   # stop sequoiadb
+   ret=0
+   while [ $ret -eq 0 ]
+   do
+      outStr=`ps -ef|grep "sequoiadb(" |grep -v grep`
+      ret=$?
+      if [ $ret -eq 0 ] ; then
+         echo "sequoiadb is running, stopping..."
+         killall -e sequoiadb
+         sleep 5
       fi
    done
 
