@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="developement_console_knack">
-  <title>Tips when using shell</title>
+  <title>Tips When Using Shell</title>
   <body>
     <p>SequoiaDB shell has built-in help documents. It can be accessed by the help() command. For more details on each method, please refer to the SeuoiaDB JavaScript Method List in the Reference section of SequoiaDB Information Center.</p>
     <ul>

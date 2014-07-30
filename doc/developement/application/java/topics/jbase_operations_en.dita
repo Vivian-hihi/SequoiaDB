@@ -10,7 +10,8 @@
     <section>
       <title>Database Operations</title>
       <ul>
-        <li>Database Connection: The following codes connect to a database and list all the collection information:<codeblock>import com.sequoiadb.base.DBCursor;
+        <li>Database Connection: The following codes connect to a database and list all the
+          collection information:<codeblock>import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
@@ -30,10 +31,13 @@ public class Sample {
 		  System.out.println("Sequoiadb driver error, error description:" + e.getErrorType());
 		}
   }
-  }</codeblock>
+}</codeblock>
           <note>
-            <p>1)	In the above sample, the port 11810 the local database connects to is the service port of a coord node; it uses null for user name and password. The users need to configure the parameters according to their own situations.</p>
-            <p>2)	SequoiaDB class is a non thread-safe class; each thread must build its own SequoiaDB object, and cannot be passed to multithreads at the same time.</p>
+            <p>1) In the above sample, the port 11810 the local database connects to is the service
+              port of a coord node; it uses null for user name and password. The users need to
+              configure the parameters according to their own situations.</p>
+            <p>2) SequoiaDB class is a non thread-safe class; each thread must build its own
+              SequoiaDB object, and cannot be passed to multithreads at the same time.</p>
           </note></li>
         <li>Insert Data
           <codeblock>String connString = "192.168.1.2:11810";

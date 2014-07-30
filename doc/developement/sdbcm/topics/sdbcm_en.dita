@@ -8,17 +8,17 @@
       <p>SequoiaDB Cluster Manager is a daemon process，in Windows, it disposes the system background
         in the way of service. All of the Cluster Manager operations must have the participation of
         sdbcm in Sequoiadb, at present, each physical machine can only start a sdbcm process,
-        responsible for executing the remote commands and Monitoring the local Sequoiadb 。sdbcm
+        responsible for executing the remote commands and Monitoring the local SequoiaDB. sdbcm
         mainly has two big functions：</p>
       <ul>
         <li>
-          <p>Remote starting、closing、creating and modifying nodes: Through Sequoiadb client or
+          <p>Remote starting, closing, creating and modifying nodes: Through SequoiaDB client or
             driving to connect to the database, then we can execute the operations of
-            starting、closing、creating and modifying nodes, those operations send remote commands to
+            starting, closing, creating and modifying nodes, those operations send remote commands to
             sdbcm that the physical machine specified, and obtaining performance results.</p>
         </li>
         <li>
-          <p>local monitoring：for the starting nodes by sdbcm,will maintain a table about nodes, it
+          <p>local monitoring: for the starting nodes by sdbcm, will maintain a table about nodes, it
             save all the service name of the local nodes and starting information, such as starting
             time、running status etc. If a node terminate in normal case, such as the process is
             forced to terminate、engine quit unexpectedly etc., then sdbcm will try restart this
@@ -35,9 +35,9 @@
             file gives the conf information of starting sdbcm, as follows:</p>
           <simpletable id="developement_sdbcm_table">
             <sthead>
-              <stentry>param </stentry>
-              <stentry>desciption</stentry>
-              <stentry>example</stentry>
+              <stentry>Param </stentry>
+              <stentry>Desciption</stentry>
+              <stentry>Example</stentry>
             </sthead>
             <strow>
               <stentry>defaultPort  </stentry>
@@ -71,11 +71,11 @@
         </li>
         <li>
           <p>start sdbcm</p>
-          <p>running <i>sdbcmart</i> commands can start sdbcm。</p>
+          <p>running <i>sdbcmart</i> commands can start sdbcm.</p>
         </li>
         <li>
           <p>close sdbcm</p>
-          <p>running <i>sdbcmtop</i> command can close sdbcm。</p>
+          <p>running <i>sdbcmtop</i> command can close sdbcm.</p>
         </li>
       </ul>
     </section>

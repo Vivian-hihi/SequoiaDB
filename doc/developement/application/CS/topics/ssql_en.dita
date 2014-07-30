@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="application_cs_sql_en">
-  <title>SQL to sequoiadb shell to C#</title>
+  <title>SQL to SequoiaDB shell to C#</title>
   <body>
-    <p> The query in Sequoiadb is in the format of json(bson). The following table shows examples
-      comparing sql statements, sequoiadb shell statements and sequoiadb C# driver application
+    <p> The query in SequoiaDB is in the format of json(bson). The following table shows examples
+      comparing sql statements, SequoiaDB shell statements and SequoiaDB C# driver application
       statements. </p>
     <simpletable>
       <sthead>
         <stentry>SQL</stentry>
-        <stentry>sequoiadb shell</stentry>
+        <stentry>SequoiaDB shell</stentry>
         <stentry>C# Driver</stentry>
       </sthead>
       <strow>

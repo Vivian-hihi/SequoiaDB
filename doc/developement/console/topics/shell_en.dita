@@ -4,7 +4,7 @@
   <title>SequoiaDB Shell Introduction </title>
   <body>
     <p>SequoiaDB has a built-in javascript shell, users can communicate with SequoiaDB instance
-      through command lines.It is very useful. Through it, users can manage system, check and run
+      through command lines. It is very useful. Through it, users can manage system, check and run
       instance or try other things. Shell is a vital tool in SequoiaDB.</p>
     <section>
       <title>Run shell</title>
@@ -46,9 +46,9 @@ hello,SequoiaDB
         it to the global variable "db". This variable is the a main entrance to visit SequoiaDB in
         shell.</p>
       <p>Shell also has some non-javascript commands. For example:
-        <codeblock>>db
+        <codeblock>> db
 localhost:11810
->db.create("foo")//create colleciton space
+> db.create("foo")   //create colleciton space
 localhost:11810.foo</codeblock></p>
       <p>Users can visit the collection space in it through the variable "db". "db.foo" returns the
         collection space "foo" in current database. Users can visit collection in it like

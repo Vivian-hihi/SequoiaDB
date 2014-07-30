@@ -7,7 +7,7 @@
     <p><xref href="..\..\..\..\c\html\index.html" format="html">C API</xref></p>
     <section>
       <title>History Updates:</title>
-      <p><b>Version1.8</b></p>
+      <p><b>Version 1.8</b></p>
       <p>New APIs in C:</p><codeblock>sdbConnect1, multiple connection address can be provided, one of the random valid addresses will be used to connect to database
 sdbCreateCollectionSpaceV2, a BSON parameter is provided to make the creating of a collection space more flexible
 sdbAlterCollection, alters the attributes of a collection
@@ -17,7 +17,7 @@ sdbGetDomain, gets a domain
 sdbListDomains, enumerates and lists the domains
 sdbReleaseDomain, releases the domain handle
 sdbAlterDomain, alters the attributes of a domain</codeblock>
-      <p><b>Version1.6</b></p>
+      <p><b>Version 1.6</b></p>
       <p>1. Use sdbNodeHandle to replace the original sdbReplicaNodeHandle. sdbReplicaNodeHandle will be abandoned in the version2.x.</p>
       <p>2. Use the concept of "node" to replace the original "replica node". And "replica node" related API interface will remain until version2.x will be abandoned.</p>
       <p>For details, please see the relevant API.</p>

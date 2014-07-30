@@ -3,7 +3,7 @@
 <topic id="application_c_sql">
   <title>SQL to SequoiaDB shell to C</title>
   <body>
-    <p>SequoiaDB 的查询用 json（bson）对象表示，下表以例子的形式显示了 SQL 语句、SequoiaDB shell 语句和 SequoiaDB C 驱动程序语法之间的对照。</p>
+    <p>SequoiaDB 的查询用 json（bson）对象表示，下表以例子的形式显示了 SQL 语句，SequoiaDB shell 语句和 SequoiaDB C 驱动程序语法之间的对照。</p>
     <simpletable >
       <sthead>
         <stentry>SQL</stentry>
@@ -40,23 +40,22 @@
       <strow>
         <stentry>select * from students where age=20</stentry>
         <stentry>db.foo.bar.find({age:20})</stentry>
-        <stentry>const char *r ="{age:20}";
-          <p>// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
+        <stentry>const char *r ="{age:20}"; <p>// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
           <p>jsonToBson ( &amp;condition, r ) ;</p>
           <p>// collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄</p>
-          <p>sdbQuery ( collection, &amp; condition , NULL, NULL, NULL, 0, -1, cursor ) ;</p>
+          <p>sdbQuery ( collection, &amp; condition, NULL, NULL, NULL, 0, -1, cursor ) ;</p>
         </stentry>
       </strow>
       <strow>
         <stentry>select * from students where age=20 order by name</stentry>
         <stentry>db.foo.bar.find({age:20}).sort({name:1})</stentry>
-        <stentry>const char *r1 ="{age:20}" ;
-          <p>const char *r2 ="{name:1}" ;</p>
+        <stentry>const char *r1 ="{age:20}" ; <p>const char *r2 ="{name:1}" ;</p>
           <p>// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
           <p>jsonToBson ( &amp; condition, r1 ) ;</p>
           <p>jsonToBson ( &amp;orderBy, r2 ) ;</p>
           <p>// collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄</p>
-          <p>sdbQuery ( collection, &amp; condition , NULL, &amp; orderBy , NULL, 0, -1, cursor ) ;</p>
+          <p>sdbQuery ( collection, &amp; condition, NULL, &amp; orderBy, NULL, 0, -1, cursor )
+            ;</p>
         </stentry>
       </strow>
       <strow>
@@ -82,18 +81,17 @@
       <strow>
         <stentry>select * from students limit 20 skip 10</stentry>
         <stentry>db.foo.bar.find().limit(20).skip(10)</stentry>
-        <stentry>// collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄
-          <p>sdbQuery ( collection, NULL, NULL, NULL,NULL, 10, 20, cursor ) ;</p>
+        <stentry>// collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄 <p>sdbQuery ( collection, NULL, NULL,
+            NULL, NULL, 10, 20, cursor ) ;</p>
         </stentry>
       </strow>
       <strow>
         <stentry>select count(*) from students where age>20</stentry>
         <stentry>db.foo.bar.find({age:{$gt:20}}).count()</stentry>
-        <stentry> const char *r ="{age:{$gt:20}}" ;
-          <p>// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
+        <stentry> const char *r ="{age:{$gt:20}}" ; <p>// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
           <p>jsonToBson ( &amp;condition, r ) ;</p>
           <p>// collection 为集合 bar 的句柄，count 为返回总数</p>
-          <p>sdbGetCount ( collection, &amp; condition , &amp;count );</p>
+          <p>sdbGetCount ( collection, &amp; condition, &amp;count );</p>
         </stentry>
       </strow>
       <strow>
@@ -115,7 +113,7 @@
           <p>// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
           <p>jsonToBson ( &amp;condition, r ) ;</p>
           <p>// collection 为集合 bar 的句柄</p>
-          sdbDelete ( collection, &amp; condition , NULL ) ;</stentry>
+          sdbDelete ( collection, &amp; condition, NULL ) ;</stentry>
       </strow>
     </simpletable>
   </body>

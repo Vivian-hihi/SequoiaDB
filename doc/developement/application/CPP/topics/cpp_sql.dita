@@ -110,10 +110,8 @@
       <strow>
         <stentry>delete from students where a=1</stentry>
         <stentry>db.foo.bar.remove({a:1})</stentry>
-        <stentry>sdbCollection collection ;
-          <p>BSONObj condition = BSON("a"&lt;&lt;1) ;</p>
-          collection.del ( condition ) ;
-        </stentry>
+        <stentry>sdbCollection collection ; <p>BSONObj condition = BSON("a"&lt;&lt;1)
+          ;</p>collection.del ( condition ) ; </stentry>
       </strow>
     </simpletable>
   </body>

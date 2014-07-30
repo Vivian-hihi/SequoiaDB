@@ -3,8 +3,11 @@
 <topic id="topic_kmr_n2s_wj_en">
   <title>C Driver</title>
   <body>
-    <p>C client application is mainly to provide database connection, collectionspaces, collections, cursor, replica group, node, domain.<xref href="..\..\..\..\..\c\html\index.html" format="html"
-        >More refer to the online C API</xref>。</p>
+    <section>
+      <title>Outline</title>
+    <p>C client application is mainly to provide database connection, collectionspaces, collections, cursor, replica group, node, domain. <xref href="..\..\..\..\..\c\html\index.html" format="html"
+        >More refer to the online C API</xref></p>
+    </section>
     <section>
       <title>Handle</title>
       <p>The handle of C client-driven is divided into two types. One is used to operate databases, the other is used to operate clusters.</p>

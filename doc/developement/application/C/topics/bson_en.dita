@@ -13,7 +13,7 @@
       bson_type in a file called bson.h.</p>
     <p>When users use bson object, they mainly create and read object .</p>
     <section>
-    <title> Create Object</title><p>In general, the process of generation of a BSON object contains 3 steps:</p><p> 1)Create object (bson_create ; bson_init) </p><p> 2)Use object </p><p> 3)Clear object (bson_dispose ; bson_destory)</p>
+    <title> Create Object</title><p>In general, the process of generation of a BSON object contains 3 steps:</p><p> 1) Create object (bson_create ; bson_init) </p><p> 2) Use object </p><p> 3) Clear object (bson_dispose ; bson_destory)</p>
       <ul>
         <li><p>Create a simple BSON object
             {age:20}。<codeblock>INT32 rc = SDB_OK;

@@ -5,8 +5,8 @@
   <body>
     <section>
       <title>Getting the Driver Development Kit</title>
-      <p>From<xref href="http://www.sequoiadb.com" format="html" scope="external"
-        >http://www.sequoiadb.com</xref>download the corresponding operating system version SequoiaDB Driver Development Kit, extract the driver development kit, from <i>driver/java/</i> directory access sequoiadb.jar file.</p>
+      <p>From <xref href="http://www.sequoiadb.com" format="html" scope="external"
+        >http://www.sequoiadb.com</xref> download the corresponding operating system version SequoiaDB Driver Development Kit, extract the driver development kit, from <i>driver/java/</i> directory access sequoiadb.jar file.</p>
     </section>
     <section>
       <title>Configuring Eclipse development environment</title>

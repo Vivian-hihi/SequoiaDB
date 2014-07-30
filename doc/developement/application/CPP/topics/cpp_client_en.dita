@@ -3,10 +3,15 @@
 <topic id="topic_kmr_n2s_wj_en">
   <title>C++ Driver</title>
   <body>
+    <section>
+      <title>Outline</title>
     <p>C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 7 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain.</p>
     <p><xref href="..\..\..\..\cpp\html\index.html" format="html">For more please refer to online C++ API</xref>。</p>
-    <section><title>C++ Class Instances</title>C++ Client-Driven has two class instances.One is used
-      to operate database,the other is used to operate cluster.<ul>
+    </section>
+    <section><title>C++ Class Instances</title>
+      <p>C++ Client-Driven has two class instances. One is used
+      to operate database, the other is used to operate cluster.</p>
+      <ul>
         <li>Database operation instance <p>There are 3 degrees of data in
             SequoiaDB:</p><p> 1) Database</p><p> 2) Collection space</p><p> 3) Collection</p><p> So in
             client, there are 3 Handles representing connection,collectionspace and collection. The
@@ -56,7 +61,7 @@
                 <stentry> It represents a stand-alone Domain </stentry>
               </strow>
             </simpletable>
-          </p> Cluster-related operations need to use ReplicaGroup instance and Data Node instance.
+            </p><p>Cluster-related operations need to use ReplicaGroup instance and Data Node instance.</p> 
             <p>The sdbReplicaGroup instants is to manage replica groups, including starting and stopping
             replicagroups, getting the status, name-information and number-information of nodes in the
             replicagroup. </p><p>The sdbNode instants is to manage Data Nodes, including starting

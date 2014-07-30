@@ -94,8 +94,8 @@ if( empty($group) )
   exit();
 }</codeblock>
         </li>
-        <li>Boot partition group
-          <codeblock>//boot partition group for the first time will automatically activate
+        <li>Boot replica group
+          <codeblock>//boot replica group for the first time will automatically activate
 //Return operation information
 $arr = $group -> start() ;
 //Check the restlts

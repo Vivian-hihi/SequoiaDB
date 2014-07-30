@@ -3,24 +3,24 @@
 <topic id="developement_basics_read_en">
   <title>Read</title>
   <body>
-    <p>Of the basic database operations(i.e.CRUD),read operatios are these those retrieve records or
-      documents from a collection in Sequoiadb, and include all operations that return a cursor in
+    <p>Of the basic database operations(i.e.CRUD), read operatios are these those retrieve records or
+      documents from a collection in SequoiaDB, and include all operations that return a cursor in
       response to application request data.</p>
     <p>This dacument describes the syntax and structure of the queries applications use to request
-      data from Sequoiadb and how different factors affect the efficiency of reads.</p>
-    <note><p>All of the examples in this document use the sequoiadb shell interface.</p></note>
+      data from SequoiaDB and how different factors affect the efficiency of reads.</p>
+    <note><p>All of the examples in this document use the SequoiaDB shell interface.</p></note>
     <section>
       <title>find()</title>
       <p>we use <xref href="../../../references/methods/topics/find_en.dita"><i>find</i></xref>method
-        to read records from Sequoiadb。the <i>find</i>method is the main method to select records
-        from collections and it returns a cursor which contains a lot of records.it's grammatical
+        to read records from SequoiaDB. the <i>find</i>method is the main method to select records
+        from collections and it returns a cursor which contains a lot of records. it's grammatical
         structure as follows:</p>
       <codeblock>db.collectionspace.collection.find([cond],[sel])</codeblock>
       <p>The corresponding opration in sql: the method of <i>find()</i> is simalar with
           <i>select</i> statement :</p>
-      <p><b>.</b>the<i> [cond]</i> parameter corresponds to <i>where</i> statement</p>
-      <p><b>.</b>the [sel] parameter corresponds to the list of fields in the result set</p>
-      <p>there is a record in collection like this：</p>
+      <p><b>.</b> the<i> [cond]</i> parameter corresponds to <i>where</i> statement</p>
+      <p><b>.</b> the [sel] parameter corresponds to the list of fields in the result set</p>
+      <p>there is a record in collection like this:</p>
       <codeblock>    {
   "_id":1,
   "name":{
@@ -49,8 +49,8 @@
     </section>
     <section>
       <title>return all the records from the collection</title>
-      <p>If there is no <i>cond</i> parameter,the method of
-          <i>db.collectionspace.colletion.find()</i> returns all the records from the collection.The
+      <p>If there is no <i>cond</i> parameter, the method of
+          <i>db.collectionspace.colletion.find()</i> returns all the records from the collection. The
         following operation select all records in the collection named <i>bar</i> which in the
         collectionspace named<i> foo</i>:</p>
       <p><codeblock>db.foo.bar.find()</codeblock></p>
@@ -69,7 +69,7 @@
             <codeblock>db.foo.bar.find({age:{<xref href="../../../references/console/topics/gt_en.dita">$gt</xref>:20}})</codeblock>
           </p></li>
         <li><p>On array </p>
-          <p>(1)query an element,The following operation returns a cursor to all records in the
+          <p>(1)query an element, The following operation returns a cursor to all records in the
               <i>bar</i> collection where the array field <i>phone</i> contains the element
             '10086':</p>
           <p><codeblock> db.foo.bar.find({"phone":10086})</codeblock></p>
@@ -98,7 +98,7 @@
     }
    )</codeblock></p>
           <p>It can also be written
-            as：<codeblock> db.foo.bar.find(
+            as:<codeblock> db.foo.bar.find(
      {
      "name.first":"Tom"
      }
@@ -116,10 +116,10 @@
         <codeblock>db.foo.bar.find(null,{name:""})</codeblock>
       </p>
       <note>
-        <p>If a records doesn't contain the specity field(as:people),Sequoiadb will default return.
+        <p>If a records doesn't contain the specity field(as:people), SequoiaDB will default return.
           For example:</p>
         <codeblock>db.foo.bar.find({},{name:"",people:""})
-return：{
+return:{
        "name":{
                 "fist":"Tom",
                 "second":"David"
@@ -130,13 +130,13 @@ return：{
     </section>
     <section>
       <title><i>find()</i> more information</title>
-      <p>Execute db.foo.bar.find().help() , then will see more methods of  <i>find()</i>
+      <p>Execute db.foo.bar.find().help(), then will see more methods of <i>find()</i>
       </p>
       <ul>
         <li>
           <p>cursor.sort(&lt;sort>)</p>
           <p>The method of sort() is used to order by the specified field, syntax:
-            sort({"field1":1|-1,"field2":1|-1,...}), '1' stand for Ascending,'-1' stand for
+            sort({"field1":1|-1,"field2":1|-1,...}), '1' stand for Ascending, '-1' stand for
             Descending. If the the method of <i>find </i>doesn't specity the content of sel
             parameter, then<i> sort()</i> will order by the <i>sort </i>parameter, but if <i>sel
             </i>parameter specity the returned field, then <i>sort()</i> can only order by the field

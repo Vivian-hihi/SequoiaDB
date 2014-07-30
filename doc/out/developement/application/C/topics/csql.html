@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="SQL to SequoiaDB shell to C"/>
-<meta name="description" content="SequoiaDB 的查询用 json（bson）对象表示，下表以例子的形式显示了 SQL 语句、SequoiaDB shell 语句和 SequoiaDB C 驱动程序语法之间的对照。 SQL SequoiaDB shell C Driver insert into students(a,b) values(1,-1) db.foo.bar.insert({a:1,b:-1}) const ..."/>
+<meta name="description" content="SequoiaDB 的查询用 json（bson）对象表示，下表以例子的形式显示了 SQL 语句，SequoiaDB shell 语句和 SequoiaDB C 驱动程序语法之间的对照。 SQL SequoiaDB shell C Driver insert into students(a,b) values(1,-1) db.foo.bar.insert({a:1,b:-1}) const ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/C/topics/c.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../references/sqlmapping/topics/sqlmapping.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -37,7 +37,7 @@
   <h1 class="title topictitle1">SQL to SequoiaDB shell to C</h1>
 
   <div class="body">
-    <p class="p">SequoiaDB 的查询用 json（bson）对象表示，下表以例子的形式显示了 SQL 语句、SequoiaDB shell 语句和 SequoiaDB C 驱动程序语法之间的对照。</p>
+    <p class="p">SequoiaDB 的查询用 json（bson）对象表示，下表以例子的形式显示了 SQL 语句，SequoiaDB shell 语句和 SequoiaDB C 驱动程序语法之间的对照。</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
         <th valign="bottom" align="left" id="d45274e17" class="stentry">SQL</th>
@@ -97,14 +97,13 @@
 
         <td valign="top" headers="d45274e20" class="stentry">db.foo.bar.find({age:20})</td>
 
-        <td valign="top" headers="d45274e23" class="stentry">const char *r ="{age:20}";
-          <p class="p">// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
+        <td valign="top" headers="d45274e23" class="stentry">const char *r ="{age:20}"; <p class="p">// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
 
           <p class="p">jsonToBson ( &amp;condition, r ) ;</p>
 
           <p class="p">// collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄</p>
 
-          <p class="p">sdbQuery ( collection, &amp; condition , NULL, NULL, NULL, 0, -1, cursor ) ;</p>
+          <p class="p">sdbQuery ( collection, &amp; condition, NULL, NULL, NULL, 0, -1, cursor ) ;</p>
 
         </td>
 
@@ -114,8 +113,7 @@
 
         <td valign="top" headers="d45274e20" class="stentry">db.foo.bar.find({age:20}).sort({name:1})</td>
 
-        <td valign="top" headers="d45274e23" class="stentry">const char *r1 ="{age:20}" ;
-          <p class="p">const char *r2 ="{name:1}" ;</p>
+        <td valign="top" headers="d45274e23" class="stentry">const char *r1 ="{age:20}" ; <p class="p">const char *r2 ="{name:1}" ;</p>
 
           <p class="p">// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
 
@@ -125,7 +123,8 @@
 
           <p class="p">// collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄</p>
 
-          <p class="p">sdbQuery ( collection, &amp; condition , NULL, &amp; orderBy , NULL, 0, -1, cursor ) ;</p>
+          <p class="p">sdbQuery ( collection, &amp; condition, NULL, &amp; orderBy, NULL, 0, -1, cursor )
+            ;</p>
 
         </td>
 
@@ -169,8 +168,8 @@
 
         <td valign="top" headers="d45274e20" class="stentry">db.foo.bar.find().limit(20).skip(10)</td>
 
-        <td valign="top" headers="d45274e23" class="stentry">// collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄
-          <p class="p">sdbQuery ( collection, NULL, NULL, NULL,NULL, 10, 20, cursor ) ;</p>
+        <td valign="top" headers="d45274e23" class="stentry">// collection 为集合 bar 的句柄，cursor 为返回查询结果的句柄 <p class="p">sdbQuery ( collection, NULL, NULL,
+            NULL, NULL, 10, 20, cursor ) ;</p>
 
         </td>
 
@@ -180,14 +179,13 @@
 
         <td valign="top" headers="d45274e20" class="stentry">db.foo.bar.find({age:{$gt:20}}).count()</td>
 
-        <td valign="top" headers="d45274e23" class="stentry"> const char *r ="{age:{$gt:20}}" ;
-          <p class="p">// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
+        <td valign="top" headers="d45274e23" class="stentry"> const char *r ="{age:{$gt:20}}" ; <p class="p">// jsonToBson 将一个 json 字符串转换为 bson 对象</p>
 
           <p class="p">jsonToBson ( &amp;condition, r ) ;</p>
 
           <p class="p">// collection 为集合 bar 的句柄，count 为返回总数</p>
 
-          <p class="p">sdbGetCount ( collection, &amp; condition , &amp;count );</p>
+          <p class="p">sdbGetCount ( collection, &amp; condition, &amp;count );</p>
 
         </td>
 
@@ -225,7 +223,7 @@
 
           <p class="p">// collection 为集合 bar 的句柄</p>
 
-          sdbDelete ( collection, &amp; condition , NULL ) ;</td>
+          sdbDelete ( collection, &amp; condition, NULL ) ;</td>
 
       </tr>
 </table>

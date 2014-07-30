@@ -3,16 +3,19 @@
 <topic id="topic_mjr_yzy_fm">
   <title>BSON Interface to C++</title>
   <body>
-    <section><title>C++ BSON main categories</title><p>C++ BSON uses four categories:</p><p><b>bson::BSONObj</b>: Creating BSONObj object.
-    </p><p><b>bson::BSONElement</b>: BSONObj object consists BSONElement object, namely BSONElement object field or element BSONObj object, which is the key right.
-    </p><p><b>bson::BSONObjBuilder</b>： BSONObjBuilder BSONObj used to instantiate the object.
-    </p><p><b>bson::BSONObjlterator</b>：BSONObjlterator used to rtaverse BSONObj object elements.
-    </p>Bson namespace type of these classes are defined as follows:<p><b>typedef bson::BSONElement be</b>; </p><p><b>typedef
-      bson::BSONObj bo</b>; </p><p><b>typedef bson::BSONObjBuilder bob</b>;
-      </p><p>In addition, you can use the bo::iterator instead of PHP development environment to build BSONObjlterator。 </p></section>
+    <section><title>C++ BSON main categories</title><p>C++ BSON uses four categories:</p>
+      <p><b>bson::BSONObj</b>: Creating BSONObj object.</p>
+      <p><b>bson::BSONElement</b>: BSONObj object consists BSONElement object, namely BSONElement object field or element BSONObj object, which is the key right.</p>
+      <p><b>bson::BSONObjBuilder</b>: BSONObjBuilder BSONObj used to instantiate the object.</p>
+      <p><b>bson::BSONObjlterator</b>: BSONObjlterator used to rtaverse BSONObj object elements.</p>
+      Bson namespace type of these classes are defined as follows:
+      <p><b>typedef bson::BSONElement be</b>; </p>
+      <p><b>typedef bson::BSONObj bo</b>;</p>
+      <p><b>typedef bson::BSONObjBuilder bob</b>;</p>
+      <p>In addition, you can use the bo::iterator instead of BSONObjlterator. </p></section>
     <section>
       <title>Create an objcet</title>
-      <p>The following describes how to create a simple to use CPP BSON instance. For details ,see <xref href="..\..\..\..\bsoncpp\html\index.html" format="html">C++ BSON API</xref></p>
+      <p>The following describes how to create a simple to use CPP BSON instance. For details, see <xref href="..\..\..\..\bsoncpp\html\index.html" format="html">C++ BSON API</xref></p>
       <ul>
         <li>Use BSONObject, BSONObjBuilder builder create an object.
           <codeblock>#include "client.hpp"

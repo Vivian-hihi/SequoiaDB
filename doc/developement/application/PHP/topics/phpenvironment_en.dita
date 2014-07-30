@@ -10,7 +10,7 @@
     <section>
       <title>Development Configuration</title>
       <ul>
-        <li>Linux<p><b>Preparation:</b>Install apache and PHP environment, PHP should be Version 5.3.3 or higher.</p>
+        <li>Linux<p><b>Preparation:</b> Install apache and PHP environment, PHP should be Version 5.3.3 or higher.</p>
           <p><b>Configuration Steps:</b></p>
           <p>1.	Open /ect/php5/apache2/php.ini file.</p>
           <p>2.	Add the following line in the [PHP] configuration lines:</p><p><codeblock>extension=&lt;PATH>/libsdbphp-x.x.x.so </codeblock></p><p>PATH is the path stores the phpliblibsdbphp-x.x.x.so file.</p>

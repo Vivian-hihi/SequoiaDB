@@ -62,8 +62,9 @@ bson_type type ;
 bson_find ( i, newobj, "name" )</codeblock>
         </li>
         <li>读取数组元素或嵌套对象，因为“address”是一个嵌套对象，需要特殊遍历。首先得到 address 值，再初始化一个新的 BSON 迭代器：<codeblock>type = bson_find(i,newobj,"address");
-        bson_iterator_subiterator(i,sub);</codeblock>
-          <p>方法 bson_iterator_subiterator 初始化迭代器 sub，并且指向子对象的开始位置，从这里开始可以遍历 sub 中的所有元素，直到子对象的结束位置。</p></li>
+bson_iterator_subiterator(i,sub);</codeblock>
+          <p>方法 bson_iterator_subiterator 初始化迭代器 sub，并且指向子对象的开始位置，从这里开始可以遍历 sub
+            中的所有元素，直到子对象的结束位置。</p></li>
       </ul>
     </section>
   </body>

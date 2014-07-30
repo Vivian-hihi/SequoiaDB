@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>Get Driver Development Kit</title>
-      <p>Download SequoiaDBDriver Development kit for the corresponding operating systems from<xref href="http://www.sequoiadb.com" format="html" scope="external">http://www.sequoiadb.com</xref>.</p>
+      <p>Download SequoiaDBDriver Development kit for the corresponding operating systems from <xref href="http://www.sequoiadb.com" format="html" scope="external">http://www.sequoiadb.com</xref>.</p>
     </section>
     <section>
       <title>Configure development environment</title>

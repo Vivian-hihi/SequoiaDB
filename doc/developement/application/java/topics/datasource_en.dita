@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_dqz_5dp_q4">
-  <title>Java datasource Introduction</title>
+  <title>Java Datasource Introduction</title>
   <body>
     <p>The datasource in the Java Driver provides users a quick access to obtain valid connetions.</p>
     <section>
@@ -22,7 +22,7 @@ urls.add("ubuntu-dev2:11810");
 urls.add("ubuntu-dev3:11810");
 		
 nwOpt.setConnectTimeout(500);                       // set connection timeout(ms)
-nwOpt.setMaxAutoConnectRetryTime(0);	              // set maximum auto-connection-retry times
+nwOpt.setMaxAutoConnectRetryTime(0);	            // set maximum auto-connection-retry times
 		
 // The following are the default setups of SequoiadbOption.
 dsOpt.setMaxConnectionNum(500);                     // set the maximum number of connections in the pool

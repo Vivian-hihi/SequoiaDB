@@ -120,7 +120,7 @@ rc = collectionspace.createCollection ( "bar", collection ) ;</pre>
         <p class="p">以上创建了一个名字为“foo”的集合空间和一个名字为“bar”的集合，集合空间内的集合的数据页大小为4k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。</p>
 
         <div class="note note"><span class="notetitle">Note:</span> 
-          <p class="p">在创建集合“bar”时并没有附加分区，压缩等信息，详情请查阅<a class="xref" href="../../../../cpp/html/index.html">C++ API</a></p>
+          <p class="p">在创建集合“bar”时并没有附加分区，压缩等信息，详情请查阅 <a class="xref" href="../../../../cpp/html/index.html">C++ API</a></p>
 
         </div>
 
@@ -191,10 +191,9 @@ sdbReplicaGroup rg  ;
 map&lt;string,string&gt; config ;
 …
 // 先建立一个编目分区组
-connection.createCataReplicaGroup ( HOST_NAME, SERVICE_NAME, CATALOG_GROUP_PATH , NULL ) ;
+connection.createCataReplicaGroup ( HOST_NAME, SERVICE_NAME, CATALOG_GROUP_PATH, NULL ) ;
 // 创建数据分区组
 connection.createRG ( REPLICA_GROUP_NAME, rg ) ;
- 
 // 创建第一个数据节点
 rg.createNode ( HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, config ) ;
 …
@@ -203,7 +202,7 @@ rg.start () ;</pre>
 
         </li>
 
-        <li class="li">数据节点操作<p class="p">数据节点操作包括创建数据节点（sdbReplicaGroup::createNode），得到主数据节点（sdbReplicaGroup::getMaster），得到从数据节点（sdbReplicaGroup::getSlave），启动数据节点（sdbNode::start），停止数据节点（sdb::Stop）等。</p>
+        <li class="li">数据节点操作<p class="p">数据节点操作包括创建数据节点（sdbReplicaGroup::createNode），得到主数据节点（sdbReplicaGroup::getMaster），得到从数据节点（sdbReplicaGroup::getSlave），启动数据节点（sdbNode::start），停止数据节点（sdbNode::Stop）等。</p>
 
           <p class="p">以下为数据节点操作示例性的例子。真正的应用应包括错误检测等。</p>
 <pre class="pre codeblock">// 定义一个数据节点实例

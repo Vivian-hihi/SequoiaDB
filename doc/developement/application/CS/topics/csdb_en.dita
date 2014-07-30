@@ -4,7 +4,7 @@
   <title>C# Development Foundation</title>
   <body>
     <p>Here's how to use the driver interface written in C# using SequoiaDB database program. This document describes a simple C# sample SequoiaDB 
-      database-driver, detailed specification can refer to the official use of <xref href="..\..\..\..\cs\html\index.html" format="html">C# API documentation</xref>.</p>
+        database-driver, detailed specification can refer to the official use of <xref href="..\..\..\..\cs\html\index.html" format="html">C# API</xref> documentation.</p>
     <section>
       <title>Namespace</title>
       <p>Before using C# driver related API, you must add the following using declaration in source code:</p>

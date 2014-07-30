@@ -3,7 +3,7 @@
 <topic id="basic_shell">
   <title>Basic Manipulation in Shell</title>
   <body>
-    <p>In shell, there are 4 basic manipulaitons :create, read, update and delete (CRUD).</p>
+    <p>In shell, there are 4 basic manipulaitons: create, read, update and delete (CRUD).</p>
     <ul>
       <li>
         <xref href="create_en.dita">create</xref>
