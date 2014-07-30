@@ -198,19 +198,9 @@ namespace engine
       return _eduID ;
    }
 
-   void _clsSession::eduID ( EDUID eduID )
-   {
-      _eduID = eduID ;
-   }
-
    pmdEDUCB *_clsSession::eduCB () const
    {
       return _pEDUCB ;
-   }
-
-   void _clsSession::eduCB ( pmdEDUCB *pEDUCB )
-   {
-      _pEDUCB = pEDUCB ;
    }
 
    NET_HANDLE _clsSession::netHandle () const
