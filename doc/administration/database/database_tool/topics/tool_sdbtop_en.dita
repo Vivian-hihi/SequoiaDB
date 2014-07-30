@@ -1,54 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_bsq_m23_x4">
-  <title>数据库性能监控工具 — sdbtop</title>
+  <title>Database Performance Monitoring Tool — sdbtop</title>
   <body>
-    <p>sdbtop 是一个 SequoiaDB 数据库的性能监控工具。通过它，可以监控和查看集群中各个节点的监视信息。</p>    
+    <p>sdbtop is a performance monitoring tool of SequoiaDB. The information of each node in the cluster can be monitored and checked by this tool.</p>    
     <section>
-      <title>选项</title>
+      <title>Options</title>
       <simpletable>
         <sthead>
-          <stentry>参数</stentry>
-          <stentry>缩写</stentry>
-          <stentry>描述</stentry>
+          <stentry>Parameters</stentry>
+          <stentry>Abbr.</stentry>
+          <stentry>Description</stentry>
         </sthead>
         <strow>
           <stentry>--help</stentry>
           <stentry>-h</stentry>
-          <stentry>返回基本帮助和用法文本</stentry>
+          <stentry>return basic help and usage documents.</stentry>
         </strow>
         <strow>
           <stentry>--confpath</stentry>
           <stentry>-c</stentry>
-          <stentry>sdbtop 的配置文件，sdbtop 界面形态以及输出字段都依赖该文件（缺省使用默认配置文件）</stentry>
+          <stentry>the configuration file of sdbtop, both the UI and output fields of sdbtop depends on this file(default configurations will be used if configuration file is not given by the user)</stentry>
         </strow>
         <strow>
           <stentry>--hostname</stentry>
           <stentry>-i</stentry>
-          <stentry>指定需要监控的主机名</stentry>
+          <stentry>specify the host name of the server to be monitored</stentry>
         </strow>
         <strow>
           <stentry>--servicename</stentry>
           <stentry>-s</stentry>
-          <stentry>指定监控的端口服务名</stentry>
+          <stentry>specify the service name of the port to be monitored</stentry>
         </strow>
         <strow>
           <stentry>--usrname</stentry>
           <stentry>-u</stentry>
-          <stentry>数据库用户名</stentry>
+          <stentry>database user name</stentry>
         </strow>
         <strow>
           <stentry>--password</stentry>
           <stentry>-p</stentry>
-          <stentry>数据库密码</stentry>
+          <stentry>database password</stentry>
         </strow>
       </simpletable>
     </section>
     <section>
-      <title>用法</title>
-      <p>在下面的例子，sdbtop 使用配置文件为“/opt/sequoiadb/conf/sdbtop.xml”，监控主机名为 sdbserver3，端口服务名为11810，用户名为 test，密码为 test 的数据库集群中的一个节点。</p>
+      <title>Usage</title>
+      <p>In the following example, sdbtop uses "/opt/sequoiadb/conf/sdbtop.xml" as the configuration file, it monitors one node in a server named sdbserver3 on the port in a service name of 11810, using test as both the user name and password.</p>
       <codeblock>sdbtop -c /opt/sequoiadb/conf/sdbtop.xml  -i sdbserver3 -s 11810 -u test -p test</codeblock>
-      <p>接着进入主窗口：</p><codeblock>refresh= 3 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
+      <p>Then enter the main window:</p><codeblock>refresh= 3 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                      Main Window                     snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0
 servicename: 11810                                             sortingWay: NULL sortingField: NULL
@@ -78,110 +78,110 @@ Use these keys to navigate:
 Licensed Materials - Property of SequoiaDB
 Copyright SequoiaDB Corp. 2013-2014 All Rights Reserved.</codeblock>
     </section>
-    <note>在主窗口中按‘<b>h</b>’键可以查看所有工具支持的按键</note>
-    <ul><li><p>主窗口按键说明</p>
+    <note>all the supported keys can be checked by pressing '<b>h</b>' in the main window</note>
+    <ul><li><p>Main window keys usage:</p>
       <simpletable>
         <sthead>
-          <stentry>参数</stentry>
-          <stentry>描述</stentry>
+          <stentry>Parameters</stentry>
+          <stentry>Description</stentry>
         </sthead>
         <strow>
           <stentry>m</stentry>
-          <stentry>返回主窗口</stentry>
+          <stentry>return to main window</stentry>
         </strow>
         <strow>
           <stentry>s</stentry>
-          <stentry>列出数据库节点上的所有会话</stentry>
+          <stentry>list all the sessions f the node</stentry>
         </strow>
         <strow>
           <stentry>c</stentry>
-          <stentry>列出数据库节点上的所有集合空间</stentry>
+          <stentry>list all the collection spaces of the node</stentry>
         </strow>
         <strow>
           <stentry>t</stentry>
-          <stentry>列出数据库节点上的系统资源使用情况</stentry>
+          <stentry>list the status of resource usage of the node</stentry>
         </strow>
         <strow>
           <stentry>d</stentry>
-          <stentry>列出数据库节点的数据库监视信息</stentry>
+          <stentry>list the monitoring information of the node</stentry>
         </strow>
         <strow>
           <stentry>G</stentry>
-          <stentry>global_snapshot，监控所有的数据节点组</stentry>
+          <stentry>global_snapshot, monitor all the data node groups</stentry>
         </strow>
         <strow>
           <stentry>g</stentry>
-          <stentry>group_snapshot，指定监控某个数据节点组</stentry>
+          <stentry>group_snapshot, specify the data node group to be monitored</stentry>
         </strow>
         <strow>
           <stentry>n</stentry>
-          <stentry>node_snapshot，列出指定的数据库节点的监视信息</stentry>
+          <stentry>node_snapshot, list all the monitoring information of the specified databse node</stentry>
         </strow>
         <strow>
           <stentry>r</stentry>
-          <stentry>设置刷屏的时间间隔，单位秒/s</stentry>
+          <stentry>set the time interval of screen refreshing in seconds</stentry>
         </strow>
         <strow>
           <stentry>A</stentry>
-          <stentry>将监视信息按照某列进行顺序排序</stentry>
+          <stentry>sort the monitoring information in ascending order</stentry>
         </strow>
         <strow>
           <stentry>D</stentry>
-          <stentry>将监视信息按照某列进行逆序排序</stentry>
+          <stentry>sort the monitoring information in descending order</stentry>
         </strow>
         <strow>
           <stentry>C</stentry>
-          <stentry>将监视信息按照某个条件进行筛选</stentry>
+          <stentry>filter the monitoring information by certain conditions</stentry>
         </strow>
         <strow>
           <stentry>Q</stentry>
-          <stentry>返回没有使用条件进行筛选前的监视信息</stentry>
+          <stentry>return the information without filtering by the conditions</stentry>
         </strow>
         <strow>
           <stentry>N</stentry>
-          <stentry>将监视信息中对应行号的记录过滤不显示</stentry>
+          <stentry>skip the information with certain line number</stentry>
         </strow>
         <strow>
           <stentry>W</stentry>
-          <stentry>返回没有使用行号进行过滤前的监视信息</stentry>
+          <stentry>return the information without filtering by the line number</stentry>
         </strow>
         <strow>
           <stentry>h</stentry>
-          <stentry>查看使用帮助</stentry>
+          <stentry>check the help document</stentry>
         </strow>
         <strow>
           <stentry>Esc</stentry>
-          <stentry>取消已进入的操作</stentry>
+          <stentry>cancel the current operation</stentry>
         </strow>
         <strow>
           <stentry>Enter</stentry>
-          <stentry>返回上一次监视界面，（在已进入 help 帮助输出中有效）</stentry>
+          <stentry>return to the last monitoring user interface</stentry>
         </strow>
         <strow>
           <stentry>F5</stentry>
-          <stentry>强制刷新后台监视信息</stentry>
+          <stentry>forces the background monitoring information to refresh</stentry>
         </strow>
         <strow>
           <stentry>&lt;</stentry>
-          <stentry>向左移动，以查看隐藏的左边列的监视信息</stentry>
+          <stentry>move to left to check the hided monitoring information in the left column</stentry>
         </strow>
         <strow>
           <stentry>></stentry>
-          <stentry>向右移动，以查看隐藏的右边列的监视信息</stentry>
+          <stentry>move to right to check the hided monitoring information in the right column</stentry>
         </strow>
         <strow>
           <stentry>q</stentry>
-          <stentry>退出程序</stentry>
+          <stentry>quit the program</stentry>
         </strow>
         <strow>
           <stentry>Tab</stentry>
-          <stentry>切换数据计算的模式（绝对值，平均值，差值三个模式）</stentry>
+          <stentry>change the data computing mode(absolute value, avg. value, difference)</stentry>
         </strow>        
       </simpletable>
     </li>    
       <li>
-        <p>例子一：</p>
-        <p>1. 进入主窗口后，按‘s’键，列出数据库节点的所有会话信息</p>
+        <p>Example 1:</p>
+        <p>1.	After entering the main window, press key 's' to list all the session information of the nodes.</p>
         <codeblock>refresh= 3 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                        Sessions                      snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0
@@ -212,8 +212,8 @@ usrName: test                                                        Refresh: F5
  20  sdbserver3:11820:6                10737 Task               Job[Prefetcher]
  21  sdbserver3:11820:7                10738 Task               Job[Prefetcher]
  22  sdbserver3:11820:8                10739 Task               Job[Prefetcher]</codeblock>
-        <p>2. 按‘Tab’键，可以看到屏幕左上方的‘displayMode’的值会发生切换</p>
-        <p>3. 按‘r’键，在屏幕最下方输入‘2’，回车，设置刷新间隔时间，可以看到屏幕左上方的‘refresh’的值变为 2</p>
+        <p>2.	Press 'Tab', the value of the 'displayMode' on the upper corner of the screen will change.</p>
+        <p>3. Press 'r', enter '2' at the bottom of the screen to set the refresh time interval. The value of the 'refresh' on the upper corner of the screen will change to 2.</p>
         <codeblock><b>refresh= 2 secs</b>                             sdbtop 1.0                        snapshotMode: GLOBAL
 <b>displayMode: ABSOLUTE</b>                        Sessions                      snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0
@@ -244,7 +244,7 @@ usrName: test                                                        Refresh: F5
  20  sdbserver3:11820:6                10737 Task               Job[Prefetcher]
  21  sdbserver3:11820:7                10738 Task               Job[Prefetcher]
  22  sdbserver3:11820:8                10739 Task               Job[Prefetcher]</codeblock>
-        <p>4. 按‘A’键，并输入‘TID’，列表结果按照 TID 进行顺序排序</p>
+        <p>4. Press 'A' and enter 'TID', the result list will be sorted according to TID.</p>
         <codeblock>refresh= 2 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                        Sessions                      snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0
@@ -275,9 +275,9 @@ usrName: test                                                        Refresh: F5
  20  sdbserver3:11820:6                10737 Task               Job[Prefetcher]
  21  sdbserver3:11820:7                10738 Task               Job[Prefetcher]
  please input the displayName which need order by asc : TID</codeblock>
-        <p>5. 按‘N’键，并输入1，列表中将原来行号为1的记录过滤不显示</p>
-        <p>6. 按‘W’键，返回没有按行号进行过滤前的列表信息</p>
-        <p>7. 按‘C’键，并输入‘TID：10732”进行筛选，则只显示 TID 值为10732的记录</p>
+        <p>5. Press 'N' and enter 1, the returned list will skip the record with a line number of 1.</p>
+        <p>6. Press 'W', the list will be returned without filtered by any line numbers.</p>
+        <p>7. Press 'C' and enter 'TID: 10732' to filter the result set, only the record with the a TID of 10732 will be returned.</p>
         <codeblock>refresh= 2 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                        Sessions                      snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0
@@ -308,8 +308,8 @@ usrName: test                                                        Refresh: F5
  20  sdbserver3:11820:6                10737 Task               Job[Prefetcher]
  21  sdbserver3:11820:7                10738 Task               Job[Prefetcher]
  please input the filter condition : TID:10732</codeblock>
-        <p>8. 按‘Q’键，返回没有按照筛选条件前的列表信息</p>
-        <p>9. 按‘&lt;’或者‘>’键，可以查看隐藏在左边或者右边的列</p>
+        <p>8. Press 'Q' to return the list without filtered by filtering by the conditions.</p>
+        <p>9. Press '&lt;' or '>' to check the information hided in the left or right columns.</p>
       </li>
     </ul>    
   </body>

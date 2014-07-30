@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="升级"/>
-<meta name="description" content="卸载旧版本 以 root 身份登陆数据库服务器 执行如下命令停止 SequoiaDB 配置服务程序 service sdbcm stop 执行如下命令停止 SequoiaDB 数据库服务程序 /opt/sequoiadb/bin/sdbstop 执行如下命令命令备份 SequoiaDB 执行程序以及配置文件 scp /opt/sequoiadb/bin/sequoiadb ..."/>
+<meta name="DC.Title" content="Upgrade"/>
+<meta name="description" content="Uninstall the Old Version Login the database server as a root user. Execute the following command to stop the SequoiaDB configuration program service. service sdbcm stop Execute the following command ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../installation/topics/install_overview_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_t2t_c23_x4"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>升级</title>
+<title>Upgrade</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -33,42 +33,42 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../installation/topics/install_overview_en.html" title="Install Overview"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Install Overview</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../../installation/topics/install_overview_en.html" title="Install Overview">Install Overview</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">升级</h1>
+  <h1 class="title topictitle1">Upgrade</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">卸载旧版本</h2>
+    <div class="section"><h2 class="title sectiontitle">Uninstall the Old Version</h2>
       
       <ul class="ul">
-        <li class="li"><p class="p">以 root 身份登陆数据库服务器</p>
+        <li class="li"><p class="p">Login the database server as a root user.</p>
 </li>
 
-        <li class="li">执行如下命令停止 SequoiaDB 配置服务程序<pre class="pre codeblock">service sdbcm stop</pre>
+        <li class="li">Execute the following command to stop the SequoiaDB configuration program service.<pre class="pre codeblock">service sdbcm stop</pre>
 </li>
 
-        <li class="li">执行如下命令停止 SequoiaDB 数据库服务程序<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstop</pre>
+        <li class="li">Execute the following command to stop the SequoiaDB cluster management service.<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstop</pre>
 </li>
 
-        <li class="li">执行如下命令命令备份 SequoiaDB 执行程序以及配置文件<pre class="pre codeblock">scp /opt/sequoiadb/bin/sequoiadb /home/sequoiadb_bak
+        <li class="li">Execute the following command to backup the SequoiaDB executive program and the configuration file.<pre class="pre codeblock">scp /opt/sequoiadb/bin/sequoiadb /home/sequoiadb_bak
 scp -rf /opt/sequoiadb/conf /home/sequoiadb_conf_bak</pre>
 </li>
 
-        <li class="li">执行如下命令卸载 SequoiaDB 软件<pre class="pre codeblock">/opt/sequoiadb/uninstall</pre>
+        <li class="li">Execute the following command to uninstall the SequoiaDB software<pre class="pre codeblock">/opt/sequoiadb/uninstall</pre>
 </li>
       
       </ul>
 
-      <div class="p"><div class="note note"><span class="notetitle">Note:</span> 分别在所有数据库服务器上执行完上述操作后，再执行以下操作：</div>
+      <div class="p"><div class="note note"><span class="notetitle">Note:</span> please make sure to execute the above operations on all the database servers before executing the following operations:</div>
 </div>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">安装新版本</h2>
+    <div class="section"><h2 class="title sectiontitle">Install the New Version</h2>
       
       <ul class="ul">
-        <li class="li"><p class="p">具体安装步骤参见<a class="xref" href="../../../installation/server_installation/topics/server_installation.html">《SequoiaDB 服务器安装》</a>章节</p>
+        <li class="li"><p class="p">For the detailed installation steps, please refer to <a class="xref" href="../../../installation/server_installation/topics/server_installation.html">Installation of SequoiaDB Server</a> section.</p>
 </li>
 
-        <li class="li"><div class="p">待新版本安装成功后，执行以下命令删除备份文件：<pre class="pre codeblock">rm -rf /home/sequoiadb_bak
+        <li class="li"><div class="p">Execute the following commands to delete the backup files after the new version has been successfully installed.<pre class="pre codeblock">rm -rf /home/sequoiadb_bak
 rm -rf /home/sequoiadb_conf_bak</pre>
 </div>
 </li>

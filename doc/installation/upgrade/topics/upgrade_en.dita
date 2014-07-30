@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_t2t_c23_x4">
-  <title>升级</title>
+  <title>Upgrade</title>
   <body>
     <section>
-      <title>卸载旧版本</title>
+      <title>Uninstall the Old Version</title>
       <ul>
-        <li><p>以 root 身份登陆数据库服务器</p></li>
-        <li>执行如下命令停止 SequoiaDB 配置服务程序<codeblock>service sdbcm stop</codeblock></li>
-        <li>执行如下命令停止 SequoiaDB 数据库服务程序<codeblock>/opt/sequoiadb/bin/sdbstop</codeblock></li>
-        <li>执行如下命令命令备份 SequoiaDB 执行程序以及配置文件<codeblock>scp /opt/sequoiadb/bin/sequoiadb /home/sequoiadb_bak
+        <li><p>Login the database server as a root user.</p></li>
+        <li>Execute the following command to stop the SequoiaDB configuration program service.<codeblock>service sdbcm stop</codeblock></li>
+        <li>Execute the following command to stop the SequoiaDB cluster management service.<codeblock>/opt/sequoiadb/bin/sdbstop</codeblock></li>
+        <li>Execute the following command to backup the SequoiaDB executive program and the configuration file.<codeblock>scp /opt/sequoiadb/bin/sequoiadb /home/sequoiadb_bak
 scp -rf /opt/sequoiadb/conf /home/sequoiadb_conf_bak</codeblock></li>
-        <li>执行如下命令卸载 SequoiaDB 软件<codeblock>/opt/sequoiadb/uninstall</codeblock></li>      
+        <li>Execute the following command to uninstall the SequoiaDB software<codeblock>/opt/sequoiadb/uninstall</codeblock></li>      
       </ul>
-      <p><note>分别在所有数据库服务器上执行完上述操作后，再执行以下操作：</note></p>
+      <p><note>please make sure to execute the above operations on all the database servers before executing the following operations:</note></p>
     </section>
     <section>
-      <title>安装新版本</title>
+      <title>Install the New Version</title>
       <ul>
-        <li><p>具体安装步骤参见<xref href="../../../installation/server_installation/topics/server_installation.dita">《SequoiaDB 服务器安装》</xref>章节</p></li>
-        <li><p>待新版本安装成功后，执行以下命令删除备份文件：<codeblock>rm -rf /home/sequoiadb_bak
+        <li><p>For the detailed installation steps, please refer to <xref href="../../../installation/server_installation/topics/server_installation.dita">Installation of SequoiaDB Server</xref> section.</p></li>
+        <li><p>Execute the following commands to delete the backup files after the new version has been successfully installed.<codeblock>rm -rf /home/sequoiadb_bak
 rm -rf /home/sequoiadb_conf_bak</codeblock></p></li>
       </ul>
     </section> 
