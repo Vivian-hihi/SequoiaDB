@@ -154,11 +154,10 @@ namespace engine
          _pmdRestSession( SOCKET fd ) ;
          virtual ~_pmdRestSession () ;
 
-         virtual INT32     sessionType() const { return PMD_SESSION_REST ; }
          virtual UINT64    identifyID() ;
          virtual INT32     getServiceType() const ;
 
-         virtual INT32     run() ;
+         INT32             run() ;
 
       public:
          httpConnection*   getRestConn() { return &_restConn ; }

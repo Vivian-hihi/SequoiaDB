@@ -60,11 +60,10 @@ namespace engine
          _pmdLocalSession( SOCKET fd ) ;
          virtual ~_pmdLocalSession () ;
 
-         virtual INT32     sessionType() const { return PMD_SESSION_LOCAL ; }
          virtual UINT64    identifyID() ;
          virtual INT32     getServiceType() const ;
 
-         virtual INT32     run() ;
+         INT32             run() ;
 
       protected:
          INT32          _processMsg( MsgHeader *msg ) ;

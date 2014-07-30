@@ -265,16 +265,6 @@ namespace engine
    #define PMD_ADD_PARAM_OPTIONS_END ;
    #define PMD_COMMANDS_STRING( a, b )       (string(a) +string( b)).c_str()
 
-   /*
-      PDM_SESSION_TYPE define
-   */
-   enum PDM_SESSION_TYPE
-   {
-      PMD_SESSION_LOCAL                = 1,
-      PMD_SESSION_COORD,
-      PMD_SESSION_REST
-   } ;
-
 }
 
 #endif // PMD_DEF_HPP__

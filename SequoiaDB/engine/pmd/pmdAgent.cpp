@@ -1073,8 +1073,7 @@ namespace engine
       MsgHeader *pMsg = NULL ;
       INT32 timeDiff = 0 ;
 
-      cb->setName ( pSession->sessionName() ) ;
-      pSession->attachIn () ;
+      pSession->attachIn ( cb ) ;
 
       while ( !cb->isDisconnected () )
       {
@@ -1160,8 +1159,8 @@ namespace engine
       INT32 timeDiff = 0 ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
-      cb->setName( pSession->sessionName() ) ;
-      pSession->attachIn () ;
+
+      pSession->attachIn ( cb ) ;
 
       while ( !cb->isDisconnected() )
       {

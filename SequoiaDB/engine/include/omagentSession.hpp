@@ -19,7 +19,6 @@ namespace CLSMGR
          _omagentSession ( SOCKET fd ) ;
          virtual ~_omagentSession () ;
 
-         virtual INT32 sessionType() const { return SDB_OK ; }
          virtual UINT64 identifyID() { return (UINT64)SDB_OK ; }
          virtual INT32 getServiceType() const { return SDB_OK ; }
 

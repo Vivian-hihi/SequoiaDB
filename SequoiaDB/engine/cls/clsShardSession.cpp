@@ -1084,9 +1084,8 @@ namespace engine
          }
          else
          {
-
             //run command
-            rc = rtnRunCommand( pCommand, CMD_SPACE_SERVICE_SHARD,
+            rc = rtnRunCommand( pCommand, getServiceType(),
                                 _pEDUCB, _pDmsCB, _pRtnCB,
                                 _pDpsCB, w, &contextID ) ;
          }

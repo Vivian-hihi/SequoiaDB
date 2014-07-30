@@ -35,6 +35,7 @@
 #include "clsSession.hpp"
 #include "ossMem.hpp"
 #include "pmd.hpp"
+#include "rtnCommand.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 
@@ -74,12 +75,33 @@ namespace engine
       _latchIn.release () ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_ATHIN, "_clsSession::attachIn" )
-   INT32 _clsSession::attachIn ()
+   UINT64 _clsSession::identifyID()
+   {
+      // TODO:XUJIANHUI
+      return 0 ;
+   }
+
+   INT32 _clsSession::getServiceType() const
+   {
+      return CMD_SPACE_SERVICE_SHARD ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_ATHIN, "_clsSession::attachIn" )
+   INT32 _clsSession::attachIn ( pmdEDUCB *cb )
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_ATHIN );
       _latchOut.try_get () ;
       _latchIn.release () ;
+
+      SDB_ASSERT( cb, "cb can't be NULL" ) ;
+
+      PD_LOG( PDINFO, "Session[%s] attach edu[%d]", sessionName(),
+              cb->getID() ) ;
+
+      _pEDUCB = cb ;
+      _eduID  = cb->getID() ;
+      _pEDUCB->setName( sessionName() ) ;
+      _pEDUCB->attachSession( this ) ;
 
       _onAttach () ;
 
@@ -87,12 +109,17 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_ATHOUT, "_clsSession::attachOut" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_ATHOUT, "_clsSession::attachOut" )
    INT32 _clsSession::attachOut ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_ATHOUT );
+
+      PD_LOG( PDINFO, "Session[%s] detach edu[%d]", sessionName(),
+              eduID() ) ;
+
       _onDetach () ;
 
+      _pEDUCB->detachSession() ;
       _latchOut.release () ;
       _pEDUCB = NULL ;
       PD_TRACE_EXIT ( SDB__CLSSN_ATHOUT );
@@ -109,7 +136,7 @@ namespace engine
       return _pEDUCB ? TRUE : FALSE ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_CLEAR, "_clsSession::clear" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_CLEAR, "_clsSession::clear" )
    void _clsSession::clear()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_CLEAR );
@@ -204,7 +231,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN__MKNAME, "_clsSession::_makeName" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN__MKNAME, "_clsSession::_makeName" )
    void _clsSession::_makeName ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN__MKNAME );
@@ -234,7 +261,7 @@ namespace engine
       _startType = startType ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN__LOCK, "_clsSession::_lock" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN__LOCK, "_clsSession::_lock" )
    INT32 _clsSession::_lock ()
    {
       INT32 rc = SDB_SYS ;
@@ -249,7 +276,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN__UNLOCK, "_clsSession::_unlock" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN__UNLOCK, "_clsSession::_unlock" )
    INT32 _clsSession::_unlock ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN__UNLOCK );
@@ -267,7 +294,7 @@ namespace engine
       return _name ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_WTATH, "_clsSession::waitAttach" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_WTATH, "_clsSession::waitAttach" )
    INT32 _clsSession::waitAttach ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_WTATH );
@@ -276,7 +303,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_WTDTH, "_clsSession::waitDetach" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_WTDTH, "_clsSession::waitDetach" )
    INT32 _clsSession::waitDetach ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_WTDTH );
@@ -286,7 +313,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_CPMSG, "_clsSession::copyMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_CPMSG, "_clsSession::copyMsg" )
    void * _clsSession::copyMsg( const CHAR *msg, UINT32 length )
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_CPMSG );
@@ -310,7 +337,7 @@ namespace engine
       return p ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_FRNBUF, "_clsSession::frontBuffer" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_FRNBUF, "_clsSession::frontBuffer" )
    clsBuffInfo *_clsSession::frontBuffer ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_FRNBUF );
@@ -327,7 +354,7 @@ namespace engine
       return p ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_POPBUF, "_clsSession::popBuffer" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_POPBUF, "_clsSession::popBuffer" )
    void _clsSession::popBuffer ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_POPBUF );
@@ -343,7 +370,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSSN_POPBUF );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_PSHBUF, "_clsSession::pushBuffer" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_PSHBUF, "_clsSession::pushBuffer" )
    INT32 _clsSession::pushBuffer ( CHAR * pBuffer, UINT32 size )
    {
       INT32 rc = SDB_OK ;

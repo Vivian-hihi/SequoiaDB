@@ -41,7 +41,7 @@
 #include "netRouteAgent.hpp"
 #include "ossLatch.hpp"
 #include "ossAtomic.hpp"
-#include "ossLatch.hpp"
+#include "sdbInterface.hpp"
 
 namespace engine
 {
@@ -56,6 +56,11 @@ namespace engine
    #define CLS_BUFF_USING           (2)
    #define CLS_BUFF_FREE            (3)
 
+   class _clsMgr ;
+
+   /*
+      _clsBuffInfo define
+   */
    class _clsBuffInfo : public SDBObject
    {
    public :
@@ -73,6 +78,9 @@ namespace engine
    } ;
    typedef class _clsBuffInfo clsBuffInfo ;
 
+   /*
+      _clsSessionMeta define
+   */
    class _clsSessionMeta : public SDBObject
    {
       public:
@@ -103,8 +111,10 @@ namespace engine
    } ;
    typedef _clsSessionMeta clsSessionMeta ;
 
-   class _clsMgr ;
-   class _clsSession : public _clsObjBase
+   /*
+      _clsSession define
+   */
+   class _clsSession : public _clsObjBase, public _ISession
    {
       friend class _clsMgr ;
       DECLARE_OBJ_MSG_MAP()
@@ -112,6 +122,10 @@ namespace engine
       public:
          _clsSession( UINT64 sessionID );
          virtual ~_clsSession();
+
+         virtual UINT64          identifyID() ;
+         virtual const CHAR*     sessionName() const ;
+         virtual INT32           getServiceType() const ;
 
          virtual INT32 type () const = 0 ;
          virtual EDU_TYPES eduType () const = 0 ;
@@ -121,13 +135,12 @@ namespace engine
          virtual BOOLEAN timeout ( UINT32 interval ) ;
 
          virtual void clear() ;
-         virtual const CHAR *sessionName () const ;
          virtual BOOLEAN canAttachMeta() const { return TRUE ; }
 
          void* copyMsg ( const CHAR *msg, UINT32 length ) ;
          INT32 waitAttach () ;
          INT32 waitDetach () ;
-         INT32 attachIn () ;
+         INT32 attachIn ( pmdEDUCB *cb ) ;
          INT32 attachOut () ;
 
          BOOLEAN isAttached () const ;
@@ -145,8 +158,6 @@ namespace engine
          void        startType ( INT32 startType ) ;
          void        meta ( clsSessionMeta * pMeta ) ;
          void        sessionID ( UINT64 sessionID ) ;
-         void        eduID ( EDUID eduID ) ;
-         void        eduCB ( pmdEDUCB *pEDUCB ) ;
 
          clsBuffInfo*   frontBuffer () ;
          void           popBuffer () ;
@@ -185,6 +196,7 @@ namespace engine
          INT32                _startType ;
 
    };
+   typedef _clsSession clsSession ;
 
 }
 

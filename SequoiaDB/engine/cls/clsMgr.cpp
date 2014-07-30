@@ -971,10 +971,6 @@ done :
          goto error ;
       }
 
-      pSession->eduID( eduID ) ;
-      cb = pEDUMgr->getEDUByID( eduID );
-      SDB_ASSERT ( NULL != cb, "EDU CB cannot be NULL" ) ;
-      pSession->eduCB( cb ) ;
       //Wait the EDUCB is in the session
       pSession->waitAttach () ;
 
