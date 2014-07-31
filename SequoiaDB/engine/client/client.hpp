@@ -21,6 +21,7 @@
     \brief C++ Client Driver
 */
 
+
 #ifndef CLIENT_HPP__
 #define CLIENT_HPP__
 #include "core.hpp"
@@ -1491,7 +1492,7 @@ namespace sdbclient
       {
          if ( !pReplicaGroup )
             return NULL ;
-         pReplicaGroup->getName() ;
+         return pReplicaGroup->getName() ;
       }
 
 /** \fn BOOLEAN isCatalog ()

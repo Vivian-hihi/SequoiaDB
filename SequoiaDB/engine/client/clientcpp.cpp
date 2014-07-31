@@ -3775,6 +3775,7 @@ namespace sdbclient
       CHAR *pTmp = NULL ;
       INT32 mark = 0 ;
       INT32 i = 0 ;
+      INT32 tmp = 0 ;
       if ( !pConnAddrs || arrSize <= 0 || !pUsrName || !pPasswd )
       {
          rc = SDB_INVALIDARG ;
@@ -3789,7 +3790,8 @@ namespace sdbclient
       do
       {
          addr = pConnAddrs[i] ;
-         i = ++i % arrSize ;
+         tmp = (++i) % arrSize ;
+         i = tmp ;
          pStr = ossStrdup ( addr ) ;
          if ( pStr == NULL )
          {
