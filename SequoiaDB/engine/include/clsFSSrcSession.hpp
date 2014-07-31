@@ -172,6 +172,7 @@ namespace engine
       virtual ~_clsFSSrcSession() ;
 
    public:
+      virtual SDB_SESSION_TYPE sessionType() const ;
       virtual INT32 type () const ;
       virtual EDU_TYPES eduType () const ;
 
@@ -210,6 +211,7 @@ namespace engine
                            const DPS_LSN_OFFSET &offset ) ;
 
       public:
+         virtual SDB_SESSION_TYPE sessionType() const ;
          virtual INT32 type () const ;
          virtual EDU_TYPES eduType () const ;
 

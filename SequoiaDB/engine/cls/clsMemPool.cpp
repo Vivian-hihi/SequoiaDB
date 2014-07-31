@@ -38,6 +38,14 @@
 
 namespace engine
 {
+   /*
+      Global define
+   */
+   const UINT32 CLS_MEM_ALIGMENT_SIZE  = 1024 ;
+
+   /*
+      _clsMemPool implement
+   */
    _clsMemPool::_clsMemPool()
    :_totalMemSize( 0 )
    {
@@ -69,6 +77,7 @@ namespace engine
    CHAR *_clsMemPool::alloc( UINT32 size, UINT32 &assignSize )
    {
       PD_TRACE_ENTRY ( SDB__CLSMEMPOL_ALLOC );
+      size = ossRoundUpToMultipleX( size, CLS_MEM_ALIGMENT_SIZE ) ;
       CHAR *pBuffer = (CHAR *)SDB_OSS_MALLOC ( size ) ;
       if ( pBuffer )
       {

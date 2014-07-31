@@ -1172,6 +1172,11 @@ namespace engine
    {
    }
 
+   SDB_SESSION_TYPE _clsFSSrcSession::sessionType() const
+   {
+      return SDB_SESSION_FS_SRC ;
+   }
+
    INT32 _clsFSSrcSession::type() const
    {
       return CLS_REPL ;
@@ -1495,6 +1500,11 @@ namespace engine
    _clsSplitSrcSession::~_clsSplitSrcSession()
    {
       _pCatAgent = NULL ;
+   }
+
+   SDB_SESSION_TYPE _clsSplitSrcSession::sessionType() const
+   {
+      return SDB_SESSION_SPLIT_SRC ;
    }
 
    INT32 _clsSplitSrcSession::type () const

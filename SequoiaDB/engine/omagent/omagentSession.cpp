@@ -19,6 +19,11 @@ namespace CLSMGR
    {
    }
 
+   SDB_SESSION_TYPE _omagentSession::sessionType() const
+   {
+      return SDB_SESSION_OMAGENT ;
+   }
+
    INT32 _omagentSession::run()
    {
       INT32 rc          = SDB_OK ;

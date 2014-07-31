@@ -136,6 +136,11 @@ namespace engine
       return CMD_SPACE_SERVICE_LOCAL ;
    }
 
+   SDB_SESSION_TYPE _pmdRestSession::sessionType() const
+   {
+      return SDB_SESSION_REST ;
+   }
+
    INT32 _pmdRestSession::run()
    {
       INT32 rc                         = SDB_OK ;

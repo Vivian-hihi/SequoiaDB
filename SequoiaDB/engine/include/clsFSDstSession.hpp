@@ -138,6 +138,7 @@ namespace engine
          STEP_TS_END
       };
    public:
+      virtual SDB_SESSION_TYPE sessionType() const ;
       virtual INT32 type () const ;
       virtual EDU_TYPES eduType () const ;
 
@@ -192,6 +193,7 @@ namespace engine
       };
 
       public:
+         virtual SDB_SESSION_TYPE sessionType() const ;
          virtual INT32 type () const ;
          virtual EDU_TYPES eduType () const ;
          virtual BOOLEAN canAttachMeta() const ;

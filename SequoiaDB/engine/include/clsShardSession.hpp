@@ -56,6 +56,7 @@ namespace engine
          _clsShdSession ( UINT64 sessionID ) ;
          virtual ~_clsShdSession ( ) ;
 
+         virtual SDB_SESSION_TYPE sessionType() const ;
          virtual INT32 type () const ;
          virtual EDU_TYPES eduType () const ;
 

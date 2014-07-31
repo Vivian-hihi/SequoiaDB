@@ -72,6 +72,11 @@ namespace engine
       return CMD_SPACE_SERVICE_LOCAL ;
    }
 
+   SDB_SESSION_TYPE _pmdLocalSession::sessionType() const
+   {
+      return SDB_SESSION_LOCAL ;
+   }
+
    void _pmdLocalSession::_onAttach ()
    {
       pmdKRCB *krcb = pmdGetKRCB() ;

@@ -104,6 +104,11 @@ namespace engine
       _pCollectionName = NULL ;
    }
 
+   SDB_SESSION_TYPE _clsShdSession::sessionType() const
+   {
+      return SDB_SESSION_SHARD ;
+   }
+
    INT32 _clsShdSession::type () const
    {
       return CLS_SHARD ;

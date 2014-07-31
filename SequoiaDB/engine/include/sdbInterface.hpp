@@ -83,6 +83,25 @@ namespace engine
       SDB_IF_MAX
    } ;
 
+   /*
+      SDB_SESSION_TYPE define
+   */
+   enum SDB_SESSION_TYPE
+   {
+      SDB_SESSION_LOCAL       = 0,
+      SDB_SESSION_REST,
+      SDB_SESSION_REPL,
+      SDB_SESSION_SHARD,
+      SDB_SESSION_FS_SRC,
+      SDB_SESSION_FS_DST,
+      SDB_SESSION_SPLIT_SRC,
+      SDB_SESSION_SPLIT_DST,
+      SDB_SESSION_OMAGENT,
+
+      // Reserved
+      SDB_SESSION_MAX
+   } ;
+
    class _ISDBRoot
    {
       public:
@@ -166,13 +185,14 @@ namespace engine
          virtual ~_ISession() {}
 
       public:
-         virtual UINT64          identifyID() = 0 ;
-         virtual const CHAR*     sessionName() const = 0 ;
-         virtual INT32           getServiceType() const = 0 ;
+         virtual UINT64             identifyID() = 0 ;
+         virtual const CHAR*        sessionName() const = 0 ;
+         virtual SDB_SESSION_TYPE   sessionType() const = 0 ;
+         virtual INT32              getServiceType() const = 0 ;
 
       protected:
-         virtual void            _onAttach () {}
-         virtual void            _onDetach () {}
+         virtual void               _onAttach () {}
+         virtual void               _onDetach () {}
 
    } ;
    typedef _ISession ISession ;

@@ -41,6 +41,7 @@
 
 namespace engine
 {
+
    /*
       _clsSessionMeta implement
    */
@@ -332,6 +333,16 @@ namespace engine
       return p ;
    }
 
+   BOOLEAN _clsSession::isBufferFull() const
+   {
+      return _buffCount >= MAX_BUFFER_ARRAY_SIZE ? TRUE : FALSE ;
+   }
+
+   BOOLEAN _clsSession::isBufferEmpty() const
+   {
+      return _buffCount == 0 ? TRUE : FALSE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN_FRNBUF, "_clsSession::frontBuffer" )
    clsBuffInfo *_clsSession::frontBuffer ()
    {
@@ -412,22 +423,581 @@ namespace engine
    */
    _clsSessionMgr::_clsSessionMgr()
    {
+      _force                  = FALSE ;
+      _pRTAgent               = NULL ;
+      _pTimerHandle           = NULL ;
+      _handleCloseTimerID     = NET_INVALID_TIMER_ID ;
+      _sessionTimerID         = NET_INVALID_TIMER_ID ;
+      _timerInterval          = OSS_ONE_SEC ;
    }
 
    _clsSessionMgr::~_clsSessionMgr()
    {
+      _pRTAgent               = NULL ;
+      _pTimerHandle           = NULL ;
    }
 
-   INT32 _clsSessionMgr::init()
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_INIT, "_clsSessionMgr::init" )
+   INT32 _clsSessionMgr::init( netRouteAgent *pRTAgent,
+                               _netTimeoutHandler *pTimerHandle,
+                               UINT32 timerInterval )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( CLS_SESSMGR_INIT ) ;
+
+      if ( !pRTAgent || !pTimerHandle )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _pRTAgent      = pRTAgent ;
+      _pTimerHandle  = pTimerHandle ;
+      _timerInterval = timerInterval ;
+
+      // init mem pool
+      rc = _memPool.initialize() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init mem pool, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // set timer
+      rc = _pRTAgent->addTimer( _timerInterval, _pTimerHandle,
+                                _sessionTimerID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Add session timer failed, rc: %d", rc ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( CLS_SESSMGR_INIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_FINI, "_clsSessionMgr::fini" )
    INT32 _clsSessionMgr::fini()
    {
-      // TODO:XUJIANHUI
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( CLS_SESSMGR_FINI ) ;
+
+      _force = TRUE ;
+
+      // kill timer
+      if ( _pRTAgent )
+      {
+         if ( NET_INVALID_TIMER_ID != _sessionTimerID )
+         {
+            _pRTAgent->removeTimer( _sessionTimerID ) ;
+            _sessionTimerID = NET_INVALID_TIMER_ID ;
+         }
+         if ( NET_INVALID_TIMER_ID != _handleCloseTimerID )
+         {
+            _pRTAgent->removeTimer( _handleCloseTimerID ) ;
+            _handleCloseTimerID = NET_INVALID_TIMER_ID ;
+         }
+      }
+
+      // release session and meta
+      MAPSESSION_IT it = _mapSession.begin () ;
+      while ( it != _mapSession.end() )
+      {
+         _releaseSession_i( it->second, FALSE, FALSE ) ;
+         ++it ;
+      }
+      _mapSession.clear () ;
+
+      while ( _deqCatchSessions.size () > 0 )
+      {
+         _releaseSession_i( _deqCatchSessions.front (), FALSE, FALSE ) ;
+         _deqCatchSessions.pop_front () ;
+      }
+
+      while ( _deqDeletingSessions.size() > 0 )
+      {
+         _releaseSession_i ( _deqDeletingSessions.front(), FALSE, FALSE ) ;
+         _deqDeletingSessions.pop_front() ;
+      }
+
+      //Clear latch
+      MAPMETA_IT itMeta = _mapMeta.begin() ;
+      while ( itMeta != _mapMeta.end() )
+      {
+         SDB_OSS_DEL itMeta->second ;
+         ++itMeta ;
+      }
+      _mapMeta.clear() ;
+
+      // mem pool fini
+      rc = _memPool.final() ;
+
+      PD_TRACE_EXITRC ( CLS_SESSMGR_FINI, rc ) ;
       return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_ONTIMER, "_clsSessionMgr::onTimer" )
+   void _clsSessionMgr::onTimer( UINT32 interval )
+   {
+      PD_TRACE_ENTRY( CLS_SESSMGR_ONTIMER ) ;
+
+      //Check _deqShdDeletingSessions
+      ossScopedLock lock ( &_deqDeletingMutex ) ;
+      clsSession *pSession = NULL ;
+      DEQSESSION::iterator it = _deqDeletingSessions.begin() ;
+      while ( it != _deqDeletingSessions.end() )
+      {
+         pSession = *it ;
+         if ( !pSession->isDetached() )
+         {
+            ++it ;
+            continue ;
+         }
+         it = _deqDeletingSessions.erase( it ) ;
+         _releaseSession_i( pSession, FALSE, FALSE ) ;
+      }
+
+      PD_TRACE_EXIT( CLS_SESSMGR_ONTIMER ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_PUSHMSG, "_clsSessionMgr::assignMemory" )
+   INT32 _clsSessionMgr::pushMessage( clsSession *pSession,
+                                      MsgHeader *header )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( CLS_SESSMGR_PUSHMSG ) ;
+      CHAR *pNewBuff = NULL ;
+      UINT32 buffSize = 0 ;
+      UINT64 userData = 0 ; // 0: memPool, 1: alloc
+      pmdEDUMemTypes memType = PMD_EDU_MEM_NONE ;
+
+      clsBuffInfo * pBuffInfo = pSession->frontBuffer () ;
+      while ( pBuffInfo && pBuffInfo->isFree() )
+      {
+         if ( !pNewBuff && pBuffInfo->size >= (UINT32)header->messageLength )
+         {
+            pNewBuff = pBuffInfo->pBuffer ;
+            buffSize = pBuffInfo->size ;
+         }
+         else //release memory to pool
+         {
+            _memPool.release( pBuffInfo->pBuffer, pBuffInfo->size ) ;
+         }
+         pSession->popBuffer () ;
+         pBuffInfo = pSession->frontBuffer () ;
+      }
+
+      if ( !pNewBuff && !pSession->isBufferFull() )
+      {
+         pNewBuff = _memPool.alloc ( header->messageLength, buffSize ) ;
+         if ( !pNewBuff )
+         {
+            PD_LOG ( PDERROR, "Memory pool assign memory failed[size:%d]",
+                     header->messageLength ) ;
+         }
+      }
+
+      if ( pNewBuff )
+      {
+         rc = pSession->pushBuffer ( pNewBuff, buffSize ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]", 
+                     pSession->sessionName(), rc ) ;
+            _memPool.release ( pNewBuff, buffSize ) ;
+            SDB_ASSERT ( 0, "why the buffer is full??? check" ) ;
+            goto error ;
+         }
+
+         pNewBuff = (CHAR*)pSession->copyMsg( (const CHAR*)header,
+                                              header->messageLength ) ;
+         if ( NULL == pNewBuff )
+         {
+            PD_LOG ( PDERROR, "Failed to allocate memory for new msg" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+      }
+      else
+      {
+         // alloc msg
+         pNewBuff = ( CHAR* )SDB_OSS_MALLOC( header->messageLength ) ;
+         if ( !pNewBuff )
+         {
+            PD_LOG( PDERROR, "Failed to alloc msg[size: %d] in session[%s]",
+                    header->messageLength, pSession->sessionName() ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         ossMemcpy( pNewBuff, (void*)header, header->messageLength ) ;
+         userData = 1 ;
+         memType  = PMD_EDU_MEM_ALLOC ;
+      }
+
+      // post edu event
+      pSession->eduCB()->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                                 memType, pNewBuff,
+                                                 userData ) ) ;
+   done:
+      PD_TRACE_EXITRC ( CLS_SESSMGR_PUSHMSG, rc ) ;
+      return rc ;
+   error:
+      _onPushMsgFailed( rc, header, pSession ) ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_GETSESSION, "_clsSessionMgr::getSession" )
+   clsSession* _clsSessionMgr::getSession( UINT64 sessionID, INT32 startType,
+                                           const NET_HANDLE handle,
+                                           BOOLEAN bCreate, INT32 opCode,
+                                           void *data )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( CLS_SESSMGR_GETSESSION );
+      clsSession *pSession = NULL ;
+      SDB_SESSION_TYPE sessionType = SDB_SESSION_MAX ;
+
+      MAPSESSION_IT it = _mapSession.find( sessionID ) ;
+      if ( it != _mapSession.end() )
+      {
+         pSession = it->second ;
+
+         // need to attach meta
+         if ( !pSession->getMeta() && pSession->canAttachMeta() &&
+              NET_INVALID_HANDLE != handle )
+         {
+            _attachSessionMeta( pSession, handle ) ;
+         }
+         goto done ;
+      }
+
+      if ( !bCreate )
+      {
+         goto done ;
+      }
+
+      // parse session type
+      sessionType = _prepareCreate( sessionID, startType, opCode ) ;
+      if ( SDB_SESSION_MAX == sessionType )
+      {
+         PD_LOG( PDERROR, "Failed to parse session type by info[sessionID: "
+                 "%lld, startType: %d, opCode: (%d)%d ]", sessionID,
+                 startType, IS_REPLY_TYPE(opCode), GET_REQUEST_TYPE(opCode) ) ;
+         goto error ;
+      }
+
+      // get from catch
+      if ( _canReuse( sessionType ) && _deqCatchSessions.size() > 0 )
+      {
+         DEQSESSION::iterator itDeq = _deqCatchSessions.begin() ;
+         while ( itDeq != _deqCatchSessions.end() )
+         {
+            if ( (*itDeq)->sessionType() == sessionType )
+            {
+               pSession = *itDeq ;
+               _deqCatchSessions.erase( itDeq ) ;
+               break ;
+            }
+            ++itDeq ;
+         }
+      }
+
+      if ( !pSession )
+      {
+         pSession = _createSession( sessionType, startType, sessionID, data ) ;
+         if ( !pSession )
+         {
+            PD_LOG( PDERROR, "Failed to create session[sessionType: %d, "
+                    "startType: %d, sessionID: %lld ]", sessionType,
+                    startType, sessionID ) ;
+            goto error ;
+        }
+      }
+
+      // set session info
+      _mapSession[ sessionID ] = pSession ;
+      pSession->startType( startType ) ;
+      pSession->sessionID( sessionID ) ;
+
+      PD_LOG ( PDEVENT, "Create session[Name: %s, StartType: %d]",
+               pSession->sessionName(), startType ) ;
+
+      // attach meta
+      if ( !pSession->getMeta() && pSession->canAttachMeta() &&
+           NET_INVALID_HANDLE != handle )
+      {
+         rc = _attachSessionMeta( pSession, handle ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+      //Start session EDU
+      rc = _startSessionEDU( pSession ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start session EDU, rc = %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXIT ( CLS_SESSMGR_GETSESSION );
+      return pSession ;
+   error:
+      if ( pSession )
+      {
+         releaseSession ( pSession ) ;
+         pSession = NULL ;
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_ATCHMETA, "_clsSessionMgr::_attachSessionMeta" )
+   INT32 _clsSessionMgr::_attachSessionMeta( clsSession *pSession,
+                                             const NET_HANDLE handle )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( CLS_SESSMGR_ATCHMETA ) ;
+      clsSessionMeta * pMeta = NULL ;
+      MAPMETA_IT itMeta = _mapMeta.find ( handle ) ;
+      if ( itMeta == _mapMeta.end() )
+      {
+         pMeta = SDB_OSS_NEW clsSessionMeta ( handle ) ;
+         if ( NULL == pMeta )
+         {
+            PD_LOG ( PDERROR, "Failed to allocate memory for meta" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         _mapMeta[handle] = pMeta ;
+      }
+      else
+      {
+         pMeta = itMeta->second ;
+      }
+      pMeta->incBaseHandleNum() ;
+      pSession->meta ( pMeta ) ;
+
+   done:
+      PD_TRACE_EXITRC ( CLS_SESSMGR_ATCHMETA, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_STARTEDU, "_clsSessionMgr::_startSessionEDU" )
+   INT32 _clsSessionMgr::_startSessionEDU( clsSession *pSession )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( CLS_SESSMGR_STARTEDU ) ;
+      pmdKRCB *pKRCB = pmdGetKRCB() ;
+      pmdEDUMgr *pEDUMgr = pKRCB->getEDUMgr() ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+      pmdEDUCB *cb = NULL ;
+
+      rc = pEDUMgr->startEDU( pSession->eduType(), (void *)pSession, &eduID ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( SDB_QUIESCED == rc )
+         {
+            PD_LOG ( PDWARNING, "Reject new connection due to quiesced "
+                     "database" ) ;
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "Failed to create subagent thread, rc: %d",
+                     rc ) ;
+         }
+         goto error ;
+      }
+
+      //Wait the EDUCB is in the session
+      pSession->waitAttach () ;
+
+   done:
+      PD_TRACE_EXITRC ( CLS_SESSMGR_STARTEDU, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_RLSSS, "_clsSessionMgr::releaseSession" )
+   INT32 _clsSessionMgr::releaseSession( clsSession * pSession, BOOLEAN delay )
+   {
+      PD_TRACE_ENTRY ( CLS_SESSMGR_RLSSS ) ;
+      if ( !_force )
+      {
+         MAPSESSION_IT it = _mapSession.find( pSession->sessionID() ) ;
+         if ( it != _mapSession.end() )
+         {
+            _mapSession.erase( it ) ;
+         }
+      }
+
+      INT32 rc = _releaseSession_i( pSession, TRUE, delay ) ;
+      PD_TRACE_EXITRC ( CLS_SESSMGR_RLSSS, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_RLSSS_I, "_clsSessionMgr::_releaseSession_i" )
+   INT32 _clsSessionMgr::_releaseSession_i ( clsSession *pSession,
+                                             BOOLEAN postQuit,
+                                             BOOLEAN delay )
+   {
+      PD_TRACE_ENTRY ( CLS_SESSMGR_RLSSS_I ) ;
+      clsBuffInfo *pBuffInfo = NULL ;
+
+      SDB_ASSERT ( pSession, "pSession can't be NULL" ) ;
+      if ( !_force && postQuit && pSession->eduCB() )
+      {
+         // Notify the edu quit
+         pSession->eduCB()->disconnect () ;
+      }
+
+      if ( delay )
+      {
+         ossScopedLock lock ( &_deqDeletingMutex ) ;
+         _deqDeletingSessions.push_back ( pSession ) ;
+         goto done ;
+      }
+
+      // Wait the EDUCB is out the session
+      pSession->waitDetach () ;
+
+      // dec based handle number
+      if ( pSession->getMeta() )
+      {
+         pSession->getMeta()->decBaseHandleNum() ;
+      }
+
+      // Release Memory to pool
+      pBuffInfo = pSession->frontBuffer() ;
+      while ( pBuffInfo )
+      {
+         _memPool.release ( pBuffInfo->pBuffer, pBuffInfo->size ) ;
+         pSession->popBuffer () ;
+         pBuffInfo = pSession->frontBuffer() ;
+      }
+      pSession->clear() ;
+
+      if ( !_force && _canReuse( pSession->sessionType() ) &&
+           _deqCatchSessions.size() < _maxCatchSize() )
+      {
+         _deqCatchSessions.push_back( pSession ) ;
+         goto done ;
+      }
+
+      SDB_OSS_DEL pSession ;
+
+   done:
+      PD_TRACE_EXIT ( CLS_SESSMGR_RLSSS_I );
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_HDLSNCLOSE, "_clsSessionMgr::handleSessionClose" )
+   INT32 _clsSessionMgr::handleSessionClose( const NET_HANDLE handle )
+   {
+      PD_TRACE_ENTRY ( CLS_SESSMGR_HDLSNCLOSE ) ;
+      clsSession *pSession = NULL ;
+      MAPSESSION_IT it = _mapSession.begin() ;
+      while ( it != _mapSession.end() )
+      {
+         pSession = it->second ;
+         if ( pSession->netHandle() == handle )
+         {
+            PD_LOG ( PDEVENT, "Session[%s, handle:%d] closed",
+                     pSession->sessionName(), pSession->netHandle() ) ;
+            _releaseSession_i( pSession, TRUE, TRUE ) ;
+            _mapSession.erase( it++ ) ;
+            continue ;
+         }
+         ++it ;
+      }
+
+      if ( NET_INVALID_TIMER_ID == _handleCloseTimerID )
+      {
+         _pRTAgent->addTimer( 30 * OSS_ONE_SEC, _pTimerHandle,
+                              _handleCloseTimerID ) ;
+      }
+
+      PD_TRACE_EXIT ( CLS_SESSMGR_HDLSNCLOSE ) ;
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_HDLSNTM, "_clsSessionMgr::handleSessionTimeout" )
+   INT32 _clsSessionMgr::handleSessionTimeout( UINT32 timerID,
+                                               UINT32 interval )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( CLS_SESSMGR_HDLSNTM ) ;
+
+      if ( _sessionTimerID == timerID )
+      {
+         _checkSession( interval ) ;
+      }
+      else if ( _handleCloseTimerID == timerID )
+      {
+         _checkSessionMeta( interval ) ;
+         _pRTAgent->removeTimer( _handleCloseTimerID ) ;
+         _handleCloseTimerID = NET_INVALID_TIMER_ID ;
+         goto done ;
+      }
+      else
+      {
+         //return not zero, the timer will dispath to main cb
+         rc = -1 ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( CLS_SESSMGR_HDLSNTM, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_CHKSNMETA, "_clsSessionMgr::_checkSessionMeta" )
+   void _clsSessionMgr::_checkSessionMeta( UINT32 interval )
+   {
+      PD_TRACE_ENTRY ( CLS_SESSMGR_CHKSNMETA ) ;
+
+      MAPMETA_IT it = _mapMeta.begin() ;
+      while ( it != _mapMeta.end() )
+      {
+         clsSessionMeta *pMeta = it->second ;
+         if ( 0 == pMeta->getBasedHandleNum() )
+         {
+            SDB_OSS_DEL pMeta ;
+            _mapMeta.erase( it++ ) ;
+            continue ;
+         }
+         ++it ;
+      }
+
+      PD_TRACE_EXIT ( CLS_SESSMGR_CHKSNMETA ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_CHKSN, "_clsSessionMgr::_checkSession" )
+   void _clsSessionMgr::_checkSession( UINT32 interval )
+   {
+      PD_TRACE_ENTRY ( CLS_SESSMGR_CHKSN ) ;
+
+      clsSession *pSession = NULL ;
+      MAPSESSION_IT it = _mapSession.begin() ;
+      while ( it != _mapSession.end() )
+      {
+         pSession = it->second ;
+
+         if ( !pSession->isProcess() && pSession->timeout( interval ) )
+         {
+            PD_LOG ( PDEVENT, "Session[%s] timeout", pSession->sessionName() ) ;
+            _releaseSession_i ( pSession, TRUE, TRUE ) ;
+            _mapSession.erase ( it++ ) ;
+            continue ;
+         }
+         ++it ;
+      }
+
+      PD_TRACE_EXIT ( CLS_SESSMGR_CHKSN ) ;
    }
 
 }

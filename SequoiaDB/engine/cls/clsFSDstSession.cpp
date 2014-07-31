@@ -1072,6 +1072,11 @@ namespace engine
 
    }
 
+   SDB_SESSION_TYPE _clsFSDstSession::sessionType() const
+   {
+      return SDB_SESSION_FS_DST ;
+   }
+
    INT32 _clsFSDstSession::type() const
    {
       return CLS_REPL ;
@@ -1482,6 +1487,11 @@ namespace engine
    _clsSplitDstSession::~_clsSplitDstSession ()
    {
       _pTask = NULL ;
+   }
+
+   SDB_SESSION_TYPE _clsSplitDstSession::sessionType() const
+   {
+      return SDB_SESSION_SPLIT_DST ;
    }
 
    INT32 _clsSplitDstSession::type () const

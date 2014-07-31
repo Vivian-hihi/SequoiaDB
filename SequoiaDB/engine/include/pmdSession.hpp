@@ -62,6 +62,7 @@ namespace engine
 
          virtual UINT64    identifyID() ;
          virtual INT32     getServiceType() const ;
+         virtual SDB_SESSION_TYPE sessionType() const ;
 
          INT32             run() ;
 

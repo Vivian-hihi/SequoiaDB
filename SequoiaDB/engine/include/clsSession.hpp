@@ -41,6 +41,7 @@
 #include "netRouteAgent.hpp"
 #include "ossLatch.hpp"
 #include "ossAtomic.hpp"
+#include "clsMemPool.hpp"
 #include "sdbInterface.hpp"
 
 #include <map>
@@ -60,6 +61,7 @@ namespace engine
    #define CLS_BUFF_FREE            (3)
 
    class _clsMgr ;
+   class _clsSessionMgr ;
 
    /*
       _clsBuffInfo define
@@ -120,6 +122,7 @@ namespace engine
    class _clsSession : public _clsObjBase, public _ISession
    {
       friend class _clsMgr ;
+      friend class _clsSessionMgr ;
       DECLARE_OBJ_MSG_MAP()
 
       public:
@@ -157,6 +160,9 @@ namespace engine
          BOOLEAN     isStartActive() ;
          clsSessionMeta* getMeta() { return _pMeta ; }
 
+         BOOLEAN        isBufferFull() const ;
+         BOOLEAN        isBufferEmpty() const ;
+
       private:
          void        startType ( INT32 startType ) ;
          void        meta ( clsSessionMeta * pMeta ) ;
@@ -166,6 +172,9 @@ namespace engine
          void           popBuffer () ;
          INT32          pushBuffer ( CHAR *pBuffer, UINT32 size ) ;
 
+         UINT32         _incBuffPos ( UINT32 pos ) ;
+         UINT32         _decBuffPos ( UINT32 pos ) ;
+
       protected:
          void  _makeName () ;
          INT32 _lock () ;
@@ -174,20 +183,12 @@ namespace engine
          virtual void   _onAttach () ;
          virtual void   _onDetach () ;
 
-         UINT32 _incBuffPos ( UINT32 pos ) ;
-         UINT32 _decBuffPos ( UINT32 pos ) ;
-
       protected:
 
          UINT64               _sessionID ;
          pmdEDUCB             *_pEDUCB ;
          EDUID                _eduID ;
          NET_HANDLE           _netHandle ;
-
-         clsBuffInfo          _buffArray[MAX_BUFFER_ARRAY_SIZE] ;
-         UINT32               _buffBegin ;
-         UINT32               _buffEnd ;
-         UINT32               _buffCount ;
 
          CHAR                 _name[SESSION_NAME_LEN+1] ;
          clsSessionMeta        *_pMeta ;
@@ -197,6 +198,11 @@ namespace engine
          ossSpinXLatch        _latchOut ;
          BOOLEAN              _lockFlag ;
          INT32                _startType ;
+
+         clsBuffInfo          _buffArray[MAX_BUFFER_ARRAY_SIZE] ;
+         UINT32               _buffBegin ;
+         UINT32               _buffEnd ;
+         UINT32               _buffCount ;
 
    };
    typedef _clsSession clsSession ;
@@ -216,14 +222,87 @@ namespace engine
 
       public:
          _clsSessionMgr() ;
-         ~_clsSessionMgr() ;
+         virtual ~_clsSessionMgr() ;
 
-         INT32          init() ;
-         INT32          fini() ;
+         virtual INT32        init( netRouteAgent *pRTAgent,
+                                    _netTimeoutHandler *pTimerHandle,
+                                    UINT32 timerInterval ) ;
+         virtual INT32        fini() ;
+
+         virtual void         onTimer( UINT32 interval ) ;
+
+         /*
+            The following function:
+            Note: The caller thread must be the net thread
+         */
+         INT32          pushMessage ( clsSession *pSession,
+                                      MsgHeader *header ) ;
+
+         clsSession     *getSession( UINT64 sessionID, INT32 startType,
+                                     const NET_HANDLE handle,
+                                     BOOLEAN bCreate, INT32 opCode,
+                                     void *data ) ;
+
+         INT32          releaseSession( clsSession *pSession,
+                                        BOOLEAN delay = FALSE ) ;
+
+         INT32          handleSessionClose( const NET_HANDLE handle ) ;
+
+         virtual INT32  handleSessionTimeout( UINT32 timerID,
+                                              UINT32 interval ) ;
+
+      protected:
+         /*
+            Parse the session type
+         */
+         virtual SDB_SESSION_TYPE   _prepareCreate( UINT64 sessionID,
+                                                    INT32 startType,
+                                                    INT32 opCode ) = 0 ;
+
+         virtual BOOLEAN      _canReuse( SDB_SESSION_TYPE sessionType ) = 0 ;
+         virtual UINT32       _maxCatchSize() const = 0 ;
+         virtual void         _onPushMsgFailed( INT32 rc, MsgHeader *pReq,
+                                                clsSession *pSession ) = 0 ;
+         /*
+            Create session
+         */
+         virtual clsSession*  _createSession(  SDB_SESSION_TYPE sessionType,
+                                               INT32 startType,
+                                               UINT64 sessionID,
+                                               void *data) = 0 ;
+
+      protected:
+         INT32          _attachSessionMeta( clsSession *pSession,
+                                            const NET_HANDLE handle ) ;
+
+         INT32          _startSessionEDU( clsSession * pSession ) ;
+
+         INT32          _releaseSession_i ( clsSession *pSession,
+                                            BOOLEAN postQuit,
+                                            BOOLEAN delay ) ;
+
+      private:
+         void           _checkSession( UINT32 interval ) ;
+         void           _checkSessionMeta( UINT32 interval ) ;
 
       private:
          MAPSESSION                 _mapSession ;
          MAPMETA                    _mapMeta ;
+         DEQSESSION                 _deqCatchSessions ;
+
+         // Delay delete sessions
+         DEQSESSION                 _deqDeletingSessions ;
+         ossSpinXLatch              _deqDeletingMutex ;
+
+         clsMemPool                 _memPool ;
+         netRouteAgent              *_pRTAgent ;
+         _netTimeoutHandler         *_pTimerHandle ;
+
+         UINT32                     _handleCloseTimerID ;
+         UINT32                     _sessionTimerID ;
+         UINT32                     _timerInterval ;
+
+         BOOLEAN                    _force ;
 
    } ;
    typedef _clsSessionMgr clsSessionMgr ;

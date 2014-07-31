@@ -82,6 +82,11 @@ namespace engine
    {
    }
 
+   SDB_SESSION_TYPE _clsReplSession::sessionType() const
+   {
+      return SDB_SESSION_REPL ;
+   }
+
    INT32 _clsReplSession::type () const
    {
       return CLS_REPL ;

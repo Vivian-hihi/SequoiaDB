@@ -21,6 +21,7 @@ namespace CLSMGR
 
          virtual UINT64 identifyID() { return (UINT64)SDB_OK ; }
          virtual INT32 getServiceType() const { return SDB_OK ; }
+         virtual SDB_SESSION_TYPE sessionType() const ;
 
          virtual void clear() {}
          virtual const CHAR* sessionName() const { return "" ; }

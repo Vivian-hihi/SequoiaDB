@@ -62,6 +62,8 @@ namespace engine
       _clsReplSession ( UINT64 sessionID ) ;
       virtual ~_clsReplSession () ;
 
+      virtual SDB_SESSION_TYPE sessionType() const ;
+
       virtual INT32 type () const ;
       virtual EDU_TYPES eduType () const ;
       virtual void    onRecieve ( const NET_HANDLE netHandle,
