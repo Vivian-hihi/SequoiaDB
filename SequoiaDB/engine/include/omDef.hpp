@@ -96,6 +96,8 @@ namespace engine
    #define OM_HOST_FIELD_PORT                "Port"
    #define OM_HOST_FIELD_SERVICE             "Service"
    #define OM_HOST_FIELD_SAFETY              "Safety"
+   #define OM_HOST_FIELD_INSTALLPATH         "InstallPath"
+   #define OM_HOST_FIELD_AGENT_PORT          "AgentPort"
 
    #define OM_CS_DEPLOY_CL_HOSTIDX1          "{name:\"SYSDEPLOY_HOST_IDX1\",key: {"\
                                              OM_HOST_FIELD_NAME":1}, unique: true, enforced: true } "
@@ -201,7 +203,6 @@ namespace engine
    #define  OM_BSON_FIELD_HOST_PASSWD        "Passwd"
    #define  OM_BSON_FIELD_HOST_SSHPORT       "SshPort"
 
-   //TODO agent端口号从配置中获取
    #define  OM_BSON_FIELD_AGENT_PORT         "AgentPort"
 
    // milliseconds

@@ -2226,6 +2226,10 @@ namespace engine
                               OM_BSON_FIELD_SERVICE ) ;
          _generateTableField( builder, OM_HOST_FIELD_SAFETY, *ite, 
                               OM_BSON_FIELD_SAFETY ) ;
+         _generateTableField( builder, OM_HOST_FIELD_INSTALLPATH, *ite, 
+                              OM_BSON_FIELD_INSTALL_PATH ) ;
+         _generateTableField( builder, OM_HOST_FIELD_AGENT_PORT, *ite, 
+                              OM_BSON_FIELD_AGENT_PORT ) ;
 
          tmp = builder.obj() ;
          rc = rtnInsert( OM_CS_DEPLOY_CL_HOST, tmp, 1, 0, _cb );
