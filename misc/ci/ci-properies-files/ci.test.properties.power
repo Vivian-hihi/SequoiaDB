@@ -15,11 +15,11 @@ target.deploy_tar_gz.ip=powersuse1
 copy.log.path=/test_log
 
 coord.service.port=50000
-jenkins.master.ip=power_rhel_1
-test.machine.no1.basic=power_suse_2
-test.machine.no2.basic=power_rhel_2
-test.machine.no3.basic=power_rhel_1
+jenkins.master.ip=power-rhel-1
+test.machine.no1.basic=power-suse-2
+test.machine.no2.basic=power-rhel-2
+test.machine.no3.basic=power-rhel-1
 
-test.machine.no1.data=power_suse_2
-test.machine.no2.data=power_rhel_2
-test.machine.no3.data=power_rhel_1
+test.machine.no1.data=power-suse-2
+test.machine.no2.data=power-rhel-2
+test.machine.no3.data=power-rhel-1
