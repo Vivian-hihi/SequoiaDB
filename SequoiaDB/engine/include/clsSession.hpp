@@ -228,6 +228,7 @@ namespace engine
                                     _netTimeoutHandler *pTimerHandle,
                                     UINT32 timerInterval ) ;
          virtual INT32        fini() ;
+         void                 setForced() { _force = TRUE ; }
 
          virtual void         onTimer( UINT32 interval ) ;
 
