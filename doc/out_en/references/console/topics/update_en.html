@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Update Operator"/>
-<meta name="description" content="update operator description information samples $inc increase add the given value to the value of specified field db.foo.bar.update({$inc:{age:25}}) $set set the specified field set the given value to ..."/>
+<meta name="description" content="Update Operator Description Information Samples $inc increase add the given value to the value of specified field. db.foo.bar.update({$inc:{age:25}}) $set set the specified field set the given value ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/console/topics/console_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/console/topics/inc_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/console/topics/gset_en.html"/>
@@ -48,13 +48,13 @@
     <div class="section">
       <div class="p">
         <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d118255e18" class="stentry">update operator</th>
+            <th valign="bottom" align="left" id="d118255e18" class="stentry">Update Operator</th>
 
-            <th valign="bottom" align="left" id="d118255e21" class="stentry">description</th>
+            <th valign="bottom" align="left" id="d118255e21" class="stentry">Description</th>
 
-            <th valign="bottom" align="left" id="d118255e24" class="stentry">information</th>
+            <th valign="bottom" align="left" id="d118255e24" class="stentry">Information</th>
 
-            <th valign="bottom" align="left" id="d118255e27" class="stentry">samples</th>
+            <th valign="bottom" align="left" id="d118255e27" class="stentry">Samples</th>
 
           </tr>
 <tr class="strow">
@@ -62,12 +62,9 @@
 
             <td valign="top" headers="d118255e21" class="stentry"> increase</td>
 
-            <td valign="top" headers="d118255e24" class="stentry">add the given value to the value of specified field</td>
+            <td valign="top" headers="d118255e24" class="stentry">add the given value to the value of specified field.</td>
 
-            <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$inc:{age:25}})</p>
-
-            </td>
+            <td valign="top" headers="d118255e27" class="stentry">db.foo.bar.update({$inc:{age:25}})</td>
 
           </tr>
 <tr class="strow">
@@ -75,12 +72,9 @@
 
             <td valign="top" headers="d118255e21" class="stentry">set the specified field</td>
 
-            <td valign="top" headers="d118255e24" class="stentry">set the given value to the specified field</td>
+            <td valign="top" headers="d118255e24" class="stentry">set the given value to the specified field.</td>
 
-            <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$set:{age:10}})</p>
-
-            </td>
+            <td valign="top" headers="d118255e27" class="stentry">db.foo.bar.update({$set:{age:10}})</td>
 
           </tr>
 <tr class="strow">
@@ -88,12 +82,9 @@
 
             <td valign="top" headers="d118255e21" class="stentry">delete the specified field</td>
 
-            <td valign="top" headers="d118255e24" class="stentry">delete the specified field of object</td>
+            <td valign="top" headers="d118255e24" class="stentry">delete the specified field of object.</td>
 
-            <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$unset:{age:""}})</p>
-
-            </td>
+            <td valign="top" headers="d118255e27" class="stentry">db.foo.bar.update({$unset:{age:""}})</td>
 
           </tr>
 <tr class="strow">
@@ -101,13 +92,11 @@
 
             <td valign="top" headers="d118255e21" class="stentry">add to set</td>
 
-            <td valign="top" headers="d118255e24" class="stentry">if the given element doesn't exist in the array,then added,otherwise
-              skipped.the object field must be array type</td>
+            <td valign="top" headers="d118255e24" class="stentry">if the given element doesn't exist in the array, then added, otherwise
+              skipped. the object field <div class="fig fignone"/>
+must be array type.</td>
 
-            <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$addtoset:{array:[3,4,5]}})</p>
-
-            </td>
+            <td valign="top" headers="d118255e27" class="stentry">db.foo.bar.update({$addtoset:{array:[3,4,5]}})</td>
 
           </tr>
 <tr class="strow">
@@ -115,14 +104,12 @@
 
             <td valign="top" headers="d118255e21" class="stentry">pull the last of N values in the array</td>
 
-            <td valign="top" headers="d118255e24" class="stentry"> pull the last of N values in the array,the object field must be array type(if
-              N less than 0 means that delete the first of -N values from the beginning of
+            <td valign="top" headers="d118255e24" class="stentry"> pull the last of N values in the array, the object field must be array type(if
+              N less than 0 means <div class="fig fignone"/>
+that delete the first of -N values from the beginning of
               array).</td>
 
-            <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$pop:{array:2}})</p>
-
-            </td>
+            <td valign="top" headers="d118255e27" class="stentry">db.foo.bar.update({$pop:{array:2}})</td>
 
           </tr>
 <tr class="strow">
@@ -130,12 +117,11 @@
 
             <td valign="top" headers="d118255e21" class="stentry">pull values</td>
 
-            <td valign="top" headers="d118255e24" class="stentry">pull the specified value from the object array，the object element must be
+            <td valign="top" headers="d118255e24" class="stentry">pull the specified value from the object array, the object element must be
               array.</td>
 
             <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$pull:{array:2}})</p>
-
+              db.foo.bar.update({$pull:{array:2}})
             </td>
 
           </tr>
@@ -144,12 +130,12 @@
 
             <td valign="top" headers="d118255e21" class="stentry">pull array</td>
 
-            <td valign="top" headers="d118255e24" class="stentry">pull each of the elements in the specified array from the object array.the
-              object element must be array type.</td>
+            <td valign="top" headers="d118255e24" class="stentry">pull each of the elements in the specified array from the object array. the
+              object element must <div class="fig fignone"/>
+be array type.</td>
 
             <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$pull_all:{array:[2,3,4}})</p>
-
+              db.foo.bar.update({$pull_all:{array:[2,3,4}})
             </td>
 
           </tr>
@@ -158,12 +144,11 @@
 
             <td valign="top" headers="d118255e21" class="stentry">push values </td>
 
-            <td valign="top" headers="d118255e24" class="stentry">push the value to the object array,the object element must be array
+            <td valign="top" headers="d118255e24" class="stentry">push the value to the object array, the object element must be array
               type.</td>
 
             <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$push:{array:2}})</p>
-
+              db.foo.bar.update({$push:{array:2}})
             </td>
 
           </tr>
@@ -172,12 +157,12 @@
 
             <td valign="top" headers="d118255e21" class="stentry">push array</td>
 
-            <td valign="top" headers="d118255e24" class="stentry">push each of values in the specified array to the object array,the object
-              element must be array type.</td>
+            <td valign="top" headers="d118255e24" class="stentry">push each of values in the specified array to the object array, the object
+              element must be array <div class="fig fignone"/>
+type.</td>
 
             <td valign="top" headers="d118255e27" class="stentry">
-              <p class="p">db.foo.bar.update({$push_all:{array:[2,3,4}})</p>
-
+              db.foo.bar.update({$push_all:{array:[2,3,4}})
             </td>
 
           </tr>

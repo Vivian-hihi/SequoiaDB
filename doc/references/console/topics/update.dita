@@ -39,7 +39,7 @@
           <strow>
             <stentry><xref href="pop.dita">$pop</xref></stentry>
             <stentry> 消除数组中最后 N 个数值</stentry>
-            <stentry> 删除数组中最后 N 个数值，目标字段必须为数组（如果 N 小于0意味着从数组起始删除第 -N 个数值） 。</stentry>
+            <stentry> 删除数组中最后 N 个数值，目标字段必须为数组（如果 N 小于0意味着从数组起始删除第 -N 个数值）。</stentry>
             <stentry> db.foo.bar.update({$pop:{array:2}}) </stentry>
           </strow>
           <strow>
