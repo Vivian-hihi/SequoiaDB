@@ -1,0 +1,100 @@
+<!--@param ${test.environment} : the control the test Environment -->
+<!--@param ${WORKSPACE}: The path where the deploy directory -->
+<!--@param ${ci.script.file.path} : the ci-script file path -->
+<!--@param ${deploy.conffile.wildcard}: deploy config file wildcard. just for debug -->
+<!--@param ${is.test}: the flag for whether execute test, if set false, then just deploy. just for debug -->
+<!--@param ${BUILD_NUMBER} : what number is it build -->
+<project name="deploy-test-all" default="copy-test-log">
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<pathelement location="${ci.script.file.path}/exec-tools/ant-sdbtasks.jar" />
+		</classpath>
+	</taskdef>
+	<hostinfo prefix="host" />
+	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
+	<property file="${ci.script.file.path}/ci.test.properties" />
+	<property name="release.path" value="${WORKSPACE}/release" />
+	<property file="${release.path}/build.version" />
+	<property name="is.test" value="true" />
+
+	<target name="tar" depends="" >
+		<echo message="tar the test file in deploy-test-all.xml" />
+		<tar destfile="${WORKSPACE}/${deploy.tar.file.name}" basedir="${WORKSPACE}" includes="deploy/**/*" compression="gzip" />
+	</target>
+
+	<target name="clean" depends="tar">
+		<delete dir="${WORKSPACE}/reports" />
+		<mkdir dir="${WORKSPACE}/reports" />
+	</target>
+
+	<target name="deploy-test-all" depends="clean">
+		<echo message="Begin deploy and test all ...deploy.config.path= ${deploy.config.path}" />
+		<property name="deploy.conffile.wildcard" value="*" />
+
+		<foreach target="deploy-one-case-and-test" param="deploy.case.fullname">
+			<path>
+				<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
+			</path>
+			<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+		</foreach>
+	</target>
+
+	<target name="clean-deploy-env-before-test" depends="">
+		<echo message="Begin to clean test env..." />
+
+		<parallel>
+			<ant antfile="deploy-software-in-host.xml" dir="." target="uninstall-software" inheritAll="false">
+				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
+				<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
+			</ant>
+
+			<ant antfile="deploy-software-in-host.xml" dir="." target="uninstall-software" inheritAll="false">
+				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
+				<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
+			</ant>
+
+			<ant antfile="deploy-software-in-host.xml" dir="." target="uninstall-software" inheritAll="false">
+				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
+			</ant>
+		</parallel>
+	</target>
+
+	<target name="deploy-one-case-and-test" depends="clean-deploy-env-before-test">
+		<echo message="Begin to deploy one case and test.... deploy file=${deploy.case.fullname},deploy.file.fullname=${deploy.file.fullname}" />
+		<echo message="antfile  -f ${deploy.case.fullname} --target=deploy -Dant.sdb.tasks.path=${ci.script.file.path}/ant-tasks -Dinstall.path=${install.path} -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy -DUSE.MONGODB=${USE.MONGODB}" />
+
+		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="deploy" inheritAll="true">
+			<property name="ant.sdb.tasks.path" value="${ci.script.file.path}/ant-sdbtask" />
+			<property name="install.path" value="${install.path}" />
+			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
+			<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+			<property name="deploy.path" value="${WORKSPACE}/deploy" />
+		</ant>
+
+		<if>
+			<equals arg1="${is.test}" arg2="true" />
+			<then>
+				<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="test" inheritAll="true">
+					<property name="ant.sdb.tasks.path" value="${ci.script.file.path}/ant-tasks" />
+					<property name="install.path" value="${install.path}" />
+					<property name="deploy.path" value="${WORKSPACE}/deploy" />
+					<property name="test.reports.path" value="${WORKSPACE}/reports" />
+					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<property name="WORKSPACE" value="${WORKSPACE}" />
+				</ant>
+			</then>
+		</if>
+
+		<echo message="Deploy ${deploy.case.fullname} complete. " />
+	</target>
+
+	<target name="copy-test-log" depends="deploy-test-all" >
+		<echo message="tarPath is : ${WORKSPACE}/${host.NAME}-copy-log" />
+		<echo message="saveHostName is ${target.deploy_tar_gz.ip}" />
+		<echo message="fileHostName is ${host.NAME}" />
+		<echo message="tar basedir=${WORKSPACE}/${host.NAME}-copy-log   destfile=${WORKSPACE}/${host.NAME}-copy-log.${BUILD_NUMBER}" />
+
+		<tar basedir="${WORKSPACE}" destfile="${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz" compression="gzip" includes="${host.NAME}-copy-log/**" />
+	</target>
+
+</project>

@@ -1,0 +1,43 @@
+<!--@param ${testcase.path}: The path where test case direcotry.-->
+<!--@param ${reports.path}: The path where test case direcotry.-->
+<!--@param ${deploy.case.fullname}: The run in which env -->
+<!--@param ${python-bin.dir} : The python-bin's director-->
+<!--@param ${pythonunit.phar.dir} : The pythonunit.pythonar's director-->
+
+<project name="exec-driver-python-test" default="exec-driver-python-test">
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+	<property file="${ci.properties.path}" />
+
+	<target name="clean-env" depends="">
+		<echo message="reports.path=${reports.path}" />
+		<delete dir="${reports.path}" failonerror="false" />
+		<mkdir dir="${reports.path}" />
+	</target>
+
+	<target name="exec-driver-python-test" depends="clean-env">
+
+		<echo message="test one case is TestPySequoiadb.py" />
+		<copy todir="${install.path}/sequoiadb/python">
+			<fileset dir="${testcase.path}" includes="**/*.py" />
+		</copy>
+
+		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;testsuite hostname=&quot;${host.NAME}&quot; errors=&quot;0&quot; failures=&quot;0&quot; tests=&quot;1&quot;&gt;&#10;&lt;testcase name=&quot;TestPySequoiadb.py&quot; &gt;&#10;" />
+		<exec executable="/usr/bin/python" failonerror="false" dir="${install.path}/sequoiadb/python" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
+			<arg line=" TestPySequoiadb.py" />
+		</exec>
+		<if>
+			<not>
+				<equals arg1="${ret.code}" arg2="0" />
+			</not>
+			<then>
+				 <echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;failure command=&quot;python TestPySequoiadb.py&quot; dir=&quot;${install.path}/sequoiadb/python&quot; returncode=&quot;${ret.code};&quot; &gt;&#10;&lt;![CDATA[errormessage=${error.output} ]]&gt;&#10; &lt;screen error=&quot; ${screen.output}&quot; /&gt;&#10;&lt;/failure&gt;&#10;" />
+			</then>
+		</if>
+		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;/testcase&gt;&#10;&lt;/testsuite&gt;&#10;" />
+	</target>
+
+</project>

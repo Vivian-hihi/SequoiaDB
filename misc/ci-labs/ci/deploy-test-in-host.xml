@@ -1,0 +1,30 @@
+<!--@param ${deploy.file.fullname} : The test deploy tar full file name -->
+<!--@param ${deploy.host.name} :  The host name for deploy test scripts and install software-->
+
+
+<project name="deploy-test-in-host" default="deploy-test-in-host">
+	 <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<pathelement location="${ci.script.path}/exec-tools/ant-sdbtasks.jar" />
+		</classpath>
+	</taskdef> 
+	<property file="ci.test.properties" />
+	<property name="is.standalone.mode" value="false" />
+	<property name="catalog.addrs" value="" />
+	<property name="is.coord.master" value="true" />
+
+	<target name="clean-deploy-test-in-host" depends="">
+		<stafTools workHost="${deploy.host.name}" workType="delete" fileName="${test.machine.deploy.path}" />
+		<stafTools workHost="${deploy.host.name}" workType="create" fileName="${test.machine.deploy.path}" />
+	</target>
+
+	<target name="deploy-test-in-host" depends="clean-deploy-test-in-host">
+		<stafTools workType="copy" fileName="${deploy.file.fullname}" saveDir="${test.machine.deploy.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="copy" fileName="${basedir}/install-test-in-host.xml" saveDir="${test.machine.deploy.path}" toHost="${deploy.host.name}" />
+    	<stafTools workHost="${deploy.host.name}" workDir="${test.machine.deploy.path}" workType="shell"
+    	   common="ant -l ${test.machine.deploy.path}/install-test-in-host.log -f ${test.machine.deploy.path}/install-test-in-host.xml -Dtest.basedir=${test.machine.deploy.path} -Ddeploy.tar.file.name=${deploy.tar.file.name}" />
+		<stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.deploy.path}/install-test-in-host.log" />    
+	</target>
+
+</project>
+

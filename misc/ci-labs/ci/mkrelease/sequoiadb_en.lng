@@ -1,0 +1,21 @@
+Install.Paramers.user.title=Confiture user information
+Install.Paramers.user.explanation=Please insert the desired username and password
+Install.Paramers.user.username.description=User Name
+Install.Paramers.user.password.description=Password
+Install.Paramers.user.reentry_password.description=Re-enter
+Install.Paramers.user.password.error=The password must not be empty
+Install.Paramers.port.title=SDBCM Port
+Install.Paramers.port.Description=Port
+Install.Paramers.port.explanation=SequoiaDB Cluster Manager port
+Install.Paramers.processAutoStart.explanation=Do You Want To Start The Process When Machine Restart
+Install.Paramers.processAutoStart.Description=Process Auto Start
+
+Install.ErrorMsg.CreateGroup.error=Warning:Group name is exist already, skip create group action
+Install.ErrorMsg.CreateUser.error=Warning:User name is exist already, skip create group action
+Install.ErrorMsg.CreateWindowsService.error=Failed to create Sequoiadb Cluster Manager Service(sdbcm)
+Install.ErrorMsg.CreateLinuxService.error=Failed to create Sequoiadb Cluster Manager Service(sdbcm)
+Install.ErrorMsg.ChangeInsallerPathPermissions.error=Failed to change file permissions: ${installdir}/bin
+Install.ErrorMsg.StartWindowsService.error=Failed to start Sequoiadb Cluster Manager Service(sdbcm)
+Install.ErrorrMsg.StopSdbCm.error=Failed to stop Sequoiadb Cluster Manager Service(sdbcm)
+Install.ErrorMsg.StopSequoiadb.error=Failed to stop SequoiaDB database service
+Install.ErrorMsg.DeleteUser.error=Failed to delete user:${username}
