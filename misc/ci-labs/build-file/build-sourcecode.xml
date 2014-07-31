@@ -18,13 +18,13 @@
 	<property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
 
 	<target name="ready" depends="">
-  		<delete file="${CODE_DIR}/misc/ci/ci.build.properties" failonerror="false" />
+  		<delete file="${CODE_DIR}/misc/ci-labs/ci.build.properties" failonerror="false" />
   		<delete dir="${RELEASE_DIR}/" failonerror="false" />
-		<echo message="copy the ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} file to be named ${CODE_DIR}/misc/ci/ci.build.properties" />
-		<copy file="${CODE_DIR}/misc/ci/ci-properies-files/ci.build.properties.${CPU.version}" tofile="${CODE_DIR}/misc/ci/ci.build.properties" />
-		<echo message="copy ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} to ${CODE_DIR}/misc/ci/ci.build.properties is OK" />
+		<echo message="copy the ${CODE_DIR}/misc/ci-labs/ci.build.properties.${CPU.version} file to be named ${CODE_DIR}/misc/ci-labs/ci.build.properties" />
+		<copy file="${CODE_DIR}/misc/ci-labs/ci-properies-files/ci.build.properties.${CPU.version}" tofile="${CODE_DIR}/misc/ci-labs/ci.build.properties" />
+		<echo message="copy ${CODE_DIR}/misc/ci-labs/ci.build.properties.${CPU.version} to ${CODE_DIR}/misc/ci-labs/ci.build.properties is OK" />
 		
-		<property file="${CODE_DIR}/misc/ci/ci.build.properties" />	
+		<property file="${CODE_DIR}/misc/ci-labs/ci.build.properties" />	
   	</target>
 
 	<target name="compile-src" depends="ready">
@@ -66,13 +66,13 @@
 
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
 		<echo>
-			/usr/bin/gcc  ${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include
+			/usr/bin/gcc  ${CODE_DIR}/misc/ci-labs/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci-labs/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include
 		</echo>
-		<exec executable="/usr/bin/gcc" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true">
-    		<arg line="${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
+		<exec executable="/usr/bin/gcc" dir="${CODE_DIR}/misc/ci-labs/exec-tools" failonerror="true">
+    		<arg line="${CODE_DIR}/misc/ci-labs/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci-labs/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
     	</exec>
-    	<exec executable="${CODE_DIR}/misc/ci/exec-tools/print_version" dir="${CODE_DIR}/misc/ci/exec-tools/" failonerror="true" outputproperty="project.version" />
-    	<echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />	
+    	<exec executable="${CODE_DIR}/misc/ci-labs/exec-tools/print_version" dir="${CODE_DIR}/misc/ci-labs/exec-tools/" failonerror="true" outputproperty="project.version" />
+    	<echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci-labs/ci.build.properties" append="true" />	
 		<echo message="compile source code completed." />		
 	</target>
 
@@ -294,9 +294,9 @@
 			<fileset dir="${RELEASE_DIR}/sequoiadb" includes="**/.svn" />
 		</delete>
 
-		<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_server.xml" todir="${RELEASE_DIR}/" />
-		<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_en.lng" todir="${RELEASE_DIR}/" />
-		<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb_zh.lng" todir="${RELEASE_DIR}/" />
+		<copy file="${CODE_DIR}/misc/ci-labs/mkrelease/sequoiadb_server.xml" todir="${RELEASE_DIR}/" />
+		<copy file="${CODE_DIR}/misc/ci-labs/mkrelease/sequoiadb_en.lng" todir="${RELEASE_DIR}/" />
+		<copy file="${CODE_DIR}/misc/ci-labs/mkrelease/sequoiadb_zh.lng" todir="${RELEASE_DIR}/" />
 
 		<touch file="${RELEASE_DIR}/license_empty.txt" />
 		<exec dir="${RELEASE_DIR}" executable="builder" failonerror="true">

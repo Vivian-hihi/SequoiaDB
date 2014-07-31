@@ -3,7 +3,7 @@
 <!--@param ${BUILD_NUMBER}:  The build number. this param pass by jenkins-->
 
 <project name="copy_tar_build" default="copy_tar_build">
-	<property file="${WORKSPACE}/sequoiadb/misc/ci/ci.build.properties" />	
+	<property file="${WORKSPACE}/sequoiadb/misc/ci-labs/ci.build.properties" />	
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
@@ -47,7 +47,7 @@
 		<if>
 			<equals arg1="${compile.debug}" arg2="false" />
 			<then>
-				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci/build.version" comment="true">
+				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci-labs/build.version" comment="true">
 					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
 					<entry key="BUILD.INSTALL.FILENAME" value="${software.package.name}" type="string" />
 					<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />								
@@ -55,7 +55,7 @@
 				</propertyfile>
 			</then>
 			<else>
-				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci/build.version" comment="true">
+				<propertyfile file="${WORKSPACE}/sequoiadb/misc/ci-labs/build.version" comment="true">
 					<entry key="BUILD.NUMBER" value="${BUILD_NUMBER}" type="string" />
 					<entry key="BUILD.INSTALL.FILENAME" value="${software.package.name}" type="string" />
 					<entry key="BUILD.DRIVER.FILENAME" value="${driver.package.name}" type="string" />							
@@ -63,7 +63,7 @@
 			</else>
 		</if>
 
-		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${WORKSPACE}/sequoiadb/misc/ci/build.version TODIRECTORY ${copy_tar} TOMACHINE LOCAL" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${WORKSPACE}/sequoiadb/misc/ci-labs/build.version TODIRECTORY ${copy_tar} TOMACHINE LOCAL" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
 			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
 			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
 			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
