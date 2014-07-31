@@ -105,6 +105,8 @@ namespace engine
       rc = _restAdptor.init( _fixBufSize, _maxRestBodySize, _restTimeout ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init rest adptor, rc: %d", rc ) ;
 
+      _checkTaskTimer = NET_INVALID_TIMER_ID ;
+
    done:
       return rc;
    error:
@@ -259,6 +261,15 @@ namespace engine
          goto error ;
       }
 
+      // register task timer
+      _checkTaskTimer = setTimer( 2 * OSS_ONE_SEC ) ;
+      if ( NET_INVALID_TIMER_ID == _checkTaskTimer )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Failed to set timer" ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -276,6 +287,13 @@ namespace engine
          killTimer( _checkSessionTimer ) ;
          _checkSessionTimer = NET_INVALID_TIMER_ID ;
       }
+
+      if ( NET_INVALID_TIMER_ID != _checkTaskTimer )
+      {
+         killTimer( _checkTaskTimer ) ;
+         _checkTaskTimer = NET_INVALID_TIMER_ID ;
+      }
+
       return SDB_OK ;
    }
 
@@ -342,6 +360,10 @@ namespace engine
       {
          _checkSession( interval ) ;
       }
+      else if ( timerID == _checkTaskTimer )
+      {
+         checkTaskStatus( _omTaskInfo._taskID ) ;
+      }
    }
 
    INT32 _omManager::authenticate( BSONObj &obj, pmdEDUCB *cb )
@@ -359,6 +381,25 @@ namespace engine
       {
          goto error ;
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::authUpdatePasswd( string user, string oldPasswd,
+                                       string newPasswd, pmdEDUCB *cb )
+   {
+      INT32 rc            = SDB_OK ;
+      SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
+      if ( NULL == pAuthCB )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = pAuthCB->updatePasswd( user, oldPasswd, newPasswd, cb ) ;
 
    done:
       return rc ;
@@ -809,6 +850,12 @@ namespace engine
    void _omManager::finishInstallTask( BSONObj &taskDetail )
    {
       _omTaskInfo._isAllFinished = true ;
+      string status = taskDetail.getStringField( OM_BSON_TASK_STATUS ) ;
+      if ( status.compare( OM_TASK_STATUS_ROLLBACK ) == 0 )
+      {
+         _omTaskInfo._status = OM_TASK_STATUS_ERROR_ROLLBACK ;
+      }
+
       if ( OM_TASK_STATUS_ERROR_ROLLBACK == _omTaskInfo._status )
       {
          _omTaskInfo._status = OM_TASK_STATUS_ERROR_FINISH ;
@@ -827,67 +874,17 @@ namespace engine
 
    void _omManager::updateInstallTask( BSONObj &taskDetail )
    {
+      string status = taskDetail.getStringField( OM_BSON_TASK_STATUS ) ;
+      if ( status.compare( OM_TASK_STATUS_ROLLBACK ) == 0 )
+      {
+         _omTaskInfo._status = OM_TASK_STATUS_ERROR_ROLLBACK ;
+      }
+
       if ( OM_TASK_STATUS_DOING == _omTaskInfo._status )
       {
          _omTaskInfo._progress = taskDetail.getObjectField( 
                                                        OM_BSON_TASK_PROGRESS ) ;
       }
-   }
-
-   void _omManager::rollBackTask( BSONObj &result )
-   {
-      INT32 rc          = SDB_OK ;
-      _pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
-      CHAR* pContent    = NULL ;
-      INT32 contentSize = 0 ;
-      pmdRemoteSession *remoteSession = NULL ;
-      BSONObjBuilder builder ;
-      BSONObj msg ;
-
-      if ( OM_TASK_STATUS_DOING != _omTaskInfo._status )
-      {
-         goto done ;
-      }
-
-      builder.append( OM_BSON_TASKID, _omTaskInfo._taskID ) ;
-      msg = builder.obj() ;
-      rc = msgBuildQueryMsg( &pContent, &contentSize, OM_ROLLBACK_INSTALL_REQ, 
-                             0, 0, 0, -1, &msg, NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "build query msg failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      remoteSession = getRSManager()->addSession( cb, OM_WAIT_SCAN_RES_INTERVAL, 
-                                                  NULL ) ;
-      if ( NULL == remoteSession )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "addSession failed" ) ;
-         SDB_OSS_FREE( pContent ) ;
-         goto error ;
-      }
-
-      rc = _sendMsgToLocalAgent( remoteSession, ( MsgHeader * )pContent ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
-         SDB_OSS_FREE( pContent ) ;
-         goto error ;
-      }
-
-      _omTaskInfo._status   = OM_TASK_STATUS_ERROR_ROLLBACK ;
-      _omTaskInfo._detail   = result.getStringField( OM_REST_RES_DETAIL ) ;
-      _omTaskInfo._progress = result.getObjectField( OM_BSON_TASK_PROGRESS ) ;
-      _omTaskInfo._isAllFinished = result.getStringField( 
-                                                       OM_BSON_ISFINISHED ) ;
-
-   done:
-      _clearSession( cb, remoteSession ) ;
-      return;
-   error:
-      goto done ;
    }
 
    INT32 _omManager::_sendMsgToLocalAgent( pmdRemoteSession *remoteSession, 
@@ -1018,6 +1015,13 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
       BSONObjBuilder builder ;
       BSONObj msg ;
+
+      if ( OM_TASK_STATUS_IDLE == _omTaskInfo._status 
+           || _omTaskInfo._isAllFinished )
+      {
+         goto done ;
+      }
+      
       builder.append( OM_BSON_TASKID, taskID ) ;
       msg = builder.obj() ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, OM_INSTALL_BUSINESS_REQ, 
@@ -1028,7 +1032,8 @@ namespace engine
          goto error ;
       }
       
-      remoteSession = getRSManager()->addSession( cb, OM_WAIT_SCAN_RES_INTERVAL, NULL ) ;
+      remoteSession = getRSManager()->addSession( cb, OM_WAIT_SCAN_RES_INTERVAL,
+                                                  NULL ) ;
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
@@ -1057,7 +1062,6 @@ namespace engine
       rc = result.getIntField( OM_REST_RES_RETCODE ) ;
       if ( SDB_OK != rc )
       {
-         rollBackTask( result ) ;
          string errorInfo = result.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "%s", errorInfo.c_str(), rc ) ;
          goto error ;
@@ -1075,6 +1079,7 @@ namespace engine
 
    done:
       _clearSession( cb, remoteSession ) ;
+      return ;
    error:
       goto done ;
    }

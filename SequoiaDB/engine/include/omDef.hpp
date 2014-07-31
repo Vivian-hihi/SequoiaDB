@@ -173,6 +173,18 @@ namespace engine
    #define  OM_REST_FIELD_TIMESTAMP          "Timestamp"
    // *****************************************************************
 
+   // *********************om rest logout_req***************************
+   #define  OM_LOGOUT_REQ                    "logout"
+
+   // *****************************************************************
+
+
+   // *********************om rest change passwd***********************
+   #define  OM_CHANGE_PASSWD_REQ             "change passwd"
+
+   #define  OM_REST_FIELD_NEW_PASSWD         "NewPasswd"
+   // *****************************************************************
+
    // *******************om rest check_session_req*********************
    #define  OM_CHECK_SESSION_REQ             "check session"
    // *****************************************************************
@@ -334,12 +346,16 @@ namespace engine
    #define  OM_REST_TASK_INFO                "Task"
 
    #define  OM_BSON_TASKID                   "TaskID"
-   #define  OM_BSON_ISFINISHED               "isAllFinish"
+   #define  OM_BSON_ISFINISHED               "IsFinish"
+   #define  OM_BSON_TASK_STATUS              "Status"
    #define  OM_BSON_TASK_PROGRESS            "Progress"
    #define  OM_BSON_ITEM_NAME                "Name"
    #define  OM_BSON_TOTAL_COUNT              "TotalCount"
    #define  OM_BSON_INSTALLED_COUNT          "InstalledCount"
    #define  OM_BSON_ITEM_DESC                "Desc"
+
+   #define  OM_TASK_STATUS_INSTALL           "install"
+   #define  OM_TASK_STATUS_ROLLBACK          "rollback"
 
 
    // milliseconds

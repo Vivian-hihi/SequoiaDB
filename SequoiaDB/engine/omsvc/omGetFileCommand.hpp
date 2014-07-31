@@ -52,20 +52,51 @@ namespace engine
    {
       public:
          omAuthCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession, 
-                       const CHAR *pRootPath) ;
+                        const CHAR *pRootPath ) ;
 
          ~omAuthCommand() ;
 
       public:
          virtual INT32   doCommand() ;
 
-      private:
+      protected:
          void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
-         
-      private:
+         void            _decryptPasswd( const string encryptPasswd, 
+                                         string time,
+                                         string &decryptPasswd) ;
+
+      protected:
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
          string          _rootPath ;
+   };
+
+   class omLogoutCommand : public omAuthCommand
+   {
+      public:
+         omLogoutCommand( restAdaptor *pRestAdaptor, 
+                          pmdRestSession *pRestSession, 
+                          const CHAR *pRootPath ) ;
+         ~omLogoutCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+   };
+
+   class omChangePasswdCommand : public omAuthCommand
+   {
+      public:
+         omChangePasswdCommand( restAdaptor *pRestAdaptor, 
+                                pmdRestSession *pRestSession, 
+                                const CHAR *pRootPath ) ;
+         ~omChangePasswdCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      private:
+         INT32           _getRestDetail( string &user, string &oldPasswd, 
+                                         string &newPasswd, string &time ) ;
    };
 
    class omCheckSessionCommand : public omCommandInterface
@@ -78,7 +109,7 @@ namespace engine
 
       public:
          virtual INT32   doCommand() ;
-         
+
       protected:
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
@@ -157,8 +188,8 @@ namespace engine
          string          _localAgentService ;
 
       private:
-         
-         
+
+
    };
 
    class omCheckHostCommand : public omScanHostCommand
@@ -245,7 +276,7 @@ namespace engine
          virtual INT32   doCommand() ;
    } ;
 
-   
+
    class omQueryBusinessCommand : public omCreateClusterCommand
    {
       public:
@@ -285,7 +316,7 @@ namespace engine
       protected:
 
    } ;
-   
+
    class omConfigBusinessCommand : public omQueryBusinessTemplateCommand
    {
       public:

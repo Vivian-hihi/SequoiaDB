@@ -165,6 +165,7 @@ namespace engine
          INT32             getFixBuffSize () const ;
 
          BOOLEAN           isAuthOK() ;
+         string            getLoginUserName() ;
          const CHAR*       getSessionID() ;
 
       protected:

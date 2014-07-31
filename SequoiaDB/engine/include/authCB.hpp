@@ -66,6 +66,9 @@ namespace engine
 
       INT32 createUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w = 1 ) ;
 
+      INT32 updatePasswd( const string &user, const string &oldPasswd, 
+                          const string &newPasswd, _pmdEDUCB *cb ) ;
+
       INT32 removeUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w = 1 ) ;
 
       INT32 authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;

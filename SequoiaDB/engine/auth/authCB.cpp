@@ -182,6 +182,35 @@ namespace engine
       goto done ;
    }
 
+   INT32 _authCB::updatePasswd( const string &user, const string &oldPasswd, 
+                                const string &newPasswd, _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObj condition = BSON( SDB_AUTH_USER << user << SDB_AUTH_PASSWD
+                                << oldPasswd );
+      BSONObj tmp       = BSON( SDB_AUTH_PASSWD << newPasswd ) ;
+      BSONObj obj       = BSON( "$set" << tmp ) ;
+      {
+         SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
+         SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+         BSONObj hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
+         rc = rtnUpdate( AUTH_USR_COLLECTION, condition, obj, hint,
+                         0, cb, dmsCB, dpsCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to update passwd for %s in %s:rc=%d", 
+                    user.c_str(), AUTH_USR_COLLECTION, rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_REMOVEUSR, "_authCB::removeUsr" )
    INT32 _authCB::removeUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w )
    {

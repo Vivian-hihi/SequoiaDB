@@ -161,6 +161,8 @@ namespace engine
          pmdRemoteSessionMgr* getRSManager() { return &_rsManager ; }
 
          INT32             authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
+         INT32             authUpdatePasswd( string user, string oldPasswd,
+                                             string newPasswd, pmdEDUCB *cb ) ;
 
          BOOLEAN           isInstallTaskExist( ) ;
          void              getTaskWriteLock() ;
@@ -172,7 +174,6 @@ namespace engine
          void              getInstallTask( INT32 &status, string &taskID, 
                                            bool &isAllFinished, string &detail, 
                                            BSONObj &progress ) ;
-         void              rollBackTask( BSONObj &result ) ;
          void              finishInstallTask( BSONObj &result ) ;
          void              checkTaskStatus( string taskID ) ;
          void              updateInstallTask( BSONObj &taskDetail ) ;
@@ -244,6 +245,8 @@ namespace engine
          string                                 _wwwRootPath ;
          omTaskInfo                             _omTaskInfo ;
          ossSpinSLatch                          _taskLatch ;
+         UINT32                                 _checkTaskTimer ;
+
 
    } ;
 

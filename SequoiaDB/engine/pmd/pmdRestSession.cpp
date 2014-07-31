@@ -348,27 +348,37 @@ namespace engine
 
          PD_LOG( PDEVENT, "OM: command:command=%s", pSubCommand ) ;
          //TODO temperately close authrity!!!!!!!!!!!
-//         if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
-//              && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
-//              && !isAuthOK() )
-//         {
-//            // except login_rep and check_seesion_req, other commands can only 
-//            // execute in authrity status
-//            BSONObjBuilder builder ;
-//            builder.append( OM_REST_RES_RETCODE, 
-//                            SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
-//            builder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
-//            pAdptor->setOPResult( this, SDB_AUTH_AUTHORITY_FORBIDDEN, 
-//                                  builder.obj() ) ;
-//            pAdptor->sendResponse( this, HTTP_OK ) ;
-//            PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
-//            goto error ;
-//         }
+         if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
+              && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
+              && !isAuthOK() )
+         {
+            // except login_rep and check_seesion_req, other commands can only 
+            // execute in authrity status
+            BSONObjBuilder builder ;
+            builder.append( OM_REST_RES_RETCODE, 
+                            SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
+            builder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
+            pAdptor->setOPResult( this, SDB_AUTH_AUTHORITY_FORBIDDEN, 
+                                  builder.obj() ) ;
+            pAdptor->sendResponse( this, HTTP_OK ) ;
+            PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
+            goto error ;
+         }
          
          if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omAuthCommand( pAdptor, this, 
                                                    _wwwRootPath.c_str() ) ;
+         }
+         else if( ossStrcasecmp( pSubCommand, OM_LOGOUT_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omLogoutCommand( pAdptor, this, 
+                                                     _wwwRootPath.c_str() ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_CHANGE_PASSWD_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omChangePasswdCommand( pAdptor, this, 
+                                                         _wwwRootPath.c_str()) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
          {
@@ -537,6 +547,16 @@ namespace engine
       }
 
       return FALSE ;
+   }
+
+   string _pmdRestSession::getLoginUserName()
+   {
+      if ( isAuthOK() )
+      {
+         return _pSessionInfo->_attr._userName ;
+      }
+
+      return "" ;
    }
 
    const CHAR* _pmdRestSession::getSessionID()

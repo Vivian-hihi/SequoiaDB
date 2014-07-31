@@ -83,10 +83,17 @@ namespace engine
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
    }
 
+   void omAuthCommand::_decryptPasswd( const string encryptPasswd, string time,
+                                       string &decryptPasswd )
+   {
+      decryptPasswd = encryptPasswd ;
+   }
+
    INT32 omAuthCommand::doCommand()
    {
       const CHAR *pUserName        = NULL ;
       const CHAR *pPasswd          = NULL ;
+      const CHAR *pTime            = NULL ;
       INT32 rc                     = SDB_OK ;
       ossSocket *socket            = NULL ;
       restSessionInfo *sessionInfo = NULL ;
@@ -95,17 +102,27 @@ namespace engine
       BSONObj bsonRes ;
       BSONObj bsonAuth ;
       md5::md5digest digest ;
+      string realPasswd ;
 
-      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_LOGIN_NAME, &pUserName ) ;
-      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_LOGIN_PASSWD, &pPasswd ) ;
-
-      if ( ( NULL == pUserName ) || ( NULL == pPasswd ) )
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_NAME, 
+                              &pUserName ) ;
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_PASSWD, 
+                              &pPasswd ) ;
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TIMESTAMP, &pTime ) ;
+      if ( ( NULL == pUserName ) || ( NULL == pPasswd ) || ( NULL == pTime ) )
       {
-         _sendErrorRes2Web( SDB_INVALIDARG, "username or passwd is null" ) ;
+         string errorInfo = string( OM_REST_FIELD_LOGIN_NAME ) + " or " 
+                            + OM_REST_FIELD_LOGIN_PASSWD + " or " 
+                            + OM_REST_FIELD_TIMESTAMP + " is null" ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( SDB_INVALIDARG, errorInfo.c_str() ) ;
          goto error ;
       }
 
-      md5::md5( ( void * )pPasswd, strlen( pPasswd ), digest) ;
+      //TODO: encrypt the passwd when through rest
+      _decryptPasswd( pPasswd, pTime, realPasswd ) ;
+      md5::md5( ( const void * )realPasswd.c_str(), realPasswd.length(), 
+                digest) ;
       authBuilder.append( SDB_AUTH_USER, pUserName ) ;
       authBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
       bsonAuth = authBuilder.obj() ;
@@ -162,6 +179,190 @@ namespace engine
          sessionInfo = NULL ;
       }
       return SDB_OK ;
+   error:
+      goto done ;
+   }
+
+   // ********************onLogoutCommand********************************
+   omLogoutCommand::omLogoutCommand( restAdaptor *pRestAdaptor, 
+                                     pmdRestSession *pRestSession, 
+                                     const CHAR *pRootPath )
+                   :omAuthCommand( pRestAdaptor, pRestSession, pRootPath )
+   {
+   }
+
+   omLogoutCommand::~omLogoutCommand()
+   {
+   }
+
+   INT32 omLogoutCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      if ( _restSession->isAuthOK() )
+      {
+         sdbGetOMManager()->releaseSessionInfo( _restSession->getSessionID() ) ;
+      }
+
+      BSONObjBuilder resBuilder ;
+      resBuilder.append( OM_REST_RES_RETCODE, rc ) ;
+      resBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
+      _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      
+      return SDB_OK ;
+   }
+
+   // *****************omChangePasswdCommand *****************************
+   omChangePasswdCommand::omChangePasswdCommand( restAdaptor *pRestAdaptor, 
+                                                 pmdRestSession *pRestSession, 
+                                                 const CHAR *pRootPath )
+                         :omAuthCommand( pRestAdaptor, pRestSession, pRootPath )
+   {
+   }
+   
+   omChangePasswdCommand::~omChangePasswdCommand()
+   {
+   }
+
+   INT32 omChangePasswdCommand::_getRestDetail( string &user, string &oldPasswd, 
+                                                string &newPasswd, string &time )
+   {
+      INT32 rc               = SDB_OK ;
+      const CHAR *pUser      = NULL ;
+      const CHAR *pOldPasswd = NULL ;
+      const CHAR *pNewPasswd = NULL ;
+      const CHAR *pTime      = NULL ;
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_NAME, &pUser ) ;
+      if ( NULL == pUser )
+      {
+         rc = SDB_INVALIDARG ;
+         string errorInfo = string( OM_REST_FIELD_LOGIN_NAME ) + " is null" ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_PASSWD, 
+                              &pOldPasswd ) ;
+      if ( NULL == pOldPasswd )
+      {
+         rc = SDB_INVALIDARG ;
+         string errorInfo = string( OM_REST_FIELD_LOGIN_PASSWD ) + " is null" ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_NEW_PASSWD, 
+                              &pNewPasswd ) ;
+      if ( NULL == pNewPasswd )
+      {
+         rc = SDB_INVALIDARG ;
+         string errorInfo = string( OM_REST_FIELD_NEW_PASSWD ) + " is null" ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_TIMESTAMP, &pTime ) ;
+      if ( NULL == pTime )
+      {
+         rc = SDB_INVALIDARG ;
+         string errorInfo = string( OM_REST_FIELD_TIMESTAMP ) + " is null" ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      user      = pUser ;
+      newPasswd = pNewPasswd ;
+      oldPasswd = pOldPasswd ;
+      time      = pTime ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omChangePasswdCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      string user ;
+      string oldPasswd ;
+      string oldDecryptPasswd ;
+      md5::md5digest oldDigest ;
+      string newPasswd ;
+      string newDecryptPasswd ;
+      md5::md5digest newDigest ;
+      string time ;
+
+      BSONObjBuilder authBuilder ;
+      BSONObj bsonAuth ;
+
+      rc = _getRestDetail( user, oldPasswd, newPasswd, time ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get rest info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( user != _restSession->getLoginUserName() )
+      {
+         rc = SDB_INVALIDARG ;
+         string errorInfo = string( "can't not change other usr's passwd:" )
+                            + "myusr=" + _restSession->getLoginUserName()
+                            + ",usr=" + user ;
+         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
+      }
+
+      _decryptPasswd( oldPasswd, time, oldDecryptPasswd ) ;
+      md5::md5( ( const void * )oldDecryptPasswd.c_str(), 
+                oldDecryptPasswd.length(), oldDigest) ;
+      authBuilder.append( SDB_AUTH_USER, user ) ;
+      authBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( oldDigest ) ) ;
+      bsonAuth = authBuilder.obj() ;
+      rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
+      if ( SDB_OK != rc )
+      {
+         if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )
+         {
+            PD_LOG( PDERROR, "username or passwd is wrong:rc=%d", rc ) ;
+            _sendErrorRes2Web( rc, "username or passwd is wrong" ) ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "system error:rc=%d", rc ) ;
+            _sendErrorRes2Web( rc, "system error" ) ;
+         }
+
+         goto error ;
+      }
+
+      _decryptPasswd( newPasswd, time, newDecryptPasswd ) ;
+      md5::md5( ( const void * )newDecryptPasswd.c_str(), 
+                newDecryptPasswd.length(), newDigest) ;
+      rc = sdbGetOMManager()->authUpdatePasswd( user,
+                                               md5::digestToString( oldDigest ), 
+                                               md5::digestToString( newDigest ),
+                                               _cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "change passwd failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, "change passwd failed" ) ;
+         goto error ;
+      }
+
+      {
+         BSONObjBuilder resBuilder ;
+         resBuilder.append( OM_REST_RES_RETCODE, rc ) ;
+         _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      }
+
+   done:
+      return rc ;
    error:
       goto done ;
    }
@@ -3899,9 +4100,9 @@ namespace engine
       }
 
       sdbGetOMManager()->getTaskWriteLock() ;
-//      _testSaveTask() ;
-//      _testUpdateTask() ;
-//      _testFinishTask() ;
+      _testSaveTask() ;
+      _testUpdateTask() ;
+      _testFinishTask() ;
       sdbGetOMManager()->getInstallTask( status, taskID, isAllFinished, detail,
                                          progress ) ;
       sdbGetOMManager()->releaseTaskWriteLock() ;
