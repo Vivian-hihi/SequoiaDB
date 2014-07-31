@@ -3,7 +3,7 @@
 <topic id="topic_ttg_jf3_x4">
   <title>SQL to SequoiaDB shell to Python</title>
   <body>
-    <p>SequoiaDB 的查询用 dict（bson）对象表示，下表以例子的形式显示了 SQL 语句，SequoiaDB shell 语句和 SequoiaDB Python 驱动程序语法之间的对照。</p>
+    <p>SequoiaDB's query uses dict(bson)objects, the following table compares SQL cammands, SequoiaDB shell commands, SequoiaDB Python commands by some examples.</p>
     <simpletable >
       <sthead>
         <stentry>SQL</stentry>
@@ -71,6 +71,6 @@
     </simpletable>
   </body>
   <related-links>
-    <link href="../../../../references/sqlmapping/topics/sqlmapping.dita" format="dita" type="topics"></link>
+    <link href="../../../../references/sqlmapping/topics/sqlmapping_en.dita" format="dita" type="topics"></link>
   </related-links>
 </topic>
