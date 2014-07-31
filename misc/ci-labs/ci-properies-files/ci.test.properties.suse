@@ -9,18 +9,18 @@ deploy.tar.file.name=deploy.tar.gz
 test.machine.deploy.path=/tmp/postgresql_test
 test.machine.software.path=/tmp/postgresql
 
-save.testLog.hostname=bl465-4
+save.testLog.hostname=suse-test5
 save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
 copy_tar=/test_tar
-target.deploy_tar_gz.ip=bl465-4
+target.deploy_tar_gz.ip=suse-test5
 copy.log.path=/test_log
 
 coord.service.port=50000
-jenkins.master.ip=suse-stest1
-test.machine.no1.basic=suse-stest1
-test.machine.no2.basic=suse-stest2
-test.machine.no3.basic=suse-stest3
+jenkins.master.ip=suse-test6
+test.machine.no1.basic=suse-test6
+test.machine.no2.basic=suse-test7
+test.machine.no3.basic=suse-test8
 
-test.machine.no1.data=suse-stest1
-test.machine.no2.data=suse-stest2
-test.machine.no3.data=suse-stest3
+test.machine.no1.data=suse-test6
+test.machine.no2.data=suse-test7
+test.machine.no3.data=suse-test8
