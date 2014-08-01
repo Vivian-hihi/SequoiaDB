@@ -11,7 +11,7 @@
 	<!-- <property name="PATH_BUILDER" value="/opt/installbuilder-9.0.1/bin/" /> -->
 	<property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
 	<property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${CODE_DIR}/misc/ci-labs/exec-tools/ant-sdbtasks.jar" />
 		</classpath>
