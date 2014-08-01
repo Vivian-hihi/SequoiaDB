@@ -602,6 +602,10 @@ namespace engine
          else
          {
             offsetTmp = _notifyList[i].offset ;
+            while ( offsetTmp != _notifyList[i].offse )
+            {
+               offsetTmp = _notifyList[i].offset ;
+            }
             plan.insert( offsetTmp ) ;
          }
       }
