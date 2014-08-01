@@ -65,6 +65,7 @@ pmdFiles = [
       "pmd/pmdRemoteSession.cpp",
       "pmd/pmdEDUMgr.cpp",
       "pmd/pmdAgent.cpp",
+	  "pmd/pmdAsyncSessionAgent.cpp",
       "pmd/pmdTcpListener.cpp",
       "pmd/pmdSignalHandler.cpp",
       "pmd/pmdWindowsListener.cpp",

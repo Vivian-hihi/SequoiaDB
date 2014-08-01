@@ -695,7 +695,8 @@ namespace engine
       }
       // create local cs and collection
       rc = _replayer.replayCrtCS( cs.c_str(), pageSize, eduCB(),
-                                  CLS_REPL == type() ? TRUE : FALSE ) ;
+                                  SDB_SESSION_FS_DST == sessionType() ?
+                                  TRUE : FALSE ) ;
       rc = _replayer.replayCrtCollection( fullName, attributes, eduCB() ) ;
       if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
       {
@@ -1075,11 +1076,6 @@ namespace engine
    SDB_SESSION_TYPE _clsFSDstSession::sessionType() const
    {
       return SDB_SESSION_FS_DST ;
-   }
-
-   INT32 _clsFSDstSession::type() const
-   {
-      return CLS_REPL ;
    }
 
    EDU_TYPES _clsFSDstSession::eduType() const
@@ -1492,11 +1488,6 @@ namespace engine
    SDB_SESSION_TYPE _clsSplitDstSession::sessionType() const
    {
       return SDB_SESSION_SPLIT_DST ;
-   }
-
-   INT32 _clsSplitDstSession::type () const
-   {
-      return CLS_SHARD ;
    }
 
    EDU_TYPES _clsSplitDstSession::eduType () const

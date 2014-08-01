@@ -60,7 +60,6 @@ namespace engine
    #define CLS_BUFF_USING           (2)
    #define CLS_BUFF_FREE            (3)
 
-   class _clsMgr ;
    class _clsSessionMgr ;
 
    /*
@@ -121,7 +120,6 @@ namespace engine
    */
    class _clsSession : public _clsObjBase, public _ISession
    {
-      friend class _clsMgr ;
       friend class _clsSessionMgr ;
       DECLARE_OBJ_MSG_MAP()
 
@@ -133,7 +131,6 @@ namespace engine
          virtual const CHAR*     sessionName() const ;
          virtual INT32           getServiceType() const ;
 
-         virtual INT32 type () const = 0 ;
          virtual EDU_TYPES eduType () const = 0 ;
 
          virtual void    onRecieve ( const NET_HANDLE netHandle,
@@ -212,6 +209,7 @@ namespace engine
    */
    class _clsSessionMgr : public SDBObject
    {
+      public:
       typedef std::map<UINT64, _clsSession*>          MAPSESSION ;
       typedef MAPSESSION::iterator                    MAPSESSION_IT ;
 
@@ -237,7 +235,8 @@ namespace engine
             Note: The caller thread must be the net thread
          */
          INT32          pushMessage ( clsSession *pSession,
-                                      MsgHeader *header ) ;
+                                      const MsgHeader *header,
+                                      const NET_HANDLE &handle ) ;
 
          clsSession     *getSession( UINT64 sessionID, INT32 startType,
                                      const NET_HANDLE handle,
@@ -252,6 +251,10 @@ namespace engine
          virtual INT32  handleSessionTimeout( UINT32 timerID,
                                               UINT32 interval ) ;
 
+      public:
+         virtual UINT64       makeSessionID( const NET_HANDLE &handle,
+                                             const MsgHeader *header ) = 0 ;
+
       protected:
          /*
             Parse the session type
@@ -262,7 +265,8 @@ namespace engine
 
          virtual BOOLEAN      _canReuse( SDB_SESSION_TYPE sessionType ) = 0 ;
          virtual UINT32       _maxCatchSize() const = 0 ;
-         virtual void         _onPushMsgFailed( INT32 rc, MsgHeader *pReq,
+         virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
+                                                const NET_HANDLE &handle,
                                                 clsSession *pSession ) = 0 ;
          /*
             Create session
@@ -270,7 +274,7 @@ namespace engine
          virtual clsSession*  _createSession(  SDB_SESSION_TYPE sessionType,
                                                INT32 startType,
                                                UINT64 sessionID,
-                                               void *data) = 0 ;
+                                               void *data = NULL ) = 0 ;
 
       protected:
          INT32          _attachSessionMeta( clsSession *pSession,
@@ -282,11 +286,14 @@ namespace engine
                                             BOOLEAN postQuit,
                                             BOOLEAN delay ) ;
 
-      private:
+         INT32          _reply( const NET_HANDLE &handle, INT32 rc,
+                                const MsgHeader *pReqMsg ) ;
+
+      protected:
          void           _checkSession( UINT32 interval ) ;
          void           _checkSessionMeta( UINT32 interval ) ;
 
-      private:
+      protected:
          MAPSESSION                 _mapSession ;
          MAPMETA                    _mapMeta ;
          DEQSESSION                 _deqCatchSessions ;

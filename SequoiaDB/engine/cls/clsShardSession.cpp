@@ -109,11 +109,6 @@ namespace engine
       return SDB_SESSION_SHARD ;
    }
 
-   INT32 _clsShdSession::type () const
-   {
-      return CLS_SHARD ;
-   }
-
    EDU_TYPES _clsShdSession::eduType () const
    {
       return EDU_TYPE_SHARDAGENT ;

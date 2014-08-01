@@ -39,21 +39,19 @@
 
 namespace engine
 {
-   class _clsMgr;
+   class _clsSessionMgr ;
 
+   /*
+      _clsMsgHandler define
+   */
    class _clsMsgHandler : public _netMsgHandler
    {
       public:
-         _clsMsgHandler ( _clsMgr * pClsMgr ) ;
+         _clsMsgHandler( _clsSessionMgr *pSessionMgr ) ;
          virtual ~_clsMsgHandler () ;
-
-         virtual INT32 type () const = 0 ;
 
          OSS_INLINE void attach( pmdEDUCB *cb ) { _pMgrEDUCB = cb; }
          OSS_INLINE void detach() { _pMgrEDUCB = NULL; }
-
-         OSS_INLINE void attachShardCB( pmdEDUCB *cb ) { _pShardCB = cb ; }
-         OSS_INLINE void detachShardCB() { _pShardCB = NULL ; }
 
          virtual INT32 handleMsg( const NET_HANDLE &handle,
                                   const _MsgHeader *header,
@@ -67,40 +65,59 @@ namespace engine
                                  const _MsgHeader *header,
                                  const CHAR *msg );
 
-         INT32 handleClsMsg( const NET_HANDLE &handle,
-                             const _MsgHeader *header,
-                             const CHAR *msg );
+         INT32 handleMainMsg( const NET_HANDLE &handle,
+                              const _MsgHeader *header,
+                              const CHAR *msg ) ;
 
       protected:
-         _clsMgr              *_pClsMgr ;
+         virtual void _postMainMsg( const NET_HANDLE &handle,
+                                    MsgHeader *pNewMsg ) ;
+
+      protected:
+         _clsSessionMgr       *_pSessionMgr ;
          pmdEDUCB             *_pMgrEDUCB ;
-         pmdEDUCB             *_pShardCB ;
 
-   };
+   } ;
+   typedef _clsMsgHandler clsMsgHandler ;
 
+   /*
+      _shdMsgHandler define
+   */
    class _shdMsgHandler : public _clsMsgHandler
    {
       public:
-         _shdMsgHandler( _clsMgr * pClsMgr );
+         _shdMsgHandler( _clsSessionMgr *pSessionMgr ) ;
          virtual ~_shdMsgHandler();
 
-         virtual INT32 type () const ;
+         OSS_INLINE void attachShardCB( pmdEDUCB *cb ) { _pShardCB = cb ; }
+         OSS_INLINE void detachShardCB() { _pShardCB = NULL ; }
 
       protected:
+         virtual void _postMainMsg( const NET_HANDLE &handle,
+                                    MsgHeader *pNewMsg ) ;
 
-   };
+      protected:
+         pmdEDUCB             *_pShardCB ;
+   } ;
+   typedef _shdMsgHandler shdMsgHandler ;
 
+   /*
+      _replMsgHandler define
+   */
    class _replMsgHandler : public _clsMsgHandler
    {
       public:
-         _replMsgHandler ( _clsMgr * pClsMgr ) ;
+         _replMsgHandler ( _clsSessionMgr *pSessionMgr ) ;
          virtual ~_replMsgHandler () ;
 
-         virtual INT32 type () const ;
+         INT32 type () const ;
 
       protected:
+         virtual void _postMainMsg( const NET_HANDLE &handle,
+                                    MsgHeader *pNewMsg ) ;
 
-   };
+   } ;
+   typedef _replMsgHandler replMsgHandler ;
 
 }
 

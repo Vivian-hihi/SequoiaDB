@@ -47,7 +47,7 @@ namespace engine
       pmdEntryPoint rt = NULL ;
       static const _eduEntryInfo entry[] = {
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SHARDAGENT, FALSE,
-                                pmdShardAgentEntryPoint,
+                                pmdAsyncSessionAgentEntryPoint,
                                 "ShardAgent" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_COORDAGENT, FALSE,
                                 pmdAgentEntryPoint,
@@ -56,7 +56,7 @@ namespace engine
                                 pmdLocalAgentEntryPoint,
                                 "Agent" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_REPLAGENT, FALSE,
-                                pmdReplAgentEntryPoint,
+                                pmdAsyncSessionAgentEntryPoint,
                                 "ReplAgent" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_HTTPAGENT, FALSE,
                                 pmdHTTPAgentEntryPoint,

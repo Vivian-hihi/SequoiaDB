@@ -1177,11 +1177,6 @@ namespace engine
       return SDB_SESSION_FS_SRC ;
    }
 
-   INT32 _clsFSSrcSession::type() const
-   {
-      return CLS_REPL ;
-   }
-
    EDU_TYPES _clsFSSrcSession::eduType () const
    {
       return  EDU_TYPE_REPLAGENT ;
@@ -1505,11 +1500,6 @@ namespace engine
    SDB_SESSION_TYPE _clsSplitSrcSession::sessionType() const
    {
       return SDB_SESSION_SPLIT_SRC ;
-   }
-
-   INT32 _clsSplitSrcSession::type () const
-   {
-      return CLS_SHARD ;
    }
 
    EDU_TYPES _clsSplitSrcSession::eduType() const

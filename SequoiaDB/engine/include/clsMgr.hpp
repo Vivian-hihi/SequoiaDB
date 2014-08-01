@@ -57,6 +57,11 @@
 namespace engine
 {
 
+   class _clsMgr ;
+
+   /*
+      _innerSessionInfo define
+   */
    struct _innerSessionInfo : public SDBObject
    {
       INT32       type ;
@@ -64,7 +69,100 @@ namespace engine
       INT32       innerTid ;
       UINT64      sessionID ;
       void*       data ;
-   };
+   } ;
+   typedef _innerSessionInfo innerSessionInfo ;
+
+   /*
+      _clsShardSessionMgr define
+   */
+   class _clsShardSessionMgr : public _clsSessionMgr
+   {
+      public:
+         _clsShardSessionMgr( _clsMgr *pClsMgr ) ;
+         virtual ~_clsShardSessionMgr() ;
+
+         virtual INT32        handleSessionTimeout( UINT32 timerID,
+                                                    UINT32 interval ) ;
+
+         BOOLEAN  isUnShardTimerStarted() const ;
+         void     startUnShardTimer( UINT32 interval ) ;
+         void     stopUnShardTimer() ;
+
+         virtual UINT64       makeSessionID( const NET_HANDLE &handle,
+                                             const MsgHeader *header ) ;
+
+      protected:
+         /*
+            Parse the session type
+         */
+         virtual SDB_SESSION_TYPE   _prepareCreate( UINT64 sessionID,
+                                                    INT32 startType,
+                                                    INT32 opCode ) ;
+
+         virtual BOOLEAN      _canReuse( SDB_SESSION_TYPE sessionType ) ;
+         virtual UINT32       _maxCatchSize() const ;
+         virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
+                                                const NET_HANDLE &handle,
+                                                clsSession *pSession ) ;
+         /*
+            Create session
+         */
+         virtual clsSession*  _createSession(  SDB_SESSION_TYPE sessionType,
+                                               INT32 startType,
+                                               UINT64 sessionID,
+                                               void *data = NULL ) ;
+
+      protected:
+         void                    _checkUnShardSessions( UINT32 interval ) ;
+
+      protected:
+         _clsMgr                 *_pClsMgr ;
+         UINT32                  _unShardSessionTimer ;
+
+   } ;
+   typedef _clsShardSessionMgr clsShardSessionMgr ;
+
+   /*
+      _clsReplSessionMgr define
+   */
+   class _clsReplSessionMgr : public _clsSessionMgr
+   {
+      public:
+         _clsReplSessionMgr( _clsMgr *pClsMgr ) ;
+         virtual ~_clsReplSessionMgr() ;
+
+         virtual INT32        handleSessionTimeout( UINT32 timerID,
+                                                    UINT32 interval ) ;
+
+         virtual UINT64       makeSessionID( const NET_HANDLE &handle,
+                                             const MsgHeader *header ) ;
+
+      protected:
+         /*
+            Parse the session type
+         */
+         virtual SDB_SESSION_TYPE   _prepareCreate( UINT64 sessionID,
+                                                    INT32 startType,
+                                                    INT32 opCode ) ;
+
+         virtual BOOLEAN      _canReuse( SDB_SESSION_TYPE sessionType ) ;
+         virtual UINT32       _maxCatchSize() const ;
+         virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
+                                                const NET_HANDLE &handle,
+                                                clsSession *pSession ) ;
+         /*
+            Create session
+         */
+         virtual clsSession*  _createSession(  SDB_SESSION_TYPE sessionType,
+                                               INT32 startType,
+                                               UINT64 sessionID,
+                                               void *data = NULL ) ;
+
+      protected:
+         _clsMgr                    *_pClsMgr ;
+
+   } ;
+   typedef _clsReplSessionMgr clsReplSessionMgr ;
 
    /*
       _clsMgr define
@@ -72,18 +170,10 @@ namespace engine
    class _clsMgr : public _clsObjBase, public _IControlBlock,
                    public _IEventHolder
    {
-      friend class _clsMsgHandler ;
-      friend class _clsTimerHandler ;
+      friend class _clsShardSessionMgr ;
+      friend class _clsReplSessionMgr ;
 
       DECLARE_OBJ_MSG_MAP()
-
-      typedef std::map<UINT64, _clsSession*>    MAPSESSION ;
-      typedef MAPSESSION::iterator              MAPSESSION_IT ;
-
-      typedef std::map<NET_HANDLE, clsSessionMeta*>  MAPMETA ;
-      typedef MAPMETA::iterator                      MAPMETA_IT ;
-
-      typedef std::deque<_clsSession*>          DEQSESSION ;
 
       typedef std::vector<_innerSessionInfo>    VECINNERPARAM ;
       typedef std::map<UINT64, BSONObj>         MAPTASKQUERY ;
@@ -148,28 +238,9 @@ namespace engine
          INT32    invalidateCata ( const CHAR *name ) ;
 
       protected:
-         _clsSession* getSession( INT32 type, UINT64 sessionID,
-                                  INT32 startType = CLS_SESSION_PASSIVE,
-                                  const NET_HANDLE handle = 0,
-                                  BOOLEAN bCreate = FALSE,
-                                  void *data = NULL ) ;
-
-         INT32        assignMemory ( _clsSession *pSession, UINT32 msgLength ) ;
-
-         INT32 handleSessionTimeout ( UINT64 timerID , UINT32 interval ) ;
-         INT32 handleSessionClose ( INT32 type, const NET_HANDLE handle ) ;
-
-         INT32 _startSessionEDU ( _clsSession *pSession ) ;
-         INT32 _releaseSession ( _clsSession *pSession , BOOLEAN delay=FALSE ) ;
-         INT32 _releaseSession_i ( _clsSession *pSession, BOOLEAN postQuit,
-                                   BOOLEAN delay ) ;
 
          INT32          _startEDU ( INT32 type, EDU_STATUS waitStatus,
                                     void *agrs, BOOLEAN regSys = TRUE ) ;
-
-         _clsSession    *_createSession ( INT32 type, INT32 startType,
-                                          UINT64 sessionID,
-                                          void *data = NULL ) ;
 
          INT32          _attachSessionMeta( INT32 type, _clsSession *pSession,
                                             const NET_HANDLE handle ) ;
@@ -186,13 +257,10 @@ namespace engine
          virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
 
       private:
-         MAPSESSION *_getSessionMap ( INT32 type ) ;
-         MAPMETA    *_getMetaMap( INT32 type ) ;
-         INT32       _startInnerSession ( INT32 type ) ;
+         INT32       _startInnerSession ( INT32 type,
+                                          clsSessionMgr *pSessionMgr ) ;
          INT32       _prepareTask () ;
          INT32       _addTaskInnerSession ( const CHAR *objdata ) ;
-
-         void        _checkSessionMeta( INT32 type ) ;
 
       //msg and event function
       protected:
@@ -211,6 +279,9 @@ namespace engine
          _clsShardMgr                  _shdObj ;
          _clsReplicateSet              _replObj ;
 
+         clsShardSessionMgr            _shardSessionMgr ;
+         clsReplSessionMgr             _replSessionMgr ;
+
          ossEvent                      _attachEvent ;
 
          UINT16                        _shardServiceID ;
@@ -218,19 +289,8 @@ namespace engine
          CHAR                          _replServiceName[OSS_MAX_SERVICENAME+1] ;
          CHAR                          _shdServiceName[OSS_MAX_SERVICENAME+1] ;
 
-         BOOLEAN                       _force ;
          NodeID                        _selfNodeID ;
-         _clsMemPool                   _memPool;
          _clsTaskMgr                   _taskMgr ;
-
-         MAPSESSION                    _mapShdSessions;
-         MAPMETA                       _mapShdMeta ;
-         DEQSESSION                    _deqShdSessions;
-         DEQSESSION                    _deqShdDeletingSessions ;
-         ossSpinXLatch                 _deqDeletingMutex ;
-
-         MAPSESSION                    _mapReplSessions;
-         MAPMETA                       _mapReplMeta ;
 
          VECINNERPARAM                 _vecInnerSessionParam ;
          MAPTASKQUERY                  _mapTaskQuery ;
@@ -243,12 +303,6 @@ namespace engine
 
          UINT64                        _regTimerID ;
          UINT64                        _oneSecTimerID ;
-         UINT64                        _repl1SecTimerID ;
-         UINT64                        _shd1MinTimerID ;
-         UINT64                        _shd1SecTimerID ;
-
-         UINT64                        _shdHandleCloseTimerID ;
-         UINT64                        _replHandleCloseTimerID ;
 
    };
 

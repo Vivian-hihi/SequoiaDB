@@ -34,23 +34,31 @@
 
 #include "core.hpp"
 #include "clsTimerHandler.hpp"
-#include "clsMgr.hpp"
+#include "clsSession.hpp"
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 
 namespace engine
 {
-   _clsTimerHandler::_clsTimerHandler( _clsMgr * pClsMgr )
+   /*
+      _clsTimerHandler implement
+   */
+   _clsTimerHandler::_clsTimerHandler( _clsSessionMgr * pSessionMgr )
    {
       _pMgrCB = NULL ;
-      _pClsMgr = pClsMgr ;
+      _pSessionMgr = pSessionMgr ;
    }
 
    _clsTimerHandler::~_clsTimerHandler()
    {
       _pMgrCB = NULL ;
-      _pClsMgr = NULL ;
+      _pSessionMgr = NULL ;
+   }
+
+   UINT64 _clsTimerHandler::_makeTimerID( UINT32 timerID )
+   {
+      return ( UINT64 )timerID ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSTMHD_HDTMOUT, "_clsTimerHandler::handleTimeout" )
@@ -58,16 +66,17 @@ namespace engine
                                          const UINT32 &id )
    {
       PD_TRACE_ENTRY ( SDB__CLSTMHD_HDTMOUT ) ;
-      UINT64 timerID = ossPack32To64 ( type(), id ) ;
+      UINT64 timerID = _makeTimerID ( id ) ;
 
-      if ( _pClsMgr->handleSessionTimeout( timerID , millisec ) != SDB_OK )
+      if ( _pSessionMgr->handleSessionTimeout( timerID , millisec ) != SDB_OK )
       {
          PMD_EVENT_MESSAGES *eventMsg = (PMD_EVENT_MESSAGES *)
             SDB_OSS_MALLOC( sizeof (PMD_EVENT_MESSAGES ) ) ;
 
          if ( NULL == eventMsg )
          {
-            PD_LOG ( PDERROR, "Failed to allocate memory for PDM timeout Event" ) ;
+            PD_LOG ( PDERROR, "Failed to allocate memory for PDM "
+                     "timeout Event" ) ;
          }
          else
          {
@@ -76,7 +85,7 @@ namespace engine
 
             eventMsg->timeoutMsg.interval = millisec ;
             eventMsg->timeoutMsg.occurTime = ts.time ;
-            eventMsg->timeoutMsg.timerID = ossPack32To64( type(), id ) ;
+            eventMsg->timeoutMsg.timerID = timerID ;
 
             _pMgrCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_TIMEOUT, 
                                               PMD_EDU_MEM_ALLOC,
@@ -86,8 +95,11 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSTMHD_HDTMOUT ) ;
    }
 
-   _clsReplTimerHandler::_clsReplTimerHandler ( _clsMgr * pClsMgr )
-      :_clsTimerHandler ( pClsMgr )
+   /*
+      _clsReplTimerHandler implement
+   */
+   _clsReplTimerHandler::_clsReplTimerHandler ( _clsSessionMgr * pSessionMgr )
+      :_clsTimerHandler ( pSessionMgr )
    {
    }
 
@@ -95,13 +107,16 @@ namespace engine
    {
    }
 
-   INT32 _clsReplTimerHandler::type () const
+   UINT64 _clsReplTimerHandler::_makeTimerID( UINT32 timerID )
    {
-      return CLS_REPL ;
+      return ossPack32To64( CLS_REPL, timerID ) ;
    }
 
-   _clsShardTimerHandler::_clsShardTimerHandler ( _clsMgr * pClsMgr )
-      :_clsTimerHandler ( pClsMgr )
+   /*
+      _clsShardTimerHandler implement
+   */
+   _clsShardTimerHandler::_clsShardTimerHandler ( _clsSessionMgr *pSessionMgr )
+      :_clsTimerHandler ( pSessionMgr )
    {
    }
 
@@ -109,9 +124,10 @@ namespace engine
    {
    }
 
-   INT32 _clsShardTimerHandler::type () const
+   UINT64 _clsShardTimerHandler::_makeTimerID( UINT32 timerID )
    {
-      return CLS_SHARD ;
+      return ossPack32To64( CLS_SHARD, timerID ) ;
    }
 
 }
+

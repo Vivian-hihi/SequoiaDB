@@ -39,6 +39,10 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 
+#include "../bson/bson.h"
+
+using namespace bson ;
+
 namespace engine
 {
 
@@ -83,6 +87,7 @@ namespace engine
    UINT64 _clsSession::identifyID()
    {
       // TODO:XUJIANHUI
+      // BY COORD SESSION INFO
       return 0 ;
    }
 
@@ -563,7 +568,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_PUSHMSG, "_clsSessionMgr::assignMemory" )
    INT32 _clsSessionMgr::pushMessage( clsSession *pSession,
-                                      MsgHeader *header )
+                                      const MsgHeader *header,
+                                      const NET_HANDLE &handle )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( CLS_SESSMGR_PUSHMSG ) ;
@@ -643,7 +649,7 @@ namespace engine
       PD_TRACE_EXITRC ( CLS_SESSMGR_PUSHMSG, rc ) ;
       return rc ;
    error:
-      _onPushMsgFailed( rc, header, pSession ) ;
+      _onPushMsgFailed( rc, header, handle, pSession ) ;
       goto done ;
    }
 
@@ -894,6 +900,44 @@ namespace engine
    done:
       PD_TRACE_EXIT ( CLS_SESSMGR_RLSSS_I );
       return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_REPLY, "_clsSessionMgr::_reply" )
+   INT32 _clsSessionMgr::_reply( const NET_HANDLE &handle, INT32 rc,
+                                 const MsgHeader *pReqMsg )
+   {
+      INT32 ret = SDB_OK ;
+      PD_TRACE_ENTRY ( CLS_SESSMGR_REPLY ) ;
+
+      MsgOpReply reply ;
+      BSONObj obj = pmdGetErrorBson( rc, "can't create session" ) ;
+
+      if ( !_pRTAgent )
+      {
+         rc = SDB_INVALIDARG ;
+      }
+
+      reply.header.opCode = MAKE_REPLY_TYPE( pReqMsg->opCode ) ;
+      reply.header.requestID = pReqMsg->requestID ;
+      reply.header.routeID.value = 0 ;
+      reply.header.TID  = pReqMsg->TID ;
+      reply.header.messageLength = sizeof ( MsgOpReply ) ;
+      reply.flags = rc ;
+      reply.contextID = -1 ;
+      reply.numReturned = 1 ;
+      reply.startFrom = 0 ;
+
+      reply.header.messageLength += obj.objsize() ;
+
+      ret = _pRTAgent->syncSend ( handle, ( MsgHeader*)&reply,
+                                  (void*)obj.objdata(),
+                                  obj.objsize() ) ;
+
+   done:
+      PD_TRACE_EXITRC ( CLS_SESSMGR_REPLY, rc );
+      return ret ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_HDLSNCLOSE, "_clsSessionMgr::handleSessionClose" )

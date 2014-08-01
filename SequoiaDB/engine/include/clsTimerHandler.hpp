@@ -40,15 +40,16 @@
 
 namespace engine
 {
-   class _clsMgr;
+   class _clsSessionMgr ;
 
+   /*
+      _clsTimerHandler define
+   */
    class _clsTimerHandler : public _netTimeoutHandler
    {
       public:
-         _clsTimerHandler ( _clsMgr * pClsMgr ) ;
+         _clsTimerHandler ( _clsSessionMgr * pSessionMgr ) ;
          virtual ~_clsTimerHandler () ;
-
-         virtual INT32 type () const = 0 ;
 
          virtual void handleTimeout( const UINT32 &millisec,
                                      const UINT32 &id ) ;
@@ -58,34 +59,45 @@ namespace engine
          OSS_INLINE void detach () { _pMgrCB = NULL ; }
 
       protected:
+         virtual UINT64  _makeTimerID( UINT32 timerID ) ;
+
+      protected:
          pmdEDUCB             *_pMgrCB ;
-         _clsMgr              *_pClsMgr ;
+         _clsSessionMgr       *_pSessionMgr ;
 
-   };
+   } ;
+   typedef _clsTimerHandler clsTimerHandler ;
 
+   /*
+      _clsReplTimerHandler define
+   */
    class _clsReplTimerHandler : public _clsTimerHandler
    {
       public:
-         _clsReplTimerHandler ( _clsMgr * pClsMgr ) ;
+         _clsReplTimerHandler ( _clsSessionMgr * pSessionMgr ) ;
          virtual ~_clsReplTimerHandler () ;
 
-         virtual INT32 type () const ;
-
       protected:
+         virtual UINT64  _makeTimerID( UINT32 timerID ) ;
 
-   };
+   } ;
+   typedef _clsReplTimerHandler clsReplTimerHandler ;
 
+   /*
+      _clsShardTimerHandler define
+   */
    class _clsShardTimerHandler : public _clsTimerHandler
    {
       public:
-         _clsShardTimerHandler ( _clsMgr * pClsMgr ) ;
+         _clsShardTimerHandler ( _clsSessionMgr * pSessionMgr ) ;
          virtual ~_clsShardTimerHandler () ;
 
-         virtual INT32 type () const ;
-
       protected:
-   };
+         virtual UINT64  _makeTimerID( UINT32 timerID ) ;
+   } ;
+   typedef _clsShardTimerHandler clsShardTimerHandler ;
 
 }
 
 #endif //CLS_TIMER_HANDLER_HPP_
+

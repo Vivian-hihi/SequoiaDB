@@ -48,8 +48,7 @@ namespace engine
    */
    INT32 pmdLocalAgentEntryPoint( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
-   INT32 pmdShardAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
-   INT32 pmdReplAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdAsyncSessionAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdHTTPAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdRestAgentEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdTcpListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;

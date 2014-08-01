@@ -87,11 +87,6 @@ namespace engine
       return SDB_SESSION_REPL ;
    }
 
-   INT32 _clsReplSession::type () const
-   {
-      return CLS_REPL ;
-   }
-
    EDU_TYPES _clsReplSession::eduType () const
    {
       return EDU_TYPE_REPLAGENT ;

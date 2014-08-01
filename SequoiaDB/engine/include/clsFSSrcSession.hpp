@@ -173,7 +173,6 @@ namespace engine
 
    public:
       virtual SDB_SESSION_TYPE sessionType() const ;
-      virtual INT32 type () const ;
       virtual EDU_TYPES eduType () const ;
 
    public:
@@ -212,7 +211,6 @@ namespace engine
 
       public:
          virtual SDB_SESSION_TYPE sessionType() const ;
-         virtual INT32 type () const ;
          virtual EDU_TYPES eduType () const ;
 
       protected:

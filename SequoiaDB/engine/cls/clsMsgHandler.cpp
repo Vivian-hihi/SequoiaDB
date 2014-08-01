@@ -31,7 +31,7 @@
 *******************************************************************************/
 
 #include "clsMsgHandler.hpp"
-#include "clsMgr.hpp"
+#include "clsSession.hpp"
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "pdTrace.hpp"
@@ -40,18 +40,19 @@
 
 namespace engine
 {
-   _clsMsgHandler::_clsMsgHandler( _clsMgr *pClsMgr )
+   /*
+      _clsMsgHandler implement
+   */
+   _clsMsgHandler::_clsMsgHandler( _clsSessionMgr *pSessionMgr )
    {
-      _pClsMgr = pClsMgr ;
-      _pMgrEDUCB = NULL ;
-      _pShardCB  = NULL ;
+      _pSessionMgr   = pSessionMgr ;
+      _pMgrEDUCB     = NULL ;
    }
 
    _clsMsgHandler::~_clsMsgHandler()
    {
-      _pClsMgr = NULL ;
-      _pMgrEDUCB = NULL ;
-      _pShardCB  = NULL ;
+      _pSessionMgr   = NULL ;
+      _pMgrEDUCB     = NULL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_CPMSG, "_clsMsgHandler::copyMsg" )
@@ -78,26 +79,27 @@ namespace engine
       //If TID not Zero, implicate external business require form client
       //or repl sync messages
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSMSGHND_HNDMSG );
+      PD_TRACE_ENTRY ( SDB__CLSMSGHND_HNDMSG ) ;
       if ( header->TID != 0 )
       {
          rc = handleSessionMsg ( handle, header, msg ) ;
       }
-      //Other msg will push to cls queue
+      //Other msg will push to cb queue
       else
       {
-         rc = handleClsMsg( handle, header, msg ) ;
+         rc = handleMainMsg( handle, header, msg ) ;
       }
-      PD_TRACE_EXITRC ( SDB__CLSMSGHND_HNDMSG, rc );
+      PD_TRACE_EXITRC ( SDB__CLSMSGHND_HNDMSG, rc ) ;
       return rc ;
    }
 
    //In this function, there is a singal thread at the same time,
    //So, can not use mutex
-   void _clsMsgHandler::handleClose ( const NET_HANDLE & handle, _MsgRouteID id )
+   void _clsMsgHandler::handleClose ( const NET_HANDLE & handle,
+                                      _MsgRouteID id )
    {
       PD_LOG ( PDINFO, "connection[handle:%d] closed", handle ) ;
-      _pClsMgr->handleSessionClose( type(), handle ) ;
+      _pSessionMgr->handleSessionClose( handle ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDSNMSG, "_clsMsgHandler::handleSessionMsg" )
@@ -110,13 +112,7 @@ namespace engine
       void *newMsg = NULL ;
       BOOLEAN bCreate = TRUE ;
 
-      UINT64 sessionID = ossPack32To64( header->routeID.columns.nodeID, 
-                                        header->TID );
-      if ( CLS_SHARD == type () &&
-           MSG_INVALID_ROUTEID == header->routeID.value )
-      {
-         sessionID = ossPack32To64 ( CLS_BASE_HANDLE_ID + handle, header->TID ) ;
-      }
+      UINT64 sessionID = _pSessionMgr->makeSessionID( handle, header ) ;
 
       if ( MSG_BS_DISCONNECT == header->opCode ||
            MSG_BS_INTERRUPTE == header->opCode )
@@ -125,9 +121,11 @@ namespace engine
       }
 
       //Find the session, if not exist, need create (need start edu)
-      _clsSession *pSession = _pClsMgr->getSession( type() , sessionID ,
-                                                    CLS_SESSION_PASSIVE,
-                                                    handle, bCreate, NULL );
+      _clsSession *pSession = _pSessionMgr->getSession( sessionID ,
+                                                        CLS_SESSION_PASSIVE,
+                                                        handle, bCreate,
+                                                        header->opCode,
+                                                        NULL ) ;
       if ( NULL == pSession )
       {
          if ( !bCreate )
@@ -135,8 +133,8 @@ namespace engine
             goto done ;
          }
 
-         PD_LOG ( PDERROR, "Failed to create session[ID:%lld, type:%d]",
-                  sessionID, type () ) ;
+         PD_LOG ( PDERROR, "Failed to create session[ID:%lld]",
+                  sessionID ) ;
          rc = SDB_OOM ;
          goto error;
       }
@@ -147,77 +145,46 @@ namespace engine
       if ( MSG_BS_DISCONNECT == header->opCode )
       {
          PD_LOG ( PDEVENT, "Session[%s] recieved disconnect message", 
-            pSession->sessionName() ) ;
-         rc = _pClsMgr->_releaseSession( pSession, TRUE ) ;
+                  pSession->sessionName() ) ;
+         rc = _pSessionMgr->releaseSession( pSession, TRUE ) ;
          goto done ;
       }
       else if ( MSG_BS_INTERRUPTE == header->opCode )
       {
          PD_LOG ( PDEVENT, "Session[%s] recieved interrupt message", 
-            pSession->sessionName() ) ;
-         pSession->eduCB()->interrupt () ;
+                  pSession->sessionName() ) ;
+         pSession->eduCB()->interrupt() ;
       }
 
-      rc = _pClsMgr->assignMemory ( pSession, header->messageLength ) ;
+      rc = _pSessionMgr->pushMessage( pSession, header, handle ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
 
-      //Post the msg to the edu queue, need create new msg in clsMemPool
-      newMsg = pSession->copyMsg( msg, header->messageLength );
-      if ( NULL == newMsg )
-      {
-         PD_LOG ( PDERROR, "Failed to allocate memory for new msg" );
-         rc = SDB_OOM;
-         goto error;
-      }
-
-      pSession->eduCB()->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                                 PMD_EDU_MEM_NONE,
-                                                 newMsg ) ) ;
-
    done:
-      PD_TRACE_EXITRC ( SDB__CLSMSGHND_HNDSNMSG, rc );
+      PD_TRACE_EXITRC ( SDB__CLSMSGHND_HNDSNMSG, rc ) ;
       return rc;
    error:
-      // need to response error
-      if ( CLS_SHARD == type() && MSG_INVALID_ROUTEID == header->routeID.value )
-      {
-         MsgOpReply reply ;
-         reply.header.opCode = MAKE_REPLY_TYPE(header->opCode) ;
-         reply.header.requestID = header->requestID ;
-         reply.header.routeID.value = 0 ;
-         reply.header.TID  = header->TID ;
-         reply.header.messageLength = sizeof ( MsgOpReply ) ;
-         reply.flags = rc ;
-         reply.contextID = -1 ;
-         reply.numReturned = 1 ;
-         reply.startFrom = 0 ;
-
-         BSONObjBuilder bb ;
-         bb.append ( OP_ERRNOFIELD, rc ) ;
-         bb.append ( OP_ERRDESP_FIELD, getErrDesp ( rc ) ) ;
-         bb.append ( OP_ERR_DETAIL, "can't create session" ) ;
-         BSONObj errorObj = bb.obj () ;
-         reply.header.messageLength += errorObj.objsize() ;
-
-         _pClsMgr->getShardRouteAgent()->syncSend ( handle, ( MsgHeader*)&reply,
-                                                    (void*)errorObj.objdata(),
-                                                    errorObj.objsize() ) ;
-      }
       goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDCLSMSG, "_clsMsgHandler::handleClsMsg" )
-   INT32 _clsMsgHandler::handleClsMsg( const NET_HANDLE &handle,
-                                       const _MsgHeader *header,
-                                       const CHAR *msg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDMAINMSG, "_clsMsgHandler::handleMainMsg" )
+   INT32 _clsMsgHandler::handleMainMsg( const NET_HANDLE &handle,
+                                        const _MsgHeader *header,
+                                        const CHAR *msg )
    {
       INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB__CLSMSGHND_HNDCLSMSG );
+      PD_TRACE_ENTRY ( SDB__CLSMSGHND_HNDMAINMSG );
       _MsgHeader *newHeader = NULL ;
       void *newMsg = NULL ;
+
+      SDB_ASSERT( _pMgrEDUCB, "Main edu can't be NULL" ) ;
+      if ( !_pMgrEDUCB )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       newMsg = copyMsg ( msg, header->messageLength ) ;
       if ( NULL == newMsg )
@@ -229,48 +196,65 @@ namespace engine
 
       newHeader = ( MsgHeader * )newMsg ;
 
-      if ( _pShardCB && ( MSG_CAT_NODEGRP_RES == (UINT32)newHeader->opCode ||
-           MSG_CAT_QUERY_CATALOG_RSP == (UINT32)newHeader->opCode ||
-           MSG_CAT_QUERY_SPACEINFO_RSP == (UINT32)newHeader->opCode ||
-           ( MSG_CAT_CATGRP_RES == (UINT32)newHeader->opCode &&
-             _pShardCB->getTID() != (UINT32)newHeader->requestID ) ) )
-      {
-         _pShardCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                            PMD_EDU_MEM_ALLOC,
-                                            newMsg, (UINT64)handle ) ) ;
-      }
-      else
-      {
-         //store type to TID and dispatch restore
-         newHeader->TID = (UINT32)type() ;
-         _pMgrEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                             PMD_EDU_MEM_ALLOC,
-                                             newMsg, (UINT64)handle ) );
-      }
+      _postMainMsg( handle, newHeader ) ;
 
    done:
-      PD_TRACE_EXITRC ( SDB__CLSMSGHND_HNDCLSMSG, rc );
+      PD_TRACE_EXITRC ( SDB__CLSMSGHND_HNDMAINMSG, rc );
       return rc;
    error:
       goto done;
    }
 
-   _shdMsgHandler::_shdMsgHandler ( _clsMgr *pClsMgr )
-      : _clsMsgHandler ( pClsMgr )
+   void _clsMsgHandler::_postMainMsg( const NET_HANDLE &handle,
+                                      MsgHeader *pNewMsg )
    {
+      _pMgrEDUCB->postEvent( pmdEDUEvent ( PMD_EDU_EVENT_MSG,
+                                           PMD_EDU_MEM_ALLOC,
+                                           pNewMsg, (UINT64)handle ) ) ;
+   }
+
+   /*
+      _shdMsgHandler implement
+   */
+   _shdMsgHandler::_shdMsgHandler ( _clsSessionMgr *pSessionMgr )
+      : _clsMsgHandler ( pSessionMgr )
+   {
+      _pShardCB = NULL ;
    }
 
    _shdMsgHandler::~_shdMsgHandler ()
    {
+      _pShardCB = NULL ;
    }
 
-   INT32 _shdMsgHandler::type () const
+   void _shdMsgHandler::_postMainMsg( const NET_HANDLE & handle,
+                                      MsgHeader * pNewMsg )
    {
-      return CLS_SHARD ;
+      if ( _pShardCB && ( MSG_CAT_NODEGRP_RES == (UINT32)pNewMsg->opCode ||
+           MSG_CAT_QUERY_CATALOG_RSP == (UINT32)pNewMsg->opCode ||
+           MSG_CAT_QUERY_SPACEINFO_RSP == (UINT32)pNewMsg->opCode ||
+           ( MSG_CAT_CATGRP_RES == (UINT32)pNewMsg->opCode &&
+             _pShardCB->getTID() != (UINT32)pNewMsg->requestID ) ) )
+      {
+         _pShardCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                            PMD_EDU_MEM_ALLOC,
+                                            pNewMsg, (UINT64)handle ) ) ;
+      }
+      else
+      {
+         //store type to TID and dispatch restore
+         pNewMsg->TID = (UINT32)CLS_SHARD ;
+         _pMgrEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                             PMD_EDU_MEM_ALLOC,
+                                             pNewMsg, (UINT64)handle ) );
+      }
    }
 
-   _replMsgHandler::_replMsgHandler ( _clsMgr *pClsMgr )
-      :_clsMsgHandler ( pClsMgr )
+   /*
+      _replMsgHandler implement
+   */
+   _replMsgHandler::_replMsgHandler ( _clsSessionMgr *pSessionMgr )
+      :_clsMsgHandler ( pSessionMgr )
    {
    }
 
@@ -278,9 +262,14 @@ namespace engine
    {
    }
 
-   INT32 _replMsgHandler::type () const
+   void _replMsgHandler::_postMainMsg( const NET_HANDLE &handle,
+                                       MsgHeader *pNewMsg )
    {
-      return CLS_REPL ;
+      //store type to TID and dispatch restore
+      pNewMsg->TID = (UINT32)CLS_REPL ;
+      _pMgrEDUCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                          PMD_EDU_MEM_ALLOC,
+                                          pNewMsg, (UINT64)handle ) ) ;
    }
 
 }

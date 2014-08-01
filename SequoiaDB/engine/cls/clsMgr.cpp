@@ -51,11 +51,308 @@ namespace engine
 {
 
    //The max del session deque size
-   #define MAX_SHD_SESSION_DEL_DEQ_SIZE            (1000)
-   #define MAX_SHD_SESSION_CHECK_SIZE              (1000)
+   #define MAX_SHD_SESSION_CATCH_DEQ_SIZE          (1000)
 
    #define CLS_WAIT_CB_ATTACH_TIMEOUT              ( 60 * OSS_ONE_SEC )
 
+
+   /*
+      _clsShardSessionMgr implement
+   */
+   _clsShardSessionMgr::_clsShardSessionMgr( _clsMgr *pClsMgr )
+   {
+      _pClsMgr    = pClsMgr ;
+      _unShardSessionTimer = NET_INVALID_TIMER_ID ;
+   }
+
+   _clsShardSessionMgr::~_clsShardSessionMgr()
+   {
+      _pClsMgr    = NULL ;
+   }
+
+   BOOLEAN _clsShardSessionMgr::isUnShardTimerStarted() const
+   {
+      return NET_INVALID_TIMER_ID == _unShardSessionTimer ?
+             FALSE : TRUE ;
+   }
+
+   void _clsShardSessionMgr::startUnShardTimer( UINT32 interval )
+   {
+      if ( _pRTAgent && _pTimerHandle && !isUnShardTimerStarted() )
+      {
+         _pRTAgent->addTimer( interval, _pTimerHandle,
+                              _unShardSessionTimer ) ;
+      }
+   }
+
+   void _clsShardSessionMgr::stopUnShardTimer()
+   {
+      if ( _pRTAgent && _pTimerHandle && isUnShardTimerStarted() )
+      {
+         _pRTAgent->removeTimer( _unShardSessionTimer ) ;
+         _unShardSessionTimer = NET_INVALID_TIMER_ID ;
+      }
+   }
+
+   UINT64 _clsShardSessionMgr::makeSessionID( const NET_HANDLE &handle,
+                                              const MsgHeader *header )
+   {
+      UINT64 sessionID = ossPack32To64( header->routeID.columns.nodeID,
+                                        header->TID ) ;
+      if ( MSG_INVALID_ROUTEID == header->routeID.value )
+      {
+         sessionID = ossPack32To64( CLS_BASE_HANDLE_ID + handle, header->TID ) ;
+      }
+
+      return sessionID ;
+   }
+
+   SDB_SESSION_TYPE _clsShardSessionMgr::_prepareCreate( UINT64 sessionID,
+                                                         INT32 startType,
+                                                         INT32 opCode )
+   {
+      SDB_SESSION_TYPE sessionType = SDB_SESSION_MAX ;
+      UINT32 nodeID = 0 ;
+      UINT32 tid = 0 ;
+
+      ossUnpack32From64( sessionID, nodeID, tid ) ;
+
+      if ( CLS_BASE_HANDLE_ID >= nodeID )
+      {
+         if ( CLS_SESSION_ACTIVE == startType )
+         {
+            sessionType = SDB_SESSION_SPLIT_DST ;
+         }
+         else
+         {
+            sessionType = SDB_SESSION_SPLIT_SRC ;
+         }
+      }
+      else
+      {
+         sessionType = SDB_SESSION_SHARD ;
+      }
+
+      return sessionType ;
+   }
+
+   BOOLEAN _clsShardSessionMgr::_canReuse( SDB_SESSION_TYPE sessionType )
+   {
+      if ( SDB_SESSION_SHARD == sessionType )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   UINT32 _clsShardSessionMgr::_maxCatchSize() const
+   {
+      return MAX_SHD_SESSION_CATCH_DEQ_SIZE ;
+   }
+
+   void _clsShardSessionMgr::_onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
+                                               const NET_HANDLE &handle,
+                                               clsSession *pSession )
+   {
+      if ( MSG_INVALID_ROUTEID == pReq->routeID.value )
+      {
+         _reply( handle, rc, pReq ) ;
+      }
+   }
+
+   clsSession* _clsShardSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
+                                                    INT32 startType,
+                                                    UINT64 sessionID,
+                                                    void *data )
+   {
+      clsSession *pSession = NULL ;
+
+      if ( SDB_SESSION_SPLIT_DST == sessionType )
+      {
+         pSession = SDB_OSS_NEW _clsSplitDstSession ( sessionID, _pRTAgent,
+                                                      data ) ;
+      }
+      else if ( SDB_SESSION_SPLIT_SRC == sessionType )
+      {
+         pSession = SDB_OSS_NEW _clsSplitSrcSession ( sessionID, _pRTAgent ) ;
+      }
+      else if ( SDB_SESSION_SHARD == sessionType )
+      {
+         pSession = SDB_OSS_NEW _clsShdSession ( sessionID ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Unknow session type[%d]", sessionType ) ;
+      }
+
+      return pSession ;
+   }
+
+   INT32 _clsShardSessionMgr::handleSessionTimeout( UINT32 timerID,
+                                                    UINT32 interval )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _unShardSessionTimer == timerID )
+      {
+         _checkUnShardSessions( interval ) ;
+
+         // start split task
+         _pClsMgr->_startInnerSession( CLS_SHARD, this ) ;
+
+         goto done ;
+      }
+      else if ( _sessionTimerID == timerID )
+      {
+         if ( _mapSession.size() <= _maxCatchSize() / 10 )
+         {
+            goto done ;
+         }
+      }
+
+      rc = _clsSessionMgr::handleSessionTimeout( timerID, interval ) ;
+
+   done:
+      return rc ;
+   }
+
+   void _clsShardSessionMgr::_checkUnShardSessions( UINT32 interval )
+   {
+      clsSession *pSession = NULL ;
+      MAPSESSION_IT it = _mapSession.begin() ;
+      while ( it != _mapSession.end() )
+      {
+         pSession = it->second ;
+         if ( SDB_SESSION_SHARD == pSession->sessionType() )
+         {
+            ++it ;
+            continue ;
+         }
+
+         if ( !pSession->isProcess() && pSession->timeout( interval ) )
+         {
+            PD_LOG ( PDEVENT, "Session[%s] timeout", pSession->sessionName() ) ;
+            _releaseSession_i ( pSession, TRUE, TRUE ) ;
+            _mapSession.erase( it++ ) ;
+            continue ;
+         }
+         ++it ;
+      }
+   }
+
+   /*
+      _clsReplSessionMgr implement
+   */
+   _clsReplSessionMgr::_clsReplSessionMgr( _clsMgr *pClsMgr )
+   {
+      _pClsMgr = pClsMgr ;
+   }
+
+   _clsReplSessionMgr::~_clsReplSessionMgr()
+   {
+      _pClsMgr = NULL ;
+   }
+
+   INT32 _clsReplSessionMgr::handleSessionTimeout( UINT32 timerID,
+                                                   UINT32 interval )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _clsSessionMgr::handleSessionTimeout( timerID, interval ) ;
+      if ( SDB_OK == rc )
+      {
+         // start repl/fs sessions
+         _pClsMgr->_startInnerSession( CLS_REPL, this ) ;
+      }
+
+      return rc ;
+   }
+
+   UINT64 _clsReplSessionMgr::makeSessionID( const NET_HANDLE & handle,
+                                             const MsgHeader * header )
+   {
+      return ossPack32To64( header->routeID.columns.nodeID,
+                            header->TID ) ;
+   }
+
+   SDB_SESSION_TYPE _clsReplSessionMgr::_prepareCreate( UINT64 sessionID,
+                                                        INT32 startType,
+                                                        INT32 opCode )
+   {
+      SDB_SESSION_TYPE sessionType = SDB_SESSION_MAX ;
+      UINT32 nodeID = 0 ;
+      UINT32 tid = 0 ;
+
+      ossUnpack32From64( sessionID, nodeID, tid ) ;
+
+      if ( CLS_TID_REPL_SYC == tid )
+      {
+         sessionType = SDB_SESSION_REPL ;
+      }
+      else if ( CLS_TID_REPL_FS_SYC == tid )
+      {
+         if ( CLS_SESSION_ACTIVE == startType )
+         {
+            sessionType = SDB_SESSION_FS_DST ;
+         }
+         else
+         {
+            sessionType = SDB_SESSION_FS_SRC ;
+         }
+      }
+
+      return sessionType ;
+   }
+
+   BOOLEAN _clsReplSessionMgr::_canReuse( SDB_SESSION_TYPE sessionType )
+   {
+      return FALSE ;
+   }
+
+   UINT32 _clsReplSessionMgr::_maxCatchSize() const
+   {
+      return 0 ;
+   }
+
+   void _clsReplSessionMgr::_onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
+                                              const NET_HANDLE &handle,
+                                              clsSession *pSession )
+   {
+      // do nothing
+   }
+
+   clsSession* _clsReplSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
+                                                   INT32 startType,
+                                                   UINT64 sessionID,
+                                                   void *data )
+   {
+      clsSession *pSession = NULL ;
+
+      if ( SDB_SESSION_REPL == sessionType )
+      {
+         pSession = SDB_OSS_NEW _clsReplSession ( sessionID ) ;
+      }
+      else if ( SDB_SESSION_FS_DST == sessionType )
+      {
+         pSession = SDB_OSS_NEW _clsFSDstSession ( sessionID,
+                                                   _pRTAgent ) ;
+      }
+      else if ( SDB_SESSION_FS_SRC == sessionType )
+      {
+         pSession = SDB_OSS_NEW _clsFSSrcSession ( sessionID,
+                                                   _pRTAgent ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Unknow session type[%d]", sessionType ) ;
+      }
+
+      return pSession ;
+   }
+
+   /*
+      _clsMgr implement
+   */
    BEGIN_OBJ_MSG_MAP( _clsMgr, _clsObjBase )
       ON_MSG ( MSG_CAT_REG_RES, _onCatRegisterRes )
       ON_MSG ( MSG_CAT_QUERY_TASK_RSP, _onCatQueryTaskRes )
@@ -63,26 +360,22 @@ namespace engine
    END_OBJ_MSG_MAP()
 
    _clsMgr::_clsMgr ()
-   :_shdMsgHandlerObj ( this ),
-    _replMsgHandlerObj ( this ),
-    _shdTimerHandler ( this ),
-    _replTimerHandler ( this ),
+   :_shdMsgHandlerObj ( &_shardSessionMgr ),
+    _replMsgHandlerObj ( &_replSessionMgr ),
+    _shdTimerHandler ( &_shardSessionMgr ),
+    _replTimerHandler ( &_replSessionMgr ),
     _replNetRtAgent ( &_replMsgHandlerObj ),
     _shardNetRtAgent ( &_shdMsgHandlerObj ),
     _shdObj ( &_shardNetRtAgent ),
     _replObj ( &_replNetRtAgent ),
+    _shardSessionMgr( this ),
+    _replSessionMgr( this ),
     _shardServiceID ( MSG_ROUTE_SHARD_SERVCIE ),
     _replServiceID ( MSG_ROUTE_REPL_SERVICE ),
-    _force ( FALSE ),
     _taskMgr( 0x7FFFFFFF ),
     _taskID ( 0 ),
     _regTimerID ( CLS_INVALID_TIMERID ),
-    _oneSecTimerID ( CLS_INVALID_TIMERID ),
-    _repl1SecTimerID ( CLS_INVALID_TIMERID ),
-    _shd1MinTimerID ( CLS_INVALID_TIMERID ),
-    _shd1SecTimerID ( CLS_INVALID_TIMERID ),
-    _shdHandleCloseTimerID ( CLS_INVALID_TIMERID ),
-    _replHandleCloseTimerID ( CLS_INVALID_TIMERID )
+    _oneSecTimerID ( CLS_INVALID_TIMERID )
    {
       _replServiceName[0] = 0 ;
       _shdServiceName[0]  = 0 ;
@@ -117,18 +410,10 @@ namespace engine
       ossStrncpy( _replServiceName, optCB->replService(),
                   OSS_MAX_SERVICENAME ) ;
 
-      // 2. init members
-      rc = _memPool.initialize() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to init memory pool" ) ;
-         goto error ;
-      }
-
       INIT_OBJ_GOTO_ERROR ( getShardCB() ) ;
       INIT_OBJ_GOTO_ERROR ( getReplCB() ) ;
 
-      // 3. create listen socket
+      // 2. create listen socket
       nodeID.columns.serviceID = _replServiceID ;
       _replNetRtAgent.updateRoute( nodeID, hostName, _replServiceName ) ;
       rc = _replNetRtAgent.listen( nodeID ) ;
@@ -152,6 +437,15 @@ namespace engine
       }
       PD_LOG ( PDEVENT, "Create sharding listen[ServiceName:%s] succeed",
                _shdServiceName ) ;
+
+      // 3. init session manager
+      rc = _shardSessionMgr.init( &_shardNetRtAgent, &_shdTimerHandler,
+                                  60 * OSS_ONE_SEC ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init shard session manager, rc: %d",
+                   rc ) ;
+
+      rc = _replSessionMgr.init( &_replNetRtAgent, &_replTimerHandler,
+                                 OSS_ONE_SEC ) ;
 
       // 4. set bussiness not ok( need wait register to change )
       pmdGetKRCB()->setBusinessOK( FALSE ) ;
@@ -213,13 +507,9 @@ namespace engine
       }
 
       // 3. set timer
-      _repl1SecTimerID = setTimer ( CLS_REPL, OSS_ONE_SEC ) ;
-      _shd1MinTimerID = setTimer ( CLS_SHARD, 60 * OSS_ONE_SEC ) ;
       _oneSecTimerID = setTimer ( CLS_REPL, OSS_ONE_SEC ) ;
 
-      if ( CLS_INVALID_TIMERID == _repl1SecTimerID ||
-           CLS_INVALID_TIMERID == _shd1MinTimerID ||
-           CLS_INVALID_TIMERID == _oneSecTimerID )
+      if ( CLS_INVALID_TIMERID == _oneSecTimerID )
       {
          PD_LOG ( PDERROR, "Register repl/shard/one seccond timer failed" ) ;
          rc = SDB_SYS ;
@@ -259,67 +549,25 @@ namespace engine
       _replNetRtAgent.stop() ;
       _shardNetRtAgent.stop() ;
 
+      _shardSessionMgr.setForced() ;
+      _replSessionMgr.setForced() ;
+
       return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_FINAL, "_clsMgr::fini" )
    INT32 _clsMgr::fini ()
    {
-      PD_TRACE_ENTRY ( SDB__CLSMGR_FINAL );
-      _force = TRUE ;
+      PD_TRACE_ENTRY ( SDB__CLSMGR_FINAL ) ;
+
+      _shardSessionMgr.fini() ;
+      _replSessionMgr.fini() ;
 
       _shdObj.final () ;
       _replObj.final () ;
 
-      //Clear sessions
-      MAPSESSION_IT it = _mapShdSessions.begin () ;
-      while ( it != _mapShdSessions.end() )
-      {
-         _releaseSession_i( it->second, TRUE, FALSE ) ;
-         ++it ;
-      }
-      _mapShdSessions.clear () ;
-
-      it = _mapReplSessions.begin () ;
-      while ( it != _mapReplSessions.end() )
-      {
-         _releaseSession_i( it->second, TRUE, FALSE ) ;
-         ++it ;
-      }
-      _mapReplSessions.clear () ;
-
-      while ( _deqShdSessions.size () > 0 )
-      {
-         _releaseSession_i( _deqShdSessions.front (), TRUE, FALSE ) ;
-         _deqShdSessions.pop_front () ;
-      }
-
-      while ( _deqShdDeletingSessions.size() > 0 )
-      {
-         _releaseSession_i ( _deqShdDeletingSessions.front(), FALSE, FALSE ) ;
-         _deqShdDeletingSessions.pop_front() ;
-      }
-
-      //Clear latch
-      MAPMETA_IT itMeta = _mapShdMeta.begin() ;
-      while ( itMeta != _mapShdMeta.end() )
-      {
-         SDB_OSS_DEL itMeta->second ;
-         ++itMeta ;
-      }
-      _mapShdMeta.clear() ;
-
-      itMeta = _mapReplMeta.begin() ;
-      while ( itMeta != _mapReplMeta.end() )
-      {
-         SDB_OSS_DEL itMeta->second ;
-         ++itMeta ;
-      }
-      _mapReplMeta.clear() ;
-
-      INT32 rc = _memPool.final () ;
-      PD_TRACE_EXITRC ( SDB__CLSMGR_FINAL, rc );
-      return rc ;
+      PD_TRACE_EXIT ( SDB__CLSMGR_FINAL );
+      return SDB_OK ;
    }
 
    void _clsMgr::onConfigChange ()
@@ -698,368 +946,6 @@ namespace engine
       }
    }
 
-   // note we do not need to request latch because getSession function is only
-   // called in one thread, thus it's not possible for multiple threads calling
-   // the same thread and ruin the map
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_GETSN, "_clsMgr::getSession" )
-   _clsSession *_clsMgr::getSession( INT32 type, UINT64 sessionID,
-                                     INT32 startType,
-                                     const NET_HANDLE handle,
-                                     BOOLEAN bCreate, void *data )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSMGR_GETSN );
-      _clsSession * pSession    = NULL ;
-      MAPSESSION  * pMapSession = _getSessionMap( type ) ;
-
-      //Find the session, if exist return it
-      MAPSESSION_IT it = pMapSession->find ( sessionID ) ;
-      if ( it != pMapSession->end () )
-      {
-         pSession = it->second ;
-
-         // need to attach meta
-         if ( !pSession->getMeta() && pSession->canAttachMeta() &&
-              NET_INVALID_HANDLE != handle )
-         {
-            _attachSessionMeta( type, pSession, handle ) ;
-         }
-         goto done ;
-      }
-
-      if ( !bCreate )
-      {
-         goto done ;
-      }
-
-      // If shard session when the del queue is not empty, can reused
-      if ( CLS_SHARD == type && CLS_NODEID( sessionID ) > CLS_BASE_HANDLE_ID &&
-           _deqShdSessions.size () > 0 )
-      {
-         pSession = _deqShdSessions.front () ;
-         _deqShdSessions.pop_front () ;
-      }
-      else
-      {
-         SDB_ASSERT ( CLS_REPL == type || CLS_SHARD == type,
-                      "Invalid type" ) ;
-         pSession = _createSession ( type, startType, sessionID, data ) ;
-         if ( NULL == pSession )
-         {
-            PD_LOG ( PDERROR, "Failed to allocate memory for session" ) ;
-            goto error ;
-         }
-      }
-
-      //Set session information
-      (*pMapSession)[sessionID] = pSession ;
-      pSession->startType ( startType ) ;
-      pSession->sessionID ( sessionID ) ;
-
-      PD_LOG ( PDEVENT, "Create session[Name: %s, StartType: %d]",
-               pSession->sessionName(), startType ) ;
-
-      // attach meta
-      if ( !pSession->getMeta() && pSession->canAttachMeta() &&
-           NET_INVALID_HANDLE != handle )
-      {
-         rc = _attachSessionMeta( type, pSession, handle ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-
-      //Start session EDU
-      rc = _startSessionEDU( pSession ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to start session EDU, rc = %d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXIT ( SDB__CLSMGR_GETSN );
-      return pSession ;
-   error:
-      if ( pSession )
-      {
-         _releaseSession ( pSession ) ;
-         pSession = NULL ;
-      }
-      goto done ;
-   }
-
-   INT32 _clsMgr::_attachSessionMeta( INT32 type, _clsSession * pSession,
-                                      const NET_HANDLE handle )
-   {
-      INT32 rc = SDB_OK ;
-      MAPMETA *pMapMeta = _getMetaMap( type ) ;
-      clsSessionMeta * pMeta = NULL ;
-      MAPMETA_IT itMeta = pMapMeta->find ( handle ) ;
-      if ( itMeta == pMapMeta->end() )
-      {
-         pMeta = SDB_OSS_NEW clsSessionMeta ( handle ) ;
-         if ( NULL == pMeta )
-         {
-            PD_LOG ( PDERROR, "Failed to allocate memory for meta" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         (*pMapMeta)[handle] = pMeta ;
-      }
-      else
-      {
-         pMeta = itMeta->second ;
-      }
-      pMeta->incBaseHandleNum() ;
-      pSession->meta ( pMeta ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_ASGNMEM, "_clsMgr::assignMemory" )
-   INT32 _clsMgr::assignMemory( _clsSession * pSession, UINT32 msgLength )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSMGR_ASGNMEM );
-      CHAR *pNewBuff = NULL ;
-      UINT32 buffSize = 0 ;
-
-      clsBuffInfo * pBuffInfo = pSession->frontBuffer () ;
-      while ( pBuffInfo && pBuffInfo->isFree() )
-      {
-         if ( !pNewBuff && pBuffInfo->size >= msgLength )
-         {
-            pNewBuff = pBuffInfo->pBuffer ;
-            buffSize = pBuffInfo->size ;
-         }
-         else //release memory to pool
-         {
-            _memPool.release( pBuffInfo->pBuffer, pBuffInfo->size ) ;
-         }
-         pSession->popBuffer () ;
-         pBuffInfo = pSession->frontBuffer () ;
-      }
-
-      if ( !pNewBuff )
-      {
-         pNewBuff = _memPool.alloc ( msgLength, buffSize ) ;
-         if ( !pNewBuff )
-         {
-            PD_LOG ( PDERROR, "Memory pool assign memory failed[size:%d]",
-               msgLength ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-      }
-
-      rc = pSession->pushBuffer ( pNewBuff, buffSize ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]", 
-            pSession->sessionName(), rc ) ;
-         _memPool.release ( pNewBuff, buffSize ) ;
-         SDB_ASSERT ( 0, "why the buffer is full??? check" ) ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC (SDB__CLSMGR_ASGNMEM, rc );
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__CRTSN, "_clsMgr::_createSession" )
-   _clsSession *_clsMgr::_createSession( INT32 type, INT32 startType,
-                                         UINT64 sessionID, void *data )
-   {
-      PD_TRACE_ENTRY ( SDB__CLSMGR__CRTSN );
-      _clsSession *p = NULL ;
-      UINT32 nodeID = 0 ;
-      UINT32 tid = 0 ;
-      ossUnpack32From64 ( sessionID, nodeID, tid ) ;
-
-      if ( CLS_REPL == type )
-      {
-         if ( CLS_TID_REPL_SYC == tid ) //repl sync session
-         {
-            p = SDB_OSS_NEW _clsReplSession ( sessionID ) ;
-            goto done ;
-         }
-         else if ( CLS_TID_REPL_FS_SYC == tid ) //repl full sync session
-         {
-            if ( CLS_SESSION_ACTIVE == startType )
-            {
-               p = SDB_OSS_NEW _clsFSDstSession ( sessionID,
-                                                  &_replNetRtAgent ) ;
-               goto done ;
-            }
-            else
-            {
-               p = SDB_OSS_NEW _clsFSSrcSession ( sessionID,
-                                                  &_replNetRtAgent ) ;
-               goto done ;
-            }
-         }
-         else
-         {
-            PD_LOG ( PDERROR, "inner TID[%d] and nodeID[%d] error",
-                     tid, nodeID ) ;
-         }
-      }
-      else if ( CLS_SHARD == type )
-      {
-         if ( CLS_BASE_HANDLE_ID >= nodeID )
-         {
-            if ( CLS_SESSION_ACTIVE == startType )
-            {
-               p = SDB_OSS_NEW _clsSplitDstSession ( sessionID,
-                                                     &_shardNetRtAgent,
-                                                     data ) ;
-               goto done ;
-            }
-            else
-            {
-               p = SDB_OSS_NEW _clsSplitSrcSession ( sessionID,
-                                                     &_shardNetRtAgent ) ;
-               goto done ;
-            }
-         }
-         else
-         {
-            p = SDB_OSS_NEW _clsShdSession ( sessionID ) ;
-            goto done ;
-         }
-      }
-      else
-      {
-         PD_LOG ( PDERROR, "The session type is error[type:%d]", type ) ;
-      }
-done :
-      PD_TRACE_EXIT ( SDB__CLSMGR__CRTSN );
-      return p ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__STARTSNEDU, "_clsMgr::_startSessionEDU" )
-   INT32 _clsMgr::_startSessionEDU( _clsSession * pSession )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB__CLSMGR__STARTSNEDU );
-      pmdKRCB *pKRCB = pmdGetKRCB() ;
-      pmdEDUMgr *pEDUMgr = pKRCB->getEDUMgr() ;
-      EDUID eduID = PMD_INVALID_EDUID ;
-      pmdEDUCB *cb = NULL ;
-
-      rc = pEDUMgr->startEDU( pSession->eduType(), (void *)pSession, &eduID ) ;
-      if ( SDB_OK != rc )
-      {
-         if ( SDB_QUIESCED == rc )
-         {
-            PD_LOG ( PDWARNING,
-                     "Reject new connection due to quiesced database" ) ;
-         }
-         else
-         {
-            PD_LOG ( PDERROR,
-                     "Failed to create subagent thread, rc = %d", rc ) ;
-         }
-         goto error ;
-      }
-
-      //Wait the EDUCB is in the session
-      pSession->waitAttach () ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB__CLSMGR__STARTSNEDU, rc );
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__RLSSN, "_clsMgr::_releaseSession" )
-   INT32 _clsMgr::_releaseSession( _clsSession * pSession, BOOLEAN delay )
-   {
-      PD_TRACE_ENTRY ( SDB__CLSMGR__RLSSN );
-      if ( !_force )
-      {
-         MAPSESSION * pMapSession = _getSessionMap ( pSession->type() );
-         MAPSESSION_IT it = pMapSession->find( pSession->sessionID() ) ;
-         if ( it != pMapSession->end() )
-         {
-            pMapSession->erase( it ) ;
-         }
-      }
-
-      INT32 rc = _releaseSession_i ( pSession, TRUE, delay ) ;
-      PD_TRACE_EXITRC ( SDB__CLSMGR__RLSSN, rc );
-      return rc ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__RLSSN_I, "_clsMgr::_releaseSession_i" )
-   INT32 _clsMgr::_releaseSession_i ( _clsSession *pSession, BOOLEAN postQuit,
-                                      BOOLEAN delay )
-   {
-      PD_TRACE_ENTRY ( SDB__CLSMGR__RLSSN_I );
-      clsBuffInfo *pBuffInfo = NULL ;
-
-      SDB_ASSERT ( pSession, "pSession can't be NULL" ) ;
-      if ( !_force && postQuit && pSession->eduCB() )
-      {
-         //Notify the edu quit
-         pSession->eduCB()->disconnect () ;
-      }
-
-      if ( delay )
-      {
-         ossScopedLock lock ( &_deqDeletingMutex ) ;
-         _deqShdDeletingSessions.push_back ( pSession ) ;
-         goto done ;
-      }
-
-      //Wait the EDUCB is out the session
-      pSession->waitDetach () ;
-
-      // dec based handle number
-      if ( pSession->getMeta() )
-      {
-         pSession->getMeta()->decBaseHandleNum() ;
-      }
-
-      //Release Memory to pool
-      pBuffInfo = pSession->frontBuffer ();
-      while ( pBuffInfo )
-      {
-         _memPool.release ( pBuffInfo->pBuffer, pBuffInfo->size ) ;
-         pSession->popBuffer () ;
-         pBuffInfo = pSession->frontBuffer ();
-      }
-      pSession->clear() ;
-
-      if ( !_force )
-      {
-         //If the deque size have overload the MAX_SESSION_DEL_DEQ_SIZE,
-         //will destory
-         if ( CLS_SHARD == pSession->type () &&
-              CLS_NODEID( pSession->sessionID() ) > CLS_BASE_HANDLE_ID &&
-              _deqShdSessions.size() < MAX_SHD_SESSION_DEL_DEQ_SIZE )
-         {
-            _deqShdSessions.push_back( pSession ) ;
-            goto done ;
-         }
-      }
-
-      SDB_OSS_DEL pSession ;
-
-   done:
-      PD_TRACE_EXIT ( SDB__CLSMGR__RLSSN_I );
-      return SDB_OK ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__DFTMSGFUNC, "_clsMgr::_defaultMsgFunc" )
    INT32 _clsMgr::_defaultMsgFunc( NET_HANDLE handle, MsgHeader * msg )
    {
@@ -1097,36 +983,21 @@ done :
       else if ( timerID == _oneSecTimerID )
       {
          //Check _deqShdDeletingSessions
-         {
-            ossScopedLock lock ( &_deqDeletingMutex ) ;
-            _clsSession *pSession = NULL ;
-            DEQSESSION::iterator it = _deqShdDeletingSessions.begin() ;
-            while ( it != _deqShdDeletingSessions.end() )
-            {
-               pSession = *it ;
-               if ( !pSession->isDetached() )
-               {
-                  ++it ;
-                  continue ;
-               }
-               it = _deqShdDeletingSessions.erase( it ) ;
-               _releaseSession_i( pSession, FALSE, FALSE ) ;
-            }
-         }
+         _shardSessionMgr.onTimer( interval ) ;
+         _replSessionMgr.onTimer( interval ) ;
 
          //prepare task
          _prepareTask () ;
 
          if ( _taskMgr.taskCount() > 0 &&
-              CLS_INVALID_TIMERID == _shd1SecTimerID )
+              !_shardSessionMgr.isUnShardTimerStarted() )
          {
-            _shd1SecTimerID = setTimer ( CLS_SHARD, OSS_ONE_SEC ) ;
+            _shardSessionMgr.startUnShardTimer( OSS_ONE_SEC ) ;
          }
-         else if ( _shd1SecTimerID != CLS_INVALID_TIMERID &&
+         else if ( _shardSessionMgr.isUnShardTimerStarted() &&
                    0 == _taskMgr.taskCount() )
          {
-            killTimer ( _shd1SecTimerID ) ;
-            _shd1SecTimerID = CLS_INVALID_TIMERID ;
+            _shardSessionMgr.stopUnShardTimer() ;
          }
       }
       else
@@ -1145,157 +1016,9 @@ done :
       PD_TRACE_EXIT ( SDB__CLSMGR_ONTMR );
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_HNDSNTMOUT, "_clsMgr::handleSessionTimeout" )
-   INT32 _clsMgr::handleSessionTimeout ( UINT64 timerID , UINT32 interval )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSMGR_HNDSNTMOUT );
-      UINT32 type = 0 ;
-      UINT32 netTimerID = 0 ;
-      BOOLEAN judgeNodeID = FALSE ;
-      ossUnpack32From64 ( timerID, type, netTimerID ) ;
-
-      MAPSESSION *pMapSession = NULL ;
-      if ( _repl1SecTimerID == timerID )
-      {
-         pMapSession = &_mapReplSessions ;
-      }
-      else if ( _shd1MinTimerID == timerID )
-      {
-         if ( _mapShdSessions.size() > MAX_SHD_SESSION_CHECK_SIZE )
-         {
-            pMapSession = &_mapShdSessions ;
-         }
-         else
-         {
-            goto done ;
-         }
-      }
-      else if ( _shd1SecTimerID == timerID )
-      {
-         pMapSession = &_mapShdSessions ;
-         judgeNodeID = TRUE ;
-      }
-      else if ( _shdHandleCloseTimerID == timerID )
-      {
-         _checkSessionMeta( type ) ;
-         killTimer( _shdHandleCloseTimerID ) ;
-         _shdHandleCloseTimerID = CLS_INVALID_TIMERID ;
-         goto done ;
-      }
-      else if ( _replHandleCloseTimerID == timerID )
-      {
-         _checkSessionMeta( type ) ;
-         killTimer( _replHandleCloseTimerID ) ;
-         _replHandleCloseTimerID = CLS_INVALID_TIMERID ;
-         goto done ;
-      }
-
-      if ( pMapSession )
-      {
-         _clsSession *pSession = NULL ;
-         MAPSESSION_IT it = pMapSession->begin() ;
-         while ( it != pMapSession->end() )
-         {
-            pSession = it->second ;
-            if ( judgeNodeID )
-            {
-               if ( CLS_NODEID( pSession->sessionID() ) > CLS_BASE_HANDLE_ID )
-               {
-                  ++it ;
-                  continue ;
-               }
-            }
-
-            if ( !pSession->isProcess() && pSession->timeout( interval ) )
-            {
-               PD_LOG ( PDEVENT, "Session[%s] timeout",
-                        pSession->sessionName() ) ;
-               _releaseSession_i ( pSession, TRUE, TRUE ) ;
-               pMapSession->erase ( it++ ) ;
-               continue ;
-            }
-            ++it ;
-         }
-
-         //start inner sessions
-         _startInnerSession ( type ) ;
-
-         //must return SDB_OK(0), otherwise the timer will dispatch to clsMgr
-         goto done ;
-      }
-
-      //return not zero, the timer will dispath to clsMgr
-      rc = -1 ;
-   done :
-      PD_TRACE_EXITRC ( SDB__CLSMGR_HNDSNTMOUT, rc );
-      return rc ;
-   }
-
-   _clsMgr::MAPSESSION *_clsMgr::_getSessionMap ( INT32 type )
-   {
-      return ( CLS_REPL == type ) ? &_mapReplSessions : &_mapShdSessions ;
-   }
-
-   _clsMgr::MAPMETA* _clsMgr::_getMetaMap( INT32 type )
-   {
-      return ( CLS_REPL == type ) ? &_mapReplMeta : &_mapShdMeta ;
-   }
-
-   void _clsMgr::_checkSessionMeta( INT32 type )
-   {
-      MAPMETA *pMapMeta = _getMetaMap( type ) ;
-      MAPMETA_IT it = pMapMeta->begin() ;
-      while ( it != pMapMeta->end() )
-      {
-         clsSessionMeta *pMeta = it->second ;
-         if ( 0 == pMeta->getBasedHandleNum() )
-         {
-            SDB_OSS_DEL pMeta ;
-            pMapMeta->erase( it++ ) ;
-            continue ;
-         }
-         ++it ;
-      }
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_HNDSNCLOSE, "_clsMgr::handleSessionClose" )
-   INT32 _clsMgr::handleSessionClose ( INT32 type, const NET_HANDLE handle )
-   {
-      PD_TRACE_ENTRY ( SDB__CLSMGR_HNDSNCLOSE );
-      _clsSession *pSession = NULL ;
-      MAPSESSION *pMapSession = _getSessionMap ( type ) ;
-      MAPSESSION_IT it = pMapSession->begin() ;
-      while ( it != pMapSession->end() )
-      {
-         pSession = it->second ;
-         if ( pSession->netHandle () == handle )
-         {
-            PD_LOG ( PDEVENT, "Session[%s, handle:%d] closed",
-                     pSession->sessionName(), pSession->netHandle() ) ;
-            _releaseSession_i ( pSession, TRUE, TRUE ) ;
-            pMapSession->erase ( it++ ) ;
-            continue ;
-         }
-         ++it ;
-      }
-
-      if ( CLS_REPL == type && CLS_INVALID_TIMERID == _replHandleCloseTimerID )
-      {
-         _replHandleCloseTimerID = setTimer( CLS_REPL, 30 * OSS_ONE_SEC ) ;
-      }
-      else if ( CLS_SHARD == type &&
-                CLS_INVALID_TIMERID == _shdHandleCloseTimerID )
-      {
-         _shdHandleCloseTimerID = setTimer( CLS_SHARD, 30 * OSS_ONE_SEC ) ;
-      }
-
-      PD_TRACE_EXIT ( SDB__CLSMGR_HNDSNCLOSE );
-      return SDB_OK ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__STARTINSN, "_clsMgr::_startInnerSession" )
-   INT32 _clsMgr::_startInnerSession ( INT32 type )
+   INT32 _clsMgr::_startInnerSession ( INT32 type,
+                                       clsSessionMgr *pSessionMgr )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSMGR__STARTINSN );
@@ -1306,16 +1029,18 @@ done :
       while ( it != _vecInnerSessionParam.end() )
       {
          _innerSessionInfo &info = *it ;
-         if ( info.type != type ||
-              getSession( info.type, info.sessionID, info.startType,
-                          NET_INVALID_HANDLE, FALSE ) )
+         if ( info.type != type || pSessionMgr->getSession( info.sessionID,
+                                                            info.startType,
+                                                            NET_INVALID_HANDLE,
+                                                            FALSE, 0, NULL ) )
          {
             ++it ;
             continue ;
          }
 
-         pSession = getSession ( info.type, info.sessionID, info.startType,
-                                 NET_INVALID_HANDLE, TRUE, info.data ) ;
+         pSession = pSessionMgr->getSession ( info.sessionID, info.startType,
+                                              NET_INVALID_HANDLE, TRUE, 0,
+                                              info.data ) ;
          if ( pSession )
          {
             PD_LOG ( PDEVENT, "Create inner session[%s] succeed",
@@ -1325,13 +1050,13 @@ done :
          }
 
          PD_LOG ( PDERROR, "Create inner session[TID:%d] failed",
-            info.innerTid ) ;
+                  info.innerTid ) ;
          rc = SDB_SYS ;
 
          ++it ;
       }
 
-      PD_TRACE_EXITRC ( SDB__CLSMGR__STARTINSN, rc );
+      PD_TRACE_EXITRC ( SDB__CLSMGR__STARTINSN, rc ) ;
       return rc ;
    }
 
