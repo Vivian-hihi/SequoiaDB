@@ -602,7 +602,7 @@ namespace engine
          else
          {
             offsetTmp = _notifyList[i].offset ;
-            while ( offsetTmp != _notifyList[i].offse )
+            while ( offsetTmp != _notifyList[i].offset )
             {
                offsetTmp = _notifyList[i].offset ;
             }
