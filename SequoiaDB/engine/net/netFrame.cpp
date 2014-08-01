@@ -87,6 +87,12 @@ namespace engine
       }
 
       _ioservice.run() ;
+
+      if ( _handler )
+      {
+         _handler->onStop() ;
+      }
+
       PD_TRACE_EXIT( SDB__NETFRAME_RUN );
       return ;
    }

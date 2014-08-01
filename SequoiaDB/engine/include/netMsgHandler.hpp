@@ -67,6 +67,9 @@ namespace engine
                                        BOOLEAN isPositive )
         {
         }
+
+        virtual void    onStop() {}
+
    } ;
 
    typedef _netMsgHandler INetMsgHandler ;

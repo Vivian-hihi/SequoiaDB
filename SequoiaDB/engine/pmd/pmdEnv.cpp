@@ -80,6 +80,11 @@ namespace engine
       return pmdGetSysInfo()->_quitFlag ;
    }
 
+   void pmdSetQuit()
+   {
+      pmdGetSysInfo()->_quitFlag = TRUE ;
+   }
+
    INT32& pmdGetSigNum()
    {
       static INT32 s_sigNum = -1 ;

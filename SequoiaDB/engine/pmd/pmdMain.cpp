@@ -269,6 +269,7 @@ namespace engine
 
    done :
       PMD_SHUTDOWN_DB( rc ) ;
+      pmdSetQuit() ;
       krcb->destroy () ;
       pmdGetStartup().final() ;
       PD_LOG ( PDEVENT, "Stop sequoiadb, exit code: %d",

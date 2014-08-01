@@ -42,6 +42,7 @@
 #include "ossLatch.hpp"
 #include "ossAtomic.hpp"
 #include "clsMemPool.hpp"
+#include "ossEvent.hpp"
 #include "sdbInterface.hpp"
 
 #include <map>
@@ -124,7 +125,7 @@ namespace engine
       DECLARE_OBJ_MSG_MAP()
 
       public:
-         _clsSession( UINT64 sessionID );
+         _clsSession( UINT64 sessionID ) ;
          virtual ~_clsSession();
 
          virtual UINT64          identifyID() ;
@@ -164,6 +165,9 @@ namespace engine
          void        startType ( INT32 startType ) ;
          void        meta ( clsSessionMeta * pMeta ) ;
          void        sessionID ( UINT64 sessionID ) ;
+         void        setSessionMgr( _clsSessionMgr *pSessionMgr ) ;
+
+         void        forceBack() ;
 
          clsBuffInfo*   frontBuffer () ;
          void           popBuffer () ;
@@ -189,6 +193,9 @@ namespace engine
 
          CHAR                 _name[SESSION_NAME_LEN+1] ;
          clsSessionMeta        *_pMeta ;
+
+         ossEvent             _detachEvent ;
+         _clsSessionMgr       *_pSessionMgr ;
 
       private:
          ossSpinXLatch        _latchIn ;
@@ -226,9 +233,13 @@ namespace engine
                                     _netTimeoutHandler *pTimerHandle,
                                     UINT32 timerInterval ) ;
          virtual INT32        fini() ;
-         void                 setForced() { _force = TRUE ; }
+         void                 setForced() { _quit = TRUE ; }
+
+         BOOLEAN              forceNotify( UINT64 sessionID,
+                                           _pmdEDUCB *cb ) ;
 
          virtual void         onTimer( UINT32 interval ) ;
+         
 
          /*
             The following function:
@@ -247,6 +258,8 @@ namespace engine
                                         BOOLEAN delay = FALSE ) ;
 
          INT32          handleSessionClose( const NET_HANDLE handle ) ;
+
+         void           handleStop() ;
 
          virtual INT32  handleSessionTimeout( UINT32 timerID,
                                               UINT32 interval ) ;
@@ -292,6 +305,7 @@ namespace engine
       protected:
          void           _checkSession( UINT32 interval ) ;
          void           _checkSessionMeta( UINT32 interval ) ;
+         void           _checkForceSession( UINT32 interval ) ;
 
       protected:
          MAPSESSION                 _mapSession ;
@@ -310,7 +324,13 @@ namespace engine
          UINT32                     _sessionTimerID ;
          UINT32                     _timerInterval ;
 
-         BOOLEAN                    _force ;
+         // for _quit edu by edu mgr, not by session mgr
+         UINT32                     _forceChecktimer ;
+         std::deque< UINT64 >       _forceSessions ;
+         ossSpinXLatch              _forceLatch ;
+         BOOLEAN                    _isStop ;
+
+         BOOLEAN                    _quit ;
 
    } ;
    typedef _clsSessionMgr clsSessionMgr ;

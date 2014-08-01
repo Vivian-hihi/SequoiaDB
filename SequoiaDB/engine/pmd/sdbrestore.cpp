@@ -546,6 +546,7 @@ namespace engine
 
    done :
       PMD_SHUTDOWN_DB( rc ) ;
+      pmdSetQuit() ;
       krcb->destroy () ;
       PD_LOG ( PDEVENT, "Stop sdbrestore, exist code: %d",
                krcb->getExitCode() ) ;

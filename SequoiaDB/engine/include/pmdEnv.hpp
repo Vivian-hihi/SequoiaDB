@@ -78,6 +78,7 @@ namespace engine
    BOOLEAN        pmdIsPrimary() ;
    void           pmdSetPrimary( BOOLEAN primary ) ;
 
+   void           pmdSetQuit() ;
    BOOLEAN        pmdIsQuitApp() ;
 
    pmdSysInfo*    pmdGetSysInfo () ;

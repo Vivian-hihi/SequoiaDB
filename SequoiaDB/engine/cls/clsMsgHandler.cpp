@@ -102,6 +102,11 @@ namespace engine
       _pSessionMgr->handleSessionClose( handle ) ;
    }
 
+   void _clsMsgHandler::onStop()
+   {
+      _pSessionMgr->handleStop() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMSGHND_HNDSNMSG, "_clsMsgHandler::handleSessionMsg" )
    INT32 _clsMsgHandler::handleSessionMsg (  const NET_HANDLE &handle,
                                              const _MsgHeader *header,

@@ -70,6 +70,7 @@ namespace engine
    {
       _lockFlag = FALSE ;
       _startType = CLS_SESSION_PASSIVE ;
+      _pSessionMgr = NULL ;
 
       clear() ;
 
@@ -113,6 +114,7 @@ namespace engine
 
       _latchOut.try_get () ;
       _latchIn.release () ;
+      _detachEvent.reset() ;
 
       _onAttach () ;
 
@@ -128,6 +130,12 @@ namespace engine
       PD_LOG( PDINFO, "Session[%s] detach edu[%d]", sessionName(),
               eduID() ) ;
 
+      if ( SDB_OK != _detachEvent.wait( 0 ) &&
+           _pSessionMgr->forceNotify( sessionID(), eduCB() ) )
+      {
+         _detachEvent.wait( 60 * OSS_ONE_SEC ) ;
+      }
+
       _onDetach () ;
 
       _pEDUCB->detachSession() ;
@@ -135,6 +143,11 @@ namespace engine
       _pEDUCB = NULL ;
       PD_TRACE_EXIT ( SDB__CLSSN_ATHOUT );
       return SDB_OK ;
+   }
+
+   void _clsSession::forceBack()
+   {
+      _detachEvent.signalAll() ;
    }
 
    BOOLEAN _clsSession::isDetached () const
@@ -230,6 +243,11 @@ namespace engine
       {
          _netHandle = NET_INVALID_HANDLE ;
       }
+   }
+
+   void _clsSession::setSessionMgr( _clsSessionMgr *pSessionMgr )
+   {
+      _pSessionMgr = pSessionMgr ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSN__MKNAME, "_clsSession::_makeName" )
@@ -428,11 +446,13 @@ namespace engine
    */
    _clsSessionMgr::_clsSessionMgr()
    {
-      _force                  = FALSE ;
+      _quit                   = FALSE ;
+      _isStop                 = FALSE ;
       _pRTAgent               = NULL ;
       _pTimerHandle           = NULL ;
       _handleCloseTimerID     = NET_INVALID_TIMER_ID ;
       _sessionTimerID         = NET_INVALID_TIMER_ID ;
+      _forceChecktimer        = NET_INVALID_TIMER_ID ;
       _timerInterval          = OSS_ONE_SEC ;
    }
 
@@ -488,7 +508,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( CLS_SESSMGR_FINI ) ;
 
-      _force = TRUE ;
+      _quit = TRUE ;
 
       // kill timer
       if ( _pRTAgent )
@@ -540,6 +560,31 @@ namespace engine
 
       PD_TRACE_EXITRC ( CLS_SESSMGR_FINI, rc ) ;
       return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_FORCENTY, "_clsSessionMgr::forceNotify" )
+   BOOLEAN _clsSessionMgr::forceNotify( UINT64 sessionID,
+                                        _pmdEDUCB *cb )
+   {
+      PD_TRACE_ENTRY( CLS_SESSMGR_FORCENTY ) ;
+
+      BOOLEAN ret = TRUE ;
+      ossScopedLock lock( &_forceLatch ) ;
+
+      if ( _isStop )
+      {
+         ret = FALSE ;
+      }
+      else
+      {
+         _forceSessions.push_back( sessionID ) ;
+         if ( NET_INVALID_TIMER_ID == _forceChecktimer )
+         {
+            _pRTAgent->addTimer( 1, _pTimerHandle, _forceChecktimer ) ;
+         }
+      }
+
+      return ret ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_ONTIMER, "_clsSessionMgr::onTimer" )
@@ -719,6 +764,7 @@ namespace engine
                     startType, sessionID ) ;
             goto error ;
         }
+        pSession->setSessionMgr( this ) ;
       }
 
       // set session info
@@ -833,7 +879,7 @@ namespace engine
    INT32 _clsSessionMgr::releaseSession( clsSession * pSession, BOOLEAN delay )
    {
       PD_TRACE_ENTRY ( CLS_SESSMGR_RLSSS ) ;
-      if ( !_force )
+      if ( !_quit )
       {
          MAPSESSION_IT it = _mapSession.find( pSession->sessionID() ) ;
          if ( it != _mapSession.end() )
@@ -856,7 +902,10 @@ namespace engine
       clsBuffInfo *pBuffInfo = NULL ;
 
       SDB_ASSERT ( pSession, "pSession can't be NULL" ) ;
-      if ( !_force && postQuit && pSession->eduCB() )
+
+      pSession->forceBack() ;
+
+      if ( !_quit && postQuit && pSession->eduCB() )
       {
          // Notify the edu quit
          pSession->eduCB()->disconnect () ;
@@ -888,7 +937,7 @@ namespace engine
       }
       pSession->clear() ;
 
-      if ( !_force && _canReuse( pSession->sessionType() ) &&
+      if ( !_quit && _canReuse( pSession->sessionType() ) &&
            _deqCatchSessions.size() < _maxCatchSize() )
       {
          _deqCatchSessions.push_back( pSession ) ;
@@ -915,6 +964,7 @@ namespace engine
       if ( !_pRTAgent )
       {
          rc = SDB_INVALIDARG ;
+         goto error ;
       }
 
       reply.header.opCode = MAKE_REPLY_TYPE( pReqMsg->opCode ) ;
@@ -970,6 +1020,15 @@ namespace engine
       return SDB_OK ;
    }
 
+   void _clsSessionMgr::handleStop()
+   {
+      _forceLatch.get() ;
+      _isStop = TRUE ;
+      _forceLatch.release() ;
+
+      _checkForceSession( 0 ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_HDLSNTM, "_clsSessionMgr::handleSessionTimeout" )
    INT32 _clsSessionMgr::handleSessionTimeout( UINT32 timerID,
                                                UINT32 interval )
@@ -987,6 +1046,10 @@ namespace engine
          _pRTAgent->removeTimer( _handleCloseTimerID ) ;
          _handleCloseTimerID = NET_INVALID_TIMER_ID ;
          goto done ;
+      }
+      else if ( _forceChecktimer == timerID )
+      {
+         _checkForceSession( interval ) ;
       }
       else
       {
@@ -1018,6 +1081,40 @@ namespace engine
       }
 
       PD_TRACE_EXIT ( CLS_SESSMGR_CHKSNMETA ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_CHKFORCESN, "_clsSessionMgr::_checkForceSession" )
+   void _clsSessionMgr::_checkForceSession( UINT32 interval )
+   {
+      PD_TRACE_ENTRY ( CLS_SESSMGR_CHKFORCESN ) ;
+
+      clsSession *pSession = NULL ;
+      UINT64 sessionID = 0 ;
+
+      ossScopedLock lock( &_forceLatch ) ;
+
+      std::deque< UINT64 >::iterator it = _forceSessions.begin() ;
+      while ( !_forceSessions.empty() )
+      {
+         sessionID = _forceSessions.front() ;
+         _forceSessions.pop_front() ;
+
+         MAPSESSION_IT itSession = _mapSession.find( sessionID ) ;
+         if ( itSession == _mapSession.end() )
+         {
+            continue ;
+         }
+         pSession = itSession->second ;
+         pSession->forceBack() ;
+      }
+
+      if ( NET_INVALID_TIMER_ID != _forceChecktimer )
+      {
+         _pRTAgent->removeTimer( _forceChecktimer ) ;
+         _forceChecktimer = NET_INVALID_TIMER_ID ;
+      }
+
+      PD_TRACE_EXIT ( CLS_SESSMGR_CHKFORCESN ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( CLS_SESSMGR_CHKSN, "_clsSessionMgr::_checkSession" )
