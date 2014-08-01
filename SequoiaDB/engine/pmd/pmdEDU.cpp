@@ -644,11 +644,13 @@ namespace engine
       _uncompressBuffLen = 0 ;
 
       // clean alloc memory
+      CHAR *pBuff = NULL ;
       ALLOC_MAP_IT itAlloc = _allocMap.begin() ;
       while ( itAlloc != _allocMap.end() )
       {
-         releaseBuff( itAlloc->first ) ;
+         pBuff = itAlloc->first ;
          ++itAlloc ;
+         releaseBuff( pBuff ) ;
       }
       _allocMap.clear() ;
 
