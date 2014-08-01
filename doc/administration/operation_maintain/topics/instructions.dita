@@ -59,7 +59,7 @@ Takes 12.85741s.
       "StartTime": "2014-07-29-22:41:40",
       "HasError": false
 }</codeblock></p>
-        <p>如果想要一次将整个数据库备份完成，则可执行数据库备份操作且不提供任意参数。如此即可一次备份完成整个数据库集群，包含编目组与数据组。默认备份到相应组主节点的 bakfile 下 /opt/sequoiadb/database/../../dialog/bakfile<codeblock>> db.backupOffline()</codeblock></p></li>
+        <note><p>如果想要一次将整个数据库备份完成，则可执行数据库备份操作且不提供任意参数。如此即可一次备份完成整个数据库集群，包含编目组与数据组。默认备份到相应组主节点的 bakfile 下 /opt/sequoiadb/database/../../dialog/bakfile<codeblock>> db.backupOffline()</codeblock></p></note></li>
       <li><p>查看备份；<codeblock>> db.listBackup()
 {
   "Name": "catalogBackup",
@@ -111,7 +111,9 @@ File:SequoiaDB/engine/pmd/sdbrestore.cpp
 Message:
 Start sdbrestore [Ver: 1.8, Release: 13673, Build: 2014-07-22-00.11.23(Debug)]...
 
-…………
+                   <b>.</b>
+                   <b>.</b>
+                   <b>.</b>
 
 *****************************************************
 Restore succeed!
