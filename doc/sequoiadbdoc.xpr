@@ -233,6 +233,8 @@
             </folder>
             <folder name="operation_maintain">
                 <folder name="topics">
+                    <file name="administration/operation_maintain/topics/bandr_en.dita"/>
+                    <file name="administration/operation_maintain/topics/bandr.dita"/>
                     <file name="administration/operation_maintain/topics/catalog_en.dita"/>
                     <file name="administration/operation_maintain/topics/catalog.dita"/>
                     <file name="administration/operation_maintain/topics/cluster_start_en.dita"/>
@@ -251,6 +253,8 @@
                     <file name="administration/operation_maintain/topics/datanode.dita"/>
                     <file name="administration/operation_maintain/topics/fault_recovery_en.dita"/>
                     <file name="administration/operation_maintain/topics/fault_recovery.dita"/>
+                    <file name="administration/operation_maintain/topics/instructions_en.dita"/>
+                    <file name="administration/operation_maintain/topics/instructions.dita"/>
                     <file name="administration/operation_maintain/topics/monitor_cluster_en.dita"/>
                     <file name="administration/operation_maintain/topics/monitor_cluster.dita"/>
                     <file name="administration/operation_maintain/topics/monitor_en.dita"/>

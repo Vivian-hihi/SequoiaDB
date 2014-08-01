@@ -7,9 +7,12 @@
    <topicref href="topics/cluster_start_en.dita"/>
    <topicref href="topics/cluster_stop_en.dita"/>
   </topicref>
-  <topicref href="topics/data_backup_en.dita"/>
-  <topicref href="topics/search_en.dita"/>
-  <topicref href="topics/data_recovery_en.dita"/>
+  <topicref href="topics/bandr_en.dita">
+   <topicref href="topics/data_backup_en.dita"/>
+   <topicref href="topics/search_en.dita"/>
+   <topicref href="topics/data_recovery_en.dita"/>
+   <topicref href="topics/instructions_en.dita"/>
+  </topicref>
   <topicref href="topics/fault_recovery_en.dita">
    <topicref href="topics/catalog_en.dita"/>
    <topicref href="topics/datanode_en.dita"/>

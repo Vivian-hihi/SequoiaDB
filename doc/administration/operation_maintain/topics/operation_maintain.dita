@@ -5,8 +5,7 @@
   <body>
     <p>目录：</p>
     <p><xref href="cluster_start_stop.dita">集群启停</xref></p>
-    <p><xref href="data_backup.dita">数据备份</xref></p>
-    <p><xref href="data_recovery.dita">数据恢复</xref></p>
+    <p><xref href="bandr.dita">备份恢复</xref></p>    
     <p><xref href="fault_recovery.dita">故障恢复</xref></p>
     <p><xref href="monitor.dita">监控</xref></p>
   </body>
