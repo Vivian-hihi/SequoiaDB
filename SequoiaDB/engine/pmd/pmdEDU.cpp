@@ -622,6 +622,7 @@ namespace engine
       {
          _catchMap.insert( std::make_pair( it->first, it->second ) ) ;
          _totalCatchSize += it->first ;
+         _totalMemSize += it->first ;
          ++it ;
       }
       catchMap.clear() ;
