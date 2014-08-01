@@ -89,7 +89,7 @@ Takes 1.762381s.
 &gt; db.listBackup()
 {
       "Name": "catalogBackup",
-      "NodeName": "htest1:30000",
+      "NodeName": "<strong class="ph b">htest1:30000</strong>",
       "GroupName": "SYSCatalogGroup",
       "EnsureInc": false,
       "BeginLSNOffset": 0,
@@ -116,8 +116,7 @@ Takes 12.85741s.
 }</pre>
 </div>
 
-        <div class="note note"><span class="notetitle">Note:</span> <div class="p">如果想要一次将整个数据库备份完成，则可执行数据库备份操作且不提供任意参数。如此即可一次备份完成整个数据库集群，包含编目组与数据组。默认备份到相应组主节点的 bakfile 下 /opt/sequoiadb/database/../../dialog/bakfile<pre class="pre codeblock">&gt; db.backupOffline()</pre>
-</div>
+        <div class="note note"><span class="notetitle">Note:</span> 如果想要一次将整个数据库备份完成，则可执行数据库备份操作且不提供任意参数。如此即可一次备份完成整个数据库集群，包含编目组与数据组。默认备份到相应组主节点的 bakfile 下 /opt/sequoiadb/database/../../dialog/bakfile<pre class="pre codeblock">&gt; db.backupOffline()</pre>
 </div>
 </li>
 
@@ -182,18 +181,17 @@ sdbadmin@htest3:/opt/sequoiadb$ cp -r /opt/sequoiadb/database/data/41000/bakfile
 
       <li class="li"><p class="p">数据恢复操作；</p>
 
-      <div class="p">恢复工具（sdbrestore）位于 SequoiaDB 数据库中的 bin 目录下面（/opt/sequoiadb/bin）。通过 sdb shell 登入分区组的数据节点，执行数据恢复。执行恢复操作时，至少要对一个组中超过半数的节点进行恢复，最好是对组内所有的节点进行恢复操作。此数据库集群包含两个组：编目组“SYSCatalogGroup”和一个数据组“g1”，分别布署在三台主机上：htest1/htest2/htest3。恢复节点操作时需要进到节点所在的主机分别进行恢复。如恢复位于主机 htest1 上的编目节点则要在此主机内执行操作：<pre class="pre codeblock">sdbadmin@htest1:/opt/sequoiadb/bin$ ./sdbrestore -p /mnt/xiaojun/BACKUP/bakfile.30000.htest1/ -n catalogBackup --dbpath /opt/sequoiadb/database/cata/30000/ --confpath /opt/sequoiadb/conf/local/30000/ --svcname 30000
+      <div class="p">恢复工具（sdbrestore）位于 SequoiaDB 数据库中的 bin 目录下面（/opt/sequoiadb/bin）。通过 sdb shell 登入分区组的数据节点，执行数据恢复。执行恢复操作时，至少要对一个组中超过半数的节点进行恢复，最好是对组内所有的节点进行恢复操作。此数据库集群包含两个组：编目组“SYSCatalogGroup”和一个数据组“g1”，分别布署在三台主机上：htest1/htest2/htest3。恢复节点操作时需要进到节点所在的主机分别进行恢复。如恢复位于主机 htest1 上的编目节点则要在此主机内执行操作：<pre class="pre codeblock">sdbadmin@htest1:/opt/sequoiadb/bin$ ./sdbrestore -p /mnt/xiaojun/BACKUP/bakfile.30000.htest1/ -n catalogBackup --dbpath \
+&gt; /opt/sequoiadb/database/cata/30000/ --confpath /opt/sequoiadb/conf/local/30000/ --svcname 30000
 2014-07-29-23.09.19.382036               Level:EVENT
 PID:9556                                 TID:9556
 Function:pmdRestoreThreadMain            Line:491
 File:SequoiaDB/engine/pmd/sdbrestore.cpp
 Message:
 Start sdbrestore [Ver: 1.8, Release: 13673, Build: 2014-07-22-00.11.23(Debug)]...
-
                    <strong class="ph b">.</strong>
                    <strong class="ph b">.</strong>
                    <strong class="ph b">.</strong>
-
 *****************************************************
 Restore succeed!
 *****************************************************</pre>
@@ -201,16 +199,17 @@ Restore succeed!
 
       <p class="p">此时仅恢复了 htest1 的编目节点，采用同样的方式去将 htest2 和 htest3 的编目节点启动起来。</p>
 
-      <div class="p">恢复数据组 g1 的数据节点，和恢复编目组节点的方法类似。三台机 htest1/htest2/htest3 中的数据节点均采用如下方法分别进行恢复：<pre class="pre codeblock">sdbadmin@htest1:/opt/sequoiadb/bin$ ./sdbrestore -p /mnt/xiaojun/BACKUP/bakfile.41000.htest3/ -n datagroupG1Backup --dbpath /opt/sequoiadb/database/data/41000/ --confpath /opt/sequoiadb/conf/local/41000/ --svcname 41000
+      <div class="p">恢复数据组 g1 的数据节点，和恢复编目组节点的方法类似。三台机 htest1/htest2/htest3 中的数据节点均采用如下方法分别进行恢复：<pre class="pre codeblock">sdbadmin@htest1:/opt/sequoiadb/bin$ ./sdbrestore -p /mnt/xiaojun/BACKUP/bakfile.41000.htest3/ -n datagroupG1Backup --dbpath \
+&gt; /opt/sequoiadb/database/data/41000/ --confpath /opt/sequoiadb/conf/local/41000/ --svcname 41000
 2014-07-29-23.18.08.966708               Level:EVENT
 PID:9590                                 TID:9590
 Function:pmdRestoreThreadMain            Line:491
 File:SequoiaDB/engine/pmd/sdbrestore.cpp
 Message:
 Start sdbrestore [Ver: 1.8, Release: 13673, Build: 2014-07-22-00.11.23(Debug)]...
-
-…………
-
+                   <strong class="ph b">.</strong>
+                   <strong class="ph b">.</strong>
+                   <strong class="ph b">.</strong>
 *****************************************************
 Restore succeed!
 *****************************************************</pre>
