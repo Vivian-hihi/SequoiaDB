@@ -515,11 +515,10 @@ namespace engine
                _notifyList[i].sameReqTimes = 0 ;
             }
 
-            if ( result <= 0 )
+            if ( result > 0 )
             {
-               goto done ;
+               _notifyList[i].offset = offset ;
             }
-            _notifyList[i].offset = offset ;
             break ;
          }
       }
