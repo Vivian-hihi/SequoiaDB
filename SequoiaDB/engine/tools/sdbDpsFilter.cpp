@@ -352,7 +352,7 @@ namespace
          writePos += writeSize ;
       }
 
-      ///< wriete enter to file
+      ///< write enter to file
       len = ossStrlen( OSS_NEWLINE ) ;
       restLen = len ;
       writePos = 0 ;
@@ -873,10 +873,10 @@ namespace
                            CHAR *pOutBuffer, const UINT64 outBufferSize )
    {
       SDB_ASSERT( pOutBuffer, "pOutBuffer cannot be NULL " ) ;
-      UINT64 len     = 0 ;
-      UINT32 begin   = DPS_INVALID_LOG_FILE_ID ;
-      UINT32 work    = 0 ;
-      UINT32 idx     = 0 ;
+      UINT64 len      = 0 ;
+      UINT32 begin    = DPS_INVALID_LOG_FILE_ID ;
+      UINT32 work     = 0 ;
+      UINT32 idx      = 0 ;
       UINT32 beginIdx = 0 ;
       // find begin file
       while( idx < metaData.metaList.size() )
@@ -1064,7 +1064,7 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
                                const CHAR *logFilePath )
 {
    INT32 rc             = SDB_OK ;
-   UINT64 len            = 0 ;
+   UINT64 len           = 0 ;
    UINT64 outBufferSize = BLOCK_SIZE ;
    CHAR *pOutBuffer     = NULL ;
    BOOLEAN start        = FALSE ;
@@ -1123,7 +1123,7 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
          len = analysisMetaData( metaData, pOutBuffer, outBufferSize ) ;
          if( len >= outBufferSize )
          {
-            len += BLOCK_SIZE ;
+            outBufferSize += BLOCK_SIZE ;
             goto retry ;
          }
 
