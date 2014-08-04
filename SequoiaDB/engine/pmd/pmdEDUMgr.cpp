@@ -107,6 +107,7 @@ namespace engine
       destroyAll () ;
    }
 
+#if defined( SDB_ENGINE )
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DUMPINFO, "_pmdEDUMgr::dumpInfo" )
    void _pmdEDUMgr::dumpInfo ( std::set<monEDUSimple> &info )
    {
@@ -152,6 +153,7 @@ namespace engine
       }
       PD_TRACE_EXIT ( SDB__PMDEDUMGR_DUMPINFO2 );
    }
+#endif // SDB_ENGINE
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DESTROYALL, "_pmdEDUMgr::destroyAll" )
    INT32 _pmdEDUMgr::destroyAll ()

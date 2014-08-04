@@ -47,10 +47,10 @@
 #include "ossRWMutex.hpp"
 #include "sdbInterface.hpp"
 #include "pdTrace.hpp"
-#include "monEDU.hpp"
-#include "monCB.hpp"
 
 #if defined ( SDB_ENGINE )
+#include "monEDU.hpp"
+#include "monCB.hpp"
 #include "dpsLogDef.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
@@ -274,6 +274,8 @@ namespace engine
          return ret ;
       }
 
+   #if defined ( SDB_ENGINE )
+
       void  initMonAppCB()
       {
          _monApplCB.reset() ;
@@ -285,8 +287,6 @@ namespace engine
       void resetMon () { _monApplCB.reset () ; }
       monConfigCB * getMonConfigCB() { return & _monCfgCB ; }
       monAppCB * getMonAppCB() { return & _monApplCB ; }
-
-   #if defined ( SDB_ENGINE )
 
       ossEvent & getEvent () { return _event ; }
 
@@ -420,11 +420,12 @@ namespace engine
       CHAR              _Name [ PMD_EDU_NAME_LENGTH + 1 ] ;
       ossSocket        *_pClientSock ;
 
-      monAppCB                _monApplCB ;
-      monConfigCB             _monCfgCB ;
       BOOLEAN                 _isDoRollback ;
 
    #if defined ( SDB_ENGINE )
+
+      monAppCB                _monApplCB ;
+      monConfigCB             _monCfgCB ;
 
       ossEvent                _event ;   // for cls replSet notify
 

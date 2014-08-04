@@ -44,12 +44,15 @@
 #include "ossUtil.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pd.hpp"
-#include "monCB.hpp"
 #include "pmdOptionsMgr.hpp"
 #include "msg.h"
 #include "msgDef.hpp"
 #include "pmdEnv.hpp"
 #include "sdbInterface.hpp"
+
+#if defined ( SDB_ENGINE )
+#include "monCB.hpp"
+#endif // SDB_ENGINE
 
 namespace engine
 {
@@ -137,12 +140,15 @@ namespace engine
 
       _pmdEDUMgr     _eduMgr ;
 
-      monConfigCB    _monCfgCB ;
-      monDBCB        _monDBCB ;
       _pmdOptionsMgr _optioncb ;
       ossTick        _curTime ;
 
       pmdEDUCB       _mainEDU ;
+
+#if defined ( SDB_ENGINE )
+      monConfigCB    _monCfgCB ;
+      monDBCB        _monDBCB ;
+#endif // SDB_ENGINE
 
    public :
 
@@ -178,6 +184,7 @@ namespace engine
       {
          return ( _SDB_RTNCB* )getOrgPointByType( SDB_CB_RTN ) ;
       }
+#if defined ( SDB_ENGINE )
       OSS_INLINE monConfigCB * getMonCB()
       {
          return & _monCfgCB ;
@@ -186,6 +193,19 @@ namespace engine
       {
          return &_monDBCB ;
       }
+      void setMonCB( monConfigCB & monCB )
+      {
+         _monCfgCB = monCB ;
+      }
+      void setMonDBCB ( monDBCB & cb )
+      {
+         _monDBCB = cb ;
+      }
+      void setMonTimestampSwitch( BOOLEAN flag )
+      {
+          _monCfgCB.timestampON = flag ;
+      }
+#endif // SDB_ENGINE
       OSS_INLINE _clsMgr *getClsCB ()
       {
          return ( _clsMgr* )getOrgPointByType( SDB_CB_CLS ) ;
@@ -255,21 +275,6 @@ namespace engine
       {
          _dbStatus = status ;
       }
-      void setMonCB( monConfigCB & monCB )
-      {
-         _monCfgCB = monCB ;
-      }
-
-      void setMonDBCB ( monDBCB & cb )
-      {
-         _monDBCB = cb ;
-      }
-
-      void setMonTimestampSwitch( BOOLEAN flag )
-      {
-          _monCfgCB.timestampON = flag ;
-      }
-
       void setGroupName ( const CHAR *groupName )
       {
          ossMemset( _groupName, 0, sizeof(_groupName) ) ;

@@ -166,6 +166,7 @@ namespace engine
          return _isDestroyed ;
       }
 
+#if defined( SDB_ENGINE )
       void dumpInfo ( std::set<monEDUSimple> &info ) ;
       void dumpInfo ( std::set<monEDUFull> &info ) ;
 
@@ -182,6 +183,7 @@ namespace engine
             (*it).second->resetMon () ;
          }
       }
+#endif // SDB_ENGINE
 
       static BOOLEAN isPoolable ( EDU_TYPES type )
       {

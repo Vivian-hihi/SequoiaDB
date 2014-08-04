@@ -71,8 +71,11 @@ namespace engine
       // monitor switch initialization, no latch needed
       // for better performance these monitor swtich should be turned off
       // here, turn it on for testing
+
+#if defined ( SDB_ENGINE )
       _monCfgCB.timestampON = TRUE ;
       _monDBCB.recordActivateTimestamp () ;
+#endif // SDB_ENGINE
 
       setBusinessOK( TRUE ) ;
       setExitCode( SDB_OK ) ;

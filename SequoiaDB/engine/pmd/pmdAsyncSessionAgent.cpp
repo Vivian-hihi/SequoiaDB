@@ -57,7 +57,10 @@ namespace engine
       MsgHeader *pMsg = NULL ;
       INT32 timeDiff = 0 ;
       pmdKRCB *krcb = pmdGetKRCB() ;
+
+#if defined ( SDB_ENGINE )
       monDBCB *mondbcb = krcb->getMonDBCB () ;
+#endif // SDB_ENGINE
 
       pSession->attachIn ( cb ) ;
 
@@ -89,7 +92,9 @@ namespace engine
             //Dispatch event msg to session
             else if ( PMD_EDU_EVENT_MSG == event._eventType )
             {
+#if defined ( SDB_ENGINE )
                mondbcb->addReceiveNum () ;
+#endif // SDB_ENGINE
                if ( 0 == event._userData )
                {
                   pBuffInfo = ( clsBuffInfo* )( event._Data ) ;

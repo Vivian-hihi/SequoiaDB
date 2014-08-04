@@ -63,6 +63,7 @@ namespace engine
       SDB_CB_AGGR,
       SDB_CB_FMP,
       SDB_CB_OMSVC,
+      SDB_CB_OMAGT,
 
       SDB_CB_PMDCTRL,
       // THE MAX CB TYPE

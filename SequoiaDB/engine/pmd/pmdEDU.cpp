@@ -1011,10 +1011,12 @@ namespace engine
             }
             else
             {
+#if defined ( SDB_ENGINE )
                // initial monCfgCB
                *(cb->getMonConfigCB() ) = *( (monConfigCB*)(krcb->getMonCB()) );
                // initial monAppCB
                cb->initMonAppCB() ;
+#endif // SDB_ENGINE
 
                rc = entryFunc ( cb, event._Data ) ;
 
@@ -1068,11 +1070,10 @@ namespace engine
          // eduDestroyed argument will be assigned when pool want to destroy
          // the thread
 
+#if defined ( SDB_ENGINE )
          //reset and clear
          cb->resetMon() ;
-         cb->clear() ;
 
-      #if defined ( SDB_ENGINE )
          //delete all leak context
          {
             SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
@@ -1084,8 +1085,9 @@ namespace engine
                         myEDUID, getEDUName(type), contextID ) ;
             }
          }
-      #endif // SDB_ENGINE
+#endif // SDB_ENGINE
 
+         cb->clear() ;
          rc = eduMgr->returnEDU ( cb->getID (), isForced, &eduDestroyed ) ;
 
          // otherwise let's check rc and report error if it's not OK

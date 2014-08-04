@@ -52,10 +52,18 @@ ossFiles = [
       "oss/ossProc.cpp",
       "oss/ossNPipe.cpp",
       "oss/ossLatch.cpp",
+	  "oss/ossRWMutex.cpp",
 	  "oss/ossEvent.cpp",
       "oss/ossDynamicLoad.cpp",
       "oss/ossHdfs.cpp",
       "oss/ossShMem.cpp"
+      ]
+
+netFiles = [
+      "net/netEventHandler.cpp",
+      "net/netFrame.cpp",
+      "net/netRoute.cpp",
+      "net/netRouteAgent.cpp"
       ]
 
 pdFiles = [
@@ -74,7 +82,12 @@ pmdFiles = [
       "pmd/pmdOptionsMgr.cpp",
       "pmd/pmdEnv.cpp",
       "pmd/pmdSignalHandler.cpp",
-      "pmd/pmdStartup.cpp"
+      "pmd/pmdStartup.cpp",
+	  "pmd/pmd.cpp",
+	  "pmd/pmdEDU.cpp",
+	  "pmd/pmdEDUMgr.cpp",
+	  "pmd/pmdAsyncSessionAgent.cpp",
+	  "pmd/pmdOMAgentEDUEntryPoint.cpp"
       ]
 
 rtnFiles = [
@@ -111,6 +124,17 @@ dpsFiles = [
       "tools/sdbDpsFilter.cpp",
       "tools/sdbDpsLogFilter.cpp",
       "tools/sdbDpsOption.cpp"
+      ]
+
+clsFiles = [
+      "cls/clsMemPool.cpp",
+      "cls/clsMsgHandler.cpp",
+      "cls/clsTimerHandler.cpp",
+      "cls/clsSession.cpp"
+      ]
+
+omagentFiles = [
+      "omagent/omagentMgr.cpp"
       ]
 
 clientFiles = [
@@ -336,8 +360,14 @@ toolEnv.StaticLibrary('util', utilFiles)
 toolEnv.StaticLibrary('mig', migFiles)
 #msg
 toolEnv.StaticLibrary('msg', msgFiles)
+#net
+toolEnv.StaticLibrary('net', netFiles)
 #dps
 toolEnv.StaticLibrary('dps', dpsFiles)
+#cls
+toolEnv.StaticLibrary('cls', clsFiles)
+#omagent
+toolEnv.StaticLibrary('omagent', omagentFiles)
 #ncurses
 if linux:
    toolEnv.StaticLibrary('ncurses', ncursesFiles)
@@ -367,7 +397,7 @@ sdblist = toolEnv.Program("sdblist", sdbListMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson","pmd","rtn", "util"],
+         LIBDEPS=["pd","oss","msg","bson","pmd","rtn", "util", "net", "cls", "omagent"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,
