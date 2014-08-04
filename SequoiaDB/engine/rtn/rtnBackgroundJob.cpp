@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnBackgroundJob.hpp
+   Source File Name = rtnBackgroundJob.cpp
 
    Descriptive Name = Data Management Service Header
 
@@ -42,238 +42,12 @@
 
 namespace engine
 {
-   rtnJobMgr * rtnGetJobMgr ()
-   {
-      static rtnJobMgr _jobMgr ( pmdGetKRCB()->getEDUMgr() ) ;
-      return &_jobMgr ;
-   }
-
-   _rtnJobMgr::_rtnJobMgr ( pmdEDUMgr * eduMgr )
-   {
-      SDB_ASSERT ( eduMgr, "EDU Mgr can't be NULL" ) ;
-      _eduMgr = eduMgr ;
-   }
-
-   _rtnJobMgr::~_rtnJobMgr ()
-   {
-      _eduMgr = NULL ;
-   }
-
-   UINT32 _rtnJobMgr::jobsCount ()
-   {
-      ossScopedLock lock ( &_latch, SHARED ) ;
-      return _mapJobs.size() ;
-   }
-
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNJOBMGR_FINDJOB, "_rtnJobMgr::findJob" )
-   _rtnBaseJob* _rtnJobMgr::findJob( EDUID eduID, INT32 *pResult )
-   {
-      PD_TRACE_ENTRY ( SDB__RTNJOBMGR_FINDJOB ) ;
-
-      {
-         ossScopedLock lock ( &_latch, SHARED ) ;
-         std::map<EDUID, _rtnBaseJob*>::iterator it = _mapJobs.find( eduID ) ;
-         if ( it != _mapJobs.end() )
-         {
-            PD_TRACE_EXIT ( SDB__RTNJOBMGR_FINDJOB ) ;
-            return it->second ;
-         }
-      }
-
-      INT32 res = SDB_OK ;
-      {
-         ossScopedLock lock ( &_latch, EXCLUSIVE ) ;
-         std::map<EDUID, INT32>::iterator itRes = _mapResult.find( eduID ) ;
-         if ( itRes != _mapResult.end() )
-         {
-            res = itRes->second ;
-            _mapResult.erase( itRes ) ;
-         }
-      }
-      if ( pResult )
-      {
-         *pResult = res ;
-      }
-      PD_TRACE_EXIT ( SDB__RTNJOBMGR_FINDJOB ) ;
-      return NULL ;
-   }
-
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNJOBMGR_STARTJOB, "_rtnJobMgr::startJob" )
-   INT32 _rtnJobMgr::startJob ( _rtnBaseJob * pJob,
-                                RTN_JOB_MUTEX_TYPE type ,
-                                EDUID * pEDUID,
-                                BOOLEAN returnResult )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__RTNJOBMGR_STARTJOB ) ;
-      EDUID newEDUID = 0 ;
-      BOOLEAN isMuted = FALSE ;
-
-      ossScopedLock lock ( &_latch, EXCLUSIVE ) ;
-
-      // if mutex, need to stop
-      if ( RTN_JOB_MUTEX_NONE != type )
-      {
-         _rtnBaseJob *itJob = NULL ;
-         std::map<EDUID, _rtnBaseJob*>::iterator it = _mapJobs.begin() ;
-         while ( it != _mapJobs.end() )
-         {
-            itJob = it->second ;
-            if ( pJob->muteXOn( itJob ) || itJob->muteXOn( pJob ) )
-            {
-               isMuted = TRUE ;
-               PD_LOG ( PDINFO, "Exist job[%s] mutex with new job[%s]",
-                        itJob->name(), pJob->name() ) ;
-
-               if ( RTN_JOB_MUTEX_RET == type )
-               {
-                  rc = SDB_RTN_MUTEX_JOB_EXIST ;
-                  goto error ;
-               }
-               else if ( RTN_JOB_MUTEX_REUSE == type )
-               {
-                  if ( pEDUID )
-                  {
-                     *pEDUID = it->first ;
-                     //_mapResult[newEDUID] = SDB_OK ;
-                  }
-                  SDB_OSS_DEL pJob ;
-                  pJob = NULL ;
-                  goto done ;
-               }
-               else
-               {
-                  _stopJob ( it->first ) ;
-                  itJob->waitDetach () ;
-               }
-            }
-            ++it ;
-         }
-      }
-
-      if ( isMuted && RTN_JOB_MUTEX_STOP_RET == type )
-      {
-         rc = SDB_RTN_MUTEX_JOB_EXIST ;
-         goto error ;
-      }
-
-      // start new edu
-      rc = _eduMgr->startEDU( EDU_TYPE_BACKGROUND_JOB, (void*)pJob,
-                              &newEDUID ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Start background job[%s] failed, rc = %d",
-                  pJob->name() , rc ) ;
-         goto error ;
-      }
-
-      // wait edu attach in
-      pJob->waitAttach () ;
-      // add to map
-      _mapJobs[newEDUID] = pJob ;
-      //_mapResult[newEDUID] = SDB_OK ;
-
-      if ( pEDUID )
-      {
-         *pEDUID = newEDUID ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB__RTNJOBMGR_STARTJOB, rc ) ;
-      return rc ;
-   error:
-      SDB_OSS_DEL pJob ;
-      goto done ;
-   }
-
-   INT32 _rtnJobMgr::_stopJob ( EDUID eduID )
-   {
-      return _eduMgr->forceUserEDU ( eduID ) ;
-   }
-
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNJOBMGR__REMOVEJOB, "_rtnJobMgr::_removeJob" )
-   INT32 _rtnJobMgr::_removeJob ( EDUID eduID, INT32 result )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__RTNJOBMGR__REMOVEJOB ) ;
-      ossScopedLock lock ( &_latch, EXCLUSIVE ) ;
-      /*std::map<EDUID, INT32>::iterator itRes = _mapResult.find( eduID ) ;
-      if ( itRes != _mapResult.end() )
-      {
-         itRes->second = result ;
-      }*/
-      if ( result )
-      {
-         _mapResult[ eduID ] = result ;
-      }
-
-      std::map<EDUID, _rtnBaseJob*>::iterator it = _mapJobs.find ( eduID ) ;
-      if ( it == _mapJobs.end() )
-      {
-         rc = SDB_RTN_JOB_NOT_EXIST ;
-         goto error ;
-      }
-
-      // free memory and erase map item
-      SDB_OSS_DEL it->second ;
-      _mapJobs.erase ( it ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB__RTNJOBMGR__REMOVEJOB, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   _rtnBaseJob::_rtnBaseJob ()
-   {
-      _pEDUCB = NULL ;
-      _latchIn.try_get () ;
-   }
-
-   _rtnBaseJob::~_rtnBaseJob ()
-   {
-      _latchIn.release () ;
-   }
-
-   INT32 _rtnBaseJob::attachIn ( pmdEDUCB * cb )
-   {
-      _pEDUCB = cb ;
-      _latchOut.try_get () ;
-      _latchIn.release () ;
-      return SDB_OK ;
-   }
-
-   INT32 _rtnBaseJob::attachOut ()
-   {
-      _latchOut.release () ;
-      _pEDUCB = NULL ;
-      return SDB_OK ;      
-   }
-
-   INT32 _rtnBaseJob::waitAttach ()
-   {
-      _latchIn.get () ;
-      return SDB_OK ;
-   }
-
-   INT32 _rtnBaseJob::waitDetach ()
-   {
-      _latchOut.get () ;
-      _latchOut.release () ;
-      return SDB_OK ;
-   }
-
-   pmdEDUCB * _rtnBaseJob::eduCB ()
-   {
-      return _pEDUCB ;
-   }
 
    ////////////////////////////////////////////////////////////////////////////
    // background job implements //
    ////////////////////////////////////////////////////////////////////////////
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB__RTNINDEXJOB, "_rtnIndexJob::_rtnIndexJob" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB__RTNINDEXJOB, "_rtnIndexJob::_rtnIndexJob" )
    _rtnIndexJob::_rtnIndexJob ( RTN_JOB_TYPE type, const CHAR *pCLName,
                                 const BSONObj & indexObj, SDB_DPSCB * dpsCB)
    {
@@ -291,7 +65,7 @@ namespace engine
    {
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB_INIT, "_rtnIndexJob::init ()" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB_INIT, "_rtnIndexJob::init ()" )
    INT32 _rtnIndexJob::init ()
    {
       INT32 rc = SDB_OK ;
@@ -410,7 +184,7 @@ namespace engine
       return _jobName.c_str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB_MUTEXON, "_rtnIndexJob::muteXOn" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB_MUTEXON, "_rtnIndexJob::muteXOn" )
    BOOLEAN _rtnIndexJob::muteXOn ( const _rtnBaseJob * pOther )
    {
       PD_TRACE_ENTRY ( SDB__RTNINDEXJOB_MUTEXON ) ;
@@ -436,7 +210,7 @@ namespace engine
       return ret ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB_DOIT , "_rtnIndexJob::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNINDEXJOB_DOIT , "_rtnIndexJob::doit" )
    INT32 _rtnIndexJob::doit ()
    {
       INT32 rc = SDB_OK ;

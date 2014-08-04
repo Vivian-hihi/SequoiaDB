@@ -33,6 +33,7 @@
 *******************************************************************************/
 
 #include "rtnBackgroundJobBase.hpp"
+#include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 

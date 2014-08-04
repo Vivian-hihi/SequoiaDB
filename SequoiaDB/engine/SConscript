@@ -179,6 +179,7 @@ rtnFiles = [
       "rtn/rtnCoord.cpp",
       "rtn/rtnCB.cpp",
       "rtn/rtnCoordInterrupt.cpp",
+	  "rtn/rtnBackgroundJobBase.cpp",
       "rtn/rtnBackgroundJob.cpp",
       "rtn/rtnPrefetchJob.cpp",
       "rtn/rtnPageCleanerJob.cpp",

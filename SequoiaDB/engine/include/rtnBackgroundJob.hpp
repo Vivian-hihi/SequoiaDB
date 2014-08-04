@@ -35,12 +35,10 @@
 #ifndef RTN_BACKGROUND_JOB_HPP_
 #define RTN_BACKGROUND_JOB_HPP_
 
-#include "ossLatch.hpp"
+#include "rtnBackgroundJobBase.hpp"
 #include "dms.hpp"
-#include "pmdEDUMgr.hpp"
 #include "dpsLogWrapper.hpp"
 #include "dmsCB.hpp"
-#include <map>
 #include <string>
 
 #include "../bson/bsonobj.h"
@@ -49,93 +47,9 @@ using namespace bson ;
 
 namespace engine
 {
-   class _rtnBaseJob ;
-
-   enum RTN_JOB_TYPE
-   {
-      RTN_JOB_CREATE_INDEX       = 1,
-      RTN_JOB_DROP_INDEX         = 2,
-      RTN_JOB_CLEANUP            = 3,
-      RTN_JOB_LOAD               = 4,
-      RTN_JOB_PREFETCH           = 5,
-      RTN_JOB_EXTENDSEGMENT      = 6,
-      RTN_JOB_RESTORE            = 7,
-      RTN_JOB_REPLSYNC           = 8,
-      RTN_JOB_PAGECLEANER        = 9
-   } ;
-
-   enum RTN_JOB_MUTEX_TYPE
-   {
-      RTN_JOB_MUTEX_NONE      = 0,     // not check mutex
-      RTN_JOB_MUTEX_RET       = 1,     // when mutex, return self
-      RTN_JOB_MUTEX_STOP_RET  = 2,     // when mutex, stop peer and return self
-      RTN_JOB_MUTEX_STOP_CONT = 3,     // when mutex, stop peer and continue self
-      RTN_JOB_MUTEX_REUSE     = 4      // when mutex, reuse peer
-   } ;
-
-   class _rtnJobMgr : public SDBObject
-   {
-      friend INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;
-
-      public:
-         _rtnJobMgr ( pmdEDUMgr * eduMgr ) ;
-         ~_rtnJobMgr () ;
-
-      public:
-         UINT32 jobsCount () ;
-         _rtnBaseJob* findJob ( EDUID eduID, INT32 *pResult = NULL ) ;
-
-         INT32 startJob ( _rtnBaseJob *pJob,
-                          RTN_JOB_MUTEX_TYPE type = RTN_JOB_MUTEX_STOP_CONT ,
-                          EDUID *pEDUID = NULL,
-                          BOOLEAN returnResult = FALSE ) ;
-
-      protected:
-         INT32 _stopJob ( EDUID eduID ) ;
-         INT32 _removeJob ( EDUID eduID, INT32 result = SDB_OK ) ;
-
-      private:
-         std::map<EDUID, _rtnBaseJob*>        _mapJobs ;
-         std::map<EDUID, INT32>               _mapResult ;
-         ossSpinSLatch                        _latch ;
-         pmdEDUMgr                            *_eduMgr ;
-   } ;
-   typedef _rtnJobMgr rtnJobMgr ;
-
-   rtnJobMgr* rtnGetJobMgr () ;
-
-   class _rtnBaseJob : public SDBObject
-   {
-      friend INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;
-
-      protected:
-         INT32 attachIn ( pmdEDUCB *cb ) ;
-         INT32 attachOut () ;
-
-      public:
-         _rtnBaseJob () ;
-         virtual ~_rtnBaseJob () ;
-
-         INT32 waitAttach () ;
-         INT32 waitDetach () ;
-
-         pmdEDUCB* eduCB() ;
-
-      public:
-         virtual RTN_JOB_TYPE type () const = 0 ;
-         virtual const CHAR* name () const = 0 ;
-         virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) = 0 ;
-         virtual INT32 doit () = 0 ;
-
-      private:
-         ossSpinXLatch        _latchIn ;
-         ossSpinXLatch        _latchOut ;
-      protected:
-         pmdEDUCB*            _pEDUCB ;
-
-   } ;
-   typedef _rtnBaseJob rtnBaseJob ;
-
+   /*
+      _rtnIndexJob define
+   */
    class _rtnIndexJob : public _rtnBaseJob
    {
       public:
