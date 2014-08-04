@@ -79,7 +79,9 @@ namespace engine
          CHAR                       _cmServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          // -1: always restart, 0: nerver restart
          INT32                      _restartCount ;
+         // restart time interval ( minute ), ignore this if <= 0
          INT32                      _restartInterval ;
+         // TRUE: start all nodes while CM start.
          BOOLEAN                    _autoStart ;
 
          CHAR                       _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;
