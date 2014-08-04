@@ -450,28 +450,17 @@ namespace engine
       sdbUsr      = clusterInfo.getStringField( OM_BSON_FIELD_SDB_USER ) ;
       sdbPasswd   = clusterInfo.getStringField( OM_BSON_FIELD_SDB_PASSWD ) ;
       sdbUsrGroup = clusterInfo.getStringField( OM_BSON_FIELD_SDB_USERGROUP ) ;
-      if ( 0 == clusterName.length() )
+      if ( 0 == clusterName.length() || 0 == sdbUsr.length()
+           || 0 == sdbPasswd.length() || 0 == sdbUsrGroup.length() )
       {
-         string errorInfo = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is null" ;
+         string errorInfo = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is null" 
+                           + " or " + OM_BSON_FIELD_SDB_USER + " is null"
+                           + " or " + OM_BSON_FIELD_SDB_PASSWD + " is null"
+                           + " or " + OM_BSON_FIELD_SDB_USERGROUP + " is null" ;
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
          _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
          goto error ;
-      }
-
-      if ( 0 == sdbUsr.length() )
-      {
-         sdbUsr = OM_DEFAULT_SDB_USER ;
-      }
-
-      if ( 0 == sdbPasswd.length() )
-      {
-         sdbPasswd = OM_DEFAULT_SDB_PASSWD ;
-      }
-
-      if ( 0 == sdbUsrGroup.length() )
-      {
-         sdbUsrGroup = OM_DEFAULT_SDB_USERGROUP ;
       }
 
    done:

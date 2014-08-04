@@ -1235,7 +1235,7 @@ namespace engine
       }
 
       _confTemplate.init() ;
-      _errorDetail = "" ;
+      //_errorDetail = "" ;
    }
 
    INT32 omConfigGenerator::_setTemplateValue( const BSONObj &templateItem ) 
