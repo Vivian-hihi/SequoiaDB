@@ -321,7 +321,6 @@ sdbConnectionHandle sdbGetConnectionHandle( const char *host,
    rc = sdbSetConnectionPreference( hConnection, preference_instance ) ;
    if ( rc )
    {
-      sdbDisconnect( hConnection ) ;
       ereport( WARNING, ( errcode( ERRCODE_WITH_CHECK_OPTION_VIOLATION ), 
                           errmsg( "set connection's preference instance failed"
                                   ":rc=%d,preference=%s", rc, 
