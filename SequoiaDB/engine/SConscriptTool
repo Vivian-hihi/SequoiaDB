@@ -313,7 +313,7 @@ sdbListMain = [
 
 sdbcmMain = [
 	  "pmd/pmdAsyncSessionAgent.cpp",
-	  "pmd/pmdOMAgentEDUEntryPoint.cpp"
+	  "pmd/pmdOMAgentEDUEntryPoint.cpp",
       "pmd/pmdCMMain.cpp"
       ]
 
