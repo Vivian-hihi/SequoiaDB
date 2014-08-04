@@ -2458,6 +2458,7 @@ namespace engine
 
    BOOLEAN omQueryBusinessCommand::isArray( ptree &pt )
    {
+      BOOLEAN isArr = FALSE ;
       string type ;
       try
       {
@@ -2465,43 +2466,54 @@ namespace engine
       }
       catch( std::exception &e )
       {
-         return FALSE ;
+         isArr = FALSE ;
+         goto done ;
       }
 
       if ( ossStrcasecmp( type.c_str(), OM_XMLATTR_TYPE_ARRAY ) == 0 )
       {
-         return TRUE ;
+         isArr = TRUE ;
+         goto done ;
       }
 
-      return FALSE ;
+   done:
+      return isArr ;
    }
 
    BOOLEAN omQueryBusinessCommand::isStringValue( ptree &pt )
    {
+      BOOLEAN isStringV = FALSE ;
       if ( isArray( pt ) )
       {
-         return FALSE ;
+         isStringV = FALSE ;
+         goto done ;
       }
 
       if ( pt.size() == 0 )
       {
-         return TRUE ;
+         isStringV = TRUE ;
+         goto done ;
       }
 
       if ( pt.size() > 1 )
       {
-         return FALSE ;
+         isStringV = FALSE ;
+         goto done ;
       }
 
       // in this case pt.size() == 1
-      ptree::iterator ite = pt.begin() ;
-      string key          = ite->first ;
-      if ( ossStrcasecmp( key.c_str(), OM_XMLATTR_KEY ) == 0 )
       {
-         return TRUE ;
+         ptree::iterator ite = pt.begin() ;
+         string key          = ite->first ;
+         if ( ossStrcasecmp( key.c_str(), OM_XMLATTR_KEY ) == 0 )
+         {
+            isStringV = TRUE ;
+            goto done ;
+         }
       }
 
-      return FALSE ;
+   done:
+      return isStringV ;
    }
 
    void omQueryBusinessCommand::ParseArray( ptree &pt, 
