@@ -77,18 +77,6 @@ namespace CLSMGR
    // buffer size
 #define CM_NPIPE_SIZE               64
 
-#if defined (_LINUX)
-      #include <dirent.h>
-      #define SDBCM_NAME_BUF_LEN       255
-      #define SDBCM_NAME_PATTERN       "sdbcm(%d)"
-      #define SDBSTARTPROG             "sdbstart"
-      #define SDBSTOPPROG              "sdbstop"
-#elif defined (_WINDOWS)
-      #include <windows.h>
-      #include <tchar.h>
-      #define SDBSTARTPROG             "sdbstart.exe"
-      #define SDBSTOPPROG              "sdbstop.exe"
-#endif
 
    // bit operation
    // service is starting, lock other sdbstart request, only setted by sdbStart2()

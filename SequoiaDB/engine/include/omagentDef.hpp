@@ -39,6 +39,43 @@
 namespace engine
 {
 
+   /*
+      [ sdbcm.conf ] Config Param Define
+   */
+   #define SDBCM_CONF_DFTPORT          "defaultPort"
+   #define SDBCM_CONF_PORT             "_Port"
+   #define SDBCM_RESTART_COUNT         "RestartCount"
+   #define SDBCM_RESTART_INTERVAL      "RestartInterval"       // minute
+   #define SDBCM_AUTO_START            "AutoStart"
+
+   #define SDBCM_DFT_PORT              11790
+
+   /*
+      cm define
+   */
+   #define SDBCM_CONF_DIR_NAME         "conf"
+   #define SDBCM_LOCAL_DIR_NAME        "local"
+   #define SDBCM_LOG_DIR_NAME          "log"
+
+   #define SDBCM_EXE_FILE_NAME         "sdbcm"
+   #define SDBCM_CFG_FILE_NAME         "sdbcm.conf"
+
+   #define SDB_CM_ROOT_PATH            ".." OSS_FILE_SEP SDBCM_CONF_DIR_NAME OSS_FILE_SEP
+   #define SDBCM_CONF_PATH_FILE        SDB_CM_ROOT_PATH SDBCM_CFG_FILE_NAME
+   #define SDBCM_LOCAL_PATH            SDB_CM_ROOT_PATH SDBCM_LOCAL_DIR_NAME
+   #define SDBCM_LOG_PATH              SDB_CM_ROOT_PATH SDBCM_LOG_DIR_NAME
+
+#if defined (_LINUX)
+      #define SDBCM_NAME_BUF_LEN       255
+      #define SDBCM_NAME_PATTERN       "sdbcm(%d)"
+      #define SDBSTARTPROG             "sdbstart"
+      #define SDBSTOPPROG              "sdbstop"
+#elif defined (_WINDOWS)
+      #define SDBSTARTPROG             "sdbstart.exe"
+      #define SDBSTOPPROG              "sdbstop.exe"
+#endif
+
+
 }
 
 #endif // OMAGENT_DEF_HPP__

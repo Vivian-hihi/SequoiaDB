@@ -41,6 +41,10 @@
 #include "pmdOptionsMgr.hpp"
 #include "sdbInterface.hpp"
 
+#include <string>
+
+using namespace std ;
+
 namespace engine
 {
    class _pmdEDUCB ;
@@ -54,17 +58,34 @@ namespace engine
          _omAgentOptions() ;
          virtual ~_omAgentOptions() ;
 
-         INT32    init () ;
+         INT32    init ( const CHAR *pRootPath ) ;
+
+         const CHAR* getCfgFileName() const { return _cfgFileName ; }
+         const CHAR* getLocalCfgPath() const { return _localCfgPath ; }
+         const CHAR* getStartProcFile() const { return _startProcFile ; }
+         const CHAR* getStopProcFile() const { return _stopProcFile ; }
+
+         const CHAR* getCMServiceName() const { return _cmServiceName ; }
+         INT32       getRestartCount() const { return _restartCount ; }
+         INT32       getRestartInterval() const { return _restartInterval ; }
+         BOOLEAN     isAutoStart() const { return _autoStart ; }
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
 
       private:
+         string                     _hostKey ;
+
          CHAR                       _cmServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          // -1: always restart, 0: nerver restart
-         UINT32                     _restartCount ;
-         UINT32                     _restartInterval ;
-         BOOLEAN                    _autoRestart ;
+         INT32                      _restartCount ;
+         INT32                      _restartInterval ;
+         BOOLEAN                    _autoStart ;
+
+         CHAR                       _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR                       _localCfgPath[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR                       _startProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR                       _stopProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
 
    } ;
    typedef _omAgentOptions omAgentOptions ;

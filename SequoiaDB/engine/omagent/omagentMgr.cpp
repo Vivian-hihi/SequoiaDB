@@ -32,6 +32,9 @@
 
 
 #include "omagentMgr.hpp"
+#include "pmd.hpp"
+#include "ossVer.hpp"
+
 
 namespace engine
 {
@@ -41,17 +44,121 @@ namespace engine
    */
    _omAgentOptions::_omAgentOptions()
    {
+      ossMemset( _cmServiceName, 0, sizeof( _cmServiceName ) ) ;
+      _restartCount        = -1 ;
+      _restartInterval     = 0 ;
+      _autoStart           = FALSE ;
+
+      ossMemset( _cfgFileName, 0, sizeof( _cfgFileName ) ) ;
+      ossMemset( _localCfgPath, 0, sizeof( _localCfgPath ) ) ;
+      ossMemset( _startProcFile, 0, sizeof( _startProcFile ) ) ;
+      ossMemset( _stopProcFile, 0, sizeof( _stopProcFile ) ) ;
+
+      // defaut service name
+      ossSnprintf( _cmServiceName, OSS_MAX_SERVICENAME, "%u",
+                   SDBCM_DFT_PORT ) ;
    }
 
    _omAgentOptions::~_omAgentOptions()
    {
    }
 
-   INT32 _omAgentOptions::init ()
+   INT32 _omAgentOptions::init ( const CHAR *pRootPath )
    {
       INT32 rc = SDB_OK ;
+      const CHAR *hostName = pmdGetKRCB()->getHostName() ;
+      po::options_description desc ( "Command options" ) ;
+      po::variables_map vm ;
 
-      // TODO:XUJIANHUI
+      _hostKey = hostName ;
+      _hostKey += SDBCM_CONF_PORT ;
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
+         ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" )
+         ( PMD_OPTION_VERSION, "show version" )
+         ( SDBCM_CONF_DFTPORT, po::value<string>(),
+         "sdbcm default listening port" )
+         ( _hostKey.c_str(), po::value<string>(),
+         "sdbcm specified listening port" )
+         ( SDBCM_RESTART_COUNT, po::value<INT32>(),
+         "sequoiadb node restart max count" )
+         ( SDBCM_RESTART_INTERVAL, po::value<INT32>(),
+         "sequoiadb node restart time interval" )
+         ( SDBCM_AUTO_START, po::value<string>(),
+         "start sequoiadb node automatically when CM start" )
+      PMD_ADD_PARAM_OPTIONS_END
+
+      if ( !pRootPath )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // build 'config/local' file path
+      rc = utilBuildFullPath( pRootPath, SDBCM_LOCAL_PATH, OSS_MAX_PATHSIZE,
+                              _localCfgPath ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Root path is too long: %s", pRootPath ) ;
+         goto error ;
+      }
+
+      // build sdbstart program file path
+      rc = utilBuildFullPath ( pRootPath, SDBSTARTPROG, OSS_MAX_PATHSIZE,
+                               _startProcFile ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Root path is too long: %s", pRootPath ) ;
+         goto error ;
+      }
+
+      // build sdbstop program file path
+      rc = utilBuildFullPath ( pRootPath, SDBSTOPPROG, OSS_MAX_PATHSIZE,
+                               _stopProcFile ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Root path is too long: %s", pRootPath ) ;
+         goto error ;
+      }
+
+      // build sdbcm config file path
+      rc = utilBuildFullPath( pRootPath, SDBCM_CONF_PATH_FILE,
+                              OSS_MAX_PATHSIZE, _cfgFileName ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Root path is too long: %s", pRootPath ) ;
+         goto error ;
+      }
+
+      // read config from file
+      rc = utilReadConfigureFile( _cfgFileName, desc, vm ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to read config from file[%s], rc: %d",
+                 _cfgFileName, rc ) ;
+         goto error ;
+      }
+
+      /// read cmd first
+      if ( vm.count( PMD_OPTION_HELP ) )
+      {
+         cout << desc << endl ;
+         rc = SDB_PMD_HELP_ONLY ;
+         goto done ;
+      }
+      if ( vm.count( PMD_OPTION_VERSION ) )
+      {
+         ossPrintVersion( "Version" ) ;
+         rc = SDB_PMD_VERSION_ONLY ;
+         goto done ;
+      }
+
+      rc = pmdCfgRecord::init( &vm, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init config record, rc: %d", rc ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -61,14 +168,33 @@ namespace engine
 
    INT32 _omAgentOptions::doDataExchange( pmdCfgExchange * pEX )
    {
-      INT32 rc = SDB_OK ;
+      resetResult () ;
 
-      // TODO:XUJIANHUI
+      pEX->setCfgStep( PMD_CFG_STEP_REINIT ) ;
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      // {{ map configs begin
+
+      // --defaultPort
+      rdxString( pEX, SDBCM_CONF_DFTPORT , _cmServiceName,
+                 sizeof( _cmServiceName ), FALSE, FALSE,
+                 _cmServiceName ) ;
+      // --$hostname$_Port
+      rdxString( pEX, _hostKey.c_str(), _cmServiceName,
+                 sizeof( _cmServiceName ), FALSE, FALSE,
+                 _cmServiceName ) ;
+      // --RestartCount
+      rdxInt( pEX, SDBCM_RESTART_COUNT, _restartCount, FALSE, TRUE,
+              _restartCount ) ;
+      // --RestartInterval
+      rdxInt( pEX, SDBCM_RESTART_INTERVAL, _restartInterval, FALSE, TRUE,
+              _restartInterval ) ;
+      // --AutoStart
+      rdxBooleanS( pEX, SDBCM_AUTO_START, _autoStart, FALSE, TRUE,
+                   _autoStart ) ;
+
+      //  end map configs }}
+
+      return getResult () ;
    }
 
    /*
