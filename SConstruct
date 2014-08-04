@@ -176,7 +176,7 @@ add_option( "64" , "whether to force 64 bit" , 0 , True , "force64" )
 add_option( "32" , "whether to force 32 bit" , 0 , True , "force32" )
 
 # dev options
-add_option( "dd", "debug build no optimization, additional debug logging, etc..." , 0 , True , "debugBuild" )
+add_option( "dd", "debug build no optimization" , 0 , True , "debugBuild" )
 add_option( "noscreenout", "do not send anything to screen", 0, True )
 
 # don't run configure if user calls --help
@@ -639,10 +639,10 @@ def doConfigure( myenv , shell=False ):
     myenv["LINKFLAGS_CLEAN"] = list( myenv["LINKFLAGS"] )
     myenv["LIBS_CLEAN"] = list( myenv["LIBS"] )
 
-    if 'CheckCXX' in dir( conf ):
-        if  not conf.CheckCXX():
-            print( "c++ compiler not installed!" )
-            Exit(1)
+#    if 'CheckCXX' in dir( conf ):
+#        if  not conf.CheckCXX():
+#            print( "c++ compiler not installed!" )
+#            Exit(1)
 
     def myCheckLib( poss , failIfNotFound=False , staticOnly=False):
 
@@ -681,12 +681,12 @@ def doConfigure( myenv , shell=False ):
 
         return False
 
-    if not conf.CheckCXXHeader( "boost/filesystem/operations.hpp" ):
-        print( "can't find boost headers" )
-        if shell:
-            print( "\tshell might not compile" )
-        else:
-            Exit(1)
+#    if not conf.CheckCXXHeader( "boost/filesystem/operations.hpp" ):
+#        print( "can't find boost headers" )
+#        if shell:
+#            print( "\tshell might not compile" )
+#        else:
+#            Exit(1)
 
     # check for boost libraries
     for b in boostLibs:
@@ -694,8 +694,8 @@ def doConfigure( myenv , shell=False ):
         myCheckLib( [ l + boostCompiler + "-mt" + boostVersion ,
                       l + boostCompiler + boostVersion ] ,
                       False)
-    if not conf.CheckCXXHeader( "execinfo.h" ):
-        myenv.Append( CPPDEFINES=[ "NOEXECINFO" ] )
+#    if not conf.CheckCXXHeader( "execinfo.h" ):
+#        myenv.Append( CPPDEFINES=[ "NOEXECINFO" ] )
 
     return conf.Finish()
 
@@ -743,39 +743,6 @@ toolEnv.Append( CPPPATH=[ncursesinclude_dir] )
 fmpEnv.Append( CPPDEFINES=[ "SDB_FMP" ] )
 fmpEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 
-#  ---- Docs ----
-def build_docs(env, target, source):
-    from buildscripts import docs
-    docs.main()
-
-env.Alias("docs", [], [build_docs])
-env.AlwaysBuild("docs")
-
-#  ---- astyle ----
-
-def doStyling( env , target , source ):
-
-    res = utils.execsys( "astyle --version" )
-    res = " ".join(res)
-    if res.count( "2." ) == 0:
-        print( "astyle 2.x needed, found:" + res )
-        Exit(-1)
-
-    files = utils.getAllSourceFiles() 
-    files = filter( lambda x: not x.endswith( ".c" ) , files )
-
-    cmd = "astyle --options=mongo_astyle " + " ".join( files )
-    res = utils.execsys( cmd )
-    print( res[0] )
-    print( res[1] )
-
-
-env.Alias( "style" , [] , [ doStyling ] )
-env.AlwaysBuild( "style" )
-
-
-
-env['NIX_LIB_DIR'] = nixLibPrefix
 env['INSTALL_DIR'] = installDir
 if testEnv is not None:
     testEnv['INSTALL_DIR'] = installDir
