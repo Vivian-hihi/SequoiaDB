@@ -1,0 +1,122 @@
+SequoiaDB README
+
+Welcome to SequoiaDB!
+
+SequoiaDB is a distributed document-oriented NoSQL Database.
+
+Engine:
+	sequoiadb		-- SequoiaDB Engine
+	sdbstart		-- SequoiaDB Engine start
+	sdbstop			-- SequoiaDB Engine stop
+	sdblist			-- SequoiaDB Engine list
+	sdbfmp			-- SequoiaDB fenced mode process
+
+Shell:
+	sdb					-- SequoiaDB client
+	sdbbp				-- SequoiaDB client backend process
+
+Cluster Manager:
+	sdbcm				-- SequoiaDB cluster manager
+	sdbcmart		-- SequoiaDB cluster manager start
+	sdbcmtop		-- SequoiaDB cluster manager stop
+	sdbcmd			-- SequoiaDB cluster manager daemon
+
+Tools:
+	sdbdpsdump	-- SequoiaDB log dump
+	sdbexprt		-- SequoiaDB export
+	sdbimprt		-- SequoiaDB import
+	sdbinspt		-- SequoiaDB data inspection
+	sdbrestore	-- SequoiaDB restore
+	sdbtop			-- SequoiaDB TOP
+	sdbperfcol	-- SequoiaDB performance collection
+	sdbwsart		-- SequoiaDB web service start
+	sdbwstop		-- SequoiaDB web service stop
+
+Drivers:
+	C Driver:
+		libsdbc.a
+		libsdbc.so
+	C++ Driver:
+		libsdbcpp.a
+		libsdbcpp.so
+	PHP Driver:
+		libsdbphp-x.x.x.so
+	JAVA Driver:
+		sequoiadb.jar
+	PYTHON Driver:
+		lib.linux-x86_64-2.6
+	.NET Driver:
+		sequoiadb.dll
+
+Connectors:
+	Hadoop Connector:
+		hadoop-connector.jar
+	Hive Connector:
+		hive-sequoiadb-apache.jar
+	Storm Connector:
+		storm-sequoiadb.jar
+	
+Building Engine:
+	Build Engine:
+		scons --engine
+	Build C/C++ Client:
+		scons --client
+	Build Shell:
+		scons --shell
+	Build Tools:
+		scons --tool
+	Build Testcase:
+		scons --testcase
+	Build FMP:
+		scons --fmp
+	Build All ( except drivers ):
+		scons --all
+	Note:
+		adding option "--dd" for debug build
+
+Building Drivers:
+	C/C++ Client:
+		scons --client
+	PHP Client:
+		cd driver/php5
+		scons --phpversion=5.3.10
+		Note:
+			PHP source code is located in thirdparty/php directory
+			The dir name must be "php-<version>"
+	Python Client:
+		cd driver/python
+		scons
+	Java Client:
+		cd driver/python
+		scons
+	.Net Client:
+		
+Running:
+	For command line options to start SequoiaDB, invoke:
+		$ ./sdbstart --help
+	For command line options to stop SequoiaDB, invoke:
+		$ ./sdbstop --help
+	For command line options to start cluster manager, invoke:
+		$ ./sdbcmart --help
+	For command line options to stop cluster manager, invoke:
+		$ ./sdbcmtop --help
+
+	To run in standalone mode:
+		$ mkdir /sequoiadb/data
+		$ /opt/sequoiadb/bin/sdbstart
+		$ # sequoiadb start successful
+		$ # start sequoiadb shell
+		$ /opt/sequoiadb/bin/sdb
+		> var db = new Sdb() ;
+		> db.help() ;
+
+Documentation:
+	http://www.sequoiadb.com/
+
+Restrictions:
+	- SequoiaDB officially only support 64 bit Linux build on CentOS, Redhat, SUSE and Ubuntu
+	- Windows build and 32 bit build are only for testing purpose
+
+License:
+	Most SequoiaDB source files are made available under the terms of the
+	GNU Affero General Public License (AGPL). See individual files for details.
