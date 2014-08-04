@@ -2157,7 +2157,7 @@
       <code>
          <name>SDB_LOB_SEQUENCE_NOT_EXIST</name>
          <description>
-            <en>the sequence of lob does not exist</en>
+            <en>LOB sequence does not exist</en>
             <cn>大对象的序列不存在</cn>
          </description>
       </code>
@@ -2165,7 +2165,7 @@
       <code>
          <name>SDB_LOB_IS_NOT_COMPLETED</name>
          <description>
-            <en>the large object is not completed</en>
+            <en>LOB creation is not completed</en>
             <cn>大对象正在创建中</cn>
          </description>
       </code>
