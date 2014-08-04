@@ -85,9 +85,7 @@ pmdFiles = [
       "pmd/pmdStartup.cpp",
 	  "pmd/pmd.cpp",
 	  "pmd/pmdEDU.cpp",
-	  "pmd/pmdEDUMgr.cpp",
-	  "pmd/pmdAsyncSessionAgent.cpp",
-	  "pmd/pmdOMAgentEDUEntryPoint.cpp"
+	  "pmd/pmdEDUMgr.cpp"
       ]
 
 rtnFiles = [
@@ -314,6 +312,8 @@ sdbListMain = [
       ]
 
 sdbcmMain = [
+	  "pmd/pmdAsyncSessionAgent.cpp",
+	  "pmd/pmdOMAgentEDUEntryPoint.cpp"
       "pmd/pmdCMMain.cpp"
       ]
 
