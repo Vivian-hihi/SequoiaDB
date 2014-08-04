@@ -334,7 +334,9 @@ namespace engine
         if ( SDB_OK == _agent->updateRoute( itr->second._id,
                                             itr->second ) )
         {
+           _info.mtx.lock_w() ;
            _clsGroupBeat &beat = (_info.info[itr->first]).beat ;
+           _info.mtx.release_w() ;
            beat.identity = itr->second._id ;
            beat.beatID = 0 ;
            /// we alive the changed node here. if it is unnormal,
@@ -372,8 +374,8 @@ namespace engine
                     tmp.columns.groupID, tmp.columns.nodeID ) ;
             _info.mtx.lock_w() ;
             _info.alives.erase( itr2->first ) ;
-            _info.mtx.release_w() ;
             _info.info.erase( itr2++ ) ;
+            _info.mtx.release_w() ;
          }
          else
          {
@@ -408,19 +410,21 @@ namespace engine
       return primary ;
    }
 
+   // The function is caller by any thread, so need to use lock
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET_GETGPINFO, "_clsReplicateSet::getGroupInfo" )
    void _clsReplicateSet::getGroupInfo( _MsgRouteID &primary,
                                         vector<_netRouteNode> &group )
    {
-      PD_TRACE_ENTRY ( SDB__CLSREPSET_GETGPINFO );
+      PD_TRACE_ENTRY ( SDB__CLSREPSET_GETGPINFO ) ;
+
+      ossScopedRWLock lock( &_info.mtx, SHARED ) ;
+
       map<UINT64, _clsSharingStatus>::const_iterator itr =
                                           _info.info.begin() ;
       INT32 rc = SDB_OK ;
       _netRouteNode node ;
       _MsgRouteID id ;
-      _info.mtx.lock_r() ;
       primary = _info.primary ;
-      _info.mtx.release_r() ;
       for ( ; itr != _info.info.end(); itr++ )
       {
          id.value = itr->first ;
@@ -603,6 +607,8 @@ namespace engine
       goto done ;
    }
 
+   // The function is called by cls mgr thread with the same change thread,
+   // so don't need to use lock
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__SHRBEAT, "_clsReplicateSet::_sharingBeat" )
    void _clsReplicateSet::_sharingBeat()
    {

@@ -282,13 +282,20 @@ namespace engine
          }
 
          // release body msg
-         releaseBuff( pFilePath, bodySize ) ;
+         if ( pFilePath )
+         {
+            releaseBuff( pFilePath, bodySize ) ;
+            pFilePath = NULL ;
+         }
          rc = SDB_OK ;
       } // end while
 
-      disconnect() ;
-
    done:
+      if ( pFilePath )
+      {
+         releaseBuff( pFilePath, bodySize ) ;
+      }
+      disconnect() ;
       return rc ;
    error:
       goto done ;
@@ -492,6 +499,8 @@ namespace engine
          {
             PD_LOG( PDERROR, "Session[%s] rollback trans info failed, rc: %d",
                     sessionName(), rc ) ;
+            // We do not jump to error because we have to delete context
+            // regardless whether rollback success or not
          }
       }
 

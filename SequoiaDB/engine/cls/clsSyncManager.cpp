@@ -81,6 +81,8 @@ namespace engine
 
    }
 
+   // The function is called by clsMgr thread, and the _notifyList is also in
+   // the same thread, so don't use lock
    void _clsSyncManager::updateNodeStatus( const MsgRouteID & id,
                                            BOOLEAN valid )
    {
@@ -95,8 +97,12 @@ namespace engine
       }
    }
 
+   // The function is called by the full sync(source) thread, so need to
+   // use lock
    void _clsSyncManager::notifyFullSync( const MsgRouteID & id )
    {
+      _info->mtx.lock_r() ;
+
       for ( UINT32 i = 0 ; i < _validSync ; ++i )
       {
          // find
@@ -106,8 +112,11 @@ namespace engine
             break ;
          }
       }
+
+      _info->mtx.release_r() ;
    }
 
+   // The function is called by shard session thread, so need to use lock
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_GETARBITLSN, "_clsSyncManager::getSyncCtrlArbitLSN" )
    DPS_LSN_OFFSET _clsSyncManager::getSyncCtrlArbitLSN()
    {
@@ -122,6 +131,8 @@ namespace engine
       }
       else
       {
+         _info->mtx.lock_r() ;
+
          for ( UINT32 i = 0 ; i < _validSync ; ++i )
          {
             if ( DPS_INVALID_LSN_OFFSET == _notifyList[i].offset )
@@ -139,6 +150,8 @@ namespace engine
                offset = _notifyList[i].offset ;
             }
          }
+
+         _info->mtx.release_r() ;
       }
 
    done:
@@ -160,6 +173,8 @@ namespace engine
       UINT32 aliveRemoved = 0 ;
       _clsSyncStatus status[CLS_REPLSET_MAX_NODE_SIZE - 1] ;
       UINT32 valid = 0 ;
+
+      ossScopedRWLock lock( &_info->mtx, EXCLUSIVE ) ;
 
       /// find removed nodes
       for ( UINT32 i = 0; i < _validSync ; i++ )
@@ -237,14 +252,29 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 sub = 0;
       BOOLEAN needWait = TRUE ;
+
       /// if w = 1, return
       if ( w == CLS_REPLSE_WRITE_ONE )
       {
          goto done ;
       }
 
-      /// cast sync to synclist sub
-      sub = CLS_W_2_SUB( w ) ;
+      _info->mtx.lock_r() ;
+
+      if ( 0 == _validSync )
+      {
+         _info->mtx.release_r() ;
+         goto done ;
+      }
+      else if ( w > _validSync + 1 )
+      {
+         sub = CLS_W_2_SUB( _validSync + 1 ) ;
+      }
+      else
+      {
+         sub = CLS_W_2_SUB( w ) ;
+      }
+
       _mtxs[sub].get() ;
       if ( DPS_INVALID_LSN_OFFSET != _checkList[sub] &&
            session.endLsn < _checkList[sub] )
@@ -256,6 +286,8 @@ namespace engine
          rc = _syncList[sub].push( session ) ;
       }
       _mtxs[sub].release() ;
+      _info->mtx.release_r() ;
+
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -264,6 +296,7 @@ namespace engine
       {
          rc = _wait( session.eduCB, sub ) ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSSYNCMAG_SYNC, rc ) ;
       return rc ;
@@ -315,6 +348,7 @@ namespace engine
    {
    }
 
+   // The function is called by repl session(src), so need use lock
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_NOTIFY, "_clsSyncManager::notify" )
    void _clsSyncManager::notify( const DPS_LSN_OFFSET &offset )
    {
@@ -323,7 +357,10 @@ namespace engine
                   "offset should not be invalid" ) ;
       _MsgSyncNotify msg ;
       msg.header.TID = CLS_TID_REPL_SYC ;
-      for ( UINT32 i = 0; i < _validSync; i++ )
+
+      _info->mtx.lock_r() ;
+
+      for ( UINT32 i = 0; i < _validSync ; i++ )
       {
          if ( 0 == _notifyList[i].id.value )
          {
@@ -342,6 +379,9 @@ namespace engine
             /// do nothing
          }
       }
+
+      _info->mtx.release_r() ;
+
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG_NOTIFY ) ;
       return ;
    }
@@ -474,25 +514,25 @@ namespace engine
          goto done ;
       }
       {
-
-      _clsSyncSession session ;
-      for ( SINT32 i = (SINT32)_validSync - 1;
-            i > (SINT32)alives - 1;
-            i-- )
-      {
-         _mtxs[i].get() ;
-         while ( SDB_OK == _syncList[i].pop( session ) )
+         _clsSyncSession session ;
+         for ( SINT32 i = (SINT32)_validSync - 1 ; i > (SINT32)alives - 1 ;
+               --i )
          {
-            session.eduCB->getEvent().signal ( SDB_CLS_WAIT_SYNC_FAILED ) ;
+            _mtxs[i].get() ;
+            while ( SDB_OK == _syncList[i].pop( session ) )
+            {
+               session.eduCB->getEvent().signal ( SDB_CLS_WAIT_SYNC_FAILED ) ;
+            }
+            _mtxs[i].release() ;
          }
-         _mtxs[i].release() ;
       }
-      }
+
    done:
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG_CUT ) ;
       return ;
    }
 
+   // The function is called by repl session, so need to use lock
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__COMPLETE, "_clsSyncManager::_complete" )
    void _clsSyncManager::_complete( const MsgRouteID &id,
                                     const DPS_LSN_OFFSET &offset )
@@ -500,6 +540,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__COMPLETE ) ;
       DPS_LSN lsn ;
       lsn.offset = offset ;
+
+      ossScopedRWLock lock( &_info->mtx, SHARED ) ;
+
       /// update notify list
       for ( UINT32 i = 0; i < _validSync ; i++ )
       {
@@ -524,11 +567,12 @@ namespace engine
       }
 
       {
-      /// wake up agent thread which is waiting
-      CLS_WAKE_PLAN plan ;
-      _createWakePlan( lsn.offset, plan ) ;
-      _wake( plan ) ;
+         /// wake up agent thread which is waiting
+         CLS_WAKE_PLAN plan ;
+         _createWakePlan( lsn.offset, plan ) ;
+         _wake( plan ) ;
       }
+
    done:
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__COMPLETE ) ;
       return ;
@@ -589,7 +633,7 @@ namespace engine
 
       DPS_LSN_OFFSET offsetTmp = DPS_INVALID_LSN_OFFSET ;
 
-      for ( UINT32 i = 0; i < _validSync; i++ )
+      for ( UINT32 i = 0; i < _validSync ; i++ )
       {
          if ( DPS_INVALID_LSN_OFFSET == _notifyList[i].offset )
          {
@@ -601,10 +645,6 @@ namespace engine
          else
          {
             offsetTmp = _notifyList[i].offset ;
-            while ( offsetTmp != _notifyList[i].offset )
-            {
-               offsetTmp = _notifyList[i].offset ;
-            }
             plan.insert( offsetTmp ) ;
          }
       }
@@ -636,24 +676,26 @@ namespace engine
 
       /// interrupted, clear info.
       {
-      _clsSyncMinHeap &heap = _syncList[sub] ;
-      UINT32 i = 0 ;
-      _mtxs[sub].get() ;
-      while ( i < heap.dataSize() )
-      {
-         if ( cb == heap[i].eduCB )
+         _mtxs[sub].get() ;
+         _clsSyncMinHeap &heap = _syncList[sub] ;
+         UINT32 i = 0 ;
+
+         while ( i < heap.dataSize() )
          {
-            PD_LOG ( PDDEBUG, "Session[ID:%lld, LSN:%lld] interrupt,remove from"
-                     "heap[sub:%d, index:%d]", heap[i].eduCB->getID(),
-                     heap[i].endLsn, sub, i ) ;
-            heap.erase( i ) ;
-            break ;
+            if ( cb == heap[i].eduCB )
+            {
+               PD_LOG ( PDDEBUG, "Session[ID:%lld, LSN:%lld] interrupt,remove "
+                        "from heap[sub:%d, index:%d]", heap[i].eduCB->getID(),
+                        heap[i].endLsn, sub, i ) ;
+               heap.erase( i ) ;
+               break ;
+            }
+            ++i ;
          }
-         ++i ;
+         _mtxs[sub].release() ;
+         rc = SDB_APP_INTERRUPT ;
       }
-      _mtxs[sub].release() ;
-      rc = SDB_APP_INTERRUPT ;
-      }
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSSYNCMAG__WAIT, rc ) ;
       return rc ;
