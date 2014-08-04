@@ -77,6 +77,12 @@ namespace CLSMGR
    // buffer size
 #define CM_NPIPE_SIZE               64
 
+#if defined (_LINUX)
+      #include <dirent.h>
+#elif defined (_WINDOWS)
+      //#include <windows.h>
+      //#include <tchar.h>
+#endif
 
    // bit operation
    // service is starting, lock other sdbstart request, only setted by sdbStart2()
