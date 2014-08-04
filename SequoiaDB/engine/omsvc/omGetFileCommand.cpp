@@ -35,15 +35,12 @@
 #include "rtn.hpp"
 #include "omManager.hpp"
 #include "omConfigGenerator.hpp"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-#include <boost/exception/all.hpp>
 #include "../bson/lib/md5.hpp"
 
 
 using namespace bson;
 using namespace boost::property_tree;
+
 
 namespace engine
 {
@@ -208,7 +205,7 @@ namespace engine
       resBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
       _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-      
+
       return SDB_OK ;
    }
 
@@ -219,7 +216,7 @@ namespace engine
                          :omAuthCommand( pRestAdaptor, pRestSession, pRootPath )
    {
    }
-   
+
    omChangePasswdCommand::~omChangePasswdCommand()
    {
    }
@@ -823,7 +820,7 @@ namespace engine
       pGlobalSshPort   = bsonHostInfo.getStringField( 
                                        OM_BSON_FIELD_HOST_SSHPORT ) ;
       pGlobalAgentPort = _localAgentService.c_str() ;
-      clusterName    = bsonHostInfo.getStringField( 
+      clusterName      = bsonHostInfo.getStringField( 
                                        OM_BSON_FIELD_CLUSTER_NAME ) ;
       if ( 0 == ossStrlen( pGlobalUser ) || 0 == ossStrlen( pGlobalPasswd )
            || 0 == ossStrlen( pGlobalSshPort ) || 0 == clusterName.length()
@@ -2470,51 +2467,150 @@ namespace engine
    {
    }
 
-   INT32 omQueryBusinessCommand::doCommand()
+   BOOLEAN omQueryBusinessCommand::isArray( ptree &pt )
    {
-      INT32 rc             = SDB_OK ;
-      string businessFile  = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR
-                             + "/" + OM_BUSINESS_FILE_NAME ;
-      BSONObjBuilder opBuilder ;
-      BSONArrayBuilder arrayBuilder ;
-
-      BSONObjBuilder businessBuilder ;
-      BSONObj bsonBusiness ;
-      ptree pt ;
+      string type ;
       try
       {
-         read_xml( businessFile.c_str(), pt ) ;
-         ptree ptList = pt.get_child( OM_XML_BUSINESS_LIST ) ;
-         ptree::iterator ite = ptList.begin() ;
-         for( ; ite != ptList.end() ; ite++ )
+         type = pt.get<string>( OM_XMLATTR_TYPE ) ;
+      }
+      catch( std::exception &e )
+      {
+         return FALSE ;
+      }
+
+      if ( ossStrcasecmp( type.c_str(), OM_XMLATTR_TYPE_ARRAY ) == 0 )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
+   BOOLEAN omQueryBusinessCommand::isStringValue( ptree &pt )
+   {
+      if ( isArray( pt ) )
+      {
+         return FALSE ;
+      }
+
+      if ( pt.size() == 0 )
+      {
+         return TRUE ;
+      }
+
+      if ( pt.size() > 1 )
+      {
+         return FALSE ;
+      }
+
+      // in this case pt.size() == 1
+      ptree::iterator ite = pt.begin() ;
+      string key          = ite->first ;
+      if ( ossStrcasecmp( key.c_str(), OM_XMLATTR_KEY ) == 0 )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
+   void omQueryBusinessCommand::ParseArray( ptree &pt, 
+                                            BSONArrayBuilder &arrayBuilder )
+   {
+      ptree::iterator ite = pt.begin() ;
+      for( ; ite != pt.end() ; ite++ )
+      {
+         string key    = ite->first ;
+         if ( ossStrcasecmp( key.c_str(), OM_XMLATTR_KEY ) == 0 )
          {
-            BSONObjBuilder builder ;
-            BSONObj temp ;
-            ptree business = ite->second ;
-            string name = business.get<string>( OM_XMLATTR_BUSINESS_NAME ) ;
-            string desc = business.get<string>( OM_XMLATTR_BUSINESS_DESC ) ;
-            builder.append( OM_BSON_BUSINESS_TYPE, name ) ;
-            builder.append( OM_BSON_BUSINESS_DESC, desc ) ;
-            temp = builder.obj() ;
-            arrayBuilder.append( temp ) ;
+            continue ;
          }
+
+         BSONObj obj ;
+         ptree child = ite->second ;
+         recurseParseObj( child, obj ) ;
+         arrayBuilder.append( obj ) ;
+      }
+   }
+
+   void omQueryBusinessCommand::recurseParseObj( ptree &pt, BSONObj &out )
+   {
+      BSONObjBuilder builder ;
+      ptree::iterator ite = pt.begin() ;
+      for( ; ite != pt.end() ; ite++ )
+      {
+         string key = ite->first ;
+         if ( ossStrcasecmp( key.c_str(), OM_XMLATTR_KEY ) == 0 )
+         {
+            continue ;
+         }
+
+         ptree child = ite->second ;
+         if ( isArray( child ) )
+         {
+            BSONArrayBuilder arrayBuilder ;
+            ParseArray( child, arrayBuilder ) ;
+            builder.append( key, arrayBuilder.arr() ) ;
+         }
+         else if ( isStringValue( child ) )
+         {
+            string value = ite->second.data() ;
+            builder.append( key, value ) ;
+         }
+         else
+         {
+            // obj
+            BSONObj obj ;
+            recurseParseObj( child, obj ) ;
+            builder.append(key, obj ) ;
+         }
+      }
+
+      out = builder.obj() ;
+   }
+
+   INT32 omQueryBusinessCommand::readConfigFile( string file, BSONObj &obj )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         ptree pt ;
+         read_xml( file.c_str(), pt ) ;
+         recurseParseObj( pt, obj ) ;
       }
       catch( std::exception &e )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
-         _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, e.what() ) ;
+         PD_LOG( PDERROR, "parse file failed:file=%s,err=%s", file.c_str(),
+                 e.what() ) ;
+         _sendErrorRes2Web( rc, e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryBusinessCommand::doCommand()
+   {
+      INT32 rc             = SDB_OK ;
+      string businessFile  = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR
+                             + "/" + OM_BUSINESS_FILE_NAME ;//business.xml
+      BSONObjBuilder opBuilder ;
+      BSONObj bsonBusiness ;
+      rc = readConfigFile( businessFile, bsonBusiness ) ;
+      if ( SDB_OK != rc )
+      {
          goto error ;
       }
 
-      businessBuilder.appendArray( OM_BSON_BUSINESS_LIST, arrayBuilder.arr() );
-      bsonBusiness = businessBuilder.obj() ;
       _restAdaptor->appendHttpBody( _restSession, bsonBusiness.objdata(), 
                                     bsonBusiness.objsize(), 1 ) ;
-
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-
    done:
       return rc ;
    error:
@@ -2562,84 +2658,25 @@ namespace engine
                                                 list<BSONObj> &clusterTypeList ) 
    {
       INT32 rc = SDB_OK ;
-      ptree pt ;
-      ptree ptList ;
-      ptree::iterator ite ;
-
-      try
+      BSONObj clusterTypeArray ;
+      BSONObj clusterTypes ;
+      rc = readConfigFile( file, clusterTypeArray ) ;
+      if ( SDB_OK != rc )
       {
-         read_xml( file.c_str(), pt ) ;
-         ptList = pt.get_child( OM_XML_CLUSTER_TYPE_LIST ) ;
-         ite    = ptList.begin() ;
-         for( ; ite != ptList.end() ; ite++ )
-         {
-            BSONObjBuilder oneClusterTypeBulider ;
-            BSONObj oneClusterType ;
-            BSONArrayBuilder arrayBuilder ;
-            ptree clusterType ;
-            clusterType = ite->second ;
-            string name = clusterType.get<string>( OM_XMLATTR_PROPERTY_NAME ) ;
-            oneClusterTypeBulider.append( OM_BSON_CLUSTER_TYPE, name ) ;
-            oneClusterTypeBulider.append( OM_BSON_BUSINESS_TYPE, 
-                                          businessType ) ;
-            ptree::iterator propertyIte = clusterType.begin() ;
-
-            propertyIte++ ;
-            for( ; propertyIte != clusterType.end() ; propertyIte++ )
-            {
-               BSONObjBuilder builder ;
-               BSONObj temp ;
-               string name         = "" ;
-               string type         = "" ;
-               string defaultValue = "" ;
-               string valid        = "" ;
-               string display      = "" ;
-               string edit         = "" ;
-               string desc         = "" ;
-               string level        = "" ;
-               string webName      = "" ;
-               name         = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_NAME ) ;
-               type         = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_TYPE ) ;
-               defaultValue = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_DEFAULT ) ;
-               valid        = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_VALID ) ;
-               display      = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_DISPLAY ) ;
-               edit         = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_EDIT ) ;
-               desc         = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_DESC ) ;
-               level        = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_LEVEL ) ;
-               webName      = propertyIte->second.get<string>( 
-                                                OM_XMLATTR_PROPERTY_WEBNAME ) ;
-               builder.append( OM_BSON_PROPERTY_NAME, name ) ;
-               builder.append( OM_BSON_PROPERTY_TYPE, type ) ;
-               builder.append( OM_BSON_PROPERTY_DEFAULT, defaultValue ) ;
-               builder.append( OM_BSON_PROPERTY_VALID, valid ) ;
-               builder.append( OM_BSON_PROPERTY_DISPLAY, display ) ;
-               builder.append( OM_BSON_PROPERTY_EDIT, edit ) ;
-               builder.append( OM_BSON_PROPERTY_DESC, desc ) ;
-               builder.append( OM_BSON_PROPERTY_LEVEL, level ) ;
-               builder.append( OM_BSON_PROPERTY_WEBNAME, webName ) ;
-               temp = builder.obj() ;
-               arrayBuilder.append( temp ) ;
-            }
-
-            oneClusterTypeBulider.append( OM_BSON_PROPERTY_ARRAY, 
-                                          arrayBuilder.arr() ) ;
-            oneClusterType = oneClusterTypeBulider.obj() ;
-            clusterTypeList.push_back( oneClusterType ) ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG( PDERROR, "%s:rc=%d", e.what(), SDB_DMS_RECORD_NOTEXIST ) ;
+         PD_LOG( PDERROR, "read file failed:file=%s", file.c_str() ) ;
          goto error ;
+      }
+
+      clusterTypes = clusterTypeArray.getObjectField( 
+                                                   OM_BSON_CLUSTER_TYPE_LIST ) ;
+      {
+         BSONObjIterator iter( clusterTypes ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele  = iter.next() ;
+            BSONObj oneType  = ele.embeddedObject() ;
+            clusterTypeList.push_back( oneType ) ;
+         }
       }
 
    done:
@@ -2652,68 +2689,13 @@ namespace engine
                                                        BSONObj &bsonConfDetail )
    {
       INT32 rc = SDB_OK ;
-      BSONArrayBuilder arrayBuilder ;
-      BSONObjBuilder confDetailBuilder ;
-      ptree pt ;
-      ptree ptList ;
-      ptree::iterator ite ;
-      try
+      rc = readConfigFile( file, bsonConfDetail ) ;
+      if ( SDB_OK != rc )
       {
-         read_xml( file.c_str(), pt ) ;
-         ptList = pt.get_child( OM_XML_CONFIG ) ;
-         ite    = ptList.begin() ;
-         for( ; ite != ptList.end() ; ite++ )
-         {
-            BSONObjBuilder builder ;
-            BSONObj temp ;
-            string name         = "" ;
-            string type         = "" ;
-            string defaultValue = "" ;
-            string valid        = "" ;
-            string display      = "" ;
-            string edit         = "" ;
-            string desc         = "" ;
-            string level        = "" ;
-            string webName      = "" ;
-            name         = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_NAME ) ;
-            type         = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_TYPE ) ;
-            defaultValue = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_DEFAULT ) ;
-            valid        = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_VALID ) ;
-            display      = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_DISPLAY ) ;
-            edit         = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_EDIT ) ;
-            desc         = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_DESC ) ;
-            level        = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_LEVEL ) ;
-            webName      = ite->second.get<string>( 
-                                             OM_XMLATTR_PROPERTY_WEBNAME ) ;
-            builder.append( OM_BSON_PROPERTY_NAME, name ) ;
-            builder.append( OM_BSON_PROPERTY_TYPE, type ) ;
-            builder.append( OM_BSON_PROPERTY_DEFAULT, defaultValue ) ;
-            builder.append( OM_BSON_PROPERTY_VALID, valid ) ;
-            builder.append( OM_BSON_PROPERTY_DISPLAY, display ) ;
-            builder.append( OM_BSON_PROPERTY_EDIT, edit ) ;
-            builder.append( OM_BSON_PROPERTY_DESC, desc ) ;
-            builder.append( OM_BSON_PROPERTY_LEVEL, level ) ;
-            builder.append( OM_BSON_PROPERTY_WEBNAME, webName ) ;
-            temp = builder.obj() ;
-            arrayBuilder.append( temp ) ;
-         }
-      }
-      catch( std::exception &e )
-      {
-         rc = SDB_DMS_RECORD_NOTEXIST ;
+         PD_LOG( PDERROR, "read file failed:file=%s", file.c_str() ) ;
          goto error ;
       }
 
-      confDetailBuilder.append( OM_BSON_PROPERTY_ARRAY, arrayBuilder.arr() ) ;
-      bsonConfDetail = confDetailBuilder.obj() ;
    done:
       return rc ;
    error:
@@ -3192,6 +3174,27 @@ namespace engine
       goto done ;
    }
 
+   /*
+     bsonTemplate(out)
+       {
+           "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
+           "ClusterType": "standalone", 
+           "Property": [ { "Name": "replica_num", "Type": "int", "Default": "1", 
+                           "Valid": "1", "Display": "edit box", "Edit": "false", 
+                           "Desc": "", "WebName": "" }
+                           , ...
+                       ] 
+        }
+
+     bsonHostInfo(out):    
+        {
+           "HostInfo":[{"HostName":"host1", "ClusterName":"c1", 
+                        "Disk":[{"Name":"dev", "Mount":"/mnt", ... }, ...],
+                        "Config":[{"BusinessName":"b1","dbpath":"","svcname":"11810", ...}, ...]
+                       }
+                       , ...
+                      ]
+        }*/
    INT32 omConfigBusinessCommand::_getTemplateInfo( BSONObj &bsonTemplate, 
                                                     BSONObj &bsonHostInfo )
    {
@@ -3280,6 +3283,16 @@ namespace engine
       goto done ;
    }
 
+   /*
+   bsonConfDetail:
+   {
+      "Property":[{"Name":"dbpath", "Type":"path", "Default":"/opt/sequoiadb", 
+                      "Valid":"1", "Display":"edit box", "Edit":"false", 
+                      "Desc":"", "WebName":"" }
+                      , ...
+                 ] 
+   }
+   */
    INT32 omConfigBusinessCommand::_getConfigDetail( const BSONObj &bsonTemplate, 
                                                   BSONObj &bsonConfDetail )
    {

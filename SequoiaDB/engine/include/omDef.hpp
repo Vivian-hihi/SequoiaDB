@@ -264,9 +264,9 @@ namespace engine
    #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
    #define  OM_BUSINESS_FILE_NAME            "business.xml"
 
-   #define  OM_XML_BUSINESS_LIST             "business_list"
-   #define  OM_XMLATTR_BUSINESS_NAME         "<xmlattr>.name"
-   #define  OM_XMLATTR_BUSINESS_DESC         "<xmlattr>.desc"
+   #define  OM_XMLATTR_KEY                   "<xmlattr>"
+   #define  OM_XMLATTR_TYPE                  "<xmlattr>.type"
+   #define  OM_XMLATTR_TYPE_ARRAY            "array"
 
    #define  OM_BSON_BUSINESS_LIST            "BusinessList"
    #define  OM_BSON_BUSINESS_TYPE            "BusinessType"
@@ -278,19 +278,10 @@ namespace engine
    #define  OM_QUERY_BUSINESS_TEMPLATE_REQ   "query business template"
 
    #define  OM_TEMPLATE_FILE_NAME            "_template.xml"
-   #define  OM_XML_CLUSTER_TYPE_LIST         "cluster_type_list"
-
-   #define  OM_XMLATTR_PROPERTY_NAME         "<xmlattr>.name"
-   #define  OM_XMLATTR_PROPERTY_TYPE         "<xmlattr>.type"
-   #define  OM_XMLATTR_PROPERTY_DEFAULT      "<xmlattr>.default"
-   #define  OM_XMLATTR_PROPERTY_VALID        "<xmlattr>.valid"
-   #define  OM_XMLATTR_PROPERTY_DISPLAY      "<xmlattr>.display"
-   #define  OM_XMLATTR_PROPERTY_EDIT         "<xmlattr>.edit"
-   #define  OM_XMLATTR_PROPERTY_DESC         "<xmlattr>.desc"
-   #define  OM_XMLATTR_PROPERTY_LEVEL        "<xmlattr>.level"
-   #define  OM_XMLATTR_PROPERTY_WEBNAME      "<xmlattr>.webname"
 
    #define  OM_REST_BUSINESS_TYPE            "BusinessType"
+
+   #define  OM_BSON_CLUSTER_TYPE_LIST        "ClusterTypeList"
 
    #define  OM_BSON_CLUSTER_TYPE             "ClusterType"
    #define  OM_BSON_PROPERTY_ARRAY           "Property"

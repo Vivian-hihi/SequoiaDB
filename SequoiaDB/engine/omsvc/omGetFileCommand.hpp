@@ -41,10 +41,15 @@
 #include "pmd.hpp"
 #include "dmsCB.hpp"
 #include "omManager.hpp"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+#include <boost/exception/all.hpp>
 #include <map>
 #include <string>
 
 using namespace bson;
+using namespace boost::property_tree;
 
 namespace engine
 {
@@ -288,6 +293,14 @@ namespace engine
 
       public:
          virtual INT32  doCommand() ;
+
+      protected:
+         INT32          readConfigFile( string file, BSONObj &obj ) ;
+         void           recurseParseObj( ptree &pt, BSONObj &out ) ;
+         void           ParseArray( ptree &pt, 
+                                    BSONArrayBuilder &arrayBuilder ) ;
+         BOOLEAN        isStringValue( ptree &pt ) ;
+         BOOLEAN        isArray( ptree &pt ) ;
 
       protected:
          string          _rootPath ;

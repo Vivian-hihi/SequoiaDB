@@ -1578,7 +1578,8 @@ namespace engine
       if ( !_isAllConfDetailSet() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "miss confDetail configur item" ) ;
+         PD_LOG( PDERROR, "miss confDetail configur item:%s", 
+                 _errorDetail.c_str() ) ;
          goto error ;
       }
 
