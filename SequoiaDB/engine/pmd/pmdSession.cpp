@@ -231,9 +231,8 @@ namespace engine
          }
       } // end while
 
-      disconnect() ;
-
    done:
+      disconnect() ;
       return rc ;
    error:
       goto done ;
