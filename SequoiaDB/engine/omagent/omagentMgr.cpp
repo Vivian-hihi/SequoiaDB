@@ -266,6 +266,7 @@ namespace engine
      _timerHandler( &_sessionMgr ),
      _netAgent( &_msgHandler )
    {
+      _oneSecTimer      = NET_INVALID_TIMER_ID ;
    }
 
    _omAgentMgr::~_omAgentMgr()
@@ -341,8 +342,14 @@ namespace engine
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
 
+      // 3. register timer
+      rc = _netAgent.addTimer( OSS_ONE_SEC, &_timerHandler, _oneSecTimer ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
+         goto error ;
+      }
 
-      // TODO:XUJIANHUI
    done:
       return rc ;
    error:
@@ -351,24 +358,52 @@ namespace engine
 
    INT32 _omAgentMgr::deactive()
    {
-      // TODO:XUJIANHUI
+      // 1. kill timer
+      if ( NET_INVALID_TIMER_ID != _oneSecTimer )
+      {
+         _netAgent.removeTimer( _oneSecTimer ) ;
+         _oneSecTimer = NET_INVALID_TIMER_ID ;
+      }
+
+      // 2. stop listen
+      _netAgent.closeListen() ;
+
+      // 3. stop io
+      _netAgent.stop() ;
+
+      // 4. set force
+      _sessionMgr.setForced() ;
+      
       return SDB_OK ;
    }
 
    INT32 _omAgentMgr::fini()
    {
-      // TODO:XUJIANHUI
+      _sessionMgr.fini() ;
+
       return SDB_OK ;
    }
 
    void _omAgentMgr::attachCB( _pmdEDUCB * cb )
    {
-      // TODO:XUJIANHUI
+      _msgHandler.attach( cb ) ;
+      _timerHandler.attach( cb ) ;
+      _attachEvent.signalAll() ;
    }
 
    void _omAgentMgr::detachCB( _pmdEDUCB * cb )
    {
-      // TODO:XUJIANHUI
+      _msgHandler.detach() ;
+      _timerHandler.detach() ;
+   }
+
+   void _omAgentMgr::onTimer( UINT64 timerID, UINT32 interval )
+   {
+      if ( _oneSecTimer == timerID )
+      {
+         //Check _deqShdDeletingSessions
+         _sessionMgr.onTimer( interval ) ;
+      }
    }
 
    omAgentOptions* _omAgentMgr::getOptions()

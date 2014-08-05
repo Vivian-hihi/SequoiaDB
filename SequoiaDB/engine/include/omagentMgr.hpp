@@ -152,6 +152,8 @@ namespace engine
          virtual void   attachCB( _pmdEDUCB *cb ) ;
          virtual void   detachCB( _pmdEDUCB *cb ) ;
 
+         virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
+
       public:
 
          omAgentOptions* getOptions() ;
@@ -166,6 +168,7 @@ namespace engine
          netRouteAgent              _netAgent ;
 
          ossEvent                   _attachEvent ;
+         UINT32                     _oneSecTimer ;
 
    } ;
 
