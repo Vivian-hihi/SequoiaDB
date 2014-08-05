@@ -33,7 +33,7 @@
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
 #include "pd.hpp"
-#include "rtnBackgroundJob.hpp"
+#include "rtnBackgroundJobBase.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 

@@ -45,7 +45,7 @@ using namespace bson ;
 namespace engine
 {
 
-   #define OM_WAIT_CB_ATTACH_TIMEOUT               ( 60 * OSS_ONE_SEC )
+   #define OM_WAIT_CB_ATTACH_TIMEOUT               ( 300 * OSS_ONE_SEC )
 
    /*
       Message Map
@@ -336,7 +336,7 @@ namespace engine
       _attachEvent.signalAll() ;
    }
 
-   void _omManager::detachCB()
+   void _omManager::detachCB( _pmdEDUCB *cb )
    {
       _msgHandler.detach() ;
       _timerHandler.detach() ;

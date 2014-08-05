@@ -129,8 +129,8 @@ namespace engine
          virtual INT32  fini () ;
          virtual void   onConfigChange() {}
 
-         void        attachCB( _pmdEDUCB *cb ) ;
-         void        detachCB() ;
+         virtual void   attachCB( _pmdEDUCB *cb ) ;
+         virtual void   detachCB( _pmdEDUCB *cb ) ;
 
          UINT32      setTimer( UINT32 milliSec ) ;
          void        killTimer( UINT32 timerID ) ;

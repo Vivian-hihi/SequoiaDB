@@ -66,6 +66,8 @@ pmdFiles = [
       "pmd/pmdEDUMgr.cpp",
       "pmd/pmdAgent.cpp",
 	  "pmd/pmdAsyncSessionAgent.cpp",
+	  "pmd/pmdCBMgrEntryPoint.cpp",
+	  "pmd/pmdAsyncNetEntryPoint.cpp",
       "pmd/pmdTcpListener.cpp",
       "pmd/pmdSignalHandler.cpp",
       "pmd/pmdWindowsListener.cpp",

@@ -133,6 +133,9 @@ namespace engine
          void     ntyPrimaryChange( BOOLEAN primary,
                                     SDB_EVENT_OCCUR_TYPE type ) ;
 
+         virtual void   attachCB( _pmdEDUCB *cb ) ;
+         virtual void   detachCB( _pmdEDUCB *cb ) ;
+
          virtual void     onTimer ( UINT32 timerID, UINT32 interval ) ;
 
          void setCatlogInfo ( const NodeID &id, const std::string& host,

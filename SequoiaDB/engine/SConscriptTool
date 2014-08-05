@@ -313,6 +313,9 @@ sdbcmMain = [
 	  "pmd/pmdEDU.cpp",
 	  "pmd/pmdEDUMgr.cpp",
 	  "pmd/pmdAsyncSessionAgent.cpp",
+	  "pmd/pmdBackgroundJob.cpp",
+	  "pmd/pmdCBMgrEntryPoint.cpp",
+	  "pmd/pmdAsyncNetEntryPoint.cpp",
 	  "pmd/pmdOMAgentEDUEntryPoint.cpp",
       "pmd/pmdCMMain.cpp"
       ]

@@ -195,8 +195,8 @@ namespace engine
 
          virtual void* queryInterface( SDB_INTERFACE_TYPE type ) ;
 
-         void     attachMainCB ( pmdEDUCB *pMainCB ) ;
-         void     detachMainCB ( pmdEDUCB *pMainCB ) ;
+         virtual void   attachCB( _pmdEDUCB *cb ) ;
+         virtual void   detachCB( _pmdEDUCB *cb ) ;
 
          void     ntyPrimaryChange( BOOLEAN primary,
                                     SDB_EVENT_OCCUR_TYPE type ) ;

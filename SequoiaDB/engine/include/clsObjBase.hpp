@@ -47,6 +47,8 @@
 namespace engine
 {
 
+   class _pmdEDUCB ;
+
    struct _msgMapEntry;
    enum MSG_SIG_FLAG { sig_event, sig_msg, sig_end };
 
@@ -101,6 +103,9 @@ namespace engine
       public:
          _clsObjBase() { _bProcess = FALSE ; }
          virtual ~_clsObjBase() {}
+
+         virtual void   attachCB( _pmdEDUCB *cb ) {}
+         virtual void   detachCB( _pmdEDUCB *cb ) {}
 
       public:
          OSS_INLINE BOOLEAN isProcess () const { return _bProcess ; }

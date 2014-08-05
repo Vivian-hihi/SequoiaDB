@@ -53,7 +53,7 @@ namespace engine
    //The max del session deque size
    #define MAX_SHD_SESSION_CATCH_DEQ_SIZE          (1000)
 
-   #define CLS_WAIT_CB_ATTACH_TIMEOUT              ( 60 * OSS_ONE_SEC )
+   #define CLS_WAIT_CB_ATTACH_TIMEOUT              ( 300 * OSS_ONE_SEC )
 
 
    /*
@@ -477,7 +477,7 @@ namespace engine
 
       _attachEvent.reset() ;
       rc = _startEDU ( EDU_TYPE_CLUSTERSHARD, PMD_EDU_UNKNOW,
-                       (void*)this, TRUE ) ;
+                       (void*)getShardCB(), TRUE ) ;
       if ( rc )
       {
          goto error ;
@@ -587,7 +587,7 @@ namespace engine
       return IControlBlock::queryInterface( type ) ;
    }
 
-   void _clsMgr::attachMainCB ( pmdEDUCB *pMainCB )
+   void _clsMgr::attachCB ( pmdEDUCB *pMainCB )
    {
       if ( EDU_TYPE_CLUSTER == pMainCB->getType() )
       {
@@ -607,7 +607,7 @@ namespace engine
       _attachEvent.signalAll() ;
    }
 
-   void _clsMgr::detachMainCB( pmdEDUCB *pMainCB )
+   void _clsMgr::detachCB( pmdEDUCB *pMainCB )
    {
       if ( EDU_TYPE_CLUSTER == pMainCB->getType() )
       {

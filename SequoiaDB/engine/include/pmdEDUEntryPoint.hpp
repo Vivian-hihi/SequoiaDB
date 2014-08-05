@@ -46,24 +46,37 @@ namespace engine
    /*
       PMD ENTRY POINTERS
    */
+
+   /*
+      @Common Entry Point For CB Manager
+      @pData: must be the _clsObjBase pointer
+   */
+   INT32 pmdCBMgrEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+
+   /*
+      @Common Entry Point For Async Session
+      @pData: must be the clsSession pointer
+   */
+   INT32 pmdAsyncSessionAgentEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+
+   /*
+      @Common Entry Point For Async Net
+      @pData: must be the _netRouteAgent pointer
+   */
+   INT32 pmdAsyncNetEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+
    INT32 pmdLocalAgentEntryPoint( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
-   INT32 pmdAsyncSessionAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdHTTPAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdRestAgentEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdTcpListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdHTTPListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdRestSvcEntryPoint ( pmdEDUCB *cb, void *arg ) ;
-   INT32 pmdRepREntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdLoggWEntryPoint ( pmdEDUCB *cb, void *arg ) ;
-   INT32 pmdClusterEntryPoint ( pmdEDUCB *cb, void *pData ) ;
-   INT32 pmdClusterShardEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdClsNtyEntryPoint( pmdEDUCB * cb, void * arg ) ;
-   INT32 pmdShardREntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdCatMainControllerEntryPoint ( pmdEDUCB *cb, void *pData );
    INT32 pmdCatNodeManagerEntryPoint ( pmdEDUCB *cb, void *pData );
    INT32 pmdCatCatalogManagerEntryPoint ( pmdEDUCB *cb, void *pData );
-   INT32 pmdCatNetWorkEntryPoint ( pmdEDUCB *cb, void *pData );
    INT32 pmdCoordNetWorkEntryPoint ( pmdEDUCB *cb, void *pData );
    INT32 pmdPreLoaderEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;
@@ -72,8 +85,6 @@ namespace engine
    INT32 pmdWindowsListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
 #endif
    INT32 pmdLoadWorkerEntryPoint ( pmdEDUCB *cb, void *pData ) ;
-   INT32 pmdOMManagerEntryPoint( pmdEDUCB * cb, void * pData ) ;
-   INT32 pmdOMNetEntryPoint( pmdEDUCB * cb, void * pData ) ;
    INT32 pmdSyncClockEntryPoint( pmdEDUCB *cb, void *arg ) ;
 
 }

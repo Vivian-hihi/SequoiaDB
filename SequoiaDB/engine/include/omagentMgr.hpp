@@ -40,6 +40,7 @@
 #include "clsTimerHandler.hpp"
 #include "pmdOptionsMgr.hpp"
 #include "sdbInterface.hpp"
+#include "ossEvent.hpp"
 
 #include <string>
 
@@ -148,6 +149,9 @@ namespace engine
          virtual INT32  deactive () ;
          virtual INT32  fini () ;
 
+         virtual void   attachCB( _pmdEDUCB *cb ) ;
+         virtual void   detachCB( _pmdEDUCB *cb ) ;
+
       public:
 
          omAgentOptions* getOptions() ;
@@ -160,6 +164,8 @@ namespace engine
          clsMsgHandler              _msgHandler ;
          clsTimerHandler            _timerHandler ;
          netRouteAgent              _netAgent ;
+
+         ossEvent                   _attachEvent ;
 
    } ;
 

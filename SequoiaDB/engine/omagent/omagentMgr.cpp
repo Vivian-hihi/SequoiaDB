@@ -38,6 +38,10 @@
 
 namespace engine
 {
+   /*
+      LOCAL DEFINE
+   */
+   #define OMAGENT_WAIT_CB_ATTACH_TIMEOUT             ( 300 * OSS_ONE_SEC )
 
    /*
       _omAgentOptions implement
@@ -281,6 +285,30 @@ namespace engine
    INT32 _omAgentMgr::init()
    {
       INT32 rc = SDB_OK ;
+      const CHAR *hostName = pmdGetKRCB()->getHostName() ;
+      const CHAR *cmService = _options.getCMServiceName() ;
+      MsgRouteID nodeID ;
+      nodeID.value = MSG_INVALID_ROUTEID ;
+
+      // 1. create listen
+      _netAgent.updateRoute( nodeID, hostName, cmService ) ;
+      rc = _netAgent.listen( nodeID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create listen[ServiceName: %s] failed, rc: %d",
+                 cmService, rc ) ;
+         goto error ;
+      }
+      PD_LOG ( PDEVENT, "Create listen[ServiceName:%s] succeed",
+               cmService ) ;
+
+      // 2. init session manager
+      rc = _sessionMgr.init( &_netAgent, &_timerHandler, OSS_ONE_SEC ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init session manager failed, rc: %d", rc ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -290,8 +318,35 @@ namespace engine
 
    INT32 _omAgentMgr::active()
    {
+      INT32 rc = SDB_OK ;
+      pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+
+      // set primary
+      pmdSetPrimary( TRUE ) ;
+
+      // 1. start om manager edu
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (void*)this, &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start OM Manager edu, rc: %d", rc ) ;
+      // register
+      pEDUMgr->regSystemEDU( EDU_TYPE_OMMGR, eduID ) ;
+      // wait attach
+      rc = _attachEvent.wait( OMAGENT_WAIT_CB_ATTACH_TIMEOUT ) ;
+      PD_RC_CHECK( rc, PDERROR, "Wait OM Manager edu attach failed, rc: %d",
+                   rc ) ;
+
+      // 2. start om net edu
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (void*)&_netAgent, &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start om net, rc: %d", rc ) ;
+      // register
+      pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
+
+
       // TODO:XUJIANHUI
-      return SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _omAgentMgr::deactive()
@@ -304,6 +359,16 @@ namespace engine
    {
       // TODO:XUJIANHUI
       return SDB_OK ;
+   }
+
+   void _omAgentMgr::attachCB( _pmdEDUCB * cb )
+   {
+      // TODO:XUJIANHUI
+   }
+
+   void _omAgentMgr::detachCB( _pmdEDUCB * cb )
+   {
+      // TODO:XUJIANHUI
    }
 
    omAgentOptions* _omAgentMgr::getOptions()

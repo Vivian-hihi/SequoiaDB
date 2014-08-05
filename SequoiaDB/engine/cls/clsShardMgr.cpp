@@ -198,6 +198,16 @@ namespace engine
       }
    }
 
+   void _clsShardMgr::attachCB( _pmdEDUCB * cb )
+   {
+      sdbGetClsCB()->attachCB( cb ) ;
+   }
+
+   void _clsShardMgr::detachCB( _pmdEDUCB * cb )
+   {
+      sdbGetClsCB()->detachCB( cb ) ;
+   }
+
    void _clsShardMgr::onTimer ( UINT32 timerID, UINT32 interval )
    {
    }

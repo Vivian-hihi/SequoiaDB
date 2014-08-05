@@ -48,6 +48,15 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_AGENT, FALSE,
                                 pmdAsyncSessionAgentEntryPoint,
                                 "Agent" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_BACKGROUND_JOB, FALSE,
+                                pmdBackgroundJobEntryPoint,
+                                "Task" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_OMMGR, TRUE,
+                                pmdCBMgrEntryPoint,
+                                "OMManager" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_OMNET, TRUE,
+                                pmdAsyncNetEntryPoint,
+                                "OMNet" ),
 
          // For the end
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_MAXIMUM, FALSE,
