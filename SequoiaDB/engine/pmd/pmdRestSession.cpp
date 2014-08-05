@@ -454,8 +454,7 @@ namespace engine
                                                           OM_DEFAULT_LOCAL_HOST, 
                                                           OM_AGENT_DEFAULT_PORT ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand, 
-                                  OM_QUERY_INSTALL_PROGRESS ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_PROGRESS ) == 0 )
          {
             commandIf = SDB_OSS_NEW omQueryInstallProgress( pAdptor, this ) ;
          }

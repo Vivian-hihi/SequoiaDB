@@ -333,7 +333,7 @@ namespace engine
    // *****************************************************************
 
    // om query install progress
-   #define  OM_QUERY_INSTALL_PROGRESS        "query install progress"
+   #define  OM_QUERY_PROGRESS                "query progress"
 
    #define  OM_REST_TASK_INFO                "Task"
 

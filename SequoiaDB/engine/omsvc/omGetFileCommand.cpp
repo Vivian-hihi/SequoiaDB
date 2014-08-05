@@ -602,6 +602,10 @@ namespace engine
                               result.getStringField( OM_CLUSTER_FIELD_NAME )) ;
          innerBuilder.append( OM_BSON_FIELD_CLUSTER_DESC, 
                               result.getStringField( OM_CLUSTER_FIELD_DESC )) ;
+         innerBuilder.append( OM_BSON_FIELD_SDB_USER, 
+                            result.getStringField( OM_CLUSTER_FIELD_SDBUSER )) ;
+         innerBuilder.append( OM_BSON_FIELD_SDB_USERGROUP, 
+                       result.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP )) ;
          tmp = innerBuilder.obj() ;
          rc = _restAdaptor->appendHttpBody( _restSession, tmp.objdata(), 
                                             tmp.objsize(), 1 ) ;
