@@ -18,8 +18,8 @@ namespace engine
    /*
       create catalog job
    */
-//   class _omaCreateCatalogJob : public _rtnBaseJob
-   class _omaCreateCatalogJob : public SDBObject
+   class _omaCreateCatalogJob : public _rtnBaseJob
+//   class _omaCreateCatalogJob : public SDBObject
    {
       public:
          _omaCreateCatalogJob ( std::vector<BSONObj> &catalog,
@@ -29,8 +29,8 @@ namespace engine
       public:
          virtual RTN_JOB_TYPE type () const ;
          virtual const CHAR*  name () const ;
-//         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
-         virtual BOOLEAN      muteXOn () ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+//         virtual BOOLEAN      muteXOn () ;
          virtual INT32        doit () ;
 
       private:
@@ -43,8 +43,8 @@ namespace engine
    /*
       create coord job
    */
-//   class _omaCreateCoordJob : public _rtnBaseJob
-   class _omaCreateCoordJob : public SDBObject
+   class _omaCreateCoordJob : public _rtnBaseJob
+//   class _omaCreateCoordJob : public SDBObject
    {
       public:
          _omaCreateCoordJob ( std::vector<BSONObj> &coord,
@@ -54,8 +54,8 @@ namespace engine
       public:
          virtual RTN_JOB_TYPE type () const ;
          virtual const CHAR*  name () const ;
-//         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
-         virtual BOOLEAN      muteXOn () ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+//         virtual BOOLEAN      muteXOn () ;
          virtual INT32        doit () ;
 
      private:
@@ -69,8 +69,8 @@ namespace engine
    /*
       create data job
    */
-//   class _omaCreateDataJob : public _rtnBaseJob
-   class _omaCreateDataJob : public SDBObject
+   class _omaCreateDataJob : public _rtnBaseJob
+//   class _omaCreateDataJob : public SDBObject
    {
       public:
          _omaCreateDataJob ( const CHAR *groupname, std::vector<BSONObj> &coord,
@@ -80,8 +80,8 @@ namespace engine
       public:
          virtual RTN_JOB_TYPE type () const ;
          virtual const CHAR*  name () const ;
-//         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
-         virtual BOOLEAN      muteXOn () ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+//         virtual BOOLEAN      muteXOn () ;
          virtual INT32        doit () ;
 
      private:
