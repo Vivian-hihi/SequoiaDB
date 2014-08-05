@@ -9,12 +9,12 @@
 #include "sptUsrFile.hpp"
 #include "sptUsrSystem.hpp"
 
-namespace CLSMGR
+namespace engine
 {
    BOOLEAN hasLoadClass = FALSE ;
 /*
-   // _omagentObjBuff
-   _omagentObjBuff::~_omagentObjBuff ()
+   // _omaObjBuff
+   _omaObjBuff::~_omaObjBuff ()
    {
       if ( _pBuff )
       {
@@ -25,7 +25,7 @@ namespace CLSMGR
       _recordNum = 0 ;
    }
 
-   INT32 _omagentObjBuff::setObj( const CHAR *pBuff,
+   INT32 _omaObjBuff::setObj( const CHAR *pBuff,
                                   INT32 buffLen, INT32 recordNum )
    {
       INT32 rc = SDB_OK ;
@@ -57,20 +57,32 @@ namespace CLSMGR
       if ( !hasLoadClass )
       {
          rc = scope->loadUsrDefObj<_sptUsrSsh>() ;
-         PD_LOG( PDERROR, "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
+         }
          rc = scope->loadUsrDefObj<_sptUsrCmd>() ;
-         PD_LOG( PDERROR, "Failed to load class _sptUsrCmd, rc = %d", rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to load class _sptUsrCmd, rc = %d", rc ) ;
+         }
          rc = scope->loadUsrDefObj<_sptUsrFile>() ;
-         PD_LOG( PDERROR, "Failed to load class _sptUsrFile, rc = %d", rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to load class _sptUsrFile, rc = %d", rc ) ;
+         }
          rc = scope->loadUsrDefObj<_sptUsrSystem>() ;
-         PD_LOG( PDERROR, "Failed to load class _sptUsrSystem, rc = %d", rc ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to load class _sptUsrSystem, rc = %d", rc ) ;
+         }
          hasLoadClass = TRUE ;
       }
       return scope ;
    }
 
    // get bson field
-   INT32 omagentGetIntElement ( const BSONObj &obj, const CHAR *fieldName,
+   INT32 omaGetIntElement ( const BSONObj &obj, const CHAR *fieldName,
                                 INT32 &value )
    {
       SINT32 rc = SDB_OK ;
@@ -90,7 +102,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   INT32 omagentGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
+   INT32 omaGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
                                    const CHAR **value )
    {
       INT32 rc = SDB_OK ;
@@ -110,7 +122,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   INT32 omagentGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
+   INT32 omaGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
                                 BSONObj &value )
    {
       INT32 rc = SDB_OK ;
@@ -130,7 +142,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   INT32 omagentGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
+   INT32 omaGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
                                     BOOLEAN &value )
    {
       INT32 rc = SDB_OK ;

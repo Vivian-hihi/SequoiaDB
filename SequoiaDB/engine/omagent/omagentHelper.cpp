@@ -1,12 +1,13 @@
 #include "omagentHelper.hpp"
 #include "omagentUtil.hpp"
-namespace CLSMGR
+
+namespace engine
 {
 
 /*
    omagent control func
 */
-   BOOLEAN omagentIsCommand ( const CHAR *name )
+   BOOLEAN omaIsCommand ( const CHAR *name )
    {
       if ( name && '$' == name[0] )
       {
@@ -15,12 +16,12 @@ namespace CLSMGR
       return FALSE ;
    }
 
-   INT32 omagentParseCommand ( const CHAR *name, _omagentCommand **ppCommand )
+   INT32 omaParseCommand ( const CHAR *name, _omaCommand **ppCommand )
    {
       INT32 rc = SDB_INVALIDARG ;
-      if ( ppCommand && omagentIsCommand ( name ) )
+      if ( ppCommand && omaIsCommand ( name ) )
       {
-         *ppCommand = getOmagentCmdBuilder()->create ( &name[1] ) ;
+         *ppCommand = getOmaCmdBuilder()->create ( &name[1] ) ;
          if ( *ppCommand )
          {
             rc = SDB_OK ;
@@ -30,7 +31,7 @@ namespace CLSMGR
    }
 
 
-   INT32 omagentInitCommand ( _omagentCommand *pCommand ,INT32 flags,
+   INT32 omaInitCommand ( _omaCommand *pCommand ,INT32 flags,
                               INT64 numToSkip,
                               INT64 numToReturn, const CHAR *pMatcherBuff,
                               const CHAR *pSelectBuff, const CHAR *pOrderByBuff,
@@ -59,8 +60,8 @@ namespace CLSMGR
       goto done ;
    }
 
-//   INT32 omagentRunCommand ( _omagentCommand *pCommand, omagentObjBuff &objBuff )
-   INT32 omagentRunCommand ( _omagentCommand *pCommand, CHAR **ppBody,
+//   INT32 omaRunCommand ( _omaCommand *pCommand, omaObjBuff &objBuff )
+   INT32 omaRunCommand ( _omaCommand *pCommand, CHAR **ppBody,
                              INT32 &bodyLen, INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -93,18 +94,18 @@ namespace CLSMGR
       goto done ;
    }
 
-   INT32 omagentReleaseCommand ( _omagentCommand **ppCommand )
+   INT32 omaReleaseCommand ( _omaCommand **ppCommand )
    {
      INT32 rc = SDB_OK ;
       if ( ppCommand && *ppCommand )
       {
-         getOmagentCmdBuilder()->release( *ppCommand ) ;
+         getOmaCmdBuilder()->release( *ppCommand ) ;
          *ppCommand = NULL ;
       }
       return rc ;
    }
 
-   INT32 omagentBuildReplyMsgBody ( CHAR **ppBuffer, INT32 *bufferSize,
+   INT32 omaBuildReplyMsgBody ( CHAR **ppBuffer, INT32 *bufferSize,
                                     SINT32 numReturned,
                                     vector<BSONObj> *objList )
    {
@@ -135,7 +136,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   INT32 omagentBuildReplyMsgBody ( CHAR **ppBuffer, INT32 *bufferSize,
+   INT32 omaBuildReplyMsgBody ( CHAR **ppBuffer, INT32 *bufferSize,
                                     SINT32 numReturned, const BSONObj *bsonobj )
    {
       SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;

@@ -1,14 +1,15 @@
-// installVirtualCoord
-if ( typeof(IP) == "undefined" ) { IP = "127.0.0.1" ; }
-if ( typeof(USERNAME) == "undefined" ) { USERNAME = "sdbadmin" ; }
-if ( typeof(PASSWORD) == "undefined" ) { PASSWORD = "adbadmin" ; }
-//if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
+/* *****************************************************************************
+@description: create virtual coord
+@modify list:
+   2014-7-26 Zhaobo Tan  Init
+***************************************************************************** */
 // todo::add path in windows
 if ( typeof(PROGRAM) == "undefined" ) { PROGRAM_PATH = "/opt/sequoiadb/bin/sequoiadb" ; }
+if ( typeof(COORD_SERVICE) == "undefined" ) { COORD_SERVICE = "11810" ; }
 if ( typeof(CONFIG_PATH) == "undefined" ) { CONFIG_PATH = "/tmp/virtualCoord" ; }
 if ( typeof(CONFIG_FILE) == "undefined" ) { CONFIG_FILE = "/tmp/virtualCoord/sdb.conf" ; }
-if ( typeof(DB_PATH) == "undefined" ) { CONFIG = "/tmp/virtualCoord" ; }
-if ( typeof(LOCAL_SERVICE) == "undefined" ) { LOCAL_SERVICE = "11810" ; }
+if ( typeof(DB_PATH) == "undefined" ) { DB_PATH = "/tmp/virtualCoord/coord" ; }
+
 var objRet = new Object() ;
 
 objRet.Rc = 0 ;
@@ -31,10 +32,10 @@ function createNewConfFile()
    var cmd = " mkdir " + CONFIG_PATH ;
    Cmd.run( cmd ) ;
    // contents
-   var confPath = "confpath = " + CONFIG_PATH ;
-   var dbPath = "dbpath = " + DB_PATH ;
-   var svcName = "svcname = " + LOCAL_SERVICE ;
-   // create a new conf file and write contents
+   // todo: windows
+   var confPath = "confpath = " + CONFIG_PATH + "\n" ;
+   var dbPath = "dbpath = " + DB_PATH + "\n" ;
+   var svcName = "svcname = " + COORD_SERVICE + "\n" ;
    try
    {
       var file = new File( CONFIG_FILE ) ;
@@ -51,22 +52,19 @@ function createNewConfFile()
 
 function main()
 {
+println( "PROGRAM is " + PROGRAM ) ;
+println( "COORD_SERVICE is " + COORD_SERVICE ) ;
+println( "CONFIG_PATH is " + CONFIG_PATH ) ;
+println( "CONFIG_FILE is " + CONFIG_FILE ) ;
+println( "DB_PATH is " + DB_PATH ) ;
+
    try
    {
-      // ssh to local
-      var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
       // prepare conf file
       createNewConfFile() ;
       // start virtual coord
-      /*
-      var cmd = "nohup " + PROGRAM + "--dbpath" + DB_PATH + "--confpath" + CONFIG_PATH +
-                "--svcname" + LOCAL_SERVICE + "& 1 > /dev/null 2 > &l"
+      var cmd = PROGRAM + " -c " + CONFIG_PATH
       Cmd.run( cmd ) ;
-      */
-// todo: think about windows
-      var cmd = "nohup " + PROGRAM + "-c " + CONFIG_PATH +
-                " & 1>/dev/null 2>&l";
-      ssh.exec( cmd ) ;
       return objRet ;
    }
    catch ( e )

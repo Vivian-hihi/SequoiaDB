@@ -2,72 +2,74 @@
 #include "omagentUtil.hpp"
 #include "omagentHelper.hpp"
 #include "sptContainer.hpp"
+#include "utilPath.hpp"
+#include "ossPath.h"
+#include "omagentJob.hpp"
 
-using namespace engine ;
 using namespace bson ;
 
 #define HOSTS_FILE_PROMPT "##############add by omagent##############"
+#define DEF_VIRTUAL_COORD_SERVICE 10810
 
-namespace CLSMGR
+#define ROLE_COORD "coord"
+#define ROLE_CATA  "catalog"
+#define ROLE_DATA  "data"
+
+#define START_DB_PROG "sdbstart"
+
+namespace engine
 {
-   // _omagentCommand
-   _omagentCommand::_omagentCommand ()
+   // command list:
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaScanHost )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallRemoteAgent )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallAgentProcess )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveAgentProcess )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaStopAgentProcess )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaGetHostInfo )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRegHosts )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaGetHostNames )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
+
+   // _omaCommand
+   _omaCommand::_omaCommand ()
    {
-/*
-      if ( NULL == scope )
-      {
-         _sptContainer container ;
-         scope = container.newScope( SPT_SCOPE_TYPE_SP ) ;
-         if ( NULL == scope )
-            ossPrintf( "Failed to get scope"OSS_NEWLINE ) ;
-      }
-*/
    }
 
-   _omagentCommand::~_omagentCommand ()
+   _omaCommand::~_omaCommand ()
    {
-/*
-      if ( NULL != scope )
-      {
-         scope->shutdown() ;
-         delete scope ;
-         scope = NULL ;
-      }
-*/
    }
 
-//   _sptScope *_omagentCommand::scope = NULL ;
-
-   // _omagentCmdAssit
-   _omagentCmdAssit::_omagentCmdAssit ( OA_NEW_FUNC pFunc )
+   // _omaCmdAssit
+   _omaCmdAssit::_omaCmdAssit ( OA_NEW_FUNC pFunc )
    {
       if ( pFunc )
       {
-         _omagentCommand *pCommand = (*pFunc)() ;
+         _omaCommand *pCommand = (*pFunc)() ;
          if ( pCommand )
          {
-            getOmagentCmdBuilder()->_register ( pCommand->name(), pFunc ) ;
+            getOmaCmdBuilder()->_register ( pCommand->name(), pFunc ) ;
             SDB_OSS_DEL pCommand ;
             pCommand = NULL ;
          }
       }
    }
 
-   _omagentCmdAssit::~_omagentCmdAssit ()
+   _omaCmdAssit::~_omaCmdAssit ()
    {
    }
 
-   // _omagentCmdBuilder
-   _omagentCmdBuilder::_omagentCmdBuilder ()
+   // _omaCmdBuilder
+   _omaCmdBuilder::_omaCmdBuilder ()
    {
    }
 
-   _omagentCmdBuilder::~_omagentCmdBuilder ()
+   _omaCmdBuilder::~_omaCmdBuilder ()
    {
       // TODO: do i need to release memory in map ?
    }
 
-   _omagentCommand* _omagentCmdBuilder::create ( const CHAR *command )
+   _omaCommand* _omaCmdBuilder::create ( const CHAR *command )
    {
       OA_NEW_FUNC pFunc = _find ( command ) ;
       if ( pFunc )
@@ -77,7 +79,7 @@ namespace CLSMGR
       return NULL ;
    }
 
-   void _omagentCmdBuilder::release ( const _omagentCommand *pCommand )
+   void _omaCmdBuilder::release ( const _omaCommand *pCommand )
    {
       if ( pCommand )
       {
@@ -85,7 +87,7 @@ namespace CLSMGR
       }
    }
 
-   INT32 _omagentCmdBuilder::_register ( const CHAR *name, OA_NEW_FUNC pFunc )
+   INT32 _omaCmdBuilder::_register ( const CHAR *name, OA_NEW_FUNC pFunc )
    {
       INT32 rc = SDB_OK ;
 
@@ -102,10 +104,10 @@ namespace CLSMGR
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
-   OA_NEW_FUNC _omagentCmdBuilder::_find ( const CHAR *name )
+   OA_NEW_FUNC _omaCmdBuilder::_find ( const CHAR *name )
    {
       if ( name )
       {
@@ -118,25 +120,25 @@ namespace CLSMGR
    }
 
    // get omagent command builder
-   _omagentCmdBuilder* getOmagentCmdBuilder()
+   _omaCmdBuilder* getOmaCmdBuilder()
    {
-      static _omagentCmdBuilder cmdBuilder ;
+      static _omaCmdBuilder cmdBuilder ;
       return &cmdBuilder ;
    }
-
+/*
    // command list:
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentAddHost )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentScanHost )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentInstallRemoteAgent )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentInstallAgentProcess )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentRemoveAgentProcess )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentStopAgentProcess )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentGetHostInfo )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentRegHosts )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omagentGetHostNames )
-
-   // _omagentAddHost
-   _omagentAddHost::_omagentAddHost()
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaScanHost )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallRemoteAgent )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallAgentProcess )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveAgentProcess )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaStopAgentProcess )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaGetHostInfo )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRegHosts )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaGetHostNames )
+*/
+   // _omaAddHost
+   _omaAddHost::_omaAddHost()
    {
       _scope = NULL ;
       _fileBuff = NULL ;
@@ -144,11 +146,11 @@ namespace CLSMGR
       _readSize = 0 ;
    }
 
-   _omagentAddHost::~_omagentAddHost()
+   _omaAddHost::~_omaAddHost()
    {
    }
 
-   INT32 _omagentAddHost::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+   INT32 _omaAddHost::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                  const CHAR *pMatcherBuff,
                                  const CHAR *pSelectBuff,
                                  const CHAR *pOrderByBuff,
@@ -162,7 +164,7 @@ namespace CLSMGR
    }
 
 // _sptScope* getSptScope
-   INT32 _omagentAddHost::doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
+   INT32 _omaAddHost::doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
    done:
@@ -171,8 +173,8 @@ namespace CLSMGR
      goto done ;
    }
 
-   // _omagentScanHost
-   _omagentScanHost::_omagentScanHost()
+   // _omaScanHost
+   _omaScanHost::_omaScanHost()
    {
 //      ossPrintf ( "In scan host constructor."OSS_NEWLINE ) ;
       _scope = NULL ;
@@ -182,12 +184,12 @@ namespace CLSMGR
       _readSize = 0 ;
    }
 
-   _omagentScanHost::~_omagentScanHost()
+   _omaScanHost::~_omaScanHost()
    {
 //      ossPrintf ( "In scan host destructor."OSS_NEWLINE ) ;
    }
 
-   INT32 _omagentScanHost::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+   INT32 _omaScanHost::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                                  const CHAR *pMatcherBuff,
                                  const CHAR *pSelectBuff,
                                  const CHAR *pOrderByBuff,
@@ -232,8 +234,8 @@ namespace CLSMGR
      goto done ;
    }
 
-//   INT32 _omagentScanHost::doit (  omagentObjBuff &objBuff )
-   INT32 _omagentScanHost::doit ( CHAR **ppBody, INT32 &bodyLen,
+//   INT32 _omaScanHost::doit (  omagentObjBuff &objBuff )
+   INT32 _omaScanHost::doit ( CHAR **ppBody, INT32 &bodyLen,
                                   INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -253,23 +255,23 @@ namespace CLSMGR
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassWord = NULL ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassWord ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassWord ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
 
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       "var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\";",
                       pIp, pUserName, pPassWord ) ;
 
@@ -294,7 +296,7 @@ namespace CLSMGR
             result.push_back( errObj ) ;
             continue ;
          }
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
 /*
@@ -318,7 +320,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       bob.appendArray( OMA_FIELD_SCAN_HOST_RET, bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -332,8 +334,8 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   // _omagentInstallRemoteAgent
-   _omagentInstallRemoteAgent::_omagentInstallRemoteAgent ()
+   // _omaInstallRemoteAgent
+   _omaInstallRemoteAgent::_omaInstallRemoteAgent ()
    {
       _scope = NULL ;
       _jsFileName = "installAgentProcess.js" ;
@@ -342,12 +344,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       _readSize = 0 ;
    }
 
-   _omagentInstallRemoteAgent::~_omagentInstallRemoteAgent ()
+   _omaInstallRemoteAgent::~_omaInstallRemoteAgent ()
    {
 
    }
 
-   INT32 _omagentInstallRemoteAgent::init ( INT32 flags, INT64 numToSkip,
+   INT32 _omaInstallRemoteAgent::init ( INT32 flags, INT64 numToSkip,
                                             INT64 numToReturn,
                                             const CHAR *pMatcherBuff,
                                             const CHAR *pSelectBuff,
@@ -394,7 +396,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       goto done ;
    }
 
-   INT32 _omagentInstallRemoteAgent::doit ( CHAR **ppBody, INT32 &bodyLen,
+   INT32 _omaInstallRemoteAgent::doit ( CHAR **ppBody, INT32 &bodyLen,
                                             INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -414,7 +416,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BSONObj status ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -424,21 +426,21 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BOOLEAN isRunning      = FALSE ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_LOCAL_PACKET_PATH,
+         rc = omaGetStringElement( host, OMA_FIELD_LOCAL_PACKET_PATH,
                                        &pLocalPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_FIELD_LOCAL_PACKET_PATH, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
+         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
                                        &pRemotePath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
@@ -448,7 +450,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = getRemoteAgentStatus ( pIp, pUserName, pPassword, status ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Failed to get remote mechine's status, rc = %d", rc ) ;
-         rc = omagentGetBooleanElement( status, OMA_FIELD_AGENT_IS_RUNNING,
+         rc = omaGetBooleanElement( status, OMA_FIELD_AGENT_IS_RUNNING,
                                         isRunning ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
@@ -456,7 +458,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          if ( isRunning )
          {
             const CHAR *ver = getVersion() ;
-            rc = omagentGetStringElement( status, OMA_FIELD_VERSION,
+            rc = omaGetStringElement( status, OMA_FIELD_VERSION,
                                           &pVersion ) ;
             PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                       "Get field[%s] failed, rc: %d",
@@ -478,7 +480,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             }
          }
          // build js file's argument
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\"; \
                       var PASSWORD = \"%s\"; var LOCAL_PACKET_PATH = \"%s\"; \
                       var REMOTE_PACKET_PATH = \"%s\" ",
@@ -506,7 +508,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             continue ;
          }
          // extract the result from the return value
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -524,7 +526,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       bob.appendArray( OMA_FIELD_INSATLL_REMOTE_AGENT_RET, bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -537,13 +539,13 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       goto done ;
    }
 
-   INT32 _omagentInstallRemoteAgent::getRemoteAgentStatus ( const CHAR *pIp,
+   INT32 _omaInstallRemoteAgent::getRemoteAgentStatus ( const CHAR *pIp,
                                                             const CHAR *pUserName,
                                                             const CHAR *pPassword,
                                                             BSONObj &result )
    {
       INT32 rc = SDB_OK ;
-      _omagentCheckRemoteAgentProcess checkRemote ;
+      _omaCheckRemoteAgentProcess checkRemote ;
       rc = checkRemote.check( pIp, pUserName, pPassword, result ) ;
       if ( rc )
       {
@@ -554,8 +556,8 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   // _omagentCheckRemoteAgentProcess
-   _omagentCheckRemoteAgentProcess::_omagentCheckRemoteAgentProcess ()
+   // _omaCheckRemoteAgentProcess
+   _omaCheckRemoteAgentProcess::_omaCheckRemoteAgentProcess ()
    {
       _scope = NULL ;
       _jsFileName = "checkRemoteAgentProcess.js" ;
@@ -565,12 +567,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
    }
 
-   _omagentCheckRemoteAgentProcess::~_omagentCheckRemoteAgentProcess ()
+   _omaCheckRemoteAgentProcess::~_omaCheckRemoteAgentProcess ()
    {
 
    }
 
-   INT32 _omagentCheckRemoteAgentProcess::init( INT32 flags, INT64 numToSkip,
+   INT32 _omaCheckRemoteAgentProcess::init( INT32 flags, INT64 numToSkip,
                                                 INT64 numToReturn,
                                                 const CHAR *pMatcherBuff,
                                                 const CHAR *pSelectBuff,
@@ -616,7 +618,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   INT32 _omagentCheckRemoteAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
+   INT32 _omaCheckRemoteAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
                                                 INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -636,23 +638,23 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
 
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       "var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\";",
                       pIp, pUserName, pPassword ) ;
          PD_LOG( PDDEBUG, "Arguments for checkRemoteAgentProcess.js is: %s",
@@ -680,7 +682,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             result.push_back( errObj ) ;
             continue ;
          }
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -699,7 +701,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
                        bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -709,11 +711,11 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
 
-   INT32 _omagentCheckRemoteAgentProcess::check ( const CHAR *pIp,
+   INT32 _omaCheckRemoteAgentProcess::check ( const CHAR *pIp,
                                                   const CHAR *pUserName,
                                                   const CHAR *pPassword,
                                                   BSONObj &result )
@@ -769,8 +771,8 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto done ;
    }
 
-   // _omagentInstallAgentProcess
-   _omagentInstallAgentProcess::_omagentInstallAgentProcess ()
+   // _omaInstallAgentProcess
+   _omaInstallAgentProcess::_omaInstallAgentProcess ()
    {
       _scope = NULL ;
       _jsFileName = "installAgentProcess.js" ;
@@ -780,12 +782,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
    }
 
-   _omagentInstallAgentProcess::~_omagentInstallAgentProcess ()
+   _omaInstallAgentProcess::~_omaInstallAgentProcess ()
    {
 
    }
 
-   INT32 _omagentInstallAgentProcess::init( INT32 flags, INT64 numToSkip,
+   INT32 _omaInstallAgentProcess::init( INT32 flags, INT64 numToSkip,
                                                 INT64 numToReturn,
                                                 const CHAR *pMatcherBuff,
                                                 const CHAR *pSelectBuff,
@@ -831,7 +833,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   INT32 _omagentInstallAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
+   INT32 _omaInstallAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
                                                 INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -850,7 +852,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -858,27 +860,27 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          const CHAR *pRemotePath = NULL ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_LOCAL_PACKET_PATH,
+         rc = omaGetStringElement( host, OMA_FIELD_LOCAL_PACKET_PATH,
                                        &pLocalPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_FIELD_LOCAL_PACKET_PATH, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
+         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
                                        &pRemotePath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_FIELD_REMOTE_PACKET_PATH, rc ) ;
 
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\"; \
                       var PASSWORD = \"%s\"; var LOCAL_PACKET_PATH = \"%s\"; \
                       var REMOTE_PACKET_PATH = \"%s\" ",
@@ -908,7 +910,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             result.push_back( errObj ) ;
             continue ;
          }
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -927,7 +929,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
                        bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -937,12 +939,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
 
-   // _omagentRemoveAgentProcess
-   _omagentRemoveAgentProcess::_omagentRemoveAgentProcess ()
+   // _omaRemoveAgentProcess
+   _omaRemoveAgentProcess::_omaRemoveAgentProcess ()
    {
       _scope = NULL ;
       _jsFileName = "removeAgentProcess.js" ;
@@ -952,12 +954,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
    }
 
-   _omagentRemoveAgentProcess::~_omagentRemoveAgentProcess ()
+   _omaRemoveAgentProcess::~_omaRemoveAgentProcess ()
    {
 
    }
 
-   INT32 _omagentRemoveAgentProcess::init( INT32 flags, INT64 numToSkip,
+   INT32 _omaRemoveAgentProcess::init( INT32 flags, INT64 numToSkip,
                                                 INT64 numToReturn,
                                                 const CHAR *pMatcherBuff,
                                                 const CHAR *pSelectBuff,
@@ -1003,7 +1005,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   INT32 _omagentRemoveAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
+   INT32 _omaRemoveAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
                                               INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -1022,7 +1024,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -1030,22 +1032,22 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          const CHAR *pRemotePath = NULL ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
+         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
                                        &pRemotePath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_FIELD_REMOTE_PACKET_PATH, rc ) ;
 
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\"; \
                       var PASSWORD = \"%s\"; var REMOTE_PACKET_PATH = \"%s\" ",
                       pIp, pUserName, pPassword, pRemotePath ) ;
@@ -1074,7 +1076,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             result.push_back( errObj ) ;
             continue ;
          }
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -1093,7 +1095,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
                        bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -1103,12 +1105,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
 
-   // _omagentStopAgentProcess
-   _omagentStopAgentProcess::_omagentStopAgentProcess ()
+   // _omaStopAgentProcess
+   _omaStopAgentProcess::_omaStopAgentProcess ()
    {
       _scope = NULL ;
       _jsFileName = "stopAgentProcess.js" ;
@@ -1118,12 +1120,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
    }
 
-   _omagentStopAgentProcess::~_omagentStopAgentProcess ()
+   _omaStopAgentProcess::~_omaStopAgentProcess ()
    {
 
    }
 
-   INT32 _omagentStopAgentProcess::init( INT32 flags, INT64 numToSkip,
+   INT32 _omaStopAgentProcess::init( INT32 flags, INT64 numToSkip,
                                                 INT64 numToReturn,
                                                 const CHAR *pMatcherBuff,
                                                 const CHAR *pSelectBuff,
@@ -1169,7 +1171,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   INT32 _omagentStopAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
+   INT32 _omaStopAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
                                               INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -1188,7 +1190,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -1196,22 +1198,22 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          const CHAR *pRemotePath = NULL ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
+         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
                                        &pRemotePath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_FIELD_REMOTE_PACKET_PATH, rc ) ;
 
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\"; \
                       var PASSWORD = \"%s\"; var REMOTE_PACKET_PATH = \"%s\" ",
                       pIp, pUserName, pPassword, pRemotePath ) ;
@@ -1240,7 +1242,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             result.push_back( errObj ) ;
             continue ;
          }
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -1259,7 +1261,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
                        bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -1269,12 +1271,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
 
-   // _omagentGetHostInfo
-   _omagentGetHostInfo::_omagentGetHostInfo ()
+   // _omaGetHostInfo
+   _omaGetHostInfo::_omaGetHostInfo ()
    {
       _scope = NULL ;
       _jsFileName = "getHostInfo.js" ;
@@ -1284,12 +1286,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
    }
 
-   _omagentGetHostInfo::~_omagentGetHostInfo ()
+   _omaGetHostInfo::~_omaGetHostInfo ()
    {
 
    }
 
-   INT32 _omagentGetHostInfo::init( INT32 flags, INT64 numToSkip,
+   INT32 _omaGetHostInfo::init( INT32 flags, INT64 numToSkip,
                                                 INT64 numToReturn,
                                                 const CHAR *pMatcherBuff,
                                                 const CHAR *pSelectBuff,
@@ -1335,7 +1337,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   INT32 _omagentGetHostInfo::doit( CHAR **ppBody, INT32 &bodyLen,
+   INT32 _omaGetHostInfo::doit( CHAR **ppBody, INT32 &bodyLen,
                                               INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -1354,7 +1356,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -1362,17 +1364,17 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          const CHAR *pRemotePath = NULL ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
 
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\";\
                         var PASSWORD = \"%s\"; ",
                       pIp, pUserName, pPassword ) ;
@@ -1401,7 +1403,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             result.push_back( errObj ) ;
             continue ;
          }
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -1420,7 +1422,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
                        bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -1430,11 +1432,11 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
-   // _omagentRegHosts
-   _omagentRegHosts::_omagentRegHosts ()
+   // _omaRegHosts
+   _omaRegHosts::_omaRegHosts ()
    {
       _scope = NULL ;
       _jsFileName = "regHostsInfo.js" ;
@@ -1444,12 +1446,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
    }
 
-   _omagentRegHosts::~_omagentRegHosts ()
+   _omaRegHosts::~_omaRegHosts ()
    {
 
    }
 
-   INT32 _omagentRegHosts::init( INT32 flags, INT64 numToSkip,
+   INT32 _omaRegHosts::init( INT32 flags, INT64 numToSkip,
                                  INT64 numToReturn,
                                  const CHAR *pMatcherBuff,
                                  const CHAR *pSelectBuff,
@@ -1501,7 +1503,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   INT32 _omagentRegHosts::doit( CHAR **ppBody, INT32 &bodyLen,
+   INT32 _omaRegHosts::doit( CHAR **ppBody, INT32 &bodyLen,
                                  INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -1522,7 +1524,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          std::vector<string> hostsInfo ;
          std::vector<string>::iterator it_h ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp       = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -1530,13 +1532,13 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          string info  = HOSTS_FILE_PROMPT ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
 
@@ -1552,7 +1554,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 //            info += OSS_NEWLINE ;
          }
          // build up argument for js file
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\";\
                         var PASSWORD = \"%s\"; var HOSTSINFO = \"%s\"; ",
                       pIp, pUserName, pPassword, info.c_str() ) ;
@@ -1582,7 +1584,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             result.push_back( errObj ) ;
             continue ;
          }
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -1601,7 +1603,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
                        bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -1611,16 +1613,16 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
-   INT32 _omagentRegHosts::_getHostsTableInfo ()
+   INT32 _omaRegHosts::_getHostsTableInfo ()
    {
       INT32 rc              = SDB_OK ;
       const CHAR *pIp       = NULL ;
       const CHAR *pUserName = NULL ;
       const CHAR *pPassword = NULL ;
-//      _omagentGetHostNames ghn ;
+//      _omaGetHostNames ghn ;
       std::vector<BSONObj>::iterator it = _hosts.begin() ;
       if ( 0 == _hosts.size() )
          goto done ;
@@ -1630,17 +1632,17 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BSONObj host = *it ;
          BSONObj tmp ;
          BSONElement ele ;
-         _omagentGetHostNames ghn ;
+         _omaGetHostNames ghn ;
 
          const CHAR *pHostName1 = NULL ;
          it++ ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
          // get remote host name by ip
@@ -1667,7 +1669,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
                }
                BSONObj temp = ele.embeddedObject() ;
 
-               rc = omagentGetStringElement( temp, OMA_FIELD_HOSTNAME1,
+               rc = omaGetStringElement( temp, OMA_FIELD_HOSTNAME1,
                                              &pHostName1 ) ;
                PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                          "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME1, rc ) ;
@@ -1690,7 +1692,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       goto done ;
    }
 
-   INT32 _omagentRegHosts::_getContentForJS ( const CHAR *pIp,
+   INT32 _omaRegHosts::_getContentForJS ( const CHAR *pIp,
                                               std::vector<string> &hostsInfo )
    {
       INT32 rc = SDB_OK ;
@@ -1721,8 +1723,8 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       goto done ;
    }
 
-   // _omagentGetHostNames
-   _omagentGetHostNames::_omagentGetHostNames ()
+   // _omaGetHostNames
+   _omaGetHostNames::_omaGetHostNames ()
    {
       _scope = NULL ;
       _jsFileName = "getHostName.js" ;
@@ -1732,12 +1734,12 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
    }
 
-   _omagentGetHostNames::~_omagentGetHostNames ()
+   _omaGetHostNames::~_omaGetHostNames ()
    {
 
    }
 
-   INT32 _omagentGetHostNames::init( INT32 flags, INT64 numToSkip,
+   INT32 _omaGetHostNames::init( INT32 flags, INT64 numToSkip,
                                                 INT64 numToReturn,
                                                 const CHAR *pMatcherBuff,
                                                 const CHAR *pSelectBuff,
@@ -1783,7 +1785,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   INT32 _omagentGetHostNames::doit( CHAR **ppBody, INT32 &bodyLen,
+   INT32 _omaGetHostNames::doit( CHAR **ppBody, INT32 &bodyLen,
                                               INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -1802,23 +1804,23 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ 1024 ] = { 0 } ;
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp       = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
 
          _content.clear() ;
-         rc = omagentGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omagentGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
 
-         ossSnprintf( tempBuff, 1024,
+         ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\";\
                         var PASSWORD = \"%s\"; ",
                       pIp, pUserName, pPassword ) ;
@@ -1848,7 +1850,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
             result.push_back( errObj ) ;
             continue ;
          }
-         rc = omagentGetObjElement( rval, "", subObj ) ;
+         rc = omaGetObjElement( rval, "", subObj ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", "", rc ) ;
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -1867,7 +1869,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
                        bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
-      rc = omagentBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -1877,10 +1879,10 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    done:
       return rc ;
    error:
-      goto error ;
+      goto done ;
    }
 
-   INT32 _omagentGetHostNames::getHostName ( const CHAR *pIp,
+   INT32 _omaGetHostNames::getHostName ( const CHAR *pIp,
                                              const CHAR *pUserName,
                                              const CHAR *pPassword,
                                              BSONObj &result )
@@ -1937,6 +1939,696 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
+   // _omaInstallDBBusiness
+   _omaInstallDBBusiness::_omaInstallDBBusiness ()
+   {
+      _scope = NULL ;
+      _jsFileName = "" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+
+   }
+
+   _omaInstallDBBusiness::~_omaInstallDBBusiness ()
+   {
+   }
+
+   INT32 _omaInstallDBBusiness::init( INT32 flags, INT64 numToSkip,
+                                          INT64 numToReturn,
+                                          const CHAR *pMatcherBuff,
+                                          const CHAR *pSelectBuff,
+                                          const CHAR *pOrderByBuff,
+                                          const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      // parse bson and get arguments info for js file
+      BSONElement ele ;
+      BSONObj arg( pMatcherBuff ) ;
+      ele = arg.getField ( OMA_FIELD_HOSTS ) ;
+      if ( Array == ele.type() )
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         while ( itr.more() )
+         {
+            const CHAR *value = NULL ;
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG ( PDERROR, "Invalid argument" ) ;
+               goto error ;
+            }
+            BSONObj temp = ele.embeddedObject() ;
+            // category
+            rc = omaGetStringElement ( temp, OMA_OPTION_ROLE,
+                                           &value ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d", OMA_OPTION_ROLE, rc ) ;
+            if ( 0 == ossStrncmp( value, ROLE_DATA,
+                                  ossStrlen( ROLE_DATA ) ) )
+            {
+               _data.push_back( temp ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_COORD,
+                                       ossStrlen( ROLE_COORD ) ) )
+            {
+               _coord.push_back( temp ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_CATA,
+                                       ossStrlen( ROLE_CATA ) ) )
+            {
+               _catalog.push_back( temp ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR,
+                       "Failed to install db business for wrong argument %s",
+                       temp.toString().c_str() ) ;
+               goto error ;
+            }
+         }
+      } // todo: else
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
+   INT32 _omaInstallDBBusiness::doit( CHAR **ppBody, INT32 &bodyLen,
+                                      INT32 &returnNum )
+   {
+      INT32 rc = SDB_OK ;
+      _omaCreateVirtualCoord vCoord( "", "" ) ;
+      _omaTaskMgr *pTaskMgr = getTaskMgr() ;
+      UINT64 taskID = pTaskMgr->getTaskID() ;
+      BOOLEAN hasVCoordStart = FALSE ;
+      INT32 coord_service = 50000 ;
+      _omaInstallDBBusinessTask *pTask = NULL ;
+      BSONObjBuilder bob ;
+      BSONObj retObj ;
+
+      // create virtual coord
+      rc = vCoord.createVirtualCoord( coord_service, hasVCoordStart ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      // create install db task
+      pTask = SDB_OSS_NEW _omaInstallDBBusinessTask( taskID ) ;
+      if ( !pTask )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR,
+                 "Failed to new install db business task install, rc = %d", rc ) ;
+         goto error ;
+      }
+      // register install db task
+      pTaskMgr->addTask( pTask ) ;
+      // start install db task
+      rc = pTask->init( _coord, _catalog, _data ) ;
+      if ( rc  )
+      {
+         PD_LOG( PDERROR,
+                 "Failed to init install db busniness task, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = pTask->doit() ;
+      {
+         PD_LOG( PDERROR,
+                 "Failed to do db busniness task, rc = %d", rc ) ;
+         goto error ;
+      }
+      // return taskID
+      bob.append( OMA_FIELD_RC, rc ) ;
+      bob.append( OMA_FIELD_DETAIL, "" ) ;
+      bob.appendNumber( OMA_FIELD_TASKID, (INT64)taskID ) ;
+      retObj = bob.obj() ;
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
+         goto error;
+      }
+   done:
+/*
+      // create remove virtual coord task
+      if ( hasVCoordStart )
+      {
+//         pTask2 = SDB_OSS_NEW _omaRemoveVirtualCoordTask( taskID ) ;
+         _omaRemoveVirtualCoordTask removeVCoordTask( taskID ) ;
+         rc = removeVCoordTask.doit() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
+         }
+      }
+*/
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   // _omaCreateVirtualCoord
+   _omaCreateVirtualCoord::_omaCreateVirtualCoord (
+                                                     const CHAR *username,
+                                                     const CHAR *password )
+   {
+      _scope = NULL ;
+      _jsFileName = "createVirtualCoord.js" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+      _username = username ;
+      _password = password ;
+   }
+
+   _omaCreateVirtualCoord::~_omaCreateVirtualCoord ()
+   {
+   }
+
+   INT32 _omaCreateVirtualCoord::init()
+   {
+      INT32 rc = SDB_OK ;
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      _scope = getSptScope () ;
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
+   INT32 _omaCreateVirtualCoord::doit( INT32 coord_service,
+                                           BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj rval ;
+      BSONObj detail ;
+      BSONObj subObj ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+      CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      // get program path
+      rc = getProgramPath( prog_agent ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get omagent program path, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = ossLocateExecutable ( prog_agent, START_DB_PROG, prog_sequoiadb,
+                                   OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get sequoiadb program path, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN,
+                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
+                     var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\"; ",
+                   _username, _password, prog_sequoiadb, coord_service ) ;
+
+      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: \
+                         var USERNAME = %s; var PASSWORD = %s; \
+                         var PROGRAM = %s; var COORD_SERVICE = %d;",
+                         "xxx", "xxx", prog_sequoiadb, coord_service ) ;
+
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         goto error ;
+      }
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", "", rc ) ;
+
+      // extract return rc
+      {
+      INT32 retRc = SDB_OK ;
+      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_RC, rc ) ;
+      if ( retRc )
+      {
+         PD_LOG( PDERROR, "Omagent failed to start virtual coord, rc = %d", retRc ) ;
+         goto error;
+      }
+      }
+      result = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCreateVirtualCoord::createVirtualCoord( INT32 coord_service,
+                                                   BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      rc = init() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init for creating virtual coord, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+      rc = doit( coord_service, result ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   // _omaRemoveVirtualCoord
+   _omaRemoveVirtualCoord::_omaRemoveVirtualCoord ( const CHAR *username,
+                                                            const CHAR *password )
+
+   {
+      _scope = NULL ;
+      _jsFileName = "removeVirtualCoord.js" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+      _username = username ;
+      _password = password ;
+   }
+
+   _omaRemoveVirtualCoord::~_omaRemoveVirtualCoord ()
+   {
+
+   }
+
+   INT32 _omaRemoveVirtualCoord::init()
+   {
+      INT32 rc = SDB_OK ;
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      _scope = getSptScope () ;
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaRemoveVirtualCoord::doit( INT32 coord_service,
+                                           BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj rval ;
+      BSONObj detail ;
+      BSONObj subObj ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+      CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      // get program path
+      rc = getProgramPath( prog_agent ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get omagent program path, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = ossLocateExecutable ( prog_agent, "sdbstop", prog_sequoiadb,
+                                 OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get sequoiadb program path, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN,
+                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
+                     var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\";  ",
+                   _username, _password, prog_sequoiadb, coord_service ) ;
+
+      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: \
+                        var USERNAME = %s; var PASSWORD = %s; \
+                        var PROGRAM = %s; var COORD_SERVICE = %d;",
+                        "xxx", "xxx", prog_sequoiadb, coord_service ) ;
+
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         goto error ;
+      }
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", "", rc ) ;
+
+      // extract return rc
+      {
+      INT32 retRc = SDB_OK ;
+      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_RC, rc ) ;
+      if ( retRc )
+      {
+         PD_LOG( PDERROR, "Omagent failed to start virtual coord, rc = %d", retRc ) ;
+         goto error;
+      }
+      }
+      result = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRemoveVirtualCoord::removeVirtualCoord( INT32 coord_service,
+                                                         BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      rc = init() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init for creating virtual coord, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+      rc = doit( coord_service, result ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // _omaPort
+   _omaPort::_omaPort ( INT32 port )
+   {
+      _scope = NULL ;
+      _jsFileName = "getPortStatus.js" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+      _port = port ;
+   }
+
+   _omaPort::~_omaPort ()
+   {
+   }
+
+   INT32 _omaPort::init()
+   {
+      INT32 rc = SDB_OK ;
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      _scope = getSptScope () ;
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
+   INT32 _omaPort::doit( BOOLEAN &hasUsed )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj rval ;
+      BSONObj detail ;
+      BSONObj subObj ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN, " var PORT = \"%d\";", _port ) ;
+      PD_LOG ( PDDEBUG, "Get port status passes arguments: %s",
+               tempBuff ) ;
+
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         goto error ;
+      }
+      // get result
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", "", rc ) ;
+      rc = omaGetBooleanElement ( subObj, OMA_FIELD_PORTHASUSED,
+                                      hasUsed ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_PORTHASUSED, rc ) ;
+
+printf ( "reval is: %s\n", subObj.toString(false, true).c_str() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaPort::getPortStatus( INT32 port, BOOLEAN hasUsed )
+   {
+      INT32 rc= SDB_OK ;
+      _setPort( port ) ;
+      rc = init() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init for get port %d status, rc = %d",
+                 port, rc ) ;
+         goto error ;
+      }
+      rc = doit( hasUsed ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to get port %d status, rc = %d",port,  rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+/*
+   // _omaJobRunInstallCatalogCmd
+   _omaJobRunInstallCatalogCmd::_omaJobRunInstallCatalogCmd()
+   {
+      _scope = NULL ;
+      _jsFileName = "createCatalog.js" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+   }
+
+   _omaJobRunInstallCatalogCmd::~_omaJobRunInstallCatalogCmd() {}
+
+   INT32 _omaJobRunInstallCatalogCmd::init ( std::vector<BSONObj> &objs )
+   {
+      INT32 rc = SDB_OK ;
+      std::vector<BSONObj>::iterator it = objs.begin() ;
+      while( it != objs.end() )
+      {
+         InstallInfo info ;
+         BSONObj conf ;
+         BSONObj pattern ;
+
+         // _dataGroupName
+         rc = omaGetStringElement( *it, OMA_OPTION_DATAGROUPNAME,
+                                       &info._dataGroupName ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_OPTION_DATAGROUPNAME, rc ) ;
+         // _hostname
+         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME1, &info._hostName ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME1, rc ) ;
+         // _svcName
+         rc = omaGetStringElement( *it, OMA_OPTION_SVCNAME,
+                                       &info._svcName ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_OPTION_SVCNAME, rc ) ;
+         // _dbPath
+         rc = omaGetStringElement( *it, OMA_OPTION_DBPATH,
+                                       &info._dbPath ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
+         // _confPath
+         rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
+                                       &info._confPath ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
+         // _conf
+         pattern = BSON( OMA_FIELD_HOSTNAME1 << 1 <<
+                         OMA_OPTION_DATAGROUPNAME << 1 <<
+                         OMA_OPTION_SVCNAME << 1 <<
+                         OMA_OPTION_DBPATH << 1 ) ;
+         conf = (*it).filterFieldsUndotted( pattern, false ) ;
+         info._conf = conf ;
+         // save info
+         _installInfos.push_back( info ) ;
+      }
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      _scope = getSptScope () ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaJobRunInstallCatalogCmd::doit ( InstallJobResult &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj rval ;
+      BSONObj detail ;
+      std::string errMsg = "" ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+      std::vector<InstallInfo>::iterator it ;
+
+      if ( 0 == _installInfos.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         errMsg = "No catalog info for install" ;
+         PD_LOG( PDERROR, errMsg.c_str() ) ;
+         goto done ;
+      }
+      it = _installInfos.begin() ;
+      while( it != _installInfos.end() )
+      {
+         const CHAR* conf = (*it)._conf.toString().c_str() ;
+         BSONObj subObj ;
+
+         // build js arguments
+         ossSnprintf( tempBuff, JS_ARG_LEN,
+                      " var INSTALL_HOSTNAME = \"%s\"; \
+                      var INSTALL_SERVICE = \"%s\"; \
+                      var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
+                      (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
+
+         PD_LOG ( PDDEBUG, "Create catalgo passes arguments: \
+                           hostname = %s; svcname = %s; \
+                           dbpath = %s; config = %s;",
+                           (*it)._hostName, (*it)._svcName,
+                           (*it)._dbPath, conf ) ;
+         _content.clear() ;
+         _content += tempBuff ;
+         _content += OSS_NEWLINE ;
+         _content += _fileBuff ;
+
+         // execute js
+         rc = _scope->eval( _content.c_str(), _content.size(),
+                            _jsFileName, 1, 1, rval, detail ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                     _jsFileName, rc, detail.toString().c_str() ) ;
+            errMsg = errMsg + "Install catalog " +
+                     (*it)._hostName + ":" +(*it)._svcName + "failed" ;
+            goto error ;
+         }
+         // extract subObj
+         rc = omaGetObjElement( rval, "", subObj ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", "", rc ) ;
+         // extract return rc
+         {
+         INT32 retRc = SDB_OK ;
+         rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d",
+                     OMA_FIELD_RC, rc ) ;
+            errMsg += "system error" ;
+            goto error ;
+         }
+         if ( retRc )
+         {
+            rc = retRc ;
+            errMsg = errMsg + "Install catalog [" +
+                     (*it)._hostName + ":" +(*it)._svcName + "] failed" ;
+            PD_LOG( PDERROR, (errMsg + ", rc = %d").c_str(), retRc ) ;
+            goto error;
+         }
+         }
+         // record successful node for rollback when install error happen
+         result._finishNode.push_back( *it ) ;
+      }
+   done:
+      return rc ;
+   error:
+      result._rc = rc ;
+      result._errMsg = errMsg ;
+      goto done ;
+   }
+*/
 
 }
 

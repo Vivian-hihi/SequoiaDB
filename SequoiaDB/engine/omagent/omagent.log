@@ -21545,3 +21545,752 @@ File:SequoiaDB/engine/spt/sptLibssh2Session.cpp
 Message:
 317 bytes were written this time
 
+2014-08-04-11.28.19.201903               Level:EVENT
+PID:16740                                TID:16740
+Function:main                            Line:19
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-11.28.19.202334               Level:EVENT
+PID:16740                                TID:16740
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-11.28.19.202388               Level:EVENT
+PID:16740                                TID:16740
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-11.28.19.202412               Level:ERROR
+PID:16740                                TID:16740
+Function:_onQueryReqMsg                  Line:263
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+Failed to parse omsvc's command[$install db business] [rc:-6]
+
+2014-08-04-11.28.19.202432               Level:EVENT
+PID:16740                                TID:16740
+Function:_processOPMsg                   Line:204
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+Something wrong, need to rollback
+
+2014-08-04-11.30.45.292319               Level:EVENT
+PID:16768                                TID:16768
+Function:main                            Line:19
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-11.36.25.920317               Level:EVENT
+PID:16768                                TID:16768
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-11.36.42.666748               Level:EVENT
+PID:16768                                TID:16768
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-11.37.27.703899               Level:EVENT
+PID:16772                                TID:16772
+Function:main                            Line:19
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-11.37.27.704298               Level:EVENT
+PID:16772                                TID:16772
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-11.37.27.704343               Level:EVENT
+PID:16772                                TID:16772
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-11.42.12.158003               Level:EVENT
+PID:16873                                TID:16873
+Function:main                            Line:19
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-11.42.12.158391               Level:EVENT
+PID:16873                                TID:16873
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-11.42.12.158432               Level:EVENT
+PID:16873                                TID:16873
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-11.53.43.955819               Level:EVENT
+PID:16964                                TID:16964
+Function:main                            Line:19
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-11.53.43.956159               Level:EVENT
+PID:16964                                TID:16964
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-11.53.43.956200               Level:EVENT
+PID:16964                                TID:16964
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-12.54.56.468239               Level:ERROR
+PID:16964                                TID:16964
+Function:getSptScope                     Line:60
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSsh, rc = 0
+
+2014-08-04-12.54.56.468385               Level:ERROR
+PID:16964                                TID:16964
+Function:getSptScope                     Line:62
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrCmd, rc = 0
+
+2014-08-04-12.54.56.468490               Level:ERROR
+PID:16964                                TID:16964
+Function:getSptScope                     Line:64
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrFile, rc = 0
+
+2014-08-04-12.54.56.468614               Level:ERROR
+PID:16964                                TID:16964
+Function:getSptScope                     Line:66
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSystem, rc = 0
+
+2014-08-04-12.58.27.528957               Level:EVENT
+PID:17174                                TID:17174
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-12.58.27.529319               Level:EVENT
+PID:17174                                TID:17174
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-12.58.27.529367               Level:EVENT
+PID:17174                                TID:17174
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-12.58.27.537551               Level:ERROR
+PID:17174                                TID:17174
+Function:getSptScope                     Line:60
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSsh, rc = 0
+
+2014-08-04-12.58.27.537654               Level:ERROR
+PID:17174                                TID:17174
+Function:getSptScope                     Line:62
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrCmd, rc = 0
+
+2014-08-04-12.58.27.537756               Level:ERROR
+PID:17174                                TID:17174
+Function:getSptScope                     Line:64
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrFile, rc = 0
+
+2014-08-04-12.58.27.537878               Level:ERROR
+PID:17174                                TID:17174
+Function:getSptScope                     Line:66
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSystem, rc = 0
+
+2014-08-04-13.10.17.137035               Level:EVENT
+PID:17466                                TID:17466
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-13.10.17.137226               Level:EVENT
+PID:17466                                TID:17466
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-13.10.17.137250               Level:EVENT
+PID:17466                                TID:17466
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-13.10.17.141391               Level:ERROR
+PID:17466                                TID:17466
+Function:getSptScope                     Line:60
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSsh, rc = 0
+
+2014-08-04-13.10.17.141442               Level:ERROR
+PID:17466                                TID:17466
+Function:getSptScope                     Line:62
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrCmd, rc = 0
+
+2014-08-04-13.10.17.141493               Level:ERROR
+PID:17466                                TID:17466
+Function:getSptScope                     Line:64
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrFile, rc = 0
+
+2014-08-04-13.10.17.141553               Level:ERROR
+PID:17466                                TID:17466
+Function:getSptScope                     Line:66
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSystem, rc = 0
+
+2014-08-04-13.12.31.966948               Level:DEBUG
+PID:17466                                TID:17466
+Function:doit                            Line:2169
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Create virtual coord passes arguments:                          var USERNAME = xxx; var PASSWORD = xxx;                          var PROGRAM = /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/sequoiadb; var COORD_SERVICE = 50000;
+
+2014-08-04-13.13.39.997686               Level:ERROR
+PID:17466                                TID:17466
+Function:_openSshSession                 Line:85
+File:SequoiaDB/engine/spt/sptLibssh2Session.cpp
+Message:
+failed to do handle shake with remote:-18
+
+2014-08-04-13.13.39.997882               Level:ERROR
+PID:17466                                TID:17466
+Function:open                            Line:92
+File:SequoiaDB/engine/spt/sptSshSession.cpp
+Message:
+failed to open ssh session:-10
+
+2014-08-04-13.13.39.997948               Level:ERROR
+PID:17466                                TID:17466
+Function:construct                       Line:116
+File:SequoiaDB/engine/spt/usrdef/sptUsrSsh.cpp
+Message:
+failed to open ssh session:-10
+
+2014-08-04-13.13.39.998037               Level:ERROR
+PID:17466                                TID:17466
+Function:callConstructFunc               Line:166
+File:SequoiaDB/engine/include/sptInvoker.hpp
+Message:
+construct function returns err: -10, detail: { "ErrMsg": "Authentication failed (username/password)" }
+
+2014-08-04-13.17.45.829993               Level:ERROR
+PID:17466                                TID:17466
+Function:doit                            Line:2197
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Omagent failed to start virtual coord, rc = -10
+
+2014-08-04-15.16.19.795455               Level:EVENT
+PID:19219                                TID:19219
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-15.16.19.796625               Level:EVENT
+PID:19219                                TID:19219
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-15.16.19.796676               Level:EVENT
+PID:19219                                TID:19219
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-15.17.10.314344               Level:ERROR
+PID:19219                                TID:19219
+Function:getSptScope                     Line:60
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSsh, rc = 0
+
+2014-08-04-15.17.10.314637               Level:ERROR
+PID:19219                                TID:19219
+Function:getSptScope                     Line:62
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrCmd, rc = 0
+
+2014-08-04-15.17.10.314897               Level:ERROR
+PID:19219                                TID:19219
+Function:getSptScope                     Line:64
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrFile, rc = 0
+
+2014-08-04-15.17.10.315143               Level:ERROR
+PID:19219                                TID:19219
+Function:getSptScope                     Line:66
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSystem, rc = 0
+
+2014-08-04-15.18.17.688043               Level:EVENT
+PID:19228                                TID:19228
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-15.18.17.688560               Level:EVENT
+PID:19228                                TID:19228
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-15.18.17.688717               Level:EVENT
+PID:19228                                TID:19228
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-15.19.45.445553               Level:ERROR
+PID:19228                                TID:19228
+Function:getSptScope                     Line:60
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSsh, rc = 0
+
+2014-08-04-15.25.29.372986               Level:EVENT
+PID:19305                                TID:19305
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-15.25.29.373518               Level:EVENT
+PID:19305                                TID:19305
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-15.25.29.373678               Level:EVENT
+PID:19305                                TID:19305
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-15.25.29.382212               Level:ERROR
+PID:19305                                TID:19305
+Function:getSptScope                     Line:60
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSsh, rc = 0
+
+2014-08-04-15.25.29.382455               Level:ERROR
+PID:19305                                TID:19305
+Function:getSptScope                     Line:62
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrCmd, rc = 0
+
+2014-08-04-15.25.29.382690               Level:ERROR
+PID:19305                                TID:19305
+Function:getSptScope                     Line:64
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrFile, rc = 0
+
+2014-08-04-15.25.29.382942               Level:ERROR
+PID:19305                                TID:19305
+Function:getSptScope                     Line:66
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSystem, rc = 0
+
+2014-08-04-15.26.00.645578               Level:EVENT
+PID:19309                                TID:19309
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-15.26.00.646140               Level:EVENT
+PID:19309                                TID:19309
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-15.26.00.646419               Level:EVENT
+PID:19309                                TID:19309
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-15.26.44.902283               Level:ERROR
+PID:19309                                TID:19309
+Function:getSptScope                     Line:60
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSsh, rc = 0
+
+2014-08-04-15.28.43.468298               Level:ERROR
+PID:19309                                TID:19309
+Function:getSptScope                     Line:62
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrCmd, rc = 0
+
+2014-08-04-15.28.53.032060               Level:ERROR
+PID:19309                                TID:19309
+Function:getSptScope                     Line:64
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrFile, rc = 0
+
+2014-08-04-15.29.02.710576               Level:ERROR
+PID:19309                                TID:19309
+Function:getSptScope                     Line:66
+File:SequoiaDB/engine/omagent/omagent.cpp
+Message:
+Failed to load class _sptUsrSystem, rc = 0
+
+2014-08-04-15.36.02.056246               Level:EVENT
+PID:19386                                TID:19386
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-15.36.02.056595               Level:EVENT
+PID:19386                                TID:19386
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-15.36.02.056642               Level:EVENT
+PID:19386                                TID:19386
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-15.37.26.852257               Level:DEBUG
+PID:19386                                TID:19386
+Function:doit                            Line:2169
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Create virtual coord passes arguments:                          var USERNAME = xxx; var PASSWORD = xxx;                          var PROGRAM = /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/sequoiadb; var COORD_SERVICE = 50000;
+
+2014-08-04-16.26.52.040884               Level:EVENT
+PID:19922                                TID:19922
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-16.26.52.041233               Level:EVENT
+PID:19922                                TID:19922
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-16.26.52.041271               Level:EVENT
+PID:19922                                TID:19922
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-16.26.52.049759               Level:DEBUG
+PID:19922                                TID:19922
+Function:doit                            Line:2171
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Create virtual coord passes arguments:                          var USERNAME = xxx; var PASSWORD = xxx;                          var PROGRAM = /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/sdbstart; var COORD_SERVICE = 50000;
+
+2014-08-04-16.27.42.610043               Level:INFO
+PID:19922                                TID:19922
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 19926 is terminated with termcode 0, exitcode 0
+
+2014-08-04-16.27.42.621298               Level:ERROR
+PID:19922                                TID:19922
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 19928 is terminated with termcode 0, exitcode 2
+
+2014-08-04-16.27.51.775346               Level:ERROR
+PID:19922                                TID:19922
+Function:callStaticFunc                  Line:121
+File:SequoiaDB/engine/include/sptInvoker.hpp
+Message:
+member function returns err: -152, detail: { "ErrMsg": "/bin/sh: 1: Syntax error: Bad fd number\nSuccess: SequoiaDB engine is successfully started (19930)\n" }
+
+2014-08-04-16.28.43.389453               Level:EVENT
+PID:19957                                TID:19957
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-16.28.43.390038               Level:EVENT
+PID:19957                                TID:19957
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-16.28.43.390290               Level:EVENT
+PID:19957                                TID:19957
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-16.28.43.399063               Level:DEBUG
+PID:19957                                TID:19957
+Function:doit                            Line:2171
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Create virtual coord passes arguments:                          var USERNAME = xxx; var PASSWORD = xxx;                          var PROGRAM = /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/sdbstart; var COORD_SERVICE = 50000;
+
+2014-08-04-16.28.58.324017               Level:INFO
+PID:19957                                TID:19957
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 19958 is terminated with termcode 0, exitcode 0
+
+2014-08-04-16.28.58.335281               Level:ERROR
+PID:19957                                TID:19957
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 19960 is terminated with termcode 0, exitcode 2
+
+2014-08-04-16.29.07.526231               Level:ERROR
+PID:19957                                TID:19957
+Function:callStaticFunc                  Line:121
+File:SequoiaDB/engine/include/sptInvoker.hpp
+Message:
+member function returns err: -152, detail: { "ErrMsg": "/bin/sh: 1: Syntax error: Bad fd number\nSuccess: SequoiaDB engine is successfully started (19962)\n" }
+
+2014-08-04-18.30.43.336734               Level:EVENT
+PID:20039                                TID:20039
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-18.30.43.337500               Level:EVENT
+PID:20039                                TID:20039
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-18.30.43.337665               Level:EVENT
+PID:20039                                TID:20039
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-18.30.43.347207               Level:DEBUG
+PID:20039                                TID:20039
+Function:doit                            Line:2171
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Create virtual coord passes arguments:                          var USERNAME = xxx; var PASSWORD = xxx;                          var PROGRAM = /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/sdbstart; var COORD_SERVICE = 50000;
+
+2014-08-04-18.31.01.589528               Level:INFO
+PID:20039                                TID:20039
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 20042 is terminated with termcode 0, exitcode 0
+
+2014-08-04-18.31.01.600932               Level:INFO
+PID:20039                                TID:20039
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 20044 is terminated with termcode 0, exitcode 0
+
+2014-08-04-18.35.10.669449               Level:EVENT
+PID:20070                                TID:20070
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-18.35.10.669970               Level:EVENT
+PID:20070                                TID:20070
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-18.35.10.670129               Level:EVENT
+PID:20070                                TID:20070
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-18.35.10.677863               Level:DEBUG
+PID:20070                                TID:20070
+Function:doit                            Line:2171
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Create virtual coord passes arguments:                          var USERNAME = xxx; var PASSWORD = xxx;                          var PROGRAM = /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/sdbstart; var COORD_SERVICE = 50000;
+
+2014-08-04-18.35.18.566856               Level:INFO
+PID:20070                                TID:20070
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 20071 is terminated with termcode 0, exitcode 0
+
+2014-08-04-18.35.27.738470               Level:INFO
+PID:20070                                TID:20070
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 20073 is terminated with termcode 0, exitcode 0
+
+2014-08-04-19.39.24.105901               Level:EVENT
+PID:20256                                TID:20256
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-19.39.24.106312               Level:EVENT
+PID:20256                                TID:20256
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-19.39.24.106357               Level:EVENT
+PID:20256                                TID:20256
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-19.39.24.114983               Level:DEBUG
+PID:20256                                TID:20256
+Function:doit                            Line:2171
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Create virtual coord passes arguments:                          var USERNAME = xxx; var PASSWORD = xxx;                          var PROGRAM = /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/sdbstart; var COORD_SERVICE = 50000;
+
+2014-08-04-19.39.24.338712               Level:INFO
+PID:20256                                TID:20256
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 20257 is terminated with termcode 0, exitcode 0
+
+2014-08-04-19.40.53.338869               Level:EVENT
+PID:20283                                TID:20283
+Function:main                            Line:22
+File:SequoiaDB/engine/omagent/omagentMain.cpp
+Message:
+Start omagent...
+
+2014-08-04-19.40.53.339215               Level:EVENT
+PID:20283                                TID:20283
+Function:_onQueryReqMsg                  Line:242
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omsvc request received
+
+2014-08-04-19.40.53.339256               Level:EVENT
+PID:20283                                TID:20283
+Function:_onQueryReqMsg                  Line:258
+File:SequoiaDB/engine/omagent/omagentSession.cpp
+Message:
+omagent receive command: $install db business
+
+2014-08-04-19.40.53.347450               Level:DEBUG
+PID:20283                                TID:20283
+Function:doit                            Line:2171
+File:SequoiaDB/engine/omagent/omagentCommand.cpp
+Message:
+Create virtual coord passes arguments:                          var USERNAME = xxx; var PASSWORD = xxx;                          var PROGRAM = /home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/sdbstart; var COORD_SERVICE = 50000;
+
+2014-08-04-19.40.53.684522               Level:INFO
+PID:20283                                TID:20283
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 20286 is terminated with termcode 0, exitcode 0
+
+2014-08-04-19.41.04.055549               Level:INFO
+PID:20283                                TID:20283
+Function:ossExec                         Line:549
+File:SequoiaDB/engine/oss/ossProc.cpp
+Message:
+Process 20288 is terminated with termcode 0, exitcode 0
+

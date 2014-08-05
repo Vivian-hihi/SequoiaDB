@@ -2,9 +2,10 @@
 #include "pd.hpp"
 #include "ossUtil.hpp"
 #include "ossSocket.hpp"
+#include "utilPath.hpp"
 #include "omagentSession.hpp"
 
-using namespace CLSMGR ;
+using namespace engine ;
 
 INT32 main( INT32 argc, CHAR **argv )
 {
@@ -13,11 +14,13 @@ INT32 main( INT32 argc, CHAR **argv )
       "omagent.log" ;
 //      "/home/users/tanzhaobo/sequoiadb/SequoiaDB/engine/omagent/omagent.log" ;
 
+   // record program path
+   setProgramName( argv[0] ) ;
    // pd
    sdbEnablePD( dialogFile ) ;
    setPDLevel( PDDEBUG ) ;
    PD_LOG( PDEVENT, "Start omagent..." ) ;
-   omagentSession oas( (SOCKET)10 ) ;
+   omaSession oas( (SOCKET)10 ) ;
    rc = oas.run() ;
 
    ossPrintf("in omagent main, rc is: %d\n", rc ) ;

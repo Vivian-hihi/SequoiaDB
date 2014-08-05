@@ -27,7 +27,7 @@ function main()
       if ( typeof(GROUPNAME == "undefined") )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "Invalid arguments" ;
+         objRet.Detail = "No group name" ;
       }
       // connect to coord
       var db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
@@ -35,15 +35,21 @@ function main()
       var rg = null ;
       try
       {
-         var rg = db.getRG( GROUPNAME ) ;
+         rg = db.getRG( GROUPNAME ) ;
       }
       catch ( e )
       {
          if ( -154 == e )
          {
-            objRet.Rc = -154 ;
-            objDetail = "group does not exist" ;
-            return objRet ;
+            // when rg not exit, create it
+            try
+            {
+               rg = db.createRG( GROUPNAME ) ;
+            }
+            catch ( e )
+            {
+              throw e ;
+            }
          }
          else
          {

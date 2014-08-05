@@ -6,25 +6,25 @@
 
 using namespace engine ;
 
-namespace CLSMGR
+namespace engine
 {
-   _omagentSession::_omagentSession( SOCKET fd )
+   _omaSession::_omaSession( SOCKET fd )
 //   :pmdSession( fd )
    {
 //ossPrintf("1, in omagent session constructor.\n");
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
    }
 
-   _omagentSession::~_omagentSession()
+   _omaSession::~_omaSession()
    {
    }
 
-   SDB_SESSION_TYPE _omagentSession::sessionType() const
+   SDB_SESSION_TYPE _omaSession::sessionType() const
    {
       return SDB_SESSION_OMAGENT ;
    }
 
-   INT32 _omagentSession::run()
+   INT32 _omaSession::run()
    {
       INT32 rc          = SDB_OK ;
       UINT32 msgSize    = 0 ;
@@ -39,8 +39,9 @@ namespace CLSMGR
 //      rc = testRemoveAgentProcess ( &pBuffer, &bufferSize ) ;
 //      rc = testStopAgentProcess ( &pBuffer, &bufferSize ) ;
 //      rc = testGetHostInfo ( &pBuffer, &bufferSize ) ;
-      rc = testRegHosts ( &pBuffer, &bufferSize ) ;
+//      rc = testRegHosts ( &pBuffer, &bufferSize ) ;
 //      rc = testGetHostName ( &pBuffer, &bufferSize ) ;
+        rc = testInstallDBBusiness ( &pBuffer, &bufferSize ) ;
 /**********************************/
 
       rc = _processMsg( (MsgHeader *)pBuffer ) ;
@@ -61,10 +62,10 @@ namespace CLSMGR
       goto done ;
    }
 
-   INT32 _omagentSession::_processMsg( MsgHeader *msg )
+   INT32 _omaSession::_processMsg( MsgHeader *msg )
    {
       INT32 rc          = SDB_OK ;
-//      omagentObjBuff objBuff ;
+//      omaObjBuff objBuff ;
       CHAR* pBody = NULL ;
       INT32 bodyLen     = 0 ;
 
@@ -122,7 +123,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   INT32 _omagentSession::_reply( MsgOpReply *responseMsg,
+   INT32 _omaSession::_reply( MsgOpReply *responseMsg,
                                   const CHAR *pBody,
                                   INT32 bodyLen )
    {
@@ -155,12 +156,12 @@ namespace CLSMGR
    }
 
 
-   INT32 _omagentSession::_processOPMsg( MsgHeader *msg, CHAR **ppBody,
+   INT32 _omaSession::_processOPMsg( MsgHeader *msg, CHAR **ppBody,
                                          INT32 &bodyLen, INT32 &returnNum )
-//   INT32 _omagentSession::_processOPMsg( MsgHeader *msg, omagentObjBuff &objBuff )
+//   INT32 _omaSession::_processOPMsg( MsgHeader *msg, omaObjBuff &objBuff )
    {
       INT32 rc = SDB_OK ;
-//      omagentObjBuff objBuff ;
+//      omaObjBuff objBuff ;
 
       if ( NULL == ppBody )
       {
@@ -199,14 +200,14 @@ namespace CLSMGR
    error:
       if ( _needRollback )
       {
-//         INT32 rcTmp = _omagentRollbak() ;
+//         INT32 rcTmp = _omaRollbak() ;
          PD_LOG( PDEVENT, "Something wrong, need to rollback" ) ;
          _needRollback = FALSE ;
       }
       goto done ;
    }
 
-   INT32 _omagentSession::_buildReplyHeader( MsgHeader *msg )
+   INT32 _omaSession::_buildReplyHeader( MsgHeader *msg )
    {
       // set reply header ( except flags, length )
       _replyHeader.contextID          = -1 ;
@@ -221,10 +222,10 @@ namespace CLSMGR
    }
 
 /*
-   INT32 _omagentSession::_onQueryReqMsg( MsgHeader *msg,
-                                          omagentObjBuff &objBuff )
+   INT32 _omaSession::_onQueryReqMsg( MsgHeader *msg,
+                                      omaObjBuff &objBuff )
 */
-   INT32 _omagentSession::_onQueryReqMsg( MsgHeader *msg, CHAR **ppBody,
+   INT32 _omaSession::_onQueryReqMsg( MsgHeader *msg, CHAR **ppBody,
                                           INT32 &bodyLen, INT32 &returnNum )
    {
       INT32 rc                  = SDB_OK ;
@@ -236,7 +237,7 @@ namespace CLSMGR
       CHAR *pHintBuffer         = NULL ;
       SINT64 numToSkip          = -1 ;
       SINT64 numToReturn        = -1 ;
-      _omagentCommand *pCommand = NULL ;
+      _omaCommand *pCommand = NULL ;
 
       PD_LOG ( PDEVENT, "omsvc request received" ) ;
       // extract command
@@ -252,17 +253,17 @@ namespace CLSMGR
          goto error ;
       }
       // is command
-      if ( omagentIsCommand ( pCollectionName ) )
+      if ( omaIsCommand ( pCollectionName ) )
       {
          PD_LOG( PDEVENT, "omagent receive command: %s", pCollectionName ) ;
-         rc = omagentParseCommand ( pCollectionName, &pCommand ) ;
+         rc = omaParseCommand ( pCollectionName, &pCommand ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to parse omsvc's command[%s] [rc:%d]",
                     pCollectionName, rc ) ;
             goto error ;
          }
-         rc = omagentInitCommand( pCommand, flags, numToSkip, numToReturn,
+         rc = omaInitCommand( pCommand, flags, numToSkip, numToReturn,
                                   pQuery, pFieldSelector, pOrderByBuffer,
                                   pHintBuffer ) ;
          if ( SDB_OK != rc )
@@ -270,7 +271,7 @@ namespace CLSMGR
             PD_LOG( PDERROR, "Failed to init omsvc's command for omagent, rc = %d", rc ) ;
             goto error ;
          }
-         rc = omagentRunCommand( pCommand, ppBody, bodyLen, returnNum ) ;
+         rc = omaRunCommand( pCommand, ppBody, bodyLen, returnNum ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to run omsvc's command, rc = %d", rc ) ;
@@ -280,7 +281,7 @@ namespace CLSMGR
    done:
       if ( pCommand )
       {
-         omagentReleaseCommand( &pCommand ) ;
+         omaReleaseCommand( &pCommand ) ;
       }
       return rc ;
    error:

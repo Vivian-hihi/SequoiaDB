@@ -2,7 +2,7 @@
 #include "pd.hpp"
 #include "omagentUtil.hpp"
 
-namespace CLSMGR
+namespace engine
 {
 
    INT32 checkBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
