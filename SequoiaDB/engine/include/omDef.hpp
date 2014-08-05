@@ -281,9 +281,9 @@ namespace engine
 
    #define  OM_REST_BUSINESS_TYPE            "BusinessType"
 
-   #define  OM_BSON_CLUSTER_TYPE_LIST        "ClusterTypeList"
+   #define  OM_BSON_CLUSTER_TYPE_LIST        "DeployModList"
 
-   #define  OM_BSON_CLUSTER_TYPE             "ClusterType"
+   #define  OM_BSON_CLUSTER_TYPE             "DeployMod"
    #define  OM_BSON_PROPERTY_ARRAY           "Property"
    #define  OM_BSON_PROPERTY_NAME            "Name"
    #define  OM_BSON_PROPERTY_TYPE            "Type"

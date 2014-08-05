@@ -2891,7 +2891,7 @@ namespace engine
       if ( iterList == clusterTypeList.end() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "clusterType is not exsit:type=%s", 
+         PD_LOG( PDERROR, "%s is not exsit:type=%s", OM_BSON_CLUSTER_TYPE,
                  clusterType.c_str() ) ;
          goto error ;
       }

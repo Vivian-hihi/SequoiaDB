@@ -62,7 +62,7 @@ namespace engine
    #define OM_DG_NAME_PATTERN          "DATAGROUP"
 
    #define OM_CLUSTER_TYPE_STANDALONE  "standalone"
-   #define OM_CLUSTER_TYPE_CLUSTER     "cluster"
+   #define OM_CLUSTER_TYPE_CLUSTER     "distribution"
 
    #define OM_NODE_TYPE_STANDALONE     "standalone"
    #define OM_NODE_TYPE_COORD          "coord"
