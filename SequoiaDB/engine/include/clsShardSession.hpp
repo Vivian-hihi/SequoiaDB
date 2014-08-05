@@ -105,7 +105,7 @@ namespace engine
 
          INT32 _onCatalogChangeNtyMsg( MsgHeader *msg ) ;
 
-         INT32 _onTransStopEvnt() ;
+         INT32 _onTransStopEvnt( pmdEDUEvent *event ) ;
 
       private:
          INT32 _includeShardingOrder( const CHAR *pCollectionName,
