@@ -47,8 +47,15 @@
 // third party
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
-// if ( NULL != str )
-//    std::cout << str << std::endl ;
+
+// macro for debug
+#ifdef _DEBUG
+   #define OUTPUT_FUNCTION( str, funcName ) \
+      std::cout << str << funcName << std::endl
+#else
+   #define OUTPUT_FUNCTION( str, funcName ) 
+#endif // _DEBUG
+
 #define CHECK_VALUE( condition, label )   \
    do                                     \
    {                                      \

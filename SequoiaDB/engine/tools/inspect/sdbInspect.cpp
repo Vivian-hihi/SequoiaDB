@@ -180,7 +180,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -228,7 +228,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -285,7 +285,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -328,7 +328,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -360,7 +360,7 @@ namespace
                              "  # Node state 1 means node has the record,"
                              " or 0 means not."OSS_NEWLINE
                              "  # The order is ascended by node index"OSS_NEWLINE
-                             "    There is [%d] piece of records synchronized :"
+                             "    There is [%d] piece of records synchronized"
                              OSS_NEWLINE""OSS_NEWLINE, link.count() ) ;
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       }
@@ -400,7 +400,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -439,7 +439,8 @@ namespace
 
       while( restLen > 0 )
       {
-         rc = ossSeekAndRead( &in, offset, buffer + readPos, restLen, &readLen ) ;
+         rc = ossSeekAndRead( &in, offset, buffer + readPos,
+                                           restLen, &readLen ) ;
          if ( SDB_OK != rc && SDB_INTERRUPT != rc )
          {
             std::cout << "Failed to read data from file" << std::endl ;
@@ -456,7 +457,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -487,7 +488,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -520,7 +521,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -681,7 +682,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -702,7 +703,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -730,7 +731,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -757,7 +758,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -781,7 +782,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -804,7 +805,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -849,7 +850,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -899,7 +900,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -920,7 +921,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1064,7 +1065,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1171,7 +1172,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1228,7 +1229,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1249,7 +1250,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1296,7 +1297,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1341,7 +1342,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1362,7 +1363,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1388,7 +1389,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1429,7 +1430,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1494,7 +1495,7 @@ namespace
                CHECK_VALUE( ( SDB_OK != rc ), error ) ;
                // dump group and node, if view option is "collection"
                // dump group
-               rc = dumpCiGroupHeader( &header, buffer, bufferSize, validSize ) ;
+               rc = dumpCiGroupHeader( &header, buffer, bufferSize, validSize );
                CHECK_VALUE( ( SDB_OK != rc ), error ) ;
                rc = writeToFile( out, buffer, validSize ) ;
                CHECK_VALUE( ( SDB_OK != rc ), error ) ;
@@ -1532,7 +1533,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1605,16 +1606,19 @@ namespace
 
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
    /**
     ** get groups through coord
     ***/
-   INT32 getCiGroup( sdbclient::sdb *coord, ciLinkList< ciGroup > &groupList )
+   INT32 getCiGroup( sdbclient::sdb *coord, const CHAR *groupName,
+                                            ciLinkList< ciGroup > &groupList )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN hasGroup = ( 0 != ossStrncmp( "", groupName,
+                                            CI_GROUPNAME_SIZE ) ) ;
       bson::BSONObj obj ;
       sdbclient::sdbCursor cursor ;
 
@@ -1637,33 +1641,46 @@ namespace
          {
             bson::BSONElement name = obj.getField( "GroupName" ) ;
             std::string beginWith = name.String().substr( 0, 3 ) ;
-            if ( 0 != ossStrncmp( beginWith.c_str(), "SYS", ossStrlen( "SYS") ) )
+            if ( 0 != ossStrncmp( beginWith.c_str(),
+                                  "SYS", ossStrlen( "SYS") ) )
             {
-               ciGroup *group = groupList.createNode() ;
-               if ( NULL == group )
-               {
-                  std::cout << "Error: failed to allocate ciGroup"
-                            << std::endl ;
-                  rc = SDB_OOM ;
-                  goto error ;
-               }
-
                // fill group item
-               ossMemcpy( group->_groupName, name.String().c_str(),
-                                             CI_GROUPNAME_SIZE ) ;
-               group->_groupID = obj.getField( "GroupID" ).Int() ;
+               if ( !hasGroup || ( 0 == ossStrncmp( name.String().c_str(),
+                                   groupName, CI_GROUPNAME_SIZE ) ) )
+               {
+                  ciGroup *group = groupList.createNode() ;
+                  if ( NULL == group )
+                  {
+                     std::cout << "Error: failed to allocate ciGroup"
+                               << std::endl ;
+                     rc = SDB_OOM ;
+                     goto error ;
+                  }
 
-               groupList.add( group ) ;
+                  ossMemcpy( group->_groupName, name.String().c_str(),
+                                                CI_GROUPNAME_SIZE ) ;
+                  group->_groupID = obj.getField( "GroupID" ).Int() ;
+
+                  groupList.add( group ) ;
+               }
             }
          }
          rc = cursor.next( obj ) ;
+      }
+
+      if ( 0 >= groupList.count() )
+      {
+         std::cout << "Error: Cannot get replica group: "
+                   << groupName << std::endl ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
 
       rc = SDB_OK ;
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1783,7 +1800,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1843,7 +1860,8 @@ namespace
                ciCollection *cl = collections.createNode() ;
                if ( NULL == cl )
                {
-                  std::cout << "Error: failed to allocate ciCollection" << std::endl ;
+                  std::cout << "Error: failed to allocate ciCollection"
+                            << std::endl ;
                   rc = SDB_OOM ;
                   goto error ;
                }
@@ -1859,7 +1877,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1931,7 +1949,7 @@ namespace
       while ( !reachEnd( record, nodeCount ) )
       {
          min = getMinObjectIndex( record, nodeCount ) ;
-         equal = compare( nodeCount, record.objs[ min ], state, record );
+         equal = compare( nodeCount, record.objs[ min ], state, record ) ;
 
          if ( !equal )
          {
@@ -1954,7 +1972,7 @@ namespace
    done:
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -1999,10 +2017,11 @@ namespace
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       offset += validSize ;
 
-      rc = getCiGroup( coord, groupList ) ;
+      rc = getCiGroup( coord, header->_groupName, groupList ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
-      hasGroup = ( 0 != ossStrncmp( "", header->_groupName, CI_GROUPNAME_SIZE ) ) ;
+      hasGroup = ( 0 != ossStrncmp( "", header->_groupName,
+                                        CI_GROUPNAME_SIZE ) ) ;
       // combine collection full name
       ossSnprintf( fullName, CI_CL_FULLNAME_SIZE, "%s.%s",
                              header->_csName, header->_clName ) ;
@@ -2066,7 +2085,8 @@ namespace
                rc = getCiRecord( cursors, records ) ;
                if ( SDB_OK != rc )
                {
-                  std::cout << "Error: failed to compare record among nodes" << std::endl ;
+                  std::cout << "Error: failed to compare record among nodes"
+                            << std::endl ;
                   goto error ;
                }
 
@@ -2086,25 +2106,6 @@ namespace
                   offset += validSize ;
                }
 
-               // for test
-//                {
-//                   std::cout << "consistency header:" << std::endl ;
-//                   std::cout << *header << std::endl << std::endl ;
-//                   std::cout << "groups:" << std::endl ;
-//                   std::cout << groupList << std::endl << std::endl ;
-//                   std::cout << "group header:" << std::endl ;
-//                   std::cout << group_header << std::endl << std::endl ;
-//                   std::cout << "nodes:" << std::endl ;
-//                   std::cout << nodeList << std::endl << std::endl ;
-//                   std::cout << "collections:" << std::endl ;
-//                   std::cout << collections << std::endl << std::endl ;
-//                   std::cout << "cursors:" << std::endl ;
-//                   std::cout << cursors << std::endl << std::endl ;
-//                   std::cout << "collection header:" << std::endl ;
-//                   std::cout << cl_header << std::endl << std::endl ;
-//                   std::cout << "records:" << std::endl ;
-//                   std::cout << records << std::endl ;
-//                }
                curCollection = collections.next() ;
             }
          }
@@ -2141,7 +2142,7 @@ namespace
 
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 
@@ -2273,7 +2274,8 @@ namespace
             rc = writeCiClHeader( out, &clHeader ) ;
             if ( SDB_OK != rc )
             {
-               std::cout << "Error: failed to write ciClHeader to file" << std::endl ;
+               std::cout << "Error: failed to write ciClHeader to file"
+                         << std::endl ;
                goto error ;
             }
             writeOffset += CI_CL_HEADER_SIZE ;
@@ -2290,7 +2292,8 @@ namespace
             {
                totalRecord += records.count() ;
 
-               rc = writeCiRecord( out, records, buffer, bufferSize, validSize );
+               rc = writeCiRecord( out, records, buffer,
+                                        bufferSize, validSize ) ;
                CHECK_VALUE( ( SDB_OK != rc ), error ) ;
                writeOffset += validSize ;
             }
@@ -2342,7 +2345,8 @@ namespace
 
       return rc ;
    error:
-      std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
       goto done ;
    }
 }
@@ -2466,6 +2470,7 @@ INT32 _sdbCi::handle( const po::options_description &desc,
       rc = byGroup ? report( _header._outfile ) : report2( _header._outfile );
       //rc = report2( _header._filepath ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+      std::cout << _header._action << " successfully" << std::endl ;
 
       goto done ;
    }
@@ -2963,7 +2968,7 @@ INT32 _sdbCi::splitAddr()
    if ( NULL == pch || end == pch + 1 )
    {
       std::cout << "Invalid parameters" << std::endl ;
-      std::cout << " Servicename must be specified after the hostname, "
+      std::cout << " Service Name must be specified after the hostname, "
                    " split by \":\"" << std::endl ;
       rc = SDB_INVALIDARG ;
       goto error ;
