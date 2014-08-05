@@ -309,6 +309,7 @@ sdbListMain = [
       ]
 
 sdbcmMain = [
+      "rtn/rtnBackgroundJobBase.cpp",
 	  "pmd/pmd.cpp",
 	  "pmd/pmdEDU.cpp",
 	  "pmd/pmdEDUMgr.cpp",
