@@ -63,6 +63,8 @@ namespace engine
          info._conf = conf ;
          // save info
          _installInfos.push_back( info ) ;
+         // get next install info
+         it++ ;
       }
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
@@ -105,16 +107,11 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var INSTALL_HOSTNAME = \"%s\"; \
-                      var INSTALL_SERVICE = \"%s\"; \
-                      var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
+                      " var INSTALL_HOSTNAME = \"%s\"; var INSTALL_SERVICE = \"%s\"; var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
                       (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
 
-         PD_LOG ( PDDEBUG, "Create catalog passes arguments: \
-                           hostname = %s; svcname = %s; \
-                           dbpath = %s; config = %s;",
-                           (*it)._hostName, (*it)._svcName,
-                           (*it)._dbPath, conf ) ;
+         PD_LOG ( PDDEBUG, "Create catalog passes arguments:  var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; var INSTALL_PATH = %s; var CONFIG = %s;",
+                  (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
          _content.clear() ;
          _content += tempBuff ;
          _content += OSS_NEWLINE ;
@@ -228,6 +225,8 @@ namespace engine
          info._conf = conf ;
          // save info
          _installInfos.push_back( info ) ;
+         // get next install info
+         it++ ;
       }
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
@@ -270,16 +269,11 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var INSTALL_HOSTNAME = \"%s\"; \
-                      var INSTALL_SERVICE = \"%s\"; \
-                      var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
+                      " var INSTALL_HOSTNAME = \"%s\"; var INSTALL_SERVICE = \"%s\"; var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
                       (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
 
-         PD_LOG ( PDDEBUG, "Create coord passes arguments: \
-                           hostname = %s; svcname = %s; \
-                           dbpath = %s; config = %s;",
-                           (*it)._hostName, (*it)._svcName,
-                           (*it)._dbPath, conf ) ;
+         PD_LOG ( PDDEBUG, "Create coord passes arguments: var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; var INSTALL_PATH = %s; var CONFIG = %s;",
+                           (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
          _content.clear() ;
          _content += tempBuff ;
          _content += OSS_NEWLINE ;
@@ -393,6 +387,8 @@ namespace engine
          info._conf = conf ;
          // save info
          _installInfos.push_back( info ) ;
+         // get next install info
+         it++ ;
       }
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
@@ -435,16 +431,10 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var GROUPNAME = \"%s\"; \
-                      var INSTALL_HOSTNAME = \"%s\"; \
-                      var INSTALL_SERVICE = \"%s\"; \
-                      var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
-                      (*it)._dataGroupName, (*it)._hostName,
-                      (*it)._svcName, (*it)._dbPath, conf ) ;
+                      " var GROUPNAME = \"%s\"; var INSTALL_HOSTNAME = \"%s\"; var INSTALL_SERVICE = \"%s\"; var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
+                      (*it)._dataGroupName, (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
 
-         PD_LOG ( PDDEBUG, "Create data node passes arguments: \
-                           groupname = %s; hostname = %s; svcname = %s; \
-                           dbpath = %s; config = %s;",
+         PD_LOG ( PDDEBUG, "Create data node passes arguments: groupname = %s; hostname = %s; svcname = %s; dbpath = %s; config = %s;",
                            (*it)._dataGroupName, (*it)._hostName,
                            (*it)._svcName, (*it)._dbPath, conf ) ;
          _content.clear() ;

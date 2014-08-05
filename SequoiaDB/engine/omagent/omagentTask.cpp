@@ -170,6 +170,7 @@ namespace engine
          PD_LOG( PDERROR, "Failed to start create catalog job, rc = %d", rc ) ;
          goto error ;
       }
+/*
       // create coord job
       rc = _installCoord() ;
       if ( rc )
@@ -177,6 +178,7 @@ namespace engine
          PD_LOG( PDERROR, "Failed to start create coord job, rc = %d", rc ) ;
          goto error ;
       }
+*/
       // create data node job
       rc = _installData() ;
       if ( rc )
@@ -203,12 +205,10 @@ namespace engine
          PD_LOG( PDERROR, "Failed to start create catalog job, rc = %d", rc ) ;
          goto error ;
       }
-/*
       while ( rtnGetJobMgr()->findJob ( installCatalogJobID ) )
       {
          ossSleep ( OSS_ONE_SEC ) ;
       }
-*/
    done:
       return rc ;
    error:

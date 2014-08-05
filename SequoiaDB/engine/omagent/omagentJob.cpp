@@ -26,8 +26,8 @@ namespace engine
       return _name.c_str() ;
    }
 
-//   BOOLEAN _omaCreateCatalogJob::muteXOn ( const _rtnBaseJob *pOther )
-   BOOLEAN _omaCreateCatalogJob::muteXOn ()
+   BOOLEAN _omaCreateCatalogJob::muteXOn ( const _rtnBaseJob *pOther )
+//   BOOLEAN _omaCreateCatalogJob::muteXOn ()
    {
       return FALSE ;
    }
@@ -67,10 +67,8 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-/*
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
-*/
    done:
       return rc ;
    error:
@@ -101,8 +99,8 @@ namespace engine
       return _name.c_str() ;
    }
 
-//   BOOLEAN _omaCreateCoordJob::muteXOn ( const _rtnBaseJob *pOther )
-   BOOLEAN _omaCreateCoordJob::muteXOn ()
+   BOOLEAN _omaCreateCoordJob::muteXOn ( const _rtnBaseJob *pOther )
+//   BOOLEAN _omaCreateCoordJob::muteXOn ()
    {
       return FALSE ;
    }
@@ -142,10 +140,8 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-/*
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
-*/
    done:
       return rc ;
    error:
@@ -178,8 +174,8 @@ namespace engine
       return _name.c_str() ;
    }
 
-//   BOOLEAN _omaCreateDataJob::muteXOn ( const _rtnBaseJob *pOther )
-   BOOLEAN _omaCreateDataJob::muteXOn ()
+   BOOLEAN _omaCreateDataJob::muteXOn ( const _rtnBaseJob *pOther )
+//   BOOLEAN _omaCreateDataJob::muteXOn ()
    {
       return FALSE ;
    }
@@ -220,10 +216,8 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-/*
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
-*/
    done:
       return rc ;
    error:

@@ -52,12 +52,13 @@ function createNewConfFile()
 
 function main()
 {
+/*
 println( "PROGRAM is " + PROGRAM ) ;
 println( "COORD_SERVICE is " + COORD_SERVICE ) ;
 println( "CONFIG_PATH is " + CONFIG_PATH ) ;
 println( "CONFIG_FILE is " + CONFIG_FILE ) ;
 println( "DB_PATH is " + DB_PATH ) ;
-
+*/
    try
    {
       // prepare conf file
