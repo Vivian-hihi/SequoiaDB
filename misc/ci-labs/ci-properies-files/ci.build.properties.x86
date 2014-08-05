@@ -4,4 +4,4 @@ project.name=sequoiadb
 os.and.platform=linux_x86_64
 
 copy_tar=/test_tar
-target.deploy_tar_gz.ip=suse-test5
+target.deploy_tar_gz.ip=rhel-test9
