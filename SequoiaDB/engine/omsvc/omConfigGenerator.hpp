@@ -53,7 +53,7 @@ namespace engine
    {
       public:
          string businessType ;
-         string clusterType ;
+         string deployMod ;
          INT32 replicaNum ;
          INT32 dataNum ;
          INT32 dataGroupNum ;

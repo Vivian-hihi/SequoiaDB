@@ -2639,48 +2639,29 @@ namespace engine
    {
    }
 
-   /* xml sample:
-   <cluster_type_list>
-      <cluster_type name="standalone">
-         <property name="replica_num"    type="int" />
-         <property name="data_group_num"    type="int" />
-      </cluster_type>
-   </cluster_type_list>
-   */
-
-   /* in this case, @clusterType have 3 elements:
-      1.  <cluster_type name="standalone">
-      2.  <property name="replica_num"    type="int" />
-      3.  <property name="data_group_num"    type="int" />
-
-      and the @propertyIte point to the first element. we just want to 
-      read the "property", so we ignore the first element to read 
-      the next elements
-   */
    INT32 omQueryBusinessTemplateCommand::_readConfTemplate( 
                                                 string businessType, 
                                                 string file, 
-                                                list<BSONObj> &clusterTypeList ) 
+                                                list<BSONObj> &deployModList ) 
    {
       INT32 rc = SDB_OK ;
-      BSONObj clusterTypeArray ;
-      BSONObj clusterTypes ;
-      rc = readConfigFile( file, clusterTypeArray ) ;
+      BSONObj deployModArray ;
+      BSONObj deployMods ;
+      rc = readConfigFile( file, deployModArray ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "read file failed:file=%s", file.c_str() ) ;
          goto error ;
       }
 
-      clusterTypes = clusterTypeArray.getObjectField( 
-                                                   OM_BSON_CLUSTER_TYPE_LIST ) ;
+      deployMods = deployModArray.getObjectField( OM_BSON_DEPLOY_MOD_LIST ) ;
       {
-         BSONObjIterator iter( clusterTypes ) ;
+         BSONObjIterator iter( deployMods ) ;
          while ( iter.more() )
          {
-            BSONElement ele  = iter.next() ;
-            BSONObj oneType  = ele.embeddedObject() ;
-            clusterTypeList.push_back( oneType ) ;
+            BSONElement ele      = iter.next() ;
+            BSONObj oneDeployMod = ele.embeddedObject() ;
+            deployModList.push_back( oneDeployMod ) ;
          }
       }
 
@@ -2742,7 +2723,7 @@ namespace engine
       const CHAR* pBusinessType = NULL ;
       string templateFile       = "" ;
       BSONObjBuilder opBuilder ;
-      list<BSONObj> clusterTypeList ;
+      list<BSONObj> deployModList ;
       list<BSONObj>::iterator iter ;
 
       _restAdaptor->getQuery(_restSession, OM_REST_BUSINESS_TYPE, 
@@ -2759,7 +2740,7 @@ namespace engine
 
       templateFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
                      + pBusinessType + OM_TEMPLATE_FILE_NAME ;
-      rc = _readConfTemplate( pBusinessType, templateFile, clusterTypeList ) ;
+      rc = _readConfTemplate( pBusinessType, templateFile, deployModList ) ;
       if ( SDB_OK != rc )
       {
          string errorInfo = string( "read template file failed:file=" ) 
@@ -2769,8 +2750,8 @@ namespace engine
          goto error ;
       }
 
-      iter = clusterTypeList.begin() ;
-      while ( iter != clusterTypeList.end() )
+      iter = deployModList.begin() ;
+      while ( iter != deployModList.end() )
       {
          _restAdaptor->appendHttpBody( _restSession, iter->objdata(),
                                        iter->objsize(), 1 ) ;
@@ -2851,23 +2832,23 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string businessType ;
-      string clusterType ;
+      string deployMod ;
       string businessName ;
       string file ;
-      list<BSONObj> clusterTypeList ;
+      list<BSONObj> deployModList ;
       list<BSONObj>::iterator iterList ;
-      BSONObj oneClusterType ;
+      BSONObj oneDeployMod ;
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
       BSONObj properties ;
 
       businessType = bsonTemplate.getStringField( OM_BSON_BUSINESS_TYPE ) ;
-      clusterType  = bsonTemplate.getStringField( OM_BSON_CLUSTER_TYPE ) ;
+      deployMod    = bsonTemplate.getStringField( OM_BSON_DEPLOY_MOD ) ;
       businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
 
       file = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
              + businessType + OM_TEMPLATE_FILE_NAME ;
-      rc = _readConfTemplate( businessType, file, clusterTypeList ) ;
+      rc = _readConfTemplate( businessType, file, deployModList ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "read template file failed:file=%s:rc=%d", 
@@ -2875,29 +2856,29 @@ namespace engine
          goto error ;
       }
 
-      iterList = clusterTypeList.begin() ;
-      while ( iterList != clusterTypeList.end() )
+      iterList = deployModList.begin() ;
+      while ( iterList != deployModList.end() )
       {
-         string tmpClusterType = iterList->getStringField( 
-                                                       OM_BSON_CLUSTER_TYPE ) ;
-         if ( tmpClusterType.compare( clusterType ) == 0 )
+         string tmpClusterType = iterList->getStringField(
+                                                          OM_BSON_DEPLOY_MOD ) ;
+         if ( tmpClusterType.compare( deployMod ) == 0 )
          {
-            oneClusterType = *iterList ;
+            oneDeployMod = *iterList ;
             break ;
          }
          iterList++ ;
       }
 
-      if ( iterList == clusterTypeList.end() )
+      if ( iterList == deployModList.end() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s is not exsit:type=%s", OM_BSON_CLUSTER_TYPE,
-                 clusterType.c_str() ) ;
+         PD_LOG( PDERROR, "%s is not exsit:type=%s", OM_BSON_DEPLOY_MOD,
+                 deployMod.c_str() ) ;
          goto error ;
       }
 
       builder.append( OM_BSON_BUSINESS_TYPE, businessType ) ;
-      builder.append( OM_BSON_CLUSTER_TYPE, clusterType ) ;
+      builder.append( OM_BSON_DEPLOY_MOD, deployMod ) ;
       builder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
       /*{
            "Property": [ { "Name": "replica_num", "Type": "int", "Default": "1", 
@@ -2906,7 +2887,7 @@ namespace engine
                          }, ...
                        ]
         }*/
-      properties = oneClusterType.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
+      properties = oneDeployMod.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
       {
          BSONObjIterator iter( properties ) ;
          while ( iter.more() )
@@ -3465,7 +3446,7 @@ namespace engine
    /*
    bsonConfValue:
    {
-      "BusinessType":"sequoiadb", "BusinessName":"b1", "ClusterType":"cluster", 
+      "BusinessType":"sequoiadb", "BusinessName":"b1", "DeployMod":"xxx", 
       "ClusterName":"c1", 
       "Config":
       [
@@ -3529,7 +3510,7 @@ namespace engine
    }
 
    INT32 omInstallBusinessReq::_combineConfDetail( string businessType, 
-                                                   string clusterType, 
+                                                   string deployMod, 
                                                    BSONObj &bsonAllConf )
    {
       INT32 rc = SDB_OK ;
@@ -3559,8 +3540,8 @@ namespace engine
       while ( iterList != bsonTemplateList.end() )
       {
          string tmpClusterType = iterList->getStringField( 
-                                                       OM_BSON_CLUSTER_TYPE ) ;
-         if ( tmpClusterType.compare( clusterType ) == 0 )
+                                                          OM_BSON_DEPLOY_MOD ) ;
+         if ( tmpClusterType.compare( deployMod ) == 0 )
          {
             bsonTemplate = *iterList ;
             break ;
@@ -3571,8 +3552,8 @@ namespace engine
       if ( iterList == bsonTemplateList.end() )
       {
          rc = SDB_INVALIDARG ;
-         string errorInfo = string( "clusterType is not exsit:type=" ) 
-                            + clusterType ;
+         string errorInfo = string( OM_BSON_DEPLOY_MOD ) + " is not exsit:type="
+                            + deployMod ;
          _sendErrorRes2Web( SDB_DMS_RECORD_NOTEXIST, errorInfo.c_str() ) ;
          PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
          goto error ;
@@ -3825,7 +3806,7 @@ namespace engine
    /*
    bsonConfValue:
    {
-      "BusinessType":"sequoiadb", "BusinessName":"b1", "ClusterType":"cluster", 
+      "BusinessType":"sequoiadb", "BusinessName":"b1", "deployMod":"xxx", 
       "ClusterName":"c1", 
       "Config":
       [
@@ -3919,7 +3900,7 @@ namespace engine
       BSONObj bsonHostInfo ;
       BSONObj bsonAllConf ;
       string businessType ;
-      string clusterType ;
+      string deployMod ;
       _restAdaptor->getQuery( _restSession, OM_REST_CONFIG_INFO, &pInfo ) ;
       if ( NULL == pInfo )
       {
@@ -3942,8 +3923,8 @@ namespace engine
       }
 
       businessType = bsonConfValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
-      clusterType  = bsonConfValue.getStringField( OM_BSON_CLUSTER_TYPE ) ;
-      rc = _combineConfDetail( businessType, clusterType, bsonAllConf ) ;
+      deployMod    = bsonConfValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      rc = _combineConfDetail( businessType, deployMod, bsonAllConf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_combineConfDetail failed:rc=%d", rc ) ;

@@ -85,7 +85,7 @@ namespace engine
    void sdbConfTemplate::init()
    {
       businessType = "" ;
-      clusterType  = "" ;
+      deployMod    = "" ;
       replicaNum   = -1 ;
       dataGroupNum = -1 ;
       catalogNum   = -1 ;
@@ -931,7 +931,7 @@ namespace engine
    /*
    bsonConfValue:
    {
-      "BusinessType":"sequoiadb", "BusinessName":"b1", "ClusterType":"cluster", 
+      "BusinessType":"sequoiadb", "BusinessName":"b1", "ClusterType":"xx", 
       "ClusterName":"c1", 
       "Config":
       [
@@ -1351,12 +1351,12 @@ namespace engine
          goto error ;
       }
 
-      rc = getBsonStringField( bsonTemplate, OM_BSON_CLUSTER_TYPE, 
-                               _confTemplate.clusterType ) ;
+      rc = getBsonStringField( bsonTemplate, OM_BSON_DEPLOY_MOD, 
+                               _confTemplate.deployMod ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = string( "Template miss bson field=" ) 
-                        + OM_BSON_CLUSTER_TYPE ;
+                        + OM_BSON_DEPLOY_MOD ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
@@ -1874,12 +1874,12 @@ namespace engine
       list<sdbConfDetail>::iterator iter ;
       BSONObjBuilder confBuilder ;
       BSONArrayBuilder arrBuilder ;
-      if ( ossStrcasecmp( _confTemplate.clusterType.c_str(), 
+      if ( ossStrcasecmp( _confTemplate.deployMod.c_str(), 
                           OM_CLUSTER_TYPE_STANDALONE ) == 0 )
       {
          rc = _generateStandAloneConfig( configList ) ;
       }
-      else if ( ossStrcasecmp( _confTemplate.clusterType.c_str(), 
+      else if ( ossStrcasecmp( _confTemplate.deployMod.c_str(), 
                                OM_CLUSTER_TYPE_CLUSTER ) == 0 )
       {
          rc = _generateClusterConfig( configList ) ;
@@ -1887,10 +1887,10 @@ namespace engine
       else
       {
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( "unrecognized cluster type:type=%s" )
-                        + _confTemplate.clusterType ;
-         PD_LOG( PDERROR, "unrecognized cluster type:type=%s", 
-                 _confTemplate.clusterType.c_str() ) ;
+         _errorDetail = string( "unrecognized deploy mod:type=%s" )
+                        + _confTemplate.deployMod ;
+         PD_LOG( PDERROR, "unrecognized deploy mod:type=%s", 
+                 _confTemplate.deployMod.c_str() ) ;
          goto error ;
       }
 
@@ -1939,7 +1939,7 @@ namespace engine
       confBuilder.append( OM_BSON_FIELD_CONFIG, arrBuilder.arr() ) ;
       confBuilder.append( OM_BSON_BUSINESS_NAME, _businessName ) ;
       confBuilder.append( OM_BSON_BUSINESS_TYPE, _confTemplate.businessType ) ;
-      confBuilder.append( OM_BSON_CLUSTER_TYPE, _confTemplate.clusterType ) ;
+      confBuilder.append( OM_BSON_DEPLOY_MOD, _confTemplate.deployMod ) ;
       bsonConfig = confBuilder.obj() ;
 
    done:
