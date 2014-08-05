@@ -446,6 +446,8 @@ namespace engine
 
       rc = _replSessionMgr.init( &_replNetRtAgent, &_replTimerHandler,
                                  OSS_ONE_SEC ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init repl session manager, rc: %d",
+                   rc ) ;
 
       // 4. set bussiness not ok( need wait register to change )
       pmdGetKRCB()->setBusinessOK( FALSE ) ;
