@@ -1473,7 +1473,7 @@ namespace engine
       return rc ;
    }
 
-   INT32 _clsShdSession::_onTransStopEvnt()
+   INT32 _clsShdSession::_onTransStopEvnt( pmdEDUEvent *event )
    {
       INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
       if ( rcTmp )
