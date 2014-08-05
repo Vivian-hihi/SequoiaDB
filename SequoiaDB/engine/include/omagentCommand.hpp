@@ -10,33 +10,33 @@
 #include "ossMem.h"
 #include "omagent.hpp"
 #include "omagentMsgDef.hpp"
+#include "omagentTask.hpp"
 #include <map>
 #include <string>
 
-using namespace engine ;
 using namespace bson ;
 
-namespace CLSMGR
+namespace engine
 {
-//   class omagentObjBuff ;
-
    #define DECLARE_OACMD_AUTO_REGISTER()                       \
       public:                                                  \
-         static _omagentCommand *newThis () ;                  \
+         static _omaCommand *newThis () ;                  \
 
    #define IMPLEMENT_OACMD_AUTO_REGISTER(theClass)             \
-      _omagentCommand* theClass::newThis ()                    \
+      _omaCommand* theClass::newThis ()                    \
       {                                                        \
          return SDB_OSS_NEW theClass() ;                       \
       }                                                        \
-      _omagentCmdAssit theClass##Assit ( theClass::newThis ) ; \
+      _omaCmdAssit theClass##Assit ( theClass::newThis ) ; \
 
-   // _omagentCommand
-   class _omagentCommand : public SDBObject
+   /*
+      _omaCommand
+   */
+   class _omaCommand : public SDBObject
    {
       public:
-         _omagentCommand () ;
-         virtual ~_omagentCommand () ;
+         _omaCommand () ;
+         virtual ~_omaCommand () ;
 
       public:
          virtual const CHAR * name () = 0 ;
@@ -46,7 +46,8 @@ namespace CLSMGR
                               const CHAR *pSelectBuff,
                               const CHAR *pOrderByBuff,
                               const CHAR *pHintBuff ) = 0 ;
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) = 0 ;
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum ) = 0 ;
 
      protected:
          _sptScope *_scope ;
@@ -56,29 +57,20 @@ namespace CLSMGR
          UINT32 _readSize ;
          std::vector<BSONObj> _hosts ;
          std::string _content ;
-
    };
 
-   typedef _omagentCommand* (*OA_NEW_FUNC) () ;
+   typedef _omaCommand* (*OA_NEW_FUNC) () ;
 
-   // _omagentCmdAssit
-   class _omagentCmdAssit : public SDBObject
+   /*
+      _omaCmdAssit
+   */
+   class _omaCmdAssit : public SDBObject
    {
       public:
-         _omagentCmdAssit ( OA_NEW_FUNC ) ;
-         virtual ~_omagentCmdAssit () ;
+         _omaCmdAssit ( OA_NEW_FUNC ) ;
+         virtual ~_omaCmdAssit () ;
    };
 
-/*
-   bool _fncomp ( const CHAR* &lhs, const CHAR* rhs ) const
-   {
-      INT32 ret = ossStrcmp( lhs, rhs ) ;
-      if ( 0 <= ret )
-         return true ;
-      else
-         return false ;
-   }
-*/
    struct _classComp
    {
       bool operator()( const CHAR *lhs, const CHAR *rhs ) const
@@ -90,40 +82,45 @@ namespace CLSMGR
    typedef std::map<const CHAR*, OA_NEW_FUNC, _classComp> MAP_OACMD ;
    typedef std::map<const CHAR*, OA_NEW_FUNC, _classComp>::iterator MAP_OACMD_IT ;
 
-   // _omagentCmdBuilder
-   class _omagentCmdBuilder : public SDBObject
+   /*
+      _omaCmdBuilder
+   */
+   class _omaCmdBuilder : public SDBObject
    {
-      friend class _omagentCmdAssit ;
+      friend class _omaCmdAssit ;
 
       public:
-         _omagentCmdBuilder () ;
-         ~_omagentCmdBuilder () ;
+         _omaCmdBuilder () ;
+         ~_omaCmdBuilder () ;
 
       public:
-         _omagentCommand *create ( const CHAR *command ) ;
+         _omaCommand *create ( const CHAR *command ) ;
 
-         void release ( const _omagentCommand *pCommand ) ;
+         void release ( const _omaCommand *pCommand ) ;
 
          INT32 _register ( const CHAR *name, OA_NEW_FUNC pFunc ) ;
 
          OA_NEW_FUNC _find ( const CHAR * name ) ;
 
       private:
-
          MAP_OACMD _cmdMap ;
    };
 
-   // get omagent command builder
-   _omagentCmdBuilder* getOmagentCmdBuilder() ;
+   /*
+      get omagent command builder
+   */
+   _omaCmdBuilder* getOmaCmdBuilder() ;
 
-   // _omagentAddHost
-   class _omagentAddHost : public _omagentCommand
+   /*
+      _omaAddHost
+   */
+   class _omaAddHost : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER()
 
       public:
-         _omagentAddHost () ;
-         ~_omagentAddHost () ;
+         _omaAddHost () ;
+         ~_omaAddHost () ;
 
          virtual const CHAR * name () { return "add host" ; }
 
@@ -138,14 +135,16 @@ namespace CLSMGR
    };
 
 
-   // _omagentScanHost
-   class _omagentScanHost : public _omagentCommand
+   /*
+      _omaScanHost
+   */
+   class _omaScanHost : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER()
 
       public:
-         _omagentScanHost () ;
-         ~_omagentScanHost () ;
+         _omaScanHost () ;
+         ~_omaScanHost () ;
 
          virtual const CHAR* name () { return "scan host" ; }
 
@@ -165,17 +164,18 @@ namespace CLSMGR
          UINT32 _readSize ;
          std::vector<BSONObj> _hosts ;
          std::string _content ;
-
    };
 
-   // _omagentInstallRemoteAgent
-   class _omagentInstallRemoteAgent : public _omagentCommand
+   /*
+      _omaInstallRemoteAgent
+   */
+   class _omaInstallRemoteAgent : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
 
       public:
-         _omagentInstallRemoteAgent () ;
-         ~_omagentInstallRemoteAgent () ;
+         _omaInstallRemoteAgent () ;
+         ~_omaInstallRemoteAgent () ;
 
          virtual const CHAR* name () { return "install remote agent" ; }
 
@@ -194,13 +194,15 @@ namespace CLSMGR
 
    } ;
 
-   // _omagentCheckRemoteAgentProcess
-   class _omagentCheckRemoteAgentProcess : public _omagentCommand
+   /*
+      _omaCheckRemoteAgentProcess
+   */
+   class _omaCheckRemoteAgentProcess : public _omaCommand
    {
 
       public:
-         _omagentCheckRemoteAgentProcess () ;
-         ~_omagentCheckRemoteAgentProcess () ;
+         _omaCheckRemoteAgentProcess () ;
+         ~_omaCheckRemoteAgentProcess () ;
 
          virtual const CHAR* name () { return "install remote agent" ; }
 
@@ -218,13 +220,15 @@ namespace CLSMGR
    } ;
 
 
-   // _omagentInstallAgentProcess
-   class _omagentInstallAgentProcess : public _omagentCommand
+   /*
+      _omaInstallAgentProcess
+   */
+   class _omaInstallAgentProcess : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omagentInstallAgentProcess () ;
-         ~_omagentInstallAgentProcess () ;
+         _omaInstallAgentProcess () ;
+         ~_omaInstallAgentProcess () ;
 
          virtual const CHAR* name () { return "install agent process" ; }
 
@@ -238,13 +242,15 @@ namespace CLSMGR
 
    } ;
 
-   // _omagentRemoveAgentProcess
-   class _omagentRemoveAgentProcess : public _omagentCommand
+   /*
+      _omaRemoveAgentProcess
+   */
+   class _omaRemoveAgentProcess : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omagentRemoveAgentProcess () ;
-         ~_omagentRemoveAgentProcess () ;
+         _omaRemoveAgentProcess () ;
+         ~_omaRemoveAgentProcess () ;
 
          virtual const CHAR* name () { return "remove agent process" ; }
 
@@ -258,13 +264,15 @@ namespace CLSMGR
 
    } ;
 
-   // _omagentStopAgentProcess
-   class _omagentStopAgentProcess : public _omagentCommand
+   /*
+      _omaStopAgentProcess
+   */
+   class _omaStopAgentProcess : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omagentStopAgentProcess () ;
-         ~_omagentStopAgentProcess () ;
+         _omaStopAgentProcess () ;
+         ~_omaStopAgentProcess () ;
 
          virtual const CHAR* name () { return "stop agent process" ; }
 
@@ -279,13 +287,15 @@ namespace CLSMGR
    } ;
 
 
-   // _omagentGetHostInfo
-   class _omagentGetHostInfo : public _omagentCommand
+   /*
+      _omaGetHostInfo
+   */
+   class _omaGetHostInfo : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omagentGetHostInfo () ;
-         ~_omagentGetHostInfo () ;
+         _omaGetHostInfo () ;
+         ~_omaGetHostInfo () ;
 
          virtual const CHAR* name () { return "get host info" ; }
 
@@ -299,13 +309,15 @@ namespace CLSMGR
 
    } ;
 
-   // _omagentRegHosts
-   class _omagentRegHosts : public _omagentCommand
+   /*
+      _omaRegHosts
+   */
+   class _omaRegHosts : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omagentRegHosts () ;
-         ~_omagentRegHosts () ;
+         _omaRegHosts () ;
+         ~_omaRegHosts () ;
 
          virtual const CHAR* name () { return "reg hosts info" ; }
 
@@ -327,13 +339,15 @@ namespace CLSMGR
    } ;
 
 
-   // _omagentGetHostNames
-   class _omagentGetHostNames : public _omagentCommand
+   /*
+      _omaGetHostNames
+   */
+   class _omaGetHostNames : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omagentGetHostNames () ;
-         ~_omagentGetHostNames () ;
+         _omaGetHostNames () ;
+         ~_omaGetHostNames () ;
 
          virtual const CHAR* name () { return "get host name" ; }
 
@@ -348,6 +362,160 @@ namespace CLSMGR
          INT32 getHostName( const CHAR *pIp, const CHAR *pUserName,
                             const CHAR *pPassword, BSONObj &result ) ;
 
+   } ;
+
+   /*
+      _omaInstallDBBusiness
+   */
+   class _omaInstallDBBusiness : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaInstallDBBusiness () ;
+         ~_omaInstallDBBusiness () ;
+
+         virtual const CHAR* name () { return "install db business" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+
+      private:
+         BOOLEAN _createVirtualCoordSucced ;
+         BOOLEAN _removeVirtualCoordSucced ;
+
+         std::vector<BSONObj> _coord ;
+         std::vector<BSONObj> _catalog ;
+         std::vector<BSONObj> _data ;
+
+         _omaTaskMgr* _taskMrg ;
+
+   } ;
+
+   /*
+      _omaInstallDBStatus
+   */
+
+
+   /*
+      _omaCreateVirtualCoord
+   */
+   class _omaCreateVirtualCoord : private _omaCommand
+   {
+      public:
+         _omaCreateVirtualCoord ( const CHAR *username,
+                                  const CHAR *password ) ;
+         ~_omaCreateVirtualCoord () ;
+
+      public:
+         INT32 createVirtualCoord ( INT32 coord_service, BOOLEAN &result ) ;
+
+      private:
+         virtual const CHAR* name () { return "create virtual coord" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff )
+         {
+            return 0 ;
+         }
+
+         INT32 init () ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
+         {
+            return 0 ;
+         }
+
+         INT32 doit ( INT32 coord_service, BOOLEAN &result ) ;
+
+      private:
+         const CHAR *_username ;
+         const CHAR *_password ;
+   } ;
+
+   /*
+      _omaRemoveVirtualCoord
+   */
+   class _omaRemoveVirtualCoord : private _omaCommand
+   {
+      public:
+         _omaRemoveVirtualCoord ( const CHAR* usename,
+                                      const CHAR *password ) ;
+         ~_omaRemoveVirtualCoord () ;
+
+      public:
+         INT32 removeVirtualCoord ( INT32 coord_service, BOOLEAN &result ) ;
+
+      private:
+         virtual const CHAR* name () { return "remove virtual coord" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff )
+         {
+            return 0 ;
+         }
+
+         INT32 init () ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
+         {
+            return 0 ;
+         }
+
+         INT32 doit ( INT32 coord_service, BOOLEAN &result ) ;
+
+      private:
+         const CHAR* _username ;
+         const CHAR* _password ;
+
+   } ;
+
+   /*
+      _omaPort
+   */
+   class _omaPort : private _omaCommand
+   {
+      public:
+         _omaPort () ;
+         _omaPort ( INT32 port ) ;
+         ~_omaPort () ;
+
+      public:
+
+         INT32 getValidPort( INT32 range_beg, INT32 range_end, INT32 &result ) ;
+
+         INT32 getPortStatus( INT32 port, BOOLEAN hasUsed ) ;
+
+      private:
+         virtual const CHAR* name () { return "" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) { return 0 ; }
+
+         INT32 init() ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
+         { return 0 ; }
+
+         INT32 doit ( BOOLEAN &hasUsed ) ;
+
+         void _setPort( INT32 port ) { _port = port ; }
+
+      private:
+         INT32 _port ;
    } ;
 
 

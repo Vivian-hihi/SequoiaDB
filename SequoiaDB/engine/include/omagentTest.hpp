@@ -11,7 +11,7 @@
 
 using namespace bson ;
 
-namespace CLSMGR
+namespace engine
 {
    INT32 testScanHost ( CHAR **ppBuffer, INT32 *bufferSize ) ;
 
@@ -29,6 +29,7 @@ namespace CLSMGR
 
    INT32 testGetHostName ( CHAR **ppBuffer, INT32 *bufferSize ) ;
 
+   INT32 testInstallDBBusiness ( CHAR **ppBuffer, INT32 *bufferSize ) ;
 
 }
 

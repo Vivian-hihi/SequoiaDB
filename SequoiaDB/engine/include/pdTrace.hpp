@@ -45,7 +45,6 @@
 #include <list>
 #include <vector>
 
-
 #define PD_TRACE_MAX_BP_NUM         10
 /*
  * Slots and chunks

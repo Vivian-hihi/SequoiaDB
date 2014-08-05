@@ -4,7 +4,7 @@
 #include "core.hpp"
 #include "ossUtil.hpp"
 
-namespace CLSMGR
+namespace engine
 {
 
    INT32 checkBuffer ( CHAR **ppBuffer, INT32 *bufferSize,

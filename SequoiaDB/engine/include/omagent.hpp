@@ -5,67 +5,68 @@
 #include "../bson/bson.h"
 #include "ossUtil.hpp"
 #include "sptApi.hpp"
+#include "omagentMsgDef.hpp"
 
-using namespace engine ;
 using namespace bson ;
 
-/*
-#define OMA_FIELD_NAME_PING                  "Ping"
-#define OMA_FIELD_NAME_SSH                   "Ssh"
-#define OMA_FIELE_NAME_HOSTNAME              "Hostname"
-#define OMA_FIELD_NMAE_IP                    "Ip"
-#define OMA_FIELD_NAME_SCAN_HOST_RET         "ScanHostRet"
-*/
+#define JS_ARG_LEN 512
 
-namespace CLSMGR
+namespace engine
 {
 /*
-   class _omagentObjBuff : public SDBObject
+   struct _confFields
    {
-      private:
-         _omagentObjBuff( const _omagentObjBuff &right ) ;
-
-         _omagentObjBuff& operator= ( const _omagentObjBuff &right ) ;
-
-      public:
-
-         _omagentObjBuff ()
-         {
-            _pBuff = NULL ;
-            _buffSize = 0 ;
-            _recordNum = 0 ;
-         }
-
-         virtual ~_omagentObjBuff () ;
-
-         INT32 setObj ( const CHAR *pBuff, INT32 buffLen, INT32 recordNum ) ;
-
-         const CHAR* data () { return _pBuff ; }
-         INT32       size () { return _buffSize ; }
-         INT32       recordNum () { return _recordNum ; }
-
-      private:
-         CHAR                 *_pBuff ;
-         INT32                _buffSize ;
-         INT32                _recordNum ;
+      CHAR *_hostName ;
+      CHAR *_dataGroupName ;
+      CHAR *_dbPath ;
+      CHAR *_svcName ;
+      CHAR *_diagLevel ;
+      CHAR *_role ;
+      CHAR *_logFileSize ;
+      CHAR *_logFileNum ;
+      CHAR *_transactionOn ;
+      CHAR *_prefInst ;
+      CHAR *_numPageCleaners ;
+      CHAR *_pageCleanInterval ;
    } ;
-
-   typedef _omagentObjBuff omagentObjBuff ;
+   typedef struct _confFields confFields ;
 */
+
+   struct _InstallInfo
+   {
+      const CHAR *_hostName ;
+      const CHAR *_svcName ;
+      const CHAR *_dbPath ;
+      const CHAR *_confPath ;
+      const CHAR *_dataGroupName ;
+      BSONObj _conf ;
+   } ;
+   typedef struct _InstallInfo InstallInfo ;
+
+   struct _InstallJobResult
+   {
+      INT32 _rc ;
+      std::string _errMsg ;
+      INT32 _totalNum ;
+      INT32 _finishNum ;
+      std::vector< InstallInfo > _finishNode ;
+   } ;
+   typedef struct _InstallJobResult InstallJobResult ;
+
    // get spider monkey engine
    _sptScope* getSptScope () ;
 
    // get bson field
-   INT32 omagentGetIntElement ( const BSONObj &obj, const CHAR *fieldName,
+   INT32 omaGetIntElement ( const BSONObj &obj, const CHAR *fieldName,
                                 INT32 &value ) ;
 
-   INT32 omagentGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
+   INT32 omaGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
                                    const CHAR **value ) ;
 
-   INT32 omagentGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
+   INT32 omaGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
                                 BSONObj &value ) ;
 
-   INT32 omagentGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
+   INT32 omaGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
                                     BOOLEAN &value ) ;
 
 }

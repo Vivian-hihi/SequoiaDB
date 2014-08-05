@@ -53,7 +53,10 @@ namespace engine
       RTN_JOB_EXTENDSEGMENT      = 6,
       RTN_JOB_RESTORE            = 7,
       RTN_JOB_REPLSYNC           = 8,
-      RTN_JOB_PAGECLEANER        = 9
+      RTN_JOB_PAGECLEANER        = 9,
+      RTN_JOB_CREATECATALOG      = 10, // create catalog
+      RTN_JOB_CREATECOORD        = 11, // create coord
+      RTN_JOB_CREATEDATA         = 12  // create data node
    } ;
 
    enum RTN_JOB_MUTEX_TYPE

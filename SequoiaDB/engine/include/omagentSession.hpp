@@ -7,17 +7,15 @@
 #include "pmdSession.hpp"
 #include "omagent.hpp"
 
-using namespace engine ;
-
-namespace CLSMGR
+namespace engine
 {
 
-//   class _omagentSession : public _pmdSession
-   class _omagentSession : public SDBObject
+//   class _omaSession : public _pmdSession
+   class _omaSession : public SDBObject
    {
       public:
-         _omagentSession ( SOCKET fd ) ;
-         virtual ~_omagentSession () ;
+         _omaSession ( SOCKET fd ) ;
+         virtual ~_omaSession () ;
 
          virtual UINT64 identifyID() { return (UINT64)SDB_OK ; }
          virtual INT32 getServiceType() const { return SDB_OK ; }
@@ -53,7 +51,7 @@ namespace CLSMGR
          BOOLEAN          _needReply ;
    } ;
 
-   typedef _omagentSession omagentSession ;
+   typedef _omaSession omaSession ;
 }
 
 
