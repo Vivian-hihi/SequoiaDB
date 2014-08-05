@@ -64,6 +64,13 @@
 			<property name="cdh.hive_connector.filename" value="${cdh.hive_connector.filename}" />
 		</ant>
 
+		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
+			<property name="hadoop.version" value="1.2" />
+		</ant>
+		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
+			<property name="hadoop.version" value="2.2" />
+		</ant>
+
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
 		<echo>
 			/usr/bin/gcc  ${CODE_DIR}/misc/ci-labs/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci-labs/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include
@@ -109,6 +116,10 @@
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
     	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
+
+    	<copy todir="${DRIVER.DIR}/hadoop" >
+    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/*.jar" />
+    	</copy>
 
 	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
 		<for list="${test-type-list}" param="php.version">
@@ -229,6 +240,10 @@
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${RELEASE_DIR}/sequoiadb/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
+
+		<copy todir="${DRIVER.DIR}/hadoop" >
+    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/*.jar" />
+    	</copy>
 		
 		<if>
 			<equals arg1="${os.arch}" arg2="ppc64" />
