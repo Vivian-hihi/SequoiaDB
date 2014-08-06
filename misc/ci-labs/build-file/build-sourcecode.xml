@@ -64,11 +64,11 @@
 
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
 			<param name="hadoop.version" value="1.2" />
-			<param name="basedir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector" />
+			<param name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
 		</ant>
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
 			<param name="hadoop.version" value="2.2" />
-			<param name="basedir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector" />
+			<param name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
 		</ant>
 
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
