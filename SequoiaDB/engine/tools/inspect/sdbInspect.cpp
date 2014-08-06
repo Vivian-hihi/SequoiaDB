@@ -173,7 +173,8 @@ namespace
                           header->_view ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       len += ossSnprintf( buffer + len, bufferSize - len,
-                         OSS_NEWLINE""OSS_NEWLINE ) ;
+                          "------------------------------"
+                          OSS_NEWLINE""OSS_NEWLINE ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       validSize = len ;
 
@@ -219,8 +220,6 @@ namespace
       len += ossSnprintf( buffer + len, bufferSize - len,
                           "  Nodes count  : %d"OSS_NEWLINE,
                           header->_nodeCount ) ;
-      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
-      len += ossSnprintf( buffer + len, bufferSize - len, OSS_NEWLINE ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
 
       validSize = len ;
@@ -360,14 +359,16 @@ namespace
                              "  # Node state 1 means node has the record,"
                              " or 0 means not."OSS_NEWLINE
                              "  # The order is ascended by node index"OSS_NEWLINE
-                             "    There is [%d] piece of records synchronized"
+                             "    There is [%d] piece of records haven't"
+                             " synchronized"
                              OSS_NEWLINE""OSS_NEWLINE, link.count() ) ;
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       }
       else
       {
          len += ossSnprintf( buffer + len, bufferSize - len,
-                             "   There is no record different"OSS_NEWLINE ) ;
+                             "   There is no record different"
+                             OSS_NEWLINE""OSS_NEWLINE ) ;
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       }
 
@@ -394,6 +395,8 @@ namespace
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
          rd = link.next() ;
       }
+      len += ossSnprintf( buffer + len, bufferSize - len, OSS_NEWLINE ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
 
       validSize = len ;
 
@@ -1168,7 +1171,7 @@ namespace
             }
             record->_bson = obj.copy() ;
             record->_len = obj.objsize() ;
-            record->_state = st._state ;
+            record->_state = dump ? state : st._state ;
             records.add( record ) ;
          }
          ++idx ;
