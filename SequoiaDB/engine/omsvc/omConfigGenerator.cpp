@@ -1779,11 +1779,11 @@ namespace engine
 
    string omConfigGenerator::_calculateGroupID( INT32 baseGroupdID, 
                                                 INT32 dataIndex,
-                                                INT32 maxDataNumber, 
+                                                INT32 dataNumPerGroup, 
                                                 INT32 maxGroupNumber )
    {
       CHAR groupID[ OM_INT32_LENGTH ] ;
-      INT32 step = dataIndex / maxDataNumber ;
+      INT32 step = dataIndex / dataNumPerGroup ;
       if ( step > maxGroupNumber )
       {
          step = maxGroupNumber ;
@@ -1854,7 +1854,7 @@ namespace engine
 
          details = _confDetailSample ;
          groupID = _calculateGroupID( baseGroupID, dataCount, 
-                                      _confTemplate.dataNum, 
+                                      _confTemplate.replicaNum, 
                                       _confTemplate.dataGroupNum ) ;
          host->assign( OM_NODE_TYPE_DATA, groupID, details ) ;
          configList.push_back( details ) ;
