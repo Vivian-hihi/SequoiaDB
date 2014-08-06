@@ -209,7 +209,7 @@
 		<copy todir="${RELEASE_DIR}/sequoiadb/lib">
 			<fileset dir="${CODE_DIR}/client/lib/" includes="**/*" />
 		</copy>	
-		<copy todir="${RELEASE_DIR}/tools/sdbsupport">
+		<copy todir="${RELEASE_DIR}/sequoiadb/tools/sdbsupport">
 			<fileset dir="${CODE_DIR}/tools/sdbsupport" includes="**/*" />
 		</copy>
 		<copy todir="${RELEASE_DIR}/sequoiadb/include/">
