@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="hadoop-connector" default="jar" basedir=".">
+<project name="hadoop-connector" default="jar" >
 	<property name="build.dir"  value="${basedir}/build"/>
-
 	
 	<target name="init">
 		<delete dir="${build.dir}" />
