@@ -5,32 +5,32 @@ Welcome to SequoiaDB!
 SequoiaDB is a distributed document-oriented NoSQL Database.
 
 Engine:
-	sequoiadb		-- SequoiaDB Engine
-	sdbstart		-- SequoiaDB Engine start
-	sdbstop			-- SequoiaDB Engine stop
-	sdblist			-- SequoiaDB Engine list
-	sdbfmp			-- SequoiaDB fenced mode process
+	sequoiadb       -- SequoiaDB Engine
+	sdbstart        -- SequoiaDB Engine start
+	sdbstop         -- SequoiaDB Engine stop
+	sdblist         -- SequoiaDB Engine list
+	sdbfmp          -- SequoiaDB fenced mode process
 
 Shell:
-	sdb					-- SequoiaDB client
-	sdbbp				-- SequoiaDB client backend process
+	sdb             -- SequoiaDB client
+	sdbbp           -- SequoiaDB client backend process
 
 Cluster Manager:
-	sdbcm				-- SequoiaDB cluster manager
-	sdbcmart		-- SequoiaDB cluster manager start
-	sdbcmtop		-- SequoiaDB cluster manager stop
-	sdbcmd			-- SequoiaDB cluster manager daemon
+	sdbcm           -- SequoiaDB cluster manager
+	sdbcmart        -- SequoiaDB cluster manager start
+	sdbcmtop        -- SequoiaDB cluster manager stop
+	sdbcmd          -- SequoiaDB cluster manager daemon
 
 Tools:
-	sdbdpsdump	-- SequoiaDB log dump
-	sdbexprt		-- SequoiaDB export
-	sdbimprt		-- SequoiaDB import
-	sdbinspt		-- SequoiaDB data inspection
-	sdbrestore	-- SequoiaDB restore
-	sdbtop			-- SequoiaDB TOP
-	sdbperfcol	-- SequoiaDB performance collection
-	sdbwsart		-- SequoiaDB web service start
-	sdbwstop		-- SequoiaDB web service stop
+	sdbdpsdump      -- SequoiaDB log dump
+	sdbexprt        -- SequoiaDB export
+	sdbimprt        -- SequoiaDB import
+	sdbinspt        -- SequoiaDB data inspection
+	sdbrestore      -- SequoiaDB restore
+	sdbtop          -- SequoiaDB TOP
+	sdbperfcol      -- SequoiaDB performance collection
+	sdbwsart        -- SequoiaDB web service start
+	sdbwstop        -- SequoiaDB web service stop
 
 Drivers:
 	C Driver:
@@ -90,7 +90,25 @@ Building Drivers:
 		cd driver/python
 		scons
 	.Net Client:
-		
+		cd driver/C#.Net
+		scons
+
+Building Connectors:
+	Hadoop Connector:
+		cd driver/hadoop/hadoop-connector
+		ant -Dhadoop.version=2.2
+	Hive Connector:
+		cd driver/hadoop/hive
+		ant
+	Storm Connector:
+		cd driver/storm
+		ant
+	PostgreSQL FDW:
+		cd driver/postgresql
+		make local
+		# Make sure pg_config is in PATH
+		make install
+
 Running:
 	For command line options to start SequoiaDB, invoke:
 		$ ./sdbstart --help
@@ -110,12 +128,14 @@ Running:
 		> var db = new Sdb() ;
 		> db.help() ;
 
+	To run in cluster mode, please refer SequoiaDB Infomation Center.
+
 Documentation:
 	http://www.sequoiadb.com/
 
 Restrictions:
-	- SequoiaDB officially only support 64 bit Linux build on CentOS, Redhat, SUSE and Ubuntu
-	- Windows build and 32 bit build are only for testing purpose
+	- SequoiaDB officially only support 64 bit Linux build on CentOS, Redhat, SUSE and Ubuntu.
+	- Windows build and 32 bit build are only for testing purpose.
 
 License:
 	Most SequoiaDB source files are made available under the terms of the
