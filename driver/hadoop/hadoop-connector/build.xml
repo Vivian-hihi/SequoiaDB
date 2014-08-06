@@ -42,13 +42,13 @@
 		</tstamp>
 		<echo message="${tstamp}" />
 
-		<jar file="${jar.dir}/hadoop-connector{$hadoop.version}.jar" basedir="${build.dir}/classes">
+		<jar file="${jar.dir}/hadoop-connector${hadoop.version}.jar" basedir="${build.dir}/classes">
 			<manifest>
 				<attribute name="Version" value="1.0" />
 				<attribute name="Build-Timestamp" value="${tstamp}" />
 			</manifest>
 		</jar>
 
-		<copy file="${jar.dir}/hadoop-connector{$hadoop.version}.jar" tofile="${basedir}/hadoop-connector{$hadoop.version}.jar" />
+		<copy file="${jar.dir}/hadoop-connector${hadoop.version}.jar" tofile="${basedir}/hadoop-connector${hadoop.version}.jar" />
 	</target>
 </project>
