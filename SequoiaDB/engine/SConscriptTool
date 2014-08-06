@@ -13,6 +13,12 @@ bsonFiles = [
       "util/utilBsongen.cpp"
       ]
 
+inspectFiles = [
+      "client/common.c",
+      "client/clientcpp.cpp",
+      "tools/inspect/sdbInspect.cpp"
+      ]
+
 migFiles = [
       "mig/migExport.cpp",
       "mig/migImport.cpp"
@@ -427,6 +433,11 @@ sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
           LIBDEPS=["oss","pd","pmd","bson","dps", "util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
+sdbInspect = toolEnv.Program("sdbInspect",
+         inspectFiles,
+         LIBDEPS=["oss","pd","pmd","bson","dps", "util"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
 toolEnv.Install( '#/bin', sdbexprt )
 toolEnv.Install( '#/bin', sdbimprt )
 toolEnv.Install( '#/bin', sdbstart )
@@ -441,3 +452,4 @@ if linux:
 toolEnv.Install( '#/tools', sdbload2 )
 toolEnv.Install( '#/tools', sdbmemcheck )
 toolEnv.Install( '#/bin', sdbdpsdump )
+toolEnv.Install( '#/tools', sdbInspect )
