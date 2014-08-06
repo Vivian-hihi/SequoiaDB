@@ -2602,7 +2602,7 @@ namespace engine
          {
             BSONElement ele      = iter.next() ;
             BSONObj oneDeployMod = ele.embeddedObject() ;
-            deployModList.push_back( oneDeployMod ) ;
+            deployModList.push_back( oneDeployMod.copy()) ;
          }
       }
 
@@ -3430,79 +3430,17 @@ namespace engine
                                                    BSONObj &bsonAllConf )
    {
       INT32 rc = SDB_OK ;
-      string confTemplateFile ;
       string confDetailFile ;
-      list<BSONObj> bsonTemplateList ;
-      list<BSONObj>::iterator iterList ;
-      BSONObj bsonTemplate ;
-      BSONObj bsonConfDetail ;
-      BSONObj properties ;
-      BSONArrayBuilder arrayBuilder ;
-      BSONObjBuilder builder ;
-      confTemplateFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
-                         + businessType + OM_TEMPLATE_FILE_NAME ;
-      rc = _readConfTemplate( businessType, confTemplateFile, 
-                              bsonTemplateList ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "read template file failed:file=%s:rc=%d", 
-                 confTemplateFile.c_str(), rc ) ;
-         goto error ;
-      }
-
-      iterList = bsonTemplateList.begin() ;
-      while ( iterList != bsonTemplateList.end() )
-      {
-         string tmpDeployMod = iterList->getStringField( OM_BSON_DEPLOY_MOD ) ;
-         if ( tmpDeployMod.compare( deployMod ) == 0 )
-         {
-            bsonTemplate = *iterList ;
-            break ;
-         }
-         iterList++ ;
-      }
-
-      if ( iterList == bsonTemplateList.end() )
-      {
-         rc           = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_DEPLOY_MOD ) + " is not exsit:mod="
-                        + deployMod ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         goto error ;
-      }
 
       confDetailFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
                        + businessType + OM_CONFIG_ITEM_FILE_NAME ;
-      rc = _readConfDetail( confDetailFile, bsonConfDetail ) ;
+      rc = _readConfDetail( confDetailFile, bsonAllConf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "read config file failed:file=%s,rc=%d", 
                  confDetailFile.c_str(), rc ) ;
          goto error ;
       }
-
-      properties = bsonTemplate.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
-      {
-         BSONObjIterator iter( properties ) ;
-         while ( iter.more() )
-         {
-            BSONElement ele     = iter.next() ;
-            arrayBuilder.append( ele ) ;
-         }
-      }
-
-      properties = bsonConfDetail.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
-      {
-         BSONObjIterator iter( properties ) ;
-         while ( iter.more() )
-         {
-            BSONElement ele     = iter.next() ;
-            arrayBuilder.append( ele ) ;
-         }
-      }
-
-      builder.append( OM_BSON_PROPERTY_ARRAY, arrayBuilder.arr() ) ;
-      bsonAllConf = builder.obj() ;
 
    done:
       return rc ;

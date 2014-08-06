@@ -84,6 +84,8 @@ namespace engine
          string   user ;         /* root user */ 
          string   passwd ;       /* root passwd */
 
+         map<string, string> additionalConfMap ;
+
       public:
          void init() ;
    } ;

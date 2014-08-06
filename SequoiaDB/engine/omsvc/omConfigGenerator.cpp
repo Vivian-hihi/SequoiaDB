@@ -72,6 +72,7 @@ namespace engine
    #define OM_SVCNAME_STEP             (10)
    #define OM_PATH_LENGTH              (256)
    #define OM_INT32_LENGTH             (20)
+   #define OM_INT32_MAXVALUE_STR       "2147483647"
 
    #define OM_CONF_VALUE_INT_TYPE      "int"
 
@@ -108,6 +109,8 @@ namespace engine
 
       user              = "" ;
       passwd            = "" ;
+
+      additionalConfMap.clear() ;
    }
 
    rangeValidator::rangeValidator( string type, const CHAR *value ) 
@@ -145,6 +148,14 @@ namespace engine
          /* if range is empty, all the value is valid */
          _isValidAll = TRUE ;
       }
+
+      if ( _type.compare( OM_CONF_VALUE_INT_TYPE ) == 0 )
+      {
+         if ( _end.length() == 0 )
+         {
+            _end = OM_INT32_MAXVALUE_STR ;
+         }
+      }
    }
 
    rangeValidator::~rangeValidator()
@@ -157,6 +168,7 @@ namespace engine
       {
          INT32 leftInt  = ossAtoi( left.c_str() ) ;
          INT32 rightInt = ossAtoi( right.c_str() ) ;
+         
          return ( leftInt - rightInt ) ;
       }
 
@@ -1461,6 +1473,11 @@ namespace engine
       {
          _confDetailSample.pageCleanInterval = ossAtoi( itemValue.c_str() ) ;
       }
+      else
+      {
+         _confDetailSample.additionalConfMap.insert(
+                      map<string, string>::value_type( itemName, itemValue ) ) ;
+      }
 
       _confDetailSample.dataGroupID = "" ;
 
@@ -1931,6 +1948,14 @@ namespace engine
 
          ossItoa( iter->pageCleanInterval, tmp, OM_INT32_LENGTH ) ;
          builder.append( OM_CONF_DETAIL_PCINTERVAL, tmp ) ;
+
+         map<string, string>::iterator additionalIter ;
+         additionalIter = iter->additionalConfMap.begin() ;
+         while( additionalIter != iter->additionalConfMap.end() )
+         {
+            builder.append( additionalIter->first, additionalIter->second ) ;
+            additionalIter++ ;
+         }
 
          arrBuilder.append( builder.obj() ) ;
          iter++ ;
