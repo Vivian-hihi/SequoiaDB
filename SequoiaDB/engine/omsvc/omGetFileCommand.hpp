@@ -56,8 +56,8 @@ namespace engine
    class omAuthCommand : public omCommandInterface
    {
       public:
-         omAuthCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession, 
-                        const CHAR *pRootPath ) ;
+         omAuthCommand( restAdaptor *pRestAdaptor, 
+                        pmdRestSession *pRestSession ) ;
 
          ~omAuthCommand() ;
 
@@ -66,6 +66,7 @@ namespace engine
 
       protected:
          void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
+         void            _sendErrorRes2Web( INT32 rc, const string &detail ) ;
          void            _decryptPasswd( const string encryptPasswd, 
                                          string time,
                                          string &decryptPasswd) ;
@@ -73,15 +74,15 @@ namespace engine
       protected:
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
-         string          _rootPath ;
+         string          _errorDetail ;
+         string          _errorPosition ;
    };
 
    class omLogoutCommand : public omAuthCommand
    {
       public:
          omLogoutCommand( restAdaptor *pRestAdaptor, 
-                          pmdRestSession *pRestSession, 
-                          const CHAR *pRootPath ) ;
+                          pmdRestSession *pRestSession ) ;
          ~omLogoutCommand() ;
 
       public:
@@ -92,8 +93,7 @@ namespace engine
    {
       public:
          omChangePasswdCommand( restAdaptor *pRestAdaptor, 
-                                pmdRestSession *pRestSession, 
-                                const CHAR *pRootPath ) ;
+                                pmdRestSession *pRestSession ) ;
          ~omChangePasswdCommand() ;
 
       public:
@@ -104,7 +104,7 @@ namespace engine
                                          string &newPasswd, string &time ) ;
    };
 
-   class omCheckSessionCommand : public omCommandInterface
+   class omCheckSessionCommand : public omAuthCommand
    {
       public:
          omCheckSessionCommand( restAdaptor *pRestAdaptor, 
@@ -116,8 +116,6 @@ namespace engine
          virtual INT32   doCommand() ;
 
       protected:
-         restAdaptor*    _restAdaptor ;
-         pmdRestSession* _restSession ;
    };
 
    class omCreateClusterCommand : public omCheckSessionCommand
@@ -130,9 +128,6 @@ namespace engine
 
       public:
          virtual INT32   doCommand() ;
-
-      protected:
-         void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
 
       private:
          INT32           _getClusterInfo( string &clusterName, string &desc,
@@ -167,8 +162,8 @@ namespace engine
 
       protected:
          bool            _isHostExist( BSONObj &host ) ;
-         void            _checkHostExistence(list<BSONObj> &hostInfoList, 
-                                             list<BSONObj> &hostResult ) ;
+         void            _filterExistHost( list<BSONObj> &hostInfoList, 
+                                           list<BSONObj> &hostResult ) ;
          void            _generateArray( list<BSONObj> &hostInfoList, 
                                          string arrayKeyName, 
                                          BSONObj &result ) ;
@@ -295,12 +290,12 @@ namespace engine
          virtual INT32  doCommand() ;
 
       protected:
-         INT32          readConfigFile( string file, BSONObj &obj ) ;
-         void           recurseParseObj( ptree &pt, BSONObj &out ) ;
-         void           ParseArray( ptree &pt, 
-                                    BSONArrayBuilder &arrayBuilder ) ;
-         BOOLEAN        isStringValue( ptree &pt ) ;
-         BOOLEAN        isArray( ptree &pt ) ;
+         INT32          _readConfigFile( string file, BSONObj &obj ) ;
+         void           _recurseParseObj( ptree &pt, BSONObj &out ) ;
+         void           _parseArray( ptree &pt, 
+                                     BSONArrayBuilder &arrayBuilder ) ;
+         BOOLEAN        _isStringValue( ptree &pt ) ;
+         BOOLEAN        _isArray( ptree &pt ) ;
 
       protected:
          string          _rootPath ;

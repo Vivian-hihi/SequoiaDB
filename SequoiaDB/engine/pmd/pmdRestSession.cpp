@@ -379,18 +379,15 @@ namespace engine
          
          if ( ossStrcasecmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omAuthCommand( pAdptor, this, 
-                                                   _wwwRootPath.c_str() ) ;
+            commandIf = SDB_OSS_NEW omAuthCommand( pAdptor, this ) ;
          }
          else if( ossStrcasecmp( pSubCommand, OM_LOGOUT_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omLogoutCommand( pAdptor, this, 
-                                                     _wwwRootPath.c_str() ) ;
+            commandIf = SDB_OSS_NEW omLogoutCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHANGE_PASSWD_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omChangePasswdCommand( pAdptor, this, 
-                                                         _wwwRootPath.c_str()) ;
+            commandIf = SDB_OSS_NEW omChangePasswdCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
          {
