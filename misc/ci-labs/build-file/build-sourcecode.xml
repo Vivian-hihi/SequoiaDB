@@ -7,8 +7,6 @@
 	<property environment="env" />
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<property name="RELEASE_DIR" value="${WORKSPACE}/release" />
-	<!-- <property name="PYTHONPATH" value="/usr/local/lib64/scons-2.3.0" /> -->
-	<!-- <property name="PATH_BUILDER" value="/opt/installbuilder-9.0.1/bin/" /> -->
 	<property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
 	<property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
@@ -65,16 +63,16 @@
 		</ant>
 
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
-			<property name="hadoop.version" value="1.2" />
+			<param name="hadoop.version" value="1.2" />
+			<param name="basedir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector" />
 		</ant>
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
-			<property name="hadoop.version" value="2.2" />
+			<param name="hadoop.version" value="2.2" />
+			<param name="basedir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector" />
 		</ant>
 
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
-		<echo>
-			/usr/bin/gcc  ${CODE_DIR}/misc/ci-labs/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci-labs/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include
-		</echo>
+		<echo message="/usr/bin/gcc  ${CODE_DIR}/misc/ci-labs/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci-labs/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
 		<exec executable="/usr/bin/gcc" dir="${CODE_DIR}/misc/ci-labs/exec-tools" failonerror="true">
     		<arg line="${CODE_DIR}/misc/ci-labs/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci-labs/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
     	</exec>
@@ -241,7 +239,7 @@
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
 
-		<copy todir="${DRIVER.DIR}/hadoop" >
+		<copy todir="${RELEASE_DIR}/sequoiadb/hadoop" >
     		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/*.jar" />
     	</copy>
 		
