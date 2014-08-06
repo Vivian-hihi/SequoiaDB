@@ -2409,7 +2409,7 @@ namespace engine
          // key in this page is less than expected in forward phase ( or greater
          // than expected in backward phase), so this key will be a better match
          rid._extent = _me ;
-         rid._slot = z ;
+         rid._slot   = z ;
          if ( direction > 0 )
          {
             // for forward scan, this code path means the requested key is
@@ -2506,8 +2506,8 @@ namespace engine
       {
          ixmExtent nextExtent ( childExtentID, _pIndexSu ) ;
          rc = nextExtent.keyLocate ( rid, prevKey, keepFieldsNum, skipToNext,
-                                     matchEle, matchInclusive, o, direction, cb
-                                      ) ;
+                                     matchEle, matchInclusive, o, direction,
+                                     cb ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to run keyLocate from extent %d",
@@ -2625,6 +2625,9 @@ namespace engine
       }
       else
       {
+         // we have to reset rid here, so that if there's no further keys
+         // in index scan let's return NULL
+         rid.reset() ;
          // if we are root?
          rc = keyLocate ( rid, prevKey, keepFieldsNum, skipToNext, matchEle,
                           matchInclusive, o, direction, cb ) ;
