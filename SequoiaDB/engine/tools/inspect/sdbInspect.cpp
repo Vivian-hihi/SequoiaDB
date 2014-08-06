@@ -1807,8 +1807,9 @@ namespace
    /**
     ** get collection space in nodes
     ***/
-   INT32 getCiCollection( ciNode *master, const CHAR *clName,
-                        ciLinkList< ciCollection > &collections )
+   INT32 getCiCollection( ciNode *master, const CHAR *csName,
+                          const CHAR *clName,
+                          ciLinkList< ciCollection > &collections )
    {
       INT32 rc              = SDB_OK ;
       BOOLEAN hasCollection = FALSE ;
@@ -1818,7 +1819,7 @@ namespace
 
       SDB_ASSERT( NULL != master, "Error: master node cannot be NULL" ) ;
 
-      hasCollection = ( 0 != ossStrncmp( ".", clName, CI_CL_FULLNAME_SIZE ) ) ;
+      hasCollection = ( 0 != ossStrncmp( "", clName, CI_CL_FULLNAME_SIZE ) ) ;
 
       // get collections of master node
       rc = db.connect( master->_hostname, master->_serviceName ) ;
@@ -1853,9 +1854,22 @@ namespace
          }
          else
          {
+            std::string cs ;
+            std::string cl ;
             std::string name = collection.getField( "Name" ).String() ;
-            if ( !hasCollection || 0 == ossStrncmp( clName, name.c_str(),
-                                                    CI_CL_FULLNAME_SIZE ) )
+            INT32 dot = name.find( '.' ) ;
+            if ( std::string::npos == dot )
+            {
+               std::cout << "Error: cannot split collection fullname: "
+                         << name << std::endl ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            cs = name.substr( 0, dot ) ;
+            cl = name.substr( dot + 1 ) ;
+            if ( !hasCollection ||
+                ( 0 == ossStrncmp( csName, cs.c_str(), CI_CS_NAME_SIZE ) &&
+                  0 == ossStrncmp( clName, cl.c_str(), CI_CL_NAME_SIZE ) ) )
             {
                ciCollection *cl = collections.createNode() ;
                if ( NULL == cl )
@@ -2041,7 +2055,8 @@ namespace
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
             // get collections
-            rc = getCiCollection( nodeList.getHead(), fullName, collections ) ;
+            rc = getCiCollection( nodeList.getHead(), header->_csName,
+                                  header->_clName, collections ) ;
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
             groupHeader._clCount = collections.count() ;
