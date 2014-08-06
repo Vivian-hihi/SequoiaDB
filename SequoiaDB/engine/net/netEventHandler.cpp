@@ -495,6 +495,14 @@ namespace engine
             goto done ;
          }
 
+#if defined (_LINUX)
+         {
+            boost::asio::detail::socket_option::boolean<IPPROTO_TCP, TCP_QUICKACK>
+                                                    quickack( TRUE ) ;
+            _sock.set_option( quickack ) ;
+         }
+#endif // _LINUX
+
          _state = NET_EVENT_HANDLER_STATE_BODY ;
          asyncRead() ;
       }
