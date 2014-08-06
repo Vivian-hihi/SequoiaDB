@@ -2163,7 +2163,7 @@
       </code>
 
       <code>
-         <name>SDB_LOB_IS_NOT_COMPLETED</name>
+         <name>SDB_LOB_IS_UNDER_CRT</name>
          <description>
             <en>LOB creation is not completed</en>
             <cn>大对象正在创建中</cn>
