@@ -1105,8 +1105,10 @@ namespace
    /**
     ** read ciRecord from file
     ***/
-   INT32 readCiRecord( OSSFILE &in, INT64 &offset, ciLinkList< ciNode > &nodes,
-                       const ciClHeader &header, ciLinkList< ciRecord > &records )
+   INT32 readCiRecord( OSSFILE &in, INT64 &offset,
+                       ciLinkList< ciNode > &nodes,
+                       const ciClHeader &header,
+                       ciLinkList< ciRecord > &records, BOOLEAN dump = FALSE )
    {
       INT32 rc         = SDB_OK ;
       CHAR *bsonBuffer = NULL ;
@@ -1147,11 +1149,14 @@ namespace
          bson::BSONObj con = bob().append( e ).obj() ;
 
          ciLinkList< ciCursor > cursors ;
-         rc = getCiCursor( nodes, header._fullname, cursors, con ) ;
-         CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+         if ( !dump )
+         {
+            rc = getCiCursor( nodes, header._fullname, cursors, con ) ;
+            CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+         }
 
          ciState st;
-         if ( !recordQuery( cursors, st, obj ) )
+         if ( dump || !recordQuery( cursors, st, obj ) )
          {
             ciRecord *record = records.createNode() ;
             if ( NULL == record )
@@ -1509,7 +1514,8 @@ namespace
                {
                   records.clear() ;
 
-                  rc = readCiRecord( in, offset, nodes, clHeader, records ) ;
+                  rc = readCiRecord( in, offset, nodes,
+                                     clHeader, records, TRUE ) ;
                   CHECK_VALUE( ( SDB_OK != rc ), error ) ;
                   rc = dumpCiRecord( nodes.count(), records,
                      buffer, bufferSize, validSize ) ;
@@ -1857,7 +1863,7 @@ namespace
             std::string cs ;
             std::string cl ;
             std::string name = collection.getField( "Name" ).String() ;
-            INT32 dot = name.find( '.' ) ;
+            std::size_t dot = name.find( '.' ) ;
             if ( std::string::npos == dot )
             {
                std::cout << "Error: cannot split collection fullname: "
@@ -2286,6 +2292,16 @@ namespace
                goto error ;
             }
 
+            if ( clHeader._recordCount > 0 )
+            {
+               records.clear() ;
+
+               rc = readCiRecord( in, offset, ciNodes, clHeader, records ) ;
+               CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+            }
+
+            clHeader._recordCount = records.count() ;
+
             rc = writeCiClHeader( out, &clHeader ) ;
             if ( SDB_OK != rc )
             {
@@ -2294,14 +2310,6 @@ namespace
                goto error ;
             }
             writeOffset += CI_CL_HEADER_SIZE ;
-
-            if ( clHeader._recordCount > 0 )
-            {
-               records.clear() ;
-
-               rc = readCiRecord( in, offset, ciNodes, clHeader, records ) ;
-               CHECK_VALUE( ( SDB_OK != rc ), error ) ;
-            }
 
             if ( records.count() > 0 )
             {
@@ -2418,6 +2426,8 @@ INT32 _sdbCi::handle( const po::options_description &desc,
 {
    INT32 rc = SDB_OK ;
    BOOLEAN byGroup = TRUE ;
+   BOOLEAN useOutput = FALSE ;
+   CHAR outReport[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
    if ( vm.empty() || vm.count( CONSISTENCY_INSPECT_HELP ) )
    {
@@ -2476,13 +2486,24 @@ INT32 _sdbCi::handle( const po::options_description &desc,
 
    byGroup = ( 0 != ossStrncmp( CI_VIEW_CL, _header._view,
                                 CI_VIEWOPTION_SIZE ) ) ? TRUE : FALSE ;
+   useOutput = ( 0 != ossStrncmp( "", _header._outfile, OSS_MAX_PATHSIZE ) ) ;
 
    if ( 0 == ossStrncmp( CI_ACTION_REPORT,
                          _header._action, CI_ACTION_SIZE ) &&
         vm.count( CONSISTENCY_INSPECT_FILE ) )
    {
-      // for test
-      rc = byGroup ? report( _header._outfile ) : report2( _header._outfile );
+      // report file
+      if ( !useOutput )
+      {
+         ossMemcpy( outReport, _header._filepath, OSS_MAX_PATHSIZE ) ;
+         ossStrncat( outReport, CI_FILE_REPORT, ossStrlen( CI_FILE_REPORT ) ) ;
+      }
+      else
+      {
+         ossMemcpy( outReport, _header._outfile, OSS_MAX_PATHSIZE ) ;
+      }
+      rc = byGroup ? report ( _header._filepath, outReport )
+                   : report2( _header._filepath, outReport );
       //rc = report2( _header._filepath ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       std::cout << _header._action << " successfully" << std::endl ;
@@ -2514,8 +2535,19 @@ INT32 _sdbCi::handle( const po::options_description &desc,
 
    rc = inspect() ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+   // report file
+   if ( !useOutput )
+   {
+      ossMemcpy( outReport, CI_FILE_NAME, OSS_MAX_PATHSIZE ) ;
+   }
+   else
+   {
+      ossMemcpy( outReport, _header._outfile, OSS_MAX_PATHSIZE ) ;
+   }
+   ossStrncat( outReport, CI_FILE_REPORT, ossStrlen( CI_FILE_REPORT ) ) ;
+   rc = byGroup ? report ( _header._outfile, outReport )
+                : report2( _header._outfile, outReport ) ;
 
-   rc = byGroup ? report( _header._outfile ) : report2( _header._outfile );
    CHECK_VALUE( (SDB_OK != rc ), error ) ;
    std::cout << _header._action << " successfully" << std::endl ;
 
@@ -2589,7 +2621,14 @@ INT32 _sdbCi::inspect()
       ossMemcpy( inFile, tmpFile, OSS_MAX_PATHSIZE ) ;
    }
 
-   rc = ossRenamePath( tmpFile, _header._outfile ) ;
+   if ( 0 != ossStrncmp( "", _header._outfile, OSS_MAX_PATHSIZE ) )
+   {
+      rc = ossRenamePath( tmpFile, _header._outfile ) ;
+   }
+   else
+   {
+      rc = ossRenamePath( tmpFile, CI_FILE_NAME ) ;
+   }
    if ( SDB_OK != rc )
    {
       std::cout << "Error: failed to rename temp file to \""
@@ -2618,7 +2657,7 @@ error:
    goto done ;
 }
 
-INT32 _sdbCi::report( const CHAR *inFile )
+INT32 _sdbCi::report ( const CHAR *inFile, const CHAR *reportFile )
 {
    INT32 rc           = SDB_OK ;
    BOOLEAN inOpened   = FALSE ;
@@ -2631,7 +2670,6 @@ INT32 _sdbCi::report( const CHAR *inFile )
    INT64 tailOffset   = 0 ;
    CHAR exitTip[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
-   CHAR outFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
    ciHeader header ;
    ciLinkList< ciOffset > Offset ;
    ciLinkList< ciNode > ciNodes ;
@@ -2667,10 +2705,7 @@ INT32 _sdbCi::report( const CHAR *inFile )
    rc = readCiTail( in, tailOffset, &tail ) ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
-   // open report file
-   ossMemcpy( outFile, inFile, OSS_MAX_PATHSIZE ) ;
-   ossStrncat( outFile, CI_FILE_REPORT, ossStrlen( CI_FILE_REPORT ) ) ;
-   rc = ossOpen( outFile, OSS_REPLACE | OSS_READWRITE,
+   rc = ossOpen( reportFile, OSS_REPLACE | OSS_READWRITE,
                  OSS_RU | OSS_WU | OSS_RG, out ) ;
    if ( SDB_OK != rc )
    {
@@ -2728,7 +2763,8 @@ INT32 _sdbCi::report( const CHAR *inFile )
          {
             records.clear() ;
 
-            rc = readCiRecord( in, offset, ciNodes, clHeader, records ) ;
+            rc = readCiRecord( in, offset, ciNodes,
+                               clHeader, records, TRUE ) ;
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
             rc = dumpCiRecord( ciNodes.count(), records,
                                buffer, bufferSize, validSize ) ;
@@ -2788,7 +2824,7 @@ error:
 
 
 
-INT32 _sdbCi::report2( const CHAR *inFile )
+INT32 _sdbCi::report2( const CHAR *inFile, const CHAR *reportFile )
 {
    INT32 rc              = SDB_OK ;
    BOOLEAN inOpened      = FALSE ;
@@ -2801,7 +2837,6 @@ INT32 _sdbCi::report2( const CHAR *inFile )
    INT64 tailOffset      = 0 ;
    CHAR exitTip[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
-   CHAR outFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
    ciHeader header ;
    ciLinkList< ciNode > ciNodes ;
    ciLinkList< ciOffset > clOffsets ;
@@ -2837,10 +2872,7 @@ INT32 _sdbCi::report2( const CHAR *inFile )
    rc = readCiTail( in, tailOffset, &tail ) ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
-   // open report file
-   ossMemcpy( outFile, inFile, OSS_MAX_PATHSIZE ) ;
-   ossStrncat( outFile, CI_FILE_REPORT, ossStrlen( CI_FILE_REPORT ) ) ;
-   rc = ossOpen( outFile, OSS_REPLACE | OSS_READWRITE,
+   rc = ossOpen( reportFile, OSS_REPLACE | OSS_READWRITE,
                  OSS_RU | OSS_WU | OSS_RG, out ) ;
    if ( SDB_OK != rc )
    {
