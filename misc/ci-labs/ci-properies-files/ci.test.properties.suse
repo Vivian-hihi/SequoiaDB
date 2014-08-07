@@ -9,10 +9,10 @@ deploy.tar.file.name=deploy.tar.gz
 test.machine.deploy.path=/tmp/postgresql_test
 test.machine.software.path=/tmp/postgresql
 
-save.testLog.hostname=suse-test5
+save.testLog.hostname=rhel-test9
 save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
 copy_tar=/test_tar
-target.deploy_tar_gz.ip=suse-test5
+target.deploy_tar_gz.ip=rhel-test9
 copy.log.path=/test_log
 
 coord.service.port=50000
