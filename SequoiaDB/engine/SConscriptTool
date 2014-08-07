@@ -14,8 +14,6 @@ bsonFiles = [
       ]
 
 inspectFiles = [
-      "client/common.c",
-      "client/clientcpp.cpp",
       "tools/inspect/sdbInspect.cpp"
       ]
 
@@ -58,8 +56,8 @@ ossFiles = [
       "oss/ossProc.cpp",
       "oss/ossNPipe.cpp",
       "oss/ossLatch.cpp",
-	  "oss/ossRWMutex.cpp",
-	  "oss/ossEvent.cpp",
+      "oss/ossRWMutex.cpp",
+      "oss/ossEvent.cpp",
       "oss/ossDynamicLoad.cpp",
       "oss/ossHdfs.cpp",
       "oss/ossShMem.cpp"
@@ -316,14 +314,14 @@ sdbListMain = [
 
 sdbcmMain = [
       "rtn/rtnBackgroundJobBase.cpp",
-	  "pmd/pmd.cpp",
-	  "pmd/pmdEDU.cpp",
-	  "pmd/pmdEDUMgr.cpp",
-	  "pmd/pmdAsyncSessionAgent.cpp",
-	  "pmd/pmdBackgroundJob.cpp",
-	  "pmd/pmdCBMgrEntryPoint.cpp",
-	  "pmd/pmdAsyncNetEntryPoint.cpp",
-	  "pmd/pmdOMAgentEDUEntryPoint.cpp",
+      "pmd/pmd.cpp",
+      "pmd/pmdEDU.cpp",
+      "pmd/pmdEDUMgr.cpp",
+      "pmd/pmdAsyncSessionAgent.cpp",
+      "pmd/pmdBackgroundJob.cpp",
+      "pmd/pmdCBMgrEntryPoint.cpp",
+      "pmd/pmdAsyncNetEntryPoint.cpp",
+      "pmd/pmdOMAgentEDUEntryPoint.cpp",
       "pmd/pmdCMMain.cpp"
       ]
 
@@ -435,7 +433,7 @@ sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
 
 sdbInspect = toolEnv.Program("sdbInspect",
          inspectFiles,
-         LIBDEPS=["oss","pd","pmd","bson","dps", "util"],
+         LIBDEPS=["oss", "bson", "pmd", "util", "pd", "client", "clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 toolEnv.Install( '#/bin', sdbexprt )
