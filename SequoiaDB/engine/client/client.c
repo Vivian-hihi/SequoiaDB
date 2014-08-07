@@ -26,6 +26,11 @@
 #include "../bson/lib/md5.h"
 #include "fmpDef.h"
 
+#if defined( _LINUX )
+#include <arpa/inet.h>
+#include <netinet/tcp.h>
+#endif // _LINUX
+
 #define HANDLE_CHECK( handle, interhandle, handletype ) \
 do                                                      \
 {                                                       \
@@ -336,6 +341,14 @@ static INT32 _recv ( SOCKET sock, MsgHeader **msg, INT32 *size,
       {
          goto error ;
       }
+
+#if defined( _LINUX )
+      // quick ack
+      {
+         INT32 i = 0 ;
+         setsockopt( sock, IPPROTO_TCP, TCP_QUICKACK, (void*)&i, sizeof(i) ) ;
+      }
+#endif // _LINUX
       break ;
    }
    ossEndianConvertIf4 ( len, realLen, endianConvert ) ;

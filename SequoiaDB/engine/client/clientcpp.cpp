@@ -4291,6 +4291,8 @@ namespace sdbclient
       {
          goto error ;
       }
+      _sock->quickAck() ;
+
       ossEndianConvertIf4 (length, realLen, _endianConvert ) ;
       rc = _reallocBuffer ( ppBuffer, size, realLen+1 ) ;
       if ( rc )
