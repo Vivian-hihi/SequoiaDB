@@ -14,14 +14,15 @@
 	
 	<target name="copySrc" depends="init">
 		<copy todir="${build.dir}/src">
-			<fileset dir="."  includes="**/*.java"></fileset>
+			<fileset dir="."  includes="**/*.java" />
 		</copy>
 	</target>
 	
 	<target name="copyJar"  depends="init">
 		<copy todir="${build.dir}/lib">
-			<fileset dir="${basedir}/hadoop${hadoop.version}"  includes="**/*.jar"></fileset>
-			<fileset dir="${basedir}/lib" includes="**/*.jar"></fileset>
+			<fileset dir="${basedir}/hadoop${hadoop.version}"  includes="**/*.jar" />
+			<fileset dir="${basedir}/lib" includes="**/*.jar" />
+			<fileset dir="java.driver.jar" />
 		</copy>
 	</target>
 	
@@ -31,6 +32,7 @@
 			<compilerarg line="-encoding UTF-8"/>
 			<classpath>
 				<fileset dir="${build.dir}/lib" includes="*.jar"  />
+				<pathelement location="${java.driver.jar}"/>
 			</classpath>
 		</javac>	
 	</target>
@@ -38,14 +40,14 @@
 	<target name="jar" depends="compile">
 		<property name="jar.dir" value="${build.dir}/dest" />
 		<tstamp>
-			<format property="tstamp" pattern="dd/MM/yyy HH:mm:ss" />
+			<format property="current.time" pattern="dd/MM/yyy HH:mm:ss" />
 		</tstamp>
-		<echo message="${tstamp}" />
+		<echo message="${current.time}" />
 
 		<jar file="${jar.dir}/hadoop-connector${hadoop.version}.jar" basedir="${build.dir}/classes">
 			<manifest>
 				<attribute name="Version" value="1.0" />
-				<attribute name="Build-Timestamp" value="${tstamp}" />
+				<attribute name="Build-Timestamp" value="${current.time}" />
 			</manifest>
 		</jar>
 
