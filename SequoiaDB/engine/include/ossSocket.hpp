@@ -144,6 +144,7 @@ class _ossSocket : public SDBObject
       INT32 accept ( SOCKET *sock, struct sockaddr *addr, socklen_t *addrlen,
                      INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
       INT32 disableNagle () ;
+      void  quickAck () ;
 
       UINT32 getPeerPort () ;
       INT32  getPeerAddress ( CHAR *pAddress, UINT32 length ) ;
