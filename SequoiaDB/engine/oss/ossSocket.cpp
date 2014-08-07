@@ -733,6 +733,17 @@ error:
    goto done ;
 }
 
+void _ossSocket::quickAck ()
+{
+#if defined( _LINUX )
+   if ( _init )
+   {
+      INT32 i = 0 ;
+      setsockopt( _fd, IPPROTO_TCP, TCP_QUICKACK, (void*)&i, sizeof(i) ) ;
+   }
+#endif // _LINUX
+}
+
 UINT32 _ossSocket::_getPort ( sockaddr_in *addr )
 {
    return ntohs ( addr->sin_port ) ;
