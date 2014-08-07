@@ -65,10 +65,12 @@
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
 			<property name="hadoop.version" value="1.2" />
 			<property name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
+			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
 		</ant>
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
 			<property name="hadoop.version" value="2.2" />
 			<property name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
+			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
 		</ant>
 
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
@@ -218,7 +220,7 @@
 		<copy todir="${RELEASE_DIR}/sequoiadb/lib">
 			<fileset dir="${CODE_DIR}/client/lib/" includes="**/*" />
 		</copy>	
-		<copy todir="${RELEASE_DIR}/tools/sdbsupport">
+		<copy todir="${RELEASE_DIR}/sequoiadb/tools/sdbsupport">
 			<fileset dir="${CODE_DIR}/tools/sdbsupport" includes="**/*" />
 		</copy>
 		<copy todir="${RELEASE_DIR}/sequoiadb/include/">
