@@ -1,11 +1,47 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = omagentTask.cpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          08/06/2014  TZB Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
 #include "ossTypes.h"
+#include "omagentUtil.hpp"
 #include "omagentTask.hpp"
 #include "omagentJob.hpp"
 #include "pmdDef.hpp"
+
 namespace engine
 {
 
-   // omagent manager
+   /*
+      omagent manager
+   */
    _omaTaskMgr::_omaTaskMgr ( UINT64 taskID )
    {
       _taskID = taskID ;
@@ -100,7 +136,9 @@ namespace engine
    }
 
 
-   // install database business
+   /*
+      install database business
+   */
    _omaInstallDBBusinessTask::_omaInstallDBBusinessTask( UINT64 taskID )
    : _omaTask( taskID )
    {
@@ -118,11 +156,17 @@ namespace engine
                                           std::vector<BSONObj> data )
    {
       INT32 rc = SDB_OK ;
-      // init coord
+      // init _coord and _coordResult
       _coord = coord ;
-      // init catalog
+      _coordResult._rc = SDB_OK ;
+      _coordResult._totalNum = _coord.size() ;
+      _coordResult._finishNum = 0 ;
+      // init _catalog and _catalogResult
       _catalog = catalog ;
-      // init data
+      _catalogResult._rc = SDB_OK ;
+      _catalogResult._totalNum = _catalog.size() ;
+      _catalogResult._finishNum = 0 ;
+      // init _mapGroups and _mapGroupsResult
       std::vector<BSONObj>::iterator it = data.begin() ;
       // let data node sort by group name
       while( it != data.end() )
@@ -130,7 +174,7 @@ namespace engine
          const CHAR *name = NULL ;
          std::string key = "" ;
          rc = omaGetStringElement ( *it, OMA_OPTION_DATAGROUPNAME,
-                                        &name ) ;
+                                    &name ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_OPTION_DATAGROUPNAME, rc ) ;
@@ -252,6 +296,7 @@ namespace engine
             PD_LOG( PDERROR, "Failed to start create data node job, rc = %d", rc ) ;
             goto error ;
          }
+         it++ ;
       }
    done:
       return rc ;

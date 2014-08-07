@@ -1,3 +1,35 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = omagentCommand.cpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          08/06/2014  TZB Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
 #include "omagentCommand.hpp"
 #include "omagentUtil.hpp"
 #include "omagentHelper.hpp"
@@ -17,6 +49,7 @@ using namespace bson ;
 
 #define START_DB_PROG "sdbstart"
 
+
 namespace engine
 {
    // command list:
@@ -31,16 +64,26 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaGetHostNames )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
 
-   // _omaCommand
+   /*
+      _omaCommand
+   */
    _omaCommand::_omaCommand ()
    {
+      _scope = NULL ;
    }
 
    _omaCommand::~_omaCommand ()
    {
+      if ( _scope )
+      {
+         _scope->shutdown() ;
+         SAFE_OSS_DELETE ( _scope ) ;
+      }
    }
 
-   // _omaCmdAssit
+   /*
+      _omaCmdAssit
+   */
    _omaCmdAssit::_omaCmdAssit ( OA_NEW_FUNC pFunc )
    {
       if ( pFunc )
@@ -59,14 +102,17 @@ namespace engine
    {
    }
 
-   // _omaCmdBuilder
+   /*
+      _omaCmdBuilder
+   */
    _omaCmdBuilder::_omaCmdBuilder ()
    {
    }
 
    _omaCmdBuilder::~_omaCmdBuilder ()
    {
-      // TODO: do i need to release memory in map ?
+      // TODO: tanzhaobo
+      // do i need to release memory in map ?
    }
 
    _omaCommand* _omaCmdBuilder::create ( const CHAR *command )
@@ -95,12 +141,12 @@ namespace engine
       ret = _cmdMap.insert( std::pair<const CHAR*, OA_NEW_FUNC>(name, pFunc) ) ;
       if ( FALSE == ret.second )
       {
-         PD_LOG ( PDERROR, "Failed to register omagent command %s, \
-                  already exist", name ) ;
+         PD_LOG ( PDERROR,
+                  "Failed to register omagent command %s, already exist",
+                   name ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
    done:
       return rc ;
    error:
@@ -119,14 +165,18 @@ namespace engine
       return NULL ;
    }
 
-   // get omagent command builder
+   /*
+      get omagent command builder
+   */
    _omaCmdBuilder* getOmaCmdBuilder()
    {
       static _omaCmdBuilder cmdBuilder ;
       return &cmdBuilder ;
    }
 
-   // _omaAddHost
+   /*
+      _omaAddHost
+   */
    _omaAddHost::_omaAddHost()
    {
       _scope = NULL ;
@@ -139,11 +189,12 @@ namespace engine
    {
    }
 
-   INT32 _omaAddHost::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                                 const CHAR *pMatcherBuff,
-                                 const CHAR *pSelectBuff,
-                                 const CHAR *pOrderByBuff,
-                                 const CHAR *pHintBuff )
+   INT32 _omaAddHost::init ( INT32 flags, INT64 numToSkip,
+                             INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
    done:
@@ -152,7 +203,6 @@ namespace engine
      goto done ;
    }
 
-// _sptScope* getSptScope
    INT32 _omaAddHost::doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
@@ -165,7 +215,6 @@ namespace engine
    // _omaScanHost
    _omaScanHost::_omaScanHost()
    {
-//      ossPrintf ( "In scan host constructor."OSS_NEWLINE ) ;
       _scope = NULL ;
       _jsFileName = "scanHost.js" ;
       _fileBuff = NULL ;
@@ -175,14 +224,15 @@ namespace engine
 
    _omaScanHost::~_omaScanHost()
    {
-//      ossPrintf ( "In scan host destructor."OSS_NEWLINE ) ;
    }
 
-   INT32 _omaScanHost::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                                 const CHAR *pMatcherBuff,
-                                 const CHAR *pSelectBuff,
-                                 const CHAR *pOrderByBuff,
-                                 const CHAR *pHintBuff )
+   INT32 _omaScanHost::init ( INT32 flags,
+                              INT64 numToSkip,
+                              INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -214,18 +264,17 @@ namespace engine
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
-      // 
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error:
      goto done ;
    }
 
-//   INT32 _omaScanHost::doit (  omagentObjBuff &objBuff )
    INT32 _omaScanHost::doit ( CHAR **ppBody, INT32 &bodyLen,
-                                  INT32 &returnNum )
+                              INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
       std::vector<BSONObj> result ;
@@ -275,7 +324,8 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
                      _jsFileName, rc, detail.toString().c_str() ) ;
-            // TODO:what's in detail ?
+            // TODO: tanzhaobo
+            // what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
             bob.append( OMA_FIELD_PING, false ) ;
@@ -323,7 +373,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
 
-   // _omaInstallRemoteAgent
+   /*
+      _omaInstallRemoteAgent
+   */
    _omaInstallRemoteAgent::_omaInstallRemoteAgent ()
    {
       _scope = NULL ;
@@ -377,8 +429,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       }
 
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error:
@@ -598,8 +651,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :
@@ -813,8 +867,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :
@@ -985,8 +1040,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :
@@ -1151,8 +1207,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :
@@ -1317,8 +1374,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :
@@ -1477,7 +1535,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
       // prepare host table info
       rc = _getHostsTableInfo() ;
       if ( rc )
@@ -1765,8 +1825,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :
@@ -2114,8 +2175,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :
@@ -2252,8 +2314,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :
@@ -2385,7 +2448,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error :

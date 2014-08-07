@@ -1,6 +1,39 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = omagentJobRunCmd.cpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          08/06/2014  TZB Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
 #include "omagentUtil.hpp"
 #include "omagentJobRunCmd.hpp"
 
+using namespace bson ;
 
 namespace engine
 {
@@ -75,8 +108,9 @@ namespace engine
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error:
@@ -107,7 +141,7 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var INSTALL_HOSTNAME = \"%s\"; var INSTALL_SERVICE = \"%s\"; var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
+                      " var INSTALL_HOSTNAME = \'%s\'; var INSTALL_SERVICE = \'%s\'; var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
                       (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
 
          PD_LOG ( PDDEBUG, "Create catalog passes arguments:  var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; var INSTALL_PATH = %s; var CONFIG = %s;",
@@ -154,6 +188,7 @@ namespace engine
          }
          // record successful node for rollback when install error happen
          result._finishNode.push_back( *it ) ;
+         result._finishNum++ ;
          // go to next
          it++ ;
       }
@@ -237,8 +272,9 @@ namespace engine
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error:
@@ -269,7 +305,7 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var INSTALL_HOSTNAME = \"%s\"; var INSTALL_SERVICE = \"%s\"; var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
+                      " var INSTALL_HOSTNAME = \'%s\'; var INSTALL_SERVICE = \'%s\'; var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
                       (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
 
          PD_LOG ( PDDEBUG, "Create coord passes arguments: var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; var INSTALL_PATH = %s; var CONFIG = %s;",
@@ -316,6 +352,7 @@ namespace engine
          }
          // record successful node for rollback when install error happen
          result._finishNode.push_back( *it ) ;
+         result._finishNum++ ;
          // go to next
          it++ ;
       }
@@ -399,8 +436,9 @@ namespace engine
          goto error ;
       }
       // get scope
-      _scope = getSptScope () ;
-
+      rc = getSptScope ( &_scope ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Failed to get scope, rc: %d", rc ) ;
    done:
       return rc ;
    error:
@@ -431,7 +469,7 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var GROUPNAME = \"%s\"; var INSTALL_HOSTNAME = \"%s\"; var INSTALL_SERVICE = \"%s\"; var INSTALL_PATH = \"%s\"; var CONFIG = \"%s\"; ",
+                      " var GROUPNAME = \'%s\'; var INSTALL_HOSTNAME = \'%s\'; var INSTALL_SERVICE = \'%s\'; var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
                       (*it)._dataGroupName, (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
 
          PD_LOG ( PDDEBUG, "Create data node passes arguments: groupname = %s; hostname = %s; svcname = %s; dbpath = %s; config = %s;",
@@ -447,6 +485,7 @@ namespace engine
                             _jsFileName, 1, 1, rval, detail ) ;
          if ( rc )
          {
+            PD_LOG ( PDDEBUG, "Js file is: \n%s\n", _content.c_str() ) ;
             PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
                      _jsFileName, rc, detail.toString().c_str() ) ;
             errMsg = errMsg + "Install data node " +
@@ -479,6 +518,7 @@ namespace engine
          }
          // record successful node for rollback when install error happen
          result._finishNode.push_back( *it ) ;
+         result._finishNum++ ;
          // go to next
          it++ ;
       }

@@ -1,12 +1,44 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = omagentHelper.cpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          08/06/2014  TZB Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
 #include "omagentHelper.hpp"
 #include "omagentUtil.hpp"
 
 namespace engine
 {
 
-/*
-   omagent control func
-*/
+   /*
+      omagent control func
+   */
    BOOLEAN omaIsCommand ( const CHAR *name )
    {
       if ( name && '$' == name[0] )
@@ -30,12 +62,11 @@ namespace engine
       return rc ;
    }
 
-
    INT32 omaInitCommand ( _omaCommand *pCommand ,INT32 flags,
-                              INT64 numToSkip,
-                              INT64 numToReturn, const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff, const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff )
+                          INT64 numToSkip,
+                          INT64 numToReturn, const CHAR *pMatcherBuff,
+                          const CHAR *pSelectBuff, const CHAR *pOrderByBuff,
+                          const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       if ( !pCommand )
@@ -60,9 +91,8 @@ namespace engine
       goto done ;
    }
 
-//   INT32 omaRunCommand ( _omaCommand *pCommand, omaObjBuff &objBuff )
    INT32 omaRunCommand ( _omaCommand *pCommand, CHAR **ppBody,
-                             INT32 &bodyLen, INT32 &returnNum )
+                         INT32 &bodyLen, INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
       if ( !pCommand )
@@ -72,7 +102,6 @@ namespace engine
       }
       try
       {
-//         rc = pCommand->doit ( objBuff ) ;
          rc = pCommand->doit ( ppBody, bodyLen, returnNum ) ;
       }
       catch ( std::exception &e )
@@ -106,8 +135,8 @@ namespace engine
    }
 
    INT32 omaBuildReplyMsgBody ( CHAR **ppBuffer, INT32 *bufferSize,
-                                    SINT32 numReturned,
-                                    vector<BSONObj> *objList )
+                                SINT32 numReturned,
+                                vector<BSONObj> *objList )
    {
       SDB_ASSERT ( ppBuffer && bufferSize && objList, "Invalid input" ) ;
       INT32 rc             = SDB_OK ;
@@ -137,7 +166,7 @@ namespace engine
    }
 
    INT32 omaBuildReplyMsgBody ( CHAR **ppBuffer, INT32 *bufferSize,
-                                    SINT32 numReturned, const BSONObj *bsonobj )
+                                SINT32 numReturned, const BSONObj *bsonobj )
    {
       SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;
       INT32 rc           = SDB_OK ;
