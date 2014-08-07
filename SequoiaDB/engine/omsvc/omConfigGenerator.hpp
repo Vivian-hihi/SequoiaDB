@@ -125,6 +125,7 @@ namespace engine
          BOOLEAN     isValid( const string &value ) ;
          string      getMinValidValue() ;
          string      getValidString() ;
+         string      getErrorDetail() ;
 
       private:
          void        _addRange( const string &value ) ;
@@ -141,6 +142,8 @@ namespace engine
          string      _level ;
          list<rangeValidator *> _validatorList ;
          typedef list<rangeValidator *>::iterator VALIDATORLIST_ITER ;
+
+         string      _errorDetail ;
    } ;
 
    struct omNodeInfo : public SDBObject
@@ -207,6 +210,7 @@ namespace engine
          BOOLEAN    isDiskExist( string dbPath ) ;
          BOOLEAN    isSvcNameConflict( string svcName ) ;
          INT32      addNode( const BSONObj &config ) ;
+         string     getErrorDetail() ;
 
       private:
          INT32      _initNodeInfo( const BSONObj &config ) ;
@@ -232,7 +236,9 @@ namespace engine
          list<omNodeInfo> _nodeInfoList ;
          typedef list<omNodeInfo>::iterator NODEINFOLIST_ITER ;
 
-         set<string> _usedDiskSet ;
+         set<string>      _usedDiskSet ;
+
+         string           _errorDetail ;
    } ;
 
    class omConfigGenerator : public SDBObject

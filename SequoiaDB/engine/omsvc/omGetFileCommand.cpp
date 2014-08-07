@@ -3430,11 +3430,47 @@ namespace engine
                                                    BSONObj &bsonAllConf )
    {
       INT32 rc = SDB_OK ;
+      string templateFile ;
+      list <BSONObj> deployModList ;
+      list <BSONObj>::iterator iterList ;
+      BSONObj bsonDeployMod ;
+      BSONObj bsonDetail ;
       string confDetailFile ;
+
+      templateFile   = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/"
+                       + businessType + OM_TEMPLATE_FILE_NAME ;
+      rc = _readConfTemplate( businessType, templateFile, deployModList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "read template file failed:file=%s,rc=%d", 
+                 templateFile.c_str(), rc ) ;
+         goto error ;
+      }
+
+      iterList = deployModList.begin() ;
+      while ( iterList != deployModList.end() )
+      {
+         string tmpDeployMod = iterList->getStringField( OM_BSON_DEPLOY_MOD ) ;
+         if ( deployMod == tmpDeployMod )
+         {
+            bsonDeployMod = *iterList ;
+            break ;
+         }
+         iterList++ ;
+      }
+
+      if ( iterList == deployModList.end() )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_DEPLOY_MOD ) + " is not exist:"
+                        + deployMod ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         goto error ;
+      }
 
       confDetailFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
                        + businessType + OM_CONFIG_ITEM_FILE_NAME ;
-      rc = _readConfDetail( confDetailFile, bsonAllConf ) ;
+      rc = _readConfDetail( confDetailFile, bsonDetail ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "read config file failed:file=%s,rc=%d", 
@@ -3442,6 +3478,31 @@ namespace engine
          goto error ;
       }
 
+      {
+         BSONArrayBuilder arrayBuilder ;
+         BSONObj properties ;
+         properties = bsonDeployMod.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
+         BSONObjIterator iter1( properties ) ;
+         while ( iter1.more() )
+         {
+            BSONElement ele  = iter1.next() ;
+            BSONObj tmp      = ele.embeddedObject() ;
+            arrayBuilder.append( tmp ) ;
+         }
+
+         properties = bsonDetail.getObjectField( OM_BSON_PROPERTY_ARRAY ) ;
+         BSONObjIterator iter2( properties ) ;
+         while ( iter2.more() )
+         {
+            BSONElement ele  = iter2.next() ;
+            BSONObj tmp      = ele.embeddedObject() ;
+            arrayBuilder.append( tmp ) ;
+         }
+
+         BSONObjBuilder builder ;
+         builder.append( OM_BSON_PROPERTY_ARRAY, arrayBuilder.arr() ) ;
+         bsonAllConf = builder.obj() ;
+      }
    done:
       return rc ;
    error:

@@ -61,13 +61,13 @@ namespace engine
 
    #define OM_DG_NAME_PATTERN          "DATAGROUP"
 
-   #define OM_CLUSTER_TYPE_STANDALONE  "standalone"
-   #define OM_CLUSTER_TYPE_CLUSTER     "distribution"
+   #define OM_DEPLOY_MOD_STANDALONE    "standalone"
+   #define OM_DEPLOY_MOD_DISTRIBUTION  "distribution"
 
-   #define OM_NODE_TYPE_STANDALONE     "standalone"
-   #define OM_NODE_TYPE_COORD          "coord"
-   #define OM_NODE_TYPE_CATALOG        "catalog"
-   #define OM_NODE_TYPE_DATA           "data"
+   #define OM_NODE_ROLE_STANDALONE     "standalone"
+   #define OM_NODE_ROLE_COORD          "coord"
+   #define OM_NODE_ROLE_CATALOG        "catalog"
+   #define OM_NODE_ROLE_DATA           "data"
 
    #define OM_SVCNAME_STEP             (10)
    #define OM_PATH_LENGTH              (256)
@@ -254,51 +254,63 @@ namespace engine
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_TYPE, _type ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", OM_BSON_PROPERTY_TYPE ) ;
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_TYPE ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_WEBNAME, _webName ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", 
-                 OM_BSON_PROPERTY_WEBNAME ) ;
+         
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_WEBNAME ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_DISPLAY, _display ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", 
-                 OM_BSON_PROPERTY_DISPLAY ) ;
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_DISPLAY ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_EDIT, _edit ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", OM_BSON_PROPERTY_EDIT ) ;
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_EDIT ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_DESC, _desc ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", OM_BSON_PROPERTY_DESC ) ;
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_DESC ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_LEVEL, _level ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", 
-                 OM_BSON_PROPERTY_LEVEL ) ;
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_LEVEL ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_NAME, _name ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", OM_BSON_PROPERTY_NAME ) ;
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_NAME ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
@@ -306,16 +318,18 @@ namespace engine
                                _defaultValue ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", 
-                 OM_BSON_PROPERTY_DEFAULT ) ;
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_DEFAULT ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_VALID, _valid ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get field failed:field=%s", 
-                 OM_BSON_PROPERTY_VALID ) ;
+         _errorDetail = string( "get field failed:field=" ) 
+                        + OM_BSON_PROPERTY_VALID ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
@@ -335,8 +349,9 @@ namespace engine
       if ( !isValid( _defaultValue ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "default value is invalid:field=%s,value=%s", 
-                 OM_BSON_PROPERTY_DEFAULT, _defaultValue.c_str() ) ;
+         _errorDetail = _name + string( "'s default value is invalid:value=" )
+                        + _defaultValue + ", valid=" + _valid ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
@@ -384,24 +399,29 @@ namespace engine
       return _valid ;
    }
 
+   string omConfigItem::getErrorDetail()
+   {
+      return _errorDetail ;
+   }
+
    INT32 omDiskInfo::getNodeCount( string role )
    {
-      if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_STANDALONE ) == 0 )
       {
          return standAloneCount ;
       }
 
-      if ( role.compare( OM_NODE_TYPE_COORD ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_COORD ) == 0 )
       {
          return coordCount ;
       }
 
-      if ( role.compare( OM_NODE_TYPE_CATALOG ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_CATALOG ) == 0 )
       {
          return catalogCount ;
       }
 
-      if ( role.compare( OM_NODE_TYPE_DATA ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_DATA ) == 0 )
       {
          return dataCount ;
       }
@@ -445,7 +465,7 @@ namespace engine
    */
    INT32 omHostInfo::_initNodeInfo( const BSONObj &config )
    {
-      BSONElement element ;
+      BSONObj innerConf ;
       NODEINFOLIST_ITER iter ;
       INT32 rc = SDB_OK ;
       if ( config.isEmpty() )
@@ -453,29 +473,14 @@ namespace engine
          goto done ;
       }
 
-      element  = config.getField( OM_BSON_FIELD_CONFIG ) ;
-      if ( element.eoo() || Array != element.type() )
+      innerConf  = config.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "field is not array type:field=%s,type=%d", 
-                 OM_BSON_FIELD_DISK, element.type() ) ;
-         goto error ;
-      }
-      {
-         BSONObjIterator i( element.embeddedObject() ) ;
+         BSONObjIterator i( innerConf ) ;
          while ( i.more() )
          {
             string tmpSvcName ;
             omNodeInfo node ;
             BSONElement ele = i.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "array's element is invalid:element=%s", 
-                       ele.toString().c_str() ) ;
-               goto error ;
-            }
-
             BSONObj oneNode = ele.embeddedObject() ;
             node.dbPath     = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
             node.role       = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
@@ -492,8 +497,6 @@ namespace engine
 
    done:
       return rc ;
-   error:
-      goto done ;
    }
 
    void omHostInfo::_increaseNodeCount( string dbpath, string role )
@@ -518,22 +521,22 @@ namespace engine
       SDB_ASSERT( iterDisk != _diskList.end(), "" ) ;
 
       // calculate the role count
-      if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_STANDALONE ) == 0 )
       {
          _nodeCounter.standAloneCount++ ;
          iterDisk->standAloneCount++ ;
       }
-      else if ( role.compare( OM_NODE_TYPE_COORD ) == 0 )
+      else if ( role.compare( OM_NODE_ROLE_COORD ) == 0 )
       {
          _nodeCounter.coordCount++ ;
          iterDisk->coordCount++ ;
       }
-      else if ( role.compare( OM_NODE_TYPE_CATALOG ) == 0 )
+      else if ( role.compare( OM_NODE_ROLE_CATALOG ) == 0 )
       {
          _nodeCounter.catalogCount++ ;
          iterDisk->catalogCount++ ;
       }
-      else if ( role.compare( OM_NODE_TYPE_DATA ) == 0 )
+      else if ( role.compare( OM_NODE_ROLE_DATA ) == 0 )
       {
          _nodeCounter.dataCount++ ;
          iterDisk->dataCount++ ;
@@ -612,7 +615,7 @@ namespace engine
                            string businessName )
    {
       INT32 rc = SDB_OK ;
-      BSONElement hostElement ;
+      BSONObj disks ;
       CONFIGITEMMAP_ITER iter ;
       string minValue ;
 
@@ -630,47 +633,42 @@ namespace engine
       rc = getBsonStringField( oneHost, OM_BSON_FIELD_HOST_IP, _ip ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "host info miss field=%s", OM_BSON_FIELD_HOST_IP ) ;
+         _errorDetail = string( "host miss field:" ) + OM_BSON_FIELD_HOST_IP ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
       rc = getBsonStringField( oneHost, OM_BSON_FIELD_HOST_NAME, _hostName ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "host info miss field=%s", OM_BSON_FIELD_HOST_NAME ) ;
+         _errorDetail = string( "host miss field:" ) + OM_BSON_FIELD_HOST_NAME ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
 
-      hostElement = oneHost.getField( OM_BSON_FIELD_DISK ) ;
-      if ( hostElement.eoo() || Array != hostElement.type() )
+      disks = oneHost.getObjectField( OM_BSON_FIELD_DISK ) ;
       {
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "field is not array type:field=%s,type=%d", 
-                 OM_BSON_FIELD_DISK, hostElement.type() ) ;
-         goto error ;
-      }
-      {
-         BSONObjIterator i( hostElement.embeddedObject() ) ;
+         BSONObjIterator i( disks ) ;
          while ( i.more() )
          {
             omDiskInfo disk ;
+            disk.init() ;
             string tmp ;
             BSONElement ele = i.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG( PDERROR, "array's element is invalid:element=%s", 
-                       ele.toString().c_str() ) ;
-               goto error ;
-            }
-            disk.init() ;
             BSONObj oneDisk = ele.embeddedObject() ;
             getBsonStringField( oneDisk, OM_BSON_FIELD_DISK_NAME, 
                                 disk.diskName );
             getBsonStringField( oneDisk, OM_BSON_FIELD_DISK_SIZE, tmp );
             disk.totalSize = ossAtoll( tmp.c_str() ) ;
-            getBsonStringField( oneDisk, OM_BSON_FIELD_DISK_MOUNT, 
-                                disk.mountPath );
+            rc = getBsonStringField( oneDisk, OM_BSON_FIELD_DISK_MOUNT, 
+                                     disk.mountPath );
+            if ( SDB_OK != rc )
+            {
+               _errorDetail = string( "disk miss field:" ) 
+                              + OM_BSON_FIELD_DISK_MOUNT ;
+               PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+               goto error ;
+            }
             getBsonStringField( oneDisk, OM_BSON_FIELD_DISK_FREE_SIZE, tmp );
             disk.freeSize = ossAtoll( tmp.c_str() ) ;
             getBsonStringField( oneDisk, OM_BSON_FIELD_DISK_USED, tmp );
@@ -685,14 +683,16 @@ namespace engine
       rc = _initNodeInfo( config ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "_initNodeInfo failed:rc=%d", rc ) ;
+         _errorDetail = "init node info failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
       rc = _initCounter() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "_initCounter failed:rc=%d", rc ) ;
+         _errorDetail = "init counter failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -759,22 +759,22 @@ namespace engine
                    confDetail.role.c_str(), confDetail.svcName ) ;
       confDetail.dbPath  = string( dbPath ) ;
       bestIter->isUsed   = TRUE ;
-      if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_STANDALONE ) == 0 )
       {
          _nodeCounter.standAloneCount++ ;
          bestIter->standAloneCount++ ;
       }
-      else if ( role.compare( OM_NODE_TYPE_COORD ) == 0 )
+      else if ( role.compare( OM_NODE_ROLE_COORD ) == 0 )
       {
          _nodeCounter.standAloneCount++ ;
          bestIter->coordCount++ ;
       }
-      else if ( role.compare( OM_NODE_TYPE_CATALOG ) == 0 )
+      else if ( role.compare( OM_NODE_ROLE_CATALOG ) == 0 )
       {
          _nodeCounter.standAloneCount++ ;
          bestIter->catalogCount++ ;
       }
-      else if ( role.compare( OM_NODE_TYPE_DATA ) == 0 )
+      else if ( role.compare( OM_NODE_ROLE_DATA ) == 0 )
       {
          confDetail.dataGroupID = dataGroupID ;
          _nodeCounter.standAloneCount++ ;
@@ -891,24 +891,29 @@ namespace engine
       return SDB_OK ;
    }
 
+   string omHostInfo::getErrorDetail()
+   {
+      return _errorDetail ;
+   }
+
    INT32 hostNodeCounter::getNodeCount( string role )
    {
-      if ( role.compare( OM_NODE_TYPE_STANDALONE ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_STANDALONE ) == 0 )
       {
          return standAloneCount ;
       }
 
-      if ( role.compare( OM_NODE_TYPE_COORD ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_COORD ) == 0 )
       {
          return coordCount ;
       }
 
-      if ( role.compare( OM_NODE_TYPE_CATALOG ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_CATALOG ) == 0 )
       {
          return catalogCount ;
       }
 
-      if ( role.compare( OM_NODE_TYPE_DATA ) == 0 )
+      if ( role.compare( OM_NODE_ROLE_DATA ) == 0 )
       {
          return dataCount ;
       }
@@ -943,7 +948,7 @@ namespace engine
    /*
    bsonConfValue:
    {
-      "BusinessType":"sequoiadb", "BusinessName":"b1", "ClusterType":"xx", 
+      "BusinessType":"sequoiadb", "BusinessName":"b1", "DeployMod":"xx", 
       "ClusterName":"c1", 
       "Config":
       [
@@ -1025,10 +1030,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       string businessName ;
       string clusterName ;
-
+      string deployMod ;
+      string nodeRole ;
+      BOOLEAN isExistStandalone = FALSE ;
+      int nodeCount             = 0 ;
       businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
       clusterName  = bsonConfValue.getStringField( 
                                                   OM_BSON_FIELD_CLUSTER_NAME ) ;
+      deployMod    = bsonConfValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
 
       BSONObj config = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       BSONObjIterator NodeIter( config ) ;
@@ -1039,6 +1048,11 @@ namespace engine
          string hostName   = oneNode.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
          string dbPath     = oneNode.getStringField( OM_CONF_DETAIL_DBPATH ) ;
          string svcName    = oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+         nodeRole          = oneNode.getStringField( OM_CONF_DETAIL_ROLE ) ;
+         if ( nodeRole.compare( OM_NODE_ROLE_STANDALONE ) == 0 )
+         {
+            isExistStandalone = TRUE ;
+         }
          omHostInfo *pHost = _getHost( hostName ) ;
          if ( NULL == pHost )
          {
@@ -1098,7 +1112,45 @@ namespace engine
          }
 
          pHost->addNode( oneNode ) ;
+         nodeCount++ ;
       }
+
+      if ( deployMod.compare( OM_DEPLOY_MOD_STANDALONE ) == 0 )
+      {
+         if ( nodeCount != 1 )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorDetail = string( "can't install more than one node in " ) 
+                           + OM_DEPLOY_MOD_STANDALONE + " mod" ;
+            PD_LOG( PDERROR, "%s:nodeCount=%d", _errorDetail.c_str(), 
+                    nodeCount ) ;
+            goto error ;
+         }
+
+         if ( nodeRole.compare( OM_NODE_ROLE_STANDALONE ) != 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorDetail = string( "can't install node with role=" ) 
+                           + nodeRole + " in " + OM_DEPLOY_MOD_STANDALONE 
+                           + " mod" ;
+            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         //OM_DEPLOY_MOD_DISTRIBUTION
+         if ( isExistStandalone )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorDetail = string( "can't install node with role=" ) 
+                           + nodeRole + " in " + OM_DEPLOY_MOD_DISTRIBUTION 
+                           + " mod" ;
+            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            goto error ;
+         }
+      }
+
    done:
       return rc ;
    error:
@@ -1296,8 +1348,8 @@ namespace engine
       rc = item.init( templateItem ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "Template bson format error" ) ;
-         PD_LOG( PDERROR, "Template bson format error:rc=%d", rc ) ;
+         _errorDetail = item.getErrorDetail() ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1306,7 +1358,8 @@ namespace engine
          rc = SDB_INVALIDARG ;
          _errorDetail = string("Template value is invalid:item=") 
                         + item.getItemName() + ",value=" 
-                        + itemValue.c_str() ;
+                        + itemValue.c_str() + ",valid="
+                        + item.getValidString() ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
@@ -1425,8 +1478,8 @@ namespace engine
       rc    = pItem->init( oneProperty ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "conf detail bson format error" ) ;
-         PD_LOG( PDERROR, "conf detail bson format error:rc=%d", rc ) ;
+         _errorDetail = pItem->getErrorDetail() ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1649,8 +1702,8 @@ namespace engine
             rc = host->init( oneHost, config, &_confDetailMap, businessName ) ;
             if ( SDB_OK != rc )
             {
-               _errorDetail = string( "initial host failed" ) ;
-               PD_LOG( PDERROR, "initial host failed:rc=%d", rc ) ;
+               _errorDetail = host->getErrorDetail() ;
+               PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
                SDB_OSS_DEL host ;
                goto error ;
             }
@@ -1755,7 +1808,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       sdbConfDetail details ;
-      omHostInfo *host = _getBestHost( OM_NODE_TYPE_STANDALONE ) ;
+      omHostInfo *host = _getBestHost( OM_NODE_ROLE_STANDALONE ) ;
       if ( NULL == host )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
@@ -1764,7 +1817,7 @@ namespace engine
       }
 
       details = _confDetailSample ;
-      host->assign( OM_NODE_TYPE_STANDALONE, "", details ) ;
+      host->assign( OM_NODE_ROLE_STANDALONE, "", details ) ;
       configList.push_back( details ) ;
 
    done:
@@ -1827,7 +1880,7 @@ namespace engine
       }
       while ( coordCount < _confTemplate.coordNum )
       {
-         omHostInfo *host = _getBestHost( OM_NODE_TYPE_COORD ) ;
+         omHostInfo *host = _getBestHost( OM_NODE_ROLE_COORD ) ;
          if ( NULL == host )
          {
             rc = SDB_DMS_RECORD_NOTEXIST ;
@@ -1836,14 +1889,14 @@ namespace engine
          }
 
          details = _confDetailSample ;
-         host->assign( OM_NODE_TYPE_COORD, "", details ) ;
+         host->assign( OM_NODE_ROLE_COORD, "", details ) ;
          configList.push_back( details ) ;
          coordCount++ ;
       }
 
       while ( catalogCount < _confTemplate.catalogNum )
       {
-         omHostInfo *host = _getBestHost( OM_NODE_TYPE_CATALOG) ;
+         omHostInfo *host = _getBestHost( OM_NODE_ROLE_CATALOG) ;
          if ( NULL == host )
          {
             rc = SDB_DMS_RECORD_NOTEXIST ;
@@ -1852,7 +1905,7 @@ namespace engine
          }
 
          details = _confDetailSample ;
-         host->assign( OM_NODE_TYPE_CATALOG, "", details ) ;
+         host->assign( OM_NODE_ROLE_CATALOG, "", details ) ;
          configList.push_back( details ) ;
          catalogCount++ ;
       }
@@ -1861,7 +1914,7 @@ namespace engine
       while ( dataCount < _confTemplate.dataNum )
       {
          string groupID ;
-         omHostInfo *host = _getBestHost( OM_NODE_TYPE_DATA ) ;
+         omHostInfo *host = _getBestHost( OM_NODE_ROLE_DATA ) ;
          if ( NULL == host )
          {
             rc = SDB_DMS_RECORD_NOTEXIST ;
@@ -1873,7 +1926,7 @@ namespace engine
          groupID = _calculateGroupID( baseGroupID, dataCount, 
                                       _confTemplate.replicaNum, 
                                       _confTemplate.dataGroupNum ) ;
-         host->assign( OM_NODE_TYPE_DATA, groupID, details ) ;
+         host->assign( OM_NODE_ROLE_DATA, groupID, details ) ;
          configList.push_back( details ) ;
          dataCount++ ;
       }
@@ -1892,12 +1945,12 @@ namespace engine
       BSONObjBuilder confBuilder ;
       BSONArrayBuilder arrBuilder ;
       if ( ossStrcasecmp( _confTemplate.deployMod.c_str(), 
-                          OM_CLUSTER_TYPE_STANDALONE ) == 0 )
+                          OM_DEPLOY_MOD_STANDALONE ) == 0 )
       {
          rc = _generateStandAloneConfig( configList ) ;
       }
       else if ( ossStrcasecmp( _confTemplate.deployMod.c_str(), 
-                               OM_CLUSTER_TYPE_CLUSTER ) == 0 )
+                               OM_DEPLOY_MOD_DISTRIBUTION ) == 0 )
       {
          rc = _generateClusterConfig( configList ) ;
       }
