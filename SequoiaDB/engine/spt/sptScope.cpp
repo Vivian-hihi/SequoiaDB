@@ -55,15 +55,6 @@ namespace engine
       SDB_ASSERT( NULL != desc, "desc can not be NULL" ) ;
       SDB_ASSERT( NULL != desc->getJSClassName(),
                   "obj name can not be empty" ) ;
-
-      if ( 0 < _descs.count( desc->getJSClassName() ))
-      {
-         PD_LOG( PDERROR, "%s has already been registered",
-                 desc->getJSClassName()) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
       rc = _loadUsrDefObj( desc ) ;
       if ( SDB_OK != rc )
       {
@@ -71,7 +62,6 @@ namespace engine
          goto error ;
       }
 
-      _descs.insert( std::make_pair( desc->getJSClassName(), desc ) ) ;
    done:
       return rc ;
    error:
