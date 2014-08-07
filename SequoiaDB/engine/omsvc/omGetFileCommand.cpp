@@ -2539,8 +2539,9 @@ namespace engine
    INT32 omQueryBusinessCommand::doCommand()
    {
       INT32 rc             = SDB_OK ;
-      string businessFile  = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR
-                             + "/" + OM_BUSINESS_FILE_NAME ;//business.xml
+      string businessFile  = _rootPath + OSS_FILE_SEP 
+                             + OM_BUSINESS_CONFIG_SUBDIR
+                             + OSS_FILE_SEP + OM_BUSINESS_FILE_NAME ;
       BSONObjBuilder opBuilder ;
       BSONObj bsonBusiness ;
       rc = _readConfigFile( businessFile, bsonBusiness ) ;
@@ -2650,8 +2651,8 @@ namespace engine
          goto error ;
       }
 
-      templateFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
-                     + pBusinessType + OM_TEMPLATE_FILE_NAME ;
+      templateFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
+                     + OSS_FILE_SEP + pBusinessType + OM_TEMPLATE_FILE_NAME ;
       rc = _readConfTemplate( pBusinessType, templateFile, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -2757,8 +2758,8 @@ namespace engine
       deployMod    = bsonTemplate.getStringField( OM_BSON_DEPLOY_MOD ) ;
       businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
 
-      file = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
-             + businessType + OM_TEMPLATE_FILE_NAME ;
+      file = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
+             + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME ;
       rc = _readConfTemplate( businessType, file, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -3210,8 +3211,9 @@ namespace engine
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
-      confDetailFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
-                       + businessType + OM_CONFIG_ITEM_FILE_NAME ;
+      confDetailFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
+                       + OSS_FILE_SEP + businessType 
+                       + OM_CONFIG_ITEM_FILE_NAME ;
 
       rc = _readConfDetail(confDetailFile, bsonConfDetail ) ;
       if( SDB_OK != rc )
@@ -3437,8 +3439,8 @@ namespace engine
       BSONObj bsonDetail ;
       string confDetailFile ;
 
-      templateFile   = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/"
-                       + businessType + OM_TEMPLATE_FILE_NAME ;
+      templateFile   = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
+                       + OSS_FILE_SEP + businessType + OM_TEMPLATE_FILE_NAME ;
       rc = _readConfTemplate( businessType, templateFile, deployModList ) ;
       if ( SDB_OK != rc )
       {
@@ -3468,8 +3470,9 @@ namespace engine
          goto error ;
       }
 
-      confDetailFile = _rootPath + "/" + OM_BUSINESS_CONFIG_SUBDIR + "/" 
-                       + businessType + OM_CONFIG_ITEM_FILE_NAME ;
+      confDetailFile = _rootPath + OSS_FILE_SEP + OM_BUSINESS_CONFIG_SUBDIR 
+                       + OSS_FILE_SEP + businessType 
+                       + OM_CONFIG_ITEM_FILE_NAME ;
       rc = _readConfDetail( confDetailFile, bsonDetail ) ;
       if ( SDB_OK != rc )
       {
@@ -4185,12 +4188,12 @@ namespace engine
       INT32 publicCount = 0 ;
 
       static char* filePathTable[][2] = {
-         {"/",    "/"OM_REST_INDEX_HTML}
+         { OSS_FILE_SEP,    OSS_FILE_SEP OM_REST_INDEX_HTML }
       } ;
 
       // only html file, other file is all public now(from jiawen)
       static char *fileAuthorityPublic[] = {
-         "/"OM_REST_LOGIN_HTML ,
+         OSS_FILE_SEP OM_REST_LOGIN_HTML ,
       } ;
 
       pairCount = sizeof( filePathTable ) / ( 2 * sizeof ( char * ) ) ;
