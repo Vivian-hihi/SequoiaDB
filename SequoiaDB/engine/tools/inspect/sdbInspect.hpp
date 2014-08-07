@@ -488,13 +488,13 @@ typedef _ciState ciState ;
 #define INSPECT_OPTIONS \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_HELP, ",h" ), "help" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_VER, ",v" ), "show version" ) \
-   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_ACTION, ",a" ), boost::program_options::value< std::string >(), "action on file specified" ) \
+   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_ACTION, ",a" ), boost::program_options::value< std::string >(), "specify action, \"inspect\" or \"report\" supported, \"inspect\" is set default" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_COORD, ",d" ), boost::program_options::value< std::string >(), "specify the coord address, like: ubuntu-coord:11810" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_LOOP, ",t" ), boost::program_options::value< INT32 >(), "specify times to loop" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_GROUP, ",g" ),boost::program_options::value< std::string >(), "specify group name to be inspect" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_CS, ",c" ), boost::program_options::value< std::string >(), "specify the collection space to be inspected") \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_CL, ",l" ), boost::program_options::value< std::string >(), "specify the collection to be inspected") \
-   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_FILE, ",f" ), boost::program_options::value< std::string >(), "specify the file" ) \
+   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_FILE, ",f" ), boost::program_options::value< std::string >(), "specify the file existed, when specified, other option will be ignored except options that \"-o\" and \"-f\" sepcified " ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_OUTPUT, ",o" ), boost::program_options::value< std::string >(), "specify the output file" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_VIEW, ",w" ), boost::program_options::value< std::string >(), "specify the way to view the report, \"group\" or \"collection\" is avaliable, \"group\" is set default" )
 

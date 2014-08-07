@@ -358,9 +358,9 @@ namespace
          len += ossSnprintf( buffer + len, bufferSize - len,
                              "  # Node state 1 means node has the record,"
                              " or 0 means not."OSS_NEWLINE
-                             "  # The order is ascended by node index"OSS_NEWLINE
-                             "    There is [%d] piece of records haven't"
-                             " synchronized"
+                             "  # The order is ascended by node index."OSS_NEWLINE
+                             "    There is [%d] piece of records that haven't been"
+                             " synchronized."
                              OSS_NEWLINE""OSS_NEWLINE, link.count() ) ;
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
       }
