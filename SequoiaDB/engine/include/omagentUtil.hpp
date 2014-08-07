@@ -35,6 +35,10 @@
 
 #include "core.hpp"
 #include "ossUtil.hpp"
+#include "../bson/bson.hpp"
+#include "sptApi.hpp"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -44,6 +48,23 @@ namespace engine
 
    INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * bufSize,
                     UINT32 * readSize ) ;
+
+   // get spider monkey engine
+   INT32 getSptScope ( _sptScope **scope ) ;
+
+   // get bson field
+   INT32 omaGetIntElement ( const BSONObj &obj, const CHAR *fieldName,
+                            INT32 &value ) ;
+
+   INT32 omaGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
+                               const CHAR **value ) ;
+
+   INT32 omaGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
+                            BSONObj &value ) ;
+
+   INT32 omaGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
+                                BOOLEAN &value ) ;
+
 }
 
 #endif // OMAGENT_UTIL_HPP_

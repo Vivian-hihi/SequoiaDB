@@ -1,3 +1,35 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = omagentCommand.hpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          06/30/2014  TZB Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
 #ifndef OMAGENT_COMMAND_HPP_
 #define OMAGENT_COMMAND_HPP_
 
@@ -131,9 +163,7 @@ namespace engine
                               const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-
    };
-
 
    /*
       _omaScanHost
@@ -154,7 +184,6 @@ namespace engine
                               const CHAR *pOrderByBuff,
                               const CHAR *pHintBuff ) ;
 
-//         virtual INT32 doit ( omagentObjBuff &objBuff ) ;
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
       private:
          _sptScope *_scope ;
@@ -180,10 +209,10 @@ namespace engine
          virtual const CHAR* name () { return "install remote agent" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
 
@@ -207,18 +236,16 @@ namespace engine
          virtual const CHAR* name () { return "install remote agent" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
 
          INT32 check ( const CHAR *pIp, const CHAR *pUserName,
                        const CHAR *pPassword, BSONObj &result ) ;
-
    } ;
-
 
    /*
       _omaInstallAgentProcess
@@ -233,13 +260,12 @@ namespace engine
          virtual const CHAR* name () { return "install agent process" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-
    } ;
 
    /*
@@ -255,10 +281,10 @@ namespace engine
          virtual const CHAR* name () { return "remove agent process" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
 
@@ -277,10 +303,10 @@ namespace engine
          virtual const CHAR* name () { return "stop agent process" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
 
@@ -300,13 +326,12 @@ namespace engine
          virtual const CHAR* name () { return "get host info" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-
    } ;
 
    /*
@@ -322,10 +347,10 @@ namespace engine
          virtual const CHAR* name () { return "reg hosts info" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
 
@@ -335,9 +360,7 @@ namespace engine
          INT32 _getContentForJS ( const CHAR *pIp, std::vector<string> &hostsInfo ) ;
 
          std::map<string, string> _hostsTableInfo ;
-
    } ;
-
 
    /*
       _omaGetHostNames
@@ -352,16 +375,15 @@ namespace engine
          virtual const CHAR* name () { return "get host name" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
 
          INT32 getHostName( const CHAR *pIp, const CHAR *pUserName,
                             const CHAR *pPassword, BSONObj &result ) ;
-
    } ;
 
    /*
@@ -377,10 +399,10 @@ namespace engine
          virtual const CHAR* name () { return "install db business" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff ) ;
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
 
@@ -418,10 +440,10 @@ namespace engine
          virtual const CHAR* name () { return "create virtual coord" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff )
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff )
          {
             return 0 ;
          }
@@ -457,10 +479,10 @@ namespace engine
          virtual const CHAR* name () { return "remove virtual coord" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff )
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff )
          {
             return 0 ;
          }
@@ -500,10 +522,10 @@ namespace engine
          virtual const CHAR* name () { return "" ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) { return 0 ; }
+                               const CHAR *pMatcherBuff,
+                               const CHAR *pSelectBuff,
+                               const CHAR *pOrderByBuff,
+                               const CHAR *pHintBuff ) { return 0 ; }
 
          INT32 init() ;
 
