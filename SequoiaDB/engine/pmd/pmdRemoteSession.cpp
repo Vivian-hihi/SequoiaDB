@@ -73,7 +73,7 @@ namespace engine
    {
       _isDisconnect  = FALSE ;
 
-      if ( _event._Data && PMD_EDU_MEM_NONE != _event._eventType )
+      if ( _event._Data && PMD_EDU_MEM_NONE != _event._dataMemType )
       {
          pmdEduEventRelase( _event, _parent->getEDUCB() ) ;
       }
