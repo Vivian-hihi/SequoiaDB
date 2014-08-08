@@ -1790,7 +1790,21 @@ namespace
                   continue ;
                }
 
+               sdbclient::sdb db;
+               rc = db.connect( hostname.c_str(), servicename.c_str() ) ;
+               if ( SDB_OK != rc )
+               {
+                  std::cout << "Warning: connot connect to " << hostname
+                            << ":" << servicename << std::endl ;
+                  std::cout << "Node is invalid, it will not be inspected"
+                            << std::endl ;
+                  rc = SDB_OK ;
+                  ++cit ;
+                  continue ;
+               }
+
                // not master node
+               db.disconnect() ;
                ossMemcpy( node->_hostname, hostname.c_str(),
                                            CI_HOSTNAME_SIZE ) ;
                ossMemcpy( node->_serviceName, servicename.c_str(),
@@ -1891,6 +1905,13 @@ namespace
                ossMemcpy( cl->_clName, name.c_str(), CI_CL_FULLNAME_SIZE ) ;
                collections.add( cl ) ;
             }
+            else
+            {
+               std::cout << "Error: cannot find collection: "
+                         << clName << std::endl ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
          }
          rc = cursor.next( collection ) ;
       }
@@ -1979,7 +2000,7 @@ namespace
             ciRecord *rd = records.createNode() ;
             if ( NULL == rd )
             {
-               std::cout << "Error: failed to allocate ciRecord" 
+               std::cout << "Error: failed to allocate ciRecord"
                          << std::endl ;
                rc = SDB_OOM ;
                goto error ;
@@ -2109,7 +2130,7 @@ namespace
                rc = getCiRecord( cursors, records ) ;
                if ( SDB_OK != rc )
                {
-                  std::cout << "Error: failed to compare record among nodes"
+                  std::cout << "Error: failed to re record among nodes"
                             << std::endl ;
                   goto error ;
                }
