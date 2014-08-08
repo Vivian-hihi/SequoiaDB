@@ -788,16 +788,20 @@ namespace engine
                                       const BSONObj &confValue )
    {
       BSONObjBuilder builder ;
+      BSONElement taskElement ;
+      CHAR taskID[ OM_INT32_LENGTH ] ;
       INT32 rc = SDB_OK ;
       if ( isInstallTaskExist() )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "previou task have not yet finished:task=%s",  
+         PD_LOG( PDERROR, "previous task have not yet finished:task=%s",  
                  _omTaskInfo._taskID.c_str() ) ;
          goto error ;
       }
 
-      _omTaskInfo._taskID        = taskInfo.getStringField( OM_BSON_TASKID ) ;
+      taskElement                = taskInfo.getField( OM_BSON_TASKID ) ;
+      ossLltoa( taskElement.numberLong(), taskID, OM_INT32_LENGTH ) ;
+      _omTaskInfo._taskID        = taskID ;
       _omTaskInfo._agentHostName = agentHost ;
       _omTaskInfo._agentSvcName  = agentService ;
       _omTaskInfo._detail        = taskInfo.getStringField( 
@@ -844,7 +848,7 @@ namespace engine
       taskID        = _omTaskInfo._taskID ;
       isAllFinished = _omTaskInfo._isAllFinished ;
       detail        = _omTaskInfo._detail ;
-      progress      = _omTaskInfo._progress ;
+      progress      = _omTaskInfo._progress.copy() ;
    }
 
    void _omManager::finishInstallTask( BSONObj &taskDetail )
@@ -1022,7 +1026,7 @@ namespace engine
          goto done ;
       }
       
-      builder.append( OM_BSON_TASKID, taskID ) ;
+      builder.append( OM_BSON_TASKID, ossAtoll(taskID.c_str() ) ) ;
       msg = builder.obj() ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, OM_INSTALL_BUSINESS_REQ, 
                              0, 0, 0, -1, &msg, NULL, NULL, NULL ) ;

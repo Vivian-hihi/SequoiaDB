@@ -71,7 +71,6 @@ namespace engine
 
    #define OM_SVCNAME_STEP             (10)
    #define OM_PATH_LENGTH              (256)
-   #define OM_INT32_LENGTH             (20)
    #define OM_INT32_MAXVALUE_STR       "2147483647"
 
    #define OM_CONF_VALUE_INT_TYPE      "int"

@@ -56,6 +56,7 @@ namespace engine
    // Session Time out
    #define OM_REST_SESSION_TIMEOUT           ( 10 * 60 * 1000 )
 
+   #define OM_INT32_LENGTH                   (20)
 
    // OM user's table
    #define  OM_DEFAULT_LOGIN_USER            "admin"

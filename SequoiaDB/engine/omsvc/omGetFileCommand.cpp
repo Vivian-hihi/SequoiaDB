@@ -3634,9 +3634,8 @@ namespace engine
                                                   const BSONObj &bsonConfValue )
    {
       INT32 rc          = SDB_OK ;
-      string taskID ;
+      BSONElement taskElement ;
       BSONObj result ;
-      BSONElement element ;
       CHAR* pContent    = NULL ;
       INT32 contentSize = 0 ;
       omManager *om     = NULL ;
@@ -3695,7 +3694,18 @@ namespace engine
          goto error ;
       }
 
-      taskID = result.getField( OM_BSON_TASKID ) ;
+      taskElement = result.getField( OM_BSON_TASKID ) ;
+      if ( taskElement.type() != NumberLong )
+      {
+         CHAR type[ OM_INT32_LENGTH ] ;
+         ossItoa( taskElement.type(), type, OM_INT32_LENGTH ) ;
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( "agent's response format error:bson field=" )
+                        + OM_BSON_TASKID + ",type=" + type ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         goto error ;
+      }
+
       rc = om->saveInstallTask( _localAgentHost, _localAgentService, result, 
                                 bsonConfValue ) ;
       SDB_ASSERT( ( SDB_OK == rc ), "" ) ;
@@ -3911,7 +3921,7 @@ namespace engine
       BSONObj tmpTest ;
       tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
       tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
-      tmpTestBuilder.append( OM_BSON_TASKID, "ad" ) ;
+      tmpTestBuilder.append( OM_BSON_TASKID, 12345LL ) ;
       tmpTestBuilder.append( OM_BSON_ISFINISHED, false ) ;
       {
          BSONObjBuilder haha ;
@@ -4010,7 +4020,7 @@ namespace engine
       sdbGetOMManager()->getTaskWriteLock() ;
       _testSaveTask() ;
       _testUpdateTask() ;
-      _testFinishTask() ;
+      //_testFinishTask() ;
       sdbGetOMManager()->getInstallTask( status, taskID, isAllFinished, detail,
                                          progress ) ;
       sdbGetOMManager()->releaseTaskWriteLock() ;
@@ -4025,6 +4035,7 @@ namespace engine
       else
       {
          BSONObjBuilder opBuilder ;
+         BSONObj op ;
          INT32 restRC = SDB_OK ;
          if ( taskID.compare( restTaskID ) != 0 )
          {
@@ -4055,7 +4066,8 @@ namespace engine
          opBuilder.append( OM_BSON_TASKID, taskID ) ;
          opBuilder.append( OM_BSON_ISFINISHED, isAllFinished ) ;
          opBuilder.appendArray( OM_BSON_TASK_PROGRESS, progress ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+         op = opBuilder.obj() ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, op ) ;
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       }
 
