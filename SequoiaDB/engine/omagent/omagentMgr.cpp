@@ -32,9 +32,8 @@
 
 
 #include "omagentMgr.hpp"
+#include "omagentSession.hpp"
 #include "pmd.hpp"
-#include "ossVer.hpp"
-
 
 namespace engine
 {
@@ -78,8 +77,6 @@ namespace engine
       _hostKey += SDBCM_CONF_PORT ;
 
       PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
-         ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" )
-         ( PMD_OPTION_VERSION, "show version" )
          ( SDBCM_CONF_DFTPORT, po::value<string>(),
          "sdbcm default listening port" )
          ( _hostKey.c_str(), po::value<string>(),
@@ -143,20 +140,6 @@ namespace engine
          goto error ;
       }
 
-      /// read cmd first
-      if ( vm.count( PMD_OPTION_HELP ) )
-      {
-         cout << desc << endl ;
-         rc = SDB_PMD_HELP_ONLY ;
-         goto done ;
-      }
-      if ( vm.count( PMD_OPTION_VERSION ) )
-      {
-         ossPrintVersion( "Version" ) ;
-         rc = SDB_PMD_VERSION_ONLY ;
-         goto done ;
-      }
-
       rc = pmdCfgRecord::init( &vm, NULL ) ;
       if ( rc )
       {
@@ -199,6 +182,26 @@ namespace engine
       //  end map configs }}
 
       return getResult () ;
+   }
+
+   INT32 _omAgentOptions::postLoaded()
+   {
+      INT32 rc = SDB_OK ;
+
+      // make sure directory exist
+      rc = ossMkdir( getLocalCfgPath(), OSS_CREATE|OSS_READWRITE ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         PD_LOG( PDERROR, "Failed to create dir: %s, rc: %d",
+                 getLocalCfgPath(), rc ) ;
+         goto error ;
+      }
+      rc = SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -247,8 +250,18 @@ namespace engine
                                                    UINT64 sessionID,
                                                    void * data )
    {
-      // TODO:XUJIANHUI
-      return NULL ;
+      clsSession *pSession = NULL ;
+
+      if ( SDB_SESSION_OMAGENT == sessionType )
+      {
+         pSession = SDB_OSS_NEW omaSession( sessionID ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "Invalid session type[%d]", sessionType ) ;
+      }
+
+      return pSession ;
    }
 
    /*
@@ -266,7 +279,9 @@ namespace engine
      _timerHandler( &_sessionMgr ),
      _netAgent( &_msgHandler )
    {
-      _oneSecTimer      = NET_INVALID_TIMER_ID ;
+      _oneSecTimer         = NET_INVALID_TIMER_ID ;
+      _nodeMonitorTimer    = NET_INVALID_TIMER_ID ;
+      _watchAndCleanTimer  = NET_INVALID_TIMER_ID ;
    }
 
    _omAgentMgr::~_omAgentMgr()
@@ -311,6 +326,14 @@ namespace engine
          goto error ;
       }
 
+      // 3. init node manager
+      rc = _nodeMgr.init() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init node manager failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -325,6 +348,10 @@ namespace engine
 
       // set primary
       pmdSetPrimary( TRUE ) ;
+
+      // active node manager
+      rc = _nodeMgr.active() ;
+      PD_RC_CHECK( rc, PDERROR, "Active node manager failed, rc: %d", rc ) ;
 
       // 1. start om manager edu
       rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (void*)this, &eduID ) ;
@@ -349,6 +376,20 @@ namespace engine
          PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
          goto error ;
       }
+      rc = _netAgent.addTimer( 2 * OSS_ONE_SEC, &_timerHandler,
+                               _nodeMonitorTimer ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
+         goto error ;
+      }
+      rc = _netAgent.addTimer( 120 * OSS_ONE_SEC, &_timerHandler,
+                               _watchAndCleanTimer ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
+         goto error ;
+      }
 
    done:
       return rc ;
@@ -358,6 +399,8 @@ namespace engine
 
    INT32 _omAgentMgr::deactive()
    {
+      iPmdProc::stop( 0 ) ;
+
       // 1. kill timer
       if ( NET_INVALID_TIMER_ID != _oneSecTimer )
       {
@@ -379,6 +422,7 @@ namespace engine
 
    INT32 _omAgentMgr::fini()
    {
+      _nodeMgr.fini() ;
       _sessionMgr.fini() ;
 
       return SDB_OK ;
@@ -404,11 +448,30 @@ namespace engine
          //Check _deqShdDeletingSessions
          _sessionMgr.onTimer( interval ) ;
       }
+      else if ( _nodeMonitorTimer == timerID )
+      {
+         _nodeMgr.monitorNodes() ;
+      }
+      else if ( _watchAndCleanTimer == timerID )
+      {
+         _nodeMgr.watchManualNodes() ;
+         _nodeMgr.cleanDeadNodes() ;
+      }
    }
 
    omAgentOptions* _omAgentMgr::getOptions()
    {
       return &_options ;
+   }
+
+   omAgentNodeMgr* _omAgentMgr::getNodeMgr()
+   {
+      return &_nodeMgr ;
+   }
+
+   netRouteAgent* _omAgentMgr::getRouteAgent()
+   {
+      return &_netAgent ;
    }
 
    /*

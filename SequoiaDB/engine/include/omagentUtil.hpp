@@ -35,10 +35,16 @@
 
 #include "core.hpp"
 #include "ossUtil.hpp"
-#include "../bson/bson.hpp"
-#include "sptApi.hpp"
+#include "omagentDef.hpp"
 
-using namespace bson ;
+#include <string>
+#include <vector>
+
+//#include "../bson/bson.hpp"
+//#include "sptApi.hpp"
+
+using namespace std ;
+//using namespace bson ;
 
 namespace engine
 {
@@ -48,7 +54,7 @@ namespace engine
 
    INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * bufSize,
                     UINT32 * readSize ) ;
-
+/*
    // get spider monkey engine
    INT32 getSptScope ( _sptScope **scope ) ;
 
@@ -63,7 +69,24 @@ namespace engine
                             BSONObj &value ) ;
 
    INT32 omaGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
-                                BOOLEAN &value ) ;
+                                BOOLEAN &value ) ; */
+
+   /*
+      Node Manager Tool Functions Define
+   */
+   INT32          omStartDBNode( const CHAR *pExecName,
+                                 const CHAR *pCfgPath,
+                                 OSSPID &pid ) ;
+
+   INT32          omStopDBNode( const CHAR *pExecName,
+                                const CHAR *pServiceName ) ;
+
+   INT32          omGetSvcListFromConfig( const CHAR *pCfgRootDir,
+                                          vector< string > &svcList ) ;
+
+   INT32          omCheckDBProcessBySvc( const CHAR *svcname,
+                                         BOOLEAN &isRuning,
+                                         OSSPID &pid ) ;
 
 }
 

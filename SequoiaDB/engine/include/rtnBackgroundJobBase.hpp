@@ -56,7 +56,11 @@ namespace engine
       RTN_JOB_PAGECLEANER        = 9,
       RTN_JOB_CREATECATALOG      = 10, // create catalog
       RTN_JOB_CREATECOORD        = 11, // create coord
-      RTN_JOB_CREATEDATA         = 12  // create data node
+      RTN_JOB_CREATEDATA         = 12, // create data node
+      RTN_JOB_STARTNODE          = 13, // start node
+      RTN_JOB_CMSYNC             = 14, // cm and cmd sync info
+
+      RTN_JOB_MAX
    } ;
 
    enum RTN_JOB_MUTEX_TYPE

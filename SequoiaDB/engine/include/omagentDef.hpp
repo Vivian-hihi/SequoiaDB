@@ -49,6 +49,27 @@ namespace engine
    #define SDBCM_AUTO_START            "AutoStart"
 
    #define SDBCM_DFT_PORT              11790
+   #define SDBCM_OPTION_PREFIX         "--"
+
+   /*
+      CM REMOTE CODE DEFINE
+   */
+   enum CM_REMOTE_OP_CODE
+   {
+      SDBSTART       = 1,
+      SDBSTOP        = 2,
+      SDBADD         = 3,
+      SDBMODIFY      = 4,
+      SDBRM          = 5,
+      SDBSTARTALL    = 6,
+      SDBSTOPALL     = 7
+   } ;
+
+   /*
+      SDB STOP RETURN RC
+   */
+   #define STOPFAIL              1
+   #define STOPPART              3
 
    /*
       cm define
@@ -58,7 +79,8 @@ namespace engine
    #define SDBCM_LOG_DIR_NAME          "log"
 
    #define SDBCM_EXE_FILE_NAME         "sdbcm"
-   #define SDBCM_CFG_FILE_NAME         "sdbcm.conf"
+   #define SDBCM_CFG_FILE_NAME         SDBCM_EXE_FILE_NAME".conf"
+   #define SDBCM_DIALOG_FILE_NAME      SDBCM_EXE_FILE_NAME".log"
 
    #define SDB_CM_ROOT_PATH            ".." OSS_FILE_SEP SDBCM_CONF_DIR_NAME OSS_FILE_SEP
    #define SDBCM_CONF_PATH_FILE        SDB_CM_ROOT_PATH SDBCM_CFG_FILE_NAME
@@ -66,8 +88,7 @@ namespace engine
    #define SDBCM_LOG_PATH              SDB_CM_ROOT_PATH SDBCM_LOG_DIR_NAME
 
 #if defined (_LINUX)
-      #define SDBCM_NAME_BUF_LEN       255
-      #define SDBCM_NAME_PATTERN       "sdbcm(%d)"
+      #define SDBCM_NAME_PATTERN       "sdbcm(%s)"
       #define SDBSTARTPROG             "sdbstart"
       #define SDBSTOPPROG              "sdbstop"
 #elif defined (_WINDOWS)

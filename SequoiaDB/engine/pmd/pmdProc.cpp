@@ -46,52 +46,56 @@
 
 namespace engine
 {
-   BOOLEAN iPmdProc::_isRunning = FALSE;
+   /*
+      _iPmdProc implement
+   */
 
-   iPmdProc::iPmdProc()
+   BOOLEAN _iPmdProc::_isRunning = FALSE;
+
+   _iPmdProc::_iPmdProc()
    {
-      _isRunning = TRUE;
-      regSignalHandler();
+      _isRunning = TRUE ;
    }
 
-   iPmdProc::~iPmdProc()
+   _iPmdProc::~_iPmdProc()
    {
    }
 
-   void iPmdProc::stop( INT32 sigNum )
+   void _iPmdProc::stop( INT32 sigNum )
    {
       if ( 0 != sigNum )
       {
          PD_LOG( PDEVENT, "Recieved signal[%d], stop...", sigNum ) ;
       }
-      _isRunning = FALSE;
+      _isRunning = FALSE ;
    }
 
-   INT32 iPmdProc::regSignalHandler()
+   INT32 _iPmdProc::regSignalHandler()
    {
       INT32 rc = SDB_OK;
 #if defined (_LINUX)
       ossSigSet sigSet ;
-      sigSet.sigAdd( SIGHUP );
-      sigSet.sigAdd( SIGINT );
-      sigSet.sigAdd( SIGTERM );
-      sigSet.sigAdd( SIGPWR );
+      sigSet.sigAdd( SIGHUP ) ;
+      sigSet.sigAdd( SIGINT ) ;
+      sigSet.sigAdd( SIGTERM ) ;
+      sigSet.sigAdd( SIGPWR ) ;
       rc = ossRegisterSignalHandle( sigSet,
-               (SIG_HANDLE)(&iPmdProc::stop) );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to register signals, rc = %d",
-                  rc );
+               (SIG_HANDLE)(&iPmdProc::stop) ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to register signals, rc = %d",
+                   rc ) ;
+
    done:
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
 #else
-      return rc;
+      return rc ;
 #endif
    }
 
-   BOOLEAN iPmdProc::isRunning()
+   BOOLEAN _iPmdProc::isRunning()
    {
-      return _isRunning;
+      return _isRunning ;
    }
+
 }

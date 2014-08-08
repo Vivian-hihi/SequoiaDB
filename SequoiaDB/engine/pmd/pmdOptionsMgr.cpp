@@ -308,11 +308,12 @@ namespace engine
    /*
       _pmdCfgRecord implement
    */
-   _pmdCfgRecord::_pmdCfgRecord ()
+   _pmdCfgRecord::_pmdCfgRecord ( BOOLEAN readOnly )
    {
       _result = SDB_OK ;
       _changeID = 0 ;
       _pConfigHander = NULL ;
+      _readOnly = readOnly ;
    }
    _pmdCfgRecord::~_pmdCfgRecord ()
    {
@@ -346,6 +347,10 @@ namespace engine
             goto error ;
          }
       }
+      if ( isReadOnly() )
+      {
+         goto done ;
+      }
       rc = postLoaded() ;
       if ( rc )
       {
@@ -378,6 +383,10 @@ namespace engine
       {
          goto restore ;
       }
+      if ( isReadOnly() )
+      {
+         goto done ;
+      }
       rc = postLoaded() ;
       if ( rc )
       {
@@ -408,6 +417,10 @@ namespace engine
       if ( rc )
       {
          goto error ;
+      }
+      if ( isReadOnly() )
+      {
+         goto done ;
       }
       rc = postLoaded() ;
       if ( rc )
@@ -879,7 +892,8 @@ namespace engine
    /*
       _pmdOptionsMgr implement
    */
-   _pmdOptionsMgr::_pmdOptionsMgr()
+   _pmdOptionsMgr::_pmdOptionsMgr( BOOLEAN readOnly )
+   :_pmdCfgRecord( readOnly )
    {
       // rdx members
       ossMemset( _krcbDbPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
@@ -1522,6 +1536,58 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdOptionsMgr::removeAllDir()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _dmsTmpBlkPath[ 0 ] != 0 && 0 == ossAccess( _dmsTmpBlkPath ) )
+      {
+         rc = ossDelete( _dmsTmpBlkPath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _dmsTmpBlkPath, rc ) ;
+      }
+
+      if ( _krcbBkupPath[ 0 ] != 0 && 0 == ossAccess( _krcbBkupPath ) )
+      {
+         rc = ossDelete( _krcbBkupPath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _krcbBkupPath, rc ) ;
+     }
+
+      if ( _krcbLogPath[ 0 ] != 0 && 0 == ossAccess( _krcbLogPath ) )
+      {
+         rc = ossDelete( _krcbLogPath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _krcbLogPath, rc ) ;
+     }
+
+      if ( _krcbDiagLogPath[ 0 ] != 0 && 0 == ossAccess( _krcbDiagLogPath ) )
+      {
+         rc = ossDelete( _krcbDiagLogPath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _krcbDiagLogPath, rc ) ;
+     }
+
+      if ( _krcbIndexPath[ 0 ] != 0 && 0 == ossAccess( _krcbIndexPath ) )
+      {
+         rc = ossDelete( _krcbIndexPath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _krcbIndexPath, rc ) ;
+     }
+
+      if ( _krcbDbPath[ 0 ] != 0 && 0 == ossAccess( _krcbDbPath ) )
+      {
+         rc = ossDelete( _krcbDbPath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _krcbDbPath, rc ) ;
+     }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR__MKDIR, "_pmdOptionsMgr::_mkdir" )
    INT32 _pmdOptionsMgr::_mkdir()
    {
@@ -1588,9 +1654,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY (SDB__PMDOPTMGR_REFLUSH2FILE ) ;
       std::string line ;
-      _OSS_FILE file ;
       CHAR conf[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-      BOOLEAN opened = FALSE ;
 
       rc = pmdCfgRecord::toString( line ) ;
       if ( SDB_OK != rc )
@@ -1608,49 +1672,14 @@ namespace engine
          goto error;
       }
 
-      /// TODO: backup first. rollback when failed flush file.
-      rc = ossOpen ( conf, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
-                     OSS_RWXU, file ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to open file[%s]:%d", conf, rc ) ;
-         goto error ;
-      }
-
-      opened = TRUE ;
-
-      {
-         SINT64 written = 0 ;
-         SINT64 len = line.size() ;
-         while ( 0 < len )
-         {
-            SINT64 tmpWritten = 0 ;
-            rc = ossWrite( &file, line.c_str() + written , len, &tmpWritten ) ;
-            if ( rc && SDB_INTERRUPT != rc )
-            {
-               PD_LOG( PDERROR, "Failed to write file[%s]:%d", conf, rc ) ;
-               goto error ;
-            }
-            written += tmpWritten ;
-            len -= tmpWritten ;
-            rc = SDB_OK ;
-         }
-      }
+      rc = utilWriteConfigFile( conf, line.c_str(), FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to write config[%s], rc: %d",
+                   conf, rc ) ;
 
    done:
-      if ( opened )
-      {
-         ossClose( file ) ;
-      }
       PD_TRACE_EXIT ( SDB__PMDOPTMGR_REFLUSH2FILE) ;
       return rc ;
    error:
-      if ( opened )
-      {
-         ossClose( file ) ;
-         ossDelete( conf ) ;
-         opened = FALSE ;
-      }
       goto done ;
    }
 

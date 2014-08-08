@@ -33,50 +33,80 @@
 #ifndef OMAGENT_SESSION_HPP_
 #define OMAGENT_SESSION_HPP_
 
-#include "core.hpp"
-#include "oss.hpp"
-
-#include "pmdSession.hpp"
 #include "omagent.hpp"
+#include "clsSession.hpp"
+#include "netRouteAgent.hpp"
+
+#include "../bson/bson.h"
+using namespace bson ;
 
 namespace engine
 {
-   // TODO: tanzhaobo
-//   class _omaSession : public _pmdSession
-   class _omaSession : public SDBObject
+
+   class _omAgentNodeMgr ;
+
+   /*
+      _omaSession define
+   */
+   class _omaSession : public _clsSession
    {
+      DECLARE_OBJ_MSG_MAP()
+
       public:
-         _omaSession ( SOCKET fd ) ;
+         _omaSession ( UINT64 sessionID ) ;
          virtual ~_omaSession () ;
 
          virtual UINT64 identifyID() { return (UINT64)SDB_OK ; }
          virtual INT32 getServiceType() const { return SDB_OK ; }
+
          virtual SDB_SESSION_TYPE sessionType() const ;
+         virtual EDU_TYPES eduType () const ;
 
-         virtual void clear() {}
-         virtual const CHAR* sessionName() const { return "" ; }
+         virtual void    onRecieve ( const NET_HANDLE netHandle,
+                                     MsgHeader * msg ) ;
+         virtual BOOLEAN timeout ( UINT32 interval ) ;
 
-         INT32 run () ;
+         virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
 
+      protected:
+         virtual void   _onDetach () ;
+         virtual void   _onAttach () ;
+         virtual INT32  _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg ) ;
+
+      // msg map function
+      protected:
+         INT32       _onNodeMgrReq( const NET_HANDLE &handle,
+                                    MsgHeader *pMsg ) ;
+
+      protected:
+
+         INT32 _reply ( MsgOpReply *header, const CHAR *pBody,
+                        INT32 bodyLen ) ;
+         INT32 _reply ( INT32 flags, MsgHeader *pSrcReqMsg ) ;
+
+/*
          INT32 _processMsg ( MsgHeader *msg ) ;
 
          INT32 _processOPMsg ( MsgHeader *msg, CHAR **ppBody,
                                INT32 &bodyLen, INT32 &returnNum ) ;
 
-         INT32 _reply ( MsgOpReply* responseMsg, const CHAR *pBody,
-                        INT32 bodyLen ) ;
-
          INT32 _buildReplyHeader( MsgHeader *msg ) ;
 
          INT32 _onQueryReqMsg( MsgHeader *msg, CHAR **ppBody,
                                INT32 &bodyLen, INT32 &returnNum ) ;
-
+*/
       private:
          MsgOpReply       _replyHeader ;
          BSONObj          _errorInfo ;
 
          BOOLEAN          _needRollback ;
          BOOLEAN          _needReply ;
+
+         _omAgentNodeMgr      *_pNodeMgr ;
+         _netRouteAgent       *_pAgent ;
+
+         ossTimestamp         _lastRecvTime ;
+
    } ;
 
    typedef _omaSession omaSession ;

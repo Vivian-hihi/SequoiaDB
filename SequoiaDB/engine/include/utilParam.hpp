@@ -55,6 +55,9 @@ namespace engine
                               po::options_description &desc,
                               po::variables_map &vm ) ;
 
+   INT32 utilWriteConfigFile( const CHAR * pFile, const CHAR * pData,
+                              BOOLEAN createOnly = FALSE ) ;
+
 }
 
 #endif // UTILPARAM_HPP__

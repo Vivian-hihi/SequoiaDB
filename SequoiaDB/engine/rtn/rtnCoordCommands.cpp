@@ -51,7 +51,7 @@
 #include "pmdOptions.hpp"
 #include "rtnRemoteExec.hpp"
 #include "dms.hpp"
-#include "rtnCM.hpp"
+#include "omagentDef.hpp"
 #include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
@@ -7391,7 +7391,7 @@ namespace engine
       const CHAR *pHostName = NULL;
       SINT32 retCode = 0 ;
       BSONObj boLocalSvc ;
-      BSONObj boDummy ;
+      BSONObj boBackup = BSON( "Backup" << true ) ;
 
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
                             &numToReturn, &pQuery, &pFieldSelector,
@@ -7440,8 +7440,8 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Remote node execute(start) failed(rc=%d)", rc ) ;
-         // boDummy for remove node to backup node info
-         rtnRemoteExec( SDBRM, pHostName, &retCode, &boNodeConfig, &boDummy ) ;
+         // boBackup for remove node to backup node info
+         rtnRemoteExec( SDBRM, pHostName, &retCode, &boNodeConfig, &boBackup ) ;
          goto error ;
       }
 

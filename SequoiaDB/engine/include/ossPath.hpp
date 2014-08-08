@@ -5,6 +5,7 @@
 #include "ossPath.h"
 #include <string>
 #include <map>
+#include <vector>
 
 using namespace std ;
 
@@ -12,6 +13,10 @@ INT32 ossEnumFiles( const string &dirPath,
                     map<string, string> &mapFiles,
                     const CHAR *filter = NULL,
                     UINT32 deep = 1 ) ;
+
+INT32 ossEnumSubDirs( const string &dirPath,
+                      vector< string > &subDirs,
+                      UINT32 deep = 1 ) ;
 
 
 #endif // OSSPATH_HPP__

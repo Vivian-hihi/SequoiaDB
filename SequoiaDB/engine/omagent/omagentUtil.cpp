@@ -33,6 +33,12 @@
 #include "ossPrimitiveFileOp.hpp"
 #include "pd.hpp"
 #include "omagentUtil.hpp"
+#include "ossProc.hpp"
+#include "pmdOptions.hpp"
+#include "ossPath.hpp"
+#include "ossIO.hpp"
+#include "pmdDef.hpp"
+/*
 #include "spt.hpp"
 #include "sptSPScope.hpp"
 #include "sptUsrSsh.hpp"
@@ -40,12 +46,20 @@
 #include "sptUsrFile.hpp"
 #include "sptUsrSystem.hpp"
 #include "../spt/js_in_cpp.hpp"
+*/
+#if defined( _LINUX )
+#include <dirent.h>
+#endif //_LINUX
 
-
-JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
+//JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
 
 namespace engine
 {
+   /*
+      Local Define
+   */
+   #define CM_NPIPE_SIZE                  64
+
 
    INT32 checkBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                        INT32 packetLength )
@@ -136,7 +150,7 @@ namespace engine
    error :
       goto done ;
    }
-
+/*
    // get spider monkey engine
    INT32 getSptScope ( _sptScope **scope )
    {
@@ -254,6 +268,297 @@ namespace engine
    done :
       return rc ;
    error :
+      goto done ;
+   }
+*/
+   /*
+      Node Manager Tool Functions Implement
+   */
+   INT32 omStartDBNode( const CHAR *pExecName,
+                        const CHAR *pCfgPath,
+                        OSSPID &pid )
+   {
+      INT32 rc                = SDB_OK ;
+      CHAR *pArgumentBuffer   = NULL ;
+      INT32 argBuffLen        = 0 ;
+      CHAR pNPipeBuf[ CM_NPIPE_SIZE + 1 ] = { 0 } ;
+
+      list< const CHAR* > argv ;
+      OSSNPIPE outNPipe ;
+      ossResultCode result ;
+      OSSPID tmppid ;
+
+      // verify the configuration file
+      rc = ossAccess ( pCfgPath ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Can not access the configure file: %s", pCfgPath ) ;
+         goto error ;
+      }
+
+      argv.push_back ( pExecName ) ;
+      argv.push_back ( SDBCM_OPTION_PREFIX PMD_OPTION_CONFPATH ) ;
+      argv.push_back ( pCfgPath ) ;
+      rc = ossBuildArguments( &pArgumentBuffer, argBuffLen, argv ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to build sdbstart arguments, rc: %d",
+                  rc ) ;
+         goto error ;
+      }
+
+      // call exec to run the command with arguments, 
+      // do NOT wait until program finish
+      rc = ossExec ( pArgumentBuffer, pArgumentBuffer, NULL,
+                     OSS_EXEC_SSAVE, tmppid, result, NULL,
+                     &outNPipe ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to execute %s, rc: %d",
+                  pArgumentBuffer, rc ) ;
+         rc = SDBCM_FAIL ;
+         goto error ;
+      }
+      // verify the executing result
+      if ( result.termcode == OSS_EXIT_NORMAL &&
+           result.exitcode == SDB_OK  )
+      {
+         // if execute sdbStart succeed
+         INT64 bufRead ;
+         rc = ossReadNamedPipe ( outNPipe, pNPipeBuf, CM_NPIPE_SIZE,
+                                 &bufRead, 0 ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to trace the PID, rc: %d", rc ) ;
+            goto error ;
+         }
+         CHAR *p = ossStrrchr ( pNPipeBuf, '(' ) ;
+         if ( p )
+         {
+            // start successfully
+            pid = (OSSPID) ossAtoi ( p + 1 ) ;
+         }
+         else
+         {
+            rc = SDBCM_FAIL ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = SDBCM_FAIL ;
+      }
+
+   done:
+      if ( pArgumentBuffer )
+      {
+         SDB_OSS_FREE( pArgumentBuffer ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omStopDBNode( const CHAR * pExecName, const CHAR * pServiceName )
+   {
+      INT32 rc                = SDB_OK ;
+      CHAR *pArgumentBuffer   = NULL ;
+      INT32 argBuffLen        = 0 ;
+
+      list<const CHAR*> argv ;
+      ossResultCode result ;
+      OSSPID pid ;
+
+      argv.push_back( pExecName ) ;
+      if ( pServiceName && pServiceName[0] )
+      {
+         argv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_SVCNAME ) ;
+         argv.push_back( pServiceName ) ;
+      }
+
+      rc = ossBuildArguments( &pArgumentBuffer, argBuffLen, argv ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to build sdbstop arguments, rc: %d",
+                  rc ) ;
+         goto error ;
+      }
+      // call exec to run the command with arguments,
+      // do NOT wait until program finish
+      rc = ossExec ( pArgumentBuffer, pArgumentBuffer, NULL,
+                     OSS_EXEC_SSAVE, pid, result, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to execute %s, rc: %d",
+                  pArgumentBuffer, rc ) ;
+         goto error ;
+      }
+
+      // verify the executing result
+      if ( result.termcode != OSS_EXIT_NORMAL )
+      {
+         rc = SDBCM_FAIL ;
+      }
+      else
+      {
+         switch ( result.exitcode )
+         {
+            case SDB_OK:
+               rc = SDB_OK ;
+               break ;
+            case STOPPART:
+               rc = SDBCM_STOP_PART ;
+               break ;
+            default:
+               rc = SDBCM_FAIL ;
+         }
+      }
+
+   done:
+      if ( pArgumentBuffer )
+      {
+         SDB_OSS_FREE( pArgumentBuffer ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omGetSvcListFromConfig( const CHAR * pCfgRootDir,
+                                 vector < string > &svcList )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = ossEnumSubDirs( pCfgRootDir, svcList, 1 ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to enum service in path[%s], rc: %d",
+                 pCfgRootDir, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omCheckDBProcessBySvc( const CHAR *svcname,
+                                BOOLEAN &isRuning,
+                                OSSPID &pid )
+   {
+      INT32 rc = SDB_OK ;
+      isRuning = FALSE ;
+
+#if defined( _WINDOWS )
+      CHAR enginePipeName [ PROC_PIPE_NAME_LEN + 1 ] = { 0 } ;
+      vector< string > names ;
+      OSSNPIPE handle ;
+      INT64 readSize = 0 ;
+      BOOLEAN isOpen = FALSE ;
+
+      ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN,
+                    ENGINE_NPIPE_PATTERN, svcname ) ;
+
+      rc = ossEnumNamedPipes ( names, enginePipeName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to enum pipes, rc: %d", rc ) ;
+
+      if ( names.size() == 0 )
+      {
+         // process is not running
+         goto done ;
+      }
+      else if ( names.size() != 1 )
+      {
+         PD_LOG( PDWARNING, "Name pipe[%s] size[%d] more than 1",
+                 enginePipeName, names.size() ) ;
+      }
+
+      rc = ossOpenNamedPipe( enginePipeName, OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
+                             OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc: %d",
+                  enginePipeName, rc ) ;
+         goto error ;
+      }
+      isOpen = TRUE ;
+      rc = ossWriteNamedPipe( handle, ENGINE_NPIPE_MSG_PID,
+                              sizeof( ENGINE_NPIPE_MSG_PID ),
+                              NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to send "ENGINE_NPIPE_MSG_PID" to %s, "
+                  "rc: %d", enginePipeName, rc ) ;
+         goto error ;
+      }
+
+      rc = ossReadNamedPipe( handle, (CHAR *)&pid, sizeof(pid), &readSize,
+                             LIST_TIMEOUT ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to read pid from pipe %s",
+                   enginePipeName ) ;
+      PD_CHECK( sizeof( pid ) == readSize, SDB_SYS, error, PDERROR,
+                "Failed to read pid from pipe %s", enginePipeName ) ;
+
+      isRuning = TRUE ;
+
+   done:
+      if ( isOpen )
+      {
+         ossCloseNamedPipe( handle );
+      }
+#else
+      DIR *pDir                  = NULL ;
+      struct dirent *pDirent     = NULL ;
+      CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      BOOLEAN isOpen = FALSE ;
+
+      pDir = opendir( PROC_PATH ) ;
+      PD_CHECK( pDir != NULL, SDB_IO, error, PDERROR,
+                "Failed to open the directory:%s, errno=%d",
+                PROC_PATH, ossGetLastError() ) ;
+      isOpen = TRUE ;
+      ossSnprintf ( engineName, OSS_MAX_PATHSIZE, ENGINE_NAME_PATTERN,
+                    svcname ) ;
+
+      while( (pDirent = readdir( pDir )) != NULL )
+      {
+         CHAR pathName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         ossSnprintf( pathName, OSS_MAX_PATHSIZE, PROC_CMDLINE_PATH_FORMAT,
+                      pDirent->d_name ) ;
+         FILE *fp = NULL ;
+         fp = fopen( pathName, "r" ) ;
+         if ( !fp )
+         {
+            continue ;
+         }
+         CHAR commandLine[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         CHAR *pTmp = fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) ;
+         fclose(fp) ;
+         if ( NULL == pTmp )
+         {
+            continue ;
+         }
+         if ( 0 != ossStrcmp( commandLine, engineName ) )
+         {
+            continue ;
+         }
+         pid = ossAtoi( pDirent->d_name ) ;
+         isRuning = TRUE ;
+         break ;
+      }
+      if ( NULL == pDirent )
+      {
+         rc = SDBCM_NODE_NOTEXISTED ;
+      }
+   done:
+      if ( isOpen )
+      {
+         closedir( pDir ) ;
+      }
+#endif // _WINDOWS
+      return rc ;
+   error:
       goto done ;
    }
 

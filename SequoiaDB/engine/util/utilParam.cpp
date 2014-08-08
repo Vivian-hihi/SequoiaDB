@@ -36,8 +36,11 @@
 
 
 #include "utilParam.hpp"
+#include "ossIO.hpp"
+#include "ossUtil.hpp"
 #include <iostream>
 
+#include <string>
 
 namespace engine
 {
@@ -123,6 +126,86 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 utilWriteConfigFile( const CHAR * pFile, const CHAR * pData,
+                              BOOLEAN createOnly )
+   {
+      INT32 rc = SDB_OK ;
+      std::string tmpFile = pFile ;
+      tmpFile += ".tmp" ;
+      OSSFILE file ;
+      BOOLEAN isOpen = FALSE ;
+      BOOLEAN isBak = FALSE ;
+
+      if ( SDB_OK == ossAccess( tmpFile.c_str() ) )
+      {
+         ossDelete( tmpFile.c_str() ) ;
+      }
+
+      // 1. first back up the file
+      if ( SDB_OK == ossAccess( pFile ) )
+      {
+         if ( createOnly )
+         {
+            rc = SDB_FE ;
+            goto error ;
+         }
+         if ( SDB_OK == ossRenamePath( pFile, tmpFile.c_str() ) )
+         {
+            isBak = TRUE ;
+         }
+      }
+
+      // 2. Create the file
+      rc = ossOpen ( pFile, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
+                     OSS_RWXU, file ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      isOpen = TRUE ;
+
+      // 3. write data
+      {
+         SINT64 written = 0 ;
+         SINT64 len = ossStrlen( pData ) ;
+         while ( 0 < len )
+         {
+            SINT64 tmpWritten = 0 ;
+            rc = ossWrite( &file, pData + written , len, &tmpWritten ) ;
+            if ( rc && SDB_INTERRUPT != rc )
+            {
+               PD_LOG( PDERROR, "Failed to write file[%s]:%d", pFile, rc ) ;
+               goto error ;
+            }
+            written += tmpWritten ;
+            len -= tmpWritten ;
+            rc = SDB_OK ;
+         }
+      }
+
+      // 4. remove tmp
+      ossDelete( tmpFile.c_str() ) ;
+
+   done:
+      if ( isOpen )
+      {
+         ossClose( file ) ;
+      }
+      return rc ;
+   error:
+      if ( isBak )
+      {
+         if ( isOpen )
+         {
+            ossClose( file ) ;
+            isOpen = FALSE ;
+            ossDelete( pFile ) ;
+            ossRenamePath( tmpFile.c_str(), pFile ) ;
+         }
+      }
       goto done ;
    }
 

@@ -31,17 +31,37 @@
 *******************************************************************************/
 
 #include "omagentSession.hpp"
-#include "omagentHelper.hpp"
+#include "omagentMgr.hpp"
+#include "pmdCommon.hpp"
 #include "msgMessage.hpp"
-#include "omagentTest.hpp"
+/*
+#include "omagentHelper.hpp"
+*/
+
 #include "../bson/bson.h"
+using namespace bson ;
 
 namespace engine
 {
-   _omaSession::_omaSession( SOCKET fd )
-//   :pmdSession( fd )
+   /*
+      Local define
+   */
+   #define OMAGENT_SESESSION_TIMEOUT         ( 120 )
+
+   /*
+      _omaSession implement
+   */
+   BEGIN_OBJ_MSG_MAP( _omaSession, _clsSession )
+      // msg map or event map
+      ON_MSG( MSG_CM_REMOTE, _onNodeMgrReq )
+   END_OBJ_MSG_MAP()
+
+   _omaSession::_omaSession( UINT64 sessionID )
+   :_clsSession( sessionID )
    {
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
+      _pAgent = NULL ;
+      _pNodeMgr = NULL ;
    }
 
    _omaSession::~_omaSession()
@@ -53,44 +73,192 @@ namespace engine
       return SDB_SESSION_OMAGENT ;
    }
 
-   INT32 _omaSession::run()
+   EDU_TYPES _omaSession::eduType() const
    {
-      INT32 rc          = SDB_OK ;
-      UINT32 msgSize    = 0 ;
-      CHAR *pBuff       = NULL ;
-      INT32 buffSize    = 0 ;
-      CHAR *pBuffer     = NULL ;
-      INT32 bufferSize  = 0 ;
+      return EDU_TYPE_AGENT ;
+   }
 
-//      rc = testScanHost ( &pBuffer, &bufferSize ) ;
-//      rc = testInstallRemoteAgent ( &pBuffer, &bufferSize ) ;
-//      rc = testInstallAgentProcess ( &pBuffer, &bufferSize ) ;
-//      rc = testRemoveAgentProcess ( &pBuffer, &bufferSize ) ;
-//      rc = testStopAgentProcess ( &pBuffer, &bufferSize ) ;
-//      rc = testGetHostInfo ( &pBuffer, &bufferSize ) ;
-//      rc = testRegHosts ( &pBuffer, &bufferSize ) ;
-//      rc = testGetHostName ( &pBuffer, &bufferSize ) ;
-        rc = testInstallDBBusiness ( &pBuffer, &bufferSize ) ;
-/**********************************/
+   void _omaSession::onRecieve( const NET_HANDLE netHandle, MsgHeader * msg )
+   {
+      ossGetCurrentTime( _lastRecvTime ) ;
+   }
 
-      rc = _processMsg( (MsgHeader *)pBuffer ) ;
-      if ( rc )
+   BOOLEAN _omaSession::timeout ( UINT32 interval )
+   {
+      BOOLEAN ret = FALSE ;
+      ossTimestamp curTime ;
+      ossGetCurrentTime ( curTime ) ;
+
+      if ( curTime.time - _lastRecvTime.time > OMAGENT_SESESSION_TIMEOUT )
       {
-         PD_LOG( PDERROR, "Failed to process omsvc's message, rc = %d", rc ) ;
+         // will be release
+         ret = TRUE ;
+         goto done ;
+      }
+
+   done :
+      return ret ;
+   }
+
+   void _omaSession::onTimer( UINT64 timerID, UINT32 interval )
+   {
+   }
+
+   void _omaSession::_onDetach()
+   {
+   }
+
+   void _omaSession::_onAttach()
+   {
+      _pNodeMgr = sdbGetOMAgentMgr()->getNodeMgr() ;
+      _pAgent = sdbGetOMAgentMgr()->getRouteAgent() ;
+   }
+
+   INT32 _omaSession::_defaultMsgFunc( NET_HANDLE handle, MsgHeader * msg )
+   {
+      PD_LOG( PDWARNING, "Session[%s] Recieve unknow msg[type:[%d]%u, len:%u]",
+              sessionName(), IS_REPLY_TYPE( msg->opCode ) ? 1 : 0,
+              GET_REQUEST_TYPE( msg->opCode ), msg->messageLength ) ;
+
+      return _reply( SDB_CLS_UNKNOW_MSG, msg ) ;
+   }
+
+   INT32 _omaSession::_reply( MsgOpReply *header, const CHAR *pBody,
+                              INT32 bodyLen )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( (UINT32)(header->header.messageLength) !=
+           sizeof (MsgOpReply) + bodyLen )
+      {
+         PD_LOG ( PDERROR, "Session[%s] reply message length error[%u != %u]",
+                  sessionName() ,header->header.messageLength,
+                  sizeof ( MsgOpReply ) + bodyLen ) ;
+         rc = SDB_SYS ;
          goto error ;
       }
 
+      //Send message
+      if ( bodyLen > 0 )
+      {
+         rc = _pAgent->syncSend ( _netHandle, (MsgHeader *)header, 
+                                  (void*)pBody, bodyLen ) ;
+      }
+      else
+      {
+         rc = _pAgent->syncSend ( _netHandle, (void *)header ) ;
+      }
+
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "Session[%s] send reply message failed[rc:%d]",
+                  sessionName(), rc ) ;
+      }
 
    done:
-      if ( pBuffer )
-      {
-         SDB_OSS_FREE ( pBuffer ) ;
-      }
       return rc ;
    error:
       goto done ;
    }
 
+   INT32 _omaSession::_reply( INT32 flags, MsgHeader * pSrcReqMsg )
+   {
+      const CHAR *pBody = NULL ;
+      INT32 bodyLen     = 0 ;
+
+      //Build reply message
+      _replyHeader.header.opCode = MAKE_REPLY_TYPE( pSrcReqMsg->opCode ) ;
+      _replyHeader.header.messageLength = sizeof ( MsgOpReply ) ;
+      _replyHeader.header.requestID = pSrcReqMsg->requestID ;
+      _replyHeader.header.TID = pSrcReqMsg->TID ;
+      _replyHeader.header.routeID.value = 0 ;
+      _replyHeader.flags = flags ;
+      _replyHeader.contextID = -1 ;
+      _replyHeader.numReturned = 0 ;
+      _replyHeader.startFrom = 0 ;
+
+      if ( flags )
+      {
+         _errorInfo = pmdGetErrorBson( flags, _pEDUCB->getInfo(
+                                       EDU_INFO_ERROR ) ) ;
+         bodyLen  = _errorInfo.objsize() ;
+         pBody    = _errorInfo.objdata() ;
+         _replyHeader.header.messageLength += bodyLen ;
+         _replyHeader.numReturned = 1 ;
+      }
+
+      return _reply( &_replyHeader, pBody, bodyLen ) ;
+   }
+
+   INT32 _omaSession::_onNodeMgrReq( const NET_HANDLE & handle,
+                                     MsgHeader * pMsg )
+   {
+      INT32 rc = SDB_OK ;
+      MsgCMRequest *pCMReq = ( MsgCMRequest* )pMsg ;
+      INT32 remoteCode = 0 ;
+      CHAR *arg1 = NULL ;
+      CHAR *arg2 = NULL ;
+      CHAR *arg3 = NULL ;
+      CHAR *arg4 = NULL ;
+
+      if ( pMsg->messageLength < (SINT32)sizeof (MsgCMRequest) )
+      {
+         PD_LOG( PDERROR, "Session[%s] recieve invalid msg[opCode: %d, "
+                 "len: %d]", sessionName(), pMsg->opCode,
+                 pMsg->messageLength ) ;
+         goto done ;
+      }
+
+      rc = msgExtractCMRequest ( ( CHAR*)pMsg, &remoteCode, &arg1, &arg2,
+                                 &arg3, &arg4 ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Session[%s]failed to extract cm request, rc: %d",
+                  sessionName(), rc ) ;
+         goto done ;
+      }
+
+      switch( pCMReq->remoCode )
+      {
+         case SDBSTART :
+            rc = _pNodeMgr->startANode( arg1 ) ;
+            break ;
+         case SDBSTOP :
+            rc = _pNodeMgr->stopANode( arg1 ) ;
+            break ;
+         case SDBADD :
+            rc = _pNodeMgr->addANode( arg1, arg2 ) ;
+            break ;
+         case SDBMODIFY :
+            rc = _pNodeMgr->mdyANode( arg1 ) ;
+            break ;
+         case SDBRM :
+            rc = _pNodeMgr->rmANode( arg1, arg2 ) ;
+            break ;
+         case SDBSTARTALL :
+            rc = _pNodeMgr->startAllNodes( NODE_START_CLIENT ) ;
+            break ;
+         case SDBSTOPALL :
+            rc = _pNodeMgr->stopAllNodes() ;
+            break ;
+         default :
+            PD_LOG( PDERROR, "Unknow remote code[%d] in session[%s]",
+                    pCMReq->remoCode, sessionName() ) ;
+            rc = SDB_INVALIDARG ;
+            break ;
+      }
+
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Session[%s] process remote code[%d] failed, rc: %d",
+                 sessionName(), pCMReq->remoCode, rc ) ;
+      }
+
+   done:
+      return _reply( rc, pMsg ) ;
+   }
+
+/*
    INT32 _omaSession::_processMsg( MsgHeader *msg )
    {
       INT32 rc          = SDB_OK ;
@@ -110,10 +278,10 @@ namespace engine
       {
          ossPrintf("rc is : %d\n", rc) ;
       }
-while( 1 )
-{
-   ossSleepsecs ( 1 ) ;
-}
+      while( 1 )
+      {
+         ossSleepsecs ( 1 ) ;
+      }
 
       BSONObj temp( pBody ) ;
       ossPrintf( "result :\n" ) ;
@@ -121,9 +289,8 @@ while( 1 )
       ossPrintf( "bodyLen is : %d\n", bodyLen ) ;
       ossPrintf( "numReturned is : %d\n", _replyHeader.numReturned ) ;
 
-/***************************************************/
-
-/*
+      */
+      /*
       if ( _needReply )
       {
          if ( rc && bodyLen == 0 )
@@ -142,8 +309,9 @@ while( 1 )
             PD_LOG ( PDERROR, "Session[%s] failed to send response for omsvc, rc: %d",
                      sessionName(), rcTmp ) ;
          }
-      }
-*/
+      }*/
+      /*
+
    done:
       if ( NULL  != pBody )
       {
@@ -154,39 +322,6 @@ while( 1 )
    error:
       goto done ;
    }
-
-   INT32 _omaSession::_reply( MsgOpReply *responseMsg,
-                                  const CHAR *pBody,
-                                  INT32 bodyLen )
-   {
-      INT32 rc = SDB_OK ;
-
-      // response header
-//      rc = sendData( (const CHAR*)responseMsg, sizeof(MsgOpReply) ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Session[%s] failed to send response header for omsvc, rc: %d",
-                 sessionName(), rc ) ;
-         goto error ;
-      }
-      // response body
-      if ( pBody )
-      {
-//         rc = sendData( pBody, bodyLen ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Session[%s] failed to send response body, rc: %d",
-                    sessionName(), rc ) ;
-            goto error ;
-         }
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
 
    INT32 _omaSession::_processOPMsg( MsgHeader *msg, CHAR **ppBody,
                                      INT32 &bodyLen, INT32 &returnNum )
@@ -219,18 +354,17 @@ while( 1 )
       {
          goto error ;
       }
-/*
+
       bodyLen = objBuff.size() ;
       returnNum = objBuff.recordNum() ;
       if ( bodyLen > 0 )
          ossMemcpy( *ppBody, objBuff.data(), bodyLen ) ;
-*/
    done:
       return rc ;
    error:
       if ( _needRollback )
       {
-//         INT32 rcTmp = _omaRollbak() ;
+         INT32 rcTmp = _omaRollbak() ;
          PD_LOG( PDEVENT, "Something wrong, need to rollback" ) ;
          _needRollback = FALSE ;
       }
@@ -313,5 +447,7 @@ while( 1 )
    error:
     goto done ;
    }
+   */
 
 } // namespace engine
+

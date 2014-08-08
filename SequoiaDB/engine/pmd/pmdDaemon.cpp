@@ -46,9 +46,6 @@
 #include "pmd.hpp"
 #include "pmdWinService.hpp"
 
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
-
 #if defined (_LINUX)
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -56,11 +53,21 @@
 
 namespace engine
 {
-   iPmdDMNChildProc * cPmdDaemon::_process = NULL;
+   /*
+      Local define
+   */
+   #define PMDDMN_SHMSTAT_EXPRIRED_TIMES        10
+   #define PMDDMN_STOP_CHILD_MAX_TRY_TIMES      60
+   #define PMDDMN_STOP_CHILD_WAIT_TIME          (5*1000)
+   #define PMDDMN_SHM_TAG                       "sequoiadbDMN"
 
+   /*
+      _pmdDMNProcInfo implement
+   */
    _pmdDMNProcInfo::_pmdDMNProcInfo()
    {
-      init();
+      szTag[ 0 ]  = 0 ;
+      init() ;
    }
 
    void _pmdDMNProcInfo::init()
@@ -69,12 +76,12 @@ namespace engine
                   "share-memory-tag is out of length" ) ;
       if ( !isInit() )
       {
-         stat = PMDDMN_SHM_STAT_CHILDREN;
-         pid = OSS_INVALID_PID;
-         cmd = PMDDMN_SHM_CMD_INVALID;
-         exitCode = SDB_OK;
-         sn = 0;
-         ossStrcpy( szTag, PMDDMN_SHM_TAG );
+         stat     = PMDDMN_SHM_STAT_CHILDREN ;
+         pid      = OSS_INVALID_PID ;
+         cmd      = PMDDMN_SHM_CMD_INVALID ;
+         exitCode = SDB_OK ;
+         sn       = 0 ;
+         ossStrcpy( szTag, PMDDMN_SHM_TAG ) ;
       }
    }
 
@@ -82,9 +89,9 @@ namespace engine
    {
       if ( ossStrcmp( szTag, PMDDMN_SHM_TAG ) == 0 )
       {
-         return TRUE;
+         return TRUE ;
       }
-      return FALSE;
+      return FALSE ;
    }
 
    INT32 _pmdDMNProcInfo::setDMNCMD( pmdDMNSHMCmd dmnCMD )
@@ -95,15 +102,15 @@ namespace engine
       if ( PMDDMN_SHM_CMD_INVALID ==
          ( cmd & PMDDMN_SHM_CMD_DMN_MASK ) )
       {
-         cmd = cmd | ( dmnCMD & PMDDMN_SHM_CMD_DMN_MASK );
-         return SDB_OK;
+         cmd = cmd | ( dmnCMD & PMDDMN_SHM_CMD_DMN_MASK ) ;
+         return SDB_OK ;
       }
-      return SDB_PERM;
+      return SDB_PERM ;
    }
 
    INT32 _pmdDMNProcInfo::getDMNCMD()
    {
-      INT32 dmnCMD = cmd & PMDDMN_SHM_CMD_DMN_MASK;
+      INT32 dmnCMD = cmd & PMDDMN_SHM_CMD_DMN_MASK ;
       if ( PMDDMN_SHM_CMD_INVALID != dmnCMD )
       {
          cmd = cmd & PMDDMN_SHM_CMD_CHL_MASK;
@@ -119,10 +126,10 @@ namespace engine
       if ( PMDDMN_SHM_CMD_INVALID ==
          ( cmd & PMDDMN_SHM_CMD_CHL_MASK ) )
       {
-         cmd = cmd | ( chlCMD & PMDDMN_SHM_CMD_CHL_MASK);
-         return SDB_OK;
+         cmd = cmd | ( chlCMD & PMDDMN_SHM_CMD_CHL_MASK) ;
+         return SDB_OK ;
       }
-      return SDB_PERM;
+      return SDB_PERM ;
    }
 
    INT32 _pmdDMNProcInfo::getCHLCMD()
@@ -130,17 +137,21 @@ namespace engine
       INT32 chlCMD = cmd & PMDDMN_SHM_CMD_CHL_MASK;
       if ( PMDDMN_SHM_CMD_INVALID != chlCMD )
       {
-         cmd = cmd & PMDDMN_SHM_CMD_DMN_MASK;
+         cmd = cmd & PMDDMN_SHM_CMD_DMN_MASK ;
       }
-      return chlCMD;
+      return chlCMD ;
    }
+
+   /*
+      iPmdDMNChildProc implement
+   */
+   iPmdDMNChildProc * cPmdDaemon::_process = NULL ;
 
    iPmdDMNChildProc::iPmdDMNChildProc()
    {
       // first run: wait for 1 cycle to check if the child is start
       _deadTime = PMDDMN_SHMSTAT_EXPRIRED_TIMES - 1;
       _procInfo = NULL;
-      _syncExit = TRUE;
       _pid = OSS_INVALID_PID;
       ossMemset( _execName, 0, sizeof( _execName) );
 #if defined (_LINUX)
@@ -150,6 +161,7 @@ namespace engine
       _shmMid = NULL;
       _shmKey = NULL;
 #endif
+      _syncEvent.signalAll() ;
    }
 
    iPmdDMNChildProc::~iPmdDMNChildProc()
@@ -379,13 +391,13 @@ namespace engine
          UINT32 sn = _procInfo->sn;
          while( i-- > 0 )
          {
-            if ( sn != _procInfo->sn
-               && (sn + 1) != _procInfo->sn )
+            if ( sn != _procInfo->sn &&
+                 (sn + 1) != _procInfo->sn )
             {
                rc = SDB_PERM;
                PD_RC_CHECK( rc, PDERROR, "Don't repeat start the process" );
             }
-            ossSleep( PMDDMN_INTERVAL_TIME_DMN );
+            ossSleep( 2 * OSS_ONE_SEC ) ;
          }
       }
       else
@@ -510,7 +522,7 @@ namespace engine
             {
                break;
             }
-            ossSleep( PMDDMN_INTERVAL_TIME_DMN ) ;
+            ossSleep( 2 * OSS_ONE_SEC ) ;
          }
       }
       return SDB_OK;
@@ -518,10 +530,11 @@ namespace engine
 
    void iPmdDMNChildProc::syncProcesserInfo()
    {
-      _syncExit = FALSE;
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
 
-      while( isRunning() )
+      _syncEvent.reset() ;
+
+      while( iPmdProc::isRunning() )
       {
          rc = attachSHM();
          if ( SDB_OK == rc )
@@ -540,7 +553,7 @@ namespace engine
             }
             detachSHM() ;
          }
-         ossSleep( PMDDMN_INTERVAL_TIME ) ;
+         ossSleep( OSS_ONE_SEC ) ;
       }
       rc = attachSHM();
       if ( SDB_OK == rc )
@@ -558,35 +571,13 @@ namespace engine
          }
          detachSHM();
       }
-      _syncExit = TRUE;
+
+      _syncEvent.signalAll() ;
    }
 
-   INT32 iPmdDMNChildProc::startSyncThr()
+   void iPmdDMNChildProc::waitSync()
    {
-      boost::thread thrd( boost::bind( &iPmdDMNChildProc::syncProcesserInfo,
-                           this ) );
-      thrd.detach();
-      return SDB_OK;
-   }
-
-   INT32 iPmdDMNChildProc::run( INT32 argc, CHAR **argv )
-   {
-      INT32 rc = SDB_OK;
-
-      rc = startSyncThr();
-      PD_RC_CHECK( rc, PDERROR, "Failed to start processor-info-sync"
-                   "-thread(rc=%d)", rc ) ;
-      rc = svcMain( argc, argv ) ;
-      PD_RC_CHECK( rc, PDERROR, "Execute failed(rc=%d)", rc ) ;
-      while ( !_syncExit )
-      {
-         ossSleep( PMDDMN_INTERVAL_TIME ) ;
-      }
-
-   done:
-      return rc;
-   error:
-      goto done;
+      _syncEvent.wait() ;
    }
 
    const CHAR* iPmdDMNChildProc::getExecuteFile()
@@ -594,18 +585,23 @@ namespace engine
       return _execName;
    }
 
+   /*
+      cPmdDaemon implement
+   */
    cPmdDaemon::cPmdDaemon( const CHAR *pDMNSvcName )
    {
-      SDB_ASSERT( pDMNSvcName, "service name can't be null!" );
+      SDB_ASSERT( pDMNSvcName, "service name can't be null!" ) ;
 
-      UINT32 len = ossStrlen( pDMNSvcName );
+      iPmdProc::regSignalHandler() ;
+
+      UINT32 len = ossStrlen( pDMNSvcName ) ;
       if ( len > 0 && len <= OSS_MAX_PATHSIZE )
       {
-         ossStrcpy( _procName, pDMNSvcName );
+         ossStrcpy( _procName, pDMNSvcName ) ;
       }
       else
       {
-         ossStrcpy( _procName, PMDDMN_SVCNAME_DEFAULT );
+         ossStrcpy( _procName, PMDDMN_SVCNAME_DEFAULT ) ;
       }
    }
 
@@ -613,18 +609,23 @@ namespace engine
    {
       if ( _process != NULL )
       {
-         _process->deactive();
-         _process = NULL;
+         _process->deactive() ;
+         _process = NULL ;
       }
    }
 
    INT32 cPmdDaemon::addChildrenProcess( iPmdDMNChildProc *childProc )
    {
       SDB_ASSERT( childProc, "childProc can't be null!" );
-      _process = childProc;
-      return _process->active();
+      _process = childProc ;
+      return _process->active() ;
    }
 
+   /*
+      The function in windows is called by new thread, and the main thread
+      is in dipatch service
+      But in linux, the function is called by main thread
+   */
    INT32 cPmdDaemon::_run( INT32 argc, CHAR **argv )
    {
       INT32 rc = SDB_OK ;
@@ -640,13 +641,6 @@ namespace engine
       }
       while( isRunning() )
       {
-         /*if ( retryTimes >= _maxRetryTimes )
-         {
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to start the process(retry times:%d), exit!",
-                        retryTimes );
-         }*/
-
          _process->lock() ;
          isChildRunning = _process->isChildRunning() ;
          _process->unlock() ;
@@ -667,7 +661,7 @@ namespace engine
          {
             retryTimes = 0;
          }
-         ossSleep( PMDDMN_INTERVAL_TIME_DMN );
+         ossSleep( 2 * OSS_ONE_SEC ) ;
       }
       _process->signal() ;
 
@@ -685,13 +679,13 @@ namespace engine
 
    INT32 cPmdDaemon::run( INT32 argc, CHAR **argv )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
 #if defined (_WINDOWS)
       rc = pmdWinstartService( _procName, &cPmdDaemon::_run ) ;
 #elif defined (_LINUX)
       ossEnableNameChanges ( argc, argv ) ;
       ossRenameProcess ( _procName ) ;
-      rc = _run( argc, argv );
+      rc = _run( argc, argv ) ;
 #endif
       PD_RC_CHECK( rc, PDERROR, "Failed to start the service(rc=%d)", rc ) ;
    done:
@@ -712,4 +706,19 @@ namespace engine
          _process->wait() ;
       }
    }
+
+   /*
+      cCMService implement
+   */
+   const CHAR *cCMService::getProgramName()
+   {
+      return SDBCM_EXE_FILE_NAME ;
+   }
+
+   const CHAR *cCMService::getArguments()
+   {
+      return SDBCM_EXE_FILE_NAME ;
+   }
+
 }
+

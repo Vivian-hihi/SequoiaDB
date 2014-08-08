@@ -43,21 +43,27 @@
 
 namespace engine
 {
-   class iPmdProc : public SDBObject
+   /*
+      iPmdProc define
+   */
+   class _iPmdProc : public SDBObject
    {
    public:
-      iPmdProc() ;
-      virtual ~iPmdProc() ;
+      _iPmdProc() ;
+      virtual ~_iPmdProc() ;
       virtual INT32 regSignalHandler() ;
-      virtual INT32 run( INT32 argc, CHAR **argv ) = 0 ;
-      static BOOLEAN isRunning() ;
 
    public:
-      static void stop( INT32 sigNum );
+      static BOOLEAN isRunning() ;
+      static void stop( INT32 sigNum ) ;
 
    private:
       static BOOLEAN                _isRunning ;
-   };
+
+   } ;
+   typedef _iPmdProc iPmdProc ;
+
 }
 
 #endif // PMDPROC_HPP_
+

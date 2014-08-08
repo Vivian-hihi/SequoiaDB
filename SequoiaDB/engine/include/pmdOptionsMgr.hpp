@@ -135,7 +135,7 @@ namespace engine
    class _pmdCfgRecord : public SDBObject
    {
       public:
-         _pmdCfgRecord () ;
+         _pmdCfgRecord ( BOOLEAN readOnly = FALSE ) ;
          virtual ~_pmdCfgRecord () ;
 
          void  setConfigHandler( IConfigHandle *pConfigHandler ) ;
@@ -153,6 +153,8 @@ namespace engine
          INT32 toString( std::string &str ) ;
 
          UINT32 getChangeID () const { return _changeID ; }
+
+         BOOLEAN isReadOnly() const { return _readOnly ; }
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) = 0 ;
@@ -206,6 +208,7 @@ namespace engine
          INT32                               _result ;
          UINT32                              _changeID ;
          IConfigHandle                       *_pConfigHander ;
+         BOOLEAN                             _readOnly ;
 
    } ;
    typedef _pmdCfgRecord pmdCfgRecord ;
@@ -216,7 +219,7 @@ namespace engine
    class _pmdOptionsMgr : public _pmdCfgRecord
    {
       public:
-         _pmdOptionsMgr() ;
+         _pmdOptionsMgr( BOOLEAN readOnly = FALSE ) ;
          ~_pmdOptionsMgr() ;
 
       public:
@@ -237,6 +240,8 @@ namespace engine
       public:
 
          INT32 init( INT32 argc, CHAR **argv ) ;
+
+         INT32 removeAllDir() ;
 
          INT32 reflush2File() ;
 

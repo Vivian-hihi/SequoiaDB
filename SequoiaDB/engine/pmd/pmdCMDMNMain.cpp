@@ -36,7 +36,6 @@
 
 *******************************************************************************/
 #include "pmdDaemon.hpp"
-#include "rtnCM.hpp"
 #include "ossProc.hpp"
 #include "utilStr.hpp"
 #include "pd.hpp"
@@ -44,7 +43,6 @@
 #include "ossVer.h"
 
 using namespace engine;
-using namespace CLSMGR;
 
 INT32 main( INT32 argc, CHAR** argv )
 {
@@ -52,8 +50,6 @@ INT32 main( INT32 argc, CHAR** argv )
    CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
    cCMService svc;
    cPmdDaemon daemon( PMDDMN_SVCNAME_DEFAULT ) ;
-   std::string shortFile = PMDDMN_SVCNAME_DEFAULT ;
-   shortFile += PMDDMN_LOG_SUFFIX ;
 
    rc = ossGetEWD( dialogFile, OSS_MAX_PATHSIZE ) ;
    if ( rc )
@@ -67,7 +63,8 @@ INT32 main( INT32 argc, CHAR** argv )
       ossPrintf( "Failed to make dialog path, rc: %d"OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE, shortFile.c_str() ) ;
+   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE,
+                             PMDDMN_DIALOG_FILE_NAME ) ;
    if ( rc )
    {
       ossPrintf( "Failed to make dialog path, rc: %d"OSS_NEWLINE, rc ) ;

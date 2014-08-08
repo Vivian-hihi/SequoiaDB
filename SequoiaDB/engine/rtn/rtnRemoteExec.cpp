@@ -39,7 +39,7 @@
 #include "ossSocket.hpp"
 #include "ossProc.hpp"
 #include "msgMessage.hpp"
-#include "rtnCM.hpp"
+#include "omagentDef.hpp"
 #include "utilParam.hpp"
 #include "pmdEDU.hpp"
 #include "msgDef.hpp"

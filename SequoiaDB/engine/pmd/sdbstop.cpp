@@ -41,11 +41,12 @@
 #include "ossProc.hpp"
 #include "ossMem.hpp"
 #include "pd.hpp"
-#include "rtnCM.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdDef.hpp"
 #include "utilParam.hpp"
+#include "pmdOptions.hpp"
+#include "omagentDef.hpp"
 #include "ossVer.h"
 
 #include <string>

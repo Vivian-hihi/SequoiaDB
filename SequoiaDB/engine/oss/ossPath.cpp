@@ -204,7 +204,6 @@ INT32 ossEnumFiles( const string &dirPath,
                     const CHAR *filter,
                     UINT32 deep )
 {
-//   INT32 rc = SDB_OK ;
    string newFilter ;
    OSS_MATCH_TYPE type = OSS_MATCH_NULL ;
 
@@ -235,5 +234,68 @@ INT32 ossEnumFiles( const string &dirPath,
 
    return _ossEnumFiles( dirPath, mapFiles, newFilter.c_str(),
                          newFilter.length(), type, deep ) ;
+}
+
+
+static INT32 _ossEnumSubDirs( const string &dirPath,
+                              const string &parentSubDir,
+                              vector< string > &subDirs,
+                              UINT32 deep )
+{
+   INT32 rc = SDB_OK ;
+
+   fs::path dbDir ( dirPath ) ;
+   fs::directory_iterator end_iter ;
+
+   string subDir ;
+
+   if ( 0 == deep )
+   {
+      goto done ;
+   }
+
+   if ( fs::exists ( dbDir ) && fs::is_directory ( dbDir ) )
+   {
+      for ( fs::directory_iterator dir_iter ( dbDir );
+            dir_iter != end_iter; ++dir_iter )
+      {
+         if ( fs::is_directory( dir_iter->path() ) )
+         {
+            if ( parentSubDir.empty() )
+            {
+               subDir = dir_iter->path().leaf().string() ;
+            }
+            else
+            {
+               string subDir = parentSubDir ;
+               subDir += OSS_FILE_SEP ;
+               subDir += dir_iter->path().leaf().string() ;
+            }
+            subDirs.push_back( subDir ) ;
+
+            if ( deep > 1 )
+            {
+               _ossEnumSubDirs( dir_iter->path().string(), subDir,
+                                subDirs,deep - 1 ) ;
+            }
+         }
+      }
+   }
+   else
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 ossEnumSubDirs( const string &dirPath, vector < string > &subDirs,
+                      UINT32 deep )
+{
+   return _ossEnumSubDirs( dirPath, "", subDirs, deep ) ;
 }
 

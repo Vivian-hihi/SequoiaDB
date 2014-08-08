@@ -19,7 +19,7 @@
 #include "core.h"
 #include "pd.hpp"
 #include "ossSocket.hpp"
-#include "rtnCM.hpp"
+#include "omagentDef.hpp"
 #include "rtnRemoteExec.hpp"
 #include "../bson/bson.h"
 

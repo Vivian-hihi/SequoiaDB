@@ -41,6 +41,7 @@
 #include "pmdOptionsMgr.hpp"
 #include "sdbInterface.hpp"
 #include "ossEvent.hpp"
+#include "omagentNodeMgr.hpp"
 
 #include <string>
 
@@ -73,6 +74,7 @@ namespace engine
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
+         virtual INT32 postLoaded() ;
 
       private:
          string                     _hostKey ;
@@ -157,6 +159,8 @@ namespace engine
       public:
 
          omAgentOptions* getOptions() ;
+         omAgentNodeMgr* getNodeMgr() ;
+         netRouteAgent*  getRouteAgent() ;
 
       protected:
 
@@ -166,9 +170,13 @@ namespace engine
          clsMsgHandler              _msgHandler ;
          clsTimerHandler            _timerHandler ;
          netRouteAgent              _netAgent ;
+         omAgentNodeMgr             _nodeMgr ;
 
          ossEvent                   _attachEvent ;
          UINT32                     _oneSecTimer ;
+
+         UINT32                     _nodeMonitorTimer ;
+         UINT32                     _watchAndCleanTimer ;
 
    } ;
 
