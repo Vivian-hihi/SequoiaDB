@@ -456,9 +456,9 @@ namespace engine
          if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength
               || SDB_MAX_MSG_LENGTH < (UINT32)_header.messageLength )
          {
-            PD_LOG( PDERROR, "Error header received, node:%d, %d, %d",
-                    _id.columns.groupID, _id.columns.nodeID,
-                    _id.columns.serviceID ) ;
+            PD_LOG( PDERROR, "Error header[len: %d] received, node:%d, %d, %d",
+                    _header.messageLength, _id.columns.groupID,
+                    _id.columns.nodeID, _id.columns.serviceID ) ;
             goto error_close ;
          }
          else
