@@ -69,9 +69,11 @@ namespace engine
    INT32 _omAgentOptions::init ( const CHAR *pRootPath )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *hostName = pmdGetKRCB()->getHostName() ;
+      CHAR hostName[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
       po::options_description desc ( "Command options" ) ;
       po::variables_map vm ;
+
+      ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
 
       _hostKey = hostName ;
       _hostKey += SDBCM_CONF_PORT ;
