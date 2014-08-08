@@ -190,7 +190,8 @@ namespace engine
       return ;
    }
 
-   INT32 pmdEnableSignalEvent( const CHAR *filepath, PMD_ON_QUIT_FUNC pFunc )
+   INT32 pmdEnableSignalEvent( const CHAR *filepath, PMD_ON_QUIT_FUNC pFunc,
+                               INT32 *pDelSig )
    {
       INT32 rc = SDB_OK ;
       ossSigSet sigSet ;
@@ -248,6 +249,17 @@ namespace engine
       sigSet.sigDel ( SIGPROF ) ;
       sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL ) ;
       sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL_INTERNAL ) ;
+
+      if ( pDelSig )
+      {
+         UINT32 i = 0 ;
+         while ( 0 != pDelSig[ i ] )
+         {
+            sigSet.sigDel( pDelSig[ i ] ) ;
+            ++i ;
+         }
+      }
+
       rc = ossRegisterSignalHandle( sigSet, (SIG_HANDLE)pmdSignalHandler ) ;
       if ( SDB_OK != rc )
       {
@@ -320,7 +332,8 @@ namespace engine
       return ret ;
    }
 
-   INT32 pmdEnableSignalEvent( const CHAR * filepath, PMD_ON_QUIT_FUNC pFunc )
+   INT32 pmdEnableSignalEvent( const CHAR * filepath, PMD_ON_QUIT_FUNC pFunc,
+                               INT32 *pDelSig )
    {
       // set trap file path
       if ( filepath )

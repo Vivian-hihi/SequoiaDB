@@ -58,6 +58,7 @@ namespace engine
       CHAR currentPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR dialogPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      INT32 delSig[] = { 17, 0 } ; // del SIGCHLD
 
       // 1. get root path
       rc = ossGetEWD( currentPath, OSS_MAX_PATHSIZE ) ;
@@ -91,7 +92,6 @@ namespace engine
          goto error ;
       }
       sdbEnablePD( dialogFile ) ;
-      setPDLevel( PDINFO ) ;
 
       PD_LOG( PDEVENT, "Start cm[Ver: %d.%d, Release: %d, Build: %s]...",
               SDB_ENGINE_VERISON_CURRENT, SDB_ENGINE_SUBVERSION_CURRENT,
@@ -104,6 +104,7 @@ namespace engine
          PD_LOG( PDERROR, "Failed to init config, rc: %d", rc ) ;
          goto error ;
       }
+      setPDLevel( sdbGetOMAgentOptions()->getDiagLevel() ) ;
 
       // 4. print all config
       {
@@ -113,7 +114,8 @@ namespace engine
       }
 
       // 5. handlers and init global mem
-      rc = pmdEnableSignalEvent( dialogPath, (PMD_ON_QUIT_FUNC)pmdOnQuit ) ;
+      rc = pmdEnableSignalEvent( dialogPath, (PMD_ON_QUIT_FUNC)pmdOnQuit,
+                                 &delSig ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to enable trap, rc: %d", rc ) ;
 
       // 6. register agent cb

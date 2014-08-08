@@ -47,6 +47,7 @@ namespace engine
    #define SDBCM_RESTART_COUNT         "RestartCount"
    #define SDBCM_RESTART_INTERVAL      "RestartInterval"       // minute
    #define SDBCM_AUTO_START            "AutoStart"
+   #define SDBCM_DIALOG_LEVEL          "DiagLevel"
 
    #define SDBCM_DFT_PORT              11790
    #define SDBCM_OPTION_PREFIX         "--"

@@ -71,6 +71,7 @@ namespace engine
          INT32       getRestartCount() const { return _restartCount ; }
          INT32       getRestartInterval() const { return _restartInterval ; }
          BOOLEAN     isAutoStart() const { return _autoStart ; }
+         PDLEVEL     getDiagLevel() const ;
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
@@ -86,6 +87,7 @@ namespace engine
          INT32                      _restartInterval ;
          // TRUE: start all nodes while CM start.
          BOOLEAN                    _autoStart ;
+         INT32                      _diagLevel ;
 
          CHAR                       _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _localCfgPath[ OSS_MAX_PATHSIZE + 1 ] ;

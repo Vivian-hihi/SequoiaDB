@@ -88,7 +88,8 @@ namespace engine
    */
 
    INT32    pmdEnableSignalEvent( const CHAR *filepath,
-                                  PMD_ON_QUIT_FUNC pFunc ) ;
+                                  PMD_ON_QUIT_FUNC pFunc,
+                                  INT32 *pDelSig = NULL ) ;
 
    INT32&   pmdGetSigNum() ;
 

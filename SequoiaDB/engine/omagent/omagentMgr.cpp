@@ -51,6 +51,7 @@ namespace engine
       _restartCount        = -1 ;
       _restartInterval     = 0 ;
       _autoStart           = FALSE ;
+      _diagLevel           = PDWARNING ;
 
       ossMemset( _cfgFileName, 0, sizeof( _cfgFileName ) ) ;
       ossMemset( _localCfgPath, 0, sizeof( _localCfgPath ) ) ;
@@ -64,6 +65,24 @@ namespace engine
 
    _omAgentOptions::~_omAgentOptions()
    {
+   }
+
+   PDLEVEL _omAgentOptions::getDiagLevel() const
+   {
+      PDLEVEL level = PDWARNING ;
+      if ( _diagLevel < PDSEVERE )
+      {
+         level = PDSEVERE ;
+      }
+      else if ( _diagLevel > PDDEBUG )
+      {
+         level = PDDEBUG ;
+      }
+      else
+      {
+         level= ( PDLEVEL )_diagLevel ;
+      }
+      return level ;
    }
 
    INT32 _omAgentOptions::init ( const CHAR *pRootPath )
@@ -89,6 +108,8 @@ namespace engine
          "sequoiadb node restart time interval" )
          ( SDBCM_AUTO_START, po::value<string>(),
          "start sequoiadb node automatically when CM start" )
+         ( SDBCM_DIALOG_LEVEL, po::value<INT32>(),
+         "Dialog level" )
       PMD_ADD_PARAM_OPTIONS_END
 
       if ( !pRootPath )
@@ -180,6 +201,9 @@ namespace engine
       // --AutoStart
       rdxBooleanS( pEX, SDBCM_AUTO_START, _autoStart, FALSE, TRUE,
                    _autoStart ) ;
+      // --DiagLevel
+      rdxInt( pEX, SDBCM_DIALOG_LEVEL, _diagLevel, FALSE, TRUE,
+              _diagLevel ) ;
 
       //  end map configs }}
 
