@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="$isnull"/>
-<meta name="description" content="语法 {&lt;字段名&gt;:{$isnull: &lt;0|1&gt;}} 描述 选择集合中指定的“&lt;字段名&gt;”是否为空，或不存在。“0”代表期望该字段存在且不为 null；“1”代表期望该字段不存在或为 null。 示例 选择集合 bar 中 age 字段不为空且存在的记录。 db.foo.bar.find({age:{$isnull:0}}) 选择集合 bar 中嵌套对象 content.name 不存在或为 ..."/>
+<meta name="description" content="语法 {&lt;字段名&gt;:{$isnull: &lt;0|1&gt;}} 描述 选择集合中指定的“&lt;字段名&gt;”是否为空，或不存在。“0”代表期望该字段存在且不为 null；“1”代表期望该字段不存在或为 null。 示例 选择集合 bar 中 age 字段不为空且存在的记录。 db.foo.bar.find({age:{$isnull:0}})"/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/console/topics/select.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_wxm_y1l_5n"/>
@@ -56,13 +56,7 @@
 
         </li>
 
-        <li class="li">
-          <p class="p">选择集合 bar 中嵌套对象 content.name 不存在或为 null 的记录。</p>
-
-          <pre class="pre codeblock">db.foo.bar.find({"content.name":{$exists:1}})</pre>
-
-        </li>
-
+        
       </ul>
       
     </div>
@@ -79,7 +73,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8
           
     </div>
 </body>
