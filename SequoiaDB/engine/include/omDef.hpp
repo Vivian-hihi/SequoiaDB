@@ -35,6 +35,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "omagentDef.hpp"
 
 namespace engine
 {
@@ -310,17 +311,6 @@ namespace engine
 
    #define  OM_BSON_FIELD_DATAGROUPNAME      "DataGroupName"
 
-   #define  OM_BSON_FIELD_DBPATH             "DBPath"
-   #define  OM_BSON_FIELD_SVCNAME            "SvcName"
-   #define  OM_BSON_FIELD_DIAGLEVEL          "DiagLevel"
-   #define  OM_BSON_FIELD_ROLE               "Role"
-   #define  OM_BSON_FIELD_LOGFSIZE           "LogfileSize"
-   #define  OM_BSON_FIELD_LOGFNUM            "LogfileNum"
-   #define  OM_BSON_FIELD_TRANSACTION        "TransactionOn"
-   #define  OM_BSON_FIELD_PREINSTANCE        "PreferedInstance"
-   #define  OM_BSON_FIELD_PCNUM              "NumpageCleaners"
-   #define  OM_BSON_FIELD_PCINTERVAL         "PageCleanInterval"
-
    // *****************************************************************
 
    // om rest install_business_req
@@ -359,7 +349,7 @@ namespace engine
    // agent default localhost
    #define  OM_DEFAULT_LOCAL_HOST            "localhost"
    // agent default port
-   #define  OM_AGENT_DEFAULT_PORT            "11791"
+   #define  OM_AGENT_DEFAULT_PORT            SDBCM_DFT_PORT
 
 
 }

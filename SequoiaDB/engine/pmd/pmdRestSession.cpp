@@ -334,6 +334,9 @@ namespace engine
    {
       omCommandInterface *commandIf = NULL ;
       restAdaptor *pAdptor          = NULL ;
+      CHAR agentDefaultPort[ OM_INT32_LENGTH + 1 ] ;
+      ossItoa( OM_AGENT_DEFAULT_PORT, agentDefaultPort, OM_INT32_LENGTH ) ;
+      
 
       pAdptor = sdbGetOMManager()->getRestAdptor() ;
 
@@ -405,19 +408,19 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omScanHostCommand( pAdptor, this, 
                                                        OM_DEFAULT_LOCAL_HOST, 
-                                                       OM_AGENT_DEFAULT_PORT ) ;
+                                                       agentDefaultPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omCheckHostCommand( pAdptor, this, 
                                                         OM_DEFAULT_LOCAL_HOST, 
-                                                        OM_AGENT_DEFAULT_PORT ) ;
+                                                        agentDefaultPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omAddHostCommand( pAdptor, this, 
                                                       OM_DEFAULT_LOCAL_HOST, 
-                                                      OM_AGENT_DEFAULT_PORT ) ;
+                                                      agentDefaultPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_REQ ) == 0 )
          {
@@ -449,7 +452,7 @@ namespace engine
                                                           _wwwRootPath.c_str(), 
                                                           pFilePath, 
                                                           OM_DEFAULT_LOCAL_HOST, 
-                                                          OM_AGENT_DEFAULT_PORT ) ;
+                                                          agentDefaultPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_PROGRESS ) == 0 )
          {
@@ -458,7 +461,8 @@ namespace engine
          else
          {
             BSONObjBuilder builder ;
-            string errorInfo = string("command is unreconigzed:") + pSubCommand ;
+            string errorInfo ;
+            errorInfo = string("command is unreconigzed:") + pSubCommand ;
             builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG ) ;
             builder.append( OM_REST_RES_DETAIL, errorInfo.c_str() ) ;
             pAdptor->setOPResult( this, SDB_INVALIDARG, builder.obj() ) ;

@@ -35,6 +35,7 @@
 #include "omDef.hpp"
 #include "pd.hpp"
 #include "ossUtil.hpp"
+#include "pmdOptions.hpp"
 
 using namespace bson ;
 
@@ -43,21 +44,16 @@ namespace engine
    #define OM_GENERATOR_DOT    ","
    #define OM_GENERATOR_LINE   "-"
 
-   #define OM_CONF_DETAIL_DBPATH       "dbpath"
-   #define OM_CONF_DETAIL_SVCNAME      "svcname"
-//   #define OM_CONF_DETAIL_REPLNAME     "replName"
-//   #define OM_CONF_DETAIL_SHARDNAME    "shardname"
-//   #define OM_CONF_DETAIL_CLNAME       "catalogname"
-//   #define OM_CONF_DETAIL_HTTPNAME     "httpname"
-//   #define OM_CONF_DETAIL_CLADDRESS    "catalogaddr"
-   #define OM_CONF_DETAIL_DIAGLEVEL    "diaglevel"
-   #define OM_CONF_DETAIL_ROLE         "role"
-   #define OM_CONF_DETAIL_LOGFSIZE     "logfilesz"
-   #define OM_CONF_DETAIL_LOGFNUM      "logfilenum"
-   #define OM_CONF_DETAIL_TRANSACTION  "transactionon"
-   #define OM_CONF_DETAIL_PREINSTANCE  "preferedinstance"
-   #define OM_CONF_DETAIL_PCNUM        "numpagecleaners"
-   #define OM_CONF_DETAIL_PCINTERVAL   "pagecleaninterval"
+   #define OM_CONF_DETAIL_DBPATH       PMD_OPTION_DBPATH
+   #define OM_CONF_DETAIL_SVCNAME      PMD_OPTION_SVCNAME
+   #define OM_CONF_DETAIL_DIAGLEVEL    PMD_OPTION_DIAGLEVEL
+   #define OM_CONF_DETAIL_ROLE         PMD_OPTION_ROLE
+   #define OM_CONF_DETAIL_LOGFSIZE     PMD_OPTION_LOGFILESZ
+   #define OM_CONF_DETAIL_LOGFNUM      PMD_OPTION_LOGFILENUM
+   #define OM_CONF_DETAIL_TRANSACTION  PMD_OPTION_TRANSACTIONON
+   #define OM_CONF_DETAIL_PREINSTANCE  PMD_OPTION_PREFINST
+   #define OM_CONF_DETAIL_PCNUM        PMD_OPTION_NUMPAGECLEANERS
+   #define OM_CONF_DETAIL_PCINTERVAL   PMD_OPTION_PAGECLEANINTERVAL
 
    #define OM_DG_NAME_PATTERN          "DATAGROUP"
 
