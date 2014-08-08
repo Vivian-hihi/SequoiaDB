@@ -115,7 +115,7 @@ namespace engine
 
       // 5. handlers and init global mem
       rc = pmdEnableSignalEvent( dialogPath, (PMD_ON_QUIT_FUNC)pmdOnQuit,
-                                 &delSig ) ;
+                                 delSig ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to enable trap, rc: %d", rc ) ;
 
       // 6. register agent cb
