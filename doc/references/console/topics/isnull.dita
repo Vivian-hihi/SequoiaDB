@@ -15,10 +15,10 @@
           <p>选择集合 bar 中 age 字段不为空且存在的记录。</p>
           <codeblock>db.foo.bar.find({age:{$isnull:0}})</codeblock>
         </li>
-        <li>
+        <!--<li>
           <p>选择集合 bar 中嵌套对象 content.name 不存在或为 null 的记录。</p>
           <codeblock>db.foo.bar.find({"content.name":{$exists:1}})</codeblock>
-        </li>
+        </li>-->
       </ul>      
     </section>
   </body>
