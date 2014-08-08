@@ -11,10 +11,7 @@
       <title>标示</title>
       <p>SDB_LIST_SESSIONS_CURRENT</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>数据，编目</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <simpletable>
@@ -25,12 +22,12 @@
         </sthead>
         <strow>
           <stentry>SessionID</stentry>
-          <stentry>整数或长整数</stentry>
+          <stentry>整型或长整型</stentry>
           <stentry>会话 ID</stentry>
         </strow>
         <strow>
           <stentry>TID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>该会话所对应的系统线程 ID</stentry>
         </strow>
         <strow>

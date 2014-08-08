@@ -15,10 +15,10 @@
           <p>Select Collection "bar" medium "age" field is not empty and there is a record.</p>
           <codeblock>db.foo.bar.find({age:{$isnull:0}})</codeblock>
         </li>
-        <li>
+        <!--<li>
           <p>Select Collection "bar" nested object "content.name" does not exist or is null record.</p>
           <codeblock>db.foo.bar.find({"content.name":{$exists:1}})</codeblock>
-        </li>
+        </li>-->
       </ul>      
     </section>
   </body>

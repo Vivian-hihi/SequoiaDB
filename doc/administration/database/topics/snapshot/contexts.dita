@@ -13,10 +13,7 @@
       <title>标示</title>
       <p>SDB_SNAP_CONTEXTS</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>数据，编目</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <simpletable>
@@ -32,17 +29,27 @@
         </strow>
         <strow>
           <stentry>Contexts.ContextID</stentry>
-          <stentry>长整数</stentry>
+          <stentry>长整型</stentry>
           <stentry>上下文 ID</stentry>
         </strow>
         <strow>
+          <stentry>Contexts.Type</stentry>
+          <stentry>字符串</stentry>
+          <stentry>上下文类型，如：DUMP</stentry>
+        </strow>
+        <strow>
+          <stentry>Contexts.Description</stentry>
+          <stentry>字符串</stentry>
+          <stentry>上下文的描述信息，如：包含当前的查询条件</stentry>
+        </strow>
+        <strow>
           <stentry>Contexts.DataRead</stentry>
-          <stentry>长整数</stentry>
+          <stentry>长整型</stentry>
           <stentry>所读数据</stentry>
         </strow>
         <strow>
           <stentry>Contexts.IndexRead</stentry>
-          <stentry>长整数</stentry>
+          <stentry>长整型</stentry>
           <stentry>所读索引</stentry>
         </strow>
         <strow>
@@ -64,7 +71,9 @@
   "SessionID": "vmsvr2-suse-x64:11820:28",
   "Contexts": [
     {
-      "ContextID": 12,
+      "ContextID": 12,      
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
       "DataRead": 0,
       "IndexRead": 0,
       "QueryTimeSpent": 0,

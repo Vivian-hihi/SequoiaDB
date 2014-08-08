@@ -11,10 +11,7 @@
       <title>标示</title>
       <p>SDB_LIST_GROUPS</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>协调</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <simpletable>
@@ -35,7 +32,7 @@
         </strow>
         <strow>
           <stentry>Group.Service.Type</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>分区组中节点的服务类型
             <ul>
               <li>0：直连服务，对应数据库参数 svcname</li>
@@ -52,12 +49,12 @@
         </strow>
         <strow>
           <stentry>Group.NodeID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>分区组中节点的 ID</stentry>
         </strow>
         <strow>
           <stentry>GroupID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>分区组 ID</stentry>
         </strow>
         <strow>
@@ -67,12 +64,12 @@
         </strow>
         <strow>
           <stentry>PrimaryNode</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>主节点 ID</stentry>
         </strow>
         <strow>
           <stentry>Role</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry> 分区组角色，可以为：
             <ul>
               <li>0：数据节点</li>
@@ -92,7 +89,7 @@
         </strow>
         <strow>
           <stentry>Version</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry/>
         </strow>
       </simpletable>

@@ -11,10 +11,7 @@
       <title>标示</title>
       <p>SDB_LIST_COLLECTIONSPACES</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>全部</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <p>由于数据节点与编目节点保存的集合空间信息不同，集合空间列表在协调节点与其它节点所返回的结构有所不同：</p>
@@ -39,7 +36,7 @@
         </strow>
         <strow>
           <stentry>PageSize</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合空间数据页大小</stentry>
         </strow>
       </simpletable>

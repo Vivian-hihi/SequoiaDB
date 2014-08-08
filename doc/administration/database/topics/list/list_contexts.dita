@@ -13,10 +13,7 @@
       <title>标示</title>
       <p>SDB_LIST_CONTEXTS</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>数据，编目</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <simpletable>
@@ -27,12 +24,12 @@
         </sthead>
         <strow>
           <stentry>SessionID</stentry>
-          <stentry>长整数</stentry>
+          <stentry>长整型</stentry>
           <stentry>会话 ID</stentry>
         </strow>
         <strow>
           <stentry>Contexts</stentry>
-          <stentry>长整数数组 </stentry>
+          <stentry>长整型数组 </stentry>
           <stentry>上下文 ID 数组，为该会话所包含的所有上下文列表 </stentry>
         </strow>
       </simpletable>

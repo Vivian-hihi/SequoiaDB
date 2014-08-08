@@ -11,10 +11,7 @@
       <title>标示</title>
       <p>SDB_SNAP_COLLECTIONSPACES</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>全部</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <p>由于数据节点与编目节点保存的集合空间信息不同，集合空间快照在协调节点与其它节点所返回的结构有所不同：</p>
@@ -39,13 +36,33 @@
         </strow>
         <strow>
           <stentry>PageSize</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合空间数据页大小</stentry>
         </strow>        
         <strow>
-          <stentry>GroupName</stentry>
-          <stentry>字符串</stentry>
-          <stentry>集合空间所在的分区组名</stentry>
+          <stentry>MaxCapacitySize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间的最大容量上限</stentry>
+        </strow>
+        <strow>
+          <stentry>NumCollections</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合数量</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalRecords</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合空间的记录总数</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间的总大小</stentry>
+        </strow>
+        <strow>
+          <stentry>FreeSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间的空闲大小</stentry>
         </strow>
       </simpletable>
     </section>
@@ -69,14 +86,20 @@
         </strow>
         <strow>
           <stentry>PageSize</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合空间数据页大小</stentry>
         </strow>
         <strow>
-          <stentry>Group.GroupID</stentry>
-          <stentry>整数数组</stentry>
-          <stentry>该集合空间所在的分区组 ID 列表</stentry>
+          <stentry>TotalSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间的总大小</stentry>
         </strow>
+        <strow>
+          <stentry>FreeSize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合空间的空闲大小</stentry>
+        </strow>
+        
         <strow>
           <stentry>Group.GroupName</stentry>
           <stentry>字符串</stentry>
@@ -93,31 +116,32 @@
       "Name": "bar"
     }
   ],
-  "PageSize": 4096,
-  "Name": "foo",
-  "GroupName": "datagroup1"
+  "PageSize": 65536,
+  "MaxCapacitySize": 8796093022208,
+  "NumCollections": 4,
+  "TotalRecords": 2,
+  "TotalSize": 306315264,
+  "FreeSize": 265551224,
+  "Name": "foo"
 }</codeblock>
     </section>
     <section>
       <title>协调节点示例</title>
       <codeblock>> coord.snapshot(SDB_SNAP_COLLECTIONSPACES)
+
 {
+  "Name": "foo",
+  "PageSize": 4096,
+  "TotalSize": 918945792,
+  "FreeSize": 805183062,
   "Collection": [
     {
       "Name": "bar"
     }
   ],
   "Group": [
-    {
-      "GroupID": 1000,
-      "GroupName": "datagroup1"
-    }
-  ],
-  "Name": "foo",
-  "PageSize": 4096,
-  "_id": {
-    "$oid": "52451a6bf80be5d22b27489b"
-  }
+    "db2"
+  ]
 }</codeblock>
     </section>
   </body>

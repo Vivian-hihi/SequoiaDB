@@ -10,13 +10,11 @@
     <section>
       <title>标示</title>
       <p>SDB_SNAP_CATALOG</p>
+      <note>只能在协调节点执行。</note>
     </section>
+    
     <section>
-      <title>适用节点</title>
-      <p>协调节点</p>
-    </section>
-    <section>
-      <title>字段信息</title>
+      <title>协调节点字段信息</title>
       <simpletable>
         <sthead>
           <stentry>字段名</stentry>
@@ -35,8 +33,8 @@
         </strow>
         <strow>
           <stentry>ReplSize </stentry>
-          <stentry>整数</stentry>
-          <stentry> 执行修改操作时需要同步的副本数。当执行更新，插入，删除记录等操作时，仅当指定副本数的节点都完成操作时才返回操作结果。</stentry>
+          <stentry>整型</stentry>
+          <stentry>执行修改操作时需要同步的副本数。当执行更新，插入，删除记录等操作时，仅当指定副本数的节点都完成操作时才返回操作结果。</stentry>
         </strow>
         <strow>
           <stentry>ShardingKey </stentry>
@@ -46,16 +44,16 @@
         <strow>
           <stentry>ShardingType </stentry>
           <stentry>字符串</stentry>
-          <stentry> 数据分区类型：<fig/>range：数据按分区键值的范围进行分区存储<fig/>hash：数据按分区键的哈希值进行分区存储 </stentry>
+          <stentry>数据分区类型：<fig/>range：数据按分区键值的范围进行分区存储<fig/>hash：数据按分区键的哈希值进行分区存储 </stentry>
         </strow>
         <strow>
           <stentry>Version </stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合版本号，当对集合的元数据执行修改操作时递增该版本号（例如数据切分）</stentry>
         </strow>
         <strow>
           <stentry>CataInfo.GroupID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>分区组 ID</stentry>
         </strow>
         <strow>

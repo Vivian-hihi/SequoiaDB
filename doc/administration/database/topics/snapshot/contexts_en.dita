@@ -33,6 +33,16 @@
           <stentry>Context ID</stentry>
         </strow>
         <strow>
+          <stentry>Contexts.Type</stentry>
+          <stentry></stentry>
+          <stentry></stentry>
+        </strow>
+        <strow>
+          <stentry>Contexts.Description</stentry>
+          <stentry></stentry>
+          <stentry></stentry>
+        </strow>
+        <strow>
           <stentry>Contexts.DataRead</stentry>
           <stentry>Long integer</stentry>
           <stentry>Data that is read</stentry>

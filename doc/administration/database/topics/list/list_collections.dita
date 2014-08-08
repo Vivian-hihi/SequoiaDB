@@ -11,10 +11,7 @@
       <title>标示</title>
       <p>SDB_LIST_COLLECTIONS</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>全部</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <p>由于数据节点与编目节点保存的集合信息不同，集合列表在协调节点与其它节点所返回的结构有所不同：</p>
@@ -34,22 +31,22 @@
         </strow>
         <strow>
           <stentry>Details.ID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合 ID，范围0~4095，集合空间内唯一</stentry>
         </strow>
         <strow>
           <stentry>Details.LogicalID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合逻辑 ID</stentry>
         </strow>
         <strow>
           <stentry>Details.Sequence</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>序列号</stentry>
         </strow>
         <strow>
           <stentry>Details.Indexes</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>该集合所包含的索引数量</stentry>
         </strow>
         <strow>

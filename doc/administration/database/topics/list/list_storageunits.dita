@@ -11,10 +11,7 @@
       <title>标示</title>
       <p>SDB_LIST_STORAGEUNITS</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>数据，编目</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <simpletable>
@@ -30,7 +27,7 @@
         </strow>
         <strow>
           <stentry>ID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>该集合空间 ID</stentry>
         </strow>
         <strow>
@@ -40,27 +37,27 @@
         </strow>
         <strow>
           <stentry>PageSize</stentry>
-          <stentry>整数 </stentry>
+          <stentry>整型</stentry>
           <stentry>集合空间数据页大小</stentry>
         </strow>
         <strow>
           <stentry>Sequence</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>序列号，当前版本中为1</stentry>
         </strow>
         <strow>
           <stentry>NumCollections</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合空间下的集合个数</stentry>
         </strow>
         <strow>
           <stentry>CollectionHWM</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合高水位，一般来说意味着该集合空间中总共创建过的集合数量（包括被删除的集合）</stentry>
         </strow>
         <strow>
           <stentry>Size</stentry>
-          <stentry>长整数</stentry>
+          <stentry>长整型</stentry>
           <stentry>存储单元大小（字节）</stentry>
         </strow>
       </simpletable>

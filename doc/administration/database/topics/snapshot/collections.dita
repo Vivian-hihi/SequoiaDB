@@ -11,10 +11,7 @@
       <title>标示</title>
       <p>SDB_SNAP_COLLECTIONS</p>
     </section>
-    <section>
-      <title>适用节点</title>
-      <p>全部</p>
-    </section>
+    
     <section>
       <title>字段信息</title>
       <p>由于数据节点与编目节点保存的集合信息不同，集合快照在协调节点与其它节点所返回的结构有所不同：</p>
@@ -34,22 +31,22 @@
         </strow>
         <strow>
           <stentry>Details.ID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合 ID，范围0~4095，集合空间内唯一</stentry>
         </strow>
         <strow>
           <stentry>Details.LogicalID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合逻辑 ID</stentry>
         </strow>
         <strow>
           <stentry>Details.Sequence</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>序列号</stentry>
         </strow>
         <strow>
           <stentry>Details.Indexes</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>该集合所包含的索引数量</stentry>
         </strow>
         <strow>
@@ -68,14 +65,29 @@
           </stentry>
         </strow>
         <strow>
-          <stentry>NodeName</stentry>
-          <stentry>字符串</stentry>
-          <stentry>节点名（主机名+端口号）</stentry>
+          <stentry>TotalRecords</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的记录总数</stentry>
         </strow>
         <strow>
-          <stentry>GroupName</stentry>
-          <stentry>字符串</stentry>
-          <stentry>节点所在分区组名（仅在集群模式下显示）</stentry>
+          <stentry>TotalDataPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的数据页总数</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的索引页总数</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDataFreeSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的数据空闲空间</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexFreeSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的索引空闲空间</stentry>
         </strow>
       </simpletable>
     </section>
@@ -100,22 +112,22 @@
         <strow/>
         <strow>
           <stentry>Details.Group.ID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合 ID，范围0~4096，集合空间内唯一</stentry>
         </strow>
         <strow>
           <stentry>Details.Group.LogicalID</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>集合逻辑 ID </stentry>
         </strow>
         <strow>
           <stentry>Details.Group.Sequence</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>序列号</stentry>
         </strow>
         <strow>
           <stentry>Details.Group.Indexes</stentry>
-          <stentry>整数</stentry>
+          <stentry>整型</stentry>
           <stentry>该集合所包含的索引数量 </stentry>
         </strow>
         <strow>
@@ -134,9 +146,34 @@
           </stentry>
         </strow>
         <strow>
+          <stentry>Details.Group.TotalRecords</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的记录总数</stentry>
+        </strow>
+        <strow>
+          <stentry>Details.Group.TotalDataPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的数据页总数</stentry>
+        </strow>
+        <strow>
+          <stentry>Details.Group.TotalIndexPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的索引页总数</stentry>
+        </strow>
+        <strow>
+          <stentry>Details.Group.TotalDataFreeSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的数据空闲空间</stentry>
+        </strow>
+        <strow>
+          <stentry>Details.Group.TotalIndexFreeSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的索引空闲空间</stentry>
+        </strow>
+        <strow>
           <stentry>Details.Group.NodeName</stentry>
           <stentry>字符串</stentry>
-          <stentry>节点名（主机名+端口）</stentry>
+          <stentry>节点名（主机名 + 端口）</stentry>
         </strow>
       </simpletable>
     </section>
@@ -152,8 +189,11 @@
       "Sequence": 1,
       "Indexes": 8,
       "Status": "Normal",
-      "NodeName": "vmsvr2-suse-x64:11820",
-      "GroupName": "datagroup1"
+      "TotalRecords": 0,
+      "TotalDataPages": 0,
+      "TotalIndexPages": 6,
+      "TotalDataFreeSpace": 0,
+      "TotalIndexFreeSpace": 196545
     }
   ]
 }</codeblock>
@@ -172,7 +212,12 @@
           "LogicalID": 0,
           "Sequence": 1,
           "Indexes": 1,
-          "Status": "Normal",
+          "Status": "Normal",          
+          "TotalRecords": 1,
+          "TotalDataPages": 1,
+          "TotalIndexPages": 2,
+          "TotalDataFreeSpace": 4004,
+          "TotalIndexFreeSpace": 4046,
           "NodeName": "vmsvr2-suse-x64:11820"
         }
       ]

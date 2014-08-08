@@ -47,7 +47,7 @@
     <section>
       <title>Usage</title>
       <p>In the following example, sdbtop uses "/opt/sequoiadb/conf/sdbtop.xml" as the configuration file, it monitors one node in a server named sdbserver3 on the port in a service name of 11810, using test as both the user name and password.</p>
-      <codeblock>sdbtop -c /opt/sequoiadb/conf/sdbtop.xml  -i sdbserver3 -s 11810 -u test -p test</codeblock>
+      <codeblock>sdbtop -c /opt/sequoiadb/conf/sdbtop.xml -i sdbserver3 -s 11810 -u test -p test</codeblock>
       <p>Then enter the main window:</p><codeblock>refresh= 3 secs                             sdbtop 1.0                        snapshotMode: GLOBAL
 displayMode: ABSOLUTE                      Main Window                     snapshotModeInput: NULL
 hostname: sdbserver3                                                           filtering Number: 0
