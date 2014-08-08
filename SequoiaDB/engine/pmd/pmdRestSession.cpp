@@ -483,6 +483,7 @@ namespace engine
       {
          _pDPSCB = NULL ;
       }
+      sdbGetOMManager()->getRSManager()->registerEDU( eduCB() ) ;
    }
 
    void _pmdRestSession::_onDetach()
@@ -516,6 +517,8 @@ namespace engine
          sdbGetOMManager()->detachSessionInfo( _pSessionInfo ) ;
          _pSessionInfo = NULL ;
       }
+
+      sdbGetOMManager()->getRSManager()->unregEUD( eduCB() ) ;
    }
 
    INT32 _pmdRestSession::getFixBuffSize() const
