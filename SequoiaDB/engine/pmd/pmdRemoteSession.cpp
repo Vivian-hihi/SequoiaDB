@@ -312,8 +312,7 @@ namespace engine
 
    void _pmdRemoteSession::clear()
    {
-      _mapPendingSubSession.clear() ;
-      _mapSubSession.clear() ;
+      clearSubSession() ;
       _pHandle          = NULL ;
       _pSite            = NULL ;
    }
