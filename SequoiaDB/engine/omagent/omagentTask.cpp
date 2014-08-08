@@ -236,6 +236,59 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omaInstallDBBusinessTask::getInstallStatus ( BSONObj &progress )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      BSONObj coordResult ;
+      BSONObj catalogResult ;
+      try
+      {
+      // get coord status
+      coordResult = BSON ( OMA_FIELD_NAME << OMA_FIELD_COORD <<
+                           OMA_FIELD_TOTALCOUNT << _coordResult._totalNum <<
+                           OMA_FIELD_INSTALLEDCOUNT << _coordResult._finishNum <<
+                           OMA_FIELD_DESC << _coordResult._desc.c_str() ) ;
+      bab.append ( coordResult ) ;
+      // get catalog status
+      catalogResult = BSON ( OMA_FIELD_NAME << OMA_FIELD_COORD <<
+                             OMA_FIELD_TOTALCOUNT << _coordResult._totalNum <<
+                             OMA_FIELD_INSTALLEDCOUNT << _coordResult._finishNum <<
+                             OMA_FIELD_DESC << _coordResult._desc.c_str() ) ;
+      bab.append ( catalogResult ) ;
+      // get data group status
+      std::map< std::string, InstallJobResult >::iterator it ;
+      it = _mapGroupsResult.begin() ;
+      while ( it != _mapGroupsResult.end() )
+      {
+         std::string groupname = it->first ;
+         InstallJobResult result = it->second ;
+         BSONObj groupResult ;
+         groupResult = BSON ( OMA_FIELD_NAME << groupname.c_str() <<
+                              OMA_FIELD_TOTALCOUNT << result._totalNum <<
+                              OMA_FIELD_INSTALLEDCOUNT << result._finishNum <<
+                              OMA_FIELD_DESC << result._desc.c_str() ) ;
+         bab.append ( groupResult ) ;
+         it++ ;
+      }
+      // set return result
+      bob.appendArray( OMA_FIELD_PROGRESS, bab.arr() ) ;
+      progress = bob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR,
+                  "Failed to get install db business progress: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
    INT32 _omaInstallDBBusinessTask::_installCatalog()
    {

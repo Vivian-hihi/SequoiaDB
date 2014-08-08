@@ -63,6 +63,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaRegHosts )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaGetHostNames )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
 
    /*
       _omaCommand
@@ -391,11 +392,11 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
    INT32 _omaInstallRemoteAgent::init ( INT32 flags, INT64 numToSkip,
-                                            INT64 numToReturn,
-                                            const CHAR *pMatcherBuff,
-                                            const CHAR *pSelectBuff,
-                                            const CHAR *pOrderByBuff,
-                                            const CHAR *pHintBuff )
+                                        INT64 numToReturn,
+                                        const CHAR *pMatcherBuff,
+                                        const CHAR *pSelectBuff,
+                                        const CHAR *pOrderByBuff,
+                                        const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -439,7 +440,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
    INT32 _omaInstallRemoteAgent::doit ( CHAR **ppBody, INT32 &bodyLen,
-                                            INT32 &returnNum )
+                                        INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
       std::vector<BSONObj> result ;
@@ -582,9 +583,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
    INT32 _omaInstallRemoteAgent::getRemoteAgentStatus ( const CHAR *pIp,
-                                                            const CHAR *pUserName,
-                                                            const CHAR *pPassword,
-                                                            BSONObj &result )
+                                                        const CHAR *pUserName,
+                                                        const CHAR *pPassword,
+                                                        BSONObj &result )
    {
       INT32 rc = SDB_OK ;
       _omaCheckRemoteAgentProcess checkRemote ;
@@ -615,11 +616,11 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
    INT32 _omaCheckRemoteAgentProcess::init( INT32 flags, INT64 numToSkip,
-                                                INT64 numToReturn,
-                                                const CHAR *pMatcherBuff,
-                                                const CHAR *pSelectBuff,
-                                                const CHAR *pOrderByBuff,
-                                                const CHAR *pHintBuff )
+                                            INT64 numToReturn,
+                                            const CHAR *pMatcherBuff,
+                                            const CHAR *pSelectBuff,
+                                            const CHAR *pOrderByBuff,
+                                            const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -662,7 +663,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
 
    INT32 _omaCheckRemoteAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
-                                                INT32 &returnNum )
+                                            INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
       std::vector<BSONObj> result ;
@@ -759,9 +760,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
 
    INT32 _omaCheckRemoteAgentProcess::check ( const CHAR *pIp,
-                                                  const CHAR *pUserName,
-                                                  const CHAR *pPassword,
-                                                  BSONObj &result )
+                                              const CHAR *pUserName,
+                                              const CHAR *pPassword,
+                                              BSONObj &result )
    {
       INT32 rc = SDB_OK ;
       CHAR *pBuffer = NULL ;
@@ -831,11 +832,11 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
    INT32 _omaInstallAgentProcess::init( INT32 flags, INT64 numToSkip,
-                                                INT64 numToReturn,
-                                                const CHAR *pMatcherBuff,
-                                                const CHAR *pSelectBuff,
-                                                const CHAR *pOrderByBuff,
-                                                const CHAR *pHintBuff )
+                                        INT64 numToReturn,
+                                        const CHAR *pMatcherBuff,
+                                        const CHAR *pSelectBuff,
+                                        const CHAR *pOrderByBuff,
+                                        const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -1789,11 +1790,11 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
    INT32 _omaGetHostNames::init( INT32 flags, INT64 numToSkip,
-                                                INT64 numToReturn,
-                                                const CHAR *pMatcherBuff,
-                                                const CHAR *pSelectBuff,
-                                                const CHAR *pOrderByBuff,
-                                                const CHAR *pHintBuff )
+                                 INT64 numToReturn,
+                                 const CHAR *pMatcherBuff,
+                                 const CHAR *pSelectBuff,
+                                 const CHAR *pOrderByBuff,
+                                 const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -2005,11 +2006,11 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
    INT32 _omaInstallDBBusiness::init( INT32 flags, INT64 numToSkip,
-                                          INT64 numToReturn,
-                                          const CHAR *pMatcherBuff,
-                                          const CHAR *pSelectBuff,
-                                          const CHAR *pOrderByBuff,
-                                          const CHAR *pHintBuff )
+                                      INT64 numToReturn,
+                                      const CHAR *pMatcherBuff,
+                                      const CHAR *pSelectBuff,
+                                      const CHAR *pOrderByBuff,
+                                      const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -2144,11 +2145,103 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       goto done ;
    }
 
+   /*
+      _omaInstallDBStatus
+   */
+   _omaInstallDBStatus::_omaInstallDBStatus ()
+   {
+      _scope = NULL ;
+      _jsFileName = "" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+      _taskID = OMA_INVALID_TASKID ;
+      _taskMrg = NULL ;
+   }
 
-   // _omaCreateVirtualCoord
-   _omaCreateVirtualCoord::_omaCreateVirtualCoord (
-                                                     const CHAR *username,
-                                                     const CHAR *password )
+   _omaInstallDBStatus::~_omaInstallDBStatus ()
+   {
+
+   }
+
+   INT32 _omaInstallDBStatus::init ( INT32 flags, INT64 numToSkip,
+                                   INT64 numToReturn,
+                                   const CHAR *pMatcherBuff,
+                                   const CHAR *pSelectBuff,
+                                   const CHAR *pOrderByBuff,
+                                   const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      // parse bson to get task id
+      BSONElement ele ;
+      BSONObj arg( pMatcherBuff ) ;
+      try
+      {
+         ele = arg.getField ( OMA_FIELD_TASKID ) ;
+         if ( NumberLong != ele.type() )
+         {
+            rc = SDB_UNEXPECTED_RESULT ;
+            PD_LOG ( PDERROR, "Failed to get taskID, rc = %d", rc ) ;
+            goto error ;
+         }
+         _taskID = ele.numberLong () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR,
+                  "Failed to get taskID, received unexpected error: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+      // get task manager
+      _taskMrg = getTaskMgr() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBStatus::doit ( CHAR **ppBody, INT32 &bodyLen,
+                                   INT32 &returnNum )
+   {
+      INT32 rc = SDB_OK ;
+      _omaTask *pTask  = NULL ;
+      _omaInstallDBBusinessTask *pChildTask = NULL ;
+      BSONObj result ;
+      pTask = _taskMrg->findTask( _taskID ) ;
+
+      if ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) )
+      {
+         pChildTask->getInstallStatus( result ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Failed to get install db progress" ) ;
+         goto error ;
+      }
+
+      // build return body
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &result ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
+         goto error;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _omaCreateVirtualCoord
+   */
+   _omaCreateVirtualCoord::_omaCreateVirtualCoord ( const CHAR *username,
+                                                    const CHAR *password )
    {
       _scope = NULL ;
       _jsFileName = "createVirtualCoord.js" ;
@@ -2186,7 +2279,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
 
 
    INT32 _omaCreateVirtualCoord::doit( INT32 coord_service,
-                                           BOOLEAN &result )
+                                       BOOLEAN &result )
    {
       INT32 rc = SDB_OK ;
       BSONObj rval ;
@@ -2261,7 +2354,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
    }
 
    INT32 _omaCreateVirtualCoord::createVirtualCoord( INT32 coord_service,
-                                                   BOOLEAN &result )
+                                                     BOOLEAN &result )
    {
       INT32 rc = SDB_OK ;
       rc = init() ;
