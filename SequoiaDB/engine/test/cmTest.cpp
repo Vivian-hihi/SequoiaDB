@@ -21,6 +21,7 @@
 #include "ossSocket.hpp"
 #include "omagentDef.hpp"
 #include "rtnRemoteExec.hpp"
+#include "omagentDef.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
