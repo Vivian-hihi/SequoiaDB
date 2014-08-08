@@ -55,6 +55,14 @@
 #define OMA_FIELD_HASPUSH                          "HasPush"
 #define OMA_FIELD_PORTHASUSED                      "PortHasUsed"
 #define OMA_FIELD_TASKID                           "TaskID"
+#define OMA_FIELD_ISFINISH                         "IsFinish"
+#define OMA_FIELD_PROGRESS                         "Progress"
+#define OMA_FIELD_TOTALCOUNT                       "TotalCount"
+#define OMA_FIELD_INSTALLEDCOUNT                   "InstalledCount"
+#define OMA_FIELD_DESC                             "Desc"
+#define OMA_FIELD_COORD                            "Coord"
+#define OMA_FIELD_CATALOG                          "Catalog"
+#define OMA_FIELD_DATA                             "Data"
 
 // host info
 #define OMA_FIELD_HOSTSTABLE                       "HostsTable"

@@ -148,7 +148,7 @@ namespace engine
          INT32 doit() ;
 
          // respond query of install status
-         INT32 getInstallStatus( BSONObj &result ) ;
+         INT32 getInstallStatus( BSONObj &progress ) ;
 
       private:
          INT32 _installCatalog() ;

@@ -421,6 +421,28 @@ namespace engine
    /*
       _omaInstallDBStatus
    */
+   class _omaInstallDBStatus : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaInstallDBStatus () ;
+         ~_omaInstallDBStatus () ;
+
+         virtual const CHAR* name () { return "get install db status" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+
+      private:
+         UINT64       _taskID ;
+         _omaTaskMgr* _taskMrg ;
+
+   } ;
 
 
    /*
@@ -539,6 +561,8 @@ namespace engine
       private:
          INT32 _port ;
    } ;
+
+
 
 
 }

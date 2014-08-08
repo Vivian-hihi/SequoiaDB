@@ -61,6 +61,7 @@ namespace engine
    {
       INT32 _rc ;
       std::string _errMsg ;
+      std::string _desc ;
       INT32 _totalNum ;
       INT32 _finishNum ;
       std::vector< InstallInfo > _finishNode ;
