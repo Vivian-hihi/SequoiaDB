@@ -187,7 +187,10 @@ namespace engine
       }
 
       // 4. remove tmp
-      ossDelete( tmpFile.c_str() ) ;
+      if ( SDB_OK == ossAccess( tmpFile.c_str() ) )
+      {
+         ossDelete( tmpFile.c_str() ) ;
+      }
 
    done:
       if ( isOpen )
