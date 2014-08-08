@@ -25,6 +25,7 @@
 #include "../bson/bson.h"
 
 using namespace bson ;
+using namespace engine ;
 
 
 INT32 main ( INT32 argc, CHAR **argv )
