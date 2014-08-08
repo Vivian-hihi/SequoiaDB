@@ -160,7 +160,8 @@ namespace engine
          }
 
          // send message
-         rc = pmdSend ( pCMRequest, reqSize, &sock, pmdGetThreadEDUCB() ) ;
+         rc = pmdSend ( pCMRequest, ((MsgHeader*)pCMRequest)->messageLength,
+                        &sock, pmdGetThreadEDUCB() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to send cm request message, rc=%d", rc ) ;
