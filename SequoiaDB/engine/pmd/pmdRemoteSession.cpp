@@ -958,6 +958,7 @@ namespace engine
          {
             itPtr->second->processEvent( event ) ;
             itPtr->second->setNeedToDel( FALSE ) ;
+            nodeID = itPtr->second->getNodeIDUInt() ;
             if ( !*ppSub && ( it = mapSessions.find( nodeID ) ) !=
                  mapSessions.end() &&
                  &(it->second) == itPtr->second )
