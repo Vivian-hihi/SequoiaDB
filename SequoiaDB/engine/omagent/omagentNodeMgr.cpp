@@ -1064,6 +1064,10 @@ namespace engine
             PD_LOG( PDEVENT, "Modify node[%s] succeed", pSvcName ) ;
          }
       }
+      if ( hasLock )
+      {
+         releaseBucket( pSvcName ) ;
+      }
       return rc ;
    error:
       if ( createCfgFile )
@@ -1077,10 +1081,6 @@ namespace engine
       if ( createDBPath )
       {
          ossDelete( dbPath ) ;
-      }
-      if ( hasLock )
-      {
-         releaseBucket( pSvcName ) ;
       }
       goto done ;
    }
