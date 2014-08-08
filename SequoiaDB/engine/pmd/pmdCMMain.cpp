@@ -110,7 +110,7 @@ namespace engine
       {
          string configs ;
          sdbGetOMAgentOptions()->toString( configs ) ;
-         PD_LOG( PDEVENT, "All configs: %s", configs.c_str() ) ;
+         PD_LOG( PDEVENT, "All configs:\n%s", configs.c_str() ) ;
       }
 
       // 5. handlers and init global mem
