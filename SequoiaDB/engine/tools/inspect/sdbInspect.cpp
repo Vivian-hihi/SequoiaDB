@@ -237,6 +237,12 @@ namespace
       INT32 rc     = SDB_OK ;
       ciNode *node = NULL ;
       INT64 len    = 0 ;
+      const CHAR * nodeState[] =
+      {
+         "Normal",
+         "Cannot connect to node or caonnot get collection",
+         "Cannot get cursor"
+      } ;
 
    retry:
       if ( bufferSize - 1 <= len )
@@ -273,6 +279,9 @@ namespace
                              "    Node ServiceName : %s"OSS_NEWLINE,
                              node->_serviceName ) ;
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+         len += ossSnprintf( buffer + len, bufferSize - len,
+                             "    Node State       : %s"OSS_NEWLINE,
+                             nodeState[ node->_state ] ) ;
          len += ossSnprintf( buffer + len, bufferSize - len, OSS_NEWLINE ) ;
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
 
@@ -331,12 +340,22 @@ namespace
       goto done ;
    }
 
-   INT32 dumpCiRecord( const INT32 nodeCount, ciLinkList< ciRecord > &link,
+   INT32 dumpCiRecord( ciLinkList< ciNode > &nodes,
+                       ciLinkList< ciRecord > &link,
                        CHAR *&buffer, INT64 &bufferSize, INT64 &validSize )
    {
-      INT32 rc     = SDB_OK ;
-      ciRecord *rd = NULL ;
-      INT64 len    = 0 ;
+      INT32 rc        = SDB_OK ;
+      INT32 nodeCount = nodes.count() ;
+      ciRecord *rd    = NULL ;
+      ciNode   *node  = NULL ;
+      const CHAR *pst = NULL ;
+      INT64 len       = 0 ;
+      const CHAR *nodeState[] =
+      {
+         " 1",
+         " 0",
+         " x"
+      } ;
 
    retry:
       if ( bufferSize - 1 <= len )
@@ -357,8 +376,10 @@ namespace
       {
          len += ossSnprintf( buffer + len, bufferSize - len,
                              "  # Node state 1 means node has the record,"
-                             " or 0 means not."OSS_NEWLINE
-                             "  # The order is ascended by node index."OSS_NEWLINE
+                             " or 0 means not, and x means node invliad"
+                             OSS_NEWLINE
+                             "  # The order is ascended by node index."
+                             OSS_NEWLINE
                              "    There is [%d] piece of records that haven't been"
                              " synchronized."
                              OSS_NEWLINE""OSS_NEWLINE, link.count() ) ;
@@ -383,16 +404,36 @@ namespace
          len += ossSnprintf( buffer + len, bufferSize - len,
                              "  -Node State : " ) ;
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+
+         nodes.resetCurrentNode() ;
+         node = nodes.getHead() ;
          for ( INT32 idx = 0 ; idx < nodeCount ; ++idx )
          {
             ciState st( rd->_state ) ;
-            len += ossSnprintf( buffer + len, bufferSize - len,
-                                   st.hit( idx ) ? " 1" : " 0" ) ;
+            if ( st.hit( idx ) )
+            {
+               if ( 0 != node->_state )
+               {
+                  pst = nodeState[ 2 ] ;
+               }
+               else
+               {
+                  pst = nodeState[ 0 ] ;
+               }
+            }
+            else
+            {
+               pst = nodeState[ 1 ] ;
+            }
+            len += ossSnprintf( buffer + len, bufferSize - len, pst ) ;
             CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+
+            node = nodes.next() ;
          }
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
          len += ossSnprintf( buffer + len, bufferSize - len, OSS_NEWLINE ) ;
          CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+
          rd = link.next() ;
       }
       len += ossSnprintf( buffer + len, bufferSize - len, OSS_NEWLINE ) ;
@@ -404,6 +445,73 @@ namespace
       return rc ;
    error:
       OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      goto done ;
+   }
+
+   INT32 dumpCiTail( ciTail &tail, CHAR *&buffer,
+                     INT64 &bufferSize, INT64 &validSize )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 len = 0 ;
+
+   retry:
+      if ( bufferSize - 1 <= len )
+      {
+         bufferSize += CI_BUFFER_BLOCK ;
+         buffer = ( CHAR *)SDB_OSS_REALLOC( buffer, bufferSize ) ;
+         if ( NULL == buffer )
+         {
+            std::cout << "Error: failed to allocate buffer, size = "
+               << bufferSize << std::endl ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+      }
+
+      len += ossSnprintf( buffer + len, bufferSize - len,
+                         "Inspect result:"OSS_NEWLINE ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+      len += ossSnprintf( buffer + len, bufferSize - len,
+                         "Total group count   : %d"OSS_NEWLINE,
+                         tail._groupCount ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+      len += ossSnprintf( buffer + len, bufferSize - len,
+                         "Total collection    : %d"OSS_NEWLINE,
+                         tail._clCount ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+      len += ossSnprintf( buffer + len, bufferSize - len,
+                         "Total records count : %d"OSS_NEWLINE,
+                         tail._recordCount ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+      len += ossSnprintf( buffer + len, bufferSize - len,
+                         "Total time cost     : %d ms"OSS_NEWLINE,
+                         tail._timeCount ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+
+      if ( 0 == tail._exitCode )
+      {
+         len += ossSnprintf( buffer + len, bufferSize - len,
+                             "Result: exit with no records "
+                             "different"OSS_NEWLINE ) ;
+      }
+      else if ( 1 == tail._exitCode )
+      {
+         len += ossSnprintf( buffer + len, bufferSize - len,
+                             "Result: exit with less than 1% of "
+                             "records not synchronized"OSS_NEWLINE ) ;
+      }
+      else
+      {
+         len += ossSnprintf( buffer + len, bufferSize - len,
+                             "Result: loop is limited"OSS_NEWLINE ) ;
+      }
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+
+      validSize = len ;
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -842,6 +950,8 @@ namespace
          pos += sizeof( INT32 ) ;
          ossMemcpy( &node->_nodeID, buffer + pos, sizeof( INT32 ) ) ;
          pos += sizeof( INT32 ) ;
+         ossMemcpy( &node->_state, buffer + pos, sizeof( INT32 ) ) ;
+         pos += sizeof( INT32 ) ;
          ossMemcpy( node->_hostname, buffer + pos, CI_HOSTNAME_SIZE + 1) ;
          pos += CI_HOSTNAME_SIZE + 1 ;
          ossMemcpy( node->_serviceName, buffer + pos, CI_SERVICENAME_SIZE + 1 );
@@ -860,7 +970,7 @@ namespace
    /**
     ** copy ciNode data to buffer
     ***/
-   INT32 ciNodeToBuffer( ciLinkList< ciNode > &nodes, CHAR *&buffer, 
+   INT32 ciNodeToBuffer( ciLinkList< ciNode > &nodes, CHAR *&buffer,
                          INT64 &bufferSize, INT64 &validSize )
    {
       INT32 rc        = SDB_OK ;
@@ -891,6 +1001,8 @@ namespace
          ossMemcpy( buffer + pos, &curNode->_index, sizeof( INT32 ) ) ;
          pos += sizeof( INT32 ) ;
          ossMemcpy( buffer + pos, &curNode->_nodeID, sizeof( INT32 ) ) ;
+         pos += sizeof( INT32 ) ;
+         ossMemcpy( buffer + pos, &curNode->_state, sizeof( INT32 ) ) ;
          pos += sizeof( INT32 ) ;
          ossMemcpy( buffer + pos, curNode->_hostname, CI_HOSTNAME_SIZE + 1) ;
          pos += CI_HOSTNAME_SIZE + 1 ;
@@ -931,7 +1043,7 @@ namespace
    /**
     ** get next record
     ***/
-   void getNext( ciState &st, ciLinkList< ciCursor > &cursors,
+   INT32 getNext( ciState &st, ciLinkList< ciCursor > &cursors,
                  const INT32 minIndex, ciBson &docs, BOOLEAN inited = TRUE )
    {
       INT32 rc = SDB_OK ;
@@ -949,8 +1061,18 @@ namespace
                rc = cursor->_cursor->next( docs.objs[ idx ] ) ;
                if ( SDB_OK != rc )
                {
-                  docs.objs[ idx ] = sdbclient::_sdbStaticObject ;
-                  rc = SDB_OK ; // need reset the return value
+                  if ( SDB_DMS_EOC != rc )
+                  {
+                     std::cout << "Error: get record failed, rc = "
+                               << rc << std::endl ;
+                     rc = CI_INSPECT_ERROR ; // redo inspect from begin
+                     goto error ;
+                  }
+                  else
+                  {
+                     docs.objs[ idx ] = sdbclient::_sdbStaticObject ;
+                     rc = SDB_OK ; // need reset the return value
+                  }
                }
             }
             else
@@ -972,6 +1094,11 @@ namespace
             docs.objs[ idx ] = sdbclient::_sdbStaticObject ;
          }
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /**
@@ -1013,8 +1140,13 @@ namespace
          rc = db->connect( curNode->_hostname, curNode->_serviceName ) ;
          if ( SDB_OK != rc )
          {
-            std::cout << "Error: failed to connect to " << curNode->_hostname
+            std::cout << "Warning: cannot connect to " << curNode->_hostname
                       << ":" << curNode->_serviceName << std::endl ;
+            std::cout << "Node is invalid, it will not be inspected"
+                      << std::endl ;
+            rc = SDB_OK ;
+            curNode->_state = 1 ;// cannot connect to node
+
             // goto error ;
             // we should not goto error, and we considerate that the
             // node is empty.
@@ -1028,6 +1160,8 @@ namespace
             // goto error ;
             // we should not goto error, and we considerate that the
             // node is empty.
+            curNode->_state = 1 ;//cannot get collection
+            delete db ;
          }
 
          sdbclient::sdbCursor *cr = new sdbclient::sdbCursor() ;
@@ -1036,6 +1170,7 @@ namespace
             std::cout << "Error: failed to allocate sdbclient::sdbCursor"
                       << std::endl ;
             rc = SDB_OOM ;
+            delete db ;
             goto error ;
          }
 
@@ -1054,6 +1189,9 @@ namespace
             // goto error ;
             // we should not goto error, and we considerate that the
             // node is empty.
+            delete db ;
+            delete cr ;
+            curNode->_state = 2 ;//cannot get cursor
          }
          else
          {
@@ -1076,7 +1214,7 @@ namespace
     ** query bson record in each cursor
     ***/
    BOOLEAN recordQuery( ciLinkList< ciCursor > &cursors,
-                      ciState &state, bson::BSONObj &obj )
+                      ciState &state, bson::BSONObj &obj, INT32 &rc )
    {
       BOOLEAN same = FALSE ;
       INT32 idx = 0 ;
@@ -1086,7 +1224,9 @@ namespace
       state.reset() ;
       // it's a trick to make sure that all cursors can get next.
       state.set( ALL_THE_SAME_BIT ) ;
-      getNext( state, cursors, 0, docs, FALSE ) ;
+      rc = getNext( state, cursors, 0, docs, FALSE ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), done ) ;
+
       state.reset() ;
       while ( idx < count )
       {
@@ -1102,6 +1242,7 @@ namespace
          same = TRUE ;
       }
 
+   done:
       return same ;
    }
 
@@ -1158,8 +1299,8 @@ namespace
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
          }
 
-         ciState st;
-         if ( dump || !recordQuery( cursors, st, obj ) )
+         ciState st ;
+         if ( dump || !recordQuery( cursors, st, obj, rc ) )
          {
             ciRecord *record = records.createNode() ;
             if ( NULL == record )
@@ -1391,6 +1532,18 @@ namespace
                          ( CHAR * )&tail->_groupCount, sizeof( UINT32 ) ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
+      rc = readFromFile( in, tmpOffset,
+                         ( CHAR * )&tail->_clCount, sizeof( UINT32 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+      rc = readFromFile( in, tmpOffset,
+                         ( CHAR * )&tail->_recordCount, sizeof( INT64 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+      rc = readFromFile( in, tmpOffset,
+                         ( CHAR * )&tail->_timeCount, sizeof( UINT64 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
       rc = readCiOffset( in, tmpOffset, tail->_groupCount, tail->_groupOffset );
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
@@ -1423,6 +1576,21 @@ namespace
                         ( const CHAR * )&tail->_groupCount, sizeof( UINT32 ) ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       len += sizeof( UINT32 ) ;
+
+      rc = writeToFile( out,
+                        ( const CHAR * )&tail->_clCount, sizeof( UINT32 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+      len += sizeof( UINT32 ) ;
+
+      rc = writeToFile( out,
+                        ( const CHAR * )&tail->_recordCount, sizeof( INT64 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+      len += sizeof( INT64 ) ;
+
+      rc = writeToFile( out,
+                        ( const CHAR * )&tail->_timeCount, sizeof( UINT64 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+      len += sizeof( UINT64 ) ;
 
       rc = writeCiClOffset( out, tail->_groupOffset,
                                  buffer, bufferSize, validSize ) ;
@@ -1520,7 +1688,7 @@ namespace
                   rc = readCiRecord( in, offset, nodes,
                                      clHeader, records, TRUE ) ;
                   CHECK_VALUE( ( SDB_OK != rc ), error ) ;
-                  rc = dumpCiRecord( nodes.count(), records,
+                  rc = dumpCiRecord( nodes, records,
                      buffer, bufferSize, validSize ) ;
                   CHECK_VALUE( ( SDB_OK != rc ), error ) ;
                   rc = writeToFile( out, buffer, validSize ) ;
@@ -1790,21 +1958,7 @@ namespace
                   continue ;
                }
 
-               sdbclient::sdb db;
-               rc = db.connect( hostname.c_str(), servicename.c_str() ) ;
-               if ( SDB_OK != rc )
-               {
-                  std::cout << "Warning: connot connect to " << hostname
-                            << ":" << servicename << std::endl ;
-                  std::cout << "Node is invalid, it will not be inspected"
-                            << std::endl ;
-                  rc = SDB_OK ;
-                  ++cit ;
-                  continue ;
-               }
-
                // not master node
-               db.disconnect() ;
                ossMemcpy( node->_hostname, hostname.c_str(),
                                            CI_HOSTNAME_SIZE ) ;
                ossMemcpy( node->_serviceName, servicename.c_str(),
@@ -1905,15 +2059,16 @@ namespace
                ossMemcpy( cl->_clName, name.c_str(), CI_CL_FULLNAME_SIZE ) ;
                collections.add( cl ) ;
             }
-            else
-            {
-               std::cout << "Error: cannot find collection: "
-                         << clName << std::endl ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
          }
          rc = cursor.next( collection ) ;
+      }
+
+      if ( 0 == collections.count() )
+      {
+         std::cout << "Error: cannot find collection: "
+                   << csName << "." << clName << std::endl ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
 
       rc = SDB_OK ;
@@ -1946,15 +2101,19 @@ namespace
    /**
     ** compare each record among nodes
     ***/
-   BOOLEAN compare( const INT32 nodeCount, const bson::BSONObj &obj,
-                                           ciState &state, ciBson &doc )
+   BOOLEAN compare( ciLinkList< ciNode > &nodes,
+                    const bson::BSONObj &obj,
+                    ciState &state, ciBson &doc )
    {
       BOOLEAN equal = FALSE ;
+      INT32 nodeCount = nodes.count() ;
+      nodes.resetCurrentNode() ;
+      ciNode *node = nodes.getHead() ;
       state.reset() ;
 
-      for ( INT32 idx = 0 ; idx < nodeCount ; ++idx )
+      for ( INT32 idx = 0 ; idx < nodeCount ; ++idx, node = nodes.next() )
       {
-         if ( doc.objs[idx].equal( obj ) )
+         if ( node->_state || doc.objs[idx].equal( obj ) )
          {
             state.set( idx ) ;
          }
@@ -1974,8 +2133,9 @@ namespace
    /**
     ** compare each record among nodes
     ***/
-   INT32 getCiRecord( ciLinkList< ciCursor > &cursors,
-                        ciLinkList< ciRecord > &records )
+   INT32 getCiRecord( ciLinkList< ciNode > &nodes,
+                      ciLinkList< ciCursor > &cursors,
+                      ciLinkList< ciRecord > &records )
    {
       INT32 rc        = SDB_OK ;
       BOOLEAN equal   = FALSE ;
@@ -1989,11 +2149,11 @@ namespace
       nodeCount = cursors.count() ;
       // get first record and compare
       state.set( ALL_THE_SAME_BIT ) ;
-      getNext( state, cursors, 0, record, FALSE ) ;
+      rc = getNext( state, cursors, 0, record, FALSE ) ;
       while ( !reachEnd( record, nodeCount ) )
       {
          min = getMinObjectIndex( record, nodeCount ) ;
-         equal = compare( nodeCount, record.objs[ min ], state, record ) ;
+         equal = compare( nodes, record.objs[ min ], state, record ) ;
 
          if ( !equal )
          {
@@ -2010,7 +2170,8 @@ namespace
             rd->_len = rd->_bson.objsize() ;
             records.add( rd ) ;
          }
-         getNext( state, cursors, min, record ) ;
+         rc = getNext( state, cursors, min, record ) ;
+         CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       }
 
    done:
@@ -2045,6 +2206,10 @@ namespace
       ciClHeader clHeader ;
       ciTail tail ;
       OSSFILE file ;
+      ossTimestamp beginTime ;
+      ossTimestamp endTime ;
+
+      ossGetCurrentTime( beginTime ) ;
 
       count = 0 ;
       rc = ossOpen( outFile, OSS_REPLACE | OSS_READWRITE,
@@ -2090,6 +2255,7 @@ namespace
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
             groupHeader._clCount = collections.count() ;
+            tail._clCount += collections.count() ;
 
             // remember the offset
             ciOffset *off = tail._groupOffset.createNode() ;
@@ -2127,7 +2293,7 @@ namespace
                ossMemcpy( clHeader._fullname, curCollection->_clName,
                                               CI_CL_FULLNAME_SIZE ) ;
                records.clear() ;
-               rc = getCiRecord( cursors, records ) ;
+               rc = getCiRecord( nodeList, cursors, records ) ;
                if ( SDB_OK != rc )
                {
                   std::cout << "Error: failed to re record among nodes"
@@ -2136,6 +2302,7 @@ namespace
                }
 
                clHeader._recordCount = records.count() ;
+               tail._recordCount += records.count() ;
 
                // write collection header to file
                rc = writeCiClHeader( file, &clHeader ) ;
@@ -2157,7 +2324,14 @@ namespace
 
          curGroup = groupList.next() ;
       }
-      
+
+      ossGetCurrentTime( endTime ) ;
+      {
+         UINT64 begin = beginTime.time * 1000000 + beginTime.microtm ;
+         UINT64 end   = endTime.time * 1000000 + endTime.microtm ;
+         tail._timeCount += ( end - begin ) / 1000 ;
+      }
+
       if ( count == 0 )
       {
          tail._exitCode = 0 ; // no records
@@ -2214,6 +2388,11 @@ namespace
       ciTail tail ;
       OSSFILE in ;
       OSSFILE out ;
+      ossTimestamp beginTime ;
+      ossTimestamp endTime ;
+
+      ossGetCurrentTime( beginTime ) ;
+
       // open in file
       rc = ossOpen( inFile, OSS_RO, OSS_RU | OSS_WU | OSS_RG, in ) ;
       if ( SDB_OK != rc )
@@ -2252,6 +2431,7 @@ namespace
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       tail._groupCount = 0 ;
       tail._groupOffset.clear() ;
+      tail._recordCount = 0 ;
 
       rc = writeCiHeader( out, header, buffer, bufferSize, validSize ) ;
       if ( SDB_OK != rc )
@@ -2325,6 +2505,7 @@ namespace
             }
 
             clHeader._recordCount = records.count() ;
+            tail._recordCount += records.count() ;
 
             rc = writeCiClHeader( out, &clHeader ) ;
             if ( SDB_OK != rc )
@@ -2348,6 +2529,14 @@ namespace
          }
       }
 
+      ossGetCurrentTime( endTime ) ;
+      {
+         UINT64 begin = beginTime.time * 1000000 + beginTime.microtm ;
+         UINT64 end   = endTime.time * 1000000 + endTime.microtm ;
+         tail._timeCount += ( end - begin ) / 1000 ;
+      }
+
+      // tail
       if ( totalRecord == 0 )
       {
          finish = TRUE ;
@@ -2608,12 +2797,13 @@ INT32 _sdbCi::inspect()
 
    if ( 0 == ossStrncmp( _header._filepath, "", OSS_MAX_PATHSIZE ) )
    {
-      curLoop = 1 ;
-
-      ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
-      ossSnprintf( tmpFile, OSS_MAX_PATHSIZE, CI_TMP_FILE, curLoop ) ;
-
-      rc = inspectWithoutFile( coord, &_header, tmpFile, totalRecord ) ;
+      do
+      {
+         curLoop += 1 ;
+         ossMemset( tmpFile, 0, OSS_MAX_PATHSIZE ) ;
+         ossSnprintf( tmpFile, OSS_MAX_PATHSIZE, CI_TMP_FILE, curLoop ) ;
+         rc = inspectWithoutFile( coord, &_header, tmpFile, totalRecord ) ;
+      }while ( CI_INSPECT_ERROR == rc ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
       if ( 0 == totalRecord )
@@ -2692,7 +2882,6 @@ INT32 _sdbCi::report ( const CHAR *inFile, const CHAR *reportFile )
    INT64 fileSize     = 0 ;
    INT64 offset       = 0 ;
    INT64 tailOffset   = 0 ;
-   CHAR exitTip[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
    ciHeader header ;
    ciLinkList< ciOffset > Offset ;
@@ -2790,7 +2979,7 @@ INT32 _sdbCi::report ( const CHAR *inFile, const CHAR *reportFile )
             rc = readCiRecord( in, offset, ciNodes,
                                clHeader, records, TRUE ) ;
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
-            rc = dumpCiRecord( ciNodes.count(), records,
+            rc = dumpCiRecord( ciNodes, records,
                                buffer, bufferSize, validSize ) ;
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
             rc = writeToFile( out, buffer, validSize ) ;
@@ -2801,26 +2990,9 @@ INT32 _sdbCi::report ( const CHAR *inFile, const CHAR *reportFile )
       }
    }
 
-   if ( 0 == tail._exitCode )
-   {
-      validSize = ossSnprintf( exitTip, OSS_MAX_PATHSIZE,
-                               OSS_NEWLINE"Result: exit with no records "
-                               "different"OSS_NEWLINE ) ;
-   }
-   else if ( 1 == tail._exitCode )
-   {
-      validSize = ossSnprintf( exitTip, OSS_MAX_PATHSIZE,
-                               OSS_NEWLINE"Result: exit with less than 1% of "
-                               "records not synchronized"OSS_NEWLINE ) ;
-   }
-   else
-   {
-      validSize = ossSnprintf( exitTip, OSS_MAX_PATHSIZE,
-                               OSS_NEWLINE"Result: loop is limited"
-                               OSS_NEWLINE ) ;
-   }
-
-   rc = writeToFile( out, exitTip, validSize ) ;
+   rc = dumpCiTail( tail, buffer, bufferSize, validSize ) ;
+   CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+   rc = writeToFile( out, buffer, validSize ) ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
 done:
@@ -2859,7 +3031,6 @@ INT32 _sdbCi::report2( const CHAR *inFile, const CHAR *reportFile )
    INT64 validSize       = 0 ;
    INT64 fileSize        = 0 ;
    INT64 tailOffset      = 0 ;
-   CHAR exitTip[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
    ciHeader header ;
    ciLinkList< ciNode > ciNodes ;
@@ -2923,25 +3094,9 @@ INT32 _sdbCi::report2( const CHAR *inFile, const CHAR *reportFile )
       groupOffset = tail._groupOffset.next() ;
    }
 
-   if ( 0 == tail._exitCode )
-   {
-      validSize = ossSnprintf( exitTip, OSS_MAX_PATHSIZE,
-                               OSS_NEWLINE"Result: exit with no records "
-                               "different"OSS_NEWLINE ) ;
-   }
-   else if ( 1 == tail._exitCode )
-   {
-      validSize = ossSnprintf( exitTip, OSS_MAX_PATHSIZE,
-                               OSS_NEWLINE"Result: exit with less than 1% of"
-                               "records not synchronized"OSS_NEWLINE ) ;
-   }
-   else
-   {
-      validSize = ossSnprintf( exitTip, OSS_MAX_PATHSIZE,
-                               OSS_NEWLINE"Result: loop is limited"
-                               OSS_NEWLINE ) ;
-   }
-   rc = writeToFile( out, exitTip, validSize ) ;
+   rc = dumpCiTail( tail, buffer, bufferSize, validSize ) ;
+   CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+   rc = writeToFile( out, buffer, validSize ) ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
 done:

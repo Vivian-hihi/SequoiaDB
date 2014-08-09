@@ -66,6 +66,7 @@
    }while( FALSE )
 
 // macros
+#define CI_INSPECT_ERROR     0x10001000
 #define CI_BUFFER_BLOCK      1024
 #define CI_HEADER_SIZE       65536
 #define CI_TAIL_SIZE         65536
@@ -119,7 +120,7 @@
 // the length of ciNode
 #define CI_NODE_SIZE ( ( CI_HOSTNAME_SIZE + 1 )    + \
                        ( CI_SERVICENAME_SIZE + 1 ) + \
-                         sizeof( INT32 ) * 2 )
+                         sizeof( INT32 ) * 3 )
 // max node count of group
 #define MAX_NODE_COUNT 7
 
@@ -312,10 +313,11 @@ struct _ciNode
 {
    INT32    _index ;
    INT32    _nodeID ;
+   INT32    _state ; // 0:normal 1:disconnected 2:lost connection
    _ciNode *_next ;
    CHAR     _hostname[ CI_HOSTNAME_SIZE + 1 ] ;
    CHAR     _serviceName[ CI_SERVICENAME_SIZE + 1 ] ;
-   _ciNode() : _index( 0 ), _nodeID( 0 ), _next( NULL )
+   _ciNode() : _index( 0 ), _nodeID( 0 ), _state( 0 ), _next( NULL )
    {
       ossMemset( _hostname, 0, CI_HOSTNAME_SIZE + 1 ) ;
       ossMemset( _serviceName, 0, CI_SERVICENAME_SIZE + 1 ) ;
@@ -433,8 +435,12 @@ struct _ciTail
 {
    INT32  _exitCode ;
    UINT32 _groupCount ;
+   UINT32 _clCount ;
+   INT64  _recordCount ;
+   UINT64  _timeCount ;
    ciLinkList< ciOffset > _groupOffset ;
-   _ciTail() : _exitCode( 0 ), _groupCount( 0 )
+   _ciTail() : _exitCode( 0 ), _groupCount( 0 ),
+               _clCount( 0 ), _recordCount( 0 ), _timeCount( 0 )
    {}
 } ;
 typedef _ciTail ciTail ;
