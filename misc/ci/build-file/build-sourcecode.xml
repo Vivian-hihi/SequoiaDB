@@ -4,18 +4,23 @@
 <!-- @param ${choise.jdk5} : choise the jdk version , default is jdk6 , if you choise jdk5,enter true-->
 
 <project name="build-srccode" default="mk-release">
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+<!-- 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
 	</taskdef>
-	<property environment="env" />
+	<property environment="env" /> -->
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<property name="RELEASE_DIR" value="${WORKSPACE}/release" />
 	<property name="PYTHONPATH" value="/usr/local/lib64/scons-2.3.0" />
 	<property name="PATH_BUILDER" value="/opt/installbuilder-9.0.1/bin/" />
 	<property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
 	<property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<pathelement location="${CODE_DIR}/misc/ci/exec-tools/ant-sdbtasks.jar" />
+		</classpath>
+	</taskdef>
 
 	<target name="ready" depends="">
   		<delete file="${CODE_DIR}/misc/ci/ci.build.properties" failonerror="false" />
@@ -64,6 +69,17 @@
 			<property name="cdh.hive_connector.filename" value="${cdh.hive_connector.filename}" />
 		</ant>
 
+		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
+			<property name="hadoop.version" value="1.2" />
+			<property name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
+			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
+		</ant>
+		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hadoop-connector/build.xml">
+			<property name="hadoop.version" value="2.2" />
+			<property name="basedir" value="${CODE_DIR}/driver/hadoop/hadoop-connector" />
+			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
+		</ant>
+
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
 		<echo>
 			/usr/bin/gcc  ${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include
@@ -109,6 +125,10 @@
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
     	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
+
+    	<copy todir="${DRIVER.DIR}/hadoop" >
+    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/*.jar" />
+    	</copy>
 
 	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
 		<for list="${test-type-list}" param="php.version">
@@ -222,6 +242,10 @@
 			<fileset dir="${CODE_DIR}/client/samples/" />
 		</copy>
 		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sdbcs.dll" />
+
+		<copy todir="${RELEASE_DIR}/sequoiadb/hadoop" >
+    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/*.jar" />
+    	</copy>
 
 		<copy todir="${RELEASE_DIR}/sequoiadb/python">
 			<fileset dir="${DRIVER.DIR}/python" />
