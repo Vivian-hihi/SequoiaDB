@@ -122,7 +122,7 @@
     	<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
 
     	<copy todir="${DRIVER.DIR}/hadoop" >
-    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/*.jar" />
+    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector*.jar" />
     	</copy>
 
 	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
@@ -239,7 +239,7 @@
 		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sdbcs.dll" />
 
 		<copy todir="${RELEASE_DIR}/sequoiadb/hadoop" >
-    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/*.jar" />
+    		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector*.jar" />
     	</copy>
 
 		<copy todir="${RELEASE_DIR}/sequoiadb/python">
