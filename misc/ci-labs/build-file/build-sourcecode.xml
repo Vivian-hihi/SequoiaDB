@@ -4,7 +4,6 @@
 <!-- @param ${choise.jdk5} : choise the jdk version , default is jdk6 , if you choise jdk5,enter true-->
 
 <project name="build-srccode" default="mk-release">
-	<property environment="env" />
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<property name="RELEASE_DIR" value="${WORKSPACE}/release" />
 	<property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
