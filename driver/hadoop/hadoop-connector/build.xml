@@ -22,8 +22,8 @@
 		<copy todir="${build.dir}/lib">
 			<fileset dir="${basedir}/hadoop${hadoop.version}"  includes="**/*.jar" />
 			<fileset dir="${basedir}/lib" includes="**/*.jar" />
-			<fileset dir="${java.driver.jar}" />
 		</copy>
+		<copy file="${java.driver.jar}" todir="${build.dir}/lib" />
 	</target>
 	
 	
