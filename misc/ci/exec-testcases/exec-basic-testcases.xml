@@ -55,7 +55,7 @@
 		<property name="sdb.cmd.allClean" value="-e &quot;var COORDSVCNAME=${COORD_SVC_NAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ,${testcase.path}/libs/all_clean.js&quot;" />
 
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="screen.output" errorproperty="error.output" resultproperty="allPrepare.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" error="screen.output" errorproperty="error.output" resultproperty="allPrepare.ret.code">
 			<arg line="${sdb.cmd.allPrepare}" />
 		</exec>
 
@@ -72,7 +72,7 @@
 		</foreach>
 		
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allClean}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="screen.output" errorproperty="error.output" resultproperty="allClean.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" error="screen.output" errorproperty="error.output" resultproperty="allClean.ret.code">
 			<arg line="${sdb.cmd.allClean}" />
 		</exec>
 	</target>
@@ -137,7 +137,7 @@
 		</tstamp>
 		<echo message="This testcase begin time is ${testcase.begin.time}"/>
 
-		<exec executable="${sdb.fullname}" timeout="300000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
+		<exec executable="${sdb.fullname}" timeout="300000" dir="" error="db.RG.info" resultproperty="ret.code.forShards">
 		  <arg line=" -s &quot; db = new Sdb('localhost',50000);var rg = db.listReplicaGroups();println(rg);db.close(); &quot;" />
 		</exec>
 		
@@ -220,15 +220,15 @@
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterUsecase}" />
 
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="beforeUsecase.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="1200000" error="screen.output" errorproperty="error.output" resultproperty="beforeUsecase.ret.code">
 			<arg line="${sdb.cmd.beforeUsecase}" />
 		</exec>
 
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="1200000" error="screen.output" errorproperty="error.output" resultproperty="ret.code">
 			<arg line="${sdb.cmd.argument}" />
 		</exec>
 
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="afterUsecase.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="1200000" error="screen.output" errorproperty="error.output" resultproperty="afterUsecase.ret.code">
 			<arg line="${sdb.cmd.afterUsecase}" />
 		</exec>
 
