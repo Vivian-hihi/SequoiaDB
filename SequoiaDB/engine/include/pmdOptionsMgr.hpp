@@ -324,10 +324,6 @@ namespace engine
          {
             return _omServiceName ;
          }
-         OSS_INLINE const CHAR *getOMAgentService() const
-         {
-            return _omLocalAgentName ;
-         }
          OSS_INLINE const CHAR *getServiceAddr() const
          {
             return _krcbSvcName ;

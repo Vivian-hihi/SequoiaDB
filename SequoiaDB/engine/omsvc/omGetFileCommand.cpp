@@ -1073,7 +1073,8 @@ namespace engine
 
       // build request to agent
       _generateArray( hostInfoList, OM_REST_FIELD_HOST_INFO, bsonRequest ) ;
-      rc = msgBuildQueryMsg( &pContent, &contentSize, OM_SCAN_HOST_REQ, 
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_SCAN_HOST_REQ, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -1200,7 +1201,8 @@ namespace engine
       BSONElement hostElement ;
 
       _generateArray(hostInfoList, OM_BSON_FIELD_HOST_INFO, bsonRequest ) ;
-      rc = msgBuildQueryMsg( &pContent, &contentSize, OM_BASIC_CHECK_REQ, 
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_BASIC_CHECK_REQ, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -1319,7 +1321,8 @@ namespace engine
       BSONElement rcElement ;
 
       _generateArray( hostInfoList, OM_BSON_FIELD_HOST_INFO, bsonRequest ) ;
-      rc = msgBuildQueryMsg( &pContent, &contentSize, OM_INSTALL_REMOTE_AGENT, 
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_INSTALL_REMOTE_AGENT, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -1411,8 +1414,9 @@ namespace engine
          reqBuilder.append(OM_BSON_FIELD_HOST_PASSWD,
                            ite->getStringField( OM_BSON_FIELD_HOST_PASSWD ) ) ;
          bsonRequest = reqBuilder.obj() ;
-         rc = msgBuildQueryMsg( &pContent, &contentSize, OM_CHECK_REMOTE_HOST,
-                             0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
+         rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                                CMD_ADMIN_PREFIX OM_CHECK_REMOTE_HOST,
+                                0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "msgBuildQueryMsg failed:rc=%d", rc ) ;
@@ -1568,7 +1572,8 @@ namespace engine
          reqBuilder.append(OM_BSON_FIELD_HOST_PASSWD, 
                            ite->getStringField( OM_BSON_FIELD_HOST_PASSWD ) ) ;
          bsonRequest = reqBuilder.obj() ;
-         rc = msgBuildQueryMsg( &pContent, &contentSize, OM_AGENT_EXIT_REQ, 
+         rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                                CMD_ADMIN_PREFIX OM_AGENT_EXIT_REQ, 
                                 0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
          if ( SDB_OK != rc )
          {
@@ -1640,7 +1645,8 @@ namespace engine
       _notifyAgentExit( hostInfoList ) ;
 
       _generateArray( hostInfoList, OM_REST_FIELD_HOST_INFO, bsonRequest ) ;
-      rc = msgBuildQueryMsg( &pContent, &contentSize, OM_UNINSTALL_REMOTE_AGENT, 
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_UNINSTALL_REMOTE_AGENT, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -2029,7 +2035,8 @@ namespace engine
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( &pContent, &contentSize, OM_ADD_HOST_REQ, 
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_ADD_HOST_REQ, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -2203,7 +2210,7 @@ namespace engine
       builder.append( OM_BSON_FIELD_TRANSACTION_ID, transactionID ) ;
       bsonRequest = builder.obj() ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                             OM_ROLLBACK_TRANSACTION_REQ, 
+                             CMD_ADMIN_PREFIX OM_ROLLBACK_TRANSACTION_REQ, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
@@ -3645,7 +3652,8 @@ namespace engine
       omManager *om     = NULL ;
       MsgHeader *pMsg   = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
-      rc = msgBuildQueryMsg( &pContent, &contentSize, OM_INSTALL_BUSINESS_REQ, 
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_INSTALL_BUSINESS_REQ, 
                              0, 0, 0, -1, &bsonConfValue, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {

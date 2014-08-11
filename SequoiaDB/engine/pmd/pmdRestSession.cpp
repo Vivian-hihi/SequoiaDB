@@ -39,6 +39,7 @@
 #include "rtnCommand.hpp"
 #include "../omsvc/omGetFileCommand.hpp"
 #include "rtn.hpp"
+#include "ossProc.hpp"
 
 #include "../bson/bson.h"
 
@@ -111,7 +112,6 @@ namespace engine
       _pDPSCB           = NULL ;
 
       _wwwRootPath      = pmdGetOptionCB()->getWWWPath() ;
-      _localAgentPort   = pmdGetOptionCB()->getOMAgentService() ;
    }
 
    _pmdRestSession::~_pmdRestSession()
@@ -302,13 +302,79 @@ namespace engine
       goto done ;
    }
 
+   void _pmdRestSession::_readAgentPort()
+   {
+      INT32 rc = SDB_OK ;
+      CHAR conf[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+      po::options_description desc ( "Config options" ) ;
+      po::variables_map vm ;
+      CHAR hostport[OSS_MAX_HOSTNAME + 6] = { 0 } ;
+      rc = ossGetHostName( hostport, OSS_MAX_HOSTNAME ) ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG( PDERROR, "get host name failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      ossStrncat ( hostport, SDBCM_CONF_PORT, ossStrlen(SDBCM_CONF_PORT) ) ;
+
+      desc.add_options()
+         (SDBCM_CONF_DFTPORT, po::value<string>(), "sdbcm default "
+         "listening port")
+         (hostport, po::value<string>(), "sdbcm specified listening port")
+      ;
+
+      rc = ossGetEWD ( conf, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get excutable file's working "
+                  "directory" ) ;
+         goto error ;
+      }
+
+      if ( ( ossStrlen ( conf ) + ossStrlen ( SDBCM_CONF_PATH_FILE ) + 2 ) >
+           OSS_MAX_PATHSIZE )
+      {
+         PD_LOG ( PDERROR, "Working directory too long" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      ossStrncat( conf, OSS_FILE_SEP, 1 );
+      ossStrncat( conf, SDBCM_CONF_PATH_FILE,
+                  ossStrlen( SDBCM_CONF_PATH_FILE ) );
+      rc = utilReadConfigureFile ( conf, desc, vm ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read configure file, rc = %d", rc ) ;
+         goto error ;
+      }
+      else if ( vm.count(hostport) )
+      {
+         _localAgentPort = vm[hostport].as<string>() ;
+      }
+      else if ( vm.count(SDBCM_CONF_DFTPORT) )
+      {
+         _localAgentPort = vm[SDBCM_CONF_DFTPORT].as<string>() ;
+      }
+      else
+      {
+         _localAgentPort = boost::lexical_cast<string>(SDBCM_DFT_PORT) ;
+      }
+
+   done:
+      return ;
+   error:
+      goto done ;
+   }
+
    INT32 _pmdRestSession::_processRestMsg( HTTP_PARSE_COMMON command, 
                                            const CHAR *pFilePath )
    {
       restAdaptor *pAdptor           = NULL ;
       omCommandInterface *pOmCommand = NULL ;
       pAdptor = sdbGetOMManager()->getRestAdptor() ;
-
+      _readAgentPort() ;
       pOmCommand = _createCommand( command, pFilePath ) ;
       if ( NULL == pOmCommand )
       {

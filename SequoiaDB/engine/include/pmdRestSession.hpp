@@ -184,6 +184,7 @@ namespace engine
       private:
          omCommandInterface *_createCommand( HTTP_PARSE_COMMON command,
                                              const CHAR *pFilePath ) ;
+         void              _readAgentPort() ;
 
       protected:
          httpConnection    _restConn ;
