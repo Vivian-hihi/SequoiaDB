@@ -60,7 +60,7 @@ ossFiles = [
 pmdFiles = [
       "pmd/pmd.cpp",
       "pmd/pmdEDU.cpp",
-	  "pmd/pmdSessionBase.cpp",
+      "pmd/pmdSessionBase.cpp",
       "pmd/pmdSession.cpp",
       "pmd/pmdRemoteSession.cpp",
       "pmd/pmdEDUMgr.cpp",
@@ -87,7 +87,7 @@ pmdFiles = [
       "pmd/pmdPreLoader.cpp",
       "pmd/pmdRestSvc.cpp",
       "pmd/pmdController.cpp",
-	  "pmd/pmdEDUEntryPoint.cpp"
+      "pmd/pmdEDUEntryPoint.cpp"
       ]
 migFiles = [
       "mig/migLoad.cpp"
@@ -376,7 +376,7 @@ dpsFiles = [
       "dps/dpsOp2Record.cpp",
       "dps/dpsDump.cpp"
       ]
-      
+
 omsvcFiles = [
       "pmd/pmdRestSession.cpp",
       "omsvc/omManager.cpp",
@@ -495,7 +495,7 @@ pmdMain = [
       "pmd/pmdMain.cpp"
       ]
 
-sdbInspectMain = [
+sdbdmsdumpMain = [
       "pmd/sdbinspt.cpp"
       ]
 
@@ -818,7 +818,7 @@ if hasTool:
           LIBDEPS=["qgm","bar","rest","cat","coord","snappy","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","dps","net", "sql","auth", "aggr", "spd", "omsvc"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
-   sdbInspect = env.Program("sdbinspt", sdbInspectMain,
+   sdbdmsdump = env.Program("sdbdmsdump", sdbdmsdumpMain,
          LIBDEPS=["qgm","bar","rest","cat","coord","snappy","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","dps","net", "sql","auth", "aggr","spd", "omsvc"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 # Install testcases
@@ -855,4 +855,4 @@ if hasTestcase:
 # Install tools
 if hasTool:
    env.Install( '#/bin', sdbrestore )
-   env.Install( '#/bin', sdbInspect )
+   env.Install( '#/bin', sdbdmsdump )

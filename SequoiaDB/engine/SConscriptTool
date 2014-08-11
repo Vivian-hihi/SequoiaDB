@@ -428,7 +428,7 @@ sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
           LIBDEPS=["oss","pd","pmd","bson","dps", "util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
-sdbInspect = toolEnv.Program("sdbInspect",
+sdbinspect = toolEnv.Program("sdbinspect",
          inspectFiles,
          LIBDEPS=["oss", "bson", "pmd", "util", "pd", "client", "clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -447,4 +447,4 @@ if linux:
 toolEnv.Install( '#/tools', sdbload2 )
 toolEnv.Install( '#/tools', sdbmemcheck )
 toolEnv.Install( '#/bin', sdbdpsdump )
-toolEnv.Install( '#/tools', sdbInspect )
+toolEnv.Install( '#/tools', sdbinspect )
