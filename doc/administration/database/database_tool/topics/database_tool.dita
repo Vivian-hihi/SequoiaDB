@@ -8,6 +8,6 @@
     <p><xref href="export.dita">数据迁移 — 导出</xref></p>
     <p><xref href="sdbinspt.dita">数据库检测工具 — sdbdmsdump</xref></p>
     <p><xref href="tool_sdbtop.dita">数据库性能监控工具 — sdbtop</xref></p>
-    <p><xref href="tool_sdbtop.dita">数据库集群节点数据一致性检测工具 — sdbinspect</xref></p>
+    <p><xref href="sdbinspect.dita">数据库集群节点数据一致性检测工具 — sdbinspect</xref></p>
   </body>
 </topic>
