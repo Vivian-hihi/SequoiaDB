@@ -1,0 +1,33 @@
+<project name="exec-hadoop-conn-test" default="test">
+	<property name="data.name" value="data-generate.jar" />
+	<property name="data.line.num" value="10000" />
+	<property name="data.file" value="sequoiadb-hadoop-data.txt" />
+	<property file="${ci.script.file.path}/ci.test.properties" />
+
+	<target name="clean-env" depends="">
+		<delete dir="${reports.path}" failonerror="false" />
+		<mkdir dir="${reports.path}" />
+	</target>
+
+	<target name="test" depends="clean-env">
+		<exec executable="python" dir=".">
+			<arg line=" ${testcase.path}/sdb-hadoop.py" />
+		</exec>
+	</target>
+
+<!-- 	<target name="init" depends="clean-env">
+		<echo message="Begin to init the test data..." />
+		<exec executable="java" dir="${testcase.path}">
+			<arg line=" -jar ${data.name} ${data.line.num} ./${data.file}" />
+		</exec>
+
+		<echo message="Exec:${install.path}/sequoiadb/bin/sdbimprt -s localhost -p ${coord.service.port} -c default -l data --file ${testcase.path}/${data.file} --fields name,age,province_code,mobile" />
+		<exec executable="${install.path}/sequoiadb/bin/sdbimprt" dir=".">
+			<arg line=" -s localhost -p ${coord.service.port} -c default -l data --file ${testcase.path}/${data.file} --fields name,age,province_code,mobile" />
+		</exec>
+		<echo message="Compelted init the test data..." />
+	</target>
+
+	<target name="" depends="">
+	</target> -->
+</project>
