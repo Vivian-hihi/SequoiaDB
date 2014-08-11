@@ -3801,8 +3801,8 @@ namespace engine
             SDB_ASSERT( iterMap != hostMap.end(), "" ) ;
 
             tmpBuilder.appendElements( oneNode ) ;
-            tmpBuilder.append( OM_HOST_FIELD_USER, iterMap->second.user ) ;
-            tmpBuilder.append( OM_HOST_FIELD_PASSWORD, 
+            tmpBuilder.append( OM_BSON_FIELD_HOST_USER, iterMap->second.user ) ;
+            tmpBuilder.append( OM_BSON_FIELD_HOST_PASSWD, 
                                iterMap->second.passwd ) ;
             BSONObj tmp = tmpBuilder.obj() ;
             arrayBuilder.append( tmp ) ;

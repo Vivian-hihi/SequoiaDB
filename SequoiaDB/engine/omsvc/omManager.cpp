@@ -1083,6 +1083,7 @@ namespace engine
       if ( isFinished )
       {
          finishInstallTask( result ) ;
+         //TODO: get transactionID and add config to the table
       }
       else
       {
