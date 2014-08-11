@@ -46,6 +46,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDASYNCNETEP ) ;
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr () ;
       _netRouteAgent *pRouteAgent = (_netRouteAgent *)pData;
+      BOOLEAN hasReg = FALSE ;
 
       rc = pEDUMgr->activateEDU( cb ) ;
       if ( SDB_OK != rc )
@@ -59,11 +60,11 @@ namespace engine
       PD_LOG ( PDEVENT, "Run %s[Type: %d] ...", getEDUName( cb->getType() ),
                cb->getType() ) ;
 
+      pEDUMgr->addIOService( pRouteAgent->ioservice() ) ;
+      hasReg = TRUE ;
       try
       {
-         pEDUMgr->addIOService( pRouteAgent->ioservice() ) ;
          pRouteAgent->run() ;
-         pEDUMgr->deleteIOService ( pRouteAgent->ioservice() ) ;
       }
       catch ( std::exception &e )
       {
@@ -77,6 +78,10 @@ namespace engine
                cb->getType() ) ;
 
    done:
+      if ( hasReg )
+      {
+         pEDUMgr->deleteIOService ( pRouteAgent->ioservice() ) ;
+      }
       PD_TRACE_EXITRC ( SDB_PMDASYNCNETEP, rc );
       return rc;
    error:
