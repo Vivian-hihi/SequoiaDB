@@ -331,6 +331,7 @@ namespace engine
 
    void _omManager::attachCB( _pmdEDUCB *cb )
    {
+      _rsManager.registerEDU( cb ) ;
       _msgHandler.attach( cb ) ;
       _timerHandler.attach( cb ) ;
       _attachEvent.signalAll() ;
@@ -340,6 +341,7 @@ namespace engine
    {
       _msgHandler.detach() ;
       _timerHandler.detach() ;
+      _rsManager.unregEUD( cb ) ;
    }
 
    UINT32 _omManager::setTimer( UINT32 milliSec )
@@ -809,7 +811,8 @@ namespace engine
       _omTaskInfo._isAllFinished = taskInfo.getBoolField( 
                                                        OM_BSON_ISFINISHED ) ;
       _omTaskInfo._progress      = taskInfo.getObjectField( 
-                                                       OM_BSON_TASK_PROGRESS ) ;
+                                                       OM_BSON_TASK_PROGRESS 
+                                                       ).copy() ;
       _omTaskInfo._confValue     = confValue.copy() ;
       _omTaskInfo._status        = OM_TASK_STATUS_DOING ;
 
@@ -1035,6 +1038,7 @@ namespace engine
          PD_LOG( PDERROR, "build query msg failed:rc=%d", rc ) ;
          goto error ;
       }
+
       
       remoteSession = getRSManager()->addSession( cb, OM_WAIT_SCAN_RES_INTERVAL,
                                                   NULL ) ;
@@ -1053,6 +1057,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
          SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
          goto error ;
       }
 
@@ -1067,7 +1072,8 @@ namespace engine
       if ( SDB_OK != rc )
       {
          string errorInfo = result.getStringField( OM_REST_RES_DETAIL ) ;
-         PD_LOG( PDERROR, "%s", errorInfo.c_str(), rc ) ;
+         PD_LOG( PDERROR, "agent process error:detail=%s,rc=%d", 
+                 errorInfo.c_str(), rc ) ;
          goto error ;
       }
 

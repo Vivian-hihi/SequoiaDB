@@ -667,6 +667,8 @@ namespace engine
             _sendErrorRes2Web( rc, "Failed to appendHttpBody" ) ;
             goto error ;
          }
+
+         ite++ ;
       }
 
       bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
@@ -829,7 +831,7 @@ namespace engine
             BSONElement ele = i.next() ;
             BSONObj oneHost = ele.embeddedObject() ;
             if ( !oneHost.hasField( OM_BSON_FIELD_HOST_IP ) 
-                    || !oneHost.hasField( OM_BSON_FIELD_HOST_NAME ) )
+                    && !oneHost.hasField( OM_BSON_FIELD_HOST_NAME ) )
             {
                rc = SDB_INVALIDARG ;
                _errorDetail = string(OM_BSON_FIELD_HOST_IP) + " or " 
@@ -1104,6 +1106,7 @@ namespace engine
          _errorDetail = string( "send message to agent failed" ) ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2057,6 +2060,7 @@ namespace engine
          _errorDetail = "send message to agent failed" ;
          PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
          goto error ;
       }
 
@@ -3673,6 +3677,7 @@ namespace engine
          _errorDetail = "send message to agent failed" ;
          PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
          goto error ;
       }
 
@@ -3935,7 +3940,8 @@ namespace engine
          tmpTestBuilder.appendArray( OM_BSON_TASK_PROGRESS, arrayBuilder.arr() ) ;
       }
       tmpTest = tmpTestBuilder.obj() ;
-      sdbGetOMManager()->saveInstallTask( "", "", tmpTest, BSONObj() ) ;
+      sdbGetOMManager()->saveInstallTask( OM_DEFAULT_LOCAL_HOST, "11790", 
+                                          tmpTest, BSONObj() ) ;
    }
 
    void omQueryInstallProgress::_testUpdateTask()
