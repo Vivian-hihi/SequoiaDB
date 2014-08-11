@@ -1415,7 +1415,7 @@ namespace engine
                            ite->getStringField( OM_BSON_FIELD_HOST_PASSWD ) ) ;
          bsonRequest = reqBuilder.obj() ;
          rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                                CMD_ADMIN_PREFIX OM_CHECK_REMOTE_HOST,
+                                CMD_ADMIN_PREFIX OM_CHECK_HOST_REQ,
                                 0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
          if ( SDB_OK != rc )
          {

@@ -218,7 +218,6 @@ namespace engine
    // sub command with agent
    #define  OM_BASIC_CHECK_REQ               "basic check"
    #define  OM_INSTALL_REMOTE_AGENT          "InstallRemoteAgentReq"
-   #define  OM_CHECK_REMOTE_HOST             "CheckRemoteHostReq"
    #define  OM_AGENT_EXIT_REQ                "AgentExitReq"
    #define  OM_UNINSTALL_REMOTE_AGENT        "UninstallRemoteAgentReq"
 
