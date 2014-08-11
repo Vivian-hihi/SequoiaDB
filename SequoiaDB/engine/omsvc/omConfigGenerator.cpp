@@ -55,6 +55,8 @@ namespace engine
    #define OM_CONF_DETAIL_PCNUM        PMD_OPTION_NUMPAGECLEANERS
    #define OM_CONF_DETAIL_PCINTERVAL   PMD_OPTION_PAGECLEANINTERVAL
 
+   #define OM_CONF_DETAIL_DATAGROUPNAME   "datagroupname"
+
    #define OM_DG_NAME_PATTERN          "DATAGROUP"
 
    #define OM_DEPLOY_MOD_STANDALONE    "standalone"
@@ -744,11 +746,12 @@ namespace engine
          iter++ ;
       }
 
-      confDetail.hostName = _hostName ;
-      confDetail.diskName = bestIter->diskName ;
-      confDetail.svcName  = _availableSvcName ;
-      _availableSvcName   += OM_SVCNAME_STEP ;
-      confDetail.role     = role ;
+      confDetail.hostName    = _hostName ;
+      confDetail.dataGroupID = dataGroupID ;
+      confDetail.diskName    = bestIter->diskName ;
+      confDetail.svcName     = _availableSvcName ;
+      _availableSvcName      += OM_SVCNAME_STEP ;
+      confDetail.role        = role ;
       ossSnprintf( dbPath, OM_PATH_LENGTH, "%s/%s/%d", 
                    bestIter->mountPath.c_str(),
                    confDetail.role.c_str(), confDetail.svcName ) ;
@@ -761,18 +764,17 @@ namespace engine
       }
       else if ( role.compare( OM_NODE_ROLE_COORD ) == 0 )
       {
-         _nodeCounter.standAloneCount++ ;
+         _nodeCounter.coordCount++ ;
          bestIter->coordCount++ ;
       }
       else if ( role.compare( OM_NODE_ROLE_CATALOG ) == 0 )
       {
-         _nodeCounter.standAloneCount++ ;
+         _nodeCounter.catalogCount++ ;
          bestIter->catalogCount++ ;
       }
       else if ( role.compare( OM_NODE_ROLE_DATA ) == 0 )
       {
-         confDetail.dataGroupID = dataGroupID ;
-         _nodeCounter.standAloneCount++ ;
+         _nodeCounter.dataCount++ ;
          bestIter->dataCount++ ;
       }
 
@@ -1081,9 +1083,10 @@ namespace engine
             BSONElement itemEle = itemIter.next() ;
             string fieldName    = itemEle.fieldName() ;
             string value        = itemEle.String() ;
-            if ( fieldName.compare( OM_BSON_FIELD_HOST_NAME ) != 0 )
+            if ( fieldName.compare( OM_BSON_FIELD_HOST_NAME ) != 0
+                 && fieldName.compare( OM_CONF_DETAIL_DATAGROUPNAME ) != 0 )
             {
-               omConfigItem *pItem = NULL ;
+               omConfigItem *pItem     = NULL ;
                CONFIGITEMMAP_ITER iter = _confDetailMap.find( fieldName ) ;
                if ( iter == _confDetailMap.end() )
                {
@@ -1884,6 +1887,7 @@ namespace engine
          }
 
          details = _confDetailSample ;
+         details.dataGroupID = "" ;
          host->assign( OM_NODE_ROLE_COORD, "", details ) ;
          configList.push_back( details ) ;
          coordCount++ ;
@@ -1900,6 +1904,7 @@ namespace engine
          }
 
          details = _confDetailSample ;
+         details.dataGroupID = "" ;
          host->assign( OM_NODE_ROLE_CATALOG, "", details ) ;
          configList.push_back( details ) ;
          catalogCount++ ;

@@ -309,8 +309,6 @@ namespace engine
 
    #define  OM_BSON_PROPERTY_VALUE           "Value"
 
-   #define  OM_BSON_FIELD_DATAGROUPNAME      "DataGroupName"
-
    // *****************************************************************
 
    // om rest install_business_req

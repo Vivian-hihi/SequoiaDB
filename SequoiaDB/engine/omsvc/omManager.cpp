@@ -1080,6 +1080,7 @@ namespace engine
       }
 
       isFinished = result.getBoolField( OM_BSON_ISFINISHED ) ;
+      getTaskWriteLock() ;
       if ( isFinished )
       {
          finishInstallTask( result ) ;
@@ -1089,6 +1090,7 @@ namespace engine
       {
          updateInstallTask( result ) ;
       }
+      releaseTaskWriteLock() ;
 
    done:
       _clearSession( cb, remoteSession ) ;
