@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_3dn_nln_2l">
-  <title>数据库检测工具 — sdbinspt</title>
+  <title>数据库检测工具 — sdbdmsdump</title>
   <body>
-    <p>sdbinspt 是一个SequoiaDB 数据库的数据文件检测工具。它可以检查数据库文件结构的正确性，并且给出结果报告。</p>
+    <p>sdbdmsdump（1.8 版本前名为 sdbinspt，1.8 版本后更名为 sdbdmsdump）是一个 SequoiaDB 数据库的数据文件检测工具。它可以检查数据库文件结构的正确性，并且给出结果报告。</p>
     <section>
       <title>权限需求</title>
-      <p>运行 sdbinspt 命令的用户必须对数据库的数据与索引文件拥有读权限。</p>
+      <p>运行 sdbdmsdump 命令的用户必须对数据库的数据与索引文件拥有读权限。</p>
     </section>
     <section>
       <title>连接需求</title>
-      <p>sdbinspt 不需要与数据库连接。</p>
+      <p>sdbdmsdump 不需要与数据库连接。</p>
     </section>
     <section>
       <title>选项</title>
@@ -84,9 +84,9 @@
     </section>
     <section>
       <title>用法</title>
-      <p>使用 sdbinspt 工具时，请务必保证数据库进程已经停止。</p>
-      <p>在下面的例子，sdbinspt 在当前目录下检测并格式化输出所有集合空间与集合的数据与索引至 output.txt 文件。</p>
-      <codeblock>sdbinspt -d . -o output.txt -v true -a all -t true -i true -p true</codeblock>
+      <p>使用 sdbdmsdump 工具时，请务必保证数据库进程已经停止。</p>
+      <p>在下面的例子，sdbdmsdump 在当前目录下检测并格式化输出所有集合空间与集合的数据与索引至 output.txt 文件。</p>
+      <codeblock>sdbdmsdump -d . -o output.txt -v true -a all -t true -i true -p true</codeblock>
     </section>
   </body>
 </topic>
