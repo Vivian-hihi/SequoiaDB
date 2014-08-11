@@ -48,6 +48,7 @@
 
 #include "rtnSortDef.hpp"
 #include "clsUtil.hpp"
+#include "omagentDef.hpp"
 
 #include <vector>
 #include <boost/algorithm/string.hpp>
@@ -908,6 +909,7 @@ namespace engine
       ossMemset( _shardServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _restServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _omServiceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
+      ossMemset( _omLocalAgentName, 0, OSS_MAX_SERVICENAME + 1 ) ;
       ossMemset( _krcbRole, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _syncStrategyStr, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _prefReplStr, 0, PMD_MAX_ENUM_STR_LEN + 1 ) ;
@@ -1009,6 +1011,10 @@ namespace engine
       // --omname
       rdxString( pEX, PMD_OPTION_OMNAME, _omServiceName,
                  sizeof(_omServiceName), FALSE, FALSE, "", TRUE ) ;
+      // --omagentname
+      rdxString( pEX, PMD_OPTION_OMAGENTNAME, _omLocalAgentName,
+                 sizeof( _omLocalAgentName ), FALSE, FALSE, 
+                 boost::lexical_cast<string>(SDBCM_DFT_PORT).c_str() ) ;
       // --diaglevel
       rdxUShort( pEX, PMD_OPTION_DIAGLEVEL, _krcbDiagLvl, FALSE, TRUE,
                  (UINT16)PDWARNING ) ;

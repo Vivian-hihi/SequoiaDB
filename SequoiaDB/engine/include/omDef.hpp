@@ -209,6 +209,7 @@ namespace engine
 
    // milliseconds
    #define  OM_WAIT_SCAN_RES_INTERVAL        (10000)
+   #define  OM_WAIT_PROGRESS_RES_INTERVAL    (500)
    // *****************************************************************
 
    // *********************om rest check_host_req**********************

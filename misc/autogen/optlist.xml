@@ -320,6 +320,22 @@
       <typeofweb>str</typeofweb>
 	  <hidden>true</hidden>
    </opt>
+   
+   <opt>
+      <name>PMD_OPTION_OMAGENTNAME</name>
+      <long>omagentname</long>
+      <description>
+         <en>OMagent's service name or port, default: '11790'</en>
+         <cn>OMagent服务名或端口, 默认:'11790'</cn>
+      </description>
+      <detail>
+         <en>1. It specifies OMagent's port.<fig></fig>
+             2. If it is not specified, the default value is "11790".</en>
+         <cn>1.指定OMagent端口。<fig></fig>
+             2.如果不指定则默认为11790。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
 
    <opt>
       <name>PMD_OPTION_DIAGLEVEL</name>

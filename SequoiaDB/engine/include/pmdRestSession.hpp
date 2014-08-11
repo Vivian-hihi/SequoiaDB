@@ -192,6 +192,7 @@ namespace engine
          restSessionInfo*  _pSessionInfo ;
 
          string            _wwwRootPath ;
+         string            _localAgentPort ;
 
          _SDB_RTNCB        *_pRTNCB ;
          _dpsLogWrapper    *_pDPSCB ;

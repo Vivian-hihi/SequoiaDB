@@ -1040,7 +1040,8 @@ namespace engine
       }
 
       
-      remoteSession = getRSManager()->addSession( cb, OM_WAIT_SCAN_RES_INTERVAL,
+      remoteSession = getRSManager()->addSession( cb, 
+                                                  OM_WAIT_PROGRESS_RES_INTERVAL,
                                                   NULL ) ;
       if ( NULL == remoteSession )
       {

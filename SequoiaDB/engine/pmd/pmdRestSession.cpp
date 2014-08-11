@@ -111,6 +111,7 @@ namespace engine
       _pDPSCB           = NULL ;
 
       _wwwRootPath      = pmdGetOptionCB()->getWWWPath() ;
+      _localAgentPort   = pmdGetOptionCB()->getOMAgentService() ;
    }
 
    _pmdRestSession::~_pmdRestSession()
@@ -334,10 +335,6 @@ namespace engine
    {
       omCommandInterface *commandIf = NULL ;
       restAdaptor *pAdptor          = NULL ;
-      CHAR agentDefaultPort[ OM_INT32_LENGTH + 1 ] ;
-      ossItoa( OM_AGENT_DEFAULT_PORT, agentDefaultPort, OM_INT32_LENGTH ) ;
-      
-
       pAdptor = sdbGetOMManager()->getRestAdptor() ;
 
       if ( COM_GETFILE == command )
@@ -408,19 +405,19 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omScanHostCommand( pAdptor, this, 
                                                        OM_DEFAULT_LOCAL_HOST, 
-                                                       agentDefaultPort ) ;
+                                                       _localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omCheckHostCommand( pAdptor, this, 
                                                         OM_DEFAULT_LOCAL_HOST, 
-                                                        agentDefaultPort ) ;
+                                                        _localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omAddHostCommand( pAdptor, this, 
                                                       OM_DEFAULT_LOCAL_HOST, 
-                                                      agentDefaultPort ) ;
+                                                      _localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_REQ ) == 0 )
          {
@@ -452,7 +449,7 @@ namespace engine
                                                           _wwwRootPath.c_str(), 
                                                           pFilePath, 
                                                           OM_DEFAULT_LOCAL_HOST, 
-                                                          agentDefaultPort ) ;
+                                                          _localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_PROGRESS ) == 0 )
          {

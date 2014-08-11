@@ -324,6 +324,10 @@ namespace engine
          {
             return _omServiceName ;
          }
+         OSS_INLINE const CHAR *getOMAgentService() const
+         {
+            return _omLocalAgentName ;
+         }
          OSS_INLINE const CHAR *getServiceAddr() const
          {
             return _krcbSvcName ;
@@ -398,6 +402,7 @@ namespace engine
          CHAR        _shardServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR        _restServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR        _omServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
+         CHAR        _omLocalAgentName[ OSS_MAX_SERVICENAME + 1 ] ;
          UINT16      _krcbDiagLvl ;
          CHAR        _krcbRole[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          CHAR        _syncStrategyStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
