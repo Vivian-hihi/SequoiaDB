@@ -239,7 +239,7 @@ namespace engine
       // parse bson and get arguments info for js file
       BSONElement ele ;
       BSONObj arg( pMatcherBuff ) ;
-      ele = arg.getField ( OMA_FIELD_HOSTS ) ;
+      ele = arg.getField ( OMA_FIELD_HOSTINFO ) ;
       if ( Array == ele.type() )
       {
          BSONObjIterator itr( ele.embeddedObject() ) ;
@@ -295,9 +295,10 @@ namespace engine
          BSONObjBuilder bob ;
 
          CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-         const CHAR *pIp = NULL ;
+         const CHAR *pIp       = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassWord = NULL ;
+         const CHAR *pSshPort  = NULL ;
 
          _content.clear() ;
          rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
@@ -306,13 +307,17 @@ namespace engine
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassWord ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassWord ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_SSH_PORT, &pSshPort ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_SSH_PORT, rc ) ;
 
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      "var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\";",
-                      pIp, pUserName, pPassWord ) ;
+                      "var IP = \'%s\'; var USERNAME = \'%s\'; \
+                      var PASSWORD = \'%s\'; var SSHPORT = \'%s\'",
+                      pIp, pUserName, pPassWord, pSshPort ) ;
 
          _content += tempBuff ;
          _content += OSS_NEWLINE ;
@@ -475,9 +480,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
          rc = omaGetStringElement( host, OMA_FIELD_LOCAL_PACKET_PATH,
                                        &pLocalPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
@@ -694,9 +699,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
 
          ossSnprintf( tempBuff, JS_ARG_LEN,
                       "var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\";",
@@ -780,7 +785,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       }
       subObj = BSON( OMA_FIELD_IP << pIp <<
                      OMA_FIELD_USER << pUserName <<
-                     OMA_FIELD_PASSWORD << pPassword ) ;
+                     OMA_FIELD_PASSWD << pPassword ) ;
       bab.append( subObj ) ;
       bob.appendArray( OMA_FIELD_HOSTS, bab.arr() ) ;
       host = bob.obj() ;
@@ -911,9 +916,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
          rc = omaGetStringElement( host, OMA_FIELD_LOCAL_PACKET_PATH,
                                        &pLocalPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
@@ -1084,9 +1089,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
          rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
                                        &pRemotePath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
@@ -1251,9 +1256,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
          rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
                                        &pRemotePath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
@@ -1418,9 +1423,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
 
          ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\";\
@@ -1588,9 +1593,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
 
          // get hosts table info for js file to append
          rc = _getContentForJS( pIp, hostsInfo ) ;
@@ -1692,9 +1697,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
          // get remote host name by ip
          rc = ghn.getHostName( pIp, pUserName, pPassword, hostName ) ;
          if ( rc )
@@ -1867,9 +1872,9 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWORD, &pPassword ) ;
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWORD, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
 
          ossSnprintf( tempBuff, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\";\
@@ -1954,7 +1959,7 @@ printf ( "reval is: %s\n", rval.toString(false, true).c_str() ) ;
       }
       subObj = BSON( OMA_FIELD_IP << pIp <<
                      OMA_FIELD_USER << pUserName <<
-                     OMA_FIELD_PASSWORD << pPassword ) ;
+                     OMA_FIELD_PASSWD << pPassword ) ;
       bab.append( subObj ) ;
       bob.appendArray( OMA_FIELD_HOSTS, bab.arr() ) ;
       host = bob.obj() ;

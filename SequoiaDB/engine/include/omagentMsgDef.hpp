@@ -34,13 +34,30 @@
 #define OMAGENT_MSG_DEF_HPP__
 
 #include "pmdOptions.hpp"
+#include "omDef.hpp"
+
+// command
+#define OMA_CMD_SCANHOST                           OM_SCAN_HOST_REQ
+#define OMA_CMD_CHECKHOST                          OM_CHECK_HOST_REQ
+#define OMA_CMD_ADDHOST                            OM_ADD_HOST_REQ
+//#define OMA_CMD_QUEYRSHOT                         OM_QUERY_HOST_REQ
+#define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ
+#define OMA_CMD_QUERY_PROGRESS                     OM_QUERY_PROGRESS
+
+
+// field
+#define OMA_FIELD_HOSTINFO                         OM_REST_FIELD_HOST_INFO
+#define OMA_FIELD_SSH_PORT                         OM_BSON_FIELD_HOST_SSHPORT
+#define OMA_FIELD_AGENT_PORT                       OM_BSON_FIELD_AGENT_PORT
 
 #define OMA_FIELD_HOSTS                            "Hosts"
 #define OMA_FIELD_HOSTNAME                         "Hostname"
 #define OMA_FIELD_HOSTNAME1                        "HostName"
 #define OMA_FIELD_USER                             "User"
 #define OMA_FIELD_PASSWORD                         "Password"
+#define OMA_FIELD_PASSWD                           "Passwd"
 #define OMA_FIELD_IP                               "IP"
+
 
 #define OMA_FIELD_PING                             "Ping"
 #define OMA_FIELD_SSH                              "Ssh"
