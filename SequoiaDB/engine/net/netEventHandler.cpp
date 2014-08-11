@@ -499,10 +499,15 @@ namespace engine
          }
 
 #if defined (_LINUX)
+         try
          {
             boost::asio::detail::socket_option::boolean<IPPROTO_TCP, TCP_QUICKACK>
                                                     quickack( TRUE ) ;
             _sock.set_option( quickack ) ;
+         }
+         catch ( boost::system::system_error &e )
+         {
+            PD_LOG ( PDERROR, "Failed to quick ack: %s", e.what() ) ;
          }
 #endif // _LINUX
 
