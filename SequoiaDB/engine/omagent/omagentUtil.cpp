@@ -38,7 +38,6 @@
 #include "ossPath.hpp"
 #include "ossIO.hpp"
 #include "pmdDef.hpp"
-/*
 #include "spt.hpp"
 #include "sptSPScope.hpp"
 #include "sptUsrSsh.hpp"
@@ -46,12 +45,11 @@
 #include "sptUsrFile.hpp"
 #include "sptUsrSystem.hpp"
 #include "../spt/js_in_cpp.hpp"
-*/
 #if defined( _LINUX )
 #include <dirent.h>
 #endif //_LINUX
 
-//JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
+JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
 
 namespace engine
 {
@@ -150,7 +148,7 @@ namespace engine
    error :
       goto done ;
    }
-/*
+
    // get spider monkey engine
    INT32 getSptScope ( _sptScope **scope )
    {
@@ -270,7 +268,7 @@ namespace engine
    error :
       goto done ;
    }
-*/
+
    /*
       Node Manager Tool Functions Implement
    */

@@ -77,6 +77,8 @@ namespace engine
       protected:
          INT32       _onNodeMgrReq( const NET_HANDLE &handle,
                                     MsgHeader *pMsg ) ;
+         INT32       _onOMAgentReq( const NET_HANDLE &handle,
+                                    MsgHeader &pMsg ) ;
 
       protected:
 
@@ -84,13 +86,14 @@ namespace engine
                         INT32 bodyLen ) ;
          INT32 _reply ( INT32 flags, MsgHeader *pSrcReqMsg ) ;
 
+         INT32 _buildReplyHeader( MsgHeader *pMsg ) ;
 /*
          INT32 _processMsg ( MsgHeader *msg ) ;
 
          INT32 _processOPMsg ( MsgHeader *msg, CHAR **ppBody,
                                INT32 &bodyLen, INT32 &returnNum ) ;
 
-         INT32 _buildReplyHeader( MsgHeader *msg ) ;
+
 
          INT32 _onQueryReqMsg( MsgHeader *msg, CHAR **ppBody,
                                INT32 &bodyLen, INT32 &returnNum ) ;
@@ -98,6 +101,9 @@ namespace engine
       private:
          MsgOpReply       _replyHeader ;
          BSONObj          _errorInfo ;
+
+         CHAR             *_pBody ;
+         INT32            _bodyLen ;
 
          BOOLEAN          _needRollback ;
          BOOLEAN          _needReply ;

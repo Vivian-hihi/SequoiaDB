@@ -387,11 +387,13 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
          }
       }
 
+#if defined (SDB_SHELL)
       /// TODO: remove this return code.
       if ( gShellReturnCode && ! JS_IsExceptionPending( _context ) )
       {
          gShellReturnCode = SDB_OK ;
       }
+#endif // SDB_SHELL
    done:
       SAFE_JS_FREE ( _context , print ) ;
       return rc ;

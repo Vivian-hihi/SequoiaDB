@@ -130,9 +130,68 @@ clsFiles = [
 
 omagentFiles = [
       "omagent/omagentMgr.cpp",
-	  "omagent/omagentNodeMgr.cpp",
-	  "omagent/omagentUtil.cpp",
-	  "omagent/omagentSession.cpp"
+      "omagent/omagentNodeMgr.cpp",
+      "omagent/omagentUtil.cpp",
+      "omagent/omagentSession.cpp",
+      "omagent/omagentHelper.cpp",
+      "omagent/omagentCommand.cpp",
+      "omagent/omagentTask.cpp",
+      "omagent/omagentJob.cpp",
+      "omagent/omagentJobRunCmd.cpp"
+      ]
+
+sptFiles = [
+      "spt/engine.cpp",
+      "spt/dbClasses.cpp",
+      "spt/sptConvertor.cpp",
+#      "spt/sptParseTroff.cpp",
+      "spt/sptConvertorHelper.cpp",
+      "spt/sptUtil.cpp"
+      ]
+
+spt2Files = [
+      "spt/sptContainer.cpp",
+      "spt/sptInvoker.cpp",
+      "spt/sptReturnVal.cpp",
+      "spt/sptScope.cpp",
+      "spt/sptSPArguments.cpp",
+      "spt/sptSPScope.cpp",
+      "spt/sptConvertor2.cpp",
+      "spt/sptBsonobj.cpp",
+      "spt/sptLibssh2Session.cpp",
+      "spt/sptSshSession.cpp",
+      "spt/usrdef/sptUsrSsh.cpp",
+      "spt/sptProperty.cpp",
+      "spt/sptGlobalFunc.cpp",
+      "spt/sptCmdRunner.cpp",
+      "spt/usrdef/sptUsrCmd.cpp",
+      "spt/usrdef/sptUsrFile.cpp",
+      "spt/usrdef/sptUsrSystem.cpp"
+      ]
+
+ssh2Files = [
+      "ssh2/agent.c",
+      "ssh2/channel.c",
+      "ssh2/comp.c",
+      "ssh2/crypt.c",
+      "ssh2/global.c",
+      "ssh2/hostkey.c",
+      "ssh2/keepalive.c",
+      "ssh2/kex.c",
+      "ssh2/knownhost.c",
+      "ssh2/libgcrypt.c",
+      "ssh2/mac.c",
+      "ssh2/misc.c",
+      "ssh2/openssl.c",
+      "ssh2/packet.c",
+      "ssh2/pem.c",
+      "ssh2/publickey.c",
+      "ssh2/scp.c",
+      "ssh2/session.c",
+      "ssh2/sftp.c",
+      "ssh2/transport.c",
+      "ssh2/userauth.c",
+      "ssh2/version.c"
       ]
 
 clientFiles = [
@@ -376,6 +435,11 @@ toolEnv.StaticLibrary('omagent', omagentFiles)
 #ncurses
 if linux:
    toolEnv.StaticLibrary('ncurses', ncursesFiles)
+#Scripting
+toolEnv.StaticLibrary('spt', sptFiles)
+toolEnv.StaticLibrary('spt2', spt2Files)
+toolEnv.StaticLibrary('ssh2', ssh2Files)
+
 #Export Executable
 sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
          LIBDEPS=["bson","mig","oss","pd","util","client","clientcpp"],
@@ -402,7 +466,7 @@ sdblist = toolEnv.Program("sdblist", sdbListMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson","util","net","cls","pmd","omagent"],
+         LIBDEPS=["pd","oss","msg","bson","util","net","cls","pmd","omagent","client","spt","spt2","ssh2"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,

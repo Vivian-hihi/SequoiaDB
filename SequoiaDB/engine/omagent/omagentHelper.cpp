@@ -92,9 +92,10 @@ namespace engine
    }
 
    INT32 omaRunCommand ( _omaCommand *pCommand, CHAR **ppBody,
-                         INT32 &bodyLen, INT32 &returnNum )
+                         INT32 &bodyLen )
    {
       INT32 rc = SDB_OK ;
+      INT32 returnNum = 0 ;
       if ( !pCommand )
       {
          rc = SDB_INVALIDARG ;

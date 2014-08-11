@@ -141,7 +141,7 @@
 #define SDB_TERMPROC2                                      0x200000000000d3L
 #define SDB_STOPENGINE2                                    0x200000000000d4L
 #define SDB_SDBSTOP_MAIN                                   0x200000000000d5L
-#define SDB_CMSTART_MAIN                                   0x200000000000d6L
+#define SDB_CMMINTHREADENTY                                0x200000000000d6L
 #define SDB_CMSTOP_TERMPROC                                0x200000000000d7L
 #define SDB_LNX_STOPSDBCM                                  0x200000000000d8L
 #define SDB_CMSTOP_MAIN                                    0x200000000000d9L

@@ -304,5 +304,5 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_OM_TASK_NOT_EXIST           -266  /**< task is not exist */
 #define SDB_OM_TASK_ROLLBACK            -267  /**< task is rolling back */
 #define SDB_LOB_SEQUENCE_NOT_EXIST      -268  /**< LOB sequence does not exist */
-#define SDB_LOB_IS_NOT_COMPLETED        -269  /**< LOB creation is not completed */
+#define SDB_LOB_IS_UNDER_CRT            -269  /**< LOB creation is not completed */
 #endif /* OSSERR_HPP_ */

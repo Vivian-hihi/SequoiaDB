@@ -283,7 +283,16 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "Rest recv size greater than max size",
                    "Wrong data for building bson",
                    "out of bound",
-                   "rest common unknow"
+                   "rest common unknow",
+                   "successfully done on catalog, but sth wrong happened when did it on data group.",
+                   "domain does not have any groups at all",
+                   "suggest sdb om's user to change the passwd",
+                   "not all nodes returned ok",
+                   "different version agent has been running",
+                   "task is not exist",
+                   "task is rolling back",
+                   "LOB sequence does not exist",
+                   "LOB creation is not completed"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

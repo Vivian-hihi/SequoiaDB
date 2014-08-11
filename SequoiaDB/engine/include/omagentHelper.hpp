@@ -54,7 +54,7 @@ namespace engine
                           const CHAR *pHintBuff ) ;
 
    INT32 omaRunCommand ( _omaCommand *pCommand, CHAR **ppBody,
-                         INT32 &bodyLen, INT32 &returnNum ) ;
+                         INT32 &bodyLen ) ;
 
    INT32 omaReleaseCommand ( _omaCommand **ppCommand ) ;
 

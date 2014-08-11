@@ -34,11 +34,9 @@
 #include "omagentMgr.hpp"
 #include "pmdCommon.hpp"
 #include "msgMessage.hpp"
-/*
 #include "omagentHelper.hpp"
-*/
-
 #include "../bson/bson.h"
+
 using namespace bson ;
 
 namespace engine
@@ -54,6 +52,7 @@ namespace engine
    BEGIN_OBJ_MSG_MAP( _omaSession, _clsSession )
       // msg map or event map
       ON_MSG( MSG_CM_REMOTE, _onNodeMgrReq )
+      ON_MSG( MSG_BS_QUERY_REQ, _onOMAgentReq )
    END_OBJ_MSG_MAP()
 
    _omaSession::_omaSession( UINT64 sessionID )
@@ -62,10 +61,17 @@ namespace engine
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _pAgent = NULL ;
       _pNodeMgr = NULL ;
+      _pBody = NULL ;
+      _bodyLen = 0 ;
    }
 
    _omaSession::~_omaSession()
    {
+      if ( _pBody )
+      {
+         SAFE_OSS_DELETE ( _pBody ) ;
+         _bodyLen = 0 ;
+      }
    }
 
    SDB_SESSION_TYPE _omaSession::sessionType() const
@@ -258,6 +264,100 @@ namespace engine
       return _reply( rc, pMsg ) ;
    }
 
+   INT32 _omaSession::_onOMAgentReq( const NET_HANDLE &handle,
+                                     MsgHeader &pMsg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flags               = 0 ;
+      CHAR *pCollectionName     = NULL ;
+      CHAR *pQuery              = NULL ;
+      CHAR *pFieldSelector      = NULL ;
+      CHAR *pOrderByBuffer      = NULL ;
+      CHAR *pHintBuffer         = NULL ;
+      SINT64 numToSkip          = -1 ;
+      SINT64 numToReturn        = -1 ;
+      _omaCommand *pCommand = NULL ;
+
+      PD_LOG ( PDEVENT, "Omagent receive requset from omsvc" ) ;
+      // build reply massage header
+      _buildReplyHeader( (MsgHeader *)(&pMsg) ) ;
+      // extract command
+      rc = msgExtractQuery ( (CHAR *)(&pMsg), &flags, &pCollectionName,
+                             &numToSkip, &numToReturn, &pQuery,
+                             &pFieldSelector, &pOrderByBuffer,
+                             &pHintBuffer ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR,
+                  "Session[%s] extract omsvc's command msg failed, rc: %d",
+                  sessionName(), rc ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // handle command
+      if ( omaIsCommand ( pCollectionName ) )
+      {
+         PD_LOG( PDEVENT, "Omagent receive command: %s", pCollectionName ) ;
+         rc = omaParseCommand ( pCollectionName, &pCommand ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to parse omsvc's command[%s] [rc:%d]",
+                    pCollectionName, rc ) ;
+            goto error ;
+         }
+         rc = omaInitCommand( pCommand, flags, numToSkip, numToReturn,
+                                  pQuery, pFieldSelector, pOrderByBuffer,
+                                  pHintBuffer ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR,
+                    "Failed to init omsvc's command for omagent, rc = %d",
+                    rc ) ;
+            goto error ;
+         }
+         rc = omaRunCommand( pCommand, &_pBody, _bodyLen ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Failed to run omsvc's command, rc = %d", rc ) ;
+            goto error ;
+         }
+         _replyHeader.numReturned = 1 ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Omsvc's request is not a command" ) ;
+         goto error ;
+      }
+   done:
+      if ( pCommand )
+      {
+         omaReleaseCommand( &pCommand ) ;
+      }
+      return _reply( &_replyHeader, _pBody, _bodyLen ) ;
+   error:
+      _replyHeader.flags = rc ;
+      goto done ;
+   }
+
+   INT32 _omaSession::_buildReplyHeader( MsgHeader *pMsg )
+   {
+      _replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      _replyHeader.header.opCode        = MAKE_REPLY_TYPE(pMsg->opCode) ;
+      _replyHeader.header.TID           = pMsg->TID ;
+      _replyHeader.header.routeID.value = 0 ;
+      _replyHeader.header.requestID     = pMsg->requestID ;
+
+      _replyHeader.contextID            = -1 ;
+      _replyHeader.flags                = 0 ;
+      _replyHeader.numReturned          = 0 ;
+      _replyHeader.startFrom            = 0 ;
+      _replyHeader.numReturned          = 0 ;
+
+      return SDB_OK ;
+   }
+
+
 /*
    INT32 _omaSession::_processMsg( MsgHeader *msg )
    {
@@ -371,16 +471,19 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaSession::_buildReplyHeader( MsgHeader *msg )
+   INT32 _omaSession::_buildReplyHeader( MsgHeader *pMsg )
    {
-      // set reply header ( except flags, length )
-      _replyHeader.contextID          = -1 ;
-      _replyHeader.numReturned        = 0 ;
-      _replyHeader.startFrom          = 0 ;
-      _replyHeader.header.opCode      = MAKE_REPLY_TYPE(msg->opCode) ;
-      _replyHeader.header.requestID   = msg->requestID ;
-      _replyHeader.header.TID         = msg->TID ;
-      _replyHeader.header.routeID.value     = 0 ;
+      _replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      _replyHeader.header.opCode        = MAKE_REPLY_TYPE(pMsg->opCode) ;
+      _replyHeader.header.TID           = pMsg->TID ;
+      _replyHeader.header.routeID.value = 0 ;
+      _replyHeader.header.requestID     = pMsg->requestID ;
+
+      _replyHeader.contextID            = -1 ;
+      _replyHeader.flags                = 0 ;
+      _replyHeader.numReturned          = 0 ;
+      _replyHeader.startFrom            = 0 ;
+      _replyHeader.numReturned          = 0 ;
 
       return SDB_OK ;
    }
