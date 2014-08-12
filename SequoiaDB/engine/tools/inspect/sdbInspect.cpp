@@ -2646,6 +2646,12 @@ INT32 _sdbCi::handle( const po::options_description &desc,
 
    if ( vm.empty() || vm.count( CONSISTENCY_INSPECT_HELP ) )
    {
+      std::cout << "This tool is used to inpect data among nodes under the "
+                << "same group to make sure all data in node are the same."
+                << "It will scan all records, and save record if record is "
+                << "different among nodes, and a report will be producted."
+                << std::endl << std::endl ;
+
       displayArgs(desc) ;
       goto done ;
    }

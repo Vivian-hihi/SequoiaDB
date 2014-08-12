@@ -492,8 +492,8 @@ typedef _ciState ciState ;
    ( std::string( a ) + std::string( b ) ).c_str()
 
 #define INSPECT_OPTIONS \
-   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_HELP, ",h" ), "help" ) \
-   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_VER, ",v" ), "show version" ) \
+   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_HELP, ",h" ), "show all command options" ) \
+   ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_VER, ",v" ), "show version of tool" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_ACTION, ",a" ), boost::program_options::value< std::string >(), "specify action, \"inspect\" or \"report\" supported, \"inspect\" is set default" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_COORD, ",d" ), boost::program_options::value< std::string >(), "specify the coord address, like: ubuntu-coord:11810" ) \
    ( INSPECT_COMMANDS_STRING( CONSISTENCY_INSPECT_LOOP, ",t" ), boost::program_options::value< INT32 >(), "specify times to loop" ) \
