@@ -190,7 +190,7 @@ namespace engine
 
    // get bson field
    INT32 omaGetIntElement ( const BSONObj &obj, const CHAR *fieldName,
-                                INT32 &value )
+                            INT32 &value )
    {
       SINT32 rc = SDB_OK ;
       SDB_ASSERT ( fieldName, "field name can't be NULL" ) ;
@@ -210,7 +210,7 @@ namespace engine
    }
 
    INT32 omaGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
-                                   const CHAR **value )
+                               const CHAR **value )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( fieldName && value, "field name and value can't be NULL" ) ;
@@ -230,7 +230,7 @@ namespace engine
    }
 
    INT32 omaGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
-                                BSONObj &value )
+                            BSONObj &value )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( fieldName , "field name can't be NULL" ) ;
@@ -250,7 +250,7 @@ namespace engine
    }
 
    INT32 omaGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
-                                    BOOLEAN &value )
+                                BOOLEAN &value )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( fieldName , "field name can't be NULL" ) ;

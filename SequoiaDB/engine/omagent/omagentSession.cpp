@@ -35,6 +35,8 @@
 #include "pmdCommon.hpp"
 #include "msgMessage.hpp"
 #include "omagentHelper.hpp"
+#include "omagentMsgDef.hpp"
+#include "omagentUtil.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -69,7 +71,7 @@ namespace engine
    {
       if ( _pBody )
       {
-         SAFE_OSS_DELETE ( _pBody ) ;
+         SAFE_OSS_FREE ( _pBody ) ;
          _bodyLen = 0 ;
       }
    }
@@ -147,7 +149,7 @@ namespace engine
       //Send message
       if ( bodyLen > 0 )
       {
-         rc = _pAgent->syncSend ( _netHandle, (MsgHeader *)header, 
+         rc = _pAgent->syncSend ( _netHandle, (MsgHeader *)header,
                                   (void*)pBody, bodyLen ) ;
       }
       else
@@ -276,7 +278,9 @@ namespace engine
       CHAR *pHintBuffer         = NULL ;
       SINT64 numToSkip          = -1 ;
       SINT64 numToReturn        = -1 ;
-      _omaCommand *pCommand = NULL ;
+      _omaCommand *pCommand     = NULL ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      BSONObj retObj ;
 
       PD_LOG ( PDEVENT, "Omagent receive requset from omsvc" ) ;
       // build reply massage header
@@ -306,8 +310,8 @@ namespace engine
             goto error ;
          }
          rc = omaInitCommand( pCommand, flags, numToSkip, numToReturn,
-                                  pQuery, pFieldSelector, pOrderByBuffer,
-                                  pHintBuffer ) ;
+                              pQuery, pFieldSelector, pOrderByBuffer,
+                              pHintBuffer ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR,
@@ -315,15 +319,17 @@ namespace engine
                     rc ) ;
             goto error ;
          }
-         rc = omaRunCommand( pCommand, &_pBody, _bodyLen ) ;
+         rc = omaRunCommand( pCommand, retObj ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to run omsvc's command, rc = %d", rc ) ;
             goto error ;
          }
+/*
          // when succeed to run command, set the return body's length to msg header
          _replyHeader.numReturned = 1 ;
          _replyHeader.header.messageLength += _bodyLen ;
+*/
       }
       else
       {
@@ -332,10 +338,29 @@ namespace engine
          goto error ;
       }
    done:
+      // TODO: tanzhaobo
+      // why i need to release ?
       if ( pCommand )
       {
          omaReleaseCommand( &pCommand ) ;
       }
+      {
+      BSONObjBuilder bob ;
+      BSONObj result ;
+      INT32 errRc = SDB_OK ;
+      const CHAR *pErrDetail = NULL ;
+      BSONObj errorObj = pmdGetErrorBson( rc, cb->getInfo( EDU_INFO_ERROR ) ) ;
+      omaGetStringElement( errorObj, OMA_FIELD_DESCRIPTION, &pErrDetail ) ;
+      omaGetIntElement( errorObj, OMA_FIELD_ERRNO, errRc ) ;
+      bob.append ( OMA_FIELD_RC, errRc ) ;
+      if ( errRc )
+         bob.append ( OMA_FIELD_DETAIL, pErrDetail ) ;
+      bob.appendElements ( retObj ) ;
+      result = bob.obj() ;
+      omaBuildReplyMsgBody ( &_pBody, &_bodyLen, 1, &result ) ;
+      }
+      _replyHeader.numReturned = 1 ;
+      _replyHeader.header.messageLength += _bodyLen ;
       return _reply( &_replyHeader, _pBody, _bodyLen ) ;
    error:
       _replyHeader.flags = rc ;

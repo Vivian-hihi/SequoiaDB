@@ -76,14 +76,20 @@ namespace engine
       }
       try
       {
-         pCommand->init ( flags, numToSkip, numToReturn, pMatcherBuff,
-                          pSelectBuff, pOrderByBuff, pHintBuff ) ;
+         rc = pCommand->init ( flags, numToSkip, numToReturn, pMatcherBuff,
+                               pSelectBuff, pOrderByBuff, pHintBuff ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR,
+                     "Omagent failed to init omsvc's command, rc = %d", rc ) ;
+            goto error ;
+         }
       }
       catch ( std::exception &e )
       {
-            PD_LOG ( PDERROR, "omagent init command[%s] exception[%s]",
-                     pCommand->name(), e.what() ) ;
-            rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "omagent init command[%s] exception[%s]",
+                  pCommand->name(), e.what() ) ;
+         rc = SDB_INVALIDARG ;
       }
    done:
       return rc ;
@@ -123,6 +129,39 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 omaRunCommand ( _omaCommand *pCommand, BSONObj &result )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 returnNum = 0 ;
+      if ( !pCommand )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      try
+      {
+         rc = pCommand->doit ( result ) ;
+      }
+      catch ( std::exception &e )
+      {
+            PD_LOG ( PDERROR, "omagent run command[%s] exception[%s]",
+                     pCommand->name(), e.what() ) ;
+            rc = SDB_INVALIDARG ;
+      }
+
+      if ( SDB_OK != rc  )
+      {
+         PD_LOG( PDERROR, "omagent run command[%s] failed[rc=%d]",
+                 pCommand->name(), rc ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 
    INT32 omaReleaseCommand ( _omaCommand **ppCommand )
    {
