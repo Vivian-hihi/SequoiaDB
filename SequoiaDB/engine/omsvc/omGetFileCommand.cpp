@@ -1618,7 +1618,7 @@ namespace engine
       }
 
       remoteSession->sendMsg() ;
-      remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      //remoteSession->waitReply( TRUE, &subSessionVec ) ;
    done:
       _clearSession( om, remoteSession ) ;
       return rc ;
