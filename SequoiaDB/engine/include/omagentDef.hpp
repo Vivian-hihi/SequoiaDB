@@ -78,6 +78,7 @@ namespace engine
    #define SDBCM_CONF_DIR_NAME         "conf"
    #define SDBCM_LOCAL_DIR_NAME        "local"
    #define SDBCM_LOG_DIR_NAME          "log"
+   #define SDBOMA_SCRIPT_DIR_NAME      "script"
 
    #define SDBCM_EXE_FILE_NAME         "sdbcm"
    #define SDBCM_CFG_FILE_NAME         SDBCM_EXE_FILE_NAME".conf"
@@ -87,6 +88,7 @@ namespace engine
    #define SDBCM_CONF_PATH_FILE        SDB_CM_ROOT_PATH SDBCM_CFG_FILE_NAME
    #define SDBCM_LOCAL_PATH            SDB_CM_ROOT_PATH SDBCM_LOCAL_DIR_NAME
    #define SDBCM_LOG_PATH              SDB_CM_ROOT_PATH SDBCM_LOG_DIR_NAME
+   #define SDBOMA_SCRIPT_PATH          SDB_CM_ROOT_PATH SDBOMA_SCRIPT_DIR_NAME
 
 #if defined (_LINUX)
       #define SDBCM_NAME_PATTERN       "sdbcm(%s)"
