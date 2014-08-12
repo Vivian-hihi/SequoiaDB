@@ -115,6 +115,8 @@ SINT32  gNumPages                                    = 1 ;
 SINT32  gCurFileIndex                                = 0 ;
 OSSFILE gFile ;
 
+#define DMS_DUMPFILE "dmsdump"
+
 // max size of a output file
 #define MAX_FILE_SIZE 500 * 1024 * 1024
 // increase delta max 64MB
@@ -308,8 +310,18 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
          goto error ;
       }
       ossStrncpy ( gOutputFile, output, sizeof(gOutputFile) ) ;
-      ossSnprintf( outputFile, OSS_MAX_PATHSIZE, "%s.%d",
-                   gOutputFile, gCurFileIndex ) ;
+      SDB_OSS_FILETYPE fileType = SDB_OSS_UNK ;
+      INT32 retValue = ossGetPathType( gOutputFile, &fileType ) ;
+      if( SDB_OSS_DIR == fileType && !retValue )
+      {
+         ossSnprintf( outputFile, OSS_MAX_PATHSIZE, "%s"DMS_DUMPFILE".%d",
+                      gOutputFile, gCurFileIndex ) ;
+      }
+      else
+      {
+         ossSnprintf( outputFile, OSS_MAX_PATHSIZE, "%s.%d",
+                      gOutputFile, gCurFileIndex ) ;
+      }
       rc = ossOpen ( outputFile, OSS_REPLACE | OSS_WRITEONLY,
                      OSS_RU|OSS_WU|OSS_RG, gFile ) ;
       if ( rc )
@@ -2711,7 +2723,7 @@ INT32 main ( INT32 argc, CHAR **argv )
 
    if ( 0 != ossStrlen( gCSName ) && !gHitCS )
    {
-      dumpPrintf( "Warning: Cannot fine any collection space named %s",
+      dumpPrintf( "Warning: Cannot find any collection space named %s",
                   gCSName ) ;
    }
 
