@@ -53,7 +53,7 @@
    #define OUTPUT_FUNCTION( str, funcName ) \
       std::cout << str << funcName << std::endl
 #else
-   #define OUTPUT_FUNCTION( str, funcName ) 
+   #define OUTPUT_FUNCTION( str, funcName )
 #endif // _DEBUG
 
 #define CHECK_VALUE( condition, label )   \

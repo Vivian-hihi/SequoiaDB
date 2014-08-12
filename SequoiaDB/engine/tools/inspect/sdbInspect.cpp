@@ -2880,7 +2880,7 @@ done:
    }
    return rc ;
 error:
-   std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
    goto done ;
 }
 
@@ -3029,7 +3029,7 @@ done:
 
    return rc ;
 error:
-   std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
    goto done ;
 }
 
@@ -3135,7 +3135,7 @@ done:
 
    return rc ;
 error:
-   std::cout << "Error occurs in " << __FUNCTION__ << std::endl ;
+   OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
    goto done ;
 }
 
