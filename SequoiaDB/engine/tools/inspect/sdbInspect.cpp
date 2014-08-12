@@ -1990,13 +1990,15 @@ namespace
    {
       INT32 rc              = SDB_OK ;
       BOOLEAN hasCollection = FALSE ;
+      BOOLEAN hasCs         = FALSE ;
       sdbclient::sdb db ;
       sdbclient::sdbCursor cursor ;
       bson::BSONObj collection ;
 
       SDB_ASSERT( NULL != master, "Error: master node cannot be NULL" ) ;
 
-      hasCollection = ( 0 != ossStrncmp( "", clName, CI_CL_FULLNAME_SIZE ) ) ;
+      hasCs = ( 0 != ossStrncmp( "", csName, CI_CS_NAME_SIZE ) ) ;
+      hasCollection = ( 0 != ossStrncmp( "", clName, CI_CL_NAME_SIZE ) ) ;
 
       // get collections of master node
       rc = db.connect( master->_hostname, master->_serviceName ) ;
@@ -2033,6 +2035,8 @@ namespace
          {
             std::string cs ;
             std::string cl ;
+            BOOLEAN csMatch = FALSE ;
+            BOOLEAN allMatch = FALSE ;
             std::string name = collection.getField( "Name" ).String() ;
             std::size_t dot = name.find( '.' ) ;
             if ( std::string::npos == dot )
@@ -2044,9 +2048,16 @@ namespace
             }
             cs = name.substr( 0, dot ) ;
             cl = name.substr( dot + 1 ) ;
-            if ( !hasCollection ||
-                ( 0 == ossStrncmp( csName, cs.c_str(), CI_CS_NAME_SIZE ) &&
-                  0 == ossStrncmp( clName, cl.c_str(), CI_CL_NAME_SIZE ) ) )
+            // no cl name input and cs name match
+            csMatch = ( !hasCollection &&
+                        ( 0 == ossStrncmp( csName, cs.c_str(),
+                                           CI_CS_NAME_SIZE ) ) ) ;
+            allMatch = ( hasCs && hasCollection &&
+                        ( 0 == ossStrncmp( csName, cs.c_str(),
+                                           CI_CS_NAME_SIZE ) ) &&
+                        ( 0 == ossStrncmp( clName, cl.c_str(),
+                                           CI_CL_NAME_SIZE ) ) ) ;
+            if ( !hasCs || csMatch || allMatch )
             {
                ciCollection *cl = collections.createNode() ;
                if ( NULL == cl )
