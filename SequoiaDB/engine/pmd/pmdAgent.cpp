@@ -1728,21 +1728,21 @@ namespace engine
       switch ( rc )
       {
       case SDB_SYS :
-         PD_LOG ( PDSEVERE, "EDU id %d cannot be found, probe %d", myEDUID,
+         PD_LOG ( PDERROR, "EDU id %d cannot be found, probe %d", myEDUID,
                   probe ) ;
          break ;
       case SDB_EDU_INVAL_STATUS :
-         PD_LOG ( PDSEVERE, "EDU status is not valid, probe %d", probe ) ;
+         PD_LOG ( PDERROR, "EDU status is not valid, probe %d", probe ) ;
          break ;
       case SDB_INVALIDARG :
-         PD_LOG ( PDSEVERE, "Invalid argument receieved by agent, probe %d",
+         PD_LOG ( PDERROR, "Invalid argument receieved by agent, probe %d",
                   probe ) ;
          break ;
       case SDB_OOM :
-         PD_LOG ( PDSEVERE, "Failed to allocate memory by agent, probe %d", probe ) ;
+         PD_LOG ( PDERROR, "Failed to allocate memory by agent, probe %d", probe ) ;
          break ;
       case SDB_NETWORK :
-         PD_LOG ( PDSEVERE, "Network error occured[%s:%u], probe %d",
+         PD_LOG ( PDERROR, "Network error occured[%s:%u], probe %d",
                   clientName, clientPort, probe ) ;
          break ;
       case SDB_NETWORK_CLOSE :
@@ -1753,7 +1753,7 @@ namespace engine
          rc = SDB_OK ;
          break ;
       default :
-         PD_LOG ( PDSEVERE, "Internal error, probe %d", probe ) ;
+         PD_LOG ( PDERROR, "Internal error, probe %d", probe ) ;
       }
       goto done ;
    }

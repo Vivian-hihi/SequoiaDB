@@ -171,7 +171,7 @@ namespace engine
 
    INT32 _CoordCB::fini ()
    {
-      if ( !_pNetWork )
+      if ( _pNetWork )
       {
          SDB_OSS_DEL _pNetWork ;
          _pNetWork = NULL ;

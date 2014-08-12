@@ -1060,6 +1060,30 @@
             <stentry>suggest sdb om's user to change the passwd</stentry>
             <stentry>-263</stentry>
          </strow>
+         <strow>
+            <stentry>not all nodes returned ok</stentry>
+            <stentry>-264</stentry>
+         </strow>
+         <strow>
+            <stentry>different version agent has been running</stentry>
+            <stentry>-265</stentry>
+         </strow>
+         <strow>
+            <stentry>task is not exist</stentry>
+            <stentry>-266</stentry>
+         </strow>
+         <strow>
+            <stentry>task is rolling back</stentry>
+            <stentry>-267</stentry>
+         </strow>
+         <strow>
+            <stentry>LOB sequence does not exist</stentry>
+            <stentry>-268</stentry>
+         </strow>
+         <strow>
+            <stentry>LOB creation is not completed</stentry>
+            <stentry>-269</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

@@ -15,6 +15,9 @@ dbpath=/opt/sequoiadb/database/data
 # diagnostic log file path
 # diagpath=
 
+# diagnostic log file max number, default:20, -1:unlimited
+# diagnum=
+
 # backup path
 # bkuppath=
 
@@ -72,19 +75,19 @@ transactionon=false
 # path of the tmp file
 # tmppath=
 
-# size of the sorting buf(MB), default:512, min value:128
+# size of the sorting buf(MB), default:256, min value:128
 # sortbuf=
 
 # size of the hash join buf(MB), default:128, min value:64
 # hjbuf=
 
-# The control strategy of data sync in ReplGroup, value enumeration: none,keepnormal,keepall, default:none.
+# The control strategy of data sync in ReplGroup, value enumeration: none,keepnormal,keepall, default:keepnormal.
 # syncstrategy=
 
 # Prefered instance when read request, default:A, value enum:M,S,A,1-7
 preferedinstance=A
 
-# Number of page cleaners to start, default 1
+# Number of page cleaners to start, default 1, value range:[0, 50]
 numpagecleaners=1
 
 # The min interval between two cleans for each collection space, unit ms, default 10000, min 1000
