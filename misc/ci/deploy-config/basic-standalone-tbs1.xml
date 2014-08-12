@@ -38,9 +38,7 @@
 		</parallel>
 		
 		<basename property="antFileName" file="${ant.file}" suffix=".xml" />
-		<property name="test-type-list" value="basic" />
-		<!-- <property name="test-type-list" value="basic,driver-java,driver-C,driver-CPP,driver-php" /> -->
-		<!--property name="test-type-list" value="driver-php" /-->
+		<property name="test-type-list" value="basic,driver-java,driver-C,driver-CPP,driver-php" />
 		<for list="${test-type-list}" param="test-type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
