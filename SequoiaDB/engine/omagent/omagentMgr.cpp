@@ -55,6 +55,7 @@ namespace engine
 
       ossMemset( _cfgFileName, 0, sizeof( _cfgFileName ) ) ;
       ossMemset( _localCfgPath, 0, sizeof( _localCfgPath ) ) ;
+      ossMemset( _scriptPath, 0, sizeof( _scriptPath ) ) ;
       ossMemset( _startProcFile, 0, sizeof( _startProcFile ) ) ;
       ossMemset( _stopProcFile, 0, sizeof( _stopProcFile ) ) ;
 
@@ -118,9 +119,18 @@ namespace engine
          goto error ;
       }
 
-      // build 'config/local' file path
+      // build 'conf/local' file path
       rc = utilBuildFullPath( pRootPath, SDBCM_LOCAL_PATH, OSS_MAX_PATHSIZE,
                               _localCfgPath ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Root path is too long: %s", pRootPath ) ;
+         goto error ;
+      }
+
+      // build 'conf/script' path
+      rc = utilBuildFullPath( pRootPath, SDBOMA_SCRIPT_PATH, OSS_MAX_PATHSIZE,
+                              _scriptPath ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Root path is too long: %s", pRootPath ) ;

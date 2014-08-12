@@ -64,6 +64,7 @@ namespace engine
 
          const CHAR* getCfgFileName() const { return _cfgFileName ; }
          const CHAR* getLocalCfgPath() const { return _localCfgPath ; }
+         const CHAR* getScriptPath() const { return _scriptPath ; }
          const CHAR* getStartProcFile() const { return _startProcFile ; }
          const CHAR* getStopProcFile() const { return _stopProcFile ; }
 
@@ -91,6 +92,7 @@ namespace engine
 
          CHAR                       _cfgFileName[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _localCfgPath[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR                       _scriptPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _startProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _stopProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
 
