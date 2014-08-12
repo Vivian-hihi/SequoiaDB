@@ -174,7 +174,7 @@ namespace engine
          void              getInstallTask( INT32 &status, string &taskID, 
                                            bool &isAllFinished, string &detail, 
                                            BSONObj &progress ) ;
-         void              finishInstallTask( BSONObj &result ) ;
+         INT32             finishInstallTask( BSONObj &result ) ;
          void              checkTaskStatus( string taskID ) ;
          void              updateInstallTask( BSONObj &taskDetail ) ;
          string            getLocalAgentPort() ;
@@ -209,6 +209,14 @@ namespace engine
          INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
                                               BSONObj &result ) ;
          void              _readAgentPort() ;
+
+         INT32             _storeTaskInfo( string taskID, 
+                                           const BSONObj &confValue, 
+                                           INT32 status ) ;
+         INT32             _removeTaskInfo( string taskID ) ;
+
+         INT32             _storeBusinessInfo() ;
+         
 
       // Msg functions
       protected:

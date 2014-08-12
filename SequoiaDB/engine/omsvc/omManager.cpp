@@ -805,8 +805,16 @@ namespace engine
          goto error ;
       }
 
-      taskElement                = taskInfo.getField( OM_BSON_TASKID ) ;
+      taskElement = taskInfo.getField( OM_BSON_TASKID ) ;
       ossLltoa( taskElement.numberLong(), taskID, OM_INT32_LENGTH ) ;
+      
+      rc = _storeTaskInfo( taskID, confValue, OM_TASK_STATUS_DOING ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "save task failed:task=%s:rc=%d", taskID, rc ) ;
+         goto error ;
+      }
+
       _omTaskInfo._taskID        = taskID ;
       _omTaskInfo._agentHostName = agentHost ;
       _omTaskInfo._agentSvcName  = agentService ;
@@ -858,8 +866,9 @@ namespace engine
       progress      = _omTaskInfo._progress.copy() ;
    }
 
-   void _omManager::finishInstallTask( BSONObj &taskDetail )
+   INT32 _omManager::finishInstallTask( BSONObj &taskDetail )
    {
+      INT32 rc = SDB_OK ;
       _omTaskInfo._isAllFinished = true ;
       string status = taskDetail.getStringField( OM_BSON_TASK_STATUS ) ;
       if ( status.compare( OM_TASK_STATUS_ROLLBACK ) == 0 )
@@ -873,6 +882,19 @@ namespace engine
       }
       else
       {
+         rc = _storeBusinessInfo() ;
+         if ( SDB_OK != rc )
+         {
+            /*
+            in case this situation happened.
+               we should let OM try again.
+
+            if it can't recovered. we should manually store it 
+               and delete the task info
+            */
+            PD_LOG( PDERROR, "store business info failed:rc=%d", rc ) ;   
+            goto error ;
+         }
          _omTaskInfo._detail        = taskDetail.getStringField( 
                                                        OM_REST_RES_DETAIL );
          _omTaskInfo._progress      = taskDetail.getObjectField( 
@@ -881,6 +903,23 @@ namespace engine
          _omTaskInfo._isAllFinished = taskDetail.getBoolField( 
                                                        OM_BSON_ISFINISHED ) ;
       }
+
+      rc = _removeTaskInfo( _omTaskInfo._taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         /*
+            in case this situation happened.
+            just delete the task info manually, and everything is OK.
+         */
+         PD_LOG( PDERROR, "task is done and delete task info failed:taskID=%s,"
+                 "status=%d", _omTaskInfo._taskID.c_str(), _omTaskInfo._status, 
+                 rc ) ;   
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _omManager::updateInstallTask( BSONObj &taskDetail )
@@ -1092,7 +1131,7 @@ namespace engine
       getTaskWriteLock() ;
       if ( isFinished )
       {
-         finishInstallTask( result ) ;
+         rc = finishInstallTask( result ) ;
          //TODO: get transactionID and add config to the table
       }
       else
@@ -1172,6 +1211,25 @@ namespace engine
       return ;
    error:
       goto done ;
+   }
+
+   INT32 _omManager::_storeTaskInfo( string taskID, const BSONObj &confValue, 
+                                     INT32 status )
+   {
+      //TODO
+      return SDB_OK ;
+   }
+   
+   INT32 _omManager::_removeTaskInfo( string taskID )
+   {
+      //TODO
+      return SDB_OK ;
+   }
+
+   INT32 _omManager::_storeBusinessInfo()
+   {
+      //TODO
+      return SDB_OK ;
    }
 
    /*
