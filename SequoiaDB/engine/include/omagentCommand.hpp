@@ -102,7 +102,7 @@ namespace engine
       public:
          _omaCmdAssit ( OA_NEW_FUNC ) ;
          virtual ~_omaCmdAssit () ;
-   };
+   } ;
 
    struct _classComp
    {
@@ -137,7 +137,7 @@ namespace engine
 
       private:
          MAP_OACMD _cmdMap ;
-   };
+   } ;
 
    /*
       get omagent command builder
@@ -164,7 +164,7 @@ namespace engine
                               const CHAR *pHintBuff ) ;
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-   };
+   } ;
 
    /*
       _omaScanHost
@@ -189,7 +189,7 @@ namespace engine
                               INT32 &returnNum ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
-   };
+   } ;
 
 
    /*
@@ -226,7 +226,7 @@ namespace engine
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
                               INT32 &returnNum ) ;
-         virtual INT32 doit ( BSONObj& retObj ) ;
+         virtual INT32 doit ( BSONObj& retObj ) { return SDB_OK ; }
 
       private:
    } ;
@@ -236,8 +236,6 @@ namespace engine
    */
    class _omaInstallRemoteAgent : public _omaCommand
    {
-      DECLARE_OACMD_AUTO_REGISTER ()
-
       public:
          _omaInstallRemoteAgent () ;
          ~_omaInstallRemoteAgent () ;
@@ -264,7 +262,6 @@ namespace engine
    */
    class _omaCheckRemoteAgentProcess : public _omaCommand
    {
-
       public:
          _omaCheckRemoteAgentProcess () ;
          ~_omaCheckRemoteAgentProcess () ;
@@ -309,7 +306,7 @@ namespace engine
    */
    class _omaRemoveAgentProcess : public _omaCommand
    {
-      DECLARE_OACMD_AUTO_REGISTER ()
+//      DECLARE_OACMD_AUTO_REGISTER ()
       public:
          _omaRemoveAgentProcess () ;
          ~_omaRemoveAgentProcess () ;
@@ -331,7 +328,7 @@ namespace engine
    */
    class _omaStopAgentProcess : public _omaCommand
    {
-      DECLARE_OACMD_AUTO_REGISTER ()
+//      DECLARE_OACMD_AUTO_REGISTER ()
       public:
          _omaStopAgentProcess () ;
          ~_omaStopAgentProcess () ;
@@ -348,29 +345,6 @@ namespace engine
 
    } ;
 
-
-   /*
-      _omaGetHostInfo
-   */
-/*
-   class _omaGetHostInfo : public _omaCommand
-   {
-      DECLARE_OACMD_AUTO_REGISTER ()
-      public:
-         _omaGetHostInfo () ;
-         ~_omaGetHostInfo () ;
-
-         virtual const CHAR* name () { return "get host info" ; }
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-   } ;
-*/
    /*
       _omaRegHosts
    */
@@ -404,7 +378,7 @@ namespace engine
    */
    class _omaGetHostNames : public _omaCommand
    {
-      DECLARE_OACMD_AUTO_REGISTER ()
+//      DECLARE_OACMD_AUTO_REGISTER ()
       public:
          _omaGetHostNames () ;
          ~_omaGetHostNames () ;
@@ -598,8 +572,6 @@ namespace engine
       private:
          INT32 _port ;
    } ;
-
-
 
 
 }
