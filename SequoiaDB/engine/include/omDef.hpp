@@ -217,9 +217,9 @@ namespace engine
 
    // sub command with agent
    #define  OM_BASIC_CHECK_REQ               "basic check"
-   #define  OM_INSTALL_REMOTE_AGENT          "InstallRemoteAgentReq"
-   #define  OM_AGENT_EXIT_REQ                "AgentExitReq"
-   #define  OM_UNINSTALL_REMOTE_AGENT        "UninstallRemoteAgentReq"
+   #define  OM_INSTALL_REMOTE_AGENT          "install remote agent"
+   #define  OM_AGENT_EXIT_REQ                "exit agent"
+   #define  OM_UNINSTALL_REMOTE_AGENT        "uninstall remote agent"
 
    #define  OM_BSON_FIELD_OS                 "OS"
    #define  OM_BSON_FIELD_OM                 "OM"
@@ -249,7 +249,7 @@ namespace engine
    // ***************om rest add_host_req******************************
    #define  OM_ADD_HOST_REQ                  "add host"
 
-   #define  OM_ROLLBACK_TRANSACTION_REQ      "RollbackTransactionReq"
+   #define  OM_ROLLBACK_TRANSACTION_REQ      "rollback transaction"
 
    #define  OM_BSON_FIELD_INSTALL_PATH       "InstallPath"
    #define  OM_BSON_FIELD_TRANSACTION_ID     "TransactionID"
