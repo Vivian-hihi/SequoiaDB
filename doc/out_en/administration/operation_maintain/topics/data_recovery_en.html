@@ -9,7 +9,7 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Data Recovery"/>
 <meta name="description" content="Use a replica group data recovery backup. Perform data recovery must ensure that the corresponding group has stopped tunning, data recovery will first clear the original node and log all the data and ..."/>
-<meta name="DC.Relation" scheme="URI" content="../../../administration/operation_maintain/topics/operation_maintain_en.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../../administration/operation_maintain/topics/bandr_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_mns_2z4_fm"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
@@ -31,7 +31,7 @@
 <body onload="highlightSearchTerm()" id="topic_mns_2z4_fm"><a name="topic_mns_2z4_fm"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../administration/operation_maintain/topics/operation_maintain_en.html" title="Operation and Maintain"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Operation and Maintain</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/administration_en.html" title="DataBase Administration">DataBase Administration</a> / <a class="navheader_parent_path" href="../../../administration/operation_maintain/topics/operation_maintain_en.html" title="Operation and Maintain">Operation and Maintain</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../administration/operation_maintain/topics/bandr_en.html" title="备份恢复"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">备份恢复</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="operation_maintain_en.html" title="Operation and Maintain">Operation and Maintain</a> / <a class="navheader_parent_path" href="../../../administration/operation_maintain/topics/bandr_en.html" title="备份恢复">备份恢复</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">Data Recovery</h1>
 
@@ -42,105 +42,105 @@
     <div class="section"><h2 class="title sectiontitle">Data recovery tool Parameter Description</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d55542e22" class="stentry">Parameter</th>
+          <th valign="bottom" align="left" id="d61653e22" class="stentry">Parameter</th>
 
-          <th valign="bottom" align="left" id="d55542e25" class="stentry">Description</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">-p [--bkpath]</td>
-
-          <td valign="top" headers="d55542e25" class="stentry">Backup source where the data path.</td>
+          <th valign="bottom" align="left" id="d61653e25" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">-i [--increaseid]</td>
+          <td valign="top" headers="d61653e22" class="stentry">-p [--bkpath]</td>
 
-          <td valign="top" headers="d55542e25" class="stentry">Requires several incremental backups to restore to default back to the last time.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">-n [--bkname]</td>
-
-          <td valign="top" headers="d55542e25" class="stentry">Need to restore the backup name.</td>
+          <td valign="top" headers="d61653e25" class="stentry">Backup source where the data path.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">-a [--action]</td>
+          <td valign="top" headers="d61653e22" class="stentry">-i [--increaseid]</td>
 
-          <td valign="top" headers="d55542e25" class="stentry">Recovery behavior, "restore" indicates that the recobery, "list" indicates view backup information, defaults to "restore".</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--isSelf</td>
-
-          <td valign="top" headers="d55542e25" class="stentry">Whether to restore the node data, the default is "true", when the value is "false", according to the following parameters to restore the data to the specified path:</td>
+          <td valign="top" headers="d61653e25" class="stentry">Requires several incremental backups to restore to default back to the last time.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--dbpath</td>
+          <td valign="top" headers="d61653e22" class="stentry">-n [--bkname]</td>
 
-          <td valign="top" headers="d55542e25" class="stentry">Must configure the data file directory.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--confpath</td>
-
-          <td valign="top" headers="d55542e25" class="stentry">Must configure the configuration file path.</td>
+          <td valign="top" headers="d61653e25" class="stentry">Need to restore the backup name.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--svcname</td>
+          <td valign="top" headers="d61653e22" class="stentry">-a [--action]</td>
 
-          <td valign="top" headers="d55542e25" class="stentry">Must configure the local service name or port.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--indexpath</td>
-
-          <td valign="top" headers="d55542e25" class="stentry">Indes file directory.</td>
+          <td valign="top" headers="d61653e25" class="stentry">Recovery behavior, "restore" indicates that the recobery, "list" indicates view backup information, defaults to "restore".</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--logpath</td>
+          <td valign="top" headers="d61653e22" class="stentry">--isSelf</td>
 
-          <td valign="top" headers="d55542e25" class="stentry">Log file directory.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--diagpath</td>
-
-          <td valign="top" headers="d55542e25" class="stentry">Diagnostic log file directory.</td>
+          <td valign="top" headers="d61653e25" class="stentry">Whether to restore the node data, the default is "true", when the value is "false", according to the following parameters to restore the data to the specified path:</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--bkuppath</td>
+          <td valign="top" headers="d61653e22" class="stentry">--dbpath</td>
 
-          <td valign="top" headers="d55542e25" class="stentry">Backup file directory.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--replname</td>
-
-          <td valign="top" headers="d55542e25" class="stentry">Copy communications service name or port.</td>
+          <td valign="top" headers="d61653e25" class="stentry">Must configure the data file directory.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--shardname</td>
+          <td valign="top" headers="d61653e22" class="stentry">--confpath</td>
 
-          <td valign="top" headers="d55542e25" class="stentry">Slice communications service name or port.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--catalogname</td>
-
-          <td valign="top" headers="d55542e25" class="stentry">Catalog communicatios service name or port.</td>
+          <td valign="top" headers="d61653e25" class="stentry">Must configure the configuration file path.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d55542e22" class="stentry">--httpname</td>
+          <td valign="top" headers="d61653e22" class="stentry">--svcname</td>
 
-          <td valign="top" headers="d55542e25" class="stentry">REST service name or port.</td>
+          <td valign="top" headers="d61653e25" class="stentry">Must configure the local service name or port.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61653e22" class="stentry">--indexpath</td>
+
+          <td valign="top" headers="d61653e25" class="stentry">Indes file directory.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61653e22" class="stentry">--logpath</td>
+
+          <td valign="top" headers="d61653e25" class="stentry">Log file directory.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61653e22" class="stentry">--diagpath</td>
+
+          <td valign="top" headers="d61653e25" class="stentry">Diagnostic log file directory.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61653e22" class="stentry">--bkuppath</td>
+
+          <td valign="top" headers="d61653e25" class="stentry">Backup file directory.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61653e22" class="stentry">--replname</td>
+
+          <td valign="top" headers="d61653e25" class="stentry">Copy communications service name or port.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61653e22" class="stentry">--shardname</td>
+
+          <td valign="top" headers="d61653e25" class="stentry">Slice communications service name or port.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61653e22" class="stentry">--catalogname</td>
+
+          <td valign="top" headers="d61653e25" class="stentry">Catalog communicatios service name or port.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d61653e22" class="stentry">--httpname</td>
+
+          <td valign="top" headers="d61653e25" class="stentry">REST service name or port.</td>
 
         </tr>
 </table>
@@ -198,7 +198,7 @@ drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 17:39 replicalog
   </div>
 
 <div class="related-links"/>
-<div class="navfooter"><a class="link" href="../../../administration/operation_maintain/topics/operation_maintain_en.html" title="Operation and Maintain"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Operation and Maintain</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../administration/operation_maintain/topics/bandr_en.html" title="备份恢复"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">备份恢复</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

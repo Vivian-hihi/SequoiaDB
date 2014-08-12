@@ -10,9 +10,7 @@
     <section><title>Sign</title>
       <p>SDB_LIST_SESSIONS_CURRENT</p>
     </section>
-    <section><title>Proper Node</title>
-      <p>data node, catalog node</p>
-    </section>
+    
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_sessions_current_table">-->
         <sthead>

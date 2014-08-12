@@ -10,9 +10,7 @@
     <section><title>Sign</title>
       <p>SDB_LIST_COLLECTIONSPACES</p>
     </section>
-    <section><title>Proper Node</title>
-      <p>All nodes</p>
-    </section>
+    
     <section><title>Field Information</title>
       <p>Since information stored in data nodes and catalog node is not the same, collection spaces
         list will return different structures according to the kind of the node:</p>

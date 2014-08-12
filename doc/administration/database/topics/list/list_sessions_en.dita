@@ -12,10 +12,7 @@
       <title>Sign</title>
       <p>SDB_LIST_SESSIONS</p>
     </section>
-    <section>
-      <title>Proper Node</title>
-      <p>data node, catalog node</p>
-    </section>
+    
     <section>
       <title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.04* 1.0* 2.13*"

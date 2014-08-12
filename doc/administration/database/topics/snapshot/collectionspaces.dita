@@ -98,8 +98,7 @@
           <stentry>FreeSize</stentry>
           <stentry>长整型</stentry>
           <stentry>集合空间的空闲大小</stentry>
-        </strow>
-        
+        </strow>        
         <strow>
           <stentry>Group.GroupName</stentry>
           <stentry>字符串</stentry>
@@ -128,7 +127,6 @@
     <section>
       <title>协调节点示例</title>
       <codeblock>> coord.snapshot(SDB_SNAP_COLLECTIONSPACES)
-
 {
   "Name": "foo",
   "PageSize": 4096,

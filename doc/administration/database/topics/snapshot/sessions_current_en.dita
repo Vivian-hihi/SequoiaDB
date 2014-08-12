@@ -10,9 +10,7 @@
     <section><title>Sign</title>
       <p>SDB_SNAP_SESSIONS_CURRENT</p>
     </section>
-    <section><title>Proper Node</title>
-      <p>data node, catalog node</p>
-    </section>
+    
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_sessions_current_table">-->
         <sthead>
@@ -126,9 +124,39 @@
           <stentry>Total data write time (millisecond)</stentry>
         </strow>
         <strow>
+          <stentry>ReadTimeSpent</stentry>
+          <stentry>长整型</stentry>
+          <stentry>读取记录的时间（毫秒）</stentry>
+        </strow>
+        <strow>
+          <stentry>WriteTimeSpent</stentry>
+          <stentry>长整型</stentry>
+          <stentry>写入记录的时间（毫秒）</stentry>
+        </strow>
+        <strow>
           <stentry>ConnectTimestamp</stentry>
           <stentry>Timeline</stentry>
           <stentry>The time of beginning connection</stentry>
+        </strow>
+        <strow>
+          <stentry>LastOpType</stentry>
+          <stentry>字符串</stentry>
+          <stentry>最后一次操作的类型，如：insert，update</stentry>
+        </strow>
+        <strow>
+          <stentry>LastOpBegin</stentry>
+          <stentry>字符串</stentry>
+          <stentry>最后一次操作的起始时间</stentry>
+        </strow>
+        <strow>
+          <stentry>LastOpEnd</stentry>
+          <stentry>字符串</stentry>
+          <stentry>最后一次操作的结束时间</stentry>
+        </strow>
+        <strow>
+          <stentry>LastOpInfo</stentry>
+          <stentry>字符串</stentry>
+          <stentry>最后一次操作的详细信息</stentry>
         </strow>
         <strow>
           <stentry>UserCPU</stentry>
@@ -168,7 +196,13 @@
   "TotalRead": 0,
   "TotalReadTime": 0,
   "TotalWriteTime": 0,
+  "ReadTimeSpent": 10,
+  "WriteTimeSpent": 0,
   "ConnectTimestamp": "2013-09-27-18.06.25.961090",
+  "LastOpType": "unknow",
+  "LastOpBegin": "2014-08-07-14.25.23.550216",
+  "LastOpEnd": "--",
+  "LastOpInfo": "",
   "UserCPU": "0.910000",
   "SysCPU": "2.060000"
 }</codeblock>

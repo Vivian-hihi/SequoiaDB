@@ -10,16 +10,13 @@
     <section><title>Sign</title>
       <p>SDB_SNAP_COLLECTIONS</p>
     </section>
-    <section><title>Proper Node</title>
-      <p>All nodes</p>
-    </section>
+    
     <section><title>Field Information</title>
       <p>Since information stored in data nodes and catalog node is not the same, collections list
         will return different structures according to the kind of the node:</p>
     </section>
-    <section><title>Other node field information</title>
-      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.99*"
-        id="administration_database_monitoring_snapshot_collections_data_table">-->
+    <section><title>Other Node Field Information</title>
+      <simpletable>
         <sthead>
           <stentry>Field Name</stentry>
           <stentry>Type</stentry>
@@ -67,14 +64,29 @@
           </stentry>
         </strow>
         <strow>
-          <stentry>NodeName</stentry>
-          <stentry>String</stentry>
-          <stentry>NodeName(HostName+Port)</stentry>
+          <stentry>TotalRecords</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的记录总数</stentry>
         </strow>
         <strow>
-          <stentry>GroupName</stentry>
-          <stentry>String</stentry>
-          <stentry>The group name where the node in(Only display in the cluster mode)</stentry>
+          <stentry>TotalDataPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的数据页总数</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的索引页总数</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDataFreeSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的数据空闲空间</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexFreeSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的索引空闲空间</stentry>
         </strow>
       </simpletable>
     </section>    
@@ -131,13 +143,39 @@
             </ul></stentry>
         </strow>
         <strow>
+          <stentry>Details.Group.TotalRecords</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的记录总数</stentry>
+        </strow>
+        <strow>
+          <stentry>Details.Group.TotalDataPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的数据页总数</stentry>
+        </strow>
+        <strow>
+          <stentry>Details.Group.TotalIndexPages</stentry>
+          <stentry>整型</stentry>
+          <stentry>集合的索引页总数</stentry>
+        </strow>
+        <strow>
+          <stentry>Details.Group.TotalDataFreeSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的数据空闲空间</stentry>
+        </strow>
+        <strow>
+          <stentry>Details.Group.TotalIndexFreeSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>集合的索引空闲空间</stentry>
+        </strow>
+        <strow>
           <stentry>Details.Group.NodeName</stentry>
           <stentry>String</stentry>
           <stentry>Node name(hostname+port)</stentry>
         </strow>
       </simpletable>
     </section>
-    <section><title>Sample of other nodes:</title>
+    <section>
+      <title>Other Node Sample</title>
       <codeblock>> db.snapshot(SDB_SNAP_COLLECTIONS)
 {
   "Name": "foo.bar",
@@ -148,13 +186,17 @@
       "Sequence": 1,
       "Indexes": 8,
       "Status": "Normal",
-      "NodeName": "vmsvr2-suse-x64:11820",
-      "GroupName": "datagroup1"
+      "TotalRecords": 0,
+      "TotalDataPages": 0,
+      "TotalIndexPages": 6,
+      "TotalDataFreeSpace": 0,
+      "TotalIndexFreeSpace": 196545
     }
   ]
 }</codeblock>
-    </section>    
-    <section><title>Sample of coord node:</title>
+    </section>
+    <section>
+      <title>Coord Node Sample</title>
       <codeblock>> coord.snapshot(SDB_SNAP_COLLECTIONS)
 {
   "Name": "susefoo.susebar",
@@ -167,13 +209,18 @@
           "LogicalID": 0,
           "Sequence": 1,
           "Indexes": 1,
-          "Status": "Normal",
+          "Status": "Normal",          
+          "TotalRecords": 1,
+          "TotalDataPages": 1,
+          "TotalIndexPages": 2,
+          "TotalDataFreeSpace": 4004,
+          "TotalIndexFreeSpace": 4046,
           "NodeName": "vmsvr2-suse-x64:11820"
         }
       ]
     }
   ]
 }</codeblock>
-    </section>    
+    </section>
   </body>
 </topic>

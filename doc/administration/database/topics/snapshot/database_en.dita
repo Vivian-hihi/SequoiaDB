@@ -10,13 +10,9 @@
     <section><title>Sign</title>
       <p>SDB_SNAP_DATABASE</p>
     </section>
-    <section>
-      <title>Proper nodes</title>
-      <p>All Node</p>
-    </section>
-    <section><title>Field Information</title>
-      <simpletable><!-- frame="all" relcolwidth="1.01* 1.0* 1.98*"
-        id="administration_database_monitoring_snapshot_database_table">-->
+    
+    <section><title>Other Node Field Information</title>
+      <simpletable>
         <sthead>
           <stentry>Field Name</stentry>
           <stentry>Type</stentry>
@@ -58,6 +54,16 @@
             make it <i>false</i>.</stentry>
         </strow>
         <strow>
+          <stentry>BeginLSN.Offset</stentry>
+          <stentry>长整型</stentry>
+          <stentry>起始 LSN 的偏移</stentry>
+        </strow>
+        <strow>
+          <stentry>BeginLSN.Version</stentry>
+          <stentry>整型</stentry>
+          <stentry>起始 LSN 的版本号</stentry>
+        </strow>
+        <strow>
           <stentry>CurrentLSN.Offset</stentry>
           <stentry>Long integer</stentry>
           <stentry>Excursion of current LSN</stentry>
@@ -66,6 +72,16 @@
           <stentry>CurrentLSN.Version</stentry>
           <stentry>Integer</stentry>
           <stentry>Verssion number of the current LSN</stentry>
+        </strow>
+        <strow>
+          <stentry>TransInfo.BeginLSN</stentry>
+          <stentry>长整型</stentry>
+          <stentry>事务起始 LSN 的偏移</stentry>
+        </strow>
+        <strow>
+          <stentry>NodeID</stentry>
+          <stentry>数组</stentry>
+          <stentry>[ 分区组 ID，节点 ID ]，在 standalone 模式下，该字段为 [ 0，0 ]</stentry>
         </strow>
         <strow>
           <stentry>Version.Major</stentry>
@@ -81,6 +97,11 @@
           <stentry>Version.Release</stentry>
           <stentry>Integer</stentry>
           <stentry>Released version number of database</stentry>
+        </strow>
+        <strow>
+          <stentry>Version.Build</stentry>
+          <stentry>字符串</stentry>
+          <stentry>数据库编译时间</stentry>
         </strow>
         <strow>
           <stentry>CurrentActiveSessions</stentry>
@@ -226,72 +247,295 @@
           <stentry>System CPU (second)</stentry>
         </strow>
         <strow>
+          <stentry>freeLogSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>空闲日志空间</stentry>
+        </strow>
+        <strow>
+          <stentry>vsize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>虚拟内存使用量</stentry>
+        </strow>
+        <strow>
+          <stentry>rss</stentry>
+          <stentry>长整型</stentry>
+          <stentry>物理内存使用量</stentry>
+        </strow>
+        <strow>
+          <stentry>fault</stentry>
+          <stentry>长整型</stentry>
+          <stentry>每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalMapped</stentry>
+          <stentry>长整型</stentry>
+          <stentry>mmap 的总数据量</stentry>
+        </strow>
+        <strow>
+          <stentry>svcNetIn</stentry>
+          <stentry>长整型</stentry>
+          <stentry>本地服务端口收到的网络流量</stentry>
+        </strow>
+        <strow>
+          <stentry>svcNetOut</stentry>
+          <stentry>长整型</stentry>
+          <stentry>本地服务端口发送的网络流量</stentry>
+        </strow>        
+      </simpletable>
+    </section>
+    <section>
+      <title>Coord Node Field Information</title>
+      <simpletable>
+        <sthead>
+          <stentry>Field Name</stentry>
+          <stentry>Type</stentry>
+          <stentry>Description</stentry>
+        </sthead>        
+        <strow>
+          <stentry>TotalNumConnects</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Total amount of database connection requests</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDataRead</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total data read requests</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexRead</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total index read requests</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDataWrite</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total data write requests</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexWrite</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total index write requests</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalUpdate</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total amount of updated records</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDelete</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total amount of deleted records</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalInsert</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total amount of inserted records</stentry>
+        </strow>
+        <strow>
+          <stentry>ReplUpdate</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Amount of updated and replicated records</stentry>
+        </strow>
+        <strow>
+          <stentry>ReplDelete</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Amount of deleted and replicated records</stentry>
+        </strow>
+        <strow>
+          <stentry>ReplInsert</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Amount of inserted and replicated records</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalSelect</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total amount of selected records</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalRead</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total amount of read records</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalReadTime</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total data read time (millisecond)</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalWriteTime</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total data write time (millisecond)</stentry>
+        </strow>            
+        <strow>
+          <stentry>freeLogSpace</stentry>
+          <stentry>长整型</stentry>
+          <stentry>空闲日志空间</stentry>
+        </strow>
+        <strow>
+          <stentry>vsize</stentry>
+          <stentry>长整型</stentry>
+          <stentry>虚拟内存使用量</stentry>
+        </strow>
+        <strow>
+          <stentry>rss</stentry>
+          <stentry>长整型</stentry>
+          <stentry>物理内存使用量</stentry>
+        </strow>
+        <strow>
+          <stentry>fault</stentry>
+          <stentry>长整型</stentry>
+          <stentry>每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalMapped</stentry>
+          <stentry>长整型</stentry>
+          <stentry>mmap 的总数据量</stentry>
+        </strow>
+        <strow>
+          <stentry>svcNetIn</stentry>
+          <stentry>长整型</stentry>
+          <stentry>本地服务端口收到的网络流量</stentry>
+        </strow>
+        <strow>
+          <stentry>svcNetOut</stentry>
+          <stentry>长整型</stentry>
+          <stentry>本地服务端口发送的网络流量</stentry>
+        </strow>
+        <strow>
+          <stentry>shardNetIn</stentry>
+          <stentry>长整型</stentry>
+          <stentry>shard 平面端口收到的网络流量</stentry>
+        </strow>
+        <strow>
+          <stentry>shardNetOut</stentry>
+          <stentry>长整型</stentry>
+          <stentry>shard 平面端口发送的网络流量</stentry>
+        </strow>
+        <strow>
+          <stentry>replNetIn</stentry>
+          <stentry>长整型</stentry>
+          <stentry>数据同步平面端口收到的网络流量</stentry>
+        </strow>
+        <strow>
+          <stentry>replNetOut</stentry>
+          <stentry>长整型</stentry>
+          <stentry>数据同步平面端口发送的网络流量</stentry>
+        </strow>
+        <strow>
           <stentry>ErrNodes.NodeName</stentry>
           <stentry>String</stentry>
           <stentry>Exception node name (hostname+port)<b>Ipmortant: This field only display in  coord
-              node and existing exception node </b></stentry>
+            node and existing exception node </b></stentry>
         </strow>
         <strow>
           <stentry>ErrNodes.Flag</stentry>
           <stentry>Int</stentry>
           <stentry>Rrror code <b>Ipmortant: This field only display in coord node and existing exception node
-            </b></stentry>
+          </b></stentry>
         </strow>
       </simpletable>
     </section>
-    <section><title>Sample</title>
+    <section>
+      <title>Other Node Sample</title>
       <codeblock>> db.snapshot(SDB_SNAP_DATABASE)
 {
-  "NodeName": "vmsvr2-suse-x64:11820",
-  "HostName": "vmsvr2-suse-x64",
-  "ServiceName": "11820",
-  "GroupName": "datagroup1",
+  "NodeName": "ubuntu-dev12:11810",
+  "HostName": "ubuntu-dev12",
+  "ServiceName": "11810",
+  "GroupName": "",
   "IsPrimary": false,
   "ServiceStatus": true,
-  "CurrentLSN": {
-    "Offset": 208904,
+  "BeginLSN": {
+    "Offset": 0,
     "Version": 1
   },
+  "CurrentLSN": {
+    "Offset": -1,
+    "Version": 0
+  },
+  "TransInfo": {
+    "BeginLSN": -1
+  },
   "NodeID": [
-    1000,
-    1000
+    0,
+    0
   ],
   "Version": {
     "Major": 1,
-    "Minor": 3,
-    "Release": 8132,
-    "Build": "2013-09-26-17.57.31"
+    "Minor": 8,
+    "Release": 13971,
+    "Build": "2014-08-07-11.04.12(Debug)"
   },
-  "CurrentActiveSessions": 10,
+  "CurrentActiveSessions": 18,
   "CurrentIdleSessions": 0,
-  "CurrentSystemSessions": 8,
+  "CurrentSystemSessions": 5,
   "CurrentContexts": 1,
-  "ReceivedEvents": 37,
-  "Role": "data",
+  "ReceivedEvents": 0,
+  "Role": "standalone",
   "Disk": {
-    "DatabasePath": "/opt/sequoiadb/database/data/11820",
-    "LoadPercent": 78,
-    "TotalSpace": 40704466944,
-    "FreeSpace": 8830676992
+    "DatabasePath": "/home/users/hejiawen/sequoiadb_new/sequoiadb/trunk/bin",
+    "LoadPercent": 46,
+    "TotalSpace": 84543193088,
+    "FreeSpace": 45332840448
   },
-  "TotalNumConnects": 1,
-  "TotalDataRead": 6337,
-  "TotalIndexRead": 45,
-  "TotalDataWrite": 2112,
-  "TotalIndexWrite": 4260,
+  "TotalNumConnects": 11,
+  "TotalDataRead": 0,
+  "TotalIndexRead": 0,
+  "TotalDataWrite": 0,
+  "TotalIndexWrite": 0,
   "TotalUpdate": 0,
-  "TotalDelete": 16,
-  "TotalInsert": 2096,
+  "TotalDelete": 0,
+  "TotalInsert": 0,
   "ReplUpdate": 0,
-  "ReplDelete": 16,
-  "ReplInsert": 2096,
-  "TotalSelect": 47,
-  "TotalRead": 6337,
+  "ReplDelete": 0,
+  "ReplInsert": 0,
+  "TotalSelect": 0,
+  "TotalRead": 0,
   "TotalReadTime": 0,
   "TotalWriteTime": 0,
-  "ActivateTimestamp": "2013-09-27-13.28.34.501403",
-  "UserCPU": "77.380000",
-  "SysCPU": "49.870000"
+  "ActivateTimestamp": "2014-08-07-13.04.16.248083",
+  "UserCPU": "7.980000",
+  "SysCPU": "10.700000",
+  "freeLogSpace": 1342177280,
+  "vsize": 1745002496,
+  "rss": 12929,
+  "fault": 12,
+  "TotalMapped": 918945792,
+  "svcNetIn": 3051,
+  "svcNetOut": 9245
+}</codeblock>
+    </section>
+    <section>
+      <title>Coord node Sample</title>
+      <codeblock>> db.snapshot(SDB_SNAP_DATABASE)
+{
+  "TotalNumConnects": 0,
+  "TotalDataRead": 4,
+  "TotalIndexRead": 0,
+  "TotalDataWrite": 3,
+  "TotalIndexWrite": 3,
+  "TotalUpdate": 0,
+  "TotalDelete": 0,
+  "TotalInsert": 3,
+  "ReplUpdate": 0,
+  "ReplDelete": 0,
+  "ReplInsert": 2,
+  "TotalSelect": 606,
+  "TotalRead": 4,
+  "TotalReadTime": 0,
+  "TotalWriteTime": 0,
+  "freeLogSpace": 5368709120,
+  "vsize": 5660057600,
+  "rss": 44765,
+  "fault": 25,
+  "TotalMapped": 2144206848,
+  "svcNetIn": 0,
+  "svcNetOut": 0,
+  "shardNetIn": 38228,
+  "shardNetOut": 393997,
+  "replNetIn": 40743956,
+  "replNetOut": 40743956,
+  "ErrNodes": []
 }</codeblock>
     </section>
   </body>

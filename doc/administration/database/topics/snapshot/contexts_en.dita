@@ -11,9 +11,7 @@
     <section><title>Sign</title>
       <p>SDB_SNAP_CONTEXTS</p>
     </section>
-    <section><title>Proper Node</title>
-      <p>data node, catalog node</p>
-    </section>
+    
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 1.0*" id="administration_database_monitoring_snapshot_contexts_table">-->
         <sthead>
@@ -34,13 +32,13 @@
         </strow>
         <strow>
           <stentry>Contexts.Type</stentry>
-          <stentry></stentry>
-          <stentry></stentry>
+          <stentry>字符串</stentry>
+          <stentry>上下文类型，如：DUMP</stentry>
         </strow>
         <strow>
           <stentry>Contexts.Description</stentry>
-          <stentry></stentry>
-          <stentry></stentry>
+          <stentry>字符串</stentry>
+          <stentry>上下文的描述信息，如：包含当前的查询条件</stentry>
         </strow>
         <strow>
           <stentry>Contexts.DataRead</stentry>
@@ -72,6 +70,8 @@
   "Contexts": [
     {
       "ContextID": 12,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
       "DataRead": 0,
       "IndexRead": 0,
       "QueryTimeSpent": 0,

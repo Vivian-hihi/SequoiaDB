@@ -12,10 +12,7 @@
       <title>Sign</title>
       <p>SDB_LIST_STORAGEUNITS</p>
     </section>
-    <section>
-      <title>Proper Node</title>
-      <p>Data node, catalog node</p>
-    </section>
+    
     <section>
       <title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*"

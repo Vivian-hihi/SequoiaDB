@@ -4,10 +4,8 @@
   <title>Catalog Snapshot</title>
   <body>
     <section><title>Description</title>Catalog Snapshot all the collections listed in the current database catalog information, each set a record.</section>
-    <section><title>Sign</title>SDB_SNAP_CATALOG</section>
-    <section><title>Proper Node</title>
-      <p>Coord node</p>
-    </section>
+    <section><title>Sign</title><p>SDB_SNAP_CATALOG</p><note>Can only executed in the coord node.</note></section>
+    
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_collections_data_table">-->
         <sthead>

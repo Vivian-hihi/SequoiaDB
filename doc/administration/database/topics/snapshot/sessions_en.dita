@@ -10,9 +10,7 @@
     <section><title>Sign</title>
       <p>SDB_SNAP_SESSIONS</p>
     </section>
-    <section><title>Proper Node</title>
-      <p>data node, catalog node</p>
-    </section>
+    
     <section><title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_sessions_table">-->
         <sthead>
@@ -126,9 +124,39 @@
           <stentry>Total data write time (millisecond)</stentry>
         </strow>
         <strow>
+          <stentry>ReadTimeSpent</stentry>
+          <stentry>长整型</stentry>
+          <stentry>读取记录的时间（毫秒）</stentry>
+        </strow>
+        <strow>
+          <stentry>WriteTimeSpent</stentry>
+          <stentry>长整型</stentry>
+          <stentry>写入记录的时间（毫秒）</stentry>
+        </strow>
+        <strow>
           <stentry>ConnectTimestamp</stentry>
           <stentry>Timeline</stentry>
           <stentry>The time of beginning connection</stentry>
+        </strow>
+        <strow>
+          <stentry>LastOpType</stentry>
+          <stentry>字符串</stentry>
+          <stentry>最后一次操作的类型，如：insert，update</stentry>
+        </strow>
+        <strow>
+          <stentry>LastOpBegin</stentry>
+          <stentry>字符串</stentry>
+          <stentry>最后一次操作的起始时间</stentry>
+        </strow>
+        <strow>
+          <stentry>LastOpEnd</stentry>
+          <stentry>字符串</stentry>
+          <stentry>最后一次操作的结束时间</stentry>
+        </strow>
+        <strow>
+          <stentry>LastOpInfo</stentry>
+          <stentry>字符串</stentry>
+          <stentry>最后一次操作的详细信息</stentry>
         </strow>
         <strow>
           <stentry>UserCPU</stentry>
@@ -166,83 +194,15 @@
   "TotalRead": 0,
   "TotalReadTime": 0,
   "TotalWriteTime": 0,
+  "ReadTimeSpent": 0,
+  "WriteTimeSpent": 0,
   "ConnectTimestamp": "2013-09-27-13.28.38.927465",
+  "LastOpType": "unknow",
+  "LastOpBegin": "--",
+  "LastOpEnd": "--",
+  "LastOpInfo": "",
   "UserCPU": "0.410000",
   "SysCPU": "0.150000"
-}
-{
-  "SessionID": "vmsvr2-suse-x64:11820:2",
-  "TID": 8681,
-  "Status": "Waiting",
-  "Type": "DpsRollbackTask",
-  "Name": "",
-  "QueueSize": 0,
-  "ProcessEventCount": 1,
-  "Contexts": [],
-  "TotalDataRead": 0,
-  "TotalIndexRead": 0,
-  "TotalDataWrite": 0,
-  "TotalIndexWrite": 0,
-  "TotalUpdate": 0,
-  "TotalDelete": 0,
-  "TotalInsert": 0,
-  "TotalSelect": 0,
-  "TotalRead": 0,
-  "TotalReadTime": 0,
-  "TotalWriteTime": 0,
-  "ConnectTimestamp": "2013-09-27-13.28.38.927406",
-  "UserCPU": "0.300000",
-  "SysCPU": "0.130000"
-}
-{
-  "SessionID": "vmsvr2-suse-x64:11820:3",
-  "TID": 8682,
-  "Status": "Waiting",
-  "Type": "Cluster",
-  "Name": "",
-  "QueueSize": 0,
-  "ProcessEventCount": 71977,
-  "Contexts": [],
-  "TotalDataRead": 0,
-  "TotalIndexRead": 0,
-  "TotalDataWrite": 0,
-  "TotalIndexWrite": 0,
-  "TotalUpdate": 0,
-  "TotalDelete": 0,
-  "TotalInsert": 0,
-  "TotalSelect": 0,
-  "TotalRead": 0,
-  "TotalReadTime": 0,
-  "TotalWriteTime": 0,
-  "ConnectTimestamp": "2013-09-27-13.28.39.127611",
-  "UserCPU": "2.050000",
-  "SysCPU": "1.010000"
-}...
-{
-  "SessionID": "vmsvr2-suse-x64:11820:28",
-  "TID": 9430,
-  "Status": "Running",
-  "Type": "Agent",
-  "Name": "127.0.0.1:60309",
-  "QueueSize": 0,
-  "ProcessEventCount": 9,
-  "Contexts": [
-    14
-  ],
-  "TotalDataRead": 0,
-  "TotalIndexRead": 0,
-  "TotalDataWrite": 0,
-  "TotalIndexWrite": 0,
-  "TotalUpdate": 0,
-  "TotalDelete": 0,
-  "TotalInsert": 0,
-  "TotalSelect": 0,
-  "TotalRead": 0,
-  "TotalReadTime": 0,
-  "TotalWriteTime": 0,
-  "ConnectTimestamp": "2013-09-27-18.06.25.961090",
-  "UserCPU": "0.030000",
-  "SysCPU": "0.060000"
 }</codeblock>
     </section>
   </body>

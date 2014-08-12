@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Collection Spaces Snapshot"/>
-<meta name="description" content="Description Collection space snapshot contains all the collection space in the current data node. Each collection space is recorded as one record. Sign SDB_SNAP_COLLECTIONSPACES Proper Node All nodes ..."/>
+<meta name="description" content="Description Collection space snapshot contains all the collection space in the current data node. Each collection space is recorded as one record. Sign SDB_SNAP_COLLECTIONSPACES Field Information ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/database/topics/snapshot/snapshot_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="administration_database_monitoring_snapshot_collectionspaces"/>
@@ -47,56 +47,84 @@
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">Proper Node</h2>
-      <p class="p">All nodes</p>
-
-    </div>
-
+    
     <div class="section"><h2 class="title sectiontitle">Field Information</h2>
       <p class="p">Since information stored in data nodes and catalog node is not the same, collection space
         snap will return different structures according to the kind of the node:</p>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">Other node field information</h2>
+    <div class="section"><h2 class="title sectiontitle">Other Node Field information</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d39575e50" class="stentry">Field Name</th>
+          <th valign="bottom" align="left" id="d40545e42" class="stentry">Field Name</th>
 
-          <th valign="bottom" align="left" id="d39575e53" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d40545e45" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d39575e56" class="stentry">Description</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d39575e50" class="stentry">Name</td>
-
-          <td valign="top" headers="d39575e53" class="stentry">String</td>
-
-          <td valign="top" headers="d39575e56" class="stentry">Collection space name</td>
+          <th valign="bottom" align="left" id="d40545e48" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d39575e50" class="stentry">Collection</td>
+          <td valign="top" headers="d40545e42" class="stentry">Name</td>
 
-          <td valign="top" headers="d39575e53" class="stentry">String array</td>
+          <td valign="top" headers="d40545e45" class="stentry">String</td>
 
-          <td valign="top" headers="d39575e56" class="stentry">All the collections in collection space</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d39575e50" class="stentry">PageSize</td>
-
-          <td valign="top" headers="d39575e53" class="stentry">Integer</td>
-
-          <td valign="top" headers="d39575e56" class="stentry">Size of data page in collection space</td>
+          <td valign="top" headers="d40545e48" class="stentry">Collection space name</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d39575e50" class="stentry">GroupName</td>
+          <td valign="top" headers="d40545e42" class="stentry">Collection</td>
 
-          <td valign="top" headers="d39575e53" class="stentry">String</td>
+          <td valign="top" headers="d40545e45" class="stentry">String array</td>
 
-          <td valign="top" headers="d39575e56" class="stentry">group name where collectionspcae in</td>
+          <td valign="top" headers="d40545e48" class="stentry">All the collections in collection space</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e42" class="stentry">PageSize</td>
+
+          <td valign="top" headers="d40545e45" class="stentry">Integer</td>
+
+          <td valign="top" headers="d40545e48" class="stentry">Size of data page in collection space</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e42" class="stentry">MaxCapacitySize</td>
+
+          <td valign="top" headers="d40545e45" class="stentry">长整型</td>
+
+          <td valign="top" headers="d40545e48" class="stentry">集合空间的最大容量上限</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e42" class="stentry">NumCollections</td>
+
+          <td valign="top" headers="d40545e45" class="stentry">整型</td>
+
+          <td valign="top" headers="d40545e48" class="stentry">集合数量</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e42" class="stentry">TotalRecords</td>
+
+          <td valign="top" headers="d40545e45" class="stentry">整型</td>
+
+          <td valign="top" headers="d40545e48" class="stentry">集合空间的记录总数</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e42" class="stentry">TotalSize</td>
+
+          <td valign="top" headers="d40545e45" class="stentry">长整型</td>
+
+          <td valign="top" headers="d40545e48" class="stentry">集合空间的总大小</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e42" class="stentry">FreeSize</td>
+
+          <td valign="top" headers="d40545e45" class="stentry">长整型</td>
+
+          <td valign="top" headers="d40545e48" class="stentry">集合空间的空闲大小</td>
 
         </tr>
 </table>
@@ -105,58 +133,67 @@
     
     <div class="section"><h2 class="title sectiontitle">Coord Node Field Information</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d39575e119" class="stentry">Field Name</th>
+          <th valign="bottom" align="left" id="d40545e159" class="stentry">Field Name</th>
 
-          <th valign="bottom" align="left" id="d39575e122" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d40545e162" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d39575e125" class="stentry">Description</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d39575e119" class="stentry">Name</td>
-
-          <td valign="top" headers="d39575e122" class="stentry">String</td>
-
-          <td valign="top" headers="d39575e125" class="stentry">Collection space name</td>
+          <th valign="bottom" align="left" id="d40545e165" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d39575e119" class="stentry">Collection</td>
+          <td valign="top" headers="d40545e159" class="stentry">Name</td>
 
-          <td valign="top" headers="d39575e122" class="stentry">String array</td>
+          <td valign="top" headers="d40545e162" class="stentry">String</td>
 
-          <td valign="top" headers="d39575e125" class="stentry">All the collection in the collection space</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d39575e119" class="stentry">PageSize</td>
-
-          <td valign="top" headers="d39575e122" class="stentry">Integer</td>
-
-          <td valign="top" headers="d39575e125" class="stentry">Size of data page in collection space</td>
+          <td valign="top" headers="d40545e165" class="stentry">Collection space name</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d39575e119" class="stentry">Group.GroupID</td>
+          <td valign="top" headers="d40545e159" class="stentry">Collection</td>
 
-          <td valign="top" headers="d39575e122" class="stentry">Integer array</td>
+          <td valign="top" headers="d40545e162" class="stentry">String array</td>
 
-          <td valign="top" headers="d39575e125" class="stentry">ID list of the replset of the collection space</td>
+          <td valign="top" headers="d40545e165" class="stentry">All the collection in the collection space</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d39575e119" class="stentry">Group.GroupName</td>
+          <td valign="top" headers="d40545e159" class="stentry">PageSize</td>
 
-          <td valign="top" headers="d39575e122" class="stentry">String</td>
+          <td valign="top" headers="d40545e162" class="stentry">Integer</td>
 
-          <td valign="top" headers="d39575e125" class="stentry">Group name list of the replset of the collection space</td>
+          <td valign="top" headers="d40545e165" class="stentry">Size of data page in collection space</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e159" class="stentry">TotalSize</td>
+
+          <td valign="top" headers="d40545e162" class="stentry">长整型</td>
+
+          <td valign="top" headers="d40545e165" class="stentry">集合空间的总大小</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e159" class="stentry">FreeSize</td>
+
+          <td valign="top" headers="d40545e162" class="stentry">长整型</td>
+
+          <td valign="top" headers="d40545e165" class="stentry">集合空间的空闲大小</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d40545e159" class="stentry">Group.GroupName</td>
+
+          <td valign="top" headers="d40545e162" class="stentry">String</td>
+
+          <td valign="top" headers="d40545e165" class="stentry">Group name list of the replset of the collection space</td>
 
         </tr>
 </table>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">Other nodes sample</h2>
+    <div class="section"><h2 class="title sectiontitle">Other Node Sample</h2>
+      
       <pre class="pre codeblock">&gt; db.snapshot(SDB_SNAP_COLLECTIONSPACES)
 {
   "Collection": [
@@ -164,36 +201,37 @@
       "Name": "bar"
     }
   ],
-  "PageSize": 4096,
-  "Name": "foo",
-  "GroupName": "datagroup1"
+  "PageSize": 65536,
+  "MaxCapacitySize": 8796093022208,
+  "NumCollections": 4,
+  "TotalRecords": 2,
+  "TotalSize": 306315264,
+  "FreeSize": 265551224,
+  "Name": "foo"
 }</pre>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">Coord node sample</h2>
+    <div class="section"><h2 class="title sectiontitle">Coord Node Sample</h2>
+      
       <pre class="pre codeblock">&gt; coord.snapshot(SDB_SNAP_COLLECTIONSPACES)
 {
+  "Name": "foo",
+  "PageSize": 4096,
+  "TotalSize": 918945792,
+  "FreeSize": 805183062,
   "Collection": [
     {
       "Name": "bar"
     }
   ],
   "Group": [
-    {
-      "GroupID": 1000,
-      "GroupName": "datagroup1"
-    }
-  ],
-  "Name": "foo",
-  "PageSize": 4096,
-  "_id": {
-    "$oid": "52451a6bf80be5d22b27489b"
-  }
+    "db2"
+  ]
 }</pre>
 
     </div>
-    
+
   </div>
 
 <div class="related-links"/>

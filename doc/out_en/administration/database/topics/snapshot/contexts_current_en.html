@@ -53,66 +53,78 @@
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">Proper Node</h2>
-      <p class="p">data node, catalog node</p>
-
-    </div>
-
+    
     <div class="section"><h2 class="title sectiontitle">Field Information</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d41035e48" class="stentry">Field Name</th>
+          <th valign="bottom" align="left" id="d42272e40" class="stentry">Field Name</th>
 
-          <th valign="bottom" align="left" id="d41035e51" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d42272e43" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d41035e54" class="stentry">Description</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d41035e48" class="stentry">SessionID</td>
-
-          <td valign="top" headers="d41035e51" class="stentry">String</td>
-
-          <td valign="top" headers="d41035e54" class="stentry">SessionID(HostName:Port:ID)</td>
+          <th valign="bottom" align="left" id="d42272e46" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d41035e48" class="stentry">Contexts.ContextID</td>
+          <td valign="top" headers="d42272e40" class="stentry">SessionID</td>
 
-          <td valign="top" headers="d41035e51" class="stentry">Long integer</td>
+          <td valign="top" headers="d42272e43" class="stentry">String</td>
 
-          <td valign="top" headers="d41035e54" class="stentry">Context ID</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d41035e48" class="stentry">Contexts.DataRead</td>
-
-          <td valign="top" headers="d41035e51" class="stentry">Long integer</td>
-
-          <td valign="top" headers="d41035e54" class="stentry">Data that is read</td>
+          <td valign="top" headers="d42272e46" class="stentry">SessionID(HostName:Port:ID)</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d41035e48" class="stentry">Contexts.IndexRead</td>
+          <td valign="top" headers="d42272e40" class="stentry">Contexts.ContextID</td>
 
-          <td valign="top" headers="d41035e51" class="stentry">Long integer</td>
+          <td valign="top" headers="d42272e43" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d41035e54" class="stentry">Index that is read</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d41035e48" class="stentry">Contexts.QueryTimeSpent</td>
-
-          <td valign="top" headers="d41035e51" class="stentry">Float</td>
-
-          <td valign="top" headers="d41035e54" class="stentry">Total query time (second)</td>
+          <td valign="top" headers="d42272e46" class="stentry">Context ID</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d41035e48" class="stentry">Contexts.StartTimestamp</td>
+          <td valign="top" headers="d42272e40" class="stentry">Contexts.Type</td>
 
-          <td valign="top" headers="d41035e51" class="stentry">Timeline</td>
+          <td valign="top" headers="d42272e43" class="stentry">字符串</td>
 
-          <td valign="top" headers="d41035e54" class="stentry">Creating time</td>
+          <td valign="top" headers="d42272e46" class="stentry">上下文类型，如：DUMP</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d42272e40" class="stentry">Contexts.Description</td>
+
+          <td valign="top" headers="d42272e43" class="stentry">字符串</td>
+
+          <td valign="top" headers="d42272e46" class="stentry">上下文的描述信息，如：包含当前的查询条件</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d42272e40" class="stentry">Contexts.DataRead</td>
+
+          <td valign="top" headers="d42272e43" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d42272e46" class="stentry">Data that is read</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d42272e40" class="stentry">Contexts.IndexRead</td>
+
+          <td valign="top" headers="d42272e43" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d42272e46" class="stentry">Index that is read</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d42272e40" class="stentry">Contexts.QueryTimeSpent</td>
+
+          <td valign="top" headers="d42272e43" class="stentry">Float</td>
+
+          <td valign="top" headers="d42272e46" class="stentry">Total query time (second)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d42272e40" class="stentry">Contexts.StartTimestamp</td>
+
+          <td valign="top" headers="d42272e43" class="stentry">Timeline</td>
+
+          <td valign="top" headers="d42272e46" class="stentry">Creating time</td>
 
         </tr>
 </table>
@@ -127,6 +139,8 @@
   "Contexts": [
     {
       "ContextID": 13,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
       "DataRead": 0,
       "IndexRead": 0,
       "QueryTimeSpent": 0,

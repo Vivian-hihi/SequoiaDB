@@ -11,10 +11,7 @@
       <title>Sign</title>
       <p>SDB_LIST_GROUPS</p>
     </section>
-    <section>
-      <title>Proper node</title>
-      <p>coord node</p>
-    </section>
+    
     <section>
       <title>Field Information</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*"
