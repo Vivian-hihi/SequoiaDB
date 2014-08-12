@@ -200,7 +200,7 @@
 					<stentry>--numpagecleaners</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>数据库启动时需要开启的脏页清除器数量，0意味着不启动任何脏页清除器1。默认：1，最小：0， 最大：50。</stentry>
+					<stentry>数据库启动时需要开启的脏页清除器数量，0意味着不启动任何脏页清除器。默认：1，最小：0， 最大：50。</stentry>
 				</strow>
 				<strow>
 					<stentry>--pagecleaninterval</stentry>

@@ -201,13 +201,13 @@
 					<stentry>--numpagecleaners</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>The number of page cleaners to start during database startup.0 means do not start any page cleaners, default 1.</stentry>
+					<stentry>The number of page cleaners to start during database startup.0 means do not start any page cleaners, Default: 1, Min: 0, Max: 50.</stentry>
 				</strow>
 				<strow>
 					<stentry>--pagecleaninterval</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>The minimum interval between two cleans for each CS. Unit: ms, Default: 10000, Min: 1000.</stentry>
+					<stentry>The minimum interval between two cleans for each CS. Unit: ms, Default: 10000, Min: 1000, Max: 4294967295.</stentry>
 				</strow>
 			</simpletable>
 			<note>
