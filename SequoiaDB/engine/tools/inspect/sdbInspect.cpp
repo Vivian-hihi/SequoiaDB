@@ -491,19 +491,19 @@ namespace
       if ( 0 == tail._exitCode )
       {
          len += ossSnprintf( buffer + len, bufferSize - len,
-                             "Result: exit with no records "
+                             "Reason for exit : exit with no records "
                              "different"OSS_NEWLINE ) ;
       }
       else if ( 1 == tail._exitCode )
       {
          len += ossSnprintf( buffer + len, bufferSize - len,
-                             "Result: exit with less than 1% of "
+                             "Reson for exit : exit with less than 1% of "
                              "records not synchronized"OSS_NEWLINE ) ;
       }
       else
       {
          len += ossSnprintf( buffer + len, bufferSize - len,
-                             "Result: loop is limited"OSS_NEWLINE ) ;
+                             "Reason for exit : loop is limited"OSS_NEWLINE ) ;
       }
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
 
@@ -2641,6 +2641,8 @@ INT32 _sdbCi::handle( const po::options_description &desc,
    BOOLEAN byGroup = TRUE ;
    BOOLEAN useOutput = FALSE ;
    CHAR outReport[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+   CHAR *tailBuffer = NULL ;
+   INT64 tailBufferSize = 0 ;
 
    if ( vm.empty() || vm.count( CONSISTENCY_INSPECT_HELP ) )
    {
@@ -2715,11 +2717,14 @@ INT32 _sdbCi::handle( const po::options_description &desc,
       {
          ossMemcpy( outReport, _header._outfile, OSS_MAX_PATHSIZE ) ;
       }
-      rc = byGroup ? report ( _header._filepath, outReport )
-                   : report2( _header._filepath, outReport );
+      rc = byGroup ? report ( _header._filepath, outReport,
+                              tailBuffer, tailBufferSize )
+                   : report2( _header._filepath, outReport,
+                              tailBuffer, tailBufferSize );
       //rc = report2( _header._filepath ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       std::cout << _header._action << " successfully" << std::endl ;
+      std::cout << tailBuffer << std::endl ;
 
       goto done ;
    }
@@ -2758,13 +2763,21 @@ INT32 _sdbCi::handle( const po::options_description &desc,
       ossMemcpy( outReport, _header._outfile, OSS_MAX_PATHSIZE ) ;
    }
    ossStrncat( outReport, CI_FILE_REPORT, ossStrlen( CI_FILE_REPORT ) ) ;
-   rc = byGroup ? report ( _header._outfile, outReport )
-                : report2( _header._outfile, outReport ) ;
+   rc = byGroup ? report ( _header._outfile, outReport,
+                           tailBuffer, tailBufferSize )
+                : report2( _header._outfile, outReport,
+                           tailBuffer, tailBufferSize ) ;
 
    CHECK_VALUE( (SDB_OK != rc ), error ) ;
    std::cout << _header._action << " successfully" << std::endl ;
+   std::cout << tailBuffer << std::endl ;
 
 done:
+   if ( NULL != tailBuffer )
+   {
+      SDB_OSS_FREE( tailBuffer ) ;
+      tailBuffer = NULL ;
+   }
    return rc ;
 error:
    goto done ;
@@ -2871,7 +2884,8 @@ error:
    goto done ;
 }
 
-INT32 _sdbCi::report ( const CHAR *inFile, const CHAR *reportFile )
+INT32 _sdbCi::report ( const CHAR *inFile, const CHAR *reportFile,
+                       CHAR *&tailBuffer, INT64 &tailBufferSize )
 {
    INT32 rc           = SDB_OK ;
    BOOLEAN inOpened   = FALSE ;
@@ -2990,10 +3004,11 @@ INT32 _sdbCi::report ( const CHAR *inFile, const CHAR *reportFile )
       }
    }
 
-   rc = dumpCiTail( tail, buffer, bufferSize, validSize ) ;
+   rc = dumpCiTail( tail, tailBuffer, tailBufferSize, validSize ) ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
-   rc = writeToFile( out, buffer, validSize ) ;
+   rc = writeToFile( out, tailBuffer, validSize ) ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+   tailBufferSize = validSize ;
 
 done:
    if ( inOpened )
@@ -3020,7 +3035,8 @@ error:
 
 
 
-INT32 _sdbCi::report2( const CHAR *inFile, const CHAR *reportFile )
+INT32 _sdbCi::report2( const CHAR *inFile, const CHAR *reportFile,
+                       CHAR *&tailBuffer, INT64 &tailBufferSize )
 {
    INT32 rc              = SDB_OK ;
    BOOLEAN inOpened      = FALSE ;
@@ -3094,10 +3110,11 @@ INT32 _sdbCi::report2( const CHAR *inFile, const CHAR *reportFile )
       groupOffset = tail._groupOffset.next() ;
    }
 
-   rc = dumpCiTail( tail, buffer, bufferSize, validSize ) ;
+   rc = dumpCiTail( tail, tailBuffer, tailBufferSize, validSize ) ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
-   rc = writeToFile( out, buffer, validSize ) ;
+   rc = writeToFile( out, tailBuffer, validSize ) ;
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+   tailBufferSize = validSize ;
 
 done:
    if ( inOpened )

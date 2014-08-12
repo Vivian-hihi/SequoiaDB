@@ -524,8 +524,10 @@ public:
 private:
    INT32 splitAddr() ;
    INT32 inspect() ;
-   INT32 report ( const CHAR *inFile, const CHAR *reportFile)  ;
-   INT32 report2( const CHAR *inFile, const CHAR *reportFile ) ;
+   INT32 report ( const CHAR *inFile, const CHAR *reportFile,
+                  CHAR *&tailBuffer, INT64 &tailBufferSize ) ;
+   INT32 report2( const CHAR *inFile, const CHAR *reportFile,
+                  CHAR *&tailBuffer, INT64 &tailBufferSize ) ;
 
 private:
    virtual INT32 doDataExchange( engine::pmdCfgExchange *pEx ) ;
