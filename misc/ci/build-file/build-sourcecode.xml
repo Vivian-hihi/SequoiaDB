@@ -33,6 +33,7 @@
 		<echo message="delete ${CODE_DIR}/bin" />
 		<delete dir="${CODE_DIR}/bin"  failonerror="true" />
     	<mkdir dir="${CODE_DIR}/bin" />
+    	<delete dir="${CODE_DIR}/build" failonerror="true" />
     	<if>
 			<equals arg1="${compile.debug}" arg2="true" />
 			<then>
