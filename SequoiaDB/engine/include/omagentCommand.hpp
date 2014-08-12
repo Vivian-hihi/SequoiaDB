@@ -52,14 +52,14 @@ namespace engine
 {
    #define DECLARE_OACMD_AUTO_REGISTER()                       \
       public:                                                  \
-         static _omaCommand *newThis () ;                  \
+         static _omaCommand *newThis () ;                      \
 
    #define IMPLEMENT_OACMD_AUTO_REGISTER(theClass)             \
-      _omaCommand* theClass::newThis ()                    \
+      _omaCommand* theClass::newThis ()                        \
       {                                                        \
          return SDB_OSS_NEW theClass() ;                       \
       }                                                        \
-      _omaCmdAssit theClass##Assit ( theClass::newThis ) ; \
+      _omaCmdAssit theClass##Assit ( theClass::newThis ) ;     \
 
    /*
       _omaCommand
@@ -80,6 +80,7 @@ namespace engine
                               const CHAR *pHintBuff ) = 0 ;
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
                               INT32 &returnNum ) = 0 ;
+         virtual INT32 doit ( BSONObj &retObj ) { return SDB_OK ; }
 
      protected:
          _sptScope *_scope ;
@@ -154,7 +155,7 @@ namespace engine
          _omaAddHost () ;
          ~_omaAddHost () ;
 
-         virtual const CHAR * name () { return "add host" ; }
+         virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -176,7 +177,7 @@ namespace engine
          _omaScanHost () ;
          ~_omaScanHost () ;
 
-         virtual const CHAR* name () { return "scan host" ; }
+         virtual const CHAR* name () { return OMA_CMD_SCAN_HOST ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -184,16 +185,51 @@ namespace engine
                               const CHAR *pOrderByBuff,
                               const CHAR *pHintBuff ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-      private:
-         _sptScope *_scope ;
-         const CHAR *_jsFileName ;
-         CHAR *_fileBuff ;
-         UINT32 _buffSize ;
-         UINT32 _readSize ;
-         std::vector<BSONObj> _hosts ;
-         std::string _content ;
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum ) ;
+
+         virtual INT32 doit ( BSONObj &retObj ) ;
    };
+
+
+   /*
+      _omaBasicCheckHost
+   */
+   class _omaBasicCheckHost : public _omaScanHost
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+
+      public:
+//         _omaBasicCheckHost () ;
+//         ~_omaBasicCheckHost () ;
+
+         virtual const CHAR* name () { return OMA_CMD_BASIE_CHECK_HOST ; }
+   };
+
+   /*
+      _omaCheckHost
+   */
+   class _omaCheckHost : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaCheckHost () ;
+         ~_omaCheckHost () ;
+
+         virtual const CHAR* name () { return OMA_CMD_CHECK_HOST ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum ) ;
+         virtual INT32 doit ( BSONObj& retObj ) ;
+
+      private:
+   } ;
 
    /*
       _omaInstallRemoteAgent
@@ -316,6 +352,7 @@ namespace engine
    /*
       _omaGetHostInfo
    */
+/*
    class _omaGetHostInfo : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
@@ -333,7 +370,7 @@ namespace engine
 
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
    } ;
-
+*/
    /*
       _omaRegHosts
    */

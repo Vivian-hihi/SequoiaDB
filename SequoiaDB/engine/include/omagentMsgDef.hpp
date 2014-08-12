@@ -37,13 +37,13 @@
 #include "omDef.hpp"
 
 // command
-#define OMA_CMD_SCANHOST                           OM_SCAN_HOST_REQ
-#define OMA_CMD_CHECKHOST                          OM_CHECK_HOST_REQ
-#define OMA_CMD_ADDHOST                            OM_ADD_HOST_REQ
-//#define OMA_CMD_QUEYRSHOT                         OM_QUERY_HOST_REQ
+#define OMA_CMD_SCAN_HOST                          OM_SCAN_HOST_REQ
+#define OMA_CMD_BASIE_CHECK_HOST                   OM_BASIC_CHECK_REQ
+#define OMA_CMD_CHECK_HOST                         OM_CHECK_HOST_REQ
+#define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
 #define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ
 #define OMA_CMD_QUERY_PROGRESS                     OM_QUERY_PROGRESS
-
+#define OMA_CMD_ROLLBACK_INSTALL_DB_BUSINESS       OM_ROLLBACK_TRANSACTION_REQ
 
 // field
 #define OMA_FIELD_HOSTINFO                         OM_REST_FIELD_HOST_INFO
@@ -80,6 +80,8 @@
 #define OMA_FIELD_COORD                            "Coord"
 #define OMA_FIELD_CATALOG                          "Catalog"
 #define OMA_FIELD_DATA                             "Data"
+#define OMA_FIELD_ERRNO                            "errno"
+#define OMA_FIELD_DESCRIPTION                      "description"
 
 // host info
 #define OMA_FIELD_HOSTSTABLE                       "HostsTable"

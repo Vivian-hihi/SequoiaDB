@@ -37,8 +37,10 @@
 #include "pd.hpp"
 #include "ossUtil.hpp"
 #include "ossTypes.hpp"
+#include "../bson/bson.hpp"
 #include "omagentCommand.hpp"
 
+using namespace bson ;
 
 namespace engine
 {
@@ -56,12 +58,14 @@ namespace engine
    INT32 omaRunCommand ( _omaCommand *pCommand, CHAR **ppBody,
                          INT32 &bodyLen ) ;
 
+   INT32 omaRunCommand ( _omaCommand *pCommand, BSONObj &result ) ;
+
    INT32 omaReleaseCommand ( _omaCommand **ppCommand ) ;
 
    // build reply buffer
    INT32 omaBuildReplyMsgBody ( CHAR **ppBuffer, INT32 *bufferSize,
                                 SINT32 numReturned,
-                                    vector<BSONObj> *objList ) ;
+                                vector<BSONObj> *objList ) ;
    INT32 omaBuildReplyMsgBody ( CHAR **ppBuffer, INT32 *bufferSize,
                                 SINT32 numReturned,
                                 const BSONObj *bsonobj ) ;
