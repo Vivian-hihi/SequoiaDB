@@ -165,7 +165,7 @@ namespace engine
       {
          INT32 leftInt  = ossAtoi( left.c_str() ) ;
          INT32 rightInt = ossAtoi( right.c_str() ) ;
-         
+
          return ( leftInt - rightInt ) ;
       }
 
@@ -259,7 +259,6 @@ namespace engine
       rc = getBsonStringField( bsonItem, OM_BSON_PROPERTY_WEBNAME, _webName ) ;
       if ( SDB_OK != rc )
       {
-         
          _errorDetail = string( "get field failed:field=" ) 
                         + OM_BSON_PROPERTY_WEBNAME ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;

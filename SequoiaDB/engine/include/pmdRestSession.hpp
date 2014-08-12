@@ -184,8 +184,6 @@ namespace engine
       private:
          omCommandInterface *_createCommand( HTTP_PARSE_COMMON command,
                                              const CHAR *pFilePath ) ;
-         void              _readAgentPort() ;
-
       protected:
          httpConnection    _restConn ;
          CHAR*             _pFixBuff ;
@@ -193,7 +191,6 @@ namespace engine
          restSessionInfo*  _pSessionInfo ;
 
          string            _wwwRootPath ;
-         string            _localAgentPort ;
 
          _SDB_RTNCB        *_pRTNCB ;
          _dpsLogWrapper    *_pDPSCB ;

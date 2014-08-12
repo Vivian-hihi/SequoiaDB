@@ -177,6 +177,7 @@ namespace engine
          void              finishInstallTask( BSONObj &result ) ;
          void              checkTaskStatus( string taskID ) ;
          void              updateInstallTask( BSONObj &taskDetail ) ;
+         string            getLocalAgentPort() ;
 
       protected:
          virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
@@ -207,6 +208,7 @@ namespace engine
                                                 MsgHeader *pMsg ) ;
          INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
                                               BSONObj &result ) ;
+         void              _readAgentPort() ;
 
       // Msg functions
       protected:
@@ -246,6 +248,8 @@ namespace engine
          omTaskInfo                             _omTaskInfo ;
          ossSpinSLatch                          _taskLatch ;
          UINT32                                 _checkTaskTimer ;
+
+         string                                 _localAgentPort ;
 
 
    } ;
