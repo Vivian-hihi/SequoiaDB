@@ -5357,4 +5357,5 @@ w["classpath，在classpath"]="1439*1";
 w["classpath，输入"]="1439*1";
 w["clean"]="91*2,1238*2,1483*2";
 w["cleanconnectiontask"]="1313*1,1558*1";
+w["cleaning"]="1238*2,1483*2";
 
