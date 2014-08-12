@@ -126,7 +126,7 @@ BOOLEAN _dpsLogFilter::isDir( const CHAR *path )
    BOOLEAN rc = FALSE ;
    SDB_OSS_FILETYPE fileType = SDB_OSS_UNK ;
    INT32 retValue = ossGetPathType( path, &fileType ) ;
-   if( SDB_OSS_DIR == fileType && !rc )
+   if( SDB_OSS_DIR == fileType && !retValue )
    {
       rc =  TRUE ;
       goto done ;
