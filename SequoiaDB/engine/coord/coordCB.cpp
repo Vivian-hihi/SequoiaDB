@@ -85,11 +85,6 @@ namespace engine
 
    _CoordCB::~_CoordCB()
    {
-      if ( !_pNetWork )
-      {
-         SDB_OSS_DEL _pNetWork ;
-         _pNetWork = NULL ;
-      }
    }
 
    INT32 _CoordCB::init ()
@@ -176,6 +171,11 @@ namespace engine
 
    INT32 _CoordCB::fini ()
    {
+      if ( !_pNetWork )
+      {
+         SDB_OSS_DEL _pNetWork ;
+         _pNetWork = NULL ;
+      }
       return SDB_OK ;
    }
 
