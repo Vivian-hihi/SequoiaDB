@@ -3,7 +3,7 @@
 <topic id="topic_wn5_4bd_fm">
   <title>Catalog Snapshot</title>
   <body>
-    <section><title>Description</title>Catalog Snapshot all the collections listed in the current database catalog information, each set a record.</section>
+    <section><title>Description</title><p>Catalog Snapshot all the collections listed in the current database catalog information, each set a record.</p></section>
     <section><title>Sign</title><p>SDB_SNAP_CATALOG</p><note>Can only executed in the coord node.</note></section>
     
     <section><title>Field Information</title>
