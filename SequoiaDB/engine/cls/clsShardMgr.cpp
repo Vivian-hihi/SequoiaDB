@@ -58,7 +58,7 @@ namespace engine
       _hostAndPort() {}
    } ;
 
-   BEGIN_OBJ_MSG_MAP(_clsShardMgr, _clsObjBase)
+   BEGIN_OBJ_MSG_MAP(_clsShardMgr, _pmdObjBase)
       ON_MSG ( MSG_CAT_CATGRP_RES, _onCatCatGroupRes )
       ON_MSG ( MSG_CAT_NODEGRP_RES, _onCatGroupRes )
       ON_MSG ( MSG_CAT_QUERY_CATALOG_RSP, _onCatalogReqMsg )

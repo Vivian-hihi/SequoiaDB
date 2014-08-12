@@ -39,7 +39,7 @@
 
 #include "clsDef.hpp"
 #include "clsFSDef.hpp"
-#include "clsSession.hpp"
+#include "pmdAsyncSession.hpp"
 #include "dms.hpp"
 #include "dpsLogDef.hpp"
 #include "dpsMessageBlock.hpp"
@@ -63,7 +63,7 @@ namespace engine
    class _clsSplitTask ;
    class _rtnContextData ;
 
-   class _clsDataSrcBaseSession : public _clsSession
+   class _clsDataSrcBaseSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
 

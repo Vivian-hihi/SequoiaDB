@@ -50,7 +50,7 @@ namespace engine
    /*
       Message Map
    */
-   BEGIN_OBJ_MSG_MAP( _omManager, _clsObjBase )
+   BEGIN_OBJ_MSG_MAP( _omManager, _pmdObjBase )
       
    END_OBJ_MSG_MAP()
 

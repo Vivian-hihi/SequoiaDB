@@ -41,7 +41,7 @@
 #include "clsDef.hpp"
 #include "clsFSDef.hpp"
 #include "msgReplicator.hpp"
-#include "clsSession.hpp"
+#include "pmdAsyncSession.hpp"
 #include "clsReplayer.hpp"
 #include "clsSrcSelector.hpp"
 #include <vector>
@@ -56,7 +56,7 @@ namespace engine
    class _clsSyncManager ;
    class _clsShardMgr ;
 
-   class _clsDataDstBaseSession : public _clsSession
+   class _clsDataDstBaseSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
 

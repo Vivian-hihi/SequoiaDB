@@ -49,14 +49,14 @@ namespace engine
    /*
       _omaSession implement
    */
-   BEGIN_OBJ_MSG_MAP( _omaSession, _clsSession )
+   BEGIN_OBJ_MSG_MAP( _omaSession, _pmdAsyncSession )
       // msg map or event map
       ON_MSG( MSG_CM_REMOTE, _onNodeMgrReq )
       ON_MSG( MSG_BS_QUERY_REQ, _onOMAgentReq )
    END_OBJ_MSG_MAP()
 
    _omaSession::_omaSession( UINT64 sessionID )
-   :_clsSession( sessionID )
+   :_pmdAsyncSession( sessionID )
    {
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _pAgent = NULL ;

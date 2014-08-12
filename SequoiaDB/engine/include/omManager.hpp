@@ -36,7 +36,7 @@
 #include "omDef.hpp"
 #include "ossLatch.hpp"
 #include "pmdRestSession.hpp"
-#include "clsObjBase.hpp"
+#include "pmdObjBase.hpp"
 #include "restAdaptor.hpp"
 #include "sdbInterface.hpp"
 #include "pmdEDU.hpp"
@@ -106,7 +106,7 @@ namespace engine
    /*
       _omManager define
    */
-   class _omManager : public _clsObjBase, public _IControlBlock
+   class _omManager : public _pmdObjBase, public _IControlBlock
    {
       DECLARE_OBJ_MSG_MAP()
 

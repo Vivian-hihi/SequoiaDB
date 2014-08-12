@@ -37,13 +37,13 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "clsObjBase.hpp"
+#include "pmdObjBase.hpp"
 #include "ossSocket.hpp"
 #include "netRouteAgent.hpp"
-#include "clsSession.hpp"
+#include "pmdAsyncSession.hpp"
 #include "clsMsgHandler.hpp"
 #include "clsTimerHandler.hpp"
-#include "clsMemPool.hpp"
+#include "pmdMemPool.hpp"
 #include "clsShardMgr.hpp"
 #include "clsReplicateSet.hpp"
 #include "clsCatalogAgent.hpp"
@@ -75,7 +75,7 @@ namespace engine
    /*
       _clsShardSessionMgr define
    */
-   class _clsShardSessionMgr : public _clsSessionMgr
+   class _clsShardSessionMgr : public _pmdAsycSessionMgr
    {
       public:
          _clsShardSessionMgr( _clsMgr *pClsMgr ) ;
@@ -103,14 +103,14 @@ namespace engine
          virtual UINT32       _maxCatchSize() const ;
          virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                                 const NET_HANDLE &handle,
-                                                clsSession *pSession ) ;
+                                                pmdAsyncSession *pSession ) ;
          /*
             Create session
          */
-         virtual clsSession*  _createSession(  SDB_SESSION_TYPE sessionType,
-                                               INT32 startType,
-                                               UINT64 sessionID,
-                                               void *data = NULL ) ;
+         virtual pmdAsyncSession*  _createSession( SDB_SESSION_TYPE sessionType,
+                                                   INT32 startType,
+                                                   UINT64 sessionID,
+                                                   void *data = NULL ) ;
 
       protected:
          void                    _checkUnShardSessions( UINT32 interval ) ;
@@ -125,7 +125,7 @@ namespace engine
    /*
       _clsReplSessionMgr define
    */
-   class _clsReplSessionMgr : public _clsSessionMgr
+   class _clsReplSessionMgr : public _pmdAsycSessionMgr
    {
       public:
          _clsReplSessionMgr( _clsMgr *pClsMgr ) ;
@@ -149,14 +149,14 @@ namespace engine
          virtual UINT32       _maxCatchSize() const ;
          virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                                 const NET_HANDLE &handle,
-                                                clsSession *pSession ) ;
+                                                pmdAsyncSession *pSession ) ;
          /*
             Create session
          */
-         virtual clsSession*  _createSession(  SDB_SESSION_TYPE sessionType,
-                                               INT32 startType,
-                                               UINT64 sessionID,
-                                               void *data = NULL ) ;
+         virtual pmdAsyncSession*  _createSession( SDB_SESSION_TYPE sessionType,
+                                                   INT32 startType,
+                                                   UINT64 sessionID,
+                                                   void *data = NULL ) ;
 
       protected:
          _clsMgr                    *_pClsMgr ;
@@ -167,7 +167,7 @@ namespace engine
    /*
       _clsMgr define
    */
-   class _clsMgr : public _clsObjBase, public _IControlBlock,
+   class _clsMgr : public _pmdObjBase, public _IControlBlock,
                    public _IEventHolder
    {
       friend class _clsShardSessionMgr ;
@@ -230,7 +230,7 @@ namespace engine
          replCB * getReplCB () ;
          catAgent * getCatAgent () ;
          nodeMgrAgent* getNodeMgrAgent () ;
-         _clsMsgHandler* getShardMsgHandle() ;
+         pmdAsyncMsgHandler* getShardMsgHandle() ;
          _clsTaskMgr*  getTaskMgr () ;
          BOOLEAN  isPrimary () ;
          BOOLEAN  isFullSync () ;
@@ -241,9 +241,6 @@ namespace engine
 
          INT32          _startEDU ( INT32 type, EDU_STATUS waitStatus,
                                     void *agrs, BOOLEAN regSys = TRUE ) ;
-
-         INT32          _attachSessionMeta( INT32 type, _clsSession *pSession,
-                                            const NET_HANDLE handle ) ;
 
          INT32 _sendRegisterMsg () ;
          INT32 _sendQueryTaskReq ( UINT64 requestID, const CHAR *clFullName,
@@ -258,7 +255,7 @@ namespace engine
 
       private:
          INT32       _startInnerSession ( INT32 type,
-                                          clsSessionMgr *pSessionMgr ) ;
+                                          pmdAsycSessionMgr *pSessionMgr ) ;
          INT32       _prepareTask () ;
          INT32       _addTaskInnerSession ( const CHAR *objdata ) ;
 

@@ -59,7 +59,7 @@ namespace engine
    /*
    _clsDataSrcBaseSession : implement
    */
-   BEGIN_OBJ_MSG_MAP ( _clsDataSrcBaseSession, _clsSession )
+   BEGIN_OBJ_MSG_MAP ( _clsDataSrcBaseSession, _pmdAsyncSession )
       //ON_MSG
       ON_MSG( MSG_CLS_FULL_SYNC_META_REQ, handleFSMeta )
       ON_MSG( MSG_CLS_FULL_SYNC_INDEX_REQ, handleFSIndex )
@@ -68,7 +68,7 @@ namespace engine
 
    _clsDataSrcBaseSession::_clsDataSrcBaseSession ( UINT64 sessionID,
                                                     _netRouteAgent *agent )
-   :_clsSession( sessionID ), _mb( 1024 )
+   :_pmdAsyncSession( sessionID ), _mb( 1024 )
    {
       _agent = agent ;
       _contextID = -1 ;

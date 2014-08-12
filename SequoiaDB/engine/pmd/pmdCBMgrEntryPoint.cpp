@@ -31,7 +31,7 @@
 *******************************************************************************/
 
 #include "pmdEDUMgr.hpp"
-#include "clsObjBase.hpp"
+#include "pmdObjBase.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
@@ -45,7 +45,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDCBMGREP );
 
-      _clsObjBase *pObj = ( _clsObjBase* )pData ;
+      _pmdObjBase *pObj = ( _pmdObjBase* )pData ;
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr() ;
       pmdEDUEvent eventData;
 

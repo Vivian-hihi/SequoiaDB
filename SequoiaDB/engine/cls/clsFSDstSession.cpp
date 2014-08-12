@@ -68,7 +68,7 @@ namespace engine
    /*
    _clsDataDstBaseSession : implement
    */
-   BEGIN_OBJ_MSG_MAP( _clsDataDstBaseSession, _clsSession )
+   BEGIN_OBJ_MSG_MAP( _clsDataDstBaseSession, _pmdAsyncSession )
       //ON_MSG
       ON_MSG( MSG_CLS_FULL_SYNC_META_RES, handleMetaRes )
       ON_MSG( MSG_CLS_FULL_SYNC_INDEX_RES, handleIndexRes )
@@ -77,7 +77,7 @@ namespace engine
 
    _clsDataDstBaseSession::_clsDataDstBaseSession ( UINT64 sessionID,
                                                     _netRouteAgent * agent )
-   :_clsSession( sessionID )
+   :_pmdAsyncSession( sessionID )
    {
       _agent = agent ;
       _packet = 0 ;

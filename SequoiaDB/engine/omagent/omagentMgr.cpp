@@ -244,7 +244,7 @@ namespace engine
    UINT64 _omAgentSessionMgr::makeSessionID( const NET_HANDLE & handle,
                                              const MsgHeader * header )
    {
-      return ossPack32To64( CLS_BASE_HANDLE_ID + handle, header->TID ) ;
+      return ossPack32To64( PMD_BASE_HANDLE_ID + handle, header->TID ) ;
    }
 
    SDB_SESSION_TYPE _omAgentSessionMgr::_prepareCreate( UINT64 sessionID,
@@ -266,17 +266,17 @@ namespace engine
 
    void _omAgentSessionMgr::_onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                               const NET_HANDLE &handle,
-                                              clsSession *pSession )
+                                              pmdAsyncSession *pSession )
    {
       _reply( handle, rc, pReq ) ;
    }
 
-   clsSession* _omAgentSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
-                                                   INT32 startType,
-                                                   UINT64 sessionID,
-                                                   void * data )
+   pmdAsyncSession* _omAgentSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
+                                                        INT32 startType,
+                                                        UINT64 sessionID,
+                                                        void * data )
    {
-      clsSession *pSession = NULL ;
+      pmdAsyncSession *pSession = NULL ;
 
       if ( SDB_SESSION_OMAGENT == sessionType )
       {
@@ -293,7 +293,7 @@ namespace engine
    /*
       omAgentMgr Message MAP
    */
-   BEGIN_OBJ_MSG_MAP( _omAgentMgr, _clsObjBase )
+   BEGIN_OBJ_MSG_MAP( _omAgentMgr, _pmdObjBase )
       
    END_OBJ_MSG_MAP()
 

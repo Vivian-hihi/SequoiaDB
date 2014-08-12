@@ -34,7 +34,7 @@
 #define OMAGENT_SESSION_HPP_
 
 #include "omagent.hpp"
-#include "clsSession.hpp"
+#include "pmdAsyncSession.hpp"
 #include "netRouteAgent.hpp"
 
 #include "../bson/bson.h"
@@ -48,7 +48,7 @@ namespace engine
    /*
       _omaSession define
    */
-   class _omaSession : public _clsSession
+   class _omaSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
 

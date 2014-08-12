@@ -43,7 +43,7 @@
 #include "msgCatalog.hpp"
 #include "clsVoteMachine.hpp"
 #include "msg.hpp"
-#include "clsObjBase.hpp"
+#include "pmdObjBase.hpp"
 #include "clsCatalogCaller.hpp"
 #include "clsSyncManager.hpp"
 #include "dms.hpp"
@@ -66,7 +66,7 @@ namespace engine
    /*
       _clsReplicateSet define
    */
-   class _clsReplicateSet : public _clsObjBase, public _dpsEventHandler
+   class _clsReplicateSet : public _pmdObjBase, public _dpsEventHandler
    {
       DECLARE_OBJ_MSG_MAP()
 

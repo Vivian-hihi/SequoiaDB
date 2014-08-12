@@ -42,7 +42,7 @@
 #include "ossAtomic.hpp"
 #include "ossEvent.hpp"
 #include "ossQueue.hpp"
-#include "clsMemPool.hpp"
+#include "pmdMemPool.hpp"
 #include "rtnBackgroundJob.hpp"
 #include "dpsLogDef.hpp"
 #include "clsReplayer.hpp"
@@ -211,7 +211,7 @@ namespace engine
       private:
          _dpsLogWrapper                   *_pDPSCB ;
          _monDBCB                         *_pMonDBCB ;
-         clsMemPool                       _memPool ;
+         pmdMemPool                       _memPool ;
          _clsReplayer                     *_replayer ;
          CLS_BUCKET_STATUS                _status ;
          UINT32                           _maxReplSync ;

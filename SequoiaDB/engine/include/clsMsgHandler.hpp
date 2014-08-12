@@ -34,61 +34,19 @@
 #define CLS_MSG_HANDLER_HPP_
 
 #include "clsBase.hpp"
-#include "netMsgHandler.hpp"
-#include "pmdEDU.hpp"
+#include "pmdAsyncHandler.hpp"
 
 namespace engine
 {
-   class _clsSessionMgr ;
-
-   /*
-      _clsMsgHandler define
-   */
-   class _clsMsgHandler : public _netMsgHandler
-   {
-      public:
-         _clsMsgHandler( _clsSessionMgr *pSessionMgr ) ;
-         virtual ~_clsMsgHandler () ;
-
-         OSS_INLINE void attach( pmdEDUCB *cb ) { _pMgrEDUCB = cb; }
-         OSS_INLINE void detach() { _pMgrEDUCB = NULL; }
-
-         virtual INT32 handleMsg( const NET_HANDLE &handle,
-                                  const _MsgHeader *header,
-                                  const CHAR *msg );
-         virtual void  handleClose( const NET_HANDLE &handle, _MsgRouteID id ) ;
-
-         virtual void  onStop() ;
-
-      protected:
-         void* copyMsg ( const CHAR* msg, UINT32 length ) ;
-
-         INT32 handleSessionMsg( const NET_HANDLE &handle,
-                                 const _MsgHeader *header,
-                                 const CHAR *msg );
-
-         INT32 handleMainMsg( const NET_HANDLE &handle,
-                              const _MsgHeader *header,
-                              const CHAR *msg ) ;
-
-      protected:
-         virtual void _postMainMsg( const NET_HANDLE &handle,
-                                    MsgHeader *pNewMsg ) ;
-
-      protected:
-         _clsSessionMgr       *_pSessionMgr ;
-         pmdEDUCB             *_pMgrEDUCB ;
-
-   } ;
-   typedef _clsMsgHandler clsMsgHandler ;
+   class _pmdAsycSessionMgr ;
 
    /*
       _shdMsgHandler define
    */
-   class _shdMsgHandler : public _clsMsgHandler
+   class _shdMsgHandler : public _pmdAsyncMsgHandler
    {
       public:
-         _shdMsgHandler( _clsSessionMgr *pSessionMgr ) ;
+         _shdMsgHandler( _pmdAsycSessionMgr *pSessionMgr ) ;
          virtual ~_shdMsgHandler();
 
          OSS_INLINE void attachShardCB( pmdEDUCB *cb ) { _pShardCB = cb ; }
@@ -106,10 +64,10 @@ namespace engine
    /*
       _replMsgHandler define
    */
-   class _replMsgHandler : public _clsMsgHandler
+   class _replMsgHandler : public _pmdAsyncMsgHandler
    {
       public:
-         _replMsgHandler ( _clsSessionMgr *pSessionMgr ) ;
+         _replMsgHandler ( _pmdAsycSessionMgr *pSessionMgr ) ;
          virtual ~_replMsgHandler () ;
 
          INT32 type () const ;

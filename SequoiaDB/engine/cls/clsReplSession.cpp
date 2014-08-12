@@ -43,7 +43,7 @@ namespace engine
 
    #define CLS_REPL_MAX_TIME           (2)
 
-   BEGIN_OBJ_MSG_MAP( _clsReplSession , _clsSession )
+   BEGIN_OBJ_MSG_MAP( _clsReplSession , _pmdAsyncSession )
       //ON_MSG
       ON_MSG( MSG_CLS_SYNC_REQ, handleSyncReq )
       ON_MSG( MSG_CLS_SYNC_RES, handleSyncRes )
@@ -55,7 +55,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__CLSREPSN, "_clsReplSession::_clsReplSession" )
    _clsReplSession::_clsReplSession ( UINT64 sessionID )
-      :_clsSession ( sessionID ),
+      :_pmdAsyncSession ( sessionID ),
        _mb( CLS_SYNC_DEF_LEN ),
        _status( CLS_SESSION_STATUS_SYNC ),
        _quit( FALSE ),

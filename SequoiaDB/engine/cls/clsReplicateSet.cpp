@@ -48,7 +48,7 @@
 
 namespace engine
 {
-   BEGIN_OBJ_MSG_MAP( _clsReplicateSet, _clsObjBase )
+   BEGIN_OBJ_MSG_MAP( _clsReplicateSet, _pmdObjBase )
       //ON_MSG ( )
       ON_MSG( MSG_CAT_GRP_RES, handleMsg )
       ON_MSG( MSG_CLS_BEAT, handleMsg )

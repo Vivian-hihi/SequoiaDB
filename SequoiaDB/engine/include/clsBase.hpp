@@ -45,12 +45,6 @@ namespace engine
       CLS_REPL    = 2            //repl
    };
 
-   enum CLS_SESSION_START_TYPE
-   {
-      CLS_SESSION_ACTIVE   = 1,  //active
-      CLS_SESSION_PASSIVE  = 2   //passive
-   };
-
    enum CLS_INNER_SESSION_TID
    {
       CLS_TID_REPL_SYC     = 1,  //repl active sync
@@ -60,9 +54,6 @@ namespace engine
    };
 
    #define CLS_INVALID_TIMERID         (0)
-
-   #define CLS_BASE_HANDLE_ID          (70000)
-
 
    enum CLS_SYNC_STRATEGY
    {

@@ -79,6 +79,7 @@ pdFiles = [
 
 pmdFiles = [
       "pmd/pmdCommon.cpp",
+	  "pmd/pmdMemPool.cpp",
       "pmd/pmdDaemon.cpp",
       "pmd/pmdWinService.cpp",
       "pmd/pmdProc.cpp",
@@ -119,13 +120,6 @@ dpsFiles = [
       "tools/sdbDpsFilter.cpp",
       "tools/sdbDpsLogFilter.cpp",
       "tools/sdbDpsOption.cpp"
-      ]
-
-clsFiles = [
-      "cls/clsMemPool.cpp",
-      "cls/clsMsgHandler.cpp",
-      "cls/clsTimerHandler.cpp",
-      "cls/clsSession.cpp"
       ]
 
 omagentFiles = [
@@ -376,6 +370,8 @@ sdbcmMain = [
       "pmd/pmdEDU.cpp",
       "pmd/pmdEDUMgr.cpp",
       "pmd/pmdAsyncSessionAgent.cpp",
+      "pmd/pmdAsyncHandler.cpp",
+      "pmd/pmdAsyncSession.cpp",
       "pmd/pmdBackgroundJob.cpp",
       "pmd/pmdCBMgrEntryPoint.cpp",
       "pmd/pmdAsyncNetEntryPoint.cpp",
@@ -428,8 +424,6 @@ toolEnv.StaticLibrary('msg', msgFiles)
 toolEnv.StaticLibrary('net', netFiles)
 #dps
 toolEnv.StaticLibrary('dps', dpsFiles)
-#cls
-toolEnv.StaticLibrary('cls', clsFiles)
 #omagent
 toolEnv.StaticLibrary('omagent', omagentFiles)
 #ncurses
@@ -466,7 +460,7 @@ sdblist = toolEnv.Program("sdblist", sdbListMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson","util","net","cls","pmd","omagent","client","spt","spt2","ssh2"],
+         LIBDEPS=["pd","oss","msg","bson","util","net","pmd","omagent","client","spt","spt2","ssh2"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,

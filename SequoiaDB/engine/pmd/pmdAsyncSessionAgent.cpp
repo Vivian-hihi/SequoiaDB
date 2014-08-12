@@ -35,7 +35,7 @@
 
 *******************************************************************************/
 
-#include "clsSession.hpp"
+#include "pmdAsyncSession.hpp"
 #include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
@@ -51,9 +51,9 @@ namespace engine
    INT32 pmdAsyncSessionAgentEntryPoint ( pmdEDUCB * cb, void * pData )
    {
       PD_TRACE_ENTRY ( SDB_PMDSYNCSESSIONAGENTEP );
-      _clsSession * pSession = (_clsSession*)pData ;
+      _pmdAsyncSession * pSession = (_pmdAsyncSession*)pData ;
       pmdEDUEvent event ;
-      clsBuffInfo *pBuffInfo = NULL ;
+      pmdBuffInfo *pBuffInfo = NULL ;
       MsgHeader *pMsg = NULL ;
       INT32 timeDiff = 0 ;
       pmdKRCB *krcb = pmdGetKRCB() ;
@@ -97,7 +97,7 @@ namespace engine
 #endif // SDB_ENGINE
                if ( 0 == event._userData )
                {
-                  pBuffInfo = ( clsBuffInfo* )( event._Data ) ;
+                  pBuffInfo = ( pmdBuffInfo* )( event._Data ) ;
                   pMsg = ( MsgHeader* )( pBuffInfo->pBuffer ) ;
 
                   timeDiff = (INT32)(time( NULL ) - pBuffInfo->addTime) ;

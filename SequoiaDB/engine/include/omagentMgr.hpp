@@ -34,10 +34,10 @@
 #define OMAGENT_MGR_HPP__
 
 #include "omagentDef.hpp"
-#include "clsSession.hpp"
+#include "pmdAsyncSession.hpp"
 #include "netRouteAgent.hpp"
-#include "clsMsgHandler.hpp"
-#include "clsTimerHandler.hpp"
+#include "pmdAsyncHandler.hpp"
+#include "pmdAsyncHandler.hpp"
 #include "pmdOptionsMgr.hpp"
 #include "sdbInterface.hpp"
 #include "ossEvent.hpp"
@@ -100,7 +100,7 @@ namespace engine
    /*
       _omAgentSessionMgr define
    */
-   class _omAgentSessionMgr : public _clsSessionMgr
+   class _omAgentSessionMgr : public _pmdAsycSessionMgr
    {
       public:
          _omAgentSessionMgr() ;
@@ -122,14 +122,14 @@ namespace engine
          virtual UINT32       _maxCatchSize() const ;
          virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                                 const NET_HANDLE &handle,
-                                                clsSession *pSession ) ;
+                                                pmdAsyncSession *pSession ) ;
          /*
             Create session
          */
-         virtual clsSession*  _createSession(  SDB_SESSION_TYPE sessionType,
-                                               INT32 startType,
-                                               UINT64 sessionID,
-                                               void *data = NULL ) ;
+         virtual pmdAsyncSession*  _createSession( SDB_SESSION_TYPE sessionType,
+                                                   INT32 startType,
+                                                   UINT64 sessionID,
+                                                   void *data = NULL ) ;
 
    } ;
    typedef _omAgentSessionMgr omAgentSessionMgr ;
@@ -137,7 +137,7 @@ namespace engine
    /*
       _omAgentMgr define
    */
-   class _omAgentMgr : public _clsObjBase, public _IControlBlock
+   class _omAgentMgr : public _pmdObjBase, public _IControlBlock
    {
       DECLARE_OBJ_MSG_MAP()
 
@@ -169,8 +169,8 @@ namespace engine
       private:
          omAgentOptions             _options ;
          omAgentSessionMgr          _sessionMgr ;
-         clsMsgHandler              _msgHandler ;
-         clsTimerHandler            _timerHandler ;
+         pmdAsyncMsgHandler         _msgHandler ;
+         pmdAsyncTimerHandler       _timerHandler ;
          netRouteAgent              _netAgent ;
          omAgentNodeMgr             _nodeMgr ;
 

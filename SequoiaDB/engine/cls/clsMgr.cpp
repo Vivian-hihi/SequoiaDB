@@ -101,7 +101,7 @@ namespace engine
                                         header->TID ) ;
       if ( MSG_INVALID_ROUTEID == header->routeID.value )
       {
-         sessionID = ossPack32To64( CLS_BASE_HANDLE_ID + handle, header->TID ) ;
+         sessionID = ossPack32To64( PMD_BASE_HANDLE_ID + handle, header->TID ) ;
       }
 
       return sessionID ;
@@ -117,9 +117,9 @@ namespace engine
 
       ossUnpack32From64( sessionID, nodeID, tid ) ;
 
-      if ( CLS_BASE_HANDLE_ID >= nodeID )
+      if ( PMD_BASE_HANDLE_ID >= nodeID )
       {
-         if ( CLS_SESSION_ACTIVE == startType )
+         if ( PMD_SESSION_ACTIVE == startType )
          {
             sessionType = SDB_SESSION_SPLIT_DST ;
          }
@@ -152,7 +152,7 @@ namespace engine
 
    void _clsShardSessionMgr::_onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                                const NET_HANDLE &handle,
-                                               clsSession *pSession )
+                                               pmdAsyncSession *pSession )
    {
       if ( MSG_INVALID_ROUTEID == pReq->routeID.value )
       {
@@ -160,12 +160,12 @@ namespace engine
       }
    }
 
-   clsSession* _clsShardSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
-                                                    INT32 startType,
-                                                    UINT64 sessionID,
-                                                    void *data )
+   pmdAsyncSession* _clsShardSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
+                                                         INT32 startType,
+                                                         UINT64 sessionID,
+                                                         void *data )
    {
-      clsSession *pSession = NULL ;
+      pmdAsyncSession *pSession = NULL ;
 
       if ( SDB_SESSION_SPLIT_DST == sessionType )
       {
@@ -210,7 +210,7 @@ namespace engine
          }
       }
 
-      rc = _clsSessionMgr::handleSessionTimeout( timerID, interval ) ;
+      rc = _pmdAsycSessionMgr::handleSessionTimeout( timerID, interval ) ;
 
    done:
       return rc ;
@@ -218,7 +218,7 @@ namespace engine
 
    void _clsShardSessionMgr::_checkUnShardSessions( UINT32 interval )
    {
-      clsSession *pSession = NULL ;
+      pmdAsyncSession *pSession = NULL ;
       MAPSESSION_IT it = _mapSession.begin() ;
       while ( it != _mapSession.end() )
       {
@@ -258,7 +258,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      rc = _clsSessionMgr::handleSessionTimeout( timerID, interval ) ;
+      rc = _pmdAsycSessionMgr::handleSessionTimeout( timerID, interval ) ;
       if ( SDB_OK == rc )
       {
          // start repl/fs sessions
@@ -291,7 +291,7 @@ namespace engine
       }
       else if ( CLS_TID_REPL_FS_SYC == tid )
       {
-         if ( CLS_SESSION_ACTIVE == startType )
+         if ( PMD_SESSION_ACTIVE == startType )
          {
             sessionType = SDB_SESSION_FS_DST ;
          }
@@ -316,17 +316,17 @@ namespace engine
 
    void _clsReplSessionMgr::_onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                               const NET_HANDLE &handle,
-                                              clsSession *pSession )
+                                              pmdAsyncSession *pSession )
    {
       // do nothing
    }
 
-   clsSession* _clsReplSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
-                                                   INT32 startType,
-                                                   UINT64 sessionID,
-                                                   void *data )
+   pmdAsyncSession* _clsReplSessionMgr::_createSession( SDB_SESSION_TYPE sessionType,
+                                                        INT32 startType,
+                                                        UINT64 sessionID,
+                                                        void *data )
    {
-      clsSession *pSession = NULL ;
+      pmdAsyncSession *pSession = NULL ;
 
       if ( SDB_SESSION_REPL == sessionType )
       {
@@ -353,7 +353,7 @@ namespace engine
    /*
       _clsMgr implement
    */
-   BEGIN_OBJ_MSG_MAP( _clsMgr, _clsObjBase )
+   BEGIN_OBJ_MSG_MAP( _clsMgr, _pmdObjBase )
       ON_MSG ( MSG_CAT_REG_RES, _onCatRegisterRes )
       ON_MSG ( MSG_CAT_QUERY_TASK_RSP, _onCatQueryTaskRes )
       //ON_EVENT FUCTION MAP
@@ -772,7 +772,7 @@ namespace engine
    {
       return _shdObj.getNodeMgrAgent() ;
    }
-   _clsMsgHandler* _clsMgr::getShardMsgHandle()
+   pmdAsyncMsgHandler* _clsMgr::getShardMsgHandle()
    {
       return &_shdMsgHandlerObj ;
    }
@@ -834,7 +834,7 @@ namespace engine
 
       _innerSessionInfo info ;
       info.type = type ;
-      info.startType = CLS_SESSION_ACTIVE ;
+      info.startType = PMD_SESSION_ACTIVE ;
       info.innerTid = innerTID ;
       info.data = data ;
       info.sessionID = ossPack32To64 ( _selfNodeID.columns.nodeID, innerTID ) ;
@@ -1007,7 +1007,7 @@ namespace engine
          UINT32 type = 0 ;
          UINT32 netTimerID = 0 ;
          ossUnpack32From64 ( timerID, type, netTimerID ) ;
-         _clsObjBase *pSubObj = &_shdObj ;
+         _pmdObjBase *pSubObj = &_shdObj ;
          if ( CLS_REPL == (INT32)type )
          {
             pSubObj = &_replObj ;
@@ -1020,11 +1020,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR__STARTINSN, "_clsMgr::_startInnerSession" )
    INT32 _clsMgr::_startInnerSession ( INT32 type,
-                                       clsSessionMgr *pSessionMgr )
+                                       pmdAsycSessionMgr *pSessionMgr )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSMGR__STARTINSN );
-      _clsSession *pSession = NULL ;
+      _pmdAsyncSession *pSession = NULL ;
       ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
 
       VECINNERPARAM::iterator it = _vecInnerSessionParam.begin() ;

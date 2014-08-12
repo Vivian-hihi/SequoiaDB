@@ -46,7 +46,7 @@ namespace engine
 
 #define SHD_SESSION_TIMEOUT         (60)
 
-   BEGIN_OBJ_MSG_MAP( _clsShdSession, _clsSession )
+   BEGIN_OBJ_MSG_MAP( _clsShdSession, _pmdAsyncSession )
       ON_MSG ( MSG_BS_UPDATE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_INSERT_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_DELETE_REQ, _onOPMsg )
@@ -77,7 +77,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSDSESS__CLSSHDSESS, "_clsShdSession::_clsShdSession" )
    _clsShdSession::_clsShdSession ( UINT64 sessionID )
-      :_clsSession ( sessionID )
+      :_pmdAsyncSession ( sessionID )
    {
       PD_TRACE_ENTRY ( SDB__CLSSDSESS__CLSSHDSESS ) ;
       _pCollectionName = NULL ;
@@ -164,7 +164,7 @@ namespace engine
          }
       }
 
-      _clsSession::_onDetach () ;
+      _pmdAsyncSession::_onDetach () ;
       PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONDETACH ) ;
    }
 

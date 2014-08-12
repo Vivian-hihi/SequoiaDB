@@ -33,7 +33,7 @@
 #ifndef CLS_SHARD_SESSION_HPP_
 #define CLS_SHARD_SESSION_HPP_
 
-#include "clsSession.hpp"
+#include "pmdAsyncSession.hpp"
 #include "rtn.hpp"
 
 using namespace bson ;
@@ -48,7 +48,7 @@ namespace engine
    class _dpsLogWrapper ;
    class _clsCatalogAgent ;
 
-   class _clsShdSession : public _clsSession
+   class _clsShdSession : public _pmdAsyncSession
    {
       DECLARE_OBJ_MSG_MAP()
 

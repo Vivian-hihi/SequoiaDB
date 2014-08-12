@@ -49,13 +49,13 @@ namespace engine
 
    /*
       @Common Entry Point For CB Manager
-      @pData: must be the _clsObjBase pointer
+      @pData: must be the _pmdObjBase pointer
    */
    INT32 pmdCBMgrEntryPoint ( pmdEDUCB *cb, void *pData ) ;
 
    /*
       @Common Entry Point For Async Session
-      @pData: must be the clsSession pointer
+      @pData: must be the pmdAsyncSession pointer
    */
    INT32 pmdAsyncSessionAgentEntryPoint ( pmdEDUCB *cb, void *pData ) ;
 

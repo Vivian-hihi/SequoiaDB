@@ -35,7 +35,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "clsObjBase.hpp"
+#include "pmdObjBase.hpp"
 #include "netRouteAgent.hpp"
 #include "ossEvent.hpp"
 #include "ossLatch.hpp"
@@ -108,7 +108,7 @@ namespace engine
    /*
       _clsShardMgr define
    */
-   class _clsShardMgr :  public _clsObjBase
+   class _clsShardMgr :  public _pmdObjBase
    {
       typedef std::map<std::string, clsEventItem*>       MAP_CAT_EVENT ;
       typedef MAP_CAT_EVENT::iterator                    MAP_CAT_EVENT_IT ;

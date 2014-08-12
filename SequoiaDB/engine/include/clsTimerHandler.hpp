@@ -35,46 +35,19 @@
 #ifndef CLS_TIMER_HANDLER_HPP_
 #define CLS_TIMER_HANDLER_HPP_
 
-#include "netTimer.hpp"
-#include "pmdEDU.hpp"
+#include "pmdAsyncHandler.hpp"
 
 namespace engine
 {
-   class _clsSessionMgr ;
-
-   /*
-      _clsTimerHandler define
-   */
-   class _clsTimerHandler : public _netTimeoutHandler
-   {
-      public:
-         _clsTimerHandler ( _clsSessionMgr * pSessionMgr ) ;
-         virtual ~_clsTimerHandler () ;
-
-         virtual void handleTimeout( const UINT32 &millisec,
-                                     const UINT32 &id ) ;
-
-      public:
-         OSS_INLINE void attach ( pmdEDUCB *cb ) { _pMgrCB = cb ; }
-         OSS_INLINE void detach () { _pMgrCB = NULL ; }
-
-      protected:
-         virtual UINT64  _makeTimerID( UINT32 timerID ) ;
-
-      protected:
-         pmdEDUCB             *_pMgrCB ;
-         _clsSessionMgr       *_pSessionMgr ;
-
-   } ;
-   typedef _clsTimerHandler clsTimerHandler ;
+   class _pmdAsycSessionMgr ;
 
    /*
       _clsReplTimerHandler define
    */
-   class _clsReplTimerHandler : public _clsTimerHandler
+   class _clsReplTimerHandler : public _pmdAsyncTimerHandler
    {
       public:
-         _clsReplTimerHandler ( _clsSessionMgr * pSessionMgr ) ;
+         _clsReplTimerHandler ( _pmdAsycSessionMgr * pSessionMgr ) ;
          virtual ~_clsReplTimerHandler () ;
 
       protected:
@@ -86,10 +59,10 @@ namespace engine
    /*
       _clsShardTimerHandler define
    */
-   class _clsShardTimerHandler : public _clsTimerHandler
+   class _clsShardTimerHandler : public _pmdAsyncTimerHandler
    {
       public:
-         _clsShardTimerHandler ( _clsSessionMgr * pSessionMgr ) ;
+         _clsShardTimerHandler ( _pmdAsycSessionMgr * pSessionMgr ) ;
          virtual ~_clsShardTimerHandler () ;
 
       protected:

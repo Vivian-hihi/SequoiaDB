@@ -33,7 +33,7 @@
 #ifndef CLS_REPL_SESSION_HPP_
 #define CLS_REPL_SESSION_HPP_
 
-#include "clsSession.hpp"
+#include "pmdAsyncSession.hpp"
 #include "dpsMessageBlock.hpp"
 #include "clsReplayer.hpp"
 #include "dpsLogRecord.hpp"
@@ -55,7 +55,7 @@ namespace engine
       CLS_SESSION_STATUS_FULL_SYNC = 3,
    } ;
 
-   class _clsReplSession : public _clsSession
+   class _clsReplSession : public _pmdAsyncSession
    {
    DECLARE_OBJ_MSG_MAP()
    public:
