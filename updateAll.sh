@@ -96,6 +96,8 @@ function installSdb()
    if [ $needInstall -ne 0 ] ; then
       echo "Begin to remove sdb...."
       rm -r ${homePath}/30000 2>/dev/null
+      rm -r ${homePath}/30010 2>/dev/null
+      rm -r ${homePath}/30020 2>/dev/null
       rm -r ${homePath}/20000 2>/dev/null
       rm -r ${homePath}/40000 2>/dev/null
       rm -r ${homePath}/41000 2>/dev/null
@@ -149,6 +151,13 @@ function installSdb()
          echo "Create Catalog RG Failed********"
          exit 1
       fi
+      echo "Start adding catalog nodes"
+      bin/sdb -s " var cataRG = db.getRG('SYSCatalogGroup') ;"
+      bin/sdb -s " node1 = cataRG.createNode('${hostName}', '30010', '${homePath}/30010' ) ; sleep(5000) ;"
+      bin/sdb -s " node2 = cataRG.createNode('${hostName}', '30020', '${homePath}/30020' ) ; sleep(5000) ;"
+      bin/sdb -s " node1.start(); sleep(5000) ;"
+      bin/sdb -s " node2.start(); sleep(5000) ;"
+      echo "Adding catalog nodes succeed"
       bin/sdb -s " var db ; try { db = new Sdb('localhost', '50000') ; var rg1=db.createRG('db1') ; rg1.createNode('${hostName}', '20000', '${homePath}/20000'); } catch( e) { println('Create db1 failed: ' + e ) ; throw e; } "
       if [ $? -eq 0 ] ; then
          echo "Create group db1 Succeed"

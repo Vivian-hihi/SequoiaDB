@@ -938,7 +938,9 @@ namespace engine
    {
       INT32       rc           = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDEDUENTPNT );
+#if defined ( SDB_ENGINE )
       pmdKRCB     *krcb        = pmdGetKRCB () ;
+#endif
       EDUID       myEDUID      = cb->getID () ; // edu id for myself
       pmdEDUMgr  *eduMgr       = cb->getEDUMgr() ; // the manager class
       pmdEDUEvent event ;
@@ -947,7 +949,7 @@ namespace engine
       CHAR        eduName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       // save kernel thread id ( Linux ), or thread handle ( windows )
-   #if defined (_WINDOWS)
+#if defined (_WINDOWS)
       HANDLE      tHdl = NULL ;
       BOOLEAN     isHdlCreated = false ;
 
@@ -957,10 +959,10 @@ namespace engine
       {
          isHdlCreated = true ;
       }
-   #elif defined (_LINUX )
+#elif defined (_LINUX )
       OSSTID tHdl = ossGetCurrentThreadID() ;
       cb->setThreadID ( ossPThreadSelf() ) ;
-   #endif
+#endif
       cb->setThreadHdl( tHdl ) ;
       cb->setTID ( ossGetCurrentThreadID() ) ;
       eduMgr->setEDU ( ossGetCurrentThreadID(), myEDUID ) ;

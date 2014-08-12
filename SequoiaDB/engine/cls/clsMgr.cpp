@@ -145,7 +145,7 @@ namespace engine
       return FALSE ;
    }
 
-   UINT32 _clsShardSessionMgr::_maxCatchSize() const
+   UINT32 _clsShardSessionMgr::_maxCacheSize() const
    {
       return MAX_SHD_SESSION_CATCH_DEQ_SIZE ;
    }
@@ -204,7 +204,7 @@ namespace engine
       }
       else if ( _sessionTimerID == timerID )
       {
-         if ( _mapSession.size() <= _maxCatchSize() / 10 )
+         if ( _mapSession.size() <= _maxCacheSize() / 10 )
          {
             goto done ;
          }
@@ -309,7 +309,7 @@ namespace engine
       return FALSE ;
    }
 
-   UINT32 _clsReplSessionMgr::_maxCatchSize() const
+   UINT32 _clsReplSessionMgr::_maxCacheSize() const
    {
       return 0 ;
    }

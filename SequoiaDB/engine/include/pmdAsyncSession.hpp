@@ -287,7 +287,7 @@ namespace engine
                                                     INT32 opCode ) = 0 ;
 
          virtual BOOLEAN      _canReuse( SDB_SESSION_TYPE sessionType ) = 0 ;
-         virtual UINT32       _maxCatchSize() const = 0 ;
+         virtual UINT32       _maxCacheSize() const = 0 ;
          virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                                 const NET_HANDLE &handle,
                                                 pmdAsyncSession *pSession ) = 0 ;
@@ -320,7 +320,7 @@ namespace engine
       protected:
          MAPSESSION                 _mapSession ;
          MAPMETA                    _mapMeta ;
-         DEQSESSION                 _deqCatchSessions ;
+         DEQSESSION                 _deqCacheSessions ;
 
          // Delay delete sessions
          DEQSESSION                 _deqDeletingSessions ;

@@ -269,7 +269,7 @@ namespace engine
       return FALSE ;
    }
 
-   UINT32 _omAgentSessionMgr::_maxCatchSize() const
+   UINT32 _omAgentSessionMgr::_maxCacheSize() const
    {
       return 0 ;
    }

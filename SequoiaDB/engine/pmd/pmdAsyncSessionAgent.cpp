@@ -56,9 +56,8 @@ namespace engine
       pmdBuffInfo *pBuffInfo = NULL ;
       MsgHeader *pMsg = NULL ;
       INT32 timeDiff = 0 ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-
 #if defined ( SDB_ENGINE )
+      pmdKRCB *krcb    = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
 #endif // SDB_ENGINE
 

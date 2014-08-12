@@ -320,7 +320,6 @@ namespace engine
       BOOLEAN isRunning = FALSE;
       static BOOLEAN isFirstRun = TRUE;
       _pid = OSS_INVALID_PID ;
-      BOOLEAN stop = FALSE ;
 
       if ( _procInfo != NULL )
       {

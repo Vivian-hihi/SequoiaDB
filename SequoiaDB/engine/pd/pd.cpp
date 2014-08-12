@@ -78,7 +78,7 @@ const CHAR* getPDLevelDesp ( PDLEVEL level )
       "INFO",
       "DEBUG"
    } ;
-   if ( level >= 0 && level < sizeof(s_PDLEVELSTRING)/sizeof(CHAR*) )
+   if ( level >= 0 && level < (INT32)(sizeof(s_PDLEVELSTRING)/sizeof(CHAR*)) )
    {
       return s_PDLEVELSTRING[(UINT32)level] ;
    }
@@ -470,8 +470,6 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
 done :
    PD_TRACE_EXITRC ( SDB_PDLOG, rc ) ;
    return ;
-error :
-   goto done ;
 }
 
 #ifdef _DEBUG

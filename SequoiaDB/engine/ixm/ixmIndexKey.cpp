@@ -379,11 +379,8 @@ namespace engine
          }
 
          keys.insert( builder.obj() ) ;
-      done:
          PD_TRACE_EXITRC ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE, rc );
          return rc ;
-      error:
-         goto done ;
       }
    } ;
    typedef class _ixmKeyGenerator ixmKeyGenerator ;

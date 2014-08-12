@@ -74,6 +74,7 @@ namespace engine
    #define PMD_DFT_INDEX_SCAN_STEP     (100)
    #define PMD_DFT_START_SHIFT_TIME    (600)
    #define PMD_DFT_NUMPAGECLEAN        (1)
+   #define PMD_MAX_NUMPAGECLEAN        (50)
    #define PMD_DFT_PAGECLEANINTERVAL   (10000)
    #define PMD_MIN_PAGECLEANINTERVAL   (1000)
 
@@ -1111,7 +1112,7 @@ namespace engine
       // --numpagecleaners
       rdxUInt( pEX, PMD_OPTION_NUMPAGECLEANERS, _pagecleanNum,
                FALSE, FALSE, PMD_DFT_NUMPAGECLEAN ) ;
-      rdvMinMax( pEX, _pagecleanNum, 0, 50, TRUE ) ;
+      rdvMinMax( pEX, _pagecleanNum, 0, PMD_MAX_NUMPAGECLEAN, TRUE ) ;
 
       // --pagecleaninterval
       rdxUInt( pEX, PMD_OPTION_PAGECLEANINTERVAL, _pagecleanInterval,

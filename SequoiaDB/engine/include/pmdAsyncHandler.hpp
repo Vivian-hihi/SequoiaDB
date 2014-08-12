@@ -89,15 +89,15 @@ namespace engine
          virtual void  onStop() ;
 
       protected:
-         void* copyMsg ( const CHAR* msg, UINT32 length ) ;
+         void* _copyMsg ( const CHAR* msg, UINT32 length ) ;
 
-         INT32 handleSessionMsg( const NET_HANDLE &handle,
-                                 const _MsgHeader *header,
-                                 const CHAR *msg );
+         INT32 _handleSessionMsg( const NET_HANDLE &handle,
+                                  const _MsgHeader *header,
+                                  const CHAR *msg );
 
-         INT32 handleMainMsg( const NET_HANDLE &handle,
-                              const _MsgHeader *header,
-                              const CHAR *msg ) ;
+         INT32 _handleMainMsg( const NET_HANDLE &handle,
+                               const _MsgHeader *header,
+                               const CHAR *msg ) ;
 
       protected:
          virtual void _postMainMsg( const NET_HANDLE &handle,

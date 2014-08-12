@@ -100,7 +100,7 @@ namespace engine
                                                     INT32 opCode ) ;
 
          virtual BOOLEAN      _canReuse( SDB_SESSION_TYPE sessionType ) ;
-         virtual UINT32       _maxCatchSize() const ;
+         virtual UINT32       _maxCacheSize() const ;
          virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                                 const NET_HANDLE &handle,
                                                 pmdAsyncSession *pSession ) ;
@@ -146,7 +146,7 @@ namespace engine
                                                     INT32 opCode ) ;
 
          virtual BOOLEAN      _canReuse( SDB_SESSION_TYPE sessionType ) ;
-         virtual UINT32       _maxCatchSize() const ;
+         virtual UINT32       _maxCacheSize() const ;
          virtual void         _onPushMsgFailed( INT32 rc, const MsgHeader *pReq,
                                                 const NET_HANDLE &handle,
                                                 pmdAsyncSession *pSession ) ;

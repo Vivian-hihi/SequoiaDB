@@ -66,23 +66,34 @@ namespace engine
       //ON_MSG
    END_OBJ_MSG_MAP()
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN, "_pmdAsyncSession::_pmdAsyncSession" )
    _pmdAsyncSession::_pmdAsyncSession( UINT64 sessionID )
    {
-      _lockFlag = FALSE ;
-      _startType = PMD_SESSION_PASSIVE ;
+      PD_TRACE_ENTRY ( SDB__PMDSN ) ;
+      _lockFlag    = FALSE ;
+      _startType   = PMD_SESSION_PASSIVE ;
       _pSessionMgr = NULL ;
 
       clear() ;
 
-      _sessionID = sessionID ;
+      _sessionID   = sessionID ;
       _makeName () ;
-      _latchIn.try_get () ;
+      // we need to latch the object in constructor because
+      // we are going to call waitAttach right after creating the object
+      // the creating thread will stay in waitAttach until another call
+      // attachIn
+      _latchIn.get () ;
+      PD_TRACE_EXIT ( SDB__PMDSN ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_DESC, "_pmdAsyncSession::~_pmdAsyncSession" )
    _pmdAsyncSession::~_pmdAsyncSession()
    {
+      PD_TRACE_ENTRY ( SDB__PMDSN_DESC ) ;
       clear() ;
+      // _latchIn will always be held by the object
       _latchIn.release () ;
+      PD_TRACE_EXIT ( SDB__PMDSN_DESC ) ;
    }
 
    UINT64 _pmdAsyncSession::identifyID()
@@ -97,6 +108,11 @@ namespace engine
       return CMD_SPACE_SERVICE_SHARD ;
    }
 
+   // This function will be called by another thread to attach a CB into the
+   // session thread
+   // It will do bunch of assignments and initialization, and attempt to
+   // latch out, then release latchIn, so that the session calling getSession
+   // will move on
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_ATHIN, "_pmdAsyncSession::attachIn" )
    INT32 _pmdAsyncSession::attachIn ( pmdEDUCB *cb )
    {
@@ -112,7 +128,12 @@ namespace engine
       _pEDUCB->setName( sessionName() ) ;
       _pEDUCB->attachSession( this ) ;
 
+      // since the object can be only attached by one thread, we use try_get
+      // here just in case someone forgot to release the latch
+      // We need to maintain latchOut since the manager need to wait until
+      // all async sessions are closed
       _latchOut.try_get () ;
+      // release latchIn here so that the caller is able to move on
       _latchIn.release () ;
       _detachEvent.reset() ;
 
@@ -122,6 +143,8 @@ namespace engine
       return SDB_OK ;
    }
 
+   // attachOut is called by the async agent once all logic are done, so that
+   // the data structure can be released
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_ATHOUT, "_pmdAsyncSession::attachOut" )
    INT32 _pmdAsyncSession::attachOut ()
    {
@@ -170,21 +193,22 @@ namespace engine
       }
 
       _sessionID = INVLIAD_SESSION_ID;
-      _pEDUCB = NULL ;
-      _eduID = PMD_INVALID_EDUID ;
+      _pEDUCB    = NULL ;
+      _eduID     = PMD_INVALID_EDUID ;
       _netHandle = NET_INVALID_HANDLE ;
-      _name [0] = 0 ;
-      _pMeta = NULL ;
+      _name [0]  = 0 ;
+      _pMeta     = NULL ;
 
+      // release all buffer pointers
       for ( UINT32 index = 0 ; index < MAX_BUFFER_ARRAY_SIZE; ++index )
       {
          _buffArray[index].pBuffer = NULL ;
-         _buffArray[index].size = 0 ;
+         _buffArray[index].size    = 0 ;
          _buffArray[index].useFlag = PMD_BUFF_INVALID ;
          _buffArray[index].addTime = 0 ;
       }
       _buffBegin = 0 ;
-      _buffEnd = 0 ;
+      _buffEnd   = 0 ;
       _buffCount = 0 ;
       PD_TRACE_EXIT ( SDB__PMDSN_CLEAR );
    }
@@ -255,15 +279,23 @@ namespace engine
    void _pmdAsyncSession::_makeName ()
    {
       PD_TRACE_ENTRY ( SDB__PMDSN__MKNAME );
-      UINT32 nodeID, TID ;
+      UINT32 nodeID = 0 ;
+      UINT32 TID    = 0 ;
       ossUnpack32From64 ( _sessionID, nodeID, TID ) ;
+      // determine whether the session is from coord
+      // we use this number to identify whether a node is coming from coord
+      // We always increase nodeID with PMD_BASE_HANDLE_ID when
+      // it's sent from coord, so we need to minus the number before
+      // printing
       if ( nodeID > PMD_BASE_HANDLE_ID )
       {
+         // if the session is coming from coord
          ossSnprintf( _name , SESSION_NAME_LEN, "NetID:%u,TID:%u",
                       nodeID - PMD_BASE_HANDLE_ID, TID ) ;
       }
       else
       {
+         // otherwise it's not session from coord
          ossSnprintf( _name , SESSION_NAME_LEN, "NodeID:%u,TID:%u,Start:%s",
                       nodeID, TID, isStartActive() ? "active" : "passive" ) ;
       }
@@ -286,6 +318,7 @@ namespace engine
    {
       INT32 rc = SDB_SYS ;
       PD_TRACE_ENTRY ( SDB__PMDSN__LOCK );
+      // if the session is already locked, we return SDB_SYS
       if ( _pMeta && !_lockFlag )
       {
          _pMeta->getLatch()->get() ;
@@ -314,6 +347,8 @@ namespace engine
       return _name ;
    }
 
+   // wait until someone calls attachIn, otherwise stay here since
+   // latchIn is got in constructor
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_WTATH, "_pmdAsyncSession::waitAttach" )
    INT32 _pmdAsyncSession::waitAttach ()
    {
@@ -323,6 +358,8 @@ namespace engine
       return SDB_OK ;
    }
 
+   // wait until the session is detached
+   // latchOut will be released only when the thread finish doing the job
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN_WTDTH, "_pmdAsyncSession::waitDetach" )
    INT32 _pmdAsyncSession::waitDetach ()
    {
@@ -337,7 +374,7 @@ namespace engine
    void * _pmdAsyncSession::copyMsg( const CHAR *msg, UINT32 length )
    {
       PD_TRACE_ENTRY ( SDB__PMDSN_CPMSG );
-      void *p = NULL ;
+      void *p        = NULL ;
       UINT32 buffPos = _decBuffPos ( _buffEnd ) ;
       if ( _buffArray[buffPos].isAlloc() &&
            _buffArray[buffPos].size >= length )
@@ -347,7 +384,9 @@ namespace engine
          p = (void*)&_buffArray[buffPos] ;
          goto done ;
       }
-
+      // we shouldn't get here
+      // if we hit here that means the memory we were trying to use was not
+      // properly allocated or the length is not good
       PD_LOG ( PDERROR, "Session[%s] copy msg failed[buffindex:%d, size:%d, "
                "flag:%d, message length:%d", sessionName(), buffPos,
                _buffArray[buffPos].size, _buffArray[buffPos].useFlag, length ) ;
@@ -376,7 +415,7 @@ namespace engine
       {
          goto done ;
       }
-      SDB_ASSERT ( _buffCount > 0 , "impossible" ) ;
+      SDB_ASSERT ( _buffCount > 0 , "_buffCount must be greater than 0" ) ;
 
       p = &_buffArray[_buffBegin] ;
    done :
@@ -388,10 +427,10 @@ namespace engine
    void _pmdAsyncSession::popBuffer ()
    {
       PD_TRACE_ENTRY ( SDB__PMDSN_POPBUF );
-      SDB_ASSERT ( _buffCount > 0 , "impossible" ) ;
+      SDB_ASSERT ( _buffCount > 0 , "_buffCount must be greater than 0" ) ;
 
       _buffArray[_buffBegin].pBuffer = NULL ;
-      _buffArray[_buffBegin].size = 0 ;
+      _buffArray[_buffBegin].size    = 0 ;
       _buffArray[_buffBegin].useFlag = PMD_BUFF_INVALID ;
       _buffArray[_buffBegin].addTime = 0 ;
 
@@ -408,14 +447,16 @@ namespace engine
       if ( _buffCount >= MAX_BUFFER_ARRAY_SIZE )
       {
          rc = SDB_CLS_BUFFER_FULL ;
+         PD_LOG ( PDWARNING, "cls buffer is full" ) ;
          goto done ;
       }
 
-      SDB_ASSERT ( _buffArray[_buffEnd].isInvalid (), "impossilbe" ) ;
+      SDB_ASSERT ( _buffArray[_buffEnd].isInvalid (),
+                   "end buffer can't be invalid" ) ;
 
       ++_buffCount ;
       _buffArray[_buffEnd].pBuffer = pBuffer ;
-      _buffArray[_buffEnd].size = size ;
+      _buffArray[_buffEnd].size    = size ;
       _buffArray[_buffEnd].useFlag = PMD_BUFF_ALLOC ;
       _buffArray[_buffEnd].addTime = time( NULL ) ;
 
@@ -426,6 +467,8 @@ namespace engine
       return rc ;
    }
 
+   // increase buffer position
+   // no need to latch since it can only be touched by one thread
    UINT32 _pmdAsyncSession::_incBuffPos ( UINT32 pos )
    {
       ++pos ;
@@ -445,8 +488,10 @@ namespace engine
    /*
       _pmdAsycSessionMgr implement
    */
+   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR, "_pmdAsycSessionMgr::_pmdAsycSessionMgr" )
    _pmdAsycSessionMgr::_pmdAsycSessionMgr()
    {
+      PD_TRACE_ENTRY ( PMD_SESSMGR ) ;
       _quit                   = FALSE ;
       _isStop                 = FALSE ;
       _pRTAgent               = NULL ;
@@ -455,12 +500,16 @@ namespace engine
       _sessionTimerID         = NET_INVALID_TIMER_ID ;
       _forceChecktimer        = NET_INVALID_TIMER_ID ;
       _timerInterval          = OSS_ONE_SEC ;
+      PD_TRACE_EXIT ( PMD_SESSMGR ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_DESC, " _pmdAsycSessionMgr::~_pmdAsycSessionMgr" )
    _pmdAsycSessionMgr::~_pmdAsycSessionMgr()
    {
+      PD_TRACE_ENTRY ( PMD_SESSMGR_DESC ) ;
       _pRTAgent               = NULL ;
       _pTimerHandle           = NULL ;
+      PD_TRACE_EXIT ( PMD_SESSMGR_DESC ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_INIT, "_pmdAsycSessionMgr::init" )
@@ -474,6 +523,7 @@ namespace engine
       if ( !pRTAgent || !pTimerHandle )
       {
          rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Invalid argument to init async session mgr" ) ;
          goto error ;
       }
       _pRTAgent      = pRTAgent ;
@@ -494,6 +544,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG( PDERROR, "Add session timer failed, rc: %d", rc ) ;
+         goto error ;
       }
 
    done:
@@ -535,10 +586,10 @@ namespace engine
       }
       _mapSession.clear () ;
 
-      while ( _deqCatchSessions.size () > 0 )
+      while ( _deqCacheSessions.size () > 0 )
       {
-         _releaseSession_i( _deqCatchSessions.front (), FALSE, FALSE ) ;
-         _deqCatchSessions.pop_front () ;
+         _releaseSession_i( _deqCacheSessions.front (), FALSE, FALSE ) ;
+         _deqCacheSessions.pop_front () ;
       }
 
       while ( _deqDeletingSessions.size() > 0 )
@@ -558,8 +609,14 @@ namespace engine
 
       // mem pool fini
       rc = _memPool.final() ;
-
-      PD_TRACE_EXITRC ( PMD_SESSMGR_FINI, rc ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDWARNING, "Failed to finalize mempool, rc = %d", rc ) ;
+         // since it's finialize job, we don't need to worry
+         // about mempool cleanup success or not
+      }
+      PD_TRACE_EXIT ( PMD_SESSMGR_FINI ) ;
+      // always return SDB_OK
       return SDB_OK ;
    }
 
@@ -578,9 +635,13 @@ namespace engine
       }
       else
       {
+         // push session into the force list
          _forceSessions.push_back( sessionID ) ;
+         // create timer to clean up the session if there's no timer exist
          if ( NET_INVALID_TIMER_ID == _forceChecktimer )
          {
+            // _checkForceSession must wait for _forceLatch before ierate force
+            // session list, so there's no concurrent issue
             _pRTAgent->addTimer( 1, _pTimerHandle, _forceChecktimer ) ;
          }
       }
@@ -597,7 +658,7 @@ namespace engine
       //Check _deqShdDeletingSessions
       ossScopedLock lock ( &_deqDeletingMutex ) ;
       pmdAsyncSession *pSession = NULL ;
-      DEQSESSION::iterator it = _deqDeletingSessions.begin() ;
+      DEQSESSION::iterator it   = _deqDeletingSessions.begin() ;
       while ( it != _deqDeletingSessions.end() )
       {
          pSession = *it ;
@@ -613,19 +674,21 @@ namespace engine
       PD_TRACE_EXIT( PMD_SESSMGR_ONTIMER ) ;
    }
 
+   // This function do not latch since it shouldn't be called by
+   // multiple threads
    // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_PUSHMSG, "_pmdAsycSessionMgr::assignMemory" )
    INT32 _pmdAsycSessionMgr::pushMessage( pmdAsyncSession *pSession,
                                           const MsgHeader *header,
                                           const NET_HANDLE &handle )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc                = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_PUSHMSG ) ;
-      CHAR *pNewBuff = NULL ;
-      UINT32 buffSize = 0 ;
-      UINT64 userData = 0 ; // 0: memPool, 1: alloc
-      pmdEDUMemTypes memType = PMD_EDU_MEM_NONE ;
-
+      CHAR *pNewBuff          = NULL ;
+      UINT32 buffSize         = 0 ;
+      UINT64 userData         = 0 ; // 0: memPool, 1: alloc
+      pmdEDUMemTypes memType  = PMD_EDU_MEM_NONE ;
       pmdBuffInfo * pBuffInfo = pSession->frontBuffer () ;
+      // loop through all free slots
       while ( pBuffInfo && pBuffInfo->isFree() )
       {
          if ( !pNewBuff && pBuffInfo->size >= (UINT32)header->messageLength )
@@ -640,17 +703,20 @@ namespace engine
          pSession->popBuffer () ;
          pBuffInfo = pSession->frontBuffer () ;
       }
-
+      // if we cannot find any free slots
       if ( !pNewBuff && !pSession->isBufferFull() )
       {
+         // let's allocate memory from pool
          pNewBuff = _memPool.alloc ( header->messageLength, buffSize ) ;
+         // if unable to allocate from pool, let's dump warning message and
+         // and keep calling oss malloc to get memory
          if ( !pNewBuff )
          {
-            PD_LOG ( PDERROR, "Memory pool assign memory failed[size:%d]",
+            PD_LOG ( PDWARNING, "Memory pool assign memory failed[size:%d]",
                      header->messageLength ) ;
          }
       }
-
+      // if memory is got from existing pool, let's assign to the session
       if ( pNewBuff )
       {
          rc = pSession->pushBuffer ( pNewBuff, buffSize ) ;
@@ -663,18 +729,21 @@ namespace engine
             goto error ;
          }
 
+         // copyMsg will NOT allocate memory inside
+         // so we don't need to set PMD_EDU_MEM_ALLOC
          pNewBuff = (CHAR*)pSession->copyMsg( (const CHAR*)header,
                                               header->messageLength ) ;
          if ( NULL == pNewBuff )
          {
-            PD_LOG ( PDERROR, "Failed to allocate memory for new msg" ) ;
-            rc = SDB_OOM ;
+            PD_LOG ( PDERROR, "Unable to find a previous valid memory" ) ;
+            rc = SDB_SYS ;
             goto error ;
          }
       }
       else
       {
-         // alloc msg
+         // if memory is not able to allocated from pool, we have to use
+         // ossmalloc to get from OS
          pNewBuff = ( CHAR* )SDB_OSS_MALLOC( header->messageLength ) ;
          if ( !pNewBuff )
          {
@@ -707,11 +776,12 @@ namespace engine
                                                     BOOLEAN bCreate, INT32 opCode,
                                                     void *data )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc                     = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_GETSESSION );
-      pmdAsyncSession *pSession = NULL ;
+      pmdAsyncSession *pSession    = NULL ;
       SDB_SESSION_TYPE sessionType = SDB_SESSION_MAX ;
 
+      // check if there's already session for the sessionID
       MAPSESSION_IT it = _mapSession.find( sessionID ) ;
       if ( it != _mapSession.end() )
       {
@@ -721,11 +791,15 @@ namespace engine
          if ( !pSession->getMeta() && pSession->canAttachMeta() &&
               NET_INVALID_HANDLE != handle )
          {
+            // we can safely ignore the return code from _attachSessionMeta
+            // if for any reason we were not able to attach, we can do
+            // it next time
             _attachSessionMeta( pSession, handle ) ;
          }
          goto done ;
       }
 
+      // if we are not asked for create new session, let's simply return
       if ( !bCreate )
       {
          goto done ;
@@ -733,6 +807,7 @@ namespace engine
 
       // parse session type
       sessionType = _prepareCreate( sessionID, startType, opCode ) ;
+      // if we hit SESSION_MAX, that means we can't find a valid session type
       if ( SDB_SESSION_MAX == sessionType )
       {
          PD_LOG( PDERROR, "Failed to parse session type by info[sessionID: "
@@ -741,22 +816,23 @@ namespace engine
          goto error ;
       }
 
-      // get from catch
-      if ( _canReuse( sessionType ) && _deqCatchSessions.size() > 0 )
+      // can we get from cached session list?
+      if ( _canReuse( sessionType ) && _deqCacheSessions.size() > 0 )
       {
-         DEQSESSION::iterator itDeq = _deqCatchSessions.begin() ;
-         while ( itDeq != _deqCatchSessions.end() )
+         DEQSESSION::iterator itDeq = _deqCacheSessions.begin() ;
+         while ( itDeq != _deqCacheSessions.end() )
          {
             if ( (*itDeq)->sessionType() == sessionType )
             {
                pSession = *itDeq ;
-               _deqCatchSessions.erase( itDeq ) ;
+               _deqCacheSessions.erase( itDeq ) ;
                break ;
             }
             ++itDeq ;
          }
       }
 
+      // if we still don't have a session, let's create one
       if ( !pSession )
       {
          pSession = _createSession( sessionType, startType, sessionID, data ) ;
@@ -766,8 +842,8 @@ namespace engine
                     "startType: %d, sessionID: %lld ]", sessionType,
                     startType, sessionID ) ;
             goto error ;
-        }
-        pSession->setSessionMgr( this ) ;
+         }
+         pSession->setSessionMgr( this ) ;
       }
 
       // set session info
@@ -785,6 +861,10 @@ namespace engine
          rc = _attachSessionMeta( pSession, handle ) ;
          if ( rc )
          {
+            // if the session is not able to attached with metadata,
+            // it cann't do much thing anyway
+            // so we don't bother to start the session if we can't attach meta
+            PD_LOG ( PDERROR, "Unable to attach metadata, rc = %d", rc ) ;
             goto error ;
          }
       }
@@ -819,6 +899,7 @@ namespace engine
       MAPMETA_IT itMeta = _mapMeta.find ( handle ) ;
       if ( itMeta == _mapMeta.end() )
       {
+         // memory will be freed in _checkSessionMeta and fini
          pMeta = SDB_OSS_NEW pmdSessionMeta ( handle ) ;
          if ( NULL == pMeta )
          {
@@ -832,6 +913,7 @@ namespace engine
       {
          pMeta = itMeta->second ;
       }
+      // increase reference counter
       pMeta->incBaseHandleNum() ;
       pSession->meta ( pMeta ) ;
 
@@ -845,12 +927,11 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_STARTEDU, "_pmdAsycSessionMgr::_startSessionEDU" )
    INT32 _pmdAsycSessionMgr::_startSessionEDU( pmdAsyncSession *pSession )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc           = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_STARTEDU ) ;
-      pmdKRCB *pKRCB = pmdGetKRCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
       pmdEDUMgr *pEDUMgr = pKRCB->getEDUMgr() ;
-      EDUID eduID = PMD_INVALID_EDUID ;
-      pmdEDUCB *cb = NULL ;
+      EDUID eduID        = PMD_INVALID_EDUID ;
 
       rc = pEDUMgr->startEDU( pSession->eduType(), (void *)pSession, &eduID ) ;
       if ( SDB_OK != rc )
@@ -868,7 +949,7 @@ namespace engine
          goto error ;
       }
 
-      //Wait the EDUCB is in the session
+      // Wait the EDUCB is in the session by the newly created thread
       pSession->waitAttach () ;
 
    done:
@@ -882,7 +963,9 @@ namespace engine
    INT32 _pmdAsycSessionMgr::releaseSession( pmdAsyncSession * pSession,
                                              BOOLEAN delay )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( PMD_SESSMGR_RLSSS ) ;
+      // clear session map
       if ( !_quit )
       {
          MAPSESSION_IT it = _mapSession.find( pSession->sessionID() ) ;
@@ -891,10 +974,18 @@ namespace engine
             _mapSession.erase( it ) ;
          }
       }
-
-      INT32 rc = _releaseSession_i( pSession, TRUE, delay ) ;
+      // release session
+      rc = _releaseSession_i( pSession, TRUE, delay ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to release session, rc = %d", rc ) ;
+         goto error ;
+      }
+   done :
       PD_TRACE_EXITRC ( PMD_SESSMGR_RLSSS, rc ) ;
       return rc ;
+   error :
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_RLSSS_I, "_pmdAsycSessionMgr::_releaseSession_i" )
@@ -914,7 +1005,8 @@ namespace engine
          // Notify the edu quit
          pSession->eduCB()->disconnect () ;
       }
-
+      // if we don't need to relase it rightaway, we can push the request to
+      // delete queue and return
       if ( delay )
       {
          ossScopedLock lock ( &_deqDeletingMutex ) ;
@@ -922,7 +1014,7 @@ namespace engine
          goto done ;
       }
 
-      // Wait the EDUCB is out the session
+      // Wait the working agent finish the job
       pSession->waitDetach () ;
 
       // dec based handle number
@@ -941,13 +1033,14 @@ namespace engine
       }
       pSession->clear() ;
 
+      // if the session can be reused, let's queue it
       if ( !_quit && _canReuse( pSession->sessionType() ) &&
-           _deqCatchSessions.size() < _maxCatchSize() )
+           _deqCacheSessions.size() < _maxCacheSize() )
       {
-         _deqCatchSessions.push_back( pSession ) ;
+         _deqCacheSessions.push_back( pSession ) ;
          goto done ;
       }
-
+      // only free memory when it can't be queued
       SDB_OSS_DEL pSession ;
 
    done:
@@ -1000,9 +1093,11 @@ namespace engine
       PD_TRACE_ENTRY ( PMD_SESSMGR_HDLSNCLOSE ) ;
       pmdAsyncSession *pSession = NULL ;
       MAPSESSION_IT it = _mapSession.begin() ;
+      // iterate all sessions
       while ( it != _mapSession.end() )
       {
          pSession = it->second ;
+         // release the session
          if ( pSession->netHandle() == handle )
          {
             PD_LOG ( PDEVENT, "Session[%s, handle:%d] closed",
@@ -1013,7 +1108,7 @@ namespace engine
          }
          ++it ;
       }
-
+      // create a timer if it doesn't exist
       if ( NET_INVALID_TIMER_ID == _handleCloseTimerID )
       {
          _pRTAgent->addTimer( 30 * OSS_ONE_SEC, _pTimerHandle,
@@ -1024,13 +1119,16 @@ namespace engine
       return SDB_OK ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_HDLSTOP, "_pmdAsycSessionMgr::handleStop" )
    void _pmdAsycSessionMgr::handleStop()
    {
+      PD_TRACE_ENTRY ( PMD_SESSMGR_HDLSTOP ) ;
       _forceLatch.get() ;
       _isStop = TRUE ;
       _forceLatch.release() ;
 
       _checkForceSession( 0 ) ;
+      PD_TRACE_EXIT ( PMD_SESSMGR_HDLSTOP ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_HDLSNTM, "_pmdAsycSessionMgr::handleSessionTimeout" )
@@ -1058,14 +1156,17 @@ namespace engine
       else
       {
          //return not zero, the timer will dispath to main cb
-         rc = -1 ;
+         rc = SDB_INVALIDARG ;
       }
 
    done :
-      PD_TRACE_EXITRC ( PMD_SESSMGR_HDLSNTM, rc ) ;
+      // rc can be ignored in this function, so we don't need to bother
+      // record it in trace
+      PD_TRACE_EXIT ( PMD_SESSMGR_HDLSNTM ) ;
       return rc ;
    }
 
+   // clean up all unused meta by checking the reference counter
    // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_CHKSNMETA, "_pmdAsycSessionMgr::_checkSessionMeta" )
    void _pmdAsycSessionMgr::_checkSessionMeta( UINT32 interval )
    {
@@ -1087,6 +1188,7 @@ namespace engine
       PD_TRACE_EXIT ( PMD_SESSMGR_CHKSNMETA ) ;
    }
 
+   // check if there's any session is forced
    // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_CHKFORCESN, "_pmdAsycSessionMgr::_checkForceSession" )
    void _pmdAsycSessionMgr::_checkForceSession( UINT32 interval )
    {
@@ -1097,6 +1199,7 @@ namespace engine
 
       ossScopedLock lock( &_forceLatch ) ;
 
+      // iterate all sessions from force list
       std::deque< UINT64 >::iterator it = _forceSessions.begin() ;
       while ( !_forceSessions.empty() )
       {
@@ -1112,6 +1215,7 @@ namespace engine
          pSession->forceBack() ;
       }
 
+      // remove the timer if it's already exist
       if ( NET_INVALID_TIMER_ID != _forceChecktimer )
       {
          _pRTAgent->removeTimer( _forceChecktimer ) ;
@@ -1121,6 +1225,7 @@ namespace engine
       PD_TRACE_EXIT ( PMD_SESSMGR_CHKFORCESN ) ;
    }
 
+   // check if there's any session timeout
    // PD_TRACE_DECLARE_FUNCTION ( PMD_SESSMGR_CHKSN, "_pmdAsycSessionMgr::_checkSession" )
    void _pmdAsycSessionMgr::_checkSession( UINT32 interval )
    {
