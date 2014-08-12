@@ -90,7 +90,7 @@ namespace engine
          UINT32 _readSize ;
          std::vector<BSONObj> _hosts ;
          std::string _content ;
-   };
+   } ;
 
    typedef _omaCommand* (*OA_NEW_FUNC) () ;
 
@@ -144,35 +144,13 @@ namespace engine
    */
    _omaCmdBuilder* getOmaCmdBuilder() ;
 
-   /*
-      _omaAddHost
-   */
-   class _omaAddHost : public _omaCommand
-   {
-      DECLARE_OACMD_AUTO_REGISTER()
-
-      public:
-         _omaAddHost () ;
-         ~_omaAddHost () ;
-
-         virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-   } ;
-
+   /******************************* scan host ********************************/
    /*
       _omaScanHost
    */
    class _omaScanHost : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER()
-
       public:
          _omaScanHost () ;
          ~_omaScanHost () ;
@@ -192,13 +170,13 @@ namespace engine
    } ;
 
 
+   /******************************* check host ********************************/
    /*
       _omaBasicCheckHost
    */
    class _omaBasicCheckHost : public _omaScanHost
    {
       DECLARE_OACMD_AUTO_REGISTER()
-
       public:
 //         _omaBasicCheckHost () ;
 //         ~_omaBasicCheckHost () ;
@@ -228,8 +206,9 @@ namespace engine
                               INT32 &returnNum ) ;
          virtual INT32 doit ( BSONObj& retObj ) { return SDB_OK ; }
 
-      private:
+//      private:
    } ;
+
 
    /*
       _omaInstallRemoteAgent
@@ -285,7 +264,7 @@ namespace engine
    */
    class _omaInstallAgentProcess : public _omaCommand
    {
-      DECLARE_OACMD_AUTO_REGISTER ()
+//      DECLARE_OACMD_AUTO_REGISTER ()
       public:
          _omaInstallAgentProcess () ;
          ~_omaInstallAgentProcess () ;
@@ -345,12 +324,36 @@ namespace engine
 
    } ;
 
+   /******************************* add host ********************************/
+   /*
+      _omaAddHost
+   */
+   class _omaAddHost : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+      public:
+         _omaAddHost () ;
+         ~_omaAddHost () ;
+
+         virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum ) ;
+   } ;
+
+
    /*
       _omaRegHosts
    */
    class _omaRegHosts : public _omaCommand
    {
-      DECLARE_OACMD_AUTO_REGISTER ()
+//      DECLARE_OACMD_AUTO_REGISTER ()
       public:
          _omaRegHosts () ;
          ~_omaRegHosts () ;

@@ -59,8 +59,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
-
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallRemoteAgent )
+/*
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallAgentProcess )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveAgentProcess )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaStopAgentProcess )
@@ -68,7 +67,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaGetHostNames )
 //   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
 //   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
-
+*/
    /*
       _omaCommand
    */
