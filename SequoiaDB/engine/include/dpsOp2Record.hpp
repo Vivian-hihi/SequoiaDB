@@ -100,7 +100,7 @@ namespace engine
                           const CHAR **csName ) ;
 
    INT32 dpsCLCrt2Record( const CHAR *fullName,
-                          UINT32 attribute,
+                          const UINT32 &attribute,
                           dpsLogRecord &record ) ;
 
    INT32 dpsRecord2CLCrt( const CHAR *logRecord,
