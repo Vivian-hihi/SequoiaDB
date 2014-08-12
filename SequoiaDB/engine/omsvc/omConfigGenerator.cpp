@@ -981,10 +981,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       _clear() ;
 
-      rc = _parseAllConf( bsonAllConf ) ;
+      rc = _parseConfigDetail( bsonAllConf ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get _parseAllConf failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "get _parseConfigDetail failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -1234,6 +1234,15 @@ namespace engine
          goto error ;
       }
 
+      if ( _confTemplate.transaction == "true" ) 
+      {
+         _confDetailSample.transaction = TRUE ;
+      }
+      else
+      {
+         _confDetailSample.transaction = FALSE ;
+      }
+
       rc = _parseHostInfo( _businessName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
@@ -1340,6 +1349,10 @@ namespace engine
       else if ( itemName.compare( OM_TEMPLATE_COORD_NUM ) == 0 )
       {
          _confTemplate.coordNum     = ossAtoi( itemValue.c_str() ) ;
+      }
+      else if ( itemName.compare( OM_TEMPLATE_TRANSACTION ) == 0 )
+      {
+         _confTemplate.transaction  = itemValue ;
       }
 
       rc = item.init( templateItem ) ;

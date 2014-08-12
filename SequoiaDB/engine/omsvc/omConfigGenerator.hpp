@@ -45,6 +45,7 @@ namespace engine
    #define OM_TEMPLATE_DATAGROUP_NUM   "datagroupnum"
    #define OM_TEMPLATE_CATALOG_NUM     "catalognum"
    #define OM_TEMPLATE_COORD_NUM       "coordnum"
+   #define OM_TEMPLATE_TRANSACTION     PMD_OPTION_TRANSACTIONON
 
    // extend configure
    #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
@@ -59,6 +60,7 @@ namespace engine
          INT32 dataGroupNum ;
          INT32 catalogNum ;
          INT32 coordNum ;
+         string transaction ;
 
       public:
          void init() ;

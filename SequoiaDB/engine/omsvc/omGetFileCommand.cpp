@@ -1790,7 +1790,6 @@ namespace engine
       BSONObj bsonHostInfo ;
       BSONElement element ;
 
-
       _restAdaptor->getQuery(_restSession, OM_REST_FIELD_HOST_INFO, 
                              &pHostInfo ) ;
       if ( NULL == pHostInfo )
