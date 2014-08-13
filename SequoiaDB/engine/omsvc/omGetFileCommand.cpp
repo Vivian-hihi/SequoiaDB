@@ -1007,7 +1007,7 @@ namespace engine
       rc = response.getIntField( OM_REST_RES_RETCODE ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "agent process failed:" ) 
+         _errorDetail = string( "agent process failed:detail=" ) 
                         + response.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
@@ -3658,7 +3658,7 @@ namespace engine
       BSONObj result ;
       CHAR* pContent    = NULL ;
       INT32 contentSize = 0 ;
-      omManager *om     = NULL ;
+      omManager *om     = sdbGetOMManager() ;
       MsgHeader *pMsg   = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
       string fakeTaskID = OM_TASKINFO_FAKE_TASKID ;
@@ -3685,7 +3685,6 @@ namespace engine
       }
 
       // create remote session
-      om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
                                                       OM_WAIT_SCAN_RES_INTERVAL,
                                                       NULL ) ;
@@ -3971,9 +3970,16 @@ namespace engine
          arrayBuilder.append( bsonHaha ) ;
          tmpTestBuilder.appendArray( OM_BSON_TASK_PROGRESS, arrayBuilder.arr() ) ;
       }
+
+      sdbGetOMManager()->storeTaskInfo( OM_TASKINFO_FAKE_TASKID, 
+                                        OM_INSTALL_BUSINESS_REQ, 
+                                        OM_DEFAULT_LOCAL_HOST, "11790", 
+                                        BSONObj(), OM_TASK_STATUS_DOING ) ;
       tmpTest = tmpTestBuilder.obj() ;
       sdbGetOMManager()->saveInstallTask( OM_DEFAULT_LOCAL_HOST, "11790", 
                                           tmpTest, BSONObj() ) ;
+//      sdbGetOMManager()->updateTaskID( OM_TASKINFO_FAKE_TASKID, 
+//                                       ( long long )123 ) ;
    }
 
    void omQueryInstallProgress::_testUpdateTask()
@@ -4056,8 +4062,8 @@ namespace engine
       }
 
       sdbGetOMManager()->getTaskWriteLock() ;
-      _testSaveTask() ;
-      _testUpdateTask() ;
+//      _testSaveTask() ;
+//      _testUpdateTask() ;
       //_testFinishTask() ;
       sdbGetOMManager()->getInstallTask( status, taskID, isAllFinished, detail,
                                          progress ) ;

@@ -1236,7 +1236,7 @@ namespace engine
                            << OM_TASKINFO_FIELD_INFO << confValue 
                            << OM_TASKINFO_FIELD_STATUS << status ) ;
 
-      rc = rtnInsert( OM_CS_DEPLOY_CL_HOST, tmp, 1, 0, cb );
+      rc = rtnInsert( OM_CS_DEPLOY_CL_TASKINFO, tmp, 1, 0, cb );
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "failed to store taskinfo into table:%s,rc=%d", 
@@ -1257,7 +1257,7 @@ namespace engine
       BSONObj condition = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
       BSONObj hint ;
 
-      rc = rtnDelete( OM_CS_DEPLOY_CL_HOST, condition, hint, 0, cb );
+      rc = rtnDelete( OM_CS_DEPLOY_CL_TASKINFO, condition, hint, 0, cb );
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "failed to delete taskinfo from table:%s,"
