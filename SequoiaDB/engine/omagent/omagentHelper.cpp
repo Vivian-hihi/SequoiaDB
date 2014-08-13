@@ -133,7 +133,7 @@ namespace engine
    INT32 omaRunCommand ( _omaCommand *pCommand, BSONObj &result )
    {
       INT32 rc = SDB_OK ;
-      INT32 returnNum = 0 ;
+//      INT32 returnNum = 0 ;
       if ( !pCommand )
       {
          rc = SDB_INVALIDARG ;
@@ -210,7 +210,7 @@ namespace engine
    {
       SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;
       INT32 rc           = SDB_OK ;
-      INT32 offset       = 0 ;
+//      INT32 offset       = 0 ;
       INT32 packetLength = ossRoundUpToMultipleX ( bsonobj->objsize(), 4 ) ;
       if ( packetLength < 0 )
       {

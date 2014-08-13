@@ -21,15 +21,12 @@
    2014-7-26 Zhaobo Tan  Init
 */
 
-if ( typeof(USERNAME) == "undefined" ) { USERNAME = "" ; }
-if ( typeof(PASSWORD) == "undefined" ) { PASSWORD = "" ; }
-if ( typeof(IP) == "undefined" ) { IP = "127.0.0.1" ; }
+if ( typeof(USERNAME) == "undefined" ) {}
+if ( typeof(PASSWORD) == "undefined" ) {}
+if ( typeof(IP) == "undefined" ) {}
 if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-// todo: modify default value
-// *********************************************************
-if ( typeof(LOCAL_PACKET_PATH) == "undefined" ) { LOCAL_PACKET_PATH = "/home/users/tanzhaobo/sequoiadb/bin/sdb" ; }
-if ( typeof(REMOTE_PACKET_PATH) == "undefined" ) { REMOTE_PACKET_PATH = "/tmp/sdb" ; }
-
+if ( typeof(LOCAL_CM_PROG) == "undefined" ) {}
+if ( typeof(REMOTE_CM_PROG) == "undefined" ) {}
 
 var objRet = new Object() ;
 
@@ -41,27 +38,50 @@ objRet.HostName = "" ;
 
 function main()
 {
+print("username is: " + USERNAME + "\n" ) ;
+print("password is: " + PASSWORD + "\n" ) ;
+print("ip is: " + IP + "\n" ) ;
+print("local cm prog is: " + LOCAL_CM_PROG + "\n" ) ;
+print("remote cm prog is: " + REMOTE_CM_PROG + "\n" ) ;
    try
    {
+      // check argument
+      if ( typeof(USERNAME) == "undefined"      ||
+           typeof(PASSWORD) == "undefined"      ||
+           typeof(IP) == "undefined" )
+      {
+         objRet.Rc = -6 ;
+         objRet.Detail = "user name, password and ip, but some of them are not defined" ;
+         return objRet ;
+      }
+      if ( typeof(LOCAL_CM_PROG) == "undefined" ||
+           typeof(REMOTE_CM_PROG) == "undefined" )
+      {
+         objRet.Rc = -10 ;
+         objRet.Detail = "no local sdbcm packet or remote sdbcm packet" ;
+         return objRet ;
+      }
+print("111111111111111111111111111111111111111111111\n") ;
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
       objRet.HostName = ssh.exec("hostname") ;
       // push packet
-      ssh.push( LOCAL_PACKET_PATH, REMOTE_PACKET_PATH ) ;
+      ssh.push( LOCAL_CM_PROG, REMOTE_CM_PROG ) ;
       objRet.HasPush = true ;
-      // start the process
+print("22222222222222222222222222222222222222222222222\n") ;
+      // start the omagent process
       var sysType = System.type() ;
       var str = "" ;
       if ( sysType == "LINUX" )
       {
          str = " 1>/dev/null 2>&1 & disown"
-         ssh.exec( REMOTE_PACKET_PATH + str ) ;
+         ssh.exec(  + str ) ;
 //println("////////////" + REMOTE_PACKET_PATH + str) ;
       }
       else
       {
          str = "start /b"
-         ssh.exec( str + REMOTE_PACKET_PATH ) ;
+         ssh.exec( str + REMOTE_CM_PROG ) ;
       }
       objRet.HasRunning = true ;
 

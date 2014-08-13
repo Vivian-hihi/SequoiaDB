@@ -38,11 +38,26 @@
 #include "utilPath.hpp"
 #include "ossPath.h"
 #include "omagentJob.hpp"
+#include "omagentMgr.hpp"
 
 using namespace bson ;
 
 #define HOSTS_FILE_PROMPT "##############add by omagent##############"
 #define DEF_VIRTUAL_COORD_SERVICE 10810
+
+#define FILE_SCAN_HOST                   "scanHost.js"
+#define FILE_BASIC_CHECK_HOST            "basicCheckHost.js"
+#define FILE_INSTALL_REMOTE_AGENT        "installRemoteAgent.js"
+#define FILE_CHECK_HOST                  "checkHost.js"
+#define FILE_EXIT_AGENT                  "exitAgent.js"
+#define FILE_UNINSTALL_REMOTE_AGENT      "uninstallRemoteAgent.js"
+
+#define FILE_GET_REMOTE_AGENT_STATUS     "getRemoteAgentStatus.js"
+#define FILE_CREATE_VIRTUAL_COORD        "createVirtualCoord.js"
+#define FILE_REMOVE_VIRTUAL_COORD        "removeVirtualCoord.js"
+#define FILE_GET_PORT_STATUS             "getPortStatus.js"
+#define FILE_REG_HOSTS_INFO              "regHostsInfo.js"
+#define FILE_GET_HOST_NAMES              "getHostNames.js"
 
 #define ROLE_COORD "coord"
 #define ROLE_CATA  "catalog"
@@ -61,6 +76,8 @@ using namespace bson ;
 #define REMOTE_OMAGENT_PROG "/tmp/sdbcm"
 #define START_DB_PROG "sdbstart"
 #define SDB_CM_PROG   "sdbcm"
+#define SDB_CM_START  "sdbcmart"
+#define SDB_CM_STOP   "sdbcmtop"
 
 #endif
 
@@ -85,10 +102,10 @@ namespace engine
    _omaCommand::_omaCommand ()
    {
       _scope      = NULL ;
-      _jsFileName = NULL ;
       _fileBuff   = NULL ;
       _buffSize   = 0 ;
       _readSize   = 0 ;
+      ossMemset( _jsFileName, 0, OSS_MAX_PATHSIZE + 1 ) ;
    }
 
    _omaCommand::~_omaCommand ()
@@ -98,6 +115,29 @@ namespace engine
          _scope->shutdown() ;
          SAFE_OSS_DELETE ( _scope ) ;
       }
+   }
+
+   INT32 _omaCommand::setJSFile( const CHAR *fileName )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *tmp = NULL ;
+      if ( NULL == fileName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      tmp = sdbGetOMAgentOptions()->getScriptPath() ;
+      ossStrncpy ( _jsFileName, tmp, OSS_MAX_PATHSIZE ) ;
+      rc = utilCatPath ( _jsFileName, OSS_MAX_PATHSIZE, fileName ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to build js file full path, rc = " ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -199,7 +239,8 @@ namespace engine
    */
    _omaScanHost::_omaScanHost()
    {
-      _jsFileName = "scanHost.js" ;
+      // get js file
+      setJSFile( FILE_SCAN_HOST ) ;
    }
 
    _omaScanHost::~_omaScanHost()
@@ -235,12 +276,22 @@ namespace engine
             _hosts.push_back ( temp ) ;
          }
       }
+/*
+      // get js file
+      rc = setJSFile( FILE_SCAN_HOST ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
+*/
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -326,7 +377,7 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
+                         _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO: tanzhaobo
             // what's in detail ?
             BSONObj errObj ;
@@ -441,7 +492,7 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
+                         _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO: tanzhaobo
             // what's in detail ?
             BSONObj errObj ;
@@ -483,7 +534,8 @@ namespace engine
    /******************************* install remote agent *********************/
    _omaBasicCheckHost::_omaBasicCheckHost ()
    {
-      _jsFileName = "basicCheckHost.js" ;
+      // get js file
+      setJSFile( FILE_BASIC_CHECK_HOST ) ;
    }
    _omaBasicCheckHost::~_omaBasicCheckHost ()
    {
@@ -495,7 +547,6 @@ namespace engine
    */
    _omaInstallRemoteAgent::_omaInstallRemoteAgent ()
    {
-      _jsFileName = "installAgentProcess.js" ;
    }
 
    _omaInstallRemoteAgent::~_omaInstallRemoteAgent ()
@@ -530,13 +581,20 @@ namespace engine
             _hosts.push_back ( temp ) ;
          }
       }
-
+      // get js file
+      rc = setJSFile( FILE_INSTALL_REMOTE_AGENT ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
 
@@ -561,7 +619,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       CHAR local_omagent_path[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       const CHAR *remote_omagent = REMOTE_OMAGENT_PROG ;
-      std::string omagent_program ;
+      std::string cm_prog ;
+      std::string cm_start_prog ;
+      std::string cm_stop_prog ;
       std::vector<BSONObj> result ;
       BSONObjBuilder bob ;
       BSONArrayBuilder bab ;
@@ -578,11 +638,13 @@ namespace engine
          goto error ;
       }
 #if defined (_WINDOWS)
-      omagent_program = omagent_program +
-                        local_omagent_path + "\\" + SDB_CM_PROG ;
+      cm_prog = cm_prog + local_omagent_path + "\\" + SDB_CM_PROG ;
+      cm_start_prog = cm_start_prog + local_omagent_path + "\\" + SDB_CM_START ;
+      cm_stop_prog = cm_stop_prog + local_omagent_path + "\\" + SDB_CM_STOP ;
 #else
-      omagent_program = omagent_program +
-                        local_omagent_path + "/" + SDB_CM_PROG ;
+      cm_prog = cm_prog + local_omagent_path + "/" + SDB_CM_PROG ;
+      cm_start_prog = cm_start_prog + local_omagent_path + "/" + SDB_CM_START ;
+      cm_stop_prog = cm_start_prog + local_omagent_path + "/" + SDB_CM_STOP ;
 #endif
       while ( itr != _hosts.end() )
       {
@@ -671,12 +733,12 @@ and we are going to instll version %s", pVersion, ver ) ;
                       " var IP = \"%s\"; var USERNAME = \"%s\"; \
                       var PASSWORD = \"%s\"; var LOCAL_CM_PROG = \"%s\"; \
                       var REMOTE_CM_PROG = \"%s\" ",
-                      pIp, pUserName, pPassword, omagent_program.c_str(),
+                      pIp, pUserName, pPassword, cm_prog.c_str(),
                       remote_omagent ) ;
          PD_LOG ( PDDEBUG, "Install remote agent passes arguments: \
 var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
 var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
-                  pIp, "xxx", "xxx", omagent_program.c_str(),
+                  pIp, "xxx", "xxx", cm_prog.c_str(),
                   remote_omagent ) ;
 
          _content.clear() ;
@@ -757,7 +819,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    */
    _omaCheckHost::_omaCheckHost ()
    {
-      _jsFileName = "getHostInfo.js" ;
    }
 
    _omaCheckHost::~_omaCheckHost ()
@@ -791,6 +852,13 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
             BSONObj temp = ele.embeddedObject() ;
             _hosts.push_back ( temp ) ;
          }
+      }
+      // get js file
+      rc = setJSFile( FILE_CHECK_HOST ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
       }
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
@@ -878,7 +946,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
+                         _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -927,7 +995,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    */
    _omaExitAgent::_omaExitAgent ()
    {
-      _jsFileName = "stopAgentProcess.js" ;
    }
 
    _omaExitAgent::~_omaExitAgent ()
@@ -962,12 +1029,20 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
             _hosts.push_back ( temp ) ;
          }
       }
+      // get js file
+      rc = setJSFile( FILE_EXIT_AGENT ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -1060,7 +1135,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
+                         _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -1108,7 +1183,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    */
    _omaUninstallRemoteAgent::_omaUninstallRemoteAgent ()
    {
-      _jsFileName = "removeAgentProcess.js" ;
    }
 
    _omaUninstallRemoteAgent::~_omaUninstallRemoteAgent ()
@@ -1143,12 +1217,20 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
             _hosts.push_back ( temp ) ;
          }
       }
+      // get js file
+      rc = setJSFile( FILE_UNINSTALL_REMOTE_AGENT ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -1241,7 +1323,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
+                         _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -1361,11 +1443,12 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
          }
       }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -1516,7 +1599,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    // _omaInstallDBBusiness
    _omaInstallDBBusiness::_omaInstallDBBusiness ()
    {
-      _jsFileName = "" ;
    }
 
    _omaInstallDBBusiness::~_omaInstallDBBusiness ()
@@ -1672,7 +1754,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    _omaInstallDBStatus::_omaInstallDBStatus ()
    {
       _scope = NULL ;
-      _jsFileName = "" ;
       _fileBuff = NULL ;
       _buffSize = 0 ;
       _readSize = 0 ;
@@ -1762,7 +1843,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
                                                     const CHAR *password )
    {
       _scope = NULL ;
-      _jsFileName = "createVirtualCoord.js" ;
       _fileBuff = NULL ;
       _buffSize = 0 ;
       _readSize = 0 ;
@@ -1778,11 +1858,12 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    {
       INT32 rc = SDB_OK ;
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -1838,13 +1919,20 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
       _content += OSS_NEWLINE ;
       _content += _fileBuff ;
 
+      // get js file
+      rc = setJSFile( FILE_CREATE_VIRTUAL_COORD ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // execute js
       rc = _scope->eval( _content.c_str(), _content.size(),
                          _jsFileName, 1, 1, rval, detail ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                  _jsFileName, rc, detail.toString().c_str() ) ;
+                      _jsFileName, rc, detail.toString().c_str() ) ;
          goto error ;
       }
       rc = omaGetObjElement( rval, "", subObj ) ;
@@ -1905,7 +1993,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
                                                     const CHAR *password )
    {
       _scope = NULL ;
-      _jsFileName = "removeVirtualCoord.js" ;
       _fileBuff = NULL ;
       _buffSize = 0 ;
       _readSize = 0 ;
@@ -1920,12 +2007,20 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    INT32 _omaRemoveVirtualCoord::init()
    {
       INT32 rc = SDB_OK ;
+      // get js file
+      rc = setJSFile( FILE_REMOVE_VIRTUAL_COORD ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -1987,7 +2082,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                  _jsFileName, rc, detail.toString().c_str() ) ;
+                      _jsFileName, rc, detail.toString().c_str() ) ;
          goto error ;
       }
       rc = omaGetObjElement( rval, "", subObj ) ;
@@ -2045,7 +2140,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    //   _omaGetRemoteAgentStatus
    _omaGetRemoteAgentStatus::_omaGetRemoteAgentStatus ()
    {
-      _jsFileName = "checkRemoteAgentProcess.js" ;
    }
 
    _omaGetRemoteAgentStatus::~_omaGetRemoteAgentStatus ()
@@ -2080,12 +2174,20 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
             _hosts.push_back ( temp ) ;
          }
       }
+      // get js file
+      rc = setJSFile( FILE_GET_REMOTE_AGENT_STATUS ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -2168,7 +2270,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
+                         _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -2303,7 +2405,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    _omaPort::_omaPort ( INT32 port )
    {
       _scope = NULL ;
-      _jsFileName = "getPortStatus.js" ;
       _fileBuff = NULL ;
       _buffSize = 0 ;
       _readSize = 0 ;
@@ -2317,12 +2418,20 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    INT32 _omaPort::init()
    {
       INT32 rc = SDB_OK ;
+      // get js file
+      rc = setJSFile( FILE_GET_PORT_STATUS ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -2363,7 +2472,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                  _jsFileName, rc, detail.toString().c_str() ) ;
+                      _jsFileName, rc, detail.toString().c_str() ) ;
          goto error ;
       }
       // get result
@@ -2394,7 +2503,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "Failed to init for get port %d status, rc = %d",
-                 port, rc ) ;
+                     port, rc ) ;
          goto error ;
       }
       rc = doit( hasUsed ) ;
@@ -2413,7 +2522,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    // _omaRegHosts
    _omaRegHosts::_omaRegHosts ()
    {
-      _jsFileName = "regHostsInfo.js" ;
    }
 
    _omaRegHosts::~_omaRegHosts ()
@@ -2448,12 +2556,20 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
             _hosts.push_back ( temp ) ;
          }
       }
+      // get js file
+      rc = setJSFile( FILE_REG_HOSTS_INFO ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -2563,7 +2679,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
+                         _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -2729,7 +2845,6 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
    // _omaGetHostNames
    _omaGetHostNames::_omaGetHostNames ()
    {
-      _jsFileName = "getHostName.js" ;
    }
 
    _omaGetHostNames::~_omaGetHostNames ()
@@ -2764,12 +2879,20 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
             _hosts.push_back ( temp ) ;
          }
       }
+      // get js file
+      rc = setJSFile( FILE_GET_HOST_NAMES ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -2855,7 +2978,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
+                         _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;

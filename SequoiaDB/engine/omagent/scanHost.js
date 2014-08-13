@@ -21,9 +21,9 @@
    2014-7-26 Zhaobo Tan  Init
 */
 
-if ( typeof(USERNAME) == "undefined" ) { USERNAME = "" ; }
-if ( typeof(PASSWORD) == "undefined" ) { PASSWORD = "" ; }
-if ( typeof(IP) == "undefined" ) { IP = "127.0.0.1" ; }
+if ( typeof(USERNAME) == "undefined" ) {}
+if ( typeof(PASSWORD) == "undefined" ) {}
+if ( typeof(IP) == "undefined" ) {}
 if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
 
 var objRet = new Object() ;
@@ -37,6 +37,16 @@ function main()
 {
    try
    {
+      // check argument
+      if ( typeof(USERNAME) == "undefined" ||
+           typeof(PASSWORD) == "undefined" ||
+           typeof(IP) == "undefined" ) )
+      {
+         objRet.Rc = -6 ;
+         objRet.Detail = "user name, password or ip is not defined" ;
+         return objRet ;
+      }
+
       // ping
       var ping = System.ping( IP, TIMES ) ;
       if ( null != typeof(ping) && "undefined" != typeof(ping) )
