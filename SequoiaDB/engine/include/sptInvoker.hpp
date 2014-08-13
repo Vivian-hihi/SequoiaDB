@@ -322,8 +322,6 @@ namespace engine
                                 INT32 rc,
                                 const bson::BSONObj &detail ) ;
  
-   private:
-      _sptFuncMap _funcMap ;
    } ;
    typedef class _sptInvoker sptInvoker ;
 }
