@@ -456,7 +456,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       CHAR *pEventData = NULL ;
-      INT32 buffLen = 0 ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_BUILDMSGEVENT ) ;
 
       pEventData = (CHAR *)SDB_OSS_MALLOC( pMsg->messageLength ) ;
