@@ -1149,10 +1149,10 @@ namespace
          rc = db->connect( curNode->_hostname, curNode->_serviceName ) ;
          if ( SDB_OK != rc )
          {
-            std::cout << "Warning: cannot connect to " << curNode->_hostname
-                      << ":" << curNode->_serviceName << std::endl ;
-            std::cout << "Node is invalid, it will not be inspected"
-                      << std::endl ;
+            //std::cout << "Warning: cannot connect to " << curNode->_hostname
+            //          << ":" << curNode->_serviceName << std::endl ;
+            //std::cout << "Node is invalid, it will not be inspected"
+            //          << std::endl ;
             rc = SDB_OK ;
             curNode->_state = 1 ;// cannot connect to node
 
@@ -1164,13 +1164,14 @@ namespace
          rc = db->getCollection( clName, cl ) ;
          if ( SDB_OK != rc )
          {
-            std::cout << "Error: failed to get collection:"
-                      << clName << std::endl ;
+            //std::cout << "Error: failed to get collection:"
+            //          << clName << std::endl ;
             // goto error ;
             // we should not goto error, and we considerate that the
             // node is empty.
             curNode->_state = 1 ;//cannot get collection
             delete db ;
+            db = NULL ;
          }
 
          sdbclient::sdbCursor *cr = new sdbclient::sdbCursor() ;
@@ -1180,6 +1181,7 @@ namespace
                       << std::endl ;
             rc = SDB_OOM ;
             delete db ;
+            db = NULL ;
             goto error ;
          }
 
@@ -1194,13 +1196,18 @@ namespace
          }
          if ( SDB_OK != rc )
          {
-            std::cout << "Warning: failed to query" << std::endl ;
+            //std::cout << "Warning: failed to query" << std::endl ;
             // goto error ;
             // we should not goto error, and we considerate that the
             // node is empty.
-            delete db ;
+            if ( NULL != db )
+            {
+               delete db ;
+               db = NULL ;
+            }
             delete cr ;
             curNode->_state = 2 ;//cannot get cursor
+            rc = SDB_OK ; //
          }
          else
          {
