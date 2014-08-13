@@ -168,6 +168,14 @@ namespace engine
       rc = utilReadConfigureFile( _cfgFileName, desc, vm ) ;
       if ( rc )
       {
+         if ( SDB_IO == rc )
+         {
+            // file or dir not exist
+            PD_LOG( PDWARNING, "Config[%s] not exist, use default config",
+                    _cfgFileName ) ;
+            rc = SDB_OK ;
+            goto done ;
+         }
          PD_LOG( PDERROR, "Failed to read config from file[%s], rc: %d",
                  _cfgFileName, rc ) ;
          goto error ;
