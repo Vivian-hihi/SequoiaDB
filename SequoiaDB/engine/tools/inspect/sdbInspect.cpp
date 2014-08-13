@@ -1230,11 +1230,12 @@ namespace
     ** query bson record in each cursor
     ***/
    BOOLEAN recordQuery( ciLinkList< ciCursor > &cursors,
-                      ciState &state, bson::BSONObj &obj, INT32 &rc )
+                        ciState &state, bson::BSONObj &obj, INT32 &rc )
    {
       BOOLEAN same = FALSE ;
       INT32 idx = 0 ;
       INT32 count = cursors.count() ;
+      ciCursor *cursor = NULL ;
       ciBson docs ;
 
       state.reset() ;
@@ -1243,14 +1244,19 @@ namespace
       rc = getNext( state, cursors, 0, docs, FALSE ) ;
       CHECK_VALUE( ( SDB_OK != rc ), done ) ;
 
+      cursors.resetCurrentNode() ;
+      cursor = cursors.getHead() ;
       state.reset() ;
+
       while ( idx < count )
       {
-         if ( !docs.objs[ idx ].isEmpty() && docs.objs[ idx ].equal( obj ) )
+         if ( NULL == cursor->_cursor ||
+             ( !docs.objs[ idx ].isEmpty() && docs.objs[ idx ].equal( obj ) ) )
          {
             state.set( idx ) ;
          }
          ++idx ;
+         cursor = cursors.next() ;
       }
 
       if ( state._state == ( ( 1 << count ) - 1 ) || state._state == 0 )
@@ -1335,6 +1341,11 @@ namespace
       }
 
    done:
+      if ( NULL != bsonBuffer )
+      {
+         SDB_OSS_FREE( bsonBuffer ) ;
+         bsonBuffer = NULL ;
+      }
       return rc ;
    error:
       OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
@@ -2503,6 +2514,7 @@ namespace
                                             header->_groupName,
                                             CI_GROUPNAME_SIZE ) )
          {
+            BOOLEAN writeNode = FALSE ;
             nodeList.clear() ;
             collections.clear() ;
 
@@ -2535,11 +2547,6 @@ namespace
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
             offset += CI_GROUP_HEADER_SIZE ;
 
-            // write group header to file
-            rc = writeCiNode( file, nodeList, buffer, bufferSize, validSize ) ;
-            CHECK_VALUE( ( SDB_OK != rc ), error ) ;
-            offset += validSize ;
-
             curCollection = collections.getHead() ;
             while ( NULL != curCollection )
             {
@@ -2548,6 +2555,15 @@ namespace
                rc = getCiCursor( nodeList, curCollection->_clName,
                                            cursors, order, TRUE ) ;
                CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+               if ( !writeNode )
+               {
+                  rc = writeCiNode( file, nodeList, buffer,
+                                    bufferSize, validSize ) ;
+                  CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+                  offset += validSize ;
+                  writeNode = TRUE ;
+               }
 
                ossMemset( clHeader._fullname, 0, CI_CL_FULLNAME_SIZE ) ;
                ossMemcpy( clHeader._fullname, curCollection->_clName,
@@ -2708,6 +2724,7 @@ namespace
       offset = CI_HEADER_SIZE ;
       while ( offset < tailOffset )
       {
+         BOOLEAN writeNode = FALSE ;
          rc = readCiGroupHeader( in, offset, &groupHeader ) ;
          CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
@@ -2739,14 +2756,6 @@ namespace
          rc = readCiNode( in, offset, groupHeader, ciNodes ) ;
          CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
-         rc = writeCiNode( out, ciNodes, buffer, bufferSize, validSize ) ;
-         if ( SDB_OK != rc )
-         {
-            std::cout << "Error: failed to write ciNodes to file" << std::endl ;
-            goto error ;
-         }
-         writeOffset += validSize ;
-
          UINT32 idx = 0 ;
          while ( idx < groupHeader._clCount )
          {
@@ -2765,6 +2774,20 @@ namespace
 
                rc = readCiRecord( in, offset, ciNodes, clHeader, records ) ;
                CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+            }
+
+            if ( !writeNode )
+            {
+               rc = writeCiNode( out, ciNodes, buffer,
+                                 bufferSize, validSize ) ;
+               if ( SDB_OK != rc )
+               {
+                  std::cout << "Error: failed to write ciNodes to file"
+                            << std::endl ;
+                  goto error ;
+               }
+               writeOffset += validSize ;
+               writeNode = TRUE ;
             }
 
             clHeader._recordCount = records.count() ;
