@@ -206,7 +206,7 @@ OSS_INLINE JSObject *SDB_JSVAL_TO_OBJECT( jsval x )
 }
 
 // Caller should free *bs in the case of success
-PD_TRACE_DECLARE_FUNCTION ( SDB_OBJ2BSON, "objToBson" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OBJ2BSON, "objToBson" )
 static JSBool objToBson ( JSContext *cx , JSObject *obj , bson ** bs )
 {
    PD_TRACE_ENTRY ( SDB_OBJ2BSON );
@@ -264,7 +264,7 @@ error :
 }
 
 // Bson
-PD_TRACE_DECLARE_FUNCTION ( SDB_BSON_DESTRUCTOR, "bson_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_BSON_DESTRUCTOR, "bson_destructor" )
 static void bson_destructor ( JSContext *cx , JSObject *obj )
 {
    PD_TRACE_ENTRY ( SDB_BSON_DESTRUCTOR );
@@ -288,7 +288,7 @@ static JSClass bson_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
 };
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_BSON_CONSTRUCTOR, "bson_constructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_BSON_CONSTRUCTOR, "bson_constructor" )
 static JSBool bson_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_BSON_CONSTRUCTOR );
@@ -305,7 +305,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_BSON_TO_JSON, "bson_to_json" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_BSON_TO_JSON, "bson_to_json" )
 static JSBool bson_to_json ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_BSON_TO_JSON );
@@ -349,7 +349,7 @@ static JSFunctionSpec bson_functions[] = {
 // end Bson
 
 // global functions
-PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_PRINT, "global_print" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_PRINT, "global_print" )
 static JSBool global_print ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_GLOBAL_PRINT );
@@ -389,7 +389,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_TRACE_FMT, "trace_fmt" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_TRACE_FMT, "trace_fmt" )
 static JSBool trace_fmt ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_TRACE_FMT );
@@ -433,7 +433,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_HELP, "global_help" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_HELP, "global_help" )
 static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_GLOBAL_HELP );
@@ -526,7 +526,7 @@ JSBool get_node_and_setproperty( JSContext *cx, jsval *vp,
                                  const CHAR *pServiceName ) ;
 
 // SdbCursor
-PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_DESTRUCTOR, "cursor_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_DESTRUCTOR, "cursor_destructor" )
 static void cursor_destructor ( JSContext *cx , JSObject *obj )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_DESTRUCTOR );
@@ -539,7 +539,7 @@ static void cursor_destructor ( JSContext *cx , JSObject *obj )
 
 // In the official documentation of Spider Monkey 1.8.5, the 3rd paramenter id
 // is said to be of type jsval, but it is actually jsid.
-PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_RESV, "cursor_resolve" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_RESV, "cursor_resolve" )
 static JSBool cursor_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                                uintN flags , JSObject ** objp )
 {
@@ -586,7 +586,7 @@ static JSClass cursor_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
 };
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_CONSTRUCTOR, "cursor_constructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_CONSTRUCTOR, "cursor_constructor" )
 static JSBool cursor_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_CONSTRUCTOR );
@@ -604,7 +604,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_NEXT, "cursor_next" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_NEXT, "cursor_next" )
 static JSBool cursor_next ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_NEXT );
@@ -685,7 +685,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_CURRENT, "cursor_current" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_CURRENT, "cursor_current" )
 static JSBool cursor_current ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_CURRENT );
@@ -737,7 +737,7 @@ error :
    goto done ;
 }
 /*
-PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_UP_CURRENT, "cursor_update_current" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_UP_CURRENT, "cursor_update_current" )
 static JSBool cursor_update_current ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_UP_CURRENT );
@@ -782,7 +782,7 @@ error :
 }
 */
 /*
-PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_DEL_CURR, "cursor_delete_current" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_DEL_CURR, "cursor_delete_current" )
 static JSBool cursor_delete_current ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_DEL_CURR );
@@ -814,7 +814,7 @@ error :
 }
 */
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_CLOSE, "cursor_close" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_CLOSE, "cursor_close" )
 static JSBool cursor_close ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CURSOR_CLOSE );
@@ -857,7 +857,7 @@ static JSFunctionSpec cursor_functions[] = {
 
 // count
 /*
-PD_TRACE_DECLARE_FUNCTION ( SDB_COUNT_DESTRUCTOR, "count_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COUNT_DESTRUCTOR, "count_destructor" )
 static void count_destructor ( JSContext *cx , JSObject *obj )
 {
    PD_TRACE_ENTRY ( SDB_COUNT_DESTRUCTOR );
@@ -871,7 +871,7 @@ static void count_destructor ( JSContext *cx , JSObject *obj )
 
 // In the official documentation of Spider Monkey 1.8.5, the 3rd paramenter id
 // is said to be of type jsval, but it is actually jsid.
-PD_TRACE_DECLARE_FUNCTION ( SDB_COUNT_RESV, "count_resolve" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COUNT_RESV, "count_resolve" )
 static JSBool count_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                                uintN flags , JSObject ** objp )
 {
@@ -917,7 +917,7 @@ static JSClass count_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
 };
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COUNT_CONSTRUCTOR, "count_constructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COUNT_CONSTRUCTOR, "count_constructor" )
 static JSBool count_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COUNT_CONSTRUCTOR );
@@ -954,7 +954,7 @@ error:
 }
 
 // SdbCollection
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DESTRUCTOR, "collection_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DESTRUCTOR, "collection_destructor" )
 static void collection_destructor ( JSContext *cx , JSObject *obj )
 {
    PD_TRACE_ENTRY ( SDB_COLL_DESTRUCTOR );
@@ -980,7 +980,7 @@ static JSClass collection_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
 };
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CONSTRUCTOR, "collection_constructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CONSTRUCTOR, "collection_constructor" )
 static JSBool collection_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_CONSTRUCTOR );
@@ -998,7 +998,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_RAW_FND, "collection_raw_find" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_RAW_FND, "collection_raw_find" )
 static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_RAW_FND );
@@ -1188,7 +1188,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_INSERT, "collection_insert" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_INSERT, "collection_insert" )
 static JSBool collection_insert ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_INSERT );
@@ -1249,7 +1249,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_UPDATE, "collection_update" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_UPDATE, "collection_update" )
 static JSBool collection_update ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_UPDATE );
@@ -1313,7 +1313,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_UPSERT, "collection_upsert" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_UPSERT, "collection_upsert" )
 static JSBool collection_upsert ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_UPSERT );
@@ -1377,7 +1377,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_REMOVE, "collection_remove" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_REMOVE, "collection_remove" )
 static JSBool collection_remove ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_REMOVE );
@@ -1426,7 +1426,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_EXPLAIN, "collection_explain" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_EXPLAIN, "collection_explain" )
 static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_COLL_EXPLAIN ) ;
@@ -1525,7 +1525,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_COUNT, "collection_count" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_COUNT, "collection_count" )
 static JSBool collection_count ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_COUNT );
@@ -1577,7 +1577,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_SPLIT, "collection_split" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_SPLIT, "collection_split" )
 static JSBool collection_split ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_SPLIT );
@@ -1672,7 +1672,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_SPLIT_ASYNC, "collection_split_async" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_SPLIT_ASYNC, "collection_split_async" )
 static JSBool collection_split_async ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_SPLIT_ASYNC );
@@ -1805,7 +1805,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CRT_INX, "collection_create_index" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CRT_INX, "collection_create_index" )
 static JSBool collection_create_index ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_CRT_INX );
@@ -1868,7 +1868,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_GET_INX, "collection_get_indexes" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_GET_INX, "collection_get_indexes" )
 static JSBool collection_get_indexes ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_GET_INX );
@@ -1930,7 +1930,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DROP_INX, "collection_drop_index" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DROP_INX, "collection_drop_index" )
 static JSBool collection_drop_index ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_DROP_INX );
@@ -1967,7 +1967,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_BULK_INSERT, "collection_bulk_insert" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_BULK_INSERT, "collection_bulk_insert" )
 static JSBool collection_bulk_insert ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_BULK_INSERT );
@@ -2033,7 +2033,7 @@ error :
    goto done ;
 }
 /*
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_RENM, "collection_rename" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_RENM, "collection_rename" )
 static JSBool collection_rename ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_RENM );
@@ -2070,7 +2070,7 @@ error :
    goto done ;
 }*/
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_AGGR, "collection_aggr" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_AGGR, "collection_aggr" )
 static JSBool collection_aggr ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_AGGR );
@@ -2146,7 +2146,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_ATTACHCOLLECTION, "collection_attachCollection" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_ATTACHCOLLECTION, "collection_attachCollection" )
 static JSBool collection_attachCollection ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_ATTACHCOLLECTION );
@@ -2207,7 +2207,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DETACHCOLLECTION, "collection_detachCollection" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DETACHCOLLECTION, "collection_detachCollection" )
 static JSBool collection_detachCollection ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_COLL_DETACHCOLLECTION );
@@ -2275,7 +2275,7 @@ static JSFunctionSpec collection_functions[] = {
 
 // In the official documentation of Spider Monkey 1.8.5, the 3rd paramenter id
 // is said to be of type jsval, but it is actually jsid.
-PD_TRACE_DECLARE_FUNCTION ( SDB_QUERY_RESV, "query_resolve" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_QUERY_RESV, "query_resolve" )
 static JSBool query_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                               uintN flags , JSObject ** objp )
 {
@@ -2322,7 +2322,7 @@ static JSClass query_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS                  // optional members
 };
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_QUERY_CONSTRUCTOR, "query_constructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_QUERY_CONSTRUCTOR, "query_constructor" )
 static JSBool query_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_QUERY_CONSTRUCTOR );
@@ -2396,7 +2396,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RN_DESTRUCTOR, "rn_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RN_DESTRUCTOR, "rn_destructor" )
 static void rn_destructor ( JSContext *cx, JSObject *obj )
 {
    PD_TRACE_ENTRY ( SDB_RN_DESTRUCTOR );
@@ -2423,7 +2423,7 @@ static JSClass rn_class = {
 } ;
 
 // SdbReplicaGroup
-PD_TRACE_DECLARE_FUNCTION ( SB_RG_DESTRUCTOR, "rg_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SB_RG_DESTRUCTOR, "rg_destructor" )
 static void rg_destructor ( JSContext *cx, JSObject *obj )
 {
    PD_TRACE_ENTRY ( SB_RG_DESTRUCTOR );
@@ -2449,7 +2449,7 @@ static JSClass rg_class = {
     JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
 } ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RG_CONSTRUCTOR, "rg_constructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_CONSTRUCTOR, "rg_constructor" )
 static JSBool rg_constructor ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_CONSTRUCTOR );
@@ -2466,7 +2466,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RG_GET_MST, "rg_get_master" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_GET_MST, "rg_get_master" )
 static JSBool rg_get_master ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_GET_MST );
@@ -2549,7 +2549,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RG_GET_SLAVE, "rg_get_slave" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_GET_SLAVE, "rg_get_slave" )
 static JSBool rg_get_slave ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_GET_SLAVE );
@@ -2633,7 +2633,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RG_START, "rg_start" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_START, "rg_start" )
 static JSBool rg_start ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_START );
@@ -2658,7 +2658,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RG_STOP, "rg_stop" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_STOP, "rg_stop" )
 static JSBool rg_stop ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_STOP );
@@ -2683,7 +2683,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RG_CRT_NODE, "rg_create_node" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_CRT_NODE, "rg_create_node" )
 static JSBool rg_create_node ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_CRT_NODE );
@@ -2803,7 +2803,7 @@ error :
 
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RG_RM_NODE, "rg_remove_node" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_RM_NODE, "rg_remove_node" )
 static JSBool rg_remove_node ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_RG_RM_NODE ) ;
@@ -2856,7 +2856,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_GET_NODE_AND_SETPROPERTY, "get_node_and_setproperty" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GET_NODE_AND_SETPROPERTY, "get_node_and_setproperty" )
 JSBool get_node_and_setproperty( JSContext *cx, jsval *vp,
                                  jsval *valRG,
                                  sdbReplicaGroupHandle *rg,
@@ -2944,7 +2944,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RG_GET_NODE, "rg_get_node" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RG_GET_NODE, "rg_get_node" )
 static JSBool rg_get_node ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_GET_NODE );
@@ -3026,7 +3026,7 @@ static JSFunctionSpec rg_functions[] = {
 
 // SdbCollectionSpace
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CS_DESTRUCTOR, "cs_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_DESTRUCTOR, "cs_destructor" )
 static void cs_destructor ( JSContext *cx , JSObject *obj )
 {
    PD_TRACE_ENTRY ( SDB_CS_DESTRUCTOR );
@@ -3037,7 +3037,7 @@ static void cs_destructor ( JSContext *cx , JSObject *obj )
    PD_TRACE_EXIT ( SDB_CS_DESTRUCTOR );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_ISSPECCOLLNM, "isSpecialCollectionName" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ISSPECCOLLNM, "isSpecialCollectionName" )
 static JSBool isSpecialCollectionName ( const CHAR *name )
 {
    PD_TRACE_ENTRY ( SDB_ISSPECCOLLNM );
@@ -3073,7 +3073,7 @@ done :
 
 // In the official documentation of Spider Monkey 1.8.5, the 3rd paramenter id
 // is said to be of type jsval, but it is actually jsid.
-PD_TRACE_DECLARE_FUNCTION ( SDB_CS_RESV, "cs_resolve" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_RESV, "cs_resolve" )
 static JSBool cs_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                            uintN flags , JSObject ** objp )
 {
@@ -3142,7 +3142,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION( GET_CL_AND_SETPROPERTY, "get_cl_and_setproperty" )
+// PD_TRACE_DECLARE_FUNCTION( GET_CL_AND_SETPROPERTY, "get_cl_and_setproperty" )
 static JSBool get_cl_and_setproperty( JSContext *cx, jsval *vp,
                                       jsval *vpcs,
                                       sdbCSHandle cs,
@@ -3197,7 +3197,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CS_GET_CL, "cs_get_cl" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_GET_CL, "cs_get_cl" )
 static JSBool cs_get_cl ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CS_GET_CL );
@@ -3229,7 +3229,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SB_CS_CRT_CL, "cs_create_cl" )
+// PD_TRACE_DECLARE_FUNCTION ( SB_CS_CRT_CL, "cs_create_cl" )
 static JSBool cs_create_cl ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SB_CS_CRT_CL );
@@ -3302,7 +3302,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CS_DROP_CL, "cs_drop_cl" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CS_DROP_CL, "cs_drop_cl" )
 static JSBool cs_drop_cl ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_CS_DROP_CL );
@@ -3357,7 +3357,7 @@ static JSFunctionSpec cs_functions[] = {
 } ;
 
 // ----------- Domain ------------
-PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_DESTRUCTOR, "domain_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_DESTRUCTOR, "domain_destructor" )
 static void domain_destructor ( JSContext *cx, JSObject *obj )
 {
    PD_TRACE_ENTRY ( SDB_DOMAIN_DESTRUCTOR );
@@ -3395,7 +3395,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_ALTER, "domain_alter" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_ALTER, "domain_alter" )
 static JSBool domain_alter( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_DOMAIN_ALTER ) ;
@@ -3441,7 +3441,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_LIST_CS, "domain_list_cs" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_LIST_CS, "domain_list_cs" )
 static JSBool domain_list_cs( JSContext *cx, uintN argc, jsval *vp )
 {
    INT32 rc = SDB_OK ;
@@ -3478,7 +3478,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_LIST_CL, "domain_list_cl" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_LIST_CL, "domain_list_cl" )
 static JSBool domain_list_cl( JSContext *cx, uintN argc, jsval *vp )
 {
    INT32 rc = SDB_OK ;
@@ -3524,7 +3524,7 @@ static JSFunctionSpec domain_functions[] = {
 
 
 // ----------- Sdb --------------
-PD_TRACE_DECLARE_FUNCTION ( SDB_DESTRUCTOR, "sdb_destructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DESTRUCTOR, "sdb_destructor" )
 static void sdb_destructor ( JSContext *cx , JSObject *obj )
 {
    UINT64                  addr       = 0 ;
@@ -3546,7 +3546,7 @@ static void sdb_destructor ( JSContext *cx , JSObject *obj )
    PD_TRACE_EXIT ( SDB_DESTRUCTOR );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_ISSPECSNM, "isSpecialCSName" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ISSPECSNM, "isSpecialCSName" )
 static JSBool isSpecialCSName ( const CHAR *name )
 {
    PD_TRACE_ENTRY ( SDB_ISSPECSNM );
@@ -3626,7 +3626,7 @@ done :
 
 // In the official documentation of Spider Monkey 1.8.5, the 3rd paramenter id
 // is said to be of type jsval, but it is actually jsid.
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RESV, "sdb_resolve" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RESV, "sdb_resolve" )
 static JSBool sdb_resolve ( JSContext *cx , JSObject *obj , jsid id ,
                             uintN flags , JSObject ** objp )
 {
@@ -3679,7 +3679,7 @@ static JSClass sdb_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS           // optional members
 };
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CONSTRUCTOR, "sdb_constructor" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CONSTRUCTOR, "sdb_constructor" )
 static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CONSTRUCTOR );
@@ -3882,7 +3882,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RN_CONNECT, "rn_connect" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RN_CONNECT, "rn_connect" )
 static JSBool rn_connect ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RN_CONNECT );
@@ -3942,7 +3942,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RN_START, "rn_start" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RN_START, "rn_start" )
 static JSBool rn_start ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RN_START );
@@ -3967,7 +3967,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_RN_STOP, "rn_stop" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_RN_STOP, "rn_stop" )
 static JSBool rn_stop ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RN_STOP );
@@ -3999,7 +3999,7 @@ static JSFunctionSpec rn_functions[] = {
    JS_FS_END
 } ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_RG, "sdb_create_rg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_RG, "sdb_create_rg" )
 static JSBool sdb_create_rg ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_RG );
@@ -4333,7 +4333,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_PROCEDURE, "sdb_crt_procedure" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_PROCEDURE, "sdb_crt_procedure" )
 static JSBool sdb_crt_procedure( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_PROCEDURE ) ;
@@ -4376,7 +4376,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RM_PROCEDURE, "sdb_rm_procedure" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RM_PROCEDURE, "sdb_rm_procedure" )
 static JSBool sdb_rm_procedure( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_RM_PROCEDURE ) ;
@@ -4409,7 +4409,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST_PROCEDURES, "sdb_list_procedures" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST_PROCEDURES, "sdb_list_procedures" )
 static JSBool sdb_list_procedures( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_LIST_PROCEDURES ) ;
@@ -4458,7 +4458,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_EVAL, "sdb_eval" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_EVAL, "sdb_eval" )
 static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_EVAL ) ;
@@ -4745,7 +4745,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_FLUSH_CONF, "sdb_flush_configure" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_FLUSH_CONF, "sdb_flush_configure" )
 static JSBool sdb_flush_configure( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_FLUSH_CONF ) ;
@@ -4783,7 +4783,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RM_RG, "rg_remove_rg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RM_RG, "rg_remove_rg" )
 static JSBool ssdb_remove_rg ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_RM_RG );
@@ -4817,7 +4817,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_CATA_RG, "sdb_create_cata_rg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_CATA_RG, "sdb_create_cata_rg" )
 static JSBool sdb_create_cata_rg ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_CATA_RG );
@@ -4880,7 +4880,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_CS, "sdb_create_cs" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_CS, "sdb_create_cs" )
 static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_CS );
@@ -5003,7 +5003,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION( SDB_GET_RG_AND_SETPROPERTY, "get_rg_and_setproperty" )
+// PD_TRACE_DECLARE_FUNCTION( SDB_GET_RG_AND_SETPROPERTY, "get_rg_and_setproperty" )
 JSBool get_rg_and_setproperty( JSContext *cx, jsval *vp,
                                sdbConnectionHandle conn,
                                UINT32 id, const CHAR *name )
@@ -5059,7 +5059,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_GET_RG, "sdb_get_rg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_GET_RG, "sdb_get_rg" )
 static JSBool sdb_get_rg ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_GET_RG );
@@ -5109,7 +5109,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION(GET_CS_AND_SETPROPERTY, "get_cs_and_setproperty" )
+// PD_TRACE_DECLARE_FUNCTION(GET_CS_AND_SETPROPERTY, "get_cs_and_setproperty" )
 JSBool get_cs_and_setproperty( JSContext *cx, jsval *vp,
                                sdbConnectionHandle *connection,
                                const CHAR *csName,
@@ -5157,7 +5157,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_GET_CS, "sdb_get_cs" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GET_CS, "sdb_get_cs" )
 static JSBool sdb_get_cs ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_GET_CS );
@@ -5191,7 +5191,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_DROP_CS, "sdb_drop_cs" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_DROP_CS, "sdb_drop_cs" )
 static JSBool sdb_drop_cs( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_DROP_CS );
@@ -5237,7 +5237,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SNAPSHOT, "sdb_snapshot" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SNAPSHOT, "sdb_snapshot" )
 static JSBool sdb_snapshot ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_SNAPSHOT );
@@ -5317,7 +5317,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RESET_SNAP, "sdb_reset_snapshot" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RESET_SNAP, "sdb_reset_snapshot" )
 static JSBool sdb_reset_snapshot ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_RESET_SNAP );
@@ -5352,7 +5352,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST, "sdb_list" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST, "sdb_list" )
 static JSBool sdb_list ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_LIST );
@@ -5432,7 +5432,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_START_RG, "sdb_start_rg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_START_RG, "sdb_start_rg" )
 static JSBool sdb_start_rg ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_START_RG );
@@ -5493,7 +5493,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_USER, "sdb_create_user" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_USER, "sdb_create_user" )
 static JSBool sdb_create_user ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_USER );
@@ -5546,7 +5546,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_DROP_USER, "sdb_drop_user" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_DROP_USER, "sdb_drop_user" )
 static JSBool sdb_drop_user ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_DROP_USER );
@@ -5597,7 +5597,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_EXEC, "sdb_exec" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_EXEC, "sdb_exec" )
 static JSBool sdb_exec ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_EXEC );
@@ -5654,7 +5654,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_EXECUP, "sdb_execUpdate" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_EXECUP, "sdb_execUpdate" )
 static JSBool sdb_execUpdate ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_EXECUP );
@@ -5687,7 +5687,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRACE_ON, "sdb_trace_on" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRACE_ON, "sdb_trace_on" )
 static JSBool sdb_trace_on ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRACE_ON );
@@ -5731,7 +5731,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRACE_RESUME, "sdb_trace_resume" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRACE_RESUME, "sdb_trace_resume" )
 static JSBool sdb_trace_resume ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRACE_RESUME );
@@ -5753,7 +5753,7 @@ error :
 }
 
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRACE_OFF, "sdb_trace_off" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRACE_OFF, "sdb_trace_off" )
 static JSBool sdb_trace_off ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRACE_OFF );
@@ -5831,7 +5831,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRANS_BEGIN, "sdb_trans_begin" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRANS_BEGIN, "sdb_trans_begin" )
 static JSBool sdb_trans_begin ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRANS_BEGIN );
@@ -5856,7 +5856,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRANS_COMMIT, "sdb_trans_commit" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRANS_COMMIT, "sdb_trans_commit" )
 static JSBool sdb_trans_commit ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRANS_COMMIT );
@@ -5880,7 +5880,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRANS_ROLLBACK, "sdb_trans_rollback" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_TRANS_ROLLBACK, "sdb_trans_rollback" )
 static JSBool sdb_trans_rollback ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_TRANS_ROLLBACK );
@@ -5905,7 +5905,7 @@ error :
 }
 
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CLOSE, "sdb_close" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CLOSE, "sdb_close" )
 static JSBool sdb_close ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CLOSE );
@@ -5939,7 +5939,7 @@ error :
 }
 
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_BACKUP_OFFLINE, "sdb_backup_offline" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_BACKUP_OFFLINE, "sdb_backup_offline" )
 static JSBool sdb_backup_offline ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_BACKUP_OFFLINE );
@@ -5977,7 +5977,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST_BACKUP, "sdb_list_backup" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST_BACKUP, "sdb_list_backup" )
 static JSBool sdb_list_backup ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_LIST_BACKUP );
@@ -6065,7 +6065,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_REMOVE_BACKUP, "sdb_remove_backup" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_REMOVE_BACKUP, "sdb_remove_backup" )
 static JSBool sdb_remove_backup ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_REMOVE_BACKUP );
@@ -6104,7 +6104,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST_TASKS, "sdb_list_tasks" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST_TASKS, "sdb_list_tasks" )
 static JSBool sdb_list_tasks ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_LIST_TASKS );
@@ -6192,7 +6192,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_WAIT_TASKS, "sdb_wait_tasks" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_WAIT_TASKS, "sdb_wait_tasks" )
 static JSBool sdb_wait_tasks ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_WAIT_TASKS );
@@ -6236,7 +6236,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CANCEL_TASK, "sdb_cancel_task" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CANCEL_TASK, "sdb_cancel_task" )
 static JSBool sdb_cancel_task ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CANCEL_TASK );
@@ -6279,7 +6279,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SET_SESSION_ATTR, "sdb_set_session_attr" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SET_SESSION_ATTR, "sdb_set_session_attr" )
 static JSBool sdb_set_session_attr ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_SET_SESSION_ATTR );
@@ -6318,7 +6318,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_MSG, "sdb_msg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_MSG, "sdb_msg" )
 static JSBool sdb_msg ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_MSG );
@@ -6350,7 +6350,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION( SDB_SDB_INVALIDATE_CACHE, "sdb_invalidate_cache" )
+// PD_TRACE_DECLARE_FUNCTION( SDB_SDB_INVALIDATE_CACHE, "sdb_invalidate_cache" )
 static JSBool sdb_invalidate_cache( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_INVALIDATE_CACHE ) ;
@@ -6386,7 +6386,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION( SDB_SDB_INTERRUPT_SESSION, "sdb_interrupt_session" )
+// PD_TRACE_DECLARE_FUNCTION( SDB_SDB_INTERRUPT_SESSION, "sdb_interrupt_session" )
 static JSBool sdb_interrupt_session( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY( SDB_SDB_INTERRUPT_SESSION ) ;
