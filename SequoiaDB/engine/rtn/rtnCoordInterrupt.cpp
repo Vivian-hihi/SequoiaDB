@@ -85,7 +85,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINTERRUPT_SENDINTER, "rtnCoordInterrupt::SendInterrupt" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINTERRUPT_SENDINTER, "rtnCoordInterrupt::SendInterrupt" )
    void rtnCoordInterrupt::SendInterrupt( pmdEDUCB *cb, ROUTE_SET &routeSet )
    {
       PD_TRACE_ENTRY ( SDB_RTNCOINTERRUPT_SENDINTER ) ;

@@ -256,8 +256,9 @@ namespace engine
          INT32    append( const BSONObj &result ) ;
          INT32    appendObjs( const CHAR *pObjBuff, INT32 len, INT32 num ) ;
 
-         virtual INT32    getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                           INT64 &startPos, _pmdEDUCB *cb ) ;
+         virtual INT32    getMore( INT32 maxNumToReturn,
+                                   rtnContextBuf &buffObj,
+                                   INT64 &startPos, _pmdEDUCB *cb ) ;
 
          OSS_INLINE BOOLEAN  isEmpty () const ;
 
@@ -785,7 +786,7 @@ namespace engine
                   BOOLEAN includeShardingOrder = FALSE );
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
-                              INT64 &startPos, _pmdEDUCB *cb );
+                             INT64 &startPos, _pmdEDUCB *cb );
 
       INT32 addSubContext( SINT64 contextID );
 

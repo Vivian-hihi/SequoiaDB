@@ -3598,9 +3598,9 @@ namespace engine
    }
 
    INT32 _rtnContextMainCL::getMore( INT32 maxNumToReturn,
-                                    rtnContextBuf &buffObj,
-                                    INT64 &startPos,
-                                    _pmdEDUCB *cb )
+                                     rtnContextBuf &buffObj,
+                                     INT64 &startPos,
+                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       BOOLEAN hasData = FALSE;
@@ -3608,12 +3608,10 @@ namespace engine
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
 
       // OrderBy: get data one by one and caused copy
-      if ( !isEmpty()
-         || ( requireOrder() && !_includeShardingOrder ) )
+      if ( !isEmpty() || ( requireOrder() && !_includeShardingOrder ) )
       {
-         rc = this->_rtnContextBase::getMore( maxNumToReturn,
-                                          buffObj, startPos,
-                                          cb );
+         rc = this->_rtnContextBase::getMore( maxNumToReturn, buffObj,
+                                              startPos, cb );
          goto done;
       }
 
@@ -3626,8 +3624,8 @@ namespace engine
          {
             SubCLBufList::iterator iterSubCTXSkip
                               = _subCLBufList.begin();
-            if ( _subCLBufList.end() == iterSubCTXSkip
-               || iterSubCTXSkip->second.recordNum() <= 0 )
+            if ( _subCLBufList.end() == iterSubCTXSkip ||
+                 iterSubCTXSkip->second.recordNum() <= 0 )
             {
                break;
             }
@@ -3643,8 +3641,7 @@ namespace engine
             }
          }
 
-         SubCLBufList::iterator iterSubCTX
-                              = _subCLBufList.begin();
+         SubCLBufList::iterator iterSubCTX = _subCLBufList.begin();
          if ( _subCLBufList.end() == iterSubCTX )
          {
             rc = SDB_DMS_EOC;
@@ -3653,8 +3650,7 @@ namespace engine
 
          if ( iterSubCTX->second.recordNum() <= 0 )
          {
-            rc = _prepareSubCTXData( iterSubCTX,
-                                    cb, maxNumToReturn );
+            rc = _prepareSubCTXData( iterSubCTX, cb, maxNumToReturn );
             if ( rc != SDB_OK )
             {
                pRtncb->contextDelete( iterSubCTX->first, cb );
