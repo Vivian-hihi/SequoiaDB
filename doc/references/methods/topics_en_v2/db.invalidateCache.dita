@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>invalidateCache.getRG</apiname>(<parmname>[options]</parmname>)
+      <p></p><apiname>invalidateCache</apiname>(<parmname>[options]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
