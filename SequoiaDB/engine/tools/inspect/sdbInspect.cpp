@@ -1702,6 +1702,11 @@ namespace
       len += sizeof( UINT32 ) ;
 
       rc = writeToFile( out,
+                        ( const CHAR * )&tail->_mainClCount, sizeof( UINT32 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+      len += sizeof( UINT32 ) ;
+
+      rc = writeToFile( out,
                         ( const CHAR * )&tail->_recordCount, sizeof( INT64 ) ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       len += sizeof( INT64 ) ;
