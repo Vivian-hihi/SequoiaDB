@@ -40,6 +40,7 @@
 #include "catCommon.hpp"
 #include "../bson/lib/md5.hpp"
 #include "ossProc.hpp"
+#include "rtn.hpp"
 
 
 using namespace bson ;
@@ -53,7 +54,7 @@ namespace engine
       Message Map
    */
    BEGIN_OBJ_MSG_MAP( _omManager, _pmdObjBase )
-      
+
    END_OBJ_MSG_MAP()
 
    /*
@@ -87,7 +88,7 @@ namespace engine
    INT32 _omManager::init ()
    {
       INT32 rc           = SDB_OK ;
-      
+
       // create collection space and collection
       _pKrcb  = pmdGetKRCB() ;
       _pDmsCB = _pKrcb->getDMSCB() ;
@@ -104,8 +105,12 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to initial the om tables rc = %d", 
                     rc ) ;
 
+      rc = _restoreTask() ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to restore task:rc=%d", 
+                    rc ) ;
+
       _readAgentPort() ;
-      
+
       rc = _restAdptor.init( _fixBufSize, _maxRestBodySize, _restTimeout ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init rest adptor, rc: %d", rc ) ;
 
@@ -115,7 +120,7 @@ namespace engine
       return rc;
    error:
       goto done;
-         
+
    }
 
    INT32 _omManager::_initOmTables() 
@@ -124,7 +129,7 @@ namespace engine
       INT32 rc            = SDB_OK ;
       BSONObjBuilder bsonBuilder ;
       SDB_AUTHCB *pAuthCB = NULL ;
-      
+
       cb = pmdGetThreadEDUCB() ;
 
       // SYSDEPLOY.SYSCLUSTER
@@ -174,6 +179,19 @@ namespace engine
 
       // SYSDEPLOY.SYSCONFIGURE
       rc = _createCollection ( OM_CS_DEPLOY_CL_CONFIGURE, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // SYSDEPLOY.SYSTASKINFO
+      rc = _createCollection ( OM_CS_DEPLOY_CL_TASKINFO, cb ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_TASKINFO,
+                             OM_CS_DEPLOY_CL_TASKINFOIDX1, cb ) ;
       if ( rc )
       {
          goto error ;
@@ -807,14 +825,6 @@ namespace engine
 
       taskElement = taskInfo.getField( OM_BSON_TASKID ) ;
       ossLltoa( taskElement.numberLong(), taskID, OM_INT32_LENGTH ) ;
-      
-      rc = _storeTaskInfo( taskID, confValue, OM_TASK_STATUS_DOING ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "save task failed:task=%s:rc=%d", taskID, rc ) ;
-         goto error ;
-      }
-
       _omTaskInfo._taskID        = taskID ;
       _omTaskInfo._agentHostName = agentHost ;
       _omTaskInfo._agentSvcName  = agentService ;
@@ -904,7 +914,7 @@ namespace engine
                                                        OM_BSON_ISFINISHED ) ;
       }
 
-      rc = _removeTaskInfo( _omTaskInfo._taskID ) ;
+      rc = removeTask( _omTaskInfo._taskID ) ;
       if ( SDB_OK != rc )
       {
          /*
@@ -1076,7 +1086,7 @@ namespace engine
       {
          goto done ;
       }
-      
+
       builder.append( OM_BSON_TASKID, ossAtoll(taskID.c_str() ) ) ;
       msg = builder.obj() ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
@@ -1088,7 +1098,6 @@ namespace engine
          goto error ;
       }
 
-      
       remoteSession = getRSManager()->addSession( cb, 
                                                   OM_WAIT_PROGRESS_RES_INTERVAL,
                                                   NULL ) ;
@@ -1213,20 +1222,95 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omManager::_storeTaskInfo( string taskID, const BSONObj &confValue, 
-                                     INT32 status )
+   INT32 _omManager::storeTaskInfo( string taskID, string taskType, 
+                                     const BSONObj &confValue, INT32 status )
    {
-      //TODO
-      return SDB_OK ;
+      INT32 rc     = SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      BSONObjBuilder builder ;
+      BSONObj tmp  = BSON( OM_TAKSINFO_FIELD_TASKID << taskID 
+                           << OM_TAKSINFO_FIELD_TYPE << taskType
+                           << OM_TAKSINFO_FIELD_INFO << confValue 
+                           << OM_TAKSINFO_FIELD_STATUS << status ) ;
+
+      rc = rtnInsert( OM_CS_DEPLOY_CL_HOST, tmp, 1, 0, cb );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to store taskinfo into table:%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
-   
-   INT32 _omManager::_removeTaskInfo( string taskID )
+
+   INT32 _omManager::removeTask( string taskID )
+   {
+      INT32 rc          = SDB_OK ;
+      pmdEDUCB *cb      = pmdGetThreadEDUCB() ;
+      BSONObj condition = BSON( OM_TAKSINFO_FIELD_TASKID << taskID ) ;
+      BSONObj hint ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_HOST, condition, hint, 0, cb );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to delete taskinfo from table:%s,"
+                     "taskID=%s,rc=%d", OM_CS_DEPLOY_CL_TASKINFO, 
+                     taskID.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::updateTaskID( string oldID, long long newID )
+   {
+      CHAR taskID[OM_INT32_LENGTH] ;
+      ossLltoa( newID, taskID, OM_INT32_LENGTH ) ;
+
+      return updateTaskID( oldID, taskID ) ;
+   }
+
+   INT32 _omManager::updateTaskID( string oldID, string newID )
+   {
+      INT32 rc     = SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ; ;
+      BSONObjBuilder builder ;
+      BSONObj hint ;
+
+      BSONObj condition = BSON( OM_TAKSINFO_FIELD_TASKID << oldID ) ;
+      BSONObj tmp       = BSON( OM_TAKSINFO_FIELD_TASKID << newID ) ;
+      BSONObj obj       = BSON( "$set" << tmp ) ;
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, condition, obj, hint, 0, cb, 
+                      _pDmsCB, _pKrcb->getDPSCB() ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to update taskid in table:%s,oldID=%s,"
+                     "newID=%s,rc=%d", OM_CS_DEPLOY_CL_TASKINFO, 
+                     oldID.c_str(), newID.c_str(), rc ) ;
+         SDB_ASSERT( 0, "this should not happend!" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::_storeBusinessInfo()
    {
       //TODO
       return SDB_OK ;
    }
 
-   INT32 _omManager::_storeBusinessInfo()
+   INT32 _omManager::_restoreTask()
    {
       //TODO
       return SDB_OK ;

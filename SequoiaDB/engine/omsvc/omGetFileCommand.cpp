@@ -3651,6 +3651,17 @@ namespace engine
       omManager *om     = NULL ;
       MsgHeader *pMsg   = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
+      string fakeTaskID = OM_TASKINFO_FAKE_TASKID ;
+
+      rc = om->storeTaskInfo( fakeTaskID, OM_INSTALL_BUSINESS_REQ,
+                              bsonConfValue, OM_TASK_STATUS_DOING ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = _cb->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_INSTALL_BUSINESS_REQ, 
                              0, 0, 0, -1, &bsonConfValue, NULL, NULL, NULL ) ;
@@ -3718,10 +3729,13 @@ namespace engine
          goto error ;
       }
 
+      //TODO: we assume thas this should not fail;
+      om->updateTaskID( fakeTaskID, taskElement.numberLong() ) ;
       rc = om->saveInstallTask( _localAgentHost, _localAgentService, result, 
                                 bsonConfValue ) ;
       SDB_ASSERT( ( SDB_OK == rc ), "" ) ;
    done:
+      om->removeTask( fakeTaskID ) ;
       _clearSession( om, remoteSession ) ;
       return rc ;
    error:

@@ -128,6 +128,19 @@ namespace engine
    #define OM_CONFIGURE_FIELD_BUSINESSNAME   "BusinessName"
    #define OM_CONFIGURE_FIELD_CONFIG         "Config"
 
+   // deploy.taskinfo
+   #define OM_CS_DEPLOY_CL_TASKINFO          OM_CS_DEPLOY".SYSTASKINFO"
+
+   #define OM_TAKSINFO_FIELD_TASKID          "TaskID"
+   #define OM_TAKSINFO_FIELD_TYPE            "Type"
+   #define OM_TAKSINFO_FIELD_INFO            "Info"
+   #define OM_TAKSINFO_FIELD_STATUS          "Status"
+
+   #define OM_CS_DEPLOY_CL_TASKINFOIDX1      "{name:\"SYSDEPLOY_TASKINFO_IDX1\",key: {"\
+                                             OM_TAKSINFO_FIELD_TASKID":1}, unique: true, enforced: true } "
+
+   #define OM_TASKINFO_FAKE_TASKID           "fakeID"
+
    // OM_REST_DEFINE
    #define  OM_REST_LOGIN_HTML               "login.html"
    #define  OM_REST_INDEX_HTML               "index.html"
@@ -314,7 +327,7 @@ namespace engine
    // om rest install_business_req
    #define  OM_INSTALL_BUSINESS_REQ          "add business"
 
-   #define  OM_ROLLBACK_INSTALL_REQ          "RollbackInstallReq"
+   #define  OM_ROLLBACK_INSTALL_REQ          OM_ROLLBACK_TRANSACTION_REQ
 
    #define  OM_REST_CONFIG_INFO              "ConfigInfo"
 

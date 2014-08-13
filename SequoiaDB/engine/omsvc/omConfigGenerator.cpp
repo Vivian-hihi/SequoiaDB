@@ -1220,6 +1220,14 @@ namespace engine
       _clear() ;
 
       _businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( _businessName == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_BUSINESS_NAME ) + " is empty!" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
       rc            = _parseTemplate( bsonTemplate ) ;
       if ( SDB_OK != rc )
       {

@@ -179,6 +179,13 @@ namespace engine
          void              updateInstallTask( BSONObj &taskDetail ) ;
          string            getLocalAgentPort() ;
 
+         INT32             storeTaskInfo( string taskID, string taskType, 
+                                           const BSONObj &confValue, 
+                                           INT32 status ) ;
+         INT32             updateTaskID( string oldID, string newID ) ;
+         INT32             updateTaskID( string oldID, long long newID ) ;
+         INT32             removeTask( string taskID ) ;
+
       protected:
          virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
 
@@ -210,12 +217,9 @@ namespace engine
                                               BSONObj &result ) ;
          void              _readAgentPort() ;
 
-         INT32             _storeTaskInfo( string taskID, 
-                                           const BSONObj &confValue, 
-                                           INT32 status ) ;
-         INT32             _removeTaskInfo( string taskID ) ;
-
          INT32             _storeBusinessInfo() ;
+
+         INT32             _restoreTask() ;
          
 
       // Msg functions
@@ -258,8 +262,6 @@ namespace engine
          UINT32                                 _checkTaskTimer ;
 
          string                                 _localAgentPort ;
-
-
    } ;
 
    typedef _omManager omManager ;
