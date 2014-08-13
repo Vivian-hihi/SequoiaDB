@@ -1223,15 +1223,18 @@ namespace engine
    }
 
    INT32 _omManager::storeTaskInfo( string taskID, string taskType, 
-                                     const BSONObj &confValue, INT32 status )
+                                    string agentHost, string agentService,
+                                    const BSONObj &confValue, INT32 status )
    {
       INT32 rc     = SDB_OK ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       BSONObjBuilder builder ;
-      BSONObj tmp  = BSON( OM_TAKSINFO_FIELD_TASKID << taskID 
-                           << OM_TAKSINFO_FIELD_TYPE << taskType
-                           << OM_TAKSINFO_FIELD_INFO << confValue 
-                           << OM_TAKSINFO_FIELD_STATUS << status ) ;
+      BSONObj tmp  = BSON( OM_TASKINFO_FIELD_TASKID << taskID 
+                           << OM_TASKINFO_FIELD_TYPE << taskType
+                           << OM_TASKINFO_FIELD_AGENTHOST << agentHost 
+                           << OM_TASKINFO_FIELD_AGENTSERVICE << agentService
+                           << OM_TASKINFO_FIELD_INFO << confValue 
+                           << OM_TASKINFO_FIELD_STATUS << status ) ;
 
       rc = rtnInsert( OM_CS_DEPLOY_CL_HOST, tmp, 1, 0, cb );
       if ( rc )
@@ -1251,7 +1254,7 @@ namespace engine
    {
       INT32 rc          = SDB_OK ;
       pmdEDUCB *cb      = pmdGetThreadEDUCB() ;
-      BSONObj condition = BSON( OM_TAKSINFO_FIELD_TASKID << taskID ) ;
+      BSONObj condition = BSON( OM_TASKINFO_FIELD_TASKID << taskID ) ;
       BSONObj hint ;
 
       rc = rtnDelete( OM_CS_DEPLOY_CL_HOST, condition, hint, 0, cb );
@@ -1284,8 +1287,8 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObj hint ;
 
-      BSONObj condition = BSON( OM_TAKSINFO_FIELD_TASKID << oldID ) ;
-      BSONObj tmp       = BSON( OM_TAKSINFO_FIELD_TASKID << newID ) ;
+      BSONObj condition = BSON( OM_TASKINFO_FIELD_TASKID << oldID ) ;
+      BSONObj tmp       = BSON( OM_TASKINFO_FIELD_TASKID << newID ) ;
       BSONObj obj       = BSON( "$set" << tmp ) ;
       rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, condition, obj, hint, 0, cb, 
                       _pDmsCB, _pKrcb->getDPSCB() ) ;
@@ -1306,14 +1309,108 @@ namespace engine
 
    INT32 _omManager::_storeBusinessInfo()
    {
-      //TODO
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string businessName ;
+      string deployMod ;
+      string businessType ;
+      string clusterName ;
+      BSONObj obj ;
+      pmdEDUCB *cb  = pmdGetThreadEDUCB() ;
+
+      BSONObj &conf = _omTaskInfo._confValue ;
+      businessName  = conf.getStringField( OM_BSON_BUSINESS_NAME );
+      deployMod     = conf.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      businessType  = conf.getStringField( OM_BSON_BUSINESS_TYPE );
+      clusterName   = conf.getStringField( OM_BSON_FIELD_CLUSTER_NAME );
+      if ( businessName == "" || businessType == "" || clusterName == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "bson miss field:businessName=%s,businessType=%s,"
+                     "clusterName=%s", businessName.c_str(), 
+                     businessType.c_str(), clusterName.c_str() ) ;
+         SDB_ASSERT( 0, "bson miss field" ) ;
+         goto error ;
+      }
+
+      obj = BSON( OM_BUSINESS_FIELD_NAME << businessName 
+                  << OM_BSON_BUSINESS_TYPE << businessType 
+                  << OM_BSON_DEPLOY_MOD << deployMod
+                  << OM_BSON_FIELD_CLUSTER_NAME << clusterName ) ;
+      rc = rtnInsert( OM_CS_DEPLOY_CL_BUSINESS, obj, 1, 0, cb );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to store business into table:%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _omManager::_restoreTask()
    {
-      //TODO
-      return SDB_OK ;
+      INT32 rc         = SDB_OK ;
+      pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
+      SINT64 contextID = -1 ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy, hint, 
+                     0, cb, 0, -1, _pDmsCB, _pRtnCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, cb, _pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               goto done ;
+            }
+
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         _omTaskInfo._agentHostName = record.getStringField( 
+                                              OM_TASKINFO_FIELD_AGENTHOST ) ;
+         _omTaskInfo._agentSvcName  = record.getStringField( 
+                                              OM_TASKINFO_FIELD_AGENTSERVICE ) ;
+         _omTaskInfo._taskID        = record.getStringField( 
+                                              OM_TASKINFO_FIELD_TASKID ) ;
+         _omTaskInfo._isAllFinished = false ;
+          _omTaskInfo._status       = record.getIntField( 
+                                              OM_TASKINFO_FIELD_STATUS ) ;
+         _omTaskInfo._confValue     = record.getObjectField( 
+                                              OM_TASKINFO_FIELD_INFO ) ;
+         _omTaskInfo._detail        = "" ;
+         _omTaskInfo._progress      = BSONObj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         _pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      goto done ;
    }
 
    /*

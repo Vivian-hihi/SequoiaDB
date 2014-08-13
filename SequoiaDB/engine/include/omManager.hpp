@@ -180,8 +180,9 @@ namespace engine
          string            getLocalAgentPort() ;
 
          INT32             storeTaskInfo( string taskID, string taskType, 
-                                           const BSONObj &confValue, 
-                                           INT32 status ) ;
+                                          string agentHost, string agentService,
+                                          const BSONObj &confValue, 
+                                          INT32 status ) ;
          INT32             updateTaskID( string oldID, string newID ) ;
          INT32             updateTaskID( string oldID, long long newID ) ;
          INT32             removeTask( string taskID ) ;

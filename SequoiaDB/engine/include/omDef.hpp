@@ -113,6 +113,7 @@ namespace engine
 
    #define OM_BUSINESS_FIELD_NAME            "Name"
    #define OM_BUSINESS_FIELD_TYPE            "Type"
+   #define OM_BUSINESS_FIELD_DEPLOYMOD       "DeployMod"
    #define OM_BUSINESS_FIELD_CLUSTERNAME     "ClusterName"
    #define OM_BUSINESS_FIELD_TIME            "Time"
    #define OM_BUSINESS_FIELD_LOCATION        "Location"
@@ -131,13 +132,15 @@ namespace engine
    // deploy.taskinfo
    #define OM_CS_DEPLOY_CL_TASKINFO          OM_CS_DEPLOY".SYSTASKINFO"
 
-   #define OM_TAKSINFO_FIELD_TASKID          "TaskID"
-   #define OM_TAKSINFO_FIELD_TYPE            "Type"
-   #define OM_TAKSINFO_FIELD_INFO            "Info"
-   #define OM_TAKSINFO_FIELD_STATUS          "Status"
+   #define OM_TASKINFO_FIELD_TASKID          "TaskID"
+   #define OM_TASKINFO_FIELD_TYPE            "Type"
+   #define OM_TASKINFO_FIELD_AGENTHOST       "AgentHost"
+   #define OM_TASKINFO_FIELD_AGENTSERVICE    "AgentService"
+   #define OM_TASKINFO_FIELD_INFO            "Info"
+   #define OM_TASKINFO_FIELD_STATUS          "Status"
 
    #define OM_CS_DEPLOY_CL_TASKINFOIDX1      "{name:\"SYSDEPLOY_TASKINFO_IDX1\",key: {"\
-                                             OM_TAKSINFO_FIELD_TASKID":1}, unique: true, enforced: true } "
+                                             OM_TASKINFO_FIELD_TASKID":1}, unique: true, enforced: true } "
 
    #define OM_TASKINFO_FAKE_TASKID           "fakeID"
 

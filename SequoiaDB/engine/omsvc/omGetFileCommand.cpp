@@ -3399,16 +3399,27 @@ namespace engine
    INT32 omInstallBusinessReq::_extractHostInfo( BSONObj &bsonConfValue, 
                                                  BSONObj &bsonHostInfo )
    {
-      string clusterName ;
-      clusterName = bsonConfValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      INT32 rc = SDB_OK ;
 
       BSONObjBuilder conditionBuilder ;
-      conditionBuilder.append( OM_BSON_FIELD_HOST_NAME, "" ) ;
-      BSONObj condition = conditionBuilder.obj() ;
-
+      BSONObj condition ;
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
-      BSONObj config = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      BSONObj config ;
+
+      string clusterName ;
+      clusterName = bsonConfValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( clusterName == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is empty!" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      conditionBuilder.append( OM_BSON_FIELD_HOST_NAME, "" ) ;
+      condition = conditionBuilder.obj() ;
+      config    = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       {
          BSONObjIterator iter( config ) ;
          while ( iter.more() )
@@ -3423,7 +3434,6 @@ namespace engine
       builder.append( OM_BSON_FIELD_HOST_INFO, arrayBuilder.arr() ) ;
       bsonHostInfo = builder.obj() ;
 
-      INT32 rc = SDB_OK ;
       rc = _fillHostInfo( clusterName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
@@ -3653,7 +3663,8 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
       string fakeTaskID = OM_TASKINFO_FAKE_TASKID ;
 
-      rc = om->storeTaskInfo( fakeTaskID, OM_INSTALL_BUSINESS_REQ,
+      rc = om->storeTaskInfo( fakeTaskID, OM_INSTALL_BUSINESS_REQ, 
+                              _localAgentHost, _localAgentService, 
                               bsonConfValue, OM_TASK_STATUS_DOING ) ;
       if ( SDB_OK != rc )
       {
