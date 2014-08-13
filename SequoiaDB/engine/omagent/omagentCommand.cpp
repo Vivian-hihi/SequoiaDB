@@ -57,7 +57,7 @@ using namespace bson ;
 #define FILE_REMOVE_VIRTUAL_COORD        "removeVirtualCoord.js"
 #define FILE_GET_PORT_STATUS             "getPortStatus.js"
 #define FILE_REG_HOSTS_INFO              "regHostsInfo.js"
-#define FILE_GET_HOST_NAMES              "getHostNames.js"
+#define FILE_GET_HOST_NAME               "getHostName.js"
 
 #define ROLE_COORD "coord"
 #define ROLE_CATA  "catalog"
@@ -2880,7 +2880,7 @@ var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
          }
       }
       // get js file
-      rc = setJSFile( FILE_GET_HOST_NAMES ) ;
+      rc = setJSFile( FILE_GET_HOST_NAME ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
