@@ -1263,16 +1263,16 @@ namespace engine
                            INT16 w = 1, INT64 *pContextID = NULL ) ;
    } ;
 
-   class _rtnInterruptSession : public _rtnCommand
+   class _rtnForceSession : public _rtnCommand
    {
    DECLARE_CMD_AUTO_REGISTER()
    public:
-      _rtnInterruptSession() ;
-      virtual ~_rtnInterruptSession() ;
+      _rtnForceSession() ;
+      virtual ~_rtnForceSession() ;
 
    public:
-      virtual const CHAR * name () { return NAME_INTERRUPT_SESSION ; }
-      virtual RTN_COMMAND_TYPE type () { return CMD_INTERRUPT_SESSION ; }
+      virtual const CHAR * name () { return NAME_FORCE_SESSION ; }
+      virtual RTN_COMMAND_TYPE type () { return CMD_FORCE_SESSION ; }
       virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                            const CHAR *pMatcherBuff,
                            const CHAR *pSelectBuff,
@@ -1285,7 +1285,7 @@ namespace engine
    private:
       EDUID _sessionID ;
    } ;
-   typedef class _rtnInterruptSession rtnInterruptSession ;
+   typedef class _rtnForceSession rtnForceSession ;
 }
 
 const UINT32 pdGetTraceFunctionListNum();

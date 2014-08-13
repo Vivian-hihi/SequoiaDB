@@ -89,7 +89,7 @@ namespace engine
 #define NAME_LINK_COLLECTION                 CMD_NAME_LINK_CL
 #define NAME_UNLINK_COLLECTION               CMD_NAME_UNLINK_CL
 #define NAME_INVALIDATE_CACHE                CMD_NAME_INVALIDATE_CACHE
-#define NAME_INTERRUPT_SESSION               CMD_NAME_INTERRUPT_SESSION
+#define NAME_FORCE_SESSION                   CMD_NAME_FORCE_SESSION
 
 #define NAME_JSON_LOAD                       CMD_NAME_JSON_LOAD
 
@@ -209,7 +209,7 @@ namespace engine
       CMD_REMOVE_BACKUP                      = 210,
 
       CMD_INVALIDATE_CACHE                   = 220,
-      CMD_INTERRUPT_SESSION                  = 221,
+      CMD_FORCE_SESSION                      = 221,
 
       CMD_UNKNOW                             = 65535
    };

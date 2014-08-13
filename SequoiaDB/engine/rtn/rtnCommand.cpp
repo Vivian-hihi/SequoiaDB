@@ -2676,23 +2676,23 @@ namespace engine
       return  SDB_OK ;
    }
 
-   _rtnInterruptSession::_rtnInterruptSession()
+   _rtnForceSession::_rtnForceSession()
    :_sessionID( OSS_INVALID_PID )
    {
 
    }
 
-   _rtnInterruptSession::~_rtnInterruptSession()
+   _rtnForceSession::~_rtnForceSession()
    {
 
    }
 
-   IMPLEMENT_CMD_AUTO_REGISTER( _rtnInterruptSession )
-   INT32 _rtnInterruptSession::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                                      const CHAR *pMatcherBuff,
-                                      const CHAR *pSelectBuff,
-                                      const CHAR *pOrderByBuff,
-                                      const CHAR *pHintBuff )
+   IMPLEMENT_CMD_AUTO_REGISTER( _rtnForceSession )
+   INT32 _rtnForceSession::init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                                  const CHAR *pMatcherBuff,
+                                  const CHAR *pSelectBuff,
+                                  const CHAR *pOrderByBuff,
+                                  const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       try
@@ -2722,16 +2722,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnInterruptSession::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                                      _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                                      INT16 w, INT64 *pContextID )
+   INT32 _rtnForceSession::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                  _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                  INT16 w, INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
       pmdEDUMgr *mgr = pmdGetKRCB()->getEDUMgr() ;
-      rc = mgr->interruptUserEDU( _sessionID ) ;
+      rc = mgr->forceUserEDU( _sessionID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to interrupt edu:%lld, rc:%d",
+         PD_LOG( PDERROR, "Failed to force edu:%lld, rc:%d",
                  _sessionID, rc ) ;
          goto error ;
       }

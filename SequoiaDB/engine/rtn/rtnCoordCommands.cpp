@@ -141,7 +141,6 @@ namespace engine
    RTN_COORD_CMD_ADD( COORD_CMD_LIST_CS_IN_DOMAIN, rtnCoordCMDListCSInDomain )
    RTN_COORD_CMD_ADD( COORD_CMD_LIST_CL_IN_DOMAIN, rtnCoordCMDListCLInDomain )
    RTN_COORD_CMD_ADD( COORD_CMD_INVALIDATE_CACHE, rtnCoordCMDInvalidateCache )
-   RTN_COORD_CMD_ADD( COORD_CMD_INTERRUPT_SESSION, rtnCoordCMDInterruptSession )
    RTN_COORD_CMD_END
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_PROCCATREPLY, "rtnCoordCommand::processCatReply" )
@@ -9946,78 +9945,5 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDINTERRUPTSESSION_EXEC, "rtnCoordCMDInterruptSession::execute" )
-   INT32 rtnCoordCMDInterruptSession::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                                               CHAR **ppResultBuffer,
-                                               pmdEDUCB *cb, MsgOpReply &replyHeader,
-                                               BSONObj **ppErrorObj )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( CMD_RTNCOCMDINTERRUPTSESSION_EXEC ) ;
-      CHAR *query = NULL ;
-      CHAR *selector = NULL ;
-      CHAR *orderby = NULL ;
-      CHAR *hint = NULL ;
-      INT32 flag = 0 ;
-      CHAR *collectionName = NULL ;
-      SINT64 skip = 0 ;
-      SINT64 limit = -1 ;
-      EDUID eduID = OSS_INVALID_PID ;
-
-      MsgHeader *reqHeader = (MsgHeader *)pReceiveBuffer ;
-      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
-      replyHeader.header.opCode = MSG_BS_QUERY_RES ;
-      replyHeader.header.requestID = reqHeader->requestID ;
-      replyHeader.header.routeID.value = 0 ;
-      replyHeader.header.TID = reqHeader->TID ;
-      replyHeader.contextID = -1 ;
-      replyHeader.flags = SDB_OK ;
-      replyHeader.numReturned = 0 ;
-      replyHeader.startFrom = 0 ;
-
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &collectionName,
-                            &skip, &limit, &query,
-                            &selector, &orderby, &hint );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONObj obj( query ) ;
-         BSONElement sessionID = obj.getField( FIELD_NAME_SESSIONID ) ;
-         if ( !sessionID.isNumber() )
-         {
-            PD_LOG( PDERROR, "session id should be a number:%s",
-                    obj.toString( FALSE, TRUE ).c_str() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         eduID = sessionID.Long() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      rc = pmdGetKRCB()->getEDUMgr()->interruptUserEDU( eduID ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to interrupt edu:%lld, rc:%d",
-                 eduID, rc ) ;
-         goto error ;
-      }
-   done:
-      PD_TRACE_EXITRC( CMD_RTNCOCMDINTERRUPTSESSION_EXEC, rc ) ;
-      return rc ;
-   error:
-      replyHeader.flags = rc ;   
-      goto done ;
-   }
 }
 

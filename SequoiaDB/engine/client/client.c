@@ -6865,8 +6865,8 @@ error:
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbInterruptSession( sdbConnectionHandle cHandle,
-                                      SINT64 sessionID )
+SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
+                                  SINT64 sessionID )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN result = TRUE ;
@@ -6880,12 +6880,12 @@ SDB_EXPORT INT32 sdbInterruptSession( sdbConnectionHandle cHandle,
    BSON_APPEND( query, FIELD_NAME_SESSIONID, sessionID, long ) ;
    BSON_FINISH( query ) ;
    rc = _runCommand ( connection->_sock, &connection->_pSendBuffer,
-                     &connection->_sendBufferSize,
-                     &connection->_pReceiveBuffer,
-                     &connection->_receiveBufferSize,
-                     connection->_endianConvert,
-                     (CMD_ADMIN_PREFIX CMD_NAME_INTERRUPT_SESSION),
-                     &result, &query, NULL, NULL, NULL ) ;
+                      &connection->_sendBufferSize,
+                      &connection->_pReceiveBuffer,
+                      &connection->_receiveBufferSize,
+                      connection->_endianConvert,
+                      (CMD_ADMIN_PREFIX CMD_NAME_FORCE_SESSION),
+                      &result, &query, NULL, NULL, NULL ) ;
    if ( SDB_OK != rc )
    {
       goto error ;

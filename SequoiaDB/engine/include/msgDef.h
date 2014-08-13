@@ -368,11 +368,9 @@
 #define CMD_NAME_UNLINK_CL                   "unlink collection"
 #define CMD_NAME_SETSESS_ATTR                "set session attribute"
 #define CMD_NAME_INVALIDATE_CACHE            "invalidate cache"
+#define CMD_NAME_FORCE_SESSION               "force session"
 #define CMD_NAME_INTERRUPT_SESSION           "interrupt session"
 
-#if defined (_DEBUG)
-#define CMD_NAME_DEBUG_QUERY                 "debug query"
-#endif
 #define CMD_NAME_JSON_LOAD                   "json load"
 
 #define CLS_REPLSET_MAX_NODE_SIZE            7

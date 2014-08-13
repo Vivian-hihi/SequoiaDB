@@ -212,8 +212,7 @@ namespace engine
       std::map<EDUID, pmdEDUCB*>::iterator it ;
       if ( isSystemEDU ( eduID ) )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "System EDU %d can't be forced", eduID ) ;
+         PD_LOG ( PDERROR, "System EDU %d can't be forced", eduID ) ;
          rc = SDB_PMD_FORCE_SYSTEM_EDU ;
          goto error ;
       }

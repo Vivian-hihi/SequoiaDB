@@ -6386,10 +6386,10 @@ error:
    goto done ;
 }
 
-// PD_TRACE_DECLARE_FUNCTION( SDB_SDB_INTERRUPT_SESSION, "sdb_interrupt_session" )
-static JSBool sdb_interrupt_session( JSContext *cx, uintN argc, jsval *vp )
+// PD_TRACE_DECLARE_FUNCTION( SDB_SDB_FORCE_SESSION, "sdb_force_session" )
+static JSBool sdb_force_session( JSContext *cx, uintN argc, jsval *vp )
 {
-   PD_TRACE_ENTRY( SDB_SDB_INTERRUPT_SESSION ) ;
+   PD_TRACE_ENTRY( SDB_SDB_FORCE_SESSION ) ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle *connection = NULL ;
    SINT64 sessionID = -1 ;
@@ -6399,11 +6399,11 @@ static JSBool sdb_interrupt_session( JSContext *cx, uintN argc, jsval *vp )
 
    connection = (sdbConnectionHandle *)
                  JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
-   REPORT ( connection , "Sdb.interrupt(): no connection handle" ) ;
+   REPORT ( connection , "Sdb.forceSession(): no connection handle" ) ;
 
    if ( 1 != argc )
    {
-      REPORT ( ret , "Sdb.interrupt(): wrong arguments" ) ;
+      REPORT ( ret , "Sdb.forceSession(): wrong arguments" ) ;
    }
    else if ( JSVAL_IS_INT(argv[0]) )
    {
@@ -6418,21 +6418,21 @@ static JSBool sdb_interrupt_session( JSContext *cx, uintN argc, jsval *vp )
    else
    {
       ret = FALSE ;
-      REPORT ( ret , "Sdb.interrupt(): wrong arguments" ) ;
+      REPORT ( ret , "Sdb.forceSession(): wrong arguments" ) ;
    }
 
    if ( sessionID <= 0 )
    {
       ret = FALSE ;
-      REPORT ( ret , "Sdb.interrupt(): wrong arguments" ) ;
+      REPORT ( ret , "Sdb.forceSession(): wrong arguments" ) ;
    }
 
-   rc = sdbInterruptSession( *connection, sessionID ) ;
-   REPORT_RC ( SDB_OK == rc , "Sdb.interrupt()" , rc ) ;
+   rc = sdbForceSession( *connection, sessionID ) ;
+   REPORT_RC ( SDB_OK == rc , "Sdb.forceSession()" , rc ) ;
    JS_SET_RVAL( cx , vp , JSVAL_VOID ) ;
 done:
    SAFE_JS_FREE( cx, sessionStr ) ;
-   PD_TRACE_EXIT( SDB_SDB_INTERRUPT_SESSION ) ;
+   PD_TRACE_EXIT( SDB_SDB_FORCE_SESSION ) ;
    return ret ;
 error:
    ret = FALSE ;
@@ -6481,7 +6481,7 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getDomain", sdb_get_domain, 1, 0 ),
    JS_FS ( "listDomains", sdb_list_domains, 0, 0 ),
    JS_FS ( "invalidateCache", sdb_invalidate_cache, 0, 0 ),
-   JS_FS ( "interrupt", sdb_interrupt_session, 0, 0 ),
+   JS_FS ( "forceSession", sdb_force_session, 0, 0 ),
    JS_FS_END
 } ;
 

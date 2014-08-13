@@ -1798,16 +1798,16 @@ SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
 SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
                                      bson *condition ) ;
 
-/** \fn INT32 sdbInterruptSession( sdbConnectionHandle cHandle,
-                                   SINT64 sessionID )
-    \brief invalidate cache on specified nodes.
+/** \fn INT32 sdbForceSession( sdbConnectionHandle cHandle,
+                               SINT64 sessionID )
+    \brief force the user session.
     \param [in] cHandle The connection handle
     \param [in] sessionID The id of the session which we want to inerrupt
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbInterruptSession( sdbConnectionHandle cHandle,
-                                      SINT64 sessionID ) ;
+SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
+                                  SINT64 sessionID ) ;
 
 SDB_EXTERN_C_END
 #endif
