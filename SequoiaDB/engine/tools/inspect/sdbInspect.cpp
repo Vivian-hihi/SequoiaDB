@@ -2313,7 +2313,7 @@ namespace
          rc = cursor.next( collection ) ;
       }
 
-      if ( 0 == collections.count() )
+      if ( hasCollection && 0 == collections.count() )
       {
          std::cout << "Error: cannot find collection: "
                    << csName << "." << clName << std::endl ;
