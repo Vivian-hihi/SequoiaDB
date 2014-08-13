@@ -1213,6 +1213,7 @@ namespace engine
          }
          pSession = itSession->second ;
          _releaseSession_i( pSession, FALSE, TRUE ) ;
+         _mapSession.erase( itSession ) ;
       }
 
       // remove the timer if it's already exist
