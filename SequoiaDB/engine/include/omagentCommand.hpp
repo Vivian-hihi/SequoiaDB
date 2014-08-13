@@ -170,7 +170,7 @@ namespace engine
    } ;
 
 
-   /******************************* check host ********************************/
+   /******************************* basic check *******************************/
    /*
       _omaBasicCheckHost
    */
@@ -178,12 +178,13 @@ namespace engine
    {
       DECLARE_OACMD_AUTO_REGISTER()
       public:
-//         _omaBasicCheckHost () ;
-//         ~_omaBasicCheckHost () ;
+         _omaBasicCheckHost () ;
+         ~_omaBasicCheckHost () ;
 
          virtual const CHAR* name () { return OMA_CMD_BASIE_CHECK_HOST ; }
    };
 
+   /******************************* check host ********************************/
    /*
       _omaCheckHost
    */
@@ -205,21 +206,20 @@ namespace engine
          virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
                               INT32 &returnNum ) ;
          virtual INT32 doit ( BSONObj& retObj ) { return SDB_OK ; }
-
-//      private:
    } ;
 
-
+   /******************************* install remote agent **********************/
    /*
       _omaInstallRemoteAgent
    */
    class _omaInstallRemoteAgent : public _omaCommand
    {
+      DECLARE_OACMD_AUTO_REGISTER()
       public:
          _omaInstallRemoteAgent () ;
          ~_omaInstallRemoteAgent () ;
 
-         virtual const CHAR* name () { return "install remote agent" ; }
+         virtual const CHAR* name () { return OMA_CMD_INSTALL_REMOTE_AGENT ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -227,70 +227,32 @@ namespace engine
                               const CHAR *pOrderByBuff,
                               const CHAR *pHintBuff ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum )
+         {
+            return SDB_OK ;
+         }
+
+         virtual INT32 doit ( BSONObj& retObj ) ;
 
          INT32 getRemoteAgentStatus ( const CHAR *pIp, const CHAR *pUsername,
                                       const CHAR *pPasswork, BSONObj &result ) ;
 
          CHAR* getVersion() { return "1.0" ; }
-
    } ;
 
+   /******************************* exit agent ********************************/
    /*
-      _omaCheckRemoteAgentProcess
+      _omaExitAgent
    */
-   class _omaCheckRemoteAgentProcess : public _omaCommand
+   class _omaExitAgent : public _omaCommand
    {
+      DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omaCheckRemoteAgentProcess () ;
-         ~_omaCheckRemoteAgentProcess () ;
+         _omaExitAgent () ;
+         ~_omaExitAgent () ;
 
-         virtual const CHAR* name () { return "install remote agent" ; }
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-
-         INT32 check ( const CHAR *pIp, const CHAR *pUserName,
-                       const CHAR *pPassword, BSONObj &result ) ;
-   } ;
-
-   /*
-      _omaInstallAgentProcess
-   */
-   class _omaInstallAgentProcess : public _omaCommand
-   {
-//      DECLARE_OACMD_AUTO_REGISTER ()
-      public:
-         _omaInstallAgentProcess () ;
-         ~_omaInstallAgentProcess () ;
-
-         virtual const CHAR* name () { return "install agent process" ; }
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-   } ;
-
-   /*
-      _omaRemoveAgentProcess
-   */
-   class _omaRemoveAgentProcess : public _omaCommand
-   {
-//      DECLARE_OACMD_AUTO_REGISTER ()
-      public:
-         _omaRemoveAgentProcess () ;
-         ~_omaRemoveAgentProcess () ;
-
-         virtual const CHAR* name () { return "remove agent process" ; }
+         virtual const CHAR* name () { return OMA_CMD_EXIT_AGENT ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -302,17 +264,18 @@ namespace engine
 
    } ;
 
+   /******************************* uninstall remote agent *******************/
    /*
-      _omaStopAgentProcess
+      _omaUninstallRemoteAgent
    */
-   class _omaStopAgentProcess : public _omaCommand
+   class _omaUninstallRemoteAgent : public _omaCommand
    {
-//      DECLARE_OACMD_AUTO_REGISTER ()
+      DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omaStopAgentProcess () ;
-         ~_omaStopAgentProcess () ;
+         _omaUninstallRemoteAgent () ;
+         ~_omaUninstallRemoteAgent () ;
 
-         virtual const CHAR* name () { return "stop agent process" ; }
+         virtual const CHAR* name () { return OMA_CMD_UNINSTALL_REMOTE_AGENT ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -320,7 +283,8 @@ namespace engine
                               const CHAR *pOrderByBuff,
                               const CHAR *pHintBuff ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum ) ;
 
    } ;
 
@@ -347,59 +311,7 @@ namespace engine
                               INT32 &returnNum ) ;
    } ;
 
-
-   /*
-      _omaRegHosts
-   */
-   class _omaRegHosts : public _omaCommand
-   {
-//      DECLARE_OACMD_AUTO_REGISTER ()
-      public:
-         _omaRegHosts () ;
-         ~_omaRegHosts () ;
-
-         virtual const CHAR* name () { return "reg hosts info" ; }
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-
-      private:
-         INT32 _getHostsTableInfo () ;
-
-         INT32 _getContentForJS ( const CHAR *pIp, std::vector<string> &hostsInfo ) ;
-
-         std::map<string, string> _hostsTableInfo ;
-   } ;
-
-   /*
-      _omaGetHostNames
-   */
-   class _omaGetHostNames : public _omaCommand
-   {
-//      DECLARE_OACMD_AUTO_REGISTER ()
-      public:
-         _omaGetHostNames () ;
-         ~_omaGetHostNames () ;
-
-         virtual const CHAR* name () { return "get host name" ; }
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
-
-         INT32 getHostName( const CHAR *pIp, const CHAR *pUserName,
-                            const CHAR *pPassword, BSONObj &result ) ;
-   } ;
-
+   /******************************* install db business ***********************/
    /*
       _omaInstallDBBusiness
    */
@@ -410,7 +322,7 @@ namespace engine
          _omaInstallDBBusiness () ;
          ~_omaInstallDBBusiness () ;
 
-         virtual const CHAR* name () { return "install db business" ; }
+         virtual const CHAR* name () { return OMA_CMD_INSTALL_DB_BUSINESS ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -432,6 +344,7 @@ namespace engine
 
    } ;
 
+   /******************************* query install db business status *********/
    /*
       _omaInstallDBStatus
    */
@@ -442,7 +355,7 @@ namespace engine
          _omaInstallDBStatus () ;
          ~_omaInstallDBStatus () ;
 
-         virtual const CHAR* name () { return "get install db status" ; }
+         virtual const CHAR* name () { return OMA_CMD_QUERY_PROGRESS ; }
 
          virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
                               const CHAR *pMatcherBuff,
@@ -458,10 +371,7 @@ namespace engine
 
    } ;
 
-
-   /*
-      _omaCreateVirtualCoord
-   */
+   // _omaCreateVirtualCoord
    class _omaCreateVirtualCoord : private _omaCommand
    {
       public:
@@ -498,9 +408,7 @@ namespace engine
          const CHAR *_password ;
    } ;
 
-   /*
-      _omaRemoveVirtualCoord
-   */
+   // _omaRemoveVirtualCoord
    class _omaRemoveVirtualCoord : private _omaCommand
    {
       public:
@@ -538,9 +446,34 @@ namespace engine
 
    } ;
 
-   /*
-      _omaPort
-   */
+   // _omaGetRemoteAgentStatus
+   class _omaGetRemoteAgentStatus : public _omaCommand
+   {
+      public:
+         _omaGetRemoteAgentStatus () ;
+         ~_omaGetRemoteAgentStatus () ;
+
+         virtual const CHAR* name () { return "get remote agent status" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum )
+         {
+            return SDB_OK ;
+         }
+
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+         INT32 getStatus ( const CHAR *pIp, const CHAR *pUserName,
+                           const CHAR *pPassword, BSONObj &result ) ;
+   } ;
+
+   // _omaPort
    class _omaPort : private _omaCommand
    {
       public:
@@ -574,6 +507,55 @@ namespace engine
 
       private:
          INT32 _port ;
+   } ;
+
+   // _omaRegHosts
+   class _omaRegHosts : public _omaCommand
+   {
+      public:
+         _omaRegHosts () ;
+         ~_omaRegHosts () ;
+
+         virtual const CHAR* name () { return "reg hosts info" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum ) ;
+
+      private:
+         INT32 _getHostsTableInfo () ;
+
+         INT32 _getContentForJS ( const CHAR *pIp,
+                                  std::vector<string> &hostsInfo ) ;
+
+         std::map<string, string> _hostsTableInfo ;
+   } ;
+
+   // _omaGetHostNames
+   class _omaGetHostNames : public _omaCommand
+   {
+      public:
+         _omaGetHostNames () ;
+         ~_omaGetHostNames () ;
+
+         virtual const CHAR* name () { return "get host name" ; }
+
+         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff ) ;
+
+         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum ) ;
+
+         INT32 getHostName( const CHAR *pIp, const CHAR *pUserName,
+                            const CHAR *pPassword, BSONObj &result ) ;
    } ;
 
 
