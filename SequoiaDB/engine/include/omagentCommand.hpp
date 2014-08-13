@@ -82,9 +82,11 @@ namespace engine
                               INT32 &returnNum ) = 0 ;
          virtual INT32 doit ( BSONObj &retObj ) { return SDB_OK ; }
 
+         virtual INT32 setJSFile ( const CHAR *fileName ) ;
+
      protected:
          _sptScope *_scope ;
-         const CHAR *_jsFileName ;
+         CHAR _jsFileName[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR *_fileBuff ;
          UINT32 _buffSize ;
          UINT32 _readSize ;
