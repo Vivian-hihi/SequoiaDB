@@ -115,7 +115,7 @@
                                  sizeof( INT32 )         + \
                                  sizeof( UINT32 ) * 2 )
 // the length of ciClHeader
-#define CI_CL_HEADER_SIZE ( ( CI_CL_FULLNAME_SIZE + 1 ) + sizeof( UINT32 ) )
+#define CI_CL_HEADER_SIZE ( ( CI_CL_FULLNAME_SIZE + 1 ) * 2 + sizeof( UINT32 ) )
 
 // the length of ciNode
 #define CI_NODE_SIZE ( ( CI_HOSTNAME_SIZE + 1 )    + \
@@ -282,9 +282,11 @@ struct _ciClHeader
 {
    UINT32 _recordCount ;
    CHAR   _fullname[ CI_CL_FULLNAME_SIZE + 1 ] ;
+   CHAR   _mainClName[ CI_CL_FULLNAME_SIZE + 1 ] ;
    _ciClHeader() : _recordCount( 0 )
    {
       ossMemset( _fullname, 0, CI_CL_FULLNAME_SIZE + 1 ) ;
+      ossMemset( _mainClName, 0, CI_CL_FULLNAME_SIZE + 1 ) ;
    }
 } ;
 typedef _ciClHeader ciClHeader ;
@@ -334,13 +336,17 @@ struct _ciNode
 } ;
 typedef _ciNode ciNode ;
 
+#define NONE_NAME "None"
 struct _ciCollection
 {
    _ciCollection *_next ;
    CHAR           _clName[ CI_CL_FULLNAME_SIZE + 1 ] ;
+   CHAR           _mainClName[ CI_CL_FULLNAME_SIZE + 1 ] ;
    _ciCollection() : _next( NULL )
    {
       ossMemset( _clName, 0, CI_CL_FULLNAME_SIZE + 1 ) ;
+      ossMemset( _mainClName, 0, CI_CL_FULLNAME_SIZE + 1 ) ;
+      ossMemcpy( _mainClName, NONE_NAME, ossStrlen( NONE_NAME ) ) ;
    }
    ~_ciCollection()
    {
@@ -414,7 +420,7 @@ typedef _ciBson ciBson ;
 
 struct _ciOffset
 {
-   INT64        _offset ;
+   INT64      _offset ;
    _ciOffset *_next ;
 
    _ciOffset() : _offset( 0 ), _next( NULL )
@@ -431,16 +437,21 @@ struct _ciOffset
 };
 typedef _ciOffset ciOffset ;
 
+typedef std::vector< std::string > subCl ;
+typedef std::map< std::string, subCl > mainCl ;
+
 struct _ciTail
 {
    INT32  _exitCode ;
    UINT32 _groupCount ;
    UINT32 _clCount ;
+   UINT32 _mainClCount ;
    INT64  _recordCount ;
-   UINT64  _timeCount ;
+   UINT64 _timeCount ;
+   mainCl _mainCls ;
    ciLinkList< ciOffset > _groupOffset ;
-   _ciTail() : _exitCode( 0 ), _groupCount( 0 ),
-               _clCount( 0 ), _recordCount( 0 ), _timeCount( 0 )
+   _ciTail() : _exitCode( 0 ), _groupCount( 0 ), _clCount( 0 ),
+               _mainClCount( 0 ), _recordCount( 0 ), _timeCount( 0 )
    {}
 } ;
 typedef _ciTail ciTail ;
@@ -541,7 +552,7 @@ private:
 typedef _sdbCi sdbCi ;
 
 
-#if _DEBUG
+#ifdef _DEBUG
 inline ostream &operator<< ( ostream &os, const ciHeader &header )
 {
    os << header._eyeCatcher  << std::endl

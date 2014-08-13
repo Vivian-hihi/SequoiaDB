@@ -322,6 +322,11 @@ namespace
                           "  Collection Full Name  : %s"OSS_NEWLINE,
                           header->_fullname ) ;
       CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+      len += ossSnprintf( buffer + len, bufferSize - len,
+                          "  Main Collection Name  : %s"OSS_NEWLINE,
+                          header->_mainClName ) ;
+      CHECK_VALUE( ( bufferSize - 1 <= len ), retry ) ;
+
       if ( header->_recordCount <= 0 )
       {
          len += ossSnprintf( buffer + len, bufferSize - len,
@@ -889,6 +894,8 @@ namespace
       ossMemcpy( &header->_recordCount, buffer + len, sizeof( UINT32 ) ) ;
       len += sizeof( UINT32 ) ;
       ossMemcpy( header->_fullname, buffer + len, CI_CL_FULLNAME_SIZE ) ;
+      len += CI_CL_FULLNAME_SIZE ;
+      ossMemcpy( header->_mainClName, buffer + len, CI_CL_FULLNAME_SIZE ) ;
 
    done:
       return rc ;
@@ -908,7 +915,9 @@ namespace
 
       ossMemcpy( buffer + len, &header->_recordCount, sizeof( UINT32 ) ) ;
       len += sizeof( UINT32 ) ;
-      ossMemcpy( buffer + len, header->_fullname, CI_GROUPNAME_SIZE ) ;
+      ossMemcpy( buffer + len, header->_fullname, CI_CL_FULLNAME_SIZE ) ;
+      len += CI_CL_FULLNAME_SIZE ;
+      ossMemcpy( buffer + len, header->_mainClName, CI_CL_FULLNAME_SIZE ) ;
 
       rc = writeToFile( out, buffer, CI_CL_HEADER_SIZE ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
@@ -1516,6 +1525,109 @@ namespace
       goto done ;
    }
 
+   INT32 readMainSubCl( OSSFILE &in, INT64 &offset,
+                        const INT32 count, mainCl &mainCls )
+   {
+      INT32 rc     = SDB_OK ;
+      INT32 idx    = 0 ;
+      INT32 subCount  = 0 ;
+      CHAR buffer[ CI_CL_FULLNAME_SIZE + 1 ] = { 0 } ;
+
+      mainCls.clear() ;
+
+      while ( idx < count )
+      {
+         rc = readFromFile( in, offset, buffer, CI_CL_FULLNAME_SIZE ) ;
+         CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+         std::string mainClName = std::string( buffer ) ;
+         rc = readFromFile( in, offset, (CHAR *)&subCount, sizeof( INT32 ) ) ;
+         CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+         INT32 subIdx = 0 ;
+         while( subIdx < subCount )
+         {
+            rc = readFromFile( in, offset, buffer, CI_CL_FULLNAME_SIZE ) ;
+            CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+            std::string subClName = std::string( buffer ) ;
+            subCl &subCls = mainCls[ mainClName ] ;
+            subCls.push_back( subClName ) ;
+
+            ++subIdx ;
+         }
+         ++idx ;
+      }
+
+   done:
+      return rc ;
+   error:
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      goto done ;
+   }
+   INT32 writeMainSubCl( OSSFILE &out, const mainCl &mainCls, CHAR *&buffer,
+                         INT64 &bufferSize, INT64 &validSize )
+   {
+      INT32 rc       = SDB_OK ;
+      INT64 pos      = 0 ;
+      INT64 totalLen = 0 ;
+
+      mainCl::const_iterator it = mainCls.begin() ;
+      for ( ; it != mainCls.end() ; ++it )
+      {
+         totalLen += CI_CL_FULLNAME_SIZE ;
+         totalLen += sizeof( INT32 ) ;
+
+         subCl::const_iterator sub_it = it->second.begin() ;
+         for ( ; sub_it != it->second.end() ; ++sub_it )
+         {
+            totalLen += CI_CL_FULLNAME_SIZE ;
+         }
+      }
+
+      validSize = totalLen ;
+
+      if ( validSize > bufferSize )
+      {
+         buffer = ( CHAR * )SDB_OSS_REALLOC( buffer, validSize ) ;
+         if ( NULL == buffer )
+         {
+            std::cout << "Error: failed to allocate buffer. size = "
+                      << validSize << std::endl ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         bufferSize = validSize ;
+      }
+
+      it = mainCls.begin() ;
+      for ( ; it != mainCls.end() ; ++it )
+      {
+         ossMemcpy( buffer + pos, it->first.c_str(), CI_CL_FULLNAME_SIZE ) ;
+         pos += CI_CL_FULLNAME_SIZE ;
+
+         INT32 count = it->second.size() ;
+         ossMemcpy( buffer + pos, ( CHAR * )&count, sizeof( INT32 ) ) ;
+         pos += sizeof( INT32 ) ;
+
+         subCl::const_iterator sub_it = it->second.begin() ;
+         for ( ; sub_it != it->second.end() ; ++sub_it )
+         {
+            ossMemcpy( buffer + pos, sub_it->c_str(), CI_CL_FULLNAME_SIZE ) ;
+            pos += CI_CL_FULLNAME_SIZE ;
+         }
+      }
+
+      rc = writeToFile( out, buffer, validSize ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+   done:
+      return rc ;
+   error:
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      goto done ;
+   }
+
    /**
     ** read ciTail from file
     ***/
@@ -1537,11 +1649,18 @@ namespace
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
       rc = readFromFile( in, tmpOffset,
+                         ( CHAR * )&tail->_mainClCount, sizeof( UINT32 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+      rc = readFromFile( in, tmpOffset,
                          ( CHAR * )&tail->_recordCount, sizeof( INT64 ) ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
       rc = readFromFile( in, tmpOffset,
                          ( CHAR * )&tail->_timeCount, sizeof( UINT64 ) ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+      rc = readMainSubCl( in, tmpOffset, tail->_mainClCount, tail->_mainCls ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
       rc = readCiOffset( in, tmpOffset, tail->_groupCount, tail->_groupOffset );
@@ -1591,6 +1710,11 @@ namespace
                         ( const CHAR * )&tail->_timeCount, sizeof( UINT64 ) ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
       len += sizeof( UINT64 ) ;
+
+      rc = writeMainSubCl( out, tail->_mainCls,
+                                buffer, bufferSize, validSize ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+      len += validSize ;
 
       rc = writeCiClOffset( out, tail->_groupOffset,
                                  buffer, bufferSize, validSize ) ;
@@ -1787,11 +1911,55 @@ namespace
       goto done ;
    }
 
+   INT32 getMainAndSubCl( sdbclient::sdb *coord, mainCl &mainCls )
+   {
+      INT32 rc = SDB_OK ;
+      sdbclient::sdbCursor cursor ;
+      bson::BSONObj record ;
+
+      rc = coord->getSnapshot( cursor, 8 ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+      rc = cursor.next( record ) ;
+      while ( SDB_DMS_EOC != rc )
+      {
+         if ( SDB_OK != rc )
+         {
+            std::cout << "Error: fail to get next record in cursor"
+                      << std::endl ;
+            goto error ;
+         }
+         else
+         {
+            bson::BSONElement mainCL ;
+            mainCL = record.getField( "MainCLName" ) ;
+            if ( !mainCL.eoo() )
+            {
+               std::string mainName = mainCL.String() ;
+               bson::BSONElement subClName ;
+               subClName = record.getField( "Name" ) ;
+               std::string subName = subClName.String() ;
+               subCl &subCls = mainCls[ mainName ] ;
+               subCls.push_back( subName ) ;
+            }
+         }
+         rc = cursor.next( record ) ;
+      }
+
+      rc = SDB_OK ;
+
+   done:
+      return rc ;
+   error:
+      OUTPUT_FUNCTION( "Error occurs in ", __FUNCTION__ ) ;
+      goto done ;
+   }
+
    /**
     ** get groups through coord
     ***/
    INT32 getCiGroup( sdbclient::sdb *coord, const CHAR *groupName,
-                                            ciLinkList< ciGroup > &groupList )
+                     ciLinkList< ciGroup > &groupList )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN hasGroup = ( 0 != ossStrncmp( "", groupName,
@@ -1981,12 +2149,57 @@ namespace
       goto done ;
    }
 
+   BOOLEAN isInMainSubCl( const CHAR *mainClName,
+                          const CHAR *subClName, const mainCl &mainCls )
+   {
+      BOOLEAN in = FALSE ;
+
+      mainCl::const_iterator it = mainCls.begin() ;
+      for ( ; it != mainCls.end() ; ++it )
+      {
+         if ( 0 == it->first.compare( mainClName ) )
+         {
+            subCl::const_iterator sub_it = it->second.begin() ;
+            for ( ; sub_it != it->second.end() ; ++sub_it )
+            {
+               if ( 0 == sub_it->compare( subClName ) )
+               {
+                  in = TRUE ;
+                  break ;
+               }
+            }
+         }
+      }
+
+      return in ;
+   }
+
+   const CHAR* getMainClName( const mainCl &mainCls, const CHAR *subClName )
+   {
+      const CHAR *pName = NULL ;
+      mainCl::const_iterator it = mainCls.begin() ;
+      for ( ; it != mainCls.end() ; ++it )
+      {
+         subCl::const_iterator sub_it = it->second.begin() ;
+         for ( ; sub_it != it->second.end() ; ++sub_it )
+         {
+            if ( 0 == sub_it->compare( subClName ) )
+            {
+               pName = it->first.c_str() ;
+               break ;
+            }
+         }
+      }
+
+      return pName ;
+   }
    /**
     ** get collection space in nodes
     ***/
    INT32 getCiCollection( ciNode *master, const CHAR *csName,
                           const CHAR *clName,
-                          ciLinkList< ciCollection > &collections )
+                          ciLinkList< ciCollection > &collections,
+                          const mainCl &mainCls )
    {
       INT32 rc              = SDB_OK ;
       BOOLEAN hasCollection = FALSE ;
@@ -1994,11 +2207,16 @@ namespace
       sdbclient::sdb db ;
       sdbclient::sdbCursor cursor ;
       bson::BSONObj collection ;
+      CHAR fullName[ CI_CL_FULLNAME_SIZE + 1 ] = { 0 } ;
 
       SDB_ASSERT( NULL != master, "Error: master node cannot be NULL" ) ;
 
       hasCs = ( 0 != ossStrncmp( "", csName, CI_CS_NAME_SIZE ) ) ;
       hasCollection = ( 0 != ossStrncmp( "", clName, CI_CL_NAME_SIZE ) ) ;
+      if ( hasCollection )
+      {
+         ossSnprintf( fullName, CI_CL_FULLNAME_SIZE, "%s.%s", csName, clName ) ;
+      }
 
       // get collections of master node
       rc = db.connect( master->_hostname, master->_serviceName ) ;
@@ -2035,10 +2253,11 @@ namespace
          {
             std::string cs ;
             std::string cl ;
-            BOOLEAN csMatch = FALSE ;
-            BOOLEAN allMatch = FALSE ;
-            std::string name = collection.getField( "Name" ).String() ;
-            std::size_t dot = name.find( '.' ) ;
+            BOOLEAN csMatch     = FALSE ;
+            BOOLEAN allMatch    = FALSE ;
+            BOOLEAN inMainSubCl = FALSE ;
+            std::string name    = collection.getField( "Name" ).String() ;
+            std::size_t dot     = name.find( '.' ) ;
             if ( std::string::npos == dot )
             {
                std::cout << "Error: cannot split collection fullname: "
@@ -2053,11 +2272,13 @@ namespace
                         ( 0 == ossStrncmp( csName, cs.c_str(),
                                            CI_CS_NAME_SIZE ) ) ) ;
             allMatch = ( hasCs && hasCollection &&
-                        ( 0 == ossStrncmp( csName, cs.c_str(),
+                         ( 0 == ossStrncmp( csName, cs.c_str(),
                                            CI_CS_NAME_SIZE ) ) &&
-                        ( 0 == ossStrncmp( clName, cl.c_str(),
+                         ( 0 == ossStrncmp( clName, cl.c_str(),
                                            CI_CL_NAME_SIZE ) ) ) ;
-            if ( !hasCs || csMatch || allMatch )
+            inMainSubCl = ( hasCs && hasCollection &&
+                            isInMainSubCl( fullName, name.c_str(), mainCls ) ) ;
+            if ( !hasCs || csMatch || allMatch || inMainSubCl )
             {
                ciCollection *cl = collections.createNode() ;
                if ( NULL == cl )
@@ -2068,6 +2289,19 @@ namespace
                   goto error ;
                }
                ossMemcpy( cl->_clName, name.c_str(), CI_CL_FULLNAME_SIZE ) ;
+               if ( inMainSubCl )
+               {
+                  ossMemcpy( cl->_mainClName, fullName, CI_CL_FULLNAME_SIZE ) ;
+               }
+               else
+               {
+                  const CHAR *mainClName = getMainClName( mainCls, name.c_str() ) ;
+                  if ( NULL != mainClName )
+                  {
+                     ossMemcpy( cl->_mainClName,
+                                mainClName, CI_CL_FULLNAME_SIZE ) ;
+                  }
+               }
                collections.add( cl ) ;
             }
          }
@@ -2240,6 +2474,9 @@ namespace
       rc = getCiGroup( coord, header->_groupName, groupList ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
+      rc = getMainAndSubCl( coord, tail._mainCls ) ;
+      CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
       hasGroup = ( 0 != ossStrncmp( "", header->_groupName,
                                         CI_GROUPNAME_SIZE ) ) ;
       // combine collection full name
@@ -2262,7 +2499,7 @@ namespace
 
             // get collections
             rc = getCiCollection( nodeList.getHead(), header->_csName,
-                                  header->_clName, collections ) ;
+                                  header->_clName, collections, tail._mainCls ) ;
             CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
             groupHeader._clCount = collections.count() ;
@@ -2303,6 +2540,9 @@ namespace
                ossMemset( clHeader._fullname, 0, CI_CL_FULLNAME_SIZE ) ;
                ossMemcpy( clHeader._fullname, curCollection->_clName,
                                               CI_CL_FULLNAME_SIZE ) ;
+               ossMemcpy( clHeader._mainClName, curCollection->_mainClName,
+                                                CI_CL_FULLNAME_SIZE ) ;
+
                records.clear() ;
                rc = getCiRecord( nodeList, cursors, records ) ;
                if ( SDB_OK != rc )
