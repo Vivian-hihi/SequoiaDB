@@ -3595,7 +3595,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "setSessionAttr",
                                    "msg",
                                    "invalidateCache",
-                                   "interrupt",
+                                   "forceSession",
                                    "help"
    };
    JSBool   in = JS_FALSE ;
