@@ -1212,7 +1212,7 @@ namespace engine
             continue ;
          }
          pSession = itSession->second ;
-         pSession->forceBack() ;
+         _releaseSession_i( pSession, FALSE, TRUE ) ;
       }
 
       // remove the timer if it's already exist
