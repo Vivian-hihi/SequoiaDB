@@ -173,7 +173,7 @@ namespace engine
             // file or dir not exist
             PD_LOG( PDWARNING, "Config[%s] not exist, use default config",
                     _cfgFileName ) ;
-            rc = SDB_OK ;
+            rc = postLoaded() ;
             goto done ;
          }
          PD_LOG( PDERROR, "Failed to read config from file[%s], rc: %d",
