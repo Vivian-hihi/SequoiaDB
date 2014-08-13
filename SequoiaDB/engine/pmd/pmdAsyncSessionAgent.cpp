@@ -65,24 +65,11 @@ namespace engine
 
       while ( !cb->isDisconnected() )
       {
+         cb->resetInterrupt() ;
          cb->resetInfo( EDU_INFO_ERROR ) ;
 
          if ( cb->waitEvent( event, OSS_ONE_SEC ) )
-         {
-            // if interrupted, kill all context
-            if ( cb->isInterrupted( TRUE ) )
-            {
-#if defined ( SDB_ENGINE )
-               // delete all context
-               INT64 contextID = -1 ;
-               while ( -1 != ( contextID = cb->contextPeek() ) )
-               {
-                  sdbGetRTNCB()->contextDelete( contextID, NULL ) ;
-               }
-#endif // SDB_ENGINE
-            }
-            cb->resetInterrupt() ;
-
+         { 
             if ( PMD_EDU_EVENT_TERM == event._eventType )
             {
                PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),

@@ -710,7 +710,7 @@ INT32 main ( INT32 argc, CHAR **argv )
          goto error ;
       }
       msgOp = (MsgOpMsg *)_pRecvBuffer ;
-      if ( OP_MSG == msgOp->header.opCode )
+      if ( MSG_BS_MSG_REQ == msgOp->header.opCode )
       {
          msgStr = msgOp->msg ;
          printMsg ( msgStr ) ;

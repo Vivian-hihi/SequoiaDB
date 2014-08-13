@@ -146,7 +146,7 @@ INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // nameLength does NOT include '\0'
    pUpdate->nameLength           = ossStrlen ( CollectionName ) ;
    pUpdate->header.requestID     = reqID ;
-   pUpdate->header.opCode        = OP_UPDATE ;
+   pUpdate->header.opCode        = MSG_BS_UPDATE_REQ ;
    pUpdate->header.messageLength = packetLength ;
    pUpdate->header.routeID.value = 0 ;
    pUpdate->header.TID           = ossGetCurrentThreadID() ;
@@ -270,7 +270,7 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // nameLength does NOT include '\0'
    pInsert->nameLength           = ossStrlen ( CollectionName ) ;
    pInsert->header.requestID     = reqID ;
-   pInsert->header.opCode        = OP_INSERT ;
+   pInsert->header.opCode        = MSG_BS_INSERT_REQ ;
    pInsert->header.messageLength = packetLength ;
    pInsert->header.routeID.value = 0 ;
    pInsert->header.TID           = ossGetCurrentThreadID() ;
@@ -370,7 +370,7 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // nameLength does NOT include '\0'
    pInsert->nameLength           = ossStrlen ( CollectionName ) ;
    pInsert->header.requestID     = reqID ;
-   pInsert->header.opCode        = OP_INSERT ;
+   pInsert->header.opCode        = MSG_BS_INSERT_REQ ;
    pInsert->header.messageLength = packetLength ;
    pInsert->header.routeID.value = 0 ;
    pInsert->header.TID           = ossGetCurrentThreadID() ;
@@ -401,7 +401,7 @@ INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    MsgOpInsert *pInsert = (MsgOpInsert*)(*ppBuffer) ;
    // make sure the it's a valid insert request
    SDB_ASSERT ( pInsert->header.messageLength &&
-                OP_INSERT ==  pInsert->header.opCode &&
+                MSG_BS_INSERT_REQ ==  pInsert->header.opCode &&
                 ossIsAligned4 ( pInsert->header.messageLength ),
                 "Invalid messageLength" ) ;
    INT32 offset         = pInsert->header.messageLength ;
@@ -546,7 +546,7 @@ INT32 msgBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
    // nameLength does NOT include '\0'
    pQuery->nameLength            = ossStrlen ( CollectionName ) ;
    pQuery->header.requestID      = reqID ;
-   pQuery->header.opCode         = OP_QUERY ;
+   pQuery->header.opCode         = MSG_BS_QUERY_REQ ;
    pQuery->numToSkip             = numToSkip ;
    pQuery->numToReturn           = numToReturn ;
    pQuery->header.messageLength  = packetLength ;
@@ -741,7 +741,7 @@ INT32 msgBuildGetMoreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    pGetMore                       = (MsgOpGetMore*)(*ppBuffer) ;
    // nameLength does NOT include '\0'
    pGetMore->header.requestID     = reqID ;
-   pGetMore->header.opCode        = OP_GETMORE ;
+   pGetMore->header.opCode        = MSG_BS_GETMORE_REQ ;
    pGetMore->numToReturn          = numToReturn ;
    pGetMore->contextID            = contextID ;
    pGetMore->header.messageLength = packetLength ;
@@ -831,7 +831,7 @@ INT32 msgBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // nameLength does NOT include '\0'
    pDelete->nameLength           = ossStrlen ( CollectionName ) ;
    pDelete->header.requestID     = reqID ;
-   pDelete->header.opCode        = OP_DELETE ;
+   pDelete->header.opCode        = MSG_BS_DELETE_REQ ;
    pDelete->header.messageLength = packetLength ;
    pDelete->header.routeID.value = 0 ;
    pDelete->header.TID           = ossGetCurrentThreadID() ;
@@ -947,7 +947,7 @@ INT32 msgBuildKillContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // now the buffer is large enough
    pKC                       = (MsgOpKillContexts*)(*ppBuffer) ;
    pKC->header.requestID     = reqID ;
-   pKC->header.opCode        = OP_KILL_CONTEXTS ;
+   pKC->header.opCode        = MSG_BS_KILL_CONTEXT_REQ ;
    pKC->header.messageLength = packetLength ;
    pKC->numContexts          = numContexts ;
    pKC->header.routeID.value = 0 ;
@@ -1019,7 +1019,7 @@ INT32 msgBuildMsgMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // now the buffer is large enough
    pMsg                       = (MsgOpMsg*)(*ppBuffer) ;
    pMsg->header.requestID     = reqID ;
-   pMsg->header.opCode        = OP_MSG ;
+   pMsg->header.opCode        = MSG_BS_MSG_REQ ;
    pMsg->header.messageLength = packetLength ;
    pMsg->header.routeID.value = 0 ;
    pMsg->header.TID           = ossGetCurrentThreadID() ;
@@ -1212,7 +1212,7 @@ INT32 msgBuildDisconnectMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    }
    pDisconnect                       = (MsgOpDisconnect*)(*ppBuffer) ;
    pDisconnect->header.requestID     = reqID ;
-   pDisconnect->header.opCode        = OP_DISCONNECT ;
+   pDisconnect->header.opCode        = MSG_BS_DISCONNECT ;
    pDisconnect->header.messageLength = packetLength ;
    pDisconnect->header.routeID.value = 0 ;
    pDisconnect->header.TID           = ossGetCurrentThreadID() ;
@@ -1250,7 +1250,7 @@ void msgBuildDisconnectMsg ( MsgOpDisconnect &disconnectHeader,
    PD_TRACE_ENTRY ( SDB_MSGBLDDISCONNMSG2 );
    disconnectHeader.header.requestID     = reqID ;
    disconnectHeader.header.routeID       = routeID ;
-   disconnectHeader.header.opCode        = OP_DISCONNECT ;
+   disconnectHeader.header.opCode        = MSG_BS_DISCONNECT ;
    disconnectHeader.header.messageLength = sizeof(MsgOpDisconnect) ;
    disconnectHeader.header.TID           = ossGetCurrentThreadID() ;
    PD_TRACE_EXIT ( SDB_MSGBLDDISCONNMSG2 );
@@ -1382,7 +1382,7 @@ INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize,
    pCMRequest = (MsgCMRequest*) (*ppBuffer) ;
    pCMRequest->header.messageLength = packetLength ;
    pCMRequest->header.requestID     = 0 ;
-   pCMRequest->header.opCode        = OP_CM ;
+   pCMRequest->header.opCode        = MSG_CM_REMOTE ;
    pCMRequest->header.routeID.value = 0 ;
    pCMRequest->header.TID           = ossGetCurrentThreadID() ;
    pCMRequest->remoCode             = remoCode ;
@@ -1551,7 +1551,7 @@ INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
    // nameLength does NOT include '\0'
    pQuery->nameLength            = ossStrlen ( CMD_ADMIN_PREFIX CMD_NAME_DROP_INDEX ) ;
    pQuery->header.requestID      = reqID ;
-   pQuery->header.opCode         = OP_QUERY ;
+   pQuery->header.opCode         = MSG_BS_QUERY_REQ ;
    pQuery->numToSkip             = 0 ;
    pQuery->numToReturn           = 0 ;
    pQuery->header.messageLength  = packetLength ;

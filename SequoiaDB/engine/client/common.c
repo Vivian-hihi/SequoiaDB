@@ -281,7 +281,7 @@ INT32 clientBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    MsgOpUpdate *pUpdate = NULL ;
    INT32 offset         = 0 ;
    INT32 nameLength     = 0 ;
-   INT32 opCode         = OP_UPDATE ;
+   INT32 opCode         = MSG_BS_UPDATE_REQ ;
    UINT32 tid           = ossGetCurrentThreadID() ;
    bson_init ( &emptyObj ) ;
    bson_empty ( &emptyObj ) ;
@@ -570,7 +570,7 @@ INT32 clientBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    nameLength = ossStrlen ( CollectionName ) ;
    ossEndianConvertIf( nameLength, pInsert->nameLength, endianConvert ) ;
    pInsert->header.requestID     = reqID ;
-   pInsert->header.opCode        = OP_INSERT ;
+   pInsert->header.opCode        = MSG_BS_INSERT_REQ ;
    pInsert->header.messageLength = packetLength ;
    pInsert->header.routeID.value = 0 ;
    pInsert->header.TID           = ossGetCurrentThreadID() ;
@@ -696,7 +696,7 @@ INT32 clientBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
    ossEndianConvertIf ( numToSkip, pQuery->numToSkip, endianConvert ) ;
    ossEndianConvertIf ( numToReturn, pQuery->numToReturn, endianConvert ) ;
    pQuery->header.requestID      = reqID ;
-   pQuery->header.opCode         = OP_QUERY ;
+   pQuery->header.opCode         = MSG_BS_QUERY_REQ ;
    pQuery->header.messageLength  = packetLength ;
    pQuery->header.routeID.value  = 0 ;
    pQuery->header.TID            = ossGetCurrentThreadID() ;
@@ -880,7 +880,7 @@ INT32 clientBuildGetMoreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    ossEndianConvertIf ( numToReturn, pGetMore->numToReturn, endianConvert ) ;
    ossEndianConvertIf ( contextID, pGetMore->contextID, endianConvert ) ;
    pGetMore->header.requestID     = reqID ;
-   pGetMore->header.opCode        = OP_GETMORE ;
+   pGetMore->header.opCode        = MSG_BS_GETMORE_REQ ;
    pGetMore->header.messageLength = packetLength ;
    pGetMore->header.routeID.value = 0 ;
    pGetMore->header.TID           = ossGetCurrentThreadID() ;
@@ -938,7 +938,7 @@ INT32 clientBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // nameLength does NOT include '\0'
    ossEndianConvertIf ( nameLength, pDelete->nameLength, endianConvert ) ;
    pDelete->header.requestID     = reqID ;
-   pDelete->header.opCode        = OP_DELETE ;
+   pDelete->header.opCode        = MSG_BS_DELETE_REQ ;
    pDelete->header.messageLength = packetLength ;
    pDelete->header.routeID.value = 0 ;
    pDelete->header.TID           = ossGetCurrentThreadID() ;
@@ -1067,7 +1067,7 @@ INT32 clientBuildKillContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    // now the buffer is large enough
    pKC                       = (MsgOpKillContexts*)(*ppBuffer) ;
    pKC->header.requestID     = reqID ;
-   pKC->header.opCode        = OP_KILL_CONTEXTS ;
+   pKC->header.opCode        = MSG_BS_KILL_CONTEXT_REQ ;
    pKC->header.messageLength = packetLength ;
    pKC->header.routeID.value = 0 ;
    pKC->header.TID           = ossGetCurrentThreadID() ;
@@ -1193,7 +1193,7 @@ INT32 clientBuildDisconnectMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    }
    pDisconnect                       = (MsgOpDisconnect*)(*ppBuffer) ;
    pDisconnect->header.requestID     = reqID ;
-   pDisconnect->header.opCode        = OP_DISCONNECT ;
+   pDisconnect->header.opCode        = MSG_BS_DISCONNECT ;
    pDisconnect->header.messageLength = packetLength ;
    pDisconnect->header.routeID.value = 0 ;
    pDisconnect->header.TID           = ossGetCurrentThreadID() ;
@@ -1390,7 +1390,7 @@ INT32 clientBuildSqlMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
    sqlMsg                       = ( MsgOpSql *)( *ppBuffer ) ;
    sqlMsg->header.requestID     = reqID ;
-   sqlMsg->header.opCode        = OP_SQL ;
+   sqlMsg->header.opCode        = MSG_BS_SQL_REQ ;
    sqlMsg->header.messageLength = sizeof( MsgOpSql ) + sqlLen ;
    sqlMsg->header.routeID.value = 0 ;
    sqlMsg->header.TID           = ossGetCurrentThreadID() ;
@@ -1671,7 +1671,7 @@ INT32 clientBuildTransactionBegMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
    transBeginMsg                       = ( MsgOpTransBegin *)( *ppBuffer ) ;
    transBeginMsg->header.requestID     = reqID ;
-   transBeginMsg->header.opCode        = OP_TRANS_BEGIN ;
+   transBeginMsg->header.opCode        = MSG_BS_TRANS_BEGIN_REQ ;
    transBeginMsg->header.messageLength = sizeof( MsgOpTransBegin ) + 0 ;
    transBeginMsg->header.routeID.value = 0 ;
    transBeginMsg->header.TID           = ossGetCurrentThreadID() ;
@@ -1708,7 +1708,7 @@ INT32 clientBuildTransactionCommitMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
    transCommitMsg                       = ( MsgOpTransCommit *)( *ppBuffer ) ;
    transCommitMsg->header.requestID     = reqID ;
-   transCommitMsg->header.opCode        = OP_TRANS_COMMIT ;
+   transCommitMsg->header.opCode        = MSG_BS_TRANS_COMMIT_REQ ;
    transCommitMsg->header.messageLength = sizeof( MsgOpTransBegin ) + 0 ;
    transCommitMsg->header.routeID.value = 0 ;
    transCommitMsg->header.TID           = ossGetCurrentThreadID() ;
@@ -1745,7 +1745,7 @@ INT32 clientBuildTransactionRollbackMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
    transRollbackMsg                       = ( MsgOpTransRollback *)( *ppBuffer ) ;
    transRollbackMsg->header.requestID     = reqID ;
-   transRollbackMsg->header.opCode        = OP_TRANS_ROLLBACK ;
+   transRollbackMsg->header.opCode        = MSG_BS_TRANS_ROLLBACK_REQ ;
    transRollbackMsg->header.messageLength = sizeof( MsgOpTransBegin ) + 0 ;
    transRollbackMsg->header.routeID.value = 0 ;
    transRollbackMsg->header.TID           = ossGetCurrentThreadID() ;
@@ -1913,7 +1913,7 @@ INT32 clientBuildAggrRequest1( CHAR **ppBuffer, INT32 *bufferSize,
    ossEndianConvertIf(clientDefaultFlags, pAggr->flags, endianConvert );
    ossEndianConvertIf( nameLength, pAggr->nameLength, endianConvert );
    pAggr->header.messageLength = packetLength;
-   pAggr->header.opCode = OP_AGGREGATE ;
+   pAggr->header.opCode = MSG_BS_AGGREGATE_REQ ;
    pAggr->header.routeID.value = 0;
    pAggr->header.requestID = 0;
    pAggr->header.TID = ossGetCurrentThreadID();
@@ -2007,7 +2007,7 @@ INT32 clientBuildAggrRequest( CHAR **ppBuffer, INT32 *bufferSize,
    //nameLength = ossStrlen ( CollectionName ) ;
    ossEndianConvertIf( nameLength, pAggr->nameLength, endianConvert ) ;
    pAggr->header.requestID     = 0 ;
-   pAggr->header.opCode        = OP_AGGREGATE ;
+   pAggr->header.opCode        = MSG_BS_AGGREGATE_REQ ;
    pAggr->header.messageLength = packetLength ;
    pAggr->header.routeID.value = 0 ;
    pAggr->header.TID           = ossGetCurrentThreadID() ;
@@ -2254,7 +2254,7 @@ INT32 clientBuildAggrRequestCpp( CHAR **ppBuffer, INT32 *bufferSize,
    ossEndianConvertIf(clientDefaultFlags, pAggr->flags, endianConvert );
    ossEndianConvertIf( nameLength, pAggr->nameLength, endianConvert );
    pAggr->header.messageLength = packetLength;
-   pAggr->header.opCode = OP_AGGREGATE ;
+   pAggr->header.opCode = MSG_BS_AGGREGATE_REQ ;
    pAggr->header.routeID.value = 0;
    pAggr->header.requestID = 0;
    pAggr->header.TID = ossGetCurrentThreadID();

@@ -282,50 +282,19 @@ enum MSG_TYPE
 // maximized collection name length
 #define OP_MAXNAMELENGTH   255
 
-// Reply to a client request. responseTo is set
-#define OP_REPLY           1
-// generic msg command followed by a string
-#define OP_MSG             MSG_BS_MSG_REQ
-// update document
-#define OP_UPDATE          MSG_BS_UPDATE_REQ
-// insert new document
-#define OP_INSERT          MSG_BS_INSERT_REQ
-// formerly used for OP_GET_BY_OID
-#define OP_SQL             MSG_BS_SQL_REQ
-// query a collection
-#define OP_QUERY           MSG_BS_QUERY_REQ
-// Get more data from a query. See context
-#define OP_GETMORE         MSG_BS_GETMORE_REQ
-// Delete documents
-#define OP_DELETE          MSG_BS_DELETE_REQ
-// Tell database client is done with a context
-#define OP_KILL_CONTEXTS   MSG_BS_KILL_CONTEXT_REQ
-// disconnect from server
-#define OP_DISCONNECT      MSG_BS_DISCONNECT
-// cluster manage
-#define OP_CM              MSG_CM_REMOTE
-// begin transaction operations
-#define OP_TRANS_BEGIN     MSG_BS_TRANS_BEGIN_REQ
-// commit transaction operations
-#define OP_TRANS_COMMIT    MSG_BS_TRANS_COMMIT_REQ
-// rollback transaction operations
-#define OP_TRANS_ROLLBACK  MSG_BS_TRANS_ROLLBACK_REQ
-// aggreation
-#define OP_AGGREGATE       MSG_BS_AGGREGATE_REQ
-
 /*
 messageLength : This is the total size of the message in bytes. This total
 includes the 4 bytes that holds the message length.
 
 requestID : This is a client or database-generated identifier that uniquely
 identifies this message. For the case of client-generated messages (e.g.
-CONTRIB:OP_QUERY and CONTRIB:OP_GET_MORE), it will be returned in the
+CONTRIB:MSG_BS_QUERY_REQ and CONTRIB:OP_GET_MORE), it will be returned in the
 responseTo field of the highest bit(1) message. Along with the reponseTo field
 in responses, clients can use this to associate query responses with the
 originating query.
 
 responseTo : In the case of a message from the database, this will be the
-requestID taken from the CONTRIB:OP_QUERY or CONTRIB:OP_GET_MORE messages from
+requestID taken from the CONTRIB:MSG_BS_QUERY_REQ or CONTRIB:OP_GET_MORE messages from
 the client. Along with the requestID field in queries, clients can use this to
 associate query responses with the originating query.
 
@@ -334,7 +303,7 @@ opCode : Type of message. See the table below in the next section.
 /*
 Clients can send all messages except for reply. This is reserved for
 use by the database.
-Note that only the CONTRIB:OP_QUERY and CONTRIB:OP_GET_MORE messages result in a
+Note that only the CONTRIB:MSG_BS_QUERY_REQ and CONTRIB:OP_GET_MORE messages result in a
 response from the database. There will be no response sent for any other
 message.
 You can determine if a message was successful with a getLastError command.
@@ -709,4 +678,5 @@ typedef enum _PREFER_REPLICA_TYPE
 
 #pragma pack()
 
-#endif
+#endif // MSG_H__
+

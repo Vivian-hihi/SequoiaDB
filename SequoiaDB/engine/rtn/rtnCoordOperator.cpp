@@ -79,7 +79,7 @@ namespace engine
    RTN_COORD_OP_ADD( MSG_BS_TRANS_BEGIN_REQ, rtnCoordTransBegin )
    RTN_COORD_OP_ADD( MSG_BS_TRANS_COMMIT_REQ, rtnCoordTransCommit )
    RTN_COORD_OP_ADD( MSG_BS_TRANS_ROLLBACK_REQ, rtnCoordTransRollback )
-   RTN_COORD_OP_ADD( OP_SQL, rtnCoordSql )
+   RTN_COORD_OP_ADD( MSG_BS_SQL_REQ, rtnCoordSql )
    RTN_COORD_OP_ADD( MSG_BS_MSG_REQ, rtnCoordMsg )
    RTN_COORD_OP_ADD( MSG_NULL, rtnCoordOperatorDefault )
    RTN_COORD_OP_END

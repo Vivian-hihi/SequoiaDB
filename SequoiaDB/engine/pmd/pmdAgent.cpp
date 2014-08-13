@@ -149,10 +149,10 @@ namespace engine
          PD_TRACE1 ( SDB_PMDPROCCOORDAGENTREQ, PD_PACK_INT(pHead->opCode) );
          switch ( pHead->opCode )
          {
-         case OP_GETMORE :
+         case MSG_BS_GETMORE_REQ :
             rc = SDB_COORD_UNKNOWN_OP_REQ ;
             break ;
-         case OP_QUERY:
+         case MSG_BS_QUERY_REQ:
             {
                //TODO:parse query message
                //TODO:check collectionspacename collectionname while create
@@ -306,11 +306,11 @@ namespace engine
 
             rc = SDB_OK ;
          }
-         else if ( OP_MSG == opCode )
+         else if ( MSG_BS_MSG_REQ == opCode )
          {
             rc = rtnMsg ( (MsgOpMsg *)header ) ;
          }
-         else if ( OP_UPDATE == opCode )
+         else if ( MSG_BS_UPDATE_REQ == opCode )
          {
             isNeedRollback = TRUE ;
             // In update, we have two BSON objects
@@ -359,7 +359,7 @@ namespace engine
                goto error ;
             }
          }
-         else if ( OP_INSERT == opCode )
+         else if ( MSG_BS_INSERT_REQ == opCode )
          {
             isNeedRollback = TRUE ;
             INT32 recordNum = 0 ;
@@ -398,7 +398,7 @@ namespace engine
                goto error ;
             }
          }
-         else if ( OP_QUERY == opCode )
+         else if ( MSG_BS_QUERY_REQ == opCode )
          {
             PD_LOG ( PDDEBUG, "Query request received" ) ;
             rc = msgExtractQuery ( pReceiveBuffer, &flags, &pCollectionName,
@@ -485,7 +485,7 @@ namespace engine
                }
             }
          }
-         else if ( OP_GETMORE == opCode )
+         else if ( MSG_BS_GETMORE_REQ == opCode )
          {
             PD_LOG ( PDDEBUG, "GetMore request received" ) ;
             rc = msgExtractGetMore ( pReceiveBuffer, &numToRead, &contextID );
@@ -501,7 +501,7 @@ namespace engine
             rc = rtnGetMore ( contextID, numToRead, buffObj, contextStart,
                               cb, rtnCB ) ;
          }
-         else if ( OP_DELETE == opCode )
+         else if ( MSG_BS_DELETE_REQ == opCode )
          {
             isNeedRollback = TRUE ;
             PD_LOG ( PDDEBUG, "Delete request received" ) ;
@@ -539,7 +539,7 @@ namespace engine
             }
 
          }
-         else if ( OP_KILL_CONTEXTS == opCode )
+         else if ( MSG_BS_KILL_CONTEXT_REQ == opCode )
          {
             PD_LOG ( PDDEBUG, "Contexts request received" ) ;
             SINT32 numContexts ;
@@ -554,20 +554,20 @@ namespace engine
             }
             rc = rtnKillContexts ( numContexts, pContextIDs, cb, rtnCB ) ;
          }
-         else if ( OP_DISCONNECT == opCode )
+         else if ( MSG_BS_DISCONNECT == opCode )
          {
             PD_LOG ( PDEVENT, "Recieve disconnect msg in session[%lld, %s]", 
                      cb->getID(), cb->getName() ) ;
             *disconnect = TRUE ;
          }
-         else if ( OP_SQL == opCode )
+         else if ( MSG_BS_SQL_REQ == opCode )
          {
             CHAR *sql = NULL ;
             rc = msgExtractSql( pReceiveBuffer, &sql ) ;
             SQL_CB *sqlcb = krcb->getSqlCB() ;
             rc = sqlcb->exec( sql, cb, contextID ) ;
          }
-         else if ( OP_TRANS_BEGIN == opCode )
+         else if ( MSG_BS_TRANS_BEGIN_REQ == opCode )
          {
             if ( krcb->getDBRole() != SDB_ROLE_STANDALONE )
             {
@@ -580,7 +580,7 @@ namespace engine
                rc = rtnTransBegin( cb );
             }
          }
-         else if ( OP_TRANS_COMMIT == opCode )
+         else if ( MSG_BS_TRANS_COMMIT_REQ == opCode )
          {
             isNeedRollback = TRUE ;
             if ( krcb->getDBRole() != SDB_ROLE_STANDALONE )
@@ -594,7 +594,7 @@ namespace engine
                rc = rtnTransCommit( cb, dpsCB );
             }
          }
-         else if ( OP_TRANS_ROLLBACK == opCode )
+         else if ( MSG_BS_TRANS_ROLLBACK_REQ == opCode )
          {
             if ( krcb->getDBRole() != SDB_ROLE_STANDALONE )
             {
@@ -607,7 +607,7 @@ namespace engine
                rc = rtnTransRollback( cb, dpsCB );
             }
          }
-         else if ( OP_AGGREGATE == opCode )
+         else if ( MSG_BS_AGGREGATE_REQ == opCode )
          {
             CHAR *pObjs = NULL;
             bson::BSONObj objs;
@@ -664,7 +664,7 @@ namespace engine
          // just construct a header with empty data, means we complete request
          // 3) error not happened and it's from getmore, in this case we need
          // to construct a header with size (headersize + result data size)
-         if ( rc || (OP_GETMORE != opCode) )
+         if ( rc || (MSG_BS_GETMORE_REQ != opCode) )
          {
             // condition 1 and 2
             if ( rc )
@@ -718,7 +718,7 @@ namespace engine
          else
          {
             // condition 3
-            // this is for OP_GETMORE ONLY
+            // this is for MSG_BS_GETMORE_REQ ONLY
             msgBuildReplyMsgHeader ( replyHeader,
                     sizeof(replyHeader)+buffObj.size(), // length
                     header->opCode,
@@ -1317,7 +1317,6 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       SDB_ROLE dbrole = krcb->getDBRole () ;
-      rtnCoordOperator *pInterrupt = NULL ;
 
       // create socket
       ossSocket sock ( &s, PMD_AGENT_SOCKET_DFT_TIMEOUT ) ;
@@ -1353,8 +1352,6 @@ namespace engine
       if ( SDB_ROLE_COORD == dbrole )
       {
          CoordCB *pCoordCB = krcb->getCoordCB() ;
-         pInterrupt = pCoordCB->getProcesserFactory(
-            )->getOperator( MSG_BS_INTERRUPTE ) ;
          netMultiRouteAgent *pRouteAgent = pCoordCB->getRouteAgent() ;
          rc = pRouteAgent->addSession( cb );
          PD_RC_CHECK( rc, PDERROR,"failed to add session(rc=%d)", rc );
@@ -1391,6 +1388,8 @@ namespace engine
       // we will detect "disconnect" request inside the loop
       while ( !disconnect )
       {
+         //clean interrupt flag
+         cb->resetInterrupt () ;
          // clear info
          cb->resetInfo ( EDU_INFO_ERROR ) ;
 
@@ -1491,28 +1490,6 @@ namespace engine
             goto error ;
          }
 
-         // if interrupted, kill all context
-         if ( cb->isInterrupted( TRUE ) )
-         {
-            if ( pInterrupt )
-            {
-               pInterrupt->execute( pReceiveBuffer, packetLength, NULL,
-                                    cb, replyHeader, NULL ) ;
-            }
-            else
-            {
-               // delete all context
-               INT64 contextID = -1 ;
-               while ( -1 != ( contextID = cb->contextPeek() ) )
-               {
-                  sdbGetRTNCB()->contextDelete( contextID, NULL ) ;
-               }
-            }
-         }
-
-         //clean interrupt flag
-         cb->resetInterrupt () ;
-
          // increase process event count
          cb->incEventCount () ;
 
@@ -1557,11 +1534,6 @@ namespace engine
             if ( SDB_APP_INTERRUPT == rc )
             {
                PD_LOG ( PDINFO, "Agent is interrupt" ) ;
-               if ( pInterrupt )
-               {
-                  pInterrupt->execute( pReceiveBuffer, packetLength, NULL,
-                                       cb, replyHeader, NULL ) ;
-               }
             }
             else if ( SDB_DMS_EOC != rc )
             {

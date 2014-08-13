@@ -131,6 +131,8 @@ namespace engine
 
       while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
       {
+         // clear interrupt flag
+         _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
 
          // recv msg
@@ -191,20 +193,7 @@ namespace engine
                }
                break ;
             }
-
-            // if interrupted, kill all context
-            if ( _pEDUCB->isInterrupted( TRUE ) )
-            {
-               // delete all context
-               INT64 contextID = -1 ;
-               while ( -1 != ( contextID = _pEDUCB->contextPeek() ) )
-               {
-                  _pRTNCB->contextDelete( contextID, NULL ) ;
-               }
-            }
-            // clear interrupt flag
-            _pEDUCB->resetInterrupt() ;
-
+ 
             // increase process event count
             _pEDUCB->incEventCount() ;
             pBuff[ msgSize ] = 0 ;
