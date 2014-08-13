@@ -34,6 +34,7 @@
 #include "omagentUtil.hpp"
 #include "omagentHelper.hpp"
 #include "sptContainer.hpp"
+#include "ossProc.hpp"
 #include "utilPath.hpp"
 #include "ossPath.h"
 #include "omagentJob.hpp"
@@ -47,7 +48,22 @@ using namespace bson ;
 #define ROLE_CATA  "catalog"
 #define ROLE_DATA  "data"
 
+// TODO:tanzhaobo
+// what is the path in windows
+#if defined (_WINDOWS)
+
+#define REMOTE_OMAGENT_PROG ""
+#define START_DB_PROG "sdbstart.exe"
+#define SDB_CM_PROG   "sdbcm.exe"
+
+#else
+
+#define REMOTE_OMAGENT_PROG "/tmp/sdbcm"
 #define START_DB_PROG "sdbstart"
+#define SDB_CM_PROG   "sdbcm"
+
+#endif
+
 
 
 namespace engine
@@ -55,19 +71,14 @@ namespace engine
    // command list:
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaScanHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaBasicCheckHost )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallRemoteAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaCheckHost )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaExitAgent )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninstallRemoteAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
-/*
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallAgentProcess )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveAgentProcess )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaStopAgentProcess )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRegHosts )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaGetHostNames )
-//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
-//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
-*/
+
    /*
       _omaCommand
    */
@@ -182,10 +193,7 @@ namespace engine
       return &cmdBuilder ;
    }
 
-/**********************************
- implment omagent command
-**********************************/
-
+   /******************************* scan host ********************************/
    /*
       _omaScanHost
    */
@@ -371,7 +379,6 @@ namespace engine
       std::vector<BSONObj> result ;
       BSONObjBuilder bob ;
       BSONArrayBuilder bab ;
-//      BSONObj retObj ;
       std::vector<BSONObj>::iterator it ;
       std::vector<BSONObj>::iterator itr = _hosts.begin() ;
       while ( itr != _hosts.end() )
@@ -473,8 +480,278 @@ namespace engine
      goto done ;
    }
 
+   /******************************* install remote agent *********************/
+   _omaBasicCheckHost::_omaBasicCheckHost ()
+   {
+      _jsFileName = "basicCheckHost.js" ;
+   }
+   _omaBasicCheckHost::~_omaBasicCheckHost ()
+   {
+   }
+
+   /******************************* install remote agent *********************/
+   /*
+      _omaInstallRemoteAgent
+   */
+   _omaInstallRemoteAgent::_omaInstallRemoteAgent ()
+   {
+      _jsFileName = "installAgentProcess.js" ;
+   }
+
+   _omaInstallRemoteAgent::~_omaInstallRemoteAgent ()
+   {
+   }
+
+   INT32 _omaInstallRemoteAgent::init ( INT32 flags, INT64 numToSkip,
+                                        INT64 numToReturn,
+                                        const CHAR *pMatcherBuff,
+                                        const CHAR *pSelectBuff,
+                                        const CHAR *pOrderByBuff,
+                                        const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      // parse bson and get arguments info for js file
+      BSONElement ele ;
+      BSONObj arg( pMatcherBuff ) ;
+      ele = arg.getField ( OMA_FIELD_HOSTINFO ) ;
+      if ( Array == ele.type() )
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         while ( itr.more() )
+         {
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Invalid argument" ) ;
+               goto error ;
+            }
+            BSONObj temp = ele.embeddedObject() ;
+            _hosts.push_back ( temp ) ;
+         }
+      }
+
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+
+      // get scope
+      rc = getSptScope ( &_scope ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+/*
+   INT32 _omaInstallRemoteAgent::doit ( CHAR **ppBody, INT32 &bodyLen,
+                                        INT32 &returnNum )
+*/
+   INT32 _omaInstallRemoteAgent::doit ( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR local_omagent_path[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      const CHAR *remote_omagent = REMOTE_OMAGENT_PROG ;
+      std::string omagent_program ;
+      std::vector<BSONObj> result ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+//      BSONObj retObj ;
+      std::vector<BSONObj>::iterator it ;
+      std::vector<BSONObj>::iterator itr = _hosts.begin() ;
+
+      // get the path of local omagent program
+      rc = ossGetEWD ( local_omagent_path, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR,
+                     "Failed to get local sdbcm program path, rc = %d", rc ) ;
+         goto error ;
+      }
+#if defined (_WINDOWS)
+      omagent_program = omagent_program +
+                        local_omagent_path + "\\" + SDB_CM_PROG ;
+#else
+      omagent_program = omagent_program +
+                        local_omagent_path + "/" + SDB_CM_PROG ;
+#endif
+      while ( itr != _hosts.end() )
+      {
+         BSONObj detail ;
+         BSONObj rval ;
+         BSONObj host = *itr++ ;
+         BSONObj subObj ;
+         BSONObj temp ;
+         BSONObj status ;
+         BSONObjBuilder bob ;
+
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+         const CHAR *pIp = NULL ;
+         const CHAR *pUserName = NULL ;
+         const CHAR *pPassword = NULL ;
+         const CHAR *pVersion   = NULL ;
+         BOOLEAN isRunning      = FALSE ;
+
+         // get fields
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_IP, rc ) ;
+            goto error ;
+         }
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_USER, rc ) ;
+            goto error ;
+         }
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_PASSWD, rc ) ;
+            goto error ;
+         }
+         // check whether the remote machine has install omagent or not
+         rc = getRemoteAgentStatus ( pIp, pUserName, pPassword, status ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR,
+                     "Failed to get remote mechine's status, rc = %d", rc ) ;
+            goto error ;
+         }
+         rc = omaGetBooleanElement( status, OMA_FIELD_AGENT_IS_RUNNING,
+                                    isRunning ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_AGENT_IS_RUNNING, rc ) ;
+            goto error ;
+         }
+         if ( isRunning )
+         {
+            const CHAR *ver = getVersion() ;
+            rc = omaGetStringElement( status, OMA_FIELD_VERSION,
+                                      &pVersion ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG ( PDERROR, "Get filed[%s] failed, rc = %d",
+                        OMA_FIELD_VERSION, rc ) ;
+               goto error ;
+            }
+            if ( 0 != ossStrncmp( pVersion, ver, ossStrlen( ver ) ) )
+            {
+               PD_LOG( PDDEBUG,
+                       "Remote omagent's version is: %s, \
+and we are going to instll version %s", pVersion, ver ) ;
+               BSONObj errObj ;
+               BSONObjBuilder bob ;
+               bob.append( OMA_FIELD_IP, pIp ) ;
+               bob.append( OMA_FIELD_RC, SDB_OMA_DIFF_VER_AGT_IS_RUNNING ) ;
+               bob.append( OMA_FIELD_DETAIL,
+                           getErrDesp( SDB_OMA_DIFF_VER_AGT_IS_RUNNING ) ) ;
+               errObj = bob.obj() ;
+               result.push_back( errObj ) ;
+               continue ;
+            }
+         }
+         // build js file's argument
+         ossSnprintf( tempBuff, JS_ARG_LEN,
+                      " var IP = \"%s\"; var USERNAME = \"%s\"; \
+                      var PASSWORD = \"%s\"; var LOCAL_CM_PROG = \"%s\"; \
+                      var REMOTE_CM_PROG = \"%s\" ",
+                      pIp, pUserName, pPassword, omagent_program.c_str(),
+                      remote_omagent ) ;
+         PD_LOG ( PDDEBUG, "Install remote agent passes arguments: \
+var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
+var LOCAL_CM_PROG = \"%s\"; var REMOTE_CM_PROG = \"%s\" ",
+                  pIp, "xxx", "xxx", omagent_program.c_str(),
+                  remote_omagent ) ;
+
+         _content.clear() ;
+         _content += tempBuff ;
+         _content += OSS_NEWLINE ;
+         _content += _fileBuff ;
+
+         // execute js
+         rc = _scope->eval( _content.c_str(), _content.size(),
+                            _jsFileName, 1, 1, rval, detail ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                         _jsFileName, rc, detail.toString().c_str() ) ;
+            // TODO:what's in detail ?
+            BSONObj errObj ;
+            BSONObjBuilder bob ;
+            bob.append( OMA_FIELD_IP, pIp ) ;
+            bob.append( OMA_FIELD_RC, rc ) ;
+            bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
+            errObj = bob.obj() ;
+            result.push_back( errObj ) ;
+            continue ;
+         }
+         // extract the result from the return value
+         rc = omaGetObjElement( rval, "", subObj ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
+            goto error ;
+         }
+         bob.append( OMA_FIELD_IP, pIp ) ;
+         bob.appendElements( subObj ) ;
+         temp = bob.obj() ;
+         result.push_back( temp ) ;
+      } // while
+      // build return bson obj
+      it = result.begin() ;
+      while ( it != result.end() )
+         bab.append( *it++ ) ;
+      bob.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
+      retObj = bob.obj() ;
+/*
+      // build return body
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
+         goto error;
+      }
+*/
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallRemoteAgent::getRemoteAgentStatus ( const CHAR *pIp,
+                                                        const CHAR *pUserName,
+                                                        const CHAR *pPassword,
+                                                        BSONObj &result )
+   {
+      INT32 rc = SDB_OK ;
+      _omaGetRemoteAgentStatus checkRemote ;
+      rc = checkRemote.getStatus( pIp, pUserName, pPassword, result ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Faled to check remote mechine's status, rc = %d",
+                  rc ) ;
+      }
+      return rc ;
+   }
 
 
+   /******************************* check host ********************************/
    /*
       _omaCheckHost
    */
@@ -520,7 +797,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
+                      _jsFileName, rc ) ;
          goto error ;
       }
       // get scope
@@ -559,8 +836,6 @@ namespace engine
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
-         const CHAR *pLocalPath = NULL ;
-         const CHAR *pRemotePath = NULL ;
          // get fields
          rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          if ( rc )
@@ -646,320 +921,25 @@ namespace engine
       goto done ;
    }
 
+   /******************************* exit agent *******************************/
    /*
-      _omaAddHost
+       _omaExitAgent
    */
-   _omaAddHost::_omaAddHost()
+   _omaExitAgent::_omaExitAgent ()
+   {
+      _jsFileName = "stopAgentProcess.js" ;
+   }
+
+   _omaExitAgent::~_omaExitAgent ()
    {
    }
 
-   _omaAddHost::~_omaAddHost()
-   {
-   }
-
-   INT32 _omaAddHost::init ( INT32 flags, INT64 numToSkip,
-                             INT64 numToReturn,
-                             const CHAR *pMatcherBuff,
-                             const CHAR *pSelectBuff,
-                             const CHAR *pOrderByBuff,
-                             const CHAR *pHintBuff )
-   {
-      INT32 rc = SDB_OK ;
-   done:
-      return rc ;
-   error:
-     goto done ;
-   }
-
-   INT32 _omaAddHost::doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
-   {
-      INT32 rc = SDB_OK ;
-   done:
-      return rc ;
-   error:
-     goto done ;
-   }
-
-   /*
-      _omaInstallRemoteAgent
-   */
-   _omaInstallRemoteAgent::_omaInstallRemoteAgent ()
-   {
-      _scope = NULL ;
-      _jsFileName = "installAgentProcess.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-   }
-
-   _omaInstallRemoteAgent::~_omaInstallRemoteAgent ()
-   {
-
-   }
-
-   INT32 _omaInstallRemoteAgent::init ( INT32 flags, INT64 numToSkip,
-                                        INT64 numToReturn,
-                                        const CHAR *pMatcherBuff,
-                                        const CHAR *pSelectBuff,
-                                        const CHAR *pOrderByBuff,
-                                        const CHAR *pHintBuff )
-   {
-      INT32 rc = SDB_OK ;
-      // parse bson and get arguments info for js file
-      BSONElement ele ;
-      BSONObj arg( pMatcherBuff ) ;
-      ele = arg.getField ( OMA_FIELD_HOSTS ) ;
-      if ( Array == ele.type() )
-      {
-         BSONObjIterator itr( ele.embeddedObject() ) ;
-         while ( itr.more() )
-         {
-            ele = itr.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG ( PDERROR, "Invalid argument" ) ;
-               goto error ;
-            }
-            BSONObj temp = ele.embeddedObject() ;
-            _hosts.push_back ( temp ) ;
-         }
-      }
-
-      // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
-         goto error ;
-      }
-
-      // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaInstallRemoteAgent::doit ( CHAR **ppBody, INT32 &bodyLen,
-                                        INT32 &returnNum )
-   {
-      INT32 rc = SDB_OK ;
-      std::vector<BSONObj> result ;
-      BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
-      BSONObj retObj ;
-      std::vector<BSONObj>::iterator it ;
-      std::vector<BSONObj>::iterator itr = _hosts.begin() ;
-      while ( itr != _hosts.end() )
-      {
-         BSONObj detail ;
-         BSONObj rval ;
-         BSONObj host = *itr++ ;
-         BSONObj subObj ;
-         BSONObj temp ;
-         BSONObj status ;
-         BSONObjBuilder bob ;
-
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-         const CHAR *pIp = NULL ;
-         const CHAR *pUserName = NULL ;
-         const CHAR *pPassword = NULL ;
-         const CHAR *pLocalPath = NULL ;
-         const CHAR *pRemotePath = NULL ;
-         const CHAR *pVersion   = NULL ;
-         BOOLEAN isRunning      = FALSE ;
-
-         // get fields
-         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_IP, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_USER, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_PASSWD, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_LOCAL_PACKET_PATH,
-                                   &pLocalPath ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_LOCAL_PACKET_PATH, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
-                                   &pRemotePath ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_REMOTE_PACKET_PATH, rc ) ;
-            goto error ;
-         }
-
-         // check whether the remote machine has install omagent or not
-         rc = getRemoteAgentStatus ( pIp, pUserName, pPassword, status ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR,
-                     "Failed to get remote mechine's status, rc = %d", rc ) ;
-            goto error ;
-         }
-         rc = omaGetBooleanElement( status, OMA_FIELD_AGENT_IS_RUNNING,
-                                    isRunning ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_AGENT_IS_RUNNING, rc ) ;
-            goto error ;
-         }
-         if ( isRunning )
-         {
-            const CHAR *ver = getVersion() ;
-            rc = omaGetStringElement( status, OMA_FIELD_VERSION,
-                                      &pVersion ) ;
-            if ( rc )
-            {
-               PD_LOG_MSG ( PDERROR, "Get filed[%s] failed, rc = %d",
-                        OMA_FIELD_VERSION, rc ) ;
-               goto error ;
-            }
-            if ( 0 != ossStrncmp( pVersion, ver, ossStrlen( ver ) ) )
-            {
-               PD_LOG( PDDEBUG,
-                       "Remote omagent's version is: %s, and we are going to instll version %s",
-                       pVersion, ver ) ;
-               BSONObj errObj ;
-               BSONObjBuilder bob ;
-               bob.append( OMA_FIELD_IP, pIp ) ;
-               bob.append( OMA_FIELD_RC, SDB_OMA_DIFF_VER_AGT_IS_RUNNING ) ;
-               bob.append( OMA_FIELD_DETAIL,
-                           getErrDesp( SDB_OMA_DIFF_VER_AGT_IS_RUNNING ) ) ;
-               errObj = bob.obj() ;
-               result.push_back( errObj ) ;
-               continue ;
-            }
-         }
-         // build js file's argument
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var IP = \"%s\"; var USERNAME = \"%s\"; \
-                      var PASSWORD = \"%s\"; var LOCAL_PACKET_PATH = \"%s\"; \
-                      var REMOTE_PACKET_PATH = \"%s\" ",
-                      pIp, pUserName, pPassword, pLocalPath, pRemotePath ) ;
-         PD_LOG ( PDDEBUG, "Install remote agent passes arguments: %s",
-                  tempBuff ) ;
-
-         _content.clear() ;
-         _content += tempBuff ;
-         _content += OSS_NEWLINE ;
-         _content += _fileBuff ;
-
-         // execute js
-         rc = _scope->eval( _content.c_str(), _content.size(), _jsFileName, 1, 1, rval, detail ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
-            // TODO:what's in detail ?
-            BSONObj errObj ;
-            BSONObjBuilder bob ;
-            bob.append( OMA_FIELD_IP, pIp ) ;
-            bob.append( OMA_FIELD_RC, rc ) ;
-            bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
-            errObj = bob.obj() ;
-            result.push_back( errObj ) ;
-            continue ;
-         }
-         // extract the result from the return value
-         rc = omaGetObjElement( rval, "", subObj ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
-            goto error ;
-         }
-         bob.append( OMA_FIELD_IP, pIp ) ;
-         bob.appendElements( subObj ) ;
-         temp = bob.obj() ;
-         result.push_back( temp ) ;
-      } // while
-      // build return bson obj
-      it = result.begin() ;
-      while ( it != result.end() )
-         bab.append( *it++ ) ;
-      bob.appendArray( OMA_FIELD_INSATLL_REMOTE_AGENT_RET, bab.arr() ) ;
-      retObj = bob.obj() ;
-      // build return body
-      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
-         goto error;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaInstallRemoteAgent::getRemoteAgentStatus ( const CHAR *pIp,
-                                                        const CHAR *pUserName,
-                                                        const CHAR *pPassword,
-                                                        BSONObj &result )
-   {
-      INT32 rc = SDB_OK ;
-      _omaCheckRemoteAgentProcess checkRemote ;
-      rc = checkRemote.check( pIp, pUserName, pPassword, result ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Faled to check remote mechine's status, rc = %d",
-                  rc ) ;
-      }
-      return rc ;
-   }
-
-
-   // _omaCheckRemoteAgentProcess
-   _omaCheckRemoteAgentProcess::_omaCheckRemoteAgentProcess ()
-   {
-      _scope = NULL ;
-      _jsFileName = "checkRemoteAgentProcess.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-
-   }
-
-   _omaCheckRemoteAgentProcess::~_omaCheckRemoteAgentProcess ()
-   {
-
-   }
-
-   INT32 _omaCheckRemoteAgentProcess::init( INT32 flags, INT64 numToSkip,
-                                            INT64 numToReturn,
-                                            const CHAR *pMatcherBuff,
-                                            const CHAR *pSelectBuff,
-                                            const CHAR *pOrderByBuff,
-                                            const CHAR *pHintBuff )
+   INT32 _omaExitAgent::init( INT32 flags, INT64 numToSkip,
+                              INT64 numToReturn,
+                              const CHAR *pMatcherBuff,
+                              const CHAR *pSelectBuff,
+                              const CHAR *pOrderByBuff,
+                              const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -1003,9 +983,8 @@ namespace engine
       goto done ;
    }
 
-
-   INT32 _omaCheckRemoteAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
-                                            INT32 &returnNum )
+   INT32 _omaExitAgent::doit( CHAR **ppBody, INT32 &bodyLen,
+                              INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
       std::vector<BSONObj> result ;
@@ -1027,36 +1006,48 @@ namespace engine
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
+         const CHAR *pLocalPath = NULL ;
+         const CHAR *pRemotePath = NULL ;
 
          // get fields
          rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
                      OMA_FIELD_IP, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
                      OMA_FIELD_USER, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
                      OMA_FIELD_PASSWD, rc ) ;
+            goto error ;
+         }
+         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
+                                   &pRemotePath ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_REMOTE_PACKET_PATH, rc ) ;
             goto error ;
          }
 
          // build argument for js file
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      "var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\";",
-                      pIp, pUserName, pPassword ) ;
-         PD_LOG ( PDDEBUG, "Arguments for checkRemoteAgentProcess.js is: %s",
+                      " var IP = \"%s\"; var USERNAME = \"%s\"; \
+                      var PASSWORD = \"%s\"; var REMOTE_PACKET_PATH = \"%s\" ",
+                      pIp, pUserName, pPassword, pRemotePath ) ;
+         PD_LOG ( PDDEBUG, "Remove remote agent packet passes arguments: %s",
                   tempBuff ) ;
+
          _content.clear() ;
          _content += tempBuff ;
          _content += OSS_NEWLINE ;
@@ -1095,8 +1086,7 @@ namespace engine
       it = result.begin() ;
       while ( it != result.end() )
          bab.append( *it++ ) ;
-      bob.appendArray( OMA_FIELD_HOSTINFO,
-                       bab.arr() ) ;
+      bob.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
       retObj = bob.obj() ;
       // build return body
       rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
@@ -1112,77 +1102,234 @@ namespace engine
       goto done ;
    }
 
-
-   INT32 _omaCheckRemoteAgentProcess::check ( const CHAR *pIp,
-                                              const CHAR *pUserName,
-                                              const CHAR *pPassword,
-                                              BSONObj &result )
+   /******************************* uninstall remote agent *******************/
+   /*
+      _omaUninstallRemoteAgent
+   */
+   _omaUninstallRemoteAgent::_omaUninstallRemoteAgent ()
    {
-      INT32 rc = SDB_OK ;
-      CHAR *pBuffer = NULL ;
-      INT32 bufLen  = 0 ;
-      INT32 returnNum = 0 ;
-      BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
-      BSONObj host ;
-      BSONObj subObj ;
-      if ( !pIp || !pUserName || !pPassword )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG ( PDERROR, "Invalid argument" ) ;
-         goto error ;
-      }
-      subObj = BSON( OMA_FIELD_IP << pIp <<
-                     OMA_FIELD_USER << pUserName <<
-                     OMA_FIELD_PASSWD << pPassword ) ;
-      bab.append( subObj ) ;
-      bob.appendArray( OMA_FIELD_HOSTS, bab.arr() ) ;
-      host = bob.obj() ;
-      // init
-      rc = init ( 0, 0, 0, host.objdata(), NULL, NULL, NULL ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to init check remote agent process" ) ;
-         goto error ;
-      }
-      // doit
-      rc = doit ( &pBuffer, bufLen, returnNum ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to execute check remote agent process" ) ;
-         goto error ;
-      }
-      // build return obj
-      try
-      {
-         result = BSONObj( pBuffer ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG_MSG ( PDERROR,  "Failed to build bson:%s", e.what() ) ;
-         goto error ;
-      }
-
-      done:
-         return rc ;
-      error:
-         goto done ;
+      _jsFileName = "removeAgentProcess.js" ;
    }
 
+   _omaUninstallRemoteAgent::~_omaUninstallRemoteAgent ()
+   {
+   }
+
+   INT32 _omaUninstallRemoteAgent::init( INT32 flags, INT64 numToSkip,
+                                         INT64 numToReturn,
+                                         const CHAR *pMatcherBuff,
+                                         const CHAR *pSelectBuff,
+                                         const CHAR *pOrderByBuff,
+                                         const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      // parse bson and get arguments info for js file
+      BSONElement ele ;
+      BSONObj arg( pMatcherBuff ) ;
+      ele = arg.getField ( OMA_FIELD_HOSTS ) ;
+      if ( Array == ele.type() )
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         while ( itr.more() )
+         {
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Invalid argument" ) ;
+               goto error ;
+            }
+            BSONObj temp = ele.embeddedObject() ;
+            _hosts.push_back ( temp ) ;
+         }
+      }
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      rc = getSptScope ( &_scope ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaUninstallRemoteAgent::doit( CHAR **ppBody, INT32 &bodyLen,
+                                         INT32 &returnNum )
+   {
+      INT32 rc = SDB_OK ;
+      std::vector<BSONObj> result ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      BSONObj retObj ;
+      std::vector<BSONObj>::iterator it ;
+      std::vector<BSONObj>::iterator itr = _hosts.begin() ;
+      while ( itr != _hosts.end() )
+      {
+         BSONObj detail ;
+         BSONObj rval ;
+         BSONObj host = *itr++ ;
+         BSONObj subObj ;
+         BSONObj temp ;
+         BSONObjBuilder bob ;
+
+         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+         const CHAR *pIp = NULL ;
+         const CHAR *pUserName = NULL ;
+         const CHAR *pPassword = NULL ;
+         const CHAR *pLocalPath = NULL ;
+         const CHAR *pRemotePath = NULL ;
+
+         // get fileds
+         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR,
+                     "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
+            goto error ;
+         }
+         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR,
+                     "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
+            goto error ;
+         }
+         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR,
+                     "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
+            goto error ;
+         }
+         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
+                                   &pRemotePath ) ;
+
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+                     OMA_FIELD_REMOTE_PACKET_PATH, rc ) ;
+            goto error ;
+         }
+
+         // build argument for js file
+         ossSnprintf( tempBuff, JS_ARG_LEN,
+                      " var IP = \"%s\"; var USERNAME = \"%s\"; \
+                      var PASSWORD = \"%s\"; var REMOTE_PACKET_PATH = \"%s\" ",
+                      pIp, pUserName, pPassword, pRemotePath ) ;
+         PD_LOG ( PDDEBUG, "Remove remote agent packet passes arguments: %s",
+                  tempBuff ) ;
+         _content.clear() ;
+         _content += tempBuff ;
+         _content += OSS_NEWLINE ;
+         _content += _fileBuff ;
+
+         // execute js
+         rc = _scope->eval( _content.c_str(), _content.size(),
+                            _jsFileName, 1, 1, rval, detail ) ;
+
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                     _jsFileName, rc, detail.toString().c_str() ) ;
+            // TODO:what's in detail ?
+            BSONObj errObj ;
+            BSONObjBuilder bob ;
+            bob.append( OMA_FIELD_IP, pIp ) ;
+            bob.append( OMA_FIELD_RC, rc ) ;
+            bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
+            errObj = bob.obj() ;
+            result.push_back( errObj ) ;
+            continue ;
+         }
+         rc = omaGetObjElement( rval, "", subObj ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+            goto error ;
+         }
+         bob.append( OMA_FIELD_IP, pIp ) ;
+         bob.appendElements( subObj ) ;
+         temp = bob.obj() ;
+         result.push_back( temp ) ;
+
+      }
+      // build return bson obj
+      it = result.begin() ;
+      while ( it != result.end() )
+         bab.append( *it++ ) ;
+      bob.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
+      retObj = bob.obj() ;
+      // build return body
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
+         goto error;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /******************************* add host ********************************/
+   /*
+      _omaAddHost
+   */
+   _omaAddHost::_omaAddHost()
+   {
+   }
+
+   _omaAddHost::~_omaAddHost()
+   {
+   }
+
+   INT32 _omaAddHost::init ( INT32 flags, INT64 numToSkip,
+                             INT64 numToReturn,
+                             const CHAR *pMatcherBuff,
+                             const CHAR *pSelectBuff,
+                             const CHAR *pOrderByBuff,
+                             const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   INT32 _omaAddHost::doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
+   {
+      INT32 rc = SDB_OK ;
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+
+
+/*
    // _omaInstallAgentProcess
    _omaInstallAgentProcess::_omaInstallAgentProcess ()
    {
-      _scope = NULL ;
       _jsFileName = "installAgentProcess.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-
    }
 
    _omaInstallAgentProcess::~_omaInstallAgentProcess ()
    {
-
    }
 
    INT32 _omaInstallAgentProcess::init( INT32 flags, INT64 numToSkip,
@@ -1363,30 +1510,25 @@ namespace engine
    error:
       goto done ;
    }
+*/
 
-
-   // _omaRemoveAgentProcess
-   _omaRemoveAgentProcess::_omaRemoveAgentProcess ()
+   /******************************* add db business **************************/
+   // _omaInstallDBBusiness
+   _omaInstallDBBusiness::_omaInstallDBBusiness ()
    {
-      _scope = NULL ;
-      _jsFileName = "removeAgentProcess.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-
+      _jsFileName = "" ;
    }
 
-   _omaRemoveAgentProcess::~_omaRemoveAgentProcess ()
+   _omaInstallDBBusiness::~_omaInstallDBBusiness ()
    {
-
    }
 
-   INT32 _omaRemoveAgentProcess::init( INT32 flags, INT64 numToSkip,
-                                                INT64 numToReturn,
-                                                const CHAR *pMatcherBuff,
-                                                const CHAR *pSelectBuff,
-                                                const CHAR *pOrderByBuff,
-                                                const CHAR *pHintBuff )
+   INT32 _omaInstallDBBusiness::init( INT32 flags, INT64 numToSkip,
+                                      INT64 numToReturn,
+                                      const CHAR *pMatcherBuff,
+                                      const CHAR *pSelectBuff,
+                                      const CHAR *pOrderByBuff,
+                                      const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -1398,6 +1540,7 @@ namespace engine
          BSONObjIterator itr( ele.embeddedObject() ) ;
          while ( itr.more() )
          {
+            const CHAR *value = NULL ;
             ele = itr.next() ;
             if ( Object != ele.type() )
             {
@@ -1406,139 +1549,202 @@ namespace engine
                goto error ;
             }
             BSONObj temp = ele.embeddedObject() ;
-            _hosts.push_back ( temp ) ;
+            // category
+            rc = omaGetStringElement ( temp, OMA_OPTION_ROLE, &value ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+                        OMA_OPTION_ROLE, rc ) ;
+               goto error ;
+            }
+            if ( 0 == ossStrncmp( value, ROLE_DATA,
+                                  ossStrlen( ROLE_DATA ) ) )
+            {
+               _data.push_back( temp ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_COORD,
+                                       ossStrlen( ROLE_COORD ) ) )
+            {
+               _coord.push_back( temp ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_CATA,
+                                       ossStrlen( ROLE_CATA ) ) )
+            {
+               _catalog.push_back( temp ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR,
+                       "Failed to install db business for wrong argument %s",
+                       temp.toString().c_str() ) ;
+               goto error ;
+            }
          }
-      }
-      // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
-         goto error ;
-      }
-      // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
+      } // todo: else
+
    done:
       return rc ;
    error :
       goto done ;
    }
 
-
-   INT32 _omaRemoveAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
-                                              INT32 &returnNum )
+   INT32 _omaInstallDBBusiness::doit( CHAR **ppBody, INT32 &bodyLen,
+                                      INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
-      std::vector<BSONObj> result ;
+      _omaCreateVirtualCoord vCoord( "", "" ) ;
+      _omaTaskMgr *pTaskMgr = getTaskMgr() ;
+      UINT64 taskID = pTaskMgr->getTaskID() ;
+      BOOLEAN hasVCoordStart = FALSE ;
+      INT32 coord_service = 50000 ;
+      _omaInstallDBBusinessTask *pTask = NULL ;
       BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
       BSONObj retObj ;
-      std::vector<BSONObj>::iterator it ;
-      std::vector<BSONObj>::iterator itr = _hosts.begin() ;
-      while ( itr != _hosts.end() )
+/*
+      // create virtual coord
+      rc = vCoord.createVirtualCoord( coord_service, hasVCoordStart ) ;
+*/
+      if ( rc )
       {
-         BSONObj detail ;
-         BSONObj rval ;
-         BSONObj host = *itr++ ;
-         BSONObj subObj ;
-         BSONObj temp ;
-         BSONObjBuilder bob ;
-
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-         const CHAR *pIp = NULL ;
-         const CHAR *pUserName = NULL ;
-         const CHAR *pPassword = NULL ;
-         const CHAR *pLocalPath = NULL ;
-         const CHAR *pRemotePath = NULL ;
-
-         // get fileds
-         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR,
-                     "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR,
-                     "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR,
-                     "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
-                                   &pRemotePath ) ;
-
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
-                     OMA_FIELD_REMOTE_PACKET_PATH, rc ) ;
-            goto error ;
-         }
-
-         // build argument for js file
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var IP = \"%s\"; var USERNAME = \"%s\"; \
-                      var PASSWORD = \"%s\"; var REMOTE_PACKET_PATH = \"%s\" ",
-                      pIp, pUserName, pPassword, pRemotePath ) ;
-         PD_LOG ( PDDEBUG, "Remove remote agent packet passes arguments: %s",
-                  tempBuff ) ;
-         _content.clear() ;
-         _content += tempBuff ;
-         _content += OSS_NEWLINE ;
-         _content += _fileBuff ;
-
-         // execute js
-         rc = _scope->eval( _content.c_str(), _content.size(),
-                            _jsFileName, 1, 1, rval, detail ) ;
-
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
-            // TODO:what's in detail ?
-            BSONObj errObj ;
-            BSONObjBuilder bob ;
-            bob.append( OMA_FIELD_IP, pIp ) ;
-            bob.append( OMA_FIELD_RC, rc ) ;
-            bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
-            errObj = bob.obj() ;
-            result.push_back( errObj ) ;
-            continue ;
-         }
-         rc = omaGetObjElement( rval, "", subObj ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
-            goto error ;
-         }
-         bob.append( OMA_FIELD_IP, pIp ) ;
-         bob.appendElements( subObj ) ;
-         temp = bob.obj() ;
-         result.push_back( temp ) ;
-
+         PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
       }
-      // build return bson obj
-      it = result.begin() ;
-      while ( it != result.end() )
-         bab.append( *it++ ) ;
-      bob.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
+      // create install db task
+      pTask = SDB_OSS_NEW _omaInstallDBBusinessTask( taskID ) ;
+      if ( !pTask )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG( PDERROR,
+                 "Failed to new install db business task install, rc = %d", rc ) ;
+         goto error ;
+      }
+      // register install db task
+      pTaskMgr->addTask( pTask ) ;
+      // start install db task
+      rc = pTask->init( _coord, _catalog, _data ) ;
+      if ( rc  )
+      {
+         PD_LOG_MSG( PDERROR,
+                 "Failed to init install db busniness task, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = pTask->doit() ;
+      {
+         PD_LOG_MSG( PDERROR,
+                 "Failed to do db busniness task, rc = %d", rc ) ;
+         goto error ;
+      }
+      // return taskID
+      bob.append( OMA_FIELD_RC, rc ) ;
+      bob.append( OMA_FIELD_DETAIL, "" ) ;
+      bob.appendNumber( OMA_FIELD_TASKID, (INT64)taskID ) ;
       retObj = bob.obj() ;
-      // build return body
       rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
+         goto error;
+      }
+   done:
+/*
+      // create remove virtual coord task
+      if ( hasVCoordStart )
+      {
+//         pTask2 = SDB_OSS_NEW _omaRemoveVirtualCoordTask( taskID ) ;
+         _omaRemoveVirtualCoordTask removeVCoordTask( taskID ) ;
+         rc = removeVCoordTask.doit() ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
+         }
+      }
+*/
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /******************************* query install status *********************/
+   /*
+      _omaInstallDBStatus
+   */
+   _omaInstallDBStatus::_omaInstallDBStatus ()
+   {
+      _scope = NULL ;
+      _jsFileName = "" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+      _taskID = OMA_INVALID_TASKID ;
+      _taskMrg = NULL ;
+   }
+
+   _omaInstallDBStatus::~_omaInstallDBStatus ()
+   {
+   }
+
+   INT32 _omaInstallDBStatus::init ( INT32 flags, INT64 numToSkip,
+                                     INT64 numToReturn,
+                                     const CHAR *pMatcherBuff,
+                                     const CHAR *pSelectBuff,
+                                     const CHAR *pOrderByBuff,
+                                     const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      // parse bson to get task id
+      BSONElement ele ;
+      BSONObj arg( pMatcherBuff ) ;
+      try
+      {
+         ele = arg.getField ( OMA_FIELD_TASKID ) ;
+         if ( NumberLong != ele.type() )
+         {
+            rc = SDB_UNEXPECTED_RESULT ;
+            PD_LOG_MSG ( PDERROR, "Failed to get taskID, rc = %d", rc ) ;
+            goto error ;
+         }
+         _taskID = ele.numberLong () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG ( PDERROR,
+                  "Failed to get taskID, received unexpected error: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+      // get task manager
+      _taskMrg = getTaskMgr() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBStatus::doit ( CHAR **ppBody, INT32 &bodyLen,
+                                   INT32 &returnNum )
+   {
+      INT32 rc = SDB_OK ;
+      _omaTask *pTask  = NULL ;
+      _omaInstallDBBusinessTask *pChildTask = NULL ;
+      BSONObj result ;
+      pTask = _taskMrg->findTask( _taskID ) ;
+
+      if ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) )
+      {
+         pChildTask->getInstallStatus( result ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG ( PDERROR, "Failed to get install db progress" ) ;
+         goto error ;
+      }
+
+      // build return body
+      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &result ) ;
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
@@ -1551,29 +1757,307 @@ namespace engine
       goto done ;
    }
 
-
-   // _omaStopAgentProcess
-   _omaStopAgentProcess::_omaStopAgentProcess ()
+   // _omaCreateVirtualCoord
+   _omaCreateVirtualCoord::_omaCreateVirtualCoord ( const CHAR *username,
+                                                    const CHAR *password )
    {
       _scope = NULL ;
-      _jsFileName = "stopAgentProcess.js" ;
+      _jsFileName = "createVirtualCoord.js" ;
       _fileBuff = NULL ;
       _buffSize = 0 ;
       _readSize = 0 ;
-
+      _username = username ;
+      _password = password ;
    }
 
-   _omaStopAgentProcess::~_omaStopAgentProcess ()
+   _omaCreateVirtualCoord::~_omaCreateVirtualCoord ()
    {
-
    }
 
-   INT32 _omaStopAgentProcess::init( INT32 flags, INT64 numToSkip,
-                                                INT64 numToReturn,
-                                                const CHAR *pMatcherBuff,
-                                                const CHAR *pSelectBuff,
-                                                const CHAR *pOrderByBuff,
-                                                const CHAR *pHintBuff )
+   INT32 _omaCreateVirtualCoord::init()
+   {
+      INT32 rc = SDB_OK ;
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      rc = getSptScope ( &_scope ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaCreateVirtualCoord::doit( INT32 coord_service,
+                                       BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj rval ;
+      BSONObj detail ;
+      BSONObj subObj ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+      CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      // get program path
+      rc = getProgramPath( prog_agent ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to get omagent program path, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = ossLocateExecutable ( prog_agent, START_DB_PROG, prog_sequoiadb,
+                                 OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to get sequoiadb program path, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN,
+                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
+                     var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\"; ",
+                   _username, _password, prog_sequoiadb, coord_service ) ;
+
+      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: var USERNAME = %s; var PASSWORD = %s; var PROGRAM = %s; var COORD_SERVICE = %d;",
+               "xxx", "xxx", prog_sequoiadb, coord_service ) ;
+
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         goto error ;
+      }
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+         goto error ;
+      }
+      // extract return rc
+      {
+      INT32 retRc = SDB_OK ;
+      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                  OMA_FIELD_RC, rc ) ;
+         goto error ;
+      }
+      if ( retRc )
+      {
+         PD_LOG_MSG( PDERROR, "Omagent failed to start virtual coord, rc = %d", retRc ) ;
+         goto error;
+      }
+      }
+      result = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCreateVirtualCoord::createVirtualCoord( INT32 coord_service,
+                                                     BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      rc = init() ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to init for creating virtual coord, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+      rc = doit( coord_service, result ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // _omaRemoveVirtualCoord
+   _omaRemoveVirtualCoord::_omaRemoveVirtualCoord ( const CHAR *username,
+                                                    const CHAR *password )
+   {
+      _scope = NULL ;
+      _jsFileName = "removeVirtualCoord.js" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+      _username = username ;
+      _password = password ;
+   }
+
+   _omaRemoveVirtualCoord::~_omaRemoveVirtualCoord ()
+   {
+   }
+
+   INT32 _omaRemoveVirtualCoord::init()
+   {
+      INT32 rc = SDB_OK ;
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      rc = getSptScope ( &_scope ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaRemoveVirtualCoord::doit( INT32 coord_service,
+                                       BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj rval ;
+      BSONObj detail ;
+      BSONObj subObj ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+      CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      // get program path
+      rc = getProgramPath( prog_agent ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to get omagent program path, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = ossLocateExecutable ( prog_agent, "sdbstop", prog_sequoiadb,
+                                 OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to get sequoiadb program path, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN,
+                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
+                     var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\";  ",
+                   _username, _password, prog_sequoiadb, coord_service ) ;
+
+      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: var USERNAME = %s; var PASSWORD = %s; var PROGRAM = %s; var COORD_SERVICE = %d;",
+                        "xxx", "xxx", prog_sequoiadb, coord_service ) ;
+
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         goto error ;
+      }
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+         goto error ;
+      }
+      // extract return rc
+      {
+      INT32 retRc = SDB_OK ;
+      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc= %d", OMA_FIELD_RC, rc ) ;
+         goto error ;
+      }
+      if ( retRc )
+      {
+         PD_LOG_MSG( PDERROR, "Omagent failed to start virtual coord, rc = %d", retRc ) ;
+         goto error;
+      }
+      }
+      result = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRemoveVirtualCoord::removeVirtualCoord( INT32 coord_service,
+                                                     BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      rc = init() ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to init for creating virtual coord, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+      rc = doit( coord_service, result ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //   _omaGetRemoteAgentStatus
+   _omaGetRemoteAgentStatus::_omaGetRemoteAgentStatus ()
+   {
+      _jsFileName = "checkRemoteAgentProcess.js" ;
+   }
+
+   _omaGetRemoteAgentStatus::~_omaGetRemoteAgentStatus ()
+   {
+   }
+
+   INT32 _omaGetRemoteAgentStatus::init( INT32 flags, INT64 numToSkip,
+                                            INT64 numToReturn,
+                                            const CHAR *pMatcherBuff,
+                                            const CHAR *pSelectBuff,
+                                            const CHAR *pOrderByBuff,
+                                            const CHAR *pHintBuff )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
@@ -1616,16 +2100,17 @@ namespace engine
    error :
       goto done ;
    }
-
-
-   INT32 _omaStopAgentProcess::doit( CHAR **ppBody, INT32 &bodyLen,
-                                              INT32 &returnNum )
+/*
+   INT32 _omaGetRemoteAgentStatus::doit( CHAR **ppBody, INT32 &bodyLen,
+                                         INT32 &returnNum )
+*/
+   INT32 _omaGetRemoteAgentStatus::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       std::vector<BSONObj> result ;
       BSONObjBuilder bob ;
       BSONArrayBuilder bab ;
-      BSONObj retObj ;
+//      BSONObj retObj ;
       std::vector<BSONObj>::iterator it ;
       std::vector<BSONObj>::iterator itr = _hosts.begin() ;
       while ( itr != _hosts.end() )
@@ -1641,48 +2126,36 @@ namespace engine
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
-         const CHAR *pLocalPath = NULL ;
-         const CHAR *pRemotePath = NULL ;
 
          // get fields
          rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
                      OMA_FIELD_IP, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
                      OMA_FIELD_USER, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
                      OMA_FIELD_PASSWD, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_REMOTE_PACKET_PATH,
-                                   &pRemotePath ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_REMOTE_PACKET_PATH, rc ) ;
             goto error ;
          }
 
          // build argument for js file
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var IP = \"%s\"; var USERNAME = \"%s\"; \
-                      var PASSWORD = \"%s\"; var REMOTE_PACKET_PATH = \"%s\" ",
-                      pIp, pUserName, pPassword, pRemotePath ) ;
-         PD_LOG ( PDDEBUG, "Remove remote agent packet passes arguments: %s",
+                      "var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\";",
+                      pIp, pUserName, pPassword ) ;
+         PD_LOG ( PDDEBUG, "Arguments for checkRemoteAgentProcess.js is: %s",
                   tempBuff ) ;
-
          _content.clear() ;
          _content += tempBuff ;
          _content += OSS_NEWLINE ;
@@ -1721,8 +2194,10 @@ namespace engine
       it = result.begin() ;
       while ( it != result.end() )
          bab.append( *it++ ) ;
-      bob.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
+      bob.appendArray( OMA_FIELD_HOSTINFO,
+                       bab.arr() ) ;
       retObj = bob.obj() ;
+/*
       // build return body
       rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
       if ( rc )
@@ -1730,7 +2205,7 @@ namespace engine
          PD_LOG_MSG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
          goto error;
       }
-
+*/
    done:
       return rc ;
    error:
@@ -1738,15 +2213,201 @@ namespace engine
    }
 
 
+   INT32 _omaGetRemoteAgentStatus::getStatus ( const CHAR *pIp,
+                                               const CHAR *pUserName,
+                                               const CHAR *pPassword,
+                                               BSONObj &result )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pBuffer = NULL ;
+      INT32 bufLen  = 0 ;
+      INT32 returnNum = 0 ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      BSONObj host ;
+      BSONObj subObj ;
+      BSONObj retObj ;
+      if ( !pIp || !pUserName || !pPassword )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Invalid argument" ) ;
+         goto error ;
+      }
+      subObj = BSON( OMA_FIELD_IP << pIp <<
+                     OMA_FIELD_USER << pUserName <<
+                     OMA_FIELD_PASSWD << pPassword ) ;
+      bab.append( subObj ) ;
+      bob.appendArray( OMA_FIELD_HOSTS, bab.arr() ) ;
+      host = bob.obj() ;
+      // init
+      rc = init ( 0, 0, 0, host.objdata(), NULL, NULL, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to init get remote agent status" ) ;
+         goto error ;
+      }
+      // doit
+      rc = doit ( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to execute get remote agent status" ) ;
+         goto error ;
+      }
+      // extract result for BSONArray
+      {
+      BSONElement ele ;
+      ele = retObj.getField ( OMA_FIELD_HOSTINFO ) ;
+      if ( Array == ele.type() )
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         while ( itr.more() )
+         {
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG_MSG ( PDERROR, "Wrong bson type" ) ;
+               goto error ;
+            }
+            result = ele.embeddedObject() ;
+            break ;
+         }
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to get remote agent status, for wrong bson type" ) ;
+         goto error ;
+      }
+      }
+/*
+      // build return obj
+      try
+      {
+         result = BSONObj( pBuffer ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG_MSG ( PDERROR,  "Failed to build bson:%s", e.what() ) ;
+         goto error ;
+      }
+*/
+      done:
+         return rc ;
+      error:
+         goto done ;
+   }
 
+   // _omaPort
+   _omaPort::_omaPort ( INT32 port )
+   {
+      _scope = NULL ;
+      _jsFileName = "getPortStatus.js" ;
+      _fileBuff = NULL ;
+      _buffSize = 0 ;
+      _readSize = 0 ;
+      _port = port ;
+   }
 
+   _omaPort::~_omaPort ()
+   {
+   }
 
+   INT32 _omaPort::init()
+   {
+      INT32 rc = SDB_OK ;
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      rc = getSptScope ( &_scope ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
 
+   INT32 _omaPort::doit( BOOLEAN &hasUsed )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj rval ;
+      BSONObj detail ;
+      BSONObj subObj ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
 
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN, " var PORT = \"%d\";", _port ) ;
+      PD_LOG ( PDDEBUG, "Get port status passes arguments: %s",
+               tempBuff ) ;
 
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
 
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
 
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         goto error ;
+      }
+      // get result
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+         goto error ;
+      }
+      rc = omaGetBooleanElement ( subObj, OMA_FIELD_PORTHASUSED, hasUsed ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+                  OMA_FIELD_PORTHASUSED, rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
+   INT32 _omaPort::getPortStatus( INT32 port, BOOLEAN hasUsed )
+   {
+      INT32 rc= SDB_OK ;
+      _setPort( port ) ;
+      rc = init() ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to init for get port %d status, rc = %d",
+                 port, rc ) ;
+         goto error ;
+      }
+      rc = doit( hasUsed ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to get port %d status, rc = %d",port,  rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
 
    // _omaRegHosts
@@ -1814,7 +2475,6 @@ namespace engine
    error :
       goto done ;
    }
-
 
    INT32 _omaRegHosts::doit( CHAR **ppBody, INT32 &bodyLen,
                                  INT32 &returnNum )
@@ -2069,17 +2729,11 @@ namespace engine
    // _omaGetHostNames
    _omaGetHostNames::_omaGetHostNames ()
    {
-      _scope = NULL ;
       _jsFileName = "getHostName.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-
    }
 
    _omaGetHostNames::~_omaGetHostNames ()
    {
-
    }
 
    INT32 _omaGetHostNames::init( INT32 flags, INT64 numToSkip,
@@ -2133,7 +2787,7 @@ namespace engine
 
 
    INT32 _omaGetHostNames::doit( CHAR **ppBody, INT32 &bodyLen,
-                                              INT32 &returnNum )
+                                 INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
       std::vector<BSONObj> result ;
@@ -2244,9 +2898,9 @@ namespace engine
    }
 
    INT32 _omaGetHostNames::getHostName ( const CHAR *pIp,
-                                             const CHAR *pUserName,
-                                             const CHAR *pPassword,
-                                             BSONObj &result )
+                                         const CHAR *pUserName,
+                                         const CHAR *pPassword,
+                                         BSONObj &result )
    {
       INT32 rc = SDB_OK ;
       CHAR *pBuffer = NULL ;
@@ -2298,654 +2952,5 @@ namespace engine
    error:
       goto done ;
    }
-
-
-   // _omaInstallDBBusiness
-   _omaInstallDBBusiness::_omaInstallDBBusiness ()
-   {
-      _jsFileName = "" ;
-   }
-
-   _omaInstallDBBusiness::~_omaInstallDBBusiness ()
-   {
-   }
-
-   INT32 _omaInstallDBBusiness::init( INT32 flags, INT64 numToSkip,
-                                      INT64 numToReturn,
-                                      const CHAR *pMatcherBuff,
-                                      const CHAR *pSelectBuff,
-                                      const CHAR *pOrderByBuff,
-                                      const CHAR *pHintBuff )
-   {
-      INT32 rc = SDB_OK ;
-      // parse bson and get arguments info for js file
-      BSONElement ele ;
-      BSONObj arg( pMatcherBuff ) ;
-      ele = arg.getField ( OMA_FIELD_HOSTS ) ;
-      if ( Array == ele.type() )
-      {
-         BSONObjIterator itr( ele.embeddedObject() ) ;
-         while ( itr.more() )
-         {
-            const CHAR *value = NULL ;
-            ele = itr.next() ;
-            if ( Object != ele.type() )
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG ( PDERROR, "Invalid argument" ) ;
-               goto error ;
-            }
-            BSONObj temp = ele.embeddedObject() ;
-            // category
-            rc = omaGetStringElement ( temp, OMA_OPTION_ROLE, &value ) ;
-            if ( rc )
-            {
-               PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
-                        OMA_OPTION_ROLE, rc ) ;
-               goto error ;
-            }
-            if ( 0 == ossStrncmp( value, ROLE_DATA,
-                                  ossStrlen( ROLE_DATA ) ) )
-            {
-               _data.push_back( temp ) ;
-            }
-            else if ( 0 == ossStrncmp( value, ROLE_COORD,
-                                       ossStrlen( ROLE_COORD ) ) )
-            {
-               _coord.push_back( temp ) ;
-            }
-            else if ( 0 == ossStrncmp( value, ROLE_CATA,
-                                       ossStrlen( ROLE_CATA ) ) )
-            {
-               _catalog.push_back( temp ) ;
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR,
-                       "Failed to install db business for wrong argument %s",
-                       temp.toString().c_str() ) ;
-               goto error ;
-            }
-         }
-      } // todo: else
-
-   done:
-      return rc ;
-   error :
-      goto done ;
-   }
-
-
-   INT32 _omaInstallDBBusiness::doit( CHAR **ppBody, INT32 &bodyLen,
-                                      INT32 &returnNum )
-   {
-      INT32 rc = SDB_OK ;
-      _omaCreateVirtualCoord vCoord( "", "" ) ;
-      _omaTaskMgr *pTaskMgr = getTaskMgr() ;
-      UINT64 taskID = pTaskMgr->getTaskID() ;
-      BOOLEAN hasVCoordStart = FALSE ;
-      INT32 coord_service = 50000 ;
-      _omaInstallDBBusinessTask *pTask = NULL ;
-      BSONObjBuilder bob ;
-      BSONObj retObj ;
-/*
-      // create virtual coord
-      rc = vCoord.createVirtualCoord( coord_service, hasVCoordStart ) ;
-*/
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
-         goto error ;
-      }
-      // create install db task
-      pTask = SDB_OSS_NEW _omaInstallDBBusinessTask( taskID ) ;
-      if ( !pTask )
-      {
-         rc = SDB_OOM ;
-         PD_LOG_MSG( PDERROR,
-                 "Failed to new install db business task install, rc = %d", rc ) ;
-         goto error ;
-      }
-      // register install db task
-      pTaskMgr->addTask( pTask ) ;
-      // start install db task
-      rc = pTask->init( _coord, _catalog, _data ) ;
-      if ( rc  )
-      {
-         PD_LOG_MSG( PDERROR,
-                 "Failed to init install db busniness task, rc = %d", rc ) ;
-         goto error ;
-      }
-      rc = pTask->doit() ;
-      {
-         PD_LOG_MSG( PDERROR,
-                 "Failed to do db busniness task, rc = %d", rc ) ;
-         goto error ;
-      }
-      // return taskID
-      bob.append( OMA_FIELD_RC, rc ) ;
-      bob.append( OMA_FIELD_DETAIL, "" ) ;
-      bob.appendNumber( OMA_FIELD_TASKID, (INT64)taskID ) ;
-      retObj = bob.obj() ;
-      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &retObj ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
-         goto error;
-      }
-   done:
-/*
-      // create remove virtual coord task
-      if ( hasVCoordStart )
-      {
-//         pTask2 = SDB_OSS_NEW _omaRemoveVirtualCoordTask( taskID ) ;
-         _omaRemoveVirtualCoordTask removeVCoordTask( taskID ) ;
-         rc = removeVCoordTask.doit() ;
-         if ( rc )
-         {
-            PD_LOG_MSG( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
-         }
-      }
-*/
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   /*
-      _omaInstallDBStatus
-   */
-   _omaInstallDBStatus::_omaInstallDBStatus ()
-   {
-      _scope = NULL ;
-      _jsFileName = "" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-      _taskID = OMA_INVALID_TASKID ;
-      _taskMrg = NULL ;
-   }
-
-   _omaInstallDBStatus::~_omaInstallDBStatus ()
-   {
-
-   }
-
-   INT32 _omaInstallDBStatus::init ( INT32 flags, INT64 numToSkip,
-                                   INT64 numToReturn,
-                                   const CHAR *pMatcherBuff,
-                                   const CHAR *pSelectBuff,
-                                   const CHAR *pOrderByBuff,
-                                   const CHAR *pHintBuff )
-   {
-      INT32 rc = SDB_OK ;
-      // parse bson to get task id
-      BSONElement ele ;
-      BSONObj arg( pMatcherBuff ) ;
-      try
-      {
-         ele = arg.getField ( OMA_FIELD_TASKID ) ;
-         if ( NumberLong != ele.type() )
-         {
-            rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG_MSG ( PDERROR, "Failed to get taskID, rc = %d", rc ) ;
-            goto error ;
-         }
-         _taskID = ele.numberLong () ;
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_SYS ;
-         PD_LOG_MSG ( PDERROR,
-                  "Failed to get taskID, received unexpected error: %s",
-                  e.what() ) ;
-         goto error ;
-      }
-      // get task manager
-      _taskMrg = getTaskMgr() ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaInstallDBStatus::doit ( CHAR **ppBody, INT32 &bodyLen,
-                                   INT32 &returnNum )
-   {
-      INT32 rc = SDB_OK ;
-      _omaTask *pTask  = NULL ;
-      _omaInstallDBBusinessTask *pChildTask = NULL ;
-      BSONObj result ;
-      pTask = _taskMrg->findTask( _taskID ) ;
-
-      if ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) )
-      {
-         pChildTask->getInstallStatus( result ) ;
-      }
-      else
-      {
-         rc = SDB_SYS ;
-         PD_LOG_MSG ( PDERROR, "Failed to get install db progress" ) ;
-         goto error ;
-      }
-
-      // build return body
-      rc = omaBuildReplyMsgBody( ppBody, &bodyLen, 1, &result ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Omagent failed to build reply msg, rc: %d", rc ) ;
-         goto error;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   /*
-      _omaCreateVirtualCoord
-   */
-   _omaCreateVirtualCoord::_omaCreateVirtualCoord ( const CHAR *username,
-                                                    const CHAR *password )
-   {
-      _scope = NULL ;
-      _jsFileName = "createVirtualCoord.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-      _username = username ;
-      _password = password ;
-   }
-
-   _omaCreateVirtualCoord::~_omaCreateVirtualCoord ()
-   {
-   }
-
-   INT32 _omaCreateVirtualCoord::init()
-   {
-      INT32 rc = SDB_OK ;
-      // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
-         goto error ;
-      }
-      // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error :
-      goto done ;
-   }
-
-
-   INT32 _omaCreateVirtualCoord::doit( INT32 coord_service,
-                                       BOOLEAN &result )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj rval ;
-      BSONObj detail ;
-      BSONObj subObj ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-      CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-
-      // get program path
-      rc = getProgramPath( prog_agent ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to get omagent program path, rc = %d", rc ) ;
-         goto error ;
-      }
-      rc = ossLocateExecutable ( prog_agent, START_DB_PROG, prog_sequoiadb,
-                                   OSS_MAX_PATHSIZE ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to get sequoiadb program path, rc = %d", rc ) ;
-         goto error ;
-      }
-
-      // build js arguments
-      ossSnprintf( tempBuff, JS_ARG_LEN,
-                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
-                     var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\"; ",
-                   _username, _password, prog_sequoiadb, coord_service ) ;
-
-      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: var USERNAME = %s; var PASSWORD = %s; var PROGRAM = %s; var COORD_SERVICE = %d;",
-               "xxx", "xxx", prog_sequoiadb, coord_service ) ;
-
-      _content.clear() ;
-      _content += tempBuff ;
-      _content += OSS_NEWLINE ;
-      _content += _fileBuff ;
-
-      // execute js
-      rc = _scope->eval( _content.c_str(), _content.size(),
-                         _jsFileName, 1, 1, rval, detail ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                  _jsFileName, rc, detail.toString().c_str() ) ;
-         goto error ;
-      }
-      rc = omaGetObjElement( rval, "", subObj ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
-         goto error ;
-      }
-      // extract return rc
-      {
-      INT32 retRc = SDB_OK ;
-      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                  OMA_FIELD_RC, rc ) ;
-         goto error ;
-      }
-      if ( retRc )
-      {
-         PD_LOG_MSG( PDERROR, "Omagent failed to start virtual coord, rc = %d", retRc ) ;
-         goto error;
-      }
-      }
-      result = TRUE ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaCreateVirtualCoord::createVirtualCoord( INT32 coord_service,
-                                                     BOOLEAN &result )
-   {
-      INT32 rc = SDB_OK ;
-      rc = init() ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to init for creating virtual coord, rc = %d",
-                  rc ) ;
-         goto error ;
-      }
-      rc = doit( coord_service, result ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-
-   // _omaRemoveVirtualCoord
-   _omaRemoveVirtualCoord::_omaRemoveVirtualCoord ( const CHAR *username,
-                                                            const CHAR *password )
-
-   {
-      _scope = NULL ;
-      _jsFileName = "removeVirtualCoord.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-      _username = username ;
-      _password = password ;
-   }
-
-   _omaRemoveVirtualCoord::~_omaRemoveVirtualCoord ()
-   {
-   }
-
-   INT32 _omaRemoveVirtualCoord::init()
-   {
-      INT32 rc = SDB_OK ;
-      // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
-         goto error ;
-      }
-      // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   INT32 _omaRemoveVirtualCoord::doit( INT32 coord_service,
-                                           BOOLEAN &result )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj rval ;
-      BSONObj detail ;
-      BSONObj subObj ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-      CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-
-      // get program path
-      rc = getProgramPath( prog_agent ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to get omagent program path, rc = %d", rc ) ;
-         goto error ;
-      }
-      rc = ossLocateExecutable ( prog_agent, "sdbstop", prog_sequoiadb,
-                                 OSS_MAX_PATHSIZE ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to get sequoiadb program path, rc = %d", rc ) ;
-         goto error ;
-      }
-
-      // build js arguments
-      ossSnprintf( tempBuff, JS_ARG_LEN,
-                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
-                     var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\";  ",
-                   _username, _password, prog_sequoiadb, coord_service ) ;
-
-      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: var USERNAME = %s; var PASSWORD = %s; var PROGRAM = %s; var COORD_SERVICE = %d;",
-                        "xxx", "xxx", prog_sequoiadb, coord_service ) ;
-
-      _content.clear() ;
-      _content += tempBuff ;
-      _content += OSS_NEWLINE ;
-      _content += _fileBuff ;
-
-      // execute js
-      rc = _scope->eval( _content.c_str(), _content.size(),
-                         _jsFileName, 1, 1, rval, detail ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                  _jsFileName, rc, detail.toString().c_str() ) ;
-         goto error ;
-      }
-      rc = omaGetObjElement( rval, "", subObj ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
-         goto error ;
-      }
-      // extract return rc
-      {
-      INT32 retRc = SDB_OK ;
-      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc= %d", OMA_FIELD_RC, rc ) ;
-         goto error ;
-      }
-      if ( retRc )
-      {
-         PD_LOG_MSG( PDERROR, "Omagent failed to start virtual coord, rc = %d", retRc ) ;
-         goto error;
-      }
-      }
-      result = TRUE ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaRemoveVirtualCoord::removeVirtualCoord( INT32 coord_service,
-                                                         BOOLEAN &result )
-   {
-      INT32 rc = SDB_OK ;
-      rc = init() ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to init for creating virtual coord, rc = %d",
-                  rc ) ;
-         goto error ;
-      }
-      rc = doit( coord_service, result ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // _omaPort
-   _omaPort::_omaPort ( INT32 port )
-   {
-      _scope = NULL ;
-      _jsFileName = "getPortStatus.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-      _port = port ;
-   }
-
-   _omaPort::~_omaPort ()
-   {
-   }
-
-   INT32 _omaPort::init()
-   {
-      INT32 rc = SDB_OK ;
-      // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
-         goto error ;
-      }
-      // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error :
-      goto done ;
-   }
-
-
-   INT32 _omaPort::doit( BOOLEAN &hasUsed )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj rval ;
-      BSONObj detail ;
-      BSONObj subObj ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-
-      // build js arguments
-      ossSnprintf( tempBuff, JS_ARG_LEN, " var PORT = \"%d\";", _port ) ;
-      PD_LOG ( PDDEBUG, "Get port status passes arguments: %s",
-               tempBuff ) ;
-
-      _content.clear() ;
-      _content += tempBuff ;
-      _content += OSS_NEWLINE ;
-      _content += _fileBuff ;
-
-      // execute js
-      rc = _scope->eval( _content.c_str(), _content.size(),
-                         _jsFileName, 1, 1, rval, detail ) ;
-
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                  _jsFileName, rc, detail.toString().c_str() ) ;
-         goto error ;
-      }
-      // get result
-      rc = omaGetObjElement( rval, "", subObj ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
-         goto error ;
-      }
-      rc = omaGetBooleanElement ( subObj, OMA_FIELD_PORTHASUSED, hasUsed ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
-                  OMA_FIELD_PORTHASUSED, rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaPort::getPortStatus( INT32 port, BOOLEAN hasUsed )
-   {
-      INT32 rc= SDB_OK ;
-      _setPort( port ) ;
-      rc = init() ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to init for get port %d status, rc = %d",
-                 port, rc ) ;
-         goto error ;
-      }
-      rc = doit( hasUsed ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to get port %d status, rc = %d",port,  rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-
 }
 

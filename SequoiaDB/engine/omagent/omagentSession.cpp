@@ -344,20 +344,37 @@ namespace engine
       {
          omaReleaseCommand( &pCommand ) ;
       }
+      // build reply message body
+      try
       {
-      BSONObjBuilder bob ;
-      BSONObj result ;
-      INT32 errRc = SDB_OK ;
-      const CHAR *pErrDetail = NULL ;
-      BSONObj errorObj = pmdGetErrorBson( rc, cb->getInfo( EDU_INFO_ERROR ) ) ;
-      omaGetStringElement( errorObj, OMA_FIELD_DESCRIPTION, &pErrDetail ) ;
-      omaGetIntElement( errorObj, OMA_FIELD_ERRNO, errRc ) ;
-      bob.append ( OMA_FIELD_RC, errRc ) ;
-      if ( errRc )
-         bob.append ( OMA_FIELD_DETAIL, pErrDetail ) ;
-      bob.appendElements ( retObj ) ;
-      result = bob.obj() ;
-      omaBuildReplyMsgBody ( &_pBody, &_bodyLen, 1, &result ) ;
+         INT32 rc2 = SDB_OK ;
+         INT32 errRc = SDB_OK ;
+         const CHAR *pErrDetail = NULL ;
+         BSONObjBuilder bob ;
+         BSONObj result ;
+         BSONObj errorObj = pmdGetErrorBson( rc, cb->getInfo( EDU_INFO_ERROR ) ) ;
+
+         rc2 = omaGetStringElement( errorObj, OMA_FIELD_DESCRIPTION,
+                                    &pErrDetail ) ;
+         if ( rc2 )
+            PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_DESCRIPTION, rc2 ) ;
+         rc2 = omaGetIntElement( errorObj, OMA_FIELD_ERRNO, errRc ) ;
+         if ( rc2 )
+            PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_ERRNO, rc2 ) ;
+         bob.append ( OMA_FIELD_RC, errRc ) ;
+         if ( errRc )
+            bob.append ( OMA_FIELD_DETAIL, pErrDetail ) ;
+         bob.appendElements ( retObj ) ;
+         result = bob.obj() ;
+         omaBuildReplyMsgBody ( &_pBody, &_bodyLen, 1, &result ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR,
+                  "Failed to build reply msg body, for unexpected error: %s",
+                  e.what() ) ;
       }
       _replyHeader.numReturned = 1 ;
       _replyHeader.header.messageLength += _bodyLen ;
