@@ -77,10 +77,10 @@ namespace engine
          goto error ;
       }
       // make sure the dir exist
-      rc = ossMkdir( currentPath, OSS_CREATE|OSS_READWRITE ) ;
+      rc = ossMkdir( dialogPath, OSS_CREATE|OSS_READWRITE ) ;
       if ( rc && SDB_FE != rc )
       {
-         std::cout << "Create dialog dir: " << currentPath << " failed: "
+         std::cout << "Create dialog dir: " << dialogPath << " failed: "
                    << rc << std::endl ;
          goto error ;
       }
