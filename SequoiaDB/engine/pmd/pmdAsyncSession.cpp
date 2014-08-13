@@ -156,7 +156,7 @@ namespace engine
       if ( SDB_OK != _detachEvent.wait( 0 ) &&
            _pSessionMgr->forceNotify( sessionID(), eduCB() ) )
       {
-         _detachEvent.wait( 60 * OSS_ONE_SEC ) ;
+         _detachEvent.wait( 300 * OSS_ONE_SEC ) ;
       }
 
       _onDetach () ;
