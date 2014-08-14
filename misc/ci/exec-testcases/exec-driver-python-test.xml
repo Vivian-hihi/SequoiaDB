@@ -5,12 +5,12 @@
 <!--@param ${pythonunit.phar.dir} : The pythonunit.pythonar's director-->
 
 <project name="exec-driver-python-test" default="exec-driver-python-test">
+	<property file="${ci.properties.path}" />
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
 	</taskdef>
-	<property file="${ci.properties.path}" />
 
 	<target name="clean-env" depends="">
 		<echo message="reports.path=${reports.path}" />
@@ -19,7 +19,6 @@
 	</target>
 
 	<target name="exec-driver-python-test" depends="clean-env">
-
 		<echo message="test one case is TestPySequoiadb.py" />
 		<copy todir="${install.path}/sequoiadb/python">
 			<fileset dir="${testcase.path}" includes="**/*.py" />
@@ -39,5 +38,4 @@
 		</if>
 		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;/testcase&gt;&#10;&lt;/testsuite&gt;&#10;" />
 	</target>
-
 </project>

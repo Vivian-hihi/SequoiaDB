@@ -4,7 +4,6 @@ install.path=/opt
 install.user=sdbadmin
 install.password=sdbadmin
 
-
 deploy.tar.file.name=deploy.tar.gz
 test.machine.deploy.path=/tmp/sequoiadb_test
 test.machine.software.path=/tmp/sequoiadb

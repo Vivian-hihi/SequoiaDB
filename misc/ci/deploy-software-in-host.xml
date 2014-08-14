@@ -11,115 +11,21 @@
 	<property name="catalog.addrs" value="" />
 	<property name="is.coord.master" value="true" />
 	
-	<target name="uninstall-software" depends="">
-		<property environment="env" />
-		<echo message="Begin to clean deploy env...with STAF.PATH=${STAF.PATH},env.PATH=${env.PATH},deploy.host.name=${deploy.host.name}" />
-		<tstamp>
-			<format property="cleandeploy.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="Begin to clean deploy env at ${cleandeploy.begin.time}"/>
-		
-		
-		<!--
-		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}  WAIT 30m" />
-		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}  WAIT 30m" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-    -->
-    <stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" 
-    	 common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" />
-		
-		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" />
-		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-
-		<echo message="exec ${STAF.PATH}/bin/staf ${deploy.host.name} FS DELETE ENTRY ${test.machine.software.path} RECURSE CONFIRM" />
-		<exec command="${STAF.PATH}/bin/staf ${deploy.host.name} FS DELETE ENTRY ${test.machine.software.path} RECURSE CONFIRM" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-
-		<echo message="exec ${STAF.PATH}/bin/staf ${deploy.host.name} FS CREATE DIRECTORY ${test.machine.software.path}" />
-		<exec command="${STAF.PATH}/bin/staf ${deploy.host.name} FS CREATE DIRECTORY ${test.machine.software.path}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-
-		<echo message="Clean deploy env compeleted." />
-		<tstamp>
-			<format property="cleanenv.compeleted.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="Compeleted to clean deploy env at ${cleanenv.compeleted.time}"/>
+	<target name="uninstall-software" depends="uninstall-software">
+	    <stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" />
+	    <stafTools workHost="${deploy.host.name}" worktype="get" fileName="${test.machine.software.path}/install-basic-in-host.log" />
+	    <stafTools workHost="${deploy.host.name}" worktype="delete" fileName="${test.machine.software.path}" />
+	    <stafTools workHost="${deploy.host.name}" worktype="create" filename="${test.machine.software.path}" />
 	</target>
 
-	<target name="install-software" depends="uninstall-software">
-		<echo message="Begin to deploy softeware and test..." />
-
-		<tstamp>
-			<format property="deploy.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="Begin to deploy software at ${deploy.begin.time}"/>
-
-		<property environment="env" />
-
-		<echo message="Begin to install sequoiadb software..." />
-		
-		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${install.package.fullname} TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" />
-		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${install.package.fullname} TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-
-		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/ci.test.properties TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" />
-		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/ci.test.properties TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-
-		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/install-basic-in-host.xml TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" />
-		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/install-basic-in-host.xml TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-		
+	<target name="install-software" depends="uninstall-software">		
+		<stafTools workType="copy" fileName="${install.package.fullname}" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="copy" fileName="${basedir}/ci.test.properties" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="copy" fileName="${basedir}/install-basic-in-host.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
 		<basename property="install.package.filename" file="${install.package.fullname}"/>
-		<!--
-		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs} WORKDIR ${test.machine.software.path} WAIT 30m" />
-		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs} WORKDIR ${test.machine.software.path} WAIT 30m" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-		-->
-		<stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" waitTime="200m"
-			common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs}" />
-		
-		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" />
-		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
-			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
-			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
-		</exec>
-
-		<echo message="Sequoiadb install compeleted." />
-
-		<tstamp>
-			<format property="install.compelete.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="Compeleted to install software at ${install.compelete.time}"/>
-
+		<stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" waitTime="200m" common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs}" />
+		<stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/install-basic-in-host.log" />
 	</target>
-
 </project>
 
 

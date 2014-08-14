@@ -6,54 +6,36 @@
 <!--@param ${catalog.addrs}: The string include catalog addr and port-->
 
 <project name="install-software" default="install-software">
+	<!-- <property environment="env" /> -->
+	<property name="host.name" value="${NAME}" />
+	<property name="host.ip" value="${ADDR4}" />
+	<property name="install.package.path" value="${test.basedir}" />
+	<property name="is.standalone.mode" value="false" />
+	<property file="${install.package.path}/ci.test.properties" />
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
 	</taskdef>
 
-	<hostinfo />
-	<property environment="env" />
-	<property name="host.name" value="${NAME}" />
-	<property name="host.ip" value="${ADDR4}" />
-
-	<property name="install.package.path" value="${test.basedir}" />
-	<property name="is.standalone.mode" value="false" />
-	<property file="${install.package.path}/ci.test.properties" />
-
 	<target name="clean-install" depends="">
-		<echo message="Begin to clean install env..." />
-
 		<property name="db.path" value="${install.path}/sequoiadb" />
+
+		<echo message="Begin to clean install env..." />
 		<available file="${db.path}/bin/sdbstop" property="sdb.installed" />
 		<if>
 			<equals arg1="${sdb.installed}" arg2="true" />
 			<then>
-				<!-- the sdb be installed-->
-				<!-- stop cm-->
 				<exec executable="service" dir="" failonerror="true">
 					<arg value="sdbcm" />
 					<arg value="stop" />
-					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
+					<!-- <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
+					-->				
 				</exec>
-        
-<!--         		<exec executable="/bin/ps" dir="." failonerror="true">
-        			<arg line=" -ef|grep sequoiadb | grep -v grep | awk '{print $2}' | xargs kill" />
-        		</exec> -->
-
-        		<chmod dir="${db.path}/bin" perm="u+x" includes="*" />
-				<!-- stop db service-->
-				<exec executable="${db.path}/bin/sdbstop" dir="${db.path}/bin" failonerror="true">
-					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
-				</exec>
-
-				<!-- unstall software-->
 				<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
 					<arg line="--mode unattended" />
 				</exec>
-
 				<delete dir="${db.path}" />
-
 				<echo message="Clean install env compeleted." />
 			</then>
 		</if>
@@ -61,16 +43,9 @@
 
 
 	<target name="install-software" depends="clean-install">
-		<echo message="Begin to install..." />
-
 		<property name="db.path" value="${install.path}/sequoiadb" />
-		<!--untar src="${install.package.path}/${install.package.name}" dest="${install.package.path}" compression="gzip" />
 
-		<chmod file="${install.package.path}/sequoiadb/sdbinst.sh" perm="u+x" />
-		<exec executable="sh" dir="${install.package.path}/sequoiadb" failonerror="true">
-			<arg line="-c '${install.package.path}/sequoiadb/sdbinst.sh -u sdbadmin -d ${install.path}'" />
-		</exec-->
-
+		<echo message="Begin to install..." />
 		<chmod file="${install.package.path}/${install.package.filename}" perm="u+x" />
 		<exec executable="${install.package.path}/${install.package.filename}">
 			<arg line="--mode unattended --prefix ${db.path} --username ${install.user} --userpasswd ${install.password}" />
@@ -79,78 +54,29 @@
 		<if>
 			<equals arg1="${is.standalone.mode}" arg2="true" />
 			<then>
-				<!--mkdir dir="${db.path}/database/standalone" /-->
-				
 				<mkdir dir="${db.path}/conf/local/${coord.service.port}" />
-
 				<copy file="${db.path}/conf/samples/sdb.conf.standalone" tofile="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="transactionon=false" replace="transactionon=true" flags="g" />
-				
+
 				<!--for fix coord port change to 11810 , we change coord port to 50000-->
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11810" replace="svcname=50000" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="replname=50001" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="shardname=50002" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
-				
-				
-				
-				<chown owner="sdbadmin:sdbadmin_group" type="both">
-					<fileset dir="${db.path}/" includes="**/*" />
-				</chown>
-				
+
 				<echo message="start standalone process: su - sdbadmin -c '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" failonerror="true" failifexecutionfails="true" >
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
-					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
+					<!-- <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" /> -->
 				</exec>
 			</then>
 			<else>
-
-				<!--exec executable="service" dir="" failonerror="true">
-					<arg value="sdbcm" />
-					<arg value="start" />
-				</exec-->
-
-				<!-- Check the status of serivce-->
-				<exec executable="service" dir="" failonerror="true">
-					<arg value="sdbcm" />
-					<arg value="status" />
-				</exec>
-
-				<!--mkdir dir="${db.path}/database/cata" />
-						<mkdir dir="${db.path}/database/cata/diag" />
-						<mkdir dir="${db.path}/database/cata/log" />
-						<mkdir dir="${db.path}/database/cata/bkup" /-->
-
-				<!--mkdir dir="${db.path}/database/data" />
-						<mkdir dir="${db.path}/database/data/diag" />
-						<mkdir dir="${db.path}/database/data/log" />
-						<mkdir dir="${db.path}/database/data/bkup" /-->
-
-				
-
-				<!--mkdir dir="${db.path}/conf/local/${cata.service.port}" /-->
-				<!--mkdir dir="${db.path}/conf/local/${data.service.port}" /-->
 				<mkdir dir="${db.path}/conf/local/${coord.service.port}" />
-				<!--mkdir dir="${db.path}/conf/log" /-->
-
-				<!--copy file="${db.path}/conf/samples/sdb.cat" tofile="${db.path}/conf/local/${cata.service.port}/sdb.cat" /-->
-				<!--copy file="${db.path}/conf/samples/sdb.conf.catalog" tofile="${db.path}/conf/local/${cata.service.port}/sdb.conf" /-->
-				<!--copy file="${db.path}/conf/samples/sdb.conf.data" tofile="${db.path}/conf/local/${data.service.port}/sdb.conf" /-->
 				<copy file="${db.path}/conf/samples/sdb.conf.coord" tofile="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
-
-				<!--replaceregexp file="${db.path}/conf/local/${cata.service.port}/sdb.cat" match="localhost" replace="${host.name}" flags="g" /-->
-				<!--replaceregexp file="${db.path}/conf/local/${cata.service.port}/sdb.conf" match="localhost" replace="${host.ip}" flags="g" />
-						<replaceregexp file="${db.path}/conf/local/${cata.service.port}/sdb.conf" match="/opt/sequoiadb" replace="${db.path}" flags="g" /-->
-				<!--replaceregexp file="${db.path}/conf/local/${data.service.port}/sdb.conf" match="localhost" replace="${host.ip}" flags="g" />
-						<replaceregexp file="${db.path}/conf/local/${data.service.port}/sdb.conf" match="/opt/sequoiadb" replace="${db.path}" flags="g" /-->
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="50000" replace="${coord.service.port}" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="localhost" replace="${host.ip}" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="/opt/sequoiadb" replace="${db.path}" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
-				
+
 				<!--for fix coord port change to 11810 , we change coord port to 50000-->
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11810" replace="svcname=50000" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="replname=50001" flags="g" />
@@ -165,40 +91,19 @@
 					</then>
 				</if>
 
-				<!--chown owner="sdbadmin:sdbadmin_group" file="${db.path}" type="both" /-->
-				<chown owner="sdbadmin:sdbadmin_group" type="both">
-					<fileset dir="${db.path}/" includes="**/*" />
-				</chown>
-
-				<!--echo message="start catalog: ${db.path}/bin/sdbstart -c ${db.path}/conf/local/${cata.service.port}" />
-						<exec dir="${db.path}/bin" executable="${db.path}/bin/sdbstart" spawn="true">
-							<arg line="-c ${db.path}/conf/local/${cata.service.port}" />
-							<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
-						</exec-->
-
-				<!--exec dir="${db.path}/bin" executable="${db.path}/bin/sdbstart" spawn="true">
-							<arg line="-c ${db.path}/conf/local/${data.service.port}" />
-							<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
-						</exec-->
-
 				<echo message="start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" spawn="false">
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
-					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
+					<!-- <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" /> -->
 				</exec>
-
 			</else>
 		</if>
 
-
 		<waitfor maxwait="30" maxwaitunit="second" checkevery="500">
 			<and>
-				<!--socket server="${host.ip}" port="${cata.service.port}" /-->
 				<socket server="${host.ip}" port="${coord.service.port}" />
 			</and>
 		</waitfor>
-
 		<echo message="Install compeleted." />
 	</target>
-
 </project>

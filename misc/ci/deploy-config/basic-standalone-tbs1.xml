@@ -7,16 +7,15 @@
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${properties.dir} : where the ci.test.properties file is it -->
 
-<project name="deploy" default="test">
-  
-  <taskdef resource="net/sf/antcontrib/antlib.xml">
-     <classpath>
-        <pathelement location="/usr/share/java/ant-contrib.jar" />
-     </classpath>
-  </taskdef>
-  
+<project name="deploy" default="test"> 
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+
 	<target name="deploy" depends="">
-		<hostinfo prefix="host" />
+		<!-- <hostinfo prefix="host" /> -->
 		<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 		<property file="${properties.dir}" />
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
@@ -25,21 +24,18 @@
 			<property name="coord.service.port" value="${coord.service.port}" />
 			<property name="is.standalone.mode" value="true" />
 		</ant>
-
-		
 	</target>
 
 	<target name="test" depends="">
+		<property name="test-type-list" value="basic" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
 			</ant>
 		</parallel>
-		
+
 		<basename property="antFileName" file="${ant.file}" suffix=".xml" />
-		<!-- <property name="test-type-list" value="basic,driver-java,driver-C,driver-CPP,driver-php" /> -->
-		<property name="test-type-list" value="basic" />
 		<for list="${test-type-list}" param="test-type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
@@ -52,10 +48,5 @@
 				</ant>
 			</sequential>
 		</for>
-		<mkdir dir="${WORKSPACE}/${host.NAME}-copy-log/${antFileName}" />
-		<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${WORKSPACE}/${host.NAME}-copy-log/${antFileName}" />
-
-
-	</target>
-	
+	</target>	
 </project>

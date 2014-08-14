@@ -3,114 +3,80 @@
 <!--@param ${lib.dir} : The path where all lib's directory .-->
 <!--@param ${antTask.jar.path} : The path where the ant task jar is it -->
 
-<project name="build-samples-test" default="build-samples-test">
-
-	<!--taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
-		</classpath>
-	</taskdef-->
-	
+<project name="build-samples-test" default="build-samples-test">	
 	<property name="antTask.jar.path" value="${WORKSPACE}/deploy/ant-sdbtasks" />
 	<property name="STAF.PATH" value="/usr/local/staf" />
+	<property name="build.testcases.CPP" value="${build.testcases}/CPP" />
+	<property name="build.testcases.C" value="${build.testcases}/C" />
+	<property name="deploy.path" value="${WORKSPACE}/deploy" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml" >
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
-			<!--pathelement location="${STAF.PATH}/lib/JSTAF.jar" />
-			<pathelement location="${STAF.PATH}/samples/demo/STAFDemo.jar" /-->
 		</classpath>
 	</taskdef>
 	
-	<property name="build.testcases.CPP" value="${build.testcases}/CPP" />
-	<property name="build.testcases.C" value="${build.testcases}/C" />
-
-	<property name="deploy.path" value="${WORKSPACE}/deploy" />
-
-	<target name="clean-samples-test">
-		
-		<echo message="Begin to clean client sample C evn.." />
-		
+	<target name="clean-samples-test">		
+		<echo message="Begin to clean client sample C env.." />
 		<delete dir="${deploy.path}/hlt/samples_testcases/" failonerror="false" />
 		<delete dir="${build.testcases}"  failonerror="false" />
-    <mkdir dir="${build.testcases}" />
-    
-    <copy todir="${build.testcases}">
+		<mkdir dir="${build.testcases}" />
+		<copy todir="${build.testcases}">
 			<fileset dir="${WORKSPACE}/sequoiadb/client/samples/" includes="**/*" />
 		</copy>
-		
 		<chmod perm="a+x">
-			 <fileset dir="${build.testcases}" includes="**/*buildApp.sh*" />
-	  </chmod>
-    
-    <mkdir dir="${deploy.path}/hlt/samples_testcases/C" />
-    <mkdir dir="${deploy.path}/hlt/samples_testcases/CPP" />
-		
-		<echo message="Clean driver client sample evn completed." />
-		
+			<fileset dir="${build.testcases}" includes="**/*buildApp.sh*" />
+		</chmod>
+		<mkdir dir="${deploy.path}/hlt/samples_testcases/C" />
+		<mkdir dir="${deploy.path}/hlt/samples_testcases/CPP" />
+		<echo message="Clean driver client sample env completed." />	
 	</target>
 
 	<target name="build-samples-test" depends="clean-samples-test">
+	    <echo message="...Begin to build the c and c++ test code ..." />
 
-    <echo message="...Begin to build the c and c++ test code ..." />
-
-    <echo message="exec build ${build.testcases.C} " />
+	    <echo message="exec build ${build.testcases.C} " />
 		<foreach target="build_c_sampls" param="build.name.C">
-			
 		   <fileset dir="${build.testcases.C}">
 		   	  <include name="*.c" />
 		   	  <exclude name="*common*" />
 		   	  <exclude name="*old*.c" />
 		   </fileset>
-		   
-		</foreach>
-		
+		</foreach>	
 		<copy todir="${deploy.path}/hlt/samples_testcases/C">
 			<fileset dir="${build.testcases.C}/build" includes="*" />
 		</copy>
 		<copy todir="${deploy.path}/hlt/samples_testcases/C" file="${build.testcases.C}/sampledb.dat" />
 
 		<echo message="exec build ${build.testcases.CPP} " />
-		
 		<foreach target="build_cpp_sampls" param="build.name.CPP">
-			
 		   <fileset dir="${build.testcases.CPP}">
 		   	  <include name="*.cpp" />
 		   	  <exclude name="*common*" />
 		   	  <exclude name="*old*.cpp" />
 		   </fileset>
-		   
 		</foreach>
-		
 		<copy todir="${deploy.path}/hlt/samples_testcases/CPP">
 			<fileset dir="${build.testcases.CPP}/build" includes="*" />
 		</copy>
-
-    <echo message="...over build the c and c++ ..." />
-
+	    <echo message="...over build the c and c++ ..." />
 	</target>
 	
 	<target name="build_c_sampls" depends="" >
-  	<!--local name="build.real.name" /-->
-	  <sdbBaseName property="build.real.name.c" file="${build.name.C}" suffix=".c" />
-
-	  <echo message="${build.name.C}" />
-	  <echo message="building the ${build.real.name.c} in C" />
-  	<exec dir="${build.testcases.C}" executable="sh" failonerror="true">
-  		 <arg line="-c '${build.testcases.C}/buildApp.sh ${build.real.name.c}'" />
-  	</exec>
-  	<echo message="Holle World" />
-  </target>
+		<sdbBaseName property="build.real.name.c" file="${build.name.C}" suffix=".c" />
+		<echo message="${build.name.C}" />
+		<echo message="building the ${build.real.name.c} in C" />
+		<exec dir="${build.testcases.C}" executable="sh" failonerror="true">
+			<arg line="-c '${build.testcases.C}/buildApp.sh ${build.real.name.c}'" />
+		</exec>
+	</target>
   
-  <target name="build_cpp_sampls" depends="">
-	  <!--local name="build.real.name" /-->
-	  <sdbBaseName property="build.real.name.cpp" file="${build.name.CPP}" suffix=".cpp" />
-	  <echo message="building the ${build.real.name.cpp} in CPP" />
-	  <exec dir="${build.testcases.CPP}" executable="sh" failonerror="true">
-		   <arg line="-c '${build.testcases.CPP}/buildApp.sh ${build.real.name.cpp}'" />
-  	</exec>
-  </target>
-
-  
+	<target name="build_cpp_sampls" depends="">
+		<sdbBaseName property="build.real.name.cpp" file="${build.name.CPP}" suffix=".cpp" />
+		<echo message="building the ${build.real.name.cpp} in CPP" />
+		<exec dir="${build.testcases.CPP}" executable="sh" failonerror="true">
+			<arg line="-c '${build.testcases.CPP}/buildApp.sh ${build.real.name.cpp}'" />
+		</exec>
+	</target>
 </project>
 
 

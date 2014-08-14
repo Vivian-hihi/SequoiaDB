@@ -3,29 +3,17 @@
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${parallel.num}:  The parallel number when parallel in same host.-->
-<!--@param ${excludes.dir.patterns}: A comma- or space-sparated list of patterns of directories that must be excluded.-->
 <!--@param ${deploy.file.fullname}: The file full path where deploy file name for test -->
 
 <project name="test-exception-testcases" default="test-exception-testcases">
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
-		</classpath>
-	</taskdef>
-
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
-		<classpath>
-			<fileset dir="ant-sdbtasks/" includes="*.jar" />
-			<pathelement location="${STAF.PATH}/lib/JSTAF.jar" />
-			<pathelement location="${STAF.PATH}/samples/demo/STAFDemo.jar" />
-		</classpath>
-	</taskdef>
-
-	<!--default prama value-->
 	<property name="cata.service.port" value="60000" />
 	<property name="data.service.port" value="51000" />
 	<property name="coord.service.port" value="50000" />
-	<property name="excludes.dir.patterns" value="" />
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks/" includes="*.jar" />
+		</classpath>
+	</taskdef>
 
 	<target name="clean-test-reports" depends="">
 		<echo message="Begin to clean test result reports..." />
@@ -36,15 +24,12 @@
 
 	<target name="test-exception-testcases" depends="clean-test-reports">
 		<echo message="Begin test exception testcases..." />
-
 		<mkdir dir="${reports.path}" />
 		<echo message="perform the exception testcases,with testcase.path=${testcase.path}" />
-
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
-				<dirset dir="${testcase.path}/ant" excludes="${excludes.dir.patterns}" />
+				<dirset dir="${testcase.path}/ant" excludes="" />
 			</path>
-
 			<param name="testcase.path" value="${testcase.path}" />
 		</foreach>
 	</target>
@@ -58,13 +43,12 @@
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<echo message="Execute test suite(${test.suite.name}) test.suite.fullname=${test.suite.fullname}" />
 		<hostinfo prefix="host" />
-    <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+    	<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
 		<property name="test.suite.class.name" value="com.sequoiadb.testcases-ant.${deploy.name}.${host.NAME}-${parallel.num}-${test.suite.name}" />
 		<property name="reportfile.fullname" value="${reports.path}/TEST-${test.suite.class.name}.xml" />
 
 
-		<echo file="${reportfile.fullname}" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;
-									            &lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot; time=&quot;0.55&quot; timestamp=&quot;${current.time}&quot;&gt;" />
+		<echo file="${reportfile.fullname}" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot; time=&quot;0.55&quot; timestamp=&quot;${current.time}&quot;&gt;" />
 
 		<foreach target="test-one-case" param="test.case.fullname">
 			<fileset dir="${test.suite.fullname}" includes="*.xml" />
@@ -75,27 +59,21 @@
 			<param name="reportfile.fullname" value="${reportfile.fullname}" />
 		</foreach>
 
-		<echo file="${reportfile.fullname}" message="
-										&lt;system-out&gt;
-										&lt;![CDATA[${on screen}]]&gt;
-										&lt;/system-out&gt;
-										&lt;/testsuite&gt;" append="true" />
+		<echo file="${reportfile.fullname}" message="&lt;system-out&gt;&lt;![CDATA[${on screen}]]&gt;&lt;/system-out&gt;&lt;/testsuite&gt;" append="true" />
+
 		<tstamp>
 			<format property="testsuite.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="This suite end time is ${testsuite.end.time}"/>
-
 	</target>
 
 	<target name="test-one-case" depends="">
 		<basename property="test.case.name" file="${test.case.fullname}" suffix=".xml" />
-		
-		 <sdbprefix prefixName="CS_PRIX">
-    	 <param name="${host.NAME}" value="${host.NAME}" />
-    	 <param name="${parallel.num}" value="${parallel.num}" />
-    	 <param name="${test.case.name}" value="${test.case.name}" />
-    </sdbprefix>
-
+		<sdbprefix prefixName="CS_PRIX">
+			<param name="${host.NAME}" value="${host.NAME}" />
+			<param name="${parallel.num}" value="${parallel.num}" />
+			<param name="${test.case.name}" value="${test.case.name}" />
+		</sdbprefix>
 		<echo message="Execute test case(${test.suite.class.name}.${test.case.name}) test.suite.fullname=${test.case.fullname}" />
 
 		<tstamp>
@@ -105,14 +83,12 @@
 
 		<echo file="${reportfile.fullname}" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; time=&quot;${current.time}&quot;&gt;" />
 
-
 		<mkdir dir="${testcase.path}/logs/TEST-${test.suite.class.name}/" />
 		<record name="${testcase.path}/logs/TEST-${test.suite.class.name}/${test.case.name}.log" loglevel="verbose" action="start" />
 
 		<trycatch property="e">
 			<try>
-				<echo message="ant -f ${test.case.fullname} -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -Ddata.service.port=${data.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path} test"></echo>
-
+				<echo message="ant -f ${test.case.fullname} -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -Ddata.service.port=${data.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path} test" />
 				<antfetch antfile="${test.case.fullname}" target="test" inheritAll="false" return="ret.code,error.msg">
 					<property name="host.NAME" value="${host.NAME}" />
 					<property name="coord.service.port" value="${coord.service.port}" />
@@ -121,7 +97,6 @@
 					<property name="CS_PRIX" value="${CS_PRIX}" />
 					<property name="install.path" value="${install.path}" />
 				</antfetch>
-
 			</try>
 			<catch>
 				<property name="ret.code" value="-1" />
@@ -130,7 +105,6 @@
 		</trycatch>
 
 		<record name="${testcase.path}/logs/TEST-${test.suite.class.name}/${test.case.name}.log" action="stop" />
-
 		<echo message="the result = ${ret.code} after exec ant testcase, and exception=${error.msg}." />
 		<if>
 			<not>
@@ -138,12 +112,12 @@
 			</not>
 			<then>
 				<loadfile property="ant.test.message" srcFile="${testcase.path}/logs/TEST-${test.suite.class.name}/${test.case.name}.log" failonerror="false" />
-				<echo file="${reportfile.fullname}" append="true" message="&lt;failure message=&quot;&quot; type=&quot;junit.framework.AssertionFailedError&quot;&gt;error.msg=&lt;![CDATA[${error.msg}]]&gt; &lt;![CDATA[${ant.test.message}]]&gt;
-		&lt;/failure&gt;" />
+				<echo file="${reportfile.fullname}" append="true" message="&lt;failure message=&quot;&quot; type=&quot;junit.framework.AssertionFailedError&quot;&gt;error.msg=&lt;![CDATA[${error.msg}]]&gt; &lt;![CDATA[${ant.test.message}]]&gt;&lt;/failure&gt;" />
 			</then>
 		</if>
 
 		<echo file="${reportfile.fullname}" append="true" message="&lt;/testcase&gt;" />
+		
 		<tstamp>
 			<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>

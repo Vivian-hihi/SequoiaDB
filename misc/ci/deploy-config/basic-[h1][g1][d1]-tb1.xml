@@ -8,12 +8,12 @@
 <!--@param ${properties.dir} : where the ci.test.properties file is it -->
 
 <project name="deploy" default="test">
-		<property name="properties.dir" value="${basedir}/../ci.test.properties" />
-		<property file="${properties.dir}" />
+	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
+	<property file="${properties.dir}" />
 
 	<target name="deploy" depends="">
 		<echo message="Begin install software and test files to ${test.machine.no2.data}" />
-		<hostinfo prefix="host" />
+		<!-- <hostinfo prefix="host" /> -->
 
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 			<property name="install.package.fullname" value="${install.package.fullname}" />
@@ -32,7 +32,6 @@
 				</node>
 			</catagroup>
 		</sdbdeploy>
-
 		<sdbdeploy host="${test.machine.no2.basic}" coordport="50000">
 			<datagroup name="group1">
 				<node host="${test.machine.no2.data}" baseport="21000" dbpath="${install.path}/sequoiadb/database/data/21000">
@@ -42,10 +41,10 @@
 				</node>
 			</datagroup>
 		</sdbdeploy>
-
 	</target>
 
 	<target name="test" depends="">
+		<property name="test-type-list" value="basic" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
@@ -60,10 +59,7 @@
 				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
 			</ant>
 		</parallel>
-		
-		
-		<property name="test-type-list" value="basic" />
-		<!--property name="test-type-list" value="sample,driver-java" /-->
+
 		<basename property="antFileName" file="${ant.file}" suffix=".xml" />
 		<for list="${test-type-list}" param="test-type">
 			<sequential>
@@ -72,24 +68,10 @@
 					<property name="install.path" value="${install.path}" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
-					<!--property name="test.machine.no1.data" value="${test.machine.no1.data}" />
-					<property name="test.machine.no2.data" value="${test.machine.no2.data}" />
-					<property name="test.machine.no3.data" value="${test.machine.no3.data}" />
-					<property name="test.machine.no4.data" value="${test.machine.no4.data}" /-->
 					<property name="test-type" value="@{test-type}" />
 					<property name="antFileName" value="${antFileName}" />
 				</ant>
 			</sequential>
-			
 		</for>
-		
-		<mkdir dir="${WORKSPACE}/${host.NAME}-copy-log/${antFileName}" />
-		<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${WORKSPACE}/${host.NAME}-copy-log/${antFileName}" />
-		
-		
 	</target>
-
-	
-
-
 </project>

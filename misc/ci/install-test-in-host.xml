@@ -1,7 +1,6 @@
 <!--@param ${test.basedir}: the path where deploy software and test script-->
 
-<project name="install-test" default="install-test">
-	
+<project name="install-test" default="install-test">	
 	<target name="clean-install-test" depends="">
 		<echo message="Begin to clean test env..." />
 		<delete dir="${test.basedir}/deploy" />
@@ -13,5 +12,4 @@
 
 		<untar src="${test.basedir}/${deploy.tar.file.name}" dest="${test.basedir}" compression="gzip" />
 	</target>
-	
 </project>

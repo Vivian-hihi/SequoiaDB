@@ -3,22 +3,20 @@
 <!--@param ${base.path} : The root path is-->
 
 <project name="ant-sdbtasks" default="jar" basedir=".">
+	<property name="build.dir" value="${base.path}/build_ant_sdbtask" />
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 			<pathelement location="C:\Tools\ant-contrib-1.0b3-bin\ant-contrib\ant-contrib-1.0b5.jar" />
 		</classpath>
 	</taskdef>
-
-	<property name="build.dir" value="${base.path}/build_ant_sdbtask" />
-
+	
 	<target name="clean" depends="">
 		<delete dir="${build.dir}" />
 		<mkdir dir="${build.dir}/lib" />
 	</target>
 
 	<target name="compile" depends="clean">
-
 		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
 		<if>
 			<equals arg1="${os.name}" arg2="Linux" />
@@ -29,14 +27,12 @@
 				<property name="jdk.name.os" value="jdk_win" />
 			</else>
 		</if>
-    
-	    <if>
-	    	<equals arg1="${os.arch}" arg2="ppc64" />
-	    	<then>
-	    		<property name="jdk.name" value="jdk_ppclinux64" />
-	      </then>
-	    </if>
-    
+		<if>
+			<equals arg1="${os.arch}" arg2="ppc64" />
+			<then>
+				<property name="jdk.name" value="jdk_ppclinux64" />
+			</then>
+		</if>
 		<if>
 			<equals arg1="${os.arch}" arg2="amd64" />
 			<then>
@@ -46,35 +42,25 @@
 				<property name="jdk.name" value="${jdk.name.os}32" />
 			</else>
 		</if>
-    	<echo message="javac srcdir=${source.dir} destdir=${target.dir} debug=true classpath=null fork=yes executable=${javac.base.dir}/java/${jdk.name}/bin/javac " />
 
-		<javac srcdir="${base.path}/src" destdir="${build.dir}" 
-			debug="true" debuglevel="lines,vars,source" classpath="" fork="yes" executable="${javac.base.dir}/java/${jdk.name}/bin/javac">
+		<echo message="javac srcdir=${source.dir} destdir=${target.dir} debug=true classpath=null fork=yes executable=${javac.base.dir}/java/${jdk.name}/bin/javac " />
+		<javac srcdir="${base.path}/src" destdir="${build.dir}" debug="true" debuglevel="lines,vars,source" classpath="" fork="yes" executable="${javac.base.dir}/java/${jdk.name}/bin/javac">
 			<classpath>
 				<fileset dir="${base.path}/lib" includes="*.jar"/>
 				<pathelement location="${java.driver.jar}"/>
 			</classpath>
 		</javac>
-		<!--copy file="${java.driver.jar}" tofile="${build.dir}/lib/sequoiadb.jar" /-->
+
 		<unjar dest="${build.dir}" src="${java.driver.jar}" />
-		<!--copy  todir="${build.dir}/lib" >
-			<fileset dir="${base.path}/lib" />
-		</copy-->
 		<unjar src="${base.path}/lib/JSTAF.jar" dest="${build.dir}" />
 		<unjar src="${base.path}/lib/ant-contrib.jar" dest="${build.dir}" />
 		<copy file="${base.path}/src/com/sequoiadb/ant/ant-sdbtasks.xml" tofile="${build.dir}/com/sequoiadb/ant/ant-sdbtasks.xml" />
 	</target>
 
 	<target name="jar" depends="compile">
-		<!--tstamp>
-			<format property="tstamp" pattern="dd/MM/yyy HH:mm:ss" />
-		</tstamp-->
-
 		<jar file="${base.path}/ant-sdbtasks.jar">
 			<manifest>
 				<attribute name="Version" value="1.0" />
-				<!--attribute name="Class-Path" value="lib/sequoiadb.jar lib/JSTAF.jar" /-->
-				<!--attribute name="Build-Timestamp" value="${tstamp}" /-->
 			</manifest>
 			<fileset dir="${build.dir}" includes="**/*" />
 		</jar>
