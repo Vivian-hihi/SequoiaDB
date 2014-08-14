@@ -37,8 +37,7 @@
 #ifndef CATCATALOGUEMANAGER_HPP_
 #define CATCATALOGUEMANAGER_HPP_
 
-#include "core.hpp"
-#include "catEventProcessor.hpp"
+#include "pmdObjBase.hpp"
 #include "pmd.hpp"
 #include "catSplit.hpp"
 
@@ -47,11 +46,8 @@ using namespace bson ;
 namespace engine
 {
 
-   class _clsMgr ;
-   class _SDB_RTNCB ;
    class _dpsLogWrapper ;
    class sdbCatalogueCB ;
-   class _SDB_KRCB ;
    class _SDB_DMSCB ;
 
    #define CAT_MASK_CLNAME          0x00000001
@@ -133,22 +129,31 @@ namespace engine
    /*
       catCatalogueManager define
    */
-   class catCatalogueManager : public catEventProcessor
+   class catCatalogueManager : public _pmdObjBase
    {
-   public:
-      catCatalogueManager();
-      INT32 init();
+   DECLARE_OBJ_MSG_MAP()
 
-      void  attachCB( pmdEDUCB *cb ) ;
-      void  detachCB( pmdEDUCB *cb ) ;
+   public:
+      catCatalogueManager() ;
+      INT32 init() ;
+
+      virtual void   attachCB( _pmdEDUCB *cb ) ;
+      virtual void   detachCB( _pmdEDUCB *cb ) ;
 
    protected:
-      INT32 active() ;
-      INT32 deactive() ;
+      virtual INT32 _defaultMsgFunc ( NET_HANDLE handle,
+                                      MsgHeader* msg ) ;
+
+      INT32 _processMsg( const NET_HANDLE &handle,
+                         MsgHeader *pMsg ) ;
+
+   // event function
+   protected:
+      INT32 _onActiveEvent( pmdEDUEvent *event ) ;
+      INT32 _onDeactiveEvent( pmdEDUEvent *event ) ;
 
    // message process functions
    protected:
-      INT32 processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
                                BOOLEAN writable ) ;
 
@@ -271,16 +276,14 @@ namespace engine
                                const BSONElement &ele,
                                BSONObjBuilder &builder ) ;
    private:
-      _SDB_KRCB            *_pKrcb;
       sdbCatalogueCB       *_pCatCB;
       _SDB_DMSCB           *_pDmsCB;
       _dpsLogWrapper       *_pDpsCB;
-      _SDB_RTNCB           *_pRtnCB;
       pmdEDUCB             *_pEduCB;
-      _clsMgr              *_pClsCB;
       clsTaskMgr           _taskMgr ;
 
-   };
+   } ;
 }
 
 #endif // CATCATALOGUEMANAGER_HPP_
+

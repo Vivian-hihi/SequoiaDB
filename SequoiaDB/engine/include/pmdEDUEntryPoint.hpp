@@ -74,9 +74,6 @@ namespace engine
    INT32 pmdRestSvcEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdLoggWEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdClsNtyEntryPoint( pmdEDUCB * cb, void * arg ) ;
-   INT32 pmdCatMainControllerEntryPoint ( pmdEDUCB *cb, void *pData );
-   INT32 pmdCatNodeManagerEntryPoint ( pmdEDUCB *cb, void *pData );
-   INT32 pmdCatCatalogManagerEntryPoint ( pmdEDUCB *cb, void *pData );
    INT32 pmdCoordNetWorkEntryPoint ( pmdEDUCB *cb, void *pData );
    INT32 pmdPreLoaderEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;

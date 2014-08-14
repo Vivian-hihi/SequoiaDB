@@ -1,9 +1,42 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = catNodeManager.hpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of runtime component. This file contains code logic for
+   common functions for coordinator node.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+
+   Last Changed =     XJH Opt
+
+*******************************************************************************/
 #ifndef CATNODEMANAGER_HPP__
 #define CATNODEMANAGER_HPP__
 
-#include "core.hpp"
-#include "oss.hpp"
-#include "catEventProcessor.hpp"
+#include "pmdObjBase.hpp"
 #include "pmd.hpp"
 #include "netDef.hpp"
 
@@ -11,34 +44,39 @@ using namespace bson ;
 
 namespace engine
 {
-   class _clsMgr ;
    class sdbCatalogueCB ;
    class _SDB_RTNCB ;
    class _dpsLogWrapper ;
    class _SDB_DMSCB ;
-   class _SDB_KRCB ;
 
    /*
       catNodeManager define
    */
-   class catNodeManager : public catEventProcessor
+   class catNodeManager : public _pmdObjBase
    {
+   DECLARE_OBJ_MSG_MAP()
+
    public:
       catNodeManager() ;
       virtual ~catNodeManager() ;
-
       INT32 init() ;
-      INT32 active() ;
-      INT32 deactive() ;
 
-      void  attachCB( pmdEDUCB *cb ) ;
-      void  detachCB( pmdEDUCB *cb ) ;
+      virtual void   attachCB( _pmdEDUCB *cb ) ;
+      virtual void   detachCB( _pmdEDUCB *cb ) ;
+
+   // event process function
+   protected:
+      INT32 _onActiveEvent( pmdEDUEvent *event ) ;
+      INT32 _onDeactiveEvent( pmdEDUEvent *event ) ;
+
+   protected:
+      virtual INT32 _defaultMsgFunc ( NET_HANDLE handle,
+                                      MsgHeader* msg ) ;
+      INT32 _processMsg( const NET_HANDLE &handle,
+                         MsgHeader *pMsg ) ;
 
    // message process functions
    protected:
-      INT32 processMsg( const NET_HANDLE &handle,
-                        MsgHeader *pMsg ) ;
-
       INT32 processCommandMsg( const NET_HANDLE &handle, MsgHeader *pMsg,
                                BOOLEAN writable ) ;
 
@@ -108,14 +146,12 @@ namespace engine
 
    private:
       SDB_CAT_MODULE_STATUS      _status;
-      _SDB_KRCB                  *_pKrcb;
       _SDB_DMSCB                 *_pDmsCB;
       _dpsLogWrapper             *_pDpsCB;
       _SDB_RTNCB                 *_pRtnCB;
-      pmdEDUMgr                  *_pEduMgr;
       sdbCatalogueCB             *_pCatCB;
       pmdEDUCB                   *_pEduCB;
-      _clsMgr                    *_pClsCB;
+
    } ;
 }
 

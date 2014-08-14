@@ -39,9 +39,8 @@
 #ifndef CAT_MAIN_CONTROLLER_HPP__
 #define CAT_MAIN_CONTROLLER_HPP__
 
-#include "core.hpp"
+#include "pmdObjBase.hpp"
 #include "netMsgHandler.hpp"
-#include "catEventProcessor.hpp"
 #include "msgCatalog.hpp"
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
@@ -59,63 +58,72 @@ namespace engine
    /*
       catMainController define
    */
-   class catMainController : public _netMsgHandler, public catEventProcessor
+   class catMainController : public _netMsgHandler, public _pmdObjBase
    {
    typedef std::map< SINT64, UINT64 > CONTEXT_LIST ;
+
+   DECLARE_OBJ_MSG_MAP()
 
    public:
       catMainController() ;
       virtual ~catMainController() ;
+      INT32 init() ;
 
+      virtual void   attachCB( _pmdEDUCB *cb ) ;
+      virtual void   detachCB( _pmdEDUCB *cb ) ;
+
+      ossEvent* getAttachEvent() { return &_attachEvent ; }
+
+   public:
       INT32 handleMsg( const NET_HANDLE &handle,
                        const _MsgHeader *header,
                        const CHAR *msg ) ;
-      void handleClose( const NET_HANDLE &handle, _MsgRouteID id );
-      INT32 init() ;
-      INT32 active() ;
-      INT32 deactive() ;
+      void  handleClose( const NET_HANDLE &handle, _MsgRouteID id ) ;
 
-      void  attachCB( pmdEDUCB *cb ) ;
-      void  detachCB( pmdEDUCB *cb ) ;
-      ossEvent* getAttachEvent() { return &_attachEvent ; }
+   protected:
+      virtual INT32 _defaultMsgFunc ( NET_HANDLE handle,
+                                      MsgHeader* msg ) ;
 
+      INT32 _processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+
+   // event process functions
+   protected:
+      INT32 _onActiveEvent( pmdEDUEvent *event ) ;
+      INT32 _onDeactiveEvent( pmdEDUEvent *event ) ;
+
+   // msg process functions
    protected :
-      INT32 catBuildMsgEvent ( const NET_HANDLE &handle,
-                               const MsgHeader *pMsg,
-                               pmdEDUEvent &event ) ;
-      INT32 processGetMoreMsg ( const NET_HANDLE &handle, const CHAR *pMsg ) ;
-      INT32 processQueryDataGrp( const NET_HANDLE &handle, const CHAR *pMsg ) ;
-      INT32 processQueryCollections( const NET_HANDLE &handle,
-                                     const CHAR *pMsg ) ;
-      INT32 processQueryCollectionSpaces ( const NET_HANDLE &handle,
-                                           const CHAR *pMsg ) ;
-      INT32 processQueryMsg( const NET_HANDLE &handle, const CHAR *pMsg ) ;
-      INT32 processKillContext(const NET_HANDLE &handle, const CHAR *pMsg ) ;
-      INT32 processAuthenticate( const NET_HANDLE &handle, const CHAR *pMsg ) ;
-      INT32 processAuthCrt( const NET_HANDLE &handle, const CHAR *pMsg ) ;
-      INT32 processAuthDel( const NET_HANDLE &handle, const CHAR *pMsg ) ;
-      INT32 processCheckRouteID( const NET_HANDLE &handle, const CHAR *pMsg ) ;
-      INT32 processQueryDomain ( const NET_HANDLE &handle, const CHAR *pMsg ) ;
+      INT32 _processGetMoreMsg ( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processQueryDataGrp( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processQueryCollections( const NET_HANDLE &handle,
+                                      MsgHeader *pMsg ) ;
+      INT32 _processQueryCollectionSpaces ( const NET_HANDLE &handle,
+                                            MsgHeader *pMsg ) ;
+      INT32 _processQueryMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processKillContext(const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processAuthenticate( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processAuthCrt( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processAuthDel( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processCheckRouteID( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+      INT32 _processInterruptMsg( const NET_HANDLE &handle,
+                                  MsgHeader *header ) ;
+      INT32 _processDisconnectMsg( const NET_HANDLE &handle,
+                                   MsgHeader *header ) ;
+      INT32 _processQueryRequest ( const NET_HANDLE &handle,
+                                   MsgHeader *pMsg,
+                                   const CHAR *pCollectionName ) ;
 
-      INT32 processMsg( const NET_HANDLE &handle, MsgHeader *pMsg ) ;
+   protected:
+      INT32 _postMsg( const NET_HANDLE &handle, const MsgHeader *pHead ) ;
+      INT32 _catBuildMsgEvent ( const NET_HANDLE &handle,
+                                const MsgHeader *pMsg,
+                                pmdEDUEvent &event ) ;
       INT32 _ensureMetadata() ;
       INT32 _createSysIndex ( const CHAR *pCollection,
                               const CHAR *pIndex,
                               pmdEDUCB *cb ) ;
       INT32 _createSysCollection ( const CHAR *pCollection,
                                    pmdEDUCB *cb ) ;
-      INT32 _processQueryRequest ( const NET_HANDLE &handle,
-                                   const CHAR *pMsg,
-                                   const CHAR *pCollectionName ) ;
-
-      INT32 _processInterruptMsg( const NET_HANDLE &handle,
-                                  MsgHeader *header ) ;
-      INT32 _processDisconnectMsg( const NET_HANDLE &handle,
-                                   MsgHeader *header ) ;
-
-      INT32 postMsg( const NET_HANDLE &handle, const MsgHeader *pHead );
-
-   protected:
       void _addContext( const UINT32 &handle, UINT32 tid, INT64 contextID ) ;
       void _delContextByHandle( const UINT32 &handle ) ;
       void _delContext( const UINT32 &handle, UINT32 tid ) ;
@@ -135,6 +143,7 @@ namespace engine
       CONTEXT_LIST      _contextLst;
 
       ossEvent          _attachEvent ;
+      BOOLEAN           _isActived ;
    } ;
 
 }

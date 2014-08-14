@@ -19,6 +19,14 @@
 using namespace bson;
 namespace engine
 {
+   BEGIN_OBJ_MSG_MAP( catMainController, _pmdObjBase )
+      ON_EVENT( PMD_EDU_EVENT_ACTIVE, _onActiveEvent )
+      ON_EVENT( PMD_EDU_EVENT_DEACTIVE, _onDeactiveEvent )
+   END_OBJ_MSG_MAP()
+
+   /*
+      catMainController implement
+   */
    catMainController::catMainController ()
    {
       _nodeManagerEDUID    = PMD_INVALID_EDUID ;
@@ -31,6 +39,8 @@ namespace engine
       _pNodeMgrCB          = NULL ;
       _pCataMgrCB          = NULL ;
       _pEDUCB              = NULL ;
+
+      _isActived           = FALSE ;
    }
 
    catMainController::~catMainController()
@@ -86,82 +96,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATMAINCT_HANDLEMSG ) ;
       PD_TRACE1 ( SDB_CATMAINCT_HANDLEMSG,
                   PD_PACK_INT ( header->opCode ) ) ;
-      //get the msg-processor's eduID
-      switch ( header->opCode )
-      {
-      case MSG_BS_QUERY_REQ:
-         {
-            rc = processQueryMsg( handle, msg );
-            break;
-         }
 
-      case MSG_BS_GETMORE_REQ :
-         {
-            rc = processGetMoreMsg( handle, msg ) ;
-            break ;
-         }
+      rc = _postMsg( handle, header ) ;
 
-      case MSG_BS_KILL_CONTEXT_REQ:
-         {
-            rc = processKillContext( handle, msg ) ;
-            break;
-         }
-      case MSG_BS_INTERRUPTE :
-         {
-            rc = _processInterruptMsg( handle, (MsgHeader*)header ) ;
-            break ;
-         }
-      case MSG_BS_DISCONNECT :
-         {
-            rc = _processDisconnectMsg( handle, (MsgHeader*)header ) ;
-            break ;
-         }
-      case MSG_CAT_QUERY_DATA_GRP_REQ :
-         {
-            rc = processQueryDataGrp( handle, msg ) ;
-            break ;
-         }
-      case MSG_CAT_QUERY_COLLECTIONS_REQ :
-         {
-            rc = processQueryCollections( handle, msg ) ;
-            break ;
-         }
-      case MSG_CAT_QUERY_COLLECTIONSPACES_REQ :
-         {
-            rc = processQueryCollectionSpaces ( handle, msg ) ;
-            break ;
-         }
-      case MSG_AUTH_VERIFY_REQ :
-         {
-            rc = processAuthenticate( handle, msg ) ;
-            break ;
-         }
-      case MSG_AUTH_CRTUSR_REQ :
-         {
-            rc = processAuthCrt( handle, msg ) ;
-            break ;
-         }
-      case MSG_AUTH_DELUSR_REQ :
-         {
-            rc = processAuthDel( handle, msg ) ;
-            break ;
-         }
-      case MSG_COOR_CHECK_ROUTEID_REQ :
-         {
-            rc = processCheckRouteID( handle, msg );
-            break;
-         }
-      case MSG_CAT_QUERY_DOMAIN_REQ :
-         {
-            rc = processQueryDomain ( handle, msg ) ;
-            break ;
-         }
-      default :
-         {
-            rc = postMsg( handle, header );
-            break ;
-         }
-      }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_HANDLEMSG, rc ) ;
       return rc ;
    }
@@ -194,9 +131,9 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_POSTMSG, "catMainController::postMsg" )
-   INT32 catMainController::postMsg( const NET_HANDLE &handle,
-                                     const MsgHeader *header )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_POSTMSG, "catMainController::_postMsg" )
+   INT32 catMainController::_postMsg( const NET_HANDLE &handle,
+                                      const MsgHeader *header )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_POSTMSG ) ;
@@ -213,8 +150,8 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         rc = catBuildMsgEvent ( handle, header, event ) ;
-         PD_RC_CHECK( rc, PDERROR, "failed to build the event(rc=%d)", rc );
+         rc = _catBuildMsgEvent ( handle, header, event ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build the event, rc: %d", rc );
          _pCataMgrCB->postEvent( event ) ;
       }
       else if  ( MSG_CAT_NODE_BEGIN < (UINT32)header->opCode &&
@@ -225,13 +162,20 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         rc = catBuildMsgEvent ( handle, header, event ) ;
-         PD_RC_CHECK( rc, PDERROR, "failed to build the event(rc=%d)", rc );
+         rc = _catBuildMsgEvent ( handle, header, event ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build the event, rc: %d", rc );
          _pNodeMgrCB->postEvent( event ) ;
       }
       else
       {
-         rc = SDB_UNKNOWN_MESSAGE ;
+         if ( NULL == _pEDUCB )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         rc = _catBuildMsgEvent( handle, header, event ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build the event, rc: %d", rc ) ;
+         _pEDUCB->postEvent( event ) ;
       }
 
    done:
@@ -259,9 +203,8 @@ namespace engine
       // after initializing, let's attempt to create collectionspace and
       // collections
       rc = _ensureMetadata () ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to create metadata collections/indexes, rc = %d",
-                    rc ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to create metadata "
+                    "collections/indexes, rc = %d", rc ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT_INIT, rc ) ;
@@ -436,49 +379,74 @@ namespace engine
 
    // when we activate the main controller, we should always assume there's
    // metadata collections exist
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_ACTIVE, "catMainController::active" )
-   INT32 catMainController::active()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_ACTIVE, "catMainController::_onActiveEvent" )
+   INT32 catMainController::_onActiveEvent( pmdEDUEvent *event )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_ACTIVE ) ;
 
-      rc = _pEduMgr->postEDUPost( _nodeManagerEDUID, PMD_EDU_EVENT_ACTIVE ) ;
-      if ( SDB_OK == rc )
+      rc = _pAuthCB->checkNeedAuth( _pEDUCB, TRUE ) ;
+      if ( rc )
       {
-         _pAuthCB->checkNeedAuth( _pEDUCB, TRUE ) ;
+         PD_LOG( PDERROR, "Failed to check need auth, rc: %d", rc ) ;
+         goto error ;
       }
-      else
+      _isActived = TRUE ;
+
+      rc = _pEduMgr->postEDUPost( _nodeManagerEDUID, PMD_EDU_EVENT_ACTIVE ) ;
+      if ( rc )
       {
-         PD_RC_CHECK ( rc, PDERROR, "Failed to post edu, rc = %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to post active event to node manager, "
+                 "rc: %d", rc ) ;
+         goto error ;
+      }
+      rc = _pEduMgr->postEDUPost( _catalogManagerEDUID, PMD_EDU_EVENT_ACTIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to post active event to catalog manager, "
+                 "rc: %d", rc ) ;
+         goto error ;
       }
 
    done:
       PD_TRACE_EXITRC ( SDB_CATMAINCT_ACTIVE, rc ) ;
       return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_DEACTIVE, "catMainController::deactive" )
-   INT32 catMainController::deactive()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_DEACTIVE, "catMainController::_onDeactiveEvent" )
+   INT32 catMainController::_onDeactiveEvent( pmdEDUEvent *event )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_DEACTIVE ) ;
 
-      rc = _pEduMgr->postEDUPost( _nodeManagerEDUID, PMD_EDU_EVENT_DEACTIVE );
-      PD_RC_CHECK ( rc, PDERROR, "Failed to post edu, rc = %d", rc ) ;
+      rc = _pEduMgr->postEDUPost( _nodeManagerEDUID, PMD_EDU_EVENT_DEACTIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Post deactive event to node manager failed, "
+                 "rc: %d", rc ) ;
+         // run continue
+      }
+      rc = _pEduMgr->postEDUPost( _catalogManagerEDUID,
+                                  PMD_EDU_EVENT_DEACTIVE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Post deactive event to catalog manager failed, "
+                 "rc: %d", rc ) ;
+         // run continue
+      }
 
-   done:
+      _isActived = FALSE ;
+
       PD_TRACE_EXITRC ( SDB_CATMAINCT_DEACTIVE, rc ) ;
       return rc ;
-   error:
-      goto done;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_BUILDMSGEVENT, "catMainController::catBuildMsgEvent" )
-   INT32 catMainController::catBuildMsgEvent ( const NET_HANDLE &handle,
-                                               const MsgHeader *pMsg,
-                                               pmdEDUEvent &event )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_BUILDMSGEVENT, "catMainController::_catBuildMsgEvent" )
+   INT32 catMainController::_catBuildMsgEvent ( const NET_HANDLE &handle,
+                                                const MsgHeader *pMsg,
+                                                pmdEDUEvent &event )
    {
       INT32 rc = SDB_OK ;
       CHAR *pEventData = NULL ;
@@ -487,7 +455,7 @@ namespace engine
       pEventData = (CHAR *)SDB_OSS_MALLOC( pMsg->messageLength ) ;
       if ( NULL == pEventData )
       {
-         rc = SDB_OOM;
+         rc = SDB_OOM ;
          PD_LOG ( PDERROR, "malloc failed(size = %d)", pMsg->messageLength ) ;
          goto error ;
       }
@@ -505,9 +473,9 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_GETMOREMSG, "catMainController::processGetMoreMsg" )
-   INT32 catMainController::processGetMoreMsg ( const NET_HANDLE &handle,
-                                                const CHAR *pMsg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_GETMOREMSG, "catMainController::_processGetMoreMsg" )
+   INT32 catMainController::_processGetMoreMsg ( const NET_HANDLE &handle,
+                                                 MsgHeader *pMsg )
    {
       INT32 rc               = SDB_OK ;
       MsgOpGetMore *pGetMore = (MsgOpGetMore*)pMsg ;
@@ -568,9 +536,9 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_KILLCONTEXT, "catMainController::processKillContext" )
-   INT32 catMainController::processKillContext( const NET_HANDLE &handle,
-                                                const CHAR *pMsg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_KILLCONTEXT, "catMainController::_processKillContext" )
+   INT32 catMainController::_processKillContext( const NET_HANDLE &handle,
+                                                 MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
       INT32 contextNum = 0 ;
@@ -605,7 +573,7 @@ namespace engine
                      contextNum, pContextIDs[0] ) ;
          }
 
-         for ( UINT32 i = 0 ; i < contextNum ; ++i )
+         for ( INT32 i = 0 ; i < contextNum ; ++i )
          {
             _delContextByID( pContextIDs[ i ], TRUE ) ;
          }
@@ -626,9 +594,9 @@ namespace engine
       return rc;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_QUERYMSG, "catMainController::processQueryMsg" )
-   INT32 catMainController::processQueryMsg( const NET_HANDLE &handle,
-                                             const CHAR *pMsg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_QUERYMSG, "catMainController::_processQueryMsg" )
+   INT32 catMainController::_processQueryMsg( const NET_HANDLE &handle,
+                                              MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
       MsgOpReply msgReply;
@@ -656,8 +624,8 @@ namespace engine
          CHAR *pOrderBy        = NULL ;
          CHAR *pHint           = NULL ;
          rc = msgExtractQuery( (CHAR *)pMsg, &flags, &pCollectionName,
-                              &numToSkip, &numToReturn, &pQuery,
-                              &pFieldSelector, &pOrderBy, &pHint );
+                               &numToSkip, &numToReturn, &pQuery,
+                               &pFieldSelector, &pOrderBy, &pHint );
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR,
@@ -685,21 +653,20 @@ namespace engine
             break;
          }
          rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
-                     hint, flags, _pEDUCB, numToSkip, numToReturn,
-                     _pDmsCB, _pRtnCB, contextID );
+                        hint, flags, _pEDUCB, numToSkip, numToReturn,
+                        _pDmsCB, _pRtnCB, contextID ) ;
          if ( rc != SDB_OK )
          {
             if ( rc != SDB_DMS_EOC )
             {
-               PD_LOG ( PDERROR,
-                        "failed to query the collection:%s(rc=%d)",
+               PD_LOG ( PDERROR, "Failed to query the collection:%s(rc=%d)",
                         pCollectionName, rc );
             }
             break;
          }
-         _addContext( handle, pReq->header.TID, contextID );
-         msgReply.contextID = contextID;
-      }while ( FALSE );
+         _addContext( handle, pReq->header.TID, contextID ) ;
+         msgReply.contextID = contextID ;
+      }while ( FALSE ) ;
 
       msgReply.flags = rc;
       PD_TRACE1 ( SDB_CATMAINCT_QUERYMSG,
@@ -707,47 +674,39 @@ namespace engine
       rc = _pCatCB->netWork()->syncSend ( handle, &msgReply );
       if ( rc != SDB_OK )
       {
-         PD_LOG ( PDERROR,
-                  "failed to send the message\
-                  ( groupID=%d, nodeID=%d, serviceID=%d )",
+         PD_LOG ( PDERROR, "Failed to send the message "
+                  "( groupID=%d, nodeID=%d, serviceID=%d )",
                   pReq->header.routeID.columns.groupID,
                   pReq->header.routeID.columns.nodeID,
                   pReq->header.routeID.columns.serviceID );
       }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_QUERYMSG, rc ) ;
-      return rc;
+      return rc ;
    }
 
-   INT32 catMainController::processQueryCollections ( const NET_HANDLE &handle,
-                                                      const CHAR *pMsg )
+   INT32 catMainController::_processQueryCollections ( const NET_HANDLE &handle,
+                                                       MsgHeader *pMsg )
    {
       return _processQueryRequest ( handle, pMsg,
                                     CAT_COLLECTION_INFO_COLLECTION ) ;
    }
 
-   INT32 catMainController::processQueryCollectionSpaces (
-         const NET_HANDLE &handle,
-         const CHAR *pMsg )
+   INT32 catMainController::_processQueryCollectionSpaces( const NET_HANDLE &handle,
+                                                           MsgHeader *pMsg )
    {
       return _processQueryRequest ( handle, pMsg,
                                     CAT_COLLECTION_SPACE_COLLECTION ) ;
    }
 
-   INT32 catMainController::processQueryDataGrp( const NET_HANDLE &handle,
-                                                 const CHAR *pMsg )
+   INT32 catMainController::_processQueryDataGrp( const NET_HANDLE &handle,
+                                                  MsgHeader *pMsg )
    {
       return _processQueryRequest ( handle, pMsg, CAT_NODE_INFO_COLLECTION ) ;
    }
 
-   INT32 catMainController::processQueryDomain ( const NET_HANDLE &handle,
-                                                 const CHAR *pMsg )
-   {
-      return _processQueryRequest ( handle, pMsg, CAT_DOMAIN_COLLECTION ) ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_QUERYREQUEST, "catMainController::_processQueryRequest" )
    INT32 catMainController::_processQueryRequest ( const NET_HANDLE &handle,
-                                                   const CHAR *pMsg,
+                                                   MsgHeader *pMsg,
                                                    const CHAR *pCollectionName )
    {
       INT32 rc              = SDB_OK ;
@@ -770,7 +729,7 @@ namespace engine
                 "it is not primary node but received query request!" );
 
       rc = msgExtractQuery ( (CHAR *)pMsgHeader, &flags, &pCN,
-                              &numToSkip, &numToReturn, &pQuery,
+                             &numToSkip, &numToReturn, &pQuery,
                              &pFieldSelector, &pOrderByBuffer,
                              &pHintBuffer ) ;
       if ( rc != SDB_OK )
@@ -792,10 +751,9 @@ namespace engine
          BSONObj selector ( pFieldSelector ) ;
          BSONObj orderBy ( pOrderByBuffer ) ;
          BSONObj hint ( pHintBuffer ) ;
-         rc = rtnQuery( pCollectionName, selector,
-                        matcher, orderBy, hint, flags,
-                        _pEDUCB, numToSkip, numToReturn,  _pDmsCB,
-                        _pRtnCB, contextID ) ;
+         rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
+                        hint, flags, _pEDUCB, numToSkip, numToReturn,
+                        _pDmsCB, _pRtnCB, contextID ) ;
          if ( rc != SDB_OK )
          {
             if ( rc != SDB_DMS_EOC )
@@ -854,19 +812,125 @@ namespace engine
       goto done ;
    }
 
-   INT32 catMainController::processMsg( const NET_HANDLE &handle,
-                                        MsgHeader *pMsg )
+   INT32 catMainController::_defaultMsgFunc( NET_HANDLE handle,
+                                             MsgHeader * msg )
    {
-      MsgHeader *pHeader = (MsgHeader *)pMsg ;
-      PD_LOG ( PDERROR, "received unknown message: (%d)%u",
-               IS_REPLY_TYPE(pHeader->opCode),
-               GET_REQUEST_TYPE(pHeader->opCode) ) ;
-      return SDB_UNKNOWN_MESSAGE ;
+      return _processMsg( handle, msg ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_AUTHCRT, "catMainController::processAuthCrt" )
-   INT32 catMainController::processAuthCrt( const NET_HANDLE &handle,
-                                            const CHAR *pMsg )
+   INT32 catMainController::_processMsg( const NET_HANDLE &handle,
+                                         MsgHeader *pMsg )
+   {
+      INT32 rc = SDB_OK ;
+
+      switch ( pMsg->opCode )
+      {
+      case MSG_BS_QUERY_REQ:
+         {
+            rc = _processQueryMsg( handle, pMsg );
+            break;
+         }
+      case MSG_BS_GETMORE_REQ :
+         {
+            rc = _processGetMoreMsg( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_BS_KILL_CONTEXT_REQ:
+         {
+            rc = _processKillContext( handle, pMsg ) ;
+            break;
+         }
+      case MSG_BS_INTERRUPTE :
+         {
+            rc = _processInterruptMsg( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_BS_DISCONNECT :
+         {
+            rc = _processDisconnectMsg( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_CAT_QUERY_DATA_GRP_REQ :
+         {
+            rc = _processQueryDataGrp( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_CAT_QUERY_COLLECTIONS_REQ :
+         {
+            rc = _processQueryCollections( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_CAT_QUERY_COLLECTIONSPACES_REQ :
+         {
+            rc = _processQueryCollectionSpaces ( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_AUTH_VERIFY_REQ :
+         {
+            rc = _processAuthenticate( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_AUTH_CRTUSR_REQ :
+         {
+            rc = _processAuthCrt( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_AUTH_DELUSR_REQ :
+         {
+            rc = _processAuthDel( handle, pMsg ) ;
+            break ;
+         }
+      case MSG_COOR_CHECK_ROUTEID_REQ :
+         {
+            rc = _processCheckRouteID( handle, pMsg ) ;
+            break;
+         }
+      default :
+         {
+            PD_LOG( PDERROR, "Recieve unknow msg[opCode:(%d)%d, len: %d, "
+                    "tid: %d, reqID: %lld, nodeID: %u.%u.%u]",
+                    IS_REPLY_TYPE(pMsg->opCode), GET_REQUEST_TYPE(pMsg->opCode),
+                    pMsg->messageLength, pMsg->TID, pMsg->requestID,
+                    pMsg->routeID.columns.groupID, pMsg->routeID.columns.nodeID,
+                    pMsg->routeID.columns.serviceID ) ;
+            rc = SDB_UNKNOWN_MESSAGE ;
+
+            BSONObj err = pmdGetErrorBson( rc, _pEDUCB->getInfo(
+                                           EDU_INFO_ERROR ) ) ;
+            MsgOpReply reply ;
+            reply.header.opCode = MAKE_REPLY_TYPE( pMsg->opCode ) ;
+            reply.header.messageLength = sizeof( MsgOpReply ) + err.objsize() ;
+            reply.header.requestID = pMsg->requestID ;
+            reply.header.routeID.value = 0 ;
+            reply.header.TID = pMsg->TID ;
+            reply.flags = rc ;
+            reply.contextID = -1 ;
+            reply.numReturned = 1 ;
+            reply.startFrom = 0 ;
+
+            _pCatCB->netWork()->syncSend( handle, (MsgHeader*)&reply,
+                                          (void*)err.objdata(),
+                                          err.objsize() ) ;
+            break ;
+         }
+      }
+
+      if ( rc && SDB_UNKNOWN_MESSAGE != rc )
+      {
+         PD_LOG( PDWARNING, "Process msg[opCode:(%d)%d, len: %d, tid: %d, "
+                 "reqID: %lld, nodeID: %u.%u.%u] failed, rc: %d",
+                 IS_REPLY_TYPE(pMsg->opCode), GET_REQUEST_TYPE(pMsg->opCode),
+                 pMsg->messageLength, pMsg->TID, pMsg->requestID,
+                 pMsg->routeID.columns.groupID, pMsg->routeID.columns.nodeID,
+                 pMsg->routeID.columns.serviceID, rc ) ;
+      }
+
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_AUTHCRT, "catMainController::_processAuthCrt" )
+   INT32 catMainController::_processAuthCrt( const NET_HANDLE &handle,
+                                             MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_AUTHCRT ) ;
@@ -874,7 +938,7 @@ namespace engine
       BSONObj obj ;
       MsgAuthCrtReply reply ;
 
-      if ( !pmdIsPrimary() )
+      if ( !pmdIsPrimary() || !_isActived )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
          goto error ;
@@ -905,9 +969,9 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_AUTHENTICATE, "catMainController::processAuthenticate" )
-   INT32 catMainController::processAuthenticate( const NET_HANDLE &handle,
-                                                 const CHAR *pMsg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_AUTHENTICATE, "catMainController::_processAuthenticate" )
+   INT32 catMainController::_processAuthenticate( const NET_HANDLE &handle,
+                                                  MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_AUTHENTICATE ) ;
@@ -915,7 +979,7 @@ namespace engine
       BSONObj obj ;
       MsgAuthReply reply ;
 
-      if ( !pmdIsPrimary() )
+      if ( !pmdIsPrimary() && !_isActived )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
          goto error ;
@@ -949,9 +1013,9 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_AUTHDEL, "catMainController::processAuthDel" )
-   INT32 catMainController::processAuthDel( const NET_HANDLE &handle,
-                                            const CHAR *pMsg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_AUTHDEL, "catMainController::_processAuthDel" )
+   INT32 catMainController::_processAuthDel( const NET_HANDLE &handle,
+                                             MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_AUTHDEL ) ;
@@ -959,7 +1023,7 @@ namespace engine
       BSONObj obj ;
       MsgAuthDelReply reply ;
 
-      if ( !pmdIsPrimary() )
+      if ( !pmdIsPrimary() || !_isActived )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
          goto error ;
@@ -990,9 +1054,9 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_CHECKROUTEID, "catMainController::processCheckRouteID" )
-   INT32 catMainController::processCheckRouteID( const NET_HANDLE &handle,
-                                                 const CHAR *pMsg )
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_CHECKROUTEID, "catMainController::_processCheckRouteID" )
+   INT32 catMainController::_processCheckRouteID( const NET_HANDLE &handle,
+                                                  MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_CHECKROUTEID ) ;

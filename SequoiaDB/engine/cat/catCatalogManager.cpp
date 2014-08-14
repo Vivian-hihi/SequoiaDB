@@ -52,33 +52,40 @@ using namespace bson;
 
 namespace engine
 {
+   BEGIN_OBJ_MSG_MAP( catCatalogueManager, _pmdObjBase )
+      ON_EVENT( PMD_EDU_EVENT_ACTIVE, _onActiveEvent )
+      ON_EVENT( PMD_EDU_EVENT_DEACTIVE, _onDeactiveEvent )
+   END_OBJ_MSG_MAP()
+
+   /*
+      catCatalogueManager implement
+   */
    catCatalogueManager::catCatalogueManager()
    {
-      _pEduCB = NULL ;
+      _pEduCB     = NULL ;
+      _pDpsCB     = NULL ;
+      _pCatCB     = NULL ;
+      _pDmsCB     = NULL ;
    }
 
-   INT32 catCatalogueManager::active()
+   INT32 catCatalogueManager::_onActiveEvent( pmdEDUEvent *event )
    {
       _taskMgr.setTaskID( catGetMaxTaskID( _pEduCB ) ) ;
-      INT32 rc = SDB_OK;
-      return rc;
+      return SDB_OK ;
    }
 
-   INT32 catCatalogueManager::deactive()
+   INT32 catCatalogueManager::_onDeactiveEvent( pmdEDUEvent *event )
    {
-      INT32 rc = SDB_OK;
-      return rc;
+      return SDB_OK ;
    }
 
    INT32 catCatalogueManager::init()
    {
-      _pKrcb   = pmdGetKRCB();
-      _pDmsCB  = _pKrcb->getDMSCB();
-      _pDpsCB  = _pKrcb->getDPSCB();
-      _pCatCB  = _pKrcb->getCATLOGUECB();
-      _pRtnCB  = _pKrcb->getRTNCB();
-      _pClsCB  = _pKrcb->getClsCB();
-      return SDB_OK;
+      pmdKRCB *krcb  = pmdGetKRCB();
+      _pDmsCB        = krcb->getDMSCB();
+      _pDpsCB        = krcb->getDPSCB();
+      _pCatCB        = krcb->getCATLOGUECB();
+      return SDB_OK ;
    }
 
    void catCatalogueManager::attachCB( pmdEDUCB * cb )
@@ -93,9 +100,14 @@ namespace engine
       _pEduCB = NULL ;
    }
 
+   INT32 catCatalogueManager::_defaultMsgFunc( NET_HANDLE handle,
+                                               MsgHeader * msg )
+   {
+      return _processMsg( handle, msg ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCS, "catCatalogueManager::processCmdDropCollectionSpace" )
-   INT32 catCatalogueManager::processCmdDropCollectionSpace (
-                              const CHAR *pQuery )
+   INT32 catCatalogueManager::processCmdDropCollectionSpace( const CHAR *pQuery )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_DROPCS ) ;
@@ -1713,9 +1725,9 @@ namespace engine
       return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSMSG, "catCatalogueManager::processMsg" )
-   INT32 catCatalogueManager::processMsg( const NET_HANDLE &handle,
-                                          MsgHeader *pMsg )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSMSG, "catCatalogueManager::_processMsg" )
+   INT32 catCatalogueManager::_processMsg( const NET_HANDLE &handle,
+                                           MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_PROCESSMSG ) ;
@@ -1741,7 +1753,6 @@ namespace engine
       case MSG_CAT_DROP_SPACE_REQ :
       case MSG_CAT_LINK_CL_REQ :
       case MSG_CAT_UNLINK_CL_REQ :
-      case MSG_CAT_QUERY_DOMAIN_REQ :
       case MSG_CAT_CREATE_DOMAIN_REQ :
       case MSG_CAT_DROP_DOMAIN_REQ :
       case MSG_CAT_ALTER_DOMAIN_REQ :

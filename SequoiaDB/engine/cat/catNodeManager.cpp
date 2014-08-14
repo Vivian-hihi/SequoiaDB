@@ -1,6 +1,39 @@
+/*******************************************************************************
 
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = catNodeManager.cpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of runtime component. This file contains code logic for
+   common functions for coordinator node.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+
+   Last Changed =     XJH Opt
+
+*******************************************************************************/
 #include "catCommon.hpp"
-
 #include "../util/fromjson.hpp"
 #include "msgCatalog.hpp"
 #include "pmdCB.hpp"
@@ -17,17 +50,22 @@ using namespace bson;
 namespace engine
 {
 
+   BEGIN_OBJ_MSG_MAP( catNodeManager, _pmdObjBase )
+      ON_EVENT( PMD_EDU_EVENT_ACTIVE, _onActiveEvent )
+      ON_EVENT( PMD_EDU_EVENT_DEACTIVE, _onDeactiveEvent )
+   END_OBJ_MSG_MAP()
+
+   /*
+      catNodeManager implement
+   */
    catNodeManager::catNodeManager()
    {
       _status = SDB_CAT_MODULE_DEACTIVE ;
-      _pKrcb = NULL ;
       _pDmsCB = NULL ;
       _pDpsCB = NULL ;
       _pRtnCB = NULL ;
-      _pEduMgr = NULL ;
       _pCatCB = NULL ;
       _pEduCB = NULL ;
-      _pClsCB = NULL ;
    }
 
    catNodeManager::~catNodeManager()
@@ -38,13 +76,11 @@ namespace engine
    INT32 catNodeManager::init()
    {
       INT32 rc = SDB_OK;
-      _pKrcb   = pmdGetKRCB() ;
-      _pDmsCB  = _pKrcb->getDMSCB();
-      _pDpsCB  = _pKrcb->getDPSCB();
-      _pRtnCB  = _pKrcb->getRTNCB();
-      _pEduMgr = _pKrcb->getEDUMgr();
-      _pCatCB  = _pKrcb->getCATLOGUECB();
-      _pClsCB  = pmdGetKRCB()->getClsCB();
+      pmdKRCB *krcb     = pmdGetKRCB() ;
+      _pDmsCB           = krcb->getDMSCB();
+      _pDpsCB           = krcb->getDPSCB();
+      _pRtnCB           = krcb->getRTNCB();
+      _pCatCB           = krcb->getCATLOGUECB();
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_INIT ) ;
       rc = readCataConf() ;
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_INIT, rc ) ;
@@ -63,11 +99,9 @@ namespace engine
       _pEduCB = NULL ;
    }
 
-   /***********************************
-   * when the node switch to  primary will call this fun
-   *************************************/
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVE, "catNodeManager::active" )
-   INT32 catNodeManager::active()
+   // when the node switch to  primary will call this fun
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVE, "catNodeManager::_onActiveEvent" )
+   INT32 catNodeManager::_onActiveEvent( pmdEDUEvent *event )
    {
       //get all of the nodes's id
       INT32 rc            = SDB_OK;
@@ -87,8 +121,7 @@ namespace engine
       if ( rc )
       {
          // rtnQuery supposed to be never failed
-         PD_LOG ( PDERROR,
-                  "Failed to query %s collection, rc = %d",
+         PD_LOG ( PDERROR, "Failed to query %s collection, rc = %d",
                   CAT_NODE_INFO_COLLECTION, rc ) ;
          goto error ;
       }
@@ -152,18 +185,23 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DEACTIVE, "catNodeManager::deactive" )
-   INT32 catNodeManager::deactive()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DEACTIVE, "catNodeManager::_onDeactiveEvent" )
+   INT32 catNodeManager::_onDeactiveEvent( pmdEDUEvent *event )
    {
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_DEACTIVE ) ;
       _status = SDB_CAT_MODULE_DEACTIVE;
       PD_TRACE_EXIT ( SDB_CATNODEMGR_DEACTIVE ) ;
-      return SDB_OK;
+      return SDB_OK ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PROCESSMSG, "catNodeManager::processMsg" )
-   INT32 catNodeManager::processMsg( const NET_HANDLE &handle,
-                                     MsgHeader *pMsg )
+   INT32 catNodeManager::_defaultMsgFunc( NET_HANDLE handle, MsgHeader * msg )
+   {
+      return _processMsg( handle, msg ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PROCESSMSG, "catNodeManager::_processMsg" )
+   INT32 catNodeManager::_processMsg( const NET_HANDLE &handle,
+                                      MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_PROCESSMSG ) ;
@@ -230,8 +268,7 @@ namespace engine
       msgReply.header.header.routeID.value= 0;
       msgReply.header.header.TID = pRequest->header.TID;
 
-      if ( !pmdIsPrimary() ||
-           SDB_CAT_MODULE_ACTIVE != _status )
+      if ( !pmdIsPrimary() || SDB_CAT_MODULE_ACTIVE != _status )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
          PD_LOG ( PDWARNING, "service deactive but received primary-change "
@@ -949,7 +986,7 @@ namespace engine
       SINT32 sBufferBegin = 0;
       INT32 iReadReturn = SDB_OK;
 
-      const CHAR *szCatFilePath = _pKrcb->getOptionCB()->getCatFile() ;
+      const CHAR *szCatFilePath = pmdGetOptionCB()->getCatFile() ;
       CHAR szBuffer[READ_BUFFER_SIZE] = {0};
       OSSFILE catFile;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_READCATACONF ) ;

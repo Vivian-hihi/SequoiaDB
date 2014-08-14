@@ -1321,7 +1321,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDLISTGRS_EXE ) ;
       rc = queryOnCatalog ( pReceiveBuffer, packSize, ppResultBuffer, cb,
-                              replyHeader, MSG_CAT_QUERY_DATA_GRP_REQ ) ;
+                            replyHeader, MSG_CAT_QUERY_DATA_GRP_REQ ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDLISTGRS_EXE, rc ) ;
       return rc ;
    }
@@ -2539,196 +2539,257 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSDBINTR_BUILDREQMSG, "rtnCoordCMDSnapshotDBIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotDBIntr::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotDBIntr::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                       INT32 *bufferSize,
+                                                       SINT32 flag,
+                                                       SINT64 numToSkip,
+                                                       SINT64 numToReturn,
+                                                       bson::BSONObj *query,
+                                                       bson::BSONObj *fieldSelector,
+                                                       bson::BSONObj *orderBy,
+                                                       bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSDBINTR_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTDATABASE,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSDBINTR_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSYSINTR_BUILDREQMSG, "rtnCoordCMDSnapshotSysIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSysIntr::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotSysIntr::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                        INT32 *bufferSize,
+                                                        SINT32 flag,
+                                                        SINT64 numToSkip,
+                                                        SINT64 numToReturn,
+                                                        bson::BSONObj *query,
+                                                        bson::BSONObj *fieldSelector,
+                                                        bson::BSONObj *orderBy,
+                                                        bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSYSINTR_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSYSTEM,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSYSINTR_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCLINTR_BUILDREQMSG, "rtnCoordCMDSnapshotClIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotClIntr::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotClIntr::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                       INT32 *bufferSize,
+                                                       SINT32 flag,
+                                                       SINT64 numToSkip,
+                                                       SINT64 numToReturn,
+                                                       bson::BSONObj *query,
+                                                       bson::BSONObj *fieldSelector,
+                                                       bson::BSONObj *orderBy,
+                                                       bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCLINTR_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCOLLECTIONS,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCLINTR_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCSINTR_BUILDREQMSG, "rtnCoordCMDSnapshotCsIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotCsIntr::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotCsIntr::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                       INT32 *bufferSize,
+                                                       SINT32 flag,
+                                                       SINT64 numToSkip,
+                                                       SINT64 numToReturn,
+                                                       bson::BSONObj *query,
+                                                       bson::BSONObj *fieldSelector,
+                                                       bson::BSONObj *orderBy,
+                                                       bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCSINTR_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCOLLECTIONSPACES,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCSINTR_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCTXINTR_BUILDREQMSG, "rtnCoordCMDSnapshotCtxIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotCtxIntr::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotCtxIntr::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                        INT32 *bufferSize,
+                                                        SINT32 flag,
+                                                        SINT64 numToSkip,
+                                                        SINT64 numToReturn,
+                                                        bson::BSONObj *query,
+                                                        bson::BSONObj *fieldSelector,
+                                                        bson::BSONObj *orderBy,
+                                                        bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCTXINTR_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCONTEXTS,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCTXINTR_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCTXCURINTR_BUILDREQMSG, "rtnCoordCMDSnapshotCtxCurIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotCtxCurIntr::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotCtxCurIntr::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                           INT32 *bufferSize,
+                                                           SINT32 flag,
+                                                           SINT64 numToSkip,
+                                                           SINT64 numToReturn,
+                                                           bson::BSONObj *query,
+                                                           bson::BSONObj *fieldSelector,
+                                                           bson::BSONObj *orderBy,
+                                                           bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCTXCURINTR_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCONTEXTSCUR,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCTXCURINTR_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSESSIONINTR_BUILDREQMSG, "rtnCoordCMDSnapshotSessionIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSessionIntr::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotSessionIntr::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                            INT32 *bufferSize,
+                                                            SINT32 flag,
+                                                            SINT64 numToSkip,
+                                                            SINT64 numToReturn,
+                                                            bson::BSONObj *query,
+                                                            bson::BSONObj *fieldSelector,
+                                                            bson::BSONObj *orderBy,
+                                                            bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSESSIONINTR_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSESSIONS,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSESSIONINTR_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSESSIONCURINTR_BUILDREQMSG, "rtnCoordCMDSnapshotSessionCurIntr::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSessionCurIntr::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotSessionCurIntr::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                               INT32 *bufferSize,
+                                                               SINT32 flag,
+                                                               SINT64 numToSkip,
+                                                               SINT64 numToReturn,
+                                                               bson::BSONObj *query,
+                                                               bson::BSONObj *fieldSelector,
+                                                               bson::BSONObj *orderBy,
+                                                               bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSESSIONCURINTR_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSESSIONSCUR,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint );
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSESSIONCURINTR_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSRESET_BUILDREQMSG, "rtnCoordCMDSnapshotReset::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotReset::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip, SINT64 numToReturn,
-                              bson::BSONObj *query, bson::BSONObj *fieldSelector,
-                              bson::BSONObj *orderBy, bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotReset::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                      INT32 *bufferSize,
+                                                      SINT32 flag,
+                                                      SINT64 numToSkip,
+                                                      SINT64 numToReturn,
+                                                      bson::BSONObj *query,
+                                                      bson::BSONObj *fieldSelector,
+                                                      bson::BSONObj *orderBy,
+                                                      bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSRESET_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTRESET,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint );
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSRESET_BUILDREQMSG, rc ) ;
       return rc ;
    }
-   INT32 rtnCoordCMDSnapshotDataBaseTmp::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector, bson::BSONObj *orderBy,
-                              bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotDataBaseTmp::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                            INT32 *bufferSize,
+                                                            SINT32 flag,
+                                                            SINT64 numToSkip,
+                                                            SINT64 numToReturn,
+                                                            bson::BSONObj *query,
+                                                            bson::BSONObj *fieldSelector,
+                                                            bson::BSONObj *orderBy,
+                                                            bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTDATABASE,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       return rc ;
    }
    
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSYS_BUILDREQMSG, "rtnCoordCMDSnapshotSystemTmp::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSystemTmp::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector, bson::BSONObj *orderBy,
-                              bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotSystemTmp::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                          INT32 *bufferSize,
+                                                          SINT32 flag,
+                                                          SINT64 numToSkip,
+                                                          SINT64 numToReturn,
+                                                          bson::BSONObj *query,
+                                                          bson::BSONObj *fieldSelector,
+                                                          bson::BSONObj *orderBy,
+                                                          bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSYS_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSYSTEM,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSYS_BUILDREQMSG, rc ) ;
       return rc ;
    }
    
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSSE_BUILDREQMSG, "rtnCoordCMDSnapshotSessions::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotSessionsTmp::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector, bson::BSONObj *orderBy,
-                              bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotSessionsTmp::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                            INT32 *bufferSize,
+                                                            SINT32 flag,
+                                                            SINT64 numToSkip,
+                                                            SINT64 numToReturn,
+                                                            bson::BSONObj *query,
+                                                            bson::BSONObj *fieldSelector,
+                                                            bson::BSONObj *orderBy,
+                                                            bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSSE_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTSESSIONS,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSSE_BUILDREQMSG, rc ) ;
       return rc ;
    }
    
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCONT_BUILDREQMSG, "rtnCoordCMDSnapshotContexts::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotContextsTmp::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector, bson::BSONObj *orderBy,
-                              bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotContextsTmp::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                            INT32 *bufferSize,
+                                                            SINT32 flag,
+                                                            SINT64 numToSkip,
+                                                            SINT64 numToReturn,
+                                                            bson::BSONObj *query,
+                                                            bson::BSONObj *fieldSelector,
+                                                            bson::BSONObj *orderBy,
+                                                            bson::BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCONT_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTCONTEXTS,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query,
+                             fieldSelector, orderBy, hint );
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCONT_BUILDREQMSG, rc ) ;
       return rc ;
    }
@@ -2736,29 +2797,33 @@ namespace engine
    // not broadcast to data node. Instead it works like ListGroups, which sends
    // request to catalog
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCLS_EXE, "rtnCoordCMDSnapshotCollections::execute" )
-   INT32 rtnCoordCMDSnapshotCollectionsTmp::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                     CHAR **ppResultBuffer,
-                     pmdEDUCB *cb, MsgOpReply &replyHeader,
-                     BSONObj **ppErrorObj )
+   INT32 rtnCoordCMDSnapshotCollectionsTmp::execute( CHAR *pReceiveBuffer,
+                                                     SINT32 packSize,
+                                                     CHAR **ppResultBuffer,
+                                                     pmdEDUCB *cb,
+                                                     MsgOpReply &replyHeader,
+                                                     BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCLS_EXE ) ;
       rc = queryOnCatalog ( pReceiveBuffer, packSize, ppResultBuffer, cb,
-                              replyHeader, MSG_CAT_QUERY_COLLECTIONS_REQ ) ;
+                            replyHeader, MSG_CAT_QUERY_COLLECTIONS_REQ ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCLS_EXE, rc ) ;
       return rc ;
    }
-   
+
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSCSS_EXE, "rtnCoordCMDSnapshotCollectionSpaces::execute" )
-   INT32 rtnCoordCMDSnapshotCollectionSpacesTmp::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                     CHAR **ppResultBuffer,
-                     pmdEDUCB *cb, MsgOpReply &replyHeader,
-                     BSONObj **ppErrorObj )
+   INT32 rtnCoordCMDSnapshotCollectionSpacesTmp::execute( CHAR *pReceiveBuffer,
+                                                          SINT32 packSize,
+                                                          CHAR **ppResultBuffer,
+                                                          pmdEDUCB *cb,
+                                                          MsgOpReply &replyHeader,
+                                                          BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDSSCSS_EXE ) ;
       rc = queryOnCatalog ( pReceiveBuffer, packSize, ppResultBuffer, cb,
-                              replyHeader, MSG_CAT_QUERY_COLLECTIONSPACES_REQ ) ;
+                            replyHeader, MSG_CAT_QUERY_COLLECTIONSPACES_REQ ) ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSSCSS_EXE, rc ) ;
       return rc ;
    }
@@ -3881,8 +3946,8 @@ namespace engine
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTCS_BQREQ, "rtnCoordCMDListCollectionSpace::buildQueryRequest" )
    INT32 rtnCoordCMDListCollectionSpace::buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput )
+                                                            pmdEDUCB *cb,
+                                                            CHAR **ppOutput )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDLISTCS_BQREQ ) ;
@@ -3897,8 +3962,8 @@ namespace engine
          CHAR *pOrderBy = NULL;
          CHAR *pHint = NULL;
          rc = msgExtractQuery( pIntput, &flag, &pCollectionName,
-                              &numToSkip, &numToReturn, &pQuery, 
-                              &pFieldSelector, &pOrderBy, &pHint );
+                               &numToSkip, &numToReturn, &pQuery, 
+                               &pFieldSelector, &pOrderBy, &pHint );
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR,
@@ -3923,18 +3988,18 @@ namespace engine
          catch ( std::exception &e )
          {
             rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "occured unexpected error:%s",
+            PD_LOG ( PDERROR, "occured unexpected error:%s",
                      e.what() );
             break;
          }
-         rc = msgBuildQueryMsg( ppOutput, &bufferSize, CAT_COLLECTION_SPACE_COLLECTION,
-                              flag, 0, numToSkip, numToReturn, &query, &fieldSelector,
-                              &orderBy, &hint );
+         rc = msgBuildQueryMsg( ppOutput, &bufferSize,
+                                CAT_COLLECTION_SPACE_COLLECTION,
+                                flag, 0, numToSkip, numToReturn,
+                                &query, &fieldSelector,
+                                &orderBy, &hint ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to build the query message(rc=%d)",
+            PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)",
                      rc );
             break;
          }
@@ -3948,8 +4013,8 @@ namespace engine
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTCL_BQREQ, "rtnCoordCMDListCollection::buildQueryRequest" )
    INT32 rtnCoordCMDListCollection::buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput )
+                                                       pmdEDUCB *cb,
+                                                       CHAR **ppOutput )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDLISTCL_BQREQ ) ;
@@ -3964,12 +4029,11 @@ namespace engine
          CHAR *pOrderBy = NULL;
          CHAR *pHint = NULL;
          rc = msgExtractQuery( pIntput, &flag, &pCollectionName,
-                              &numToSkip, &numToReturn, &pQuery, 
-                              &pFieldSelector, &pOrderBy, &pHint );
+                               &numToSkip, &numToReturn, &pQuery, 
+                               &pFieldSelector, &pOrderBy, &pHint ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to parse query request(rc=%d)",
+            PD_LOG ( PDERROR, "Failed to parse query request(rc=%d)",
                      rc );
             break;
          }
@@ -3995,14 +4059,15 @@ namespace engine
                      e.what() );
             break;
          }
-         rc = msgBuildQueryMsg( ppOutput, &bufferSize, CAT_COLLECTION_INFO_COLLECTION,
-                              flag, 0, numToSkip, numToReturn, &query, &fieldSelector,
-                              &orderBy, &hint );
+         rc = msgBuildQueryMsg( ppOutput, &bufferSize,
+                                CAT_COLLECTION_INFO_COLLECTION,
+                                flag, 0, numToSkip, numToReturn,
+                                &query, &fieldSelector,
+                                &orderBy, &hint ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to build the query message(rc=%d)",
-                     rc );
+            PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)",
+                     rc ) ;
             break;
          }
          MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
@@ -8395,7 +8460,7 @@ namespace engine
                                                       INT32 &bufUsed )
    {
       return appendObjs( RTNCOORD_SNAPSHOTCL_INPUT, pOutputBuffer,
-                        bufferSize, addObjNum, bufUsed );
+                         bufferSize, addObjNum, bufUsed ) ;
    }
 
    const CHAR * rtnCoordCMDSnapshotCollections::getIntrCMDName()
@@ -8475,8 +8540,8 @@ namespace engine
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDSSCATA_BUILDREQ, "rtnCoordCMDSnapshotCata::buildQueryRequest" )
    INT32 rtnCoordCMDSnapshotCata::buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput )
+                                                     pmdEDUCB *cb,
+                                                     CHAR **ppOutput )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOORDCMDSSCATA_BUILDREQ ) ;
@@ -8520,13 +8585,14 @@ namespace engine
                      e.what() );
             break;
          }
-         rc = msgBuildQueryMsg( ppOutput, &bufferSize, CAT_COLLECTION_INFO_COLLECTION,
-                              flag, 0, numToSkip, numToReturn, &query, &fieldSelector,
-                              &orderBy, &hint );
+         rc = msgBuildQueryMsg( ppOutput, &bufferSize,
+                                CAT_COLLECTION_INFO_COLLECTION,
+                                flag, 0, numToSkip, numToReturn,
+                                &query, &fieldSelector,
+                                &orderBy, &hint ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to build the query message(rc=%d)",
+            PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)",
                      rc );
             break;
          }
@@ -8851,17 +8917,18 @@ namespace engine
       }
 
       rc = msgBuildQueryMsg( ppOutput, &bufferSize, CAT_PROCEDURES_COLLECTION,
-                             flag, 0, numToSkip, numToReturn, &query, &fieldSelector,
-                             &orderBy, &hint );
+                             flag, 0, numToSkip, numToReturn, &query,
+                             &fieldSelector, &orderBy, &hint );
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)", rc );
          goto error;
       }
+
       {
-      MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
-      pQueryMsg->header.routeID.value = 0;
-      pQueryMsg->header.TID = cb->getTID();
+         MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
+         pQueryMsg->header.routeID.value = 0;
+         pQueryMsg->header.TID = cb->getTID();
       }
    done:
       PD_TRACE_EXITRC( SDB_RTNCOCMDLISTPROCEDURES_BUILD, rc ) ;
@@ -9418,10 +9485,11 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)", rc );
          goto error;
       }
+
       {
-      MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
-      pQueryMsg->header.routeID.value = 0;
-      pQueryMsg->header.TID = cb->getTID();
+         MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
+         pQueryMsg->header.routeID.value = 0;
+         pQueryMsg->header.TID = cb->getTID();
       }
    done:
       PD_TRACE_EXITRC( SDB_RTNCOCMDLISTPROCEDURES_BUILD, rc ) ;

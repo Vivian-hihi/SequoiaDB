@@ -62,11 +62,6 @@ namespace engine
 
    sdbCatalogueCB::~sdbCatalogueCB()
    {
-      if ( _pNetWork != NULL )
-      {
-         SDB_OSS_DEL _pNetWork;
-         _pNetWork = NULL;
-      }
    }
 
    INT16 sdbCatalogueCB::majoritySize()
@@ -156,6 +151,7 @@ namespace engine
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start cat main controller edu, "
                    "rc: %d", rc ) ;
+      pEDUMgr->regSystemEDU( EDU_TYPE_CATMAINCONTROLLER, eduID ) ;
       rc = _catMainCtrl.getAttachEvent()->wait( CAT_WAIT_EDU_ATTACH_TIMEOUT ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to wait cat main contoller edu "
                    "attach, rc: %d", rc ) ;
@@ -166,6 +162,7 @@ namespace engine
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start catlogue manager edu, "
                    "rc: %d", rc ) ;
+      pEDUMgr->regSystemEDU( EDU_TYPE_CATCATALOGUEMANAGER, eduID ) ;
       rc = _catMainCtrl.getAttachEvent()->wait( CAT_WAIT_EDU_ATTACH_TIMEOUT ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to wait catlogue manager edu "
                    "attach, rc: %d", rc ) ;
@@ -176,6 +173,7 @@ namespace engine
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start cat node manager edu, "
                    "rc: %d", rc ) ;
+      pEDUMgr->regSystemEDU( EDU_TYPE_CATNODEMANAGER, eduID ) ;
       rc = _catMainCtrl.getAttachEvent()->wait( CAT_WAIT_EDU_ATTACH_TIMEOUT ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to wait cat node manager edu "
                    "attach, rc: %d", rc ) ;
@@ -218,6 +216,12 @@ namespace engine
       {
          pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
          pHolder->unregEventHandler( this ) ;
+      }
+
+      if ( _pNetWork != NULL )
+      {
+         SDB_OSS_DEL _pNetWork;
+         _pNetWork = NULL;
       }
       return SDB_OK ;
    }
@@ -462,7 +466,7 @@ namespace engine
                                              PMD_EDU_EVENT_DEACTIVE ;
 
       if ( SDB_EVT_OCCUR_AFTER == occurType )
-      {      
+      {
          EDUID eduID = pEDUMgr->getSystemEDU( EDU_TYPE_CATMAINCONTROLLER ) ;
          if ( PMD_INVALID_EDUID != eduID )
          {
