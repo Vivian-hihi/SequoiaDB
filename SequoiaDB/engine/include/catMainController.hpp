@@ -52,19 +52,16 @@ namespace engine
 {
 
    class _SDB_DMSCB ;
-   class _dpsLogWrapper ;
    class _SDB_RTNCB ;
    class _authCB ;
    class sdbCatalogueCB ;
-   class _SDB_KRCB ;
-   class _clsMgr ;
 
    /*
       catMainController define
    */
    class catMainController : public _netMsgHandler, public catEventProcessor
    {
-   typedef std::multimap< UINT32, SINT64 > CONTEXT_LIST ;
+   typedef std::map< SINT64, UINT64 > CONTEXT_LIST ;
 
    public:
       catMainController() ;
@@ -82,7 +79,7 @@ namespace engine
       void  detachCB( pmdEDUCB *cb ) ;
       ossEvent* getAttachEvent() { return &_attachEvent ; }
 
-   private :
+   protected :
       INT32 catBuildMsgEvent ( const NET_HANDLE &handle,
                                const MsgHeader *pMsg,
                                pmdEDUEvent &event ) ;
@@ -110,25 +107,31 @@ namespace engine
       INT32 _processQueryRequest ( const NET_HANDLE &handle,
                                    const CHAR *pMsg,
                                    const CHAR *pCollectionName ) ;
+
+      INT32 _processInterruptMsg( const NET_HANDLE &handle,
+                                  MsgHeader *header ) ;
+      INT32 _processDisconnectMsg( const NET_HANDLE &handle,
+                                   MsgHeader *header ) ;
+
       INT32 postMsg( const NET_HANDLE &handle, const MsgHeader *pHead );
-      void addContext( const UINT32 &handle, INT64 contextID );
-      void delContext( const UINT32 &handle );
-      void delContext( const UINT32 &handle, INT64 contextID );
+
+   protected:
+      void _addContext( const UINT32 &handle, UINT32 tid, INT64 contextID ) ;
+      void _delContextByHandle( const UINT32 &handle ) ;
+      void _delContext( const UINT32 &handle, UINT32 tid ) ;
+      void _delContextByID( INT64 contextID, BOOLEAN rtnDel ) ;
 
    private :
       EDUID             _nodeManagerEDUID;
       EDUID             _catalogManagerEDUID;
-      _SDB_KRCB         *_pKrcb;
       pmdEDUMgr         *_pEduMgr;
       sdbCatalogueCB    *_pCatCB;
       _SDB_DMSCB        *_pDmsCB;
-      _dpsLogWrapper    *_pDpsCB;
       pmdEDUCB          *_pEDUCB;
       _SDB_RTNCB        *_pRtnCB;
       _authCB           *_pAuthCB;
       pmdEDUCB          *_pNodeMgrCB;
       pmdEDUCB          *_pCataMgrCB;
-      _clsMgr           *_pClsCB;
       CONTEXT_LIST      _contextLst;
 
       ossEvent          _attachEvent ;

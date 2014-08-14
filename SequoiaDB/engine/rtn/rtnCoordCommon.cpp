@@ -306,15 +306,11 @@ namespace engine
       while ( requestIdMap.size() > 0 )
       {
          pmdEDUEvent pmdEvent;
-         BOOLEAN isGotMsg = cb->waitEvent( pmdEvent, waitTime );
+         BOOLEAN isGotMsg = cb->waitEvent( pmdEvent, waitTime ) ;
          // if we hit interrupt, let's just get out of here. Don't need to worry
          // about cb queue, pmdEDUCB::clear() is going to clean it up.
-         // if it is disconnect, ignore the interrupt and go on process the reply,
-         // so avoid sending too many killcontext to data-node
-         PD_CHECK( !( cb->isForced() )
-                  && ( !(cb->isInterrupted ()) || cb->isDisconnected() ),
-                  SDB_APP_INTERRUPT, error, PDERROR,
-                  "Interrupt! stop receiving reply!" );
+         PD_CHECK( !cb->isInterrupted(), SDB_APP_INTERRUPT, error, PDERROR,
+                   "Interrupt! stop receiving reply!" ) ;
 
          // if we didn't receive anything
          if ( FALSE == isGotMsg )

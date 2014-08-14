@@ -17,4 +17,4 @@ namespace engine
    };
 }
 
-#endif
+#endif // RTNCOORDINTERRUPT_HPP__

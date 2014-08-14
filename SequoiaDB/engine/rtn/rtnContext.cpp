@@ -2286,7 +2286,7 @@ namespace engine
       _emptyContextMap.clear() ;
 
       // kill sub context
-      if ( cb )
+      if ( cb && !cb->isInterrupted() )
       {
          MsgOpKillContexts killMsg ;
          MsgRouteID routeID ;

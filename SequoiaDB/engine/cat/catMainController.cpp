@@ -23,15 +23,13 @@ namespace engine
    {
       _nodeManagerEDUID    = PMD_INVALID_EDUID ;
       _catalogManagerEDUID = PMD_INVALID_EDUID ;
-      _pKrcb               = NULL ;
       _pEduMgr             = NULL ;
       _pCatCB              = NULL ;
       _pDmsCB              = NULL ;
-      _pDpsCB              = NULL ;
+      _pRtnCB              = NULL ;
       _pAuthCB             = NULL ;
       _pNodeMgrCB          = NULL ;
       _pCataMgrCB          = NULL ;
-      _pClsCB              = NULL ;
       _pEDUCB              = NULL ;
    }
 
@@ -79,7 +77,7 @@ namespace engine
                                        const _MsgHeader *header,
                                        const CHAR *msg )
    {
-      SDB_ASSERT ( _pEduMgr && _pKrcb && _pCatCB && _pDmsCB && _pDpsCB,
+      SDB_ASSERT ( _pEduMgr && _pCatCB && _pDmsCB,
                    "all of the members must be initialized before init "
                    "netfram" ) ;
       SDB_ASSERT ( NULL != header, "message-header should not be NULL" ) ;
@@ -108,7 +106,16 @@ namespace engine
             rc = processKillContext( handle, msg ) ;
             break;
          }
-
+      case MSG_BS_INTERRUPTE :
+         {
+            rc = _processInterruptMsg( handle, (MsgHeader*)header ) ;
+            break ;
+         }
+      case MSG_BS_DISCONNECT :
+         {
+            rc = _processDisconnectMsg( handle, (MsgHeader*)header ) ;
+            break ;
+         }
       case MSG_CAT_QUERY_DATA_GRP_REQ :
          {
             rc = processQueryDataGrp( handle, msg ) ;
@@ -162,7 +169,29 @@ namespace engine
    void catMainController::handleClose( const NET_HANDLE & handle,
                                         _MsgRouteID id )
    {
-      delContext( handle );
+      _delContextByHandle( handle );
+   }
+
+   INT32 catMainController::_processInterruptMsg( const NET_HANDLE & handle,
+                                                  MsgHeader * header )
+   {
+      PD_LOG( PDEVENT, "Recieve interrupt msg[handle: %u, tid: %u]",
+              handle, header->TID ) ;
+      // release the ' handle + tid ' all context
+      _delContext( handle, header->TID ) ;
+      // not reply
+      return SDB_OK ;
+   }
+
+   INT32 catMainController::_processDisconnectMsg( const NET_HANDLE & handle,
+                                                   MsgHeader * header )
+   {
+      PD_LOG( PDEVENT, "Recieve disconnect msg[handle: %u, tid: %u]",
+              handle, header->TID ) ;
+      // release the ' handle + tid ' all context
+      _delContext( handle, header->TID ) ;
+      // not reply
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_POSTMSG, "catMainController::postMsg" )
@@ -218,15 +247,12 @@ namespace engine
    INT32 catMainController::init()
    {
       INT32 rc             = SDB_OK ;
-      _pKrcb               = pmdGetKRCB() ;
-      _pEduMgr             = _pKrcb->getEDUMgr () ;
-      _pDmsCB              = _pKrcb->getDMSCB() ;
-      _pDpsCB              = _pKrcb->getDPSCB() ;
-      _pRtnCB              = _pKrcb->getRTNCB() ;
-      _pAuthCB             = _pKrcb->getAuthCB() ;
-      _pClsCB              = _pKrcb->getClsCB() ;
-
-      _pCatCB = _pKrcb->getCATLOGUECB() ;
+      pmdKRCB *pKrcb       = pmdGetKRCB() ;
+      _pEduMgr             = pKrcb->getEDUMgr () ;
+      _pDmsCB              = pKrcb->getDMSCB() ;
+      _pRtnCB              = pKrcb->getRTNCB() ;
+      _pAuthCB             = pKrcb->getAuthCB() ;
+      _pCatCB              = pKrcb->getCATLOGUECB() ;
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_INIT ) ;
 
@@ -497,7 +523,7 @@ namespace engine
                        buffObj, startingPos, _pEDUCB, _pRtnCB ) ;
       if ( rc )
       {
-         delContext( handle, pGetMore->contextID );
+         _delContextByID( pGetMore->contextID, FALSE );
       }
       msgLen =  sizeof(MsgOpReply) + buffObj.size() ;
       // free by end of function
@@ -568,38 +594,30 @@ namespace engine
                                        &contextNum, &pContextIDs ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR,
-                     "failed to parse the killcontexts request(rc=%d)",
-                     rc ) ;
+            PD_LOG ( PDERROR, "Failed to parse the killcontexts request, "
+                     "rc: %d", rc ) ;
             break;
          }
 
          if ( contextNum > 0 )
          {
-            PD_LOG ( PDDEBUG,
-                     "KillContext: contextNum:%d\ncontextID: %lld",
+            PD_LOG ( PDDEBUG, "KillContext: contextNum:%d\ncontextID: %lld",
                      contextNum, pContextIDs[0] ) ;
          }
 
-         rc = rtnKillContexts ( contextNum, pContextIDs, _pEDUCB, _pRtnCB ) ;
-         if ( rc != SDB_OK )
+         for ( UINT32 i = 0 ; i < contextNum ; ++i )
          {
-            PD_LOG ( PDWARNING,
-                     "failed to delete the context(rc = %d),\
-                     contextNum:%d\ncontextID: %lld",
-                     rc, contextNum, pContextIDs[0] );
-            break;
+            _delContextByID( pContextIDs[ i ], TRUE ) ;
          }
-      }while ( FALSE );
+      }while ( FALSE ) ;
       msgReply.flags = rc;
       PD_TRACE1 ( SDB_CATMAINCT_KILLCONTEXT,
                   PD_PACK_INT ( rc ) ) ;
       rc = _pCatCB->netWork()->syncSend( handle, &msgReply );
       if ( rc != SDB_OK )
       {
-         PD_LOG ( PDERROR,
-                  "failed to send the message\
-                  ( groupID=%d, nodeID=%d, serviceID=%d )",
+         PD_LOG ( PDERROR, "Failed to send the message "
+                  "( groupID=%d, nodeID=%d, serviceID=%d )",
                   pReq->header.routeID.columns.groupID,
                   pReq->header.routeID.columns.nodeID,
                   pReq->header.routeID.columns.serviceID );
@@ -679,7 +697,7 @@ namespace engine
             }
             break;
          }
-         addContext( handle, contextID );
+         _addContext( handle, pReq->header.TID, contextID );
          msgReply.contextID = contextID;
       }while ( FALSE );
 
@@ -815,7 +833,7 @@ namespace engine
       }
       else
       {
-         addContext( handle, contextID );
+         _addContext( handle, pMsgHeader->TID, contextID );
          msgReply.flags = 0;
       }
       PD_TRACE1 ( SDB_CATMAINCT_QUERYREQUEST,
@@ -1010,43 +1028,73 @@ namespace engine
       return rc;
    }
 
-   void catMainController::addContext( const UINT32 &handle,
-                                       INT64 contextID )
+   void catMainController::_addContext( const UINT32 &handle, UINT32 tid,
+                                        INT64 contextID )
    {
       PD_LOG( PDDEBUG, "add context( handle=%u, contextID=%lld )",
-            handle, contextID );
-      _contextLst.insert( std::make_pair( handle, contextID ) );
+              handle, contextID );
+      _contextLst[ contextID ] = ossPack32To64( handle, tid ) ;
    }
 
-   void catMainController::delContext( const UINT32 &handle )
+   void catMainController::_delContextByHandle( const UINT32 &handle )
    {
       PD_LOG ( PDDEBUG, "delete context( handle=%u )",
-               handle );
-      CONTEXT_LIST::iterator iterMap;
-      iterMap = _contextLst.find( handle );
-      while ( iterMap != _contextLst.end()
-            && iterMap->first == handle )
+               handle ) ;
+      UINT32 saveTid = 0 ;
+      UINT32 saveHandle = 0 ;
+
+      CONTEXT_LIST::iterator iterMap = _contextLst.begin() ;
+      while ( iterMap != _contextLst.end() )
       {
-         _pRtnCB->contextDelete( iterMap->second, _pEDUCB );
-         _contextLst.erase( iterMap++ );
+         ossUnpack32From64( iterMap->second, saveHandle, saveTid ) ;
+         if ( handle != saveHandle )
+         {
+            ++iterMap ;
+            continue ;
+         }
+         // rtn delete
+         _pRtnCB->contextDelete( iterMap->first, _pEDUCB );
+         _contextLst.erase( iterMap++ ) ;
       }
    }
 
-   void catMainController::delContext( const UINT32 &handle, INT64 contextID )
+   void catMainController::_delContext( const UINT32 &handle,
+                                        UINT32 tid )
    {
-      PD_LOG ( PDDEBUG, "delete context( handle=%u, contextID=%lld )",
-               handle, contextID );
-      CONTEXT_LIST::iterator iterMap;
-      iterMap = _contextLst.find( handle );
-      while ( iterMap != _contextLst.end()
-            && iterMap->first == handle )
+      PD_LOG ( PDDEBUG, "delete context( handle=%u, tid=%u )",
+               handle, tid ) ;
+      UINT32 saveTid = 0 ;
+      UINT32 saveHandle = 0 ;
+
+      CONTEXT_LIST::iterator iterMap = _contextLst.begin() ;
+      while ( iterMap != _contextLst.end() )
       {
-         if ( iterMap->second == contextID )
+         ossUnpack32From64( iterMap->second, saveHandle, saveTid ) ;
+         if ( handle != saveHandle || tid != saveTid )
          {
-            _contextLst.erase( iterMap );
-            break;
+            ++iterMap ;
+            continue ;
          }
-         ++iterMap;
+         // rtn delete
+         _pRtnCB->contextDelete( iterMap->first, _pEDUCB ) ;
+         _contextLst.erase( iterMap++ ) ;
       }
    }
+
+   void catMainController::_delContextByID( INT64 contextID, BOOLEAN rtnDel )
+   {
+      PD_LOG ( PDDEBUG, "delete context( contextID=%lld )", contextID ) ;
+
+      CONTEXT_LIST::iterator iterMap = _contextLst.find( contextID ) ;
+      if ( iterMap != _contextLst.end() )
+      {
+         if ( rtnDel )
+         {
+            _pRtnCB->contextDelete( iterMap->first, _pEDUCB ) ;
+         }
+         _contextLst.erase( iterMap ) ;
+      }
+   }
+
 }
+
