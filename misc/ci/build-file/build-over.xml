@@ -6,7 +6,7 @@
 	<property file="${WORKSPACE}/sequoiadb/misc/ci/ci.build.properties" />	
  	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="${ci.script.path}/exec-tools/ant-sdbtasks.jar" />
+			<pathelement location="${WORKSPACE}/sequoiadb/misc/ci/exec-tools/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef> 
 
