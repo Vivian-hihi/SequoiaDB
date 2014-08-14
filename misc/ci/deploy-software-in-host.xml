@@ -24,11 +24,11 @@
 	</target>
 
 	<target name="install-software" depends="uninstall-software">		
-		<stafTools workType="copy" fileName="${install.package.fullname}" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
-		<stafTools workType="copy" fileName="${basedir}/ci.test.properties" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
-		<stafTools workType="copy" fileName="${basedir}/install-basic-in-host.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="copy" workHost="LOCAL" fileName="${install.package.fullname}" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/ci.test.properties" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/install-basic-in-host.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
 		<basename property="install.package.filename" file="${install.package.fullname}"/>
-		<stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" waitTime="200m" common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs}" />
+		<stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" waitTime="30m" common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs}" />
 		<stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/install-basic-in-host.log" />
 	</target>
 </project>
