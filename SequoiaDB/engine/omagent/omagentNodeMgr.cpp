@@ -1182,6 +1182,11 @@ namespace engine
             PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
                     pSvcName, nodeOptions.getDiagLogPath(), bakPath ) ;
          }
+         else
+         {
+            PD_LOG( PDERROR, "Move node[%s] dialog[%s] to path[%s] failed",
+                    pSvcName, nodeOptions.getDiagLogPath(), bakPath ) ;
+         }
       }
 
       // remove all dir
