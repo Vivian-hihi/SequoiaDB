@@ -92,7 +92,6 @@ public class stafTools extends Task{
 				}
 			}
 			
-			///dost not test , I don't know is it work
 			if( workType.equals("delete")){
 				System.out.println("delete work");
 				request = "DELETE ENTRY " + fileName + " RECURSE CONFIRM ";
@@ -104,7 +103,7 @@ public class stafTools extends Task{
 					}
 				}
 			}
-			///dost not test , I don't know is it work
+			
 			if( workType.equals("get")){
 				System.out.println("get work");
 				request = "GET FILE " + fileName + " TEXT ";
@@ -112,6 +111,18 @@ public class stafTools extends Task{
 				result = handle.submit2(workHost, "FS", request);
 				if( failonerror ){
 					if (result.rc != STAFResult.Ok) {
+						throw new BuildException(STAFResultToString(result));
+					}
+				}
+			}
+
+			if(workType.equals("create")){
+				System.out.println("create work");
+				request="CREATE DIRECTORY"+fileName;
+				System.out.println("exec:staf "+workHost+"FS"+request);
+				result=handle.submit2(workHost,"FS",request);
+				if(failonerror){
+					if(result.rc!=STAFResult.Ok){
 						throw new BuildException(STAFResultToString(result));
 					}
 				}
