@@ -1409,10 +1409,12 @@ namespace engine
             goto error ;
          }
 
-         reqBuilder.append(OM_BSON_FIELD_HOST_USER,
-                           ite->getStringField( OM_BSON_FIELD_HOST_USER ) ) ;
-         reqBuilder.append(OM_BSON_FIELD_HOST_PASSWD,
-                           ite->getStringField( OM_BSON_FIELD_HOST_PASSWD ) ) ;
+         reqBuilder.append( OM_BSON_FIELD_HOST_IP, agentIP ) ;
+         reqBuilder.append( OM_BSON_FIELD_HOST_NAME, agentHost ) ;
+         reqBuilder.append( OM_BSON_FIELD_HOST_USER,
+                            ite->getStringField( OM_BSON_FIELD_HOST_USER ) ) ;
+         reqBuilder.append( OM_BSON_FIELD_HOST_PASSWD,
+                            ite->getStringField( OM_BSON_FIELD_HOST_PASSWD ) ) ;
          bsonRequest = reqBuilder.obj() ;
          rc = msgBuildQueryMsg( &pContent, &contentSize, 
                                 CMD_ADMIN_PREFIX OM_CHECK_HOST_REQ,
