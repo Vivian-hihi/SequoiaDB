@@ -1189,15 +1189,16 @@ namespace engine
          {
             ossDelete( bakPath ) ;
          }
-         if ( SDB_OK == ossRenamePath( srcPath, bakPath ) )
+         if ( SDB_OK == ( rc = ossRenamePath( srcPath, bakPath ) ) )
          {
             PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
                     pSvcName, srcPath, bakPath ) ;
          }
          else
          {
-            PD_LOG( PDERROR, "Move node[%s] dialog[%s] to path[%s] failed",
-                    pSvcName, srcPath, bakPath ) ;
+            PD_LOG( PDERROR, "Move node[%s] dialog[%s] to path[%s] failed, "
+                    "rc: %d", pSvcName, srcPath, bakPath, rc ) ;
+            goto error ;
          }
       }
 
