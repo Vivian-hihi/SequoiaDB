@@ -12,7 +12,7 @@
 	<property name="is.coord.master" value="true" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks/" includes="*.jar" />
+			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef>
 	
