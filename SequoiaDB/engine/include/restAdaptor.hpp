@@ -39,13 +39,14 @@
 #include "oss.hpp"
 #include "msg.hpp"
 #include "../bson/bson.h"
+#include "ossUtil.hpp"
 #include "msgMessage.hpp"
 #include "pmdRestSession.hpp"
 #include "restDefine.hpp"
 #include <map>
 
 //recv and send timeout
-#define REST_TIMEOUT  1000
+#define REST_TIMEOUT             ( 30 * OSS_ONE_SEC )
 
 namespace engine
 {
@@ -147,4 +148,5 @@ namespace engine
       void clearHtttpBody( pmdRestSession *pSession ) ;
    } ;
 }
-#endif
+
+#endif // RESTADAPTOR_HPP__
