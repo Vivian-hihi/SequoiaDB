@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.interrupt()"/>
-<meta name="description" content="db.interrupt (&lt;sessionID&gt;) 终止指定会话的当前操作。 参数描述 参数名 参数类型 描述 是否必填 sessionID int 会话编号。 是 只有用户会话可以被终止。 示例 终止编号为100的会话。 db.interruptSession(100)"/>
+<meta name="DC.Title" content="db.forceSession()"/>
+<meta name="description" content="db.forceSession(&lt;sessionID&gt;) 终止指定会话的当前操作。 参数描述 参数名 参数类型 描述 是否必填 sessionID int 会话编号。 是 只有用户会话可以被终止。 示例 终止编号为100的会话。 db.forceSession(100)"/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_4mk_ytq_t4"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.interrupt()</title>
+<title>db.forceSession()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -33,33 +33,33 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.interrupt()</h1>
+  <h1 class="title topictitle1">db.forceSession()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.interrupt (&lt;sessionID&gt;)</h2>
+    <div class="section"><h2 class="title sectiontitle">db.forceSession(&lt;sessionID&gt;)</h2>
       <p class="p">终止指定会话的当前操作。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d116695e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d116650e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d116695e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d116650e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d116695e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d116650e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d116695e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d116650e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d116695e26" class="stentry">sessionID</td>
+          <td valign="top" headers="d116650e26" class="stentry">sessionID</td>
 
-          <td valign="top" headers="d116695e29" class="stentry">int</td>
+          <td valign="top" headers="d116650e29" class="stentry">int</td>
 
-          <td valign="top" headers="d116695e32" class="stentry">会话编号。</td>
+          <td valign="top" headers="d116650e32" class="stentry">会话编号。</td>
 
-          <td valign="top" headers="d116695e35" class="stentry">是</td>
+          <td valign="top" headers="d116650e35" class="stentry">是</td>
 
         </tr>
 </table>
@@ -78,7 +78,7 @@
       <ul class="ul">
         <li class="li"><p class="p">终止编号为100的会话。</p>
 
-          <div class="p"><pre class="pre codeblock">db.interruptSession(100)</pre>
+          <div class="p"><pre class="pre codeblock">db.forceSession(100)</pre>
 </div>
 
         </li>

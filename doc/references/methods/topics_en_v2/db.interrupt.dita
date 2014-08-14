@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_chb_y5q_t4">
-  <title>db.interrupt()</title>
+  <title>db.forceSession()</title>
   <body>
     <section>
       <title>NAME</title>
-      <p>interrupt - Stop the specified session's current operation.</p>
+      <p>forceSession - Stop the specified session's current operation.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.interrupt</apiname>(<parmname>&lt;sessionID></parmname>)
+      <p></p><apiname>db.forceSession</apiname>(<parmname>&lt;sessionID></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -33,7 +33,7 @@
     <section>
       <title>Examples</title>
       <p>Stop the session with the ID of 100.</p>
-      <codeblock>db.interruptSession(100)</codeblock>      
+      <codeblock>db.forceSession(100)</codeblock>      
     </section>
   </body>
 </topic>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_4mk_ytq_t4">
-  <title>db.interrupt()</title>
+  <title>db.forceSession()</title>
   <body>
-    <section><title>db.interrupt (&lt;sessionID>)</title>
+    <section><title>db.forceSession(&lt;sessionID>)</title>
       <p>终止指定会话的当前操作。</p>
     </section>
     <section><title>参数描述</title>
@@ -30,7 +30,7 @@
     <section><title>示例</title>
       <ul>
         <li><p>终止编号为100的会话。</p>
-          <p><codeblock>db.interruptSession(100)</codeblock></p>
+          <p><codeblock>db.forceSession(100)</codeblock></p>
         </li>        
       </ul>
     </section>
