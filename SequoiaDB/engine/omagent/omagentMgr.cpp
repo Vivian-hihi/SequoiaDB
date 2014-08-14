@@ -398,7 +398,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Active node manager failed, rc: %d", rc ) ;
 
       // 1. start om manager edu
-      rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (void*)this, &eduID ) ;
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (_pmdObjBase*)this, &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start OM Manager edu, rc: %d", rc ) ;
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMMGR, eduID ) ;
@@ -408,7 +408,8 @@ namespace engine
                    rc ) ;
 
       // 2. start om net edu
-      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (void*)&_netAgent, &eduID ) ;
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (netRouteAgent*)&_netAgent,
+                              &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start om net, rc: %d", rc ) ;
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
