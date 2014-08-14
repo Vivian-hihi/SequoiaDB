@@ -34,7 +34,7 @@
 
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
 		<property name="sdb.cmd.allPrepare" value="-e &quot;var COORDSVCNAME=${COORD_SVC_NAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ,${testcase.path}/libs/all_prepare.js&quot;" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="allPrepare.screen.output" errorproperty="allPrepare.error.output" resultproperty="allPrepare.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="allPrepare.screen.output"  resultproperty="allPrepare.ret.code">
 			<arg line="${sdb.cmd.allPrepare}" />
 		</exec>
 
@@ -48,7 +48,7 @@
 
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allClean}" />
 		<property name="sdb.cmd.allClean" value="-e &quot;var COORDSVCNAME=${COORD_SVC_NAME} ;&quot; -f &quot;${testcase.path}/libs/func.js ,${testcase.path}/libs/all_clean.js&quot;" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="allClean.screen.output" errorproperty="allClean.error.output" resultproperty="allClean.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="allClean.screen.output" resultproperty="allClean.ret.code">
 			<arg line="${sdb.cmd.allClean}" />
 		</exec>
 	</target>
@@ -89,7 +89,7 @@
 			<param name="commlib.option" value="${commlib.option}" />
 		</foreach>
 
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;system-out&gt;&#10;&lt;![CDATA[${error.output}]]&gt;&#10;&lt;/system-out&gt;&#10;&lt;/testsuite&gt;&#10;" append="true" />
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;system-out&gt;&#10;&lt;![CDATA[${screen.output}]]&gt;&#10;&lt;/system-out&gt;&#10;&lt;/testsuite&gt;&#10;" append="true" />
 
 		<tstamp>
 			<format property="testsuite.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
@@ -150,19 +150,20 @@
 
 		<property name="sdb.cmd.beforeUsecase" value="-e &quot; var COORDSVCNAME='${COORD_SVC_NAME}' ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/before_usecase.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.beforeUsecase}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="beforeUsecase.screen.output" errorproperty="beforeUsecase.error.output" resultproperty="beforeUsecase.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="beforeUsecase.screen.output" resultproperty="beforeUsecase.ret.code">
 			<arg line="${sdb.cmd.beforeUsecase}" />
 		</exec>
 
 		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}';var COORDSVCNAME='${COORD_SVC_NAME}';&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option},${test.case.fullname}&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
 			<arg line="${sdb.cmd.argument}" />
 		</exec>
+		<echo message="${screen.output}" />
 		
 		<property name="sdb.cmd.afterUsecase" value="-e &quot; var COORDSVCNAME='${COORD_SVC_NAME}' ;&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${testcase.path}/libs/after_usecase.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterUsecase}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="afterUsecase.screen.output" errorproperty="afterUsecase.error.output" resultproperty="afterUsecase.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="afterUsecase.screen.output" resultproperty="afterUsecase.ret.code">
 			<arg line="${sdb.cmd.afterUsecase}" />
 		</exec>
 
@@ -238,7 +239,7 @@
 								<equals arg1="${allPrepare.ret.code}" arg2="0" />
 							</not>
 							<then>
-								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;The allPrepare.ret.code.js failed...&quot;/&gt;&#10;" />
+								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;${allPrepare.screen.output}&quot;/&gt;&#10;" />
 							</then>
 						</if>
 						<if>
@@ -246,7 +247,7 @@
 								<equals arg1="${allClean.ret.code}" arg2="0" />
 							</not>
 							<then>
-								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;The allClean.js failed...&quot;/&gt;&#10;" />
+								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;${allClean.screen.output}&quot;/&gt;&#10;" />
 							</then>
 						</if>
 						<if>
@@ -254,7 +255,7 @@
 								<equals arg1="${beforeUsecase.ret.code}" arg2="0" />
 							</not>
 							<then>
-								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;The before_usecase.js failed...&quot;/&gt;&#10;" />
+								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;${beforeUsecase.screen.output}&quot;/&gt;&#10;" />
 							</then>
 						</if>
 						<if>
@@ -262,11 +263,11 @@
 								<equals arg1="${afterUsecase.ret.code}" arg2="0" />
 							</not>
 							<then>
-								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;The after_usecase.js failed...&quot;/&gt;&#10;" />		
+								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;${afterUsecase.screen.output}&quot;/&gt;&#10;" />		
 							</then>
 						</if>
 
-						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure type=&quot;junit.framework.AssertionFailedError&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; return code=${ret.code}; error message=${error.output} &#10; screen=&#10; ${screen.output}&#10;&#10;testBeginStr=${testBeginStr} &#10;testEndStr=${testEndStr} &#10;db.listReplicaGroups() : &#10;${db.RG.info} &#10;&#10;
+						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure type=&quot;junit.framework.AssertionFailedError&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; return code=${ret.code}; error message=&#10;${screen.output}&#10;&#10;testBeginStr=${testBeginStr} &#10;testEndStr=${testEndStr} &#10;db.listReplicaGroups() : &#10;${db.RG.info} &#10;&#10;
 						download the test log :&#10;${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;" />
 
 						<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
