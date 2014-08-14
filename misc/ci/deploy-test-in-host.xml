@@ -19,8 +19,8 @@
 	</target>
 
 	<target name="deploy-test-in-host" depends="clean-deploy-test-in-host">
-		<stafTools workType="copy" fileName="${deploy.file.fullname}" saveDir="${test.machine.deploy.path}" toHost="${deploy.host.name}" />
-		<stafTools workType="copy" fileName="${basedir}/install-test-in-host.xml" saveDir="${test.machine.deploy.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="copy" workHost="LOCAL" fileName="${deploy.file.fullname}" saveDir="${test.machine.deploy.path}" toHost="${deploy.host.name}" />
+		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/install-test-in-host.xml" saveDir="${test.machine.deploy.path}" toHost="${deploy.host.name}" />
     	<stafTools workHost="${deploy.host.name}" workDir="${test.machine.deploy.path}" workType="shell"
     	   common="ant -l ${test.machine.deploy.path}/install-test-in-host.log -f ${test.machine.deploy.path}/install-test-in-host.xml -Dtest.basedir=${test.machine.deploy.path} -Ddeploy.tar.file.name=${deploy.tar.file.name}" />
 		<stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.deploy.path}/install-test-in-host.log" />    
