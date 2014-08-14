@@ -259,7 +259,7 @@ namespace engine
       pmdSetPrimary( TRUE ) ;
 
       // start om manager edu
-      rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (void*)this, &eduID ) ;
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMMGR, (_pmdObjBase*)this, &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start OM Manager edu, rc: %d", rc ) ;
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMMGR, eduID ) ;
@@ -269,7 +269,8 @@ namespace engine
                    rc ) ;
 
       // start om net
-      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (void*)&_netAgent, &eduID ) ;
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (netRouteAgent*)&_netAgent,
+                              &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start om net, rc: %d", rc ) ;
       // register
       pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;

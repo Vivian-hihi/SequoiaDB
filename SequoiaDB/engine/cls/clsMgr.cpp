@@ -467,7 +467,7 @@ namespace engine
       // 1. start cls edu and shard edu
       _attachEvent.reset() ;
       rc = _startEDU ( EDU_TYPE_CLUSTER, PMD_EDU_UNKNOW,
-                       (void*)this, TRUE ) ;
+                       (_pmdObjBase*)this, TRUE ) ;
       if ( rc )
       {
          goto error ;
@@ -477,7 +477,7 @@ namespace engine
 
       _attachEvent.reset() ;
       rc = _startEDU ( EDU_TYPE_CLUSTERSHARD, PMD_EDU_UNKNOW,
-                       (void*)getShardCB(), TRUE ) ;
+                       (_pmdObjBase*)getShardCB(), TRUE ) ;
       if ( rc )
       {
          goto error ;
@@ -488,7 +488,7 @@ namespace engine
 
       // Start log notify
       rc = _startEDU( EDU_TYPE_CLSLOGNTY, PMD_EDU_UNKNOW,
-                      (void*)getReplCB(), TRUE ) ;
+                      (_pmdObjBase*)getReplCB(), TRUE ) ;
       if ( rc )
       {
          goto error ;
@@ -496,13 +496,13 @@ namespace engine
 
       // 2. start net edus
       rc = _startEDU ( EDU_TYPE_SHARDR, PMD_EDU_RUNNING,
-                       (void*)getShardRouteAgent(), TRUE ) ;
+                       (netRouteAgent*)getShardRouteAgent(), TRUE ) ;
       if ( rc )
       {
          goto error ;
       }
       rc = _startEDU ( EDU_TYPE_REPR, PMD_EDU_RUNNING,
-                       (void*)getReplRouteAgent(), TRUE ) ;
+                       (netRouteAgent*)getReplRouteAgent(), TRUE ) ;
       if ( rc )
       {
          goto error ;

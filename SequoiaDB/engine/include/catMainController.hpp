@@ -58,7 +58,7 @@ namespace engine
    /*
       catMainController define
    */
-   class catMainController : public _netMsgHandler, public _pmdObjBase
+   class catMainController : public _pmdObjBase, public _netMsgHandler
    {
    typedef std::map< SINT64, UINT64 > CONTEXT_LIST ;
 

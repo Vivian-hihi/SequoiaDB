@@ -147,7 +147,7 @@ namespace engine
       // 1. start catMain, catlogManager, catNodeManager edus
       _catMainCtrl.getAttachEvent()->reset() ;
       rc = pEDUMgr->startEDU ( EDU_TYPE_CATMAINCONTROLLER,
-                               (void*)getMainController(),
+                               (_pmdObjBase*)getMainController(),
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start cat main controller edu, "
                    "rc: %d", rc ) ;
@@ -158,7 +158,7 @@ namespace engine
 
       _catMainCtrl.getAttachEvent()->reset() ;
       rc = pEDUMgr->startEDU ( EDU_TYPE_CATCATALOGUEMANAGER,
-                               (void*)getCatlogueMgr(),
+                               (_pmdObjBase*)getCatlogueMgr(),
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start catlogue manager edu, "
                    "rc: %d", rc ) ;
@@ -169,7 +169,7 @@ namespace engine
 
       _catMainCtrl.getAttachEvent()->reset() ;
       rc = pEDUMgr->startEDU ( EDU_TYPE_CATNODEMANAGER,
-                               (void*)getCatNodeMgr(),
+                               (_pmdObjBase*)getCatNodeMgr(),
                                &eduID ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to start cat node manager edu, "
                    "rc: %d", rc ) ;
@@ -179,7 +179,8 @@ namespace engine
                    "attach, rc: %d", rc ) ;
 
       // 2. start net edu
-      pEDUMgr->startEDU ( EDU_TYPE_CATNETWORK, (void*)netWork(), &eduID ) ;
+      pEDUMgr->startEDU ( EDU_TYPE_CATNETWORK, (netRouteAgent*)netWork(),
+                          &eduID ) ;
       pEDUMgr->regSystemEDU ( EDU_TYPE_CATNETWORK, eduID ) ;
       rc = pEDUMgr->waitUntil( EDU_TYPE_CATNETWORK, PMD_EDU_RUNNING ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait CATNET active failed, rc: %d", rc ) ;
