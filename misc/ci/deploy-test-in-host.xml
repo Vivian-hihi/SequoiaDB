@@ -9,7 +9,7 @@
 	<property name="is.coord.master" value="true" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="${ci.script.path}/exec-tools/ant-sdbtasks.jar" />
+			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef> 
 

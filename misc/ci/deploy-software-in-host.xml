@@ -12,9 +12,9 @@
 	<property name="is.coord.master" value="true" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
+			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> 
 	
 	<target name="uninstall-software" depends="uninstall-software">
 	    <stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}" />
