@@ -101,6 +101,7 @@
 	</target>
 
 	<target name="test" depends="">
+		<property name="test-type-list" value="driver-python" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
@@ -117,7 +118,6 @@
 		</parallel>
 
 		<basename property="antFileName" file="${ant.file}" suffix=".xml" />
-		<property name="test-type-list" value="driver-python" />
 		<for list="${test-type-list}" param="test-type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
