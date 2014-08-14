@@ -1169,23 +1169,35 @@ namespace engine
       // make sure need to backup dialog
       if ( backupDialog )
       {
-         CHAR  bakPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         CHAR bakPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         CHAR srcPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          utilBuildFullPath( getDialogPath(), pSvcName, OSS_MAX_PATHSIZE,
                             bakPath ) ;
+
+         if ( 0 == *(nodeOptions.getDiagLogPath() ) )
+         {
+            utilBuildFullPath( nodeOptions.getDbPath(), PMD_OPTION_DIAG_PATH,
+                               OSS_MAX_PATHSIZE, srcPath ) ;
+         }
+         else
+         {
+            ossStrncpy( srcPath, nodeOptions.getDiagLogPath(),
+                        OSS_MAX_PATHSIZE ) ;
+         }
+
          if ( SDB_OK == ossAccess( bakPath ) )
          {
             ossDelete( bakPath ) ;
          }
-         if ( SDB_OK == ossRenamePath( nodeOptions.getDiagLogPath(),
-                                       bakPath ) )
+         if ( SDB_OK == ossRenamePath( srcPath, bakPath ) )
          {
             PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
-                    pSvcName, nodeOptions.getDiagLogPath(), bakPath ) ;
+                    pSvcName, srcPath, bakPath ) ;
          }
          else
          {
             PD_LOG( PDERROR, "Move node[%s] dialog[%s] to path[%s] failed",
-                    pSvcName, nodeOptions.getDiagLogPath(), bakPath ) ;
+                    pSvcName, srcPath, bakPath ) ;
          }
       }
 
