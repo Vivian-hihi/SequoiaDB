@@ -1198,7 +1198,6 @@ namespace engine
          {
             PD_LOG( PDERROR, "Move node[%s] dialog[%s] to path[%s] failed, "
                     "rc: %d", pSvcName, srcPath, bakPath, rc ) ;
-            goto error ;
          }
       }
 
