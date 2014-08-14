@@ -36,6 +36,7 @@
 #include "pd.hpp"
 #include "ossUtil.hpp"
 #include "pmdOptions.hpp"
+#include "pmdEDU.hpp"
 
 using namespace bson ;
 
@@ -487,6 +488,7 @@ namespace engine
                                                    OM_BSON_BUSINESS_NAME ) ;
             node.dataGroupName = oneNode.getStringField( 
                                                    OM_CONF_DETAIL_EX_DG_NAME ) ;
+            _increaseNodeCount( node.dbPath, node.role ) ;
             _nodeInfoList.push_back( node ) ;
          }
       }
@@ -588,7 +590,7 @@ namespace engine
             }
          }
 
-         _increaseNodeCount( iterNodeInfo->dbPath, iterNodeInfo->role ) ;
+         //_increaseNodeCount( iterNodeInfo->dbPath, iterNodeInfo->role ) ;
 
          iterNodeInfo++ ;
       }
@@ -698,17 +700,11 @@ namespace engine
       goto done ;
    }
 
-   /*
-      rule1: the less the better which disk contains role's count
-   */
-   INT32 omHostInfo::assign( string role, string dataGroupID, 
-                             sdbConfDetail &confDetail )
+   void omHostInfo::_getBestDisk( string role, omDiskInfo &disk ) 
    {
-      CHAR dbPath[OM_PATH_LENGTH] ;
-      omNodeInfo nodeInfo;
       DISKINFO_ITER bestIter ;
       DISKINFO_ITER iter = _diskList.begin() ;
-      bestIter = iter ;
+      bestIter           = iter ;
       iter++ ;
       while ( iter != _diskList.end() )
       {
@@ -745,37 +741,31 @@ namespace engine
          iter++ ;
       }
 
+      disk = *bestIter ;
+   }
+
+   /*
+      rule1: the less the better which disk contains role's count
+   */
+   INT32 omHostInfo::assign( string role, string dataGroupID, 
+                             sdbConfDetail &confDetail )
+   {
+      CHAR dbPath[OM_PATH_LENGTH] = "" ;
+      omNodeInfo nodeInfo;
+      omDiskInfo disk ;
+      _getBestDisk( role, disk ) ;
+
       confDetail.hostName    = _hostName ;
       confDetail.dataGroupID = dataGroupID ;
-      confDetail.diskName    = bestIter->diskName ;
+      confDetail.diskName    = disk.diskName ;
       confDetail.svcName     = _availableSvcName ;
       _availableSvcName      += OM_SVCNAME_STEP ;
       confDetail.role        = role ;
-      ossSnprintf( dbPath, OM_PATH_LENGTH, "%s/%s/%d", 
-                   bestIter->mountPath.c_str(),
-                   confDetail.role.c_str(), confDetail.svcName ) ;
+      ossSnprintf( dbPath, OM_PATH_LENGTH, "%s%s%s%s%d", 
+                   disk.mountPath.c_str(), OSS_FILE_SEP, 
+                   confDetail.role.c_str(), OSS_FILE_SEP, confDetail.svcName ) ;
       confDetail.dbPath  = string( dbPath ) ;
-      bestIter->isUsed   = TRUE ;
-      if ( role.compare( OM_NODE_ROLE_STANDALONE ) == 0 )
-      {
-         _nodeCounter.standAloneCount++ ;
-         bestIter->standAloneCount++ ;
-      }
-      else if ( role.compare( OM_NODE_ROLE_COORD ) == 0 )
-      {
-         _nodeCounter.coordCount++ ;
-         bestIter->coordCount++ ;
-      }
-      else if ( role.compare( OM_NODE_ROLE_CATALOG ) == 0 )
-      {
-         _nodeCounter.catalogCount++ ;
-         bestIter->catalogCount++ ;
-      }
-      else if ( role.compare( OM_NODE_ROLE_DATA ) == 0 )
-      {
-         _nodeCounter.dataCount++ ;
-         bestIter->dataCount++ ;
-      }
+      _increaseNodeCount( confDetail.dbPath, role ) ;
 
       nodeInfo.dataGroupName = confDetail.dataGroupID ;
       nodeInfo.role          = confDetail.role ;
@@ -822,6 +812,31 @@ namespace engine
       return _hostName ;
    }
 
+   INT32 omHostInfo::checkDBPath( string dbPath )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !isDiskExist( dbPath ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = "dbpath's disk is not exist:dbpath=" + dbPath ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( isDbPathExist( dbPath ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = "dbpath is exist:dbpath=" + dbPath ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    BOOLEAN omHostInfo::isDiskExist( string dbPath )
    {
       DISKINFO_ITER iter = _diskList.begin() ;
@@ -839,6 +854,81 @@ namespace engine
       return FALSE ;
    }
 
+   BOOLEAN omHostInfo::isDbPathExist( string dbPath )
+   {
+      NODEINFOLIST_ITER iter = _nodeInfoList.begin() ;
+      while ( iter != _nodeInfoList.end() )
+      {
+         if ( isSamePath( iter->dbPath, dbPath ) )
+         {
+            return TRUE ;
+         }
+
+         iter++ ;
+      }
+
+      return FALSE ;
+   }
+
+   void omHostInfo::extractPath( const string path, list<string> &combination )
+   {
+      combination.clear() ;
+      if ( OSS_FILE_SEP_CHAR == path.at( 0 ) )
+      {
+         combination.push_back( OSS_FILE_SEP ) ;
+      }
+      string::size_type pos1 = 0 ;
+      string::size_type pos2 = 0 ;
+      while ( true )
+      {
+         pos1 = path.find_first_not_of( OSS_FILE_SEP_CHAR, pos2 ) ;
+         if ( pos1 == string::npos )
+         {
+           break ;
+         }
+
+         pos2 = path.find_first_of( OSS_FILE_SEP_CHAR, pos1 ) ;
+         if ( pos2 == string::npos )
+         {
+           combination.push_back( path.substr( pos1 ) ) ;
+           break ;
+         }
+
+         combination.push_back( path.substr( pos1, pos2 - pos1 ) ) ;
+         pos2++ ;
+      }
+   }
+
+   BOOLEAN omHostInfo::isSamePath( const string leftPath, 
+                                   const string rightPath )
+   {
+      list<string> leftCombine ;
+      list<string> rightCombine ;
+      extractPath( leftPath, leftCombine ) ;
+      extractPath( rightPath, rightCombine ) ;
+
+      INT32 leftSize  = leftCombine.size() ;
+      INT32 rightSize = rightCombine.size() ;
+      if ( leftSize != rightSize )
+      {
+         return FALSE ;
+      }
+
+      list<string>::iterator leftIter  = leftCombine.begin() ;
+      list<string>::iterator rightIter = rightCombine.begin() ;
+      while ( leftIter != leftCombine.end() && rightIter != rightCombine.end() )
+      {
+         if ( *leftIter != *rightIter )
+         {
+            return FALSE ;
+         }
+         leftIter++ ;
+         rightIter++ ;
+      }
+
+      return TRUE ;
+   }
+
    BOOLEAN omHostInfo::isSvcNameConflict( string svcName )
    {
       INT32 iSvcName = ossAtoi( svcName.c_str() ) ;
@@ -849,6 +939,11 @@ namespace engine
          {
             if ( ( iter->svcName - iSvcName ) < OM_SVCNAME_STEP )
             {
+               CHAR tmpName[OM_INT32_LENGTH + 1] ;
+               ossItoa( iter->svcName, tmpName, OM_INT32_LENGTH ) ;
+               _errorDetail = string( OM_CONF_DETAIL_SVCNAME ) + 
+                              " is conflict:" + svcName + ",exist svcName="
+                              + tmpName ;
                return TRUE ;
             }
          }
@@ -856,6 +951,11 @@ namespace engine
          {
             if ( ( iSvcName - iter->svcName ) < OM_SVCNAME_STEP )
             {
+               CHAR tmpName[OM_INT32_LENGTH + 1] ;
+               ossItoa( iter->svcName, tmpName, OM_INT32_LENGTH ) ;
+               _errorDetail = string( OM_CONF_DETAIL_SVCNAME ) + 
+                              " is conflict:" + svcName + ",exist svcName="
+                              + tmpName ;
                return TRUE ;
             }
          }
@@ -882,6 +982,8 @@ namespace engine
                                              OM_BSON_BUSINESS_NAME ) ;
       node.dataGroupName = oneNode.getStringField( 
                                              OM_CONF_DETAIL_EX_DG_NAME ) ;
+
+      _increaseNodeCount( node.dbPath, node.role ) ;
       _nodeInfoList.push_back( node ) ;
 
       return SDB_OK ;
@@ -989,10 +1091,21 @@ namespace engine
       }
 
       _businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      _businessType = bsonConfValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      _clusterName  = bsonConfValue.getStringField( 
+                                                  OM_BSON_FIELD_CLUSTER_NAME ) ;
+      _deployMod    = bsonConfValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
       rc = _parseHostInfo( _businessName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get template failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _checkExistHost() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_checkExistHost failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -1021,6 +1134,32 @@ namespace engine
       return pHost ;
    }
 
+   INT32 omConfigGenerator::_checkDistributionCount()
+   {
+      INT32 rc            = SDB_OK ;
+      INT32 standaloneNum = 0 ;
+      INT32 coordNum      = 0 ;
+      INT32 catalogNum    = 0 ;
+      INT32 dataNum       = 0 ;
+      _getNodeCount( standaloneNum, coordNum, catalogNum, dataNum ) ;
+
+      if ( 0 == coordNum || 0 == catalogNum || 0 == dataNum )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "missing coord or catalog or data in %s mod:"
+                     "coordnum=%d,catalognum=%d,datanum=%d", 
+                     OM_DEPLOY_MOD_DISTRIBUTION, coordNum, catalogNum, 
+                     dataNum ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omConfigGenerator::_checkConfValue( const BSONObj &bsonConfValue )
    {
       INT32 rc = SDB_OK ;
@@ -1029,7 +1168,7 @@ namespace engine
       string deployMod ;
       string nodeRole ;
       BOOLEAN isExistStandalone = FALSE ;
-      int nodeCount             = 0 ;
+      int additionNodeCount     = 0 ;
       businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
       clusterName  = bsonConfValue.getStringField( 
                                                   OM_BSON_FIELD_CLUSTER_NAME ) ;
@@ -1058,11 +1197,11 @@ namespace engine
             goto error ;
          }
 
-         if ( !pHost->isDiskExist( dbPath ) )
+         rc = pHost->checkDBPath( dbPath ) ;
+         if ( SDB_OK != rc )
          {
-            rc = SDB_DMS_RECORD_NOTEXIST ;
-            _errorDetail = string( OM_CONF_DETAIL_DBPATH ) 
-                           + "'s disk is not exist:" + dbPath ;
+            _errorDetail = string( "check field:" ) + OM_CONF_DETAIL_DBPATH + 
+                           " failed." + pHost->getErrorDetail() ;
             PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
             goto error ;
          }
@@ -1070,8 +1209,7 @@ namespace engine
          if ( pHost->isSvcNameConflict( svcName ) )
          {
             rc = SDB_INVALIDARG ;
-            _errorDetail = string( OM_CONF_DETAIL_SVCNAME ) + 
-                           " is conflict:" + svcName ;
+            _errorDetail = pHost->getErrorDetail() ;
             PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
             goto error ;
          }
@@ -1109,18 +1247,18 @@ namespace engine
          }
 
          pHost->addNode( oneNode ) ;
-         nodeCount++ ;
+         additionNodeCount++ ;
       }
 
       if ( deployMod.compare( OM_DEPLOY_MOD_STANDALONE ) == 0 )
       {
-         if ( nodeCount != 1 )
+         if ( additionNodeCount != 1 )
          {
             rc = SDB_INVALIDARG ;
             _errorDetail = string( "can't install more than one node in " ) 
                            + OM_DEPLOY_MOD_STANDALONE + " mod" ;
-            PD_LOG( PDERROR, "%s:nodeCount=%d", _errorDetail.c_str(), 
-                    nodeCount ) ;
+            PD_LOG( PDERROR, "%s:additionNodeCount=%d", _errorDetail.c_str(), 
+                    additionNodeCount ) ;
             goto error ;
          }
 
@@ -1144,6 +1282,15 @@ namespace engine
                            + nodeRole + " in " + OM_DEPLOY_MOD_DISTRIBUTION 
                            + " mod" ;
             PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            goto error ;
+         }
+
+         // make sure coordnum>0 and catalog>0 and data>0
+         rc = _checkDistributionCount() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "check node count in %s mod failed:rc=%d", 
+                    OM_DEPLOY_MOD_DISTRIBUTION, rc ) ;
             goto error ;
          }
       }
@@ -1182,7 +1329,7 @@ namespace engine
    bsonTemplate:
    {
       "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
-      "ClusterType": "standalone", 
+      "DeployMod": "standalone", 
       "Property":[{"Name":"replicanum", "Type":"int", "Default":"1", 
                       "Valid":"1", "Display":"edit box", "Edit":"false", 
                       "Desc":"", "WebName":"" }
@@ -1220,13 +1367,10 @@ namespace engine
       _clear() ;
 
       _businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
-      if ( _businessName == "" )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_BUSINESS_NAME ) + " is empty!" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
+      _businessType = bsonTemplate.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      _clusterName  = bsonTemplate.getStringField( 
+                                                  OM_BSON_FIELD_CLUSTER_NAME ) ;
+      _deployMod    = bsonTemplate.getStringField( OM_BSON_DEPLOY_MOD ) ;
 
       rc            = _parseTemplate( bsonTemplate ) ;
       if ( SDB_OK != rc )
@@ -1258,6 +1402,13 @@ namespace engine
          goto error ;
       }
 
+      rc = _checkExistHost() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_checkExistHost failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
       rc = _generateConfig( bsonConfig ) ;
       if ( SDB_OK != rc )
       {
@@ -1269,6 +1420,59 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void omConfigGenerator::_getNodeCount( INT32 &standaloneNum, 
+                                          INT32 &coordNum,
+                                          INT32 &catalogNum,
+                                          INT32 &dataNum )
+   {
+      HOSTINFOMAP_ITER iter = _hostInfoMap.begin() ;
+      while ( iter != _hostInfoMap.end() )
+      {
+         omHostInfo *pHost = iter->second ;
+         coordNum      += pHost->getNodeCount( OM_NODE_ROLE_COORD ) ;
+         catalogNum    += pHost->getNodeCount( OM_NODE_ROLE_CATALOG ) ;
+         dataNum       += pHost->getNodeCount( OM_NODE_ROLE_DATA ) ;
+         standaloneNum += pHost->getNodeCount( OM_NODE_ROLE_STANDALONE ) ;
+         iter++ ;
+      }
+   }
+
+   INT32 omConfigGenerator::_checkExistHost()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 standaloneNum = 0 ;
+      INT32 coordNum      = 0 ;
+      INT32 catalogNum    = 0 ;
+      INT32 dataNum       = 0 ;
+      _getNodeCount( standaloneNum, coordNum, catalogNum, dataNum ) ;
+
+      if ( _deployMod == OM_DEPLOY_MOD_STANDALONE )
+      {
+         if ( standaloneNum > 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            _errorDetail = string( OM_DEPLOY_MOD_STANDALONE ) 
+                           + " node is exist in " + _deployMod 
+                           + " mod, can't create more than one node" ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      else if ( _deployMod != OM_DEPLOY_MOD_DISTRIBUTION )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( "unreconigzed " ) + OM_BSON_DEPLOY_MOD + ":"
+                        + _deployMod ; 
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;   
    }
 
    string omConfigGenerator::getErrorDetail()

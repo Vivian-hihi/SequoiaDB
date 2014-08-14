@@ -2852,6 +2852,7 @@ namespace engine
    }
 
    INT32 omConfigBusinessCommand::_getHostConfig( string hostName, 
+                                                  string businessName,
                                                   BSONObj &config )
    {
       BSONObjBuilder confBuilder ;
@@ -2864,6 +2865,7 @@ namespace engine
 
       BSONObjBuilder condBuilder ;
       condBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, hostName ) ;
+      condBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
       // condBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
       BSONObj condition = condBuilder.obj() ;
 
@@ -2882,7 +2884,6 @@ namespace engine
       {
          rtnContextBuf buffObj ;
          BSONObj tmpConf ;
-         string BusinessName ;
          SINT64 startingPos = 0 ;
          rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
          if ( rc )
@@ -2910,8 +2911,6 @@ namespace engine
             }
          */
          BSONObj result( buffObj.data() ) ;
-         BusinessName = result.getStringField( 
-                                             OM_CONFIGURE_FIELD_BUSINESSNAME ) ;
          tmpConf = result.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
          {
             BSONObjIterator iter( tmpConf ) ;
@@ -2921,7 +2920,7 @@ namespace engine
                BSONElement ele     = iter.next() ;
 
                innerBuilder.appendElements( ele.embeddedObject() ) ;
-               innerBuilder.append( OM_BSON_BUSINESS_NAME, BusinessName ) ;
+               innerBuilder.append( OM_BSON_BUSINESS_NAME, businessName ) ;
                arrayBuilder.append( innerBuilder.obj() ) ;
             }
          }
@@ -2937,6 +2936,108 @@ namespace engine
       */
       confBuilder.append( OM_BSON_FIELD_CONFIG, arrayBuilder.arr() ) ;
       config = confBuilder.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omConfigBusinessCommand::_checkBusiness( string businessName, 
+                                                  const string &businessType,
+                                                  const string &deployMod,
+                                                  const string &clusterName )
+   {
+      INT32 rc = SDB_OK ;
+      string existType ;
+      string existDeployMod ;
+      string existClusterName ;
+
+      rc = _getExistBusiness( businessName, existType, existDeployMod, 
+                              existClusterName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get exist business failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( existType == "" )
+      {
+         // no record
+         goto done ;
+      }
+
+      if ( businessType != existType || deployMod != existDeployMod 
+           || clusterName != existClusterName )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( "business conflict with same name:exist=[" ) 
+                        + businessName + "," + existType + "," 
+                        + existDeployMod + "," + existClusterName + "] new=["
+                        + businessName + "," + businessType + "," 
+                        + deployMod + "," + clusterName + "]" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   INT32 omConfigBusinessCommand::_getExistBusiness( const string &businessName, 
+                                                     string &businessType,
+                                                     string &deployMod,
+                                                     string &clusterName )
+   {
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID  = -1 ;
+      INT32 rc          = SDB_OK ;
+      BSONObj condition = BSON( OM_BUSINESS_FIELD_NAME << businessName )  ;
+
+      businessType = "" ;
+      deployMod    = "" ;
+      clusterName  = "" ;
+
+      // query table
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, condition, order, 
+                     hint, 0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_BUSINESS ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         BSONObj tmpConf ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_BUSINESS ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         businessType = result.getStringField( OM_BUSINESS_FIELD_TYPE );
+         deployMod    = result.getStringField( OM_BUSINESS_FIELD_DEPLOYMOD );
+         clusterName  = result.getStringField( OM_BUSINESS_FIELD_CLUSTERNAME );
+      }
 
    done:
       return rc ;
@@ -2962,6 +3063,7 @@ namespace engine
 
      */
    INT32 omConfigBusinessCommand::_fillHostInfo( string clusterName, 
+                                                 string businessName,
                                                  BSONObj &bsonHostInfo )
    {
       BSONObj condition ;
@@ -3048,7 +3150,7 @@ namespace engine
          BSONObj result( buffObj.data() ) ;
          resultBuilder.appendElements( result ) ;
          hostName = result.getStringField( OM_HOST_FIELD_NAME ) ;
-         rc       = _getHostConfig( hostName, config ) ;
+         rc       = _getHostConfig( hostName, businessName, config ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to get host config, rc=%d", rc ) ;
@@ -3095,7 +3197,7 @@ namespace engine
      bsonTemplate(out)
        {
            "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
-           "ClusterType": "standalone", 
+           "DeployMod": "standalone", 
            "Property": [ { "Name": "replica_num", "Type": "int", "Default": "1", 
                            "Valid": "1", "Display": "edit box", "Edit": "false", 
                            "Desc": "", "WebName": "" }
@@ -3117,10 +3219,8 @@ namespace engine
    {
       INT32 rc          = SDB_OK ;
       const CHAR *pInfo = NULL ;
-      string clusterName ;
       BSONObj bsonInfo ;
       BSONObjBuilder templateBuilder ;
-      BSONObjBuilder filterBuilder ;
       BSONObj filter ;
       BSONObjBuilder hostInfoBuilder ;
       _restAdaptor->getQuery( _restSession, OM_REST_TEMPLATE_INFO, 
@@ -3143,18 +3243,51 @@ namespace engine
          goto error ;
       }
 
-      clusterName  = bsonInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
-      _clusterName = clusterName ;
-
-      filterBuilder.append( OM_BSON_FIELD_HOST_INFO, "" ) ;
-      filter       = filterBuilder.obj() ;
+      filter       = BSON( OM_BSON_FIELD_HOST_INFO << "" ) ;
       /*{
            "ClusterName":"c1","BusinessType":"sequoiadb", "BusinessName":"b1",
            "ClusterType": "standalone", 
            "Property": [ { "Name": "replica_num", "Value":"" }, ...] 
         } */
       bsonTemplate = bsonInfo.filterFieldsUndotted( filter, false ) ;
-      rc           = _fillTemplateInfo( bsonTemplate ) ;
+
+      _clusterName = bsonTemplate.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( _clusterName == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is empty" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      _businessType = bsonTemplate.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      if ( _businessType == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_BUSINESS_TYPE ) + " is empty" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      _businessName = bsonTemplate.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( _businessName == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_BUSINESS_NAME ) + " is empty" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      _deployMod = bsonTemplate.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      if ( _deployMod == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_DEPLOY_MOD ) + " is empty" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = _fillTemplateInfo( bsonTemplate ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_fillTemplateInfo failed:rc=%d", rc ) ;
@@ -3183,7 +3316,7 @@ namespace engine
                        , ...
                       ]
         }*/
-      rc = _fillHostInfo( clusterName, bsonHostInfo ) ;
+      rc = _fillHostInfo( _clusterName, _businessName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_fillHostInfo failed:rc=%d", rc ) ;
@@ -3322,6 +3455,15 @@ namespace engine
          goto error ;
       }
 
+      rc = _checkBusiness( _businessName, _businessType, _deployMod, 
+                           _clusterName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_checkBusiness failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
       rc = _getConfigDetail( bsonTemplate, bsonConfigDetail ) ;
       if ( SDB_OK != rc )
       {
@@ -3407,12 +3549,22 @@ namespace engine
       BSONArrayBuilder arrayBuilder ;
       BSONObj config ;
 
+      string businessName ;
       string clusterName ;
       clusterName = bsonConfValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
       if ( clusterName == "" )
       {
          rc = SDB_INVALIDARG ;
          _errorDetail = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is empty!" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( businessName == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_BUSINESS_NAME ) + " is empty!" ;
          PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
@@ -3434,7 +3586,7 @@ namespace engine
       builder.append( OM_BSON_FIELD_HOST_INFO, arrayBuilder.arr() ) ;
       bsonHostInfo = builder.obj() ;
 
-      rc = _fillHostInfo( clusterName, bsonHostInfo ) ;
+      rc = _fillHostInfo( clusterName, businessName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_fillHostInfo failed:rc=%d", rc ) ;
@@ -3839,17 +3991,11 @@ namespace engine
       bsonConfValue = valueBuilder.obj() ;
    }
 
-   INT32 omInstallBusinessReq::doCommand()
+   INT32 omInstallBusinessReq::_getRestInfo( BSONObj &bsonConfValue )
    {
       INT32 rc          = SDB_OK ;
       const CHAR *pInfo = NULL ;
-      omConfigGenerator confGenerator ;
-      BSONObjBuilder opBuilder ;
-      BSONObj bsonConfValue ;
-      BSONObj bsonHostInfo ;
-      BSONObj bsonAllConf ;
-      string businessType ;
-      string deployMod ;
+
       _restAdaptor->getQuery( _restSession, OM_REST_CONFIG_INFO, &pInfo ) ;
       if ( NULL == pInfo )
       {
@@ -3857,7 +4003,6 @@ namespace engine
                         + " is null" ;
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
@@ -3867,13 +4012,79 @@ namespace engine
          _errorDetail = string( "change rest field " ) + OM_REST_TEMPLATE_INFO
                         + " to BSONObj failed" ;
          PD_LOG( PDERROR, "%s:rc=%d,src=%s", _errorDetail.c_str(), rc, pInfo ) ;
+         goto error ;
+      }
+
+      _clusterName = bsonConfValue.getStringField( 
+                                                  OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( _clusterName == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is empty" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      _businessType = bsonConfValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
+      if ( _businessType == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_BUSINESS_TYPE ) + " is empty" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      _businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
+      if ( _businessName == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_BUSINESS_NAME ) + " is empty" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      _deployMod = bsonConfValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      if ( _deployMod == "" )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( OM_BSON_DEPLOY_MOD ) + " is empty" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omInstallBusinessReq::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      omConfigGenerator confGenerator ;
+      BSONObjBuilder opBuilder ;
+      BSONObj bsonConfValue ;
+      BSONObj bsonHostInfo ;
+      BSONObj bsonAllConf ;
+
+      rc = _getRestInfo( bsonConfValue ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
-      businessType = bsonConfValue.getStringField( OM_BSON_BUSINESS_TYPE ) ;
-      deployMod    = bsonConfValue.getStringField( OM_BSON_DEPLOY_MOD ) ;
-      rc = _combineConfDetail( businessType, deployMod, bsonAllConf ) ;
+      rc = _checkBusiness( _businessName, _businessType, _deployMod, 
+                           _clusterName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_checkBusiness failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _combineConfDetail( _businessType, _deployMod, bsonAllConf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_combineConfDetail failed:rc=%d", rc ) ;

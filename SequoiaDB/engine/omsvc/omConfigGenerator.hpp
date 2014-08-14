@@ -187,7 +187,7 @@ namespace engine
       INT32    getDiskCount() ;
       INT32    getUnusedDiskCount() ;
    } ;
-   
+
    class omHostInfo : public SDBObject
    {
       public:
@@ -209,7 +209,13 @@ namespace engine
 
          string     getHostName() ;
 
+         INT32      checkDBPath( string dbPath ) ;
          BOOLEAN    isDiskExist( string dbPath ) ;
+         BOOLEAN    isDbPathExist( string dbPath ) ;
+         void       extractPath( const string path, 
+                                 list<string> &combination ) ;
+         BOOLEAN    isSamePath( const string leftPath, 
+                                const string rightPath ) ;
          BOOLEAN    isSvcNameConflict( string svcName ) ;
          INT32      addNode( const BSONObj &config ) ;
          string     getErrorDetail() ;
@@ -218,6 +224,7 @@ namespace engine
          INT32      _initNodeInfo( const BSONObj &config ) ;
          INT32      _initCounter() ;
          void       _increaseNodeCount( string dbpath, string role ) ;
+         void       _getBestDisk( string role, omDiskInfo &disk ) ;
 
       private:
          hostNodeCounter  _nodeCounter ;
@@ -285,7 +292,11 @@ namespace engine
 
          omHostInfo *_getHost( string hostName ) ;
          INT32       _checkConfValue( const BSONObj &bsonConfValue ) ;
+         INT32       _checkDistributionCount() ;
          INT32       _parseAllConf( const BSONObj &bsonAllConf ) ;
+         void        _getNodeCount( INT32 &standaloneNum, INT32 &coordNum,
+                                    INT32 &catalogNum, INT32 &dataNum ) ;
+         INT32       _checkExistHost() ;
 
 
       private:
@@ -293,6 +304,9 @@ namespace engine
          sdbConfDetail                 _confDetailSample ;
          string                        _errorDetail ;
          string                        _businessName ;
+         string                        _businessType ;
+         string                        _clusterName ;
+         string                        _deployMod ;
          map<string, omConfigItem*>    _confDetailMap ;
          // typedef map<string, omConfigItem*>::value_type CONFIGITEMMAP_TYPE ;
          // typedef map<string, omConfigItem*>::iterator CONFIGITEMMAP_ITER ;

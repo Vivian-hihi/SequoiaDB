@@ -338,8 +338,13 @@ namespace engine
          virtual INT32  doCommand() ;
 
       protected:
-         INT32          _fillHostInfo( string clusterName,
+         INT32          _fillHostInfo( string clusterName, string businessName,
                                        BSONObj &bsonHostInfo ) ;
+
+         INT32          _checkBusiness( string businessName, 
+                                        const string &businessType,
+                                        const string &deployMod,
+                                        const string &clusterName ) ;
 
       private:
          INT32          _generateConfig( const BSONObj &bsonTemplate, 
@@ -357,10 +362,18 @@ namespace engine
          INT32          _getPropertyNameValue( BSONObj &bsonTemplate, 
                                                string propertyName, 
                                                string &value ) ;
-         INT32          _getHostConfig( string hostName, BSONObj &config ) ;
+         INT32          _getHostConfig( string hostName, string businessName,
+                                        BSONObj &config ) ;
 
-      private:
+         INT32          _getExistBusiness( const string &businessName, 
+                                           string &businessType,
+                                           string &deployMod,
+                                           string &clusterName ) ;
+      protected:
          string         _clusterName ;
+         string         _deployMod ;
+         string         _businessType ;
+         string         _businessName ;
 
    } ;
 
@@ -396,6 +409,7 @@ namespace engine
                                              BSONObj &bsonConfValue ) ;
          void           _clearSession( omManager *om, 
                                        pmdRemoteSession *remoteSession) ;
+         INT32          _getRestInfo( BSONObj &bsonConfValue ) ;
       private:
          string         _localAgentHost ;
          string         _localAgentService ;
