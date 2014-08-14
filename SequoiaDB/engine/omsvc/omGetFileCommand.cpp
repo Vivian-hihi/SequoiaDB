@@ -2865,7 +2865,7 @@ namespace engine
 
       BSONObjBuilder condBuilder ;
       condBuilder.append( OM_CONFIGURE_FIELD_HOSTNAME, hostName ) ;
-      condBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
+      //condBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
       // condBuilder.append( OM_CONFIGURE_FIELD_BUSINESSNAME, businessName ) ;
       BSONObj condition = condBuilder.obj() ;
 
@@ -2911,6 +2911,8 @@ namespace engine
             }
          */
          BSONObj result( buffObj.data() ) ;
+         businessName = result.getStringField( 
+                                             OM_CONFIGURE_FIELD_BUSINESSNAME ) ;
          tmpConf = result.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
          {
             BSONObjIterator iter( tmpConf ) ;
@@ -3549,26 +3551,6 @@ namespace engine
       BSONArrayBuilder arrayBuilder ;
       BSONObj config ;
 
-      string businessName ;
-      string clusterName ;
-      clusterName = bsonConfValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
-      if ( clusterName == "" )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_FIELD_CLUSTER_NAME ) + " is empty!" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      businessName = bsonConfValue.getStringField( OM_BSON_BUSINESS_NAME ) ;
-      if ( businessName == "" )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorDetail = string( OM_BSON_BUSINESS_NAME ) + " is empty!" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
       conditionBuilder.append( OM_BSON_FIELD_HOST_NAME, "" ) ;
       condition = conditionBuilder.obj() ;
       config    = bsonConfValue.getObjectField( OM_BSON_FIELD_CONFIG ) ;
@@ -3586,7 +3568,7 @@ namespace engine
       builder.append( OM_BSON_FIELD_HOST_INFO, arrayBuilder.arr() ) ;
       bsonHostInfo = builder.obj() ;
 
-      rc = _fillHostInfo( clusterName, businessName, bsonHostInfo ) ;
+      rc = _fillHostInfo( _clusterName, _businessName, bsonHostInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_fillHostInfo failed:rc=%d", rc ) ;
