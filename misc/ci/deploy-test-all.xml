@@ -7,9 +7,9 @@
 <project name="deploy-test-all" default="copy-test-log">
 	<hostinfo prefix="host" />
 	<property file="${ci.script.file.path}/ci.test.properties" />
-	<property file="${release.path}/build.version" />
 	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
 	<property name="release.path" value="${WORKSPACE}/release" />
+	<property file="${release.path}/build.version" />
 	<property name="is.test" value="true" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
