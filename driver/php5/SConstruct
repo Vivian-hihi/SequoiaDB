@@ -124,6 +124,7 @@ debugBuild = has_option( "debugBuildAndLogging" )
 testBuild = has_option( "testpro" )
 clienttestBuild = has_option( "clienttestpro" )
 
+phpedition = ""
 if testBuild or clienttestBuild :
     print "build test program file ! "
 else:
@@ -224,4 +225,5 @@ Export("env")
 Export("root_dir")
 Export("testBuild")
 Export("clienttestBuild")
+Export("phpedition")
 env.SConscript( 'SConscript', variant_dir=variantDir, duplicate=False )

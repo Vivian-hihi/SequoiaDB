@@ -2,7 +2,7 @@ Import("env")
 Import("root_dir")
 Import("testBuild")
 Import("clienttestBuild")
-
+Import("phpedition")
 
 phpFiles = [
       "ext/sequoiadb.cpp",
@@ -101,4 +101,4 @@ else:
     if clienttestBuild :
         env.Program([clienttestFiles])
     else:
-        env.SharedLibrary('sequoiadb',[phpFiles, srcFile ])
+        env.SharedLibrary('libsequoiadb-' + phpedition,[phpFiles, srcFile ])
