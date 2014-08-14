@@ -1173,6 +1173,7 @@ namespace engine
          CHAR srcPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          utilBuildFullPath( getDialogPath(), pSvcName, OSS_MAX_PATHSIZE,
                             bakPath ) ;
+         ossMkdir( bakPath, OSS_CREATE|OSS_READWRITE ) ;
 
          if ( 0 == *(nodeOptions.getDiagLogPath() ) )
          {
