@@ -1189,8 +1189,6 @@ namespace engine
          {
             ossDelete( bakPath ) ;
          }
-         ossMkdir( bakPath, OSS_CREATE|OSS_READWRITE ) ;
-
          if ( SDB_OK == ( rc = ossRenamePath( srcPath, bakPath ) ) )
          {
             PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
