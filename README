@@ -135,7 +135,7 @@ Documentation:
 
 Restrictions:
 	- SequoiaDB officially only support 64 bit Linux build on CentOS, Redhat, SUSE and Ubuntu.
-	- Windows build and 32 bit build are only for testing purpose.
+	- Windows build and 32 bit build are for testing purpose only.
 
 License:
 	Most SequoiaDB source files are made available under the terms of the
