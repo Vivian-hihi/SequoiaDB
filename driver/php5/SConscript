@@ -101,4 +101,4 @@ else:
     if clienttestBuild :
         env.Program([clienttestFiles])
     else:
-        env.SharedLibrary('libsequoiadb-' + phpedition,[phpFiles, srcFile ])
+        env.SharedLibrary('libsdbphp-' + phpedition,[phpFiles, srcFile ])
