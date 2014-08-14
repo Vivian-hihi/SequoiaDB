@@ -184,6 +184,7 @@ namespace engine
    error:
       PD_LOG ( PDERROR, "Failed to process message(MessageType = %d, rc=%d)",
                header->opCode, rc ) ;
+      SDB_ASSERT( FALSE, "test error" ) ;
       goto done;
    }
 
