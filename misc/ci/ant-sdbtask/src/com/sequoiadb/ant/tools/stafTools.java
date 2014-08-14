@@ -118,8 +118,8 @@ public class stafTools extends Task{
 
 			if(workType.equals("create")){
 				System.out.println("create work");
-				request="CREATE DIRECTORY"+fileName;
-				System.out.println("exec:staf "+workHost+"FS"+request);
+				request="CREATE DIRECTORY "+fileName;
+				System.out.println("exec: staf "+workHost+" FS "+request);
 				result=handle.submit2(workHost,"FS",request);
 				if(failonerror){
 					if(result.rc!=STAFResult.Ok){
