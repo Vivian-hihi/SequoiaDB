@@ -140,7 +140,7 @@ INT32 _fmpController::_runLoop()
       }
 
       ele = obj.getField( FMP_CONTROL_FIELD ) ;
-      if ( ele.eoo() || NumberInt != ele.type() )
+      if ( ele.eoo() )
       {
          /// we considered it be download.
          /// so func is no need to be copy in spdCB.
