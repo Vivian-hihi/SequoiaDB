@@ -113,7 +113,7 @@ class client(object):
       # try to connect with default user and password 
       rc = self.connect(self.__host, _svcname, _user, _psw)
       if const.SDB_OK != rc:
-         pysequoiadb.cout("Attempt to connect to host:[%s], port:[%d],\
+         pysequoiadb.cout("Attempt to connect to host:[%s], port:[%s],\
                            user:[%s], password:[%s] failed."\
                            % (self.__host, _svcname, _user, _psw))
          pysequoiadb.cout("Error: %s" % pysequoiadb.getErr(rc))

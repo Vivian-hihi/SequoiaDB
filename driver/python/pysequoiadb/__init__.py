@@ -43,7 +43,7 @@ default_host = "localhost"
 """Default host."""
 
 default_svcname = 11810
-"""Default port."""
+"""Default service name."""
 
 default_user = ""
 """Default user name."""
