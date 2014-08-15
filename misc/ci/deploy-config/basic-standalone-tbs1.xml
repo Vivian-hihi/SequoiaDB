@@ -26,7 +26,7 @@
 	</target>
 
 	<target name="test" depends="">
-		<property name="test-type-list" value="driver-php,driver-java" />
+		<property name="test-type-list" value="driver-java" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
