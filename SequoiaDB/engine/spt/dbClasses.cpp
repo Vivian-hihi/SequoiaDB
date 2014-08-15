@@ -186,6 +186,9 @@ extern BOOLEAN gReadNothing ;
 #if defined (SDB_FMP)
 extern CHAR FMP_COORD_SERVICE[OSS_MAX_PATHSIZE+1] ;
 extern CHAR *FMP_COORD_HOST ;
+extern CHAR g_UserName[ OSS_MAX_PATHSIZE + 1 ] ;
+extern CHAR g_Password[ OSS_MAX_PATHSIZE + 1 ] ;
+extern BOOLEAN g_disablePassEncode ;
 #endif
 
 // troff file's relative path
@@ -3796,6 +3799,9 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
       pwd = (CHAR *) JS_EncodeString ( cx , strPwd ) ;
       VERIFY ( pwd ) ;
 
+#if defined( SDB_FMP )
+      g_disablePassEncode = FALSE ;
+#endif // SDB_FMP
       // handle contained by connection will be released in error: or
       // in the destructor
       rc = sdbConnect ( host , port , name , pwd , connection ) ;
@@ -3811,7 +3817,12 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    {
       // handle contained by connection will be released in error: or
       // in the destructor
+#if defined( SDB_FMP )
+      g_disablePassEncode = TRUE ;
+      rc = sdbConnect ( host , port , g_UserName, g_Password, connection ) ;
+#else
       rc = sdbConnect ( host , port , "", "", connection ) ;
+#endif // SDB_FMP
       REPORT_RC ( SDB_OK == rc , "new Sdb()" , rc ) ;
    }
    // new a js sdb object

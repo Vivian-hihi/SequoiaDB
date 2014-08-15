@@ -37,6 +37,9 @@
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "rtnCoordCommon.hpp"
+#include "msgAuth.hpp"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -74,6 +77,14 @@ namespace engine
       REPLY_QUE replyQue ;
       NodeID curNodeID = pmdGetNodeID() ;
       BOOLEAN hasRetry = FALSE ;
+
+      BSONObj authObj ;
+      BSONElement user, pass ;
+      rc = extractAuthMsg( (MsgHeader*)pReceiveBuffer, authObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to extrace auth msg, "
+                   "rc: %d", rc ) ;
+      user = authObj.getField( SDB_AUTH_USER ) ;
+      pass = authObj.getField( SDB_AUTH_PASSWD ) ;
 
    retry:
       rc = rtnCoordGetCatGroupInfo( cb, hasRetry ? TRUE : FALSE, cata ) ;
@@ -138,6 +149,11 @@ namespace engine
       if ( SDB_OK != rc )
       {
          goto error ;
+      }
+      else
+      {
+         // auth ok
+         cb->setUserInfo( user.valuestrsafe(), pass.valuestrsafe() ) ;
       }
 
     done:

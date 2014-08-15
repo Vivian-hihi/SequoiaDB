@@ -224,6 +224,8 @@ namespace engine
       }
       _processEventCount = 0 ;
       _Name[0] = 0 ;
+      _userName = "" ;
+      _passWord = "" ;
 
 #if defined ( SDB_ENGINE )
       clearTransInfo() ;
@@ -385,6 +387,13 @@ namespace engine
    {
       resetInterrupt () ;
       _ctrlFlag &= ~EDU_CTRL_DISCONNECTED ;
+   }
+
+   void _pmdEDUCB::setUserInfo( const string & userName,
+                                const string & password )
+   {
+      _userName = userName ;
+      _passWord = password ;
    }
 
    void _pmdEDUCB::setClientInfo ( const CHAR *clientName, UINT16 clientPort )

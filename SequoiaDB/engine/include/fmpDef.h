@@ -57,6 +57,8 @@
 #define FMP_DIAG_PATH         "diag"
 #define FMP_FUNCTION_DEF      "function"
 #define FMP_LOCAL_SERVICE     "service"
+#define FMP_LOCAL_USERNAME    "username"
+#define FMP_LOCAL_PASSWORD    "password"
 
 #define FMP_CONTROL_STEP_INVALID    -3
 #define FMP_CONTROL_STEP_QUIT       -2

@@ -187,6 +187,8 @@ namespace engine
        builder.append( type ) ;
        builder.append( FMP_DIAG_PATH, pmdGetOptionCB()->getDiagLogPath() ) ;
        builder.append( FMP_LOCAL_SERVICE, pmdGetOptionCB()->getServiceAddr() ) ;
+       builder.append( FMP_LOCAL_USERNAME, _cb->getUserName() ) ;
+       builder.append( FMP_LOCAL_PASSWORD, _cb->getPassword() ) ;
 
        rc = _fmp->write( builder.obj() ) ;
        if ( SDB_OK != rc )

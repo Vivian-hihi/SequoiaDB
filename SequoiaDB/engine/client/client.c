@@ -31,6 +31,8 @@
 #include <netinet/tcp.h>
 #endif // _LINUX
 
+BOOLEAN g_disablePassEncode = FALSE ;
+
 #define HANDLE_CHECK( handle, interhandle, handletype ) \
 do                                                      \
 {                                                       \
@@ -1106,14 +1108,14 @@ error :
    goto done ;
 }
 
-#define ENCRYTED_STR_LEN (SDB_MD5_DIGEST_LENGTH*2+1)
+#define ENCRYTED_STR_LEN   ( SDB_MD5_DIGEST_LENGTH * 2 + 1 )
 SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                               const CHAR *pUsrName, const CHAR *pPasswd ,
                               sdbConnectionHandle *handle )
 {
    INT32 rc                            = SDB_OK ;
    //for the encryted password
-   CHAR md5[ENCRYTED_STR_LEN]          = {0} ;
+   CHAR md5[ENCRYTED_STR_LEN + 1]      = {0} ;
    BOOLEAN r                           = FALSE ;
    SINT64 contextID                    = 0 ;
    sdbConnectionStruct *connection     = NULL ;
@@ -1141,11 +1143,19 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
 
    //encryt the password
    //do we need to take care of endianess?
-   rc = md5Encrypt( pPasswd, md5, ENCRYTED_STR_LEN) ;
-   if ( SDB_OK != rc )
+   if ( FALSE == g_disablePassEncode )
    {
-      goto error ;
+      rc = md5Encrypt( pPasswd, md5, ENCRYTED_STR_LEN ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    }
+   else
+   {
+      ossStrncpy( md5, pPasswd, ENCRYTED_STR_LEN ) ;
+   }
+
    //build checking message
    rc = clientBuildAuthMsg( &connection->_pSendBuffer,
                             &connection->_sendBufferSize,

@@ -176,15 +176,18 @@ namespace engine
       void  resetInfo ( EDU_INFO_TYPE type ) ;
 
       void setClientInfo ( const CHAR *clientName, UINT16 clientPort ) ;
+      void setUserInfo( const string &userName, const string &password ) ;
       void setName ( const CHAR *name ) ;
       void setClientSock ( ossSocket *pSock ) { _pClientSock = pSock ; }
       ossSocket * getClientSock () { return _pClientSock ; }
       BOOLEAN isFromLocal() const { return _pClientSock ? TRUE : FALSE ; }
-      const char *getName ()
+      const CHAR *getName ()
       {
          ossScopedLock _lock ( &_mutex, SHARED ) ;
          return _Name ;
       }
+      const CHAR *getUserName() const { return _userName.c_str() ; }
+      const CHAR *getPassword() const { return _passWord.c_str() ; }
 
       void postEvent ( pmdEDUEvent const &data )
       {
@@ -396,6 +399,9 @@ namespace engine
 
       INT32          _ctrlFlag ;
       BOOLEAN        _writingDB ;
+
+      string         _userName ;
+      string         _passWord ;
 
       // buffer related
       CHAR           *_pCompressBuff ;

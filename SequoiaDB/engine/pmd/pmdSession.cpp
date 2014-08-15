@@ -263,6 +263,13 @@ namespace engine
    INT32 _pmdLocalSession::_onAuth( MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
+      BSONObj authObj ;
+      BSONElement user, pass ;
+      rc = extractAuthMsg( msg, authObj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] failed to extrace auth msg, "
+                   "rc: %d", sessionName(), rc ) ;
+      user = authObj.getField( SDB_AUTH_USER ) ;
+      pass = authObj.getField( SDB_AUTH_PASSWD ) ;
 
       if ( SDB_ROLE_STANDALONE == pmdGetDBRole() ) // not auth
       {
@@ -271,14 +278,11 @@ namespace engine
       }
       else if ( SDB_ROLE_OM == pmdGetDBRole() )
       {
-         BSONObj authObj ;
-         rc = extractAuthMsg( msg, authObj ) ;
-         PD_RC_CHECK( rc, PDERROR, "Session[%s] failed to extrace auth msg, "
-                      "rc: %d", sessionName(), rc ) ;
          rc = sdbGetOMManager()->authenticate( authObj, eduCB() ) ;
          PD_RC_CHECK( rc, PDERROR, "Session[%s] failed to authenticate, "
                       "rc: %d", sessionName(), rc ) ;
          _authOK = TRUE ;
+         eduCB()->setUserInfo( user.valuestrsafe(), pass.valuestrsafe() ) ;
       }
       else
       {
@@ -320,6 +324,8 @@ namespace engine
             else
             {
                _authOK = TRUE ;
+               eduCB()->setUserInfo( user.valuestrsafe(),
+                                     pass.valuestrsafe() ) ;
             }
             break ;
          }
