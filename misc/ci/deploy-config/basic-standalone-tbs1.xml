@@ -15,7 +15,6 @@
 	</taskdef>
 
 	<target name="deploy" depends="">
-		<!-- <hostinfo prefix="host" /> -->
 		<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 		<property file="${properties.dir}" />
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
@@ -27,7 +26,7 @@
 	</target>
 
 	<target name="test" depends="">
-		<property name="test-type-list" value="basic" />
+		<property name="test-type-list" value="driver-php,driver-java" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />

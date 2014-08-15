@@ -6,15 +6,12 @@
 <!--@param ${test.reports.path}: The path where test reports directory. -->
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${properties.dir} : where the ci.test.properties file is it -->
-<!--@param ${USE.MONGODB} : use mongodb for test , default is false-->
 <project name="deploy" default="test">
 	<target name="deploy" depends="">
 		<property name="properties.dir" value="${basedir}/../ci.test.properties" />
-		<property name="USE.MONGODB" value="false" />
 		<property file="${properties.dir}" />
 
 		<echo message="Begin install software and test files to ${test.machine1}" />
-		<!-- <hostinfo prefix="host" /> -->
 		<parallel>
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 			   <property name="install.package.fullname" value="${install.package.fullname}" />
