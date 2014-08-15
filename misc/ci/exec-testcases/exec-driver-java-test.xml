@@ -19,9 +19,9 @@
         <attribute name="name" default="" />
         <attribute name="reportPath" default="${reports.path}" />
         <element name="some-tasks" optional="yes" />
-            <sequential>
-                <echo message="@{message}" />
-            </sequential>
+        <sequential>
+            <echo message="@{message}" />
+        </sequential>
     </macrodef>
 
     <target name="clean-env" depends="">
