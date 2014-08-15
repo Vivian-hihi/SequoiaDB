@@ -79,12 +79,12 @@ namespace engine
          goto error ;
       }
       rc = _pTcpListener->initSocket() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to init tcp listener socket, rc: %d",
-                   rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init tcp listener socket[%d], "
+                   "rc: %d", port, rc ) ;
 
       rc = _pTcpListener->bind_listen() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to bind tcp listener socket, rc: %d",
-                   rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind tcp listener socket[%d], "
+                   "rc: %d", port, rc ) ;
       PD_LOG( PDEVENT, "Listerning on port[%d]", port ) ;
 
       // 2. create http listerner
@@ -99,11 +99,11 @@ namespace engine
          goto error ;
       }
       rc = _pHttpListener->initSocket() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to init http listener socket, rc: %d",
-                   rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init http listener socket[%d], "
+                   "rc: %d", port, rc ) ;
       rc = _pHttpListener->bind_listen() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to bind http listerner socket, rc: %d",
-                   rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind http listerner socket[%d], "
+                   "rc: %d", port, rc ) ;
       PD_LOG( PDEVENT, "Http Listerning on port[%d]", port ) ;
 
    done:

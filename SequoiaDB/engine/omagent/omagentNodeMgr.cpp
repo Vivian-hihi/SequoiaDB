@@ -1171,8 +1171,10 @@ namespace engine
       {
          CHAR bakPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          CHAR srcPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-         utilBuildFullPath( getDialogPath(), pSvcName, OSS_MAX_PATHSIZE,
-                            bakPath ) ;
+
+         ossStrncpy( bakPath, nodeOptions.getDbPath(),
+                     OSS_MAX_PATHSIZE ) ;
+         ossStrncat( bakPath, "_bak", OSS_MAX_PATHSIZE ) ;
 
          if ( 0 == *(nodeOptions.getDiagLogPath() ) )
          {
