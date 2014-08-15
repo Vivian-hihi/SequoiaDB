@@ -76,7 +76,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-static PYOBJECT *connect_by_host( PYOBJECT *self, PYOBJECT *args )
+static PYOBJECT *connect_by_port( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc         = 0 ;
    INT32 port       = 0 ;
@@ -1183,7 +1183,7 @@ static PyMethodDef client_methods[] = {
    {"create_client",             create_client,             METH_VARARGS},
    {"init_connect",              init_connect,              METH_VARARGS},
    {"release_client",            release_client,            METH_VARARGS},
-   {"connect_by_host",           connect_by_host,           METH_VARARGS},
+   {"connect_by_port",           connect_by_port,           METH_VARARGS},
    {"connect_by_service",        connect_by_service,        METH_VARARGS},
    {"disconnect",                disconnect,                METH_VARARGS},
    {"create_user",               create_user,               METH_VARARGS},
