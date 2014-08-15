@@ -319,15 +319,13 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
    }
    else if ( FMP_CONTROL_STEP_EVAL == step )
    {
-/*      rc = _vm->initGlobalDB( res ) ;
-      if ( SDB_OK != rc )
+      rc = _vm->initGlobalDB( res ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "failed to init global db:%s",
-                 res.toString(FALSE, TRUE).c_str() ) ;
-         goto error ;
+         PD_LOG( PDWARNING, "Failed to init global db: %s",
+                 res.toString( FALSE, TRUE ).c_str() ) ;
+         // continue run
       }
-*/
-      _vm->initGlobalDB( res ) ;
 
       rc = _vm->eval( obj, res ) ;
       if ( SDB_OK != rc )

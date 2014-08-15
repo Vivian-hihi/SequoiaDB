@@ -51,7 +51,7 @@ _fmpJSVM::_fmpJSVM()
    _scope = _engine->newScope() ;
    if ( NULL == _scope )
    {
-//      PD_LOG( PDERROR, "failed to new scope" ) ;
+      PD_LOG( PDERROR, "failed to new scope" ) ;
       return ;
    }
 
@@ -114,12 +114,12 @@ INT32 _fmpJSVM::eval( const BSONObj &func,
    rc = _transCode2Str( ele, _cmd ) ;
    if ( SDB_OK != rc )
    {
-//      PD_LOG( PDERROR, "failed to trans code to str:%d",rc ) ;
+      PD_LOG( PDERROR, "failed to trans code to str:%d", rc ) ;
       goto error ;
    }
 
    rc = _scope->evaluate2( _cmd.c_str(), _cmd.length(),
-                          1, &val, &errMsg ) ;
+                           1, &val, &errMsg ) ;
    if ( SDB_OK != rc )
    {
       if ( NULL != errMsg )
@@ -459,6 +459,5 @@ INT32 _fmpJSVM::_transCode2Str( const BSONElement &ele,
 {
    INT32 rc = SDB_OK ;
    str = ele.toString(FALSE, TRUE ) ;
-//   _cmd = ele.jsonString( bson::JS, FALSE, 0) ;
    return rc ;
 }
