@@ -74,7 +74,7 @@ class client(object):
              bson.SON and list. It is a subclass of built-in dict
              and order-sensitive
    """
-   def __init__(self, host = default_host, port = default_svcname,
+   def __init__(self, host = default_host, service = default_svcname,
                       user = default_user, psw  = default_psw):
       """initialize when product a object.
  
@@ -87,10 +87,12 @@ class client(object):
       else:
          raise TypeError("host must be an instance of basestring")
 
-      if isinstance(port, int):
-         _port = port
+      if isinstance(service, int):
+         _svcname = str(service)
+      if isinstance(service, basestring):
+         _svcname = service
       else:
-         raise TypeError("port must be an instance of int")
+         raise TypeError("port must be an instance of int or basestring")
 
       if isinstance(user, basestring):
          _user = user
@@ -109,11 +111,11 @@ class client(object):
          raise SequoiaDBError
 
       # try to connect with default user and password 
-      rc = self.connect(self.__host, _port, _user, _psw)
+      rc = self.connect(self.__host, _svcname, _user, _psw)
       if const.SDB_OK != rc:
          pysequoiadb.cout("Attempt to connect to host:[%s], port:[%d],\
                            user:[%s], password:[%s] failed."\
-                           % (self.__host, _port, _user, _psw))
+                           % (self.__host, _svcname, _user, _psw))
          pysequoiadb.cout("Error: %s" % pysequoiadb.getErr(rc))
          sdbclient.disconnect(self._client)
 
@@ -182,15 +184,15 @@ class client(object):
 
    def connect_to_hosts(self, hosts, user = default_user,
                               psw = default_psw, policy = "random"):
-      """try to connect to hosts
+      """try to connect a host in specified hosts
 
       Parameters:
          Name    Type    Info:
          hosts   list    The list contains hosts.
                                eg.
-                               [ {'host':'localhost', 'port':11810,},
-                                 {'host':'192.168.10.30', 'port':11810},
-                                 {'host':'192.168.20.63', 'port':11810}, ]
+                               [ {'host':'localhost', 'service':11810,},
+                                 {'host':'192.168.10.30', 'service':11810},
+                                 {'host':'192.168.20.63', 'service':11810}, ]
          user    str     The user name to access to database 
          psw     str     The user password to access to database
          policy  str     The policy of select hosts. it must be string of
@@ -263,7 +265,7 @@ class client(object):
 
       return rc, const.INVALIDARG
 
-   def connect(self, host = default_host, port = default_svcname,
+   def connect(self, host = default_host, service = default_svcname,
                             user = default_user, psw  = default_psw):
       """connect to specified database
 
@@ -271,7 +273,7 @@ class client(object):
          Name    Type    Info:
          host    str     The host name or IP address of database server, if None,
                                'localhost' instead.
-         port    int     The servicename of database server, if None, 11810 instead.
+         service int     The servicename of database server, if None, 11810 instead.
          user    str     The user name to access to database, if None, "" instead.
          psw     str     The password to access to database, if None, "" instead.
       Return values:
@@ -283,10 +285,10 @@ class client(object):
       else:
          raise TypeError("host must be an instance of basestring")
 
-      if isinstance(port, int):
-         _svcname = str(svcname)
-      elif isinstance( svcname, basestring ):
-         _svcname = svcname
+      if isinstance(service, int):
+         _svcname = str(service)
+      elif isinstance( service, basestring ):
+         _svcname = service
       else:
          raise TypeError("port must be an instance of int or basestring")
 
