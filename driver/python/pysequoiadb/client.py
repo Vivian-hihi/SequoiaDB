@@ -31,7 +31,7 @@ import bson
 import pysequoiadb
 from pysequoiadb import ( static_object,
                           default_host,
-                          default_port,
+                          default_svcname,
                           default_user,
                           default_psw )
 from pysequoiadb.collectionspace import collectionspace
@@ -74,7 +74,7 @@ class client(object):
              bson.SON and list. It is a subclass of built-in dict
              and order-sensitive
    """
-   def __init__(self, host = default_host, port = default_port,
+   def __init__(self, host = default_host, port = default_svcname,
                       user = default_user, psw  = default_psw):
       """initialize when product a object.
  
@@ -109,8 +109,7 @@ class client(object):
          raise SequoiaDBError
 
       # try to connect with default user and password 
-      rc = sdbclient.init_connect(self._client, self.__host,
-                                                 _port, _user, _psw)
+      rc = sdbclient.connect(self._client, self.__host, _port, _user, _psw)
       if const.SDB_OK != rc:
          pysequoiadb.cout("Attempt to connect to host:[%s], port:[%d],\
                            user:[%s], password:[%s] failed."\
@@ -220,11 +219,18 @@ class client(object):
               localip in ip.values() ):
 
             host = ip['host']
-            port = ip['port']
-            rc = self.connect_by_port(host, port, user, psw)
+            svc = ip['service']
+            if isinstance(svc, int):
+               svcname = str(svc)
+            elif isinstance(svc, basestring):
+               svcname = svc
+            else:
+               raise TypeError("policy must be an instance of int or str")
+
+            rc = self.connect(host, svcname, user, psw)
             if const.SDB_OK == rc:
-               pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
-                                 % (host, port))
+               pysequoiadb.cout("connect to host:[%s], servicename:[%s] success."\
+                                 % (host, svcname))
             return rc, count
          count += 1
 
@@ -240,26 +246,32 @@ class client(object):
       while count < size:
          ip = hosts[position]
          host = ip['host']
-         port = ip['port']
+         svc = ip['service']
+         if isinstance(svc, int):
+            svcname = str(svc)
+         elif isinstance(svc, basestring):
+            svcname = svc
+         else:
+            raise TypeError("policy must be an instance of int or str")
 
-         rc = self.connect_by_port(host, port, _user, _psw)
+         rc = self.connect(host, svcname, _user, _psw)
          if const.SDB_OK == rc:
-            pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
-                              % (host, port))
+            pysequoiadb.cout("connect to host:[%s], service name:[%s] success."\
+                              % (host, svcname))
             return rc, position
          position += 1
 
       return rc, const.INVALIDARG
 
-   def connect_by_port(self, host = default_host, port = default_port,
-                             user = default_user, psw  = default_psw):
+   def connect(self, host = default_host, port = default_svcname,
+                            user = default_user, psw  = default_psw):
       """connect to specified database
 
       Parameters:
          Name    Type    Info:
          host    str     The host name or IP address of database server, if None,
                                'localhost' instead.
-         port    int     The port of database server, if None, 11810 instead.
+         port    int     The servicename of database server, if None, 11810 instead.
          user    str     The user name to access to database, if None, "" instead.
          psw     str     The password to access to database, if None, "" instead.
       Return values:
@@ -272,9 +284,11 @@ class client(object):
          raise TypeError("host must be an instance of basestring")
 
       if isinstance(port, int):
-         _port = port
+         _svcname = str(svcname)
+      elif isinstance( svcname, basestring ):
+         _svcname = svcname
       else:
-         raise TypeError("port must be an instance of int")
+         raise TypeError("port must be an instance of int or basestring")
 
       if isinstance(user, basestring):
          _user = user
@@ -286,50 +300,8 @@ class client(object):
       else:
          raise TypeError("password must be an instance of basestring")
 
-      rc = sdbclient.connect_by_port(self._client, self.__host,
-                                                   _port, _user, _psw)
-      pysequoiadb.check_error(rc)
-
-      return rc
-
-   def connect_by_service(self, host, service, user = default_user,
-                                               psw  = default_psw):
-      """connect to specified database, using host and service name.
-
-      Parameters:
-         Name    Type    Info:
-         host    str     The host name or IP address of database server.
-         service str     The service name of database server.
-         user    str     The user name to access to database, if None,
-                              "" instead.
-         psw     str     The password to access to database, if None,
-                              "" instead.
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
-      """
-      if isinstance(host, basestring):
-         self.__host = host
-      else:
-         raise TypeError("host must be an instance of basestring")
-
-      if isinstance(service, basestring):
-         _service = service
-      else:
-         raise TypeError("port must be an instance of basestring")
-
-      if isinstance(user, basestring):
-         _user = user
-      else:
-         raise TypeError("user name must be an instance of basestring")
-
-      if isinstance(psw, basestring):
-         _psw = psw
-      else:
-         raise TypeError("password must be an instance of basestring")
-
-      rc = sdbclient.connect_by_service(self._client, self.__host,
-                                                       _service, _user, _psw)
+      rc = sdbclient.connect(self._client, self.__host,
+                                        _svcname, _user, _psw)
       pysequoiadb.check_error(rc)
 
       return rc

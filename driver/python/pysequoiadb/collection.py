@@ -28,7 +28,7 @@ from bson.objectid import ObjectId
 import pysequoiadb
 from pysequoiadb import ( static_object,
                           default_host,
-                          default_port,
+                          default_svcname,
                           default_user,
                           default_psw )
 

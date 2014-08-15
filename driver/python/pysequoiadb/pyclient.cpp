@@ -33,30 +33,6 @@ static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args )
    return MAKE_PYOBJECT( client ) ;
 }
 
-static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
-{
-   INT32 rc         = 0 ;
-   INT32 port       = 0 ;
-   PYOBJECT *obj    = NULL ;
-   sdb *client      = NULL ;
-   const char *host = NULL ;
-   const char *user = NULL ;
-   const char *psw  = NULL ;
-   
-   
-   if ( !PARSE_PYTHON_ARGS( args, "Osiss", &obj, &host, &port, &user, &psw ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-   rc = client->connect( host, port, user, psw ) ;
-
-done:
-   return MAKE_RETURN_INT( rc ) ;
-}
-
 static PYOBJECT *release_client( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc      = 0 ;
@@ -76,30 +52,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-static PYOBJECT *connect_by_port( PYOBJECT *self, PYOBJECT *args )
-{
-   INT32 rc         = 0 ;
-   INT32 port       = 0 ;
-   PYOBJECT *obj    = NULL ;
-   sdb *client      = NULL ;
-   const char *host = NULL ;
-   const char *user = NULL ;
-   const char *psw  = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "Osiss", &obj, &host, &port, &user, &psw ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-   rc = client->connect( host, port, user, psw ) ;
-
-done:
-   return MAKE_RETURN_INT( rc ) ;
-}
-
-static PYOBJECT *connect_by_service( PYOBJECT *self, PYOBJECT *args )
+static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
@@ -1181,10 +1134,8 @@ static PYOBJECT *get_version( PYOBJECT *self, PYOBJECT *args )
 /* List of functions defined in the module */
 static PyMethodDef client_methods[] = {
    {"create_client",             create_client,             METH_VARARGS},
-   {"init_connect",              init_connect,              METH_VARARGS},
    {"release_client",            release_client,            METH_VARARGS},
-   {"connect_by_port",           connect_by_port,           METH_VARARGS},
-   {"connect_by_service",        connect_by_service,        METH_VARARGS},
+   {"connect",                   connect,                   METH_VARARGS},
    {"disconnect",                disconnect,                METH_VARARGS},
    {"create_user",               create_user,               METH_VARARGS},
    {"remove_user",               remove_user,               METH_VARARGS},

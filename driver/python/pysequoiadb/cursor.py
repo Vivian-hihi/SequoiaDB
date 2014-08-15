@@ -123,7 +123,7 @@ if __name__ == '__main__':
     from pysequoiadb.collectionspace import collectionspace
     from pysequoiadb.common import const
     sdb = client("192.168.20.111", 50000)
-    rc = sdb.connect_by_host("192.168.20.111", 50000)
+    rc = sdb.connect("192.168.20.111", 50000)
     if const.SDB_OK != rc:
         raise Exception("Test Failure")
     rc,cs = sdb.get_collection_space('tst')
