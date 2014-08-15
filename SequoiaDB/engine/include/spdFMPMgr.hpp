@@ -43,7 +43,7 @@
 #include "sdbInterface.hpp"
 
 #include <list>
-#include <set>
+#include <vector>
 
 namespace engine
 {
