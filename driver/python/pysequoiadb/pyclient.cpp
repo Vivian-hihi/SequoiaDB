@@ -1154,7 +1154,6 @@ static PyMethodDef client_methods[] = {
    {"create_replica_group",      create_replica_group,      METH_VARARGS},
    {"remove_replica_group",      remove_replica_group,      METH_VARARGS},
    {"create_replica_cata_group", create_replica_cata_group, METH_VARARGS},
-   /*{"active_replica_group",     active_replica_group,       METH_VARARGS},*/
    {"exec_update",               exec_update,               METH_VARARGS},
    {"exec_sql",                  exec_sql,                  METH_VARARGS},
    {"transaction_begin",         transaction_begin,         METH_VARARGS},
