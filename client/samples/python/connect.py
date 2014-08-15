@@ -53,13 +53,13 @@ if "__main__" == __name__:
    #
    host = "192.168.30.63"
    service = '80000'
-   rc = db.connect_by_host(host, 11810, 'admin', '*****')
+   rc = db.connect(host, 11810, 'admin', '*****')
    if const.SDB_OK != rc:
       pysequoiadb.cout("connect to server [%s] failed, %s"\
                                % (host, pysequoiadb.getErr(rc)))
 
    # try to connect another db server by service
-   rc = db.connect_by_service(host, service)
+   rc = db.connect(host, service)
    if const.SDB_OK != rc:
       pysequoiadb.cout("connect to server [%s] failed, %s"\
                                  % (host, pysequoiadb.getErr(rc)))
@@ -70,9 +70,9 @@ if "__main__" == __name__:
    db.disconnect()
 
    # try to connect other db server
-   hosts = [ {'host':'192.168.20.48', 'port':11810},
-             {'host':'192.168.20.111', 'port':50000},
-             {'host':'localhost', 'port':11810} ]
+   hosts = [ {'host':'192.168.20.48', 'service':11810},
+             {'host':'192.168.20.111', 'service':50000},
+             {'host':'localhost', 'service':11810} ]
    rc, idx = db.connect_to_hosts(hosts)
    if const.SDB_OK != rc:
       pysequoiadb.cout("failed to connect all hosts")
