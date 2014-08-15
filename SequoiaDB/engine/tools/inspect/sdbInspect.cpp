@@ -2620,13 +2620,19 @@ namespace
          curGroup = groupList.next() ;
       }
 
-      if ( ( 0 != ossStrncmp( "", header->_clName, CI_CL_NAME_SIZE ) ) &&
-           ( 0 >= tail._clCount ) )
       {
-         std::cout << "Error: cannot find collection: "
-                   << header->_csName << "." << header->_clName << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         //BOOLEAN hasCS = ( 0 != ossStrncmp( "", header->_csName,
+         //                                       CI_CS_NAME_SIZE ) ) ;
+         BOOLEAN hasCL = ( 0 != ossStrncmp( "", header->_clName,
+                                                CI_CL_NAME_SIZE ) ) ;
+         if ( 0 >= tail._clCount )
+         {
+            std::cout << "Error: cannot find any "
+                      << ( hasCL ? "match " : "" )
+                      << "collection" << std::endl ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
 
       ossGetCurrentTime( endTime ) ;
