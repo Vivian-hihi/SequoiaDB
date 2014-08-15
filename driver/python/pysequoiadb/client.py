@@ -221,7 +221,7 @@ class client(object):
 
             host = ip['host']
             port = ip['port']
-            rc = self.connect_by_host(host, port, user, psw)
+            rc = self.connect_by_port(host, port, user, psw)
             if const.SDB_OK == rc:
                pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
                                  % (host, port))
@@ -242,7 +242,7 @@ class client(object):
          host = ip['host']
          port = ip['port']
 
-         rc = self.connect_by_host(host, port, _user, _psw)
+         rc = self.connect_by_port(host, port, _user, _psw)
          if const.SDB_OK == rc:
             pysequoiadb.cout("connect to host:[%s], port:[%d] success."\
                               % (host, port))
