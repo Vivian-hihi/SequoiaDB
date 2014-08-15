@@ -178,7 +178,7 @@ class client(object):
          inet = fcntl.ioctl( sock.fileno(), 0x8915, 
                              struct.pack('256s', ifname[:15]))
          localip = socket.inet_ntoa(inet[20:24])
-      
+
       return localip
 
    def connect_to_hosts(self, hosts, user = default_user,
@@ -250,8 +250,8 @@ class client(object):
          position += 1
 
       return rc, const.INVALIDARG
-   
-   def connect_by_host(self, host = default_host, port = default_port,
+
+   def connect_by_port(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):
       """connect to specified database
 
@@ -286,8 +286,8 @@ class client(object):
       else:
          raise TypeError("password must be an instance of basestring")
 
-      rc = sdbclient.connect_by_host(self._client, self.__host,
-                                                    _port, _user, _psw)
+      rc = sdbclient.connect_by_port(self._client, self.__host,
+                                                   _port, _user, _psw)
       pysequoiadb.check_error(rc)
 
       return rc
