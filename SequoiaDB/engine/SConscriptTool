@@ -505,4 +505,4 @@ if linux:
 toolEnv.Install( '#/tools', sdbload2 )
 toolEnv.Install( '#/tools', sdbmemcheck )
 toolEnv.Install( '#/bin', sdbdpsdump )
-toolEnv.Install( '#/tools', sdbinspect )
+toolEnv.Install( '#/bin', sdbinspect )
