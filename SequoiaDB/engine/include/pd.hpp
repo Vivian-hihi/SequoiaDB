@@ -44,7 +44,6 @@
 #define PD_DFT_FILE_NUM             (20)
 #define PD_DFT_FILE_SZ              (100)
 #define PD_DFT_DIAGLOG              "sdbdiag.log"
-#define PD_FMP_DIAGLOG              "fmpdiag.log"
 
 #define PD_LOG_STRINGMAX            ( 4096 )
 

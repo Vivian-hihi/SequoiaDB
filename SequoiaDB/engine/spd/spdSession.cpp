@@ -89,15 +89,18 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != downloader, "impossible" ) ;
 
-      _fmpMgr = pmdGetKRCB()->getFMPCB() ;
-
-      rc = _fmpMgr->getFMP( _fmp ) ;
-      if ( SDB_OK != rc )
+      if ( NULL == _fmp )
       {
-         PD_LOG( PDERROR, "failed to get fmp:%d", rc ) ;
-         goto error ;
+         _fmpMgr = pmdGetKRCB()->getFMPCB() ;
+
+         rc = _fmpMgr->getFMP( _fmp ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get fmp:%d", rc ) ;
+            goto error ;
+         }
+         SDB_ASSERT( NULL != _fmp, "impossible" ) ;
       }
-      SDB_ASSERT( NULL != _fmp, "impossible" ) ;
 
       _cb = cb ;
 
@@ -186,6 +189,7 @@ namespace engine
        builder.append( FMP_CONTROL_FIELD, FMP_CONTROL_STEP_BEGIN ) ;
        builder.append( type ) ;
        builder.append( FMP_DIAG_PATH, pmdGetOptionCB()->getDiagLogPath() ) ;
+       builder.append( FMP_SEQ_ID, _fmp->getSeqID() ) ;
        builder.append( FMP_LOCAL_SERVICE, pmdGetOptionCB()->getServiceAddr() ) ;
        builder.append( FMP_LOCAL_USERNAME, _cb->getUserName() ) ;
        builder.append( FMP_LOCAL_PASSWORD, _cb->getPassword() ) ;

@@ -42,7 +42,7 @@
 #include "ossUtil.hpp"
 #include "fmpDef.hpp"
 
-#define SPD_POOL_HIGH_WATERMARK 5
+#define SPD_POOL_HIGH_WATERMARK           ( 5 )
 
 namespace engine
 {
@@ -50,7 +50,7 @@ namespace engine
    :_startBuf(NULL),
     _allocated( 0 )
    {
-
+      _hwSeqID = 0 ;
    }
 
    _spdFMPMgr::~_spdFMPMgr()
@@ -64,7 +64,7 @@ namespace engine
             _mtx.release() ;
             break ;
          }
-         else  if ( (UINT32)allocated != _pool.size() )
+         else if ( (UINT32)allocated != _pool.size() )
          {
             _mtx.release() ;
             PD_LOG( PDINFO, "not all fmp are returned:%d", allocated ) ;
@@ -151,28 +151,11 @@ namespace engine
       return SDB_OK ;
    }
 
-   BOOLEAN _spdFMPMgr::isProcedureUsr( const CHAR *usr )
-   {
-      BOOLEAN rc = FALSE ;
-      _mtx.get() ;
-      std::set<std::string>::iterator itr = _usrTable.find( usr ) ;
-      if ( _usrTable.end() == itr )
-      {
-         /// do noting.
-      }
-      else
-      {
-         _usrTable.erase( itr ) ;
-         rc = TRUE ;
-      }
-      _mtx.release() ;
-      return rc ;
-   }
-
    INT32 _spdFMPMgr::getFMP( _spdFMP *&fmp )
    {
       INT32 rc = SDB_OK ;
       _spdFMP *got = NULL ;
+
       _mtx.get() ;
       if ( _pool.empty() )
       {
@@ -184,17 +167,23 @@ namespace engine
             PD_LOG( PDERROR, "failed to create new fmp:%d",rc ) ;
             goto error ;
          }
+
          _mtx.get() ;
          ++_allocated ;
-//         ++got->_useTimes ;
-//         _usrTable.insert( got->getTmpUsr() ) ;
+         if( _vecFreeSeqID.size() > 0 )
+         {
+            got->_seqID = _vecFreeSeqID.back() ;
+            _vecFreeSeqID.pop_back() ;
+         }
+         else
+         {
+            got->_seqID = ++_hwSeqID ;
+         }
          _mtx.release() ;
       }
       else
       {
          got = _pool.back() ;
-//         ++got->_useTimes ;
-//         _usrTable.insert( got->getTmpUsr() ) ;
          _pool.pop_back() ;
          _mtx.release() ;
       }
@@ -250,6 +239,7 @@ namespace engine
            SPD_POOL_HIGH_WATERMARK <= _pool.size() )
       {
          --_allocated ;
+         _vecFreeSeqID.push_back( fmp->getSeqID() ) ;
          poolSize = _pool.size() ;
          allocateSize = _allocated ;
          SDB_ASSERT( 0 <= _allocated, "impossible" ) ;
@@ -270,6 +260,7 @@ namespace engine
             PD_LOG( PDERROR, "failed to reset fmp:%d",rc ) ;
             _mtx.get() ;
             --_allocated ;
+            _vecFreeSeqID.push_back( fmp->getSeqID() ) ;
             poolSize = _pool.size() ;
             allocateSize = _allocated ;
             _mtx.release() ;
@@ -287,7 +278,8 @@ namespace engine
       }
 
       PD_LOG( PDDEBUG, "pool size:%d, allocate size:%d",
-                          poolSize, allocateSize ) ;
+              poolSize, allocateSize ) ;
+
    done:
       return rc ;
    error:

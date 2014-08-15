@@ -70,17 +70,18 @@ namespace engine
    public:
       INT32 getFMP( _spdFMP *&fmp ) ;
       INT32 returnFMP( _spdFMP *fmp, _pmdEDUCB *cb ) ;
-      BOOLEAN isProcedureUsr( const CHAR *usr ) ;
 
    private:
       INT32 _createNewFMP( _spdFMP *&fmp ) ;
 
    private:
-      std::list<_spdFMP *> _pool ;
-      std::set<std::string> _usrTable ;
-      ossSpinXLatch _mtx ;
-      CHAR *_startBuf ;
-      INT32 _allocated ;
+      std::list<_spdFMP *>       _pool ;
+      std::vector< UINT32 >      _vecFreeSeqID ;
+      UINT32                     _hwSeqID ;
+      ossSpinXLatch              _mtx ;
+      CHAR                       *_startBuf ;
+      INT32                      _allocated ;
+
    } ;
 
    typedef class _spdFMPMgr spdFMPMgr ;

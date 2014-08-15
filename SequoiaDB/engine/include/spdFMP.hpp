@@ -55,6 +55,8 @@ namespace engine
       _spdFMP() ;
       virtual ~_spdFMP() ;
 
+      UINT32 getSeqID() const { return _seqID ; }
+
    public:
       /// timeout is sec.
       /// user should call getOwned if necessary.
@@ -83,8 +85,6 @@ namespace engine
 
       INT32 quit( _pmdEDUCB *cb ) ;
 
-      std::string getTmpUsr() ;
-
    private:
       INT32 _extendReadBuf() ;
 
@@ -99,16 +99,16 @@ namespace engine
       }
 
    protected:
-      OSSNPIPE _in ;
-      OSSNPIPE _out ;
-      OSSPID _id ;
-      BOOLEAN _discarded ;
-      CHAR *_readBuf ;
-      INT32 _readBufSize ;
-      INT32 _totalRead ;
-      INT32 _itr ;
-      INT32 _expect ;
-      INT32 _useTimes ;
+      UINT32         _seqID ;
+      OSSNPIPE       _in ;
+      OSSNPIPE       _out ;
+      OSSPID         _id ;
+      BOOLEAN        _discarded ;
+      CHAR           *_readBuf ;
+      INT32          _readBufSize ;
+      INT32          _totalRead ;
+      INT32          _itr ;
+      INT32          _expect ;
 
       friend class _spdFMPMgr ;
    } ;

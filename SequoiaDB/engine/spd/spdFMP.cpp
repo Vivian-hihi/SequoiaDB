@@ -42,9 +42,9 @@
 #include "pd.hpp"
 #include "pmdEDU.hpp"
 
-#define SPD_READ_TIMEOUT 1
+#define SPD_READ_TIMEOUT      1
 const INT32 SPD_MSG_MAX_LEN = 17 * 1024 *1024 ;
-#define SPD_READ_PAGE 4096
+#define SPD_READ_PAGE         4096
 
 static const CHAR *SPD_MAGIC = FMP_MSG_MAGIC;
 static BSONObj RESET_MSG = BSON( FMP_CONTROL_FIELD << FMP_CONTROL_STEP_RESET ) ;
@@ -57,14 +57,14 @@ static INT32 SPD_NEXT[SPD_NEXT_SIZE] = { -1, -1, 0, -1 } ;
 namespace engine
 {
    _spdFMP::_spdFMP()
-   :_id( -1 ),
+   :_seqID( 0 ),
+    _id( -1 ),
     _discarded(FALSE),
     _readBuf(NULL),
     _readBufSize(0),
     _totalRead(0),
     _itr(0),
-    _expect( 0 ),
-    _useTimes(0)
+    _expect( 0 )
    {}
 
    _spdFMP::~_spdFMP()
@@ -87,13 +87,6 @@ namespace engine
       {
          SDB_OSS_FREE( _readBuf ) ;
       }
-   }
-
-   std::string _spdFMP::getTmpUsr()
-   {
-      std::stringstream ss ;
-      ss << FMP_MSG_MAGIC << _id << ":" << _useTimes ;
-      return ss.str() ;
    }
 
    INT32 _spdFMP::read( BSONObj &msg, _pmdEDUCB *cb, BOOLEAN ignoreTimeout )

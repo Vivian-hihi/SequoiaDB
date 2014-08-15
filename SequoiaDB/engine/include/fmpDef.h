@@ -40,7 +40,14 @@
 #include "msgDef.h"
 #include "spd.h"
 
-#define SPD_PROCESS_NAME "sdbfmp"
+#if defined( _WINDOWS )
+#define SPD_PROCESS_NAME      "sdbfmp.exe"
+#else
+#define SPD_PROCESS_NAME      "sdbfmp"
+#endif // _WINDOWS
+
+#define PD_FMP_DIAGLOG_PREFIX       "fmpdiag"
+#define PD_FMP_DIAGLOG_SUBFIX       "log"
 
 /// WARNING: do not modify this define.
 /// spdFMP.cpp::SPD_NEXT is depend on this define.
@@ -55,6 +62,7 @@
 #define FMP_RES_CODE          "retCode"
 #define FMP_CONTROL_FIELD     "step"
 #define FMP_DIAG_PATH         "diag"
+#define FMP_SEQ_ID            "seqid"
 #define FMP_FUNCTION_DEF      "function"
 #define FMP_LOCAL_SERVICE     "service"
 #define FMP_LOCAL_USERNAME    "username"

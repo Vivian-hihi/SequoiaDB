@@ -40,12 +40,12 @@
 #include "ossUtil.hpp"
 #include "ossSocket.hpp"
 #include "utilStr.hpp"
+#include "fmpJSVM.hpp"
 #include "pd.hpp"
 
-/// TODO: get vm instance from a factroy
-#include "fmpJSVM.hpp"
+using namespace bson ;
 
-#define FMP_DEFAULT_BUF_SIZE 1024
+#define FMP_DEFAULT_BUF_SIZE           ( 1024 )
 
 static INT32 FMP_STATUS_M[FMP_CONTROL_SETP_MAX][FMP_CONTROL_SETP_MAX]
        = {{FMP_CONTROL_STEP_DOWNLOAD, FMP_CONTROL_STEP_INVALID, FMP_CONTROL_STEP_INVALID, FMP_CONTROL_STEP_INVALID},
@@ -221,12 +221,21 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
 
    if ( FMP_CONTROL_STEP_BEGIN == step )
    {
-      BSONElement diag = obj.getField( FMP_DIAG_PATH ) ;
-      if ( !diag.eoo() && String == diag.type() &&
-           FALSE == sdbIsPDEnabled() )
+      UINT32 seqID = 1 ;
+      BSONElement beSeq = obj.getField( FMP_SEQ_ID ) ;
+      if ( beSeq.isNumber() )
       {
+         seqID = (UINT32)beSeq.numberInt() ;
+      }
+      BSONElement diag = obj.getField( FMP_DIAG_PATH ) ;
+      if ( !diag.eoo() && String == diag.type() )
+      {
+         CHAR diaglogShort[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         ossSnprintf( diaglogShort, OSS_MAX_PATHSIZE, "%s_%u.%s",
+                      PD_FMP_DIAGLOG_PREFIX, seqID, PD_FMP_DIAGLOG_SUBFIX ) ;
+
          CHAR diaglog[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         engine::utilBuildFullPath( diag.valuestrsafe(), PD_FMP_DIAGLOG,
+         engine::utilBuildFullPath( diag.valuestrsafe(), diaglogShort,
                                     OSS_MAX_PATHSIZE, diaglog ) ;
          sdbEnablePD( diaglog ) ;
       }
@@ -299,7 +308,6 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
             goto error ;
          }
       }
-
    }
    else if ( FMP_CONTROL_STEP_DOWNLOAD == step )
    {
