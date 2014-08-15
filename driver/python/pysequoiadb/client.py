@@ -190,8 +190,8 @@ class client(object):
          Name    Type    Info:
          hosts   list    The list contains hosts.
                                eg.
-                               [ {'host':'localhost', 'service':11810,},
-                                 {'host':'192.168.10.30', 'service':11810},
+                               [ {'host':'localhost',     'service':'11810'},
+                                 {'host':'192.168.10.30', 'service':'11810'},
                                  {'host':'192.168.20.63', 'service':11810}, ]
          user    str     The user name to access to database 
          psw     str     The user password to access to database
@@ -273,7 +273,7 @@ class client(object):
          Name    Type    Info:
          host    str     The host name or IP address of database server, if None,
                                'localhost' instead.
-         service int     The servicename of database server, if None, 11810 instead.
+         service int/str The servicename of database server, if None, 11810 instead.
          user    str     The user name to access to database, if None, "" instead.
          psw     str     The password to access to database, if None, "" instead.
       Return values:
