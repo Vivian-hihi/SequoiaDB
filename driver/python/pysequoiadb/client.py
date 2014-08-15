@@ -89,7 +89,7 @@ class client(object):
 
       if isinstance(service, int):
          _svcname = str(service)
-      if isinstance(service, basestring):
+      elif isinstance(service, basestring):
          _svcname = service
       else:
          raise TypeError("port must be an instance of int or basestring")
