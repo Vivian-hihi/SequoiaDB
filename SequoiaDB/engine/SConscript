@@ -123,33 +123,6 @@ utilFiles = [
       "util/url.c"
       ]
 
-sptFiles = [
-      "spt/engine.cpp",
-      "spt/dbClasses.cpp",
-      "spt/sptConvertor.cpp"
-      ]
-
-spt2Files = [
-      "spt/sptContainer.cpp",
-      "spt/sptInvoker.cpp",
-      "spt/sptReturnVal.cpp",
-      "spt/sptScope.cpp",
-      "spt/sptSPScope.cpp",
-      "spt/sptUtil.cpp",
-      "spt/sptSPArguments.cpp",
-      "spt/sptLibssh2Session.cpp",
-      "spt/sptProperty.cpp",
-      "spt/sptBsonobj.cpp",
-      "spt/sptSshSession.cpp",
-      "spt/sptConvertor2.cpp",
-      "spt/sptGlobalFunc.cpp",
-      "spt/sptCmdRunner.cpp",
-      "spt/usrdef/sptUsrSsh.cpp",
-      "spt/usrdef/sptUsrCmd.cpp",
-      "spt/usrdef/sptUsrFile.cpp",
-      "spt/usrdef/sptUsrSystem.cpp"
-      ]
-
 rtnFiles = [
       "rtn/rtnContext.cpp",
       "rtn/rtnUpdate.cpp",
@@ -262,31 +235,6 @@ optFiles = [
 monFiles = [
       "mon/monDump.cpp",
       "mon/monCB.cpp"
-      ]
-
-ssh2Files = [
-      "ssh2/agent.c",
-      "ssh2/channel.c",
-      "ssh2/comp.c",
-      "ssh2/crypt.c",
-      "ssh2/global.c",
-      "ssh2/hostkey.c",
-      "ssh2/keepalive.c",
-      "ssh2/kex.c",
-      "ssh2/knownhost.c",
-      "ssh2/libgcrypt.c",
-      "ssh2/mac.c",
-      "ssh2/misc.c",
-      "ssh2/openssl.c",
-      "ssh2/packet.c",
-      "ssh2/pem.c",
-      "ssh2/publickey.c",
-      "ssh2/scp.c",
-      "ssh2/session.c",
-      "ssh2/sftp.c",
-      "ssh2/transport.c",
-      "ssh2/userauth.c",
-      "ssh2/version.c"
       ]
 
 pcreFiles = [
@@ -419,7 +367,6 @@ aggrFiles = [
       "aggr/aggrSort.cpp",
       "aggr/aggrProject.cpp"
       ]
-
 
 netFiles = [
       "net/netEventHandler.cpp",
@@ -621,8 +568,6 @@ spdTestFiles =[
 env.StaticLibrary('bson', bsonFiles)
 #PCRE
 env.StaticLibrary('pcre', pcreFiles)
-#ssh2
-env.StaticLibrary('ssh2', ssh2Files)
 #snappy
 env.StaticLibrary('snappy', snappyFiles)
 #Operating System Services
@@ -637,9 +582,6 @@ env.StaticLibrary('mig', migFiles)
 env.StaticLibrary('pd', pdFiles)
 #Utilities
 env.StaticLibrary('util', utilFiles)
-#Scripting
-env.StaticLibrary('spt', sptFiles)
-env.StaticLibrary('spt2', spt2Files)
 #Runtime
 env.StaticLibrary('rtn', rtnFiles)
 #Message
@@ -697,7 +639,7 @@ spdtest = env.Object('spdtest', gtestMainFile)
 
 if hasEngine:
    engine = env.Program("sequoiadb", pmdMain,
-         LIBDEPS=["qgm","bar","rest","dps","cat","coord","cls","snappy","pcre","bson","oss","bps","ixm","pmd","pd","util","spt","rtn","msg","dms","mth","opt","mon", "net", "sql", "auth","mig", "aggr", "spd", "omsvc"],
+         LIBDEPS=["qgm","bar","rest","dps","cat","coord","cls","snappy","pcre","bson","oss","bps","ixm","pmd","pd","util","rtn","msg","dms","mth","opt","mon", "net", "sql", "auth","mig", "aggr", "spd", "omsvc"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
    env.Install( '#/bin', engine )
@@ -711,7 +653,7 @@ if hasEngine:
 # Test Buckets
 if hasTestcase:
 #smwrappertest = env.Program("smwrappertest", SMWrapperTestFiles,
-#         LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest","snappy","cls","pcre","bson","oss","bps","ixm","pmd","mig","pd","util","spt","rtn","msg","dms","mth","opt","mon", "net", "sql"],
+#         LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest","snappy","cls","pcre","bson","oss","bps","ixm","pmd","mig","pd","util","rtn","msg","dms","mth","opt","mon", "net", "sql"],
 #          _LIBDEPS='$_LIBDEPS_OBJS' )
    cmtest = env.Program("cmtest", cmTestFile,
           LIBDEPS=["qgm","bar","rest","dps","cat","coord","gtest","snappy","cls","bps","pcre","oss","pd","pmd","mig","util","rtn","ixm","msg","dms","mth","opt","bson","mon","net","sql","auth", "aggr", "spd", "omsvc"],
