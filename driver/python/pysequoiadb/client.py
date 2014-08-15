@@ -109,7 +109,7 @@ class client(object):
          raise SequoiaDBError
 
       # try to connect with default user and password 
-      rc = sdbclient.connect(self._client, self.__host, _port, _user, _psw)
+      rc = self.connect(self.__host, _port, _user, _psw)
       if const.SDB_OK != rc:
          pysequoiadb.cout("Attempt to connect to host:[%s], port:[%d],\
                            user:[%s], password:[%s] failed."\
