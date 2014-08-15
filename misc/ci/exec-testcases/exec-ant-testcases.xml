@@ -9,11 +9,11 @@
 	<property name="cata.service.port" value="60000" />
 	<property name="data.service.port" value="51000" />
 	<property name="coord.service.port" value="50000" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
-			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>
 
 	<target name="clean-test-reports" depends="">
 		<echo message="Begin to clean test result reports..." />
