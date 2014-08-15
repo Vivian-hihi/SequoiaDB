@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="hadoop-connector" default="jar" >
 	<property name="build.dir"  value="${basedir}/build"/>
+	<property name="java.driver.jar" value="${basedir}/../../java/sequoiadb.jar"/>		
 	
 	<target name="init">
 		<delete dir="${build.dir}" />
@@ -21,7 +22,7 @@
 	<target name="copyJar"  depends="init">
 		<copy todir="${build.dir}/lib">
 			<fileset dir="${basedir}/hadoop${hadoop.version}"  includes="**/*.jar" />
-			<fileset dir="${basedir}/lib" includes="**/*.jar" />
+			<fileset dir="${basedir}/lib" includes="**/*.jar" />			 
 		</copy>
 		<copy file="${java.driver.jar}" todir="${build.dir}/lib" />
 	</target>
