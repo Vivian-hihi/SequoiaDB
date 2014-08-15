@@ -84,10 +84,11 @@ Building Drivers:
 			PHP source code is located in thirdparty/php directory
 			The dir name must be "php-<version>"
 	Python Client:
+		scons --client
 		cd driver/python
 		scons
 	Java Client:
-		cd driver/python
+		cd driver/java
 		scons
 	.Net Client:
 		cd driver/C#.Net
@@ -95,9 +96,13 @@ Building Drivers:
 
 Building Connectors:
 	Hadoop Connector:
+                cd driver/java
+                scons
 		cd driver/hadoop/hadoop-connector
 		ant -Dhadoop.version=2.2
 	Hive Connector:
+		cd driver/java
+                scons
 		cd driver/hadoop/hive
 		ant
 	Storm Connector:
