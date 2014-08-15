@@ -85,6 +85,25 @@ const CHAR* getPDLevelDesp ( PDLEVEL level )
    return "UNKNOW" ;
 }
 
+/* private variables */
+struct _pdLogFile : public SDBObject
+{
+   // ossPrimitiveFileOp is native file interface, which returns errno or
+   // GetLastError, instead of database error code
+   ossPrimitiveFileOp _logFile ;
+   UINT64             _fileSize ;
+   ossSpinXLatch _mutex ;
+} ;
+typedef struct _pdLogFile pdLogFile ;
+
+// currently we only have diag log, we may have different types of logs later
+enum _pdLogType
+{
+   PD_DIAGLOG = 0,
+   PD_LOG_MAX
+} ;
+pdLogFile _pdLogFiles [ PD_LOG_MAX ] ;
+
 /*
    _pdCfgInfo define
 */
@@ -132,6 +151,8 @@ const CHAR* getDialogPath ()
 void sdbEnablePD( const CHAR *pdPathOrFile, INT32 fileMaxNum,
                   UINT32 fileMaxSize )
 {
+   sdbDisablePD() ;
+
    pdCfgInfo &info = _getPDCfgInfo() ;
    const CHAR *shortName = PD_DFT_DIAGLOG ;
 
@@ -172,6 +193,11 @@ void sdbEnablePD( const CHAR *pdPathOrFile, INT32 fileMaxNum,
 
 void sdbDisablePD()
 {
+   pdLogFile &logFile = _pdLogFiles[ PD_DIAGLOG ] ;
+   if ( logFile._logFile.isValid() )
+   {
+      logFile._logFile.Close() ;
+   }
    _getPDCfgInfo()._pdLogFile[0] = 0 ;
 }
 
@@ -203,25 +229,6 @@ const static CHAR *PD_LOG_HEADER_FORMAT="%04d-%02d-%02d-%02d.%02d.%02d.%06d\
 Level:%s"OSS_NEWLINE"PID:%-37dTID:%d"OSS_NEWLINE"Function:%-32sLine:%d"\
 OSS_NEWLINE"File:%s"OSS_NEWLINE"Message:"OSS_NEWLINE"%s"OSS_NEWLINE OSS_NEWLINE;
 /* extern variables */
-
-/* private variables */
-struct _pdLogFile : public SDBObject
-{
-   // ossPrimitiveFileOp is native file interface, which returns errno or
-   // GetLastError, instead of database error code
-   ossPrimitiveFileOp _logFile ;
-   UINT64             _fileSize ;
-   ossSpinXLatch _mutex ;
-} ;
-typedef struct _pdLogFile pdLogFile ;
-
-// currently we only have diag log, we may have different types of logs later
-enum _pdLogType
-{
-   PD_DIAGLOG = 0,
-   PD_LOG_MAX
-} ;
-pdLogFile _pdLogFiles [ PD_LOG_MAX ] ;
 
 // driver don't use the code
 #ifndef SDB_CLIENT
