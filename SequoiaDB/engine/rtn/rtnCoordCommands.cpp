@@ -7537,13 +7537,14 @@ namespace engine
          sdbGetCoordCB()->getLock( EXCLUSIVE ) ;
          sdbGetCoordCB()->clearCatNodeAddrList() ;
          sdbGetCoordCB()->releaseLock( EXCLUSIVE ) ;
-      }
-      CoordGroupInfo *pEmptyGroupInfo = NULL ;
-      pEmptyGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID ) ;
-      if ( NULL != pEmptyGroupInfo )
-      {
-         CoordGroupInfoPtr groupInfo( pEmptyGroupInfo ) ;
-         sdbGetCoordCB()->updateCatGroupInfo( groupInfo ) ;
+
+         CoordGroupInfo *pEmptyGroupInfo = NULL ;
+         pEmptyGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID ) ;
+         if ( NULL != pEmptyGroupInfo )
+         {
+            CoordGroupInfoPtr groupInfo( pEmptyGroupInfo ) ;
+            sdbGetCoordCB()->updateCatGroupInfo( groupInfo ) ;
+         }
       }
       replyHeader.flags = rc ;
       goto done ;
