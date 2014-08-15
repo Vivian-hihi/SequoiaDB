@@ -2154,6 +2154,15 @@ namespace
                                            CI_HOSTNAME_SIZE ) ;
                ossMemcpy( node->_serviceName, servicename.c_str(),
                                               CI_SERVICENAME_SIZE ) ;
+               {
+                  sdbclient::sdb db ;
+                  rc = db.connect( node->_hostname, node->_serviceName ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     node->_state = 1 ;
+                     rc = SDB_OK ;
+                  }
+               }
                node->_nodeID = nodeID ;
                ++index ;
                node->_index = index ;
@@ -2331,15 +2340,10 @@ namespace
          rc = cursor.next( collection ) ;
       }
 
-      if ( hasCollection && 0 == collections.count() )
+      if ( SDB_DMS_EOC == rc )
       {
-         std::cout << "Error: cannot find collection: "
-                   << csName << "." << clName << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         rc = SDB_OK ;
       }
-
-      rc = SDB_OK ;
 
    done:
       return rc ;
@@ -2499,6 +2503,7 @@ namespace
 
       rc = getMainAndSubCl( coord, tail._mainCls ) ;
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+      tail._mainClCount = tail._mainCls.size() ;
 
       hasGroup = ( 0 != ossStrncmp( "", header->_groupName,
                                         CI_GROUPNAME_SIZE ) ) ;
@@ -2548,6 +2553,17 @@ namespace
             offset += CI_GROUP_HEADER_SIZE ;
 
             curCollection = collections.getHead() ;
+
+            // write node data to file first, if collection not NULL
+            if ( NULL == curCollection )
+            {
+               rc = writeCiNode( file, nodeList, buffer,
+                                 bufferSize, validSize ) ;
+               CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+               offset += validSize ;
+               writeNode = TRUE ;
+            }
+
             while ( NULL != curCollection )
             {
                cursors.clear() ;
@@ -2602,6 +2618,15 @@ namespace
          }
 
          curGroup = groupList.next() ;
+      }
+
+      if ( ( 0 != ossStrncmp( "", header->_clName, CI_CL_NAME_SIZE ) ) &&
+           ( 0 >= tail._clCount ) )
+      {
+         std::cout << "Error: cannot find collection: "
+                   << header->_csName << "." << header->_clName << std::endl ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
 
       ossGetCurrentTime( endTime ) ;
@@ -2755,6 +2780,19 @@ namespace
          ciNodes.clear() ;
          rc = readCiNode( in, offset, groupHeader, ciNodes ) ;
          CHECK_VALUE( ( SDB_OK != rc ), error ) ;
+
+         if ( 0 >= groupHeader._clCount )
+         {
+            rc = writeCiNode( out, ciNodes, buffer,
+                              bufferSize, validSize ) ;
+            if ( SDB_OK != rc )
+            {
+               std::cout << "Error: failed to write ciNodes to file"
+                         << std::endl ;
+               goto error ;
+            }
+            writeOffset += validSize ;
+         }
 
          UINT32 idx = 0 ;
          while ( idx < groupHeader._clCount )
