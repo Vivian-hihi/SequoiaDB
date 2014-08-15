@@ -70,6 +70,8 @@ using namespace bson ;
 #define REMOTE_OMAGENT_PROG ""
 #define START_DB_PROG "sdbstart.exe"
 #define SDB_CM_PROG   "sdbcm.exe"
+#define SDB_CM_START  "sdbcmart.exe"
+#define SDB_CM_STOP   "sdbcmtop.exe"
 
 #else
 
