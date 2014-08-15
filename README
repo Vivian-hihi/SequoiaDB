@@ -57,19 +57,19 @@ Connectors:
 		storm-sequoiadb.jar
 	
 Building Engine:
-	Build Engine:
+	Engine Only:
 		scons --engine
-	Build C/C++ Client:
+	C/C++ Client:
 		scons --client
-	Build Shell:
+	Shell:
 		scons --shell
-	Build Tools:
+	Tools:
 		scons --tool
-	Build Testcase:
+	Testcase:
 		scons --testcase
-	Build FMP:
+	FMP:
 		scons --fmp
-	Build All ( except drivers ):
+	All ( except drivers ):
 		scons --all
 	Note:
 		adding option "--dd" for debug build
