@@ -10,7 +10,7 @@ var searchData=
   ['collection',['collection',['../classbson_1_1dbref_1_1DBRef.html#abcd0407ebf9e5ace1e6939ce60bc1cc7',1,'bson::dbref::DBRef']]],
   ['collectionspace',['collectionspace',['../classpysequoiadb_1_1collectionspace_1_1collectionspace.html',1,'pysequoiadb::collectionspace']]],
   ['connect',['connect',['../classpysequoiadb_1_1replicanode_1_1replicanode.html#afec533245151d0c9e7f5780d29a845b1',1,'pysequoiadb::replicanode::replicanode']]],
-  ['connect_5fby_5fhost',['connect_by_host',['../classpysequoiadb_1_1client_1_1client.html#add42f21204c81321133182335c2be55c',1,'pysequoiadb::client::client']]],
+  ['connect_5fby_5fport',['connect_by_port',['../classpysequoiadb_1_1client_1_1client.html#a33b3fc66a10f8bb8ebfb585644988a32',1,'pysequoiadb::client::client']]],
   ['connect_5fby_5fservice',['connect_by_service',['../classpysequoiadb_1_1client_1_1client.html#aa61fac418deffc7f557f10c286c2a145',1,'pysequoiadb::client::client']]],
   ['connect_5fto_5fhosts',['connect_to_hosts',['../classpysequoiadb_1_1client_1_1client.html#a94ed87aee00da0ee5d01e020c79c363f',1,'pysequoiadb::client::client']]],
   ['connecterror',['ConnectError',['../classpysequoiadb_1_1error_1_1ConnectError.html',1,'pysequoiadb::error']]],
