@@ -11,9 +11,9 @@
 	<property name="coord.service.port" value="50000" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks/" includes="*.jar" />
+			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> 
 
 	<target name="clean-test-reports" depends="">
 		<echo message="Begin to clean test result reports..." />
