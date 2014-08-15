@@ -12,6 +12,7 @@
     <typedef name="sdbisclexist" classname="com.sequoiadb.ant.sdbtask.SdbIsCLExist" onerror="ignore" />
 	<typedef name="sdbcount" classname="com.sequoiadb.ant.sdbtask.SdbCount" onerror="ignore" />
 	<typedef name="sdbinsert" classname="com.sequoiadb.ant.sdbtask.SdbInsert" onerror="ignore" />
+    <typedef name="sdbTime" classname="com.sequoiadb.ant.sdbtask.SdbTime" onerror="ignore" />
 	<typedef name="sdbquery" classname="com.sequoiadb.ant.sdbtask.SdbQuery" onerror="ignore" />
     <typedef name="sdbdelete" classname="com.sequoiadb.ant.sdbtask.SdbDelete" onerror="ignore" />
 	<typedef name="sdbcreateindex" classname="com.sequoiadb.ant.sdbtask.SdbCreateIndex" onerror="ignore"/>
