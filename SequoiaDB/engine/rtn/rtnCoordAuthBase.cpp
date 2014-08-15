@@ -73,9 +73,15 @@ namespace engine
       REQUESTID_MAP nodes ;
       REPLY_QUE replyQue ;
       NodeID curNodeID = pmdGetNodeID() ;
-      rc = rtnCoordGetCatGroupInfo( cb, FALSE, cata ) ;
-      PD_RC_CHECK ( rc, PDWARNING,
-                    "Failed to get catalog group info, rc = %d", rc  ) ;
+      BOOLEAN hasRetry = FALSE ;
+
+   retry:
+      rc = rtnCoordGetCatGroupInfo( cb, hasRetry ? TRUE : FALSE, cata ) ;
+      PD_RC_CHECK ( rc, PDWARNING, "Failed to get catalog group info, "
+                    "rc = %d", rc  ) ;
+
+      nodes.clear() ;
+      // send message
       rc = rtnCoordSendRequestToPrimary( pReceiveBuffer,
                                          cata, nodes,
                                          pRouteAgent,
@@ -83,70 +89,41 @@ namespace engine
                                          cb ) ;
       if ( SDB_OK != rc )
       {
-         rc = rtnCoordGetCatGroupInfo( cb, TRUE, cata ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "failed to get catagroup info, rc = %d", rc ) ;
-         nodes.clear() ;
-         rc = rtnCoordSendRequestToPrimary( pReceiveBuffer,
-                                    cata, nodes,
-                                    pRouteAgent,
-                                    MSG_ROUTE_CAT_SERVICE,
-                                    cb ) ;
-         if ( SDB_OK != rc )
+         if ( !hasRetry )
          {
-            if ( sWhenNoPrimary )
-            {
-               rc = rtnCoordSendRequestToOne( pReceiveBuffer, cata,
-                                      nodes, pRouteAgent,
-                                      MSG_ROUTE_CAT_SERVICE,
-                                      cb ) ;
-               PD_RC_CHECK ( rc, PDERROR,
-                             "can not find a available cata node, rc = %d",
-                             rc ) ;
-            }
-            else
-            {
-               PD_RC_CHECK ( rc, PDERROR,
-                             "cannot find the priamry, rc = %d", rc ) ;
-            }
+            hasRetry = TRUE ;
+            goto retry ;
+         }
+
+         if ( sWhenNoPrimary )
+         {
+            rc = rtnCoordSendRequestToOne( pReceiveBuffer, cata,
+                                           nodes, pRouteAgent,
+                                           MSG_ROUTE_CAT_SERVICE,
+                                           cb ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Can not find a available cata node, "
+                          "rc = %d", rc ) ;
+         }
+         else
+         {
+            PD_RC_CHECK ( rc, PDERROR, "Can not find the priamry, rc = %d",
+                          rc ) ;
          }
       }
 
-      rc = rtnCoordGetReply( cb, nodes, replyQue, msgType );
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to get reply from catalog for auth, rc = %d", rc ) ;
+      rc = rtnCoordGetReply( cb, nodes, replyQue, msgType ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to get reply from catalog for auth, "
+                    "rc = %d", rc ) ;
 
       if ( !replyQue.empty() )
       {
          MsgInternalReplyHeader *res = ( MsgInternalReplyHeader * )
-                                       (replyQue.front()) ;
-         if ( SDB_CLS_NOT_PRIMARY == rc )
+                                       ( replyQue.front() ) ;
+         if ( SDB_CLS_NOT_PRIMARY == res->res && !hasRetry )
          {
             clearQ( replyQue ) ;
-            nodes.clear() ;
-            rc = rtnCoordGetCatGroupInfo( cb, TRUE, cata ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to get catalog group info, rc = %d", rc ) ;
-            rc = rtnCoordSendRequestToPrimary( pReceiveBuffer,
-                                       cata, nodes,
-                                       pRouteAgent,
-                                       MSG_ROUTE_CAT_SERVICE,
-                                       cb ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to send request to primary, rc = %d", rc ) ;
-            rc = rtnCoordGetReply( cb, nodes, replyQue, msgType );
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to get reply from primary, rc = %d", rc ) ;
-            if ( !replyQue.empty() )
-            {
-               MsgInternalReplyHeader *r = ( MsgInternalReplyHeader * )
-                                          (replyQue.front()) ;
-               rc = r->res ;
-            }
-            else
-            {
-               PD_RC_CHECK ( SDB_SYS, PDERROR, "Empty reply is received" ) ;
-            }
+            hasRetry = TRUE ;
+            goto retry ;
          }
          else
          {
@@ -157,10 +134,12 @@ namespace engine
       {
          PD_RC_CHECK ( SDB_SYS, PDERROR, "Empty reply is received" ) ;
       }
+
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
     done:
       msgBuildReplyMsgHeader( replyHeader,
                               sizeof(replyHeader),
@@ -176,4 +155,6 @@ namespace engine
       rtnCoordClearRequest( cb, nodes );
       goto done ;
    }
+
 }
+
