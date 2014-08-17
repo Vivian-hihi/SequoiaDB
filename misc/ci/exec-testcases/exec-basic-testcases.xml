@@ -89,7 +89,7 @@
 			<param name="commlib.option" value="${commlib.option}" />
 		</foreach>
 
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;system-out&gt;&#10;&lt;![CDATA[${screen.output}]]&gt;&#10;&lt;/system-out&gt;&#10;&lt;/testsuite&gt;&#10;" append="true" />
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
 
 		<tstamp>
 			<format property="testsuite.end.time" pattern="yyyy-MM-dd HH-mm-ss" />
@@ -270,13 +270,13 @@
 						</if>
 
 						<tstamp>
-							<format property="testcase.end.time" pattern="yyyy-MM-dd HH-mm-ss" />
+							<format property="testcase.failure.end.time" pattern="yyyy-MM-dd HH-mm-ss" />
 						</tstamp>
 						<echo message="This testcase end time is ${testcase.failure.end.time}"/>
 						<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
 						<echo message="The testcase ${test.case.name}.js cost ${testcase.failure.timeOutput} s in total..." />
 
-						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure type=&quot;junit.framework.AssertionFailedError&quot;time=&quot;${testcase.failure.timeOutput}&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; return code=${ret.code}; error message=&#10;${screen.output}&#10;&#10;testBeginStr=${testBeginStr} &#10;testEndStr=${testEndStr} &#10;db.listReplicaGroups() : &#10;${db.RG.info} &#10;&#10;
+						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure type=&quot;junit.framework.AssertionFailedError&quot; time=&quot;${testcase.failure.timeOutput}&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; return code=${ret.code}; error message=&#10;${screen.output}&#10;&#10;testBeginStr=${testBeginStr} &#10;testEndStr=${testEndStr} &#10;db.listReplicaGroups() : &#10;${db.RG.info} &#10;&#10;
 						download the test log :&#10;${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;" />
 
 						<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
