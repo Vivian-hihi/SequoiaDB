@@ -6,6 +6,7 @@
 <!--@param ${deploy.file.fullname}: The file full path where deploy file name for test -->
 
 <project name="test-exception-testcases" default="test-exception-testcases">
+	<property file="${ci.properties.path}" />
 	<property name="cata.service.port" value="60000" />
 	<property name="data.service.port" value="51000" />
 	<property name="coord.service.port" value="50000" />
