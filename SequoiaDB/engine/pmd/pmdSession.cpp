@@ -575,7 +575,7 @@ namespace engine
             rc = _onAggrReqMsg( msg, contextID ) ;
             break ;
          case MSG_LOB_OPEN_REQ :
-            rc = _onOpenLobMsg( msg, contextID ) ;
+            rc = _onOpenLobMsg( msg, contextID, ppBody, bodyLen ) ;
             break ;
          case MSG_LOB_WRITE_REQ:
             rc = _onWriteLobMsg( msg ) ;
@@ -1057,11 +1057,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onOpenLobMsg( MsgHeader *msg, SINT64 &contextID )
+   INT32 _pmdLocalSession::_onOpenLobMsg( MsgHeader *msg, SINT64 &contextID,
+                                          const CHAR **data,
+                                          INT32 &len )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
       BSONObj lob ;
+      BSONObj meta ;
       rc = msgExtractOpenLobRequest( ( const CHAR * )msg, &header, lob ) ;
       if ( SDB_OK != rc )
       {
@@ -1070,12 +1073,15 @@ namespace engine
       }
 
       rc = rtnOpenLob( lob, header->flags, TRUE, _pEDUCB,
-                       _pDPSCB, header->w, contextID ) ;
+                       _pDPSCB, header->w, contextID, meta ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lob:%d", rc ) ;
          goto error ;
       }
+
+      *data = meta.objdata() ;
+      len = meta.objsize() ;
    done:
       return rc ;
    error:

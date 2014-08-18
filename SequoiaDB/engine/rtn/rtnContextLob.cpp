@@ -18,10 +18,6 @@
 
    Descriptive Name = N/A
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of data management component. This file contains code logic for
-   data insert/update/delete. This file does NOT include index logic.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -199,16 +195,29 @@ namespace engine
    INT32 _rtnContextLob::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      UINT32 read = 0 ;
+      if ( 0 == _readLen )
+      {
+         goto done ;
+      }
 
-      rc = _stream->read( _readLen, this, cb  ) ;
+      rc = _stream->read( _readLen, this, cb, read ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
          goto error ;
       }
 
-      _readLen = 0 ;
-      _readOffset = -1 ;
+      if ( read < _readLen )
+      {
+         _readLen -= read ;
+         _readOffset += read ;
+      }
+      else
+      {
+         _readLen = 0 ;
+         _readOffset = -1 ;
+      }
    done:
       return rc ;
    error:

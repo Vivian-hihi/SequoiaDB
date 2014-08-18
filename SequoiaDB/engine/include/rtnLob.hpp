@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of msg component. This file contains definition for global keywords
-   that used in client/server communication.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -50,7 +46,8 @@ INT32 rtnOpenLob( const BSONObj &lob,
                   _pmdEDUCB *cb,
                   SDB_DPSCB *dpsCB,
                   SINT16 w,
-                  SINT64 &contextID ) ;
+                  SINT64 &contextID,
+                  bson::BSONObj &meta ) ;
 
 INT32 rtnWriteLob( SINT64 contextID,
                    pmdEDUCB *cb,

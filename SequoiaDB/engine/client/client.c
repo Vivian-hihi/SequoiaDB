@@ -7001,7 +7001,7 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   bsonBuf = cs->_pReceiveBuffer + sizeof( MsgOpLob ) ;
+   bsonBuf = cs->_pReceiveBuffer + sizeof( MsgOpReply ) ;
    if ( BSON_OK != bson_init_finished_data( &obj, bsonBuf ) )
    {
       rc = SDB_SYS ;
@@ -7140,8 +7140,8 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
    UINT32 onceRead = 0 ;
    const MsgOpReply *reply = NULL ;
    const MsgLobTuple *tuple = NULL ;
-   UINT32 alignedLen = 0 ;
    const CHAR *body = NULL ;
+   UINT32 alignedLen = 0 ;
    SINT64 contextID = -1 ;
    BOOLEAN result = TRUE ;
 
@@ -7184,7 +7184,20 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
    rc = _recvExtract ( lob->_sock, (MsgHeader**)&lob->_pReceiveBuffer,
                        &lob->_receiveBufferSize, &contextID, &result,
                        lob->_endianConvert ) ;
-   if ( SDB_OK != rc )
+   if ( SDB_EOF == rc )
+   {
+      if ( 0 < totalRead )
+      {
+         rc = SDB_OK ;
+         *read = totalRead ;
+         goto done ;   
+      }
+      else
+      {
+         goto error ;
+      }
+   }
+   else if ( SDB_OK != rc )
    {
       goto error ;
    }
@@ -7207,7 +7220,7 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
       ossMemcpy( localBuf, body, needRead ) ;
       totalRead += needRead ;
       lob->_currentOffset += needRead ;
-      lob->_cachedOffset = lob->_currentOffset + needRead ;
+      lob->_cachedOffset = lob->_currentOffset ;
       lob->_cachedSize = tuple->columns.len - needRead ;
       lob->_dataCache = body + needRead ;
    }
@@ -7263,13 +7276,14 @@ SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
       goto done ;
    }
 
-   while ( 0 < needRead )
+   while ( 0 < needRead && lob->_currentOffset < lob->_lobSize )
    {
       rc = sdbOnceRead( lob, localBuf, needRead, &onceRead ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
+
       needRead -= onceRead ;
       totalRead += onceRead ;
       localBuf += onceRead ;

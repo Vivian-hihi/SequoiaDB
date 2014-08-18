@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of msg component. This file contains definition for global keywords
-   that used in client/server communication.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -51,7 +47,8 @@ namespace engine
                      _pmdEDUCB *cb,
                      SDB_DPSCB *dpsCB,
                      SINT16 w,
-                     SINT64 &contextID )
+                     SINT64 &contextID,
+                     BSONObj &meta )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNOPENLOB ) ;
@@ -75,6 +72,13 @@ namespace engine
          goto error ;
       }
 
+      rc = lobContext->getLobMetaData( meta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get meta data:%d", rc ) ;
+         goto error ;
+      }
+
       if ( NULL != dpsCB && 1 < w )
       {
          dpsCB->completeOpr( cb, w ) ;
@@ -92,6 +96,7 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREADLOB, "rtnReadLob" )
    INT32 rtnReadLob( SINT64 contextID,
                      pmdEDUCB *cb,
                      UINT32 len,
@@ -99,6 +104,7 @@ namespace engine
                      UINT32 &read )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNREADLOB ) ;
       rtnContextLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContextBuf contextBuf ;
@@ -149,6 +155,7 @@ namespace engine
       *buf = contextBuf.data() ;
       read = contextBuf.size() ;
    done:
+      PD_TRACE_EXITRC( SDB_RTNREADLOB, rc ) ;
       return rc ;
    error:
       if ( SDB_EOF != rc )
@@ -158,13 +165,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNWRITELOB, "rtnWriteLob" )
    INT32 rtnWriteLob( SINT64 contextID,
                       pmdEDUCB *cb,
                       UINT32 len,
                       const CHAR *buf )
    {
       INT32 rc = SDB_OK ;
-      
+      PD_TRACE_ENTRY( SDB_RTNWRITELOB ) ;
       rtnContextLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContext *context = rtnCB->contextFind ( contextID ) ;
@@ -203,6 +211,7 @@ namespace engine
          goto error ;
       }      
    done:
+      PD_TRACE_EXITRC( SDB_RTNWRITELOB, rc ) ;
       return rc ;
    error:
       if ( -1 != contextID )
@@ -212,11 +221,13 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLOSELOB, "rtnCloseLob" )
    INT32 rtnCloseLob( SINT64 contextID,
                      pmdEDUCB *cb )
    {
       
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCLOSELOB ) ;
       rtnContextLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContext *context = rtnCB->contextFind ( contextID ) ;
@@ -258,11 +269,13 @@ namespace engine
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
+      PD_TRACE_EXITRC( SDB_RTNCLOSELOB, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREMOVELOB, "rtnRemoveLob" )
    INT32 rtnRemoveLob( const BSONObj &meta,
                        SINT32 flags,
                        SINT16 w,
@@ -270,6 +283,7 @@ namespace engine
                        SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNREMOVELOB ) ;
       SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *clName = NULL ;
@@ -404,16 +418,19 @@ namespace engine
       {
          dmsCB->suUnlock ( su->CSID() ) ;
       }
+      PD_TRACE_EXITRC( SDB_RTNREMOVELOB, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETLOBMETADATA, "rtnGetLobMetaData" )
    INT32 rtnGetLobMetaData( SINT64 contextID,
                             pmdEDUCB *cb, 
                             BSONObj &meta )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNGETLOBMETADATA ) ;
       rtnContextLob *lobContext = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
       rtnContext *context = rtnCB->contextFind ( contextID ) ;
@@ -452,6 +469,7 @@ namespace engine
          goto error ;
       }      
    done:
+      PD_TRACE_EXITRC( SDB_RTNGETLOBMETADATA, rc ) ;
       return rc ;
    error:
       if ( -1 != contextID )

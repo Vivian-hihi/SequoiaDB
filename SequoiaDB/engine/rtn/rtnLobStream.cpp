@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of msg component. This file contains definition for global keywords
-   that used in client/server communication.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -209,9 +205,10 @@ namespace engine
 
       if ( _metaObj.isEmpty() )
       {
-         _metaObj = BSON( FIELD_NAME_LOB_SIZE << (long long)_meta._lobLen <<
-                          FIELD_NAME_LOB_CREATTIME << ( long long )_meta._createTime <<
-                          FIELD_NAME_LOB_PAGE_SIZE << _lobPageSz ) ;
+         BSONObjBuilder builder ;
+         builder.append( FIELD_NAME_LOB_SIZE, (long long)_meta._lobLen ) ;
+         builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
+         _metaObj = builder.obj() ;
       }
 
       meta = _metaObj ;
@@ -225,6 +222,7 @@ namespace engine
    INT32 _rtnLobStream::close( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_CLOSE ) ;
       if ( !isOpened() )
       {
          goto done ;
@@ -262,15 +260,18 @@ namespace engine
 
       _opened = FALSE ;
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_CLOSE, rc ) ;
       return rc ;
    error:
       closeWithException( cb ) ;
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_CLOSEWITHEXCEPTION, "_rtnLobStream::closeWithException" )
    INT32 _rtnLobStream::closeWithException( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_CLOSEWITHEXCEPTION ) ;
       if ( !isOpened() )
       {
          goto done ;
@@ -291,6 +292,7 @@ namespace engine
 
       _opened = FALSE ;
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_CLOSEWITHEXCEPTION, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -380,11 +382,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_READ, "_rtnLobStream::read" )
    INT32 _rtnLobStream::read( UINT32 len,
                               _rtnContextBase *context,
-                              _pmdEDUCB *cb )
+                              _pmdEDUCB *cb,
+                              UINT32 &read )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_READ ) ;
       UINT32 readLen = 0 ;
       UINT32 needLen = 0 ;
       _dmsLobRecord pieces[RTN_LOB_READ_PIECE_NUM] ;
@@ -436,6 +441,8 @@ namespace engine
          }
       }
 
+      /// TODO: when changing page size is accepted, we should
+      /// create read piece by read size rather than piece num.
       rc = _lw.prepare2Read( _meta._lobLen,
                              _offset, len,
                              needLen,
@@ -464,7 +471,9 @@ namespace engine
 
       SDB_ASSERT( needLen == readLen, "impossible" ) ;
       _offset += readLen ;
+      read = readLen ;
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_READ, rc ) ;
       return rc ;
    error:
       closeWithException( cb ) ;
@@ -503,12 +512,14 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__READFROMPOOL, "_rtnLobStream::_readFromPool" )
    INT32 _rtnLobStream::_readFromPool( UINT32 len,
                                        _rtnContextBase *context,
                                        _pmdEDUCB *cb,
                                        UINT32 &readLen )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__READFROMPOOL ) ;
       const CHAR *data = NULL ;
       _MsgLobTuple tuple ;
       tuple.columns.len = len <= _pool.getDataSize() ?
@@ -557,6 +568,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__READFROMPOOL, rc ) ;
       return rc ;
    error:
       goto done ;

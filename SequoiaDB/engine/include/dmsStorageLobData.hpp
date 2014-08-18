@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of data management component. This file contains structure for
-   DMS storage unit and its methods.
-
    Dependencies: N/A
 
    Restrictions: N/A

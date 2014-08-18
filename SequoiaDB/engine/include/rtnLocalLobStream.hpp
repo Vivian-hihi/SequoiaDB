@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of msg component. This file contains definition for global keywords
-   that used in client/server communication.
-
    Dependencies: N/A
 
    Restrictions: N/A

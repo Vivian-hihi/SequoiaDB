@@ -73,6 +73,10 @@ namespace engine
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
+      virtual BOOLEAN _canPrefetch () const
+      {
+         return TRUE ;
+      }
 
    private:
       rtnLobStream *_stream ;

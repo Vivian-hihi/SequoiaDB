@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of data management component. This file contains structure for
-   DMS storage unit and its methods.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -910,7 +906,7 @@ namespace engine
 
    UINT32 _dmsStorageLob::_extendThreshold() const
    {
-      return 128 ;
+      return 0 ;
    }
 
    UINT64 _dmsStorageLob::_dataOffset()
@@ -921,8 +917,7 @@ namespace engine
    INT32 _dmsStorageLob::_extendSegments( UINT32 numSeg )
    {
       INT32 rc = SDB_OK ;
-      INT64 dataFileSz = _data.getFileSz() ;
-      rc = _data.extend( DMS_SEGMENT_SZ ) ;
+      rc = _data.extend( DMS_SEGMENT_SZ * numSeg ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extend lobd file:%d", rc ) ;
@@ -938,16 +933,6 @@ namespace engine
    done:
       return rc ;
    error:
-      if ( dataFileSz != _data.getFileSz() )
-      {
-         INT32 rcTmp = _data.truncate( dataFileSz ) ;
-         if ( SDB_OK != rcTmp )
-         {
-            PD_LOG( PDSEVERE, "Failed to revert the increase of segment, "
-                     "rc = %d", rcTmp ) ;
-            ossPanic() ;
-         }
-      }
       goto done ;
    }
 

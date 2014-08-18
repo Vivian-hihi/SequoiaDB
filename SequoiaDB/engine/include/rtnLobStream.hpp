@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of data management component. This file contains structure for
-   DMS storage unit and its methods.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -71,7 +67,8 @@ namespace engine
 
       INT32 read( UINT32 len,
                   _rtnContextBase *context,
-                  _pmdEDUCB *cb ) ;
+                  _pmdEDUCB *cb,
+                  UINT32 &read ) ;
  
       /// buf may be invalid when do next read.
       /// copy data to your own buf if necessary.

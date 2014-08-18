@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of data management component. This file contains structure for
-   DMS storage unit and its methods.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -62,7 +58,7 @@ namespace engine
                                    const dmsStorageInfo &info )
    {
       INT32 rc = SDB_OK ;
-      UINT32 mode = OSS_READWRITE | OSS_EXCLUSIVE  ; /// directio
+      UINT32 mode = OSS_READWRITE | OSS_EXCLUSIVE  ; 
       SDB_ASSERT( path, "path can't be NULL" ) ;
       INT64 fileSize = 0 ;
 
@@ -194,7 +190,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ASSERT( DMS_LOB_INVALID_PAGEID != page &&
                   NULL != data &&
-                  len + offset <= _pageSz, "invalid operation" ) ;
+                  0 == offset &&
+                  len <= _pageSz, "invalid operation" ) ;
+      SDB_ASSERT( 0 == (getSeek( page, offset ) - sizeof( _dmsStorageUnitHeader )) % (256 * 1024 ), "impossible" ) ;
       rc = ossSeek( &_file, getSeek( page, offset ), OSS_SEEK_SET ) ;
       if ( SDB_OK != rc )
       {
@@ -209,7 +207,6 @@ namespace engine
                  page, rc ) ;
          goto error ; 
       }
-      
    done:
       return rc ;
    error:
@@ -254,6 +251,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( 0 < len, "invalid extend size" ) ;
+      SINT64 oldSz = _fileSz ;
       rc = ossExtendFile( &_file, len ) ;
       if ( SDB_OK != rc )
       {
@@ -269,12 +267,60 @@ namespace engine
          }
          goto error ;
       }
+#ifdef _DEBUG
+      {
+      SINT64 sizeAfterExtend = 0 ;
+      rc = ossGetFileSize( &_file, &sizeAfterExtend ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get size of file:%s, rc:%d",
+                 _fileName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( ( sizeAfterExtend - sizeof( _dmsStorageUnitHeader ) ) % DMS_SEGMENT_SZ != 0 )
+      {
+         PD_LOG( PDERROR, "invalid file size:%lld, file:%s",
+                 sizeAfterExtend, _fileName.c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      }
+#endif
 
       _fileSz += len ;
    done:
       return rc ;
-   error:
+   truncate:
+      {
+      INT32 rcTmp = SDB_OK ;
+      rcTmp = truncate( oldSz ) ;
+      if ( SDB_OK != rcTmp )
+      {
+         PD_LOG( PDSEVERE, "Failed to revert the increase of segment, "
+                  "rc = %d", rcTmp ) ;
+         ossPanic() ;
+      }
       goto done ;
+      }
+   error:
+      {
+      SINT64 nowSize = 0 ;
+      INT32 rcTmp = ossGetFileSize( &_file, &nowSize ) ;
+      if ( SDB_OK != rcTmp )
+      {
+         PD_LOG( PDERROR, "failed to get file size:%d", rcTmp ) ;
+         goto truncate ;
+      }
+      else if ( nowSize != oldSz )
+      {
+         goto truncate ;
+      }
+      else
+      {
+         goto done ;
+      }
+      }
    }
 
    INT32 _dmsStorageLobData::remove()

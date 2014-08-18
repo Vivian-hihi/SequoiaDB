@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of msg component. This file contains definition for global keywords
-   that used in client/server communication.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -268,12 +264,14 @@ namespace engine
       return SDB_OK ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITEV, "_rtnLocalLobStream::_writev" )
    INT32 _rtnLocalLobStream::_writev( const _dmsLobRecord *pieces,
                                       UINT32 cnt,
                                       _pmdEDUCB *cb,
                                       UINT32 &succNum )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITEV ) ;
       UINT32 i = 0 ;
       for ( ; i < cnt; ++i )
       {
@@ -292,15 +290,19 @@ namespace engine
       }
    done:
       succNum = i ;
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__WRITEV, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITE, "_rtnLocalLobStream::_write" )
    INT32 _rtnLocalLobStream::_write( const _dmsLobRecord &record,
                                      _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITE ) ;
       SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
       BOOLEAN lockDms = FALSE ;
 
@@ -326,17 +328,20 @@ namespace engine
       {
          dmsCB->writeDown();
       }
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__WRITE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__READV, "_rtnLocalLobStream::_readv" )
    INT32 _rtnLocalLobStream::_readv( const _dmsLobRecord *pieces,
                                      UINT32 cnt,
                                      _pmdEDUCB *cb,
                                      UINT32 needLen )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__READV ) ;
       SDB_ASSERT( 0 < cnt, "can not be zero" ) ;
       CHAR *buf = NULL ;
       SINT64 readSize = 0 ;
@@ -368,6 +373,7 @@ namespace engine
 
       _getPool().pushDown() ;
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__READV, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -395,9 +401,11 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__ROLLBACK, "_rtnLocalLobStream::_rooback" )
    INT32 _rtnLocalLobStream::_rollback( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__ROLLBACK ) ;
       dmsLobRecord piece ;
       INT32 num = 0 ;
       SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
@@ -437,6 +445,7 @@ namespace engine
       {
          dmsCB->writeDown() ;
       }
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__ROLLBACK, rc ) ;
       return rc ;
    error:
       goto done ;

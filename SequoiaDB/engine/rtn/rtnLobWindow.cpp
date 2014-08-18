@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of msg component. This file contains definition for global keywords
-   that used in client/server communication.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -229,6 +225,7 @@ namespace engine
       return hasNext ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBWINDOW_PREPARE2READ, "_rtnLobWindow::_rtnLobWindow::prepare2Read" )
    INT32 _rtnLobWindow::prepare2Read( SINT64 lobLen,
                                       SINT64 offset,
                                       UINT32 len,
@@ -238,6 +235,7 @@ namespace engine
                                       UINT32 &pieceNum )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBWINDOW_PREPARE2READ ) ;
       SDB_ASSERT( offset < lobLen, "impossible" ) ;
       UINT32 i = 0 ;
       while ( 0 < len && offset < lobLen && i < maxPieceNum )
@@ -271,6 +269,7 @@ namespace engine
       
       pieceNum = i ;
    done:
+      PD_TRACE_EXITRC( SDB_RTNLOBWINDOW_PREPARE2READ, rc ) ;
       return rc ;
    error:
       readLen = 0 ;
