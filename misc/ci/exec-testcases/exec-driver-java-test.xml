@@ -27,6 +27,9 @@
     <target name="clean-env" depends="">
         <delete dir="${reports.path}" failonerror="false" />
         <mkdir dir="${reports.path}" />
+
+        <echo message="${reports.path}" />
+
     </target>
 
     <target name="exec-driver-java-test" depends="clean-env">
