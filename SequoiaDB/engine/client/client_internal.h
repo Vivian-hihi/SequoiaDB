@@ -198,16 +198,16 @@ struct _sdbLobStruct
    SINT64 _contextID ;
    BOOLEAN _endianConvert ;
 
-//   CHAR _fullName [ CLIENT_CS_NAMESZ + CLIENT_COLLECTION_NAMESZ + 2 ];
-//   CHAR _oid[12] ; //DMS_LOB_OID_LEN
+   INT32 _mode ;
+   CHAR _oid[12] ; //DMS_LOB_OID_LEN
+   UINT64 _createTime ;
+   SINT64 _lobSize ;
+   SINT64 _currentOffset ;
+   SINT64 _cachedOffset ;
+   UINT32 _cachedSize ;
+   const CHAR *_dataCache ;
 } ;
 typedef struct _sdbLobStruct sdbLobStruct ;
-
-typedef struct _sdbLobPiece
-{
-   SINT64 _offset ;
-   UINT32 _dataLen ;
-} sdbLobPiece;
 
 
 #endif

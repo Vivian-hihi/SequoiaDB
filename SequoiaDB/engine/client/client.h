@@ -70,6 +70,21 @@ enum SDB_LIST_TYPE
    SDB_LIST_END /**< Not a list type, just use to mark the end of current enum */
 };
 
+enum _SDB_LOB_OPEN_MODE
+{
+   SDB_LOB_CREATEONLY = 0x00000001,
+   SDB_LOB_READ = 0x00000004,
+} ;
+typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE ;
+
+enum _SDB_LOB_SEEK
+{
+   SDB_LOB_SEEK_SET = 0,
+   SDB_LOB_SEEK_CUR,
+   SDB_LOB_SEEK_END, 
+} ;
+typedef enum _SDB_LOB_SEEK SDB_LOB_SEEK ;
+
 #define SDB_INVALID_HANDLE       ((ossValuePtr) 0)
 typedef ossValuePtr sdbConnectionHandle   ;
 typedef ossValuePtr sdbCSHandle           ;
@@ -1810,14 +1825,6 @@ SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
                                   SINT64 sessionID ) ;
 
-/** \fn void sdbReleaseLob ( sdbLobHandle *lobHandle )
-    \brief release the lob handle
-    \param [in] lobHandle The handle of large object
-    \retval SDB_OK Operation Success
-    \retval Others Operation Fail
-*/
-SDB_EXPORT void sdbReleaseLob ( sdbLobHandle lobHandle ) ;
-
 /** \fn INT32 sdbOpenLob( sdbCollectionHandle cHandle,
  *                        const bson_oid_t *,
  *                        INT32 mode,
@@ -1866,13 +1873,13 @@ SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
                              void *buf,
                              UINT32 *read ) ;
 
-/** \fn INT32 sdbCloseLob( sdbLobHandle lobHandle )
+/** \fn INT32 sdbCloseLob( sdbLobHandle *lobHandle )
  *  \brief close lob 
  *  \param [in] lobHandle The large object handle
  *  \retval SDB_OK Operation Success
  *  \retval Others Operation Fail
  *  */
-SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle lobHandle ) ;
+SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle ) ;
 
 /** \fn INT32 sdbRemoveLob( const CHAR *fullName,
  *                          const bson_oid_t *oid )
@@ -1895,6 +1902,19 @@ SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
                                 SINT64 *size ) ;
 
+
+/** \fn INT32 sdbSeekLob( sdbLobHandle lobHandle,
+ *                        SINT64 size,
+ *                        SDB_LOB_SEEK whence )
+ *  \param [in] lobHandle The large object handle
+ *  \param [in] size The size of seek
+ *  \param [in] whence The whence of seek
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
+                             SINT64 size,
+                             SDB_LOB_SEEK whence ) ;
 
 SDB_EXTERN_C_END
 #endif
