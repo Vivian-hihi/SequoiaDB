@@ -269,6 +269,12 @@ namespace engine
 
    #define  OM_BSON_FIELD_INSTALL_PATH       "InstallPath"
    #define  OM_BSON_FIELD_TRANSACTION_ID     "TransactionID"
+
+   // with filename
+   #define  OM_BSON_FIELD_PATCKET_PATH       "PacketPath"
+
+   #define  OM_PACKET_SUBPATH                "packet"
+
    // *****************************************************************
 
    // om rest query_host_req

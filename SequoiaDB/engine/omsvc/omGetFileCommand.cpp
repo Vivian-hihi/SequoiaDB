@@ -36,7 +36,8 @@
 #include "omManager.hpp"
 #include "omConfigGenerator.hpp"
 #include "../bson/lib/md5.hpp"
-
+#include "ossPath.hpp"
+#include "ossProc.hpp"
 
 using namespace bson;
 using namespace boost::property_tree;
@@ -1907,6 +1908,14 @@ namespace engine
       string sdbUser ;
       string sdbPasswd ;
       string sdbUserGroup ;
+      CHAR packetPath[ OSS_MAX_PATHSIZE ] = "" ;
+      rc = _getPacketFullPath( packetPath ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get packet path failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
       rc = _getSdbUsrInfo( clusterName, sdbUser, sdbPasswd, sdbUserGroup ) ;
       if ( SDB_OK != rc )
       {
@@ -1941,6 +1950,7 @@ namespace engine
       builder.append( OM_BSON_FIELD_SDB_USER, sdbUser ) ;
       builder.append( OM_BSON_FIELD_SDB_PASSWD, sdbPasswd ) ;
       builder.append( OM_BSON_FIELD_SDB_USERGROUP, sdbUserGroup ) ;
+      builder.append( OM_BSON_FIELD_PATCKET_PATH, packetPath ) ;
       builder.appendArray( OM_REST_FIELD_HOST_INFO, arrayBuilder.arr() );
       bsonRequest = builder.obj() ;
 
@@ -2009,7 +2019,39 @@ namespace engine
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
-      return SDB_OK ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omAddHostCommand::_getPacketFullPath( char *path )
+   {
+      INT32 rc = SDB_OK ;
+      ossGetEWD( path, OSS_MAX_PATHSIZE ) ;
+      utilCatPath( path, OSS_MAX_PATHSIZE, ".." ) ;
+      utilCatPath( path, OSS_MAX_PATHSIZE, OM_PACKET_SUBPATH ) ;
+
+      map< string, string> mapFiles ;      
+      rc = ossEnumFiles( path, mapFiles ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = string( "path is invalid:path=" ) + path ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( mapFiles.size() != 1 )
+      {
+         rc = SDB_FNE ;
+         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,fileCount=%d", path, 
+                     mapFiles.size() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      utilCatPath( path, OSS_MAX_PATHSIZE, mapFiles.begin()->second.c_str() ) ;
+   done:
+      return rc ;
    error:
       goto done ;
    }

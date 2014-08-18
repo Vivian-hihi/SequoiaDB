@@ -262,6 +262,7 @@ namespace engine
          INT32           _getSdbUsrInfo( string clusterName, string &sdbUser, 
                                          string &sdbPasswd, 
                                          string &sdbUserGroup ) ;
+         INT32           _getPacketFullPath( char *path ) ;
    };
 
    class omQueryHostCommand : public omCreateClusterCommand
