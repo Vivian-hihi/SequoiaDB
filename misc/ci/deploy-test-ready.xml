@@ -5,6 +5,8 @@
 
 <project name="copy_tar_deploy" default="check">
 	<property name="release.path" value="${WORKSPACE}/release" />
+	<property file="${ci.script.path}/ci.test.properties" />
+	<property file="${release.path}/build.version" />
  	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${ci.script.path}/exec-tools/ant-sdbtasks.jar" />
@@ -14,8 +16,6 @@
 	<target name="check" depends="">
 		<hostinfo prefix="local" />
 		<available file="${release.path}/build.version" property="build.version.exist" />
-		<property file="${ci.script.path}/ci.test.properties" />
-		<property file="${release.path}/build.version" />
 
 		<echo message="build.version exist is ${build.version.exist} " />
 		<delete file="${release.path}/build.version.local" failonerror="false" />

@@ -28,7 +28,7 @@
 
 	<target name="test-exception-testcases" depends="clean-test-reports">
 		<echo message="Begin test exception testcases..." />
-		<mkdir dir="${reports.path}" />
+		<mkdir dir="${test.reports.path}" />
 		<echo message="perform the exception testcases,with testcase.path=${testcase.path}" />
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
@@ -49,7 +49,7 @@
 		<hostinfo prefix="host" />
     	<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
 		<property name="test.suite.class.name" value="com.sequoiadb.testcases-ant.${deploy.name}.${host.NAME}-${parallel.num}-${test.suite.name}" />
-		<property name="reportfile.fullname" value="${reports.path}/TEST-${test.suite.class.name}.xml" />
+		<property name="reportfile.fullname" value="${test.reports.path}/TEST-${test.suite.class.name}.xml" />
 
 		<echo file="${reportfile.fullname}" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot; time=&quot;0.55&quot; timestamp=&quot;${current.time}&quot;&gt;" />
 
