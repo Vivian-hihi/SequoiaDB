@@ -4,6 +4,7 @@
 <!--@param ${ci.script.path} : The path where place ci script files-->
 
 <project name="copy_tar_deploy" default="check">
+	<hostinfo prefix="local" />
 	<property name="release.path" value="${WORKSPACE}/release" />
 	<property file="${ci.script.path}/ci.test.properties" />
 	<property file="${release.path}/build.version" />
@@ -14,7 +15,6 @@
 	</taskdef> 
 
 	<target name="check" depends="">
-		<hostinfo prefix="local" />
 		<available file="${release.path}/build.version" property="build.version.exist" />
 
 		<echo message="build.version exist is ${build.version.exist} " />
