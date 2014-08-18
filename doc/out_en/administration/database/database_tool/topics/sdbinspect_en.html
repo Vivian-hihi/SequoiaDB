@@ -154,9 +154,18 @@
 
     <div class="section"><h2 class="title sectiontitle">用法</h2>
             
-      <p class="p">在下面的例子，sdbinspect 检测协调节点 ubuntu-dev9:11810 下的全部集群（5次），并将中间文件结果输出到 item.bin 中，同时会解析 item.bin 文件，把文本结果输出到 item.bin.report 文件中。</p>
+            
+      <p class="p">在下面的例子，sdbinspect 检查协调节点 ubuntu-dev9:11810 下的全部集群（5次），并将中间文件结果输出到 item.bin 中，同时会解析 item.bin 文件，把文本结果按（默认的）group 划分，输出到 item.bin.report 文件中。</p>
 
       <pre class="pre codeblock">sdbinspect -d ubuntu-dev9:11810 –o item.bin</pre>
+
+      <p class="p">在下面的例子，sdbinspect 检查协调节点 ubuntu-dev9:11810 下的全部集群中的集合空间 sports（3次），并将中间文件结果输出到 item.bin 中，同时会解析 item.bin 文件，把文本结果按 collection 划分，输出到 item.bin.report 文件中。</p>
+
+      <pre class="pre codeblock">sdbinspect -d ubuntu-dev9:11810 –o item.bin –c sports –w collection –t 3</pre>
+
+      <p class="p">在下面的例子，sdbinspect 检查协调节点 ubuntu-dev9:11810 下的 data_group 集群中的名为 sports 的集合空间，名为 item 的集合（5次），并将中间文件结果输出到 inspect.bin 中，同时会解析 inspect.bin 文件，把文本结果按（默认的）group 划分，输出到 inspect.bin.report 文件中。</p>
+
+      <pre class="pre codeblock">sdbinspect -d ubuntu-dev9:11810 –g data_group –c sports –l item</pre>
 
     </div>
 

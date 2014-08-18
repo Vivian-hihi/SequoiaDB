@@ -45,23 +45,23 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d102025e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d102057e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d102025e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d102057e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d102025e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d102057e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d102025e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d102057e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d102025e26" class="stentry">code</td>
+          <td valign="top" headers="d102057e26" class="stentry">code</td>
 
-          <td valign="top" headers="d102025e29" class="stentry">自定义函数</td>
+          <td valign="top" headers="d102057e29" class="stentry">自定义函数</td>
 
-          <td valign="top" headers="d102025e32" class="stentry">标准函数定义，不是字符串类型，在输入参数时不能使用引号。 </td>
+          <td valign="top" headers="d102057e32" class="stentry">标准函数定义，不是字符串类型，在输入参数时不能使用引号。 </td>
 
-          <td valign="top" headers="d102025e35" class="stentry">是</td>
+          <td valign="top" headers="d102057e35" class="stentry">是</td>
 
         </tr>
 </table>
@@ -76,9 +76,9 @@
 </div>
 
       <div class="p"><strong class="ph b">说明：</strong><a name="topic_rlh_vcw_ql__ul_p2q_bmw_ql"><!-- --></a><ul class="ul" id="topic_rlh_vcw_ql__ul_p2q_bmw_ql">
-          <li class="li">推荐直接使用存储过程中已初始化全局的 db，如：<strong class="ph b">db.createProcedure( function getAll(){return db.foo.bar.find();} )</strong> 。但如果需要鉴权，则全局 db 失效。需要自己初始化 db。</li>
+        <li class="li">推荐直接使用存储过程中已初始化全局的 db，且全局 db 采用当前执行该存储过程的会话的鉴权信息，如：<strong class="ph b">db.createProcedure( function getAll(){return db.foo.bar.find();} )</strong> 。</li>
 
-          <li class="li">自己初始化 db 的形式为 <strong class="ph b">var db = new Sdb()</strong>。如果需要加入用户名和密码，为 <strong class="ph b">var db = new Sdb('usrname','passwd')</strong> 。这里需要注意的时，存储过程只能运行在已连接上的 db，不提供远程连接其他 db 的方法。在不需要鉴权的情况下，即使如 <strong class="ph b">var db = new Sdb('hostname', 'servicename')</strong> 语句正常执行。得到的 db 仍然是本地 db。</li>
+        <li class="li">自己初始化 db 的形式为 <strong class="ph b">var db = new Sdb()</strong>，db 采用当前执行该存储过程的会话的鉴权信息。如果需要加入其它用户名和密码，为 <strong class="ph b">var db = new Sdb('usrname','passwd')</strong> 。这里需要注意的时，存储过程只能运行在已连接上的 db，不提供远程连接其他 db 的方法。在不需要鉴权的情况下，即使如 <strong class="ph b">var db = new Sdb('hostname', 'servicename')</strong> 语句正常执行。得到的 db 仍然是本地 db。</li>
 
           <li class="li">db 角色必须为协调节点。standalone 模式不提供存储过程功能。</li>
 
