@@ -76,8 +76,7 @@ namespace engine
       }
       try
       {
-         rc = pCommand->init ( flags, numToSkip, numToReturn, pMatcherBuff,
-                               pSelectBuff, pOrderByBuff, pHintBuff ) ;
+         rc = pCommand->init ( pMatcherBuff ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR,
@@ -97,43 +96,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 omaRunCommand ( _omaCommand *pCommand, CHAR **ppBody,
-                         INT32 &bodyLen )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 returnNum = 0 ;
-      if ( !pCommand )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      try
-      {
-         rc = pCommand->doit ( ppBody, bodyLen, returnNum ) ;
-      }
-      catch ( std::exception &e )
-      {
-            PD_LOG ( PDERROR, "omagent run command[%s] exception[%s]",
-                     pCommand->name(), e.what() ) ;
-            rc = SDB_INVALIDARG ;
-      }
-
-      if ( SDB_OK != rc  )
-      {
-         PD_LOG( PDERROR, "omagent run command[%s] failed[rc=%d]",
-                 pCommand->name(), rc ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omaRunCommand ( _omaCommand *pCommand, BSONObj &result )
    {
       INT32 rc = SDB_OK ;
-//      INT32 returnNum = 0 ;
       if ( !pCommand )
       {
          rc = SDB_INVALIDARG ;
@@ -142,18 +107,18 @@ namespace engine
       try
       {
          rc = pCommand->doit ( result ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "omagent run command[%s] failed[rc=%d]",
+                    pCommand->name(), rc ) ;
+            goto error ;
+         }
       }
       catch ( std::exception &e )
       {
             PD_LOG ( PDERROR, "omagent run command[%s] exception[%s]",
                      pCommand->name(), e.what() ) ;
             rc = SDB_INVALIDARG ;
-      }
-
-      if ( SDB_OK != rc  )
-      {
-         PD_LOG( PDERROR, "omagent run command[%s] failed[rc=%d]",
-                 pCommand->name(), rc ) ;
       }
 
    done:

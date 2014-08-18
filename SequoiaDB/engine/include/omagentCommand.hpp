@@ -73,14 +73,9 @@ namespace engine
       public:
          virtual const CHAR * name () = 0 ;
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) = 0 ;
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum ) = 0 ;
-         virtual INT32 doit ( BSONObj &retObj ) { return SDB_OK ; }
+         virtual INT32 init ( const CHAR *pInfomation ) = 0 ;
+
+         virtual INT32 doit ( BSONObj &retObj ) = 0 ;
 
          virtual INT32 setJSFile ( const CHAR *fileName ) ;
 
@@ -159,14 +154,7 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_SCAN_HOST ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
    } ;
@@ -184,7 +172,7 @@ namespace engine
          ~_omaBasicCheckHost () ;
 
          virtual const CHAR* name () { return OMA_CMD_BASIE_CHECK_HOST ; }
-   };
+   } ;
 
    /******************************* check host ********************************/
    /*
@@ -199,15 +187,9 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_CHECK_HOST ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum ) ;
-         virtual INT32 doit ( BSONObj& retObj ) { return SDB_OK ; }
+         virtual INT32 doit ( BSONObj& retObj ) ;
    } ;
 
    /******************************* install remote agent **********************/
@@ -223,17 +205,7 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_INSTALL_REMOTE_AGENT ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum )
-         {
-            return SDB_OK ;
-         }
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
          virtual INT32 doit ( BSONObj& retObj ) ;
 
@@ -241,6 +213,13 @@ namespace engine
                                       const CHAR *pPasswork, BSONObj &result ) ;
 
          CHAR* getVersion() { return "1.0" ; }
+
+      private:
+         INT32 setLocalPath() ;
+
+         CHAR _prog_path[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR _spt_path[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR _conf_path[ OSS_MAX_PATHSIZE + 1 ] ;
    } ;
 
    /******************************* exit agent ********************************/
@@ -256,13 +235,9 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_EXIT_AGENT ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
    } ;
 
@@ -279,14 +254,9 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_UNINSTALL_REMOTE_AGENT ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
    } ;
 
@@ -303,14 +273,15 @@ namespace engine
 
          virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      private:
+         CHAR _packet_path[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR _sdb_user[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR _sdb_passwd[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR _sdb_user_group[ OSS_MAX_PATHSIZE + 1 ] ;
    } ;
 
    /******************************* install db business ***********************/
@@ -326,13 +297,9 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_INSTALL_DB_BUSINESS ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
          BOOLEAN _createVirtualCoordSucced ;
@@ -359,13 +326,9 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_QUERY_PROGRESS ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
          UINT64       _taskID ;
@@ -387,21 +350,13 @@ namespace engine
       private:
          virtual const CHAR* name () { return "create virtual coord" ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff )
-         {
-            return 0 ;
-         }
+         virtual INT32 init ( const CHAR *pInfomation ) { return SDB_OK ; }
+
+         virtual INT32 doit ( BSONObj &retObj ) { return SDB_OK ; }
 
          INT32 init () ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
-         {
-            return 0 ;
-         }
+         INT32 doit () ;         
 
          INT32 doit ( INT32 coord_service, BOOLEAN &result ) ;
 
@@ -424,21 +379,11 @@ namespace engine
       private:
          virtual const CHAR* name () { return "remove virtual coord" ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff )
-         {
-            return 0 ;
-         }
-
          INT32 init () ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
-         {
-            return 0 ;
-         }
+         virtual INT32 init ( const CHAR *pInfomation ) { return SDB_OK ; } ;
+
+         virtual INT32 doit ( BSONObj &retObj ) { return SDB_OK ; } ;
 
          INT32 doit ( INT32 coord_service, BOOLEAN &result ) ;
 
@@ -457,17 +402,7 @@ namespace engine
 
          virtual const CHAR* name () { return "get remote agent status" ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum )
-         {
-            return SDB_OK ;
-         }
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -492,16 +427,11 @@ namespace engine
       private:
          virtual const CHAR* name () { return "" ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                               const CHAR *pMatcherBuff,
-                               const CHAR *pSelectBuff,
-                               const CHAR *pOrderByBuff,
-                               const CHAR *pHintBuff ) { return 0 ; }
+         virtual INT32 init ( const CHAR *pInfomation ) { return 0 ; } 
+
+         virtual INT32 doit ( BSONObj &retObj ) { return 0 ; }
 
          INT32 init() ;
-
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen, INT32 &returnNum )
-         { return 0 ; }
 
          INT32 doit ( BOOLEAN &hasUsed ) ;
 
@@ -520,14 +450,9 @@ namespace engine
 
          virtual const CHAR* name () { return "reg hosts info" ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
          INT32 _getHostsTableInfo () ;
@@ -547,14 +472,9 @@ namespace engine
 
          virtual const CHAR* name () { return "get host name" ; }
 
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( CHAR **ppBody, INT32 &bodyLen,
-                              INT32 &returnNum ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
          INT32 getHostName( const CHAR *pIp, const CHAR *pUserName,
                             const CHAR *pPassword, BSONObj &result ) ;

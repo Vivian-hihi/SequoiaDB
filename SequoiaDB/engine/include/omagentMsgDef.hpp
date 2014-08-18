@@ -52,10 +52,14 @@
 #define OMA_FIELD_HOSTINFO                         OM_REST_FIELD_HOST_INFO
 #define OMA_FIELD_SSH_PORT                         OM_BSON_FIELD_HOST_SSHPORT
 #define OMA_FIELD_AGENT_PORT                       OM_BSON_FIELD_AGENT_PORT
+#define OMA_FIELD_SDBUSER                          OM_CLUSTER_FIELD_SDBUSER
+#define OMA_FIELD_SDBPASSWD                        OM_CLUSTER_FIELD_SDBPASSWD
+#define OMA_FIELD_SDBUSERGROUP                     OM_CLUSTER_FIELD_SDBUSERGROUP
+#define OMA_FIELD_INSTALLPATH                      OM_HOST_FIELD_INSTALLPATH
+
 
 #define OMA_FIELD_HOSTS                            "Hosts"
-#define OMA_FIELD_HOSTNAME                         "Hostname"
-#define OMA_FIELD_HOSTNAME1                        "HostName"
+#define OMA_FIELD_HOSTNAME                         "HostName"
 #define OMA_FIELD_USER                             "User"
 #define OMA_FIELD_PASSWORD                         "Password"
 #define OMA_FIELD_PASSWD                           "Passwd"

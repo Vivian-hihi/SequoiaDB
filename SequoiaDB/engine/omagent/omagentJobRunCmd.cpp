@@ -68,10 +68,10 @@ namespace engine
                    "Get field[%s] failed, rc: %d",
                    OMA_OPTION_DATAGROUPNAME, rc ) ;
          // _hostname
-         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME1,
+         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME,
                                        &info._hostName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME1, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
          // _svcName
          rc = omaGetStringElement( *it, OMA_OPTION_SVCNAME,
                                        &info._svcName ) ;
@@ -88,7 +88,7 @@ namespace engine
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
          // _conf
-         pattern = BSON( OMA_FIELD_HOSTNAME1 << 1 <<
+         pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                          OMA_OPTION_DATAGROUPNAME << 1 <<
                          OMA_OPTION_SVCNAME << 1 <<
                          OMA_OPTION_DBPATH << 1 ) ;
@@ -232,10 +232,10 @@ namespace engine
                    "Get field[%s] failed, rc: %d",
                    OMA_OPTION_DATAGROUPNAME, rc ) ;
          // _hostname
-         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME1,
+         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME,
                                        &info._hostName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME1, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
          // _svcName
          rc = omaGetStringElement( *it, OMA_OPTION_SVCNAME,
                                        &info._svcName ) ;
@@ -252,7 +252,7 @@ namespace engine
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
          // _conf
-         pattern = BSON( OMA_FIELD_HOSTNAME1 << 1 <<
+         pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                          OMA_OPTION_DATAGROUPNAME << 1 <<
                          OMA_OPTION_SVCNAME << 1 <<
                          OMA_OPTION_DBPATH << 1 ) ;
@@ -396,10 +396,10 @@ namespace engine
                    "Get field[%s] failed, rc: %d",
                    OMA_OPTION_DATAGROUPNAME, rc ) ;
          // _hostname
-         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME1,
+         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME,
                                        &info._hostName ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME1, rc ) ;
+                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
          // _svcName
          rc = omaGetStringElement( *it, OMA_OPTION_SVCNAME,
                                        &info._svcName ) ;
@@ -416,7 +416,7 @@ namespace engine
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
          // _conf
-         pattern = BSON( OMA_FIELD_HOSTNAME1 << 1 <<
+         pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                          OMA_OPTION_DATAGROUPNAME << 1 <<
                          OMA_OPTION_SVCNAME << 1 <<
                          OMA_OPTION_DBPATH << 1 ) ;

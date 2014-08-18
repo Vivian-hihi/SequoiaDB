@@ -224,7 +224,7 @@ namespace engine
    #define  OM_BSON_FIELD_AGENT_PORT         "AgentPort"
 
    // milliseconds
-   #define  OM_WAIT_SCAN_RES_INTERVAL        (10000)
+   #define  OM_WAIT_SCAN_RES_INTERVAL        (60000)
    #define  OM_WAIT_PROGRESS_RES_INTERVAL    (500)
    // *****************************************************************
 
