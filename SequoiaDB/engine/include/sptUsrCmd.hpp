@@ -49,10 +49,11 @@ namespace engine
       virtual ~_sptUsrCmd(){}
 
    public:
-      /*INT32 construct( const _sptArguments &arg,
+/*
+      INT32 construct( const _sptArguments &arg,
                        _sptReturnVal &rval,
                        bson::BSONObj &detail ) ;
-      */
+*/
 
       static INT32 exec( const _sptArguments &arg,
                          _sptReturnVal &rval,
