@@ -76,8 +76,8 @@ JS_MAPPING_END()
    }
 
    INT32 _sptGlobalFunc::sleep( const _sptArguments &arg,
-                                 _sptReturnVal &rval,
-                                 bson::BSONObj &detail )
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       UINT32 time = 0 ;

@@ -90,7 +90,8 @@ namespace engine
       }
       else
       {
-         PD_LOG( PDERROR, "the type %d is not surpported yet.", pro.getType() ) ;
+         PD_LOG( PDERROR, "the type %d is not surpported yet.",
+                 pro.getType() ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -101,9 +102,9 @@ namespace engine
    }
 
    INT32 _sptInvoker::_callbackDone( JSContext *cx, JSObject *obj,
-                                    const _sptReturnVal &rval,
-                                    const bson::BSONObj &detail,
-                                    jsval *rvp )
+                                     const _sptReturnVal &rval,
+                                     const bson::BSONObj &detail,
+                                     jsval *rvp )
    {
       INT32 rc = SDB_OK ;
       const sptProperty &rpro = rval.getVal() ;
@@ -116,10 +117,12 @@ namespace engine
       }
       else if ( Object == rpro.getType() )
       {
-         JSObject *jsObj = JS_NewObject ( cx, (JSClass *)(rval.getClassDef()), 0 , 0 ) ;
+         JSObject *jsObj = JS_NewObject ( cx, (JSClass *)(rval.getClassDef()),
+                                          0 , 0 ) ;
          if ( NULL == jsObj )
          {
-            /// WARNING: it will cause mem leak, because we can not delete rpro.getObj().
+            /// WARNING: it will cause mem leak, because we can not delete
+            /// rpro.getObj().
             PD_LOG( PDERROR, "faile to new js object" ) ;
             rc = SDB_OOM ;
             goto error ;
@@ -129,7 +132,8 @@ namespace engine
 
          if ( !rval.getValProperties().empty() )
          {
-            rc = _sptInvoker::setProperty( cx, jsObj, rval.getValProperties() ) ;
+            rc = _sptInvoker::setProperty( cx, jsObj,
+                                           rval.getValProperties() ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -164,7 +168,7 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   } 
+   }
 
    INT32 _sptInvoker::setProperty( JSContext *cx,
                                    JSObject *obj,
@@ -181,7 +185,7 @@ namespace engine
          {
             goto error ;
          }
-        
+
          if ( !JS_SetProperty( cx, obj, itr->getName().c_str(), &val ) )
          {
             PD_LOG( PDERROR, "failed to set property of obj" ) ;

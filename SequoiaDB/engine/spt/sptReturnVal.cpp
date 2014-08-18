@@ -57,8 +57,8 @@ namespace engine
    }
 
    INT32 _sptReturnVal::setUsrObjectVal( const CHAR *name,
-                                     void *value,
-                                     const void *classDef )
+                                         void *value,
+                                         const void *classDef )
    {
       SDB_ASSERT( NULL != classDef, "class def can not be NULL" ) ;
       INT32 rc = SDB_OK ;
