@@ -252,12 +252,38 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ASSERT( 0 < len, "invalid extend size" ) ;
       SINT64 oldSz = _fileSz ;
+#ifdef _DEBUG
+      {
+      SINT64 sizeBeforeExtend = 0 ;
+      rc = ossGetFileSize( &_file, &sizeBeforeExtend ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get size of file:%s, rc:%d",
+                 _fileName.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( ( sizeBeforeExtend - sizeof( _dmsStorageUnitHeader ) ) % DMS_SEGMENT_SZ != 0 )
+      {
+         if ( ( sizeBeforeExtend - sizeof( _dmsStorageUnitHeader ) ) !=  65536 &&
+               ( sizeBeforeExtend ) != 0 )
+         {
+            PD_LOG( PDERROR, "invalid file size:%lld, file:%s",
+                    sizeBeforeExtend, _fileName.c_str() ) ;
+            rc = SDB_SYS ;
+            SDB_ASSERT( FALSE, "impossible" ) ;
+            goto error ;
+         }
+      }
+      }
+#endif
+
       rc = ossExtendFile( &_file, len ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extend file:%s, rc:%d",
                  _fileName.c_str(), rc ) ;
-         INT32 rcTmp = ossTruncateFile( &_file, _fileSz ) ;
+         INT32 rcTmp = ossTruncateFile( &_file, oldSz ) ;
          if ( SDB_OK != rcTmp )
          {
             PD_LOG( PDSEVERE, "failed to revert the increase of segment:%d"
@@ -283,6 +309,7 @@ namespace engine
          PD_LOG( PDERROR, "invalid file size:%lld, file:%s",
                  sizeAfterExtend, _fileName.c_str() ) ;
          rc = SDB_SYS ;
+         SDB_ASSERT( FALSE, "impossible" ) ;
          goto error ;
       }
       }
