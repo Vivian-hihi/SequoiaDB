@@ -42,17 +42,15 @@
 #include "pd.hpp"
 #include "pmdEDU.hpp"
 
+using namespace bson ;
+
 #define SPD_READ_TIMEOUT      1
 const INT32 SPD_MSG_MAX_LEN = 17 * 1024 *1024 ;
 #define SPD_READ_PAGE         4096
 
-static const CHAR *SPD_MAGIC = FMP_MSG_MAGIC;
+static const CHAR SPD_MAGIC[] = FMP_MSG_MAGIC ;
 static BSONObj RESET_MSG = BSON( FMP_CONTROL_FIELD << FMP_CONTROL_STEP_RESET ) ;
 static BSONObj QUIT_MSG = BSON( FMP_CONTROL_FIELD << FMP_CONTROL_STEP_QUIT ) ;
-
-/// WARNING: do not modify spd_next, it's value is depend on SPD_MAGIC
-#define SPD_NEXT_SIZE 4
-static INT32 SPD_NEXT[SPD_NEXT_SIZE] = { -1, -1, 0, -1 } ;
 
 namespace engine
 {
@@ -296,7 +294,7 @@ namespace engine
       SDB_ASSERT( 0 <= _expect, "impossible" ) ;
 
       /// magic has already been found.
-      if ( '\0' == SPD_MAGIC[_expect])
+      if ( sizeof( SPD_MAGIC ) == _expect )
       {
 found:
          if ( (_totalRead - _itr) < (INT32)sizeof(INT32) )
@@ -314,7 +312,7 @@ found:
             }
             else if ( (_totalRead - _itr) == bsonLen )
             {
-               SDB_ASSERT( _itr >= (INT32)ossStrlen(FMP_MSG_MAGIC),
+               SDB_ASSERT( _itr >= (INT32)sizeof( SPD_MAGIC ) ,
                            "impossible" ) ;
                BSONObj tmp ;
 
@@ -329,7 +327,7 @@ found:
                   goto error ;
                }
 
-               if ( ossStrlen(FMP_MSG_MAGIC) == _itr )
+               if ( sizeof( SPD_MAGIC ) == _itr )
                {
                   /// only a bson msg.
                   msg = tmp ;
@@ -393,13 +391,13 @@ found:
       }
       else
       {
-         while ( _itr < _totalRead  && _expect < SPD_NEXT_SIZE )
+         while ( _itr < _totalRead  && _expect < sizeof( SPD_MAGIC ) )
          {
             if ( SPD_MAGIC[_expect] == _readBuf[_itr] )
             {
                ++_itr ;
                ++_expect ;
-               if ( '\0' == SPD_MAGIC[_expect])
+               if ( sizeof( SPD_MAGIC ) == _expect )
                {
                   goto found ;
                }
@@ -410,7 +408,7 @@ found:
             }
             else
             {
-               _expect = SPD_NEXT[ _expect - 1 ] + 1 ;
+               _expect = 0 ;
             }
          }
       }

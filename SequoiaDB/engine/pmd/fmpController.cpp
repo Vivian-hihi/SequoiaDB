@@ -69,7 +69,7 @@ CHAR FMP_COORD_SERVICE[OSS_MAX_SERVICENAME + 1] = {0};
 CHAR *FMP_COORD_HOST = "localhost" ;
 CHAR g_UserName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 CHAR g_Password[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-static const CHAR *magicNumber = FMP_MSG_MAGIC ;
+static const CHAR magicNumber[] = FMP_MSG_MAGIC ;
 
 BSONObj OK_RES = BSON( FMP_RES_CODE << SDB_OK ) ;
 
@@ -361,7 +361,7 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
          PD_LOG( PDERROR, "a empty obj was fetched out" ) ;
          rc = SDB_SYS ;
          res = BSON( FMP_ERR_MSG << "a empty obj was fetched out" <<
-                        FMP_RES_CODE << rc ) ;
+                     FMP_RES_CODE << rc ) ;
          goto error ;
       }
 
@@ -492,7 +492,7 @@ INT32 _fmpController::_writeMsg( const BSONObj &msg )
    BOOLEAN writeHead = TRUE ;
 
    /// to distinguish our own msg or printf.
-   SINT64 objsize = ossStrlen(FMP_MSG_MAGIC) ;
+   SINT64 objsize = sizeof( magicNumber ) ;
    const CHAR *buf = magicNumber ;
 
 send:
