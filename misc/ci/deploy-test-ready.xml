@@ -6,8 +6,7 @@
 <project name="copy_tar_deploy" default="check">
 	<hostinfo prefix="local" />
 	<property name="release.path" value="${WORKSPACE}/release" />
-	<property file="${ci.script.path}/ci.test.properties" />
-	<property file="${release.path}/build.version" />
+	
  	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${ci.script.path}/exec-tools/ant-sdbtasks.jar" />
@@ -27,7 +26,8 @@
 				<copy file="${release.path}/build.version" tofile="${release.path}/build.version.local" failonerror="true" />
 				<replace file="${release.path}/build.version.local" token="BUILD.NUMBER" value="BUILD.NUMBER.LOCAL" />
 				<replace file="${release.path}/build.version.local" token="BUILD.INSTALL.FILENAME" value="BUILD.INSTALL.FILENAME.LOCAL" />
-				<replace file="${release.path}/build.version.local" token="BUILD.DRIVER.FILENAME" value="BUILD.DRIVER.FILENAME.LOCAL" />	
+				<replace file="${release.path}/build.version.local" token="BUILD.DRIVER.FILENAME" value="BUILD.DRIVER.FILENAME.LOCAL" />
+				<property file="${release.path}/build.version" />	
 			</then>
 			<else>
 				<echo message="build.version is not exist " />
@@ -38,6 +38,7 @@
 		<delete file="${release.path}/build.version" failonerror="false" />
 		<mkdir dir="${release.path}" />	
 		<copy file="${ci.script.path}/ci-properies-files/ci.test.properties.${os.publish.name}" tofile="${ci.script.path}/ci.test.properties" />
+		<property file="${ci.script.path}/ci.test.properties" />
 		
 		<echo message="Begin to copy the software package ..." />
 		<stafTools workType="copy" workHost="${target.deploy_tar_gz.ip}" fileName="${copy_tar}/build.version" saveDir="${release.path}" toHost="${local.ADDR4}" />
@@ -60,6 +61,7 @@
 	</target>
 
 	<target name="copy_tar_deploy" depends="clean">
+		<property file="${ci.script.path}/ci.test.properties" />
 		<echo message="Begin to copy the software package ..." />
 
 		<stafTools workType="copy" workHost="${target.deploy_tar_gz.ip}" fileName="${copy_tar}/build.version" saveDir="${release.path}" toHost="${local.ADDR4}" />
