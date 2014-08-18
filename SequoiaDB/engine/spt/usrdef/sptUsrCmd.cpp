@@ -41,11 +41,12 @@ static const UINT32 SPT_STACK_OUTPUT = 1024 * 2 ;
 namespace engine
 {
 JS_STATIC_FUNC_DEFINE( _sptUsrCmd, exec )
-//JS_CONSTRUCT_FUNC_DEFINE( _sptUsrCmd, construct )
+JS_CONSTRUCT_FUNC_DEFINE( _sptUsrCmd, construct )
 JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
    JS_ADD_STATIC_FUNC( "run", exec )
 //   JS_ADD_CONSTRUCT_FUNC( construct)
 JS_MAPPING_END()
+
 /*
    INT32 _sptUsrCmd::construct( const _sptArguments &arg,
                                 _sptReturnVal &rval,

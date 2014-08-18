@@ -101,8 +101,8 @@ JS_MAPPING_END()
       }
 
       _session = SDB_OSS_NEW _sptLibssh2Session( host.c_str(),
-                                                usr.c_str(),
-                                                passwd.c_str() ) ;
+                                                 usr.c_str(),
+                                                 passwd.c_str() ) ;
       if ( NULL == _session )
       {
          PD_LOG( PDERROR, "failed to allocate mem." ) ;
