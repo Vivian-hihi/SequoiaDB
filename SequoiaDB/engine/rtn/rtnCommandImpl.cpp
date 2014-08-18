@@ -983,6 +983,7 @@ namespace engine
    INT32 rtnCreateCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                            pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                            SDB_DPSCB *dpsCB, INT32 pageSize,
+                                           INT32 lobPageSize,
                                            BOOLEAN sysCall,
                                            BOOLEAN delWhenExist )
    {
@@ -1045,7 +1046,8 @@ namespace engine
       }
 
       // new storage unit, will insert into dmsCB->addCollectionSpace
-      su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace, 1, pageSize ) ;
+      su = SDB_OSS_NEW dmsStorageUnit ( pCollectionSpace, 1, pageSize,
+                                        lobPageSize ) ;
       if ( !su )
       {
          PD_LOG ( PDERROR, "Failed to allocate new storage unit" ) ;
@@ -1147,6 +1149,7 @@ namespace engine
          if ( SDB_OK == rtnCreateCollectionSpaceCommand ( temp, cb,
                                                           dmsCB, dpsCB,
                                                           DMS_PAGE_SIZE_DFT,
+                                                          DMS_DEFAULT_LOB_PAGE_SZ,
                                                           sysCall ) )
          {
             //restore '\0' to '.'

@@ -130,6 +130,16 @@ if ( handle )                        \
    *handle = SDB_INVALID_HANDLE ;    \
 }
 
+#define LOB_INIT( lob, conn, handle )\
+        do\
+        {\
+           lob->_handleType = SDB_HANDLE_TYPE_LOB ;\
+           lob->_connection = ( sdbConnectionHandle )conn ;\
+           lob->_sock = handle->_sock ;\
+           lob->_contextID = -1 ;\
+           lob->_offset = -1 ; \
+           lob->_endianConvert = handle->_endianConvert ;\
+        } while ( FALSE )
 
 static BOOLEAN _sdbIsSrand = FALSE ;
 
@@ -6907,3 +6917,334 @@ error:
    goto done ;
 }
 
+SDB_EXPORT void sdbReleaseLob ( sdbLobHandle lobHandle )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *s = (sdbLobStruct*)lobHandle ;
+
+   HANDLE_CHECK( lobHandle, s, SDB_HANDLE_TYPE_LOB ) ;
+
+   
+
+   if ( s->_pSendBuffer )
+   {
+      SDB_OSS_FREE ( s->_pSendBuffer ) ;
+   }
+   if ( s->_pReceiveBuffer )
+   {
+      SDB_OSS_FREE ( s->_pReceiveBuffer ) ;
+   }
+
+   SDB_OSS_FREE( s ) ;
+done :
+   return ;
+error :
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
+                             const bson_oid_t *oid,
+                             INT32 mode,
+                             sdbLobHandle* lobHandle )
+{
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   bson_init( &obj ) ;
+   SINT64 contextID = -1 ;
+   BOOLEAN result = TRUE ;
+   sdbLobStruct *lobStruct = NULL ;
+   
+   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+
+   if ( NULL == oid )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+
+   if ( !cs->_collectionFullName[0] || NULL == lobHandle )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = bson_append_oid( &obj, FIELD_NAME_LOB_OID, oid ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   
+   rc = bson_append_int( &obj, FIELD_NAME_LOB_OPEN_MODE, mode ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+ 
+   bson_finish( &obj ) ;
+
+   rc = clientBuildOpenLobMsg( &cs->_pSendBuffer, &cs->_sendBufferSize,
+                               &obj, 0, 1, 0, cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _send ( cs->_sock, (MsgHeader*)cs->_pSendBuffer,
+                cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _recvExtract ( cs->_sock, (MsgHeader**)&cs->_pReceiveBuffer,
+                       &cs->_receiveBufferSize, &contextID, &result,
+                       cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   ALLOC_HANDLE( lobStruct, sdbLobStruct ) ;
+   LOB_INIT( lobStruct, cs->_connection, cs ) ;
+//   ossMemcpy( lobStruct->_oid, oid, 12 ) ;
+   lobStruct->_contextID = contextID ;
+   *lobHandle = (sdbLobHandle)lobStruct ;
+done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
+                              const CHAR *buf,
+                              UINT32 len )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+   SINT64 contextID = -1 ;
+   BOOLEAN result = TRUE ;
+
+   HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
+
+   if ( NULL == buf )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = clientBuildWriteLobMsg( &(lob->_pSendBuffer), &lob->_sendBufferSize,
+                                buf, len, -1, 0, 1,
+                                lob->_contextID, 0,
+                                lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _send ( lob->_sock, (MsgHeader*)lob->_pSendBuffer,
+                lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _recvExtract ( lob->_sock, (MsgHeader**)&lob->_pReceiveBuffer,
+                       &lob->_receiveBufferSize, &contextID, &result,
+                       lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
+                             UINT32 len,
+                             void *buf,
+                             UINT32 *read )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+   SINT64 contextID = -1 ;
+   BOOLEAN result = TRUE ;
+   const MsgOpReply *reply = NULL ;
+   const MsgLobTuple *tuple = NULL ;
+
+   HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
+
+   if (  NULL == buf )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = clientBuildReadLobMsg( &(lob->_pSendBuffer), &lob->_sendBufferSize,
+                               len, -1, 0, lob->_contextID, 0,
+                               lob->_endianConvert ) ;
+
+   rc = _send ( lob->_sock, (MsgHeader*)lob->_pSendBuffer,
+                lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _recvExtract ( lob->_sock, (MsgHeader**)&lob->_pReceiveBuffer,
+                       &lob->_receiveBufferSize, &contextID, &result,
+                       lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   reply = ( const MsgOpReply * )( lob->_pReceiveBuffer ) ;
+   if ( ( UINT32 )( reply->header.messageLength ) <
+        ( sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ) )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   tuple = ( const MsgLobTuple *)
+           ( lob->_pReceiveBuffer + sizeof( MsgOpReply ) ) ;
+
+   *read = tuple->columns.len ;
+   ossMemcpy( buf,
+              lob->_pReceiveBuffer + sizeof( MsgOpReply ) + sizeof( MsgLobTuple ),
+              tuple->columns.len ) ;
+   
+done:
+   return rc ;
+error:
+   *read = 0 ;
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle lobHandle )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+   SINT64 contextID = -1 ;
+   BOOLEAN result = TRUE ;
+
+   HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
+
+   rc = clientBuildCloseLobMsg( &lob->_pSendBuffer, &lob->_sendBufferSize,
+                                0, 1, lob->_contextID, 0,
+                                lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _send ( lob->_sock, (MsgHeader*)lob->_pSendBuffer,
+                lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _recvExtract ( lob->_sock, (MsgHeader**)&lob->_pReceiveBuffer,
+                       &lob->_receiveBufferSize, &contextID, &result,
+                       lob->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   lob->_contextID = -1 ; 
+   lob->_isClosed = TRUE ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
+                               const bson_oid_t *oid )
+{
+   INT32 rc = SDB_OK ;
+   SINT64 contextID = -1 ;
+   BOOLEAN result = TRUE ;
+   bson meta ;
+   bson_init( &meta ) ;
+
+   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+
+   if ( NULL == oid )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+
+   if ( !cs->_collectionFullName[0] || NULL == oid )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( NULL == oid )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = bson_append_string( &meta, FIELD_NAME_COLLECTION,
+                            cs->_collectionFullName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = bson_append_oid( &meta, FIELD_NAME_LOB_OID, oid ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   bson_finish( &meta ) ;
+
+   rc = clientBuildRemoveLobMsg( &cs->_pSendBuffer, &cs->_sendBufferSize,
+                                 &meta, 0, 1, 0, cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _send ( cs->_sock, (MsgHeader*)cs->_pSendBuffer,
+                cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _recvExtract ( cs->_sock, (MsgHeader**)&cs->_pReceiveBuffer,
+                       &cs->_receiveBufferSize, &contextID, &result,
+                       cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &meta ) ;
+   return rc ;
+error:
+   goto done ;
+}

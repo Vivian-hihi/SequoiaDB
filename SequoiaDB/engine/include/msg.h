@@ -267,6 +267,21 @@ enum MSG_TYPE
    MSG_AUTH_DELUSR_REQ                 = 7002,
    MSG_AUTH_DELUSR_RES                 = MAKE_REPLY_TYPE(MSG_AUTH_DELUSR_REQ),
 
+   MSG_LOB_BEGIN                       = 8000,
+   MSG_LOB_OPEN_REQ                    = 8001,
+   MSG_LOB_OPEN_RES                    = MAKE_REPLY_TYPE( MSG_LOB_OPEN_REQ ),
+   MSG_LOB_WRITE_REQ                   = 8002,
+   MSG_LOB_WRITE_RES                   = MAKE_REPLY_TYPE( MSG_LOB_WRITE_REQ ),
+   MSG_LOB_READ_REQ                    = 8003,
+   MSG_LOB_READ_RES                    = MAKE_REPLY_TYPE( MSG_LOB_READ_REQ ),
+   MSG_LOB_REMOVE_REQ                  = 8004,
+   MSG_LOB_REMOVE_RES                  = MAKE_REPLY_TYPE( MSG_LOB_REMOVE_REQ ),
+   MSG_LOB_CLOSE_REQ                   = 8005,
+   MSG_LOB_CLOSE_RES                   = MAKE_REPLY_TYPE( MSG_LOB_CLOSE_REQ ),
+   MSG_LOB_META_REQ                    = 8006,
+   MSG_LOB_META_RES                    = MAKE_REPLY_TYPE( MSG_LOB_META_REQ ),
+   MSG_LOB_END                         = 8999,
+
    MSG_NULL                            = 999999        //reserved
 };
 
@@ -652,6 +667,37 @@ typedef struct _MsgOpAggregate
    // whatever number of bytes in nameLength
    CHAR      name[1] ;    // name of the object
 }MsgOpAggregate;
+
+
+
+/// when it is open reg |MsgOpLob|bsonobj|
+/// when it is open res |MsgOpReply|bsonobj|
+/// when it is put req |MsgOpLob|_MsgLobTuple|data|
+/// when it is put res |MsgOpReply|
+/// when it is read req |MsgOpLob|_MsgLobTuple|
+/// when it is read res |MsgOpReply|_MsgLobTuple|data|
+typedef struct _MsgOpLob
+{
+   MsgHeader header ;
+   INT32 version ;
+   SINT16 w ;
+   SINT16 padding ;
+   SINT32 flags ;
+   SINT64 contextID ;
+   UINT32 bsonLen ;
+} MsgOpLob ;
+
+union _MsgLobTuple
+{
+   struct
+   {
+      UINT32 len ;
+      SINT64 offset ;
+   } columns ;
+
+   CHAR data[12] ;
+} ;
+typedef union _MsgLobTuple MsgLobTuple ;
 
 typedef enum _PREFER_REPLICA_TYPE
 {

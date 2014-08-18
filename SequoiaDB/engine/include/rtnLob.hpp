@@ -1,0 +1,81 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = rtnLob.hpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of msg component. This file contains definition for global keywords
+   that used in client/server communication.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          07/31/2014  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef RTN_LOB_HPP_
+#define RTN_LOB_HPP_
+
+#include "rtn.hpp"
+#include "dmsLobDef.hpp"
+
+namespace engine
+{
+/// local interface
+INT32 rtnOpenLob( const BSONObj &lob,
+                  SINT32 flags,
+                  BOOLEAN isLocal,
+                  _pmdEDUCB *cb,
+                  SDB_DPSCB *dpsCB,
+                  SINT16 w,
+                  SINT64 &contextID ) ;
+
+INT32 rtnWriteLob( SINT64 contextID,
+                   pmdEDUCB *cb,
+                   UINT32 len,
+                   const CHAR *buf ) ;
+
+INT32 rtnReadLob( SINT64 contextID,
+                  pmdEDUCB *cb,
+                  UINT32 len,
+                  const CHAR **buf,
+                  UINT32 &read ) ;
+
+INT32 rtnCloseLob( SINT64 contextID,
+                   pmdEDUCB *cb ) ;
+
+INT32 rtnRemoveLob( const BSONObj &lob,
+                    SINT32 flags,
+                    SINT16 w,
+                    _pmdEDUCB *cb,
+                    SDB_DPSCB *dpsCB ) ;
+
+INT32 rtnGetLobMetaData( SINT64 contextID,
+                         pmdEDUCB *cb,
+                         BSONObj &meta ) ;
+}
+
+#endif
+

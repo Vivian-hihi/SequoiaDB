@@ -151,7 +151,7 @@ public :
 #if defined (_WINDOWS)
        return INVALID_HANDLE_VALUE != hFile ;
 #else
-       return 0 != fd ;
+       return 0 != fd && -1 != fd ;
 #endif
     }
 };

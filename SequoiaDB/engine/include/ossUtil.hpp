@@ -70,6 +70,23 @@ OSS_INLINE UINT32 ossHash( const CHAR *value, UINT32 size, UINT32 bit = 5)
    return hash ;
 }
 
+OSS_INLINE UINT32 ossHash( const BYTE *v1, UINT32 s1,
+                           const BYTE *v2, UINT32 s2 )
+{
+   UINT32 hash = 5381 ;
+   for ( UINT32 i = 0; i < s1; ++i )
+   {
+      hash = ( (hash << 5) + hash + *v1++ ) ;
+   }
+
+   for ( UINT32 i = 0; i < s2; ++i )
+   {
+      hash = ( (hash << 5) + hash + *v2++ ) ;
+   }
+
+   return hash ;
+}
+
 BOOLEAN ossIsPowerOf2( UINT32 num, UINT32 *pSquare = NULL ) ;
 
 #if defined (_WINDOWS)

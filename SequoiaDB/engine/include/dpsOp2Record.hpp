@@ -40,6 +40,7 @@
 
 #include "dpsLogRecord.hpp"
 #include "../bson/bson.h"
+#include "dmsLobDef.hpp"
 
 using namespace bson ;
 
@@ -162,6 +163,47 @@ namespace engine
 
    INT32 dpsRecord2InvalidCata( const CHAR *logRecord,
                                 const CHAR **clFullName ) ;
+
+   INT32 dpsLobW2Record( const CHAR *fullName,
+                         const bson::OID *oid,
+                         const UINT32 &sequence,
+                         const UINT32 &offset,
+                         const UINT32 &hash,
+                         const UINT32 &len,
+                         const CHAR *data,
+                         const DMS_LOB_PAGEID &pageID,
+                         const DPS_TRANS_ID &transID,
+                         const DPS_LSN_OFFSET &preTransLsn,
+                         const DPS_LSN_OFFSET &relatedLSN,
+                         dpsLogRecord &record ) ;
+
+   INT32 dpsLobU2Record(  const CHAR *fullName,
+                          const bson::OID *oid,
+                          const UINT32 &sequence,
+                          const UINT32 &offset,
+                          const UINT32 &hash,
+                          const UINT32 &len,
+                          const CHAR *data,
+                          const UINT32 &oldLen,
+                          const CHAR *oldData,
+                          const DMS_LOB_PAGEID &pageID,
+                          const DPS_TRANS_ID &transID,
+                          const DPS_LSN_OFFSET &preTransLsn,
+                          const DPS_LSN_OFFSET &relatedLSN,
+                          dpsLogRecord &record ) ;
+
+   INT32 dpsLobRm2Record( const CHAR *fullName,
+                          const bson::OID *oid,
+                          const UINT32 &sequence,
+                          const UINT32 &offset,
+                          const UINT32 &hash,
+                          const UINT32 &len,
+                          const CHAR *data,
+                          const DMS_LOB_PAGEID &page,
+                          const DPS_TRANS_ID &transID,
+                          const DPS_LSN_OFFSET &preTransLsn,
+                          const DPS_LSN_OFFSET &relatedLSN,
+                          dpsLogRecord &record ) ;
 
 }
 

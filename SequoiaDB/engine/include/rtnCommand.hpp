@@ -457,6 +457,7 @@ namespace engine
      protected:
          const CHAR                 *_spaceName ;
          INT32                      _pageSize ;
+         INT32                      _lobPageSize ;
 
    };
 

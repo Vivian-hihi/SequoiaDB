@@ -1880,3 +1880,308 @@ INT32 msgExtractAggrRequest ( CHAR *pBuffer, CHAR **ppCollectionName,
    PD_TRACE_EXITRC ( SDB_MSGEXTRACTAGGRREQ, rc ) ;
    return rc;
 }
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTLOBREQ, "msgExtractLobRequest" )
+INT32 msgExtractLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                            bson::BSONObj &meta, const MsgLobTuple **tuples,
+                            UINT32 *tuplesSize )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTLOBREQ ) ;
+   SDB_ASSERT( NULL != pBuffer, "can not be null" ) ;
+   SDB_ASSERT( NULL != header, "can not be null" ) ;
+   const MsgOpLob *msgHeader = ( const MsgOpLob * )pBuffer ;
+   UINT32 msgLen = ( UINT32 )msgHeader->header.messageLength ;
+   const CHAR *body = NULL ;
+   UINT32 bsonLen = 0 ;
+
+   if ( msgLen < sizeof( MsgOpLob ) )
+   {
+      PD_LOG( PDERROR, "invalid msg len:%d", msgLen ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   body = pBuffer + sizeof( MsgOpLob ) ;
+   *header = msgHeader ;
+
+   if ( 0 < msgHeader->bsonLen )
+   {
+      bsonLen = ossRoundUpToMultipleX( msgHeader->bsonLen, 4 ) ;
+      if ( msgLen < ( sizeof( MsgOpLob ) + bsonLen ) )
+      {
+         PD_LOG( PDERROR, "invalid msg len:%d", msgLen ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      try
+      {
+         meta = BSONObj( body ) ;
+         body += ossRoundUpToMultipleX( msgHeader->bsonLen, 4 ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   }
+
+   if ( NULL != tuples && NULL != tuplesSize &&
+        sizeof( MsgOpLob ) + bsonLen < msgLen )
+   {
+      *tuples = ( MsgLobTuple * )body ;
+      *tuplesSize = msgLen - sizeof( MsgOpLob ) - bsonLen ;
+   }
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTLOBREQ, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 msgExtractReadTuples( const MsgLobTuple **begin, UINT32 *tuplesSize,
+                            const MsgLobTuple **tuple, BOOLEAN *got )
+{
+   INT32 rc = SDB_OK ;
+
+   if ( NULL == *begin || 0 == *tuplesSize )
+   {
+      goto done ;
+   }
+
+   if ( sizeof( MsgLobTuple ) < *tuplesSize )
+   {
+      *tuple = *begin ;
+      *tuplesSize -= sizeof( MsgLobTuple ) ;
+      *begin += 1 ;
+      *got = TRUE ;
+   }
+   else if ( sizeof( MsgLobTuple ) == *tuplesSize )
+   {
+      *tuple = *begin ;
+      *tuplesSize -= sizeof( MsgLobTuple ) ;
+      *begin = NULL ;
+      *got = TRUE ;
+   }
+   else
+   {
+      PD_LOG( PDERROR, "invalid tuple size:%d", *tuplesSize ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 msgExtractWriteTuples( const MsgLobTuple **begin, UINT32 *tuplesSize,
+                             const MsgLobTuple **tuple, const CHAR **data,
+                             BOOLEAN *got )
+{
+   INT32 rc = FALSE ;
+   if ( NULL == *begin || 0 == *tuplesSize )
+   {
+      goto done ;
+   }
+
+   if ( sizeof( MsgLobTuple ) <= *tuplesSize )
+   {
+      const MsgLobTuple *t = *begin ;
+      UINT32 dataLen = ossRoundUpToMultipleX( t->columns.len, 4 ) ;
+      if ( sizeof( MsgLobTuple ) + dataLen < *tuplesSize )
+      {
+         *tuple = *begin ;
+         *tuplesSize -= sizeof( MsgLobTuple ) + dataLen ;
+         *data = ( const CHAR * )( *begin ) + sizeof( MsgLobTuple ) ;
+         *begin += 1 ;
+         *got = TRUE ;
+      }
+      else if ( sizeof( MsgLobTuple ) + dataLen == *tuplesSize )
+      {
+         *tuple = *begin ;
+         *tuplesSize -= sizeof( MsgLobTuple ) + dataLen ;
+         *data = ( const CHAR * )( *begin ) + sizeof( MsgLobTuple ) ;
+         *begin = NULL ;
+         *got = TRUE ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "invalid tuple size:%d", *tuplesSize ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   }
+   else
+   {
+      PD_LOG( PDERROR, "invalid tuple size:%d", *tuplesSize ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTOPENLOBREQ, "msgExtractOpenLobRequest" )
+INT32 msgExtractOpenLobRequest( const CHAR *pBuffer,
+                                const MsgOpLob **header,
+                                BSONObj &lob )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTOPENLOBREQ ) ;
+   SDB_ASSERT( NULL != pBuffer, "can not be null" ) ;
+   SDB_ASSERT( NULL != header, "can not be null" ) ;
+   rc = msgExtractLobRequest( pBuffer, header, lob, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract lob msg:%d", rc ) ;
+      goto error ;
+   }
+
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTOPENLOBREQ, rc ) ;
+   return rc ;
+error:
+   *header = NULL ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTWRITELOBREQ, "msgExtractWriteLobRequest" )
+INT32 msgExtractWriteLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                 UINT32 *len, SINT64 *offset, const CHAR **data )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTWRITELOBREQ ) ;
+   SDB_ASSERT( NULL != pBuffer && NULL != header &&
+               NULL != len && NULL != offset &&
+               NULL != data, "cat not be null" ) ;
+   const MsgLobTuple *tuple = NULL ;
+   const MsgLobTuple *tuples = NULL ;
+   UINT32 size = 0 ;
+   BOOLEAN got = FALSE ;
+   BSONObj lob ;
+
+   rc = msgExtractLobRequest( pBuffer, header, lob, &tuples, &size ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract lob msg:%d", rc ) ;
+      goto error ;
+   }
+
+   rc = msgExtractWriteTuples( &tuples, &size,
+                               &tuple, data, &got ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract write msg:%d", rc ) ;
+      goto error ;
+   }
+
+   if ( !got )
+   {
+      PD_LOG( PDERROR, "failed to extract write msg"
+              ", we got nothing" ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   *offset = tuple->columns.offset ;
+   *len = tuple->columns.len ;
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTWRITELOBREQ, rc ) ; 
+   return rc ;
+error:
+   goto done ;
+}
+
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREADLOBREQ, "msgExtractReadLobRequest" )
+INT32 msgExtractReadLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                UINT32 *len, SINT64 *offset )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTREADLOBREQ ) ;
+   SDB_ASSERT( NULL != pBuffer && NULL != header &&
+               NULL != len && NULL != offset, "cat not be null" ) ;
+
+   const MsgLobTuple *tuple = NULL ;
+   const MsgLobTuple *tuples = NULL ;
+   UINT32 size = 0 ;
+   BOOLEAN got = FALSE ;
+   BSONObj lob ;
+
+   rc = msgExtractLobRequest( pBuffer, header, lob, &tuples, &size ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract lob msg:%d", rc ) ;
+      goto error ;
+   }
+
+   rc = msgExtractReadTuples( &tuples, &size,
+                              &tuple, &got ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract read msg:%d", rc ) ;
+      goto error ;
+   }
+
+   if ( !got )
+   {
+      PD_LOG( PDERROR, "failed to extract read msg"
+              ", we got nothing" ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   *offset = tuple->columns.offset ;
+   *len = tuple->columns.len ;
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTREADLOBREQ, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTCLOSELOBREQ, "msgExtractCloseLobRequest" )
+INT32 msgExtractCloseLobRequest( const CHAR *pBuffer, const MsgOpLob **header )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTCLOSELOBREQ ) ;
+   SDB_ASSERT( NULL != pBuffer && NULL != header, "can not be null" ) ;
+   BSONObj obj ;
+   rc = msgExtractLobRequest( pBuffer, header, obj, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract lob msg:%d", rc ) ;
+      goto error ;
+   }
+
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTCLOSELOBREQ, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREMOVELOBREQ, "msgExtractRemoveLobRequest" )
+INT32 msgExtractRemoveLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                  BSONObj &obj )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTREMOVELOBREQ ) ;
+   rc = msgExtractLobRequest( pBuffer, header, obj, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      PD_LOG( PDERROR, "failed to extract lob msg:%d", rc ) ;
+      goto error ;
+   }
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTREMOVELOBREQ, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}

@@ -105,6 +105,14 @@ namespace engine
          INT32 _onTransCommitMsg () ;
          INT32 _onTransRollbackMsg () ;
          INT32 _onAggrReqMsg( MsgHeader *msg, INT64 &contextID ) ;
+         INT32 _onOpenLobMsg( MsgHeader *msg, INT64 &contextID ) ;
+         INT32 _onWriteLobMsg( MsgHeader *msg ) ;
+         INT32 _onReadLobMsg( MsgHeader *msg, const CHAR **data,
+                              INT32 &len  ) ;
+         INT32 _onCloseLobMsg( MsgHeader *msg ) ;
+         INT32 _onRemoveLobMsg( MsgHeader *msg ) ;
+         INT32 _onGetLobMeta( MsgHeader *msg, const CHAR **data,
+                              INT32 &len ) ;
 
       protected:
          BOOLEAN              _authOK ;

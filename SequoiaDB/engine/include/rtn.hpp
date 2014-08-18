@@ -183,6 +183,7 @@ namespace engine
                                            pmdEDUCB *cb,
                                            SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
+                                           INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ,
                                            BOOLEAN sysCall = FALSE,
                                            BOOLEAN delWhenExist = FALSE ) ;
 

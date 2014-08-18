@@ -94,7 +94,8 @@ namespace engine
 
       // create new systemp collection space
       rc = rtnCreateCollectionSpaceCommand ( SDB_DMSTEMP_NAME, NULL, _dmsCB,
-                                             NULL, DMS_PAGE_SIZE_MAX, TRUE,
+                                             NULL, DMS_PAGE_SIZE_MAX,
+                                             DMS_DO_NOT_CREATE_LOB, TRUE,
                                              TRUE ) ;
       if ( rc )
       {

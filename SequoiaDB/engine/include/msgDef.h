@@ -65,6 +65,7 @@
 #define FIELD_NAME_PRIMARY                   "PrimaryNode"
 #define FIELD_NAME_GROUP_STATUS              "Status"
 #define FIELD_NAME_PAGE_SIZE                 "PageSize"
+#define FIELD_NAME_LOB_PAGE_SIZE             "LobPageSize"
 #define FIELD_NAME_MAX_CAPACITY_SIZE         "MaxCapacitySize"
 #define FIELD_NAME_TOTAL_SIZE                "TotalSize"
 #define FIELD_NAME_FREE_SIZE                 "FreeSize"
@@ -269,6 +270,10 @@
 #define FIELD_NAME_SHARD_NETOUT              "shardNetOut"
 #define FIELD_NAME_DOMAIN_AUTO_SPLIT         "AutoSplit"
 #define FIELD_NAME_DOMAIN_AUTO_REBALANCE     "AutoRebalance"
+#define FIELD_NAME_LOB_OID                   "Oid"
+#define FIELD_NAME_LOB_OPEN_MODE             "Mode"
+#define FIELD_NAME_LOB_SIZE                  "Size"
+#define FIELD_NAME_LOB_CREATTIME             "CreateTime"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
@@ -397,6 +402,8 @@
 #define SDB_AUTH_USER                        "User"
 #define SDB_AUTH_PASSWD                      "Passwd"
 
+#define SDB_LOB_OID_LEN                      16
+
 enum SDB_ROLE
 {
    SDB_ROLE_DATA = 0,
@@ -405,6 +412,13 @@ enum SDB_ROLE
    SDB_ROLE_STANDALONE,
    SDB_ROLE_OM,
    SDB_ROLE_MAX
+} ;
+
+enum SDB_LOB_MODE
+{
+   SDB_LOB_MODE_CREATEONLY = 0x00000001,
+   SDB_LOB_MODE_R = 0x00000004,
+   SDB_LOB_MODE_W = 0x00000008, /// not supported yet.
 } ;
 
 #endif // MSGDEF_H__

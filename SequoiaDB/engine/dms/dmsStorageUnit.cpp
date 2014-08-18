@@ -43,12 +43,17 @@
 #include "pmdCB.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
+#include "dmsStorageLob.hpp"
 
 namespace engine
 {
    _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName, UINT32 sequence,
-                                      INT32 pageSize )
-   :_apm(this)
+                                      INT32 pageSize,
+                                      INT32 lobPageSize )
+   :_apm(this),
+    _pDataSu( NULL ),
+    _pIndexSu( NULL ),
+    _pLobSu( NULL )
    {
       SDB_ASSERT ( pSUName, "name can't be null" ) ;
 
@@ -61,6 +66,7 @@ namespace engine
       CHAR idxFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
 
       _storageInfo._pageSize = pageSize ;
+      _storageInfo._lobdPageSize = lobPageSize ;
       ossStrncpy( _storageInfo._suName, pSUName, DMS_SU_NAME_SZ ) ;
       _storageInfo._suName[DMS_SU_NAME_SZ] = 0 ;
       _storageInfo._sequence = sequence ;
@@ -79,6 +85,28 @@ namespace engine
          _pIndexSu = SDB_OSS_NEW dmsStorageIndex( idxFileName, &_storageInfo,
                                                   _pDataSu ) ;
       }
+
+      if ( NULL != _pDataSu && NULL != _pIndexSu &&
+           DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize )
+      {
+         SDB_ASSERT( 0 < _storageInfo._lobdPageSize, "impossible" ) ;
+         /// reuse buf for lob
+         ossMemset( dataFileName, 0, sizeof( dataFileName ) ) ;
+         ossMemset( idxFileName, 0 , sizeof( idxFileName ) ) ;
+         ossSnprintf( dataFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                      _storageInfo._suName, _storageInfo._sequence,
+                      DMS_LOB_META_SU_EXT_NAME ) ;
+         ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
+                      _storageInfo._suName, _storageInfo._sequence,
+                      DMS_LOB_DATA_SU_EXT_NAME ) ;
+         UINT32 pageSz = _storageInfo._pageSize ;
+
+         /// lobm's page size always be 256B.
+         _storageInfo._pageSize = DMS_PAGE_SIZE256B ;
+         _pLobSu = SDB_OSS_NEW dmsStorageLob( dataFileName, idxFileName,
+                                              &_storageInfo ) ;
+         _storageInfo._pageSize = pageSz ;
+      }
    }
 
    _dmsStorageUnit::~_dmsStorageUnit()
@@ -95,6 +123,11 @@ namespace engine
          SDB_OSS_DEL _pDataSu ;
          _pDataSu = NULL ;
       }
+      if ( _pLobSu )
+      {
+         SDB_OSS_DEL _pLobSu ;
+         _pDataSu = NULL ;
+      }
    }
 
    INT32 _dmsStorageUnit::open( const CHAR *pDataPath, const CHAR *pIndexPath,
@@ -102,7 +135,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( !_pDataSu || !_pIndexSu )
+      if ( !_pDataSu || !_pIndexSu ) 
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "Alloc memory failed" ) ;
@@ -134,6 +167,33 @@ namespace engine
             goto rmdata ;
          }
          goto error ;
+      }
+
+      // open lob 
+      if ( DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize )
+      {
+         UINT32 pageSz = _storageInfo._pageSize ;
+         if ( NULL == _pLobSu )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem." ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+
+         _storageInfo._pageSize = DMS_PAGE_SIZE256B ;
+         rc = _pLobSu->open( pDataPath, createNew, delWhenExist ) ;
+         _storageInfo._pageSize = pageSz ;
+         if ( SDB_OK != rc )
+         {
+             PD_LOG( PDERROR, "failed to open storage lob, rc:%d", rc ) ;
+            if ( createNew )
+            {
+               goto rmboth ;
+            }
+            goto error ;
+         }
+
+         _pLobSu->setDmsData( _pDataSu ) ;
       }
 
    done:
@@ -173,6 +233,10 @@ namespace engine
       {
          _pDataSu->closeStorage() ;
       }
+      if ( _pLobSu )
+      {
+         _pLobSu->closeStorage() ;
+      }
    }
 
    INT32 _dmsStorageUnit::remove ()
@@ -191,6 +255,11 @@ namespace engine
          rc = _pIndexSu->removeStorage() ;
          PD_RC_CHECK( rc, PDERROR, "Failed to remove collection space[%s] "
                       "index file, rc: %d", CSName(), rc ) ;
+      }
+
+      if ( _pLobSu && DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize )
+      {
+         _pLobSu->removeStorageFiles() ;
       }
 
       PD_LOG( PDEVENT, "Remove collection space[%s] files succeed", CSName() ) ;

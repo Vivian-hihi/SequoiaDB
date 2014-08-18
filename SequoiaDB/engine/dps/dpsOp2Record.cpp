@@ -1195,5 +1195,340 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_LOBW2RECORD, "dpsLobW2Record" )
+   INT32 dpsLobW2Record( const CHAR *fullName,
+                         const bson::OID *oid,
+                         const UINT32 &sequence,
+                         const UINT32 &offset,
+                         const UINT32 &hash,
+                         const UINT32 &len,
+                         const CHAR *data,
+                         const DMS_LOB_PAGEID &pageID,
+                         const DPS_TRANS_ID &transID,
+                         const DPS_LSN_OFFSET &preTransLsn,
+                         const DPS_LSN_OFFSET &relatedLSN,
+                         dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_LOBW2RECORD ) ;
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_LOB_WRITE ;
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen( fullName ) + 1,
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_OID,
+                        sizeof( bson::OID ),
+                        ( const CHAR * )oid ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push oid to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_SEQUENCE,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &sequence ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push sequence to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_OFFSET,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &offset ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push offset to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_HASH,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &hash ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push hash to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_LEN,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &len ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push len to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_DATA,
+                        len,
+                        data ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push data to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_PAGE,
+                        sizeof( DMS_LOB_PAGEID ),
+                        ( const CHAR * )( &pageID ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push pageid to record, rc:%d", rc ) ;
+         goto error ;
+      }
+                        
+
+      rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_LOBW2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_LOBU2RECORD, "dpsLobU2Record" )
+   INT32 dpsLobU2Record(  const CHAR *fullName,
+                          const bson::OID *oid,
+                          const UINT32 &sequence,
+                          const UINT32 &offset,
+                          const UINT32 &hash,
+                          const UINT32 &len,
+                          const CHAR *data,
+                          const UINT32 &oldLen,
+                          const CHAR *oldData,
+                          const DMS_LOB_PAGEID &pageID,
+                          const DPS_TRANS_ID &transID,
+                          const DPS_LSN_OFFSET &preTransLsn,
+                          const DPS_LSN_OFFSET &relatedLSN,
+                          dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_LOBU2RECORD ) ;
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_LOB_UPDATE ;
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen( fullName ) + 1,
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_OID,
+                        sizeof( bson::OID ),
+                        ( const CHAR * )oid ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push oid to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_SEQUENCE,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &sequence ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push sequence to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_OFFSET,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &offset ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push offset to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_HASH,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &hash ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push hash to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_LEN,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &len ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push len to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_DATA,
+                        len,
+                        data ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push data to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_PAGE,
+                        sizeof( DMS_LOB_PAGEID ),
+                        ( const CHAR * )( &pageID ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push pageid to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_OLD_LEN,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &oldLen ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push old len to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_OLD_DATA,
+                        oldLen,
+                        oldData ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push old data to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_LOBU2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_LOBRM2RECORD, "dpsLobRm2Record" )
+   INT32 dpsLobRm2Record( const CHAR *fullName,
+                          const bson::OID *oid,
+                          const UINT32 &sequence,
+                          const UINT32 &offset,
+                          const UINT32 &hash,
+                          const UINT32 &len,
+                          const CHAR *data,
+                          const DMS_LOB_PAGEID &page,
+                          const DPS_TRANS_ID &transID,
+                          const DPS_LSN_OFFSET &preTransLsn,
+                          const DPS_LSN_OFFSET &relatedLSN,
+                          dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_LOBRM2RECORD ) ;
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_LOB_REMOVE ;
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen( fullName ) + 1,
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_OID,
+                        sizeof( bson::OID ),
+                        ( const CHAR * )oid ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push oid to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_SEQUENCE,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &sequence ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push sequence to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_OFFSET,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &offset ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push offset to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_HASH,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &hash ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push hash to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_LEN,
+                        sizeof( UINT32 ),
+                        ( const CHAR * )( &len ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push len to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_DATA,
+                        len,
+                        data ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push data to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_LOB_PAGE,
+                        sizeof( DMS_LOB_PAGEID ),
+                        ( const CHAR * )( &page ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push pageid to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;   
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_LOBRM2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

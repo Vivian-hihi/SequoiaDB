@@ -56,6 +56,8 @@
 #include "../bson/bsonobj.h"
 #include "dmsCB.hpp"
 #include "rtnQueryOptions.hpp"
+#include "dmsLobDef.hpp"
+#include "rtnLocalLobStream.hpp"
 
 #include <map>
 
@@ -227,6 +229,8 @@ namespace engine
       RTN_CONTEXT_DELCL,
       RTN_CONTEXT_DELMAINCL,
       RTN_CONTEXT_EXPLAIN,
+      RTN_CONTEXT_LOB,
+      RTN_CONTEXT_COORD_LOB,
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
@@ -1005,6 +1009,7 @@ namespace engine
       
    } ;
    typedef class _rtnContextExplain rtnContextExplain ;
+
 }
 
 #endif //RTNCONTEXT_HPP_

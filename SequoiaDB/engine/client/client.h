@@ -78,6 +78,7 @@ typedef ossValuePtr sdbCursorHandle       ;
 typedef ossValuePtr sdbReplicaGroupHandle ;
 typedef ossValuePtr sdbNodeHandle  ;
 typedef ossValuePtr sdbDomainHandle ;
+typedef ossValuePtr sdbLobHandle ;
 
 /** sdbReplicaNodeHandle will be deprecated in version 2.x, use sdbNodeHandle instead of it. */
 typedef sdbNodeHandle             sdbReplicaNodeHandle ;
@@ -1767,7 +1768,7 @@ SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
 
 /** \fn INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
                                                sdbCursorHandle *cursor ) ;
-    \brief alter the domains.
+    \brief list the collection spaces in domain.
     \param [in] cHandle The domain handle
     \param [out] handle The cusor handle of result 
     \retval SDB_OK Operation Success
@@ -1778,7 +1779,7 @@ SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
 
 /** \fn INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
                                           sdbCursorHandle *cursor ) ;
-    \brief alter the domains.
+    \brief list the collections in domain.
     \param [in] cHandle The domain handle
     \param [out] handle The cusor handle of result
     \retval SDB_OK Operation Success
@@ -1798,9 +1799,9 @@ SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
 SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
                                      bson *condition ) ;
 
-/** \fn INT32 sdbForceSession( sdbConnectionHandle cHandle,
-                               SINT64 sessionID )
-    \brief force the user session.
+/** \fn INT32 sdbInterruptSession( sdbConnectionHandle cHandle,
+                                   SINT64 sessionID )
+    \brief interrupte the session
     \param [in] cHandle The connection handle
     \param [in] sessionID The id of the session which we want to inerrupt
     \retval SDB_OK Operation Success
@@ -1808,6 +1809,92 @@ SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
                                   SINT64 sessionID ) ;
+
+/** \fn void sdbReleaseLob ( sdbLobHandle *lobHandle )
+    \brief release the lob handle
+    \param [in] lobHandle The handle of large object
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT void sdbReleaseLob ( sdbLobHandle lobHandle ) ;
+
+/** \fn INT32 sdbOpenLob( sdbCollectionHandle cHandle,
+ *                        const bson_oid_t *,
+ *                        INT32 mode,
+                          sdbLobHandle * )
+    \brief create a large object
+    \param [in] cHandle The collection handle
+    \param [in] oid The object id
+    \param [in] mode The open mode: LOB_C/LOB_R
+    \param [out] The handle of object 
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
+                             const bson_oid_t *,
+                             INT32 mode,
+                             sdbLobHandle * ) ;
+
+/** \fn INT32 sdbWriteLob( sdbLobHandle lobHandle,
+ *                         const void *buf,
+ *                         UINT32 len )
+    \brief write lob
+    \param [in] lobHandle The large object handle
+    \param [in] buf The buf of write
+    \param [in] len The length of write
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
+                              const CHAR *buf,
+                              UINT32 len );
+
+/** \fn INT32 sdbReadLob( sdbLobHandle lobHandle,
+ *                        void *buf,
+ *                        UINT32 len,
+ *                        UINT32 &read )
+ *   \brief read lob
+ *   \param [in] lobHandle The large object handle
+ *   \param [in] len The length want to read
+ *   \param [in] buf Put the data into buf
+ *   \param [out] read The length of read
+ *   \retval SDB_OK Operation Success
+ *   \retval Others Operation Fail
+ */
+SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
+                             UINT32 len,
+                             void *buf,
+                             UINT32 *read ) ;
+
+/** \fn INT32 sdbCloseLob( sdbLobHandle lobHandle )
+ *  \brief close lob 
+ *  \param [in] lobHandle The large object handle
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ *  */
+SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle lobHandle ) ;
+
+/** \fn INT32 sdbRemoveLob( const CHAR *fullName,
+ *                          const bson_oid_t *oid )
+ *   \brief remove lob
+ *   \param [in] cHandle The handle of collection
+ *   \param [in] oid The large object id
+ *   \retval SDB_OK Operation Success
+ *   \retval Others Operation Fail
+ */
+SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
+                               const bson_oid_t *oid ) ;
+
+/** \fn INT32 sdbGetLobSize( sdbLobHandle lobHandle,
+ *                           SINT64 *size )
+ *  \param [in] lobHandle The large object handle
+ *  \param [out] size The size of lob
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
+                                SINT64 *size ) ;
+
 
 SDB_EXTERN_C_END
 #endif

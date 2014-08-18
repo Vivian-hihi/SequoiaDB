@@ -150,7 +150,7 @@ rtnFiles = [
       "rtn/rtnCoord.cpp",
       "rtn/rtnCB.cpp",
       "rtn/rtnCoordInterrupt.cpp",
-	  "rtn/rtnBackgroundJobBase.cpp",
+      "rtn/rtnBackgroundJobBase.cpp",
       "rtn/rtnBackgroundJob.cpp",
       "rtn/rtnPrefetchJob.cpp",
       "rtn/rtnPageCleanerJob.cpp",
@@ -181,7 +181,13 @@ rtnFiles = [
       "rtn/rtnMergeSorting.cpp",
       "rtn/rtnSortTuple.cpp",
       "rtn/rtnQueryOptions.cpp",
-      "rtn/rtnDataSet.cpp"
+      "rtn/rtnDataSet.cpp",
+      "rtn/rtnLob.cpp",
+      "rtn/rtnLobStream.cpp",
+      "rtn/rtnLocalLobStream.cpp",
+      "rtn/rtnLobWindow.cpp",
+      "rtn/rtnContextLob.cpp",
+      "rtn/rtnLobDataPool.cpp"
       ]
 
 msgFiles = [
@@ -207,7 +213,9 @@ dmsFiles = [
       "dms/dmsStorageLoadExtent.cpp",
       "dms/dmsStorageJob.cpp",
       "dms/dmsTmpBlkUnit.cpp",
-      "dms/dmsCompress.cpp"
+      "dms/dmsCompress.cpp",
+      "dms/dmsStorageLob.cpp",
+      "dms/dmsStorageLobData.cpp"
       ]
 
 ixmFiles = [

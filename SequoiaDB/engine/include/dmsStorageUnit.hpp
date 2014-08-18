@@ -41,6 +41,7 @@
 
 #include "dmsStorageData.hpp"
 #include "dmsStorageIndex.hpp"
+#include "dmsStorageLob.hpp"
 #include "rtnAPM.hpp"
 
 using namespace bson ;
@@ -82,7 +83,8 @@ namespace engine
 
       public:
          _dmsStorageUnit ( const CHAR *pSUName, UINT32 sequence,
-                           INT32 pageSize = DMS_PAGE_SIZE_DFT ) ;
+                           INT32 pageSize = DMS_PAGE_SIZE_DFT,
+                           INT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ) ;
          ~_dmsStorageUnit() ;
 
          INT32 open ( const CHAR *pDataPath, const CHAR *pIndexPath,
@@ -93,9 +95,11 @@ namespace engine
 
          dmsStorageData    *data() { return _pDataSu ; }
          dmsStorageIndex   *index() { return _pIndexSu ; }
+         dmsStorageLob *lob() { return _pLobSu ; }
          rtnAccessPlanManager *getAPM () { return &_apm ; }
 
          INT32       getPageSize() const { return _storageInfo._pageSize ; }
+         INT32       getLobPageSize() const { return _storageInfo._lobdPageSize ; }
          const CHAR* CSName() const { return _storageInfo._suName ; }
          UINT32      CSSequence() const { return _storageInfo._sequence ; }
          UINT32      LogicalCSID() const { return _pDataSu->logicalID() ; }
@@ -228,6 +232,7 @@ namespace engine
          dmsStorageData                      *_pDataSu ;
          dmsStorageIndex                     *_pIndexSu ;
          dmsStorageInfo                      _storageInfo ;
+         _dmsStorageLob                       *_pLobSu ;
 
    } ;
    typedef _dmsStorageUnit dmsStorageUnit ;

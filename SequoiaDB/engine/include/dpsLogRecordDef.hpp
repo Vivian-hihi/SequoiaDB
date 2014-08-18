@@ -131,6 +131,19 @@ namespace engine
    {
       DPS_LOG_ROW_ROWDATA = 1,
    };
+
+   enum DPS_LOG_LOB
+   {
+      DPS_LOG_LOB_OID = 1,
+      DPS_LOG_LOB_SEQUENCE,
+      DPS_LOG_LOB_OFFSET,
+      DPS_LOG_LOB_HASH,
+      DPS_LOG_LOB_LEN,
+      DPS_LOG_LOB_DATA,
+      DPS_LOG_LOB_PAGE,
+      DPS_LOG_LOB_OLD_LEN,
+      DPS_LOG_LOB_OLD_DATA,
+   } ;
 }
 
 

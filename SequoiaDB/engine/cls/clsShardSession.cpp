@@ -578,14 +578,15 @@ namespace engine
       }
 
       UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
-      rc = _pShdMgr->rGetCSPageSize( csName, pageSize ) ;
+      UINT32 lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+      rc = _pShdMgr->rGetCSPageSize( csName, pageSize, lobPageSize ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "Get collection space[%s] page size from catalog "
                  "failed, rc: %d, use default pagesize", csName, rc ) ;
       }
       rc = rtnCreateCollectionSpaceCommand( csName, _pEDUCB, _pDmsCB, _pDpsCB,
-                                            pageSize, FALSE ) ;
+                                            pageSize, lobPageSize, FALSE ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDWARNING, "Create collection space[%s] by catalog failed, rc:"

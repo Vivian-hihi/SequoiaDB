@@ -302,7 +302,8 @@ namespace engine
                goto error ;
             }
             rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB, _dpsCB,
-                                                  pageSize, TRUE ) ;
+                                                  pageSize, DMS_DEFAULT_LOB_PAGE_SZ,
+                                                  TRUE ) ;
             if ( SDB_DMS_CS_EXIST == rc )
             {
                PD_LOG( PDWARNING, "Collection space[%s] already exist when "
@@ -734,7 +735,9 @@ namespace engine
    {
       SDB_ASSERT( NULL != cs, "cs should not be NULL" ) ;
       return rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
-                                              _dpsCB, pageSize, TRUE,
+                                              _dpsCB, pageSize,
+                                              DMS_DEFAULT_LOB_PAGE_SZ,
+                                              TRUE,
                                               delWhenExist ) ;
    }
 

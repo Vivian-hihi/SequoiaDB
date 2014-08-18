@@ -625,6 +625,7 @@ namespace engine
          realHint = ele.embeddedObject() ;
       }
 
+      /// clear explain flag.
       rtnQueryOptions options( matcher, selector,
                                orderBy, realHint,
                                pCollectionName,
@@ -659,5 +660,6 @@ namespace engine
       }
       goto done ;
    }
+
 }
 

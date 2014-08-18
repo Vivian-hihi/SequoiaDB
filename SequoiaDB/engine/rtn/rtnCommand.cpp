@@ -582,9 +582,11 @@ namespace engine
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCollectionspace)
    _rtnCreateCollectionspace::_rtnCreateCollectionspace ()
-   :_spaceName ( NULL )
+   :_spaceName ( NULL ),
+    _pageSize( 0 ),
+    _lobPageSize( 0 )
    {
-      _pageSize = 0 ;
+
    }
 
    _rtnCreateCollectionspace::~_rtnCreateCollectionspace ()
@@ -621,6 +623,13 @@ namespace engine
          _pageSize = DMS_PAGE_SIZE_DFT ;
       }
 
+      rc = rtnGetIntElement( mather, FIELD_NAME_LOB_PAGE_SIZE,
+                             _lobPageSize ) ;
+      if ( SDB_OK != rc )
+      {
+         _lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+      }
+
       return rtnGetStringElement ( mather, FIELD_NAME_NAME, &_spaceName ) ;
    }
 
@@ -638,7 +647,7 @@ namespace engine
       }
 
       rc = rtnCreateCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB,
-                                             _pageSize ) ;
+                                             _pageSize, _lobPageSize ) ;
       dmsCB->writeDown () ;
    done :
       PD_TRACE_EXITRC ( SDB__RTNCREATECS_DOIT, rc ) ;

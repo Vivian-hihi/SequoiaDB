@@ -252,5 +252,34 @@ INT32 msgExtractAggrRequest ( CHAR *pBuffer, CHAR **ppCollectionName,
                               CHAR **ppObjs, INT32 &count,
                               INT32 *pFlags = NULL );
 
+INT32 msgExtractLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                            bson::BSONObj &meta, const MsgLobTuple **tuples,
+                            UINT32 *tuplesSize ) ;
+
+INT32 msgExtractReadTuples( const MsgLobTuple **begin,
+                            UINT32 *tuplesSize,
+                            const MsgLobTuple **tuple,
+                            BOOLEAN *got ) ;
+
+INT32 msgExtractWriteTuples( const MsgLobTuple **begin, UINT32 *tuplesSize,
+                             const MsgLobTuple **tuple, const CHAR **data,
+                             BOOLEAN *got ) ;
+
+INT32 msgExtractOpenLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                bson::BSONObj &meta ) ;
+
+INT32 msgExtractWriteLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                 UINT32 *len, SINT64 *offset, const CHAR **data ) ;
+
+INT32 msgExtractReadLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                 UINT32 *len, SINT64 *offset ) ;
+
+INT32 msgExtractCloseLobRequest( const CHAR *pBuffer, const MsgOpLob **header ) ;
+
+INT32 msgExtractRemoveLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
+                                  BSONObj &obj ) ;
+
+INT32 msgBuildGetLobMetaRequest( CHAR **ppBuffer, INT32 *pBufferSize ) ;
+
 
 #endif // MSGMESSAGE_HPP_

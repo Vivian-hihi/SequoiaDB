@@ -2204,118 +2204,249 @@ error:
    goto done ;
 }
 
-/*
-INT32 clientBuildAggrRequestCpp( CHAR **ppBuffer, INT32 *bufferSize,
-                                     const CHAR *CollectionName, vector<BSONObj> &obj,
-                                     BOOLEAN endianConvert )
+INT32 clientBuildLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                         INT32 msgType, const bson *meta,
+                         SINT32 flags, SINT16 w, SINT64 contextID,
+                         UINT64 reqID, const SINT64 *lobOffset,
+                         const UINT32 *len, const CHAR *data,
+                         BOOLEAN endianConvert )
 {
    INT32 rc = SDB_OK ;
-   MsgOpAggregate *pAggr = NULL ;
-   INT32 nameLength = 0;
-   INT32 packetLength = 0;
-   INT32 offset = 0;
-   SINT32 i = 0;
-   bson bi ;
-   CHAR *tmpStr = NULL ;
-   SINT32 num = obj.size() ;
+   SINT32 packetLength = 0 ;
+   MsgOpLob *msg = NULL ;
+   SINT32 offset = 0 ;
+   SINT16 padding = 0 ;
+   UINT32 bsonLen = 0 ;
+   MsgLobTuple *tuple = NULL ;
 
-   if ( NULL == objs || num <= 0 )
+   packetLength = sizeof( MsgOpLob ) ;
+
+   if ( NULL != meta )
    {
-      rc = SDB_INVALIDARG;
-      ossPrintf( "param can't be empty!"OSS_NEWLINE ) ;
-      goto error;
+      bsonLen = bson_size( meta ) ;
+      packetLength += ossRoundUpToMultipleX( bsonLen, 4 ) ;
    }
-   nameLength = ossStrlen( CollectionName ) ;
-   packetLength = ossRoundUpToMultipleX( offsetof(MsgOpAggregate, name ) +
-                                       nameLength + 1, 4 );
-   for ( i = 0 ; i < num ; i++ )
+
+
+   if ( NULL != lobOffset && NULL != len )
    {
-      bson_init ( &bi ) ;
-      bson_init_finished_data (&bi, obj[i].objdata() ) ;
-      packetLength += ossRoundUpToMultipleX( bson_size( &bi ), 4 );
-      if ( packetLength <= 0 )
-      {
-         rc = SDB_INVALIDARG;
-         ossPrintf( "packet size overflow!"OSS_NEWLINE );
-         bson_destroy ( &bi ) ;
-         goto error;
-      }
-      bson_destroy ( &bi ) ;
+      packetLength += sizeof( MsgLobTuple ) ;
    }
-   rc = clientCheckBuffer( ppBuffer, bufferSize, packetLength );
+   
+   if ( NULL != data )
+   {
+      packetLength += ossRoundUpToMultipleX( *len, 4 ) ;
+   }
+
+   if ( packetLength < 0 )
+   {
+      ossPrintf ( "Packet size overflow"OSS_NEWLINE ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = clientCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
    if ( rc )
    {
-      ossPrintf( "Failed to check buffer, rc=%d"OSS_NEWLINE, rc );
-      goto error;
+      ossPrintf ( "Failed to check buffer, rc = %d"OSS_NEWLINE, rc ) ;
+      goto error ;
    }
-   pAggr = (MsgOpAggregate *)(*ppBuffer);
-   ossEndianConvertIf( clientDefaultVersion, pAggr->version, endianConvert );
-   ossEndianConvertIf( clientDefaultW, pAggr->w, endianConvert );
-   ossEndianConvertIf(clientDefaultFlags, pAggr->flags, endianConvert );
-   ossEndianConvertIf( nameLength, pAggr->nameLength, endianConvert );
-   pAggr->header.messageLength = packetLength;
-   pAggr->header.opCode = MSG_BS_AGGREGATE_REQ ;
-   pAggr->header.routeID.value = 0;
-   pAggr->header.requestID = 0;
-   pAggr->header.TID = ossGetCurrentThreadID();
-   ossStrncpy( pAggr->name, CollectionName, nameLength );
-   pAggr->name[nameLength] = 0;
-   offset = ossRoundUpToMultipleX( offsetof(MsgOpAggregate, name) +
-                                 nameLength + 1, 4 );
+
+   msg = ( MsgOpLob * )( *ppBuffer ) ;
+   ossEndianConvertIf ( flags, msg->flags, endianConvert ) ;
+   ossEndianConvertIf ( clientDefaultVersion, msg->version, endianConvert ) ;
+   ossEndianConvertIf ( w, msg->w, endianConvert ) ;
+   ossEndianConvertIf ( padding, msg->padding, endianConvert ) ;
+   ossEndianConvertIf ( contextID, msg->contextID, endianConvert ) ;
+   ossEndianConvertIf ( bsonLen, msg->bsonLen, endianConvert ) ;
+
+   msg->header.requestID = reqID ;
+   msg->header.opCode = msgType ;
+   msg->header.messageLength = packetLength ;
+   msg->header.routeID.value = clientDefaultRouteID ;
+   msg->header.TID = ossGetCurrentThreadID() ;
+
+   offset = sizeof( MsgOpLob ) ;
+
    if ( !endianConvert )
    {
-      for ( i = 0 ; i < num ; i++ )
+      if ( NULL != meta )
       {
-         bson_init ( &bi ) ;
-         bson_init_finished_data (&bi, obj[i].objdata() ) ;
-         ossMemcpy( &((*ppBuffer)[offset]), bson_data( &bi ),
-                  bson_size( &bi ));
-         offset += ossRoundUpToMultipleX( bson_size( &bi ), 4 );
-         bson_destroy ( &bi ) ;
+         ossMemcpy( *ppBuffer + offset, bson_data( meta ), bsonLen ) ;
+         offset += ossRoundUpToMultipleX( bsonLen, 4 ) ;
+      }
+
+      if ( NULL != lobOffset && NULL != len )
+      {
+         tuple = ( MsgLobTuple * )(*ppBuffer + offset) ;
+         tuple->columns.len = *len ;
+         tuple->columns.offset = *lobOffset ;
+         offset += sizeof( MsgLobTuple ) ;
+      }
+
+      if ( NULL != data )
+      {
+         ossMemcpy( *ppBuffer + offset, data, *len ) ;
+         offset += ossRoundUpToMultipleX( *len, 4 ) ;
       }
    }
    else
    {
-      clientEndianConvertHeader( &pAggr->header );
-      for ( i = 0 ; i < num ; i++ )
+      BOOLEAN res = TRUE ;
+      clientEndianConvertHeader ( &( msg->header ) ) ;
+      if ( NULL != meta )
       {
-         off_t off = 0;
-         bson newObj;
-         bson_init( &newObj );
-         bson_init( &bi ) ;
-         bson_init_finished_data (&bi, obj[i].objdata() ) ;
-         bson_copy( &newObj, &bi );
-         rc = bson_endian_convert((CHAR *)bson_data(&newObj), &off, TRUE );
-         if ( 0 == rc )
+         off_t off = 0 ;
+         bson newObj ;
+         bson_init( &newObj ) ;
+         bson_copy( &newObj, meta ) ;
+         res = bson_endian_convert ( (char*)bson_data(&newObj), &off, TRUE ) ;
+         if ( rc )
          {
-            goto endian_convert_done;
+            ossMemcpy( *ppBuffer + offset, bson_data( &newObj ), bson_size( &newObj ) ) ;
+            offset += ossRoundUpToMultipleX( bson_size( &newObj ), 4 ) ;
          }
-         ossMemcpy(&((*ppBuffer)[offset]), bson_data(&newObj),
-                  bson_size(&bi));
-         offset += ossRoundUpToMultipleX( bson_size(&bi), 4 );
-endian_convert_done:
-         bson_destroy( &newObj );
-         bson_destroy( &bi ) ;
-         if ( FALSE == rc )
+
+         bson_destroy( &newObj ) ;
+         if ( !res )
          {
-            rc = SDB_INVALIDARG;
-            goto error;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
          else
          {
-            rc = SDB_OK;
+            rc = SDB_OK ;
          }
       }
+
+      if ( NULL != lobOffset && NULL != len )
+      {
+         tuple = ( MsgLobTuple * )( *ppBuffer + offset ) ;
+         ossEndianConvertIf( *len, tuple->columns.len, endianConvert ) ;
+         ossEndianConvertIf( *lobOffset, tuple->columns.offset, endianConvert ) ;
+         offset += sizeof( MsgLobTuple ) ;
+      }
+
+      if ( NULL != data )
+      {
+         ossMemcpy( *ppBuffer + offset, data, *len ) ;
+         offset += ossRoundUpToMultipleX( *len, 4 ) ;
+      }
    }
+
    if ( offset != packetLength )
    {
-      ossPrintf( "Invalid packet length"OSS_NEWLINE );
-      rc = SDB_SYS;
-      goto error;
+      ossPrintf ( "Invalid packet length"OSS_NEWLINE ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 clientBuildOpenLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                             const bson *meta, SINT32 flags, SINT16 w,
+                             UINT64 reqID,
+                             BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           MSG_LOB_OPEN_REQ, meta,
+                           flags, w, -1, reqID, NULL,
+                           NULL, NULL, endianConvert ) ;
+
+   if ( SDB_OK != rc )
+   {
+      goto error ;
    }
 done:
-   return rc;
+   return rc ;
 error:
-   goto done;
+   goto done ;
 }
-*/
+
+INT32 clientBuildWriteLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                              const CHAR *buf, UINT32 len,
+                              SINT64 lobOffset, SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID,
+                              BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           MSG_LOB_WRITE_REQ, NULL,
+                           flags, w, contextID, reqID, &lobOffset,
+                           &len, buf, endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 clientBuildReadLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                             UINT32 len, SINT64 lobOffset,
+                             SINT32 flags, SINT64 contextID,
+                             UINT64 reqID,
+                             BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           MSG_LOB_READ_REQ, NULL,
+                           flags, 1, contextID, reqID,
+                           &lobOffset, &len, NULL, endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 clientBuildCloseLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                              SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID,
+                              BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           MSG_LOB_CLOSE_REQ, NULL,
+                           flags, w, contextID, reqID,
+                           NULL, NULL, NULL, endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 clientBuildRemoveLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                               const bson *meta,
+                               SINT32 flags, SINT16 w,
+                               UINT64 reqID,
+                               BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           MSG_LOB_REMOVE_REQ, meta,
+                           flags, w, -1, reqID,
+                           NULL, NULL, NULL, endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;   
+}

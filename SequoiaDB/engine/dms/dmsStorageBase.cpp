@@ -281,7 +281,7 @@ namespace engine
                    _suFileName, rc ) ;
 
       // make sure the file size is multiple of segments
-      if ( 0 != ( fileSize - _dataOffset() ) % DMS_SEGMENT_SZ )
+      if ( 0 != ( fileSize - _dataOffset() ) % _getSegmentSize() )
       {
          PD_LOG ( PDERROR, "Unexpected length[%d] of file: %s", fileSize,
                   _suFileName ) ;
@@ -311,14 +311,14 @@ namespace engine
       currentOffset = _dataOffset() ;
       while ( currentOffset < fileSize )
       {
-         rc = map ( currentOffset, DMS_SEGMENT_SZ, NULL ) ;
+         rc = map ( currentOffset, _getSegmentSize(), NULL ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to map data segment at offset %lld",
                      currentOffset ) ;
             goto error ;
          }
-         currentOffset += DMS_SEGMENT_SZ ;
+         currentOffset += _getSegmentSize() ;
       }
       _maxSegID = (INT32)ossMmapFile::segmentSize() - 1 ;
 
@@ -519,6 +519,7 @@ namespace engine
       pHeader->_MBHWM    = 0 ;
       pHeader->_pageNum  = 0 ;
       pHeader->_secretValue = _pStorageInfo->_secretValue ;
+      pHeader->_lobdPageSize = _pStorageInfo->_lobdPageSize ;
    }
 
    INT32 _dmsStorageBase::_validateHeader( dmsStorageUnitHeader * pHeader )
@@ -547,7 +548,11 @@ namespace engine
                 DMS_PAGE_SIZE8K  != pHeader->_pageSize &&
                 DMS_PAGE_SIZE16K != pHeader->_pageSize &&
                 DMS_PAGE_SIZE32K != pHeader->_pageSize &&
-                DMS_PAGE_SIZE64K != pHeader->_pageSize )
+                DMS_PAGE_SIZE64K != pHeader->_pageSize &&
+                /// for lob pagesize
+                DMS_PAGE_SIZE256B != pHeader->_pageSize &&
+                DMS_PAGE_SIZE256K != pHeader->_pageSize &&
+                DMS_PAGE_SIZE512K != pHeader->_pageSize )
       {
          PD_LOG ( PDERROR, "Invalid page size: %u, page size must be one of "
                   "4K/8K/16K/32K/64K", pHeader->_pageSize ) ;
@@ -603,8 +608,12 @@ namespace engine
       {
          _pStorageInfo->_sequence = pHeader->_sequence ;
       }
+      if ( (UINT32)_pStorageInfo->_lobdPageSize != pHeader->_lobdPageSize )
+      {
+         _pStorageInfo->_lobdPageSize =  pHeader->_lobdPageSize ;   
+      }
       _pageNum = pHeader->_pageNum ;
-      _segmentPages = DMS_SEGMENT_SZ >> _pageSizeSquare ;
+      _segmentPages = _getSegmentSize() >> _pageSizeSquare ;
 
       if ( !ossIsPowerOf2( _segmentPages, &_segmentPagesSquare ) )
       {
@@ -698,12 +707,12 @@ namespace engine
       // MAKE SURE NOT HOLD ANY METADATA LATCH DURING SUCH EXPENSIVE DISK 
       // OPERATION extendSeg latch is held here so that it's not possible //
       // two sessions doing same extend
-      rc = ossExtendFile( &_file, DMS_SEGMENT_SZ * numSeg ) ;
+      rc = ossExtendFile( &_file, _getSegmentSize() * numSeg ) ;
       if ( rc )
       {
          INT32 rc1 = SDB_OK ;
          PD_LOG ( PDERROR, "Failed to extend storage unit for %lld bytes",
-                  DMS_SEGMENT_SZ * (UINT64)numSeg ) ;
+                  _getSegmentSize() * (UINT64)numSeg ) ;
 
          // truncate the file when it's failed to extend file
          rc1 = ossTruncateFile ( &_file, fileSize ) ;
@@ -722,11 +731,11 @@ namespace engine
       // map all new segments into memory
       for ( UINT32 i = 0; i < numSeg ; i++ )
       {
-         rc = map ( fileSize, DMS_SEGMENT_SZ, NULL ) ;
+         rc = map ( fileSize, _getSegmentSize(), NULL ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to map storage unit from offset %lld",
-                     DMS_SEGMENT_SZ * i + _dmsHeader->_storageUnitSize ) ;
+                     _getSegmentSize() * i + _dmsHeader->_storageUnitSize ) ;
             goto error ;
          }
          _maxSegID += 1 ;
@@ -741,7 +750,7 @@ namespace engine
             goto error ;
          }
          beginExtentID += _segmentPages ;
-         fileSize += DMS_SEGMENT_SZ ;
+         fileSize += _getSegmentSize() ;
 
          // update header
          _dmsHeader->_storageUnitSize += _segmentPages ;
@@ -758,6 +767,11 @@ namespace engine
    UINT32 _dmsStorageBase::_extendThreshold () const
    {
       return (UINT32)( DMS_EXTEND_THRESHOLD_SIZE >> _pageSizeSquare ) ;
+   }
+
+   UINT32 _dmsStorageBase::_getSegmentSize() const
+   {
+      return DMS_SEGMENT_SZ ;
    }
 
    INT32 _dmsStorageBase::_findFreeSpace( UINT16 numPages, SINT32 & foundPage,

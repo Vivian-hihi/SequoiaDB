@@ -38,6 +38,7 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "msgAuth.hpp"
+#include "rtnLob.hpp"
 
 using namespace bson ;
 
@@ -573,6 +574,24 @@ namespace engine
          case MSG_BS_AGGREGATE_REQ :
             rc = _onAggrReqMsg( msg, contextID ) ;
             break ;
+         case MSG_LOB_OPEN_REQ :
+            rc = _onOpenLobMsg( msg, contextID ) ;
+            break ;
+         case MSG_LOB_WRITE_REQ:
+            rc = _onWriteLobMsg( msg ) ;
+            break ;
+         case MSG_LOB_READ_REQ:
+            rc = _onReadLobMsg( msg, ppBody, bodyLen ) ;
+            break ;
+         case MSG_LOB_CLOSE_REQ:
+            rc = _onCloseLobMsg( msg ) ;
+            break ;
+         case MSG_LOB_REMOVE_REQ:
+            rc = _onRemoveLobMsg( msg ) ;
+            break ;
+         case MSG_LOB_META_REQ :
+            rc = _onGetLobMeta( msg, ppBody, bodyLen ) ;
+            break ;
          default :
             PD_LOG( PDWARNING, "Session[%s] recv unknow msg[type:[%d]%d, "
                     "len: %d, tid: %d, routeID: %d.%d.%d, reqID: %lld]",
@@ -1038,6 +1057,173 @@ namespace engine
       goto done ;
    }
 
+   INT32 _pmdLocalSession::_onOpenLobMsg( MsgHeader *msg, SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj lob ;
+      rc = msgExtractOpenLobRequest( ( const CHAR * )msg, &header, lob ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract open msg:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnOpenLob( lob, header->flags, TRUE, _pEDUCB,
+                       _pDPSCB, header->w, contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open lob:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onWriteLobMsg( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      UINT32 len = 0 ;
+      SINT64 offset = -1 ;
+      const CHAR *data = NULL ;
+      rc = msgExtractWriteLobRequest( ( const CHAR * )msg, &header,
+                                        &len, &offset, &data ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract write msg:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnWriteLob( header->contextID, _pEDUCB,
+                        len, data ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onReadLobMsg( MsgHeader *msg,
+                                          const CHAR **data,
+                                          INT32 &len )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      SINT64 offset = -1 ;
+      UINT32 readLen = 0 ;
+      UINT32 length = 0 ;
+
+      rc = msgExtractReadLobRequest( ( const CHAR * )msg, &header,
+                                      &readLen, &offset ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract read msg:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnReadLob( header->contextID, _pEDUCB,
+                       readLen, data, length ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+         goto error ;
+      }
+
+      len = length ;
+      SDB_ASSERT( 0 < len, "impossible" ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onCloseLobMsg( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      rc = msgExtractCloseLobRequest( ( const CHAR * )msg, &header ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract close msg:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnCloseLob( header->contextID, _pEDUCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onRemoveLobMsg( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj meta ;
+      const MsgOpLob *header = NULL ;
+      rc = msgExtractRemoveLobRequest( ( const CHAR * )msg, &header,
+                                        meta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract remove msg:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnRemoveLob( meta, header->flags, header->w,
+                         _pEDUCB, _pDPSCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onGetLobMeta( MsgHeader *msg,
+                                          const CHAR **data,
+                                          INT32 &len )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      const MsgOpLob *header = NULL ;
+
+      rc = msgExtractLobRequest( ( const CHAR * )msg, &header,
+                                 obj, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract get meat msg:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnGetLobMetaData( header->contextID, _pEDUCB, obj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get meta data:%d", rc ) ;
+         goto error ;
+      }
+
+      *data = obj.objdata() ;
+      len = obj.objsize() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 
 

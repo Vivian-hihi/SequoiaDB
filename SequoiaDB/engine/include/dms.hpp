@@ -52,16 +52,29 @@ namespace engine
 #define DMS_PAGE_SIZE16K       16384ll
 #define DMS_PAGE_SIZE32K       32768ll
 #define DMS_PAGE_SIZE64K       65536ll
+
+/// for lob
+#define DMS_PAGE_SIZE256B      256ll
+#define DMS_PAGE_SIZE256K      262144ll
+#define DMS_PAGE_SIZE512K      524288ll
+
 #elif defined (_WINDOWS)
 #define DMS_PAGE_SIZE4K        4096LL
 #define DMS_PAGE_SIZE8K        8192LL
 #define DMS_PAGE_SIZE16K       16384LL
 #define DMS_PAGE_SIZE32K       32768LL
 #define DMS_PAGE_SIZE64K       65536LL
+
+#define DMS_PAGE_SIZE256B      256LL
+#define DMS_PAGE_SIZE256K      262144LL
+#define DMS_PAGE_SIZE512K      524288LL
 #endif
 
 #define DMS_PAGE_SIZE_DFT      DMS_PAGE_SIZE64K
 #define DMS_PAGE_SIZE_MAX      DMS_PAGE_SIZE64K
+
+#define DMS_DEFAULT_LOB_PAGE_SZ DMS_PAGE_SIZE256K
+#define DMS_DO_NOT_CREATE_LOB 0
 
 // the maximum number of pages * size for the storage unit
 // this number does NOT count metadata
@@ -102,6 +115,8 @@ namespace engine
 
 #define DMS_DATA_SU_EXT_NAME        "data"
 #define DMS_INDEX_SU_EXT_NAME       "idx"
+#define DMS_LOB_DATA_SU_EXT_NAME    "lobd"
+#define DMS_LOB_META_SU_EXT_NAME    "lobm"
 
 #define SDB_DMSTEMP_NAME            "SYSTEMP"
 #define DMS_TEMP_NAME_PATTERN       "%s%04d"

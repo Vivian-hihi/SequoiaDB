@@ -49,6 +49,8 @@
 #include "../bson/bsonobj.h"
 #include "../bson/oid.h"
 #include "dmsSMEMgr.hpp"
+#include "dmsLobDef.hpp"
+
 
 #include <string>
 
@@ -74,6 +76,7 @@ namespace engine
                                                    // _sequence
       UINT32      _sequence ;
       UINT64      _secretValue ;
+      INT32       _lobdPageSize ;
 
       _dmsStorageInfo ()
       {
@@ -81,6 +84,7 @@ namespace engine
          ossMemset( _suName, 0, sizeof( _suName ) ) ;
          _sequence      = 0 ;
          _secretValue   = 0 ;
+         _lobdPageSize = DMS_DO_NOT_CREATE_LOB ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;
@@ -100,7 +104,8 @@ namespace engine
       UINT32 _MBHWM ;
       UINT32 _pageNum ;                                  // current page number
       UINT64 _secretValue ;                              // with the index
-      CHAR   _pad [ 65364 ] ;
+      UINT32 _lobdPageSize ;                              // lobd page size
+      CHAR   _pad [ 65360 ] ;                          
 
       _dmsStorageUnitHeader()
       {
@@ -223,6 +228,11 @@ namespace engine
          OSS_INLINE void lockPageCleaner () ;
          OSS_INLINE void unlockPageCleaner () ;
 
+         OSS_INLINE UINT32 getLobdPageSize() const
+         {
+            return _dmsHeader->_lobdPageSize ;
+         }
+
       public:
          INT32 openStorage ( const CHAR *pPath, BOOLEAN createNew = TRUE,
                              BOOLEAN delWhenExist = FALSE ) ;
@@ -239,8 +249,9 @@ namespace engine
          virtual INT32  _checkVersion( dmsStorageUnitHeader *pHeader ) = 0 ;
          virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) = 0 ;
          virtual INT32  _onMapMeta( UINT64 curOffSet ) = 0 ;
-         virtual void   _onClosed() = 0 ;
+         virtual void   _onClosed() { return ;}
          virtual UINT32 _extendThreshold() const ;
+         virtual UINT32 _getSegmentSize() const ;
 
       protected:
          // No space will extent new segment
@@ -255,11 +266,12 @@ namespace engine
 
          void     _markDirty ( INT32 extentID ) ;
 
+         virtual INT32 _extendSegments ( UINT32 numSeg ) ;
+
       private:
          INT32    _initializeStorageUnit () ;
          void     _initHeader ( dmsStorageUnitHeader *pHeader ) ;
          INT32    _validateHeader( dmsStorageUnitHeader *pHeader ) ;
-         INT32    _extendSegments ( UINT32 numSeg ) ;
          INT32    _preExtendSegment() ;
 
       protected:
@@ -300,7 +312,11 @@ namespace engine
    }
    OSS_INLINE UINT32 _dmsStorageBase::pageSize () const
    {
-      if ( _pStorageInfo )
+      if ( NULL != _dmsHeader )
+      {
+         return _dmsHeader->_pageSize ;
+      }
+      else if ( _pStorageInfo )
       {
          return _pStorageInfo->_pageSize ;
       }

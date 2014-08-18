@@ -27,6 +27,7 @@
 #define SDB_HANDLE_TYPE_REPLICAGROUP 5
 #define SDB_HANDLE_TYPE_REPLICANODE  6
 #define SDB_HANDLE_TYPE_DOMAIN       7
+#define SDB_HANDLE_TYPE_LOB          8
 
 struct _Node
 {
@@ -176,5 +177,37 @@ struct _sdbDomainStruct
    CHAR _domainName [ CLIENT_DOMAIN_NAMESZ + 1 ] ;
 } ;
 typedef struct _sdbDomainStruct sdbDomainStruct ;
+
+enum LOB_SEEK
+{
+   LOB_SEEK_SET = 0,
+   LOB_SEEK_CUR,
+   LOB_SEEK_END,
+} ;
+
+struct _sdbLobStruct
+{
+   INT32 _handleType ;
+   sdbConnectionHandle _connection ;
+   SOCKET _sock ;
+   INT32 _offset ;
+   CHAR *_pSendBuffer ;
+   INT32 _sendBufferSize ;
+   CHAR *_pReceiveBuffer ;
+   INT32 _receiveBufferSize ;
+   SINT64 _contextID ;
+   BOOLEAN _endianConvert ;
+
+//   CHAR _fullName [ CLIENT_CS_NAMESZ + CLIENT_COLLECTION_NAMESZ + 2 ];
+//   CHAR _oid[12] ; //DMS_LOB_OID_LEN
+} ;
+typedef struct _sdbLobStruct sdbLobStruct ;
+
+typedef struct _sdbLobPiece
+{
+   SINT64 _offset ;
+   UINT32 _dataLen ;
+} sdbLobPiece;
+
 
 #endif

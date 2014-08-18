@@ -814,6 +814,32 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPID2, "_clsCatalogSet::findGroupID2" )
+   INT32 _clsCatalogSet::findGroupID( const bson::OID &oid,
+                                      UINT32 sequence,
+                                      UINT32 &groupID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSCTSET_FINDGPID2 ) ;
+      SDB_ASSERT( !isRangeSharding(), "can not be range sharded" ) ;
+      clsCatalogItem *item = NULL ;
+      UINT32 hash = ossHash( oid.getData(), 12,
+                             ( const BYTE * )( &sequence ), sizeof( UINT32 ) ) ;
+      rc = _findItem( ( INT32 )hash, item ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to find item:%d", rc ) ;
+         goto error ;
+      }
+
+      groupID = item->getGroupID() ;
+   done:
+      PD_TRACE_EXITRC( SDB__CLSCTSET_FINDGPID2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPIDS, "_clsCatalogSet::findGroupIDS" )
    INT32 _clsCatalogSet::findGroupIDS ( const BSONObj &matcher,
                                        VEC_GROUP_ID &vecGroup )

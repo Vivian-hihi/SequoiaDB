@@ -100,6 +100,42 @@ INT32 clientBuildAggrRequest( CHAR **ppBuffer, INT32 *bufferSize,
                              BOOLEAN endianConvert ) ;
 INT32 clientAppendAggrRequest ( CHAR **ppBuffer, INT32 *bufferSize,
                               bson *obj, BOOLEAN endianConvert ) ;
+
+INT32 clientBuildLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                         INT32 msgType, const bson *meta,
+                         SINT32 flags, SINT16 w, SINT64 contextID,
+                         UINT64 reqID, const SINT64 *lobOffset,
+                         const UINT32 *len, const CHAR *data,
+                         BOOLEAN endianConvert ) ;
+
+INT32 clientBuildOpenLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                             const bson *meta, SINT32 flags, SINT16 w,
+                             UINT64 reqID,
+                             BOOLEAN endianConvert ) ;
+
+INT32 clientBuildWriteLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                              const CHAR *buf, UINT32 len,
+                              SINT64 offset, SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID,
+                              BOOLEAN endianConvert ) ;
+
+INT32 clientBuildReadLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                             UINT32 len, SINT64 offset,
+                             SINT32 flags, SINT64 contextID,
+                             UINT64 reqID,
+                             BOOLEAN endianConvert ) ;
+
+INT32 clientBuildCloseLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                              SINT32 flags, SINT16 w,
+                              SINT64 contextID, UINT64 reqID,
+                              BOOLEAN endianConvert ) ;
+
+INT32 clientBuildRemoveLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                               const bson *meta,
+                               SINT32 flags, SINT16 w,
+                               UINT64 reqID,
+                               BOOLEAN endianConvert ) ;
+
 #endif
 INT32 clientBuildGetMoreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                               SINT32 numToReturn,
@@ -172,6 +208,7 @@ INT32 clientBuildFlushConfMsg( CHAR **ppBuffer, INT32 *bufferSize,
 
 INT32 clientBuildTestMsg( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *msg, UINT64 reqID, BOOLEAN endianConvert ) ;
+
 
 SDB_EXTERN_C_END
 #endif

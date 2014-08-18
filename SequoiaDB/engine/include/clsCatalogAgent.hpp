@@ -176,6 +176,9 @@ namespace engine
          INT32             genKeyObj ( const BSONObj &obj, BSONObj &keyObj ) ;
          INT32             findItem ( const BSONObj & obj, clsCatalogItem *& item ) ;
          INT32             findGroupID ( const BSONObj & obj, UINT32 &groupID ) ;
+         INT32             findGroupID ( const bson::OID &oid,
+                                         UINT32 sequence,
+                                         UINT32 &groupID ) ;
          INT32             findGroupIDS ( const BSONObj &matcher, VEC_GROUP_ID &vecGroup );
          INT32             findSubCLName ( const BSONObj &obj, std::string &subCLName );
          INT32             findSubCLNames( const bson::BSONObj &matcher,

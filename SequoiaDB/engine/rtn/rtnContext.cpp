@@ -52,6 +52,7 @@
 #include "rtnContextSort.hpp"
 #include "dpsOp2Record.hpp"
 #include "rtnExplainDef.hpp"
+#include "rtnLob.hpp"
 
 using namespace bson;
 namespace engine
@@ -412,6 +413,9 @@ namespace engine
       {
          _isOpened = TRUE ;
       }
+
+      if ( 0 < len )
+      {
       _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
       if ( _bufferEndOffset + len > _resultBufferSize )
       {
@@ -425,6 +429,8 @@ namespace engine
       }
 
       ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), pObjBuff, len ) ;
+      }
+
       _totalRecords += num ; // total num
       _bufferNumRecords += num ; // cur buff num
       _bufferEndOffset += len ;
