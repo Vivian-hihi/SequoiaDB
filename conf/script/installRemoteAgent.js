@@ -25,24 +25,137 @@ if ( typeof(USERNAME) == "undefined" ) {}
 if ( typeof(PASSWORD) == "undefined" ) {}
 if ( typeof(IP) == "undefined" ) {}
 if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-if ( typeof(LOCAL_CM_PROG) == "undefined" ) {}
-if ( typeof(REMOTE_CM_PROG) == "undefined" ) {}
+if ( typeof(LOCAL_PROG_PATH) == "undefined" ) {}
+if ( typeof(LOCAL_SPT_PATH) == "undefined" ) {}
+if ( typeof(LOCAL_CM_CONF) == "undefined" ) {}
+
+// linux
+var TOPDIR_L               = "/tmp/omatmp/" ;
+var PROGDIR_L              = "/tmp/omatmp/bin/" ;
+var CONFDIR_L              = "/tmp/omatmp/conf/" ;
+var LOGDIR_L               = "/tmp/omatmp/conf/log/" ;
+var SPTDIR_L               = "/tmp/omatmp/conf/script/" ;
+
+var SDBCM_L                = "sdbcm" ;
+var SDBCMD_L               = "sdbcmd" ;
+var SDBCMART_L             = "sdbcmart" ;
+var SDBCMTOP_L             = "sdbcmtop" ;
+
+// windows
+var SDBCM_W                = "sdbcm.exe" ;
+var SDBCMD_W               = "sdbcmd.exe" ;
+var SDBCMART_W             = "sdbcmart.exe" ;
+var SDBCMTOP_W             = "sdbcmtop.exe" ;
+
+var SDBCMCONF              = "sdbcm.conf" ;
+var FILE_CHECK_HOST        = "checkHost.js" ;
+var FILE_EXIT_AGENT        = "exitAgent.js" ;
 
 var objRet = new Object() ;
-
 objRet.Rc = 0 ;
 objRet.Detail = "" ;
 objRet.HasPush = false ;
 objRet.HasRunning = false ;
-objRet.HostName = "" ;
+
+function createTmpDir( ssh, osInfo )
+{
+   var cmd = "" ;
+   if ( "LINUX" == osInfo )
+   {
+     // rm /tmp/omatmp
+     cmd = "rm " + TOPDIR_L + " -rf " ;
+     ssh.exec( cmd ) ;
+     // mkdir /tmp/omatmp
+     cmd = "mkdir " + TOPDIR_L ;
+     ssh.exec( cmd ) ;
+     // mkdir /tmp/omatmp/bin
+     cmd = "mkdir " + PROGDIR_L ;
+     ssh.exec( cmd ) ;
+     // mkdir /tmp/omatmp/conf
+     cmd = "mkdir " + CONFDIR_L ;
+     ssh.exec( cmd ) ;
+     // mkdir /tmp/omatmp/conf/log
+     cmd = "mkdir " + LOGDIR_L ;
+     ssh.exec( cmd ) ;
+     // mkdir /tmp/omatmp/conf/script
+     cmd = "mkdir " + SPTDIR_L ;
+     ssh.exec( cmd ) ;
+   }
+   else
+   {
+      // TODO: tanzhaobo
+      // create dir in windows
+   }
+}
+
+function pushPacket( ssh, osInfo )
+{
+   var src = "" ;
+   var dest = "" ;
+   if ( "LINUX" == osInfo )
+   {
+      // sdbcm
+      src = LOCAL_PROG_PATH + SDBCM_L;
+      dest = PROGDIR_L + SDBCM_L ;
+      ssh.push( src, dest ) ;
+      // sdbcmd
+      src = LOCAL_PROG_PATH + SDBCMD_L;
+      dest = PROGDIR_L + SDBCMD_L ;
+      ssh.push( src, dest ) ;
+      // sdbcmart
+      src = LOCAL_PROG_PATH + SDBCMART_L ;
+      dest = PROGDIR_L + SDBCMART_L ;
+      ssh.push( src, dest ) ;
+      // sdbcmtop
+      src = LOCAL_PROG_PATH + SDBCMTOP_L ;
+      dest = PROGDIR_L + SDBCMTOP_L ;
+      ssh.push( src, dest ) ;
+      // conf file
+      src = LOCAL_CM_CONF ;
+      dest = CONFDIR_L + SDBCMCONF ;
+      ssh.push( src, dest ) ;
+      // script checkHost.js
+      src = LOCAL_SPT_PATH + FILE_CHECK_HOST ;
+      dest = SPTDIR_L + FILE_CHECK_HOST ;
+      ssh.push( src, dest ) ;
+      // script exitAgent.js
+      src = LOCAL_SPT_PATH + FILE_EXIT_AGENT ;
+      dest = SPTDIR_L + FILE_EXIT_AGENT ;
+print("src is: " + src + "\n" ) ;
+print("dest is: " + dest + "\n" ) ;
+      ssh.push( src, dest ) ;
+print("111111111>>>>>>>>>>>>>>>111111111>>>>>>>>>\n") ;
+   }
+   else
+   {
+      // TODO: tanzhaobo
+      // push program in windows
+   }
+}
+
+function startCMProg( ssh, osInfo )
+{
+   var cmd = "" ;
+   if ( "LINUX" == osInfo )
+   {
+      cmd = PROGDIR_L + "/" + SDBCMART_L ;
+      ssh.exec( cmd ) ;
+   }
+   else
+   {
+      cmd = PROGDIR_L + "\\" + SDBCMART_L ;
+      ssh.exec( cmd ) ;
+   }
+}
 
 function main()
 {
 print("username is: " + USERNAME + "\n" ) ;
 print("password is: " + PASSWORD + "\n" ) ;
 print("ip is: " + IP + "\n" ) ;
-print("local cm prog is: " + LOCAL_CM_PROG + "\n" ) ;
-print("remote cm prog is: " + REMOTE_CM_PROG + "\n" ) ;
+print("local cm path is: " + LOCAL_PROG_PATH + "\n" ) ;
+print("local spt path is: " + LOCAL_SPT_PATH + "\n" ) ;
+print("local cm conf is: " + LOCAL_CM_CONF + "\n" ) ;
    try
    {
       // check argument
@@ -51,46 +164,49 @@ print("remote cm prog is: " + REMOTE_CM_PROG + "\n" ) ;
            typeof(IP) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "user name, password and ip, but some of them are not defined" ;
+         objRet.Detail = "not specified username, password or ip" ;
          return objRet ;
       }
-      if ( typeof(LOCAL_CM_PROG) == "undefined" ||
-           typeof(REMOTE_CM_PROG) == "undefined" )
+      if ( typeof(LOCAL_PROG_PATH) == "undefined" ||
+           typeof(LOCAL_SPT_PATH) == "undefined"  ||
+           typeof(LOCAL_CM_CONF) == "undefined" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "no local sdbcm packet or remote sdbcm packet" ;
+         objRet.Detail = "not specified sdbcm, js script or sdbcm config file" ;
          return objRet ;
       }
+      // get os info
+      var osInfo = System.type() ;
 print("111111111111111111111111111111111111111111111\n") ;
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-      objRet.HostName = ssh.exec("hostname") ;
-      // push packet
-      ssh.push( LOCAL_CM_PROG, REMOTE_CM_PROG ) ;
-      objRet.HasPush = true ;
 print("22222222222222222222222222222222222222222222222\n") ;
-      // start the omagent process
-      var sysType = System.type() ;
-      var str = "" ;
-      if ( sysType == "LINUX" )
-      {
-         str = " 1>/dev/null 2>&1 & disown"
-         ssh.exec(  + str ) ;
-//println("////////////" + REMOTE_PACKET_PATH + str) ;
-      }
-      else
-      {
-         str = "start /b"
-         ssh.exec( str + REMOTE_CM_PROG ) ;
-      }
+      // build directory in remote mechine
+      createTmpDir( ssh, osInfo ) ;
+print("33333333333333333333333333333333333333333333333\n") ;
+      // push packet
+      pushPacket( ssh, osInfo ) ;
+      objRet.HasPush = true ;
+print("444444444444444444444444444444444444444444444444\n") ;
+      // start the omagent program
+      startCMProg( ssh, osInfo ) ;
       objRet.HasRunning = true ;
-
+print("55555555555555555555555555555555555555555555555555\n") ;
+      // return the result
       return objRet ;
    }
    catch ( e )
    {
-      objRet.Rc = e ;
-      objRet.Detail = getLastErrMsg() ;
+      if ( typeof(e) != "number" )
+      {
+         objRet.Rc = -10 ;
+         objRet.Detail = "system error" ;
+      }
+      else
+      {
+         objRet.Rc = e ;
+         objRet.Detail = eval( '(' + getLastErrMsg() + ')' ) ;
+      }
       return objRet ;
    }
 }

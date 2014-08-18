@@ -91,7 +91,7 @@ println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
    }
    catch ( e )
    {
-      if ( typeof(CONFIG) != "number" )
+      if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
          objRet.Detail = "system error" ;

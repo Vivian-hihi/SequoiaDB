@@ -88,7 +88,7 @@ print("CONFIG is: " + CONFIG + '\n') ;
    catch ( e )
    {
 // todo: modify other js file to deal like this
-      if ( typeof(CONFIG) != "number" )
+      if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
          objRet.Detail = "system error" ;

@@ -16,55 +16,77 @@
 
 *******************************************************************************/
 /*
-@description: remove remote angent process
+@description: uninstall remote sdbcm packet
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 */
 
-if ( typeof(USERNAME) == "undefined" ) { USERNAME = "" ; }
-if ( typeof(PASSWORD) == "undefined" ) { PASSWORD = "" ; }
-if ( typeof(IP) == "undefined" ) { IP = "127.0.0.1" ; }
+if ( typeof(USERNAME) == "undefined" ) {}
+if ( typeof(PASSWORD) == "undefined" ) {}
+if ( typeof(IP) == "undefined" ) {}
 if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-// todo: modify default value
-// *********************************************************
-if ( typeof(REMOTE_PACKET_PATH) == "undefined" ) { REMOTE_PACKET_PATH = "/tmp/sdbomagent" ; }
 
+// linux
+var TOPDIR_L = "/tmp/omatmp/"
+//windows
+var TOPDIR_W = ""
 
 var objRet = new Object() ;
-
 objRet.Rc = 0 ;
 objRet.Detail = "" ;
-objRet.HasRemove = false ;
-objRet.HostName = "" ; // no need, just for test, remember to remove it
+objRet.HasUninstall = false ;
+
+function uninstallRemoteSdbcmPacket( ssh, osInfo )
+{
+   var cmd = "" ;
+   if ( osInfo == "LINUX" )
+   {
+      cmd = "rm -rf " + TOPDIR_L ;
+      ssh.exec( cmd ) ;
+   }
+   else
+   {
+      cmd = "DEL /Q " + TOPDIR_W
+      ssh.exec( cmd ) ;
+   }
+   objRet.HasUninstall = true ;
+}
+
 
 function main()
 {
    try
    {
+      // check argument
+      if ( typeof(USERNAME) == "undefined" ||
+           typeof(PASSWORD) == "undefined" ||
+           typeof(IP) == "undefined" )
+      {
+         objRet.Rc = -6 ;
+         objRet.Detail = "not specified username, password or ip" ;
+         return objRet ;
+      }
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-      objRet.HostName = ssh.exec("hostname") ;
-      // remove the agent packet
-      var sysType = System.type() ;
-      var str = "" ;
-      if ( sysType == "LINUX" )
-      {
-         str = "rm -rf " ;
-         ssh.exec( str + REMOTE_PACKET_PATH ) ;
-      }
-      else
-      {
-         str = "DEL /Q "
-         ssh.exec( str + REMOTE_PACKET_PATH ) ;
-      }
-      objRet.HasRemove = true ;
-
+      // get os infomation
+      var osInfo = System.type() ;
+      // remove the packet in remote machine
+      uninstallRemoteSdbcmPacket( ssh, osInfo ) ;
+      // return the result
       return objRet ;
    }
    catch ( e )
    {
-      objRet.Rc = e ;
-      objRet.Detail = getLastErrMsg() ;
+      if ( typeof(e) != "number" )
+      {
+         objRet.Rc = -10 ;
+         objRet.Detail = "system error" ;
+      }
+      else
+      {
+         objRet.Rc = e ;
+         objRet.Detail = eval( '(' + getLastErrMsg() + ')' ) ;
+      }
       return objRet ;
    }
 }

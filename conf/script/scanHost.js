@@ -65,15 +65,30 @@ function main()
          // TODO: tanzhaobo
          // windows "\n\r"
          var i = name.indexOf( "\n" ) ;
-         var substr = name.substring(0, i);
-         objRet.HostName = substr ;
+         if ( -1 != i )
+         {
+            var substr = name.substring(0, i);
+            objRet.HostName = substr ;
+         }
+         else
+         {
+            objRet.HostName = name ;
+         }
       }
       return objRet ;
    }
    catch ( e )
    {
-      objRet.Rc = e ;
-      objRet.Detail = getLastErrMsg() ;
+      if ( typeof(e) != "number" )
+      {
+         objRet.Rc = -10 ;
+         objRet.Detail = "system error" ;
+      }
+      else
+      {
+         objRet.Rc = e ;
+         objRet.Detail = eval( '(' + getLastErrMsg() + ')' ) ;
+      }
       return objRet ;
    }
 }
