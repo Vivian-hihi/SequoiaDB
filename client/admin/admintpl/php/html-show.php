@@ -3,6 +3,11 @@
 $model   = empty ( $_GET['m'] ) ? "all"   : $_GET['m'] ;
 $mapping = empty ( $_GET['p'] ) ? "data" : $_GET['p'] ;
 
+if( $mapping == 'index' )
+{
+   $mapping = 'data' ;
+}
+
 $smarty -> assign( "isConnect", $isConnect ) ;
 
 if ( $model == "all" )
