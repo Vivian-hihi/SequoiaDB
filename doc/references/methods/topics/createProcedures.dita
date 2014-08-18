@@ -27,8 +27,8 @@
       <p>createProcedure() 方法的定义格式包含 code 参数，参数值为标准函数定义。</p>
       <p><codeblock>createProcedure(&lt;code>)</codeblock></p>
       <p><b>说明：</b><ul id="ul_p2q_bmw_ql">
-          <li>推荐直接使用存储过程中已初始化全局的 db，如：<b>db.createProcedure( function getAll(){return db.foo.bar.find();} )</b> 。但如果需要鉴权，则全局 db 失效。需要自己初始化 db。</li>
-          <li>自己初始化 db 的形式为 <b>var db = new Sdb()</b>。如果需要加入用户名和密码，为 <b>var db = new Sdb('usrname','passwd')</b> 。这里需要注意的时，存储过程只能运行在已连接上的 db，不提供远程连接其他 db 的方法。在不需要鉴权的情况下，即使如 <b>var db = new Sdb('hostname', 'servicename')</b> 语句正常执行。得到的 db 仍然是本地 db。</li>
+        <li>推荐直接使用存储过程中已初始化全局的 db，且全局 db 采用当前执行该存储过程的会话的鉴权信息，如：<b>db.createProcedure( function getAll(){return db.foo.bar.find();} )</b> 。</li>
+        <li>自己初始化 db 的形式为 <b>var db = new Sdb()</b>，db 采用当前执行该存储过程的会话的鉴权信息。如果需要加入其它用户名和密码，为 <b>var db = new Sdb('usrname','passwd')</b> 。这里需要注意的时，存储过程只能运行在已连接上的 db，不提供远程连接其他 db 的方法。在不需要鉴权的情况下，即使如 <b>var db = new Sdb('hostname', 'servicename')</b> 语句正常执行。得到的 db 仍然是本地 db。</li>
           <li>db 角色必须为协调节点。standalone 模式不提供存储过程功能。</li>
         </ul></p>
     </section>

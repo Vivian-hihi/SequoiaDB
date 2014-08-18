@@ -115,10 +115,8 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:a60c7707597e8804216925b302262ec9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94ed87aee00da0ee5d01e020c79c363f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#a94ed87aee00da0ee5d01e020c79c363f">connect_to_hosts</a></td></tr>
 <tr class="separator:a94ed87aee00da0ee5d01e020c79c363f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add42f21204c81321133182335c2be55c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#add42f21204c81321133182335c2be55c">connect_by_host</a></td></tr>
-<tr class="separator:add42f21204c81321133182335c2be55c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa61fac418deffc7f557f10c286c2a145"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#aa61fac418deffc7f557f10c286c2a145">connect_by_service</a></td></tr>
-<tr class="separator:aa61fac418deffc7f557f10c286c2a145"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86b9d348b3c506eb35de350669dad7a2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#a86b9d348b3c506eb35de350669dad7a2">connect</a></td></tr>
+<tr class="separator:a86b9d348b3c506eb35de350669dad7a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55386e002908c9be26d7ec1255198893"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#a55386e002908c9be26d7ec1255198893">disconnect</a></td></tr>
 <tr class="separator:a55386e002908c9be26d7ec1255198893"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a57ae3dc886d7c24997b030e8c1e8d17a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#a57ae3dc886d7c24997b030e8c1e8d17a">create_user</a></td></tr>
@@ -246,7 +244,7 @@ and user should deal with it according the meaning of error code printed.
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>port</em> = <code>default_port</code>, </td>
+          <td class="paramname"><em>service</em> = <code>default_svcname</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -479,12 +477,12 @@ Return values:
 </pre> 
 </div>
 </div>
-<a class="anchor" id="add42f21204c81321133182335c2be55c"></a>
+<a class="anchor" id="a86b9d348b3c506eb35de350669dad7a2"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">def pysequoiadb.client.client.connect_by_host </td>
+          <td class="memname">def pysequoiadb.client.client.connect </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>self</em>, </td>
@@ -499,7 +497,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>port</em> = <code>default_port</code>, </td>
+          <td class="paramname"><em>service</em> = <code>default_svcname</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -526,66 +524,9 @@ Parameters:
    Name    Type    Info:
    host    str     The host name or IP address of database server, if None,
                    'localhost' instead.
-   port    int     The port of database server, if None, 11810 instead.
+   service int/str The servicename of database server, if None, 11810 instead.
    user    str     The user name to access to database, if None, "" instead.
    psw     str     The password to access to database, if None, "" instead.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
-</pre> 
-</div>
-</div>
-<a class="anchor" id="aa61fac418deffc7f557f10c286c2a145"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">def pysequoiadb.client.client.connect_by_service </td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>self</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>host</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>service</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>user</em> = <code>default_user</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>psw</em> = <code>default_psw</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<pre class="fragment">connect to specified database, using host and service name.
-
-Parameters:
-   Name    Type    Info:
-   host    str     The host name or IP address of database server.
-   service str     The service name of database server.
-   user    str     The user name to access to database, if None,
-                  "" instead.
-   psw     str     The password to access to database, if None,
-                  "" instead.
 Return values:
    Success: SDB_OK
    Fail   : Others
@@ -633,15 +574,15 @@ Return values:
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">try to connect to hosts
+<pre class="fragment">try to connect a host in specified hosts
 
 Parameters:
    Name    Type    Info:
    hosts   list    The list contains hosts.
                    eg.
-                   [ {'host':'localhost', 'port':11810,},
-                     {'host':'192.168.10.30', 'port':11810},
-                     {'host':'192.168.20.63', 'port':11810}, ]
+                   [ {'host':'localhost',     'service':'11810'},
+                     {'host':'192.168.10.30', 'service':'11810'},
+                     {'host':'192.168.20.63', 'service':11810}, ]
    user    str     The user name to access to database 
    psw     str     The user password to access to database
    policy  str     The policy of select hosts. it must be string of
@@ -1956,7 +1897,7 @@ Return values:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jul 8 2014 09:41:44 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Aug 15 2014 16:49:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>
