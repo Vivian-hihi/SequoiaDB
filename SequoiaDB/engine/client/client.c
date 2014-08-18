@@ -6927,15 +6927,14 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
 {
    INT32 rc = SDB_OK ;
    bson obj ;
-   bson_init( &obj ) ;
    SINT64 contextID = -1 ;
    BOOLEAN result = TRUE ;
    sdbLobStruct *lobStruct = NULL ;
    const CHAR *bsonBuf = NULL ;
    bson_iterator bsonItr ;
    bson_type bType = BSON_EOO ;
-   
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+   bson_init( &obj ) ;
 
    if ( NULL == oid )
    {
@@ -7349,9 +7348,9 @@ SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
    SINT64 contextID = -1 ;
    BOOLEAN result = TRUE ;
    bson meta ;
-   bson_init( &meta ) ;
-
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+   
+   bson_init( &meta ) ;
 
    if ( NULL == oid )
    {
