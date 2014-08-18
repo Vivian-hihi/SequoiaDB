@@ -1870,7 +1870,7 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
  */
 SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
                              UINT32 len,
-                             void *buf,
+                             CHAR *buf,
                              UINT32 *read ) ;
 
 /** \fn INT32 sdbCloseLob( sdbLobHandle *lobHandle )

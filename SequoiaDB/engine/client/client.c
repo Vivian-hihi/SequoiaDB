@@ -7129,14 +7129,14 @@ static void sdbReadInCache( sdbLobStruct *lob,
 }
 
 static INT32 sdbOnceRead( sdbLobStruct *lob,
-                          void *buf,
+                          CHAR *buf,
                           UINT32 len,
                           UINT32 *read )
 {
    INT32 rc = SDB_OK ;
    UINT32 needRead = len ;
    UINT32 totalRead = 0 ;
-   void *localBuf = buf ;
+   CHAR *localBuf = buf ;
    UINT32 onceRead = 0 ;
    const MsgOpReply *reply = NULL ;
    const MsgLobTuple *tuple = NULL ;
@@ -7227,13 +7227,13 @@ error:
 
 SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
                              UINT32 len,
-                             void *buf,
+                             CHAR *buf,
                              UINT32 *read )
 {
    INT32 rc = SDB_OK ;
    sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
    UINT32 needRead = len ;
-   void *localBuf = buf ;
+   CHAR *localBuf = buf ;
    UINT32 onceRead = 0 ;
    UINT32 totalRead = 0 ;
 
