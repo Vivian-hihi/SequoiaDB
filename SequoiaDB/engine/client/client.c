@@ -7167,7 +7167,6 @@ SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle lobHandle )
    }
 
    lob->_contextID = -1 ; 
-   lob->_isClosed = TRUE ;
 done:
    return rc ;
 error:
