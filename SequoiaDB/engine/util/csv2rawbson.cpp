@@ -1202,7 +1202,7 @@ INT32 csvParser::_string2timestamp2( _csvTimestamp &value,
    }
 
    if ( ( temp1 > TIME_MAX_NUM ) ||
-        ( temp1 == TIME_MAX_NUM ) && temp2 > 0 )
+        ( ( temp1 == TIME_MAX_NUM ) && temp2 > 0 ) )
    {
       PD_LOG ( PDERROR, "The time stamp %lld is greater than %d000",
                varLong, TIME_MAX_NUM ) ;

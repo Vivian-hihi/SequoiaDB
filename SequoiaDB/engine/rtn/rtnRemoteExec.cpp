@@ -177,8 +177,8 @@ namespace engine
                      rc ) ;
             goto error ;
          }
-         else if ( packetLength < sizeof(MsgHeader) ||
-                   packetLength > SDB_MAX_MSG_LENGTH )
+         else if ( (UINT32)packetLength < sizeof(MsgHeader) ||
+                   (UINT32)packetLength > SDB_MAX_MSG_LENGTH )
          {
             PD_LOG( PDERROR, "Recv msg size[%d] is less than "
                     "MsgHeader size[%d] or more than max msg size[%d]",

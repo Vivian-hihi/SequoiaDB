@@ -78,9 +78,6 @@ void _pdTraceCB::pause ( UINT64 funcCode )
          break ;
       } // if ( _bpList[i] == funcCode )
    } // for ( i = 0; i < _numBP; ++i )
-
-done:
-   return;
 }
 #endif
 

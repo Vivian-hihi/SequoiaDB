@@ -88,7 +88,7 @@ const INT32 _dpsLogFilter::getFileCount( const CHAR *path )
       const CHAR *namePos = ossStrstr( filepath, pFileName ) ;
       if( !namePos )
          continue ;
-      if( ( dotPos - namePos + 1 ) != ossStrlen( pFileName ) )
+      if( ( dotPos - namePos + 1 ) != (UINT32)ossStrlen( pFileName ) )
          continue ;
 
       ++fileCount ;

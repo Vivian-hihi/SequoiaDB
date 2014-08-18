@@ -810,7 +810,6 @@ INT32 display( const CHAR *first, const CHAR *second, INT32 indent1,
    vector<string> vec ;
    // the lenght of synopsis
    INT32 first_part_len = 0 ;
-   CHAR buf[ FORMAT_LEN ] = { 0 } ;
    INT32 idt1 = indent1 ;
    INT32 idt2 = 0 ;
 

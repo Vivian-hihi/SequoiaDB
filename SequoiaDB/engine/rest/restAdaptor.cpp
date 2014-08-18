@@ -566,7 +566,7 @@ namespace engine
          if ( pExtension )
          {
             extenSize = ossStrlen( pExtension ) ;
-            for( INT32 i = 0; i < REST_STRING_FILE_EX_SIZE; ++i )
+            for( UINT32 i = 0; i < REST_STRING_FILE_EX_SIZE; ++i )
             {
                if ( 0 == ossStrncasecmp( pExtension,
                                          fileExtension[i], extenSize ) )

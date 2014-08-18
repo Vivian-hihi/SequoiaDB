@@ -250,7 +250,7 @@ static void _pdRemoveOutOfDataFiles( pdCfgInfo &info )
    ossEnumFiles( info._pdLogPath, mapFiles, filter, 1 ) ;
 
    while ( mapFiles.size() > 0 &&
-           mapFiles.size() >= info._pdFileMaxNum )
+           mapFiles.size() >= (UINT32)info._pdFileMaxNum )
    {
       // remove the oldest file
       ossDelete( mapFiles.begin()->second.c_str() ) ;
@@ -283,7 +283,7 @@ static INT32 _pdLogArchive( pdCfgInfo &info )
    if ( rc )
    {
       ossPrintf( "Rename %s to %s failed, rc: %d"OSS_NEWLINE,
-                 info._pdLogFile, fileName ) ;
+                 info._pdLogFile, fileName, rc ) ;
       ossDelete( info._pdLogFile ) ;
    }
 

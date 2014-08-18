@@ -92,7 +92,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       CHAR *pTmpBuff = NULL ;
-      CHAR *pBuff = NULL ;
 
       // if we want to append OID, then
       if ( oidLen && pOIDPtr )

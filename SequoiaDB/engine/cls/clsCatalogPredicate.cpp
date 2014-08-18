@@ -314,7 +314,6 @@ namespace engine
          goto error ;
       }
 
-   check_children:
       for ( UINT32 i = 0 ; i < _children.size(); i++ )
       {
          rc = _children[i]->matches( pCatalogItem, rsTmp ) ;

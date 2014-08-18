@@ -434,8 +434,6 @@ INT32 migExport::_exportCL( const CHAR *pCSName,
                             INT32 &total )
 {
    INT32 rc = SDB_OK ;
-   SINT64 writedSize = 0 ;
-   SINT64 curWriteSize = 0 ;
    INT32 clTotal = 0 ;
    bson obj ;
 

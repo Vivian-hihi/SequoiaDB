@@ -664,7 +664,6 @@ static int completeLine(struct linenoiseState *ls)
     }
     else if ( 1== lc.len || lc.fill )
     {
-        size_t clen = 0;
         char *newStr = NULL;
         if ( 1 == lc.len )
         {
@@ -1626,9 +1625,6 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
         int nread ;
         char seq[3] ;
         char buf[10] = {0} ;
-        char buf2[10] = {0} ;
-        char buf3[10] = {0} ;
-        char buf4[10] = {0} ;
 
 #ifdef _WIN32
         nread = win32read(&c);

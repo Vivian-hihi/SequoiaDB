@@ -1094,7 +1094,7 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
 
          if( !dpsLogFilter::isFileExisted( filename ) )
          {
-            printf( "Warning: file:[%s] is missing\n" ) ;
+            printf( "Warning: file:[%s] is missing\n", filename ) ;
             continue ;
          }
 

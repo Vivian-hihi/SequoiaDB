@@ -572,8 +572,6 @@ namespace engine
          _createWakePlan( lsn.offset, plan ) ;
          _wake( plan ) ;
       }
-
-   done:
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__COMPLETE ) ;
       return ;
    }

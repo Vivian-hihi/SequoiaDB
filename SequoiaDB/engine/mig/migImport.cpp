@@ -483,7 +483,7 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
          // empty bson
          continue ;
       }
-      if ( ( sumSize + bsonSize ) >=
+      if ( (UINT32)( sumSize + bsonSize ) >=
             ( SDB_MAX_MSG_LENGTH - sizeof( MsgOpInsert ) ) )
       {
          sumSize = bsonSize ;
