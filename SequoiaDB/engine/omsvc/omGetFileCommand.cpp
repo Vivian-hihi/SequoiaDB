@@ -2157,7 +2157,7 @@ namespace engine
                                                BSONObj &bsonOld,
                                                string oldFiledName ) 
    {  
-      BSONElement element = bsonOld.getField( OM_BSON_FIELD_HOST_NAME ) ;
+      BSONElement element = bsonOld.getField( oldFiledName ) ;
       if ( !element.eoo() )
       {
          builder.appendAs( element, newFieldName ) ;
@@ -4455,6 +4455,16 @@ namespace engine
       const CHAR *businessName = NULL ;
       map<string, BSONObj> mapHostConf ;
 
+//      string business = "b1" ;
+//      string host     = "h1" ;
+//      if ( sdbGetOMManager()->_isHostConfExist( "h1", "b1" ) )
+//      {
+//         //sdbGetOMManager()->_appendConfigure(string hostName, string businessName, BSONObj & oneNode)
+//      }
+//      else
+//      {
+//         
+//      }
       _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
                               &businessName ) ;
       if ( NULL == businessName )

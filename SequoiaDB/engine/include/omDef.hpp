@@ -255,7 +255,7 @@ namespace engine
    #define  OM_BSON_FIELD_SERVICE            "Service"
    #define  OM_BSON_FIELD_SAFETY             "Safety"
    //
-   #define  OM_BSON_FIELD_CONFIG             "Config"
+   #define  OM_BSON_FIELD_CONFIG             OM_CONFIGURE_FIELD_CONFIG
 
 
    #define  OM_WAIT_AGENT_RES_INTERVAL        (5000)

@@ -202,7 +202,7 @@ namespace engine
          void              _checkSession( UINT32 interval ) ;
 
          INT32             _initOmTables() ;
-         
+
          INT32             _createCollectionIndex ( const CHAR *pCollection,
                                                     const CHAR *pIndex,
                                                     pmdEDUCB *cb ) ;
@@ -221,7 +221,18 @@ namespace engine
          INT32             _storeBusinessInfo() ;
 
          INT32             _restoreTask() ;
-         
+
+      public:
+         INT32             _insertConfigure( string hostName, 
+                                             string businessName ,
+                                             BSONObj &oneNode ) ;
+         INT32             _appendConfigure( string hostName,
+                                             string businessName ,
+                                             BSONObj &oneNode ) ;
+         BOOLEAN           _isHostConfExist( string hostName, 
+                                             string businessName ) ;
+         INT32             _storeConfigInfo() ;
+
 
       // Msg functions
       protected:
@@ -244,7 +255,7 @@ namespace engine
 
          restAdaptor                            _restAdptor ;
          pmdRemoteSessionMgr                    _rsManager ;
- 
+
          omMsgHandler                           _msgHandler ;
          omTimerHandler                         _timerHandler ;
          netRouteAgent                          _netAgent ;

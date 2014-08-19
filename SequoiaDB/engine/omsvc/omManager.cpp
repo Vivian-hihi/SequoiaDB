@@ -906,6 +906,13 @@ namespace engine
             PD_LOG( PDERROR, "store business info failed:rc=%d", rc ) ;   
             goto error ;
          }
+         rc = _storeConfigInfo() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "store config info failed:rc=%d", rc ) ;   
+            goto error ;
+         }
+
          _omTaskInfo._detail        = taskDetail.getStringField( 
                                                        OM_REST_RES_DETAIL );
          _omTaskInfo._progress      = taskDetail.getObjectField( 
@@ -1308,6 +1315,151 @@ namespace engine
       goto done ;
    }
 
+   INT32 _omManager::_insertConfigure( string hostName, string businessName ,
+                                       BSONObj &oneNode )
+   {
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      INT32 rc     = SDB_OK ;
+      BSONObj obj  = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
+                           << OM_CONFIGURE_FIELD_HOSTNAME << hostName 
+                           << OM_CONFIGURE_FIELD_CONFIG << oneNode ) ;
+      rc = rtnInsert( OM_CS_DEPLOY_CL_CONFIGURE, obj, 1, 0, cb );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to store config into table:%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::_appendConfigure( string hostName, string businessName ,
+                                       BSONObj &oneNode )
+   {
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      INT32 rc     = SDB_OK ;
+      BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
+                                << OM_CONFIGURE_FIELD_HOSTNAME << hostName );
+      BSONObj obj       = BSON( "$addtoset" << oneNode ) ;
+      {
+         BSONObj hint ;
+         rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, condition, obj, hint,
+                         0, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to update config for %s in %s:rc=%d", 
+                    hostName.c_str(), OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _omManager::_isHostConfExist( string hostName, string businessName )
+   {
+      INT32 rc         = SDB_OK ;
+      pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
+      BOOLEAN flag     = FALSE ;
+      SINT64 contextID = -1 ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+
+      matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
+                      << OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, orderBy, 
+                     hint, 0, cb, 0, -1, _pDmsCB, _pRtnCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
+         goto done ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, cb, _pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               goto done ;
+            }
+
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+            goto done ;
+         }
+
+         flag = TRUE ;
+         goto done ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      return flag ;
+   }
+
+   INT32 _omManager::_storeConfigInfo()
+   {
+      string businessName ;
+      BSONObj configs ;
+      INT32 rc      = SDB_OK ;
+      BSONObj &conf = _omTaskInfo._confValue ;
+      businessName  = conf.getStringField( OM_BSON_BUSINESS_NAME );
+      configs       = conf.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      {
+         BSONObjIterator iter( configs ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj oneNode = ele.embeddedObject() ;
+            string hostName = oneNode.getStringField( 
+                                                     OM_BSON_FIELD_HOST_NAME ) ;
+            if ( _isHostConfExist( hostName, businessName ) )
+            {
+               rc = _appendConfigure( hostName, businessName, oneNode ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "append configure failed:host=%s,"
+                                   "business=%s, node=%s, rc=%d", 
+                                   hostName.c_str(), businessName.c_str(), 
+                                   oneNode.toString(false, false).c_str(), 
+                                   rc ) ;
+                  goto error ;
+               }
+            }
+            else
+            {
+               rc = _insertConfigure( hostName, businessName, oneNode ) ;
+               PD_LOG( PDERROR, "insert configure failed:host=%s,"
+                                "business=%s, node=%s, rc=%d", 
+                                hostName.c_str(), businessName.c_str(), 
+                                oneNode.toString(false, false).c_str(), 
+                                rc ) ;
+               goto error ;
+            }
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omManager::_storeBusinessInfo()
    {
       INT32 rc = SDB_OK ;
@@ -1316,6 +1468,7 @@ namespace engine
       string businessType ;
       string clusterName ;
       BSONObj obj ;
+      BSONObj configs ;
       pmdEDUCB *cb  = pmdGetThreadEDUCB() ;
 
       BSONObj &conf = _omTaskInfo._confValue ;
@@ -1340,11 +1493,13 @@ namespace engine
       rc = rtnInsert( OM_CS_DEPLOY_CL_BUSINESS, obj, 1, 0, cb );
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "failed to store business into table:%s,rc=%d", 
-                 OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
-         goto error ;
+         if ( SDB_IXM_DUP_KEY != rc )
+         {
+            PD_LOG_MSG( PDERROR, "failed to store business into table:%s,rc=%d", 
+                    OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
+            goto error ;
+         }
       }
-
    done:
       return rc ;
    error:
