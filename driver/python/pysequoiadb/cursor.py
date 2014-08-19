@@ -112,12 +112,16 @@ class cursor(object):
       try:
          rc, bson_string = sdbcursor.current(self._cursor)
          if const.SDB_OK != rc:
-            record = None
+            if const.SDB_DMS_EOC == rc:
+               record = None
+            else:
+               raise SequoiaDBError("Failed to get current record", rc)
          else:
-            raise SequoiaDBError("Failed to get current record", rc)
-      else:
-         record, size = bson._bson_to_dict(bson_string, dict, False,
+            record, size = bson._bson_to_dict(bson_string, dict, False,
                                            bson.OLD_UUID_SUBTYPE, True)
+      except SequoiaDBError:
+         raise
+
       return rc, record
 
    def close(self):
