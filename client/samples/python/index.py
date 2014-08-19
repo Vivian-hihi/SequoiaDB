@@ -3,7 +3,7 @@
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
-from pysequoiadb.error import SequoiaDBError
+from pysequoiadb.error import (InvalidParameter, SequoiaDBError)
 
 from bson.objectid import ObjectId
 
