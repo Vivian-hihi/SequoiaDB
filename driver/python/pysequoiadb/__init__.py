@@ -38,35 +38,20 @@
              bson.SON and list. It is a subclass of built-in dict
              and order-sensitive
 """
-
-default_host = "localhost"
-"""Default host."""
-
-default_svcname = 11810
-"""Default service name."""
-
-default_user = ""
-"""Default user name."""
-
-default_psw  = ""
-"""Default password."""
-
-static_object = None
-"""Default bson"""
-
 from bson.son import SON
 
 from pysequoiadb.client import client
 from pysequoiadb.common import const
 from pysequoiadb.error import ( SequoiaDBError,
-                                ConnectError,
-                                OperationError )
+                                InvalidParameter)
 
 import sys
 try:
    import sdbclient
 except ImportError:
    raise Exception("cannot find C module file: sdbclient")
+
+EMPTY_BSON = {}
 
 def get_version():
    ver, sub_version, release, build = sdbclient.get_version()
@@ -75,33 +60,24 @@ def get_version():
 
 PY3 = sys.version_info[0] == 3
 
-# OPEN THE SWITCH WHEN DEBUG
-_DEBUG = False
-
 driver_version = get_version()
 """Current version of python driver for SequoiaDB."""
 
-def cout(what):
+def _print(what):
    if PY3:
       print(what)
    else:
       print what
 
-def ASSERT( condition ):
-   """Check and make sure the parameter is always true.
+def _raise_if_error(msg, rc):
+   """Check return value, raise a SequoiaDBError if error occurred.
    """
-   if condition != True:
-      cout("Error: SquoiaDB Assert Failed.")
-      raise SequoiaDBError
-
-def check_error(rc):
-   """Check error occurred, and print error message if error occurred.
-
-   """
-   if const.SDB_OK != rc and _DEBUG:
-      cout( OperationError("  Error code: ", rc) )
-
-def getErr(rc):
+   if msg is None:
+      msg = "  Error code: "
+   if const.SDB_OK != rc:
+      raise OperationError(msg, rc)
+   
+def _getErr(rc):
    """Display error message of code specified
 
    """

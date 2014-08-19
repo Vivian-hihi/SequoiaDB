@@ -29,17 +29,13 @@ except ImportError:
 
 import bson
 import pysequoiadb
-from pysequoiadb import ( static_object,
-                          default_host,
-                          default_svcname,
-                          default_user,
-                          default_psw )
+from pysequoiadb import EMPTY_BSON
 from pysequoiadb.collectionspace import collectionspace
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb.replicagroup import replicagroup
 from pysequoiadb.common import const
-from pysequoiadb.error import SequoiaDBError
+from pysequoiadb.error import (SequoiaDBError, InvalidParameter)
 
 
 class client(object):
@@ -74,64 +70,97 @@ class client(object):
              bson.SON and list. It is a subclass of built-in dict
              and order-sensitive
    """
-   def __init__(self, host = default_host, service = default_svcname,
-                      user = default_user, psw  = default_psw):
+   HOST = "localhost"
+   SERVICE = "11810"
+   USER = ""
+   PSW = ""
+
+   def __init__(self, host = None, service = None, user = None, psw  = None):
       """initialize when product a object.
  
          it will try to connect to SequoiaDB using host and port given,
          localhost and 11810 are the default value of host and port,
          user and password are "". 
+
+      Parameters:
+         Name    Type      Info:
+         host    str       The hostname or IP address of dbserver,
+                                 if None, "localhost" will be insteaded
+         service str/int   The service name or port number of dbserver,
+                                 if None, "localhost" will be insteaded
+         user    str       The user name to access to database,
+                                 if None, "" will be insteaded
+         psw     str       The user password to access to database,
+                                 if None, "" will be insteaded
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
+      self.__connected = False
+      if host is None:
+         host = self.HOST
       if isinstance(host, basestring):
          self.__host = host
       else:
-         raise TypeError("host must be an instance of basestring")
+         raise InvalidParameter("host must be an instance of basestring")
 
+      if service is None:
+         service = self.SERVICE
       if isinstance(service, int):
-         _svcname = str(service)
+         self.__service = str(service)
       elif isinstance(service, basestring):
-         _svcname = service
+         self.__service = service
       else:
-         raise TypeError("port must be an instance of int or basestring")
+         raise InvalidParameter("service name must be an instance of int or basestring")
 
+      if user is None:
+         _user = self.USER
       if isinstance(user, basestring):
          _user = user
       else:
-         raise TypeError("user name must be an instance of basestring")
+         raise InvalidParameter("user name must be an instance of basestring")
 
+      if psw is None:
+         _psw = self.PSW
       if isinstance(psw, basestring):
          _psw = psw
       else:
-         raise TypeError("password must be an instance of basestring")
+         raise InvalidParameter("password must be an instance of basestring")
 
       try:
          self._client = sdbclient.create_client()
       except SystemError:
-         pysequoiadb.check_error(const.SDM_OOM)
-         raise SequoiaDBError
+         raise SequoiaDBError("Failed to alloc client", const.SDB_OOM)
 
-      # try to connect with default user and password 
-      rc = self.connect(self.__host, _svcname, _user, _psw)
-      if const.SDB_OK != rc:
-         pysequoiadb.cout("Attempt to connect to host:[%s], port:[%s],\
-                           user:[%s], password:[%s] failed."\
-                           % (self.__host, _svcname, _user, _psw))
-         pysequoiadb.cout("Error: %s" % pysequoiadb.getErr(rc))
-         sdbclient.disconnect(self._client)
+      # try to connect with default user and password
+      if host is not None and service is not None:
+         try:
+            rc = self.connect(self.__host, self.__service, _user, _psw)
+            pysequoiadb._raise_if_error("Failed to connect to %s:%s" %
+                                        (host, service), rc)
+         except SequoiaDBError:
+            raise
 
    def __del__(self):
       """release resource when del called.
 
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      self.__host = default_host
+      self.__host = self.HOST
+      self.__service = self.SERVICE
       if self._client is not None:
-         rc = sdbclient.release_client(self._client)
-         pysequoiadb.check_error(rc)
+         try:
+            rc = sdbclient.release_client(self._client)
+            pysequoiadb._raise_if_error("Failed to release client", rc)
+         except SequoiaDBError:
+            raise
          self._client = None
 
    def __repr__(self):
 
-      return "Client, connect to: %s" % (self.__host)
+      if self.__connected:
+         return "Client, connect to: %s:s%" % (self.__host, self.__service)
 
    def __getitem__(self, name):
       """support [] to access to collection space.
@@ -139,6 +168,9 @@ class client(object):
          eg.
          cc = client()
          cs = cc['test'] # access to collection space named 'test'.
+
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
       return self.__getattr__(name)
 
@@ -154,16 +186,22 @@ class client(object):
          __getattr__("__methods__").
 
          if success, a collection object will be returned, or None.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if '__members__' == name or '__methods__' == name:
          pass
       else:
-         cs = collectionspace()
-         rc = sdbclient.get_collection_space(self._client, name, cs._cs)
-         pysequoiadb.check_error(rc)
-         if const.SDB_OK != rc:
+         try:
+            cs = collectionspace()
+            rc = sdbclient.get_collection_space(self._client, name, cs._cs)
+            pysequoiadb._raise_if_error("Failed to get collection space: %s" %
+                                        name, rc)
+         except SequoiaDBError:
             del cs;
             cs = None
+            raise
 
          return cs
 
@@ -182,217 +220,261 @@ class client(object):
 
       return localip
 
-   def connect_to_hosts(self, hosts, user = default_user,
-                              psw = default_psw, policy = "random"):
+   def connect_to_hosts(self, hosts, **kwargs):
       """try to connect a host in specified hosts
 
       Parameters:
-         Name    Type    Info:
-         hosts   list    The list contains hosts.
-                               eg.
-                               [ {'host':'localhost',     'service':'11810'},
-                                 {'host':'192.168.10.30', 'service':'11810'},
-                                 {'host':'192.168.20.63', 'service':11810}, ]
-         user    str     The user name to access to database 
-         psw     str     The user password to access to database
-         policy  str     The policy of select hosts. it must be string of
-                               'random' or 'one_by_one'
-      Return values:
-         Success: SDB_OK  and  the index in the hosts of current connection
-         Fail   : Others  and  -1
+         Name        Type  Info:
+         hosts       list  The list contains hosts.
+                                 eg.
+                                 [ {'host':'localhost',     'service':'11810'},
+                                    {'host':'192.168.10.30', 'service':'11810'},
+                                    {'host':'192.168.20.63', 'service':11810}, ]
+         **kwargs          Useful options are below:
+         -  user     str         The user name to access to database.
+         -  password str         The user password to access to database.
+         -  policy   str         The policy of select hosts. it must be string
+                                       of 'random' or 'one_by_one'.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(hosts, list):
-         raise TypeError("hosts must be an instance of list")
+         raise InvalidParameter("hosts must be an instance of list")
+      if "policy" in kwargs:
+         policy = kwargs.get("policy")
+      else:
+         policy = "random"
       if not isinstance(policy, str):
-         raise TypeError("policy must be an instance of str")
+         raise InvalidParameter("policy must be an instance of basestring")
 
       if len(hosts) == 0:
-         raise TypeError("hosts must hava at least 1 item")
+         raise InvalidParameter("hosts must hava at least 1 item",
+                                     const.INVALIDARG)
 
       local = socket.gethostname()
       localip = self.__get_local_ip()
-      _user = user
-      _psw  = psw
+      if "user" in kwargs:
+         if not isinstance(kwargs.get("user", str)):
+            raise InvalidParameter("user name in kwargs must be \
+                            an instance of basestring")
+         _user = kwargs.get("user")
+      else:
+         _user = self.USER
 
-      count = 0
+      if "password" in kwargs:
+         if not isinstance(kwargs.get("password", str)):
+            raise InvalidParameter("password in kwargs must be \
+                            an instance of basestring")
+         _psw = kwargs.get("password")
+      else:
+         _psw = self.PSW
+
+      # connect to localhost first
       for ip in hosts:
-         if ( "localhost" in ip.values() or
-              local in ip.values() or
-              localip in ip.values() ):
+         if ("localhost" in ip.values() or
+             local in ip.values() or
+             localip in ip.values()):
 
             host = ip['host']
             svc = ip['service']
-            if isinstance(svc, int):
-               svcname = str(svc)
-            elif isinstance(svc, basestring):
-               svcname = svc
+            if isinstance(host, basestring):
+               self.__host = host
             else:
-               raise TypeError("policy must be an instance of int or str")
+               raise InvalidParameter("policy must be an instance of basestring")
 
-            rc = self.connect(host, svcname, user, psw)
-            if const.SDB_OK == rc:
-               pysequoiadb.cout("connect to host:[%s], servicename:[%s] success."\
-                                 % (host, svcname))
-            return rc, count
-         count += 1
+            if isinstance(svc, int):
+               self.__service = str(svc)
+            elif isinstance(svc, basestring):
+               self.__service = svc
+            else:
+               raise InvalidParameter("policy must be an instance of int or basestring")
 
+            try:
+               rc = self.connect(self.__host, self.__service, _user, _psw)
+            except SequoiaDBError:
+               continue
+
+            pysequoiadb._print(self.__repr__())
+            return
+
+      # without local host in hosts, check policy
       size = len(hosts)
       if 0 == cmp("random", policy):
          position = random.randint(0, size - 1)
       elif 0 == cmp("one_by_one", policy):
          position = 0;
       else:
-         raise TypeError("policy must be 'random' or 'one_by_one'.")
+         raise InvalidParameter("policy must be 'random' or 'one_by_one'.")
 
-      count = 0
-      while count < size:
+      # try to connect to host one by one
+      for index in range(size):
          ip = hosts[position]
          host = ip['host']
          svc = ip['service']
-         if isinstance(svc, int):
-            svcname = str(svc)
-         elif isinstance(svc, basestring):
-            svcname = svc
+
+         if isinstance(host, basestring):
+            self.__host = host
          else:
-            raise TypeError("policy must be an instance of int or str")
+            raise InvalidParameter("policy must be an instance of basestring")
 
-         rc = self.connect(host, svcname, _user, _psw)
-         if const.SDB_OK == rc:
-            pysequoiadb.cout("connect to host:[%s], service name:[%s] success."\
-                              % (host, svcname))
-            return rc, position
-         position += 1
+         if isinstance(svc, int):
+            self.__service = str(svc)
+         elif isinstance(svc, basestring):
+            self.__service = svc
+         else:
+            raise InvalidParameter("policy must be an instance of int or str")
 
-      return rc, const.INVALIDARG
+         try:
+            rc = self.connect(self.__host, self.__service, _user, _psw)
+         except SequoiaDBError:
+            position += 1
+            if position >= size:
+               position %= size
+            continue
+         #with no error
+         pysequoiadb._print(self.__repr__())
+         return
 
-   def connect(self, host = default_host, service = default_svcname,
-                            user = default_user, psw  = default_psw):
+      #raise a expection for failed to connect to any host
+      raise SequoiaDBError("Failed to connect all specified hosts", rc)
+
+   def connect(self, host, service, **kwargs):
       """connect to specified database
 
       Parameters:
-         Name    Type    Info:
-         host    str     The host name or IP address of database server, if None,
-                               'localhost' instead.
-         service int/str The servicename of database server, if None, 11810 instead.
-         user    str     The user name to access to database, if None, "" instead.
-         psw     str     The password to access to database, if None, "" instead.
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+         Name        Type     Info:
+         host        str      The host name or IP address of database server.
+         service     int/str  The servicename of database server.
+         **kwargs             Useful options are below:
+         -  user     str      The user name to access to database.
+         -  password str      The user password to access to database.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if isinstance(host, basestring):
          self.__host = host
       else:
-         raise TypeError("host must be an instance of basestring")
+         raise InvalidParameter("host must be an instance of basestring")
 
       if isinstance(service, int):
-         _svcname = str(service)
+         self.__service = str(service)
       elif isinstance( service, basestring ):
-         _svcname = service
+         self.__service = service
       else:
-         raise TypeError("port must be an instance of int or basestring")
+         raise InvalidParameter("service name must be an instance of int or basestring")
 
+      if "user" in kwargs:
+         user = kwargs.get("user")
+      else:
+         user = self.USER
       if isinstance(user, basestring):
          _user = user
       else:
-         raise TypeError("user name must be an instance of basestring")
-
+         raise InvalidParameter("user name must be an instance of basestring")
+      
+      if "password" in kwargs:
+         psw = kwargs.get("password")
+      else:
+         psw = self.PSW
       if isinstance(psw, basestring):
          _psw = psw
       else:
-         raise TypeError("password must be an instance of basestring")
+         raise InvalidParameter("password must be an instance of basestring")
 
-      rc = sdbclient.connect(self._client, self.__host,
-                                        _svcname, _user, _psw)
-      pysequoiadb.check_error(rc)
+      try:
+         rc = sdbclient.connect(self._client, self.__host, self.__service,
+                                              _user, _psw)
+         pysequoiadb._raise_if_error(rc)
+      except SequoiaDBError:
+         raise
 
-      return rc
+      # success to connect
+      self.__connected = True
 
    def disconnect(self):
       """disconnect to current server.
 
-      Parameters:
-         Name    Type    Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      self.__host = default_host
-      rc = sdbclient.disconnect(self._client)
-      pysequoiadb.check_error(rc)
+      try:
+         rc = sdbclient.disconnect(self._client)
+         pysequoiadb._raise_if_error("Failed to release object", rc)
+      except SequoiaDBError:
+         raise
 
-      return rc
+      # success to disconnect
+      self.__host = self.HOST
+      self.__service = self.PSW
+      self.__connected = False
+      self._client = None
 
-   def create_user(self, user_name, psw):
+   def create_user(self, name, psw):
       """Add an user in current database.
 
       Parameters:
          Name         Type     Info:
-         user_name    str      The name of user to be created.
+         name         str      The name of user to be created.
          psw          str      The password of user to be created.
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
-      if isinstance(user_name, basestring):
-         _user_name = user_name
-      else:
-         raise TypeError("user name must be an instance of basestring")
+      if not isinstance(name, basestring):
+         raise InvalidParameter("user name must be an instance of basestring")
 
-      if isinstance(psw, basestring):
-         _psw = psw
-      else:
-         raise TypeError("password must be an instance of basestring")
+      if not isinstance(psw, basestring):
+         raise InvalidParameter("password must be an instance of basestring")
 
-      rc = sdbclient.create_user(self._client, _user_name, _psw)
-      pysequoiadb.check_error(rc)
+      try:
+         rc = sdbclient.create_user(self._client, name, psw)
+         pysequoiadb._raise_if_error("Failed to create user", rc)
+      except SequoiaDBError:
+         raise
 
-      return rc
-
-   def remove_user(self, user_name, psw):
+   def remove_user(self, name, psw):
       """Remove the spacified user from current database.
 
       Parameters:
          Name         Type     Info:
          user_name    str      The name of user to be removed.
          psw          str      The password of user to be removed.
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
-      if isinstance(user_name, basestring):
-         _user_name = user_name
-      else:
-         raise TypeError("user name must be an instance of basestring")
+      if not isinstance(user_name, basestring):
+         raise InvalidParameter("user name must be an instance of basestring")
 
-      if isinstance(psw, basestring):
-         _psw = psw
-      else:
-         raise TypeError("password must be an instance of basestring")
+      if not isinstance(psw, basestring):
+         raise InvalidParameter("password must be an instance of basestring")
 
-      rc = sdbclient.remove_user(self._client, _user_name, _psw)
-      pysequoiadb.check_error(rc)
+      try:
+         rc = sdbclient.remove_user(self._client, name, psw)
+         pysequoiadb._raise_if_error("Failed to remove user", rc)
+      except SequoiaDBError:
+         raise
 
-      return rc
-
-   def get_snapshot(self, snap_type, condition = static_object,
-                                     selector  = static_object,
-                                     order_by  = static_object):
+   def get_snapshot(self, snap_type, **kwargs):
       """Get the snapshots of specified type.
 
       Parameters:
-         Name         Type  Info:
-         snap_typr    str   The type of snapshot, see Info as below
-         condition    dict  The matching rule, match all the documents
-                                  if not provided.
-         selector     dict  The selective rule, return the whole
-                                  document if not provided.
-         order_by     dict  The ordered rule, result set is unordered
-                                  if not provided.
+         Name           Type  Info:
+         snap_typr      str   The type of snapshot, see Info as below
+         **kwargs             Useful options are below
+         - condition    dict  The matching rule, match all the documents
+                                    if not provided.
+         - selector     dict  The selective rule, return the whole
+                                    document if not provided.
+         - order_by     dict  The ordered rule, result set is unordered
+                                    if not provided.
       Return values:
-         Success: SDB_OK       and  a cursor object of query
-         Fail   : Others  and  None
+         a cursor object of query
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       Info:
         snapshot type:
                   0     : Get all contexts' snapshot
@@ -406,30 +488,40 @@ class client(object):
                   8     : Get catalog's snapshot
       """
       if not isinstance(snap_type, int):
-         raise TypeError("snap type must be an instance of int")
+         raise InvalidParameter("snap type must be an instance of int")
+      if snap_type < 0 or snap_type > 8:
+         raise InvalidParameter("snap_type value is invalid")
 
       bson_condition = None
       bson_selector = None
       bson_order_by = None
       
-      if condition is not None:
-         bson_condition = bson.BSON.encode(condition)
-      if selector is not None:
-         bson_selector = bson.BSON.encode(selector)
-      if order_by is not None:
-         bson_order_by = bson.BSON.encode(order_by)
+      if "condition" in kwargs:
+         if not isinstance(kwargs.get("condition"), dict):
+            raise InvalidParameter("condition in kwargs must be an instance of dict")
+         bson_condition = bson.BSON.encode(kwargs.get("condition"))
+      if "selector" in kwargs:
+         if not isinstance(kwargs.get("selector"), dict):
+            raise InvalidParameter("selector in kwargs must be an instance of dict")
+         bson_selector = bson.BSON.encode(kwargs.get("selector"))
+      if "order_by" in kwargs:
+         if not isinstance(kwargs.get("order_by"), dict):
+            raise InvalidParameter("order_by in kwargs must be an instance of dict")
+         bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
 
-      result = cursor()
-      rc = sdbclient.get_snapshot(self._client, result._cursor, snap_type,
-                                  bson_condition, bson_selector, bson_order_by)
-      pysequoiadb.check_error(rc)
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.get_snapshot(self._client, result._cursor, snap_type,
+                                     bson_condition, bson_selector, bson_order_by)
+         pysequoiadb._raise_if_error("Failed to get snapshot", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
-   def reset_snapshot(self, condition = static_object):
+   def reset_snapshot(self, condition = EMPTY_BSON):
       """Reset the snapshot.
 
       Parameters:
@@ -437,35 +529,39 @@ class client(object):
          condition    dict     The matching rule, usually specifies the
                                      node in sharding environment, in standalone
                                      mode, this option is ignored.
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       bson_condition = None
       if condition is not None:
+         if not isinstance(condition, dict):
+            raise InvalidParameter("condition must be an instance of dict")
          bson_condition = bson.BSON.encode(condition)
 
-      rc = sdbclient.reset_snapshot(self._client, bson_condition)
-      pysequoiadb.check_error(rc)
+      try:
+         rc = sdbclient.reset_snapshot(self._client, bson_condition)
+         pysequoiadb._raise_if_error("Failed to reset snapshot", rc)
+      except SequoiaDBError:
+         raise
 
-      return rc
-
-   def get_list(self, list_type, condition = static_object,
-                                 selector  = static_object,
-                                 order_by  = static_object):
+   def get_list(self, list_type, **kwargs):
       """Get the informations of specified type.
 
       Parameters:
-         Name         Type     Info:
-         list_type    int      type of list, see Info as below.
-         condition    dict     The matching rule, match all the documents
-                                     if None.
-         selector     dict     The selective rule, return the whole
-                                     documents if None.
-         order_by     dict     The ordered rule, never sort if None.
+         Name        Type     Info:
+         list_type   int      Type of list option, see Info as below.
+         **kwargs             Useful options are below
+         - condition dict     The matching rule, match all the documents
+                                    if None.
+         - selector  dict     The selective rule, return the whole
+                                    documents if None.
+         - order_by  dict     The ordered rule, never sort if None.
       Return values:
-         Success: SDB_OK   and   a cursor object of query
-         Fail   : Other    and   None
+         a cursor object of query
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       Info:
          list type:
                 0          : Get all contexts list
@@ -483,29 +579,33 @@ class client(object):
                 12         : Get collection list in domain
       """
       if not isinstance(list_type, int):
-         raise TypeError("list type must be an instance of int")
+         raise InvalidParameter("list type must be an instance of int")
+      if list_type < 0 or list_type > 12:
+         raise InvalidParameter("list type value %d is not defined" %
+                                     list_type)
 
       bson_condition = None
       bson_selector = None
       bson_order_by = None
 
-      if condition is not None:
-         bson_condition = bson.BSON.encode(condition)
-      if selector is not None:
-         bson_selector = bson.BSON.encode(selector)
-      if order_by is not None:
-         bson_order_by = bson.BSON.encode(order_by)
+      if "condition" in kwargs:
+         bson_condition = bson.BSON.encode(kwargs.get("condition"))
+      if "selector" in kwargs:
+         bson_selector = bson.BSON.encode(kwargs.get("selector"))
+      if "order_by" in kwargs:
+         bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
 
-      result = cursor()
-      rc = sdbclient.get_list(self._client, result._cursor, list_type,
-                              bson_condition, bson_selector, bson_order_by)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.get_list(self._client, result._cursor, list_type,
+                                 bson_condition, bson_selector, bson_order_by)
+         pysequoiadb._raise_if_error("Failed to get list", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def get_collection(self, cl_full_name):
       """Get the specified collection.
@@ -514,21 +614,26 @@ class client(object):
          Name         Type     Info:
          cl_full_name str      The full name of collection
       Return values:
-         Success: SDB_OK   and   a collection object of query.
-         Fail   : Other    and   None
+         a collection object of query.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(cl_full_name, basestring):
-         raise TypeError("full name of collection must be an instance of basestring")
+         raise InvalidParameter("full name of collection must be an instance of basestring")
+      if '.' not in cl_full_name:
+         raise InvalidParameter("Full name must included '.'")
 
-      cl = collection()
-      rc = sdbclient.get_collection(self._client, cl_full_name, cl._cl)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         cl = collection()
+         rc = sdbclient.get_collection(self._client, cl_full_name, cl._cl)
+         pysequoiadb._raise_if_error("Failed to get collection", rc)
+      except SequoiaDBError:
          del cl
          cl = None
+         raise
 
-      return rc, cl
+      return cl
 
    def get_collection_space(self, cs_name):
       """Get the specified collection space.
@@ -537,21 +642,24 @@ class client(object):
          Name         Type     Info:
          cs_name      str      The name of collection space.
       Return values:
-         Success: SDB_OK   and   a collection space object of query.
-         Fail   : Other    and   None
+         a collection space object of query.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(cs_name, basestring):
-         raise TypeError("name of collection space must be an instance of basestring")
+         raise InvalidParameter("name of collection space must be an instance of basestring")
 
-      cs = collectionspace()
-      rc = sdbclient.get_collection_space(self._client, cs_name, cs._cs)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         cs = collectionspace()
+         rc = sdbclient.get_collection_space(self._client, cs_name, cs._cs)
+         pysequoiadb._raise_if_error("Failed to get collection space", rc)
+      except SequoiaDBError:
          del cs
          cs = None
+         raise
 
-      return rc, cs
+      return cs
 
    def create_collection_space(self, cs_name, page_size = 0):
       """Create collection space with specified pagesize.
@@ -562,8 +670,10 @@ class client(object):
          page_size    int      The page size of collection space. See Info
                                      as below.
       Return values:
-         Success: SDB_OK   and   the collection space object created.
-         Fail   : Other    and   None
+         collection space object created.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       Info:
          valid page size value:
                            0  :  64k default page size
@@ -574,20 +684,23 @@ class client(object):
                        65536  :  64k
       """
       if not isinstance(cs_name, basestring):
-         raise TypeError("name of collection space must be an instance of basestring")
+         raise InvalidParameter("name of collection space must be an instance of basestring")
       if not isinstance(page_size, int):
-         raise TypeError("page size must be an instance of int")
-      
-      cs = collectionspace()
-      rc = sdbclient.create_collection_space(self._client, cs_name,
-                                             page_size, cs._cs)
-      pysequoiadb.check_error(rc)
+         raise InvalidParameter("page size must be an instance of int")
+      if page_size not in [0, 4096, 8192, 16384, 32768, 65536]:
+         raise InvalidParameter("page size is invalid")
 
-      if const.SDB_OK != rc:
+      try:
+         cs = collectionspace()
+         rc = sdbclient.create_collection_space(self._client, cs_name,
+                                                page_size, cs._cs)
+         pysequoiadb._raise_if_error("Failed to create collection space", rc)
+      except SequoiaDBError:
          del cs
          cs = None
+         raise
 
-      return rc, cs
+      return cs
 
    def drop_collection_space(self, cs_name):
       """Remove the specified collection space.
@@ -595,78 +708,77 @@ class client(object):
       Parameters:
          Name         Type     Info:
          cs_name      str      The name of collection space to be dropped
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(cs_name, basestring):
-         raise TypeError("name of collection space must be an instance of basestring")
+         raise InvalidParameter("name of collection space must be\
+                         an instance of basestring")
 
-      rc = sdbclient.drop_collection_space(self._client, cs_name)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.drop_collection_space(self._client, cs_name)
+         pysequoiadb._raise_if_error("Failed to drop collection space", rc)
+      except SequoiaDBError:
+         raise
 
    def list_collection_spaces(self):
       """List all collection space of current database, include temporary
          collection space.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
       Return values:
-         Success: SDB_OK   and   a cursor object of collection space list.
-         Fail   : Other    and   None
+         a cursor object of collection spaces.
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      result = cursor()
-      rc = sdbclient.list_collection_spaces(self._client, result._cursor)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.list_collection_spaces(self._client, result._cursor)
+         pysequoiadb._raise_if_error("Failed to list collection spaces", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def list_collections(self):
       """List all collections in current database.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
       Return values:
-         Success: SDB_OK   and   a cursor object of collection list.
-         Fail   : Other    and   None
+         a cursor object of collection.
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      result = cursor()
-      rc = sdbclient.list_collections(self._client, result._cursor)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.list_collections(self._client, result._cursor)
+         pysequoiadb._raise_if_error("Failed to list collections", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def list_replica_groups(self):
       """List all replica groups of current database.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
       Return values:
-         Success: SDB_OK   and   a cursor object of replication groups.
-         Fail   : Other    and   None
+         a cursor object of replication groups.
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      result = cursor()
-      rc = sdbclient.list_replica_groups(self._client, result._cursor)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.list_replica_groups(self._client, result._cursor)
+         pysequoiadb._raise_if_error("Failed to list replica groups", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def get_replica_group_by_name(self, group_name):
       """Get the specified replica group of specified group name.
@@ -675,22 +787,25 @@ class client(object):
          Name         Type     Info:
          group_name   str      The name of replica group.
       Return values:
-         Success: SDB_OK   and   the replicagroup object of query.
-         Fail   : Other    and   None
+         the replicagroup object of query.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(group_name, basestring):
-         raise TypeError("group name must be an instance of basestring")
+         raise InvalidParameter("group name must be an instance of basestring")
 
-      result = replicagroup(self._client)
-      rc = sdbclient.get_replica_group_by_name(self._client, group_name,
-                                                             result._group)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = replicagroup(self._client)
+         rc = sdbclient.get_replica_group_by_name(self._client, group_name,
+                                                  result._group)
+         pysequoiadb._raise_if_error("Failed to get specified group", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def get_replica_group_by_id(self, id):
       """Get the specified replica group of specified group id.
@@ -699,45 +814,51 @@ class client(object):
          Name       Type     Info:
          id         str      The id of replica group.
       Return values:
-         Success: SDB_OK   and   the replicagroup object of query.
-         Fail   : Other    and   None
+         the replicagroup object of query.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(id, int):
-         raise TypeError("group id must be an instance of int")
+         raise InvalidParameter("group id must be an instance of int")
 
-      result = replicagroup(self._client)
-      rc = sdbclient.get_replica_group_by_id(self._client, id, result._group)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = replicagroup(self._client)
+         rc = sdbclient.get_replica_group_by_id(self._client, id, result._group)
+         pysequoiadb._raise_if_error("Failed to get specified group", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def create_replica_group(self, group_name):
       """Create the specified replica group.
 
       Parameters:
-         Name         Type     Info:
-         group_name   str      The name of replica group to be created.
+         Name        Type     Info:
+         group_name  str      The name of replica group to be created.
       Return values:
-         Success: SDB_OK   and   the replicagroup object created.
-         Fail   : Other    and   None
+         the replicagroup object created.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(group_name, basestring):
-         raise TypeError("group name must be an instance of basestring")
+         raise InvalidParameter("group name must be an instance of basestring")
 
-      replica_group = replicagroup(self._client)
-      rc = sdbclient.create_replica_group(self._client, group_name,
-                                                        replica_group._group)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         replica_group = replicagroup(self._client)
+         rc = sdbclient.create_replica_group(self._client, group_name,
+                                             replica_group._group)
+         pysequoiadb._raise_if_error("Failed to create replica group", rc)
+      except SequoiaDBError:
          del replica_group
          replica_group = None
+         raise
 
-      return rc, replica_group
+      return replica_group
 
    def remove_replica_group(self, group_name):
       """Remove the specified replica group.
@@ -745,17 +866,18 @@ class client(object):
       Parameters:
          Name         Type     Info:
          group_name   str      The name of replica group to be removed
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(group_name, basestring):
-         raise TypeError("group name must be an instance of basestring")
+         raise InvalidParameter("group name must be an instance of basestring")
 
-      rc = sdbclient.remove_replica_group(self._client, group_name)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.remove_replica_group(self._client, group_name)
+         pysequoiadb._raise_if_error("Failed to remove replica group", rc)
+      except SequoiaDBError:
+         raise
 
    def create_replica_cata_group(self, host, service, path, configure):
       """Create a catalog replica group.
@@ -766,24 +888,27 @@ class client(object):
          service      str      The servicename for the catalog replica group.
          path         str      The path for the catalog replica group.
          configure    dict     The configurations for the catalog replica group.
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(host, basestring):
-         raise TypeError("host must be an instance of basestring")
+         raise InvalidParameter("host must be an instance of basestring")
       if not isinstance(service, basestring):
-         raise TypeError("service name must be an instance of basestring")
+         raise InvalidParameter("service name must be an instance of basestring")
       if not isinstance(path, basestring):
-         raise TypeError("path must be an instance of basestring")
+         raise InvalidParameter("path must be an instance of basestring")
+      if not isinstance(configure, dict):
+         raise InvalidParameter("configure must be an instance of dict")
 
       bson_configure = bson.BSON.encode(configure)
 
-      rc = sdbclient.create_replica_cata_group(self._client, host, service,
-                                               path, bson_configure)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.create_replica_cata_group(self._client, host, service,
+                                                  path, bson_configure)
+         pysequoiadb._raise_if_error("Failed to create replica cate group", rc)
+      except SequoiaDBError:
+         raise
 
    def exec_update(self, sql):
       """Executing SQL command for updating.
@@ -791,17 +916,18 @@ class client(object):
       Parameters:
          Name         Type     Info:
          sql          str      The SQL command.
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(sql, basestring):
-         raise TypeError("update sql must be an instance of basestring")
+         raise InvalidParameter("update sql must be an instance of basestring")
 
-      rc = sdbclient.exec_update(self._client, sql)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.exec_update(self._client, sql)
+         pysequoiadb._raise_if_error("Failed to execute update sql", rc)
+      except SequoiaDBError:
+         raise
 
    def exec_sql(self, sql):
       """Executing SQL command.
@@ -810,66 +936,60 @@ class client(object):
          Name         Type     Info:
          sql          str      The SQL command.
       Return values:
-         Success: SDB_OK   and   a cursor object of matching documents.
-         Fail   : Other    and   None
+         a cursor object of matching documents.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(sql, basestring):
-         raise TypeError("sql must be an instance of basestring")
+         raise InvalidParameter("sql must be an instance of basestring")
 
-      result = cursor()
-      rc = sdbclient.exec_sql(self._client, sql, result._cursor)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.exec_sql(self._client, sql, result._cursor)
+         pysequoiadb._raise_if_error("Failed to execute sql command", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def transaction_begin(self):
       """Transaction begin.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      rc = sdbclient.transaction_begin(self._client)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.transaction_begin(self._client)
+         pysequoiadb._raise_if_error("Transaction error", rc)
+      except SequoiaDBError:
+         raise
 
    def transaction_commit(self):
       """Transaction commit.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      rc = sdbclient.transaction_commit(self._client)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.transaction_commit(self._client)
+         pysequoiadb._raise_if_error("Transaction commit error", rc)
+      except SequoiaDBError:
+         raise
 
    def transaction_rollback(self):
       """Transaction rollback
 
-      Parameters:
-         Name         Type     Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      rc = sdbclient.transaction_rollback(self._client)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.transaction_rollback(self._client)
+         pysequoiadb._raise_if_error("Transaction rollback error", rc)
+      except SequoiaDBError:
+         raise
 
    def flush_configure(self, options):
       """Flush the options to configure file.
@@ -881,15 +1001,19 @@ class client(object):
                                configuration file, while passing {"Global":false} will 
                                flush coord's configuration file. In stand-alone
                                environment, both them have the same behaviour.
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
-      bson_options = bson.BSON.encode(options)
-      rc = sdbclient.flush_configure(self._client, bson_options)
-      pysequoiadb.check_error(rc)
+      if not isinstance(options, dict):
+         raise InvalidParameter("options must be an instance of dict")
 
-      return rc
+      bson_options = bson.BSON.encode(options)
+      try:
+         rc = sdbclient.flush_configure(self._client, bson_options)
+         pysequoiadb._raise_if_error("Failed to flush confige", rc)
+      except SequoiaDBError:
+         raise
 
    def create_procedure(self, code):
       """Create a store procedures
@@ -897,16 +1021,17 @@ class client(object):
       Parameters:
          Name         Type     Info:
          code         str      The JS code of store procedures.
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(code, basestring):
-         raise TypeError("code must be an instance of basestring")
-      rc = sdbclient.create_JS_procedure(self._client, code)
-      pysequoiadb.check_error(rc)
-
-      return rc
+         raise InvalidParameter("code must be an instance of basestring")
+      try:
+         rc = sdbclient.create_JS_procedure(self._client, code)
+         pysequoiadb._raise_if_error("Failed to crate procedure", rc)
+      except SequoiaDBError:
+         raise
 
    def remove_procedure(self, name):
       """Remove a store procedures.
@@ -914,16 +1039,18 @@ class client(object):
       Parameters:
          Name         Type     Info:
          name         str      The name of store procedure.
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(name, basestring):
-         raise TypeError("procedure name must be an instance of basestring")
-      rc = sdbclient.remove_procedure(self._client, name)
-      pysequoiadb.check_error(rc)
+         raise InvalidParameter("procedure name must be an instance of basestring")
 
-      return rc
+      try:
+         rc = sdbclient.remove_procedure(self._client, name)
+         pysequoiadb._raise_if_error("Failed to remove procedure", rc)
+      except SequoiaDBError:
+         raise
 
    def list_procedures(self, condition):
       """List store procedures.
@@ -932,16 +1059,26 @@ class client(object):
          Name         Type     Info:
          condition    dict     The condition of list.
       Return values:
-         Success: SDB_OK  and  an cursor object of result
-         Fail   : Other   and  None
+         an cursor object of result
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
-      bson_condition = bson.BSON.encode(condition)
-      result = cursor()
-      rc = sdbclient.list_procedures(self._client, result._cursor,
-                                                   bson_condition)
-      pysequoiadb.check_error(rc)
+      if not isinstance(condition, dict):
+         raise InvalidParameter("condition must be an instance of dict")
 
-      return rc, result
+      bson_condition = bson.BSON.encode(condition)
+      try:
+         result = cursor()
+         rc = sdbclient.list_procedures(self._client, result._cursor,
+                                        bson_condition)
+         pysequoiadb._raise_if_error("Failed to list procedures", rc)
+      except SequoiaDBError:
+         del result
+         result = None
+         raise
+
+      return result
 
    def eval_procedure(self, name):
       """Eval a func.
@@ -950,21 +1087,26 @@ class client(object):
          Name         Type     Info:
          name         str      The name of store procedure.
       Return values:
-         Success: SDB_OK   and  a cursor object of current eval.
-         Fail   : Other    and  None
+         cursor object of current eval.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(name, basestring):
-         raise TypeError("code must be an instance of basestring")
+         raise InvalidParameter("code must be an instance of basestring")
 
-      result = cursor()
-      rc = sdbclient.eval_JS(self._client, result._cursor, name)
-      pysequoiadb.check_error(rc)
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.eval_JS(self._client, result._cursor, name)
+         pysequoiadb._raise_if_error("Failed to eval procedure", rc)
+      except SequoiaDBError:
+         del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
-   def backup_offline(self, options = static_object):
+   def backup_offline(self, options = EMPTY_BSON):
       """Backup the whole database or specifed replica group.
 
       Parameters:
@@ -979,9 +1121,9 @@ class client(object):
                                  "Name":"backupName", "Description":description,
                                  "EnsureInc":true, "OverWrite":true }
                                See Info as below.
-      Return values:
-         Success: SDB_OK
-         Fail   : Other
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       Info:
          GroupName   :  The replica groups which to be backuped.
          Path        :  The backup path, if not assign, use the backup path assigned in configuration file.
@@ -992,40 +1134,45 @@ class client(object):
          OverWrite   :  Whether overwrite the old backup file,
                               default to be false.
       """
+      if not isinstance(options, dict):
+         raise InvalidParameter("options must be an instance of dict")
+
       bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
 
-      rc = sdbclient.backup_offline(self._client, bson_options)
-      pysequoiadb.check_error(rc)
+      try:
+         rc = sdbclient.backup_offline(self._client, bson_options)
+         pysequoiadb._raise_if_error("Failed to backup offline", rc)
+      except SequoiaDBError:
+         raise
 
-      return rc
-
-   def list_backup(self, options, condition = static_object,
-                                  selector  = static_object,
-                                  order_by  = static_object):
+   def list_backup(self, options, **kwargs):
       """List the backups.
 
       Parameters:
-         Name      Type     Info:
-         options   dict     Contains configuration infomations for remove
-                                  backups, list all the backups in the default
-                                  backup path if None. 
-                                  The "options" contains 3 options as below. 
-                                  All the elements in options are optional. 
-                                  eg:
-                                  { "GroupName":["rgame1", "rgName2"], 
-                                    "Path":"/opt/sequoiadb/backup",
-                                    "Name":"backupName" }
-                                  See Info as below.
-         condition dict     The matching rule, return all the documents
-                                  if None.
-         selector  dict     The selective rule, return the whole document
-                                  if None.
-         order_by  dict     The ordered rule, never sort if None.
+         Name        Type     Info:
+         options     dict     Contains configuration infomations for remove
+                                     backups, list all the backups in the
+                                     default backup path if None. 
+                                     The "options" contains 3 options as below. 
+                                     All the elements in options are optional. 
+                                     eg:
+                                     { "GroupName":["rgame1", "rgName2"], 
+                                       "Path":"/opt/sequoiadb/backup",
+                                       "Name":"backupName" }
+                                     See Info as below.
+         **kwargs             Useful option arw below
+         - condition dict     The matching rule, return all the documents
+                                    if None.
+         - selector  dict     The selective rule, return the whole document
+                                    if None.
+         - order_by  dict     The ordered rule, never sort if None.
       Return values:
-         Success: SDB_OK  and  a cursor object of backup list
-         Fail   : Others  and  None
+         a cursor object of backup list
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       Info:
          GroupName   :  Assign the backups of specifed replica groups to be list.
          Path        :  Assign the backups in specifed path to be list,
@@ -1038,24 +1185,34 @@ class client(object):
       bson_selector = None
       bson_order_by = None
 
+      if not isinstance(options, dict):
+         raise InvalidParameter("options in kwargs must be an instance of dict")
+
       bson_options = bson.BSON.encode(options)
-      if condition is not None:
-         bson_condition = bson.BSON.encode(condition)
-      if selector is not None:
-         bson_selector = bson.BSON.encode(selector)
-      if order_by is not None:
-         bson_order_by = bson.BSON.encode(order_by)
+      if "condition" in kwargs:
+         if not isinstance(kwargs.get("condition"), dict):
+            raise InvalidParameter("condition in kwargs must be an instance of dict")
+         bson_condition = bson.BSON.encode(kwargs.get("condition"))
+      if "selector" in kwargs:
+         if not isinstance(kwargs.get("selector"), dict):
+            raise InvalidParameter("selector in kwargs must be an instance of dict")
+         bson_selector = bson.BSON.encode(kwargs.get("selector"))
+      if "order_by" in kwargs:
+         if not isinstance(kwargs.get("order_by"), dict):
+            raise InvalidParameter("order_by in kwargs must be an instance of dict")
+         bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
 
-      result = cursor()
-      rc = sdbclient.list_backup(self._client, result._cursor, bson_options,
-                                 bson_condition, bson_selector, bson_order_by)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.list_backup(self._client, result._cursor, bson_options,
+                                   bson_condition, bson_selector, bson_order_by)
+         pysequoiadb._raise_if_error("Failed to list backup", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def remove_backup(self, options):
       """Remove the backups
@@ -1073,9 +1230,10 @@ class client(object):
                                  "Name":"backupName" }
                                See Info as below.
       Return values:
-         Success: SDB_OK  and  an cursor object of result
-         Fail   : Other   and  None
-
+         an cursor object of result
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       Info:
          GroupName   : Assign the backups of specifed replica groups to be
                              remove.
@@ -1084,60 +1242,74 @@ class client(object):
                              file.
          Name        : Assign the backups with specifed name to be remove.
       """
-      bson_condition = None
-
+      bson_options = None
+      if not isinstance(options, dict):
+         raise InvalidParameter("options must be an instance of dict")
       bson_options = bson.BSON.encode(options)
-      rc = sdbclient.remove_backup(self._client, bson_options)
-      pysequoiadb.check_error(rc)
 
-      return rc
+      try:
+         rc = sdbclient.remove_backup(self._client, bson_options)
+         pysequoiadb._raise_if_error("Failed to remove backup", rc)
+      except SequoiaDBError:
+         raise
 
-   def list_task(self, condition = static_object, selector  = static_object,
-                       order_by  = static_object, hint      = static_object):
+   def list_task(self, **kwargs):
       """List the tasks.
 
       Parameters:
-         Name         Type     Info:
-         condition    dict     The matching rule, return all the documents
-                                     if None.
-         selector     dict     The selective rule, return the whole
-                                     document if None.
-         order_by     dict     The ordered rule, never sort if None.
-                                     bson.SON may need if it is order-sensitive.
-                                     eg.
-                                     bson.SON([("name",-1), ("age":1)]) it will
-                                     be ordered descending by 'name' first, and
-                                     be ordered ascending by 'age'
-         hint         dict     The hint, automatically match the optimal
-                                     hint if None.
+         Name           Type     Info:
+         **kwargs                Useful options are below
+         - condition    dict     The matching rule, return all the documents
+                                       if None.
+         - selector     dict     The selective rule, return the whole
+                                       document if None.
+         - order_by     dict     The ordered rule, never sort if None.
+                                       bson.SON may need if it is order-sensitive.
+                                       eg.
+                                       bson.SON([("name",-1), ("age":1)]) it will
+                                       be ordered descending by 'name' first, and
+                                       be ordered ascending by 'age'
+         - hint         dict     The hint, automatically match the optimal
+                                       hint if None.
       Return values:
-         Success: SDB_OK  and  a cursor object of task list
-         Fail   : Others  and  None
+         a cursor object of task list
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       bson_condition = None
       bson_selector = None
       bson_order_by = None
       bson_hint = None
 
-      if condition is not None:
-         bson_condition = bson.BSON.encode(condition)
-      if selector is not None:
-         bson_selector = bson.BSON.encode(selector)
-      if order_by is not None:
-         bson_order_by = bson.BSON.encode(order_by)
-      if hint is not None:
-         bson_hint = bson.BSON.encode(hint)
+      if "condition" in kwargs:
+         if not isinstance(kwargs.get("condition", dict)):
+            raise InvalidParameter("consition in kwargs must be an instance of dict")
+         bson_condition = bson.BSON.encode(kwargs.get("condition"))
+      if "selector" in kwargs:
+         if not isinstance(kwargs.get("selector", dict)):
+            raise InvalidParameter("selector in kwargs must be an instance of dict")
+         bson_selector = bson.BSON.encode(kwargs.get("selector"))
+      if "order_by" in kwargs:
+         if not isinstance(kwargs.get("order_by", dict)):
+            raise InvalidParameter("order_by in kwargs must be an instance of dict")
+         bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
+      if "hint" in kwargs:
+         if not isinstance(kwargs.get("hint", dict)):
+            raise InvalidParameter("hint in kwargs must be an instance of dict")
+         bson_hint = bson.BSON.encode(kwargs.get("hint"))
 
-      result = cursor()
-      rc = sdbclient.list_task(self._client, result._cursor, bson_condition,
-                               bson_selector, bson_order_by, bson_hint)
-      pysequoiadb.check_error(rc)
-
-      if const.SDB_OK != rc:
+      try:
+         result = cursor()
+         rc = sdbclient.list_task(self._client, result._cursor, bson_condition,
+                                  bson_selector, bson_order_by, bson_hint)
+         pysequoiadb._raise_if_error("Failed to list tasks", rc)
+      except SequoiaDBError:
          del result
          result = None
+         raise
 
-      return rc, result
+      return result
 
    def wait_task(self, task_ids, num):
       """Wait the tasks to finish.
@@ -1146,19 +1318,20 @@ class client(object):
          Name         Type     Info:
          task_ids     list     The list of task id.
          num          int      The number of task id.
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(task_ids, list):
-         raise TypeError("task id must be an instance of list")
+         raise InvalidParameter("task id must be an instance of list")
       if not isinstance(num, int):
-         raise TypeError("size of tasks must be an instance of int")
+         raise InvalidParameter("size of tasks must be an instance of int")
 
-      rc = sdbclient.wait_task(self._client, task_ids, num)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.wait_task(self._client, task_ids, num)
+         pysequoiadb._raise_if_error("Failed to wait task", rc)
+      except SequoiaDBError:
+         raise
 
    def cancel_task(self, task_id, is_async):
       """Cancel the specified task.
@@ -1166,75 +1339,76 @@ class client(object):
       Parameters:
          Name         Type     Info:
          task_id      long     The task id to be canceled.
-         is_async     int      The operation "cancel task" is async or not,
-                                     "true" for async, "false" for sync.
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+         is_async     bool     The operation "cancel task" is async or not,
+                                     "True" for async, "False" for sync.
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       if not isinstance(task_id, long):
-         raise TypeError("task id must be an instance of list")
+         raise InvalidParameter("task id must be an instance of list")
 
       async = 0
       if isinstance(is_async, bool):
          if is_async:
             async = 1
       else:
-         raise TypeError("size of tasks must be an instance of int")
+         raise InvalidParameter("size of tasks must be an instance of int")
 
-      rc = sdbclient.cancel_task(self._client, task_id, async)
-      pysequoiadb.check_error(rc)
+      try:
+         rc = sdbclient.cancel_task(self._client, task_id, async)
+         pysequoiadb._raise_if_error("Failed to cancel task", rc)
+      except SequoiaDBError:
+         raise
 
-      return rc
-
-   def set_session_attri(self, options = static_object):
+   def set_session_attri(self, options = EMPTY_BSON):
       """Set the attributes of the session.
 
       Parameters:
          Name         Type     Info:
          options      dict     The configuration options for session.
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.InvalidParameter
+         pysequoiadb.error.SequoiaDBError
       """
       bson_options = None
       if options is not None:
+         if not isinstance(options, dict):
+            raise InvalidParameter("options must be an instance of dict")
          bson_options = bson.BSON.encode(options)
 
-      rc = sdbclient.set_session_attri(self._client, bson_options)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.set_session_attri(self._client, bson_options)
+         pysequoiadb._raise_if_error("Failed to set session attribute", rc)
+      except SequoiaDBError:
+         raise
 
    def close_all_cursors(self):
       """Close all the cursors in current thread, we can't use those cursors to 
          get data again.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      rc = sdbclient.close_all_cursors(self._client)
-      pysequoiadb.check_error(rc)
-
-      return rc
+      try:
+         rc = sdbclient.close_all_cursors(self._client)
+         pysequoiadb._raise_if_error("Failed to close all cursors", rc)
+      except SequoiaDBError:
+         raise
 
    def is_valid(self):
       """Judge whether the connection is valid.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
       Return values:
-         Success: True, if the result is valid 
-         Fail   : False
+         bool 
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      rc, valid = sdbclient.is_valid(self._client)
-      pysequoiadb.check_error(rc)
-      if const.SDB_OK != rc:
+      try:
+         rc, valid = sdbclient.is_valid(self._client)
+         pysequoiadb._raise_if_error("connection is invalid", rc)
+      except SequoiaDBError:
          valid = False
+         raise
 
       return valid

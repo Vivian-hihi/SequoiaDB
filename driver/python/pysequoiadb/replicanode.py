@@ -55,131 +55,131 @@ class replicanode(object):
              and order-sensitive
    """
    def __init__(self, client):
+      """constructor of replica node
 
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
+      """
       self._client = client
       try:
          self._node = sdbreplicanode.create_node()
       except SystemError:
-         pysequoiadb.check_error(const.SDB_OK)
-         raise SequoiaDBError
+         raise SequoiaDBError("Failed to alloc node", const.SDB_OOM)
 
    def __del__(self):
+      """release replica node
 
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
+      """
       if self._node is not None:
-         sdbreplicanode.release_node(self._node)
+         try:
+            rc = sdbreplicanode.release_node(self._node)
+            pysequoiadb._raise_if_error("Failed to release node", rc)
+         except SequoiaDBError:
+            raise
          self._node = None
       self._client = None
 
    def connect(self):
       """Connect to the current node.
       
-      Parameters:
-         Name         Type     Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      ret = sdbreplicanode.connect(self._node, self._client)
-      pysequoiadb.check_error(ret)
-      return ret
+      try:
+         rc = sdbreplicanode.connect(self._node, self._client)
+         pysequoiadb._raise_if_error("Failed to connect", rc)
+      except SequoiaDBError:
+         raise
 
    def get_status(self):
       """Get status of the current node
       
-      Parameters:
-         Name         Type     Info:
-         N/A
       Return values:
-         Success: SDB_OK  and  the status of node
-         Fail   : Others  and  None
+         the status of node
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      ret, nodestatus = sdbreplicanode.get_status(self._node)
-      pysequoiadb.check_error(ret)
+      try:
+         rc, nodestatus = sdbreplicanode.get_status(self._node)
+         pysequoiadb._raise_if_error("Failed to get node status", rc)
+      except SequoiaDBError:
+          raise
 
-      if const.SDB_OK != ret:
-          nodestatus = None
-
-      return ret, nodestatus
+      return nodestatus
 
    def get_hostname(self):
       """Get host name of the current node.
-      
-      Parameters:
-         Name         Type     Info:
-         N/A
+
       Return values:
-         Success: SDB_OK  and  the name of host
-         Fail   : Others  and  None
+         the name of host
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      ret, hostname = sdbreplicanode.get_hostname(self._node)
-      pysequoiadb.check_error(ret)
-
-      if const.SDB_OK != ret:
+      try:
+         rc, hostname = sdbreplicanode.get_hostname(self._node)
+         pysequoiadb._raise_if_error("Failed to get host name", rc)
+      except SequoiaDBError:
          hostname = None
+         raise
 
-      return ret, hostname
+      return hostname
 
    def get_servicename(self):
       """Get service name of the current node.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
       Return values:
-         Success: SDB_OK  and  the name of service
-         Fail   : Others  and  None
+         the name of service
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      ret, servicename = sdbreplicanode.get_servicename(self._node)
-      pysequoiadb.check_error(ret)
-
-      if const.SDB_OK != ret:
+      try:
+         rc, servicename = sdbreplicanode.get_servicename(self._node)
+         pysequoiadb._raise_if_error("Failed to get service name", rc)
+      except SequoiaDBError:
          servicename = None
+         raise
 
-      return ret,servicename
+      return servicename
 
    def get_nodename(self):
       """Get node name of the current node.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
       Return values:
-         Success: SDB_OK  and  the name of node
-         Fail   : Others  and  None
+         the name of node
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      ret, nodename = sdbreplicanode.get_nodename(self._node)
-      pysequoiadb.check_error(ret)
-
-      if const.SDB_OK != ret:
+      try:
+         rc, nodename = sdbreplicanode.get_nodename(self._node)
+         pysequoiadb._raise_if_error("Failed to get node name", rc)
+      except SequoiaDBError:
          nodename = None
+         raise
 
-      return ret, nodename
+      return nodename
 
    def stop(self):
       """Stop the node.
       
-      Parameters:
-         Name         Type     Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      ret = sdbreplicanode.stop(self._node)
-      pysequoiadb.check_error(ret)
-      return ret
+      try:
+         rc = sdbreplicanode.stop(self._node)
+         pysequoiadb._raise_if_error("Failed to stop node", rc)
+      except SequoiaDBError:
+         raise
 
    def start(self):
       """Start the node.
       
-      Parameters:
-         Name         Type     Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      ret = sdbreplicanode.start(self._node)
-      pysequoiadb.check_error(ret)
-      return ret
+      try:
+         rc = sdbreplicanode.start(self._node)
+         pysequoiadb._raise_if_error("Filed to start node", rc)
+      except SequoiaDBError:
+         raise

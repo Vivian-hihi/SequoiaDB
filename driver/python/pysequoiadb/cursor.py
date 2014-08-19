@@ -53,106 +53,79 @@ class cursor(object):
              and order-sensitive
    """
    def __init__(self):
+      """constructor of cursor
 
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
+      """
       self._cursor = None
       try:
          self._cursor = sdbcursor.create_cursor()
       except SystemError:
-         pysequoiadb.check_error(const.SDM_OOM)
-         raise SequoiaDBError
+         raise SequoiaDBError("Failed to alloc cursor", const.SDB_OOM)
 
    def __del__(self):
+      """release cursor
 
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
+      """
       if self._cursor is not None:
-         sdbcursor.release_cursor(self._cursor)
+         try:
+            rc = sdbcursor.release_cursor(self._cursor)
+            pysequoiadb._raise_if_error("Failed to release cursor", rc)
+         except SequoiaDBError:
+            raise
          self._cursor = None
 
    def next(self):
       """Return the next document of current cursor, and move forward.
-       
-      Parameters:
-         Name         Type     Info:
-         N/A
+
       Return values:
-         Success: SDB_OK and an dict object of record
-         Fail   : Others and None
+         an dict object of record
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      result, bson_string = sdbcursor.next(self._cursor)
-      if const.SDB_OK != result:
-         record = None
-      else:
-         record,_ = bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
-      return result,record
+      try:
+         rc, bson_string = sdbcursor.next(self._cursor)
+         if const.SDB_OK != rc:
+            if const.SDB_DMS_EOC == rc:
+               record = None
+            else:
+               raise SequoiaDBError("Failed to get next record", rc)
+         else:
+            record, size = bson._bson_to_dict(bson_string, dict, False,
+                                              bson.OLD_UUID_SUBTYPE, True)
+      return rc, record
 
    def current(self):
       """Return the current document of cursor, and don't move.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
       Return values:
-         Success: SDB_OK and an dict object of record
-         Fail   : Others and None
+         an dict object of record
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-      result, bson_string = sdbcursor.current(self._cursor)
-      if const.SDB_OK != result:
-         record = None
+      try:
+         rc, bson_string = sdbcursor.current(self._cursor)
+         if const.SDB_OK != rc:
+            record = None
+         else:
+            raise SequoiaDBError("Failed to get current record", rc)
       else:
-         record,_ = bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
-      return result,record
+         record, size = bson._bson_to_dict(bson_string, dict, False,
+                                           bson.OLD_UUID_SUBTYPE, True)
+      return rc, record
 
    def close(self):
       """Close the cursor's connection to database, we can't use this handle to
          get data again.
 
-      Parameters:
-         Name         Type     Info:
-         N/A
-      Return values:
-         Success: SDB_OK
-         Fail   : Others
+      Exceptions:
+         pysequoiadb.error.SequoiaDBError
       """
-
-      rc = sdbcursor.close(self._cursor)
-      pysequoiadb.check_error(rc)
-
-      return rc
-
-if __name__ == '__main__':
-    from pysequoiadb.client import client
-    from pysequoiadb.collectionspace import collectionspace
-    from pysequoiadb.common import const
-    sdb = client("192.168.20.111", 50000)
-    rc = sdb.connect("192.168.20.111", 50000)
-    if const.SDB_OK != rc:
-        raise Exception("Test Failure")
-    rc,cs = sdb.get_collection_space('tst')
-    if -34 == rc:
-        rc,cs = sdb.create_collection_space('tst')
-        if const.SDB_OK != rc:
-            raise Exception("Test Failure")
-    if const.SDB_OK != rc:
-       raise Exception("Test Failure")
-    rc,cl = cs.get_collection('tst')
-    if -23 == rc:
-        rc, cl = cs.create_collection('tst')
-        if const.SDB_OK != rc:
-            raise Exception("Test Failure")
-    for i in range(1000):
-        rc, oid = cl.insert({'id':i})
-        if const.SDB_OK != rc:
-            raise Exception("Test Failure")
-    import sdbcl
-    print dir(sdbcl)
-    print cl.get_collection_name()
-    rc,cr = cl.query()
-    if const.SDB_OK != rc:
-        raise Exception("Test Failure")
-    while const.SDB_OK ==rc and rc != const.SDB_DMS_EOC:
-        rc,record = cr.next()
-        print record
-        rc,record = cr.current()
-        print record
-
-    if rc == const.SDB_DMS_EOC:
-        cr.close()
+      try:
+         rc = sdbcursor.close(self._cursor)
+         pysequoiadb._raise_if_error("Failed to close cursor", rc)
+      except SequoiaDBError:
+         raise

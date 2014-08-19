@@ -17,7 +17,7 @@ from pysequoiadb.enum import enum
 
 NODE_STATUS = enum(((0,"ALL"),(1,"ACTIVE"),(2,"INACTIVE"),(3,"UNKNOWN")))
 const.SDB_OK = 0
-const.SDM_OOM = -2
+const.SDB_OOM = -2
 const.INVALIDARG = -6
 const.SDB_DMS_EOC = -29
 const.errmaps = dict()

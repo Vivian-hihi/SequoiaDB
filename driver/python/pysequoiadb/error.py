@@ -16,35 +16,43 @@ import pysequoiadb
 from pysequoiadb import common
 from pysequoiadb.common import const
 
-#class TypeError()
-
-class SequoiaDBError(Exception):
+class SDBBaseError(Exception):
    """Base Exception of Python Driver for SequoiaDB
    """
 
-class ConnectError(SequoiaDBError):
-   """Raised when failed to connect to database
+class SequoiaDBError(SDBBaseError):
+   """Exception of SequoiaDB
    """
+   DEFAULT = "  Error: "
+   def __init__(self, errmsg, code = 0):
 
-class OperationError(SequoiaDBError):
-   """Raised when failed to do operation(s)
-   """
+      if errmsg is None:
+         self.__errmsg = self.DEFAULT
+      else:
+         self.__errmsg = errmsg
 
-   def __init__(self, errmsg, code):
-
-      self.errmsg = errmsg
-      self.__code = code
-      self.__details = common.get_info(code)
+      if code != 0:
+         self.__code = code
+         self.__details = common.get_info(code)
+      SDBBaseError.__init__(self, errmsg)
 
    def __repr__(self, what):
       """make the error info.
       """
-      return self.errmsg + '%d -----> ' % self.__code + what
+      return what
+
+   def __detail(self, detail):
+      """make error info with code
+      """
+      return ("%s Error code: %d, detail: %s" %
+              ( self.__errmsg, self.__code, detail ) )
 
    def __str__(self):
       """return the error info.
       """
-      return self.__repr__(self.__details)
+      if self.__code == 0:
+         return self.__repr__(self.__errmsg)
+      return self.__detail(self.__details)
 
    @property
    def code(self):
@@ -52,14 +60,14 @@ class OperationError(SequoiaDBError):
       """
       return self.__code
 
-class InvalidParameter(SequoiaDBError):
-   """Raised when an invalid parameter is used.
-   """
+   @property
+   def detail(self):
+      """return the detail error message
+      """
+      if self.__code == 0:
+         return self.__str__()
+      return self.__detail()
 
-if __name__ == "__main__":
-   def test():
-      raise OperationError(" Error: ", -2)
-   try:
-      test()
-   except OperationError,data:
-      print data
+class InvalidParameter(TypeError):
+   """Invalid parameter
+   """
