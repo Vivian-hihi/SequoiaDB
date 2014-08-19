@@ -125,7 +125,6 @@ namespace engine
    #define OM_CS_DEPLOY_CL_CONFIGURE         OM_CS_DEPLOY".SYSCONFIGURE"
 
    #define OM_CONFIGURE_FIELD_HOSTNAME       "HostName"
-   #define OM_CONFIGURE_FIELD_SERVICENAME    "ServiceName"
    #define OM_CONFIGURE_FIELD_BUSINESSNAME   "BusinessName"
    #define OM_CONFIGURE_FIELD_CONFIG         "Config"
 
@@ -303,7 +302,7 @@ namespace engine
 
    #define  OM_TEMPLATE_FILE_NAME            "_template.xml"
 
-   #define  OM_REST_BUSINESS_TYPE            "BusinessType"
+   #define  OM_REST_BUSINESS_TYPE            OM_BSON_BUSINESS_TYPE
 
    #define  OM_BSON_DEPLOY_MOD_LIST          "DeployModList"
 
@@ -348,7 +347,6 @@ namespace engine
 
    #define  OM_REST_TASK_INFO                "Task"
 
-   #define  OM_BSON_TASKID                   "TaskID"
    #define  OM_BSON_ISFINISHED               "IsFinish"
    #define  OM_BSON_TASK_STATUS              "Status"
    #define  OM_BSON_TASK_PROGRESS            "Progress"
@@ -359,7 +357,23 @@ namespace engine
 
    #define  OM_TASK_STATUS_INSTALL           "install"
    #define  OM_TASK_STATUS_ROLLBACK          "rollback"
+   //******************************************************************
 
+   // om query node req
+   #define  OM_QUERY_NODE_REQ                "query node"
+
+   #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
+   
+   //******************************************************************
+
+   // om query business req
+   //******************************************************************
+
+   // om start business req
+   //******************************************************************
+
+   // om stop business req
+   //******************************************************************
 
    // milliseconds
    #define  OM_WAIT_EVENT_INTERVAL           (500)

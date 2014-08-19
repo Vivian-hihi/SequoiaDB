@@ -2027,15 +2027,16 @@ namespace engine
    INT32 omAddHostCommand::_getPacketFullPath( char *path )
    {
       INT32 rc = SDB_OK ;
-      ossGetEWD( path, OSS_MAX_PATHSIZE ) ;
-      utilCatPath( path, OSS_MAX_PATHSIZE, ".." ) ;
-      utilCatPath( path, OSS_MAX_PATHSIZE, OM_PACKET_SUBPATH ) ;
+      CHAR tmpPath[ OSS_MAX_PATHSIZE + 1 ] = "" ;
+      ossGetEWD( tmpPath, OSS_MAX_PATHSIZE ) ;
+      utilCatPath( tmpPath, OSS_MAX_PATHSIZE, ".." ) ;
+      utilCatPath( tmpPath, OSS_MAX_PATHSIZE, OM_PACKET_SUBPATH ) ;
 
       map< string, string> mapFiles ;      
-      rc = ossEnumFiles( path, mapFiles ) ;
+      rc = ossEnumFiles( tmpPath, mapFiles ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "path is invalid:path=" ) + path ;
+         _errorDetail = string( "path is invalid:path=" ) + tmpPath ;
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
@@ -2043,13 +2044,14 @@ namespace engine
       if ( mapFiles.size() != 1 )
       {
          rc = SDB_FNE ;
-         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,fileCount=%d", path, 
+         PD_LOG_MSG( PDERROR, "path is invalid:path=%s,fileCount=%d", tmpPath, 
                      mapFiles.size() ) ;
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
-      utilCatPath( path, OSS_MAX_PATHSIZE, mapFiles.begin()->second.c_str() ) ;
+      ossSnprintf( path, OSS_MAX_PATHSIZE, "%s", 
+                   mapFiles.begin()->second.c_str() ) ;
    done:
       return rc ;
    error:
@@ -4352,6 +4354,128 @@ namespace engine
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       }
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omQueryNodeCommand *****************************
+   omQueryNodeCommand::omQueryNodeCommand( restAdaptor *pRestAdaptor, 
+                                           pmdRestSession *pRestSession )
+                      :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omQueryNodeCommand::~omQueryNodeCommand()
+   {
+   }
+
+   INT32 omQueryNodeCommand::_getNodeInfo( string businessName, 
+                                           map<string, BSONObj> &mapHostConf )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+
+      matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_BUSINESS ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         BSONObjBuilder innerBuilder ;
+         BSONObj tmp ;
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_BUSINESS ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         string hostName ;
+         BSONObj conf ;
+         hostName = result.getStringField( OM_CONFIGURE_FIELD_HOSTNAME ) ;
+         conf     = result.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
+         mapHostConf.insert( map<string, BSONObj>::value_type( hostName, 
+                                                                      conf ) ) ;
+      }
+   done:
+      return SDB_OK ;
+   error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      goto done ;
+   }
+
+   void omQueryNodeCommand::_sendNodeInfo2Web( 
+                                             map<string, BSONObj> &mapHostConf )
+   {
+//      BSONArrayBuilder arrayBuilder ;
+//      map<string, BSONObj>::iterator iter = mapHostConf.begin() ;
+//      while ( iter != mapHostConf.end() )
+//      {
+//         string hostName = iter->first ;
+//         BSONObj confs   = iter->second.getObjectField() ;
+//         iter++ ;
+//      }
+
+      return ;
+   }
+
+   INT32 omQueryNodeCommand::doCommand()
+   {
+      INT32 rc                 = SDB_OK ;
+      const CHAR *businessName = NULL ;
+      map<string, BSONObj> mapHostConf ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
+                              &businessName ) ;
+      if ( NULL == businessName )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_BUSINESS_NAME )
+                        + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _getNodeInfo( businessName, mapHostConf ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      _sendNodeInfo2Web( mapHostConf ) ;
    done:
       return rc ;
    error:

@@ -420,7 +420,7 @@ namespace engine
    {
       public:
          omQueryInstallProgress( restAdaptor *pRestAdaptor, 
-                               pmdRestSession *pRestSession ) ;
+                                 pmdRestSession *pRestSession ) ;
          virtual ~omQueryInstallProgress() ;
 
       public:
@@ -429,7 +429,39 @@ namespace engine
          void           _testSaveTask() ;
          void           _testUpdateTask() ;
          void           _testFinishTask() ;
-   };
+   } ;
+
+   class omQueryNodeCommand : public omAuthCommand
+   {
+      public:
+         omQueryNodeCommand( restAdaptor *pRestAdaptor, 
+                             pmdRestSession *pRestSession ) ;
+         virtual ~omQueryNodeCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      protected:
+         INT32          _getNodeInfo( string businessName, 
+                                      map<string, BSONObj> &mapHostConf ) ;
+
+      private:
+         void           _sendNodeInfo2Web( map<string, BSONObj> &mapHostConf ) ;
+   } ;
+
+   class omStartBusinessCommand : public omAuthCommand
+   {
+      public:
+         omStartBusinessCommand( restAdaptor *pRestAdaptor, 
+                                pmdRestSession *pRestSession ) ;
+         virtual ~omStartBusinessCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      protected:
+   } ;
+   
 
    class omGetFileCommand : public omCommandInterface
    {
