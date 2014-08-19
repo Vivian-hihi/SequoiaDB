@@ -7111,13 +7111,14 @@ static void sdbReadInCache( sdbLobStruct *lob,
                             UINT32 len,
                             UINT32 *read )
 {
+   const CHAR *body = NULL ;
    UINT32 readInCache = lob->_cachedOffset + lob->_cachedSize -
                         lob->_currentOffset ;
    readInCache = readInCache <= len ?
                  readInCache : len ;
-   const CHAR *cache = lob->_dataCache +
-                       lob->_currentOffset -
-                       lob->_cachedOffset ;
+   cache = lob->_dataCache +
+           lob->_currentOffset -
+           lob->_cachedOffset ;
    ossMemcpy( buf, cache, readInCache ) ;
    lob->_cachedSize -= readInCache + cache - lob->_dataCache ;
 
