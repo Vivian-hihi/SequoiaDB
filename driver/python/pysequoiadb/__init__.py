@@ -42,8 +42,7 @@ from bson.son import SON
 
 from pysequoiadb.client import client
 from pysequoiadb.common import const
-from pysequoiadb.error import ( SequoiaDBError,
-                                InvalidParameter)
+from pysequoiadb.error import (InvalidParameter, SequoiaDBError)
 
 import sys
 try:
@@ -73,10 +72,10 @@ def _raise_if_error(msg, rc):
    if msg is None:
       msg = "  Error code: "
    if const.SDB_OK != rc:
-      raise OperationError(msg, rc)
+      raise SequoiaDBError(msg, rc)
    
 def _getErr(rc):
    """Display error message of code specified
 
    """
-   return OperationError(" ", rc)
+   return SequoiaDBError(" ", rc)
