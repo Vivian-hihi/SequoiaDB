@@ -7111,7 +7111,7 @@ static void sdbReadInCache( sdbLobStruct *lob,
                             UINT32 len,
                             UINT32 *read )
 {
-   const CHAR *body = NULL ;
+   const CHAR *cache = NULL ;
    UINT32 readInCache = lob->_cachedOffset + lob->_cachedSize -
                         lob->_currentOffset ;
    readInCache = readInCache <= len ?
