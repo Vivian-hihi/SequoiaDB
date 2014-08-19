@@ -637,7 +637,10 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "rtnRunCommand"
 ,   "_rtnLobStream::open"
 ,   "_rtnLobStream::close"
+,   "_rtnLobStream::closeWithException"
 ,   "_rtnLobStream::write"
+,   "_rtnLobStream::read"
+,   "_rtnLobStream::_readFromPool"
 ,   "rtnCoordQuery::queryToDataNodeGroup"
 ,   "rtnCoordQuery::getNodeGroups"
 ,   "rtnCoordAuthCrt::execute"
@@ -650,6 +653,7 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "_rtnJobMgr::_removeJob"
 ,   "_rtnLobWindow::addOutputData"
 ,   "_rtnLobWindow::getNextWriteSequence"
+,   "_rtnLobWindow::_rtnLobWindow::prepare2Read"
 ,   "rtnReorgOfflineCopyBack"
 ,   "rtnReorgRecover"
 ,   "rtnReorgOffline"
@@ -826,6 +830,10 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "_rtnLocalLobStream::_queryLobMeta"
 ,   "_rtnLocalLobStream::_ensureLob"
 ,   "_rtnLocalLobStream::_completeLob"
+,   "_rtnLocalLobStream::_writev"
+,   "_rtnLocalLobStream::_write"
+,   "_rtnLocalLobStream::_readv"
+,   "_rtnLocalLobStream::_rooback"
 ,   "_rtnAccessPlanList::invalidate"
 ,   "_rtnAccessPlanList::getPlan"
 ,   "rtnAccessPlanList::releasePlan"
@@ -854,6 +862,11 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "rtnDelete"
 ,   "rtnTraversalDelete"
 ,   "rtnOpenLob"
+,   "rtnReadLob"
+,   "rtnWriteLob"
+,   "rtnCloseLob"
+,   "rtnRemoveLob"
+,   "rtnGetLobMetaData"
 ,   "rtnCoordUpdate::execute"
 ,   "rtnCoordUpdate::getNodeGroups"
 ,   "rtnCoordUpdate::updateToDataNodeGroup"
@@ -1999,10 +2012,10 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "_qgmMatcher::match"
 ,   "_qgmMatcher::_match"
 } ;
-const UINT32 _pTraceFunctionListNum = 1997 ;
+const UINT32 _pTraceFunctionListNum = 2010 ;
 const UINT32 pdGetTraceFunctionListNum()
 {
-  return 1997;
+  return 2010;
 }
 const CHAR *pdGetTraceFunction ( UINT64 id )
 {
