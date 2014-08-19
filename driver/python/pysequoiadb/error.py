@@ -36,23 +36,23 @@ class SequoiaDBError(SDBBaseError):
          self.__details = common.get_info(code)
       SDBBaseError.__init__(self, errmsg)
 
-   def __repr__(self, what):
+   def __repr__(self):
       """make the error info.
       """
-      return what
+      return self.__errmsg
 
-   def __detail(self, detail):
+   def __detail(self):
       """make error info with code
       """
-      return ("%s Error code: %d, detail: %s" %
-              ( self.__errmsg, self.__code, detail ) )
+      return ("%s. Error code: %d, detail: %s" %
+              ( self.__errmsg, self.__code, self.__detail) )
 
    def __str__(self):
       """return the error info.
       """
       if self.__code == 0:
-         return self.__repr__(self.__errmsg)
-      return self.__detail(self.__details)
+         return self.__repr__()
+      return self.__detail()
 
    @property
    def code(self):
