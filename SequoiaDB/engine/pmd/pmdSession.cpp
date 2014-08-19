@@ -236,7 +236,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 recvSize = (INT32)sizeof(MsgSysInfoRequest) ;
-      INT32 recvSize1 = ( INT32 )offsetof( MsgSysInfoHeader, padding ) ;
+      INT32 recvSize1 = ( INT32 )offsetof( MsgSysInfoRequest, padding ) ;
       BOOLEAN endianConvert         = FALSE ;
       MsgSysInfoRequest *pSysInfo   = NULL ;
       INT32 realSize                = 0 ;

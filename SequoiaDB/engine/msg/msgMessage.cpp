@@ -1751,7 +1751,7 @@ INT32 msgBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize )
    request->header.specialSysInfoLen         = MSG_SYSTEM_INFO_LEN ;
    request->header.eyeCatcher                = MSG_SYSTEM_INFO_EYECATCHER ;
    request->header.realMessageLength         = sizeof(MsgSysInfoRequest) ;
-   ossMemset( request->header.padding, 0, sizeof( request->header.padding ) ) ;
+   ossMemset( request->padding, 0, sizeof( request->padding ) ) ;
 done :
    PD_TRACE_EXITRC ( SDB_MSGBUILDSYSINFOREQUEST, rc ) ;
    return rc ;

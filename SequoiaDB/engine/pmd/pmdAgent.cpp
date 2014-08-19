@@ -81,7 +81,7 @@ namespace engine
       INT32 replySize = sizeof(reply) ;
 
       INT32 recvSize    = (INT32)sizeof( MsgSysInfoRequest ) ;
-      INT32 recvSize1   = (INT32)offsetof( MsgSysInfoHeader, padding ) ;
+      INT32 recvSize1   = (INT32)offsetof( MsgSysInfoRequest, padding ) ;
       INT32 realSize    = 0 ;
 
       SDB_ASSERT ( recvSize < receiveBufferSize,

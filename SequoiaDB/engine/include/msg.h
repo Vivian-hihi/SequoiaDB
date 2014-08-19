@@ -350,13 +350,14 @@ struct _MsgSysInfoHeader
    SINT32 specialSysInfoLen ;
    UINT32 eyeCatcher ;
    SINT32 realMessageLength ;
-   CHAR   padding[ 16 ] ;  // keep the msg size the same with _MsgHeader
 } ;
 typedef struct _MsgSysInfoHeader MsgSysInfoHeader ;
 
 struct _MsgSysInfoRequest
 {
    MsgSysInfoHeader header ;
+   CHAR             padding[ 16 ] ;  // keep the msg size the
+                                     // same with _MsgHeader
 } ;
 typedef struct _MsgSysInfoRequest MsgSysInfoRequest ;
 
