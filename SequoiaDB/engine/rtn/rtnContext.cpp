@@ -85,6 +85,18 @@ namespace engine
             return "SORT" ;
          case RTN_CONTEXT_QGMSORT :
             return "QGMSORT" ;
+         case RTN_CONTEXT_DELCS :
+            return "DELCS" ;
+         case RTN_CONTEXT_DELCL :
+            return "DELCL" ;
+         case RTN_CONTEXT_DELMAINCL :
+            return "DELMAINCL" ;
+         case RTN_CONTEXT_EXPLAIN :
+            return "EXPLAIN" ;
+         case RTN_CONTEXT_LOB :
+            return "LOB" ;
+         case RTN_CONTEXT_COORD_LOB :
+            return "COORDLOB" ;
          default :
             break ;
       }
