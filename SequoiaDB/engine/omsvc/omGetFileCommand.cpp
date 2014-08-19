@@ -4389,12 +4389,12 @@ namespace engine
       INT32 rc         = SDB_OK ;
 
       matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
          _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_BUSINESS ;
+                        + OM_CS_DEPLOY_CL_CONFIGURE ;
          PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
@@ -4416,18 +4416,16 @@ namespace engine
 
             contextID = -1 ;
             _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_BUSINESS ;
+                           + OM_CS_DEPLOY_CL_CONFIGURE ;
             PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
             goto error ;
          }
 
          BSONObj result( buffObj.data() ) ;
          string hostName ;
-         BSONObj conf ;
          hostName = result.getStringField( OM_CONFIGURE_FIELD_HOSTNAME ) ;
-         conf     = result.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
          mapHostConf.insert( map<string, BSONObj>::value_type( hostName, 
-                                                                      conf ) ) ;
+                                                                      result ) ) ;
       }
    done:
       return SDB_OK ;
@@ -4442,14 +4440,29 @@ namespace engine
    void omQueryNodeCommand::_sendNodeInfo2Web( 
                                              map<string, BSONObj> &mapHostConf )
    {
-//      BSONArrayBuilder arrayBuilder ;
-//      map<string, BSONObj>::iterator iter = mapHostConf.begin() ;
-//      while ( iter != mapHostConf.end() )
-//      {
-//         string hostName = iter->first ;
-//         BSONObj confs   = iter->second.getObjectField() ;
-//         iter++ ;
-//      }
+      BSONObjBuilder opBuilder ;
+      BSONArrayBuilder arrayBuilder ;
+      map<string, BSONObj>::iterator iter = mapHostConf.begin() ;
+      while ( iter != mapHostConf.end() )
+      {
+         string hostName = iter->first ;
+         BSONObj confs   = iter->second.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+         {
+            BSONObjIterator iter( confs ) ;
+            while ( iter.more() )
+            {
+               BSONElement ele = iter.next() ;
+               BSONObj oneNode = ele.embeddedObject() ;
+               arrayBuilder.append( oneNode ) ;
+            }
+         }
+         iter++ ;
+      }
+
+      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      opBuilder.append( OM_BSON_NODE_INFO, arrayBuilder.arr() ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
       return ;
    }

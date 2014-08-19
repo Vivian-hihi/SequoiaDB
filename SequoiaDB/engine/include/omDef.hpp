@@ -363,6 +363,8 @@ namespace engine
    #define  OM_QUERY_NODE_REQ                "query node"
 
    #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
+
+   #define  OM_BSON_NODE_INFO                "NodeInfo"
    
    //******************************************************************
 
