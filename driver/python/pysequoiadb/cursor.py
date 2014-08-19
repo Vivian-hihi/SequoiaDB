@@ -96,6 +96,9 @@ class cursor(object):
          else:
             record, size = bson._bson_to_dict(bson_string, dict, False,
                                               bson.OLD_UUID_SUBTYPE, True)
+      except SequoiaDBError:
+         raise
+
       return rc, record
 
    def current(self):
