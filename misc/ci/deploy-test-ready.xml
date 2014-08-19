@@ -28,7 +28,7 @@
 				<replace file="${release.path}/build.version.local" token="BUILD.NUMBER" value="BUILD.NUMBER.LOCAL" />
 				<replace file="${release.path}/build.version.local" token="BUILD.INSTALL.FILENAME" value="BUILD.INSTALL.FILENAME.LOCAL" />
 				<replace file="${release.path}/build.version.local" token="BUILD.DRIVER.FILENAME" value="BUILD.DRIVER.FILENAME.LOCAL" />
-				<property file="${release.path}/build.version" />	
+				<property file="${release.path}/build.version" />
 			</then>
 			<else>
 				<echo message="build.version is not exist " />
@@ -41,7 +41,6 @@
 		<copy file="${ci.script.path}/ci-properies-files/ci.test.properties.${os.publish.name}" tofile="${ci.script.path}/ci.test.properties" />
 		<property file="${ci.script.path}/ci.test.properties" />
 		
-		<echo message="Begin to copy the software package ..." />
 		<stafTools workType="copy" workHost="${target.deploy_tar_gz.ip}" fileName="${copy_tar}/build.version" saveDir="${release.path}" toHost="${local.ADDR4}" />
 
 		<echo message="now software is ${BUILD.NUMBER.LOCAL}" />

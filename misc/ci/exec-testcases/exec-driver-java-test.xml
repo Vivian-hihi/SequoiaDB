@@ -27,6 +27,9 @@
     <target name="clean-env" depends="">
         <delete dir="${reports.path}" failonerror="false" />
         <mkdir dir="${reports.path}" />
+
+        <echo message="${deploy.case.fullname}" />
+
     </target>
 
     <target name="exec-driver-java-test" depends="clean-env">
@@ -53,7 +56,7 @@
     </target>
 
     <target name="exec-test-over" depends="exec-driver-java-test">
-    <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
         <replace token='name="com.sequoiadb.test' value='name="com.sequoiadb.testcases-java.${deploy.name}'>
             <fileset dir="${reports.path}/"  includes="*" />
         </replace>
