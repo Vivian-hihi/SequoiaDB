@@ -387,7 +387,8 @@ class client(object):
       try:
          rc = sdbclient.connect(self._client, self.__host, self.__service,
                                               _user, _psw)
-         pysequoiadb._raise_if_error(rc)
+         pysequoiadb._raise_if_error("Failed to connect to %s:%s" %
+                                     (self.__host, self.__service), rc)
       except SequoiaDBError:
          raise
 
