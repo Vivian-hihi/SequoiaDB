@@ -132,13 +132,12 @@ class client(object):
          raise SequoiaDBError("Failed to alloc client", const.SDB_OOM)
 
       # try to connect with default user and password
-      if host is not None and service is not None:
-         try:
-            rc = self.connect(self.__host, self.__service, _user, _psw)
-            pysequoiadb._raise_if_error("Failed to connect to %s:%s" %
-                                        (host, service), rc)
-         except SequoiaDBError:
-            raise
+      try:
+         rc = self.connect(self.__host, self.__service, _user, _psw)
+         pysequoiadb._raise_if_error("Failed to connect to %s:%s" %
+                                     (host, service), rc)
+      except SequoiaDBError:
+         raise
 
    def __del__(self):
       """release resource when del called.
