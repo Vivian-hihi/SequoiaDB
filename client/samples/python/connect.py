@@ -25,12 +25,12 @@ if "__main__" == __name__:
 
    # connect to db, using default args value.
    # host= 'localhost', port= 11810, user= '', password= ''
-   try:   
+   try:
       db = client()
 
-      host = "192.168.30.63"
-      service = '80000'
-      db.connect(host, 11810, 'admin', '*****')
+      host = "192.168.20.48"
+      service = '11840'
+      db.connect(host, 11820)
 
       # try to connect another db server by service
       db.connect(host, service)
@@ -49,5 +49,3 @@ if "__main__" == __name__:
 
    except (InvalidParameter, SequoiaDBError), e:
       pysequoiadb._print(e)
-      
-   

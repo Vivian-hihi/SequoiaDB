@@ -24,10 +24,10 @@ if __name__ == "__main__":
       basketball = {"Item":"basketball", "id":0}
       oid = cl.insert(basketball)
 
-      condition = {"id":{'$et':0}}
-      pysequoiadb._print("query one record, using condition=%s" % condition)
+      cond = {"id":{'$et':0}}
+      pysequoiadb._print("query one record, using condition=%s" % cond)
 
-      cr = cl.query(condition)
+      cr = cl.query(condition=cond)
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
          pysequoiadb._print(record)
@@ -41,7 +41,7 @@ if __name__ == "__main__":
       cl.bulk_insert(1, records)
 
       pysequoiadb._print("query all records:")
-      rc, cr = cl.query()
+      cr = cl.query()
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
          pysequoiadb._print(record)
