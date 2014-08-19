@@ -61,7 +61,6 @@ function getHostsTableInfo()
 {
    var hostsInfo = eval( '(' + System.getHostsMap() + ')' ) ;
    objRet.HostsTable = hostsInfo ;
-println( "hosts map is: " + System.getHostsMap() + "\n" ) ;
 }
 
 // os info
@@ -69,7 +68,6 @@ function getOSInfo()
 {
    var osInfo = eval( '(' + System.getReleaseInfo() + ')' ) ;
    objRet.OS = osInfo ;
-println( "OS info: " + System.getReleaseInfo() + "\n" ) ;
 }
 
 // cpu
@@ -77,7 +75,6 @@ function getCPUInfo()
 {
    var cpuInfo = eval( '(' + System.getCpuInfo() + ')' ) ;
    objRet.CPU = cpuInfo ;
-println( "CPU info: " + System.getCpuInfo() ) ;
 }
 
 // memory
@@ -85,7 +82,6 @@ function getMemInfo()
 {
    var memInfo = eval( '(' + System.getMemInfo() + ')' ) ;
    objRet.Memery = memInfo ;
-println( "Memory info: " + System.getMemInfo() + "\n" ) ;
 }
 
 // disk
@@ -93,7 +89,6 @@ function getDiskInfo()
 {
    var diskInfo = eval( '(' + System.getDiskInfo() + ')' ) ;
    objRet.Disk = diskInfo ;
-println( "Disk info: " + System.getDiskInfo() + "\n" ) ;
 }
 
 // net card
@@ -101,7 +96,6 @@ function getNetCardInfo()
 {
    var netcardInfo = eval( '(' + System.getNetcardInfo() + ')' ) ;
    objRet.Net = netcardInfo ;
-println( "Net card info: " + System.getNetcardInfo() + "\n" ) ;
 }
 
 // port status 
@@ -113,7 +107,6 @@ function getSafetyInfo()
 {
    var safetyInfo = eval( '(' + System.getIpTablesInfo() + ')' ) ;
    objRet.Safety = safetyInfo ;
-println( "Safety info: " + System.getIpTablesInfo() + "\n" ) ;
 }
 
 function main()
