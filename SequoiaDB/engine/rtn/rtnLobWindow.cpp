@@ -108,7 +108,7 @@ namespace engine
          goto error ;
       }
 
-      /// never cache data
+      /// never cached data
       if ( 0 == _cachedSz )
       {
          _writeData.offset = offset ;
@@ -173,7 +173,9 @@ namespace engine
       }
       else if ( _pageSize == _cachedSz )
       {
-         piece.set( _oid, RTN_LOB_GET_SEQUENCE(( _writeData.offset - _cachedSz ),_logarithmic),
+         /// we should find the exact offset.
+         SINT64 offset = _writeData.empty() ? _curOffset : _writeData.offset ;
+         piece.set( _oid, RTN_LOB_GET_SEQUENCE(( offset - _cachedSz ),_logarithmic),
                        0, _cachedSz, _pool ) ;
          hasNext = TRUE ;
          _analysisCache = FALSE ;

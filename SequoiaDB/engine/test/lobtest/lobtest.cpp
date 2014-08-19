@@ -97,16 +97,14 @@ TEST(lobTest, insert_2)
       oids[i] = oid ;
       memset( buf, 'a' + i, bufSize ) ;
       SINT64 totalWriteLen = 0 ;
-      while ( totalWriteLen < ( bufSize - 1231 ) )
+      while ( totalWriteLen < bufSize )
       {
-         rc = sdbWriteLob( lob, buf + totalWriteLen, 1024 * 10 ) ;
+         UINT32 writeLen = bufSize - totalWriteLen < 1452 ? bufSize - totalWriteLen : 1452 ;
+         rc = sdbWriteLob( lob, buf + totalWriteLen, writeLen ) ;
          ASSERT_TRUE( SDB_OK == rc ) ;
-         totalWriteLen += 1024 * 10 ;
+         totalWriteLen += writeLen ;
       }
-      rc = sdbWriteLob( lob, buf+totalWriteLen, 1231 ) ;
-      totalWriteLen += 1231 ;
       ASSERT_TRUE( totalWriteLen == bufSize ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
       rc = sdbCloseLob( &lob ) ;
       ASSERT_TRUE( SDB_OK == rc ) ;
 

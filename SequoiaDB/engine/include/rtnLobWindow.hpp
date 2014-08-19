@@ -51,7 +51,7 @@ namespace engine
          UINT32 len ;
          const CHAR *data ;
          pieceFromUsr()
-         :offset( 0 ),
+         :offset( -1 ),
           len( 0 ),
           data( NULL )
          {
@@ -60,13 +60,13 @@ namespace engine
 
          BOOLEAN empty() const
          {
-            return 0 == offset &&
+            return -1 == offset &&
                    len == 0 && NULL == data ;
          }
 
          void clear()
          {
-            offset = 0 ;
+            offset = -1 ;
             len = 0 ;
             data = NULL ;
          }
