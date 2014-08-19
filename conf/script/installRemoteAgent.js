@@ -121,10 +121,7 @@ function pushPacket( ssh, osInfo )
       // script exitAgent.js
       src = LOCAL_SPT_PATH + FILE_EXIT_AGENT ;
       dest = SPTDIR_L + FILE_EXIT_AGENT ;
-print("src is: " + src + "\n" ) ;
-print("dest is: " + dest + "\n" ) ;
       ssh.push( src, dest ) ;
-print("111111111>>>>>>>>>>>>>>>111111111>>>>>>>>>\n") ;
    }
    else
    {
@@ -150,12 +147,6 @@ function startCMProg( ssh, osInfo )
 
 function main()
 {
-print("username is: " + USERNAME + "\n" ) ;
-print("password is: " + PASSWORD + "\n" ) ;
-print("ip is: " + IP + "\n" ) ;
-print("local cm path is: " + LOCAL_PROG_PATH + "\n" ) ;
-print("local spt path is: " + LOCAL_SPT_PATH + "\n" ) ;
-print("local cm conf is: " + LOCAL_CM_CONF + "\n" ) ;
    try
    {
       // check argument
@@ -177,21 +168,16 @@ print("local cm conf is: " + LOCAL_CM_CONF + "\n" ) ;
       }
       // get os info
       var osInfo = System.type() ;
-print("111111111111111111111111111111111111111111111\n") ;
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-print("22222222222222222222222222222222222222222222222\n") ;
       // build directory in remote mechine
       createTmpDir( ssh, osInfo ) ;
-print("33333333333333333333333333333333333333333333333\n") ;
       // push packet
       pushPacket( ssh, osInfo ) ;
       objRet.HasPush = true ;
-print("444444444444444444444444444444444444444444444444\n") ;
       // start the omagent program
       startCMProg( ssh, osInfo ) ;
       objRet.HasRunning = true ;
-print("55555555555555555555555555555555555555555555555555\n") ;
       // return the result
       return objRet ;
    }

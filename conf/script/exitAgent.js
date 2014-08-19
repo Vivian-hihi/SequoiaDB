@@ -25,11 +25,6 @@ if ( typeof(USERNAME) == "undefined" ) {}
 if ( typeof(PASSWORD) == "undefined" ) {}
 if ( typeof(IP) == "undefined" ) { IP = "127.0.0.1" ; }
 if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-/*
-if ( typeof(LOCAL_PROG_PATH) == "undefined" ) {}
-if ( typeof(LOCAL_SPT_PATH) == "undefined" ) {}
-if ( typeof(LOCAL_CM_CONF) == "undefined" ) {}
-*/
 
 // linux
 var TOPDIR_L               = "/tmp/omatmp/" ;
@@ -117,10 +112,7 @@ function pushPacket( ssh, osInfo )
       // script
       src = LOCAL_SPT_PATH + FILE_CHECK_HOST ;
       dest = SPTDIR_L + FILE_CHECK_HOST ;
-print("src is: " + src + "\n" ) ;
-print("dest is: " + dest + "\n" ) ;
       ssh.push( src, dest ) ;
-print("111111111>>>>>>>>>>>>>>>111111111>>>>>>>>>\n") ;
    }
    else
    {
@@ -146,9 +138,6 @@ function startCMProg( ssh, osInfo )
 
 function main()
 {
-print("username is: " + USERNAME + "\n" ) ;
-print("password is: " + PASSWORD + "\n" ) ;
-print("ip is: " + IP + "\n" ) ;
    try
    {
       // check argument
@@ -161,14 +150,11 @@ print("ip is: " + IP + "\n" ) ;
       }
       // get os info
       var osInfo = System.type() ;
-print("111111111111111111111111111111111111111111111\n") ;
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-print("22222222222222222222222222222222222222222222222\n") ;
       // stop the cm program
       startCMProg( ssh, osInfo ) ;
       objRet.HasEixt = true ;
-print("55555555555555555555555555555555555555555555555555\n") ;
 
       return objRet ;
    }

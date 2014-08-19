@@ -28,17 +28,8 @@ if ( typeof(HOSTNAME) == "undefined" ) {}
 if ( typeof(USERNAME) == "undefined" ) {}
 if ( typeof(PASSWORD) == "undefined" ) {}
 if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-if ( typeof(INSTALL_PACKET) == "undefined" ) {}
+if ( typeof(PACKET_PATH) == "undefined" ) {}
 if ( typeof(INSTALL_PATH) == "undefined" ) {}
-
-var install_packet_name = null ;
-
-// TODO: tanzhaobo
-// just use for test
-SDBUSER = "sdbadmin" ;
-SDBPASSWD = "sdbadmin" ;
-SDBUSERGROUP = "sdbadmin" ;
-INSTALL_PACKET = "/home/users/tanzhaobo/sequoiadb/bin/sequoiadb-1.8-linux_x86_64-installer.run" ;
 
 // linux
 var INSTALL_PACKET_PATH_L = "/tmp/tmpoma/packet/" ;
@@ -55,7 +46,7 @@ function getInstallPacketName( osInfo )
 {
    var s = "" ;
    var i = 1 ;
-   var packet = INSTALL_PACKET ;
+   var packet = PACKET_PATH ;
    var subStr = "" ;
    if ( "LINUX" == osInfo )
       s = "/" ;
@@ -79,7 +70,6 @@ function createTmpDir( ssh, osInfo )
    if ( "LINUX" == osInfo )
    {
       cmd = "mkdir -p " + INSTALL_PACKET_PATH_L ;
-print("AAAAAAAAAAAAAAAAAAAAAAA cmd is: " + cmd + "\n") ;
       ssh.exec( cmd ) ;
    }
    else
@@ -95,17 +85,13 @@ function pushInstallationPacket( ssh, osInfo )
    var src = "" ;
    var dest = "" ;
    var packetName = getInstallPacketName( osInfo ) ;
-print("********************************packetName is: " + packetName + "\n") ;
    createTmpDir( ssh, osInfo ) ;
    if ( "LINUX" == osInfo )
    {
       // installer.run
-      src = INSTALL_PACKET;
+      src = PACKET_PATH;
       dest = INSTALL_PACKET_PATH_L + packetName ;
-print("44444src is: " + src + "\n" ) ;
-print("44444dest is: " + dest + "\n" ) ;
       ssh.push( src, dest ) ;
-print(">>>>>>>>finish push packet>>>>>>>>>>\n") ;
       var cmd = "chmod a+x " + INSTALL_PACKET_PATH_L + packetName ;
       ssh.exec( cmd ) ;
    }
@@ -138,15 +124,6 @@ function installPacket( ssh, osInfo )
 
 function main()
 {
-print("sdbuser is: " + SDBUSER + "\n" )  ;
-print("sdbpasswd is: " + SDBPASSWD + "\n" ) ;
-print("sdbusergroup is: " + SDBUSERGROUP + "\n" ) ;
-print("username is: " + USERNAME + "\n" ) ;
-print("password is: " + PASSWORD + "\n" ) ;
-print("ip is: " + IP + "\n" ) ;
-print("hostname is: " + HOSTNAME + "\n" ) ;
-print("install path is: " + INSTALL_PATH + "\n" ) ;
-print("packet is: " + INSTALL_PACKET + "\n" ) ;
    try
    {
       // check argument
@@ -166,7 +143,7 @@ print("packet is: " + INSTALL_PACKET + "\n" ) ;
          objRet.Detail = "not specified username, password or ip" ;
          return objRet ;
       }
-      if ( typeof(INSTALL_PACKET) == "undefined" ||
+      if ( typeof(PACKET_PATH) == "undefined" ||
            typeof(INSTALL_PATH) == "undefined" )
       {
          objRet.Rc = -10 ;
@@ -175,15 +152,11 @@ print("packet is: " + INSTALL_PACKET + "\n" ) ;
       }
       // get os info
       var osInfo = System.type() ;
-print("111111111111111111111111111111111111111111111\n") ;
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-print("22222222222222222222222222222222222222222222222\n") ;
       // push packet to remote machine
       pushInstallationPacket( ssh, osInfo ) ;
-print("33333333333333333333333333333333333333333333333\n") ;
       installPacket( ssh, osInfo ) ;
-print("55555555555555555555555555555555555555555555555555\n") ;
       // return the result
       return objRet ;
    }
