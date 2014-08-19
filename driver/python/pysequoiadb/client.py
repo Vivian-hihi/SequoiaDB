@@ -409,7 +409,6 @@ class client(object):
       self.__host = self.HOST
       self.__service = self.PSW
       self.__connected = False
-      self._client = None
 
    def create_user(self, name, psw):
       """Add an user in current database.
