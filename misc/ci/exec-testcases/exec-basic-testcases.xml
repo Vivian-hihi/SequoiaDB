@@ -40,7 +40,7 @@
 
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
-				<dirset dir="${testcase.path}/js" excludes="" />
+				<dirset dir="${testcase.path}/js" excludes="vote" />
 			</path>
 			<param name="testcase.path" value="${testcase.path}" />
 			<param name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
