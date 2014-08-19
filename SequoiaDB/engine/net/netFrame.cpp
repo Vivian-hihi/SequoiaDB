@@ -299,6 +299,43 @@ namespace engine
       goto done ;
    }
 
+   INT32 _netFrame::syncSendRaw( const NET_HANDLE &handle,
+                                 const CHAR *pBuff,
+                                 UINT32 buffSize )
+   {
+      SDB_ASSERT( NULL != pBuff, "pBuff should not be NULL") ;
+      SDB_ASSERT( NET_INVALID_HANDLE != handle,
+                  "handle should not be invalid" ) ;
+      INT32 rc = SDB_OK ;
+      NET_EH eh ;
+      _mtx.get_shared() ;
+      map<NET_HANDLE, NET_EH>::iterator itr =
+                                _opposite.find( handle ) ;
+      if ( _opposite.end() == itr )
+      {
+         _mtx.release_shared() ;
+         rc = SDB_NET_INVALID_HANDLE ;
+         goto error ;
+      }
+      eh = itr->second ;
+      _mtx.release_shared() ;
+
+      eh->mtx().get() ;
+      rc = eh->syncSend( pBuff, buffSize ) ;
+      eh->mtx().release() ;
+      if ( SDB_OK != rc )
+      {
+         eh->close() ;
+         goto error ;
+      }
+      _netOut.add( buffSize ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND3, "INT32 _netFrame::syncSend" )
    INT32 _netFrame::syncSend( const NET_HANDLE &handle,
                               MsgHeader *header,

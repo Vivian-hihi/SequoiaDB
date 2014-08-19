@@ -33,6 +33,7 @@
 #include "sptUsrCmd.hpp"
 #include "sptUsrFile.hpp"
 #include "sptUsrSystem.hpp"
+#include "sptUsrOma.hpp"
 
 JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
 
@@ -810,6 +811,9 @@ int main ( int argc , CHAR **argv )
    SH_VERIFY_RC
 
    rc = scope->loadUsrDefObj<_sptUsrSystem>() ;
+   SH_VERIFY_RC
+
+   rc = scope->loadUsrDefObj<_sptUsrOma>() ;
    SH_VERIFY_RC
 
    rc = evalInitScripts2( scope ) ;

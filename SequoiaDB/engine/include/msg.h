@@ -341,14 +341,16 @@ typedef union _MsgRouteID MsgRouteID ;
 // of server and client
 // Therefore we are using a special length "-1" to indicate the request, and we
 // are going to reply the real system info
-#define MSG_SYSTEM_INFO_LEN 0xFFFFFFFF
-#define MSG_SYSTEM_INFO_EYECATCHER 0xFFFEFDFC
-#define MSG_SYSTEM_INFO_EYECATCHER_REVERT 0xFCFDFEFF
+#define MSG_SYSTEM_INFO_LEN                  0xFFFFFFFF
+#define MSG_SYSTEM_INFO_EYECATCHER           0xFFFEFDFC
+#define MSG_SYSTEM_INFO_EYECATCHER_REVERT    0xFCFDFEFF
+
 struct _MsgSysInfoHeader
 {
    SINT32 specialSysInfoLen ;
    UINT32 eyeCatcher ;
    SINT32 realMessageLength ;
+   CHAR   padding[ 16 ] ;  // keep the msg size the same with _MsgHeader
 } ;
 typedef struct _MsgSysInfoHeader MsgSysInfoHeader ;
 

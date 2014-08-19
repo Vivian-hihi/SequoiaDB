@@ -328,6 +328,11 @@ namespace engine
       else
       {
          UINT32 len = _header.messageLength ;
+         if ( (UINT32)MSG_SYSTEM_INFO_LEN == len )
+         {
+            len = sizeof( MsgSysInfoRequest ) ;
+         }
+
          if ( SDB_OK != _allocateBuf( len ) )
          {
             goto error ;
@@ -453,8 +458,12 @@ namespace engine
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {
          /// error header
-         if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength
-              || SDB_MAX_MSG_LENGTH < (UINT32)_header.messageLength )
+         if ( ( UINT32 )MSG_SYSTEM_INFO_LEN == (UINT32)_header.messageLength )
+         {
+            // sys info request
+         }
+         else if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength ||
+                   SDB_MAX_MSG_LENGTH < (UINT32)_header.messageLength )
          {
             PD_LOG( PDERROR, "Error header[len: %d, opCode: (%d)%d, TID:%d] "
                     "received, node:%d, %d, %d", _header.messageLength,
@@ -485,7 +494,9 @@ namespace engine
             }
          }
          /// msg has only header
-         if ( sizeof(_MsgHeader) == _header.messageLength )
+         if ( (UINT32)sizeof(_MsgHeader) == (UINT32)_header.messageLength ||
+              ( (UINT32)MSG_SYSTEM_INFO_LEN == (UINT32)_header.messageLength &&
+                sizeof( _MsgHeader ) == sizeof( MsgSysInfoRequest ) ) )
          {
             if ( SDB_OK != _allocateBuf( sizeof(_MsgHeader) ))
             {

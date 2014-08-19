@@ -112,7 +112,6 @@ namespace engine
       _dpsLogWrapper                *_logger ;
       _clsSyncManager               *_sync ;
       _clsReplicateSet              *_repl ;
-      _netRouteAgent                *_agent ;
       _clsBucket                    *_pReplBucket ;
       _clsReplayer                  _replayer ;
       MsgRouteID                    _syncSrc ;

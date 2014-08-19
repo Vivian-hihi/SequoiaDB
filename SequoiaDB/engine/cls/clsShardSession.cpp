@@ -88,7 +88,6 @@ namespace engine
       _pDmsCB    = pKRCB->getDMSCB () ;
       _pDpsCB    = pKRCB->getDPSCB () ;
       _pRtnCB    = pKRCB->getRTNCB () ;
-      _pNetAgent = pKRCB->getClsCB()->getShardRouteAgent () ;
       PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
    }
 
@@ -100,7 +99,6 @@ namespace engine
       _pDmsCB    = NULL ;
       _pRtnCB    = NULL ;
       _pDpsCB    = NULL ;
-      _pNetAgent = NULL ;
       _pCollectionName = NULL ;
    }
 
@@ -325,12 +323,12 @@ namespace engine
       //Send message
       if ( size > 0 )
       {
-         rc = _pNetAgent->syncSend ( _netHandle, (MsgHeader *)header, 
-                                    (void*)buff, size ) ;
+         rc = routeAgent()->syncSend ( _netHandle, (MsgHeader *)header, 
+                                       (void*)buff, size ) ;
       }
       else
       {
-         rc = _pNetAgent->syncSend ( _netHandle, (void *)header ) ;
+         rc = routeAgent()->syncSend ( _netHandle, (void *)header ) ;
       }
 
       if ( rc != SDB_OK )
@@ -1452,7 +1450,7 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       MsgCoordCheckRouteID *pMsgReq = (MsgCoordCheckRouteID *)msg;
-      MsgRouteID localRouteID = _pNetAgent->localID();
+      MsgRouteID localRouteID = routeAgent()->localID();
       if ( pMsgReq->dstRouteID.columns.nodeID !=
            localRouteID.columns.nodeID ||
            pMsgReq->dstRouteID.columns.groupID !=

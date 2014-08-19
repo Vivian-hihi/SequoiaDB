@@ -106,6 +106,10 @@ namespace engine
          INT32 syncSend( const NET_HANDLE &handle,
                           void *header ) ;
 
+         INT32 syncSendRaw( const NET_HANDLE &handle,
+                            const CHAR *pBuff,
+                            UINT32 buffSize ) ;
+
          INT32 syncSend( const  _MsgRouteID &id,
                          void *header ) ;
 

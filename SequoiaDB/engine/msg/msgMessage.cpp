@@ -1821,8 +1821,7 @@ INT32 msgExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN &endianConvert,
    SDB_ASSERT ( (UINT32)reply->header.specialSysInfoLen ==
                 MSG_SYSTEM_INFO_LEN,
                 "Invalid len, expected -1" ) ;
-   SDB_ASSERT ( reply->header.realMessageLength == sizeof(MsgSysInfoReply),
-                "Invalid real message len" ) ;
+
    if ( reply->header.eyeCatcher == MSG_SYSTEM_INFO_EYECATCHER )
    {
       endianConvert = FALSE ;

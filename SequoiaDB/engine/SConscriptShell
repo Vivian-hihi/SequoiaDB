@@ -31,7 +31,9 @@ spt2Files = [
       "spt/sptCmdRunner.cpp",
       "spt/usrdef/sptUsrCmd.cpp",
       "spt/usrdef/sptUsrFile.cpp",
-      "spt/usrdef/sptUsrSystem.cpp"
+      "spt/usrdef/sptUsrSystem.cpp",
+      "spt/usrdef/sptUsrOma.cpp",
+      "spt/usrdef/sptUsrOmaAssit.cpp"
       ]
 
 ossFiles = [

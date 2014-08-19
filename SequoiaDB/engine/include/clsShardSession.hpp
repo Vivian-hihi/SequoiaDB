@@ -198,7 +198,6 @@ namespace engine
          _SDB_DMSCB             *_pDmsCB ;
          _SDB_RTNCB             *_pRtnCB ;
          _dpsLogWrapper         *_pDpsCB ;
-         _netRouteAgent         *_pNetAgent ;
 
          MsgOpReply             _replyHeader ;
          BSONObj                _errorInfo ;

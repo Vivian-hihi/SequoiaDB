@@ -595,13 +595,15 @@ static INT32 requestSysInfo ( sdbConnectionStruct *connection )
    MsgSysInfoReply reply ;
 
    connection->_endianConvert = FALSE;
-   rc = clientBuildSysInfoRequest ( (CHAR**)&connection->_pSendBuffer, &connection->_sendBufferSize ) ;
+   rc = clientBuildSysInfoRequest ( (CHAR**)&connection->_pSendBuffer,
+                                    &connection->_sendBufferSize ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 
-   rc = _send1 ( connection->_sock, connection->_pSendBuffer, sizeof(MsgSysInfoRequest) ) ;
+   rc = _send1 ( connection->_sock, connection->_pSendBuffer,
+                 sizeof( MsgSysInfoRequest ) ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -609,7 +611,8 @@ static INT32 requestSysInfo ( sdbConnectionStruct *connection )
 
    while ( TRUE )
    {
-      rc = clientRecv ( connection->_sock, (CHAR*)&reply, sizeof(MsgSysInfoReply),
+      rc = clientRecv ( connection->_sock, (CHAR*)&reply,
+                        sizeof(MsgSysInfoReply),
                         SDB_CLIENT_DFT_NETWORK_TIMEOUT ) ;
       if ( SDB_TIMEOUT == rc )
          continue ;
@@ -620,7 +623,9 @@ static INT32 requestSysInfo ( sdbConnectionStruct *connection )
       break ;
    }
 
-   rc = clientExtractSysInfoReply ( (CHAR*)&reply, &(connection->_endianConvert), NULL ) ;
+   rc = clientExtractSysInfoReply ( (CHAR*)&reply,
+                                    &(connection->_endianConvert),
+                                    NULL ) ;
    if ( SDB_OK != rc )
    {
       goto error ;

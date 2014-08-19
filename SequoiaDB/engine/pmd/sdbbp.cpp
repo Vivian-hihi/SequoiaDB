@@ -18,6 +18,7 @@
 #include "sptUsrCmd.hpp"
 #include "sptUsrFile.hpp"
 #include "sptUsrSystem.hpp"
+#include "sptUsrOma.hpp"
 #include "sptSPScope.hpp"
 #include "../spt/js_in_cpp.hpp"
 
@@ -298,6 +299,9 @@ int main ( int argc , const char * argv[] )
    SH_VERIFY_RC
 
    rc = scope->loadUsrDefObj<_sptUsrSystem>() ;
+   SH_VERIFY_RC
+
+   rc = scope->loadUsrDefObj<_sptUsrOma>() ;
    SH_VERIFY_RC
 
    rc = evalInitScripts2( scope ) ;

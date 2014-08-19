@@ -216,6 +216,13 @@ namespace engine
       return _frame.syncSend( handle, header ) ;
    }
 
+   INT32 _netRouteAgent::syncSendRaw( const NET_HANDLE & handle,
+                                      const CHAR * pBuff,
+                                      UINT32 buffSize )
+   {
+      return _frame.syncSendRaw( handle, pBuff, buffSize ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND2, "_netRouteAgent::syncSend" )
    INT32 _netRouteAgent::syncSend( const _MsgRouteID &id,
                                    MsgHeader *header, void *body,

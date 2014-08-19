@@ -61,7 +61,6 @@ namespace engine
    :_pmdAsyncSession( sessionID )
    {
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
-      _pAgent = NULL ;
       _pNodeMgr = NULL ;
       _pBody = NULL ;
       _bodyLen = 0 ;
@@ -119,7 +118,6 @@ namespace engine
    void _omaSession::_onAttach()
    {
       _pNodeMgr = sdbGetOMAgentMgr()->getNodeMgr() ;
-      _pAgent = sdbGetOMAgentMgr()->getRouteAgent() ;
    }
 
    INT32 _omaSession::_defaultMsgFunc( NET_HANDLE handle, MsgHeader * msg )
@@ -149,12 +147,12 @@ namespace engine
       //Send message
       if ( bodyLen > 0 )
       {
-         rc = _pAgent->syncSend ( _netHandle, (MsgHeader *)header,
-                                  (void*)pBody, bodyLen ) ;
+         rc = routeAgent()->syncSend ( _netHandle, (MsgHeader *)header,
+                                       (void*)pBody, bodyLen ) ;
       }
       else
       {
-         rc = _pAgent->syncSend ( _netHandle, (void *)header ) ;
+         rc = routeAgent()->syncSend ( _netHandle, (void *)header ) ;
       }
 
       if ( rc != SDB_OK )

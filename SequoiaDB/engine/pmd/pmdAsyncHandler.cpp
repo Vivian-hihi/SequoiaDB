@@ -35,6 +35,7 @@
 #include "core.hpp"
 #include "pmdAsyncHandler.hpp"
 #include "pmdAsyncSession.hpp"
+#include "msgMessage.hpp"
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
@@ -159,7 +160,12 @@ namespace engine
       //or repl sync messages
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDMSGHND_HNDMSG ) ;
-      if ( header->TID != 0 )
+
+      if ( (UINT32)MSG_SYSTEM_INFO_LEN == (UINT32)header->messageLength )
+      {
+         rc = _handleSysInfo( handle, header, msg ) ;
+      }
+      else if ( header->TID != 0 )
       {
          rc = _handleSessionMsg ( handle, header, msg ) ;
       }
@@ -178,6 +184,29 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__PMDMSGHND_HNDMSG, rc ) ;
       return rc ;
    error :
+      goto done ;
+   }
+
+   void _pmdAsyncMsgHandler::_handleSysInfo( const NET_HANDLE & handle,
+                                             const _MsgHeader * header,
+                                             const CHAR * msg )
+   {
+      INT32 rc = SDB_OK ;
+      MsgSysInfoReply reply ;
+      MsgSysInfoReply *pReply = &reply ;
+      INT32 replySize = sizeof(reply) ;
+
+      rc = msgBuildSysInfoReply ( (CHAR**)&pReply, &replySize ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to build sys info reply, "
+                    "rc = %d", rc ) ;
+
+      rc = _pSessionMgr->getRouteAgent()->syncSendRaw( handle,
+                                                       (const CHAR *)pReply,
+                                                       (UINT32)replySize ) ;
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

@@ -1792,8 +1792,7 @@ INT32 clientBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize )
 {
    INT32 rc = SDB_OK ;
    MsgSysInfoRequest *request = NULL ;
-   rc = clientCheckBuffer ( ppBuffer, pBufferSize,
-                                      sizeof(MsgSysInfoRequest) ) ;
+   rc = clientCheckBuffer ( ppBuffer, pBufferSize, sizeof(MsgSysInfoRequest) ) ;
    if ( rc )
    {
       goto error ;

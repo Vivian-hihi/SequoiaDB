@@ -65,7 +65,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSREPSN__CLSREPSN );
       _logger = pmdGetKRCB()->getDPSCB() ;
       _sync = sdbGetReplCB()->syncMgr() ;
-      _agent = pmdGetKRCB()->getClsCB()->getReplRouteAgent() ;
       _repl = sdbGetReplCB() ;
       _pReplBucket = _repl->getBucket() ;
 
@@ -566,7 +565,7 @@ namespace engine
       PD_LOG( PDEVENT, "Sync Session[%s]: Consult[res:%d, return offset:%lld, "
               "return version:%d]", sessionName(), res.header.res,
               res.returnTo.offset, res.returnTo.version ) ;
-      _agent->syncSend( handle, &res ) ;
+      routeAgent()->syncSend( handle, &res ) ;
       PD_TRACE_EXIT ( SDB__CLSREPSN_HNDCSTREQ );
       return SDB_OK ;
    }
@@ -866,8 +865,8 @@ namespace engine
          _MsgReplVirSyncReq msg ;
          msg.header.TID = CLS_TID( _sessionID ) ;
          msg.next = _logger->expectLsn() ;
-         msg.from = _agent->localID() ;
-         _agent->syncSend( _syncSrc, &msg ) ;
+         msg.from = routeAgent()->localID() ;
+         routeAgent()->syncSend( _syncSrc, &msg ) ;
          PD_LOG( PDDEBUG, "Sync Session[%s]: Send vir sync req to [node: %d] "
                  "[group:%d], lsn: [%lld][%d]", sessionName(),
                  _syncSrc.columns.nodeID, _syncSrc.columns.groupID,
@@ -908,8 +907,8 @@ namespace engine
             }
          }
 
-         msg.identity = _agent->localID() ;
-         _agent->syncSend( _syncSrc, &msg ) ;
+         msg.identity = routeAgent()->localID() ;
+         routeAgent()->syncSend( _syncSrc, &msg ) ;
          PD_LOG( PDDEBUG, "Sync Session[%s]: Send sync req to [node: %d, "
                  "group:%d], lsn: [%llu][%u], complete lsn: [%lld][%u]",
                  sessionName(), _syncSrc.columns.nodeID,
@@ -955,8 +954,8 @@ namespace engine
          msg.header.TID = CLS_TID( _sessionID ) ;
          msg.header.requestID = ++_requestID ;
          msg.current =  _consultLsn ;
-         msg.identity = _agent->localID() ;
-         _agent->syncSend( _syncSrc, &msg ) ;
+         msg.identity = routeAgent()->localID() ;
+         routeAgent()->syncSend( _syncSrc, &msg ) ;
          PD_LOG( PDEVENT, "Sync Session[%s]: Send consult req to [node: %d, "
                  "group:%d], [LSN: %d:%lld]", sessionName(),
                  _syncSrc.columns.nodeID, _syncSrc.columns.groupID,
@@ -1106,7 +1105,7 @@ namespace engine
       msg.header.header.routeID = req->header.routeID ;
       msg.header.header.TID = req->header.TID ;
       msg.header.header.requestID = req->header.requestID ;
-      msg.identity = _agent->localID() ;
+      msg.identity = routeAgent()->localID() ;
 
       {
       DPS_LSN fLsn ;
@@ -1125,7 +1124,7 @@ namespace engine
                  sessionName(), req->next.offset, req->next.version,
                  fLsn.offset, fLsn.version, eLsn.offset, eLsn.version ) ;
          msg.header.res = SDB_CLS_SYNC_FAILED ;
-         _agent->syncSend( handle, &msg ) ;
+         routeAgent()->syncSend( handle, &msg ) ;
          rc = SDB_CLS_SYNC_FAILED ;
          goto done ;
       }
@@ -1161,13 +1160,13 @@ namespace engine
             msg.header.res = SDB_OK ;
             rc = SDB_OK ;
          }
-         _agent->syncSend( handle, &msg ) ;
+         routeAgent()->syncSend( handle, &msg ) ;
          goto done ;
       }
       else if ( 0 == req->needData )
       {
          msg.header.res = SDB_OK ;
-         _agent->syncSend( handle, &msg ) ;
+         routeAgent()->syncSend( handle, &msg ) ;
          goto done ;
       }
       else
@@ -1211,8 +1210,8 @@ namespace engine
       {
          rc = SDB_OK ;
          msg.header.res = SDB_OK ;
-         _agent->syncSend( handle, ( MsgHeader *)(&msg),
-                           _mb.offset( 0 ), _mb.length() ) ;
+         routeAgent()->syncSend( handle, ( MsgHeader *)(&msg),
+                                 _mb.offset( 0 ), _mb.length() ) ;
       }
       else
       {
@@ -1221,7 +1220,7 @@ namespace engine
          PD_LOG( PDWARNING, "Sync Session[%s]: Can not find [ver:%d, "
                  "offset:%lld]", sessionName(), search.version,
                  search.offset ) ;
-         _agent->syncSend( handle, &msg ) ;
+         routeAgent()->syncSend( handle, &msg ) ;
       }
       }
 

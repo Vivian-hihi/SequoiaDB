@@ -63,7 +63,7 @@ namespace engine
       _pmdAsyncSession implement
    */
    BEGIN_OBJ_MSG_MAP( _pmdAsyncSession, _pmdObjBase )
-      //ON_MSG
+      // ON_MSG
    END_OBJ_MSG_MAP()
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN, "_pmdAsyncSession::_pmdAsyncSession" )
@@ -273,6 +273,11 @@ namespace engine
    void _pmdAsyncSession::setSessionMgr( _pmdAsycSessionMgr *pSessionMgr )
    {
       _pSessionMgr = pSessionMgr ;
+   }
+
+   netRouteAgent* _pmdAsyncSession::routeAgent()
+   {
+      return _pSessionMgr->getRouteAgent() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSN__MKNAME, "_pmdAsyncSession::_makeName" )

@@ -109,7 +109,6 @@ namespace engine
          BOOLEAN          _needReply ;
 
          _omAgentNodeMgr      *_pNodeMgr ;
-         _netRouteAgent       *_pAgent ;
 
          ossTimestamp         _lastRecvTime ;
 

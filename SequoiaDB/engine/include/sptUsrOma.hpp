@@ -1,0 +1,73 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = sptUsrOma.hpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          18/08/2014  XJH Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef SPT_USROMA_HPP__
+#define SPT_USROMA_HPP__
+
+#include "sptApi.hpp"
+#include "sptUsrOmaAssit.hpp"
+
+namespace engine
+{
+
+   /*
+      _sptUsrOma define
+   */
+   class _sptUsrOma : public SDBObject
+   {
+   JS_DECLARE_CLASS( _sptUsrOma )
+
+   public:
+      _sptUsrOma() ;
+      virtual ~_sptUsrOma() ;
+
+   public:
+      INT32 construct( const _sptArguments &arg,
+                       _sptReturnVal &rval,
+                       bson::BSONObj &detail) ;
+
+      INT32 destruct() ;
+
+      INT32 toString( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
+   private:
+      sptUsrOmaAssit          _assit ;
+      string                  _hostname ;
+      string                  _svcname ;
+
+   } ;
+
+}
+
+#endif // SPT_USROMA_HPP__

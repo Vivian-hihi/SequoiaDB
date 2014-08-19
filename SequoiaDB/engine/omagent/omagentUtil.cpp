@@ -44,6 +44,7 @@
 #include "sptUsrCmd.hpp"
 #include "sptUsrFile.hpp"
 #include "sptUsrSystem.hpp"
+#include "sptUsrOma.hpp"
 #include "../spt/js_in_cpp.hpp"
 #if defined( _LINUX )
 #include <dirent.h>
@@ -177,6 +178,9 @@ namespace engine
       rc = _scope->loadUsrDefObj<_sptUsrSystem>() ;
       PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
                  "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
+      rc = _scope->loadUsrDefObj<_sptUsrOma>() ;
+      PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
+                 "Failed to load class _sptUsrOma, rc = %d", rc ) ;
       rc = evalInitScripts2( _scope ) ;
       PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
                  "Failed to init spt scope, rc = %d", rc ) ;

@@ -191,6 +191,8 @@ namespace engine
          INT32 _lock () ;
          INT32 _unlock () ;
 
+         netRouteAgent* routeAgent() ;
+
          virtual void   _onAttach () ;
          virtual void   _onDetach () ;
 
@@ -244,12 +246,13 @@ namespace engine
                                     UINT32 timerInterval ) ;
          virtual INT32        fini() ;
          void                 setForced() { _quit = TRUE ; }
+         netRouteAgent*       getRouteAgent() { return _pRTAgent ; }
 
          BOOLEAN              forceNotify( UINT64 sessionID,
                                            _pmdEDUCB *cb ) ;
 
          virtual void         onTimer( UINT32 interval ) ;
-         
+
 
          /*
             The following function:

@@ -99,6 +99,10 @@ namespace engine
                                const _MsgHeader *header,
                                const CHAR *msg ) ;
 
+         INT32 _handleSysInfo( const NET_HANDLE &handle,
+                               const _MsgHeader *header,
+                               const CHAR *msg ) ;
+
       protected:
          virtual void _postMainMsg( const NET_HANDLE &handle,
                                     MsgHeader *pNewMsg ) ;
