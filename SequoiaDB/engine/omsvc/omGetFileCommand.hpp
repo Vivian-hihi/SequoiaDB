@@ -447,6 +447,7 @@ namespace engine
 
       private:
          void           _sendNodeInfo2Web( map<string, BSONObj> &mapHostConf ) ;
+         INT32          _test() ;
    } ;
 
    class omStartBusinessCommand : public omAuthCommand

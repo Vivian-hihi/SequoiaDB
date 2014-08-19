@@ -2308,6 +2308,7 @@ namespace engine
       string clusterName ;
       INT32 transactionID = -1 ;
       INT32 rc = SDB_OK ;
+      BSONObjBuilder bsonBuilder ;
 
       rc = _getHostList( clusterName, hostInfoList ) ;
       if ( SDB_OK != rc )
@@ -2334,6 +2335,10 @@ namespace engine
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
+
+      bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
    done:
       return rc ;
@@ -4449,22 +4454,42 @@ namespace engine
       return ;
    }
 
+   INT32 omQueryNodeCommand::_test()
+   {
+      string business = "b1" ;
+      string host     = "h1" ;
+      if ( sdbGetOMManager()->_isHostConfExist( host, business ) )
+      {
+         BSONObj conf = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "hh" ) ;
+         sdbGetOMManager()->_appendConfigure( host, business, conf ) ;
+      }
+      else
+      {
+         BSONObj conf = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "hh" ) ;
+         sdbGetOMManager()->_insertConfigure( host, business, conf ) ;
+      }
+
+      if ( sdbGetOMManager()->_isHostConfExist( host, business ) )
+      {
+         BSONObj conf = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "kk" ) ;
+         sdbGetOMManager()->_appendConfigure( host, business, conf ) ;
+      }
+      else
+      {
+         BSONObj conf = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "kk" ) ;
+         sdbGetOMManager()->_insertConfigure( host, business, conf ) ;
+      }
+
+      return SDB_OK ;
+   }
+
    INT32 omQueryNodeCommand::doCommand()
    {
       INT32 rc                 = SDB_OK ;
       const CHAR *businessName = NULL ;
       map<string, BSONObj> mapHostConf ;
 
-//      string business = "b1" ;
-//      string host     = "h1" ;
-//      if ( sdbGetOMManager()->_isHostConfExist( "h1", "b1" ) )
-//      {
-//         //sdbGetOMManager()->_appendConfigure(string hostName, string businessName, BSONObj & oneNode)
-//      }
-//      else
-//      {
-//         
-//      }
+      
       _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
                               &businessName ) ;
       if ( NULL == businessName )

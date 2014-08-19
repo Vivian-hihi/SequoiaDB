@@ -1320,9 +1320,11 @@ namespace engine
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       INT32 rc     = SDB_OK ;
-      BSONObj obj  = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
-                           << OM_CONFIGURE_FIELD_HOSTNAME << hostName 
-                           << OM_CONFIGURE_FIELD_CONFIG << oneNode ) ;
+      BSONArrayBuilder arrayBuilder ;
+      arrayBuilder.append( oneNode ) ;
+      BSONObj obj = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
+                          << OM_CONFIGURE_FIELD_HOSTNAME << hostName 
+                          << OM_CONFIGURE_FIELD_CONFIG << arrayBuilder.arr() ) ;
       rc = rtnInsert( OM_CS_DEPLOY_CL_CONFIGURE, obj, 1, 0, cb );
       if ( rc )
       {
@@ -1341,9 +1343,12 @@ namespace engine
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       INT32 rc     = SDB_OK ;
+      BSONArrayBuilder arrayBuilder ;
       BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
                                 << OM_CONFIGURE_FIELD_HOSTNAME << hostName );
-      BSONObj obj       = BSON( "$addtoset" << oneNode ) ;
+      arrayBuilder.append( oneNode ) ;
+      BSONObj tmp = BSON( OM_CONFIGURE_FIELD_CONFIG << arrayBuilder.arr() ) ;
+      BSONObj obj = BSON( "$addtoset" << tmp ) ;
       {
          BSONObj hint ;
          rc = rtnUpdate( OM_CS_DEPLOY_CL_CONFIGURE, condition, obj, hint,
