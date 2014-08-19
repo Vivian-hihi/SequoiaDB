@@ -56,7 +56,8 @@
 #define OMA_FIELD_SDBPASSWD                        OM_CLUSTER_FIELD_SDBPASSWD
 #define OMA_FIELD_SDBUSERGROUP                     OM_CLUSTER_FIELD_SDBUSERGROUP
 #define OMA_FIELD_INSTALLPATH                      OM_HOST_FIELD_INSTALLPATH
-
+#define OMA_FIELD_TRANSACTION_ID                   OM_BSON_FIELD_TRANSACTION_ID
+#define OMA_FIELD_PACKET_PATH                      OM_BSON_FIELD_PATCKET_PATH
 
 #define OMA_FIELD_HOSTS                            "Hosts"
 #define OMA_FIELD_HOSTNAME                         "HostName"

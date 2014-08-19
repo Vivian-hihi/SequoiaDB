@@ -82,6 +82,7 @@ namespace engine
      protected:
          _sptScope *_scope ;
          CHAR _jsFileName[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR _jsFileArgs[ JS_ARG_LEN + 1 ] ;
          CHAR *_fileBuff ;
          UINT32 _buffSize ;
          UINT32 _readSize ;
@@ -278,10 +279,16 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
+         INT32 rollback_internal () ;
+
          CHAR _packet_path[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR _sdb_user[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR _sdb_passwd[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR _sdb_user_group[ OSS_MAX_PATHSIZE + 1 ] ;
+
+         BOOLEAN                          _needRollback ;
+         std::vector<AddHost>             _hasAddHosts ;
+         INT32                            _transactionID ;
    } ;
 
    /******************************* install db business ***********************/
@@ -480,6 +487,26 @@ namespace engine
                             const CHAR *pPassword, BSONObj &result ) ;
    } ;
 
+   // _omaAddHostRollbackInternal
+   class _omaAddHostRollbackInternal : public _omaCommand
+   {
+      public:
+         _omaAddHostRollbackInternal() ;
+         ~_omaAddHostRollbackInternal () ;
+
+         virtual const CHAR* name () { return "" ; }
+
+         virtual INT32 init ( const CHAR *pInfomation ) ;
+
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+         INT32 rollback( std::vector<AddHost> &hosts ) ;
+      private:
+         const CHAR *_pIp ;
+         const CHAR *_pUserName ;
+         const CHAR *_pPassword ;
+         const CHAR *_pInstallPath ;
+   } ;
 
 }
 

@@ -95,8 +95,8 @@ namespace engine
    }
 
 
-   INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * bufSize,
-                    UINT32 * readSize )
+   INT32 readFile ( const CHAR *name , CHAR **buf , UINT32 *bufSize,
+                    UINT32 *readSize )
    {
       ossPrimitiveFileOp op ;
       ossPrimitiveFileOp::offsetType offset ;

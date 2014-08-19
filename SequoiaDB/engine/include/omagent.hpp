@@ -41,7 +41,8 @@
 
 using namespace bson ;
 
-#define JS_ARG_LEN 512
+#define JS_FILE_NAME_LEN 512
+#define JS_ARG_LEN       1024
 
 namespace engine
 {
@@ -68,6 +69,14 @@ namespace engine
    } ;
    typedef struct _InstallJobResult InstallJobResult ;
 
+   struct _AddHost
+   {
+      std::string _ip ;
+      std::string _userName ;
+      std::string _passwd ;
+      std::string _installPath ;
+   } ;
+   typedef struct _AddHost AddHost ;
 }
 
 

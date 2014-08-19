@@ -59,6 +59,7 @@ using namespace bson ;
 #define FILE_GET_PORT_STATUS             "getPortStatus.js"
 #define FILE_REG_HOSTS_INFO              "regHostsInfo.js"
 #define FILE_GET_HOST_NAME               "getHostName.js"
+#define FILE_ADDHOST_ROLLBACK_INTERNAL   "addHostRollbackInternal.js"
 
 #define ROLE_COORD "coord"
 #define ROLE_CATA  "catalog"
@@ -110,6 +111,7 @@ namespace engine
       _buffSize   = 0 ;
       _readSize   = 0 ;
       ossMemset( _jsFileName, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      ossMemset( _jsFileArgs, 0, JS_ARG_LEN + 1 ) ;
    }
 
    _omaCommand::~_omaCommand ()
@@ -118,6 +120,10 @@ namespace engine
       {
          _scope->shutdown() ;
          SAFE_OSS_DELETE ( _scope ) ;
+      }
+      if ( _fileBuff )
+      {
+         SAFE_OSS_FREE ( _fileBuff ) ;
       }
    }
 
@@ -135,7 +141,8 @@ namespace engine
       rc = utilCatPath ( _jsFileName, OSS_MAX_PATHSIZE, fileName ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to build js file full path, rc = " ) ;
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to build js file full path, rc = %d", rc ) ;
          goto error ;
       }
    done:
@@ -205,8 +212,8 @@ namespace engine
       if ( FALSE == ret.second )
       {
          PD_LOG_MSG ( PDERROR,
-                  "Failed to register omagent command %s, already exist",
-                   name ) ;
+                      "Failed to register omagent command %s, already exist",
+                      name ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -313,7 +320,6 @@ namespace engine
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp       = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassWord = NULL ;
@@ -323,38 +329,38 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_IP, rc ) ;
+                         OMA_FIELD_IP, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_USER, rc ) ;
+                         OMA_FIELD_USER, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassWord ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_PASSWD, rc ) ;
+                         OMA_FIELD_PASSWD, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_SSH_PORT, &pSshPort ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_SSH_PORT, rc ) ;
+                         OMA_FIELD_SSH_PORT, rc ) ;
             goto error ;
          }
          // build js file argument
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      "var IP = \'%s\'; var USERNAME = \'%s\'; \
-                      var PASSWORD = \'%s\'; var SSHPORT = \'%s\'",
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                      "var IP = \'%s\'; var USERNAME = \'%s\'; "
+                      "var PASSWORD = \'%s\'; var SSHPORT = \'%s\'",
                       pIp, pUserName, pPassWord, pSshPort ) ;
 
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          _content += _fileBuff ;
 
@@ -363,7 +369,8 @@ namespace engine
                             _jsFileName, 1, 1, rval, detail ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+            PD_LOG_MSG ( PDERROR,
+                         "Failed to eval js file: %s, rc = %d, errmsg = %s",
                          _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO: tanzhaobo
             // what's in detail ?
@@ -507,7 +514,6 @@ namespace engine
          BSONObj status ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -519,21 +525,21 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_IP, rc ) ;
+                         OMA_FIELD_IP, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_USER, rc ) ;
+                         OMA_FIELD_USER, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_PASSWD, rc ) ;
+                         OMA_FIELD_PASSWD, rc ) ;
             goto error ;
          }
          // check whether the remote machine has install omagent or not
@@ -541,7 +547,8 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                     "Failed to get remote mechine's status, rc = %d", rc ) ;
+                         "Failed to get remote mechine's status, rc = %d",
+                         rc ) ;
             goto error ;
          }
          rc = omaGetBooleanElement( status, OMA_FIELD_AGENT_IS_RUNNING,
@@ -549,7 +556,7 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_AGENT_IS_RUNNING, rc ) ;
+                         OMA_FIELD_AGENT_IS_RUNNING, rc ) ;
             goto error ;
          }
          if ( isRunning )
@@ -560,14 +567,15 @@ namespace engine
             if ( rc )
             {
                PD_LOG_MSG ( PDERROR, "Get filed[%s] failed, rc = %d",
-                        OMA_FIELD_VERSION, rc ) ;
+                            OMA_FIELD_VERSION, rc ) ;
                goto error ;
             }
             if ( 0 != ossStrncmp( pVersion, ver, ossStrlen( ver ) ) )
             {
                PD_LOG( PDDEBUG,
-                       "Remote omagent's version is: %s, \
-and we are going to instll version %s", pVersion, ver ) ;
+                       "Remote omagent's version is: %s, "
+                       "and we are going to instll version %s",
+                       pVersion, ver ) ;
                BSONObj errObj ;
                BSONObjBuilder bob ;
                bob.append( OMA_FIELD_IP, pIp ) ;
@@ -580,21 +588,24 @@ and we are going to instll version %s", pVersion, ver ) ;
             }
          }
          // build js file's argument
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var IP = \"%s\"; var USERNAME = \"%s\"; \
-                      var PASSWORD = \"%s\"; var LOCAL_PROG_PATH = \"%s\"; \
-                      var LOCAL_SPT_PATH = \"%s\"; \
-                      var LOCAL_CM_CONF = \"%s\" ",
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                      " var IP = \"%s\"; var USERNAME = \"%s\"; "
+                      "var PASSWORD = \"%s\"; var LOCAL_PROG_PATH = \"%s\"; "
+                      "var LOCAL_SPT_PATH = \"%s\"; "
+                      "var LOCAL_CM_CONF = \"%s\" ",
                       pIp, pUserName, pPassword,
                       _prog_path, _spt_path, _conf_path ) ;
-         PD_LOG ( PDDEBUG, "Install remote agent passes arguments: \
-var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
-var LOCAL_PROG_PATH = \"%s\"; var LOCAL_SPT_PATH = \"%s\"; \
-var LOCAL_CM_CONF = \"%s\" ",
-                  pIp, "xxx", "xxx", _prog_path, _spt_path, _conf_path ) ;
+         PD_LOG ( PDDEBUG, "Install remote agent passes arguments: "
+                  "var IP = \"%s\"; var USERNAME = \"%s\"; "
+                  "var PASSWORD = \"%s\"; "
+                  "var LOCAL_PROG_PATH = \"%s\"; "
+                  "var LOCAL_SPT_PATH = \"%s\"; "
+                  "var LOCAL_CM_CONF = \"%s\" ",
+                  pIp, "xxx", "xxx", _prog_path,
+                  _spt_path, _conf_path ) ;
 
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          _content += _fileBuff ;
 
@@ -603,8 +614,10 @@ var LOCAL_CM_CONF = \"%s\" ",
                             _jsFileName, 1, 1, rval, detail ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, "
+                         "rc = %d, errmsg = %s",
+                          _jsFileName, rc,
+                          detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -785,7 +798,6 @@ var LOCAL_CM_CONF = \"%s\" ",
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pHostName = NULL ;
          const CHAR *pUserName = NULL ;
@@ -820,16 +832,17 @@ var LOCAL_CM_CONF = \"%s\" ",
             goto error ;
          }
          // build js argument for js file
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var IP = \"%s\"; var HOSTNAME = \"%s\"; \ 
-                      var USERNAME = \"%s\"; var PASSWORD = \"%s\"; ",
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                      " var IP = \"%s\"; var HOSTNAME = \"%s\"; " 
+                      "var USERNAME = \"%s\"; var PASSWORD = \"%s\"; ",
                       pIp, pHostName, pUserName, pPassword ) ;
-         PD_LOG ( PDDEBUG, "Excute check host infomation passes arguments: \
-var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
+         PD_LOG ( PDDEBUG, "Excute check host infomation passes arguments: "
+                  "var IP = %s; var HOSTNAME = %s; "
+                  "var USERNAME = %s; var PASSWORD = %s",
                   pIp, pHostName, "xxx", "xxx" ) ;
 
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          _content += _fileBuff ;
 
@@ -839,7 +852,8 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+            PD_LOG_MSG ( PDERROR,
+                         "Failed to eval js file: %s, rc = %d, errmsg = %s",
                          _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
@@ -940,7 +954,6 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
 
@@ -960,13 +973,13 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
          }
 
          // build argument for js file
-         ossSnprintf( tempBuff, JS_ARG_LEN,
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
                       " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; ",
                       pUserName, pPassword ) ;
          PD_LOG ( PDDEBUG, "Excute stop sdbcm program command" ) ;
 
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          _content += _fileBuff ;
 
@@ -976,7 +989,8 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+            PD_LOG_MSG ( PDERROR,
+                         "Failed to eval js file: %s, rc = %d, errmsg = %s",
                          _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
@@ -1090,7 +1104,6 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -1100,32 +1113,33 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                     "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
+                         "Get field[%s] failed, rc: %d", OMA_FIELD_IP, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                     "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
+                         "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                     "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
+                         "Get field[%s] failed, rc: %d",
+                         OMA_FIELD_PASSWD, rc ) ;
             goto error ;
          }
 
          // build argument for js file
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var IP = \"%s\"; var USERNAME = \"%s\"; \
-                      var PASSWORD = \"%s\"; ",
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                      " var IP = \"%s\"; var USERNAME = \"%s\"; "
+                      "var PASSWORD = \"%s\"; ",
                       pIp, pUserName, pPassword ) ;
          PD_LOG ( PDDEBUG, "Excute uninstall remote sdbcm[ip:%s]", pIp ) ;
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          _content += _fileBuff ;
 
@@ -1135,8 +1149,10 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, "
+                         "rc = %d, errmsg = %s",
+                         _jsFileName, rc,
+                         detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -1178,6 +1194,7 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
    */
    _omaAddHost::_omaAddHost ()
    {
+      _transactionID = 12345678 ;
    }
 
    _omaAddHost::~_omaAddHost ()
@@ -1194,6 +1211,7 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
       const CHAR *pSdbUser      = NULL ;
       const CHAR *pSdbPassword  = NULL ;
       const CHAR *pSdbUserGroup = NULL ;
+      const CHAR *pPacketPath   = NULL ;
       // parse bson and get arguments info for js file
       BSONObj arg( pInfomation ) ;
       BSONElement ele ;
@@ -1219,9 +1237,17 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
                       OMA_FIELD_SDBUSERGROUP, rc ) ;
          goto error ;
       }
+      rc = omaGetStringElement( arg, OMA_FIELD_PACKET_PATH, &pPacketPath ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                      OMA_FIELD_PACKET_PATH, rc ) ;
+         goto error ;
+      }
       ossStrncpy ( _sdb_user, pSdbUser, OSS_MAX_PATHSIZE ) ;
       ossStrncpy ( _sdb_passwd, pSdbPassword, OSS_MAX_PATHSIZE ) ;
       ossStrncpy ( _sdb_user_group, pSdbUserGroup, OSS_MAX_PATHSIZE ) ;
+      ossStrncpy ( _packet_path, pPacketPath, OSS_MAX_PATHSIZE ) ;
       // get install host info
       ele = arg.getField ( OMA_FIELD_HOSTINFO ) ;
       if ( Array == ele.type() )
@@ -1247,11 +1273,6 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
          PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
          goto error ;
       }
-      // TODO: tanzhaobo
-      // maybe it need to set another path for install packet
-      // set the database install packet's path
-      ossStrncpy( _packet_path, sdbGetOMAgentOptions()->getCfgFileName(),
-                  OSS_MAX_PATHSIZE ) ;
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff,
                       &_buffSize, &_readSize ) ;
@@ -1274,7 +1295,6 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
       goto done ;
    }
 
-
    INT32 _omaAddHost::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
@@ -1285,19 +1305,19 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
       std::vector<BSONObj>::iterator itr = _hosts.begin() ;
       while ( itr != _hosts.end() )
       {
+         BSONObj host = *itr++ ;
          BSONObj detail ;
          BSONObj rval ;
-         BSONObj host = *itr++ ;
          BSONObj subObj ;
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp             = NULL ;
          const CHAR *pHostName       = NULL ;
          const CHAR *pUserName       = NULL ;
          const CHAR *pPassword       = NULL ;
          const CHAR *pInstallPath    = NULL ;
+         AddHost addHost ;
 
          // get fileds
          rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
@@ -1338,24 +1358,34 @@ var IP = %s; var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s",
          }
 
          // build argument for js file
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var SDBUSER = \"%s\"; var SDBPASSWD = \"%s\"; \
-                      var SDBUSERGROUP = \"%s\"; \
-                      var IP = \"%s\"; var HOSTNAME = \"%s\"; \
-                      var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
-                      var PACKET_PATH = \"%s\"; var INSTALL_PATH = \"%s\"; ",
+         // register
+         addHost._ip          = pIp ;
+         addHost._userName    = pUserName ;
+         addHost._passwd      = pPassword ;
+         addHost._installPath = pInstallPath ;
+         _hasAddHosts.push_back( addHost ) ;
+
+         // build argument for js file
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                      " var SDBUSER = \"%s\"; var SDBPASSWD = \"%s\"; "
+                      "var SDBUSERGROUP = \"%s\"; "
+                      "var IP = \"%s\"; var HOSTNAME = \"%s\"; "
+                      "var USERNAME = \"%s\"; var PASSWORD = \"%s\"; "
+                      "var PACKET_PATH = \"%s\"; var INSTALL_PATH = \"%s\"; ",
                       _sdb_user, _sdb_passwd, _sdb_user_group,
                       pIp, pHostName, pUserName, pPassword,
                       _packet_path, pInstallPath ) ;
-         PD_LOG ( PDDEBUG, " Install db business passes arguments: \
-var SDBUSER = %s; var SDBPASSWD = %s; var SDBUSERGROUP = %s; var IP = %s; \
-var HOSTNAME = %s; var USERNAME = %s; var PASSWORD = %s; \
-var PACKET_PATH = %s; var INSTALL_PATH = %s ",
+         PD_LOG ( PDDEBUG, " Install db business passes arguments: "
+                  "var SDBUSER = %s; var SDBPASSWD = %s; "
+                  "var SDBUSERGROUP = %s; var IP = %s; "
+                  "var HOSTNAME = %s; var USERNAME = %s; "
+                  "var PASSWORD = %s; var PACKET_PATH = %s; "
+                  "var INSTALL_PATH = %s ",
                   _sdb_user, _sdb_passwd, _sdb_user_group,
                   pIp, pHostName,
                   "xxx", "xxx", _packet_path, pInstallPath ) ;
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          _content += _fileBuff ;
 
@@ -1365,23 +1395,37 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
-            // TODO:what's in detail ?
-            BSONObj errObj ;
-            BSONObjBuilder bob ;
-            bob.append( OMA_FIELD_IP, pIp ) ;
-            bob.append( OMA_FIELD_RC, rc ) ;
-            bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
-            errObj = bob.obj() ;
-            result.push_back( errObj ) ;
-            continue ;
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file %s, going to rollback: "
+                         "rc = %d, errmsg = %s",
+                         _jsFileName, rc, detail.toString().c_str() ) ;
+            goto error ;
          }
+         // set the rollback flag to be true, and when error happen
+         // it's going to rollback
+         _needRollback = TRUE ;
+         // get the return result
          rc = omaGetObjElement( rval, "", subObj ) ;
          if ( rc )
          {
             PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
             goto error ;
+         }
+         {
+         INT32 retRc = SDB_OK ;
+         rc = omaGetIntElement( subObj, OMA_FIELD_RC, retRc ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc: %d",
+                        OMA_FIELD_RC, rc ) ;
+            goto error ;
+         }
+         if ( retRc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to add host[%s], rc = %d",
+                         pIp, retRc ) ;
+            rc = retRc ;
+            goto error ;
+         }
          }
          bob.append( OMA_FIELD_IP, pIp ) ;
          bob.appendElements( subObj ) ;
@@ -1394,7 +1438,32 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       while ( it != result.end() )
          bab.append( *it++ ) ;
       bob.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
+      bob.append( OMA_FIELD_TRANSACTION_ID, _transactionID ) ;
       retObj = bob.obj() ;
+   done:
+      return rc ;
+   error:
+      if ( _needRollback )
+      {
+         PD_LOG ( PDERROR, "Something wrong for add host, "
+                  "going to rollback internally, rc = %d", rc ) ; 
+         rollback_internal() ;
+      }
+      goto done ;
+   }
+
+   INT32 _omaAddHost::rollback_internal ()
+   {
+      INT32 rc = SDB_OK ;
+      _omaAddHostRollbackInternal _rollbackInternal ;
+      if ( 0 == _hasAddHosts.size() )
+         goto done ;
+      rc = _rollbackInternal.rollback( _hasAddHosts ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to rollback in add host, rc = %d", rc ) ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
@@ -1437,7 +1506,7 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
             if ( rc )
             {
                PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
-                        OMA_OPTION_ROLE, rc ) ;
+                            OMA_OPTION_ROLE, rc ) ;
                goto error ;
             }
             if ( 0 == ossStrncmp( value, ROLE_DATA,
@@ -1459,8 +1528,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
             {
                rc = SDB_INVALIDARG ;
                PD_LOG_MSG( PDERROR,
-                       "Failed to install db business for wrong argument %s",
-                       temp.toString().c_str() ) ;
+                           "Failed to install db business: %s",
+                           temp.toString().c_str() ) ;
                goto error ;
             }
          }
@@ -1496,7 +1565,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       {
          rc = SDB_OOM ;
          PD_LOG_MSG( PDERROR,
-                 "Failed to new install db business task install, rc = %d", rc ) ;
+                     "Failed to create install db business task, rc = %d",
+                     rc ) ;
          goto error ;
       }
       // register install db task
@@ -1506,13 +1576,14 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       if ( rc  )
       {
          PD_LOG_MSG( PDERROR,
-                 "Failed to init install db busniness task, rc = %d", rc ) ;
+                     "Failed to init install db busniness task, rc = %d",
+                     rc ) ;
          goto error ;
       }
       rc = pTask->doit() ;
       {
          PD_LOG_MSG( PDERROR,
-                 "Failed to do db busniness task, rc = %d", rc ) ;
+                     "Failed to do db busniness task, rc = %d", rc ) ;
          goto error ;
       }
       // return taskID
@@ -1579,8 +1650,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       {
          rc = SDB_SYS ;
          PD_LOG_MSG ( PDERROR,
-                  "Failed to get taskID, received unexpected error: %s",
-                  e.what() ) ;
+                      "Failed to get taskID, received unexpected error: %s",
+                      e.what() ) ;
          goto error ;
       }
       // get task manager
@@ -1599,7 +1670,7 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       _omaInstallDBBusinessTask *pChildTask = NULL ;
       pTask = _taskMrg->findTask( _taskID ) ;
 
-      if ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) )
+      if ( ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) ) )
       {
          pChildTask->getInstallStatus( objRet ) ;
       }
@@ -1664,7 +1735,6 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       BSONObj rval ;
       BSONObj detail ;
       BSONObj subObj ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
       CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
@@ -1684,16 +1754,18 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       }
 
       // build js arguments
-      ossSnprintf( tempBuff, JS_ARG_LEN,
-                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
-                     var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\"; ",
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; "
+                   "var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\"; ",
                    _username, _password, prog_sequoiadb, coord_service ) ;
 
-      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: var USERNAME = %s; var PASSWORD = %s; var PROGRAM = %s; var COORD_SERVICE = %d;",
+      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: "
+               "var USERNAME = %s; var PASSWORD = %s; "
+               "var PROGRAM = %s; var COORD_SERVICE = %d;",
                "xxx", "xxx", prog_sequoiadb, coord_service ) ;
 
       _content.clear() ;
-      _content += tempBuff ;
+      _content += _jsFileArgs ;
       _content += OSS_NEWLINE ;
       _content += _fileBuff ;
 
@@ -1709,7 +1781,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
                          _jsFileName, 1, 1, rval, detail ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to eval js file: %s, rc = %d, errmsg = %s",
                       _jsFileName, rc, detail.toString().c_str() ) ;
          goto error ;
       }
@@ -1726,12 +1799,13 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                  OMA_FIELD_RC, rc ) ;
+                      OMA_FIELD_RC, rc ) ;
          goto error ;
       }
       if ( retRc )
       {
-         PD_LOG_MSG( PDERROR, "Omagent failed to start virtual coord, rc = %d", retRc ) ;
+         PD_LOG_MSG( PDERROR, "Omagent failed to start virtual  "
+                     "coord, rc = %d", retRc ) ;
          goto error;
       }
       }
@@ -1750,14 +1824,16 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       rc = init() ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to init for creating virtual coord, rc = %d",
-                  rc ) ;
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to init for creating virtual coord, rc = %d",
+                      rc ) ;
          goto error ;
       }
       rc = doit( coord_service, result ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to create virtual coord, rc = %d", rc ) ;
          goto error ;
       }
    done:
@@ -1821,7 +1897,6 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       BSONObj rval ;
       BSONObj detail ;
       BSONObj subObj ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
       CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
@@ -1829,28 +1904,32 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       rc = getProgramPath( prog_agent ) ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get omagent program path, rc = %d", rc ) ;
+         PD_LOG_MSG( PDERROR,
+                     "Failed to get omagent program path, rc = %d", rc ) ;
          goto error ;
       }
       rc = ossLocateExecutable ( prog_agent, "sdbstop", prog_sequoiadb,
                                  OSS_MAX_PATHSIZE ) ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get sequoiadb program path, rc = %d", rc ) ;
+         PD_LOG_MSG( PDERROR,
+                     "Failed to get sequoiadb program path, rc = %d", rc ) ;
          goto error ;
       }
 
       // build js arguments
-      ossSnprintf( tempBuff, JS_ARG_LEN,
-                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; \
-                     var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\";  ",
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; "
+                   "var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\";  ",
                    _username, _password, prog_sequoiadb, coord_service ) ;
 
-      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: var USERNAME = %s; var PASSWORD = %s; var PROGRAM = %s; var COORD_SERVICE = %d;",
+      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: "
+                        "var USERNAME = %s; var PASSWORD = %s; "
+                        "var PROGRAM = %s; var COORD_SERVICE = %d;",
                         "xxx", "xxx", prog_sequoiadb, coord_service ) ;
 
       _content.clear() ;
-      _content += tempBuff ;
+      _content += _jsFileArgs ;
       _content += OSS_NEWLINE ;
       _content += _fileBuff ;
 
@@ -1859,7 +1938,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
                          _jsFileName, 1, 1, rval, detail ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, "
+                               "rc = %d, errmsg = %s",
                       _jsFileName, rc, detail.toString().c_str() ) ;
          goto error ;
       }
@@ -1875,12 +1955,15 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc= %d", OMA_FIELD_RC, rc ) ;
+         PD_LOG_MSG ( PDERROR,
+                      "Get field[%s] failed, rc= %d", OMA_FIELD_RC, rc ) ;
          goto error ;
       }
       if ( retRc )
       {
-         PD_LOG_MSG( PDERROR, "Omagent failed to start virtual coord, rc = %d", retRc ) ;
+         PD_LOG_MSG( PDERROR,
+                     "Omagent failed to start virtual coord, rc = %d",
+                     retRc ) ;
          goto error;
       }
       }
@@ -1899,14 +1982,16 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       rc = init() ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to init for creating virtual coord, rc = %d",
-                  rc ) ;
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to init for creating virtual coord, rc = %d",
+                      rc ) ;
          goto error ;
       }
       rc = doit( coord_service, result ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to create virtual coord, rc = %d", rc ) ;
          goto error ;
       }
    done:
@@ -1993,7 +2078,6 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -2022,13 +2106,14 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          }
 
          // build argument for js file
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      "var IP = \"%s\"; var USERNAME = \"%s\"; var PASSWORD = \"%s\";",
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                      "var IP = \"%s\"; var USERNAME = \"%s\"; "
+                      "var PASSWORD = \"%s\";",
                       pIp, pUserName, pPassword ) ;
          PD_LOG ( PDDEBUG, "Arguments for checkRemoteAgentProcess.js is: %s",
-                  tempBuff ) ;
+                  _jsFileArgs ) ;
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          _content += _fileBuff ;
 
@@ -2038,7 +2123,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+            PD_LOG_MSG ( PDERROR,
+                         "Failed to eval js file: %s, rc = %d, errmsg = %s",
                          _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
@@ -2137,7 +2223,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       {
          rc = SDB_SYS ;
          PD_LOG_MSG ( PDERROR,
-                      "Failed to get remote agent status, for wrong bson type" ) ;
+                      "Failed to get remote agent status, "
+                      "for wrong bson type" ) ;
          goto error ;
       }
       }
@@ -2200,15 +2287,14 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       BSONObj rval ;
       BSONObj detail ;
       BSONObj subObj ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
 
       // build js arguments
-      ossSnprintf( tempBuff, JS_ARG_LEN, " var PORT = \"%d\";", _port ) ;
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN, " var PORT = \"%d\";", _port ) ;
       PD_LOG ( PDDEBUG, "Get port status passes arguments: %s",
-               tempBuff ) ;
+               _jsFileArgs ) ;
 
       _content.clear() ;
-      _content += tempBuff ;
+      _content += _jsFileArgs ;
       _content += OSS_NEWLINE ;
       _content += _fileBuff ;
 
@@ -2218,7 +2304,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
 
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to eval js file: %s, rc = %d, errmsg = %s",
                       _jsFileName, rc, detail.toString().c_str() ) ;
          goto error ;
       }
@@ -2233,7 +2320,7 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
-                  OMA_FIELD_PORTHASUSED, rc ) ;
+                      OMA_FIELD_PORTHASUSED, rc ) ;
          goto error ;
       }
    done:
@@ -2256,7 +2343,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
       rc = doit( hasUsed ) ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to get port %d status, rc = %d",port,  rc ) ;
+         PD_LOG_MSG( PDERROR,
+                     "Failed to get port %d status, rc = %d", port,  rc ) ;
          goto error ;
       }
    done:
@@ -2353,7 +2441,6 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          std::vector<string> hostsInfo ;
          std::vector<string>::iterator it_h ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp       = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -2364,21 +2451,21 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc= %d",
-                     OMA_FIELD_IP, rc ) ;
+                         OMA_FIELD_IP, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc= %d",
-                     OMA_FIELD_USER, rc ) ;
+                         OMA_FIELD_USER, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc= %d",
-                     OMA_FIELD_PASSWD, rc ) ;
+                         OMA_FIELD_PASSWD, rc ) ;
             goto error ;
          }
          // get hosts table info for js file to append
@@ -2386,7 +2473,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                     "Faild to get hosts table info for js file, rc = %d", rc ) ;
+                         "Faild to get hosts table info for js file, rc = %d",
+                         rc ) ;
             goto error ;
          }
          for ( it_h = hostsInfo.begin();
@@ -2398,16 +2486,16 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
 //            info += OSS_NEWLINE ;
          }
          // build up argument for js file
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var IP = \"%s\"; var USERNAME = \"%s\";\
-                      var PASSWORD = \"%s\"; var HOSTSINFO = \"%s\"; ",
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                      " var IP = \"%s\"; var USERNAME = \"%s\"; "
+                      "var PASSWORD = \"%s\"; var HOSTSINFO = \"%s\"; ",
                       pIp, pUserName, pPassword, info.c_str() ) ;
 
          PD_LOG ( PDDEBUG, "Reg hosts info passes arguments: %s",
-                  tempBuff ) ;
+                  _jsFileArgs ) ;
 
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          _content += _fileBuff ;
 
@@ -2417,7 +2505,8 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, "
+                         "rc = %d, errmsg = %s",
                          _jsFileName, rc, detail.toString().c_str() ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
@@ -2478,21 +2567,21 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_IP, rc ) ;
+                         OMA_FIELD_IP, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_USER, rc ) ;
+                         OMA_FIELD_USER, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_PASSWD, rc ) ;
+                         OMA_FIELD_PASSWD, rc ) ;
             goto error ;
          }
          // get remote host name by ip
@@ -2500,7 +2589,7 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          if ( rc )
          {
             PD_LOG_MSG( PDERROR, "Field to get host name from %s, rc = %d",
-                    pIp, rc ) ;
+                        pIp, rc ) ;
             goto error ;
          }
          // extract the hostname
@@ -2544,7 +2633,7 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
    }
 
    INT32 _omaRegHosts::_getContentForJS ( const CHAR *pIp,
-                                              std::vector<string> &hostsInfo )
+                                          std::vector<string> &hostsInfo )
    {
       INT32 rc = SDB_OK ;
       string str = "" ;
@@ -2653,7 +2742,6 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          BSONObj temp ;
          BSONObjBuilder bob ;
 
-         CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
          const CHAR *pIp       = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
@@ -2663,34 +2751,34 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
-                     OMA_FIELD_IP, rc ) ;
+                         OMA_FIELD_IP, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
-                     OMA_FIELD_USER, rc ) ;
+                         OMA_FIELD_USER, rc ) ;
             goto error ;
          }
          rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
-                     OMA_FIELD_PASSWD, rc ) ;
+                         OMA_FIELD_PASSWD, rc ) ;
             goto error ;
          }
 
          // build argument for js file
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var IP = \"%s\"; var USERNAME = \"%s\";\
-                      var PASSWORD = \"%s\"; ",
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                      " var IP = \"%s\"; var USERNAME = \"%s\"; "
+                      "var PASSWORD = \"%s\"; ",
                       pIp, pUserName, pPassword ) ;
          PD_LOG ( PDDEBUG, "Get host info passes arguments: %s",
-                  tempBuff ) ;
+                  _jsFileArgs ) ;
 
          _content.clear() ;
-         _content += tempBuff ;
+         _content += _jsFileArgs ;
          _content += OSS_NEWLINE ;
          // TODO: tanzhabo
 //         _content += " " ;
@@ -2780,5 +2868,153 @@ var PACKET_PATH = %s; var INSTALL_PATH = %s ",
    error:
       goto done ;
    }
+
+   // _omaAddHostRollbackInternal
+   _omaAddHostRollbackInternal::_omaAddHostRollbackInternal()
+   {
+   }
+
+   _omaAddHostRollbackInternal::~_omaAddHostRollbackInternal()
+   {
+   }
+
+   INT32 _omaAddHostRollbackInternal::init( const CHAR *pInfomation )
+   {
+      INT32 rc = SDB_OK ;
+      // get js file
+      rc = setJSFile( FILE_ADDHOST_ROLLBACK_INTERNAL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff,
+                      &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // get scope
+      rc = getSptScope ( &_scope ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+ 
+   INT32 _omaAddHostRollbackInternal::doit ( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONObj subObj ;
+      BSONObj detail ;
+      BSONObj rval ;
+
+      // build argument for js file
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                   " var IP = \"%s\"; var USERNAME = \"%s\"; "
+                   "var PASSWORD = \"%s\"; var INSTALL_PATH = \"%s\" ",
+                   _pIp, _pUserName, _pPassword, _pInstallPath ) ;
+      PD_LOG ( PDDEBUG, "Execute get host[%s] info", _pIp ) ;
+ 
+      _content.clear() ;
+      _content += _jsFileArgs ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+ 
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+ 
+      if ( rc )
+      {
+         PD_LOG ( PDERROR,
+                  "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                   _jsFileName, rc, detail.toString().c_str() ) ;
+         goto error ;
+      }
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+         goto error ;
+      }
+      bob.append( OMA_FIELD_IP, _pIp ) ;
+      bob.appendElements( subObj ) ;
+      retObj = bob.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaAddHostRollbackInternal::rollback ( std::vector<AddHost> &hosts )
+   {
+      INT32 rc = SDB_OK ;
+      std::vector<AddHost>::iterator it = hosts.begin() ;
+
+      rc = init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init for rollback in add host, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+     
+      while ( it != hosts.end() ) 
+      {
+         BSONObj result ;
+         INT32 retRc = SDB_OK ;
+         const CHAR *pIp = NULL ;
+         AddHost host = *it++ ;
+
+         _pIp = host._ip.c_str() ;
+         _pUserName = host._userName.c_str() ;
+         _pPassword = host._passwd.c_str() ;
+         _pInstallPath = host._installPath.c_str() ;   
+         rc = doit ( result ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to execute rollback in add host, rc = %d",
+                     rc ) ;
+            goto error ;
+         }
+         rc = omaGetIntElement( result, OMA_FIELD_RC, retRc ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDWARNING, "Get field[%s] failed, rc: %d",
+                     OMA_FIELD_IP, rc ) ;
+            continue ;
+         }
+         if ( retRc )
+         {
+            rc = omaGetStringElement( result, OMA_FIELD_IP, &pIp ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d",
+                        OMA_FIELD_IP, rc ) ;
+               continue ;
+            }
+            PD_LOG ( PDERROR,
+                     "Failed to execute rollback in host[%s], rc = %d",
+                     pIp, retRc ) ;
+         }
+     }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 
