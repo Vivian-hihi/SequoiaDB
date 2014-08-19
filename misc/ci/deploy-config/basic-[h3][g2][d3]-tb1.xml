@@ -13,7 +13,6 @@
 
 	<target name="deploy" depends="">
 		<echo message="Begin install software and test files to ${test.machine.no1.basic}" />
-		<!-- <hostinfo prefix="host" /> -->
 
 		<parallel>
 			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
@@ -101,7 +100,9 @@
 	</target>
 
 	<target name="test" depends="">
-		<property name="test-type-list" value="driver-python" />
+		<!-- <property name="test-type-list" value="basic,driver-python" /> -->
+		<property name="test-type-list" value="sample" />
+		
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
