@@ -157,11 +157,11 @@ class client(object):
    def __repr__(self):
 
       if self.__connected:
-         return "Client, connect to: %s:s%" % (self.__host, self.__service)
+         return "Client, connect to: %s:%s" % (self.__host, self.__service)
 
    def __getitem__(self, name):
       """support [] to access to collection space.
-      
+
          eg.
          cc = client()
          cs = cc['test'] # access to collection space named 'test'.

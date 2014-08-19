@@ -45,7 +45,7 @@ class SequoiaDBError(SDBBaseError):
       """make error info with code
       """
       return ("%s. Error code: %d, detail: %s" %
-              ( self.__errmsg, self.__code, self.__detail) )
+              ( self.__errmsg, self.__code, self.__details) )
 
    def __str__(self):
       """return the error info.
