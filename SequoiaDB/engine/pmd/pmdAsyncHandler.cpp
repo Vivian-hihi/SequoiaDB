@@ -187,9 +187,9 @@ namespace engine
       goto done ;
    }
 
-   void _pmdAsyncMsgHandler::_handleSysInfo( const NET_HANDLE & handle,
-                                             const _MsgHeader * header,
-                                             const CHAR * msg )
+   INT32 _pmdAsyncMsgHandler::_handleSysInfo( const NET_HANDLE & handle,
+                                              const _MsgHeader * header,
+                                              const CHAR * msg )
    {
       INT32 rc = SDB_OK ;
       MsgSysInfoReply reply ;
