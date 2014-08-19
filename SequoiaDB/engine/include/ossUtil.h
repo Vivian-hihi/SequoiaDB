@@ -75,7 +75,7 @@ INT32 ossStrToInt ( const CHAR *pBuffer, INT32 *number ) ;
 #define ossStrtok(x,y,z) strtok_s(x,y,z)
 #define ossFdopen(x,y) _fdopen(x,y)
 #define OSS_LL_PRINT_FORMAT   "%I64d"
-#define ossStrcasecmp(x,y)  stricmp(x,y)
+#define ossStrcasecmp(x,y)  _stricmp(x,y)
 #endif
 #define ossMemcpy(x,y,z) memcpy(x,y,z)
 #define ossMemmove(x,y,z) memmove(x,y,z)
