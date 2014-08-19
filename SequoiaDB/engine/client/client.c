@@ -7479,3 +7479,24 @@ done:
 error:
    goto done ;
 }
+
+SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
+                                SINT64 *size )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+
+   HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
+
+   if ( SDB_LOB_READ != lob->_mode || -1 == lob->_contextID )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   *size = lob->_lobSize ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
