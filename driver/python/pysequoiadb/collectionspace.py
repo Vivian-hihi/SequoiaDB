@@ -25,7 +25,6 @@ except ImportError:
 
 import bson
 import pysequoiadb
-from pysequoiadb import EMPTY_BSON
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
@@ -163,7 +162,7 @@ class collectionspace(object):
 
       return cl
 
-   def create_collection(self, cl_name, options = EMPTY_BSON):
+   def create_collection(self, cl_name, options = None):
       """create a collection using name and options.
 
       Parameters:

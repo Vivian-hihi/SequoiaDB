@@ -29,7 +29,6 @@ except ImportError:
 
 import bson
 import pysequoiadb
-from pysequoiadb import EMPTY_BSON
 from pysequoiadb.collectionspace import collectionspace
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
@@ -521,7 +520,7 @@ class client(object):
 
       return result
 
-   def reset_snapshot(self, condition = EMPTY_BSON):
+   def reset_snapshot(self, condition = None):
       """Reset the snapshot.
 
       Parameters:
@@ -1106,7 +1105,7 @@ class client(object):
 
       return result
 
-   def backup_offline(self, options = EMPTY_BSON):
+   def backup_offline(self, options = None):
       """Backup the whole database or specifed replica group.
 
       Parameters:
@@ -1360,7 +1359,7 @@ class client(object):
       except SequoiaDBError:
          raise
 
-   def set_session_attri(self, options = EMPTY_BSON):
+   def set_session_attri(self, options = None):
       """Set the attributes of the session.
 
       Parameters:

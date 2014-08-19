@@ -26,7 +26,6 @@ except ImportError:
 import bson
 from bson.objectid import ObjectId
 import pysequoiadb
-from pysequoiadb import EMPTY_BSON
 
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
@@ -91,7 +90,7 @@ class collection(object):
 
       return "Collection: %s" % (self.get_full_name())
 
-   def get_count(self, condition = EMPTY_BSON):
+   def get_count(self, condition = None):
       """Get the count of matching documents in current collection.
 
       Parameters:
@@ -121,7 +120,7 @@ class collection(object):
 
    def split_by_condition(self, source_group_name, target_group_name,
                                 split_condition,
-                                split_end_condition = EMPTY_BSON):
+                                split_end_condition = None):
       """Split the specified collection from source replica group to target
          replica group by range.
 
@@ -202,7 +201,7 @@ class collection(object):
          raise
 
    def split_async_by_condition(self, source_group_name, target_group_name,
-                         split_condition, split_end_condition = EMPTY_BSON):
+                         split_condition, split_end_condition = None):
       """Split the specified collection from source replica group to target
          replica group by range.
       
