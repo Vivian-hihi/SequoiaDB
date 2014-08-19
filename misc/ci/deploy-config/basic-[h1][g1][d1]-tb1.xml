@@ -13,7 +13,6 @@
 
 	<target name="deploy" depends="">
 		<echo message="Begin install software and test files to ${test.machine.no2.data}" />
-		<!-- <hostinfo prefix="host" /> -->
 
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 			<property name="install.package.fullname" value="${install.package.fullname}" />
@@ -44,7 +43,7 @@
 	</target>
 
 	<target name="test" depends="">
-		<property name="test-type-list" value="driver-php" />
+		<property name="test-type-list" value="basic,driver-php" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
