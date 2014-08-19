@@ -133,7 +133,8 @@ class client(object):
 
       # try to connect with default user and password
       try:
-         rc = self.connect(self.__host, self.__service, _user, _psw)
+         rc = self.connect(self.__host, self.__service,
+                           user = _user, password = _psw)
          pysequoiadb._raise_if_error("Failed to connect to %s:%s" %
                                      (host, service), rc)
       except SequoiaDBError:
@@ -289,7 +290,8 @@ class client(object):
                raise InvalidParameter("policy must be an instance of int or basestring")
 
             try:
-               rc = self.connect(self.__host, self.__service, _user, _psw)
+               rc = self.connect(self.__host, self.__service,
+                                 user = _user, password = _psw)
             except SequoiaDBError:
                continue
 
@@ -324,7 +326,8 @@ class client(object):
             raise InvalidParameter("policy must be an instance of int or str")
 
          try:
-            rc = self.connect(self.__host, self.__service, _user, _psw)
+            rc = self.connect(self.__host, self.__service,
+                              user = _user, password = _psw)
          except SequoiaDBError:
             position += 1
             if position >= size:
