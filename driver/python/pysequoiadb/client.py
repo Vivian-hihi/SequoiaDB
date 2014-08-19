@@ -97,15 +97,15 @@ class client(object):
       """
       self.__connected = False
       if host is None:
-         host = self.HOST
-      if isinstance(host, basestring):
+         self.__host = self.HOST
+      elif isinstance(host, basestring):
          self.__host = host
       else:
          raise InvalidParameter("host must be an instance of basestring")
 
       if service is None:
-         service = self.SERVICE
-      if isinstance(service, int):
+         self.__service = self.SERVICE
+      elif isinstance(service, int):
          self.__service = str(service)
       elif isinstance(service, basestring):
          self.__service = service
@@ -114,14 +114,14 @@ class client(object):
 
       if user is None:
          _user = self.USER
-      if isinstance(user, basestring):
+      elif isinstance(user, basestring):
          _user = user
       else:
          raise InvalidParameter("user name must be an instance of basestring")
 
       if psw is None:
          _psw = self.PSW
-      if isinstance(psw, basestring):
+      elif isinstance(psw, basestring):
          _psw = psw
       else:
          raise InvalidParameter("password must be an instance of basestring")
