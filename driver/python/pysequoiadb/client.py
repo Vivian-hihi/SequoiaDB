@@ -1134,11 +1134,10 @@ class client(object):
          OverWrite   :  Whether overwrite the old backup file,
                               default to be false.
       """
-      if not isinstance(options, dict):
-         raise InvalidParameter("options must be an instance of dict")
-
       bson_options = None
       if options is not None:
+         if not isinstance(options, dict):
+            raise InvalidParameter("options must be an instance of dict")
          bson_options = bson.BSON.encode(options)
 
       try:

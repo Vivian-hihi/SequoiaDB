@@ -51,7 +51,7 @@ try:
 except ImportError:
    raise Exception("cannot find C module file: sdbclient")
 
-EMPTY_BSON = {}
+EMPTY_BSON = None
 
 def get_version():
    ver, sub_version, release, build = sdbclient.get_version()
