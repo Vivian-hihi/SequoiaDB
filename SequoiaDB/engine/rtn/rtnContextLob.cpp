@@ -40,8 +40,8 @@ namespace engine
    _rtnContextLob::_rtnContextLob( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID ),
     _stream( NULL ),
-    _readLen( 0 ),
-    _readOffset( -1 )
+    _offset( -1 ),
+    _readLen( 0 )
    {
 
    }
@@ -169,12 +169,17 @@ namespace engine
    }
 
    INT32 _rtnContextLob::read( UINT32 len,
+                               SINT64 offset,
                                _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       _readLen = len ;
-      _readOffset = _stream->curOffset() ;
+      _offset = offset ;
+
+   done: 
       return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _rtnContextLob::close( _pmdEDUCB *cb )
@@ -201,6 +206,17 @@ namespace engine
          goto done ;
       }
 
+      if ( -1 != _offset && _offset != _stream->curOffset() )
+      {
+         _empty() ;  /// clear data in context.
+         rc = _stream->seek( _offset, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to seek lob:%d", rc ) ;
+            goto error ;
+         }
+      }
+
       rc = _stream->read( _readLen, this, cb, read ) ;
       if ( SDB_OK != rc )
       {
@@ -210,13 +226,13 @@ namespace engine
 
       if ( read < _readLen )
       {
-         _readLen -= read ;
-         _readOffset += read ;
+         _readLen = DMS_PAGE_SIZE512K ;
+         _offset += read ;
       }
       else
       {
          _readLen = 0 ;
-         _readOffset = -1 ;
+         _offset = -1 ;
       }
    done:
       return rc ;

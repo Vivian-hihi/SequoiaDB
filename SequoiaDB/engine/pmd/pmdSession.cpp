@@ -1178,7 +1178,7 @@ namespace engine
       }
 
       rc = rtnReadLob( header->contextID, _pEDUCB,
-                       readLen, data, length ) ;
+                       readLen, offset, data, length ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;

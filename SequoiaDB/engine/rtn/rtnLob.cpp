@@ -100,6 +100,7 @@ namespace engine
    INT32 rtnReadLob( SINT64 contextID,
                      pmdEDUCB *cb,
                      UINT32 len,
+                     SINT64 offset,
                      const CHAR **buf,
                      UINT32 &read )
    {
@@ -134,7 +135,7 @@ namespace engine
       }
 
       lobContext = ( rtnContextLob * )context ;
-      rc = lobContext->read( len, cb ) ;
+      rc = lobContext->read( len, offset, cb ) ;
       if ( SDB_OK != rc )
       {
          if ( SDB_EOF != rc )

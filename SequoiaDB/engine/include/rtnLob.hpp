@@ -57,6 +57,7 @@ INT32 rtnWriteLob( SINT64 contextID,
 INT32 rtnReadLob( SINT64 contextID,
                   pmdEDUCB *cb,
                   UINT32 len,
+                  SINT64 offset,
                   const CHAR **buf,
                   UINT32 &read ) ;
 

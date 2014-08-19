@@ -4,7 +4,16 @@
 
 using namespace std ;
 
-
+void hexDump( const CHAR *src, UINT32 size, CHAR *dst )
+{
+   static const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+   for ( UINT32 i = 0; i < size; ++i )
+   {
+      dst[i*2] = hex[( src[i] & 0xf0 ) >> 4];
+      dst[2*i + 1] = hex[ src[i] & 0x0f ];
+   }
+   dst[size * 2] = '\0' ;
+}
 
 TEST(lobTest, insert_1)
 {
@@ -142,5 +151,102 @@ TEST(lobTest, insert_2)
 
    delete []buf ;
    delete []buf2 ;
+}
+
+TEST(lobTest, seek_1)
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+   bson_oid_t oid ;
+
+   rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+
+   rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+
+   const UINT32 bufSize = 1024 * 1024 * 10 + 1924 ;
+   CHAR *buf = new CHAR[bufSize] ;
+   for ( UINT32 j = 0 ; j < bufSize; ++j )
+   {
+         buf[j] = ( CHAR )rand() ;
+   }
+   
+   bson_oid_gen( &oid ) ;
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+   SINT64 totalWriteLen = 0 ;
+   while ( totalWriteLen < bufSize )
+   {
+      UINT32 writeLen = bufSize - totalWriteLen < 1844 ? bufSize - totalWriteLen : 1844 ;
+      rc = sdbWriteLob( lob, buf + totalWriteLen, writeLen ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+      totalWriteLen += writeLen ;
+   }
+   ASSERT_TRUE( totalWriteLen == bufSize ) ;
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+   SINT64 lobSize = 0 ;
+   rc = sdbGetLobSize( lob, &lobSize ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_TRUE( bufSize == lobSize ) ;
+
+   const UINT32 seekReadSize = 2000 ;
+
+   CHAR buf2[seekReadSize] ;
+   for ( UINT32 i = 0; i < 10000; ++i )
+   {
+      memset( buf2, 0, seekReadSize ) ;
+      SINT64 seekSize = rand() % bufSize ;
+      rc = sdbSeekLob( lob, seekSize, SDB_LOB_SEEK_SET ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+      UINT32 readSize = bufSize - seekSize < seekReadSize ? bufSize - seekSize : seekReadSize ;
+      readSize = rand() % readSize ;
+      UINT32 read = 0 ;
+      rc = sdbReadLob( lob, readSize, buf2, &read ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_TRUE( readSize == read ) ;
+      if ( 0 != memcmp( buf + seekSize, buf2, readSize ) )
+      {
+         CHAR dump[seekReadSize * 2 + 1];
+         hexDump( buf2, readSize, dump) ;
+         cout << "buf2:" << dump << endl ;
+         hexDump( buf+ seekSize, readSize, dump );
+         cout << "buf:" << dump << endl ;
+         ASSERT_TRUE( FALSE ) ;
+      }
+      cout << "seek times:" << i << endl ;
+   }
+
+   UINT32 read = 0 ;
+   rc = sdbSeekLob( lob, bufSize, SDB_LOB_SEEK_SET ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+   rc = sdbReadLob( lob, 1, buf2, &read ) ;
+   ASSERT_TRUE( SDB_EOF == rc ) ;
+   rc = sdbSeekLob( lob, bufSize, SDB_LOB_SEEK_END ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+   const UINT32 lastReadSize = 1855 ;
+   rc = sdbReadLob( lob, lastReadSize, buf2, &read ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_TRUE( lastReadSize == read ) ;
+   if ( 0 != memcmp( buf, buf2, lastReadSize ) )
+   {
+      CHAR dump[lastReadSize * 2 + 1];
+      hexDump( buf2, lastReadSize, dump) ;
+      cout << "buf2:" << dump << endl ;
+      hexDump( buf, lastReadSize, dump );
+      cout << "buf:" << dump << endl ;
+      ASSERT_TRUE( FALSE ) ;
+   }
+
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+   rc = sdbRemoveLob( cl, &oid ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
 }
 

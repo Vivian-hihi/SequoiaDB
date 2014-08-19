@@ -7115,8 +7115,11 @@ static void sdbReadInCache( sdbLobStruct *lob,
                         lob->_currentOffset ;
    readInCache = readInCache <= len ?
                  readInCache : len ;
-   ossMemcpy( buf, lob->_dataCache, readInCache ) ;
-   lob->_cachedSize -= readInCache ;
+   const CHAR *cache = lob->_dataCache +
+                       lob->_currentOffset -
+                       lob->_cachedOffset ;
+   ossMemcpy( buf, cache, readInCache ) ;
+   lob->_cachedSize -= readInCache + cache - lob->_dataCache ;
 
    if ( 0 == lob->_cachedSize )
    {
@@ -7125,8 +7128,8 @@ static void sdbReadInCache( sdbLobStruct *lob,
    }
    else
    {
-      lob->_dataCache += readInCache ;
-      lob->_cachedOffset += readInCache ;
+      lob->_dataCache = cache + readInCache ;
+      lob->_cachedOffset = readInCache + lob->_currentOffset ;
    }
 
    *read = readInCache ;
@@ -7217,6 +7220,11 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
 
    tuple = ( const MsgLobTuple *)
            ( lob->_pReceiveBuffer + sizeof( MsgOpReply ) ) ;
+   if ( lob->_currentOffset != tuple->columns.offset )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
 
    body = lob->_pReceiveBuffer + sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ;
 
@@ -7284,7 +7292,19 @@ SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
    while ( 0 < needRead && lob->_currentOffset < lob->_lobSize )
    {
       rc = sdbOnceRead( lob, localBuf, needRead, &onceRead ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_EOF == rc )
+      {
+         if ( 0 < totalRead )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         else
+         {
+            goto error ;
+         }
+      }
+      else if ( SDB_OK != rc )
       {
          goto error ;
       }

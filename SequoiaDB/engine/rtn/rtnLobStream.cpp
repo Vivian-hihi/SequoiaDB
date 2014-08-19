@@ -422,7 +422,7 @@ namespace engine
       /// data may be cached.
       if ( !_pool.empty() )
       {
-         if ( !_pool.match( _offset ) )
+         if ( _pool.match( _offset ) )
          {
             rc = _readFromPool( len, context, cb, readLen ) ;
             if ( SDB_OK != rc )
@@ -431,12 +431,17 @@ namespace engine
                goto error ;
             }
 
-             _offset += readLen ;
+            _offset += readLen ;
+            if ( _pool.empty() )
+            {
+               _pool.clear() ;
+            }
+
             goto done ;
          }
+         /// TODO: keep useful data in cache rather than clear all.
          else
          {
-            /// TODO: keep useful data in cache rather than clear all.
             _pool.clear() ;
          }
       }
@@ -469,8 +474,7 @@ namespace engine
          goto error ;
       }
 
-      SDB_ASSERT( needLen == readLen, "impossible" ) ;
-      _offset += readLen ;
+      _offset += len ;
       read = readLen ;
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_READ, rc ) ;

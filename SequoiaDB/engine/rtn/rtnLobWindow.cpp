@@ -240,33 +240,21 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNLOBWINDOW_PREPARE2READ ) ;
       SDB_ASSERT( offset < lobLen, "impossible" ) ;
       UINT32 i = 0 ;
-      while ( 0 < len && offset < lobLen && i < maxPieceNum )
+      while ( readLen < len && offset < lobLen && i < maxPieceNum )
       {
          UINT32 offstInPiece = RTN_LOB_GET_OFFSET_IN_SEQUENCE( offset, _pageSize ) ;
-         UINT32 lenInPiece =  ( _pageSize - offstInPiece ) < len ?
-                              ( _pageSize - offstInPiece ) : len ;
+//         UINT32 lenInPiece =  ( _pageSize - offstInPiece ) < len ?
+//                              ( _pageSize - offstInPiece ) : len ;
+         UINT32 lenInPiece = _pageSize - offstInPiece ;
          lenInPiece = lenInPiece <= ( lobLen - offset ) ?
                       lenInPiece : ( lobLen - offset ) ;
          UINT32 sequence = RTN_LOB_GET_SEQUENCE( offset, _logarithmic ) ;
 
-         len -= lenInPiece ;
          offset += lenInPiece ;
          readLen += lenInPiece ;
 
          pieces[i++].set( _oid, sequence, offstInPiece,
                           lenInPiece, NULL ) ;
-         if ( lenInPiece == ( UINT32 )_pageSize )
-         {
-            continue ;
-         }
-         else if ( (UINT32)_pageSize <= ( len - readLen ) )
-         {
-            continue ;
-         }
-         else
-         {
-            break ;
-         }
       }
       
       pieceNum = i ;

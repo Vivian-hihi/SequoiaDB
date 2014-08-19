@@ -61,6 +61,7 @@ namespace engine
                   SDB_DPSCB *dpsCB ) ;
 
       INT32 read( UINT32 len,
+                  SINT64 offset,
                   _pmdEDUCB *cb ) ;
 
       INT32 write( UINT32 len,
@@ -73,15 +74,12 @@ namespace engine
 
    protected:
       virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
-      virtual BOOLEAN _canPrefetch () const
-      {
-         return TRUE ;
-      }
+      virtual BOOLEAN   _canPrefetch () const { return TRUE ; }
 
    private:
       rtnLobStream *_stream ;
+      SINT64 _offset ;
       UINT32 _readLen ;
-      SINT64 _readOffset ;
    } ;
    typedef class _rtnContextLob rtnContextLob ;
 }
