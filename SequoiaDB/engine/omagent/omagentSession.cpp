@@ -54,6 +54,7 @@ namespace engine
    BEGIN_OBJ_MSG_MAP( _omaSession, _pmdAsyncSession )
       // msg map or event map
       ON_MSG( MSG_CM_REMOTE, _onNodeMgrReq )
+      ON_MSG( MSG_AUTH_VERIFY_REQ, _onAuth )
       ON_MSG( MSG_BS_QUERY_REQ, _onOMAgentReq )
    END_OBJ_MSG_MAP()
 
@@ -196,6 +197,11 @@ namespace engine
       return _reply( &_replyHeader, pBody, bodyLen ) ;
    }
 
+   INT32 _omaSession::_onAuth( const NET_HANDLE & handle, MsgHeader * pMsg )
+   {
+      return _reply( SDB_OK, pMsg ) ;
+   }
+
    INT32 _omaSession::_onNodeMgrReq( const NET_HANDLE & handle,
                                      MsgHeader * pMsg )
    {
@@ -265,7 +271,7 @@ namespace engine
    }
 
    INT32 _omaSession::_onOMAgentReq( const NET_HANDLE &handle,
-                                     MsgHeader &pMsg )
+                                     MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
       INT32 flags               = 0 ;
@@ -282,9 +288,9 @@ namespace engine
 
       PD_LOG ( PDEVENT, "Omagent receive requset from omsvc" ) ;
       // build reply massage header
-      _buildReplyHeader( (MsgHeader *)(&pMsg) ) ;
+      _buildReplyHeader( pMsg ) ;
       // extract command
-      rc = msgExtractQuery ( (CHAR *)(&pMsg), &flags, &pCollectionName,
+      rc = msgExtractQuery ( (CHAR *)pMsg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQuery,
                              &pFieldSelector, &pOrderByBuffer,
                              &pHintBuffer ) ;

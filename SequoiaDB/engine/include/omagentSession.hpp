@@ -78,7 +78,9 @@ namespace engine
          INT32       _onNodeMgrReq( const NET_HANDLE &handle,
                                     MsgHeader *pMsg ) ;
          INT32       _onOMAgentReq( const NET_HANDLE &handle,
-                                    MsgHeader &pMsg ) ;
+                                    MsgHeader *pMsg ) ;
+         INT32       _onAuth( const NET_HANDLE &handle,
+                              MsgHeader *pMsg ) ;
 
       protected:
 
