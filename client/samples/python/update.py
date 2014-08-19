@@ -23,11 +23,11 @@ if __name__ == "__main__":
       basketball = {"Item":"basketball", "id":0}
       oid = cl.insert(basketball)
 
-      pysequoiadb.cout("before update")
+      pysequoiadb._print("before update")
       cr = cl.query()
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
-         pysequoiadb.cout(record)
+         pysequoiadb._print(record)
          rc, record = cr.next()
 
       # update records
@@ -35,11 +35,11 @@ if __name__ == "__main__":
       condition = {'id':{'$exists':0}}
       cl.update(update, condition)
 
-      pysequoiadb.cout("after update")
+      pysequoiadb._print("after update")
       cr = cl.query()
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
-         pysequoiadb.cout(record)
+         pysequoiadb._print(record)
          rc, record = cr.next()
 
       # drop collection
@@ -54,4 +54,4 @@ if __name__ == "__main__":
       del db
 
    except (InvalidParameter, SequoiaDBError), e:
-      pysequoiadb.cout(e)
+      pysequoiadb._print(e)

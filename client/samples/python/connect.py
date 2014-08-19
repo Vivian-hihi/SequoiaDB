@@ -13,7 +13,7 @@ if "__main__" == __name__:
       db_default = client()
       del db_default
    except (InvalidParameter, SequoiaDBError), e:
-      pysequoiadb.cout(e)
+      pysequoiadb._print(e)
 
    # connect to db, using default args value.
    # host= '192.168.20.111', port= 50000, user= 'db_admin', password= 'password'
@@ -21,7 +21,7 @@ if "__main__" == __name__:
       db_to_1 = client('192.168.20.111', 50000, 'db_admin', 'password')
       del db_to_1
    except (InvalidParameter, SequoiaDBError), e:
-      pysequoiadb.cout(e)
+      pysequoiadb._print(e)
 
    # connect to db, using default args value.
    # host= 'localhost', port= 11810, user= '', password= ''
@@ -48,6 +48,6 @@ if "__main__" == __name__:
       del db
 
    except (InvalidParameter, SequoiaDBError), e:
-      pysequoiadb.cout(e)
+      pysequoiadb._print(e)
       
    

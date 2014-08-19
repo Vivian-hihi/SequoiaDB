@@ -24,12 +24,12 @@ if __name__ == "__main__":
       # 2.get collection space
       # try to get a collection named by 'sports' use __getitem__
       cs = db[cs_name]
-      pysequoiadb.cout("get collection space:[%s] success" % cs_name)
+      pysequoiadb._print("get collection space:[%s] success" % cs_name)
 
       # 3.get collection space
       # try to get a collection named by 'sports' use __getattri__
       cs = cs.sports
-      pysequoiadb.cout("get collection space:[%s] success." % 'cs_third')
+      pysequoiadb._print("get collection space:[%s] success." % 'cs_third')
 
       # release
       cs_name = cs.get_collection_space_name()
@@ -39,7 +39,7 @@ if __name__ == "__main__":
       del db
 
    except (InvalidParameter, SequoiaDBError), e:
-      pysequoiadb.cout(e)
+      pysequoiadb._print(e)
       
 
    

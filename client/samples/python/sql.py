@@ -36,22 +36,22 @@ if __name__ == "__main__":
 
       # execute sql1
       cr = db.exec_sql(sql1)
-      pysequoiadb.cout("The result are below after execute sql:%s" % sql1)
+      pysequoiadb._print("The result are below after execute sql:%s" % sql1)
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
-         pysequoiadb.cout(record)
+         pysequoiadb._print(record)
          rc, record = cr.next()
 
-      pysequoiadb.cout('\n')
+      pysequoiadb._print('\n')
 
       # execute sql2
       db.exec_update(sql2)
-      pysequoiadb.cout("The result are below after execute sql:%s" % sql2)
+      pysequoiadb._print("The result are below after execute sql:%s" % sql2)
       rcr = cl.query()
   
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
-         pysequoiadb.cout(record)
+         pysequoiadb._print(record)
          rc, record = cr.next()
 
       # drop collection

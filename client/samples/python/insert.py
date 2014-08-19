@@ -42,4 +42,4 @@ if __name__ == "__main__":
       del db
 
    except (InvalidParameter, SequoiaDBError), e:
-      pysequoiadb.cout(e)
+      pysequoiadb._print(e)

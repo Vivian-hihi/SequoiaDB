@@ -25,12 +25,12 @@ if __name__ == "__main__":
       oid = cl.insert(basketball)
 
       condition = {"id":{'$et':0}}
-      pysequoiadb.cout("query one record, using condition=%s" % condition)
+      pysequoiadb._print("query one record, using condition=%s" % condition)
 
       cr = cl.query(condition)
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
-         pysequoiadb.cout(record)
+         pysequoiadb._print(record)
          rc, record = cr.next()
 
       # bulk_insert
@@ -40,11 +40,11 @@ if __name__ == "__main__":
          records.append(sport)
       cl.bulk_insert(1, records)
 
-      pysequoiadb.cout("query all records:")
+      pysequoiadb._print("query all records:")
       rc, cr = cl.query()
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
-         pysequoiadb.cout(record)
+         pysequoiadb._print(record)
          rc, record = cr.next()
 
       cs.drop_collection( cl_name )
@@ -57,4 +57,4 @@ if __name__ == "__main__":
       del db
 
    except (InvalidParameter, SequoiaDBError), e:
-      pysequoiadb.cout(e)
+      pysequoiadb._print(e)
