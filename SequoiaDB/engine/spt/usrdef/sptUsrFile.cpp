@@ -42,6 +42,7 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrFile, read )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, seek )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, write )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, close )
+JS_MEMBER_FUNC_DEFINE( _sptUsrFile, toString )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrFile, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrFile, destruct )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, remove )
@@ -52,6 +53,7 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC( "close", close )
    JS_ADD_STATIC_FUNC( "remove", remove )
    JS_ADD_MEMBER_FUNC( "seek", seek )
+   JS_ADD_MEMBER_FUNC( "toString", toString )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
 JS_MAPPING_END()
@@ -74,9 +76,8 @@ JS_MAPPING_END()
                                  bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      string fullPath ;
 
-      rc = arg.getString( 0, fullPath ) ;
+      rc = arg.getString( 0, _filename ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get fullpath" ) ;
@@ -84,14 +85,14 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = ossOpen( fullPath.c_str(),
+      rc = ossOpen( _filename.c_str(),
                     OSS_READWRITE | OSS_CREATE,
                     OSS_RWXU,
                     _file ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open file:%s, rc:%d",
-                 fullPath.c_str(), rc ) ;
+                 _filename.c_str(), rc ) ;
          goto error ;
       }
 
@@ -100,6 +101,14 @@ JS_MAPPING_END()
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrFile::toString( const _sptArguments & arg,
+                                _sptReturnVal & rval,
+                                bson::BSONObj & detail )
+   {
+      rval.setStringVal( "", _filename.c_str() ) ;
+      return SDB_OK ;
    }
 
    INT32 _sptUsrFile::destruct()

@@ -44,6 +44,7 @@ namespace engine
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, exec )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, copy2Remote )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, copyFromRemote )
+JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, toString )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrSsh, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrSsh, destruct )
 
@@ -51,6 +52,7 @@ JS_BEGIN_MAPPING( _sptUsrSsh, "Ssh" )
    JS_ADD_MEMBER_FUNC( "exec", exec )
    JS_ADD_MEMBER_FUNC( "push", copy2Remote )
    JS_ADD_MEMBER_FUNC( "pull", copyFromRemote )
+   JS_ADD_MEMBER_FUNC( "toString", toString )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
 JS_MAPPING_END()
@@ -71,12 +73,10 @@ JS_MAPPING_END()
                                 bson::BSONObj &detail)
    {
       INT32 rc = SDB_OK ;
-      string host ;
-      string usr ;
       string passwd ;
       string errmsg ;
 
-      rc = arg.getString( 0, host ) ;
+      rc = arg.getString( 0, _host ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get host from arg" ) ;
@@ -84,7 +84,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getString( 1, usr ) ;
+      rc = arg.getString( 1, _user ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
          PD_LOG( PDERROR, "failed to get usr from arg" ) ;
@@ -100,8 +100,8 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      _session = SDB_OSS_NEW _sptLibssh2Session( host.c_str(),
-                                                 usr.c_str(),
+      _session = SDB_OSS_NEW _sptLibssh2Session( _host.c_str(),
+                                                 _user.c_str(),
                                                  passwd.c_str() ) ;
       if ( NULL == _session )
       {
@@ -137,6 +137,17 @@ JS_MAPPING_END()
    INT32 _sptUsrSsh::destruct()
    {
       SAFE_OSS_DELETE( _session ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrSsh::toString( const _sptArguments & arg,
+                               _sptReturnVal & rval,
+                               bson::BSONObj & detail )
+   {
+      string str = _user ;
+      str += "@" ;
+      str += _host ;
+      rval.setStringVal( "", str.c_str() ) ;
       return SDB_OK ;
    }
 
