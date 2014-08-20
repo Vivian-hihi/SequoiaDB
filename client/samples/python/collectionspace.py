@@ -3,7 +3,8 @@
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
-from pysequoiadb.error import (SequoiaDBError, InvalidParameter)
+from pysequoiadb.error import (SDBTypeError,
+                               SDBBaseError)
 
 if __name__ == "__main__":
 
@@ -37,5 +38,5 @@ if __name__ == "__main__":
 
       del db
 
-   except (InvalidParameter, SequoiaDBError), e:
+   except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)

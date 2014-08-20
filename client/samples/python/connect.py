@@ -3,7 +3,8 @@
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
-from pysequoiadb.error import (InvalidParameter, SequoiaDBError)
+from pysequoiadb.error import (SDBTypeError,
+                               SDBBaseError)
 
 if "__main__" == __name__:
 
@@ -12,7 +13,7 @@ if "__main__" == __name__:
    try:
       db_default = client()
       del db_default
-   except (InvalidParameter, SequoiaDBError), e:
+   except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)
 
    # connect to db, using default args value.
@@ -20,7 +21,7 @@ if "__main__" == __name__:
    try:
       db_to_1 = client('192.168.20.111', 50000, 'db_admin', 'password')
       del db_to_1
-   except (InvalidParameter, SequoiaDBError), e:
+   except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)
 
    # connect to db, using default args value.
@@ -47,5 +48,5 @@ if "__main__" == __name__:
       # release clinet
       del db
 
-   except (InvalidParameter, SequoiaDBError), e:
+   except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)

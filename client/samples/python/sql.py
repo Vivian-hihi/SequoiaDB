@@ -3,7 +3,8 @@
 import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
-from pysequoiadb.error import (InvalidParameter, SequoiaDBError)
+from pysequoiadb.error import (SDBTypeError,
+                               SDBBaseError)
 
 from bson.objectid import ObjectId
 
@@ -65,6 +66,6 @@ if __name__ == "__main__":
       db.disconnect()
       del db
 
-   except (InvalidParameter, SequoiaDBError), e:
+   except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)
       
