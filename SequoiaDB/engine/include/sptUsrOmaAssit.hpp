@@ -52,6 +52,9 @@ namespace engine
                               const CHAR *pServiceName ) ;
          INT32       disconnect() ;
 
+         INT32       syncSend( const CHAR *pBuff, INT32 buffLen,
+                               CHAR **ppRecv, INT32 &recvLen ) ;
+
       protected:
 
       private:
