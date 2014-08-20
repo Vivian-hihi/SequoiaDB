@@ -1,7 +1,10 @@
 #!/usr/bin/sh
 
+#加载confi文件
 source config.ini
 
+
+#检查sdbinspect返回值正常
 function checkrc_succ()
 {
    if [ $1 -ne 0 ];then
@@ -10,6 +13,7 @@ function checkrc_succ()
    fi
 }
 
+#检查sdbinspect返回值异常
 function checkrc_fail()
 {
    if [ $1 -eq 0 ];then
@@ -18,6 +22,7 @@ function checkrc_fail()
    fi
 }
 
+#检查报告是否生成 以及里面的内容是否正确
 function checkReport()
 {
    if [ ! -f $1 ];then
@@ -33,6 +38,7 @@ function checkReport()
    fi
 }
 
+#清理报告文件
 function clean()
 {
    if [ -e $1 ];then
@@ -44,6 +50,8 @@ function clean()
    fi
 }
 
+
+#testcase1 与测试设计中的excel文档相对应
 function testcase1()
 {
    $sdb "var db = new Sdb('$dataAddr',$dataPort)"
@@ -341,6 +349,7 @@ function testcase17()
 
 }
 
+#总的测试函数
 function runtest()
 {
    testcase1
@@ -363,6 +372,8 @@ function runtest()
 }
 
 #testcase17
+
+
 #run all testcase
 runtest
 
