@@ -272,7 +272,7 @@ void RCGen::genPython ()
    }
 
    fout << "[error]" << endl ;
-   int size = (int)codelist.size() - 1 ;
+   int size = (int)codelist.size() ;
    for ( int idx = 0 ; idx < size; ++idx )
    {
       fout << std::left << setw(5) << -( idx + 1 )
