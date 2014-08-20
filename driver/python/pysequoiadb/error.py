@@ -28,6 +28,7 @@ class SDBBaseError(Exception):
       self.__type    = type
       self.__errmsg  = errmsg
       self.__code    = code
+      self.__details = None
 
       if code is not None and isinstance(code, int):
          try:
@@ -48,7 +49,7 @@ class SDBBaseError(Exception):
    def __detail(self):
       """get detail info with code
       """
-      return "Error code: %d, detail: %s" % (self.__code, self.__details)
+      return "Error code: %s, detail: %s" % (self.__code, self.__details)
 
    @property
    def code(self):
