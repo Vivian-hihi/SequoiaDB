@@ -278,14 +278,14 @@ namespace engine
    } ;
 
 
-   class omQueryBusinessCommand : public omCreateClusterCommand
+   class omQueryBusinessTypeCommand : public omCreateClusterCommand
    {
       public:
-         omQueryBusinessCommand( restAdaptor *pRestAdaptor, 
+         omQueryBusinessTypeCommand( restAdaptor *pRestAdaptor, 
                                  pmdRestSession *pRestSession, 
                                  const CHAR *pRootPath, 
                                  const CHAR *pSubPath ) ;
-         virtual ~omQueryBusinessCommand() ;
+         virtual ~omQueryBusinessTypeCommand() ;
 
       public:
          virtual INT32  doCommand() ;
@@ -304,7 +304,7 @@ namespace engine
 
    } ;
 
-   class omQueryBusinessTemplateCommand : public omQueryBusinessCommand
+   class omQueryBusinessTemplateCommand : public omQueryBusinessTypeCommand
    {
       public:
          omQueryBusinessTemplateCommand( restAdaptor *pRestAdaptor, 
@@ -450,12 +450,12 @@ namespace engine
          INT32          _test() ;
    } ;
 
-   class omStartBusinessCommand : public omAuthCommand
+   class omQueryBusinessCommand : public omAuthCommand
    {
       public:
-         omStartBusinessCommand( restAdaptor *pRestAdaptor, 
-                                pmdRestSession *pRestSession ) ;
-         virtual ~omStartBusinessCommand() ;
+         omQueryBusinessCommand( restAdaptor *pRestAdaptor, 
+                                 pmdRestSession *pRestSession ) ;
+         virtual ~omQueryBusinessCommand() ;
 
       public:
          virtual INT32  doCommand() ;

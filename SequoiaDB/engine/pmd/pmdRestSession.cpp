@@ -422,11 +422,12 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omQueryHostCommand( pAdptor, this ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_TYPE_REQ ) 
+                                                                          == 0 )
          {
-            commandIf = SDB_OSS_NEW omQueryBusinessCommand( pAdptor, this, 
-                                                            _wwwRootPath.c_str(), 
-                                                            pFilePath ) ;
+            commandIf = SDB_OSS_NEW omQueryBusinessTypeCommand( pAdptor, this, 
+                                                           _wwwRootPath.c_str(), 
+                                                           pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, 
                                   OM_QUERY_BUSINESS_TEMPLATE_REQ ) == 0 )

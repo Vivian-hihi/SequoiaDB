@@ -280,9 +280,8 @@ namespace engine
    #define  OM_QUERY_HOST_REQ                "query host"
    // *****************************************************************
 
-
-   // om rest query_business_list_req
-   #define  OM_QUERY_BUSINESS_REQ            "query business list"
+   // om rest query_business_type_req
+   #define  OM_QUERY_BUSINESS_TYPE_REQ       "query business type"
 
    #define  OM_BUSINESS_CONFIG_SUBDIR        "config"
    #define  OM_BUSINESS_FILE_NAME            "business.xml"

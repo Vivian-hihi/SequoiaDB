@@ -1171,6 +1171,7 @@ namespace engine
       po::options_description desc ( "Config options" ) ;
       po::variables_map vm ;
       CHAR hostport[OSS_MAX_HOSTNAME + 6] = { 0 } ;
+      _localAgentPort = boost::lexical_cast<string>( SDBCM_DFT_PORT ) ;
       rc = ossGetHostName( hostport, OSS_MAX_HOSTNAME ) ;
       if ( rc != SDB_OK )
       {

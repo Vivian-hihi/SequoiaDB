@@ -2445,21 +2445,23 @@ namespace engine
       goto done ;
    }
 
-   // *****************omQueryBusinessCommand *****************************
-   omQueryBusinessCommand::omQueryBusinessCommand( restAdaptor *pRestAdaptor, 
+   // *****************omQueryBusinessTypeCommand *****************************
+   omQueryBusinessTypeCommand::omQueryBusinessTypeCommand( 
+                                                restAdaptor *pRestAdaptor, 
                                                 pmdRestSession *pRestSession, 
                                                 const CHAR *pRootPath, 
                                                 const CHAR *pSubPath )
-                          :omCreateClusterCommand( pRestAdaptor, pRestSession ),
-                           _rootPath( pRootPath ), _subPath( pSubPath )
+                               :omCreateClusterCommand( pRestAdaptor, 
+                                                        pRestSession ),
+                                _rootPath( pRootPath ), _subPath( pSubPath )
    {
    }
 
-   omQueryBusinessCommand::~omQueryBusinessCommand()
+   omQueryBusinessTypeCommand::~omQueryBusinessTypeCommand()
    {
    }
 
-   BOOLEAN omQueryBusinessCommand::_isArray( ptree &pt )
+   BOOLEAN omQueryBusinessTypeCommand::_isArray( ptree &pt )
    {
       BOOLEAN isArr = FALSE ;
       string type ;
@@ -2483,7 +2485,7 @@ namespace engine
       return isArr ;
    }
 
-   BOOLEAN omQueryBusinessCommand::_isStringValue( ptree &pt )
+   BOOLEAN omQueryBusinessTypeCommand::_isStringValue( ptree &pt )
    {
       BOOLEAN isStringV = FALSE ;
       if ( _isArray( pt ) )
@@ -2519,7 +2521,7 @@ namespace engine
       return isStringV ;
    }
 
-   void omQueryBusinessCommand::_parseArray( ptree &pt, 
+   void omQueryBusinessTypeCommand::_parseArray( ptree &pt, 
                                             BSONArrayBuilder &arrayBuilder )
    {
       ptree::iterator ite = pt.begin() ;
@@ -2538,7 +2540,7 @@ namespace engine
       }
    }
 
-   void omQueryBusinessCommand::_recurseParseObj( ptree &pt, BSONObj &out )
+   void omQueryBusinessTypeCommand::_recurseParseObj( ptree &pt, BSONObj &out )
    {
       BSONObjBuilder builder ;
       ptree::iterator ite = pt.begin() ;
@@ -2574,7 +2576,7 @@ namespace engine
       out = builder.obj() ;
    }
 
-   INT32 omQueryBusinessCommand::_readConfigFile( string file, BSONObj &obj )
+   INT32 omQueryBusinessTypeCommand::_readConfigFile( string file, BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       try
@@ -2597,7 +2599,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryBusinessCommand::doCommand()
+   INT32 omQueryBusinessTypeCommand::doCommand()
    {
       INT32 rc             = SDB_OK ;
       string businessFile  = _rootPath + OSS_FILE_SEP 
@@ -2631,10 +2633,10 @@ namespace engine
                                                    pmdRestSession *pRestSession, 
                                                    const CHAR *pRootPath, 
                                                    const CHAR *pSubPath )
-                                  :omQueryBusinessCommand( pRestAdaptor, 
-                                                           pRestSession, 
-                                                           pRootPath,
-                                                           pSubPath)
+                                  :omQueryBusinessTypeCommand( pRestAdaptor, 
+                                                               pRestSession, 
+                                                               pRootPath,
+                                                               pSubPath )
    {
    }
 
@@ -4524,6 +4526,27 @@ namespace engine
       }
 
       _sendNodeInfo2Web( mapHostConf ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omQueryBusinessCommand *****************************
+   omQueryBusinessCommand::omQueryBusinessCommand( restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+                          :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omQueryBusinessCommand::~omQueryBusinessCommand()
+   {
+   }
+
+   INT32 omQueryBusinessCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      
    done:
       return rc ;
    error:
