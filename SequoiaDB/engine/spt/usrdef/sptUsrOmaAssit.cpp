@@ -77,7 +77,7 @@ namespace engine
                    pHostName, pServiceName, rc ) ;
 
       // get coord group
-      rc = sdbGetReplicaGroup( _handle, COORD_GROUPNAME, &_groupHandle ) ;
+      rc = _getCoordGroupHandle( _groupHandle ) ;
       PD_RC_CHECK( rc, PDERROR, "Get group handle failed, rc: %d", rc ) ;
 
    done:
@@ -174,7 +174,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      handle = (ossValuePtr)s ;
+      handle = (ossValuePtr)r ;
 
       ossMemset( (void*)r, 0, sizeof( sdbRNStruct ) ) ;
       // set members
@@ -183,6 +183,44 @@ namespace engine
       r->_sock = s->_sock ;
       r->_endianConvert = s->_endianConvert ;
       ossStrncpy( r->_serviceName, pSvcName, CLIENT_MAX_SERVICENAME ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrOmaAssit::_getCoordGroupHandle( ossValuePtr & handle )
+   {
+      INT32 rc = SDB_OK ;
+      handle = 0 ;
+      sdbRGStruct *r                   = NULL ;
+      sdbConnectionStruct *connection  = NULL ;
+
+      if ( 0 == _handle )
+      {
+         PD_LOG( PDERROR, "Collection handle is invalid" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      connection = ( sdbConnectionStruct* )_handle ;
+      r = ( sdbRGStruct* )SDB_OSS_MALLOC( sizeof( sdbRGStruct ) ) ;
+      if ( !r )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      handle = (ossValuePtr)r ;
+
+      ossMemset( (void*)r, 0, sizeof( sdbRGStruct ) ) ;
+      // set members
+      r->_handleType = SDB_HANDLE_TYPE_REPLICAGROUP ;
+      r->_connection = _handle ;
+      r->_sock = connection->_sock ;
+      r->_endianConvert = connection->_endianConvert ;
+      r->_isCatalog = FALSE ;
+      ossStrncpy( r->_replicaGroupName, COORD_GROUPNAME, CLIENT_RG_NAMESZ ) ;
 
    done:
       return rc ;

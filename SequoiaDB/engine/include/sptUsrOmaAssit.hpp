@@ -68,6 +68,8 @@ namespace engine
                                      ossValuePtr &handle ) ;
          void        _releaseNodeHandle( ossValuePtr handle ) ;
 
+         INT32       _getCoordGroupHandle( ossValuePtr &handle ) ;
+
       private:
          ossValuePtr          _handle ;
          ossValuePtr          _groupHandle ;
