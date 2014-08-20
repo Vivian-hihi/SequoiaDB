@@ -4264,10 +4264,6 @@ static JSBool sdb_create_rg ( JSContext *cx, uintN argc, jsval *vp )
    rc = sdbCreateReplicaGroup( *connection, rgName, rg ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.createRG()", rc ) ;
 
-   // get the replica group
-   rc = sdbGetReplicaGroup ( *connection, rgName, rg ) ;
-   REPORT_RC ( SDB_OK == rc, "Sdb.createRG()", rc ) ;
-
    objRG = JS_NewObject ( cx, &rg_class, 0 , 0 ) ;
    VERIFY ( objRG ) ;
 
