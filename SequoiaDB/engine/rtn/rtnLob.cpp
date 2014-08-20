@@ -374,7 +374,7 @@ namespace engine
       {
          /// other one is deleting or writing this lob.
          rc = SDB_OK ;
-         goto error ;
+         goto done ;
       }
       else
       {
