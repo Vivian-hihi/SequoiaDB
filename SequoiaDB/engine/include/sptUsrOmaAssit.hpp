@@ -52,13 +52,25 @@ namespace engine
                               const CHAR *pServiceName ) ;
          INT32       disconnect() ;
 
-         INT32       syncSend( const CHAR *pBuff, INT32 buffLen,
-                               CHAR **ppRecv, INT32 &recvLen ) ;
+         INT32       createCoord( const CHAR *pSvcName,
+                                  const CHAR *pDBPath,
+                                  const CHAR *pConfig ) ;
+
+         INT32       removeCoord( const CHAR *pSvcName ) ;
+
+         INT32       startNode( const CHAR *pSvcName ) ;
+
+         INT32       stopNode( const CHAR *pSvcName ) ;
 
       protected:
 
+         INT32       _getNodeHandle( const CHAR *pSvcName,
+                                     ossValuePtr &handle ) ;
+         void        _releaseNodeHandle( ossValuePtr handle ) ;
+
       private:
          ossValuePtr          _handle ;
+         ossValuePtr          _groupHandle ;
 
    } ;
    typedef _sptUsrOmaAssit sptUsrOmaAssit ;

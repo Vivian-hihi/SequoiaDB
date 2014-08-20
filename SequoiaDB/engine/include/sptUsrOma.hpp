@@ -65,9 +65,9 @@ namespace engine
                   _sptReturnVal &rval,
                   bson::BSONObj &detail ) ;
 
-      INT32 addCoord( const _sptArguments &arg,
-                      _sptReturnVal &rval,
-                      bson::BSONObj &detail ) ;
+      INT32 createCoord( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
 
       INT32 removeCoord( const _sptArguments &arg,
                          _sptReturnVal &rval,
@@ -80,14 +80,6 @@ namespace engine
       INT32 stopNode( const _sptArguments &arg,
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
-
-      INT32 startAll( const _sptArguments &arg,
-                      _sptReturnVal &rval,
-                      bson::BSONObj &detail ) ;
-
-      INT32 stopAll( const _sptArguments &arg,
-                     _sptReturnVal &rval,
-                     bson::BSONObj &detail ) ;
 
       INT32 close( const _sptArguments &arg,
                    _sptReturnVal &rval,
