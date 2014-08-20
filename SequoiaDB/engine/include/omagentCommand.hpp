@@ -47,6 +47,7 @@
 #include <string>
 
 using namespace bson ;
+using namespace std ;
 
 namespace engine
 {
@@ -70,6 +71,8 @@ namespace engine
          _omaCommand () ;
          virtual ~_omaCommand () ;
 
+         INT32 setJSFile ( const CHAR *fileName ) ;
+
       public:
          virtual const CHAR * name () = 0 ;
 
@@ -77,9 +80,7 @@ namespace engine
 
          virtual INT32 doit ( BSONObj &retObj ) = 0 ;
 
-         virtual INT32 setJSFile ( const CHAR *fileName ) ;
-
-     protected:
+      protected:
          _sptScope            *_scope ;
          CHAR                 _jsFileName[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                 _jsFileArgs[ JS_ARG_LEN + 1 ] ;
@@ -110,8 +111,12 @@ namespace engine
       }
    } ;
 
-   typedef std::map<const CHAR*, OA_NEW_FUNC, _classComp> MAP_OACMD ;
-   typedef std::map<const CHAR*, OA_NEW_FUNC, _classComp>::iterator MAP_OACMD_IT ;
+   typedef map<const CHAR*, OA_NEW_FUNC, _classComp>     MAP_OACMD ;
+#if defined (_WINDOWS)
+   typedef MAP_OACMD::iterator                           MAP_OACMD_IT ;
+#else
+   typedef map<const CHAR*, OA_NEW_FUNC>::iterator       MAP_OACMD_IT ;
+#endif // _WINDOWS
 
    /*
       _omaCmdBuilder
@@ -127,7 +132,7 @@ namespace engine
       public:
          _omaCommand *create ( const CHAR *command ) ;
 
-         void release ( const _omaCommand *pCommand ) ;
+         void release ( _omaCommand *&pCommand ) ;
 
          INT32 _register ( const CHAR *name, OA_NEW_FUNC pFunc ) ;
 

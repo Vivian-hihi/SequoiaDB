@@ -141,8 +141,8 @@ namespace engine
       rc = utilCatPath ( _jsFileName, OSS_MAX_PATHSIZE, fileName ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR,
-                      "Failed to build js file full path, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build js file full path, rc = %d",
+                      rc ) ;
          goto error ;
       }
    done:
@@ -181,8 +181,6 @@ namespace engine
 
    _omaCmdBuilder::~_omaCmdBuilder ()
    {
-      // TODO: tanzhaobo
-      // do i need to release memory in map ?
    }
 
    _omaCommand* _omaCmdBuilder::create ( const CHAR *command )
@@ -195,11 +193,12 @@ namespace engine
       return NULL ;
    }
 
-   void _omaCmdBuilder::release ( const _omaCommand *pCommand )
+   void _omaCmdBuilder::release ( _omaCommand *&pCommand )
    {
       if ( pCommand )
       {
          SDB_OSS_DEL pCommand ;
+         pCommand = NULL ;
       }
    }
 
@@ -207,16 +206,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      std::pair<MAP_OACMD_IT, BOOLEAN> ret ;
-      ret = _cmdMap.insert( std::pair<const CHAR*, OA_NEW_FUNC>(name, pFunc) ) ;
+      pair< MAP_OACMD_IT, BOOLEAN > ret ;
+      ret = _cmdMap.insert( pair<const CHAR*, OA_NEW_FUNC>(name, pFunc) ) ;
       if ( FALSE == ret.second )
       {
-         PD_LOG_MSG ( PDERROR,
-                      "Failed to register omagent command[%s], already exist",
-                      name ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to register omagent command[%s], "
+                      "already exist", name ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -227,10 +226,11 @@ namespace engine
    {
       if ( name )
       {
-         MAP_OACMD_IT it ;
-         it = _cmdMap.find( name ) ;
+         MAP_OACMD_IT it = _cmdMap.find( name ) ;
          if ( it != _cmdMap.end() )
+         {
             return it->second ;
+         }
       }
       return NULL ;
    }
