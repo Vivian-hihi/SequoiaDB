@@ -91,8 +91,21 @@ namespace engine
                                        const CHAR * pDBPath,
                                        const CHAR * pConfig )
    {
-      return sdbCreateNode( _groupHandle, "", pSvcName,
-                            pDBPath, ( bson* )pConfig ) ;
+      INT32 rc = SDB_OK ;
+      bson config ;
+      bson_init( &config ) ;
+      rc = bson_init_finished_data( &config, pConfig ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to finish bons, rc: %d", rc ) ;
+
+      rc = sdbCreateNode( _groupHandle, "", pSvcName,
+                          pDBPath, &config ) ;
+      PD_RC_CHECK( rc, PDERROR, "Create Node[%s] failed, rc: %d",
+                   pSvcName, rc ) ;
+
+   done:
+      bson_destroy( &config ) ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOmaAssit::removeCoord( const CHAR * pSvcName )
