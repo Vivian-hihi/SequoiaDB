@@ -80,14 +80,14 @@ namespace engine
          virtual INT32 setJSFile ( const CHAR *fileName ) ;
 
      protected:
-         _sptScope *_scope ;
-         CHAR _jsFileName[ OSS_MAX_PATHSIZE + 1 ] ;
-         CHAR _jsFileArgs[ JS_ARG_LEN + 1 ] ;
-         CHAR *_fileBuff ;
-         UINT32 _buffSize ;
-         UINT32 _readSize ;
+         _sptScope            *_scope ;
+         CHAR                 _jsFileName[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR                 _jsFileArgs[ JS_ARG_LEN + 1 ] ;
+         CHAR                 *_fileBuff ;
+         UINT32               _buffSize ;
+         UINT32               _readSize ;
          std::vector<BSONObj> _hosts ;
-         std::string _content ;
+         std::string          _content ;
    } ;
 
    typedef _omaCommand* (*OA_NEW_FUNC) () ;
@@ -511,4 +511,4 @@ namespace engine
 }
 
 
-#endif
+#endif // OMAGENT_COMMAND_HPP_
