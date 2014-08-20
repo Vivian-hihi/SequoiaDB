@@ -1,6 +1,7 @@
 #include "client.h"
 
 #include <gtest/gtest.h>
+#include <boost/thread.hpp>
 
 using namespace std ;
 
@@ -15,7 +16,8 @@ void hexDump( const CHAR *src, UINT32 size, CHAR *dst )
    dst[size * 2] = '\0' ;
 }
 
-TEST(lobTest, insert_1)
+
+void insert_1()
 {
    INT32 rc = SDB_OK ;
    sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
@@ -53,17 +55,35 @@ TEST(lobTest, insert_1)
    for ( UINT32 i = 0 ; i < putNum ; ++i )
    {
       rc = sdbOpenLob( cl, &( oids[i] ), SDB_LOB_READ, &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      if ( SDB_OK != rc )
+      {
+         CHAR tmp[25] ;
+         bson_oid_to_string( &( oids[i]), tmp ) ;
+         cout << tmp << endl ;
+         ASSERT_TRUE( FALSE ) ;
+      }
       SINT64 lobSize = 0 ;
       rc = sdbGetLobSize( lob, &lobSize ) ;
       ASSERT_TRUE( SDB_OK == rc ) ;
-      ASSERT_TRUE( bufSize == lobSize ) ;
+      if ( bufSize != lobSize )
+      {
+         CHAR tmp[25] ;
+         bson_oid_to_string( &( oids[i]), tmp ) ;
+         cout << tmp << endl ;
+         ASSERT_TRUE( FALSE ) ;
+      }
       UINT32 readSize = 0 ;
       rc = sdbReadLob( lob, bufSize, buf, &readSize ) ;
       ASSERT_TRUE( SDB_OK == rc ) ;
       ASSERT_TRUE( readSize = bufSize ) ;
       memset( buf2, 'a' + i, bufSize ) ;
-      ASSERT_TRUE( 0 == memcmp(buf, buf2, bufSize )) ;
+      if ( 0 != memcmp(buf, buf2, bufSize ) )
+      {
+         CHAR tmp[25] ;
+         bson_oid_to_string( &( oids[i]), tmp ) ;
+         cout << tmp << endl ;
+         ASSERT_TRUE( FALSE ) ;
+      }
       rc = sdbReadLob( lob, bufSize, buf, &readSize ) ;
       ASSERT_TRUE( SDB_EOF == rc ) ;
       rc = sdbCloseLob( &lob ) ;
@@ -73,7 +93,12 @@ TEST(lobTest, insert_1)
    }
 }
 
-TEST(lobTest, insert_2)
+TEST(lobTest, insert_1)
+{
+   insert_1() ;
+}
+
+void insert_2()
 {
    INT32 rc = SDB_OK ;
    sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
@@ -151,6 +176,11 @@ TEST(lobTest, insert_2)
 
    delete []buf ;
    delete []buf2 ;
+}
+
+TEST(lobTest, insert_2)
+{
+   insert_2() ;
 }
 
 TEST(lobTest, seek_1)
@@ -250,3 +280,44 @@ TEST(lobTest, seek_1)
    ASSERT_TRUE( SDB_OK == rc ) ;
 }
 
+void multi_insert1()
+{
+   insert_1() ; 
+}
+
+TEST(lobTest, multi_1)
+{
+   const UINT32 threadNum = 5 ;
+   boost::thread *ts[threadNum] ;
+   for ( UINT32 i = 0; i < threadNum; i++ )
+   {
+      ts[i] = new boost::thread( multi_insert1 ) ;
+   }
+
+   for ( UINT32 i = 0; i < threadNum; i++ )
+   {
+      ts[i]->join() ;
+      delete ts[i] ;
+   }
+}
+
+void multi_insert2()
+{
+   insert_2() ;
+}
+
+TEST(lobTest, multi_2)
+{
+   const UINT32 threadNum = 5 ;
+   boost::thread *ts[threadNum] ;
+   for ( UINT32 i = 0; i < threadNum; i++ )
+   {
+      ts[i] = new boost::thread( multi_insert2 ) ;
+   }
+
+   for ( UINT32 i = 0; i < threadNum; i++ )
+   {
+      ts[i]->join() ;
+      delete ts[i] ;
+   }
+}

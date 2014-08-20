@@ -166,6 +166,7 @@ namespace engine
       goto done ;
    }
 
+/*
    INT32 _dmsStorageLobData::truncate( INT64 len )
    {
       INT32 rc = SDB_OK ;
@@ -181,6 +182,7 @@ namespace engine
    error:
       goto done ;
    }
+*/
 
    INT32 _dmsStorageLobData::write( DMS_LOB_PAGEID page,
                                     const CHAR *data,
@@ -251,11 +253,21 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( 0 < len, "invalid extend size" ) ;
+      OSSFILE file ;
+      UINT32 mode = OSS_READWRITE | OSS_EXCLUSIVE  ;
       SINT64 oldSz = _fileSz ;
+      rc = ossOpen( _fullPath.c_str(), mode,
+                    OSS_RU|OSS_WU|OSS_RG, file ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open file when extend:%d", rc ) ;
+         goto error ;
+      }
+
 #ifdef _DEBUG
       {
       SINT64 sizeBeforeExtend = 0 ;
-      rc = ossGetFileSize( &_file, &sizeBeforeExtend ) ;
+      rc = ossGetFileSize( &file, &sizeBeforeExtend ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get size of file:%s, rc:%d",
@@ -278,25 +290,17 @@ namespace engine
       }
 #endif
 
-      rc = ossExtendFile( &_file, len ) ;
+      rc = ossExtendFile( &file, len ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extend file:%s, rc:%d",
                  _fileName.c_str(), rc ) ;
-         INT32 rcTmp = ossTruncateFile( &_file, oldSz ) ;
-         if ( SDB_OK != rcTmp )
-         {
-            PD_LOG( PDSEVERE, "failed to revert the increase of segment:%d"
-                    ", we will panic the db",
-                    rcTmp ) ;
-            ossPanic() ;
-         }
          goto error ;
       }
 #ifdef _DEBUG
       {
       SINT64 sizeAfterExtend = 0 ;
-      rc = ossGetFileSize( &_file, &sizeAfterExtend ) ;
+      rc = ossGetFileSize( &file, &sizeAfterExtend ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get size of file:%s, rc:%d",
@@ -317,11 +321,20 @@ namespace engine
 
       _fileSz += len ;
    done:
+      if ( file.isOpened() )
+      {
+         INT32 rcTmp = SDB_OK ;
+         rcTmp = ossClose( file ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to close file after extend:%d", rcTmp ) ;
+         }
+      }
       return rc ;
    truncate:
       {
       INT32 rcTmp = SDB_OK ;
-      rcTmp = truncate( oldSz ) ;
+      rcTmp = ossTruncateFile( &file, oldSz ) ;
       if ( SDB_OK != rcTmp )
       {
          PD_LOG( PDSEVERE, "Failed to revert the increase of segment, "
@@ -333,7 +346,7 @@ namespace engine
    error:
       {
       SINT64 nowSize = 0 ;
-      INT32 rcTmp = ossGetFileSize( &_file, &nowSize ) ;
+      INT32 rcTmp = ossGetFileSize( &file, &nowSize ) ;
       if ( SDB_OK != rcTmp )
       {
          PD_LOG( PDERROR, "failed to get file size:%d", rcTmp ) ;

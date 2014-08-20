@@ -86,7 +86,7 @@ namespace engine
 
       INT32 extend( INT64 len ) ;
 
-      INT32 truncate( INT64 len ) ;
+      //INT32 truncate( INT64 len ) ;
 
    private:
       INT32 _initFileHeader( const dmsStorageInfo &info ) ;
