@@ -225,6 +225,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__COMPLETELOB ) ;
+      SDB_ASSERT( meta.isDone(), "impossible" ) ;
       SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
       dmsLobRecord record ;
       BOOLEAN lockDms = FALSE ;

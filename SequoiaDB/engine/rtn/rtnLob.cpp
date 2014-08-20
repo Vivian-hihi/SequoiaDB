@@ -75,8 +75,15 @@ namespace engine
       rc = lobContext->getLobMetaData( meta ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get meta data:%d", rc ) ;
-         goto error ;
+         if ( SDB_LOB_IS_UNDER_CRT == rc )
+         {
+            rc = SDB_OK ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "failed to get meta data:%d", rc ) ;
+            goto error ;
+         }
       }
 
       if ( NULL != dpsCB && 1 < w )

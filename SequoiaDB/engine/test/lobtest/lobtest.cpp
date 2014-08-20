@@ -61,7 +61,7 @@ void insert_1()
       rc = sdbOpenLob( cl, &( oids[i] ), SDB_LOB_READ, &lob ) ;
       if ( SDB_OK != rc )
       {
-         cout << tmp << endl ;
+         cout << tmp << " " << rc << endl ;
          ASSERT_TRUE( FALSE ) ;
       }
       SINT64 lobSize = 0 ;

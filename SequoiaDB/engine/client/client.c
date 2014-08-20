@@ -7047,6 +7047,11 @@ done:
    bson_destroy( &obj ) ;
    return rc ;
 error:
+   if ( NULL != lobStruct )
+   {
+      SDB_OSS_FREE( lobStruct ) ;
+   }
+   *lobHandle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 

@@ -158,7 +158,7 @@ typedef SINT32 DMS_LOB_PAGEID ;
 
       BOOLEAN isDone() const
       {
-         return DMS_LOB_UNCOMPLETE == _status ;
+         return DMS_LOB_COMPLETE == _status ;
       }
    } ;
    typedef struct _dmsLobMeta dmsLobMeta ;

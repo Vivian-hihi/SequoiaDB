@@ -197,16 +197,10 @@ namespace engine
          goto done ;
       }
 
-      if ( !_meta.isDone() )
-      {
-         PD_LOG( PDERROR, "not a completed lob" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
       if ( _metaObj.isEmpty() )
       {
          BSONObjBuilder builder ;
+         /// we can get nothing when mode is create.
          builder.append( FIELD_NAME_LOB_SIZE, (long long)_meta._lobLen ) ;
          builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
          builder.append( FIELD_NAME_LOB_CREATTIME, (long long)_meta._createTime ) ;
@@ -248,6 +242,7 @@ namespace engine
          ossGetCurrentTime( t ) ;
          _meta._lobLen = _offset ;
          _meta._createTime = t.time * 1000 + t.microtm / 1000 ;
+         _meta._status = DMS_LOB_COMPLETE ;
 
          rc = _completeLob( _meta, cb ) ;
          if ( SDB_OK != rc )
