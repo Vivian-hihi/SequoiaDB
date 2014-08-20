@@ -33,6 +33,8 @@
 #include "omagentNodeCmd.hpp"
 #include "rtnCommandDef.hpp"
 #include "omagentMgr.hpp"
+#include "pmdOptions.h"
+#include "msgDef.h"
 
 using namespace bson ;
 
@@ -60,27 +62,39 @@ namespace engine
    INT32 _omaCreateNodeCmd::init( const CHAR * pInfomation )
    {
       INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
 
       try
       {
          BSONObj obj( pInfomation ) ;
-         _config = obj ;
+         BSONObjIterator it( obj ) ;
 
-         BSONElement e = obj.getField( FIELD_NAME_GROUPNAME ) ;
-         if ( String != e.type() )
+         while ( it.more() )
          {
-            PD_LOG( PDERROR, "Field[%s] type[%d] error in command[%s]",
-                    e.fieldName(), e.type(), name() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            BSONElement e = it.next() ;
+
+            if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_GROUPNAME ) )
+            {
+               if ( 0 != ossStrcmp( e.valuestrsafe(), COORD_GROUPNAME ) )
+               {
+                  PD_LOG( PDERROR, "Group[%s] is not %s in command[%s]",
+                          e.valuestrsafe(), COORD_GROUPNAME, name() ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               continue ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_HOST ) ||
+                      0 == ossStrcmp( e.fieldName(), PMD_OPTION_ROLE ) )
+            {
+               continue ;
+            }
+
+            builder.append( e ) ;
          }
-         else if ( 0 != ossStrcmp( e.valuestr(), COORD_GROUPNAME ) )
-         {
-            PD_LOG( PDERROR, "Group[%s] is not %s in command[%s]",
-                    e.valuestr(), COORD_GROUPNAME, name() ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
+
+         builder.append( PMD_OPTION_ROLE, SDB_ROLE_COORD_STR ) ;
+         _config = builder.obj() ;
       }
       catch( std::exception &e )
       {
