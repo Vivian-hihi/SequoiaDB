@@ -51,6 +51,9 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, removeCoord)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, startNode)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, stopNode)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, startAll)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, stopAll)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, close)
 
    /*
       Function Map
@@ -64,6 +67,9 @@ namespace engine
       JS_ADD_MEMBER_FUNC("removeCoord", removeCoord)
       JS_ADD_MEMBER_FUNC("startNode", startNode)
       JS_ADD_MEMBER_FUNC("stopNode", stopNode)
+      JS_ADD_MEMBER_FUNC("startAll", startAll)
+      JS_ADD_MEMBER_FUNC("stopAll", stopAll)
+      JS_ADD_MEMBER_FUNC("close", close)
    JS_MAPPING_END()
 
    /*
@@ -123,7 +129,10 @@ namespace engine
          << "   addCoord( svcname, dbpath, [config obj])" << endl
          << "   removeCoord( svcname )" << endl
          << "   startNode( svcname )" << endl
-         << "   stopNode( svcname )" << endl ;
+         << "   stopNode( svcname )" << endl
+         << "   startAll()" << endl
+         << "   stopAll()" << endl
+         << "   close()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
@@ -167,6 +176,30 @@ namespace engine
    INT32 _sptUsrOma::stopNode( const _sptArguments & arg,
                                _sptReturnVal & rval,
                                BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::close( const _sptArguments & arg,
+                            _sptReturnVal & rval,
+                            BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::startAll( const _sptArguments & arg,
+                               _sptReturnVal & rval,
+                               BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::stopAll( const _sptArguments & arg,
+                              _sptReturnVal & rval,
+                              BSONObj & detail )
    {
       // TODO:XUJIANHUI
       return SDB_OK ;

@@ -81,6 +81,18 @@ namespace engine
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
+      INT32 startAll( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
+      INT32 stopAll( const _sptArguments &arg,
+                     _sptReturnVal &rval,
+                     bson::BSONObj &detail ) ;
+
+      INT32 close( const _sptArguments &arg,
+                   _sptReturnVal &rval,
+                   bson::BSONObj &detail ) ;
+
    private:
       sptUsrOmaAssit          _assit ;
       string                  _hostname ;
@@ -91,3 +103,4 @@ namespace engine
 }
 
 #endif // SPT_USROMA_HPP__
+
