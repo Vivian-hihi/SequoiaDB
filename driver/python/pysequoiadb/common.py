@@ -16,20 +16,56 @@ from pysequoiadb import const
 from pysequoiadb.enum import enum
 
 NODE_STATUS = enum(((0,"ALL"),(1,"ACTIVE"),(2,"INACTIVE"),(3,"UNKNOWN")))
-const.SDB_OK = 0
-const.SDB_OOM = -2
-const.INVALIDARG = -6
-const.SDB_DMS_EOC = -29
+
 const.errmaps = dict()
 
-init=False
+# some error code
+const.SDB_OK                     = 0
+const.SDB_DMS_EOC                = -29
+
+# io error
+const.SDB_IO                     = -1
+const.SDB_FNE                    = -4
+const.SDB_FE                     = -5
+const.SDB_NOSPC                  = -11
+
+#network error
+const.SDB_NETWORK                = -15
+const.SDB_NETWORK_CLOSE          = -16
+const.SDB_NET_ALREADY_LISTENED   = -77
+const.SDB_NET_CANNOT_LISTEN      = -78
+const.SDB_NET_CANNOT_CONNECT     = -79
+const.SDB_NET_NOT_CONNECT        = -80
+const.SDB_NET_SEND_ERR           = -81
+const.SDB_NET_TIMER_ID_NOT_FOUND = -82
+const.SDB_NET_ROUTE_NOT_FOUND    = -83
+const.SDB_NET_BROKEN_MSG         = -84
+const.SDB_NET_INVALID_HANDLE     = -85
+
+# invalid error
+const.SDB_INVALIDARG             = -6
+const.SDB_INVALIDSIZE            = -7
+const.SDB_INVALIDPATH            = -19
+const.SDB_INVALID_FILE_TYPE      = -20
+
+# system error
+const.SDB_OOM                    = -2
+cosnt.SDB_SYS                    = -10
 
 def get_info(code):
-   return const.errmaps[code]
+   try:
+      info = const.errmaps[code]
+   except KeyError:
+      raise
+
+   return info
 
 import os
 import sys
 import string
+
+init=False
+
 def init_errmaps():
    if False == os.access(os.path.dirname(__file__) + "/err.prop", os.R_OK):
       raise Exception("file not exist")

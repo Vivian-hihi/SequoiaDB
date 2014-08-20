@@ -30,7 +30,7 @@ import pysequoiadb
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
 from pysequoiadb.common import const
-from pysequoiadb.error import (SequoiaDBError, InvalidParameter)
+from pysequoiadb.error import (SDBBaseError, SDBTypeError)
 
 class collection(object):
    """Collection for SequoiaDB
@@ -64,24 +64,24 @@ class collection(object):
       """create a new collection.
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          self._cl = sdbcl.create_cl()
       except SystemError:
-         raise SequoiaDBError("Failed to alloc collection", const.SDB_OOM)
+         raise SDBBaseError("Failed to alloc collection", const.SDB_OOM)
 
    def __del__(self):
       """delete a object existed.
       
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       if self._cl is not None:
          try:
             rc = sdbcl.release_cl(self._cl)
             pysequoiadb._raise_if_error("Failed to release collection", rc)
-         except SequoiaDBError:
+         except SDBBaseError:
             raise
 
          self._cl = None
@@ -100,19 +100,19 @@ class collection(object):
       Return values:
          count of result
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       bson_condition = None
       if condition is not None:
          if not isinstance(condition, dict):
-            raise InvalidParameter("condition must be an instance of dict")
+            raise SDBTypeError("condition must be an instance of dict")
          bson_condition = bson.BSON.encode(condition)
 
       try:
          rc, count = sdbcl.get_count(self._cl, bson_condition)
          pysequoiadb._raise_if_error("Failed to get count of record", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          count = 0
          raise
 
@@ -144,24 +144,24 @@ class collection(object):
                                               If splitEndCondition is null, they
                                               are in [30,max).
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(source_group_name, basestring):
-         raise InvalidParameter("source group name must be an instance of basestring")
+         raise SDBTypeError("source group name must be an instance of basestring")
       if not isinstance(target_group_name, basestring):
-         raise InvalidParameter("target group name must be an instance of basestring")
+         raise SDBTypeError("target group name must be an instance of basestring")
 
       bson_split_condition = None
       if split_condition is not None:
          if not isinstance(split_condition, dict):
-            raise InvalidParameter("split condition must be an instance of dict")
+            raise SDBTypeError("split condition must be an instance of dict")
          bson_split_condition = bson.BSON.encode(split_condition)
 
       bson_end_condition = None
       if split_end_condition is not None:
          if not isinstance(split_end_condition, dict):
-            raise InvalidParameter("split end condition must be an instance of dict")
+            raise SDBTypeError("split end condition must be an instance of dict")
          bson_end_condition = bson.BSON.encode(split_end_condition)
 
       try:
@@ -170,7 +170,7 @@ class collection(object):
                                                  bson_split_condition,
                                                  bson_end_condition)
          pysequoiadb._raise_if_error("Failed to split", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def split_by_percent(self, source_group_name, target_group_name, percent):
@@ -183,21 +183,21 @@ class collection(object):
          target_group_name  str      The target replica group name.
          percent	          float    The split percent, Range:(0,100]
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(source_group_name, basestring):
-         raise InvalidParameter("source group name must be an instance of basestring")
+         raise SDBTypeError("source group name must be an instance of basestring")
       if not isinstance(target_group_name, basestring):
-         raise InvalidParameter("target group name must be an instance of basestring")
+         raise SDBTypeError("target group name must be an instance of basestring")
       if not isinstance(percent, float):
-         raise InvalidParameter("precent must be an instance of float")
+         raise SDBTypeError("precent must be an instance of float")
 
       try:
          rc = sdbcl.split_by_percent(self._cl, source_group_name,
                                                target_group_name, percent)
          pysequoiadb._raise_if_error("Failed to split by precent", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def split_async_by_condition(self, source_group_name, target_group_name,
@@ -226,24 +226,24 @@ class collection(object):
       Return values:
          task id
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(source_group_name, basestring):
-         raise InvalidParameter("source group name must be an instance of basestring")
+         raise SDBTypeError("source group name must be an instance of basestring")
       if not isinstance(target_group_name, basestring):
-         raise InvalidParameter("target group name must be an instance of basestring")
+         raise SDBTypeError("target group name must be an instance of basestring")
 
       bson_split_condition = None
       if split_condition is not None:
          if not isinstance(split_condition, dict):
-            raise InvalidParameter("split condition must be an instance of dict")
+            raise SDBTypeError("split condition must be an instance of dict")
          bson_split_condition = bson.BSON.encode(split_condition)
 
       bson_end_condition = None
       if split_end_condition is not None:
          if not isinstance(split_end_condition, dict):
-            raise InvalidParameter("split end condition must be an instance of dict")
+            raise SDBTypeError("split end condition must be an instance of dict")
          bson_end_condition = bson.BSON.encode(split_end_condition)
 
       try:
@@ -254,7 +254,7 @@ class collection(object):
                                                       bson_end_condition)
          pysequoiadb._raise_if_error("Failed to split async", rc)
 
-      except SequoiaDBError:
+      except SDBBaseError:
          task_id = 0
          raise
 
@@ -273,15 +273,15 @@ class collection(object):
       Return values:
          task id
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(source_group_name, basestring):
-         raise InvalidParameter("source group name must be an instance of basestring")
+         raise SDBTypeError("source group name must be an instance of basestring")
       if not isinstance(target_group_name, basestring):
-         raise InvalidParameter("target group name must be an instance of basestring")
+         raise SDBTypeError("target group name must be an instance of basestring")
       if not isinstance(percent, float):
-         raise InvalidParameter("percent must be an instance of float")
+         raise SDBTypeError("percent must be an instance of float")
 
       try:
          rc, task_id = sdbcl.splite_async_by_percent(self._cl,
@@ -289,7 +289,7 @@ class collection(object):
                                                      target_group_name,
                                                      percent)
          pysequoiadb._raise_if_error("Failed to split async", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          task_id = 0
          raise
 
@@ -303,27 +303,27 @@ class collection(object):
          flags       int        0 or 1, see Info as below.
          records     list/tuple The list of inserted records.
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       Info:
          flags : 0 or 1. 
          0 : stop insertting record when an error occurred
          1 : continue insertting records even though error occurred
       """
       if not isinstance(flags, int):
-         raise InvalidParameter("flags must be an instance of int")
+         raise SDBTypeError("flags must be an instance of int")
 
       container = []
       for elem in records :
          if not isinstance(elem, dict):
-            raise InvalidParameter("record must be an instance of dict")
+            raise SDBTypeError("record must be an instance of dict")
          record = bson.BSON.encode( elem )
          container.append( record )
 
       try:
          rc = sdbcl.bulk_insert(self._cl, flags, container)
          pysequoiadb._raise_if_error("Failed to insert records", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def insert(self, record):
@@ -335,17 +335,17 @@ class collection(object):
       Return values:
          ObjectId of record inserted
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(record, dict):
-         raise InvalidParameter("record must be an instance of dict")
+         raise SDBTypeError("record must be an instance of dict")
 
       bson_record = bson.BSON.encode(record)
       try:
          rc, id_str = sdbcl.insert(self._cl, bson_record)
          pysequoiadb._raise_if_error("Failed to insert record", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
       oid = bson.ObjectId(id_str)
@@ -363,14 +363,14 @@ class collection(object):
          - hint      dict     The hint, automatically match the optimal hint
                                     if not provided
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       Note:
          It won't work to update the "ShardingKey" field, but the other fields
                take effect.
       """
       if not isinstance(rule, dict):
-         raise InvalidParameter("rule must be an instance of dict")
+         raise SDBTypeError("rule must be an instance of dict")
 
       bson_rule = bson.BSON.encode(rule)
       bson_condition = None
@@ -378,17 +378,17 @@ class collection(object):
 
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
-            raise InvalidParameter("condition in kwargs must be an instance of dict")
+            raise SDBTypeError("condition in kwargs must be an instance of dict")
          bson_condition = bson.BSON.encode(kwargs.get("condition"))
       if "hint" in kwargs:
          if not isinstance(kwargs.get("hint"), dict):
-            raise InvalidParameter("hint in kwargs must be an instance of dict")
+            raise SDBTypeError("hint in kwargs must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
 
       try:
          rc = sdbcl.update(self._cl, bson_rule, bson_condition, bson_hint)
          pysequoiadb._raise_if_error("Failed to update", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def upsert(self, rule, **kwargs):
@@ -404,14 +404,14 @@ class collection(object):
          - hint      dict  The hint, automatically match the optimal hint
                                  if not provided
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       Note:
          It won't work to update the "ShardingKey" field, but the other fields
                take effect.
       """
       if not isinstance(rule, dict):
-         raise InvalidParameter("rule must be an instance of dict")
+         raise SDBTypeError("rule must be an instance of dict")
       bson_rule = bson.BSON.encode(rule)
 
       bson_condition = None
@@ -419,17 +419,17 @@ class collection(object):
 
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
-            raise InvalidParameter("condition must be an instance of dict")
+            raise SDBTypeError("condition must be an instance of dict")
          bson_condition = bson.BSON.encode(kwargs.get("condition"))
       if "hint" in kwargs:
          if not isinstance(kwargs.get("hint"), dict):
-            raise InvalidParameter("hint must be an instance of dict")
+            raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
 
       try:
          rc = sdbcl.upsert(self._cl, bson_rule, bson_condition, bson_hint)
          pysequoiadb._raise_if_error("Failed to update", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def delete(self, **kwargs):
@@ -443,25 +443,25 @@ class collection(object):
          - hint      dict  The hint, automatically match the optimal hint
                                  if not provided
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       bson_condition = None
       bson_hint = None
 
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
-            raise InvalidParameter("condition must be an instance of dict")
+            raise SDBTypeError("condition must be an instance of dict")
          bson_condition = bson.BSON.encode(kwargs.get("condition"))
       if "hint" in kwargs:
          if not isinstance(kwargs.get("hint"), dict):
-            raise InvalidParameter("hint must be an instance of dict")
+            raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
 
       try:
          rc = sdbcl.delete(self._cl, bson_condition, bson_hint)
          pysequoiadb._raise_if_error("Failed to delete", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def query(self, **kwargs):
@@ -486,8 +486,8 @@ class collection(object):
       Return values:
          a cursor object of query
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
 
       bson_condition = None
@@ -500,28 +500,28 @@ class collection(object):
 
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
-            raise InvalidParameter("condition must be an instance of dict")
+            raise SDBTypeError("condition must be an instance of dict")
          bson_condition = bson.BSON.encode(kwargs.get("condition"))
       if "selector" in kwargs:
          if not isinstance(kwargs.get("selector"), dict):
-            raise InvalidParameter("selector must be an instance of dict")
+            raise SDBTypeError("selector must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("selector"))
       if "order_by" in kwargs:
          if not isinstance(kwargs.get("order_by"), dict):
-            raise InvalidParameter("order_by must be an instance of dict")
+            raise SDBTypeError("order_by must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("order_by"))
       if "hint" in kwargs:
          if not isinstance(kwargs.get("hint"), dict):
-            raise InvalidParameter("hint must be an instance of dict")
+            raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
       if "num_to_skip" in kwargs:
          if not isinstance(kwargs.get("num_to_skip"), long):
-            raise InvalidParameter("num_to_skip must be an instance of long")
+            raise SDBTypeError("num_to_skip must be an instance of long")
          else:
             num_to_return = kwargs.get("num_to_skip")
       if "num_to_return" in kwargs:
          if not isinstance(kwargs.get("num_to_return"), long):
-            raise InvalidParameter("num_to_return must be an instance of long")
+            raise SDBTypeError("num_to_return must be an instance of long")
          else:
             num_to_return = kwargs.get("num_to_return")
 
@@ -532,7 +532,7 @@ class collection(object):
                           bson_order_by, bson_hint,
                           num_to_skip, num_to_return)
          pysequoiadb._raise_if_error("Failed to query", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del result
          result = None
          raise
@@ -552,17 +552,17 @@ class collection(object):
                                   element is meaningful when isUnique is set to
                                   true.
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(index_def, dict):
-         raise InvalidParameter("index definition must be an instance of dict")
+         raise SDBTypeError("index definition must be an instance of dict")
       if not isinstance(idx_name, basestring):
-         raise InvalidParameter("index name must be an instance of basestring")
+         raise SDBTypeError("index name must be an instance of basestring")
       if not isinstance(is_unique, bool):
-         raise InvalidParameter("is_unique must be an instance of bool")
+         raise SDBTypeError("is_unique must be an instance of bool")
       if not isinstance(is_enforced, bool):
-         raise InvalidParameter("is_enforced must be an instance of bool")
+         raise SDBTypeError("is_enforced must be an instance of bool")
 
       unique = 0
       enforce = 0
@@ -577,7 +577,7 @@ class collection(object):
          rc = sdbcl.create_index(self._cl, bson_index_def, idx_name,
                                            is_unique, is_enforced)
          pysequoiadb._raise_if_error("Failed to create index", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def get_indexes(self, idx_name = None):
@@ -590,11 +590,11 @@ class collection(object):
       Return values:
          a cursor object of result
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if idx_name is not None and not isinstance(idx_name, basestring):
-         raise InvalidParameter("index name must be an instance of basestring")
+         raise SDBTypeError("index name must be an instance of basestring")
       if idx_name is None:
          idx_name = ""
 
@@ -602,7 +602,7 @@ class collection(object):
          result = cursor()
          rc = sdbcl.get_index(self._cl, result._cursor, idx_name)
          pysequoiadb._raise_if_error("Failed to get indexes", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del result
          result = None
          raise
@@ -616,16 +616,16 @@ class collection(object):
          Name         Type  Info:
          idx_name     str   The index name.
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(idx_name, basestring):
-         raise InvalidParameter("index name must be an instance of basestring")
+         raise SDBTypeError("index name must be an instance of basestring")
 
       try:
          rc = sdbcl.drop_index(self._cl, idx_name)
          pysequoiadb._raise_if_error("Failed to drop index", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def get_collection_name(self):
@@ -634,12 +634,12 @@ class collection(object):
       Return values:
          The name of specified collection
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, cl_name = sdbcl.get_collection_name(self._cl)
          pysequoiadb._raise_if_error("Failed to get collection name", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
       return cl_name
@@ -650,12 +650,12 @@ class collection(object):
       Return values:
          The name of current collection space
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, cs_name = sdbcl.get_collection_space_name(self._cl)
          pysequoiadb._raise_if_error("Failed to get collection space name", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
       return cs_name
@@ -666,12 +666,12 @@ class collection(object):
       Return values:
          The full name of current collection
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, full_name = sdbcl.get_full_name(self._cl)
          pysequoiadb._raise_if_error("Failed to get full name", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
       return full_name
@@ -691,15 +691,15 @@ class collection(object):
       Return values:
          a cursor object of result
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstace(aggregate_options, list):
-         raise InvalidParameter("aggregate options must be an instance of list")
+         raise SDBTypeError("aggregate options must be an instance of list")
 
       container = []
       for option in aggregate_options :
          if not isinstace(option, dict):
-            raise InvalidParameter("options must be an instance of dict")
+            raise SDBTypeError("options must be an instance of dict")
          bson_option = bson.BSON.encode( option )
          container.append( bson_option )
 
@@ -707,7 +707,7 @@ class collection(object):
          result = cursor()
          rc = sdbcl.aggregate(self._cl, result._cursor, container)
          pysequoiadb._raise_if_error("Failed to aggregate", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del result
          result = None
          raise
@@ -737,20 +737,20 @@ class collection(object):
       Return values:
          a cursor object of query
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       num_to_skip = 0L
       num_to_return = -1L
 
       if "num_to_skip" in kwargs:
          if not isinstance(kwargs.get("num_to_skip"), long):
-            raise InvalidParameter("number to skip must be an instance of long")
+            raise SDBTypeError("number to skip must be an instance of long")
          else:
             num_to_skip = kwargs.get("num_to_skip")
       if "num_to_return" in kwargs:
          if not isinstance(kwargs.get("num_to_return"), long):
-            raise InvalidParameter("number to return must be an instance of long")
+            raise SDBTypeError("number to return must be an instance of long")
          else:
             num_to_return = kwargs.get("num_to_return")
 
@@ -759,15 +759,15 @@ class collection(object):
       bson_hint = None
       if "condition" in kwargs:
          if not isinstance(kwargs.get("condition"), dict):
-            raise InvalidParameter("condition must be an instance of dict")
+            raise SDBTypeError("condition must be an instance of dict")
          bson_condition = bson.BSON.encode(kwargs.get("condition"))
       if "order_by" in kwargs:
          if not isinstance(kwargs.get("order_by"), dict):
-            raise InvalidParameter("order_by must be an instance of dict")
+            raise SDBTypeError("order_by must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("order_by"))
       if "hint" in kwargs:
          if not isinstance(kwargs.get("hint"), dict):
-            raise InvalidParameter("hint must be an instance of dict")
+            raise SDBTypeError("hint must be an instance of dict")
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
 
       try:
@@ -775,7 +775,7 @@ class collection(object):
          rc = sdbcl.get_query_meta(self._cl, result._cursor, condition,
                                 order_by, hint, num_to_skip, num_to_return)
          pysequoiadb._raise_if_error("Failed to query meta", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del result
          result = None
          raise
@@ -791,14 +791,14 @@ class collection(object):
          options         dict  he low boudary and up boudary
                                      eg: {"LowBound":{a:1},"UpBound":{a:100}}
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(cl_full_name, basestring):
-         raise InvalidParameter("full name of subcollection must be \
+         raise SDBTypeError("full name of subcollection must be \
                           an instance of basestring")
       if not isinstance(options, dict):
-         raise InvalidParameter("options must be an instance of basestring")
+         raise SDBTypeError("options must be an instance of basestring")
 
       bson_options = None
       if options is not None:
@@ -807,7 +807,7 @@ class collection(object):
       try:
          rc = sdbcl.attach_collection(self._cl, cl_full_name, bson_options)
          pysequoiadb._raise_if_error("Failed to attach collection", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def detach_collection(self, sub_cl_full_name):
@@ -817,14 +817,14 @@ class collection(object):
          Name            Type  Info:
          subcl_full_name str   The name fo the subcollection.
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(sub_cl_full_name, basestring):
-         raise InvalidParameter("name of subcollection must be an instance of basestring")
+         raise SDBTypeError("name of subcollection must be an instance of basestring")
 
       try:
          rc = sdbcl.detach_collection(self._cl, sub_cl_full_name)
          pysequoiadb._raise_if_error("Failed to detach collection", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise

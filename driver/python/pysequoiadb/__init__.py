@@ -41,8 +41,14 @@
 from bson.son import SON
 
 from pysequoiadb.client import client
-from pysequoiadb.common import const
-from pysequoiadb.error import (InvalidParameter, SequoiaDBError)
+from pysequoiadb.common import (const, get_info)
+from pysequoiadb.error import (SDBTypeError,
+                               SDBBaseError,
+                               SDBIOError,
+                               SDBNetworkError,
+                               SDBInvalidValue,
+                               SDBSystemError,
+                               SDBUnknownError)
 
 import sys
 try:
@@ -60,6 +66,31 @@ PY3 = sys.version_info[0] == 3
 driver_version = get_version()
 """Current version of python driver for SequoiaDB."""
 
+io_error      = [ const.SDB_IO,
+                  const.SDB_FNE,
+                  const.SDB_FE,
+                  const.SDB_NOSPC ]
+
+net_error     = [ const.SDB_NETWORK,
+                  const.SDB_NETWORK_CLOSE,
+                  const.SDB_NET_ALREADY_LISTENED,
+                  const.SDB_NET_CANNOT_LISTEN,
+                  const.SDB_NET_CANNOT_CONNECT,
+                  const.SDB_NET_NOT_CONNECT,
+                  const.SDB_NET_SEND_ERR,
+                  const.SDB_NET_TIMER_ID_NOT_FOUND,
+                  const.SDB_NET_ROUTE_NOT_FOUND,
+                  const.SDB_NET_BROKEN_MSG,
+                  const.SDB_NET_INVALID_HANDLE ]
+
+invalid_error = [ const.SDB_INVALIDARG,
+                  const.SDB_INVALIDSIZE,
+                  const.SDB_INVALIDPATH,
+                  const.SDB_INVALID_FILE_TYPE ]
+
+system_error  = [ const.SDB_OOM,
+                  cosnt.SDB_SYS ]
+
 def _print(what):
    if PY3:
       print(what)
@@ -67,15 +98,21 @@ def _print(what):
       print what
 
 def _raise_if_error(msg, rc):
-   """Check return value, raise a SequoiaDBError if error occurred.
+   """Check return value, raise a SDBBaseError if error occurred.
    """
-   if msg is None:
-      msg = "  Error code: "
    if const.SDB_OK != rc:
-      raise SequoiaDBError(msg, rc)
-   
-def _getErr(rc):
-   """Display error message of code specified
+      try:
+         _ = get_info(rc)
+      except KeyError:
+         raise SDBUnknownError(msg)
 
-   """
-   return SequoiaDBError(" ", rc)
+      if rc in io_error:
+         raise SDBIOError(msg, rc)
+      elif rc in net_error:
+         raise SDBNetworkError(msg, rc)
+      elif rc in invalid_error:
+         raise InvalidParameter(msg, rc)
+      elif rc in system_error:
+         raise SDBSystemError(msg, rc)
+      else:
+         raise SDBError(msg, rc)

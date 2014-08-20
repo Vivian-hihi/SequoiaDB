@@ -29,7 +29,7 @@ from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb import error
 from pysequoiadb.common import const
-from pysequoiadb.error import (SequoiaDBError, InvalidParameter)
+from pysequoiadb.error import (SDBBaseError, SDBTypeError)
 
 class collectionspace(object):
    """CollectionSpace for SequoiaDB
@@ -63,26 +63,26 @@ class collectionspace(object):
       """invoked when a new object is producted.
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       #'cs' is short for collection space
       try:
          self._cs = sdbcs.create_cs()
       except SystemError:
-         raise SequoiaDBError("Failed to alloc collection space", const.SDB_OOM)
+         raise SDBBaseError("Failed to alloc collection space", const.SDB_OOM)
 
    def __del__(self):
       """delete a object existed.
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       if self._cs is not None:
          try:
             rc = sdbcs.release_cs(self._cs)
             pysequoiadb._raise_if_error("Failed to release collection space",
                                         rc)
-         except SequoiaDBError:
+         except SDBBaseError:
             raise
          self._cs = None
 
@@ -105,7 +105,7 @@ class collectionspace(object):
          if success, a collection object will be returned.
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       if '__members__' == name or '__methods__' == name:
          pass
@@ -115,7 +115,7 @@ class collectionspace(object):
             rc = sdbcs.get_collection(self._cs, name, cl._cl)
             pysequoiadb._raise_if_error("Failed to get collection: %s" %
                                         name, rc)
-         except SequoiaDBError:
+         except SDBBaseError:
             del cl;
             cl = None
             raise
@@ -131,7 +131,7 @@ class collectionspace(object):
          cl = cs['test_cl']   # access to collection named 'test_cl'.
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       return self.__getattr__(name)
 
@@ -144,18 +144,18 @@ class collectionspace(object):
       Return values:
          a collection object of query
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(cl_name, basestring):
-         raise InvalidParameter("collection must be an instance of basestring")
+         raise SDBTypeError("collection must be an instance of basestring")
 
       try:
          cl = collection()
          rc = sdbcs.get_collection(self._cs, cl_name, cl._cl)
          pysequoiadb._raise_if_error("Failed to get collection: %s" %
                                      cl_name, rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del cl
          cl = None
          raise
@@ -174,16 +174,16 @@ class collectionspace(object):
       Return values:
          a collection object created
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(cl_name, basestring):
-         raise InvalidParameter("collection must be an instance of basestring")
+         raise SDBTypeError("collection must be an instance of basestring")
 
       bson_options = None
       if options is not None:
          if not isinstance(options, dict):
-            raise InvalidParameter("options must be an instance of dict")
+            raise SDBTypeError("options must be an instance of dict")
          bson_options = bson.BSON.encode(options)
 
       try:
@@ -194,7 +194,7 @@ class collectionspace(object):
             rc = sdbcs.create_collection_use_opt(self._cs, cl_name,
                                                  bson_options, cl._cl)
          pysequoiadb._raise_if_error("Failed to create collection", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del cl
          cl = None
          raise
@@ -208,16 +208,16 @@ class collectionspace(object):
          Name      Type     Info:
          cl_name   str      The collection name.
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(cl_name, basestring):
-         raise InvalidParameter("collection must be an instance of basestring")
+         raise SDBTypeError("collection must be an instance of basestring")
 
       try:
          rc = sdbcs.drop_collection(self._cs, cl_name)
          pysequoiadb._raise_if_error("Failed to drop collection", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def get_collection_space_name(self):
@@ -226,12 +226,12 @@ class collectionspace(object):
       Return values:
          The name of current collection space.
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, cs_name = sdbcs.get_collection_space_name(self._cs)
          pysequoiadb._raise_if_error("Failed to get collection space name", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
       return cs_name

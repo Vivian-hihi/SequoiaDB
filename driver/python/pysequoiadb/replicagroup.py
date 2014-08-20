@@ -30,7 +30,7 @@ import pysequoiadb
 from pysequoiadb.replicanode import replicanode
 from pysequoiadb.common import const
 from pysequoiadb import common
-from pysequoiadb.error import (SequoiaDBError, InvalidParameter)
+from pysequoiadb.error import (SDBBaseError, SDBTypeError)
 
 class replicagroup(object):
    """Replica group of SequoiaDB
@@ -63,26 +63,26 @@ class replicagroup(object):
       """constructor of replica group
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
 
       self._client = client
       try:
          self._group = sdbreplicagroup.create_replicagroup()
       except SystemError:
-         raise SequoiaDBError("Failed to alloc replica group", const.SDB_OOM)
+         raise SDBBaseError("Failed to alloc replica group", const.SDB_OOM)
 
    def __del__(self):
       """release replica group object
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       if self._group is not None:
          try:
             rc = sdbreplicagroup.release_replicagroup(self._group)
             pysequoiadb._raise_if_error("Failed to release replica group", rc)
-         except SequoiaDBError:
+         except SDBBaseError:
             raise
          self._group = None
 
@@ -97,8 +97,8 @@ class replicagroup(object):
       Return values:
          the count of node
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       Info:
          flags : 0 or 1. 
              0 : count of all node
@@ -107,15 +107,15 @@ class replicagroup(object):
              3 : count of unknown node
       """
       if not isinstance(nodestatus, int):
-         raise InvalidParameter("nodestatus be an instance of int")
+         raise SDBTypeError("nodestatus be an instance of int")
 
       if nodestatus not in common.NODE_STATUS.available_options() :
-         raise InvalidParameter("nodestatus invalid")
+         raise SDBTypeError("nodestatus invalid")
 
       try:
          rc, nodenum = sdbreplicagroup.get_nodenum(self._group, nodestatus)
          pysequoiadb._raise_if_error("Failed to get count of node", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
           nodenum = 0
           raise
 
@@ -127,12 +127,12 @@ class replicagroup(object):
       Return values:
          a dict object of query
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, bson_string = sdbreplicagroup.get_detail(self._group)
          pysequoiadb._raise_if_error("Failed to get detail", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          detail=None
          raise
 
@@ -146,13 +146,13 @@ class replicagroup(object):
       Return values:
          a replicanode object of query
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          node = replicanode(self._client)
          rc = sdbreplicagroup.get_master(self._group, node._node)
          pysequoiadb._raise_if_error("Failed to get master", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del node
          node = None
          raise
@@ -166,13 +166,13 @@ class replicagroup(object):
       Return values:
          a replicanode object of query
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          node = replicanode(self._client)
          rc = sdbreplicagroup.get_slave(self._group, node._node)
          pysequoiadb._raise_if_error("Failed to get slave", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del node
          node = None
          raise
@@ -189,20 +189,20 @@ class replicagroup(object):
       Return values:
          a replicanode object of query
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isintance(hostname, basestring):
-         raise InvalidParameter("hostname must be an instance of basestring")
+         raise SDBTypeError("hostname must be an instance of basestring")
       if not isintance(servicename, basestring):
-         raise InvalidParameter("servicename must be an instance of basestring")
+         raise SDBTypeError("servicename must be an instance of basestring")
 
       try:
          node = replicanode(self._client)
          rc = sdbreplicagroup.get_nodebyendpoint(self._group, node._node,
                                                  hostname, servicename)
          pysequoiadb._raise_if_error("Failed to get node", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del node
          node = None
          raise
@@ -218,17 +218,17 @@ class replicagroup(object):
       Return values:
          a replicanode object of query
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isintance(nodename, basestring):
-         raise InvalidParameter("nodename must be an instance of basestring")
+         raise SDBTypeError("nodename must be an instance of basestring")
 
       try:
          node = replicanode(self._client)
          rc = sdbreplicagroup.get_nodebyname(self._group, node._node, nodename)
          pysequoiadb._raise_if_error("Failed to get node", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          del node
          node = None
          raise
@@ -245,17 +245,17 @@ class replicagroup(object):
          dbpath       str      The database path for the node.
          config       dict     The configurations for the node.
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(hostname, basestring):
-         raise InvalidParameter("host must be an instance of basestring")
+         raise SDBTypeError("host must be an instance of basestring")
       if not isinstance(servicename, basestring):
-         raise InvalidParameter("service name must be an instance of basestring")
+         raise SDBTypeError("service name must be an instance of basestring")
       if not isinstance(dbpath, basestring):
-         raise InvalidParameter("path must be an instance of basestring")
+         raise SDBTypeError("path must be an instance of basestring")
       if config is not None and not isinstance(config, dict):
-         raise InvalidParameter("config must be an instance of dict")
+         raise SDBTypeError("config must be an instance of dict")
 
       if config is None:
          config = {}
@@ -264,7 +264,7 @@ class replicagroup(object):
          rc = sdbreplicagroup.create_node(self._group, hostname, servicename,
                                           dbpath, config)
          pysequoiadb._raise_if_error("Failed to create node", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def remove_node(self, hostname, servicename, config = None):
@@ -276,15 +276,15 @@ class replicagroup(object):
          servicename  str      The servicename for the node.
          config       dict     The configurations for the node.
       Exceptions:
-         pysequoiadb.error.InvalidParameter
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
       """
       if not isinstance(hostname, basestring):
-         raise InvalidParameter("host must be an instance of basestring")
+         raise SDBTypeError("host must be an instance of basestring")
       if not isinstance(servicename, basestring):
-         raise InvalidParameter("service name must be an instance of basestring")
+         raise SDBTypeError("service name must be an instance of basestring")
       if config is not None and not isinstance(config, dict):
-         raise InvalidParameter("config must be an instance of dict")
+         raise SDBTypeError("config must be an instance of dict")
 
       try:
          if config is not None:
@@ -294,31 +294,31 @@ class replicagroup(object):
          else:
             rc = sdbreplicagroup.remove_node(self._group, hostname, servicename)
          pysequoiadb._raise_if_error("Failed to remove node", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def start(self):
       """Start up current replica group.
       
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc = sdbreplicagroup.start(self._group)
          pysequoiadb._raise_if_error("Failed to start", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def stop(self):
       """Stop current replica group.
       
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc = sdbreplicagroup.stop(self._group)
          pysequoiadb._raise_if_error("Failed to stop", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def is_catalog(self):
@@ -327,7 +327,7 @@ class replicagroup(object):
       Return values:
          bool
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc = sdbreplicagroup.is_catalog(self._group)
@@ -340,7 +340,7 @@ class replicagroup(object):
             iscatalog = False
 
          pysequoiadb._raise_if_error("Failed to get catalog info", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
       return iscatalog

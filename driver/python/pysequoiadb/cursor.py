@@ -23,7 +23,7 @@ except ImportError:
 import bson
 import pysequoiadb
 from pysequoiadb.common import const
-from pysequoiadb.error import SequoiaDBError
+from pysequoiadb.error import SDBBaseError
 
 class cursor(object):
    """Cursor of SequoiaDB
@@ -56,25 +56,25 @@ class cursor(object):
       """constructor of cursor
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       self._cursor = None
       try:
          self._cursor = sdbcursor.create_cursor()
       except SystemError:
-         raise SequoiaDBError("Failed to alloc cursor", const.SDB_OOM)
+         raise SDBBaseError("Failed to alloc cursor", const.SDB_OOM)
 
    def __del__(self):
       """release cursor
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       if self._cursor is not None:
          try:
             rc = sdbcursor.release_cursor(self._cursor)
             pysequoiadb._raise_if_error("Failed to release cursor", rc)
-         except SequoiaDBError:
+         except SDBBaseError:
             raise
          self._cursor = None
 
@@ -84,7 +84,7 @@ class cursor(object):
       Return values:
          an dict object of record
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, bson_string = sdbcursor.next(self._cursor)
@@ -92,11 +92,11 @@ class cursor(object):
             if const.SDB_DMS_EOC == rc:
                record = None
             else:
-               raise SequoiaDBError("Failed to get next record", rc)
+               raise SDBBaseError("Failed to get next record", rc)
          else:
             record, size = bson._bson_to_dict(bson_string, dict, False,
                                               bson.OLD_UUID_SUBTYPE, True)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
       return rc, record
@@ -107,7 +107,7 @@ class cursor(object):
       Return values:
          an dict object of record
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, bson_string = sdbcursor.current(self._cursor)
@@ -115,11 +115,11 @@ class cursor(object):
             if const.SDB_DMS_EOC == rc:
                record = None
             else:
-               raise SequoiaDBError("Failed to get current record", rc)
+               raise SDBBaseError("Failed to get current record", rc)
          else:
             record, size = bson._bson_to_dict(bson_string, dict, False,
                                            bson.OLD_UUID_SUBTYPE, True)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
       return rc, record
@@ -129,10 +129,10 @@ class cursor(object):
          get data again.
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc = sdbcursor.close(self._cursor)
          pysequoiadb._raise_if_error("Failed to close cursor", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise

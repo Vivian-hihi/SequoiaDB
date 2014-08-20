@@ -25,7 +25,7 @@ except ImportError:
 
 import pysequoiadb
 from pysequoiadb.common import const
-from pysequoiadb.error import SequoiaDBError
+from pysequoiadb.error import SDBBaseError
 
 class replicanode(object):
    """Replica Node of SequoiaDB
@@ -58,25 +58,25 @@ class replicanode(object):
       """constructor of replica node
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       self._client = client
       try:
          self._node = sdbreplicanode.create_node()
       except SystemError:
-         raise SequoiaDBError("Failed to alloc node", const.SDB_OOM)
+         raise SDBBaseError("Failed to alloc node", const.SDB_OOM)
 
    def __del__(self):
       """release replica node
 
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       if self._node is not None:
          try:
             rc = sdbreplicanode.release_node(self._node)
             pysequoiadb._raise_if_error("Failed to release node", rc)
-         except SequoiaDBError:
+         except SDBBaseError:
             raise
          self._node = None
       self._client = None
@@ -85,12 +85,12 @@ class replicanode(object):
       """Connect to the current node.
       
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc = sdbreplicanode.connect(self._node, self._client)
          pysequoiadb._raise_if_error("Failed to connect", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def get_status(self):
@@ -99,12 +99,12 @@ class replicanode(object):
       Return values:
          the status of node
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, nodestatus = sdbreplicanode.get_status(self._node)
          pysequoiadb._raise_if_error("Failed to get node status", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
           raise
 
       return nodestatus
@@ -115,12 +115,12 @@ class replicanode(object):
       Return values:
          the name of host
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, hostname = sdbreplicanode.get_hostname(self._node)
          pysequoiadb._raise_if_error("Failed to get host name", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          hostname = None
          raise
 
@@ -132,12 +132,12 @@ class replicanode(object):
       Return values:
          the name of service
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, servicename = sdbreplicanode.get_servicename(self._node)
          pysequoiadb._raise_if_error("Failed to get service name", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          servicename = None
          raise
 
@@ -149,12 +149,12 @@ class replicanode(object):
       Return values:
          the name of node
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, nodename = sdbreplicanode.get_nodename(self._node)
          pysequoiadb._raise_if_error("Failed to get node name", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          nodename = None
          raise
 
@@ -164,22 +164,22 @@ class replicanode(object):
       """Stop the node.
       
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc = sdbreplicanode.stop(self._node)
          pysequoiadb._raise_if_error("Failed to stop node", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
 
    def start(self):
       """Start the node.
       
       Exceptions:
-         pysequoiadb.error.SequoiaDBError
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc = sdbreplicanode.start(self._node)
          pysequoiadb._raise_if_error("Filed to start node", rc)
-      except SequoiaDBError:
+      except SDBBaseError:
          raise
