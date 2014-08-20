@@ -46,13 +46,24 @@ namespace engine
    JS_CONSTRUCT_FUNC_DEFINE( _sptUsrOma, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptUsrOma, destruct )
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, toString)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, help)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, addCoord)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, removeCoord)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, startNode)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, stopNode)
 
    /*
       Function Map
    */
    JS_BEGIN_MAPPING( _sptUsrOma, "Oma" )
       JS_ADD_CONSTRUCT_FUNC( construct )
+      JS_ADD_DESTRUCT_FUNC(destruct)
       JS_ADD_MEMBER_FUNC("toString", toString)
+      JS_ADD_MEMBER_FUNC("help", help)
+      JS_ADD_MEMBER_FUNC("addCoord", addCoord)
+      JS_ADD_MEMBER_FUNC("removeCoord", removeCoord)
+      JS_ADD_MEMBER_FUNC("startNode", startNode)
+      JS_ADD_MEMBER_FUNC("stopNode", stopNode)
    JS_MAPPING_END()
 
    /*
@@ -103,7 +114,59 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _sptUsrOma::help( const _sptArguments & arg,
+                           _sptReturnVal & rval,
+                           BSONObj & detail )
+   {
+      stringstream ss ;
+      ss << "Oma functions:" << endl
+         << "   addCoord( svcname, dbpath, [config obj])" << endl
+         << "   removeCoord( svcname )" << endl
+         << "   startNode( svcname )" << endl
+         << "   stopNode( svcname )" << endl ;
+      rval.setStringVal( "", ss.str().c_str() ) ;
+      return SDB_OK ;
+   }
+
    INT32 _sptUsrOma::destruct()
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::addCoord( const _sptArguments & arg,
+                               _sptReturnVal & rval,
+                               BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+
+      // TODO:XUJIANHUI
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrOma::removeCoord( const _sptArguments & arg,
+                                  _sptReturnVal & rval,
+                                  BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::startNode( const _sptArguments & arg,
+                                _sptReturnVal & rval,
+                                BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::stopNode( const _sptArguments & arg,
+                               _sptReturnVal & rval,
+                               BSONObj & detail )
    {
       // TODO:XUJIANHUI
       return SDB_OK ;

@@ -61,6 +61,26 @@ namespace engine
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
+      INT32 help( const _sptArguments &arg,
+                  _sptReturnVal &rval,
+                  bson::BSONObj &detail ) ;
+
+      INT32 addCoord( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
+      INT32 removeCoord( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
+
+      INT32 startNode( const _sptArguments &arg,
+                       _sptReturnVal &rval,
+                       bson::BSONObj &detail ) ;
+
+      INT32 stopNode( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
    private:
       sptUsrOmaAssit          _assit ;
       string                  _hostname ;
