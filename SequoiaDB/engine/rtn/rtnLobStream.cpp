@@ -143,6 +143,7 @@ namespace engine
          }
          else
          {
+            PD_LOG( PDERROR, "lob[%s] does not exist", oid.str().c_str() ) ;
             goto error ;
          }
       }

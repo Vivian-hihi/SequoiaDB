@@ -31,7 +31,7 @@ void insert_1()
    rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
    ASSERT_TRUE( SDB_OK == rc ) ;
 
-   const UINT32 putNum = 100 ;
+   const UINT32 putNum = 1000 ;
    bson_oid_t oids[putNum] ;
    const UINT32 bufSize = 1231 ;
    CHAR buf[bufSize] = { 0 } ;
@@ -54,11 +54,13 @@ void insert_1()
    CHAR buf2[bufSize] = { 0 } ;
    for ( UINT32 i = 0 ; i < putNum ; ++i )
    {
+      CHAR tmp[25] ;
+      bson_oid_to_string( &( oids[i]), tmp ) ;
+//      cout << "query:" << tmp << endl ;
+
       rc = sdbOpenLob( cl, &( oids[i] ), SDB_LOB_READ, &lob ) ;
       if ( SDB_OK != rc )
       {
-         CHAR tmp[25] ;
-         bson_oid_to_string( &( oids[i]), tmp ) ;
          cout << tmp << endl ;
          ASSERT_TRUE( FALSE ) ;
       }
@@ -67,9 +69,7 @@ void insert_1()
       ASSERT_TRUE( SDB_OK == rc ) ;
       if ( bufSize != lobSize )
       {
-         CHAR tmp[25] ;
-         bson_oid_to_string( &( oids[i]), tmp ) ;
-         cout << tmp << endl ;
+         cout << tmp << " " << lobSize << endl ;
          ASSERT_TRUE( FALSE ) ;
       }
       UINT32 readSize = 0 ;
@@ -79,8 +79,6 @@ void insert_1()
       memset( buf2, 'a' + i, bufSize ) ;
       if ( 0 != memcmp(buf, buf2, bufSize ) )
       {
-         CHAR tmp[25] ;
-         bson_oid_to_string( &( oids[i]), tmp ) ;
          cout << tmp << endl ;
          ASSERT_TRUE( FALSE ) ;
       }
@@ -278,6 +276,97 @@ TEST(lobTest, seek_1)
    ASSERT_TRUE( SDB_OK == rc ) ;
    rc = sdbRemoveLob( cl, &oid ) ;
    ASSERT_TRUE( SDB_OK == rc ) ;
+}
+
+void remove_1()
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+   bson_oid_t oid ;
+
+   rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+
+   rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
+   ASSERT_TRUE( SDB_OK == rc ) ;
+
+   const UINT32 putNum = 1000 ;
+   bson_oid_t oids[putNum] ;
+   const UINT32 bufSize = 1231 ;
+   CHAR buf[bufSize] = { 0 } ;
+
+   for ( UINT32 i = 0 ; i < putNum ; ++i )
+   {
+      bson_oid_gen( &oid ) ;
+      rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+      oids[i] = oid ;
+      memset( buf, 'a' + i, bufSize ) ;
+      rc = sdbWriteLob( lob, buf, bufSize ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+      rc = sdbCloseLob( &lob ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+   }
+
+   cout << "write done" << endl ; 
+
+   CHAR buf2[bufSize] = { 0 } ;
+   for ( UINT32 i = 0 ; i < putNum ; ++i )
+   {
+      for ( UINT32 j = i ; j < putNum ; ++j )
+      {
+      CHAR tmp[25] ;
+      bson_oid_to_string( &( oids[j]), tmp ) ;
+      //cout << "query:" << tmp << endl ;
+
+      rc = sdbOpenLob( cl, &( oids[j] ), SDB_LOB_READ, &lob ) ;
+      if ( SDB_OK != rc )
+      {
+         cout << i << "," << j << "," << rc << " " << tmp << endl  ;
+         ASSERT_TRUE( FALSE ) ;
+      }
+      SINT64 lobSize = 0 ;
+      rc = sdbGetLobSize( lob, &lobSize ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+      if ( bufSize != lobSize )
+      {
+         cout << i << "," << j << "," << tmp << endl  ;
+
+         ASSERT_TRUE( FALSE ) ;
+      }
+      UINT32 readSize = 0 ;
+      rc = sdbReadLob( lob, bufSize, buf, &readSize ) ;
+      if ( SDB_OK != rc )
+      {
+         cout << i << "," << j << "," << tmp << endl  ;
+         ASSERT_TRUE( SDB_OK == rc ) ;
+      }
+      ASSERT_TRUE( readSize = bufSize ) ;
+      memset( buf2, 'a' + j, bufSize ) ;
+      if ( 0 != memcmp(buf, buf2, bufSize ) )
+      {
+         cout << tmp << endl ;
+         ASSERT_TRUE( FALSE ) ;
+      }
+      rc = sdbReadLob( lob, bufSize, buf, &readSize ) ;
+      ASSERT_TRUE( SDB_EOF == rc ) ;
+      rc = sdbCloseLob( &lob ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+      }
+
+      rc = sdbRemoveLob( cl, &( oids[i] ) ) ;
+      ASSERT_TRUE( SDB_OK == rc ) ;
+      CHAR tmp[25] ;
+      bson_oid_to_string( &( oids[i]), tmp ) ;
+      cout << "remove:" << tmp << endl ;
+   }
+}
+
+TEST(lobTest, remove_1)
+{
+   remove_1() ;
 }
 
 void multi_insert1()

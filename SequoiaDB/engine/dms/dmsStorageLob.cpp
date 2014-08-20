@@ -690,10 +690,26 @@ namespace engine
          }
       }
 
+      /// first page in bucket
       if ( DMS_LOB_INVALID_PAGEID == blk->_lastPageInBucket )
       {
          SDB_ASSERT( _dmsBME->_buckets[bucketNumber] == page, "must be this page" ) ;
-         _dmsBME->_buckets[bucketNumber] = DMS_LOB_INVALID_PAGEID ;
+         _dmsBME->_buckets[bucketNumber] = blk->_nextPageInBucket ;
+         if ( DMS_LOB_INVALID_PAGEID != blk->_nextPageInBucket )
+         {
+            _dmsLobDataMapBlk *nextBlk = NULL ;
+            ossValuePtr nextExtent = extentAddr( blk->_nextPageInBucket ) ;
+            if ( !nextExtent )
+            {
+               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
+                       blk->_nextPageInBucket ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            nextBlk = DMS_LOB_META( nextExtent ) ;
+            nextBlk->_lastPageInBucket = DMS_LOB_INVALID_PAGEID ;
+         }
       }
       else
       {
@@ -709,6 +725,22 @@ namespace engine
 
          lastBlk = DMS_LOB_META( lastExtent ) ;
          lastBlk->_nextPageInBucket = blk->_nextPageInBucket ;
+
+         if ( DMS_LOB_INVALID_PAGEID != blk->_nextPageInBucket )
+         {
+            _dmsLobDataMapBlk *nextBlk = NULL ;
+            ossValuePtr nextExtent = extentAddr( blk->_nextPageInBucket ) ;
+            if ( !nextExtent )
+            {
+               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
+                       blk->_nextPageInBucket ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            nextBlk = DMS_LOB_META( nextExtent ) ;
+            nextBlk->_lastPageInBucket = blk->_lastPageInBucket ;
+         }
       }
 
       _releaseSpace( page, 1 ) ;
