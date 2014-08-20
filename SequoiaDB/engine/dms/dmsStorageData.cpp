@@ -78,16 +78,17 @@ namespace engine
       ossStrncat( pBuffer, flagStr, bufSize - ossStrlen( pBuffer ) ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__MBFLAG2STRING, "mbFlag2String" )
    void mbFlag2String( UINT16 flag, CHAR * pBuffer, INT32 bufSize )
    {
+      PD_TRACE_ENTRY ( SDB__MBFLAG2STRING ) ;
       SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" ) ;
       ossMemset ( pBuffer, 0, bufSize ) ;
-
       // Free
       if ( DMS_IS_MB_FREE ( flag ) )
       {
          appendFlagString( pBuffer, bufSize, DMS_MB_FLAG_FREE_STR ) ;
-         return ;
+         goto done ;
       }
 
       // Used
@@ -169,12 +170,18 @@ namespace engine
       {
          appendFlagString( pBuffer, bufSize, DMS_MB_FLAG_UNKNOWN ) ;
       }
+   done :
+      PD_TRACE2 ( SDB__MBFLAG2STRING,
+                  PD_PACK_USHORT ( flag ),
+                  PD_PACK_STRING ( pBuffer ) ) ;
+      PD_TRACE_EXIT ( SDB__MBFLAG2STRING ) ;
    }
 
    #define DMS_MB_ATTR_COMPRESSED_STR                        "Compressed"
-
+   PD_TRACE_DECLARE_FUNCTION ( SDB__MBATTR2STRING, "mbAttr2String" )
    void mbAttr2String( UINT32 attributes, CHAR * pBuffer, INT32 bufSize )
    {
+      PD_TRACE_ENTRY ( SDB__MBATTR2STRING ) ;
       SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" ) ;
       ossMemset ( pBuffer, 0, bufSize ) ;
 
@@ -189,23 +196,35 @@ namespace engine
       {
          appendFlagString( pBuffer, bufSize, DMS_MB_FLAG_UNKNOWN ) ;
       }
+      PD_TRACE2 ( SDB__MBATTR2STRING,
+                  PD_PACK_UINT ( attributes ),
+                  PD_PACK_STRING ( pBuffer ) ) ;
+      PD_TRACE_EXIT ( SDB__MBATTR2STRING ) ;
    }
 
    /*
       _dmsMBContext implement
    */
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT, "_dmsMBContext::_dmsMBContext" )
    _dmsMBContext::_dmsMBContext ()
    {
+      PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT ) ;
       _reset () ;
+      PD_TRACE_EXIT ( SDB__DMSMBCONTEXT ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_DESC, "_dmsMBContext::~_dmsMBContext" )
    _dmsMBContext::~_dmsMBContext ()
    {
+      PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT_DESC ) ;
       _reset () ;
+      PD_TRACE_EXIT ( SDB__DMSMBCONTEXT_DESC ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT__RESET, "_dmsMBContext::_reset" )
    void _dmsMBContext::_reset ()
    {
+      PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT__RESET ) ;
       _mb            = NULL ;
       _mbStat        = NULL ;
       _latch         = NULL ;
@@ -213,6 +232,7 @@ namespace engine
       _mbID          = DMS_INVALID_MBID ;
       _mbLockType    = -1 ;
       _resumeType    = -1 ;
+      PD_TRACE_EXIT ( SDB__DMSMBCONTEXT__RESET ) ;
    }
 
    string _dmsMBContext::toString() const
@@ -235,41 +255,54 @@ namespace engine
       return ss.str() ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_PAUSE, "_dmsMBContext::pause" )
    INT32 _dmsMBContext::pause()
    {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT_PAUSE ) ;
       if ( SHARED == _mbLockType || EXCLUSIVE == _mbLockType )
       {
          _resumeType = _mbLockType ;
-         return mbUnlock() ;
+         rc = mbUnlock() ;
       }
-      return SDB_OK ;
+      PD_TRACE_EXITRC ( SDB__DMSMBCONTEXT_PAUSE, rc ) ;
+      return rc ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSMBCONTEXT_RESUME, "_dmsMBContext::resume" )
    INT32 _dmsMBContext::resume()
    {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__DMSMBCONTEXT_RESUME ) ;
       if ( SHARED == _resumeType || EXCLUSIVE == _resumeType )
       {
          INT32 lockType = _resumeType ;
          _resumeType = -1 ;
-         return mbLock( lockType ) ;
+         rc = mbLock( lockType ) ;
       }
-      return SDB_OK ;
+      PD_TRACE_EXITRC ( SDB__DMSMBCONTEXT_RESUME, rc ) ;
+      return rc ;
    }
 
    /*
       _dmsStorageData implement
    */
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA, "_dmsStorageData::_dmsStorageData" )
    _dmsStorageData::_dmsStorageData ( const CHAR *pSuFileName,
                                       dmsStorageInfo *pInfo )
    :_dmsStorageBase( pSuFileName, pInfo )
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA ) ;
       _pIdxSU           = NULL ;
       _logicalCSID      = 0 ;
       _CSID             = DMS_INVALID_SUID ;
+      PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_DESC, "_dmsStorageData::~_dmsStorageData" )
    _dmsStorageData::~_dmsStorageData ()
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_DESC ) ;
       _collectionNameMapCleanup() ;
 
       vector<dmsMBContext*>::iterator it = _vecContext.begin() ;
@@ -281,10 +314,13 @@ namespace engine
       _vecContext.clear() ;
 
       _pIdxSU = NULL ;
+      PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_DESC ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP, "_dmsStorageData::syncMemToMmap" )
    void _dmsStorageData::syncMemToMmap ()
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP ) ;
       // write total count to disk
       for ( UINT32 i = 0 ; i < DMS_MME_SLOTS ; ++i )
       {
@@ -301,6 +337,7 @@ namespace engine
                _mbStatInfo[i]._totalIndexFreeSpace ;
          }
       }
+      PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA_SYNCMEMTOMMAP ) ;
    }
 
    void _dmsStorageData::_attach( _dmsStorageIndex * pIndexSu )
@@ -341,11 +378,13 @@ namespace engine
       return rc ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONCREATE, "_dmsStorageData::_onCreate" )
    INT32 _dmsStorageData::_onCreate( OSSFILE * file, UINT64 curOffSet )
    {
       INT32 rc          = SDB_OK ;
       _dmsMME           = NULL ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONCREATE ) ;
       SDB_ASSERT( DMS_MME_OFFSET == curOffSet, "Offset is not MME offset" ) ;
 
       _dmsMME = SDB_OSS_NEW dmsMetadataManagementExtent ; 
@@ -369,6 +408,7 @@ namespace engine
       _dmsMME = NULL ;
 
    done:
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__ONCREATE, rc ) ;
       return rc ;
    error:
       if ( _dmsMME )
@@ -379,10 +419,12 @@ namespace engine
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONMAPMETA, "_dmsStorageData::_onMapMeta" )
    INT32 _dmsStorageData::_onMapMeta( UINT64 curOffSet )
    {
       INT32 rc = SDB_OK ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONMAPMETA ) ;
       // MME, 4MB
       rc = map ( DMS_MME_OFFSET, DMS_MME_SZ, (void**)&_dmsMME ) ;
       if ( rc )
@@ -411,29 +453,37 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__ONMAPMETA, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ONCLOSED, "_dmsStorageData::_onClosed" )
    void _dmsStorageData::_onClosed ()
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ONCLOSED ) ;
       // write total count to disk
       syncMemToMmap () ;
 
       _dmsMME     = NULL ;
+      PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA__ONCLOSED ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__INITMME, "_dmsStorageData::_initializeMME" )
    void _dmsStorageData::_initializeMME ()
    {
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__INITMME ) ;
       SDB_ASSERT ( _dmsMME, "MME is NULL" ) ;
 
       for ( INT32 i = 0; i < DMS_MME_SLOTS ; i++ )
       {
          _dmsMME->_mbList[i].reset () ;
       }
+      PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA__INITMME ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__LOGDPS, "_dmsStorageData::_logDPS" )
    INT32 _dmsStorageData::_logDPS( SDB_DPSCB * dpsCB,
                                    dpsMergeInfo & info,
                                    pmdEDUCB * cb,
@@ -444,11 +494,13 @@ namespace engine
                                    dmsExtentID extLID )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__LOGDPS ) ;
       info.setInfoEx( _logicalCSID, clLID, extLID, cb ) ;
       rc = dpsCB->prepare( info ) ;
       if ( rc )
       {
-         return rc ;
+         goto error ;
       }
       // release lock
       if ( pLatch && locked )
@@ -465,21 +517,26 @@ namespace engine
       }
       // write dps
       dpsCB->writeData( info ) ;
-
-      return SDB_OK ;
+   done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__LOGDPS, rc ) ;
+      return rc ;
+   error :
+      goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__LOGDPS1, "_dmsStorageData::_logDPS" )
    INT32 _dmsStorageData::_logDPS( SDB_DPSCB *dpsCB, dpsMergeInfo &info,
                                    pmdEDUCB *cb, dmsMBContext *context,
                                    dmsExtentID extLID,
                                    BOOLEAN needUnLock )
    {
       INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__LOGDPS1 ) ;
       info.setInfoEx( logicalID(), context->clLID(), extLID, cb ) ;
       rc = dpsCB->prepare( info ) ;
       if ( rc )
       {
-         return rc ;
+         goto error ;
       }
 
       // release lock
@@ -490,10 +547,14 @@ namespace engine
 
       // write dps
       dpsCB->writeData( info ) ;
-
-      return SDB_OK ;
+   done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__LOGDPS1, rc ) ;
+      return rc ;
+   error :
+      goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__ALLOCATEEXTENT, "_dmsStorageData::_allocateExtent" )
    INT32 _dmsStorageData::_allocateExtent( dmsMBContext * context,
                                            UINT16 numPages,
                                            BOOLEAN map2DelList,
@@ -501,11 +562,14 @@ namespace engine
                                            dmsExtentID *allocExtID )
    {
       SDB_ASSERT( context, "dms mb context can't be NULL" ) ;
-
       INT32 rc                 = SDB_OK ;
       SINT32 firstFreeExtentID = DMS_INVALID_EXTENT ;
       dmsExtent *extAddr       = NULL ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__ALLOCATEEXTENT ) ;
+      PD_TRACE3 ( SDB__DMSSTORAGEDATA__ALLOCATEEXTENT,
+                  PD_PACK_USHORT ( numPages ),
+                  PD_PACK_UINT ( map2DelList ),
+                  PD_PACK_UINT ( add2LoadList ) ) ;
       if ( numPages > segmentPages() || numPages < 1 )
       {
          PD_LOG ( PDERROR, "Invalid number of pages: %d", numPages ) ;
@@ -594,9 +658,12 @@ namespace engine
       if ( allocExtID )
       {
          *allocExtID = firstFreeExtentID ;
+         PD_TRACE1 ( SDB__DMSSTORAGEDATA__ALLOCATEEXTENT,
+                     PD_PACK_INT ( firstFreeExtentID ) ) ;
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__ALLOCATEEXTENT, rc ) ;
       return rc ;
    error :
       if ( DMS_INVALID_EXTENT != firstFreeExtentID )
@@ -606,18 +673,20 @@ namespace engine
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__FREEEXTENT, "_dmsStorageData::_freeExtent" )
    INT32 _dmsStorageData::_freeExtent( dmsExtentID extentID )
    {
       INT32 rc = SDB_OK ;
       dmsExtent *extAddr = NULL ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__FREEEXTENT ) ;
       if ( DMS_INVALID_EXTENT == extentID )
       {
          PD_LOG( PDERROR, "Invalid extent id for free" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
+      PD_TRACE1 ( SDB__DMSSTORAGEDATA__FREEEXTENT,
+                  PD_PACK_INT ( extentID ) ) ;
       extAddr = (dmsExtent*)extentAddr( extentID ) ;
 
       if ( !extAddr->validate() )
@@ -640,11 +709,13 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__FREEEXTENT, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST, "_dmsStorageData::_reserveFromDeleteList" )
    INT32 _dmsStorageData::_reserveFromDeleteList( dmsMBContext *context,
                                                   UINT32 requiredSize,
                                                   dmsRecordID &resultID,
@@ -664,6 +735,9 @@ namespace engine
       ossValuePtr delRecordPtr      = 0 ;
       dpsTransCB *pTransCB          = pmdGetKRCB()->getTransCB() ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST ) ;
+      PD_TRACE1 ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST,
+                  PD_PACK_UINT ( requiredSize ) ) ;
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
@@ -682,7 +756,7 @@ namespace engine
       if ( deleteRecordSlot >= dmsMB::_max )
       {
          PD_LOG( PDERROR, "Invalid record size: %u", requiredSize ) ;
-         return SDB_SYS ;
+         rc = SDB_SYS ;
          goto error ;
       }
 
@@ -778,11 +852,13 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__RESERVEFROMDELETELIST, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION, "_dmsStorageData::_truncateCollection" )
    INT32 _dmsStorageData::_truncateCollection( dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
@@ -792,6 +868,7 @@ namespace engine
 
       SDB_ASSERT( context, "dms mb context can't be NULL" ) ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION ) ;
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
@@ -848,11 +925,13 @@ namespace engine
       context->mbStat()->_totalRecords = 0 ;
 
    done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECTION, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECITONLOADS, "_dmsStorageData::_truncateCollectionLoads" )
    INT32 _dmsStorageData::_truncateCollectionLoads( dmsMBContext * context )
    {
       INT32 rc                     = SDB_OK ;
@@ -860,7 +939,7 @@ namespace engine
       dmsExtentID prevExt          = DMS_INVALID_EXTENT ;
 
       SDB_ASSERT( context, "dms mb context can't be NULL" ) ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECITONLOADS ) ;
       rc = context->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
 
@@ -890,11 +969,13 @@ namespace engine
       context->mb()->_loadFirstExtentID = DMS_INVALID_EXTENT ;
 
    done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__TRUNCATECOLLECITONLOADS, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD, "_dmsStorageData::_saveDeletedRecord" )
    INT32 _dmsStorageData::_saveDeletedRecord( dmsMB *mb, dmsExtent * extAddr,
                                               dmsOffset offset,
                                               INT32 recordSize,
@@ -903,6 +984,14 @@ namespace engine
       UINT8 deleteRecordSlot = 0 ;
       ossValuePtr recordPtr = ( (ossValuePtr)extAddr + offset ) ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD ) ;
+      PD_TRACE6 ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD,
+                  PD_PACK_STRING ( "offset" ),
+                  PD_PACK_INT ( offset ),
+                  PD_PACK_STRING ( "recordSize" ),
+                  PD_PACK_INT ( recordSize ),
+                  PD_PACK_STRING ( "extentID" ),
+                  PD_PACK_INT ( extentID ) ) ;
       // assign flags to the memory
       DMS_DELETEDRECORD_SETFLAG( recordPtr, DMS_RECORD_FLAG_DELETED ) ;
       DMS_DELETEDRECORD_SETSIZE( recordPtr, recordSize ) ;
@@ -942,10 +1031,11 @@ namespace engine
       // Then assign MB delete slot to the extent and offset
       mb->_deleteList[ deleteRecordSlot ]._extent = extentID ;
       mb->_deleteList[ deleteRecordSlot ]._offset = offset ;
-
+      PD_TRACE_EXIT ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD ) ;
       return SDB_OK ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD1, "_dmsStorageData::_saveDeletedRecord" )
    INT32 _dmsStorageData::_saveDeletedRecord( dmsMB * mb,
                                               const dmsRecordID &recordID,
                                               INT32 recordSize )
@@ -953,6 +1043,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       ossValuePtr extentPtr = 0 ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD1 ) ;
+      PD_TRACE2 ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD1,
+                  PD_PACK_INT ( recordID._extent ),
+                  PD_PACK_INT ( recordID._offset ) ) ;
       if ( recordID.isNull() )
       {
          rc = SDB_INVALIDARG ;
@@ -969,12 +1063,18 @@ namespace engine
       rc = _saveDeletedRecord ( mb, (dmsExtent*)extentPtr, recordID._offset,
                                 recordSize, recordID._extent ) ;
    done :
+      PD_TRACE_EXITRC ( SDB__DMSSTORAGEDATA__SAVEDELETEDRECORD1, rc ) ;
       return rc ;
    }
 
    void _dmsStorageData::_mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,
                                              SINT32 extentID )
    {
+      INT32 extentSize         = 0 ;
+      INT32 extentUseableSpace = 0 ;
+      INT32 deleteRecordSize   = 0 ;
+      dmsOffset recordOffset   = 0 ;
+      INT32 curUseableSpace    = 0 ;
       if ( (UINT32)extAddr->_freeSpace < DMS_MIN_RECORD_SZ )
       {
          if ( extAddr->_freeSpace != 0 )
@@ -984,20 +1084,20 @@ namespace engine
                     mb->_collectionName, mb->_blockID, extentID,
                     extAddr->_freeSpace, DMS_MIN_RECORD_SZ ) ;
          }
-         return ;
+         goto done ;
       }
 
       // calculate the delete record size we need to use
-      INT32 extentSize         = extAddr->_blockSize << pageSizeSquareRoot() ;
-      INT32 extentUseableSpace = extAddr->_freeSpace ;
+      extentSize          = extAddr->_blockSize << pageSizeSquareRoot() ;
+      extentUseableSpace  = extAddr->_freeSpace ;
       extAddr->_freeSpace = 0 ;
 
       // make sure the delete record is not greater 16MB
-      INT32 deleteRecordSize   = OSS_MIN ( extentUseableSpace,
+      deleteRecordSize    = OSS_MIN ( extentUseableSpace,
                                            DMS_RECORD_MAX_SZ ) ;
       // place first record offset
-      dmsOffset recordOffset  = extentSize - extentUseableSpace ;
-      INT32 curUseableSpace   = extentUseableSpace ;
+      recordOffset        = extentSize - extentUseableSpace ;
+      curUseableSpace     = extentUseableSpace ;
 
       // if extentUseableSpace > 16MB
       while ( curUseableSpace - deleteRecordSize >=
@@ -1025,6 +1125,8 @@ namespace engine
       // correct check
       SDB_ASSERT( extentUseableSpace == extAddr->_freeSpace,
                   "Extent[%d] free space invalid" ) ;
+   done :
+      return ;
    }
 
    INT32 _dmsStorageData::addExtent2Meta( dmsExtentID extID,

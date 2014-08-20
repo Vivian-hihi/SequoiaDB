@@ -47,6 +47,7 @@
 
 namespace engine
 {
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU, "_dmsStorageUnit::_dmsStorageUnit" )
    _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName, UINT32 sequence,
                                       INT32 pageSize,
                                       INT32 lobPageSize )
@@ -55,6 +56,7 @@ namespace engine
     _pIndexSu( NULL ),
     _pLobSu( NULL )
    {
+      PD_TRACE_ENTRY ( SDB__DMSSU ) ;
       SDB_ASSERT ( pSUName, "name can't be null" ) ;
 
       if ( 0 == pageSize )
@@ -107,10 +109,14 @@ namespace engine
                                               &_storageInfo ) ;
          _storageInfo._pageSize = pageSz ;
       }
+
+      PD_TRACE_EXIT ( SDB__DMSSU ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DESC, "_dmsStorageUnit::~_dmsStorageUnit" )
    _dmsStorageUnit::~_dmsStorageUnit()
    {
+      PD_TRACE_ENTRY ( SDB__DMSSU_DESC ) ;
       close() ;
 
       if ( _pIndexSu )
@@ -128,13 +134,15 @@ namespace engine
          SDB_OSS_DEL _pLobSu ;
          _pDataSu = NULL ;
       }
+      PD_TRACE_EXIT ( SDB__DMSSU_DESC ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_OPEN, "_dmsStorageUnit::open" )
    INT32 _dmsStorageUnit::open( const CHAR *pDataPath, const CHAR *pIndexPath,
                                 BOOLEAN createNew, BOOLEAN delWhenExist )
    {
       INT32 rc = SDB_OK ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU_OPEN ) ;
       if ( !_pDataSu || !_pIndexSu ) 
       {
          rc = SDB_OOM ;
@@ -197,6 +205,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB__DMSSU_OPEN, rc ) ;
       return rc ;
    error:
       close() ;
@@ -223,8 +232,10 @@ namespace engine
       goto rmdata ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CLOSE, "_dmsStorageUnit::close" )
    void _dmsStorageUnit::close ()
    {
+      PD_TRACE_ENTRY ( SDB__DMSSU_CLOSE ) ;
       if ( _pIndexSu )
       {
          _pIndexSu->closeStorage() ;
@@ -237,12 +248,14 @@ namespace engine
       {
          _pLobSu->closeStorage() ;
       }
+      PD_TRACE_EXIT ( SDB__DMSSU_CLOSE ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_REMOVE, "_dmsStorageUnit::remove" )
    INT32 _dmsStorageUnit::remove ()
    {
       INT32 rc = SDB_OK ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU_REMOVE ) ;
       if ( _pDataSu )
       {
          rc = _pDataSu->removeStorage() ;
@@ -265,15 +278,17 @@ namespace engine
       PD_LOG( PDEVENT, "Remove collection space[%s] files succeed", CSName() ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB__DMSSU_REMOVE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__RESETCOLLECTION, "_dmsStorageUnit::_resetCollection" )
    INT32 _dmsStorageUnit::_resetCollection( dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU__RESETCOLLECTION ) ;
       SDB_ASSERT( context, "context can't be NULL" ) ;
 
       // drop all indexes
@@ -289,7 +304,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "Truncate collection data failed, rc: %d", rc ) ;
       }
-
+      PD_TRACE_EXITRC ( SDB__DMSSU__RESETCOLLECTION, rc ) ;
       return rc ;
    }
 
@@ -381,6 +396,7 @@ namespace engine
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_INSERTRECORD, "_dmsStorageUnit::insertRecord" )
    INT32 _dmsStorageUnit::insertRecord ( const CHAR *pName,
                                          BSONObj &record,
                                          pmdEDUCB *cb,
@@ -391,7 +407,7 @@ namespace engine
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU_INSERTRECORD ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -414,11 +430,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_INSERTRECORD, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_UPDATERECORDS, "_dmsStorageUnit::updateRecords" )
    INT32 _dmsStorageUnit::updateRecords ( const CHAR *pName,
                                           pmdEDUCB *cb,
                                           SDB_DPSCB *dpscb,
@@ -430,7 +448,7 @@ namespace engine
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU_UPDATERECORDS ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -478,11 +496,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_UPDATERECORDS, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DELETERECORDS, "_dmsStorageUnit::deleteRecords" )
    INT32 _dmsStorageUnit::deleteRecords ( const CHAR *pName,
                                           pmdEDUCB * cb,
                                           SDB_DPSCB *dpscb,
@@ -493,7 +513,7 @@ namespace engine
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU_DELETERECORDS ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -541,18 +561,20 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_DELETERECORDS, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_REBUILDINDEXES, "_dmsStorageUnit::rebuildIndexes" )
    INT32 _dmsStorageUnit::rebuildIndexes( const CHAR *pName,
                                           pmdEDUCB * cb,
                                           dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU_REBUILDINDEXES ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -574,18 +596,20 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_REBUILDINDEXES, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CREATEINDEX, "_dmsStorageUnit::createIndex" )
    INT32 _dmsStorageUnit::createIndex( const CHAR *pName, const BSONObj &index,
                                        pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                        BOOLEAN isSys, dmsMBContext * context )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU_CREATEINDEX ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -607,11 +631,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_CREATEINDEX, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX, "_dmsStorageUnit::dropIndex" )
    INT32 _dmsStorageUnit::dropIndex( const CHAR *pName, const CHAR *indexName,
                                      pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                      BOOLEAN isSys, dmsMBContext *context )
@@ -619,6 +645,7 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_DROPINDEX ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -640,11 +667,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_DROPINDEX, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX1, "_dmsStorageUnit::dropIndex" )
    INT32 _dmsStorageUnit::dropIndex( const CHAR *pName, OID &indexOID,
                                      pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                      BOOLEAN isSys, dmsMBContext *context )
@@ -652,6 +681,7 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_DROPINDEX1 ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -673,11 +703,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_DROPINDEX1, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_COUNTCOLLECTION, "_dmsStorageUnit::countCollection" )
    INT32 _dmsStorageUnit::countCollection ( const CHAR *pName,
                                             INT64 &recordNum,
                                             pmdEDUCB *cb,
@@ -688,6 +720,7 @@ namespace engine
       //dmsExtent *pExtent           = NULL ;
       recordNum                    = 0 ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_COUNTCOLLECTION ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -722,17 +755,20 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_COUNTCOLLECTION, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONFLAG, "_dmsStorageUnit::getCollectionFlag" )
    INT32 _dmsStorageUnit::getCollectionFlag( const CHAR *pName, UINT16 &flag,
                                              dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_GETCOLLECTIONFLAG ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -755,17 +791,20 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_GETCOLLECTIONFLAG, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CHANGECOLLECTIONFLAG, "_dmsStorageUnit::changeCollectionFlag" )
    INT32 _dmsStorageUnit::changeCollectionFlag( const CHAR *pName, UINT16 flag,
                                                 dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_CHANGECOLLECTIONFLAG ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -788,11 +827,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_CHANGECOLLECTIONFLAG, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONATTRIBUTES, "_dmsStorageUnit::getCollectionAttributes" )
    INT32 _dmsStorageUnit::getCollectionAttributes( const CHAR *pName,
                                                    UINT32 &attributes,
                                                    dmsMBContext *context )
@@ -800,6 +841,7 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_GETCOLLECTIONATTRIBUTES ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -822,11 +864,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_GETCOLLECTIONATTRIBUTES, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_UPDATECOLLECTIONATTRIBUTES, "_dmsStorageUnit::updateCollectionAttributes" )
    INT32 _dmsStorageUnit::updateCollectionAttributes( const CHAR *pName,
                                                       UINT32 newAttributes,
                                                       dmsMBContext *context )
@@ -834,6 +878,7 @@ namespace engine
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_UPDATECOLLECTIONATTRIBUTES ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -856,11 +901,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_UPDATECOLLECTIONATTRIBUTES, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETSEGEXTENTS, "_dmsStorageUnit::getSegExtents" )
    INT32 _dmsStorageUnit::getSegExtents( const CHAR *pName,
                                          vector < dmsExtentID > &segExtents,
                                          dmsMBContext *context )
@@ -870,6 +917,7 @@ namespace engine
       dmsMBEx *mbEx                = NULL ;
       dmsExtentID firstID          = DMS_INVALID_EXTENT ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_GETSEGEXTENTS ) ;
       segExtents.clear() ;
 
       if ( NULL == context )
@@ -912,11 +960,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_GETSEGEXTENTS, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEXES, "_dmsStorageUnit::getIndexes" )
    INT32 _dmsStorageUnit::getIndexes( const CHAR *pName,
                                       vector< _monIndex > &resultIndexes,
                                       dmsMBContext * context )
@@ -925,7 +975,7 @@ namespace engine
       BOOLEAN getContext           = FALSE ;
       UINT32 indexID               = 0 ;
       monIndex indexItem ;
-
+      PD_TRACE_ENTRY ( SDB__DMSSU_GETINDEXES ) ;
       if ( NULL == context )
       {
          SDB_ASSERT( pName, "Collection name can't be NULL" ) ;
@@ -964,11 +1014,13 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_GETINDEXES, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEX, "_dmsStorageUnit::getIndex" )
    INT32 _dmsStorageUnit::getIndex( const CHAR *pName,
                                     const CHAR *pIndexName,
                                     _monIndex &resultIndex,
@@ -978,6 +1030,7 @@ namespace engine
       BOOLEAN getContext           = FALSE ;
       UINT32 indexID               = 0 ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_GETINDEX ) ;
       SDB_ASSERT( pIndexName, "Index name can't be NULL" ) ;
 
       if ( NULL == context )
@@ -1022,14 +1075,17 @@ namespace engine
       {
          _pDataSu->releaseMBContext( context ) ;
       }
+      PD_TRACE_EXITRC ( SDB__DMSSU_GETINDEX, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO, "_dmsStorageUnit::dumpInfo" )
    void _dmsStorageUnit::dumpInfo ( vector<CHAR*> &collectionList,
                                     BOOLEAN sys )
    {
+      PD_TRACE_ENTRY( SDB__DMSSU_DUMPINFO ) ;
       // lock meta data
       _pDataSu->_metadataLatch.get_shared() ;
 
@@ -1059,17 +1115,20 @@ namespace engine
    done :
       // release meta lock
       _pDataSu->_metadataLatch.release_shared() ;
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO ) ;
       return ;
    error :
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO1, "_dmsStorageUnit::dumpInfo" )
    void _dmsStorageUnit::dumpInfo ( set<_monCollection> &collectionList,
                                     BOOLEAN sys )
    {
       dmsMB *mb = NULL ;
       dmsMBStatInfo *mbStat = NULL ;
 
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO1 ) ;
       // lock meta
       _pDataSu->_metadataLatch.get_shared() ;
 
@@ -1109,18 +1168,21 @@ namespace engine
 
       // release meta
       _pDataSu->_metadataLatch.release_shared() ;
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO1 ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO2, "_dmsStorageUnit::dumpInfo" )
    void _dmsStorageUnit::dumpInfo ( set<_monStorageUnit> &storageUnitList,
                                     BOOLEAN sys )
    {
-      if ( !sys && dmsIsSysCSName( CSName() ) )
-      {
-         return ;
-      }
-
       monStorageUnit su ;
       const dmsStorageUnitHeader *dataHeader = _pDataSu->getHeader() ;
+
+      PD_TRACE_ENTRY ( SDB__DMSSU_DUMPINFO2 ) ;
+      if ( !sys && dmsIsSysCSName( CSName() ) )
+      {
+         goto done ;
+      }
 
       ossMemset ( su._name, 0, sizeof ( su._name ) ) ;
       ossStrncpy ( su._name, CSName(), DMS_SU_NAME_SZ ) ;
@@ -1134,11 +1196,15 @@ namespace engine
 
       //add
       storageUnitList.insert ( su ) ;
+   done :
+      PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO2 ) ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALSIZE, "_dmsStorageUnit::totalSize" )
    INT64 _dmsStorageUnit::totalSize() const
    {
       INT64 totalSize = 0 ;
+      PD_TRACE_ENTRY ( SDB__DMSSU_TOTALSIZE ) ;
       if ( _pDataSu && _pIndexSu )
       {
          const dmsStorageUnitHeader *dataHeader = _pDataSu->getHeader() ;
@@ -1147,44 +1213,65 @@ namespace engine
                      idxHeader->_storageUnitSize ;
          totalSize = totalSize << _pDataSu->pageSizeSquareRoot() ;
       }
+      PD_TRACE1 ( SDB__DMSSU_TOTALSIZE,
+                  PD_PACK_LONG ( totalSize ) ) ;
+      PD_TRACE_EXIT ( SDB__DMSSU_TOTALSIZE ) ;
       return totalSize ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALDATAPAGES, "_dmsStorageUnit::totalDataPages" )
    INT64 _dmsStorageUnit::totalDataPages() const
    {
       INT64 totalDataPages = 0 ;
+      PD_TRACE_ENTRY ( SDB__DMSSU_TOTALDATAPAGES ) ;
       if ( _pDataSu && _pIndexSu )
       {
          const dmsStorageUnitHeader *dataHeader = _pDataSu->getHeader() ;
          const dmsStorageUnitHeader *idxHeader = _pIndexSu->getHeader() ;
          totalDataPages = dataHeader->_pageNum + idxHeader->_pageNum ;
       }
+      PD_TRACE1 ( SDB__DMSSU_TOTALDATAPAGES,
+                  PD_PACK_LONG ( totalDataPages ) ) ;
+      PD_TRACE_EXIT ( SDB__DMSSU_TOTALDATAPAGES ) ;
       return totalDataPages ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALDATASIZE, "_dmsStorageUnit::totalDataSize" )
    INT64 _dmsStorageUnit::totalDataSize() const
    {
       INT64 totalSize = 0 ;
+      PD_TRACE_ENTRY ( SDB__DMSSU_TOTALDATASIZE ) ;
       if ( _pDataSu )
       {
          totalSize = totalDataPages() << _pDataSu->pageSizeSquareRoot() ;
       }
+      PD_TRACE1 ( SDB__DMSSU_TOTALDATASIZE,
+                  PD_PACK_LONG ( totalSize ) ) ;
+      PD_TRACE_EXIT ( SDB__DMSSU_TOTALDATASIZE ) ;
       return totalSize ;
    }
 
+   // 32 bit is enough for free pages
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALFREEPAGES, "_dmsStorageUnit::totalFreePages" )
    INT32 _dmsStorageUnit::totalFreePages () const
    {
       INT32 freePages = 0 ;
+      PD_TRACE_ENTRY ( SDB__DMSSU_TOTALFREEPAGES ) ;
       if ( _pDataSu && _pIndexSu )
       {
          freePages = (INT32)_pDataSu->freePageNum() +
                      (INT32)_pIndexSu->freePageNum() ;
       }
+      PD_TRACE1 ( SDB__DMSSU_TOTALFREEPAGES,
+                  PD_PACK_INT ( freePages ) ) ;
+      PD_TRACE_EXIT ( SDB__DMSSU_TOTALFREEPAGES ) ;
       return freePages ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETSTATINFO, "_dmsStorageUnit::getStatInfo" )
    void _dmsStorageUnit::getStatInfo( dmsStorageUnitStat & statInfo )
    {
+      PD_TRACE_ENTRY ( SDB__DMSSU_GETSTATINFO ) ;
       ossMemset( &statInfo, 0, sizeof( dmsStorageUnitStat ) ) ;
 
       dmsMB *mb = NULL ;
@@ -1211,6 +1298,7 @@ namespace engine
 
       // release meta
       _pDataSu->_metadataLatch.release_shared() ;
+      PD_TRACE_EXIT ( SDB__DMSSU_GETSTATINFO ) ;
    }
 
 }  // namespace engine
