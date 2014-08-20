@@ -13,11 +13,10 @@ if __name__ == "__main__":
       db = client()
       # create collection space
       # try to get a collection space named by cs_name specified
-      cs_name = 'sports'
+      cs_name = 'subject'
       cs = db.create_collection_space( cs_name )
 
       # 1.get collection space
-      cs_name = 'sports'
       # try to get a collection space named by cs_name specified
       cs = db.get_collection_space( cs_name )
 
@@ -28,8 +27,8 @@ if __name__ == "__main__":
 
       # 3.get collection space
       # try to get a collection named by 'sports' use __getattri__
-      cs = cs.sports
-      pysequoiadb._print("get collection space:[%s] success." % 'cs_third')
+      cs = db.subject
+      pysequoiadb._print("get collection space:[%s] success." % 'subject')
 
       # release
       cs_name = cs.get_collection_space_name()
@@ -40,14 +39,3 @@ if __name__ == "__main__":
 
    except (InvalidParameter, SequoiaDBError), e:
       pysequoiadb._print(e)
-      
-
-   
-
-   
-
-   
-
-   
-
-   

@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
       # update records
       update = {'$set':{"Item":"football", "Rank":1 }}
-      cond = {'id':{'$exists':0}}
+      cond = {'id':{'$et':0}}
       cl.update(update, condition = cond)
 
       pysequoiadb._print("after update")

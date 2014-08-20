@@ -22,11 +22,21 @@ if __name__ == "__main__":
       cl_name = "sports"
       cl = cs.create_collection(cl_name)
 
+      # get all indexes before create index
+      pysequoiadb._print("Before create index:")
+      cr = cl.get_indexes()
+      # print indexes
+      state, record = cr.next()
+      while ( const.SDB_DMS_EOC != state ):
+         pysequoiadb._print(record)
+         state, record = cr.next()
+
       #create an index
       index = {'Item':1, 'Rank':-1}
       index_name = 'idx'
       cl.create_index(index, index_name, False, False)
 
+      pysequoiadb._print("After create index:")
       # get all indexes
       cr = cl.get_indexes()
 

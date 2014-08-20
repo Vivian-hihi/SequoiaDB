@@ -47,8 +47,8 @@ if __name__ == "__main__":
       # execute sql2
       db.exec_update(sql2)
       pysequoiadb._print("The result are below after execute sql:%s" % sql2)
-      rcr = cl.query()
-  
+      cr = cl.query()
+
       rc, record = cr.next()
       while const.SDB_DMS_EOC != rc:
          pysequoiadb._print(record)
