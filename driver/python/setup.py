@@ -118,8 +118,6 @@ else:
    compile_options = [
       '-shared',
       '-fPIC',
-      '-ldl',
-      '-ggdb',
       '-O3', ]
 
    link = [
