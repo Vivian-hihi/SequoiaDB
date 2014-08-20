@@ -43,7 +43,7 @@ from bson.son import SON
 from pysequoiadb.client import client
 from pysequoiadb.common import (const, get_info)
 from pysequoiadb.error import (SDBTypeError,
-                               SDBBaseError,
+                               SDBError,
                                SDBIOError,
                                SDBNetworkError,
                                InvalidParameter,

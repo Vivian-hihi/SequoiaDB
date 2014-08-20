@@ -95,12 +95,6 @@ class SDBSystemError(SDBBaseError):
 class SDBUnknownError(SDBBaseError):
    """Unknown Error of SequoiaDB
    """
-   def __init__(self, errmsg, code):
+   def __init__(self, errmsg):
       SDBBaseError.__init__(self, errmsg, None, "Unknown Error")
-
-if "__main__" == __name__:
-   try:
-      raise SDBSystemError("System Error occurred", -10)
-   except SDBBaseError, err:
-      print(err)
 
