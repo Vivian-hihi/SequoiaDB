@@ -50,7 +50,7 @@ const.SDB_INVALID_FILE_TYPE      = -20
 
 # system error
 const.SDB_OOM                    = -2
-cosnt.SDB_SYS                    = -10
+const.SDB_SYS                    = -10
 
 def get_info(code):
    try:

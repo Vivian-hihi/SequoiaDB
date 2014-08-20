@@ -89,7 +89,7 @@ invalid_error = [ const.SDB_INVALIDARG,
                   const.SDB_INVALID_FILE_TYPE ]
 
 system_error  = [ const.SDB_OOM,
-                  cosnt.SDB_SYS ]
+                  const.SDB_SYS ]
 
 def _print(what):
    if PY3:
