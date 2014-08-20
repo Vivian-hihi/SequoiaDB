@@ -249,7 +249,6 @@ public class Sequoiadb {
 		int mark = count;
 		do
 		{
-System.out.println("count is: " + count);
 			String str = connStrings.get(count);
 			count = ++count % size;
 			try
