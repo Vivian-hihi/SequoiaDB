@@ -116,9 +116,9 @@ namespace engine
       }
       catch ( std::exception &e )
       {
-            PD_LOG ( PDERROR, "omagent run command[%s] exception[%s]",
-                     pCommand->name(), e.what() ) ;
-            rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "omagent run command[%s] exception[%s]",
+                  pCommand->name(), e.what() ) ;
+         rc = SDB_INVALIDARG ;
       }
 
    done:

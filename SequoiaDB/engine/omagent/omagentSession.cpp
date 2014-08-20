@@ -367,6 +367,7 @@ namespace engine
       {
          builder.append( OMA_FIELD_DETAIL, getErrDesp( rc ) ) ;
       }
+      _replyHeader.flags = rc ;
       goto done ;
    }
 
