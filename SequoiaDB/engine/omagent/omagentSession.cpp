@@ -358,7 +358,7 @@ namespace engine
          BSONObj result ;
          BSONObj errorObj = pmdGetErrorBson( rc, cb->getInfo( EDU_INFO_ERROR ) ) ;
 
-         rc2 = omaGetStringElement( errorObj, OMA_FIELD_DESCRIPTION,
+         rc2 = omaGetStringElement( errorObj, OMA_FIELD_DETAIL2,
                                     &pErrDetail ) ;
          if ( rc2 )
             PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",

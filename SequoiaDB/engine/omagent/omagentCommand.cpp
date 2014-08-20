@@ -212,7 +212,7 @@ namespace engine
       if ( FALSE == ret.second )
       {
          PD_LOG_MSG ( PDERROR,
-                      "Failed to register omagent command %s, already exist",
+                      "Failed to register omagent command[%s], already exist",
                       name ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -286,7 +286,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -370,8 +370,8 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                         "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+                         "Failed to eval js file[%s]: %s, rc = %d",
+                         _jsFileName, detail.toString().c_str(), rc ) ;
             // TODO: tanzhaobo
             // what's in detail ?
             BSONObj errObj ;
@@ -469,7 +469,8 @@ namespace engine
       rc = setLocalPath() ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to set program's or script's path", rc ) ;
+         PD_LOG ( PDERROR, "Failed to set program's or script's path, rc = %d",
+                  rc ) ;
          goto error ;
       }
       // read js from file
@@ -477,7 +478,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -614,10 +615,10 @@ namespace engine
                             _jsFileName, 1, 1, rval, detail ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, "
-                         "rc = %d, errmsg = %s",
-                          _jsFileName, rc,
-                          detail.toString().c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file[%s]: "
+                         " %s, rc = %d",
+                          _jsFileName,
+                          detail.toString().c_str(), rc ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -663,8 +664,9 @@ namespace engine
       rc = checkRemote.getStatus( pIp, pUserName, pPassword, result ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Faled to check remote mechine's status, rc = %d",
-                  rc ) ;
+         PD_LOG_MSG ( PDERROR,
+                      "Faled to check remote mechine's status, rc = %d",
+                      rc ) ;
       }
       return rc ;
    }
@@ -764,7 +766,7 @@ namespace engine
       rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -853,8 +855,8 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                         "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+                         "Failed to eval js file[%s]: %s, rc = %d",
+                         _jsFileName, detail.toString().c_str(), rc ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -920,7 +922,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -990,8 +992,8 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                         "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+                         "Failed to eval js file[%s]: %s, rc = %d",
+                         _jsFileName, detail.toString().c_str(), rc ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -1070,7 +1072,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -1149,10 +1151,10 @@ namespace engine
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, "
-                         "rc = %d, errmsg = %s",
-                         _jsFileName, rc,
-                         detail.toString().c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file[%s]: %s, "
+                         "rc = %d",
+                         _jsFileName,
+                         detail.toString().c_str(), rc ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -1278,7 +1280,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -1395,9 +1397,8 @@ namespace engine
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file %s, going to rollback: "
-                         "rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file[%s]: %s, rc = %d",
+                         _jsFileName, detail.toString().c_str(), rc ) ;
             goto error ;
          }
          // set the rollback flag to be true, and when error happen
@@ -1407,22 +1408,38 @@ namespace engine
          rc = omaGetObjElement( rval, "", subObj ) ;
          if ( rc )
          {
-            PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+            PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
             goto error ;
          }
          {
          INT32 retRc = SDB_OK ;
+         BSONObj value ;
+         const CHAR *pErrMsg = NULL ;
          rc = omaGetIntElement( subObj, OMA_FIELD_RC, retRc ) ;
          if ( rc )
          {
-            PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc: %d",
+            PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc = %d",
                         OMA_FIELD_RC, rc ) ;
             goto error ;
          }
          if ( retRc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to add host[%s], rc = %d",
-                         pIp, retRc ) ;
+            rc = omaGetObjElement( subObj, OMA_FIELD_DETAIL, value ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc = %d",
+                           OMA_FIELD_DETAIL, rc ) ;
+               goto error ;
+            }
+            rc = omaGetStringElement( value, OMA_FIELD_ERRMSG, &pErrMsg ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc = %d",
+                           OMA_FIELD_ERRMSG, rc ) ;
+               goto error ;
+            }
+            PD_LOG_MSG ( PDERROR, "Failed to add host[%s]: %s, rc = %d",
+                         pIp, pErrMsg, retRc ) ;
             rc = retRc ;
             goto error ;
          }
@@ -1505,7 +1522,7 @@ namespace engine
             rc = omaGetStringElement ( temp, OMA_OPTION_ROLE, &value ) ;
             if ( rc )
             {
-               PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+               PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
                             OMA_OPTION_ROLE, rc ) ;
                goto error ;
             }
@@ -1528,7 +1545,7 @@ namespace engine
             {
                rc = SDB_INVALIDARG ;
                PD_LOG_MSG( PDERROR,
-                           "Failed to install db business: %s",
+                           "Failed to install db business[%s]",
                            temp.toString().c_str() ) ;
                goto error ;
             }
@@ -1711,7 +1728,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -1782,14 +1799,14 @@ namespace engine
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR,
-                      "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                      _jsFileName, rc, detail.toString().c_str() ) ;
+                      "Failed to eval js file[%s]: %s, rc = %d",
+                      _jsFileName, detail.toString().c_str(), rc ) ;
          goto error ;
       }
       rc = omaGetObjElement( rval, "", subObj ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc =%d", "", rc ) ;
          goto error ;
       }
       // extract return rc
@@ -1873,7 +1890,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -1938,9 +1955,8 @@ namespace engine
                          _jsFileName, 1, 1, rval, detail ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, "
-                               "rc = %d, errmsg = %s",
-                      _jsFileName, rc, detail.toString().c_str() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to eval js file[%s]: %s, rc = %d ",
+                      _jsFileName, detail.toString().c_str(), rc ) ;
          goto error ;
       }
       rc = omaGetObjElement( rval, "", subObj ) ;
@@ -2110,7 +2126,7 @@ namespace engine
                       "var IP = \"%s\"; var USERNAME = \"%s\"; "
                       "var PASSWORD = \"%s\";",
                       pIp, pUserName, pPassword ) ;
-         PD_LOG ( PDDEBUG, "Arguments for checkRemoteAgentProcess.js is: %s",
+         PD_LOG ( PDDEBUG, "Argument for check remote progress is: %s",
                   _jsFileArgs ) ;
          _content.clear() ;
          _content += _jsFileArgs ;
@@ -2124,8 +2140,8 @@ namespace engine
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
-                         "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+                         "Failed to eval js file[%s]: %s, rc = %d",
+                         _jsFileName, detail.toString().c_str(), rc ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -2139,7 +2155,7 @@ namespace engine
          rc = omaGetObjElement( rval, "", subObj ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
             goto error ;
          }
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -2264,7 +2280,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -2305,8 +2321,8 @@ namespace engine
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR,
-                      "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                      _jsFileName, rc, detail.toString().c_str() ) ;
+                      "Failed to eval js file[%s]: %s, rc = %d",
+                      _jsFileName, detail.toString().c_str(), rc ) ;
          goto error ;
       }
       // get result
@@ -2319,7 +2335,7 @@ namespace engine
       rc = omaGetBooleanElement ( subObj, OMA_FIELD_PORTHASUSED, hasUsed ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
                       OMA_FIELD_PORTHASUSED, rc ) ;
          goto error ;
       }
@@ -2398,7 +2414,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -2505,9 +2521,9 @@ namespace engine
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, "
-                         "rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file[%s]: "
+                         "%s, rc = %d",
+                         _jsFileName, detail.toString().c_str(), rc ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -2521,7 +2537,7 @@ namespace engine
          rc = omaGetObjElement( rval, "", subObj ) ;
          if ( rc )
          {
-            PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+            PD_LOG_MSG( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
             goto error ;
          }
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -2707,7 +2723,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
                       _jsFileName, rc ) ;
          goto error ;
       }
@@ -2790,8 +2806,8 @@ namespace engine
 
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                         _jsFileName, rc, detail.toString().c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to eval js file[%s]: %s, rc = %d",
+                         _jsFileName, detail.toString().c_str(), rc ) ;
             // TODO:what's in detail ?
             BSONObj errObj ;
             BSONObjBuilder bob ;
@@ -2805,7 +2821,7 @@ namespace engine
          rc = omaGetObjElement( rval, "", subObj ) ;
          if ( rc )
          {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
             goto error ;
          }
          bob.append( OMA_FIELD_IP, pIp ) ;
@@ -2893,7 +2909,7 @@ namespace engine
                       &_buffSize, &_readSize ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
+         PD_LOG ( PDERROR, "Failed to read js file[%s], rc = %d",
                   _jsFileName, rc ) ;
          goto error ;
       }
@@ -2937,8 +2953,8 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDERROR,
-                  "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                   _jsFileName, rc, detail.toString().c_str() ) ;
+                  "Failed to eval js file[%s]: %s, rc = %d",
+                   _jsFileName, detail.toString().c_str(), rc ) ;
          goto error ;
       }
       rc = omaGetObjElement( rval, "", subObj ) ;
@@ -2991,7 +3007,7 @@ namespace engine
          rc = omaGetIntElement( result, OMA_FIELD_RC, retRc ) ;
          if ( rc )
          {
-            PD_LOG ( PDWARNING, "Get field[%s] failed, rc: %d",
+            PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
                      OMA_FIELD_IP, rc ) ;
             continue ;
          }
@@ -3000,7 +3016,7 @@ namespace engine
             rc = omaGetStringElement( result, OMA_FIELD_IP, &pIp ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d",
+               PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
                         OMA_FIELD_IP, rc ) ;
                continue ;
             }
