@@ -62,18 +62,11 @@ namespace engine
    :_pmdAsyncSession( sessionID )
    {
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
-      _pNodeMgr = NULL ;
-      _pBody = NULL ;
-      _bodyLen = 0 ;
+      _pNodeMgr   = NULL ;
    }
 
    _omaSession::~_omaSession()
    {
-      if ( _pBody )
-      {
-         SAFE_OSS_FREE ( _pBody ) ;
-         _bodyLen = 0 ;
-      }
    }
 
    SDB_SESSION_TYPE _omaSession::sessionType() const
@@ -283,10 +276,11 @@ namespace engine
       SINT64 numToSkip          = -1 ;
       SINT64 numToReturn        = -1 ;
       _omaCommand *pCommand     = NULL ;
-      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       BSONObj retObj ;
+      BSONObjBuilder builder ;
 
-      PD_LOG ( PDEVENT, "Omagent receive requset from omsvc" ) ;
+      PD_LOG ( PDDEBUG, "Omagent receive requset from omsvc" ) ;
+
       // build reply massage header
       _buildReplyHeader( pMsg ) ;
       // extract command
@@ -296,20 +290,21 @@ namespace engine
                              &pHintBuffer ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR,
-                  "Session[%s] extract omsvc's command msg failed, rc: %d",
-                  sessionName(), rc ) ;
+         PD_LOG ( PDERROR, "Session[%s] extract omsvc's command msg failed, "
+                  "rc: %d", sessionName(), rc ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
       // handle command
       if ( omaIsCommand ( pCollectionName ) )
       {
-         PD_LOG( PDEVENT, "Omagent receive command: %s", pCollectionName ) ;
+         PD_LOG( PDDEBUG, "Omagent receive command: %s", pCollectionName ) ;
+
          rc = omaParseCommand ( pCollectionName, &pCommand ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Failed to parse omsvc's command[%s] [rc:%d]",
+            PD_LOG( PDERROR, "Failed to parse omsvc's command[%s], rc:%d",
                     pCollectionName, rc ) ;
             goto error ;
          }
@@ -318,73 +313,60 @@ namespace engine
                               pHintBuffer ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR,
-                    "Failed to init omsvc's command for omagent, rc = %d",
-                    rc ) ;
+            PD_LOG( PDERROR, "Failed to init omsvc's command[%s] for omagent, "
+                    "rc: %d", pCollectionName, rc ) ;
             goto error ;
          }
          rc = omaRunCommand( pCommand, retObj ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "Failed to run omsvc's command, rc = %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to run omsvc's command[%s], rc: %d",
+                    pCollectionName, rc ) ;
             goto error ;
          }
-/*
-         // when succeed to run command, set the return body's length to msg header
-         _replyHeader.numReturned = 1 ;
-         _replyHeader.header.messageLength += _bodyLen ;
-*/
       }
       else
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Omsvc's request is not a command" ) ;
+         PD_LOG ( PDERROR, "Omsvc's request[%s] is not a command",
+                  pCollectionName ) ;
          goto error ;
       }
-   done:
-      // TODO: tanzhaobo
-      // why i need to release ?
+
+      // consturct reply
+      builder.append( OMA_FIELD_RC, rc ) ;
+      builder.appendElements( retObj ) ;
+
+   done :
+      // release command
       if ( pCommand )
       {
          omaReleaseCommand( &pCommand ) ;
       }
-      // build reply message body
-      try
-      {
-         INT32 rc2 = SDB_OK ;
-         INT32 errRc = SDB_OK ;
-         const CHAR *pErrDetail = NULL ;
-         BSONObjBuilder bob ;
-         BSONObj result ;
-         BSONObj errorObj = pmdGetErrorBson( rc, cb->getInfo( EDU_INFO_ERROR ) ) ;
-
-         rc2 = omaGetStringElement( errorObj, OMA_FIELD_DETAIL2,
-                                    &pErrDetail ) ;
-         if ( rc2 )
-            PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_DESCRIPTION, rc2 ) ;
-         rc2 = omaGetIntElement( errorObj, OMA_FIELD_ERRNO, errRc ) ;
-         if ( rc2 )
-            PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_ERRNO, rc2 ) ;
-         bob.append ( OMA_FIELD_RC, errRc ) ;
-         if ( errRc )
-            bob.append ( OMA_FIELD_DETAIL, pErrDetail ) ;
-         bob.appendElements ( retObj ) ;
-         result = bob.obj() ;
-         omaBuildReplyMsgBody ( &_pBody, &_bodyLen, 1, &result ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG ( PDERROR,
-                  "Failed to build reply msg body, for unexpected error: %s",
-                  e.what() ) ;
-      }
+      // reply
+      retObj = builder.obj() ;
+      _replyHeader.header.messageLength += retObj.objsize() ;
       _replyHeader.numReturned = 1 ;
-      _replyHeader.header.messageLength += _bodyLen ;
-      return _reply( &_replyHeader, _pBody, _bodyLen ) ;
-   error:
-      _replyHeader.flags = rc ;
+
+      return _reply( &_replyHeader, retObj.objdata(), retObj.objsize() ) ;
+   error :
+      // check flags
+      if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
+      {
+         PD_LOG ( PDERROR, "Error code error[rc:%d]", rc ) ;
+         rc = SDB_SYS ;
+      }
+      builder.append( OMA_FIELD_RC, rc ) ;
+      if ( eduCB()->getInfo( EDU_INFO_ERROR ) &&
+           0 != *( eduCB()->getInfo( EDU_INFO_ERROR ) ) )
+      {
+         builder.append( OMA_FIELD_DETAIL,
+                         eduCB()->getInfo( EDU_INFO_ERROR ) ) ;
+      }
+      else
+      {
+         builder.append( OMA_FIELD_DETAIL, getErrDesp( rc ) ) ;
+      }
       goto done ;
    }
 

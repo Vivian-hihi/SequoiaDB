@@ -88,9 +88,6 @@
 #define OMA_FIELD_COORD                            "Coord"
 #define OMA_FIELD_CATALOG                          "Catalog"
 #define OMA_FIELD_DATA                             "Data"
-#define OMA_FIELD_ERRNO                            "errno"
-#define OMA_FIELD_DESCRIPTION                      "description"
-#define OMA_FIELD_DETAIL2                          "detail"
 #define OMA_FIELD_ERRMSG                           "ErrMsg"
 
 // host info
