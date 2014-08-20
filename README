@@ -55,7 +55,14 @@ Connectors:
 		hive-sequoiadb-apache.jar
 	Storm Connector:
 		storm-sequoiadb.jar
-	
+
+Building Prerequisites:
+	scons
+	g++
+	gcc
+	ant
+	make
+
 Building Engine:
 	Engine Only:
 		scons --engine
