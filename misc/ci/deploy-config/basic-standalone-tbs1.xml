@@ -26,8 +26,8 @@
 	</target>
 
 	<target name="test" depends="">
-		<!-- <property name="test-type-list" value="basic,ant" /> -->
-		<property name="test-type-list" value="basic" />
+		<property name="test-type-list" value="basic,ant" />
+		<!-- <property name="test-type-list" value="basic" /> -->
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
