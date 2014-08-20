@@ -40,6 +40,81 @@ using namespace bson ;
 namespace engine
 {
 
+   /*
+      _omaCreateNodeCmd define
+   */
+   class _omaCreateNodeCmd : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+
+      public:
+         _omaCreateNodeCmd() ;
+         virtual ~_omaCreateNodeCmd() ;
+
+         virtual const CHAR * name () ;
+
+         virtual INT32 init ( const CHAR *pInfomation ) ;
+
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      protected:
+         BSONObj        _config ;
+
+   } ;
+
+   /*
+      _omaRemoveNodeCmd define
+   */
+   class _omaRemoveNodeCmd : public _omaCreateNodeCmd
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+
+      public:
+         _omaRemoveNodeCmd() ;
+         virtual ~_omaRemoveNodeCmd() ;
+
+         virtual const CHAR * name () ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+   } ;
+
+   /*
+      _omaStartNodeCmd define
+   */
+   class _omaStartNodeCmd : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+
+      public:
+         _omaStartNodeCmd() ;
+         virtual ~_omaStartNodeCmd() ;
+
+         virtual const CHAR * name () ;
+
+         virtual INT32 init ( const CHAR *pInfomation ) ;
+
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      protected:
+         const CHAR        *_pData ;
+
+   } ;
+
+   /*
+      _omaStopNodeCmd define
+   */
+   class _omaStopNodeCmd : _omaStartNodeCmd
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+
+      public:
+         _omaStopNodeCmd() ;
+         virtual ~_omaStopNodeCmd() ;
+
+         virtual const CHAR * name () ;
+
+         virtual INT32 doit ( BSONObj &retObj ) ;
+   } ;
+
 }
 
 #endif //OMAGENT_NODECMD_HPP__
