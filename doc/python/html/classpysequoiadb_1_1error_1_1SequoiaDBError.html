@@ -69,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -84,6 +84,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div>
 </div><!-- top -->
 <div class="header">
+  <div class="summary">
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="classpysequoiadb_1_1error_1_1SequoiaDBError-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">pysequoiadb.error.SequoiaDBError Class Reference</div>  </div>
 </div><!--header-->
@@ -94,20 +98,129 @@ Inheritance diagram for pysequoiadb.error.SequoiaDBError:</div>
  <div class="center">
   <img src="classpysequoiadb_1_1error_1_1SequoiaDBError.png" usemap="#pysequoiadb.error.SequoiaDBError_map" alt=""/>
   <map id="pysequoiadb.error.SequoiaDBError_map" name="pysequoiadb.error.SequoiaDBError_map">
-<area href="classpysequoiadb_1_1error_1_1ConnectError.html" alt="pysequoiadb.error.ConnectError" shape="rect" coords="0,112,215,136"/>
-<area href="classpysequoiadb_1_1error_1_1InvalidParameter.html" alt="pysequoiadb.error.InvalidParameter" shape="rect" coords="225,112,440,136"/>
-<area href="classpysequoiadb_1_1error_1_1OperationError.html" alt="pysequoiadb.error.OperationError" shape="rect" coords="450,112,665,136"/>
+<area href="classpysequoiadb_1_1error_1_1SDBBaseError.html" alt="pysequoiadb.error.SDBBaseError" shape="rect" coords="0,56,212,80"/>
 </map>
  </div></div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a2103e9afdff95625c7875a0fdd36e46f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2103e9afdff95625c7875a0fdd36e46f"></a>
+def&#160;</td><td class="memItemRight" valign="bottom"><b>__init__</b></td></tr>
+<tr class="separator:a2103e9afdff95625c7875a0fdd36e46f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e149806b7d8a5d3c213dd57269f822d"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1error_1_1SequoiaDBError.html#a2e149806b7d8a5d3c213dd57269f822d">__repr__</a></td></tr>
+<tr class="separator:a2e149806b7d8a5d3c213dd57269f822d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad150499d6aff433cce29a551883362a2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1error_1_1SequoiaDBError.html#ad150499d6aff433cce29a551883362a2">__str__</a></td></tr>
+<tr class="separator:ad150499d6aff433cce29a551883362a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a508241584ac23da8b803eb2445706e75"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1error_1_1SequoiaDBError.html#a508241584ac23da8b803eb2445706e75">code</a></td></tr>
+<tr class="separator:a508241584ac23da8b803eb2445706e75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a260d3f6336f7c1678a547176d7d9270b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1error_1_1SequoiaDBError.html#a260d3f6336f7c1678a547176d7d9270b">detail</a></td></tr>
+<tr class="separator:a260d3f6336f7c1678a547176d7d9270b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a92eb6e442ea7d90ae66cf5efc6b2d76e"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1error_1_1SequoiaDBError.html#a92eb6e442ea7d90ae66cf5efc6b2d76e">DEFAULT</a> = &quot; Error: &quot;</td></tr>
+<tr class="separator:a92eb6e442ea7d90ae66cf5efc6b2d76e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><pre class="fragment">Base Exception of Python Driver for SequoiaDB
-</pre> </div><hr/>The documentation for this class was generated from the following file:<ul>
+<div class="textblock"><pre class="fragment">Exception of SequoiaDB
+</pre> </div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a2e149806b7d8a5d3c213dd57269f822d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.error.SequoiaDBError.__repr__ </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">make the error info.
+</pre> 
+</div>
+</div>
+<a class="anchor" id="ad150499d6aff433cce29a551883362a2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.error.SequoiaDBError.__str__ </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">return the error info.
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a508241584ac23da8b803eb2445706e75"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.error.SequoiaDBError.code </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">The error code returned by the server, if any.
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a260d3f6336f7c1678a547176d7d9270b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.error.SequoiaDBError.detail </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">return the detail error message
+</pre> 
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="a92eb6e442ea7d90ae66cf5efc6b2d76e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">string pysequoiadb.error.SequoiaDBError.DEFAULT = &quot; Error: &quot;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<pre class="fragment">Exception of SequoiaDB
+</pre> 
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>C:/SequoiaDB/trunk/driver/python/pysequoiadb/error.py</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Aug 15 2014 16:49:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 20 2014 10:28:54 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

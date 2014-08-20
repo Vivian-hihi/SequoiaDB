@@ -3,7 +3,7 @@ var searchData=
   ['cancel_5ftask',['cancel_task',['../classpysequoiadb_1_1client_1_1client.html#a3a3a3e4e5392bc17cfd0b25abca86a9d',1,'pysequoiadb::client::client']]],
   ['close',['close',['../classpysequoiadb_1_1cursor_1_1cursor.html#a60e560821e39d8f3752bab0b533e59a0',1,'pysequoiadb::cursor::cursor']]],
   ['close_5fall_5fcursors',['close_all_cursors',['../classpysequoiadb_1_1client_1_1client.html#aac17be205eaf4e1f9abd7afd7088d999',1,'pysequoiadb::client::client']]],
-  ['code',['code',['../classpysequoiadb_1_1error_1_1OperationError.html#ae72be613c89c24c059c85534a1d852ee',1,'pysequoiadb::error::OperationError']]],
+  ['code',['code',['../classpysequoiadb_1_1error_1_1SDBBaseError.html#a6b9f08401030ce1e37e659838cf7f739',1,'pysequoiadb::error::SDBBaseError']]],
   ['collection',['collection',['../classbson_1_1dbref_1_1DBRef.html#abcd0407ebf9e5ace1e6939ce60bc1cc7',1,'bson::dbref::DBRef']]],
   ['connect',['connect',['../classpysequoiadb_1_1client_1_1client.html#a86b9d348b3c506eb35de350669dad7a2',1,'pysequoiadb.client.client.connect()'],['../classpysequoiadb_1_1replicanode_1_1replicanode.html#afec533245151d0c9e7f5780d29a845b1',1,'pysequoiadb.replicanode.replicanode.connect()']]],
   ['connect_5fto_5fhosts',['connect_to_hosts',['../classpysequoiadb_1_1client_1_1client.html#a94ed87aee00da0ee5d01e020c79c363f',1,'pysequoiadb::client::client']]],

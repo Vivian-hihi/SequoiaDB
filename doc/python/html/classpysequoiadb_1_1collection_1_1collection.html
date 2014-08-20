@@ -192,7 +192,11 @@ and user should deal with it according the meaning of error code printed.
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">create a new collection.</pre> 
+<pre class="fragment">create a new collection.
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
 </div>
 </div>
 <a class="anchor" id="ace60cd9d1d732701dae7eb072f6a4713"></a>
@@ -208,7 +212,11 @@ and user should deal with it according the meaning of error code printed.
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">delete a object existed.</pre> 
+<pre class="fragment">delete a object existed.
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
@@ -238,17 +246,18 @@ and user should deal with it according the meaning of error code printed.
 <pre class="fragment">Execute aggregate operation in specified collection.
 
 Parameters:
-   Name               Type  Info:
-   aggregate_options  list  The array of dict objects.
-                            bson.SON may need if the element is
-                            order-sensitive.
-                            eg.
-                            {'$sort':bson.SON([("name",-1), ("age":1)])}
-                            it will be ordered descending by 'name'
-                            first, and be ordered ascending by 'age'
+   Name               Type       Info:
+   aggregate_options  list/tuple The array of dict objects.
+                                 bson.SON may need if the element is
+                                 order-sensitive.
+                                 eg.
+                                 {'$sort':bson.SON([("name",-1), ("age":1)])}
+                                 it will be ordered descending by 'name'
+                                 first, and be ordered ascending by 'age'
 Return values:
-   Success: SDB_OK  and  a cursor object of result
-   Fail   : Others  and  None
+   a cursor object of result
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -288,9 +297,9 @@ Parameters:
    subcl_full_name str   The name fo the subcollection.
    options         dict  he low boudary and up boudary
                          eg: {"LowBound":{a:1},"UpBound":{a:100}}
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -326,12 +335,12 @@ Return values:
 <pre class="fragment">Insert a bulk of record into current collection.
 
 Parameters:
-   Name      Type     Info:
-   flags     int      0 or 1, see Info as below.
-   records   list     The list of inserted records.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+   Name        Type       Info:
+   flags       int        0 or 1, see Info as below.
+   records     list/tuple The list of inserted records.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Info:
    flags : 0 or 1. 
    0 : stop insertting record when an error occurred
@@ -391,9 +400,9 @@ Parameters:
    is_enforced  bool  Whether the index is enforced unique This
                       element is meaningful when isUnique is set to
                       true.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -411,13 +420,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>hint</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -429,14 +432,15 @@ Return values:
 <pre class="fragment">Delete the matching documents in current collection.
 
 Parameters:
-   Name      Type  Info:
-   condition dict  The matching rule, delete all the documents
-                   if not provided.
-   hint      dict  The hint, automatically match the optimal hint
-                   if not provided
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+   Name        Type  Info:
+   **kwargs          Useful options are below
+   - condition dict  The matching rule, delete all the documents
+                     if not provided.
+   - hint      dict  The hint, automatically match the optimal hint
+                     if not provided
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -468,9 +472,9 @@ Return values:
 Parameters:
    Name            Type  Info:
    subcl_full_name str   The name fo the subcollection.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -502,9 +506,9 @@ Return values:
 Parameters:
    Name         Type  Info:
    idx_name     str   The index name.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -523,11 +527,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Get the name of specified collection in current collection space.
 
-Parameters:
-   Name         Type  Info:
-   N/A
 Return values:
    The name of specified collection
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -545,7 +548,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -561,8 +564,10 @@ Parameters:
    condition    dict     The matching rule, return the count of all
                          documents if None.
 Return values:
-   Success: SDB_OK   and   count of result
-   Fail   : Others   and   0
+   count of result
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -581,11 +586,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Get the name of current collection space.
 
-Parameters:
-   Name         Type  Info:
-   N/A
 Return values:
    The name of current collection space
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -604,11 +608,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Get the full name of specified collection in current collection space.
 
-Parameters:
-   Name         Type  Info:
-   N/A
 Return values:
    The full name of current collection
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -626,7 +629,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>idx_name</em>&#160;</td>
+          <td class="paramname"><em>idx_name</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -640,10 +643,12 @@ Return values:
 Parameters:
    Name         Type  Info:
    idx_name     str   The index name, returns all of the indexes
-                      if this parameter is ""(empty str).
+                      if this parameter is None.
 Return values:
-   Success: SDB_OK  and  a cursor object of result
-   Fail   : Others  and  None
+   a cursor object of result
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -661,31 +666,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>order_by</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>hint</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>num_to_skip</em> = <code>0L</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>num_to_return</em> = <code>-1L</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -697,24 +678,27 @@ Return values:
 <pre class="fragment">Get the index blocks' or data blocks' infomations for concurrent query.
 
 Parameters:
-   Name            Type     Info:
-   condition       dict     The matching rule, return the whole range
-                            of index blocks if not provided.
-                            eg:{"age":{"$gt":25},"age":{"$lt":75}}.
-   order_by        dict     The ordered rule, result set is unordered
-                            if not provided.bson.SON may need if it is
-                            order-sensitive.
-   hint            dict     One of the indexs in current collection,
-                            using default index to query if not
-                            provided.
-                            eg:{"":"ageIndex"}.
-   num_to_skip     long     Skip the first num_to_skip documents,
-                            default is 0L.
-   num_to_return   long     Only return num_to_return documents,
-                            default is -1L for returning all results.
+   Name              Type     Info:
+   **kwargs                   Useful options are below
+   - condition       dict     The matching rule, return the whole range
+                              of index blocks if not provided.
+                              eg:{"age":{"$gt":25},"age":{"$lt":75}}.
+   - order_by        dict     The ordered rule, result set is unordered
+                              if not provided.bson.SON may need if it is
+                              order-sensitive.
+   - hint            dict     One of the indexs in current collection,
+                              using default index to query if not
+                              provided.
+                              eg:{"":"ageIndex"}.
+   - num_to_skip     long     Skip the first num_to_skip documents,
+                              default is 0L.
+   - num_to_return   long     Only return num_to_return documents,
+                              default is -1L for returning all results.
 Return values:
-   Success: SDB_OK   and   a cursor object of query
-   Fail   : Others   and   None
+   a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -747,8 +731,10 @@ Parameters:
    Name      Type    Info:
    records   dict    The inserted record.
 Return values:
-   Success: SDB_OK  and  ObjectId of record inserted
-   Fail   : Others  and  None
+   ObjectId of record inserted
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -766,37 +752,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>selected</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>order_by</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>hint</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>num_to_skip</em> = <code>0L</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>num_to_return</em> = <code>-1L</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -808,22 +764,26 @@ Return values:
 <pre class="fragment">Get the matching documents in current collection.
 
 Parameters:
-   Name            Type     Info:
-   condition       dict     The matching rule, update all the
-                            documents if not provided.
-   selected        dict     The selective rule, return the whole
-                            document if not provided.
-   order_by        dict     The ordered rule, result set is unordered
-                            if not provided.
-   hint            dict     The hint, automatically match the optimal
-                            hint if not provided.
-   num_to_skip     long     Skip the first numToSkip documents,
-                            default is 0L.
-   num_to_return   long     Only return numToReturn documents,
-                            default is -1L for returning all results.
+   Name              Type     Info:
+   **kwargs                   Useful options are below
+   - condition       dict     The matching rule, update all the
+                              documents if not provided.
+   - selected        dict     The selective rule, return the whole
+                              document if not provided.
+   - order_by        dict     The ordered rule, result set is unordered
+                              if not provided.
+   - hint            dict     The hint, automatically match the optimal
+                              hint if not provided.
+   - num_to_skip     long     Skip the first numToSkip documents,
+                              default is 0L.
+   - num_to_return   long     Only return numToReturn documents,
+                              default is -1L for returning
+                              all results.
 Return values:
-   Success: SDB_OK   and   a cursor object of query
-   Fail   : Others   and   None
+   a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -859,7 +819,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>split_end_condition</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>split_end_condition</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -890,8 +850,10 @@ Parameters:
                                [30,60). If splitEndCondition is null,
                                they are in [30,max).
 Return values:
-   Success: SDB_OK  and  the task id
-   Fail   : Others  and  0
+   task id
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -939,8 +901,10 @@ Parameters:
    target_group_name  str      The target replica group name.
    percent                float    The split percent, Range:(0,100]
 Return values:
-   Success: SDB_OK  and  the task id
-   Fail   : Others  and  0
+   task id
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -976,7 +940,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>split_end_condition</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>split_end_condition</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1007,9 +971,9 @@ Parameters:
                                   hash value are in [30,60).
                                   If splitEndCondition is null, they
                                   are in [30,max).
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1056,9 +1020,9 @@ Parameters:
    source_group_name  str      The source replica group name.
    target_group_name  str      The target replica group name.
    percent                float    The split percent, Range:(0,100]
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1082,13 +1046,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>hint</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1100,15 +1058,16 @@ Return values:
 <pre class="fragment">Update the matching documents in current collection.
 
 Parameters:
-   Name      Type  Info:
-   rule      dict  The updating rule.
-   condition dict  The matching rule, update all the documents
-                   if not provided.
-   hint      dict  The hint, automatically match the optimal hint
-                   if not provided
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+   Name        Type     Info:
+   rule        dict     The updating rule.
+   **kwargs             Useful option are below
+   - condition dict     The matching rule, update all the documents
+                        if not provided.
+   - hint      dict     The hint, automatically match the optimal hint
+                        if not provided
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Note:
    It won't work to update the "ShardingKey" field, but the other fields
    take effect.
@@ -1135,13 +1094,7 @@ Note:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>hint</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1154,15 +1107,16 @@ Note:
    no matching.
 
 Parameters:
-   Name      Type  Info:
-   rule      dict  The updating rule.
-   condition dict  The matching rule, update all the documents
-                   if not provided.
-   hint      dict  The hint, automatically match the optimal hint
-                   if not provided
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+   Name        Type  Info:
+   rule        dict  The updating rule.
+   **kwargs          Useful options are below
+   - condition dict  The matching rule, update all the documents
+                     if not provided.
+   - hint      dict  The hint, automatically match the optimal hint
+                     if not provided
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Note:
    It won't work to update the "ShardingKey" field, but the other fields
    take effect.
@@ -1175,7 +1129,7 @@ Note:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Aug 15 2014 16:49:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 20 2014 18:24:21 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

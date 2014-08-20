@@ -102,11 +102,9 @@ Inheritance diagram for pysequoiadb.cursor.cursor:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aafa6d4f9dbc43839c61e1a705c15a656"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aafa6d4f9dbc43839c61e1a705c15a656"></a>
-def&#160;</td><td class="memItemRight" valign="bottom"><b>__init__</b></td></tr>
+<tr class="memitem:aafa6d4f9dbc43839c61e1a705c15a656"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1cursor_1_1cursor.html#aafa6d4f9dbc43839c61e1a705c15a656">__init__</a></td></tr>
 <tr class="separator:aafa6d4f9dbc43839c61e1a705c15a656"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6812a5ea64653108d749d1f271defb64"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6812a5ea64653108d749d1f271defb64"></a>
-def&#160;</td><td class="memItemRight" valign="bottom"><b>__del__</b></td></tr>
+<tr class="memitem:a6812a5ea64653108d749d1f271defb64"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1cursor_1_1cursor.html#a6812a5ea64653108d749d1f271defb64">__del__</a></td></tr>
 <tr class="separator:a6812a5ea64653108d749d1f271defb64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0056dfe7cc85b877ade41af613aedad6"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1cursor_1_1cursor.html#a0056dfe7cc85b877ade41af613aedad6">next</a></td></tr>
 <tr class="separator:a0056dfe7cc85b877ade41af613aedad6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -141,7 +139,48 @@ and user should deal with it according the meaning of error code printed.
           In every scene which the order is important, please make it using
           bson.SON and list. It is a subclass of built-in dict
           and order-sensitive
-</pre> </div><h2 class="groupheader">Member Function Documentation</h2>
+</pre> </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="aafa6d4f9dbc43839c61e1a705c15a656"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.cursor.cursor.__init__ </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">constructor of cursor
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a6812a5ea64653108d749d1f271defb64"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.cursor.cursor.__del__ </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">release cursor
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a60e560821e39d8f3752bab0b533e59a0"></a>
 <div class="memitem">
 <div class="memproto">
@@ -158,12 +197,8 @@ and user should deal with it according the meaning of error code printed.
 <pre class="fragment">Close the cursor's connection to database, we can't use this handle to
    get data again.
 
-Parameters:
-   Name         Type     Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -182,12 +217,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Return the current document of cursor, and don't move.
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: SDB_OK and an dict object of record
-   Fail   : Others and None
+   an dict object of record
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -205,13 +238,11 @@ Return values:
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Return the next document of current cursor, and move forward.
- 
-Parameters:
-   Name         Type     Info:
-   N/A
+
 Return values:
-   Success: SDB_OK and an dict object of record
-   Fail   : Others and None
+   an dict object of record
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -221,7 +252,7 @@ Return values:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Aug 15 2014 16:49:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 20 2014 18:24:21 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

@@ -86,6 +86,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classpysequoiadb_1_1client_1_1client-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">pysequoiadb.client.client Class Reference</div>  </div>
@@ -191,6 +192,21 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:aac17be205eaf4e1f9abd7afd7088d999"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c223a7d1daf0fd06d3615d4d337a9fa"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1client_1_1client.html#a7c223a7d1daf0fd06d3615d4d337a9fa">is_valid</a></td></tr>
 <tr class="separator:a7c223a7d1daf0fd06d3615d4d337a9fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a0127318ebb1546f35ff2e1aae61ff4f0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0127318ebb1546f35ff2e1aae61ff4f0"></a>
+string&#160;</td><td class="memItemRight" valign="bottom"><b>HOST</b> = &quot;localhost&quot;</td></tr>
+<tr class="separator:a0127318ebb1546f35ff2e1aae61ff4f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd5450d9380a20141cb091a58924d014"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acd5450d9380a20141cb091a58924d014"></a>
+string&#160;</td><td class="memItemRight" valign="bottom"><b>SERVICE</b> = &quot;11810&quot;</td></tr>
+<tr class="separator:acd5450d9380a20141cb091a58924d014"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a952d51da1ca0b06b55f3571b1faffa39"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a952d51da1ca0b06b55f3571b1faffa39"></a>
+string&#160;</td><td class="memItemRight" valign="bottom"><b>USER</b> = &quot;&quot;</td></tr>
+<tr class="separator:a952d51da1ca0b06b55f3571b1faffa39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affb73d162b64929cb56e06537904ade1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="affb73d162b64929cb56e06537904ade1"></a>
+string&#160;</td><td class="memItemRight" valign="bottom"><b>PSW</b> = &quot;&quot;</td></tr>
+<tr class="separator:affb73d162b64929cb56e06537904ade1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><pre class="fragment">SequoiaDB Client Driver
@@ -238,25 +254,25 @@ and user should deal with it according the meaning of error code printed.
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>host</em> = <code>default_host</code>, </td>
+          <td class="paramname"><em>host</em> = <code>None</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>service</em> = <code>default_svcname</code>, </td>
+          <td class="paramname"><em>service</em> = <code>None</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>user</em> = <code>default_user</code>, </td>
+          <td class="paramname"><em>user</em> = <code>None</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>psw</em> = <code>default_psw</code>&#160;</td>
+          <td class="paramname"><em>psw</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -270,6 +286,20 @@ and user should deal with it according the meaning of error code printed.
    it will try to connect to SequoiaDB using host and port given,
    localhost and 11810 are the default value of host and port,
    user and password are "". 
+
+Parameters:
+   Name    Type      Info:
+   host    str       The hostname or IP address of dbserver,
+                     if None, "localhost" will be insteaded
+   service str/int   The service name or port number of dbserver,
+                     if None, "localhost" will be insteaded
+   user    str       The user name to access to database,
+                     if None, "" will be insteaded
+   psw     str       The user password to access to database,
+                     if None, "" will be insteaded
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -286,7 +316,11 @@ and user should deal with it according the meaning of error code printed.
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">release resource when del called.</pre> 
+<pre class="fragment">release resource when del called.
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
@@ -324,6 +358,9 @@ and user should deal with it according the meaning of error code printed.
    __getattr__("__methods__").
 
    if success, a collection object will be returned, or None.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -355,6 +392,9 @@ and user should deal with it according the meaning of error code printed.
    eg.
    cc = client()
    cs = cc['test'] # access to collection space named 'test'.
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -372,7 +412,7 @@ and user should deal with it according the meaning of error code printed.
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>options</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>options</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -395,9 +435,9 @@ Parameters:
                      "Name":"backupName", "Description":description,
                      "EnsureInc":true, "OverWrite":true }
                    See Info as below.
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Info:
    GroupName   :  The replica groups which to be backuped.
    Path        :  The backup path, if not assign, use the backup path assigned in configuration file.
@@ -444,11 +484,11 @@ Info:
 Parameters:
    Name         Type     Info:
    task_id      long     The task id to be canceled.
-   is_async     int      The operation "cancel task" is async or not,
-                         "true" for async, "false" for sync.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+   is_async     bool     The operation "cancel task" is async or not,
+                         "True" for async, "False" for sync.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -466,14 +506,10 @@ Return values:
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Close all the cursors in current thread, we can't use those cursors to 
-   get data again.
+get data again.
 
-Parameters:
-   Name         Type     Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -491,25 +527,19 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>host</em> = <code>default_host</code>, </td>
+          <td class="paramname"><em>host</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>service</em> = <code>default_svcname</code>, </td>
+          <td class="paramname"><em>service</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>user</em> = <code>default_user</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>psw</em> = <code>default_psw</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -521,15 +551,15 @@ Return values:
 <pre class="fragment">connect to specified database
 
 Parameters:
-   Name    Type    Info:
-   host    str     The host name or IP address of database server, if None,
-                   'localhost' instead.
-   service int/str The servicename of database server, if None, 11810 instead.
-   user    str     The user name to access to database, if None, "" instead.
-   psw     str     The password to access to database, if None, "" instead.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+   Name        Type     Info:
+   host        str      The host name or IP address of database server.
+   service     int/str  The servicename of database server.
+   **kwargs             Useful options are below:
+   -  user     str      The user name to access to database.
+   -  password str      The user password to access to database.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -553,19 +583,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>user</em> = <code>default_user</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>psw</em> = <code>default_psw</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>policy</em> = <code>&quot;random&quot;</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -577,19 +595,20 @@ Return values:
 <pre class="fragment">try to connect a host in specified hosts
 
 Parameters:
-   Name    Type    Info:
-   hosts   list    The list contains hosts.
-                   eg.
-                   [ {'host':'localhost',     'service':'11810'},
-                     {'host':'192.168.10.30', 'service':'11810'},
-                     {'host':'192.168.20.63', 'service':11810}, ]
-   user    str     The user name to access to database 
-   psw     str     The user password to access to database
-   policy  str     The policy of select hosts. it must be string of
-                   'random' or 'one_by_one'
-Return values:
-   Success: SDB_OK  and  the index in the hosts of current connection
-   Fail   : Others  and  -1
+   Name        Type  Info:
+   hosts       list  The list contains hosts.
+                     eg.
+                     [ {'host':'localhost',     'service':'11810'},
+                       {'host':'192.168.10.30', 'service':'11810'},
+                       {'host':'192.168.20.63', 'service':11810}, ]
+   **kwargs          Useful options are below:
+   -  user     str   The user name to access to database.
+   -  password str   The user password to access to database.
+   -  policy   str   The policy of select hosts. it must be string
+                     of 'random' or 'one_by_one'.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -630,8 +649,10 @@ Parameters:
    page_size    int      The page size of collection space. See Info
                          as below.
 Return values:
-   Success: SDB_OK   and   the collection space object created.
-   Fail   : Other    and   None
+   collection space object created.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Info:
    valid page size value:
                0  :  64k default page size
@@ -671,9 +692,9 @@ Info:
 Parameters:
    Name         Type     Info:
    code         str      The JS code of store procedures.
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -726,9 +747,9 @@ Parameters:
    service      str      The servicename for the catalog replica group.
    path         str      The path for the catalog replica group.
    configure    dict     The configurations for the catalog replica group.
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -758,11 +779,13 @@ Return values:
 <pre class="fragment">Create the specified replica group.
 
 Parameters:
-   Name         Type     Info:
-   group_name   str      The name of replica group to be created.
+   Name        Type     Info:
+   group_name  str      The name of replica group to be created.
 Return values:
-   Success: SDB_OK   and   the replicagroup object created.
-   Fail   : Other    and   None
+   the replicagroup object created.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -780,7 +803,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>user_name</em>, </td>
+          <td class="paramname"><em>name</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -799,11 +822,11 @@ Return values:
 
 Parameters:
    Name         Type     Info:
-   user_name    str      The name of user to be created.
+   name         str      The name of user to be created.
    psw          str      The password of user to be created.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -822,12 +845,8 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">disconnect to current server.
 
-Parameters:
-   Name    Type    Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -859,9 +878,9 @@ Return values:
 Parameters:
    Name         Type     Info:
    cs_name      str      The name of collection space to be dropped
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -894,8 +913,10 @@ Parameters:
    Name         Type     Info:
    name         str      The name of store procedure.
 Return values:
-   Success: SDB_OK   and  a cursor object of current eval.
-   Fail   : Other    and  None
+   cursor object of current eval.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -928,8 +949,10 @@ Parameters:
    Name         Type     Info:
    sql          str      The SQL command.
 Return values:
-   Success: SDB_OK   and   a cursor object of matching documents.
-   Fail   : Other    and   None
+   a cursor object of matching documents.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -961,9 +984,9 @@ Return values:
 Parameters:
    Name         Type     Info:
    sql          str      The SQL command.
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -999,9 +1022,9 @@ Parameters:
                    configuration file, while passing {"Global":false} will 
                    flush coord's configuration file. In stand-alone
                    environment, both them have the same behaviour.
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1034,8 +1057,10 @@ Parameters:
    Name         Type     Info:
    cl_full_name str      The full name of collection
 Return values:
-   Success: SDB_OK   and   a collection object of query.
-   Fail   : Other    and   None
+   a collection object of query.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1068,8 +1093,10 @@ Parameters:
    Name         Type     Info:
    cs_name      str      The name of collection space.
 Return values:
-   Success: SDB_OK   and   a collection space object of query.
-   Fail   : Other    and   None
+   a collection space object of query.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1093,19 +1120,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>selector</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>order_by</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1117,16 +1132,19 @@ Return values:
 <pre class="fragment">Get the informations of specified type.
 
 Parameters:
-   Name         Type     Info:
-   list_type    int      type of list, see Info as below.
-   condition    dict     The matching rule, match all the documents
-                         if None.
-   selector     dict     The selective rule, return the whole
-                         documents if None.
-   order_by     dict     The ordered rule, never sort if None.
+   Name        Type     Info:
+   list_type   int      Type of list option, see Info as below.
+   **kwargs             Useful options are below
+   - condition dict     The matching rule, match all the documents
+                        if None.
+   - selector  dict     The selective rule, return the whole
+                        documents if None.
+   - order_by  dict     The ordered rule, never sort if None.
 Return values:
-   Success: SDB_OK   and   a cursor object of query
-   Fail   : Other    and   None
+   a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Info:
    list type:
     0          : Get all contexts list
@@ -1174,8 +1192,10 @@ Parameters:
    Name       Type     Info:
    id         str      The id of replica group.
 Return values:
-   Success: SDB_OK   and   the replicagroup object of query.
-   Fail   : Other    and   None
+   the replicagroup object of query.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1208,8 +1228,10 @@ Parameters:
    Name         Type     Info:
    group_name   str      The name of replica group.
 Return values:
-   Success: SDB_OK   and   the replicagroup object of query.
-   Fail   : Other    and   None
+   the replicagroup object of query.
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1233,19 +1255,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>selector</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>order_by</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1257,17 +1267,20 @@ Return values:
 <pre class="fragment">Get the snapshots of specified type.
 
 Parameters:
-   Name         Type  Info:
-   snap_typr    str   The type of snapshot, see Info as below
-   condition    dict  The matching rule, match all the documents
-                      if not provided.
-   selector     dict  The selective rule, return the whole
-                      document if not provided.
-   order_by     dict  The ordered rule, result set is unordered
-                      if not provided.
+   Name           Type  Info:
+   snap_typr      str   The type of snapshot, see Info as below
+   **kwargs             Useful options are below
+   - condition    dict  The matching rule, match all the documents
+                        if not provided.
+   - selector     dict  The selective rule, return the whole
+                        document if not provided.
+   - order_by     dict  The ordered rule, result set is unordered
+                        if not provided.
 Return values:
-   Success: SDB_OK       and  a cursor object of query
-   Fail   : Others  and  None
+   a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Info:
   snapshot type:
       0     : Get all contexts' snapshot
@@ -1297,12 +1310,10 @@ Info:
 </div><div class="memdoc">
 <pre class="fragment">Judge whether the connection is valid.
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: True, if the result is valid 
-   Fail   : False
+   bool 
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1326,19 +1337,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>selector</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>order_by</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1350,25 +1349,28 @@ Return values:
 <pre class="fragment">List the backups.
 
 Parameters:
-   Name      Type     Info:
-   options   dict     Contains configuration infomations for remove
-                      backups, list all the backups in the default
-                      backup path if None. 
-                      The "options" contains 3 options as below. 
-                      All the elements in options are optional. 
-                      eg:
-                      { "GroupName":["rgame1", "rgName2"], 
-                        "Path":"/opt/sequoiadb/backup",
-                        "Name":"backupName" }
-                      See Info as below.
-   condition dict     The matching rule, return all the documents
-                      if None.
-   selector  dict     The selective rule, return the whole document
-                      if None.
-   order_by  dict     The ordered rule, never sort if None.
+   Name        Type     Info:
+   options     dict     Contains configuration infomations for remove
+                         backups, list all the backups in the
+                         default backup path if None. 
+                         The "options" contains 3 options as below. 
+                         All the elements in options are optional. 
+                         eg:
+                         { "GroupName":["rgame1", "rgName2"], 
+                           "Path":"/opt/sequoiadb/backup",
+                           "Name":"backupName" }
+                         See Info as below.
+   **kwargs             Useful option arw below
+   - condition dict     The matching rule, return all the documents
+                        if None.
+   - selector  dict     The selective rule, return the whole document
+                        if None.
+   - order_by  dict     The ordered rule, never sort if None.
 Return values:
-   Success: SDB_OK  and  a cursor object of backup list
-   Fail   : Others  and  None
+   a cursor object of backup list
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Info:
    GroupName   :  Assign the backups of specifed replica groups to be list.
    Path        :  Assign the backups in specifed path to be list,
@@ -1394,12 +1396,10 @@ Info:
 <pre class="fragment">List all collection space of current database, include temporary
    collection space.
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: SDB_OK   and   a cursor object of collection space list.
-   Fail   : Other    and   None
+   a cursor object of collection spaces.
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1418,12 +1418,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">List all collections in current database.
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: SDB_OK   and   a cursor object of collection list.
-   Fail   : Other    and   None
+   a cursor object of collection.
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1456,8 +1454,10 @@ Parameters:
    Name         Type     Info:
    condition    dict     The condition of list.
 Return values:
-   Success: SDB_OK  and  an cursor object of result
-   Fail   : Other   and  None
+   an cursor object of result
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1476,12 +1476,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">List all replica groups of current database.
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: SDB_OK   and   a cursor object of replication groups.
-   Fail   : Other    and   None
+   a cursor object of replication groups.
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1499,25 +1497,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>selector</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>order_by</em> = <code>static_object</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>hint</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1529,22 +1509,25 @@ Return values:
 <pre class="fragment">List the tasks.
 
 Parameters:
-   Name         Type     Info:
-   condition    dict     The matching rule, return all the documents
-                         if None.
-   selector     dict     The selective rule, return the whole
-                         document if None.
-   order_by     dict     The ordered rule, never sort if None.
-                         bson.SON may need if it is order-sensitive.
-                         eg.
-                         bson.SON([("name",-1), ("age":1)]) it will
-                         be ordered descending by 'name' first, and
-                         be ordered ascending by 'age'
-   hint         dict     The hint, automatically match the optimal
-                         hint if None.
+   Name           Type     Info:
+   **kwargs                Useful options are below
+   - condition    dict     The matching rule, return all the documents
+                           if None.
+   - selector     dict     The selective rule, return the whole
+                           document if None.
+   - order_by     dict     The ordered rule, never sort if None.
+                           bson.SON may need if it is order-sensitive.
+                           eg.
+                           bson.SON([("name",-1), ("age":1)]) it will
+                           be ordered descending by 'name' first, and
+                           be ordered ascending by 'age'
+   - hint         dict     The hint, automatically match the optimal
+                           hint if None.
 Return values:
-   Success: SDB_OK  and  a cursor object of task list
-   Fail   : Others  and  None
+   a cursor object of task list
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1586,9 +1569,10 @@ Parameters:
                      "Name":"backupName" }
                    See Info as below.
 Return values:
-   Success: SDB_OK  and  an cursor object of result
-   Fail   : Other   and  None
-
+   an cursor object of result
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 Info:
    GroupName   : Assign the backups of specifed replica groups to be
                  remove.
@@ -1627,9 +1611,9 @@ Info:
 Parameters:
    Name         Type     Info:
    name         str      The name of store procedure.
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1661,9 +1645,9 @@ Return values:
 Parameters:
    Name         Type     Info:
    group_name   str      The name of replica group to be removed
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1681,7 +1665,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>user_name</em>, </td>
+          <td class="paramname"><em>name</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1702,9 +1686,9 @@ Parameters:
    Name         Type     Info:
    user_name    str      The name of user to be removed.
    psw          str      The password of user to be removed.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1722,7 +1706,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>condition</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1738,9 +1722,9 @@ Parameters:
    condition    dict     The matching rule, usually specifies the
                          node in sharding environment, in standalone
                          mode, this option is ignored.
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1758,7 +1742,7 @@ Return values:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>options</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>options</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1772,9 +1756,9 @@ Return values:
 Parameters:
    Name         Type     Info:
    options      dict     The configuration options for session.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1793,12 +1777,8 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Transaction begin.
 
-Parameters:
-   Name         Type     Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1817,12 +1797,8 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Transaction commit.
 
-Parameters:
-   Name         Type     Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1841,12 +1817,8 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Transaction rollback
 
-Parameters:
-   Name         Type     Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Other
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1885,9 +1857,9 @@ Parameters:
    Name         Type     Info:
    task_ids     list     The list of task id.
    num          int      The number of task id.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -1897,7 +1869,7 @@ Return values:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Aug 15 2014 16:49:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 20 2014 18:24:21 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

@@ -162,7 +162,11 @@ and user should deal with it according the meaning of error code printed.
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">invoked when a new object is producted.</pre> 
+<pre class="fragment">invoked when a new object is producted.
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
 </div>
 </div>
 <a class="anchor" id="a75cd643b7b38d32e725d2cb3f1e5a27f"></a>
@@ -178,7 +182,11 @@ and user should deal with it according the meaning of error code printed.
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">delete a object existed.</pre> 
+<pre class="fragment">delete a object existed.
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
@@ -216,7 +224,10 @@ and user should deal with it according the meaning of error code printed.
    becasue dir(cc) will invoke __getattr__("__members__") and
    __getattr__("__methods__").
 
-   if success, a collection object will be returned, or None.
+   if success, a collection object will be returned.
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -248,7 +259,10 @@ and user should deal with it according the meaning of error code printed.
    eg.
    cc = client()
    cs = cc['test']
-   cl = cs['test_cl']# access to collection named 'test_cl'.
+   cl = cs['test_cl']   # access to collection named 'test_cl'.
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -272,7 +286,7 @@ and user should deal with it according the meaning of error code printed.
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>options</em> = <code>static_object</code>&#160;</td>
+          <td class="paramname"><em>options</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -290,8 +304,11 @@ Parameters:
                       "ShardingKey", "ReplSize", "IsMainCL" and
                       "Compressed" informations, no options, if None.
 Return values:
-   Success: SDB_OK  and  a collection object created
-   Fail   : Others  and  None</pre> 
+   a collection object created
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
 </div>
 </div>
 <a class="anchor" id="a1e15a1d5fb5063ea745a40cc158b1d96"></a>
@@ -322,9 +339,9 @@ Return values:
 Parameters:
    Name      Type     Info:
    cl_name   str      The collection name.
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -357,8 +374,10 @@ Parameters:
    Name         Type     Info:
    cl_name      str      The full name of the collection..
 Return values:
-   Success: SDB_OK  and  a collection object of query
-   Fail   : Others  and  None
+   a collection object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -377,11 +396,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Get the current collection space name.
 
-Parameters:
-   Name      Type     Info:
-   N/A
 Return values:
    The name of current collection space.
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -391,7 +409,7 @@ Return values:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Aug 15 2014 16:49:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 20 2014 18:24:21 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

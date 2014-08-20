@@ -102,11 +102,9 @@ Inheritance diagram for pysequoiadb.replicanode.replicanode:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a1bfc1039e9f68c904d7c405a7a758841"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1bfc1039e9f68c904d7c405a7a758841"></a>
-def&#160;</td><td class="memItemRight" valign="bottom"><b>__init__</b></td></tr>
+<tr class="memitem:a1bfc1039e9f68c904d7c405a7a758841"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1replicanode_1_1replicanode.html#a1bfc1039e9f68c904d7c405a7a758841">__init__</a></td></tr>
 <tr class="separator:a1bfc1039e9f68c904d7c405a7a758841"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad2a5fbb61080efccaa49bcdecc18ef77"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad2a5fbb61080efccaa49bcdecc18ef77"></a>
-def&#160;</td><td class="memItemRight" valign="bottom"><b>__del__</b></td></tr>
+<tr class="memitem:ad2a5fbb61080efccaa49bcdecc18ef77"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1replicanode_1_1replicanode.html#ad2a5fbb61080efccaa49bcdecc18ef77">__del__</a></td></tr>
 <tr class="separator:ad2a5fbb61080efccaa49bcdecc18ef77"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afec533245151d0c9e7f5780d29a845b1"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1replicanode_1_1replicanode.html#afec533245151d0c9e7f5780d29a845b1">connect</a></td></tr>
 <tr class="separator:afec533245151d0c9e7f5780d29a845b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -149,7 +147,58 @@ and user should deal with it according the meaning of error code printed.
           In every scene which the order is important, please make it using
           bson.SON and list. It is a subclass of built-in dict
           and order-sensitive
-</pre> </div><h2 class="groupheader">Member Function Documentation</h2>
+</pre> </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="a1bfc1039e9f68c904d7c405a7a758841"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.replicanode.replicanode.__init__ </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>client</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">constructor of replica node
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="ad2a5fbb61080efccaa49bcdecc18ef77"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.replicanode.replicanode.__del__ </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">release replica node
+
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="afec533245151d0c9e7f5780d29a845b1"></a>
 <div class="memitem">
 <div class="memproto">
@@ -165,12 +214,8 @@ and user should deal with it according the meaning of error code printed.
 </div><div class="memdoc">
 <pre class="fragment">Connect to the current node.
 
-Parameters:
-   Name         Type     Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -189,12 +234,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Get host name of the current node.
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: SDB_OK  and  the name of host
-   Fail   : Others  and  None
+   the name of host
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -213,12 +256,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Get node name of the current node.
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: SDB_OK  and  the name of node
-   Fail   : Others  and  None
+   the name of node
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -237,12 +278,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Get service name of the current node.
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: SDB_OK  and  the name of service
-   Fail   : Others  and  None
+   the name of service
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -261,12 +300,10 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Get status of the current node
 
-Parameters:
-   Name         Type     Info:
-   N/A
 Return values:
-   Success: SDB_OK  and  the status of node
-   Fail   : Others  and  None
+   the status of node
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -285,12 +322,8 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Start the node.
 
-Parameters:
-   Name         Type     Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -309,12 +342,8 @@ Return values:
 </div><div class="memdoc">
 <pre class="fragment">Stop the node.
 
-Parameters:
-   Name         Type     Info:
-   N/A
-Return values:
-   Success: SDB_OK
-   Fail   : Others
+Exceptions:
+   pysequoiadb.error.SDBBaseError
 </pre> 
 </div>
 </div>
@@ -324,7 +353,7 @@ Return values:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Aug 15 2014 16:49:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 20 2014 18:24:21 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

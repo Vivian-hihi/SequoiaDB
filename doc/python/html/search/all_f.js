@@ -1,7 +1,13 @@
 var searchData=
 [
   ['scope',['scope',['../classbson_1_1code_1_1Code.html#a469e80e1b36d72a12fe207a350aae8ba',1,'bson::code::Code']]],
-  ['sequoiadberror',['SequoiaDBError',['../classpysequoiadb_1_1error_1_1SequoiaDBError.html',1,'pysequoiadb::error']]],
+  ['sdbbaseerror',['SDBBaseError',['../classpysequoiadb_1_1error_1_1SDBBaseError.html',1,'pysequoiadb::error']]],
+  ['sdberror',['SDBError',['../classpysequoiadb_1_1error_1_1SDBError.html',1,'pysequoiadb::error']]],
+  ['sdbioerror',['SDBIOError',['../classpysequoiadb_1_1error_1_1SDBIOError.html',1,'pysequoiadb::error']]],
+  ['sdbnetworkerror',['SDBNetworkError',['../classpysequoiadb_1_1error_1_1SDBNetworkError.html',1,'pysequoiadb::error']]],
+  ['sdbsystemerror',['SDBSystemError',['../classpysequoiadb_1_1error_1_1SDBSystemError.html',1,'pysequoiadb::error']]],
+  ['sdbtypeerror',['SDBTypeError',['../classpysequoiadb_1_1error_1_1SDBTypeError.html',1,'pysequoiadb::error']]],
+  ['sdbunknownerror',['SDBUnknownError',['../classpysequoiadb_1_1error_1_1SDBUnknownError.html',1,'pysequoiadb::error']]],
   ['set_5fsession_5fattri',['set_session_attri',['../classpysequoiadb_1_1client_1_1client.html#a294103e4431a7fb950c7377c7c46d3b6',1,'pysequoiadb::client::client']]],
   ['son',['SON',['../classbson_1_1son_1_1SON.html',1,'bson::son']]],
   ['split_5fasync_5fby_5fcondition',['split_async_by_condition',['../classpysequoiadb_1_1collection_1_1collection.html#a281e097877f1d9648b9cf023047b2058',1,'pysequoiadb::collection::collection']]],
