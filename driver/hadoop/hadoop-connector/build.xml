@@ -53,5 +53,6 @@
 		</jar>
 
 		<copy file="${jar.dir}/hadoop-connector${hadoop.version}.jar" tofile="${basedir}/hadoop-connector${hadoop.version}.jar" />
+		<delete file="${jar.dir}/hadoop-connector${hadoop.version}.jar" />
 	</target>
 </project>
