@@ -591,7 +591,6 @@ namespace engine
          goto error ;
       }
 
-      _markDirty( page ) ;
    done:
       return rc ;
    error:
