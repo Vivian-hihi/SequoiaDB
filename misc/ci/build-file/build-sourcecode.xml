@@ -299,5 +299,19 @@
 			<arg line="build sequoiadb_server.xml --setvars project.version=${project.version}  --setvars platform=${os.and.platform} --setvars project.outputDirectory=${RELEASE_DIR}" />
 		</exec>
 		<echo message="Make relase package completed." />
+
+<!-- 		<echo message="begin to make rpm package.." />
+		<echo message="tar the ${project.name}-${project.version}-linux.tar.gz to /usr/src/packages/SOURCES..." />
+		<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${project.version}" />
+		<tar destfile="/usr/src/packages/SOURCES/${project.name}-${project.version}-linux.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
+
+		<copy file="${CODE_DIR}/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPEC" />
+		<exec executable="rpmbuild" dir="/usr/src/packages/SPEC">
+			<arg line=" -bb sequoiadb-${project.version}.spec" />
+		</exec>
+		<copy file="/usr/src/packages/RPMS/x86_64/${project.name}-${project.version}-linux.x86_64.rpm" todir="${RELEASE_DIR}" />
+        <delete file="/usr/src/packages/SOURCES/sequoiadb-1.8.tar.gz" />
+        <delete file="/usr/src/packages/SPECS/sequoiadb-1.8.spec" />
+		<echo message="Make rpm package completed.." /> -->
 	</target>
 </project>
