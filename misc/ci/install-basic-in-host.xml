@@ -28,9 +28,7 @@
 			<then>
 				<exec executable="service" dir="" failonerror="true">
 					<arg value="sdbcm" />
-					<arg value="stop" />
-					<!-- <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
-					-->				
+					<arg value="stop" />			
 				</exec>
 				<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
 					<arg line="--mode unattended" />
@@ -69,7 +67,6 @@
 				<echo message="start standalone process: su - sdbadmin -c '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" failonerror="true" failifexecutionfails="true" >
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
-					<!-- <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" /> -->
 				</exec>
 			</then>
 			<else>
@@ -94,7 +91,6 @@
 				<echo message="start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" spawn="false">
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
-					<!-- <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" /> -->
 				</exec>
 			</else>
 		</if>
