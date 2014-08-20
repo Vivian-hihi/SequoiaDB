@@ -46,7 +46,7 @@ from pysequoiadb.error import (SDBTypeError,
                                SDBBaseError,
                                SDBIOError,
                                SDBNetworkError,
-                               SDBInvalidValue,
+                               InvalidParameter,
                                SDBSystemError,
                                SDBUnknownError)
 
