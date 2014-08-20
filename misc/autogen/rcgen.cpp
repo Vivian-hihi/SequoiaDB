@@ -24,6 +24,7 @@ void RCGen::run ()
     genCS();
     genJava();
     genJS();
+    genPython();
 }
 
 void RCGen::loadFromXML ()
@@ -259,6 +260,25 @@ void RCGen::genJava ()
     }
 
     fout.close();
+}
+
+void RCGen::genPython ()
+{
+   ofstream fout(PYTHONPATH);
+   if ( fout == NULL )
+   {
+      cout << "can not open file: " << PYTHONPATH << endl;
+      exit(0);
+   }
+
+   fout << "[error]" << endl ;
+   int size = (int)codelist.size() - 1 ;
+   for ( int idx = 0 ; idx < size; ++idx )
+   {
+      fout << std::left << setw(5) << -( idx + 1 )
+           << "= " << codelist[idx].second << endl ;
+   }
+   fout.close();
 }
 
 string& replace_all ( string &str, const string& old_value, const string &new_value )

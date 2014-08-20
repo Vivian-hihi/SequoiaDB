@@ -17,6 +17,7 @@
 #define JAVAPATH "../../driver/java/src/main/resources/errors.properties"
 #define JSPATH "../../SequoiaDB/engine/spt/error.js"
 #define WEBPATH "../../client/admin/admintpl/error_"
+#define PYTHONPATH "../../driver/python/pysequoiadb/err.prop"
 #define WEBPATHSUFFIX ".php"
 // chinese version document
 #define DOCPATH "../../doc/references/exceptionmapping/topics/exceptionmapping_"
@@ -40,6 +41,7 @@ class RCGen
     void genCS ();
     void genJava ();
     void genJS () ;
+    void genPython() ;
 public:
     RCGen (const char* lang);
     void run ();
