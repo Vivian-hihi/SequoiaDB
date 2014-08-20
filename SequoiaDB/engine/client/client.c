@@ -7030,6 +7030,17 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
          rc = SDB_SYS ;
          goto error ;
       }
+
+      bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_CREATTIME ) ;
+      if ( BSON_LONG == bType )
+      {
+         lobStruct->_createTime = bson_iterator_long( &bsonItr ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
    }
    *lobHandle = (sdbLobHandle)lobStruct ;
 done:
@@ -7526,3 +7537,25 @@ done:
 error:
    goto done ;
 }
+
+SDB_EXPORT INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
+                                      UINT64 *millis )
+{
+   INT32 rc = SDB_OK ;
+   sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
+
+   HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
+
+   if ( SDB_LOB_READ != lob->_mode || -1 == lob->_contextID )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   *millis = lob->_createTime ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+

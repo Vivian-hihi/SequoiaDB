@@ -1902,6 +1902,16 @@ SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
 SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
                                 SINT64 *size ) ;
 
+/** \fn INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
+ *                                 UINT64 *millis )
+ *  \param [in] lobHandle The large object handle
+ *  \param [out] millis The create time of lob
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+
+SDB_EXPORT INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
+                                      UINT64 *millis ) ;
 
 /** \fn INT32 sdbSeekLob( sdbLobHandle lobHandle,
  *                        SINT64 size,

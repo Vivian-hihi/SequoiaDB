@@ -208,6 +208,7 @@ namespace engine
          BSONObjBuilder builder ;
          builder.append( FIELD_NAME_LOB_SIZE, (long long)_meta._lobLen ) ;
          builder.append( FIELD_NAME_LOB_PAGE_SIZE, _lobPageSz ) ;
+         builder.append( FIELD_NAME_LOB_CREATTIME, (long long)_meta._createTime ) ;
          _metaObj = builder.obj() ;
       }
 

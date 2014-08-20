@@ -36,6 +36,7 @@
 #include "climits"
 #include "sptCommon.hpp"
 #include "utilPath.hpp"
+#include "ossIO.hpp"
 
 //#define ERRMSGBUFFERSIZE 256
 #define SAFE_JS_FREE( cx, p ) \
@@ -1429,6 +1430,222 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_GET_LOB, "collection_get_lob" )
+static JSBool collection_get_lob( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_COLL_GET_LOB ) ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *collection = NULL ;
+   JSString *jsPath = NULL ;
+   JSString *jsOid = NULL ;
+   JSBool replaceFile = JS_FALSE ;
+   CHAR *path = NULL ;
+   CHAR *oidStr = NULL ;
+   OSSFILE file ;
+   bson_oid_t oid ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+   const UINT32 bufLen = 512 * 1024 ;
+   CHAR buf[bufLen] = { 0 } ;
+   INT32 mode = OSS_READWRITE|OSS_EXCLUSIVE ;
+   SINT64 lobSize = 0 ;
+   SINT64 readSize = 0 ;
+   JSObject *rval = NULL ;
+   bson *meta = NULL ;
+   UINT64 createTime = 0 ;
+   bson_timestamp_t t ;
+
+   collection = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( collection , "SdbCollection.getLob(): no collection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "SS/b" , &jsOid, &jsPath, &replaceFile ) ;
+   REPORT ( ret , "SdbCollection.getLob(): wrong arguments" ) ;
+
+   oidStr = (CHAR *) JS_EncodeString ( cx , jsOid ) ;
+   VERIFY( oidStr ) ;
+   bson_oid_from_string( &oid, oidStr ) ;
+
+   path = (CHAR *) JS_EncodeString ( cx , jsPath ) ;
+   VERIFY( path ) ;
+
+   if ( replaceFile )
+   {
+      mode |= OSS_REPLACE ;
+   }
+   else
+   {
+      mode |= OSS_CREATEONLY ;
+   }
+   
+   rc = ossOpen( path, mode, OSS_DEFAULTFILE, file ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to open local file", rc ) ;
+
+   rc = sdbOpenLob( *collection, &oid, SDB_LOB_READ, &lob ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to open lob", rc ) ;
+
+   rc = sdbGetLobSize( lob, &lobSize ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to get size of lob", rc ) ;
+
+   rc = sdbGetLobCreateTime( lob, &createTime ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to get create time of lob", rc ) ;
+
+   while ( readSize < lobSize )
+   {
+      UINT32 read = 0 ;
+      rc = sdbReadLob( lob, bufLen, buf, &read ) ;
+      REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to read lob", rc ) ;
+      readSize += read ;
+      rc = ossWriteN( &file, buf, read ) ;
+      REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to write local file", rc ) ;
+      
+   }
+
+   rc = ossClose( file ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to close local file", rc ) ;
+
+   rc = sdbCloseLob( &lob ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to close lob", rc ) ;
+
+   meta = bson_create() ;
+   VERIFY( meta ) ;
+
+   rc = bson_append_long( meta, "LobSize", lobSize ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to create meta data", rc ) ;
+
+   t.t = createTime / 1000 ;
+   t.i = ( createTime - ( t.t * 1000 ) ) * 1000 ;
+   rc = bson_append_timestamp( meta, "CreateTime", &t ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.getLob(): failed to create meta data", rc ) ;
+
+   bson_finish( meta ) ;
+
+   rval = JS_NewObject ( cx , &bson_class , 0 , 0 ) ;
+   VERIFY ( rval ) ;
+
+   ret = JS_SetPrivate ( cx , rval, meta ) ;
+   VERIFY ( ret ) ;
+
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( rval ) ) ;
+
+done:
+   SAFE_JS_FREE( cx, path ) ;
+   SAFE_JS_FREE( cx, oidStr ) ;
+   if ( SDB_INVALID_HANDLE != lob )
+   {
+      sdbCloseLob( &lob ) ;
+   }
+   if ( file.isOpened() )
+   {
+      ossClose( file ) ;
+   }
+
+   PD_TRACE_EXIT( SDB_COLL_GET_LOB ) ;
+   return ret ;
+error:
+   if ( file.isOpened() )
+   {
+      ossClose( file ) ;
+      ossDelete( path ) ;
+   }
+
+   SAFE_BSON_DISPOSE( meta ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_PUT_LOB, "collection_put_lob" )
+static JSBool collection_put_lob( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_COLL_PUT_LOB ) ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *collection = NULL ;
+   JSString *jsPath = NULL ;
+   JSString *jsOid = NULL ;
+   CHAR *path = NULL ;
+   CHAR *oidStr = NULL ;
+   OSSFILE file ;
+   bson_oid_t oid ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+   const UINT32 bufLen = 512 * 1024 ;
+   CHAR buf[bufLen] = { 0 } ;
+   SINT64 read = 0 ;
+
+   collection = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( collection , "SdbCollection.putLob(): no collection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "S/S" , &jsPath, &jsOid ) ;
+   REPORT ( ret , "SdbCollection.putLob(): wrong arguments" ) ;
+
+   path = (CHAR *) JS_EncodeString ( cx , jsPath ) ;
+   VERIFY( path ) ;
+
+   if ( NULL != jsOid )
+   {
+      oidStr = (CHAR *) JS_EncodeString ( cx , jsOid ) ;
+      VERIFY( path ) ;
+   }
+
+   if ( NULL != oidStr )
+   {
+      bson_oid_from_string( &oid, oidStr ) ;
+   }
+   else
+   {
+      bson_oid_gen( &oid ) ;
+   }
+
+   rc = ossOpen( path, OSS_READONLY, OSS_DEFAULTFILE, file ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.putLob(): failed to open file", rc ) ;
+
+   rc = sdbOpenLob( *collection, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.putLob(): failed to open lob", rc ) ;
+
+   while ( SDB_OK == ( rc = ossReadN( &file, bufLen, buf, read ) ) )
+   {
+      rc = sdbWriteLob( lob, buf, read ) ;
+      REPORT_RC( SDB_OK == rc, "SdbCollection.putLob(): failed to write lob", rc ) ;
+      read = 0 ;
+   }
+
+   if ( SDB_EOF == rc )
+   {
+      rc = SDB_OK ;
+      rc = sdbCloseLob( &lob ) ;
+      REPORT_RC( SDB_OK == rc, "SdbCollection.putLob(): close lob with exception", rc ) ;
+   }
+   else
+   {
+      REPORT_RC( SDB_OK == rc, "SdbCollection.putLob(): failed to read local file", rc ) ;
+   }
+
+   if ( NULL == jsOid )
+   {
+      CHAR tmp[25] ;
+      bson_oid_to_string( &oid, tmp ) ;
+      jsOid = JS_NewStringCopyN( cx, tmp, 24 ) ;
+   }
+   JS_SET_RVAL ( cx , vp , STRING_TO_JSVAL( jsOid ) ) ;
+done:
+   SAFE_JS_FREE( cx, path ) ;
+   SAFE_JS_FREE( cx, oidStr ) ;
+   if ( SDB_INVALID_HANDLE != lob )
+   {
+      sdbCloseLob( &lob ) ;
+   }
+   if ( file.isOpened() )
+   {
+      ossClose( file ) ;
+   }
+   PD_TRACE_EXIT( SDB_COLL_PUT_LOB ) ;
+   return ret ;
+error:
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_EXPLAIN, "collection_explain" )
 static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
 {
@@ -2269,6 +2486,8 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "attachCL", collection_attachCollection, 2, 0 ) ,
     JS_FS ( "detachCL", collection_detachCollection, 1, 0 ) ,
     JS_FS ( "explain", collection_explain, 1, 0 ) ,
+    JS_FS ( "putLob", collection_put_lob, 1, 0 ) ,
+    JS_FS ( "getLob", collection_get_lob, 1, 0 ) ,
     JS_FS_END
 } ;
 
