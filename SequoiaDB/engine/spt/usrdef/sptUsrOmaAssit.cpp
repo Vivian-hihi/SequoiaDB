@@ -104,6 +104,7 @@ namespace engine
 
    done:
       bson_destroy( &config ) ;
+      return rc ;
    error:
       goto done ;
    }
