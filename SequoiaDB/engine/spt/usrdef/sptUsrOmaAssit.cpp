@@ -50,8 +50,12 @@ namespace engine
 
    INT32 _sptUsrOmaAssit::disconnect()
    {
-      // TODO:XUJIANHUI  
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      if ( 0 != _handle )
+      {
+         rc = sdbDisconnect( _handle ) ;
+      }
+      return rc ;
    }
 
    INT32 _sptUsrOmaAssit::connect( const CHAR * pHostName,

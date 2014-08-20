@@ -139,8 +139,7 @@ namespace engine
 
    INT32 _sptUsrOma::destruct()
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      return _assit.disconnect() ;
    }
 
    INT32 _sptUsrOma::addCoord( const _sptArguments & arg,
@@ -185,8 +184,7 @@ namespace engine
                             _sptReturnVal & rval,
                             BSONObj & detail )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      return _assit.disconnect() ;
    }
 
    INT32 _sptUsrOma::startAll( const _sptArguments & arg,
