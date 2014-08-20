@@ -129,6 +129,7 @@ omagentFiles = [
       "omagent/omagentSession.cpp",
       "omagent/omagentHelper.cpp",
       "omagent/omagentCommand.cpp",
+	  "omagent/omagentNodeCmd.cpp",
       "omagent/omagentTask.cpp",
       "omagent/omagentJob.cpp",
       "omagent/omagentJobRunCmd.cpp"
