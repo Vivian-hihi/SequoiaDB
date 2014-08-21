@@ -177,7 +177,7 @@ namespace engine
          rc = libssh2_userauth_publickey_fromfile( _session, _usr.c_str(),
                                                    SPT_PUBLICKEY_FILE,
                                                    SPT_PRIVATEKEY_FILE,
-                                                   _passwd.c_str() ) ;
+                                                   "" ) ;
       }
       if ( SDB_OK != rc )
       {
