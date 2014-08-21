@@ -59,6 +59,26 @@ namespace engine
    } ;
 
    /*
+   */
+   class _omaSetPDLevelCmd : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+
+      public:
+         _omaSetPDLevelCmd() ;
+         virtual ~_omaSetPDLevelCmd() ;
+
+         virtual const CHAR * name () ;
+
+         virtual INT32 init ( const CHAR *pInfomation ) ;
+
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      private:
+         INT32       _pdLevel ;
+   } ;
+
+   /*
       _omaCreateNodeCmd define
    */
    class _omaCreateNodeCmd : public _omaCommand

@@ -72,6 +72,70 @@ namespace engine
    }
 
    /*
+      _omaSetPDLevelCmd implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaSetPDLevelCmd )
+
+   _omaSetPDLevelCmd::_omaSetPDLevelCmd()
+   {
+      _pdLevel = PDWARNING ;
+   }
+
+   _omaSetPDLevelCmd::~_omaSetPDLevelCmd()
+   {
+   }
+
+   const CHAR* _omaSetPDLevelCmd::name()
+   {
+      return NAME_SET_PDLEVEL ;
+   }
+
+   INT32 _omaSetPDLevelCmd::init( const CHAR * pInfomation )
+   {
+      INT32 rc = SDB_OK ;
+
+      try
+      {
+         BSONObj match ( pInfomation ) ;
+         BSONElement e = match.getField( FIELD_NAME_PDLEVEL ) ;
+         if ( !e.isNumber() )
+         {
+            PD_LOG( PDERROR, "Failed to get field[%s], field: %s",
+                    FIELD_NAME_PDLEVEL, e.toString().c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _pdLevel = e.numberInt() ;
+
+         if ( _pdLevel < PDSEVERE || _pdLevel > PDDEBUG )
+         {
+            PD_LOG ( PDWARNING, "PDLevel[%d] error, set to default[%d]",
+                     _pdLevel, PDWARNING ) ;
+            _pdLevel = PDWARNING ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaSetPDLevelCmd::doit( BSONObj & retObj )
+   {
+      setPDLevel( (PDLEVEL)_pdLevel ) ;
+      PD_LOG ( getPDLevel(), "Set PDLEVEL to [%s]",
+               getPDLevelDesp( getPDLevel() ) ) ;
+      return SDB_OK ;
+   }
+
+   /*
       _omaCreateNodeCmd implement
    */
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaCreateNodeCmd )

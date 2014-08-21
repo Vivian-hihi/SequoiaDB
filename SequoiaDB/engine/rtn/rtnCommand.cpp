@@ -1896,8 +1896,8 @@ namespace engine
       if ( _pdLevel < PDSEVERE || _pdLevel > PDDEBUG )
       {
          PD_LOG ( PDWARNING, "PDLevel[%d] error, set to default[%d]",
-                  _pdLevel, PDEVENT ) ;
-         _pdLevel = PDEVENT ;
+                  _pdLevel, PDWARNING ) ;
+         _pdLevel = PDWARNING ;
       }
 
    done:
