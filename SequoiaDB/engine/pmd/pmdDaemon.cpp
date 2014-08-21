@@ -587,6 +587,7 @@ namespace engine
    /*
       cPmdDaemon implement
    */
+   BOOLEAN cPmdDaemon::_hasRename = FALSE ;
    cPmdDaemon::cPmdDaemon( const CHAR *pDMNSvcName )
    {
       SDB_ASSERT( pDMNSvcName, "service name can't be null!" ) ;
@@ -602,7 +603,6 @@ namespace engine
       {
          ossStrcpy( _procName, PMDDMN_SVCNAME_DEFAULT ) ;
       }
-      _hasRename = FALSE ;
    }
 
    cPmdDaemon::~cPmdDaemon()

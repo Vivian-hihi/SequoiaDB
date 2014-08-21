@@ -200,7 +200,7 @@ namespace engine
    private:
       CHAR                       _procName[OSS_MAX_PATHSIZE + 1] ;
       static iPmdDMNChildProc    *_process ;
-      BOOLEAN                    _hasRename ;
+      static BOOLEAN              _hasRename ;
 
    } ;
 
