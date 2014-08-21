@@ -92,19 +92,26 @@ namespace engine
       if ( arg.argc() >= 1 )
       {
          rc = arg.getString( 0, _hostname ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get host name, rc: %d", rc ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "hostname must be string" ) ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get hostname, rc: %d", rc ) ;
       }
       if ( arg.argc() >= 2 )
       {
          rc = arg.getString( 1, _svcname ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "svcname must be string" ) ;
+         }
          PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
       }
 
       rc = _assit.connect( _hostname.c_str(), _svcname.c_str() ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to connect %s:%s, rc: %d",
+                   _hostname.c_str(), _svcname.c_str(), rc ) ;
+
       rval.setUsrObjectVal( "", this, SPT_CLASS_DEF( this ) ) ;
 
    done:
@@ -154,20 +161,40 @@ namespace engine
       BSONObj config ;
 
       rc = arg.getString( 0, svcname ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be config" ) ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be string" ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
 
       rc = arg.getString( 1, dbpath ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "dbpath must be config" ) ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "dbpath must be string" ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Failed to get dbpath, rc: %d", rc ) ;
 
       if ( arg.argc() >= 3 )
       {
          rc = arg.getBsonobj( 2, config ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to get dbpath, rc: %d", rc ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "config must be object" ) ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Failed to get config, rc: %d", rc ) ;
       }
 
       rc = _assit.createCoord( svcname.c_str(), dbpath.c_str(),
                                config.objdata() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Add coord[%s] failed, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Failed to create coord[%s], rc: %d",
                    svcname.c_str(), rc ) ;
 
    done:
@@ -184,10 +211,18 @@ namespace engine
       string svcname ;
 
       rc = arg.getString( 0, svcname ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be config" ) ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be string" ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
 
       rc = _assit.removeCoord( svcname.c_str() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Remove coord[%s] failed, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Failed to remove coord[%s], rc: %d",
                    svcname.c_str(), rc ) ;
 
    done:
@@ -204,6 +239,14 @@ namespace engine
       string svcname ;
 
       rc = arg.getString( 0, svcname ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be config" ) ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be string" ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
 
       rc = _assit.startNode( svcname.c_str() ) ;
@@ -224,6 +267,14 @@ namespace engine
       string svcname ;
 
       rc = arg.getString( 0, svcname ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be config" ) ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be string" ) ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
 
       rc = _assit.stopNode( svcname.c_str() ) ;
