@@ -1444,6 +1444,8 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
       VEC_SUB_SESSIONPTR subSessionVec ;
       list<BSONObj>::iterator ite ;
+      INT32 sucNum   = 0 ; 
+      INT32 totalNum = 0 ;
 
       // create remote session
       om            = sdbGetOMManager() ;
@@ -1463,7 +1465,7 @@ namespace engine
          goto done ;
       }
 
-      remoteSession->sendMsg() ;
+      remoteSession->sendMsg( &sucNum, &totalNum ) ;
       rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
       if ( SDB_OK != rc && SDB_TIMEOUT != rc )
       {
@@ -1592,6 +1594,8 @@ namespace engine
       INT32 rc                        = SDB_OK ;
       omManager *om                   = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
+      INT32 sucNum                    = 0 ; 
+      INT32 totalNum                  = 0 ;
       VEC_SUB_SESSIONPTR subSessionVec ;
       list<BSONObj>::iterator ite ;
 
@@ -1613,7 +1617,7 @@ namespace engine
          goto done ;
       }
 
-      remoteSession->sendMsg() ;
+      remoteSession->sendMsg( &sucNum, &totalNum ) ;
       remoteSession->waitReply( TRUE, &subSessionVec ) ;
    done:
       _clearSession( om, remoteSession ) ;
