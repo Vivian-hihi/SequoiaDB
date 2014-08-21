@@ -77,7 +77,8 @@ namespace po = boost::program_options;
 
 #define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 #define COMMANDS_OPTIONS \
-       ( COMMANDS_STRING(PMD_OPTION_HELP, ",h"),                          "help" )\
+       ( COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" )\
+       ( PMD_OPTION_VERSION, "version" ) \
        ( COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name" )
 
 #if defined (_WINDOWS)
@@ -537,7 +538,8 @@ INT32 main ( INT32 argc, CHAR **argv )
    rc = resolveArgument ( desc, argc, argv ) ;
    if ( rc )
    {
-      if ( SDB_PMD_HELP_ONLY != rc )
+      if ( SDB_PMD_HELP_ONLY != rc &&
+           SDB_PMD_VERSION_ONLY != rc )
       {
          PD_LOG ( PDERROR, "Invalid argument" ) ;
          displayArg ( desc ) ;
