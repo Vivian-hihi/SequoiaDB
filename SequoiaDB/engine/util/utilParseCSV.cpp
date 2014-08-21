@@ -205,8 +205,8 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
                if ( isReadSize == _bufferSize )
                {
                   isReadSize = 0 ;
-                  PD_LOG ( PDWARNING, "Data size larger than the bucket \
-size %d, clear bucket data", _bufferSize ) ;
+                  PD_LOG ( PDWARNING, "Data size larger than the bucket "
+                           "size %d, clear bucket data", _bufferSize ) ;
                }
                _pBlock = 0 ;
                if ( ppBucket )
