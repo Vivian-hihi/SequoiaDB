@@ -198,9 +198,8 @@ namespace engine
       static INT32 _run( INT32 argc, CHAR **argv ) ;
 
    private:
-      static CHAR                _procName[OSS_MAX_PATHSIZE + 1] ;
+      CHAR                       _procName[OSS_MAX_PATHSIZE + 1] ;
       static iPmdDMNChildProc    *_process ;
-      static BOOLEAN             _hasRename ;
 
    } ;
 

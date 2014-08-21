@@ -587,8 +587,6 @@ namespace engine
    /*
       cPmdDaemon implement
    */
-   BOOLEAN cPmdDaemon::_hasRename = FALSE ;
-   CHAR cPmdDaemon::_procName[OSS_MAX_PATHSIZE + 1] = { 0 } ;
    cPmdDaemon::cPmdDaemon( const CHAR *pDMNSvcName )
    {
       SDB_ASSERT( pDMNSvcName, "service name can't be null!" ) ;
@@ -663,15 +661,6 @@ namespace engine
             retryTimes = 0;
          }
 
-         if ( isChildRunning && !_hasRename )
-         {
-            _hasRename = TRUE ;
-#if defined (_LINUX)
-            ossEnableNameChanges ( argc, argv ) ;
-            ossRenameProcess ( _procName ) ;
-#endif // _LINUX
-         }
-
          ossSleep( 2 * OSS_ONE_SEC ) ;
       }
       _process->signal() ;
@@ -694,6 +683,8 @@ namespace engine
 #if defined (_WINDOWS)
       rc = pmdWinstartService( _procName, &cPmdDaemon::_run ) ;
 #elif defined (_LINUX)
+      ossEnableNameChanges ( argc, argv ) ;
+      ossRenameProcess ( _procName ) ;
       rc = _run( argc, argv ) ;
 #endif
       PD_RC_CHECK( rc, PDERROR, "Failed to start the service(rc=%d)", rc ) ;
