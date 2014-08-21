@@ -59,6 +59,10 @@ namespace engine
                          _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
 
+      static INT32 help( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail ) ;
+
    private:
       static INT32 _setRVal( _sptCmdRunner *runner,
                              _sptReturnVal &rval,

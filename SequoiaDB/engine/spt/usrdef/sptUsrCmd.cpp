@@ -40,12 +40,15 @@ static const UINT32 SPT_STACK_OUTPUT = 1024 * 2 ;
 
 namespace engine
 {
-JS_STATIC_FUNC_DEFINE( _sptUsrCmd, exec )
-//JS_CONSTRUCT_FUNC_DEFINE( _sptUsrCmd, construct )
-JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
-   JS_ADD_STATIC_FUNC( "run", exec )
-//   JS_ADD_CONSTRUCT_FUNC( construct)
-JS_MAPPING_END()
+   JS_STATIC_FUNC_DEFINE( _sptUsrCmd, exec )
+   JS_STATIC_FUNC_DEFINE( _sptUsrCmd, help )
+   //JS_CONSTRUCT_FUNC_DEFINE( _sptUsrCmd, construct )
+
+   JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
+      JS_ADD_STATIC_FUNC( "run", exec )
+      JS_ADD_STATIC_FUNC( "help", help )
+      //JS_ADD_CONSTRUCT_FUNC( construct)
+   JS_MAPPING_END()
 
 /*
    INT32 _sptUsrCmd::construct( const _sptArguments &arg,
@@ -80,6 +83,11 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << "environment should be a string" ) ;
          goto error ;
       }
+      else if ( SDB_OK == rc )
+      {
+         cmd += " " ;
+         cmd += ev ;
+      }
 
       rc = runner.exec( cmd.c_str(), exit ) ; 
       if ( SDB_OK != rc )
@@ -105,6 +113,17 @@ JS_MAPPING_END()
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrCmd::help( const _sptArguments & arg,
+                           _sptReturnVal & rval,
+                           BSONObj & detail )
+   {
+      stringstream ss ;
+      ss << "Cmd functions:" << endl
+         << "   run( cmd, [args] )" << endl ;
+      rval.setStringVal( "", ss.str().c_str() ) ;
+      return SDB_OK ;
    }
 
    INT32 _sptUsrCmd::_setRVal( _sptCmdRunner *runner,

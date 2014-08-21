@@ -46,12 +46,12 @@ namespace engine
    JS_CONSTRUCT_FUNC_DEFINE( _sptUsrOma, construct )
    JS_DESTRUCT_FUNC_DEFINE( _sptUsrOma, destruct )
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, toString)
-   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, help)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, createCoord)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, removeCoord)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, startNode)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, stopNode)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, close)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, help)
 
    /*
       Function Map
@@ -60,12 +60,12 @@ namespace engine
       JS_ADD_CONSTRUCT_FUNC( construct )
       JS_ADD_DESTRUCT_FUNC(destruct)
       JS_ADD_MEMBER_FUNC("toString", toString)
-      JS_ADD_MEMBER_FUNC("help", help)
       JS_ADD_MEMBER_FUNC("createCoord", createCoord)
       JS_ADD_MEMBER_FUNC("removeCoord", removeCoord)
       JS_ADD_MEMBER_FUNC("startNode", startNode)
       JS_ADD_MEMBER_FUNC("stopNode", stopNode)
       JS_ADD_MEMBER_FUNC("close", close)
+      JS_ADD_STATIC_FUNC("help", help)
    JS_MAPPING_END()
 
    /*
