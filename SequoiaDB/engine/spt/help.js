@@ -14,8 +14,10 @@ var help = function( val ) {
       println("   db.cs.cl.find().help()                 help on find methods");
       println("   db.cs.cl.count().help()                help on count methods");
       println("   print(x), println(x)                   print out x");
+      println("   sleep(ms)                              sleep macro seconds");
       println("   traceFmt(<type>,<in>,<out>)            format trace input(in) to output(out) by type");
       println("   getErr(ret)                            print error description for return code");
+      println("   getLastErrMsg()                        get last error detail information");
       println("   clear                                  clear the terminal screen");
       println("   history -c                             clear the history");
       println("   quit                                   exit");
