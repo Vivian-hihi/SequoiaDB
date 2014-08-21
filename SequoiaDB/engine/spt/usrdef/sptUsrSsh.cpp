@@ -93,15 +93,15 @@ JS_MAPPING_END()
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "user must be string" ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get user, rc: %d", rc ) ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get user, rc: %d", rc ) ;
 
       rc = arg.getString( 2, passwd ) ;
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "password must be string" ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get password, rc: %d", rc ) ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get password, rc: %d", rc ) ;
 
       _session = SDB_OSS_NEW _sptLibssh2Session( _host.c_str(),
                                                  _user.c_str(),
@@ -194,8 +194,8 @@ JS_MAPPING_END()
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "mode must be native type" ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get mode, rc: %d", rc ) ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get mode, rc: %d", rc ) ;
 
       rc = _session->copy2Remote( SPT_CP_PROTOCOL_SCP,
                                   local.c_str(),
@@ -254,8 +254,8 @@ JS_MAPPING_END()
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "mode must be native type" ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get mode, rc: %d", rc ) ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get mode, rc: %d", rc ) ;
 
       rc = _session->copyFromRemote( SPT_CP_PROTOCOL_SCP,
                                      remote.c_str(),

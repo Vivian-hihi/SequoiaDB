@@ -148,8 +148,8 @@ JS_MAPPING_END()
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "size must be native type" ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get size, rc: %d", rc ) ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get size, rc: %d", rc ) ;
 
       if ( SPT_READ_LEN < len )
       {
@@ -253,8 +253,8 @@ JS_MAPPING_END()
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "where must be string(b/c/e)" ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get where, rc: %d", rc ) ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get where, rc: %d", rc ) ;
 
       if ( "b" == whenceStr )
       {
