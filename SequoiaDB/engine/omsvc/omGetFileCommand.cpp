@@ -1553,8 +1553,6 @@ namespace engine
          string agentHost ;
          string agentIP ;
          string agentPort ;
-         BSONObjBuilder reqBuilder ;
-         BSONObj bsonRequest ;
          pmdSubSession *subSession = NULL ;
          CHAR *pContent            = NULL ;
          INT32 contentSize         = 0 ;
@@ -1570,14 +1568,9 @@ namespace engine
             goto error ;
          }
 
-         reqBuilder.append(OM_BSON_FIELD_HOST_USER, 
-                           ite->getStringField( OM_BSON_FIELD_HOST_USER ) ) ;
-         reqBuilder.append(OM_BSON_FIELD_HOST_PASSWD, 
-                           ite->getStringField( OM_BSON_FIELD_HOST_PASSWD ) ) ;
-         bsonRequest = reqBuilder.obj() ;
          rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                                CMD_ADMIN_PREFIX OM_AGENT_EXIT_REQ, 
-                                0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
+                                CMD_ADMIN_PREFIX CMD_NAME_SHUTDOWN,
+                                0, 0, 0, -1, NULL, NULL, NULL, NULL ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "msgBuildQueryMsg failed:rc=%d", rc ) ;

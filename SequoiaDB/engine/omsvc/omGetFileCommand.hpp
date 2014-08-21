@@ -465,6 +465,28 @@ namespace engine
          INT32          _getBusinessInfo( string clusterName, 
                                           list<BSONObj> &listBusiness ) ;
    } ;
+
+   class omStartBusinessCommand : public omAuthCommand
+   {
+      public:
+         omStartBusinessCommand( restAdaptor *pRestAdaptor, 
+                                 pmdRestSession *pRestSession ) ;
+         virtual ~omStartBusinessCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+   } ;
+
+   class omStopBusinessCommand : public omAuthCommand
+   {
+      public:
+         omStopBusinessCommand( restAdaptor *pRestAdaptor, 
+                                pmdRestSession *pRestSession ) ;
+         virtual ~omStopBusinessCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+   } ;
    
 
    class omGetFileCommand : public omCommandInterface
