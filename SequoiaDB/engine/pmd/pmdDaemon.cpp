@@ -588,6 +588,7 @@ namespace engine
       cPmdDaemon implement
    */
    BOOLEAN cPmdDaemon::_hasRename = FALSE ;
+   CHAR cPmdDaemon::_procName[OSS_MAX_PATHSIZE + 1] = { 0 } ;
    cPmdDaemon::cPmdDaemon( const CHAR *pDMNSvcName )
    {
       SDB_ASSERT( pDMNSvcName, "service name can't be null!" ) ;
@@ -665,8 +666,10 @@ namespace engine
          if ( isChildRunning && !_hasRename )
          {
             _hasRename = TRUE ;
+#if defined (_LINUX)
             ossEnableNameChanges ( argc, argv ) ;
             ossRenameProcess ( _procName ) ;
+#endif // _LINUX
          }
 
          ossSleep( 2 * OSS_ONE_SEC ) ;
