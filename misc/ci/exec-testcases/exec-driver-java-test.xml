@@ -30,7 +30,7 @@
     </target>
 
     <target name="exec-driver-java-test" depends="clean-env">
-        <junit printsummary="on" fork="true" showoutput="true" errorproperty="error.output">
+        <junit printsummary="on" fork="true" showoutput="true">
             <classpath>
                 <pathelement path="/usr/share/java/junit4.jar" />
                 <pathelement path="${sequoiadb.jar.dir}" />
@@ -45,11 +45,12 @@
                     <exclude name="**/*testdata*/*" />
                     <exclude name="**/*Constan*.class" />
                     <exclude name="**/SdbNest.class" />
-                    <exclude name="**/MultiThread*" />  
+                    <exclude name="**/MultiThread*" /> 
+                    
+                    <exclude name="**/Bug_CL_InsertOld*" /> 
                 </fileset>
             </batchtest>
         </junit>
-        <echo message="${error.output}" />
         <echo message="driver java is over , report file is in ${reports.path}" /> 
     </target>
 
