@@ -307,7 +307,7 @@
 				<echo message="tar the sequoiadb-${project.version}.tar.gz to /usr/src/packages/SOURCES..." />
 				<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${project.version}" />
 				<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
-				<copy file="${CODE_DIR}/mkrelease/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPECS" />
+				<copy file="${CODE_DIR}/misc/ci/mkrelease/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPECS" />
 				<exec executable="rpmbuild" dir="/usr/src/packages/SPECS">
 					<arg line=" -bb sequoiadb-${project.version}.spec" />
 				</exec>
