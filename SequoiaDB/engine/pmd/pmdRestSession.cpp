@@ -459,6 +459,10 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omQueryNodeCommand( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omQueryBusinessCommand( pAdptor, this ) ;
+         }
          else
          {
             BSONObjBuilder builder ;

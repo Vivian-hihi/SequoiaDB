@@ -225,6 +225,9 @@ namespace engine
    // milliseconds
    #define  OM_WAIT_SCAN_RES_INTERVAL        (60000)
    #define  OM_WAIT_PROGRESS_RES_INTERVAL    (500)
+
+   #define  OM_WAIT_AGENT_EXIT_RES_INTERVAL  (5000)
+   #define  OM_WAIT_AGENT_UNISTALL_INTERVAL  (5000)
    // *****************************************************************
 
    // *********************om rest check_host_req**********************
@@ -257,8 +260,6 @@ namespace engine
    //
    #define  OM_BSON_FIELD_CONFIG             OM_CONFIGURE_FIELD_CONFIG
 
-
-   #define  OM_WAIT_AGENT_RES_INTERVAL        (5000)
    // *****************************************************************
 
    // ***************om rest add_host_req******************************
@@ -365,6 +366,13 @@ namespace engine
 
    #define  OM_BSON_NODE_INFO                "NodeInfo"
    
+   //******************************************************************
+
+   // om query business req
+   #define  OM_QUERY_BUSINESS_REQ            "query business"
+
+   #define  OM_REST_CLUSTER_NAME             "ClusterName"
+   #define  OM_BSON_BUSINESS_INFO            "BusinessInfo"
    //******************************************************************
 
    // om query business req

@@ -460,7 +460,10 @@ namespace engine
       public:
          virtual INT32  doCommand() ;
 
-      protected:
+      private:
+         void           _sendBusinessInfo2Web( list<BSONObj> &listBusiness ) ;
+         INT32          _getBusinessInfo( string clusterName, 
+                                          list<BSONObj> &listBusiness ) ;
    } ;
    
 

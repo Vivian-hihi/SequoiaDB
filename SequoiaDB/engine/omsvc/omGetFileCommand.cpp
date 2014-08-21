@@ -1605,8 +1605,8 @@ namespace engine
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
-                                                     OM_WAIT_AGENT_RES_INTERVAL,
-                                                     NULL ) ;
+                                                OM_WAIT_AGENT_EXIT_RES_INTERVAL,
+                                                NULL ) ;
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
@@ -1621,7 +1621,7 @@ namespace engine
       }
 
       remoteSession->sendMsg() ;
-      //remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      remoteSession->waitReply( TRUE, &subSessionVec ) ;
    done:
       _clearSession( om, remoteSession ) ;
       return rc ;
@@ -1661,8 +1661,8 @@ namespace engine
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
-                                                     OM_WAIT_AGENT_RES_INTERVAL,
-                                                     NULL ) ;
+                                                OM_WAIT_AGENT_UNISTALL_INTERVAL,
+                                                NULL ) ;
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
@@ -4504,7 +4504,7 @@ namespace engine
       const CHAR *businessName = NULL ;
       map<string, BSONObj> mapHostConf ;
 
-      
+
       _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
                               &businessName ) ;
       if ( NULL == businessName )
@@ -4543,10 +4543,111 @@ namespace engine
    {
    }
 
+   void omQueryBusinessCommand::_sendBusinessInfo2Web( 
+                                                   list<BSONObj> &listBusiness )
+   {
+      BSONObjBuilder opBuilder ;
+      BSONArrayBuilder arrayBuilder ;
+      list<BSONObj>::iterator iter = listBusiness.begin() ;
+      while ( iter != listBusiness.end() )
+      {
+         arrayBuilder.append( *iter ) ;
+         iter++ ;
+      }
+
+      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      opBuilder.append( OM_BSON_BUSINESS_INFO, arrayBuilder.arr() ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+      return ;
+   }
+
+   INT32 omQueryBusinessCommand::_getBusinessInfo( string clusterName, 
+                                                   list<BSONObj> &listBusiness )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+
+      matcher = BSON( OM_BUSINESS_FIELD_NAME << clusterName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_BUSINESS ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         BSONObjBuilder innerBuilder ;
+         BSONObj tmp ;
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_CONFIGURE ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         listBusiness.push_back( result ) ;
+      }
+   done:
+      return SDB_OK ;
+   error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      goto done ;
+   }
+
    INT32 omQueryBusinessCommand::doCommand()
    {
-      INT32 rc = SDB_OK ;
-      
+      INT32 rc                 = SDB_OK ;
+      const CHAR *clusterName  = NULL ;
+      list<BSONObj> listBusiness ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_CLUSTER_NAME, 
+                              &clusterName ) ;
+      if ( NULL == clusterName )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_CLUSTER_NAME )
+                        + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _getBusinessInfo( clusterName, listBusiness ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      _sendBusinessInfo2Web( listBusiness ) ;
    done:
       return rc ;
    error:
