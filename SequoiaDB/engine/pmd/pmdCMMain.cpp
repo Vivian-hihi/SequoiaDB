@@ -92,8 +92,6 @@ namespace engine
 
    done:
       return rc ;
-   error:
-      goto done ;
    }
 
    void pmdOnQuit()
