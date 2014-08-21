@@ -299,17 +299,23 @@
 		</exec>
 		<echo message="Make relase package completed." />
 
-		<echo message="begin to make rpm package.." />
-		<echo message="tar the sequoiadb-${project.version}.tar.gz to /usr/src/packages/SOURCES..." />
-		<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${project.version}" />
-		<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
-		<copy file="${CODE_DIR}/mkrelease/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPECS" />
-		<exec executable="rpmbuild" dir="/usr/src/packages/SPECS">
-			<arg line=" -bb sequoiadb-${project.version}.spec" />
-		</exec>
-		<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
-        <delete file="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" />
-        <delete file="/usr/src/packages/SPECS/sequoiadb-${project.version}.spec" />
-		<echo message="Make rpm package completed.." />
+		<echo message="os.name=${os.name}, os.arch=${os.arch}" />
+		<if>
+			<equals arg1="${os.arch}" arg2="amd64" />
+			<then>
+				<echo message="begin to make rpm package.." />
+				<echo message="tar the sequoiadb-${project.version}.tar.gz to /usr/src/packages/SOURCES..." />
+				<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${project.version}" />
+				<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
+				<copy file="${CODE_DIR}/mkrelease/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPECS" />
+				<exec executable="rpmbuild" dir="/usr/src/packages/SPECS">
+					<arg line=" -bb sequoiadb-${project.version}.spec" />
+				</exec>
+				<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
+		        <delete file="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" />
+		        <delete file="/usr/src/packages/SPECS/sequoiadb-${project.version}.spec" />
+				<echo message="Make rpm package completed.." />
+			</then>
+		</if>
 	</target>
 </project>
