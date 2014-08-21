@@ -528,7 +528,7 @@ class collection(object):
       try:
          result = cursor()
          rc = sdbcl.query(self._cl, result._cursor,
-                          bson_condition, bson_selected,
+                          bson_condition, bson_selector,
                           bson_order_by, bson_hint,
                           num_to_skip, num_to_return)
          pysequoiadb._raise_if_error("Failed to query", rc)
