@@ -693,12 +693,12 @@ class collection(object):
       Exceptions:
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstace(aggregate_options, list):
+      if not isinstance(aggregate_options, list):
          raise SDBTypeError("aggregate options must be an instance of list")
 
       container = []
       for option in aggregate_options :
-         if not isinstace(option, dict):
+         if not isinstance(option, dict):
             raise SDBTypeError("options must be an instance of dict")
          bson_option = bson.BSON.encode( option )
          container.append( bson_option )
