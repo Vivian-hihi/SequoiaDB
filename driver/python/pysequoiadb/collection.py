@@ -491,7 +491,7 @@ class collection(object):
       """
 
       bson_condition = None
-      bson_selected = None
+      bson_selector = None
       bson_order_by = None
       bson_hint = None
       
@@ -505,11 +505,11 @@ class collection(object):
       if "selector" in kwargs:
          if not isinstance(kwargs.get("selector"), dict):
             raise SDBTypeError("selector must be an instance of dict")
-         bson_hint = bson.BSON.encode(kwargs.get("selector"))
+         bson_selector = bson.BSON.encode(kwargs.get("selector"))
       if "order_by" in kwargs:
          if not isinstance(kwargs.get("order_by"), dict):
             raise SDBTypeError("order_by must be an instance of dict")
-         bson_hint = bson.BSON.encode(kwargs.get("order_by"))
+         bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
       if "hint" in kwargs:
          if not isinstance(kwargs.get("hint"), dict):
             raise SDBTypeError("hint must be an instance of dict")
@@ -518,7 +518,7 @@ class collection(object):
          if not isinstance(kwargs.get("num_to_skip"), long):
             raise SDBTypeError("num_to_skip must be an instance of long")
          else:
-            num_to_return = kwargs.get("num_to_skip")
+            num_to_skip = kwargs.get("num_to_skip")
       if "num_to_return" in kwargs:
          if not isinstance(kwargs.get("num_to_return"), long):
             raise SDBTypeError("num_to_return must be an instance of long")
@@ -764,7 +764,7 @@ class collection(object):
       if "order_by" in kwargs:
          if not isinstance(kwargs.get("order_by"), dict):
             raise SDBTypeError("order_by must be an instance of dict")
-         bson_hint = bson.BSON.encode(kwargs.get("order_by"))
+         bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
       if "hint" in kwargs:
          if not isinstance(kwargs.get("hint"), dict):
             raise SDBTypeError("hint must be an instance of dict")

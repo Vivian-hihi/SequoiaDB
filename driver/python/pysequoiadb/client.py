@@ -252,7 +252,7 @@ class client(object):
       local = socket.gethostname()
       localip = self.__get_local_ip()
       if "user" in kwargs:
-         if not isinstance(kwargs.get("user", str)):
+         if not isinstance(kwargs.get("user"), str):
             raise SDBTypeError("user name in kwargs must be \
                             an instance of basestring")
          _user = kwargs.get("user")
@@ -260,7 +260,7 @@ class client(object):
          _user = self.USER
 
       if "password" in kwargs:
-         if not isinstance(kwargs.get("password", str)):
+         if not isinstance(kwargs.get("password"), str):
             raise SDBTypeError("password in kwargs must be \
                             an instance of basestring")
          _psw = kwargs.get("password")
