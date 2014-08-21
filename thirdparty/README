@@ -17,6 +17,7 @@ Windows32:
 		mozilla-build ( installation image in ..\tools\mozilla dir )
 		scons
 		ActivePerl
+		cygwin
 
 	Boost 1.49.0:
 		cd boost\tools\build\v2\
@@ -67,6 +68,7 @@ Windows64:
                 mozilla-build ( installation image in ..\tools\mozilla dir )
                 scons
                 ActivePerl
+		cygwin
 
         Boost 1.49.0:
                 cd boost\tools\build\v2\
