@@ -349,7 +349,7 @@ JS_MAPPING_END()
          << "   write( content )" << endl
          << "   seek( offset, [where] ) " << endl
          << "   close()" << endl
-         << "File.remove( filepath )" << endl ;
+         << " File.remove( filepath )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }

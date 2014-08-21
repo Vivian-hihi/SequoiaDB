@@ -121,7 +121,7 @@ namespace engine
    {
       stringstream ss ;
       ss << "Cmd functions:" << endl
-         << "   run( cmd, [args] )" << endl ;
+         << " Cmd.run( cmd, [args] )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
