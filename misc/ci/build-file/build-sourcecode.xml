@@ -106,7 +106,6 @@
 		<mkdir dir="${DRIVER.DIR}/python" />
 		<mkdir dir="${DRIVER.DIR}/samples" />
 
-
     	<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
@@ -300,18 +299,17 @@
 		</exec>
 		<echo message="Make relase package completed." />
 
-<!-- 		<echo message="begin to make rpm package.." />
-		<echo message="tar the ${project.name}-${project.version}-linux.tar.gz to /usr/src/packages/SOURCES..." />
+		<echo message="begin to make rpm package.." />
+		<echo message="tar the sequoiadb-${project.version}.tar.gz to /usr/src/packages/SOURCES..." />
 		<move file="${RELEASE_DIR}/sequoiadb" tofile="${RELEASE_DIR}/sequoiadb-${project.version}" />
-		<tar destfile="/usr/src/packages/SOURCES/${project.name}-${project.version}-linux.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
-
-		<copy file="${CODE_DIR}/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPEC" />
-		<exec executable="rpmbuild" dir="/usr/src/packages/SPEC">
+		<tar destfile="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" basedir="${RELEASE_DIR}" includes="sequoiadb-${project.version}/**" compression="gzip" />
+		<copy file="${CODE_DIR}/mkrelease/sequoiadb-${project.version}.spec" todir="/usr/src/packages/SPECS" />
+		<exec executable="rpmbuild" dir="/usr/src/packages/SPECS">
 			<arg line=" -bb sequoiadb-${project.version}.spec" />
 		</exec>
-		<copy file="/usr/src/packages/RPMS/x86_64/${project.name}-${project.version}-linux.x86_64.rpm" todir="${RELEASE_DIR}" />
-        <delete file="/usr/src/packages/SOURCES/sequoiadb-1.8.tar.gz" />
-        <delete file="/usr/src/packages/SPECS/sequoiadb-1.8.spec" />
-		<echo message="Make rpm package completed.." /> -->
+		<copy file="/usr/src/packages/RPMS/x86_64/sequoiadb-${project.version}-1.x86_64.rpm" todir="${RELEASE_DIR}" />
+        <delete file="/usr/src/packages/SOURCES/sequoiadb-${project.version}.tar.gz" />
+        <delete file="/usr/src/packages/SPECS/sequoiadb-${project.version}.spec" />
+		<echo message="Make rpm package completed.." />
 	</target>
 </project>
