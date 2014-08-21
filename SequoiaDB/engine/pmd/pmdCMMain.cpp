@@ -45,6 +45,57 @@
 
 namespace engine
 {
+
+   #define COMMANDS_OPTIONS \
+       ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
+       ( PMD_OPTION_VERSION, "version" )
+
+   void displayArg ( po::options_description &desc )
+   {
+      std::cout << "Usage:  sdbcm [OPTION]" <<std::endl;
+      std::cout << desc << std::endl ;
+   }
+
+   // initialize options
+   INT32 initArgs ( INT32 argc, CHAR **argv )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ( "Command options" ) ;
+      po::variables_map vm ;
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
+         COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
+
+      // validate arguments
+      rc = utilReadCommandLine( argc, argv, desc, vm ) ;
+      if ( rc )
+      {
+         std::cout << "Invalid arguments: " << rc << std::endl ;
+         displayArg ( desc ) ;
+         goto done ;
+      }
+
+      /// read cmd first
+      if ( vm.count( PMD_OPTION_HELP ) )
+      {
+         displayArg( desc ) ;
+         rc = SDB_PMD_HELP_ONLY ;
+         goto done ;
+      }
+      if ( vm.count( PMD_OPTION_VERSION ) )
+      {
+         ossPrintVersion( "Sdb CM version" ) ;
+         rc = SDB_PMD_VERSION_ONLY ;
+         goto done ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    void pmdOnQuit()
    {
       PMD_SHUTDOWN_DB( SDB_INTERRUPT ) ;
@@ -59,6 +110,12 @@ namespace engine
       CHAR dialogPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       INT32 delSig[] = { 17, 0 } ; // del SIGCHLD
+
+      rc = initArgs( argc, argv ) ;
+      if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
+      {
+         goto done ;
+      }
 
       // 1. get root path
       rc = ossGetEWD( currentPath, OSS_MAX_PATHSIZE ) ;
