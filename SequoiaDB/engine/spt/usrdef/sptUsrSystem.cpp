@@ -58,6 +58,7 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getNetcardInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getIpTablesInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHostName )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, help )
 
    JS_BEGIN_MAPPING( _sptUsrSystem, "System" )
       JS_ADD_STATIC_FUNC( "ping", ping )
@@ -70,6 +71,7 @@ namespace engine
       JS_ADD_STATIC_FUNC( "getNetcardInfo", getNetcardInfo )
       JS_ADD_STATIC_FUNC( "getIpTablesInfo", getIpTablesInfo )
       JS_ADD_STATIC_FUNC( "getHostName", getHostName )
+      JS_ADD_STATIC_FUNC( "help", help )
    JS_MAPPING_END()
 
    INT32 _sptUsrSystem::ping( const _sptArguments &arg,
@@ -83,13 +85,16 @@ namespace engine
       _sptCmdRunner runner ;
       UINT32 exitCode = 0 ;
       rc = arg.getString( 0, host ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get host from ping" ) ;
-         rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "System.ping(): wrong arguments" ) ;
-         goto error ;
+         detail = BSON( SPT_ERR << "hostname must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "hostname must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get hostname, rc: %d", rc ) ;
+
 #if defined (_LINUX)
       cmd << "ping " << host << " -q -c 1" ;
       rc = runner.exec( cmd.str().c_str(), exitCode ) ;
@@ -437,8 +442,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystem::getCpuInfo( const _sptArguments &arg,
-                               _sptReturnVal &rval,
-                               bson::BSONObj &detail )
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
@@ -590,8 +595,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystem::getMemInfo( const _sptArguments &arg,
-                               _sptReturnVal &rval,
-                               bson::BSONObj &detail )
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
@@ -702,8 +707,8 @@ namespace engine
    }
 
    INT32 _sptUsrSystem::getDiskInfo( const _sptArguments &arg,
-                                _sptReturnVal &rval,
-                                bson::BSONObj &detail )
+                                     _sptReturnVal &rval,
+                                     bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
@@ -1026,5 +1031,26 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 _sptUsrSystem::help( const _sptArguments & arg,
+                              _sptReturnVal & rval,
+                              BSONObj & detail )
+   {
+      stringstream ss ;
+      ss << "System functions:" << endl
+         << " System.ping( hostname )" << endl
+         << " System.type()" << endl
+         << " System.getReleaseInfo()" << endl
+         << " System.getHostsMap()" << endl
+         << " System.getCpuInfo()" << endl
+         << " System.getMemInfo()" << endl
+         << " System.getDiskInfo()" << endl
+         << " System.getNetcardInfo()" << endl
+         << " System.getIpTablesInfo()" << endl
+         << " System.getHostName()" << endl ;
+      rval.setStringVal( "", ss.str().c_str() ) ;
+      return SDB_OK ;
+   }
+
 }
 

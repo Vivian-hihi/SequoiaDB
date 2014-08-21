@@ -60,12 +60,12 @@ namespace engine
       return NAME_SHUTDOWN ;
    }
 
-   INT32 _omaCreateNodeCmd::init( const CHAR * pInfomation )
+   INT32 _omaShutdownCmd::init( const CHAR * pInfomation )
    {
       return SDB_OK ;
    }
 
-   INT32 _omaCreateNodeCmd::doit( BSONObj & retObj )
+   INT32 _omaShutdownCmd::doit( BSONObj & retObj )
    {
       PMD_SHUTDOWN_DB( SDB_OK )
       return SDB_OK ;

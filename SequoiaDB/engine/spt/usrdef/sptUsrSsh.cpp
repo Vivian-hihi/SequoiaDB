@@ -47,6 +47,7 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, copyFromRemote )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, toString )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrSsh, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrSsh, destruct )
+JS_STATIC_FUNC_DEFINE(_sptUsrSsh, help)
 
 JS_BEGIN_MAPPING( _sptUsrSsh, "Ssh" )
    JS_ADD_MEMBER_FUNC( "exec", exec )
@@ -55,6 +56,7 @@ JS_BEGIN_MAPPING( _sptUsrSsh, "Ssh" )
    JS_ADD_MEMBER_FUNC( "toString", toString )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
+   JS_ADD_STATIC_FUNC( "help", help)
 JS_MAPPING_END()
 
    _sptUsrSsh::_sptUsrSsh()
@@ -77,28 +79,29 @@ JS_MAPPING_END()
       string errmsg ;
 
       rc = arg.getString( 0, _host ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get host from arg" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "hostname must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "hostname must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get hostname, rc: %d", rc ) ;
 
       rc = arg.getString( 1, _user ) ;
-      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if ( rc && SDB_OUT_OF_BOUND != rc )
       {
-         PD_LOG( PDERROR, "failed to get usr from arg" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "user must be string" ) ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get user, rc: %d", rc ) ;
 
       rc = arg.getString( 2, passwd ) ;
-      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if ( rc && SDB_OUT_OF_BOUND != rc )
       {
-         PD_LOG( PDERROR, "failed to get passwd from arg" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "password must be string" ) ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get password, rc: %d", rc ) ;
 
       _session = SDB_OSS_NEW _sptLibssh2Session( _host.c_str(),
                                                  _user.c_str(),
@@ -123,15 +126,18 @@ JS_MAPPING_END()
       return rc ;
    error:
       SAFE_OSS_DELETE( _session ) ;
-      if ( !errmsg.empty() )
+      if ( detail.isEmpty() )
       {
-         detail = BSON( SPT_ERR << errmsg ) ;
+         if ( !errmsg.empty() )
+         {
+            detail = BSON( SPT_ERR << errmsg ) ;
+         }
+         else
+         {
+            detail = BSON( SPT_ERR << "failed to ssh to specified host" ) ;
+         }
       }
-      else
-      {
-         detail = BSON( SPT_ERR << "failed to ssh to specified host" ) ;
-      }
-      goto done ;      
+      goto done ;
    }
 
    INT32 _sptUsrSsh::destruct()
@@ -163,28 +169,33 @@ JS_MAPPING_END()
       string errMsg ;
 
       rc = arg.getString( 0, local ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get local file" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "local_file must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "local_file must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get local_file, rc: %d", rc ) ;
 
       rc = arg.getString( 1, dst ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get dst file" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "dst_file must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "dst_file must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get dst_file, rc: %d", rc ) ;
 
       rc = arg.getNative( 2, &mode ) ;
-      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if ( rc && SDB_OUT_OF_BOUND != rc )
       {
-         PD_LOG( PDERROR, "failed to get mode" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "mode must be native type" ) ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get mode, rc: %d", rc ) ;
 
       rc = _session->copy2Remote( SPT_CP_PROTOCOL_SCP,
                                   local.c_str(),
@@ -197,7 +208,6 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      
    done:
       return rc ;
    error:
@@ -219,28 +229,33 @@ JS_MAPPING_END()
       string errMsg ;
 
       rc = arg.getString( 0, remote ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get local file" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "remote_file must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "remote_file must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get remote_file, rc: %d", rc ) ;
 
       rc = arg.getString( 1, local ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get dst file" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "local_file must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "local_file must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get local_file, rc: %d", rc ) ;
 
       rc = arg.getNative( 2, &mode ) ;
-      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if ( rc && SDB_OUT_OF_BOUND != rc )
       {
-         PD_LOG( PDERROR, "failed to get mode" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "mode must be native type" ) ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get mode, rc: %d", rc ) ;
 
       rc = _session->copyFromRemote( SPT_CP_PROTOCOL_SCP,
                                      remote.c_str(),
@@ -272,14 +287,17 @@ JS_MAPPING_END()
       string cmd ;
       string errMsg ;
       string sig ;
-      
+
       rc = arg.getString( 0, cmd ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "exec should have one argument at least" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "command must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "command must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get command, rc: %d", rc ) ;
 
       {
 #define READ_LEN 8192
@@ -319,6 +337,20 @@ JS_MAPPING_END()
          detail = BSON( SPT_ERR << errMsg ) ;
       }
       goto done ;
+   }
+
+   INT32 _sptUsrSsh::help( const _sptArguments & arg,
+                           _sptReturnVal & rval,
+                           BSONObj & detail )
+   {
+      stringstream ss ;
+      ss << "Ssh functions:" << endl
+         << "var ssh = new Ssh( hostname, [user], [password] )" << endl
+         << "   exec( command )" << endl
+         << "   push( local_file, dst_file, [mode] )" << endl
+         << "   pull( remote_file, local_file, [mode] )" << endl ;
+      rval.setStringVal( "", ss.str().c_str() ) ;
+      return SDB_OK ;
    }
 
 }
