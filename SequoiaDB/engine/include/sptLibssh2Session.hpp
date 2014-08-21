@@ -97,6 +97,7 @@ namespace engine
       LIBSSH2_SESSION *_session ;
       LIBSSH2_CHANNEL *_channel ;
       std::string _errmsg ;
+
    } ;
    typedef class _sptLibssh2Session sptLibssh2Session ;
 }

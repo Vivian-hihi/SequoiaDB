@@ -55,6 +55,8 @@ namespace engine
                       const CHAR *passwd ) ;
       virtual ~_sptSshSession() ;
 
+      const CHAR* getPassword() const { return _passwd.c_str() ; }
+
    public:
       INT32 open() ;
 

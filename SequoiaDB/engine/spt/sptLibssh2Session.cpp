@@ -40,6 +40,70 @@ using namespace std ;
 
 namespace engine
 {
+
+   #define SPT_AUTH_PASSWD       0x0001
+   #define SPT_AUTH_KEYBOARD     0x0002
+   #define SPT_AUTH_PUBKEY       0x0004
+
+   #define SPT_PUBLICKEY_FILE    "~/.ssh/id_rsa.pub"
+   #define SPT_PRIVATEKEY_FILE   "~/.ssh/id_rsa"
+
+   /*
+      _sptLibSshAssit implement
+   */
+   class _sptLibSshAssit
+   {
+      public:
+         _sptLibSshAssit() ;
+         ~_sptLibSshAssit() ;
+
+   } ;
+
+   _sptLibSshAssit::_sptLibSshAssit()
+   {
+      libssh2_init( 0 ) ;
+   }
+
+   _sptLibSshAssit::~_sptLibSshAssit()
+   {
+      libssh2_exit() ;
+   }
+
+   _sptLibSshAssit s_libSshAssit ;
+
+   /*
+      Callback function
+   */
+   static void kbd_callback( const CHAR *name, INT32 name_len,
+                             const CHAR *instruction, INT32 instruction_len,
+                             INT32 num_prompts,
+                             const LIBSSH2_USERAUTH_KBDINT_PROMPT *prompts,
+                             LIBSSH2_USERAUTH_KBDINT_RESPONSE *responses,
+                             void **abstract )
+   {
+      // disable warning
+      (void)name ;
+      (void)name_len ;
+      (void)instruction ;
+      (void)instruction_len ;
+      (void)prompts ;
+
+      if ( !*abstract )
+      {
+         return ;
+      }
+      sptLibssh2Session *pSession = ( sptLibssh2Session* )( *abstract ) ;
+
+      if ( 1 == num_prompts )
+      {
+         responses[ 0 ].text = strdup( pSession->getPassword() ) ;
+         responses[ 0 ].length = ossStrlen( pSession->getPassword() ) ;
+      }
+   }
+
+   /*
+      _sptLibssh2Session implement
+   */
    _sptLibssh2Session::_sptLibssh2Session( const CHAR *host,
                                            const CHAR *usrname,
                                            const CHAR *passwd)
@@ -60,8 +124,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != _sock, "can not be null" ) ;
+      CHAR *authList = NULL ;
+      INT32 authType = 0 ;
 
-      _session = libssh2_session_init() ;
+      _session = libssh2_session_init_ex( NULL, NULL, NULL, (void*)this ) ;
       if ( NULL == _session )
       {
          PD_LOG( PDERROR, "failed to init libssh2 session" ) ;
@@ -79,10 +145,43 @@ namespace engine
          goto error ;
       }
 
-      rc = libssh2_userauth_password( _session, _usr.c_str(), _passwd.c_str() ) ;
+      // check auth type
+      authList = libssh2_userauth_list( _session, _usr.c_str(),
+                                        ossStrlen( _usr.c_str() ) ) ;
+
+      if ( ossStrstr( authList, "password" ) != NULL )
+      {
+         authType |= SPT_AUTH_PASSWD ;
+      }
+      if ( ossStrstr( authList, "keyboard-interactive" ) != NULL )
+      {
+         authType |= SPT_AUTH_KEYBOARD ;
+      }
+      if ( ossStrstr( authList, "publickey" ) != NULL )
+      {
+         authType |= SPT_AUTH_PUBKEY ;
+      }
+
+      if ( _passwd.size() > 0 && authType & SPT_AUTH_PASSWD )
+      {
+         rc = libssh2_userauth_password( _session, _usr.c_str(),
+                                         _passwd.c_str() ) ;
+      }
+      else if ( _passwd.size() > 0 && authType & SPT_AUTH_KEYBOARD )
+      {
+         rc = libssh2_userauth_keyboard_interactive( _session, _usr.c_str(),
+                                                     &kbd_callback ) ;
+      }
+      else
+      {
+         rc = libssh2_userauth_publickey_fromfile( _session, _usr.c_str(),
+                                                   SPT_PUBLICKEY_FILE,
+                                                   SPT_PRIVATEKEY_FILE,
+                                                   _passwd.c_str() ) ;
+      }
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to do handle shake with remote:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to do user auth: %d", rc ) ;
          rc = SDB_SYS ;
          _getLastError( _errmsg ) ;
          goto error ;
