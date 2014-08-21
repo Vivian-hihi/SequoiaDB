@@ -192,7 +192,8 @@ namespace engine
 
          // remote process functions
          INT32    addANode( const CHAR *arg1, const CHAR *arg2 ) ;
-         INT32    rmANode( const CHAR *arg1, const CHAR *arg2 ) ;
+         INT32    rmANode( const CHAR *arg1, const CHAR *arg2,
+                           const CHAR *roleStr = NULL ) ;
          INT32    mdyANode( const CHAR *arg1 ) ;
          INT32    startANode( const CHAR *arg1 ) ;
          INT32    stopANode( const CHAR *arg1 ) ;

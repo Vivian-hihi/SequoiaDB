@@ -138,7 +138,8 @@ namespace engine
    {
       BSONObj dummy ;
       return sdbGetOMAgentMgr()->getNodeMgr()->rmANode( _config.objdata(),
-                                                        dummy.objdata() ) ;
+                                                        dummy.objdata(),
+                                                        SDB_ROLE_COORD_STR ) ;
    }
 
    /*

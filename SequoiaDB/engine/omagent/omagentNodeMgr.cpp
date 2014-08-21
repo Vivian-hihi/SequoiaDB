@@ -1085,7 +1085,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omAgentNodeMgr::rmANode( const CHAR *arg1, const CHAR *arg2 )
+   INT32 _omAgentNodeMgr::rmANode( const CHAR *arg1, const CHAR *arg2,
+                                   const CHAR *roleStr )
    {
       INT32 rc = SDB_OK ;
       const CHAR *pSvcName = _getSvcNameFromArg( arg1 ) ;
@@ -1165,6 +1166,18 @@ namespace engine
                  pSvcName, rc ) ;
          goto error ;
       }
+
+      if ( roleStr && 0 != *roleStr &&
+           0 != ossStrcmp( nodeOptions.dbroleStr(), roleStr ) )
+      {
+         PD_LOG( PDERROR, "Role[%s] is not expect[%s]",
+                 nodeOptions.dbroleStr(), roleStr ) ;
+         rc = SDB_PERM ;
+         goto error ;
+      }
+
+      // first to stop the node
+      stopANode( pSvcName, NODE_START_CLIENT, FALSE ) ;
 
       // make sure need to backup dialog
       if ( backupDialog )
