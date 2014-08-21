@@ -437,14 +437,14 @@ class client(object):
       """Remove the spacified user from current database.
 
       Parameters:
-         Name         Type     Info:
-         user_name    str      The name of user to be removed.
-         psw          str      The password of user to be removed.
+         Name     Type     Info:
+         name     str      The name of user to be removed.
+         psw      str      The password of user to be removed.
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
       """
-      if not isinstance(user_name, basestring):
+      if not isinstance(name, basestring):
          raise SDBTypeError("user name must be an instance of basestring")
 
       if not isinstance(psw, basestring):
