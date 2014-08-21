@@ -602,6 +602,7 @@ namespace engine
       {
          ossStrcpy( _procName, PMDDMN_SVCNAME_DEFAULT ) ;
       }
+      _hasRename = FALSE ;
    }
 
    cPmdDaemon::~cPmdDaemon()
@@ -660,6 +661,14 @@ namespace engine
          {
             retryTimes = 0;
          }
+
+         if ( isChildRunning && !_hasRename )
+         {
+            _hasRename = TRUE ;
+            ossEnableNameChanges ( argc, argv ) ;
+            ossRenameProcess ( _procName ) ;
+         }
+
          ossSleep( 2 * OSS_ONE_SEC ) ;
       }
       _process->signal() ;
@@ -682,8 +691,6 @@ namespace engine
 #if defined (_WINDOWS)
       rc = pmdWinstartService( _procName, &cPmdDaemon::_run ) ;
 #elif defined (_LINUX)
-      ossEnableNameChanges ( argc, argv ) ;
-      ossRenameProcess ( _procName ) ;
       rc = _run( argc, argv ) ;
 #endif
       PD_RC_CHECK( rc, PDERROR, "Failed to start the service(rc=%d)", rc ) ;
