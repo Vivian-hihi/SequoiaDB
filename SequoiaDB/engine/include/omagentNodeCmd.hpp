@@ -41,6 +41,24 @@ namespace engine
 {
 
    /*
+      _omaShutdownCmd define
+   */
+   class _omaShutdownCmd : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+
+      public:
+         _omaShutdownCmd() ;
+         virtual ~_omaShutdownCmd() ;
+
+         virtual const CHAR * name () ;
+
+         virtual INT32 init ( const CHAR *pInfomation ) ;
+
+         virtual INT32 doit ( BSONObj &retObj ) ;
+   } ;
+
+   /*
       _omaCreateNodeCmd define
    */
    class _omaCreateNodeCmd : public _omaCommand

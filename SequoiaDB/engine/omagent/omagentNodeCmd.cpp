@@ -35,11 +35,41 @@
 #include "omagentMgr.hpp"
 #include "pmdOptions.h"
 #include "msgDef.h"
+#include "pmd.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
+
+   /*
+      _omaShutdownCmd implement
+   */
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaShutdownCmd )
+
+   _omaShutdownCmd::_omaShutdownCmd()
+   {
+   }
+
+   _omaShutdownCmd::~_omaShutdownCmd()
+   {
+   }
+
+   const CHAR* _omaShutdownCmd::name()
+   {
+      return NAME_SHUTDOWN ;
+   }
+
+   INT32 _omaCreateNodeCmd::init( const CHAR * pInfomation )
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _omaCreateNodeCmd::doit( BSONObj & retObj )
+   {
+      PMD_SHUTDOWN_DB( SDB_OK )
+      return SDB_OK ;
+   }
 
    /*
       _omaCreateNodeCmd implement
