@@ -12,9 +12,9 @@ Windows32:
 	Building Prerequisites:
 		Microsoft Windows SDK 7.1 32 bit
 		Python 2.7.3
-		autoconf 2.13
+		autoconf 2.13 ( source code in ..\tools\compile\autoconf-2.13 )
 		Windows 7, Windows 2003, Windows 2008
-		mozilla-build ( in tools/mozilla dir )
+		mozilla-build ( installation image in ..\tools\mozilla dir )
 		scons
 		ActivePerl
 
@@ -62,9 +62,9 @@ Windows64:
         Building Prerequisites:
                 Microsoft Windows SDK 7.1 64 bit
                 Python 2.7.3
-                autoconf 2.13
-                Windows 7, Windows2003, Windows 2008
-                mozilla-build ( in tools/mozilla dir )
+                autoconf 2.13 ( source code in ..\tools\compile\autoconf-2.13 )
+                Windows 7, Windows 2003, Windows 2008
+                mozilla-build ( installation image in ..\tools\mozilla dir )
                 scons
                 ActivePerl
 
@@ -113,7 +113,7 @@ Linux32:
 		g++ 4.6.3
 		libstdc++ 6
 		Python 2.7.3
-                autoconf 2.13
+                autoconf 2.13 ( source code in ..\tools\compile\autoconf-2.13 )
                 scons
 		perl
 
@@ -150,7 +150,7 @@ Linux64:
                 g++ 4.6.3
                 libstdc++ 6
                 Python 2.7.3
-                autoconf 2.13
+                autoconf 2.13 ( source code in ..\tools\compile\autoconf-2.13 )
                 scons
                 perl
 
@@ -187,7 +187,7 @@ PowerLinux64:
                 g++ 4.6.3
                 libstdc++ 6
                 Python 2.7.3
-                autoconf 2.13
+                autoconf 2.13 ( source code in ..\tools\compile\autoconf-2.13 )
                 scons
                 perl
 
