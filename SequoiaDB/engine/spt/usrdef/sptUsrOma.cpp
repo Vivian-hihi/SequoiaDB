@@ -137,6 +137,7 @@ namespace engine
    {
       stringstream ss ;
       ss << "Oma functions:" << endl
+         << "var oma = new Oma( [hostname], [svcname] )" << endl
          << "   createCoord( svcname, dbpath, [config obj])" << endl
          << "   removeCoord( svcname )" << endl
          << "   startNode( svcname )" << endl

@@ -35,6 +35,7 @@
 #include "ossMem.hpp"
 
 using namespace std ;
+using namespace bson ;
 
 namespace engine
 {
@@ -46,12 +47,14 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrFile, toString )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrFile, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrFile, destruct )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, remove )
+JS_STATIC_FUNC_DEFINE( _sptUsrFile, help )
 
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC( "read", read )
    JS_ADD_MEMBER_FUNC( "write", write )
    JS_ADD_MEMBER_FUNC( "close", close )
    JS_ADD_STATIC_FUNC( "remove", remove )
+   JS_ADD_STATIC_FUNC( "help", help )
    JS_ADD_MEMBER_FUNC( "seek", seek )
    JS_ADD_MEMBER_FUNC( "toString", toString )
    JS_ADD_CONSTRUCT_FUNC( construct )
@@ -78,12 +81,15 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
 
       rc = arg.getString( 0, _filename ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get fullpath" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "filename must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "filename must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get filename, rc: %d", rc ) ;
 
       rc = ossOpen( _filename.c_str(),
                     OSS_READWRITE | OSS_CREATE,
@@ -134,16 +140,16 @@ JS_MAPPING_END()
       if ( !_file.isOpened() )
       {
          PD_LOG( PDERROR, "the file is not opened." ) ;
+         detail = BSON( SPT_ERR << "file is not opened" ) ;
          rc = SDB_IO ;
          goto error ;
       }
       rc = arg.getNative( 0, &len ) ;
-      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if ( rc && SDB_OUT_OF_BOUND != rc )
       {
-         PD_LOG( PDERROR, "failed to get read len" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "size must be native type" ) ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get size, rc: %d", rc ) ;
 
       if ( SPT_READ_LEN < len )
       {
@@ -188,16 +194,20 @@ JS_MAPPING_END()
       if ( !_file.isOpened() )
       {
          PD_LOG( PDERROR, "the file is not opened." ) ;
+         detail = BSON( SPT_ERR << "file is not opened" ) ;
          rc = SDB_IO ;
          goto error ;
       }
       rc = arg.getString( 0, content ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get content" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "content must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "content must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get content, rc: %d", rc ) ;
 
       rc = ossWriteN( &_file, content.c_str(), content.size() ) ;
       if ( SDB_OK != rc )
@@ -218,30 +228,33 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
       INT32 seekSize = 0 ;
       OSS_SEEK whence ;
-      string whenceStr ;
+      string whenceStr = "b" ;
 
       if ( !_file.isOpened() )
       {
          PD_LOG( PDERROR, "the file is not opened." ) ;
+         detail = BSON( SPT_ERR << "file is not opened" ) ;
          rc = SDB_IO ;
          goto error ;
       }
 
       rc = arg.getNative( 0, &seekSize ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get seek size" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "offset must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "offset must be native type" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get offset, rc: %d", rc ) ;
 
       rc = arg.getString( 1, whenceStr ) ;
-      if ( SDB_OK != rc )
+      if ( rc && SDB_OUT_OF_BOUND != rc )
       {
-         PD_LOG( PDERROR, "failed to get whence" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "where must be string(b/c/e)" ) ;
       }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get where, rc: %d", rc ) ;
 
       if ( "b" == whenceStr )
       {
@@ -257,6 +270,7 @@ JS_MAPPING_END()
       }
       else
       {
+         detail = BSON( SPT_ERR << "where must be string(b/c/e)" ) ;
          PD_LOG( PDERROR, "invalid arg whence:%s", whenceStr.c_str() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -281,12 +295,15 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
       string fullPath ;
       rc = arg.getString( 0, fullPath ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OUT_OF_BOUND == rc )
       {
-         PD_LOG( PDERROR, "failed to get fullpath" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         detail = BSON( SPT_ERR << "filepath must be config" ) ;
       }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "filepath must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get filepath, rc: %d", rc ) ;
 
       rc = ossDelete( fullPath.c_str() ) ;
       if ( SDB_OK != rc )
@@ -320,5 +337,22 @@ JS_MAPPING_END()
    error:
       goto done ;
    }
+
+   INT32 _sptUsrFile::help( const _sptArguments & arg,
+                            _sptReturnVal & rval,
+                            BSONObj & detail )
+   {
+      stringstream ss ;
+      ss << "File functions:" << endl
+         << "var file = new File( filename )" << endl
+         << "   read( [size] )" << endl
+         << "   write( content )" << endl
+         << "   seek( offset, [where] ) " << endl
+         << "   close()" << endl
+         << "File.remove( filepath )" << endl ;
+      rval.setStringVal( "", ss.str().c_str() ) ;
+      return SDB_OK ;
+   }
+
 }
 
