@@ -1881,9 +1881,9 @@ namespace sdbclient
          bob.appendBool ( FIELD_NAME_ASYNC, TRUE ) ;
          newObj = bob.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
@@ -1987,9 +1987,9 @@ namespace sdbclient
          bob.appendBool ( FIELD_NAME_ASYNC, TRUE ) ;
          newObj = bob.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
@@ -2275,7 +2275,7 @@ namespace sdbclient
          bob.append ( FIELD_NAME_OPTIONS, options ) ;
          newObj = bob.obj() ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -3433,7 +3433,7 @@ namespace sdbclient
          ob.append ( FIELD_NAME_OPTIONS, options ) ;
          newObj = ob.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -3475,7 +3475,7 @@ namespace sdbclient
          ob2.appendNull ( FIELD_NAME_NAME ) ;
          selector = ob2.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -3515,7 +3515,7 @@ namespace sdbclient
          ob2.appendNull ( FIELD_NAME_NAME ) ;
          selector = ob2.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -4553,7 +4553,7 @@ namespace sdbclient
 //         ob.append ( FIELD_NAME_OPTIONS, options ) ;
          newObj = bob.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -5579,9 +5579,9 @@ namespace sdbclient
          bob.append ( FIELD_NAME_TASKID, subObj ) ;
          newObj = bob.obj () ;
       }
-      catch (std::exception &e )
+      catch (std::exception )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
 
@@ -5645,9 +5645,9 @@ namespace sdbclient
          it.appendBool( FIELD_NAME_ASYNC, isAsync ) ;
          newObj = it.obj () ;
       }
-      catch (std::exception &e )
+      catch (std::exception )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
@@ -5736,7 +5736,7 @@ namespace sdbclient
                         goto error ;
                      }
                   }
-                  catch( std::exception &e )
+                  catch( std::exception )
                   {
                      rc = SDB_SYS ;
                      goto error ;
@@ -5754,7 +5754,7 @@ namespace sdbclient
                         goto error ;
                      }
                   }
-                  catch( std::exception &e )
+                  catch( std::exception )
                   {
                      rc = SDB_SYS ;
                      goto error ;
@@ -5902,7 +5902,7 @@ namespace sdbclient
          ob.append ( FIELD_NAME_OPTIONS, options ) ;
          newObj = ob.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -5954,7 +5954,7 @@ namespace sdbclient
          ob.append ( FIELD_NAME_NAME, pDomainName ) ;
          newObj = ob.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
@@ -5994,7 +5994,7 @@ namespace sdbclient
          ob.append ( FIELD_NAME_NAME, pDomainName ) ;
          newObj = ob.obj () ;
       }
-      catch ( std::exception &e )
+      catch ( std::exception )
       {
          rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
