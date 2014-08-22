@@ -32,7 +32,7 @@ if ( typeof(PACKET_PATH) == "undefined" ) {}
 if ( typeof(INSTALL_PATH) == "undefined" ) {}
 
 // linux
-var INSTALL_PACKET_PATH_L = "/tmp/tmpoma/packet/" ;
+var INSTALL_PACKET_PATH_L = "/tmp/omatmp/packet/" ;
 // windows
 var INSTALL_PACKET_PATH_W = "" ;
 
