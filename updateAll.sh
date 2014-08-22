@@ -61,7 +61,7 @@ function installSdb()
    ret=0
    while [ $ret -eq 0 ]
    do
-      outStr=`ps -ef|grep sdbcm |grep -v grep`
+      outStr=`ps -ef|grep "sdbcm(" |grep -v grep`
       ret=$?
       if [ $ret -eq 0 ] ; then
          echo "stopping sdbcm..."
@@ -84,17 +84,17 @@ function installSdb()
       fi
    done
 
-   rm -rf ${homePath}/50000 2>/dev/null
    rm -f sdb.conf 2>/dev/null
    rm -f nohup 2>/dev/null
 
    # remove old sdb
-   if [ ! -d "${homePath}/30000" ] ; then
+   if [ ! -d "conf/local/30000" ] ; then
       needInstall=1
    fi
 
    if [ $needInstall -ne 0 ] ; then
       echo "Begin to remove sdb...."
+      rm -r ${homePath}/50000 2>/del/null
       rm -r ${homePath}/30000 2>/dev/null
       rm -r ${homePath}/30010 2>/dev/null
       rm -r ${homePath}/30020 2>/dev/null
@@ -102,7 +102,7 @@ function installSdb()
       rm -r ${homePath}/40000 2>/dev/null
       rm -r ${homePath}/41000 2>/dev/null
       rm -r ${homePath}/42000 2>/dev/null
-      rm -rf conf/local
+      rm -rf conf/local 2>/del/null
       mkdir conf/local
       echo "Remove sdb ok"
       sleep 2
@@ -119,20 +119,11 @@ function installSdb()
       exit 1
    fi
 
-   # start coord
-   if [ ! -d "${homePath}/50000" ] ; then
-      mkdir -p ${homePath}/50000
-   fi
-   if [ $needInstall -eq 0 ] ; then
-      echo "use catalog list"
-      nohup bin/sequoiadb -o coord -d ${homePath}/50000 -p "50000" -t ${hostName}:30003 >/dev/null 2>&1 &
-   else
-      echo "no catalog list"
-      nohup bin/sequoiadb -o coord -d ${homePath}/50000 -p "50000" >/dev/null 2>&1 &
-   fi
-
-   # install db1 and db2
+   # install coord db1 and db2
    if [ $needInstall -ne 0 ] ; then
+      # create coord and start coord
+      bin/sdb -s " var oma = new Oma() ; oma.createCoord('50000', '${homePath}/50000') ; oma.startNode('50000') ; "
+      # check coord
       bin/sdb -s " var db ; for ( var i=0; i < 60; ++i ) { try { db = new Sdb('localhost', '50000') ; break; } catch( e ) { sleep(1000) ; } } "
       if [ $? -eq 0 ] ; then
          echo "Coord is ok"
