@@ -38,11 +38,11 @@
 #include "ossTypes.h"
 #include "ossUtil.h"
 #include "../bson/bson.h"
-#include "sptApi.hpp"
 #include "ossMem.h"
 #include "omagent.hpp"
 #include "omagentMsgDef.hpp"
 #include "omagent.hpp"
+#include "sptScope.hpp"
 #include <map>
 #include <string>
 

@@ -38,19 +38,10 @@
 #include "ossPath.hpp"
 #include "ossIO.hpp"
 #include "pmdDef.hpp"
-#include "spt.hpp"
-#include "sptSPScope.hpp"
-#include "sptUsrSsh.hpp"
-#include "sptUsrCmd.hpp"
-#include "sptUsrFile.hpp"
-#include "sptUsrSystem.hpp"
-#include "sptUsrOma.hpp"
-#include "../spt/js_in_cpp.hpp"
+
 #if defined( _LINUX )
 #include <dirent.h>
 #endif //_LINUX
-
-JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
 
 namespace engine
 {
@@ -147,48 +138,6 @@ namespace engine
       op.Close() ;
       return rc ;
    error :
-      goto done ;
-   }
-
-   // get spider monkey engine
-   INT32 getSptScope ( _sptScope **scope )
-   {
-      INT32 rc = SDB_OK ;
-      _sptContainer container ;
-      _sptScope *_scope = container.newScope( SPT_SCOPE_TYPE_SP ) ;
-      SDB_ASSERT( _scope, "Failed to get spt scope" ) ;
-      // init db classes for omagent to use db driver API
-      if ( !InitDbClasses( ((sptSPScope *)_scope)->getContext(),
-                           ((sptSPScope *)_scope)->getGlobalObj() ) )
-      {
-         PD_LOG( PDERROR, "failed to init dbclass" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      // init another classes for omagent to get hosts info and so on
-      rc = _scope->loadUsrDefObj<_sptUsrSsh>() ;
-      PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                 "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
-      rc = _scope->loadUsrDefObj<_sptUsrCmd>() ;
-      PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                 "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
-      rc = _scope->loadUsrDefObj<_sptUsrFile>() ;
-      PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                 "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
-      rc = _scope->loadUsrDefObj<_sptUsrSystem>() ;
-      PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                 "Failed to load class _sptUsrSsh, rc = %d", rc ) ;
-      rc = _scope->loadUsrDefObj<_sptUsrOma>() ;
-      PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                 "Failed to load class _sptUsrOma, rc = %d", rc ) ;
-      rc = evalInitScripts2( _scope ) ;
-      PD_CHECK ( SDB_OK == rc, SDB_SYS, error, PDERROR,
-                 "Failed to init spt scope, rc = %d", rc ) ;
-      // return result
-      *scope = _scope ;
-   done:
-      return rc ;
-   error:
       goto done ;
    }
 

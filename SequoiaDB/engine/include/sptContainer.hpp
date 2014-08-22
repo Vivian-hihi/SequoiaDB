@@ -35,25 +35,47 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "sptScope.hpp"
+#include "ossLatch.hpp"
+#include <vector>
 
 namespace engine
 {
-   enum SPT_SCOPE_TYPE
-   {
-      SPT_SCOPE_TYPE_SP = 0,
-      SPT_SCOPE_TYPE_V8 = 1,
-   } ;
 
-   class _sptScope ;
+   typedef std::vector< _sptScope* >            VEC_SCOPE ;
+   typedef VEC_SCOPE::iterator                  VEC_SCOPE_IT ;
+
+   #define SPT_OBJ_MASK_STANDARD                0x0001
+   #define SPT_OBJ_MASK_USR                     0x0002
+   #define SPT_OBJ_MASK_INNER_JS                0x0004
+
+   #define SPT_OBJ_MASK_ALL                     0xFFFF
 
    class _sptContainer : public SDBObject
    {
    public:
-      _sptContainer() ;
+      _sptContainer( INT32 loadMask = SPT_OBJ_MASK_ALL ) ;
       virtual ~_sptContainer() ;
 
+      INT32    init () ;
+      INT32    fini () ;
+
    public:
-      _sptScope *newScope( SPT_SCOPE_TYPE type = SPT_SCOPE_TYPE_SP ) ;
+      _sptScope   *newScope( SPT_SCOPE_TYPE type = SPT_SCOPE_TYPE_SP ) ;
+      void        releaseScope( _sptScope *pScope ) ;
+
+   protected:
+      _sptScope* _getFromCache( SPT_SCOPE_TYPE type ) ;
+
+      _sptScope* _createScope( SPT_SCOPE_TYPE type ) ;
+
+      INT32      _loadObj( _sptScope *pScope ) ;
+
+   private:
+      VEC_SCOPE            _vecScopes ;
+      ossSpinXLatch        _latch ;
+      INT32                _loadMask ;
+
    } ;
 
    typedef class _sptContainer sptContainer ;

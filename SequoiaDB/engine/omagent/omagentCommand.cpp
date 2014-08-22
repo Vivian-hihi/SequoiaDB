@@ -33,7 +33,6 @@
 #include "omagentCommand.hpp"
 #include "omagentUtil.hpp"
 #include "omagentHelper.hpp"
-#include "sptContainer.hpp"
 #include "ossProc.hpp"
 #include "utilPath.hpp"
 #include "ossPath.h"
@@ -116,8 +115,8 @@ namespace engine
    {
       if ( _scope )
       {
-         _scope->shutdown() ;
-         SAFE_OSS_DELETE ( _scope ) ;
+         sdbGetOMAgentMgr()->releaseScope( _scope ) ;
+         _scope = NULL ;
       }
       if ( _fileBuff )
       {
@@ -289,9 +288,10 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
@@ -482,12 +482,14 @@ namespace engine
       }
 
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -818,12 +820,14 @@ namespace engine
       _content += _fileBuff ;
 
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :
@@ -922,12 +926,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :
@@ -1130,12 +1136,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :
@@ -1578,12 +1586,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :
@@ -1740,12 +1750,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :
@@ -1910,12 +1922,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :
@@ -2130,12 +2144,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :
@@ -2264,12 +2280,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
       // prepare host table info
       rc = _getHostsTableInfo() ;
       if ( rc )
@@ -2573,12 +2591,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
+         rc = SDB_OOM ;
          PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :
@@ -2759,12 +2779,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
       {
-         PD_LOG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         rc = SDB_OOM ;
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error :

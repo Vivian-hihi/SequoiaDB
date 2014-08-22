@@ -44,6 +44,8 @@ namespace engine
       _sptSPScope() ;
       virtual ~_sptSPScope() ;
 
+      virtual SPT_SCOPE_TYPE getType() const { return SPT_SCOPE_TYPE_SP ; }
+
    public:
       virtual INT32 start() ;
 

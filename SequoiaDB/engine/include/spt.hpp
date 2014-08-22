@@ -95,4 +95,7 @@ private:
 
 } // namespace engine
 
+JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
+
 #endif
+

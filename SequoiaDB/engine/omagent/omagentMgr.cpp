@@ -378,6 +378,14 @@ namespace engine
          goto error ;
       }
 
+      // 4. init scopt container
+      rc = _sptScopePool.init() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init container failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -469,6 +477,7 @@ namespace engine
    {
       _nodeMgr.fini() ;
       _sessionMgr.fini() ;
+      _sptScopePool.fini() ;
 
       return SDB_OK ;
    }
@@ -517,6 +526,21 @@ namespace engine
    netRouteAgent* _omAgentMgr::getRouteAgent()
    {
       return &_netAgent ;
+   }
+
+   sptContainer* _omAgentMgr::getSptScopePool()
+   {
+      return &_sptScopePool ;
+   }
+
+   sptScope* _omAgentMgr::getScope()
+   {
+      return _sptScopePool.newScope() ;
+   }
+
+   void _omAgentMgr::releaseScope( sptScope * pScope )
+   {
+      _sptScopePool.releaseScope( pScope ) ;
    }
 
    /*

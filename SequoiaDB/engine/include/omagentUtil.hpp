@@ -41,7 +41,6 @@
 #include <vector>
 
 #include "../bson/bson.hpp"
-#include "sptApi.hpp"
 
 using namespace std ;
 using namespace bson ;
@@ -54,9 +53,6 @@ namespace engine
 
    INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * bufSize,
                     UINT32 * readSize ) ;
-
-   // get spider monkey engine
-   INT32 getSptScope ( _sptScope **scope ) ;
 
    // get bson field
    INT32 omaGetIntElement ( const BSONObj &obj, const CHAR *fieldName,

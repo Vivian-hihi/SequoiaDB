@@ -1,4 +1,4 @@
-#include "spt.hpp"
+
 #include "pd.hpp"
 #include "ossUtil.h"
 #include "ossNPipe.hpp"
@@ -13,15 +13,7 @@
 #include <string>
 #include "sptCommon.hpp"
 #include "utilPipe.hpp"
-#include "sptApi.hpp"
-#include "sptUsrSsh.hpp"
-#include "sptUsrCmd.hpp"
-#include "sptUsrFile.hpp"
-#include "sptUsrSystem.hpp"
-#include "sptUsrOma.hpp"
-#include "sptSPScope.hpp"
-#include "../spt/js_in_cpp.hpp"
-
+#include "sptContainer.hpp"
 
 using std::string ;
 using namespace engine ;
@@ -29,8 +21,6 @@ using namespace engine ;
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
 #endif
-
-JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
 
 extern INT32 gShellReturnCode ;
 // caller should free output in the case of success
@@ -277,42 +267,22 @@ int main ( int argc , const char * argv[] )
                                         b2fName , sizeof ( b2fName ) ) ;
    SH_VERIFY_RC
 
+   rc = container.init() ;
+   SH_VERIFY_RC
+
    // will purge engine in done:
    scope = container.newScope() ;
    SH_VERIFY_COND ( scope , SDB_SYS ) ;
-
-   if ( !InitDbClasses( ((engine::sptSPScope *)scope)->getContext(),
-                       ((engine::sptSPScope *)scope)->getGlobalObj() ) )
-   {
-      PD_LOG( PDERROR, "failed to init dbclass" ) ;
-      rc = SDB_SYS ;
-      goto error ;
-   }
-
-   rc = scope->loadUsrDefObj<_sptUsrSsh>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrCmd>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrFile>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrSystem>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrOma>() ;
-   SH_VERIFY_RC
-
-   rc = evalInitScripts2( scope ) ;
-   SH_VERIFY_RC
 
    rc = enterDaemonMode ( scope , shpid , waitName , f2bName , b2fName ) ;
    SH_VERIFY_RC
 
 done :
-   scope->shutdown() ;
-   SAFE_OSS_DELETE ( scope ) ;
+   if ( scope )
+   {
+      container.releaseScope( scope ) ;
+   }
+   container.fini() ;
    PD_TRACE_EXITRC ( SDB_SDBBP_MAIN, rc );
    return rc ;
 error :

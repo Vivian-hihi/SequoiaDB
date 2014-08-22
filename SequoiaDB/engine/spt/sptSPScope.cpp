@@ -116,7 +116,8 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
       JS_SetVersion( _context, JSVERSION_LATEST );
       JS_SetErrorReporter( _context, reportError );
 
-      _global = JS_NewCompartmentAndGlobalObject( _context, &global_class, NULL );
+      _global = JS_NewCompartmentAndGlobalObject( _context, &global_class,
+                                                  NULL );
       if ( NULL == _global )
       {
          PD_LOG( PDERROR, "failed to init js global object" ) ;
@@ -144,6 +145,7 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
          PD_LOG( PDERROR, "failed to load bsonobj:%d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error:

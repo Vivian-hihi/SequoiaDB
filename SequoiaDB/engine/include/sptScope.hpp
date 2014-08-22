@@ -44,11 +44,19 @@ namespace engine
 {
    class _sptObjDesc ;
 
+   enum SPT_SCOPE_TYPE
+   {
+      SPT_SCOPE_TYPE_SP = 0,
+      SPT_SCOPE_TYPE_V8 = 1,
+   } ;
+
    class _sptScope : public SDBObject
    {
    public:
       _sptScope() ;
       virtual ~_sptScope() ;
+
+      virtual SPT_SCOPE_TYPE getType() const = 0 ;
 
    public:
       virtual INT32 start() = 0 ;
@@ -93,6 +101,7 @@ namespace engine
       static OBJ_DESCS _descs ;
    } ;
    typedef class _sptScope sptScope ;
+
 }
 
 #endif

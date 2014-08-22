@@ -42,6 +42,7 @@
 #include "sdbInterface.hpp"
 #include "ossEvent.hpp"
 #include "omagentNodeMgr.hpp"
+#include "sptContainer.hpp"
 
 #include <string>
 
@@ -165,6 +166,10 @@ namespace engine
          omAgentOptions* getOptions() ;
          omAgentNodeMgr* getNodeMgr() ;
          netRouteAgent*  getRouteAgent() ;
+         sptContainer*   getSptScopePool() ;
+
+         sptScope*       getScope() ;
+         void            releaseScope( sptScope *pScope ) ;
 
       protected:
 
@@ -175,6 +180,7 @@ namespace engine
          pmdAsyncTimerHandler       _timerHandler ;
          netRouteAgent              _netAgent ;
          omAgentNodeMgr             _nodeMgr ;
+         sptContainer               _sptScopePool ;
 
          ossEvent                   _attachEvent ;
          UINT32                     _oneSecTimer ;

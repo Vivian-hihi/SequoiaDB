@@ -32,6 +32,7 @@
 
 #include "omagentUtil.hpp"
 #include "omagentJobRunCmd.hpp"
+#include "omagentMgr.hpp"
 
 using namespace bson ;
 
@@ -108,9 +109,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Failed to get scope, rc: %d", rc ) ;
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -272,9 +278,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Failed to get scope, rc: %d", rc ) ;
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
@@ -436,9 +447,14 @@ namespace engine
          goto error ;
       }
       // get scope
-      rc = getSptScope ( &_scope ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Failed to get scope, rc: %d", rc ) ;
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+
    done:
       return rc ;
    error:

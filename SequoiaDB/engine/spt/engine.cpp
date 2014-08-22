@@ -55,8 +55,6 @@ INT32 gShellReturnCode ;
 BOOLEAN gReadNothing ;
 #endif
 
-JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
-
 namespace engine {
 
 static ScriptEngine * globalEngine ;

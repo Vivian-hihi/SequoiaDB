@@ -1,4 +1,4 @@
-#include "spt.hpp"
+
 #include "sdbOptionMgr.hpp"
 #include "ossUtil.h"
 #include "ossProc.hpp"
@@ -16,7 +16,6 @@
 #include "pmdTrace.hpp"
 #include "../mdocml/parseMandocCpp.hpp"
 #include "sptParseTroff.hpp"
-#include <vector>
 #include <string>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/erase.hpp>
@@ -25,17 +24,7 @@
 #include "sptCommon.hpp"
 #include "utilPath.hpp"
 #include "utilPipe.hpp"
-#include "sptApi.hpp"
-#include "sptSPScope.hpp"
-#include "../spt/js_in_cpp.hpp"
-#include "jsapi.h"
-#include "sptUsrSsh.hpp"
-#include "sptUsrCmd.hpp"
-#include "sptUsrFile.hpp"
-#include "sptUsrSystem.hpp"
-#include "sptUsrOma.hpp"
-
-JSBool InitDbClasses( JSContext *cx, JSObject *obj ) ;
+#include "sptContainer.hpp"
 
 using namespace bson ;
 
@@ -789,36 +778,11 @@ int main ( int argc , CHAR **argv )
    //
    linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
 
+   rc = container.init() ;
+   SH_VERIFY_RC
+
    scope = container.newScope() ;
    SH_VERIFY_COND ( scope , SDB_SYS ) ;
-
-   if ( !InitDbClasses( ((engine::sptSPScope *)scope)->getContext(),
-                       ((engine::sptSPScope *)scope)->getGlobalObj() ) )
-   {
-      PD_LOG( PDERROR, "failed to init dbclass" ) ;
-      rc = SDB_SYS ;
-      goto error ;
-   }
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrSsh>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrCmd>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrFile>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrSystem>() ;
-   SH_VERIFY_RC
-
-   rc = scope->loadUsrDefObj<_sptUsrOma>() ;
-   SH_VERIFY_RC
-
-   rc = evalInitScripts2( scope ) ;
-   SH_VERIFY_RC
-
 
    // parse Argument into argInfo
    rc = parseArguments ( argc , argv , argInfo ) ;
@@ -848,9 +812,13 @@ int main ( int argc , CHAR **argv )
    }
 
 done :
-   scope->shutdown() ;
-   SAFE_OSS_DELETE ( scope ) ;
+   if ( scope )
+   {
+      container.releaseScope( scope ) ;
+   }
+   container.fini() ;
    PD_TRACE_EXITRC ( SDB_SDB_MAIN, rc );
+
    if ( rc )
    {
       // if rc is here, that means something really goes off in either
@@ -861,3 +829,4 @@ done :
 error :
    goto done ;
 }
+
