@@ -47,6 +47,8 @@ Drivers:
 		lib.linux-x86_64-2.6
 	.NET Driver:
 		sequoiadb.dll
+	Python Driver:
+		pysequoiadb.tar.gz
 
 Connectors:
 	Hadoop Connector:
@@ -103,7 +105,6 @@ Building Drivers:
 			PHP source code is located in thirdparty/php directory
 			The dir name must be "php-<version>"
 	Python Client:
-		scons --client
 		cd driver/python
 		scons
 	Java Client:
