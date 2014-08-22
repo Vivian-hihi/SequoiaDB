@@ -16,7 +16,7 @@
 """
 
 try:
-   import libsdbnode
+   import libsdbnode as sdbreplicanode
 except ImportError:
    raise Exception("cannot find C module file: libsdbnode")
 

@@ -52,9 +52,9 @@ from pysequoiadb.error import (SDBTypeError,
 
 import sys
 try:
-   import sdbclient
+   import libsdbclient as sdbclient
 except ImportError:
-   raise Exception("cannot find C module file: sdbclient")
+   raise Exception("cannot find C module file: libsdbclient")
 
 def get_version():
    ver, sub_version, release, build = sdbclient.get_version()

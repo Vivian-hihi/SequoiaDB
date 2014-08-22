@@ -16,7 +16,7 @@
 """
 
 try:
-   import libsdbcl
+   import libsdbcl as sdbcl
 except ImportError:
    raise Exception("cannot find C module file: libsdbcl")
 

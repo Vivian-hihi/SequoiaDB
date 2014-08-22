@@ -16,7 +16,7 @@
 """
 
 try:
-   import libsdbgroup
+   import libsdbgroup as sdbreplicagroup
 except ImportError:
    raise Exception("cannot find C module file: libsdbgroup")
 

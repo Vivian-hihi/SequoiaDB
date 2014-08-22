@@ -20,7 +20,7 @@ import socket
 import random
 
 try:
-   import libsdbclient
+   import libsdbclient as sdbclient
 except ImportError:
    raise Exception("cannot find C module file: libsdbclient")
 

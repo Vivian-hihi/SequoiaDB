@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 try:
-   import libsdbcursor
+   import libsdbcursor as sdbcursor
 except ImportError:
    raise Exception("cannot find C module file: libsdbcursor")
 

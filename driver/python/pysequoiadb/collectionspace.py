@@ -16,7 +16,7 @@
 """
 
 try:
-   import libsdbcs
+   import libsdbcs as sdbcs
 except ImportError:
    raise Exception("cannot find C module file: libsdbcs")
 
