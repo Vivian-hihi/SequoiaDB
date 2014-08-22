@@ -130,7 +130,7 @@
 		</for>
 
 		<antcall target="build-and-copy-python" inheritAll="true">
-			<param name="python.dir" value="${CODE_DIR}/driver/python/dist" />
+			<param name="python.dir" value="${CODE_DIR}/driver/python" />
 			<param name="DRIVER.DIR" value="${DRIVER.DIR}" />
 		</antcall>
 
@@ -154,7 +154,8 @@
  	</target>
 
  	<target name="build-and-copy-python" depends="">
-	    <if>
+ 		<property name="python.tar" value="pysequoiadb.tar.gz" />
+<!-- 	    <if>
 	    	<equals arg1="${os.arch}" arg2="ppc64" />
 	    	<then>
 	    		<property name="python.tar" value="pysequoiadb-1.0.linux-${os.arch}.tar" />
@@ -165,20 +166,21 @@
 			<then>
 				<property name="python.tar" value="pysequoiadb-1.0.linux-x86_64.tar" />
 			</then>
-		</if>
+		</if> -->
 
-		<exec executable="scons" dir="${python.dir}/..">
+		<exec executable="scons" dir="${python.dir}">
 			<arg line=" " />
 		</exec>
 		<exec executable="/bin/chmod" dir="${python.dir}">
 			<arg line=" u+x ${python.tar}" />
 		</exec>
-		<exec executable="/bin/tar" dir="${python.dir}">
+<!-- 		<exec executable="/bin/tar" dir="${python.dir}">
 			<arg line=" -xvf ${python.tar}" />
-		</exec>
-		<copy todir="${DRIVER.DIR}/python">
+		</exec> -->
+		<copy file="${python.dir}/${python.tar}" todir="${DRIVER.DIR}/python">
+<!-- 		<copy todir="${DRIVER.DIR}/python">
     		<fileset dir="${python.dir}/python" includes="**/*" />
-    	</copy> 
+    	</copy>  -->
  	</target>
   
 	<target name="mk-release" depends="mk-driver,compile-src">
