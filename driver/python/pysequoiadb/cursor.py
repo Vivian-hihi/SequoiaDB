@@ -13,12 +13,9 @@
 #   limitations under the License.
 
 try:
-   import sdbcursor
+   import libsdbcursor
 except ImportError:
-   try:
-      import libsdbcursor
-   except ImportError:
-      raise Exception("cannot find C module file: sdbcursor")
+   raise Exception("cannot find C module file: libsdbcursor")
 
 import bson
 import pysequoiadb

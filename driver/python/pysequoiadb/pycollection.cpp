@@ -725,4 +725,4 @@ static PyMethodDef sdbcollection_methods[] = {
    {NULL, NULL}
 };
 
-CREATE_MODULE( sdbcl, sdbcollection_methods )
+CREATE_MODULE( libsdbcl, sdbcollection_methods )

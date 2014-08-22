@@ -404,5 +404,5 @@ static PyMethodDef group_methods[] = {
    {NULL, NULL}
 };
 
-CREATE_MODULE( sdbreplicagroup, group_methods )
+CREATE_MODULE( libsdbgroup, group_methods )
 

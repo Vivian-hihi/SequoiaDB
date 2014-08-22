@@ -199,4 +199,4 @@ static PyMethodDef sdbcollectionspace_methods[] = {
    {NULL, NULL}
 };
 
-CREATE_MODULE( sdbcs, sdbcollectionspace_methods )
+CREATE_MODULE( libsdbcs, sdbcollectionspace_methods )

@@ -215,5 +215,5 @@ static PyMethodDef node_methods[] = {
    {NULL, NULL}
 };
 
-CREATE_MODULE( sdbreplicanode, node_methods )
+CREATE_MODULE( libsdbnode, node_methods )
 

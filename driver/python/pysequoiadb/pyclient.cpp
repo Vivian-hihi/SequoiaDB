@@ -1177,4 +1177,4 @@ static PyMethodDef client_methods[] = {
    {NULL, NULL}
 };
 
-CREATE_MODULE( sdbclient, client_methods )
+CREATE_MODULE( libsdbclient, client_methods )

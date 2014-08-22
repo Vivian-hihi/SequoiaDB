@@ -139,4 +139,4 @@ static PyMethodDef cursor_methods[] = {
    {NULL, NULL}
 };
 
-CREATE_MODULE( sdbcursor, cursor_methods )
+CREATE_MODULE( libsdbcursor, cursor_methods )

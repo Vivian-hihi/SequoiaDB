@@ -16,12 +16,9 @@
 """
 
 try:
-   import sdbreplicanode
+   import libsdbnode
 except ImportError:
-   try:
-      import libsdbreplicanode
-   except ImportError:
-      raise Exception("cannot find C module file: sdbreplicanode")
+   raise Exception("cannot find C module file: libsdbnode")
 
 import pysequoiadb
 from pysequoiadb.common import const

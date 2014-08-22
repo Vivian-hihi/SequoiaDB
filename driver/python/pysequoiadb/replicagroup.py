@@ -16,12 +16,9 @@
 """
 
 try:
-   import sdbreplicagroup
+   import libsdbgroup
 except ImportError:
-   try:
-      import libsdbreplicagroup
-   except ImportError:
-      raise Exception("cannot find C module file: sdbreplicagroup")
+   raise Exception("cannot find C module file: libsdbgroup")
 
 import bson
 import types

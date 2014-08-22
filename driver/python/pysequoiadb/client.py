@@ -20,12 +20,9 @@ import socket
 import random
 
 try:
-   import sdbclient
+   import libsdbclient
 except ImportError:
-   try:
-      import libsdbclient
-   except ImportError:
-      raise Exception("cannot find C module file: sdbclient")
+   raise Exception("cannot find C module file: libsdbclient")
 
 import bson
 import pysequoiadb

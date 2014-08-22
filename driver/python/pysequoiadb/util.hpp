@@ -18,6 +18,7 @@
 #ifndef _SDB_PYTHON_DRIVER_UTIL_HPP_
 #define _SDB_PYTHON_DRIVER_UTIL_HPP_
 
+#include "ossFeat.hpp"
 #include <Python.h>
 
 #define SDB_OK          0
