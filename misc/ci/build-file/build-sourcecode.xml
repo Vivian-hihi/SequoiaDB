@@ -177,7 +177,7 @@
 <!-- 		<exec executable="/bin/tar" dir="${python.dir}">
 			<arg line=" -xvf ${python.tar}" />
 		</exec> -->
-		<copy file="${python.dir}/${python.tar}" todir="${DRIVER.DIR}/python">
+		<copy file="${python.dir}/${python.tar}" todir="${DRIVER.DIR}/python" />
 <!-- 		<copy todir="${DRIVER.DIR}/python">
     		<fileset dir="${python.dir}/python" includes="**/*" />
     	</copy>  -->
