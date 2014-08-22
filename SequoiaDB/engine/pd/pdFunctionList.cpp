@@ -468,6 +468,8 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "collection_update"
 ,   "collection_upsert"
 ,   "collection_remove"
+,   "collection_get_lob"
+,   "collection_put_lob"
 ,   "collection_explain"
 ,   "collection_count"
 ,   "collection_split"
@@ -2064,10 +2066,10 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "_qgmMatcher::match"
 ,   "_qgmMatcher::_match"
 } ;
-const UINT32 _pTraceFunctionListNum = 2062 ;
+const UINT32 _pTraceFunctionListNum = 2064 ;
 const UINT32 pdGetTraceFunctionListNum()
 {
-  return 2062;
+  return 2064;
 }
 const CHAR *pdGetTraceFunction ( UINT64 id )
 {
