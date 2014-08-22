@@ -19,6 +19,9 @@
 #define _SDB_PYTHON_DRIVER_UTIL_HPP_
 
 #include "ossFeat.hpp"
+// the following two options will be redefined in Python
+#undef _XOPEN_SOURCE
+#undef _POSIX_C_SOURCE
 #include <Python.h>
 
 #define SDB_OK          0
