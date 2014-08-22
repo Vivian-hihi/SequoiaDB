@@ -158,22 +158,18 @@ def get_variant_dir():
 
 # build options
 add_option( "all", "build engine/tools/testcases/shell/client/fmp", 0, False)
-add_option( "engine", "install engine", 0, False)
-add_option( "tool", "install tools", 0, False)
-add_option( "testcase", "install testcases", 0, False)
-add_option( "shell", "install shell", 0, False)
-add_option( "client", "install client environment", 0, False)
-add_option( "fmp", "install fmp", 0, False)
+add_option( "engine", "build engine", 0, False)
+add_option( "tool", "build tools", 0, False)
+add_option( "testcase", "build testcases", 0, False)
+add_option( "shell", "build shell", 0, False)
+add_option( "client", "build C/C++ clients", 0, False)
+add_option( "fmp", "build fmp", 0, False)
 
 # language could be en or cn
 add_option( "language" , "description language" , 1 , False )
 
 # linking options
 add_option( "release" , "release build" , 0 , True )
-
-# base compile flags
-add_option( "64" , "whether to force 64 bit" , 0 , True , "force64" )
-add_option( "32" , "whether to force 32 bit" , 0 , True , "force32" )
 
 # dev options
 add_option( "dd", "debug build no optimization" , 0 , True , "debugBuild" )
@@ -205,15 +201,10 @@ nix = False
 linux = False
 linux64  = False
 windows = False
-force64 = has_option( "force64" )
-msarch = None
-if force64:
-   msarch = "amd64"
 
 release = True
 debugBuild = False
 
-force32 = has_option( "force32" )
 release = has_option( "release" )
 
 # get whether we are using debug build
@@ -229,7 +220,6 @@ elif release and debugBuild:
    debugBuild = True
 
 env = Environment( BUILD_DIR=variantDir,
-                   MSVS_ARCH=msarch ,
                    tools=["default", "gch", "jsheader", "mergelib" ],
                    PYSYSPLATFORM=os.sys.platform,
                    )
@@ -326,11 +316,6 @@ if "uname" in dir(os):
 else:
     processor = "i386"
 
-if force32:
-    processor = "i386"
-if force64:
-    processor = "x86_64"
-
 env['PROCESSOR_ARCHITECTURE'] = processor
 
 DEFAULT_INSTALL_DIR = "/opt/sequoiadb"
@@ -364,12 +349,13 @@ if guess_os == "linux":
     # GNU
     env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
     # 64 bit linux
-    if guess_arch == "ia64" and not force32:
+    if guess_arch == "ia64":
         linux64 = True
         nixLibPrefix = "lib64"
+	boost_lib_dir = join(boost_lib_dir,'linux64')
         env.Append( EXTRALIBPATH="/lib64" )
         # use project-related boost library
-        env.Append( EXTRALIBPATH=join(boost_lib_dir,'linux64') )
+        env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux64') )
         # use project-related spidermonkey library
@@ -383,14 +369,14 @@ if guess_os == "linux":
                 env.Append( CPPPATH=join(js_dir,'lib/release/linux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/linux64')
-        force64 = False
     # in case for 32 bit linux or compiling 32 bit in 64 env
-    elif guess_arch == "ia32" or force32:
+    elif guess_arch == "ia32":
         linux64 = False
         nixLibPrefix = "lib"
+	boost_lib_dir = join(boost_lib_dir,'linux32')
         env.Append( EXTRALIBPATH="/lib" )
         # we want 32 bit boost library
-        env.Append( EXTRALIBPATH=join(boost_lib_dir,'linux32') )
+        env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux32') )
         # and 32 bit spidermonkey library
@@ -406,15 +392,16 @@ if guess_os == "linux":
                 # if we are in 64 bit box but want to build 32 bit release
         ssllib_dir = join(ssl_dir,'lib/linux32')
     # power pc linux
-    elif guess_arch == "ppc64" and not force32:
+    elif guess_arch == "ppc64":
         linux64 = True
         nixLibPrefix = "lib64"
+	boost_lib_dir = join(boost_lib_dir,'ppclinux64')
         # use big endian
         env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
         #env.Append( EXTRALIBPATH="/usr/lib64" )
         env.Append( EXTRALIBPATH="/lib64" )
         # use project-related boost library
-        env.Append( EXTRALIBPATH=join(boost_lib_dir,'ppclinux64') )
+        env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/ppclinux64') )
         # use project-related spidermonkey library
@@ -428,7 +415,6 @@ if guess_os == "linux":
                 env.Append( CPPPATH=join(js_dir,'lib/release/ppclinux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/ppclinux64')
-        force64 = False
 
     # spider monkey
     if usesm:
@@ -454,9 +440,10 @@ elif "win32" == guess_os:
             env['ENV'] = dict(os.environ)
 
     # if we are 64 bit
-    if guess_arch == "ia64" and not force32:
+    if guess_arch == "ia64":
+	boost_lib_dir = join(boost_lib_dir,'win64')
         # use 64 bit boost library
-        env.Append( EXTRALIBPATH=join(boost_lib_dir,'win64') )
+        env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win64') )
         # use 64 bit spidermonkey
@@ -469,11 +456,11 @@ elif "win32" == guess_os:
                 smlib_dir = join(js_dir,'lib/release/win64/lib')
                 env.Append( CPPPATH=join(js_dir,'lib/release/win64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
-        force64 = False
         ssllib_dir = join(ssl_dir,'lib/win64')
     else:
-        # either we are 32 bit or force 32 bit
-        env.Append( EXTRALIBPATH=join(boost_lib_dir,'win32') )
+	boost_lib_dir = join(boost_lib_dir,'win32')
+        # we are 32 bit
+        env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win32') )
         if usesm:
@@ -537,7 +524,6 @@ elif "win32" == guess_os:
         env.Append( CPPDEFINES=[ "NDEBUG" ] )
         env.Append( CPPFLAGS= " /O2 /Gy " )
         env.Append( CPPFLAGS= " /MT /Zi /errorReport:none " )
-        # TODO: this has caused some linking problems :
         # /GL whole program optimization
         # /LTCG link time code generation
         env.Append( CPPFLAGS= " /GL " )
@@ -558,7 +544,7 @@ elif "win32" == guess_os:
             env.Append( CPPFLAGS=" /Od " )
             env.Append( CPPDEFINES=[ "_DEBUG" ] )
 
-    if guess_arch == "ia64" and not force32:
+    if guess_arch == "ia64":
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib/x64" ] )
     else:
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib" ] )
@@ -570,11 +556,8 @@ elif "win32" == guess_os:
 
     winLibString = "ws2_32.lib kernel32.lib advapi32.lib Psapi.lib"
 
-    if force64:
-        winLibString += ""
-    else:
-        winLibString += " user32.lib gdi32.lib winspool.lib comdlg32.lib  shell32.lib ole32.lib oleaut32.lib "
-        winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
+    winLibString += " user32.lib gdi32.lib winspool.lib comdlg32.lib  shell32.lib ole32.lib oleaut32.lib "
+    winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
 
     env.Append( LIBS=Split(winLibString) )
 else:
@@ -605,16 +588,6 @@ if nix:
     else:
         env.Append( CPPFLAGS=" -O3 " )
 
-    if force64:
-        env.Append( CFLAGS="-m64" )
-        env.Append( CXXFLAGS="-m64" )
-        env.Append( LINKFLAGS="-m64" )
-
-    if force32:
-        env.Append( CFLAGS="-m32" )
-        env.Append( CXXFLAGS="-m32" )
-        env.Append( LINKFLAGS="-m32" )
-
 if "uname" in dir(os):
     hacks = buildscripts.findHacks( os.uname() )
     if hacks is not None:
@@ -634,77 +607,17 @@ def getSysInfo():
     else:
         return " ".join( os.uname() )
 
-def doConfigure( myenv , shell=False ):
-    conf = Configure(myenv)
-    myenv["LINKFLAGS_CLEAN"] = list( myenv["LINKFLAGS"] )
-    myenv["LIBS_CLEAN"] = list( myenv["LIBS"] )
-
-#    if 'CheckCXX' in dir( conf ):
-#        if  not conf.CheckCXX():
-#            print( "c++ compiler not installed!" )
-#            Exit(1)
-
-    def myCheckLib( poss , failIfNotFound=False , staticOnly=False):
-
-        if type( poss ) != types.ListType :
-            poss = [poss]
-
-        allPlaces = [];
-        allPlaces += extraLibPlaces
-        #if nix and release:
-        if nix:
-            allPlaces += myenv.subst( myenv["LIBPATH"] )
-            if not force64:
-                allPlaces += [ "/usr/lib" , "/usr/local/lib", "/usr/lib64" ]
-            for p in poss:
-                for loc in allPlaces:
-                    fullPath = loc + "/lib" + p + ".a"
-                    if os.path.exists( fullPath ):
-                        myenv.Append( _LIBFLAGS='${SLIBS}',
-                                      SLIBS=" " + fullPath + " " )
-                        return True
-
-        if release and not windows and failIfNotFound:
-            print( "ERROR: can't find static version of: " + str( poss ) + " in: " + str( allPlaces ) )
-            Exit(1)
-
-        res = not staticOnly and conf.CheckLib( poss )
-        if res:
-            return True
-
-        if failIfNotFound:
-            print( "can't find or link against library " + str( poss ) + " in " + str( myenv["LIBPATH"] ) )
-            print( "see config.log for more information" )
-            if windows:
-                print( "use scons --64 when cl.exe is 64 bit compiler" )
-            Exit(1)
-
-        return False
-
-#    if not conf.CheckCXXHeader( "boost/filesystem/operations.hpp" ):
-#        print( "can't find boost headers" )
-#        if shell:
-#            print( "\tshell might not compile" )
-#        else:
-#            Exit(1)
-
-    # check for boost libraries
-    for b in boostLibs:
-        l = "boost_" + b
-        myCheckLib( [ l + boostCompiler + "-mt" + boostVersion ,
-                      l + boostCompiler + boostVersion ] ,
-                      False)
-#    if not conf.CheckCXXHeader( "execinfo.h" ):
-#        myenv.Append( CPPDEFINES=[ "NOEXECINFO" ] )
-
-    return conf.Finish()
-
 clientCppEnv = env.Clone()
 clientCppEnv.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 clientCEnv = clientCppEnv.Clone()
 clientCppEnv["BUILD_DIR"] = clientCppVariantDir
 clientCEnv["BUILD_DIR"] = clientCVariantDir
-env = doConfigure( env )
+
+# --- append boost library to env ---
+if nix:
+   for b in boostLibs:
+      env.Append ( _LIBFLAGS='${SLIBS}',
+                   SLIBS=" " + join(boost_lib_dir,"libboost_" + b + ".a") )
 
 testEnv = env.Clone()
 testEnv.Append( CPPPATH=["../"] )
@@ -726,8 +639,6 @@ if release and ( linux64 ):
 if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
-
-#shellEnv = doConfigure( shellEnv , shell=True )
 
 # add engine and client variable
 env.Append( CPPDEFINES=[ "SDB_ENGINE" ] )
