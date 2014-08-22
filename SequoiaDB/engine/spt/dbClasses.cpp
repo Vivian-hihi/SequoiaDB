@@ -189,7 +189,11 @@ extern CHAR FMP_COORD_SERVICE[OSS_MAX_PATHSIZE+1] ;
 extern CHAR *FMP_COORD_HOST ;
 extern CHAR g_UserName[ OSS_MAX_PATHSIZE + 1 ] ;
 extern CHAR g_Password[ OSS_MAX_PATHSIZE + 1 ] ;
-extern "C" { extern BOOLEAN g_disablePassEncode ; }
+// g_disablePassEncode is defined in client.c, so we have to convert
+// cpp to C in order to link with fmp
+SDB_EXTERN_C_START
+extern BOOLEAN g_disablePassEncode ;
+SDB_EXTERN_C_END
 #endif // SDB_FMP
 
 // troff file's relative path
