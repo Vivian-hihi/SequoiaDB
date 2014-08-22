@@ -198,11 +198,11 @@ namespace engine
       BSONObj obj ;
       BSONElement user, pass ;
 
-      user = obj.getField( SDB_AUTH_USER ) ;
-      pass = obj.getField( SDB_AUTH_PASSWD ) ;
-
       rc = extractAuthMsg( pMsg, obj ) ;
       PD_RC_CHECK( rc, PDERROR, "Extrace auth msg failed, rc: %d", rc ) ;
+
+      user = obj.getField( SDB_AUTH_USER ) ;
+      pass = obj.getField( SDB_AUTH_PASSWD ) ;
 
       // check usr and passwd
       if ( 0 != ossStrcmp( user.valuestrsafe(), SDB_OMA_USER ) )
