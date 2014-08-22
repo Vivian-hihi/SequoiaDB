@@ -89,9 +89,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrOmaAssit::createCoord( const CHAR * pSvcName,
-                                       const CHAR * pDBPath,
-                                       const CHAR * pConfig )
+   INT32 _sptUsrOmaAssit::createNode( const CHAR * pSvcName,
+                                      const CHAR * pDBPath,
+                                      const CHAR * pConfig )
    {
       INT32 rc = SDB_OK ;
       bson config ;
@@ -111,9 +111,24 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrOmaAssit::removeCoord( const CHAR * pSvcName )
+   INT32 _sptUsrOmaAssit::removeNode( const CHAR * pSvcName,
+                                      const CHAR * pConfig )
    {
-      return sdbRemoveNode( _groupHandle, "", pSvcName, NULL ) ;
+      INT32 rc = SDB_OK ;
+      bson config ;
+      bson_init( &config ) ;
+      rc = bson_init_finished_data( &config, pConfig ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to finish bons, rc: %d", rc ) ;
+
+      rc = sdbRemoveNode( _groupHandle, "", pSvcName, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Remove Node[%s] failed, rc: %d",
+                   pSvcName, rc ) ;
+
+   done:
+      bson_destroy( &config ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOmaAssit::startNode( const CHAR * pSvcName )

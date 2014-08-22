@@ -158,6 +158,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObjBuilder builder ;
 
+      _roleStr = SDB_ROLE_COORD_STR ;
+
       try
       {
          BSONObj obj( pInfomation ) ;
@@ -178,16 +180,24 @@ namespace engine
                }
                continue ;
             }
-            else if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_HOST ) ||
-                      0 == ossStrcmp( e.fieldName(), PMD_OPTION_ROLE ) )
+            else if ( 0 == ossStrcmp( e.fieldName(), FIELD_NAME_HOST ) )
             {
+               continue ;
+            }
+            else if ( 0 == ossStrcmp( e.fieldName(), PMD_OPTION_ROLE ) )
+            {
+               if ( 0 == ossStrcmp( e.valuestrsafe(),
+                                    SDB_ROLE_STANDALONE_STR ) )
+               {
+                  _roleStr = SDB_ROLE_STANDALONE_STR ;
+               }
                continue ;
             }
 
             builder.append( e ) ;
          }
 
-         builder.append( PMD_OPTION_ROLE, SDB_ROLE_COORD_STR ) ;
+         builder.append( PMD_OPTION_ROLE, _roleStr ) ;
          _config = builder.obj() ;
       }
       catch( std::exception &e )
@@ -233,7 +243,7 @@ namespace engine
       BSONObj dummy ;
       return sdbGetOMAgentMgr()->getNodeMgr()->rmANode( _config.objdata(),
                                                         dummy.objdata(),
-                                                        SDB_ROLE_COORD_STR ) ;
+                                                        _roleStr.c_str() ) ;
    }
 
    /*

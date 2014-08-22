@@ -34,8 +34,10 @@
 #define OMAGENT_NODECMD_HPP__
 
 #include "omagentCommand.hpp"
+#include <string>
 
 using namespace bson ;
+using namespace std ;
 
 namespace engine
 {
@@ -97,6 +99,7 @@ namespace engine
 
       protected:
          BSONObj        _config ;
+         string         _roleStr ;
 
    } ;
 

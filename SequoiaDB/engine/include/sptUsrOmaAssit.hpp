@@ -52,11 +52,12 @@ namespace engine
                               const CHAR *pServiceName ) ;
          INT32       disconnect() ;
 
-         INT32       createCoord( const CHAR *pSvcName,
-                                  const CHAR *pDBPath,
-                                  const CHAR *pConfig ) ;
+         INT32       createNode( const CHAR *pSvcName,
+                                 const CHAR *pDBPath,
+                                 const CHAR *pConfig ) ;
 
-         INT32       removeCoord( const CHAR *pSvcName ) ;
+         INT32       removeNode( const CHAR *pSvcName,
+                                 const CHAR * pConfig ) ;
 
          INT32       startNode( const CHAR *pSvcName ) ;
 
