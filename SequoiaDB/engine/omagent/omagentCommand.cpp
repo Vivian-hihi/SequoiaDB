@@ -49,7 +49,6 @@ using namespace bson ;
 #define FILE_BASIC_CHECK_HOST            "basicCheckHost.js"
 #define FILE_INSTALL_REMOTE_AGENT        "installRemoteAgent.js"
 #define FILE_CHECK_HOST                  "checkHost.js"
-#define FILE_EXIT_AGENT                  "exitAgent.js"
 #define FILE_UNINSTALL_REMOTE_AGENT      "uninstallRemoteAgent.js"
 #define FILE_ADD_HOST                    "addHost.js"
 
@@ -95,7 +94,6 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaBasicCheckHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallRemoteAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaCheckHost )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaExitAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninstallRemoteAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
@@ -518,8 +516,8 @@ namespace engine
          const CHAR *pIp = NULL ;
          const CHAR *pUserName = NULL ;
          const CHAR *pPassword = NULL ;
-         const CHAR *pVersion   = NULL ;
-         BOOLEAN isRunning      = FALSE ;
+//         const CHAR *pVersion   = NULL ;
+//         BOOLEAN isRunning      = FALSE ;
 
          // get fields
          rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
@@ -543,6 +541,7 @@ namespace engine
                          OMA_FIELD_PASSWD, rc ) ;
             goto error ;
          }
+/*
          // check whether the remote machine has install omagent or not
          rc = getRemoteAgentStatus ( pIp, pUserName, pPassword, status ) ;
          if ( rc )
@@ -588,6 +587,7 @@ namespace engine
                continue ;
             }
          }
+*/
          // build js file's argument
          ossSnprintf( _jsFileArgs, JS_ARG_LEN,
                       " var IP = \"%s\"; var USERNAME = \"%s\"; "
@@ -742,6 +742,10 @@ namespace engine
    */
    _omaCheckHost::_omaCheckHost ()
    {
+      _pIp       = NULL ;
+      _pHostName = NULL ;
+      _pUserName = NULL ;
+      _pPassword = NULL ;
    }
 
    _omaCheckHost::~_omaCheckHost ()
@@ -752,9 +756,37 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
-      BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
-      _hosts.push_back ( arg ) ;
+      BSONObj host( pInfomation ) ;
+      // get fields
+      rc = omaGetStringElement( host, OMA_FIELD_IP, &_pIp ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                      OMA_FIELD_IP, rc ) ;
+         goto error ;
+      }
+      rc = omaGetStringElement( host, OMA_FIELD_HOSTNAME, &_pHostName ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                      OMA_FIELD_HOSTNAME, rc ) ;
+         goto error ;
+      }
+      rc = omaGetStringElement( host, OMA_FIELD_USER, &_pUserName ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                      OMA_FIELD_USER, rc ) ;
+         goto error ;
+      }
+      rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &_pPassword ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                      OMA_FIELD_PASSWD, rc ) ;
+         goto error ;
+      }
+
       // get js file
       rc = setJSFile( FILE_CHECK_HOST ) ;
       if ( rc )
@@ -770,6 +802,21 @@ namespace engine
                       _jsFileName, rc ) ;
          goto error ;
       }
+      // build js argument for js file
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                   " var IP = \"%s\"; var HOSTNAME = \"%s\"; "
+                   "var USERNAME = \"%s\"; var PASSWORD = \"%s\"; ",
+                   _pIp, _pHostName, _pUserName, _pPassword ) ;
+      PD_LOG ( PDDEBUG, "Excute check host infomation passes arguments: "
+               "var IP = %s; var HOSTNAME = %s; "
+               "var USERNAME = %s; var PASSWORD = %s",
+               _pIp, _pHostName, "xxx", "xxx" ) ;
+
+      _content.clear() ;
+      _content += _jsFileArgs ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
       // get scope
       rc = getSptScope ( &_scope ) ;
       if ( rc )
@@ -783,240 +830,38 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaCheckHost::doit( BSONObj& retObj )
+   INT32 _omaCheckHost::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-      std::vector<BSONObj> result ;
       BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
-      std::vector<BSONObj>::iterator it ;
-      std::vector<BSONObj>::iterator itr = _hosts.begin() ;
-      while ( itr != _hosts.end() )
-      {
-         BSONObj detail ;
-         BSONObj rval ;
-         BSONObj host = *itr++ ;
-         BSONObj subObj ;
-         BSONObj temp ;
-         BSONObjBuilder bob ;
+      BSONObj rval ;
+      BSONObj detail ;
+      BSONObj subObj ;
 
-         const CHAR *pIp = NULL ;
-         const CHAR *pHostName = NULL ;
-         const CHAR *pUserName = NULL ;
-         const CHAR *pPassword = NULL ;
-         // get fields
-         rc = omaGetStringElement( host, OMA_FIELD_IP, &pIp ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_IP, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_HOSTNAME, &pHostName ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_HOSTNAME, rc ) ;
-            goto error ;
-         } 
-         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_USER, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_PASSWD, rc ) ;
-            goto error ;
-         }
-         // build js argument for js file
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
-                      " var IP = \"%s\"; var HOSTNAME = \"%s\"; " 
-                      "var USERNAME = \"%s\"; var PASSWORD = \"%s\"; ",
-                      pIp, pHostName, pUserName, pPassword ) ;
-         PD_LOG ( PDDEBUG, "Excute check host infomation passes arguments: "
-                  "var IP = %s; var HOSTNAME = %s; "
-                  "var USERNAME = %s; var PASSWORD = %s",
-                  pIp, pHostName, "xxx", "xxx" ) ;
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
 
-         _content.clear() ;
-         _content += _jsFileArgs ;
-         _content += OSS_NEWLINE ;
-         _content += _fileBuff ;
-
-         // execute js
-         rc = _scope->eval( _content.c_str(), _content.size(),
-                            _jsFileName, 1, 1, rval, detail ) ;
-
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR,
-                         "Failed to eval js file[%s]: %s, rc = %d",
-                         _jsFileName, detail.toString().c_str(), rc ) ;
-            // TODO:what's in detail ?
-            BSONObj errObj ;
-            BSONObjBuilder bob ;
-            bob.append( OMA_FIELD_IP, pIp ) ;
-            bob.append( OMA_FIELD_RC, rc ) ;
-            bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
-            errObj = bob.obj() ;
-            result.push_back( errObj ) ;
-            continue ;
-         }
-         rc = omaGetObjElement( rval, "", subObj ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
-            goto error ;
-         }
-         bob.append( OMA_FIELD_IP, pIp ) ;
-         bob.appendElements( subObj ) ;
-         temp = bob.obj() ;
-         result.push_back( temp ) ;
-      }
-      // build return bson obj
-      it = result.begin() ;
-      while ( it != result.end() )
-         bab.append( *it++ ) ;
-      bob.appendArray( OMA_FIELD_HOSTINFO,
-                       bab.arr() ) ;
-      retObj = bob.obj() ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   /******************************* exit agent *******************************/
-   /*
-       _omaExitAgent
-   */
-   _omaExitAgent::_omaExitAgent ()
-   {
-   }
-
-   _omaExitAgent::~_omaExitAgent ()
-   {
-   }
-
-   INT32 _omaExitAgent::init( const CHAR *pInfomation )
-   {
-      INT32 rc = SDB_OK ;
-      // parse bson and get arguments info for js file
-      BSONObj arg( pInfomation ) ;
-      _hosts.push_back ( arg ) ;
-      // get js file
-      rc = setJSFile( FILE_EXIT_AGENT ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR,
+                      "Failed to eval js file[%s]: %s, rc = %d",
+                      _jsFileName, detail.toString().c_str(), rc ) ;
+         bob.append( OMA_FIELD_IP, _pIp ) ;
+         bob.append( OMA_FIELD_RC, rc ) ;
+         bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
+         retObj = bob.obj() ;
          goto error ;
       }
-      // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff,
-                      &_buffSize, &_readSize ) ;
+      // extract result
+      rc = omaGetObjElement( rval, "", subObj ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
-                      _jsFileName, rc ) ;
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
          goto error ;
       }
-      // get scope
-      rc = getSptScope ( &_scope ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   INT32 _omaExitAgent::doit( BSONObj &retObj )
-   {
-      INT32 rc = SDB_OK ;
-      std::vector<BSONObj> result ;
-      BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
-      std::vector<BSONObj>::iterator it ;
-      std::vector<BSONObj>::iterator itr = _hosts.begin() ;
-      while ( itr != _hosts.end() )
-      {
-         BSONObj detail ;
-         BSONObj rval ;
-         BSONObj host = *itr++ ;
-         BSONObj subObj ;
-         BSONObj temp ;
-         BSONObjBuilder bob ;
-
-         const CHAR *pUserName = NULL ;
-         const CHAR *pPassword = NULL ;
-
-         rc = omaGetStringElement( host, OMA_FIELD_USER, &pUserName ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_USER, rc ) ;
-            goto error ;
-         }
-         rc = omaGetStringElement( host, OMA_FIELD_PASSWD, &pPassword ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_PASSWD, rc ) ;
-            goto error ;
-         }
-
-         // build argument for js file
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN,
-                      " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; ",
-                      pUserName, pPassword ) ;
-         PD_LOG ( PDDEBUG, "Excute stop sdbcm program command" ) ;
-
-         _content.clear() ;
-         _content += _jsFileArgs ;
-         _content += OSS_NEWLINE ;
-         _content += _fileBuff ;
-
-         // execute js
-         rc = _scope->eval( _content.c_str(), _content.size(),
-                            _jsFileName, 1, 1, rval, detail ) ;
-
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR,
-                         "Failed to eval js file[%s]: %s, rc = %d",
-                         _jsFileName, detail.toString().c_str(), rc ) ;
-            // TODO:what's in detail ?
-            BSONObj errObj ;
-            BSONObjBuilder bob ;
-            bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
-            errObj = bob.obj() ;
-            result.push_back( errObj ) ;
-            continue ;
-         }
-         rc = omaGetObjElement( rval, "", subObj ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
-            goto error ;
-         }
-         bob.appendElements( subObj ) ;
-         temp = bob.obj() ;
-         result.push_back( temp ) ;
-      }
-      // build return bson obj
-      it = result.begin() ;
-      while ( it != result.end() )
-         bab.append( *it++ ) ;
-      bob.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
+      bob.append( OMA_FIELD_IP, _pIp ) ;
+      bob.appendElements( subObj ) ;
       retObj = bob.obj() ;
 
    done:
@@ -2485,7 +2330,7 @@ namespace engine
             goto error ;
          }
          // get hosts table info for js file to append
-         rc = _getContentForJS( pIp, hostsInfo ) ;
+         rc = _getHostsToReg( pIp, hostsInfo ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR,
@@ -2648,8 +2493,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaRegHosts::_getContentForJS ( const CHAR *pIp,
-                                          std::vector<string> &hostsInfo )
+   INT32 _omaRegHosts::_getHostsToReg ( const CHAR *pIp,
+                                        std::vector<string> &hostsInfo )
    {
       INT32 rc = SDB_OK ;
       string str = "" ;

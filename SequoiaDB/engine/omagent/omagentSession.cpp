@@ -276,11 +276,17 @@ namespace engine
       SINT64 numToSkip          = -1 ;
       SINT64 numToReturn        = -1 ;
       _omaCommand *pCommand     = NULL ;
+      INT64 sec                 = 0 ;
+      INT64 microSec            = 0 ;
+      INT64 tkTime              = 0 ;
+      ossTimestamp tmBegin ;
+      ossTimestamp tmEnd ;
       BSONObj retObj ;
       BSONObjBuilder builder ;
 
       PD_LOG ( PDDEBUG, "Omagent receive requset from omsvc" ) ;
-
+      // compute the time takes
+      ossGetCurrentTime( tmBegin ) ;
       // build reply massage header
       _buildReplyHeader( pMsg ) ;
       // extract command
@@ -348,6 +354,18 @@ namespace engine
       _replyHeader.header.messageLength += retObj.objsize() ;
       _replyHeader.numReturned = 1 ;
 
+      ossGetCurrentTime ( tmEnd ) ;
+      // time takes
+      tkTime = ( tmEnd.time * 1000000 + tmEnd.microtm ) -
+               ( tmBegin.time * 1000000 + tmBegin.microtm ) ;
+      sec = tkTime/1000000 ;
+      microSec = tkTime%1000000 ;
+      PD_LOG ( PDDEBUG, "Excute command[%s] return: %s",
+               pCollectionName, retObj.toString(FALSE, TRUE).c_str() ) ;
+      PD_LOG ( PDDEBUG, "Excute command[%s] takes %lld.%llds.",
+               pCollectionName, sec, microSec ) ;
+
+      // reply message
       return _reply( &_replyHeader, retObj.objdata(), retObj.objsize() ) ;
    error :
       // check flags

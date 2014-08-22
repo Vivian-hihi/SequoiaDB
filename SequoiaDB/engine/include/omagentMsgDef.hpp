@@ -34,6 +34,7 @@
 #define OMAGENT_MSG_DEF_HPP__
 
 #include "pmdOptions.hpp"
+#include "msgDef.hpp"
 #include "omDef.hpp"
 
 // command
@@ -41,7 +42,7 @@
 #define OMA_CMD_BASIE_CHECK_HOST                   OM_BASIC_CHECK_REQ
 #define OMA_CMD_INSTALL_REMOTE_AGENT               OM_INSTALL_REMOTE_AGENT
 #define OMA_CMD_CHECK_HOST                         OM_CHECK_HOST_REQ
-#define OMA_CMD_EXIT_AGENT                         OM_AGENT_EXIT_REQ
+// #define OMA_CMD_EXIT_AGENT                         OM_AGENT_EXIT_REQ
 #define OMA_CMD_UNINSTALL_REMOTE_AGENT             OM_UNINSTALL_REMOTE_AGENT
 #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
 #define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ

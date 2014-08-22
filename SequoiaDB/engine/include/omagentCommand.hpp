@@ -196,6 +196,13 @@ namespace engine
          virtual INT32 init ( const CHAR *pInfomation ) ;
 
          virtual INT32 doit ( BSONObj& retObj ) ;
+
+      private:
+         const CHAR *_pIp ;
+         const CHAR *_pHostName ;
+         const CHAR *_pUserName ;
+         const CHAR *_pPassword ;
+
    } ;
 
    /******************************* install remote agent **********************/
@@ -226,25 +233,6 @@ namespace engine
          CHAR _prog_path[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR _spt_path[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR _conf_path[ OSS_MAX_PATHSIZE + 1 ] ;
-   } ;
-
-   /******************************* exit agent ********************************/
-   /*
-      _omaExitAgent
-   */
-   class _omaExitAgent : public _omaCommand
-   {
-      DECLARE_OACMD_AUTO_REGISTER ()
-      public:
-         _omaExitAgent () ;
-         ~_omaExitAgent () ;
-
-         virtual const CHAR* name () { return OMA_CMD_EXIT_AGENT ; }
-
-         virtual INT32 init ( const CHAR *pInfomation ) ;
-
-         virtual INT32 doit ( BSONObj &retObj ) ;
-
    } ;
 
    /******************************* uninstall remote agent *******************/
@@ -460,7 +448,7 @@ namespace engine
          _omaRegHosts () ;
          ~_omaRegHosts () ;
 
-         virtual const CHAR* name () { return "reg hosts info" ; }
+         virtual const CHAR* name () { return "" ; }
 
          virtual INT32 init ( const CHAR *pInfomation ) ;
 
@@ -469,8 +457,8 @@ namespace engine
       private:
          INT32 _getHostsTableInfo () ;
 
-         INT32 _getContentForJS ( const CHAR *pIp,
-                                  std::vector<string> &hostsInfo ) ;
+         INT32 _getHostsToReg ( const CHAR *pIp,
+                                std::vector<string> &hostsInfo ) ;
 
          std::map<string, string> _hostsTableInfo ;
    } ;
