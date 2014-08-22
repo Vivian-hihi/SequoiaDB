@@ -23,4 +23,5 @@ thirdparty/php/php-5.3.10
 SequoiaDB
 SConstruct
 README
+NOTICE
 GNU-AGPL-3.0.txt
