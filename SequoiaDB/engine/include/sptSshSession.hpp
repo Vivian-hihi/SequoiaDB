@@ -87,9 +87,11 @@ namespace engine
 
    protected:
       std::string _host ;
+      INT32       _port ;
       std::string _usr ;
       std::string _passwd ;
       _ossSocket *_sock ;
+
    } ;
    typedef class _sptSshSession sptSshSession ;
 }

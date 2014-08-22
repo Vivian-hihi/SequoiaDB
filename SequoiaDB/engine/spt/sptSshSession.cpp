@@ -47,12 +47,11 @@ namespace engine
       _usr.assign( usrname ) ;
       _passwd.assign( passwd ) ;
 
-      INT32 sshPort = SPT_SSH_PORT ;
+      _port = SPT_SSH_PORT ;
       if ( port )
       {
-         sshPort = *port ;
+         _port = *port ;
       }
-      _sock = SDB_OSS_NEW _ossSocket( _host.c_str(), sshPort );
    }
 
    _sptSshSession::~_sptSshSession()
@@ -68,7 +67,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       
-      _sock = SDB_OSS_NEW _ossSocket( _host.c_str(), SPT_SSH_PORT ) ;
+      _sock = SDB_OSS_NEW _ossSocket( _host.c_str(), _port ) ;
       if ( NULL == _sock )
       {
          PD_LOG( PDERROR, "failed to allocate mem." ) ;
@@ -86,7 +85,8 @@ namespace engine
       rc = _sock->connect() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "can not connect to host:%s, rc:%d", _host.c_str(), rc ) ;
+         PD_LOG( PDERROR, "can not connect to host:%s:%d, rc:%d",
+                 _host.c_str(), _port, rc ) ;
          goto error ;
       }
 
