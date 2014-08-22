@@ -134,7 +134,9 @@ env.Install("#/pysequoiadb", pycursor)
 env.Install("#/pysequoiadb", pygroup)
 base = env.Install("#/pysequoiadb", pynode)
 
-act = "tar -zcvf pysequoiadb.tar.gz ./bson ./pysequoiadb ./setup.py"
+act = "tar -zcvf pysequoiadb.tar.gz   \
+      ./bson ./pysequoiadb ./setup.py \
+      --exclude-vcs"
 run = env.Command(target = None, source = base, action = act )
 #   env.Execute("tar -zcvf pysequoiadb.tar.gz ./bson ./pysequoiadb ./setup.py")
 env.Depends(run, base)
