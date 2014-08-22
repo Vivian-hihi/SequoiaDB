@@ -144,7 +144,7 @@ JS_MAPPING_END()
          rc = SDB_IO ;
          goto error ;
       }
-      rc = arg.getNative( 0, &len ) ;
+      rc = arg.getNative( 0, &len, SPT_NATIVE_INT64 ) ;
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "size must be native type" ) ;
@@ -238,7 +238,7 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      rc = arg.getNative( 0, &seekSize ) ;
+      rc = arg.getNative( 0, &seekSize, SPT_NATIVE_INT32 ) ;
       if ( SDB_OUT_OF_BOUND == rc )
       {
          detail = BSON( SPT_ERR << "offset must be config" ) ;

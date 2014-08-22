@@ -96,7 +96,11 @@ namespace engine
 
       if ( 1 == num_prompts )
       {
-         responses[ 0 ].text = ossStrdup( pSession->getPassword() ) ;
+#if defined( _WINDOWS )
+         responses[ 0 ].text = _strdup( pSession->getPassword() ) ;
+#else
+         responses[ 0 ].text = strdup( pSession->getPassword() ) ;
+#endif // WINDOWS
          responses[ 0 ].length = ossStrlen( pSession->getPassword() ) ;
       }
    }

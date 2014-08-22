@@ -166,10 +166,42 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptSPArguments::getNative( UINT32 pos, void *value ) const
+   #define NATIVE_VALUE_EQ( pData, type, value ) \
+      do \
+      { \
+         switch( type ) \
+         { \
+            case SPT_NATIVE_CHAR : \
+               *(CHAR*)pData = ( CHAR )( value ) ; \
+               break ; \
+            case SPT_NATIVE_INT16 : \
+               *(INT16*)pData = ( INT16 )( value ) ; \
+               break ; \
+            case SPT_NATIVE_INT32 : \
+               *(INT32*)pData = ( INT32 )( value ) ; \
+               break ; \
+            case SPT_NATIVE_INT64 : \
+               *(INT64*)pData = ( INT64 )( value ) ; \
+               break ; \
+            case SPT_NATIVE_FLOAT32 : \
+               *(FLOAT32*)pData = ( FLOAT32 )( value ) ; \
+               break ; \
+            case SPT_NATIVE_FLOAT64 : \
+               *(FLOAT64*)pData = ( FLOAT64 )( value ) ; \
+               break ; \
+            default : \
+               PD_LOG( PDERROR, "type[%d] is error", type ) ; \
+               goto error ; \
+         } \
+      } while ( 0 )
+
+
+   INT32 _sptSPArguments::getNative( UINT32 pos, void *value,
+                                     SPT_NATIVE_TYPE type ) const
    {
       INT32 rc = SDB_OK ;
       jsval *val = NULL ;
+
       if ( _argc <= pos )
       {
          rc = SDB_OUT_OF_BOUND ;
@@ -186,15 +218,15 @@ namespace engine
 
       if ( JSVAL_IS_INT( *val ) )
       {
-         *((INT32 *)value) = JSVAL_TO_INT( *val ) ;
+         NATIVE_VALUE_EQ( value, type, JSVAL_TO_INT( *val ) ) ;
       }
       else if ( JSVAL_IS_BOOLEAN( *val ) )
       {
-         *((BOOLEAN *)value) = JSVAL_TO_BOOLEAN( *val ) ;
+         NATIVE_VALUE_EQ( value, type, JSVAL_TO_BOOLEAN( *val ) ) ;
       }
       else if ( JSVAL_IS_DOUBLE( *val ) )
       {
-         *((FLOAT64 *)value) = JSVAL_TO_DOUBLE( *val ) ;
+         NATIVE_VALUE_EQ( value, type, JSVAL_TO_DOUBLE( *val ) ) ;
       }
       else
       {
@@ -203,7 +235,6 @@ namespace engine
          goto error ;
       }
 
-      
    done:
       return rc ;
    error:

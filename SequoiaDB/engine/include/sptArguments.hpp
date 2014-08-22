@@ -39,6 +39,16 @@
 
 namespace engine
 {
+   enum SPT_NATIVE_TYPE
+   {
+      SPT_NATIVE_CHAR      = 1,
+      SPT_NATIVE_INT16,
+      SPT_NATIVE_INT32,
+      SPT_NATIVE_INT64,
+      SPT_NATIVE_FLOAT32,
+      SPT_NATIVE_FLOAT64
+   } ;
+
    class _sptArguments : public SDBObject
    {
    public:
@@ -47,7 +57,8 @@ namespace engine
 
    public:
       /// start with zero.
-      virtual INT32 getNative( UINT32 pos, void *value ) const = 0 ;
+      virtual INT32 getNative( UINT32 pos, void *value,
+                               SPT_NATIVE_TYPE type ) const = 0 ;
       virtual INT32 getString( UINT32 pos, std::string &value ) const = 0 ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const = 0 ;
       virtual UINT32 argc() const = 0 ;

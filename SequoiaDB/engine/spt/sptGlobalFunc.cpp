@@ -81,7 +81,7 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
       UINT32 time = 0 ;
-      rc = arg.getNative( 0, &time ) ;
+      rc = arg.getNative( 0, &time, SPT_NATIVE_INT32 ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

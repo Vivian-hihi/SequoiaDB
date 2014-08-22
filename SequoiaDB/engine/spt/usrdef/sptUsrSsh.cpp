@@ -104,7 +104,7 @@ JS_MAPPING_END()
          PD_RC_CHECK( rc, PDERROR, "Failed to get password, rc: %d", rc ) ;
       }
 
-      rc = arg.getNative( 3, &port ) ;
+      rc = arg.getNative( 3, (void*)&port, SPT_NATIVE_INT32 ) ;
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "port must be uint or int" ) ;
@@ -199,7 +199,7 @@ JS_MAPPING_END()
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get dst_file, rc: %d", rc ) ;
 
-      rc = arg.getNative( 2, &mode ) ;
+      rc = arg.getNative( 2, (void*)&mode, SPT_NATIVE_INT32 ) ;
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "mode must be native type" ) ;
@@ -259,7 +259,7 @@ JS_MAPPING_END()
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get local_file, rc: %d", rc ) ;
 
-      rc = arg.getNative( 2, &mode ) ;
+      rc = arg.getNative( 2, &mode, SPT_NATIVE_INT32 ) ;
       if ( rc && SDB_OUT_OF_BOUND != rc )
       {
          detail = BSON( SPT_ERR << "mode must be native type" ) ;
