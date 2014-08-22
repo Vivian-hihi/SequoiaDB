@@ -189,8 +189,8 @@ extern CHAR FMP_COORD_SERVICE[OSS_MAX_PATHSIZE+1] ;
 extern CHAR *FMP_COORD_HOST ;
 extern CHAR g_UserName[ OSS_MAX_PATHSIZE + 1 ] ;
 extern CHAR g_Password[ OSS_MAX_PATHSIZE + 1 ] ;
-extern BOOLEAN g_disablePassEncode ;
-#endif
+extern "C" { extern BOOLEAN g_disablePassEncode ; }
+#endif // SDB_FMP
 
 // troff file's relative path
 #if defined (_WINDOWS)
