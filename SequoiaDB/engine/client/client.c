@@ -31,7 +31,9 @@
 #include <netinet/tcp.h>
 #endif // _LINUX
 
+SDB_EXTERN_C_START
 BOOLEAN g_disablePassEncode = FALSE ;
+SDB_EXTERN_C_END
 
 #define HANDLE_CHECK( handle, interhandle, handletype ) \
 do                                                      \
