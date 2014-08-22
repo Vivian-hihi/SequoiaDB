@@ -36,6 +36,7 @@
 #include "pd.hpp"
 #include "msgDef.h"
 #include "ossUtil.h"
+#include "omagentDef.hpp"
 
 namespace engine
 {
@@ -72,7 +73,8 @@ namespace engine
                                    const CHAR * pServiceName )
    {
       INT32 rc = SDB_OK ;
-      rc = sdbConnect( pHostName, pServiceName, "", "", &_handle ) ;
+      rc = sdbConnect( pHostName, pServiceName, SDB_OMA_USER,
+                       SDB_OMA_USERPASSWD, &_handle ) ;
       PD_RC_CHECK( rc, PDERROR, "Connect to %s:%s failed, rc: %d",
                    pHostName, pServiceName, rc ) ;
 

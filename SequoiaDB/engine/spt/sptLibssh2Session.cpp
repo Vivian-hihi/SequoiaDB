@@ -96,7 +96,7 @@ namespace engine
 
       if ( 1 == num_prompts )
       {
-         responses[ 0 ].text = strdup( pSession->getPassword() ) ;
+         responses[ 0 ].text = ossStrdup( pSession->getPassword() ) ;
          responses[ 0 ].length = ossStrlen( pSession->getPassword() ) ;
       }
    }
@@ -106,8 +106,9 @@ namespace engine
    */
    _sptLibssh2Session::_sptLibssh2Session( const CHAR *host,
                                            const CHAR *usrname,
-                                           const CHAR *passwd)
-   :_sptSshSession( host, usrname, passwd ),
+                                           const CHAR *passwd,
+                                           INT32 *port )
+   :_sptSshSession( host, usrname, passwd, port ),
     _session( NULL ),
     _channel( NULL )
    {

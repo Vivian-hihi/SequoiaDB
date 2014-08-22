@@ -44,7 +44,8 @@ namespace engine
    public:
       _sptLibssh2Session( const CHAR *host,
                           const CHAR *usrname,
-                          const CHAR *passwd ) ;
+                          const CHAR *passwd,
+                          INT32 *port = NULL ) ;
       virtual ~_sptLibssh2Session() ;
 
    public:

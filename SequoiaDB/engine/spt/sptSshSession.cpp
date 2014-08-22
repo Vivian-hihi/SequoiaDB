@@ -33,13 +33,12 @@
 #include "sptSshSession.hpp"
 #include "pd.hpp"
 
-#define SPT_SSH_PORT 22
-
 namespace engine
 {
    _sptSshSession::_sptSshSession( const CHAR *host,
                                    const CHAR *usrname,
-                                   const CHAR *passwd  )
+                                   const CHAR *passwd,
+                                   INT32 *port )
    :_sock( NULL )
    {
       SDB_ASSERT( NULL != host && NULL != usrname && NULL != passwd,
@@ -47,8 +46,13 @@ namespace engine
       _host.assign( host ) ;
       _usr.assign( usrname ) ;
       _passwd.assign( passwd ) ;
-      _sock = SDB_OSS_NEW _ossSocket( _host.c_str(),
-                                      SPT_SSH_PORT );
+
+      INT32 sshPort = SPT_SSH_PORT ;
+      if ( port )
+      {
+         sshPort = *port ;
+      }
+      _sock = SDB_OSS_NEW _ossSocket( _host.c_str(), sshPort );
    }
 
    _sptSshSession::~_sptSshSession()

@@ -47,12 +47,15 @@ namespace engine
       SPT_CP_PROTOCOL_SFTP,
    } ;
 
+   #define SPT_SSH_PORT             ( 22 )
+
    class _sptSshSession : public SDBObject
    {
    public:
       _sptSshSession( const CHAR *host,
                       const CHAR *usrname,
-                      const CHAR *passwd ) ;
+                      const CHAR *passwd,
+                      INT32 *port = NULL ) ;
       virtual ~_sptSshSession() ;
 
       const CHAR* getPassword() const { return _passwd.c_str() ; }

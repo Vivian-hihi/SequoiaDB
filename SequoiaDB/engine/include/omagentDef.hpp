@@ -99,6 +99,8 @@ namespace engine
       #define SDBSTOPPROG              "sdbstop.exe"
 #endif
 
+   #define SDB_OMA_USER                "OMA_ADMIN"
+   #define SDB_OMA_USERPASSWD          "OMA_ADMIN_PASSWD"
 
 }
 

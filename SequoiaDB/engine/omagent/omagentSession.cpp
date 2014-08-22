@@ -37,7 +37,9 @@
 #include "omagentHelper.hpp"
 #include "omagentMsgDef.hpp"
 #include "omagentUtil.hpp"
+#include "msgAuth.hpp"
 #include "../bson/bson.h"
+#include "../bson/lib/md5.hpp"
 
 using namespace bson ;
 
@@ -192,7 +194,39 @@ namespace engine
 
    INT32 _omaSession::_onAuth( const NET_HANDLE & handle, MsgHeader * pMsg )
    {
-      return _reply( SDB_OK, pMsg ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONElement user, pass ;
+
+      user = obj.getField( SDB_AUTH_USER ) ;
+      pass = obj.getField( SDB_AUTH_PASSWD ) ;
+
+      rc = extractAuthMsg( pMsg, obj ) ;
+      PD_RC_CHECK( rc, PDERROR, "Extrace auth msg failed, rc: %d", rc ) ;
+
+      // check usr and passwd
+      if ( 0 != ossStrcmp( user.valuestrsafe(), SDB_OMA_USER ) )
+      {
+         PD_LOG( PDERROR, "User name[%s] is not support",
+                 user.valuestrsafe() ) ;
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         goto error ;
+      }
+
+      if ( md5::md5simpledigest( string( SDB_OMA_USERPASSWD ) ) !=
+           string( pass.valuestrsafe() ) )
+      {
+         PD_LOG( PDERROR, "User password[%s] is not error",
+                 pass.valuestrsafe() ) ;
+         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         goto error ;
+      }
+      eduCB()->setUserInfo( user.valuestrsafe(), pass.valuestrsafe() ) ;
+
+   done:
+      return _reply( rc, pMsg ) ;
+   error:
+      goto done ;
    }
 
    INT32 _omaSession::_onNodeMgrReq( const NET_HANDLE & handle,

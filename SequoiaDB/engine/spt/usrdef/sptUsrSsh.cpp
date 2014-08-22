@@ -77,6 +77,7 @@ JS_MAPPING_END()
       INT32 rc = SDB_OK ;
       string passwd ;
       string errmsg ;
+      INT32 port = SPT_SSH_PORT ;
 
       rc = arg.getString( 0, _host ) ;
       if ( SDB_OUT_OF_BOUND == rc )
@@ -103,9 +104,17 @@ JS_MAPPING_END()
          PD_RC_CHECK( rc, PDERROR, "Failed to get password, rc: %d", rc ) ;
       }
 
+      rc = arg.getNative( 3, &port ) ;
+      if ( rc && SDB_OUT_OF_BOUND != rc )
+      {
+         detail = BSON( SPT_ERR << "port must be uint or int" ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get port, rc: %d", rc ) ;
+      }
+
       _session = SDB_OSS_NEW _sptLibssh2Session( _host.c_str(),
                                                  _user.c_str(),
-                                                 passwd.c_str() ) ;
+                                                 passwd.c_str(),
+                                                 &port ) ;
       if ( NULL == _session )
       {
          PD_LOG( PDERROR, "failed to allocate mem." ) ;
@@ -345,7 +354,7 @@ JS_MAPPING_END()
    {
       stringstream ss ;
       ss << "Ssh functions:" << endl
-         << "var ssh = new Ssh( hostname, [user], [password] )" << endl
+         << "var ssh = new Ssh( hostname, [user], [password], [port] )" << endl
          << "   exec( command )" << endl
          << "   push( local_file, dst_file, [mode] )" << endl
          << "   pull( remote_file, local_file, [mode] )" << endl ;
