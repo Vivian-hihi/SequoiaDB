@@ -42,6 +42,12 @@ var SDBCMART_L             = "sdbcmart" ;
 var SDBCMTOP_L             = "sdbcmtop" ;
 
 // windows
+var TOPDIR_W               = "" ;
+var PROGDIR_W              = "" ;
+var CONFDIR_W              = "" ;
+var LOGDIR_W               = "" ;
+var SPTDIR_W               = "" ;
+
 var SDBCM_W                = "sdbcm.exe" ;
 var SDBCMD_W               = "sdbcmd.exe" ;
 var SDBCMART_W             = "sdbcmart.exe" ;
@@ -49,7 +55,6 @@ var SDBCMTOP_W             = "sdbcmtop.exe" ;
 
 var SDBCMCONF              = "sdbcm.conf" ;
 var FILE_CHECK_HOST        = "checkHost.js" ;
-var FILE_EXIT_AGENT        = "exitAgent.js" ;
 
 var objRet = new Object() ;
 objRet.Rc = 0 ;
@@ -118,10 +123,6 @@ function pushPacket( ssh, osInfo )
       src = LOCAL_SPT_PATH + FILE_CHECK_HOST ;
       dest = SPTDIR_L + FILE_CHECK_HOST ;
       ssh.push( src, dest ) ;
-      // script exitAgent.js
-      src = LOCAL_SPT_PATH + FILE_EXIT_AGENT ;
-      dest = SPTDIR_L + FILE_EXIT_AGENT ;
-      ssh.push( src, dest ) ;
    }
    else
    {
@@ -135,14 +136,30 @@ function startCMProg( ssh, osInfo )
    var cmd = "" ;
    if ( "LINUX" == osInfo )
    {
-      cmd = PROGDIR_L + "/" + SDBCMART_L ;
+      cmd = PROGDIR_L + SDBCMART_L ;
       ssh.exec( cmd ) ;
    }
    else
    {
-      cmd = PROGDIR_L + "\\" + SDBCMART_L ;
+      cmd = PROGDIR_W + SDBCMART_W ;
       ssh.exec( cmd ) ;
    }
+}
+
+function stopCMProg( ssh, osInfo )
+{
+   var cmd = "" ;
+   if ( "LINUX" == osInfo )
+   {
+      cmd = PROGDIR_L + SDBCMTOP_L ;
+      ssh.exec( cmd ) ;
+   }
+   else
+   {
+      cmd = PROGDIR_W + SDBCMTOP_W ;
+      ssh.exec( cmd ) ;
+   }
+
 }
 
 function main()
@@ -170,14 +187,24 @@ function main()
       var osInfo = System.type() ;
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
+
       // build directory in remote mechine
       createTmpDir( ssh, osInfo ) ;
+
       // push packet
       pushPacket( ssh, osInfo ) ;
       objRet.HasPush = true ;
+
+      // TODO: tanzhaobo
+      // it's better for us to check it than to stop it
+      // stop the existing sdbcm program anyway
+      stopCMProg( ssh, osInfo ) ;
+
       // start the omagent program
       startCMProg( ssh, osInfo ) ;
+      sleep(3000) ;
       objRet.HasRunning = true ;
+
       // return the result
       return objRet ;
    }
@@ -190,8 +217,13 @@ function main()
       }
       else
       {
+         var errMsg = "" ;
          objRet.Rc = e ;
-         objRet.Detail = eval( '(' + getLastErrMsg() + ')' ) ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
       }
       return objRet ;
    }

@@ -98,8 +98,13 @@ println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
       }
       else
       {
+         var errMsg = "" ;
          objRet.Rc = e ;
-         objRet.Detail = getLastErrMsg() ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
       }
       return objRet ;
    }

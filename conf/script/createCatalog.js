@@ -87,7 +87,6 @@ print("CONFIG is: " + CONFIG + '\n') ;
    }
    catch ( e )
    {
-// todo: modify other js file to deal like this
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
@@ -95,8 +94,13 @@ print("CONFIG is: " + CONFIG + '\n') ;
       }
       else
       {
+         var errMsg = "" ;
          objRet.Rc = e ;
-         objRet.Detail = getLastErrMsg() ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
       }
       return objRet ;
    }

@@ -21,11 +21,18 @@
    2014-7-26 Zhaobo Tan  Init
 */
 
-if ( typeof(USERNAME) == "undefined" ) { USERNAME = "root" ; }
-if ( typeof(PASSWORD) == "undefined" ) { PASSWORD = "sequoiadb" ; }
-if ( typeof(IP) == "undefined" ) { IP = "192.168.20.112" ; }
+if ( typeof(USERNAME) == "undefined" ) {}
+if ( typeof(PASSWORD) == "undefined" ) {}
+if ( typeof(IP) == "undefined" ) {}
 if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-if ( typeof(HOSTSINFO) == "undefined" ) { HOSTSINFO = "hahaha" ; }
+if ( typeof(HOSTSINFO) == "undefined" ) {}
+
+// linux
+var HOSTS_FILE_L        = "/etc/hosts" ;
+var HOSTS_FIEL_BACKUP_L = "/etc/hosts_backup_by_omagent" ;
+// windows
+var HOSTS_FILE_W        = "" ;
+var HOSTS_FILE_BACKUP_W = "" ;
 
 var objRet = new Object() ;
 
@@ -34,22 +41,33 @@ objRet.hasLeftCopy = false ;
 objRet.Rc          = 0 ;
 objRet.Detail      = null ;
 
+function backupRemoteHostsFile( ssh, osInfo )
+{
+   // judge wether the backup file is exsit or not
+   
+   // backup the hosts file
+}
+
+
+
 function main()
 {
    var ssh = null ;
+   var osInfo = null ;
    var file = null ;
 
    try
    {
       // ssh and get host name
       ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
+/*
       var name = ssh.exec("hostname") ;
       var i = name.indexOf( "\n" ) ;
-      var substr = name.substring(0, i);
+      var substr = name.substring(0, i) ;
       objRet.HostName = substr ;
-
+*/
       // get OS info
-      var osInfo = System.type() ;
+      osInfo = System.type() ;
       // backup hosts file
       var remoteFile = "" ;
       if ( "LINUX" == osInfo )
@@ -60,10 +78,6 @@ function main()
          objRet.hasLeftCopy = true ;
       }
       else if ( "WINDOWS" == osInfo )
-      {
-
-      }
-      else
       {
 
       }
@@ -78,10 +92,6 @@ function main()
       {
 
       }
-      else
-      {
-
-      }
       // append content to the file
       file = new File( localFile ) ;
       file.seek( 0, 'e' ) ;
@@ -93,9 +103,21 @@ function main()
    }
    catch ( e )
    {
-      objRet.Rc = e ;
-      objRet.Detail = getLastErrMsg() ;
-//      objRet.Detail = eval( '(' + getLastErrMsg() + ')' ) ;
+      if ( typeof(e) != "number" )
+      {
+         objRet.Rc = -10 ;
+         objRet.Detail = "system error" ;
+      }
+      else
+      {
+         var errMsg = "" ;
+         objRet.Rc = e ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
+      }
       return objRet ;
    }
    return objRet ;

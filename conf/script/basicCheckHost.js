@@ -47,9 +47,11 @@ function main()
       }
 
       // ping
-      var ping = System.ping( IP, TIMES ) ;
-      if ( null != typeof(ping) && "undefined" != typeof(ping) )
-         objRet.Ping = true ;
+      var ret = System.ping( IP, TIMES ) ;
+      var ping = eval( "(" + ret + ")" ) ;
+      if ( true != ping.Reachable )
+         return objRet ;
+      objRet.Ping = true ;
 
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
@@ -60,8 +62,21 @@ function main()
    }
    catch ( e )
    {
-      objRet.Rc = e ;
-      objRet.Detail = getLastErrMsg() ;
+      if ( typeof(e) != "number" )
+      {
+         objRet.Rc = -10 ;
+         objRet.Detail = "system error" ;
+      }
+      else
+      {
+         var errMsg = "" ;
+         objRet.Rc = e ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
+      }
       return objRet ;
    }
 }

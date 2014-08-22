@@ -37,6 +37,7 @@ function main()
 {
    try
    {
+
       // check argument
       if ( typeof(USERNAME) == "undefined" ||
            typeof(PASSWORD) == "undefined" ||
@@ -46,11 +47,12 @@ function main()
          objRet.Detail = "user name, password or ip is not defined" ;
          return objRet ;
       }
-
       // ping
-      var ping = System.ping( IP, TIMES ) ;
-      if ( null != typeof(ping) && "undefined" != typeof(ping) )
-         objRet.Ping = true ;
+      var ret = System.ping( IP, TIMES ) ;
+      var ping = eval( "(" + ret + ")" ) ;
+      if ( true != ping.Reachable )
+         return objRet ;
+      objRet.Ping = true ;
 
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
@@ -86,8 +88,13 @@ function main()
       }
       else
       {
+         var errMsg = "" ;
          objRet.Rc = e ;
-         objRet.Detail = eval( '(' + getLastErrMsg() + ')' ) ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
       }
       return objRet ;
    }

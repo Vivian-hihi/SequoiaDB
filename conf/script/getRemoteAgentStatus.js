@@ -16,38 +16,32 @@
 
 *******************************************************************************/
 /*
-@description: check remote agent process
+@description: check whether remote omagent is running,
+              if so, get it's version
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 */
-if ( typeof(USERNAME) == "undefined" ) { USERNAME = "" ; }
-if ( typeof(PASSWORD) == "undefined" ) { PASSWORD = "" ; }
-if ( typeof(IP) == "undefined" ) { IP = "127.0.0.1" ; }
-if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-/*
-if ( typeof(VERSION) == "undefined" ) { VERSION = "" ; }
-if ( typeof(LOCAL_CONF_FILE_PATH) == "undefined" ) { LOCAL_CONF_FILE_PATH = "" ; }
-if ( typeof(LOCAL_PACKET_PATH) == "undefined" ) { LOCAL_PACKET_PATH = "" ; }
-if ( typeof(REMOTE_PACKET_PATH) == "undefined" ) { REMOTE_PACKET_PATH = "" ; }
-*/
+if ( typeof(USERNAME) == "undefined" ) {}
+if ( typeof(PASSWORD) == "undefined" ) {}
+if ( typeof(IP) == "undefined" ) {}
+if ( typeof(TIMES) == "undefined" ) {}
 
 var objRet = new Object() ;
 objRet.IsRunning     = false ;
-objRet.Version       = null ;
+objRet.Version       = "" ;
 
 objRet.Rc            = 0 ;
 objRet.Detail        = "" ;
 
-function main()
+
+// TODO: not finish yet
+function getRemoteSdbcmStatus( ssh, osInfo )
 {
-   try
-   {
-      // ssh
-      var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
 
       // test whether omagent is running in remote mechine
       var cmd1 = "ps -e | grep sequoiadb" ;
       var ret1 = ssh.exec( cmd1 ) ;
+print("IIIIIIIIIIIIIIIIIIIIIIIIII\n") ;
 println( "ret1 is: " + ret1 );
       if ( "" != ret1 )
       {
@@ -66,23 +60,54 @@ println( "ret3 is: " + ret3 ) ;
          }
       }
 
+
+}
+
+function main()
+{
+   var ssh = null ;
+   var osInfo = null ;
+
+   try
+   {
+      // check arguments
+      if ( typeof(USERNAME) == "undefined" ||
+           typeof(PASSWORD) == "undefined" ||
+           typeof(IP)       == "undefined" )
+      {
+         objRet.Rc = -6 ;
+         objRet.Detail = "not specified user name, password or ip" ;
+         return objRet ;
+      }
+      // ssh
+      ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
+      // os infomation
+      osInfo = System.type() ;
+      // get remote sdbcm status
+      getRemoteSdbcmStatus( ssh, osInfo ) ;
       return objRet ;
    }
    catch ( e )
    {
-      objRet.Rc = e ;
-      objRet.Detail = getLastErrMsg() ;
+      if ( typeof(e) != "number" )
+      {
+         objRet.Rc = -10 ;
+         objRet.Detail = "system error" ;
+      }
+      else
+      {
+         var errMsg = "" ;
+         objRet.Rc = e ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
+      }
       return objRet ;
    }
 }
 
-try
-{
+// execute
    main() ;
-}
-catch( e )
-{
-   println( "Failed in main: " + e ) ;
-//   return objRet ;
-}
 

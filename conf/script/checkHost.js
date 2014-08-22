@@ -150,8 +150,13 @@ function main()
       }
       else
       {
+         var errMsg = "" ;
          objRet.Rc = e ;
-         objRet.Detail = eval( '(' + getLastErrMsg() + ')' ) ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
       }
       return objRet ;
    }

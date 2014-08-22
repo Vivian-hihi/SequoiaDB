@@ -59,8 +59,21 @@ function main()
    }
    catch ( e )
    {
-      objRet.Rc = e ;
-      objRet.Detail = getLastErrMsg() ;
+      if ( typeof(e) != "number" )
+      {
+         objRet.Rc = -10 ;
+         objRet.Detail = "system error" ;
+      }
+      else
+      {
+         var errMsg = "" ;
+         objRet.Rc = e ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
+      }
       return objRet ;
    }
 }

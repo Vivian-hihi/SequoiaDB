@@ -27,9 +27,13 @@ if ( typeof(IP) == "undefined" ) {}
 if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
 
 // linux
-var TOPDIR_L = "/tmp/omatmp/"
+var TOPDIR_L               = "/tmp/omatmp/"
+var PROGDIR_L              = "/tmp/omatmp/bin/" ;
+var SDBCMTOP_L             = "sdbcmtop" ;
 //windows
-var TOPDIR_W = ""
+var PROGDIR_W              = "" ;
+var TOPDIR_W               = ""
+var SDBCMTOP_W             = "sdbcmtop.exe" ;
 
 var objRet = new Object() ;
 objRet.Rc = 0 ;
@@ -42,7 +46,7 @@ function uninstallRemoteSdbcmPacket( ssh, osInfo )
    if ( osInfo == "LINUX" )
    {
       cmd = "rm -rf " + TOPDIR_L ;
-      ssh.exec( cmd ) ;
+//      ssh.exec( cmd ) ;
    }
    else
    {
@@ -52,6 +56,19 @@ function uninstallRemoteSdbcmPacket( ssh, osInfo )
    objRet.HasUninstall = true ;
 }
 
+function stopRemoteSdbcmProgram( ssh, osInfo )
+{
+   var cmd = "" ;
+   if ( osInfo == "LINUX" )
+   {
+      cmd = PROGDIR_L + SDBCMTOP_L ;
+      ssh.exec( cmd ) ;
+   }
+   else
+   {
+      // TODO: tanzhaobo
+   } 
+}
 
 function main()
 {
@@ -70,6 +87,8 @@ function main()
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
       // get os infomation
       var osInfo = System.type() ;
+      // stop remote sdbcm program
+      stopRemoteSdbcmProgram( ssh, osInfo ) ;
       // remove the packet in remote machine
       uninstallRemoteSdbcmPacket( ssh, osInfo ) ;
       // return the result
@@ -84,8 +103,13 @@ function main()
       }
       else
       {
+         var errMsg = "" ;
          objRet.Rc = e ;
-         objRet.Detail = eval( '(' + getLastErrMsg() + ')' ) ;
+         errMsg = getLastErrMsg() ;
+         if ( "" != errMsg )
+         {
+            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+         }
       }
       return objRet ;
    }
