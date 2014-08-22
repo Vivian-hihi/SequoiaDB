@@ -1,4 +1,4 @@
-Snappy License:
+SNAPPY License:
 
 Copyright 2011, Google Inc.
 All rights reserved.
@@ -30,7 +30,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ---------------------------------------------------------------
-Boost License:
+BOOST License:
 
 Boost Software License - Version 1.0 - August 17th, 2003
 
@@ -57,7 +57,7 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
 -------------------------------------------------------------------
-OpenSSL License:
+OPENSSL License:
 
   LICENSE ISSUES
   ==============
@@ -489,7 +489,7 @@ End
 
 ---------------------------------------
 
-Spider Monkey License:
+SPIDERMONKEY License:
 
 Mozilla Public License Version 2.0
 ==================================
@@ -865,3 +865,195 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
   This Source Code Form is "Incompatible With Secondary Licenses", as
   defined by the Mozilla Public License, v. 2.0.
 
+---------------------------------------
+LIBSSH2 License:
+
+/* Copyright (c) 2004-2007 Sara Golemon <sarag@libssh2.org>
+ * Copyright (c) 2005,2006 Mikhail Gusarov <dottedmag@dottedmag.net>
+ * Copyright (c) 2006-2007 The Written Word, Inc.
+ * Copyright (c) 2007 Eli Fant <elifantu@mail.ru>
+ * Copyright (c) 2009 Daniel Stenberg
+ * Copyright (C) 2008, 2009 Simon Josefsson
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided
+ * that the following conditions are met:
+ *
+ *   Redistributions of source code must retain the above
+ *   copyright notice, this list of conditions and the
+ *   following disclaimer.
+ *
+ *   Redistributions in binary form must reproduce the above
+ *   copyright notice, this list of conditions and the following
+ *   disclaimer in the documentation and/or other materials
+ *   provided with the distribution.
+ *
+ *   Neither the name of the copyright holder nor the names
+ *   of any other contributors may be used to endorse or
+ *   promote products derived from this software without
+ *   specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
+ */
+
+---------------------------------------
+MDOCML License:
+
+$Id: LICENSE,v 1.2 2014/04/23 21:06:41 schwarze Exp $
+
+With the exceptions noted below, all code and documentation
+contained in the mdocml toolkit is protected by the Copyright
+of the following developers:
+
+Copyright (c) 2008, 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
+Copyright (c) 2010, 2011, 2012, 2013, 2014 Ingo Schwarze
+<schwarze@openbsd.org>
+Copyright (c) 2009, 2010, 2011, 2012 Joerg Sonnenberger <joerg@netbsd.org>
+Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
+Copyright (c) 1999, 2004 Marc Espie <espie@openbsd.org>
+Copyright (c) 1998, 2010 Todd C. Miller <Todd.Miller@courtesan.com>
+Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
+Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
+
+See the individual source files for information about who contributed
+to which file during which years.
+
+
+The mdocml distribution as a whole is distributed by its developers
+under the following license:
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+The following files included from outside sources are protected by
+other people's Copyright and are distributed under a 3-clause BSD
+license; see these individual files for details.
+
+compat_getsubopt.c, compat_strcasestr.c, compat_strsep.c:
+Copyright (c) 1990, 1993 The Regents of the University of California
+
+compat_fgetln.c:
+Copyright (c) 1998 The NetBSD Foundation, Inc.
+
+---------------------------------------
+LINENOISE License:
+
+/* linenoise.c -- guerrilla line editing library against the idea that a
+ * line editing lib needs to be 20,000 lines of C code.
+ *
+ * You can find the latest source code at:
+ * 
+ *   http://github.com/antirez/linenoise
+ *
+ * Does a number of crazy assumptions that happen to be true in 99.9999% of
+ * the 2010 UNIX computers around.
+ *
+ * ------------------------------------------------------------------------
+ *
+ * Copyright (c) 2010-2013, Salvatore Sanfilippo <antirez at gmail dot com>
+ * Copyright (c) 2010-2013, Pieter Noordhuis <pcnoordhuis at gmail dot com>
+ *
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ * 
+ *  *  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *  *  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * ------------------------------------------------------------------------
+ *
+ * References:
+ * - http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+ * - http://www.3waylabs.com/nw/WWW/products/wizcon/vt220.html
+ *
+ * Todo list:
+ * - Filter bogus Ctrl+<char> combinations.
+ * - Win32 support
+ *
+ * Bloat:
+ * - History search like Ctrl+r in readline?
+ *
+ * List of escape sequences used by this program, we do everything just
+ * with three sequences. In order to be so cheap we may have some
+ * flickering effect with some slow terminal, but the lesser sequences
+ * the more compatible.
+ *
+ * CHA (Cursor Horizontal Absolute)
+ *    Sequence: ESC [ n G
+ *    Effect: moves cursor to column n
+ *
+ * EL (Erase Line)
+ *    Sequence: ESC [ n K
+ *    Effect: if n is 0 or missing, clear from cursor to end of line
+ *    Effect: if n is 1, clear from beginning of line to cursor
+ *    Effect: if n is 2, clear entire line
+ *
+ * CUF (CUrsor Forward)
+ *    Sequence: ESC [ n C
+ *    Effect: moves cursor forward of n chars
+ *
+ * When multi line mode is enabled, we also use an additional escape
+ * sequence. However multi line editing is disabled by default.
+ *
+ * CUU (Cursor Up)
+ *    Sequence: ESC [ n A
+ *    Effect: moves cursor up of n chars.
+ *
+ * CUD (Cursor Down)
+ *    Sequence: ESC [ n B
+ *    Effect: moves cursor down of n chars.
+ *
+ * The following are used to clear the screen: ESC [ H ESC [ 2 J
+ * This is actually composed of two sequences:
+ *
+ * cursorhome
+ *    Sequence: ESC [ H
+ *    Effect: moves the cursor to upper left corner
+ *
+ * ED2 (Clear entire screen)
+ *    Sequence: ESC [ 2 J
+ *    Effect: clear the whole screen
+ * 
+ */
