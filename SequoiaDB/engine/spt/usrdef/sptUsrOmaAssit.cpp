@@ -120,7 +120,7 @@ namespace engine
       rc = bson_init_finished_data( &config, pConfig ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to finish bons, rc: %d", rc ) ;
 
-      rc = sdbRemoveNode( _groupHandle, "", pSvcName, NULL ) ;
+      rc = sdbRemoveNode( _groupHandle, "", pSvcName, &config ) ;
       PD_RC_CHECK( rc, PDERROR, "Remove Node[%s] failed, rc: %d",
                    pSvcName, rc ) ;
 
