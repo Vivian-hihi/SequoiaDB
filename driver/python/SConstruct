@@ -10,15 +10,6 @@ curPath = pwd
 
 os.system( "scons -C ../../misc/autogen")
 
-#python_path = os.__file__
-#python_include = os.path.abspath( os.path.join(python_path,
-#                                               os.pardir,
-#                                               os.pardir,
-#                                               os.pardir))
-#ver = sys.version_info[0]
-#sub = sys.version_info[1]
-#python_include += "/include/" + ("python%d.%d" % (ver, sub))
-
 root_dir           = dirname(File('SConstruct').rfile().abspath)
 client_include_dir = join(root_dir, path + 'client/CPP/include')
 client_include     = join(root_dir, path + 'SequoiaDB/engine/include')
@@ -59,12 +50,13 @@ guess_os = GuessOS()
 guess_arch = GuessArch()
 
 if guess_os == 'linux':
-   python_include = sys.prefix + '/include/'
    ver = sys.version_info[0]
    sub = sys.version_info[1]
-   python_include += ("python%d.%d" % (ver, sub))
+   python_include = sys.prefix + '/include/' + ("python%d.%d" % (ver, sub))
+   python_lib = sys.prefix + '/lib/' + ("python%d.%d" % (ver, sub))
 elif guess_os == 'win32':
    python_include = sys.prefix + "/include/"
+   python_lib = sys.prefix + '/libs/'
 
 if not os.path.isfile ( "gitbuild" ):
    if guess_os == "win32":
@@ -218,6 +210,7 @@ elif guess_os == "linux":
 
 env.Append( CPPPATH=[ root_dir, client_include, boost_dir,
                       common_include_dir, bson_include_dir, python_include ] )
+env.Append( LIBPATH= python_lib)
 
 Export("env")
 Export("path")
