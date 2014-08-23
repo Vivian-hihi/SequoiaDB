@@ -120,12 +120,12 @@ srcFiles = [
    curPath + "nonce.cpp",
 ]
 
-pyclient = env.SharedLibrary("sdbclient", [pyclientFile, srcFiles])
-pycs     = env.SharedLibrary("sdbcs",     [pycsFile, srcFiles])
-pycl     = env.SharedLibrary("sdbcl",     [pyclFile, srcFiles])
-pycursor = env.SharedLibrary("sdbcursor", [pycursorFile, srcFiles])
-pygroup  = env.SharedLibrary("sdbgroup",  [pygroupFile, srcFiles])
-pynode   = env.SharedLibrary("sdbnode",   [pynodeFile, srcFiles])
+pyclient = env.SharedLibrary("libsdbclient", [pyclientFile, srcFiles])
+pycs     = env.SharedLibrary("libsdbcs",     [pycsFile, srcFiles])
+pycl     = env.SharedLibrary("libsdbcl",     [pyclFile, srcFiles])
+pycursor = env.SharedLibrary("libsdbcursor", [pycursorFile, srcFiles])
+pygroup  = env.SharedLibrary("libsdbgroup",  [pygroupFile, srcFiles])
+pynode   = env.SharedLibrary("libsdbnode",   [pynodeFile, srcFiles])
 
 env.Install("#/pysequoiadb", pyclient)
 env.Install("#/pysequoiadb", pycs)
