@@ -13,12 +13,18 @@
 #   limitations under the License.
 
 from distutils.core import Extension, setup
+import sys
+import os
+
+if 'win32' == sys.platform:
+   modules = ['err.prop', '*.lib', '*.dll', '*.exp']
+else:
+   modules = ['err.prop', '*.so']
 
 extra_opts = {}
 extra_opts['packages'] = [ 'bson', 'pysequoiadb']
 extra_opts['package_dir']={ 'pysequoiadb':'pysequoiadb', 'bson':'bson'}
-extra_opts['package_data'] = { 'pysequoiadb':['err.prop',
-                                              '*.so', ],
+extra_opts['package_data'] = { 'pysequoiadb':modules,
                                'bson':[ 'buffer.h',
                                         'buffer.c',
                                         '_cbsonmodule.h',
