@@ -47,8 +47,8 @@
                     <exclude name="**/SdbNest.class" />
                     <exclude name="**/MultiThread*" /> 
                     
-                    <!-- <exclude name="**/Bug_CL_InsertOld*" />
-                    <exclude name="**/CursorTest*" /> -->
+                    <exclude name="**/Bug_CL_InsertOld*" />
+                    <exclude name="**/CursorTest*" />
                     
                 </fileset>
             </batchtest>
