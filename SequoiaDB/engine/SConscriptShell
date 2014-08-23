@@ -4,7 +4,9 @@ import os
 import buildscripts.utils as utils
 
 Import("shellEnv")
-
+Import("ssllib_file")
+Import("ssllib_file1")
+Import("guess_os")
 sptFiles = [
       "spt/engine.cpp",
       "spt/dbClasses.cpp",
@@ -204,4 +206,6 @@ sdbbp = shellEnv.Program("sdbbp", shellBpMain,
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdbbp )
-
+if "win32" == guess_os:
+   shellEnv.Install( '#/bin', ssllib_file)
+   shellEnv.Install( '#/bin', ssllib_file1)
