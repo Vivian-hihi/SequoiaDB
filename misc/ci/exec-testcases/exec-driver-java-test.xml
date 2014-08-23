@@ -6,9 +6,9 @@
     <property name="java_test.dir" value="${testcase.path}/java/build" />
     <property name="java_test.jar.dir" value="${testcase.path}/java/lib/java_test.jar" />
     <property name="sequoiadb.jar.dir" value="${testcase.path}/java/lib/sequoiadb.jar" />
-    <path id="classpath.test">
+<!--     <path id="classpath.test">
         <fileset dir="/usr/share/ant/lib" includes="*junit*" />
-    </path>
+    </path> -->
     <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
         <classpath>
             <pathelement location="/usr/share/java/ant-junit.jar" />
