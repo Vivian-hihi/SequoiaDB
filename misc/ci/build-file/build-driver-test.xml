@@ -6,7 +6,7 @@
 	<property name="build.testcases.java" value="${build.testcases}/java/" />
 	<property name="build.testcases.CPP" value="${build.testcases}/CPP" />
 	<property name="build.testcases.C" value="${build.testcases}/C" />
-	<property name="junit.jar.dir" value="/usr/share/java/junit.jar" />
+<!-- 	<property name="junit.jar.dir" value="/usr/share/java/junit.jar" /> -->
 	<property name="junit4.jar.dir" value="/usr/share/java/junit4.jar" />
 	<property name="sequoiadb.jar.dir" value="${lib.dir}/java/sequoiadb.jar" />
 	<property name="deploy.path" value="${WORKSPACE}/deploy" />
@@ -38,7 +38,7 @@
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/java/lib" />
 		
 		<copy file="${sequoiadb.jar.dir}" tofile="${WORKSPACE}/deploy/hlt/drivers_testcases/java/lib/sequoiadb.jar" />
-		<echo message="Clean driver  evn completed." />
+		<echo message="Clean driver  env completed." />
 	</target>
 
 	<target name="build-driver-test" depends="clean-driver-test">
