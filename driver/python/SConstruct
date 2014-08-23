@@ -63,7 +63,7 @@ if guess_os == 'linux':
    ver = sys.version_info[0]
    sub = sys.version_info[1]
    python_include += ("python%d.%d" % (ver, sub))
-elif guess == 'win32':
+elif guess_os == 'win32':
    python_include = sys.prefix + "/include/"
 
 if not os.path.isfile ( "gitbuild" ):
