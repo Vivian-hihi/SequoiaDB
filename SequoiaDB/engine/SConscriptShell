@@ -7,6 +7,9 @@ Import("shellEnv")
 Import("ssllib_file")
 Import("ssllib_file1")
 Import("guess_os")
+Import("usesm")
+if usesm:
+    Import("smlib_file")
 sptFiles = [
       "spt/engine.cpp",
       "spt/dbClasses.cpp",
@@ -207,5 +210,7 @@ sdbbp = shellEnv.Program("sdbbp", shellBpMain,
 
 shellEnv.Install( '#/bin', sdbbp )
 if "win32" == guess_os:
+   if usesm:
+      shellEnv.Install( '#/bin', smlib_file)
    shellEnv.Install( '#/bin', ssllib_file)
    shellEnv.Install( '#/bin', ssllib_file1)

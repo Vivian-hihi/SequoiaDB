@@ -652,12 +652,6 @@ if hasEngine:
 
    env.Install( '#/bin', engine )
 
-   if usesm:
-      env.Install( '#/bin', smlib_file)
-   #env.Install( '#/bin', ssllib_file)
-   #if "win32" == guess_os:
-   #   env.Install( '#/bin', ssllib_file1)
-
 # Test Buckets
 if hasTestcase:
 #smwrappertest = env.Program("smwrappertest", SMWrapperTestFiles,
