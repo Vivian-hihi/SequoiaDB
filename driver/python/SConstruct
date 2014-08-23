@@ -1,6 +1,4 @@
 import os
-os.system ( "scons -C ../../misc/autogen" )
-
 import sys
 import platform
 import re
@@ -9,6 +7,8 @@ from os.path import join, dirname, abspath
 pwd = os.getcwd()
 path = os.path.abspath(os.path.join(pwd, os.pardir, os.pardir)) + os.sep
 curPath = pwd
+
+os.system( "scons -C ../../misc/autogen")
 
 python_path = os.__file__
 python_include = os.path.abspath( os.path.join(python_path,
@@ -57,6 +57,15 @@ def GuessArch():
 
 guess_os = GuessOS()
 guess_arch = GuessArch()
+
+if not os.path.isfile ( "gitbuild" ):
+   if guess_os == "win32":
+      # In windows platform, we take advantage of SubWCRev
+      os.system ( "SubWCRev . ../../misc/autogen/ossVer.tmp ../../SequoiaDB/engine/include/ossVer_Autogen.h" )
+   else:
+      # In NIX platform, we use svn and sed to send to ossVer_Autogen.h
+      os.system("sed \"s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g\" ../../misc/autogen/ossVer.tmp > ../../oss.tmp")
+      os.system("sed 's/\$//g' ../../oss.tmp > ../../SequoiaDB/engine/include/ossVer_Autogen.h")
 
 def add_option( name, help , nargs , contibutesToVariantDir , dest=None ):
    if dest is None:
