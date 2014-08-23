@@ -10,14 +10,14 @@ curPath = pwd
 
 os.system( "scons -C ../../misc/autogen")
 
-python_path = os.__file__
-python_include = os.path.abspath( os.path.join(python_path,
-                                               os.pardir,
-                                               os.pardir,
-                                               os.pardir))
-ver = sys.version_info[0]
-sub = sys.version_info[1]
-python_include += "/include/" + ("python%d.%d" % (ver, sub))
+#python_path = os.__file__
+#python_include = os.path.abspath( os.path.join(python_path,
+#                                               os.pardir,
+#                                               os.pardir,
+#                                               os.pardir))
+#ver = sys.version_info[0]
+#sub = sys.version_info[1]
+#python_include += "/include/" + ("python%d.%d" % (ver, sub))
 
 root_dir           = dirname(File('SConstruct').rfile().abspath)
 client_include_dir = join(root_dir, path + 'client/CPP/include')
@@ -57,6 +57,14 @@ def GuessArch():
 
 guess_os = GuessOS()
 guess_arch = GuessArch()
+
+if guess_os == 'linux':
+   python_include = sys.prefix + '/include/'
+   ver = sys.version_info[0]
+   sub = sys.version_info[1]
+   python_include += ("python%d.%d" % (ver, sub))
+elif guess == 'win32':
+   python_include = sys.prefix + "/include/"
 
 if not os.path.isfile ( "gitbuild" ):
    if guess_os == "win32":
