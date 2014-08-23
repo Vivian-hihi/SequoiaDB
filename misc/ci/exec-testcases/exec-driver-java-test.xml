@@ -9,14 +9,9 @@
     <path id="classpath.test">
         <fileset dir="/usr/share/ant/lib" includes="*junit*" />
     </path>
-<!--     <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
         <classpath>
             <pathelement location="/usr/share/java/ant-junit.jar" />
-        </classpath>
-    </taskdef> -->
-    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnit4TestMethodAdapter">
-        <classpath>
-            <pathelement location="/usr/share/java/ant-junit4.jar" />
         </classpath>
     </taskdef>
 
@@ -52,8 +47,8 @@
                     <exclude name="**/SdbNest.class" />
                     <exclude name="**/MultiThread*" /> 
                     
-<!--                     <exclude name="**/Bug_CL_InsertOld*" />
-                    <exclude name="**/CursorTest*" /> -->
+                    <exclude name="**/Bug_CL_InsertOld*" />
+                    <exclude name="**/CursorTest*" />
                     
                 </fileset>
             </batchtest>
