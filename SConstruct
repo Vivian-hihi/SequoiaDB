@@ -352,7 +352,7 @@ if guess_os == "linux":
     if guess_arch == "ia64":
         linux64 = True
         nixLibPrefix = "lib64"
-	boost_lib_dir = join(boost_lib_dir,'linux64')
+        boost_lib_dir = join(boost_lib_dir,'linux64')
         env.Append( EXTRALIBPATH="/lib64" )
         # use project-related boost library
         env.Append( EXTRALIBPATH=boost_lib_dir )
@@ -373,7 +373,7 @@ if guess_os == "linux":
     elif guess_arch == "ia32":
         linux64 = False
         nixLibPrefix = "lib"
-	boost_lib_dir = join(boost_lib_dir,'linux32')
+        boost_lib_dir = join(boost_lib_dir,'linux32')
         env.Append( EXTRALIBPATH="/lib" )
         # we want 32 bit boost library
         env.Append( EXTRALIBPATH=boost_lib_dir )
@@ -395,7 +395,7 @@ if guess_os == "linux":
     elif guess_arch == "ppc64":
         linux64 = True
         nixLibPrefix = "lib64"
-	boost_lib_dir = join(boost_lib_dir,'ppclinux64')
+        boost_lib_dir = join(boost_lib_dir,'ppclinux64')
         # use big endian
         env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
         #env.Append( EXTRALIBPATH="/usr/lib64" )
@@ -441,7 +441,7 @@ elif "win32" == guess_os:
 
     # if we are 64 bit
     if guess_arch == "ia64":
-	boost_lib_dir = join(boost_lib_dir,'win64')
+        boost_lib_dir = join(boost_lib_dir,'win64')
         # use 64 bit boost library
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
@@ -458,7 +458,7 @@ elif "win32" == guess_os:
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/win64')
     else:
-	boost_lib_dir = join(boost_lib_dir,'win32')
+        boost_lib_dir = join(boost_lib_dir,'win32')
         # we are 32 bit
         env.Append( EXTRALIBPATH=boost_lib_dir )
         # use project-related ssl library
