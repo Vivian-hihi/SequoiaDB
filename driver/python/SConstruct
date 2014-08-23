@@ -160,16 +160,18 @@ if guess_os == "win32":
                "WIN32", "NDEBUG", "_MBCS", "_USRDLL", "_EXPORTS",
                "COMPILE_DL_SEQUOIADB", "ZTS=1", "HAVE_SEQUOIADB=1"] )
 
-   winLibString = "ws2_32.lib kernel32.lib advapi32.lib psapi.lib \
-                   dbghelp.lib user32.lib gdi32.lib winspool.lib  \
-                   comdlg32.lib"
+   winLibString = "ws2_32.lib kernel32.lib advapi32.lib Psapi.lib"
+   winLibString += " user32.lib gdi32.lib winspool.lib comdlg32.lib shell32.lib ole32.lib oleaut32.lib "
+   winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
+
+   env.Append( LIBS=Split(winLibString) )
+
    if guess_arch == "ia64":
       env.Append( LIBPATH=[join(boost_lib_dir,'win64')] )
    else:
       env.Append( CPPDEFINES=[ "_USE_32BIT_TIME_T=1"])
       env.Append( LIBPATH=[join(boost_lib_dir,'win32')] )
 
-   env.Append( LIBS=Split(winLibString) )
    env.Append( CPPDEFINES=[ "_CRT_RAND_S" ] )
    env.Append( CPPDEFINES=[ "UNICODE" ] )
    env.Append( CPPFLAGS=" /EHsc /W3 " )
