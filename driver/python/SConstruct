@@ -164,7 +164,7 @@ if guess_os == "win32":
                    dbghelp.lib user32.lib gdi32.lib winspool.lib  \
                    comdlg32.lib"
    if guess_arch == "ia64":
-      pass
+      env.Append( LIBPATH=[join(boost_lib_dir,'win64')] )
    else:
       env.Append( CPPDEFINES=[ "_USE_32BIT_TIME_T=1"])
       env.Append( LIBPATH=[join(boost_lib_dir,'win32')] )
