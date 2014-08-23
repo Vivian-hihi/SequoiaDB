@@ -23,7 +23,7 @@
 
 		<echo message="begin to init python driver..." />
 		<exec executable="/bin/tar" dir="${install.path}/sequoiadb/python">
-			<arg line=" -zxvf ${python.tar}">
+			<arg line=" -zxvf ${python.tar}" />
 		</exec>
 		<exec executable="/usr/bin/python" dir="${install.path}/sequoiadb/python">
 			<arg line=" setup.py install" />
