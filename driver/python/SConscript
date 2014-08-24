@@ -134,10 +134,13 @@ env.Install("#/pysequoiadb", pycursor)
 env.Install("#/pysequoiadb", pygroup)
 base = env.Install("#/pysequoiadb", pynode)
 
-act = "tar -zcvf pysequoiadb.tar.gz   \
-      ./bson ./pysequoiadb ./setup.py \
-      --exclude-vcs"
-run = env.Command(target = None, source = base, action = act )
-#   env.Execute("tar -zcvf pysequoiadb.tar.gz ./bson ./pysequoiadb ./setup.py")
-env.Depends(run, base)
-env.AlwaysBuild(run)
+if sys.platform == 'win32':
+   env.Copy( curPath + "pysequoiadb/*.pyd", curPath + "pysequoiadb/*.dll")
+else:
+   act = "tar -zcvf pysequoiadb.tar.gz   \
+          ./bson ./pysequoiadb ./setup.py \
+          --exclude-vcs"
+
+   run = env.Command(target = None, source = base, action = act )
+   env.Depends(run, base)
+   env.AlwaysBuild(run)

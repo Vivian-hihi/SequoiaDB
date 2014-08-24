@@ -186,6 +186,9 @@ if guess_os == "win32":
       env.Append( CPPFLAGS= " /GL " )
       env.Append( LINKFLAGS=" /LTCG " )
 
+   env.Append( CPPDEFINES=["_CONSOLE", "_CRT_SECURE_NO_WARNINGS", "PSAPI_VERSION=1", "_CRT_RAND_S" ] )
+
+
 elif guess_os == "linux":
    env.Append( CPPDEFINES=["HAVE_CONFIG_H","PIC"])
    env['ENV']['HOME']=os.environ['HOME']
