@@ -10,7 +10,7 @@
 		<switch value="${test-type}">
 			<case value="basic">
 				<echo message="begin to test js tests ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases" />
 					<param name="install.path" value="${install.path}" />
 					<param name="excludes.dir.patterns" value="vote" />
@@ -22,7 +22,7 @@
 
 			<case value="ant">
 				<echo message="... test ant-testcases ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/ant_testcases/reports" masterreports="${test.reports.path}" timeout="300m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/ant_testcases/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/ant_testcases/" />
 					<param name="install.path" value="${install.path}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -33,7 +33,7 @@
 
 			<case value="driver-python">
 				<echo message="...test python driver..."/>
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/build" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
@@ -45,7 +45,7 @@
 
 			<case value="driver-php" >
 				<echo message="... test the php driver ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-php-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/php/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-php-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/php/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/php_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
@@ -55,7 +55,7 @@
 
 			<case value="driver-java">
 				<echo message="... test the java driver ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-java-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/java/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-java-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/java/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases" />
 					<param name="install.path" value="${install.path}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -66,7 +66,7 @@
 			<case value="driver-C">
 				<echo message="... test the C driver ..." />
 				<property name="testCcases" value="*-*sdbConnect_with_usr*:*sdbCreateCollection1_doubtful*:*sdbCreateUsr*:*sdbListReplicaGroups*:*sdbRemoveUsr*:*sdbResetSnapshot*:*sdbSplitCollection*" />     
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-C-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/C/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-C-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/C/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases" />
 					<param name="test_name" value="${testCcases}"  />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -77,7 +77,7 @@
 			<case value="driver-CPP">
 				<echo message="... test the CPP driver ..." />		
 				<property name="testCPPcases" value="*-*create*:*drop*:*insert_with_iterator*:*rename*:*split*:*createCollection_with_Sharding_and_replSize*:*resetSnapshot*:*transactionBegin*:*transactionCommit*:*transactionRollback*:*getList_SDB_LIST_GROUPS*" />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-CPP-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/CPP/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-CPP-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/CPP/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases" />
 					<param name="test_name" value="${testCPPcases}"  />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -87,7 +87,7 @@
 
 			<case value="sample">
 				<echo message="... test the client sample test ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/samples_testcases/CPP/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/samples_testcases/CPP/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/samples_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 				</sdbtest>
@@ -128,7 +128,7 @@
 
 			<default>
 				<echo message="begin to test js tests ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="250m" antFileName="${antFileName}">
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 					<param name="install.path" value="${install.path}" />
 					<param name="excludes.dir.patterns" value="vote" />
