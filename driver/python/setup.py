@@ -17,7 +17,15 @@ import sys
 import os
 
 if 'win32' == sys.platform:
-   modules = ['err.prop', '*.lib', '*.dll', '*.exp']
+   import glob
+   import shutil
+   dlls = './pysequoiadb/*.dll'
+   for file in glob.glob(dlls):
+      newname = file[:-3] + '.pyd'
+      shutil.copy(file, newname)
+      #newname = file.replace(".dll", ".pyd")
+      os.rename(file, newname)
+   modules = ['err.prop', '*.lib', '*.pyd', '*.exp']
 else:
    modules = ['err.prop', '*.so']
 
@@ -43,3 +51,11 @@ setup(name = 'pysequoiadb',
       description = 'This is a sequoiadb python driver use adapter package',
       url = 'http://www.sequoiadb.com',
       **extra_opts)
+
+if 'win32' == sys.platform:
+   import glob
+   import shutil
+   dlls = './pysequoiadb/*.pyd'
+   for file in glob.glob(dlls):
+      os.remove(file)
+
