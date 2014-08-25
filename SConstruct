@@ -342,6 +342,9 @@ if guess_os == "linux":
     elif guess_arch == "ia64":
         hdfsJniPath = join(java_dir,"jdk_linux64/include")
         hdfsJniMdPath = join(java_dir,"jdk_linux64/include/linux")
+    elif guess_arch == "ppc64":
+        hdfsJniPath = join(java_dir,"jdk_ppclinux64/include")
+        hdfsJniMdPath = join(java_dir,"jdk_ppclinux64/include/linux")
 elif guess_os == "win32":
     if guess_arch == "ia32":
         hdfsJniPath = join(java_dir,"jdk_win32/include")
