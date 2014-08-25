@@ -304,7 +304,7 @@
 			</else>
 		</if>
 
-		<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost"/>
+		<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
 		<echo message="${haveMaster}" />
 		<if>
 			<equals arg1="${haveMaster}" arg2="true"/>
