@@ -32,22 +32,72 @@
 
 #include "omagentUtil.hpp"
 #include "omagentJobRunCmd.hpp"
+#include "utilStr.hpp"
 #include "omagentMgr.hpp"
 
 using namespace bson ;
 
+#define FILE_CREATE_CATALOG              "createCatalog.js"
+#define FILE_CREATE_COORD                "createCoord.js"
+#define FILE_CREATE_DATANODE             "createData.js"
+
 namespace engine
 {
+   /*
+      _omaJobRunCmd
+   */
+   _omaJobRunCmd::_omaJobRunCmd ()
+   {
+      _scope      = NULL ;
+      _fileBuff   = NULL ;
+      _buffSize   = 0 ;
+      _readSize   = 0 ;
+      ossMemset( _jsFileName, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      ossMemset( _jsFileArgs, 0, JS_ARG_LEN + 1 ) ;
+   }
+
+   _omaJobRunCmd::~_omaJobRunCmd ()
+   {
+      if ( _scope )
+      {
+         _scope->shutdown() ;
+         SAFE_OSS_DELETE ( _scope ) ;
+      }
+      if ( _fileBuff )
+      {
+         SAFE_OSS_FREE ( _fileBuff ) ;
+      }
+   }
+
+   INT32 _omaJobRunCmd::setJSFile( const CHAR *fileName )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *tmp = NULL ;
+      if ( NULL == fileName )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      tmp = sdbGetOMAgentOptions()->getScriptPath() ;
+      ossStrncpy ( _jsFileName, tmp, OSS_MAX_PATHSIZE ) ;
+      rc = utilCatPath ( _jsFileName, OSS_MAX_PATHSIZE, fileName ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to build js file full path, rc = %d",
+                      rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
       _omaJobRunInstallCatalogCmd
    */
    _omaJobRunInstallCatalogCmd::_omaJobRunInstallCatalogCmd()
    {
-      _scope = NULL ;
-      _jsFileName = "createCatalog.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
    }
 
    _omaJobRunInstallCatalogCmd::~_omaJobRunInstallCatalogCmd() {}
@@ -83,11 +133,6 @@ namespace engine
                                        &info._dbPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
-         // _confPath
-         rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
-                                       &info._confPath ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
          // _conf
          pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                          OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -99,6 +144,13 @@ namespace engine
          _installInfos.push_back( info ) ;
          // get next install info
          it++ ;
+      }
+      // set js file
+      rc = setJSFile( FILE_CREATE_CATALOG ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d", rc ) ;
+         goto error ;
       }
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
@@ -147,10 +199,14 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var INSTALL_HOSTNAME = \'%s\'; var INSTALL_SERVICE = \'%s\'; var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
+                      " var INSTALL_HOSTNAME = \'%s\'; "
+                      "var INSTALL_SERVICE = \'%s\'; "
+                      "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
                       (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
 
-         PD_LOG ( PDDEBUG, "Create catalog passes arguments:  var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; var INSTALL_PATH = %s; var CONFIG = %s;",
+         PD_LOG ( PDDEBUG, "Create catalog passes arguments: "
+                  "var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; "
+                  "var INSTALL_PATH = %s; var CONFIG = %s;",
                   (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
          _content.clear() ;
          _content += tempBuff ;
@@ -162,7 +218,8 @@ namespace engine
                             _jsFileName, 1, 1, rval, detail ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+            PD_LOG ( PDERROR,
+                     "Failed to eval js file: %s, rc = %d, errmsg = %s",
                      _jsFileName, rc, detail.toString().c_str() ) ;
             errMsg = errMsg + "Install catalog " +
                      (*it)._hostName + ":" +(*it)._svcName + "failed" ;
@@ -212,11 +269,6 @@ namespace engine
    */
    _omaJobRunInstallCoordCmd::_omaJobRunInstallCoordCmd()
    {
-      _scope = NULL ;
-      _jsFileName = "createCoord.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
    }
 
    _omaJobRunInstallCoordCmd::~_omaJobRunInstallCoordCmd() {}
@@ -252,11 +304,13 @@ namespace engine
                                        &info._dbPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
+/*
          // _confPath
          rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
                                        &info._confPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
+*/
          // _conf
          pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                          OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -275,6 +329,13 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
                   _jsFileName, rc ) ;
+         goto error ;
+      }
+      // set js file
+      rc = setJSFile( FILE_CREATE_COORD ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d", rc ) ;
          goto error ;
       }
       // get scope
@@ -316,11 +377,17 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var INSTALL_HOSTNAME = \'%s\'; var INSTALL_SERVICE = \'%s\'; var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
+                      " var INSTALL_HOSTNAME = \'%s\'; "
+                      "var INSTALL_SERVICE = \'%s\'; "
+                      "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
                       (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
 
-         PD_LOG ( PDDEBUG, "Create coord passes arguments: var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; var INSTALL_PATH = %s; var CONFIG = %s;",
-                           (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
+         PD_LOG ( PDDEBUG, "Create coord passes arguments: "
+                           "var INSTALL_HOSTNAME = %s; "
+                           "var INSTALL_SERVICE = %s;  "
+                           "var INSTALL_PATH = %s; var CONFIG = %s;",
+                           (*it)._hostName, (*it)._svcName,
+                           (*it)._dbPath, conf ) ;
          _content.clear() ;
          _content += tempBuff ;
          _content += OSS_NEWLINE ;
@@ -331,7 +398,8 @@ namespace engine
                             _jsFileName, 1, 1, rval, detail ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+            PD_LOG ( PDERROR,
+                     "Failed to eval js file: %s, rc = %d, errmsg = %s",
                      _jsFileName, rc, detail.toString().c_str() ) ;
             errMsg = errMsg + "Install coord " +
                      (*it)._hostName + ":" +(*it)._svcName + "failed" ;
@@ -381,11 +449,6 @@ namespace engine
    */
    _omaJobRunInstallDataCmd::_omaJobRunInstallDataCmd()
    {
-      _scope = NULL ;
-      _jsFileName = "createData.js" ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
    }
 
    _omaJobRunInstallDataCmd::~_omaJobRunInstallDataCmd() {}
@@ -421,11 +484,13 @@ namespace engine
                                        &info._dbPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
+/*
          // _confPath
          rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
                                        &info._confPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
+*/
          // _conf
          pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                          OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -437,6 +502,13 @@ namespace engine
          _installInfos.push_back( info ) ;
          // get next install info
          it++ ;
+      }
+      // set js file
+      rc = setJSFile( FILE_CREATE_DATANODE ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d", rc ) ;
+         goto error ;
       }
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
@@ -485,12 +557,18 @@ namespace engine
 
          // build js arguments
          ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var GROUPNAME = \'%s\'; var INSTALL_HOSTNAME = \'%s\'; var INSTALL_SERVICE = \'%s\'; var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
-                      (*it)._dataGroupName, (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
+                      " var GROUPNAME = \'%s\'; "
+                      "var INSTALL_HOSTNAME = \'%s\'; "
+                      "var INSTALL_SERVICE = \'%s\';  "
+                      "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
+                      (*it)._dataGroupName, (*it)._hostName,
+                      (*it)._svcName, (*it)._dbPath, conf ) ;
 
-         PD_LOG ( PDDEBUG, "Create data node passes arguments: groupname = %s; hostname = %s; svcname = %s; dbpath = %s; config = %s;",
-                           (*it)._dataGroupName, (*it)._hostName,
-                           (*it)._svcName, (*it)._dbPath, conf ) ;
+         PD_LOG ( PDDEBUG, "Create data node passes arguments: "
+                  "groupname = %s; hostname = %s; svcname = %s; "
+                  "dbpath = %s; config = %s;",
+                  (*it)._dataGroupName, (*it)._hostName,
+                  (*it)._svcName, (*it)._dbPath, conf ) ;
          _content.clear() ;
          _content += tempBuff ;
          _content += OSS_NEWLINE ;
@@ -502,7 +580,8 @@ namespace engine
          if ( rc )
          {
             PD_LOG ( PDDEBUG, "Js file is: \n%s\n", _content.c_str() ) ;
-            PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+            PD_LOG ( PDERROR,
+                     "Failed to eval js file: %s, rc = %d, errmsg = %s",
                      _jsFileName, rc, detail.toString().c_str() ) ;
             errMsg = errMsg + "Install data node " +
                      (*it)._hostName + ":" +(*it)._svcName + "failed" ;

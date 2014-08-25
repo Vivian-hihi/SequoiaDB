@@ -39,6 +39,7 @@
 #include "ossUtil.h"
 #include "../bson/bson.h"
 #include "ossMem.h"
+#include "ossSocket.hpp"
 #include "omagent.hpp"
 #include "omagentMsgDef.hpp"
 #include "omagentTask.hpp"
@@ -302,12 +303,16 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         BOOLEAN _createVirtualCoordSucced ;
-         BOOLEAN _removeVirtualCoordSucced ;
+//         BOOLEAN _createVirtualCoordSucced ;
+//         BOOLEAN _removeVirtualCoordSucced ;
+         CHAR _localHostName[OSS_MAX_HOSTNAME + 1] ;
+         CHAR _omaSvcName[OSS_MAX_SERVICENAME + 1] ;
+         CHAR _vCoordSvcName[OSS_MAX_SERVICENAME + 1] ;
 
          std::vector<BSONObj> _coord ;
          std::vector<BSONObj> _catalog ;
          std::vector<BSONObj> _data ;
+         std::vector<BSONObj> _standalone ;
 
          _omaTaskMgr* _taskMrg ;
 
@@ -324,7 +329,10 @@ namespace engine
          _omaInstallDBStatus () ;
          ~_omaInstallDBStatus () ;
 
-         virtual const CHAR* name () { return OMA_CMD_QUERY_PROGRESS ; }
+         virtual const CHAR* name ()
+         { 
+            return OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS ;
+         }
 
          virtual INT32 init ( const CHAR *pInfomation ) ;
 
@@ -340,57 +348,50 @@ namespace engine
    class _omaCreateVirtualCoord : private _omaCommand
    {
       public:
-         _omaCreateVirtualCoord ( const CHAR *username,
-                                  const CHAR *password ) ;
+         _omaCreateVirtualCoord ( const CHAR *omaHostName,
+                                  const CHAR *omaSvcName,
+                                  const CHAR *vCoordSvcName ) ;
          ~_omaCreateVirtualCoord () ;
 
       public:
-         INT32 createVirtualCoord ( INT32 coord_service, BOOLEAN &result ) ;
+         INT32 createVirtualCoord ( BOOLEAN &result ) ;
 
       private:
-         virtual const CHAR* name () { return "create virtual coord" ; }
+         virtual const CHAR* name () { return "" ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) { return SDB_OK ; }
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 doit ( BSONObj &retObj ) { return SDB_OK ; }
-
-         INT32 init () ;
-
-         INT32 doit () ;         
-
-         INT32 doit ( INT32 coord_service, BOOLEAN &result ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         const CHAR *_username ;
-         const CHAR *_password ;
+         const CHAR *_omaHostname ;
+         const CHAR *_omaSvcName ;
+         const CHAR *_vCoordSvcName ;
    } ;
 
    // _omaRemoveVirtualCoord
    class _omaRemoveVirtualCoord : private _omaCommand
    {
       public:
-         _omaRemoveVirtualCoord ( const CHAR* usename,
-                                      const CHAR *password ) ;
+         _omaRemoveVirtualCoord ( const CHAR *omaHostName,
+                                  const CHAR *omaSvcName,
+                                  const CHAR *vCoordSvcName ) ;
          ~_omaRemoveVirtualCoord () ;
 
       public:
-         INT32 removeVirtualCoord ( INT32 coord_service, BOOLEAN &result ) ;
+         INT32 removeVirtualCoord ( BOOLEAN &result ) ;
 
       private:
-         virtual const CHAR* name () { return "remove virtual coord" ; }
+         virtual const CHAR* name () { return "" ; }
 
-         INT32 init () ;
+         virtual INT32 init ( const CHAR *pInfomation ) ;
 
-         virtual INT32 init ( const CHAR *pInfomation ) { return SDB_OK ; } ;
-
-         virtual INT32 doit ( BSONObj &retObj ) { return SDB_OK ; } ;
-
-         INT32 doit ( INT32 coord_service, BOOLEAN &result ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         const CHAR* _username ;
-         const CHAR* _password ;
-
+         const CHAR *_omaHostName ;
+         const CHAR *_omaSvcName ;
+         const CHAR *_vCoordSvcName ;
    } ;
 
    // _omaGetRemoteAgentStatus

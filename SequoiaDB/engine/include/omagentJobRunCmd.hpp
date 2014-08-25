@@ -53,22 +53,18 @@ namespace engine
    class _omaJobRunCmd : public SDBObject
    {
       public:
-         _omaJobRunCmd () { _scope = NULL ; }
-         virtual ~_omaJobRunCmd ()
-         {
-            if ( _scope )
-            {
-              _scope->shutdown() ;
-              SAFE_OSS_DELETE ( _scope ) ;
-            }
-         }
+         _omaJobRunCmd () ;
+         virtual ~_omaJobRunCmd () ;
+         virtual INT32 setJSFile ( const CHAR *fileName ) ;
+ 
       public:
          virtual INT32 init ( std::vector<BSONObj> &objs ) = 0 ;
          virtual INT32 doit ( InstallJobResult &result ) = 0 ;
 
      protected:
          _sptScope *_scope ;
-         const CHAR *_jsFileName ;
+         CHAR _jsFileName[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR _jsFileArgs[ JS_ARG_LEN + 1 ] ;
          CHAR *_fileBuff ;
          UINT32 _buffSize ;
          UINT32 _readSize ;

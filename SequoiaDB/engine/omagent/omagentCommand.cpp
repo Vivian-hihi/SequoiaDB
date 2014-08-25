@@ -42,7 +42,7 @@
 using namespace bson ;
 
 #define HOSTS_FILE_PROMPT "##############add by omagent##############"
-#define DEF_VIRTUAL_COORD_SERVICE 10810
+#define DEF_VIRTUAL_COORD_SERVICE        "13579"
 
 #define FILE_SCAN_HOST                   "scanHost.js"
 #define FILE_BASIC_CHECK_HOST            "basicCheckHost.js"
@@ -59,9 +59,10 @@ using namespace bson ;
 #define FILE_GET_HOST_NAME               "getHostName.js"
 #define FILE_ADDHOST_ROLLBACK_INTERNAL   "addHostRollbackInternal.js"
 
-#define ROLE_COORD "coord"
-#define ROLE_CATA  "catalog"
-#define ROLE_DATA  "data"
+#define ROLE_COORD                       "coord"
+#define ROLE_CATA                        "catalog"
+#define ROLE_DATA                        "data"
+#define ROLE_STANDALONE                  "standalone"
 
 // TODO:tanzhaobo
 // what is the path in windows
@@ -1344,6 +1345,9 @@ namespace engine
    // _omaInstallDBBusiness
    _omaInstallDBBusiness::_omaInstallDBBusiness ()
    {
+      ossMemset( _localHostName, OSS_MAX_HOSTNAME + 1, 0 ) ;
+      ossMemset( _omaSvcName, OSS_MAX_SERVICENAME + 1, 0 ) ;
+      ossMemset( _vCoordSvcName, OSS_MAX_SERVICENAME + 1, 0 ) ;
    }
 
    _omaInstallDBBusiness::~_omaInstallDBBusiness ()
@@ -1353,10 +1357,26 @@ namespace engine
    INT32 _omaInstallDBBusiness::init( const CHAR *pInfomation )
    {
       INT32 rc = SDB_OK ;
-      // parse bson and get arguments info for js file
       BSONElement ele ;
       BSONObj arg( pInfomation ) ;
-      ele = arg.getField ( OMA_FIELD_HOSTS ) ;
+
+      // get localhost name
+      rc = ossGetHostName( _localHostName, OSS_MAX_HOSTNAME ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to get localhost name, rc = %d", rc ) ;
+         goto error ;
+      }
+      // get local sdbcm service name
+      ossStrncpy( _omaSvcName, sdbGetOMAgentOptions()->getCMServiceName(),
+                  OSS_MAX_SERVICENAME ) ;
+      // get a  service name for creating virtual coord
+      // TODO:
+      ossStrncpy ( _vCoordSvcName, DEF_VIRTUAL_COORD_SERVICE,
+                   OSS_MAX_SERVICENAME ) ;
+
+      // parse bson and get arguments info for js file
+      ele = arg.getField ( OMA_FIELD_CONFIG ) ;
       if ( Array == ele.type() )
       {
          BSONObjIterator itr( ele.embeddedObject() ) ;
@@ -1394,11 +1414,16 @@ namespace engine
             {
                _catalog.push_back( temp ) ;
             }
+            else if ( 0 == ossStrncmp( value, ROLE_STANDALONE,
+                                       ossStrlen( ROLE_STANDALONE ) ) )
+            {
+               _standalone.push_back( temp ) ;
+            }
             else
             {
                rc = SDB_INVALIDARG ;
                PD_LOG_MSG( PDERROR,
-                           "Failed to install db business[%s]",
+                           "Unknown role for install db business[%s]",
                            temp.toString().c_str() ) ;
                goto error ;
             }
@@ -1413,17 +1438,18 @@ namespace engine
 
    INT32 _omaInstallDBBusiness::doit( BSONObj &objRet )
    {
-      INT32 rc = SDB_OK ;
-      _omaCreateVirtualCoord vCoord( "", "" ) ;
-      _omaTaskMgr *pTaskMgr = getTaskMgr() ;
-      UINT64 taskID = pTaskMgr->getTaskID() ;
+      INT32 rc                         = SDB_OK ;
+      _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
+      UINT64 taskID                    = pTaskMgr->getTaskID() ;
       _omaInstallDBBusinessTask *pTask = NULL ;
+      BOOLEAN hasVCoordStart           = FALSE ;
+      _omaCreateVirtualCoord vCoord( _localHostName, _omaSvcName,
+                                     _vCoordSvcName ) ;
       BSONObjBuilder bob ;
       BSONObj retObj ;
-/*
+
       // create virtual coord
-      rc = vCoord.createVirtualCoord( coord_service, hasVCoordStart ) ;
-*/
+      rc = vCoord.createVirtualCoord( hasVCoordStart ) ;
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
@@ -1558,24 +1584,29 @@ namespace engine
    }
 
    // _omaCreateVirtualCoord
-   _omaCreateVirtualCoord::_omaCreateVirtualCoord ( const CHAR *username,
-                                                    const CHAR *password )
+   _omaCreateVirtualCoord::_omaCreateVirtualCoord ( const CHAR *omaHostName,
+                                                    const CHAR *omaSvcName,
+                                                    const CHAR *vCoordSvcName )
    {
-      _scope = NULL ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-      _username = username ;
-      _password = password ;
+      _omaHostname = omaHostName ;
+      _omaSvcName = omaSvcName ;
+      _vCoordSvcName = vCoordSvcName ;
    }
 
    _omaCreateVirtualCoord::~_omaCreateVirtualCoord ()
    {
    }
 
-   INT32 _omaCreateVirtualCoord::init()
+   INT32 _omaCreateVirtualCoord::init( const CHAR *pInfomation )
    {
       INT32 rc = SDB_OK ;
+      // set js file
+      rc = setJSFile( FILE_CREATE_VIRTUAL_COORD ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+         goto error ;
+      }
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff,
                       &_buffSize, &_readSize ) ;
@@ -1585,6 +1616,22 @@ namespace engine
                       _jsFileName, rc ) ;
          goto error ;
       }
+      // build js arguments
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                   " var OMA_HOST_NAME = \"%s\"; var OMA_SVC_NAME = \"%s\"; "
+                   "var V_COORD_SVC_NAME = \"%s\"; ",
+                   _omaHostname, _omaSvcName, _vCoordSvcName ) ;
+
+      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: "
+               "var OMA_HOST_NAME = %s; var OMA_SVC_NAME = %s; "
+               "var V_COORD_SVC_NAME = %s; ",
+               _omaHostname, _omaSvcName, _vCoordSvcName ) ;
+
+      _content.clear() ;
+      _content += _jsFileArgs ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
       // get scope
       _scope = sdbGetOMAgentMgr()->getScope() ;
       if ( !_scope )
@@ -1600,54 +1647,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaCreateVirtualCoord::doit( INT32 coord_service,
-                                       BOOLEAN &result )
+   INT32 _omaCreateVirtualCoord::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       BSONObj rval ;
       BSONObj detail ;
       BSONObj subObj ;
-      CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
-      // get program path
-      rc = getProgramPath( prog_agent ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to get omagent program path, rc = %d", rc ) ;
-         goto error ;
-      }
-      rc = ossLocateExecutable ( prog_agent, START_DB_PROG, prog_sequoiadb,
-                                 OSS_MAX_PATHSIZE ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to get sequoiadb program path, rc = %d", rc ) ;
-         goto error ;
-      }
-
-      // build js arguments
-      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
-                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; "
-                   "var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\"; ",
-                   _username, _password, prog_sequoiadb, coord_service ) ;
-
-      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: "
-               "var USERNAME = %s; var PASSWORD = %s; "
-               "var PROGRAM = %s; var COORD_SERVICE = %d;",
-               "xxx", "xxx", prog_sequoiadb, coord_service ) ;
-
-      _content.clear() ;
-      _content += _jsFileArgs ;
-      _content += OSS_NEWLINE ;
-      _content += _fileBuff ;
-
-      // get js file
-      rc = setJSFile( FILE_CREATE_VIRTUAL_COORD ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
-         goto error ;
-      }
       // execute js
       rc = _scope->eval( _content.c_str(), _content.size(),
                          _jsFileName, 1, 1, rval, detail ) ;
@@ -1664,10 +1670,36 @@ namespace engine
          PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc =%d", "", rc ) ;
          goto error ;
       }
-      // extract return rc
-      {
+      retObj = subObj.getOwned() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCreateVirtualCoord::createVirtualCoord( BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
       INT32 retRc = SDB_OK ;
-      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
+      BSONObj retObj ;
+
+      rc = init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR,
+                  "Failed to init for creating virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR,
+                  "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      // extract return rc
+      rc = omaGetIntElement ( retObj, OMA_FIELD_RC, retRc ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
@@ -1676,10 +1708,10 @@ namespace engine
       }
       if ( retRc )
       {
-         PD_LOG_MSG( PDERROR, "Omagent failed to start virtual  "
+         PD_LOG_MSG( PDERROR, "Omagent failed to create virtual "
                      "coord, rc = %d", retRc ) ;
-         goto error;
-      }
+         result = FALSE ;
+         goto done;
       }
       result = TRUE ;
 
@@ -1689,48 +1721,21 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaCreateVirtualCoord::createVirtualCoord( INT32 coord_service,
-                                                     BOOLEAN &result )
-   {
-      INT32 rc = SDB_OK ;
-      rc = init() ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR,
-                      "Failed to init for creating virtual coord, rc = %d",
-                      rc ) ;
-         goto error ;
-      }
-      rc = doit( coord_service, result ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR,
-                      "Failed to create virtual coord, rc = %d", rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    // _omaRemoveVirtualCoord
-   _omaRemoveVirtualCoord::_omaRemoveVirtualCoord ( const CHAR *username,
-                                                    const CHAR *password )
+   _omaRemoveVirtualCoord::_omaRemoveVirtualCoord ( const CHAR *omaHostName,
+                                                    const CHAR *omaSvcName,
+                                                    const CHAR *vCoordSvcName )
    {
-      _scope = NULL ;
-      _fileBuff = NULL ;
-      _buffSize = 0 ;
-      _readSize = 0 ;
-      _username = username ;
-      _password = password ;
+      _omaHostName = omaHostName ;
+      _omaSvcName = omaSvcName ;
+      _vCoordSvcName = vCoordSvcName ;
    }
 
    _omaRemoveVirtualCoord::~_omaRemoveVirtualCoord ()
    {
    }
 
-   INT32 _omaRemoveVirtualCoord::init()
+   INT32 _omaRemoveVirtualCoord::init( const CHAR *pInfomation )
    {
       INT32 rc = SDB_OK ;
       // get js file
@@ -1749,6 +1754,22 @@ namespace engine
                       _jsFileName, rc ) ;
          goto error ;
       }
+      // build js arguments
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                   " var OMA_HOST_NAME = \"%s\"; var OMA_SVC_NAME = \"%s\"; "
+                   "var V_COORD_SVC_NAME = \"%s\"; ",
+                   _omaHostName, _omaSvcName, _vCoordSvcName ) ;
+
+      PD_LOG ( PDDEBUG, "Remove virtual coord passes arguments: "
+                        "var OMA_HOST_NAME = %s; var OMA_SVC_NAME = %s; "
+                        "var V_COORD_SVC_NAME = %s; ",
+                        _omaHostName, _omaSvcName, _vCoordSvcName ) ;
+
+      _content.clear() ;
+      _content += _jsFileArgs ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
       // get scope
       _scope = sdbGetOMAgentMgr()->getScope() ;
       if ( !_scope )
@@ -1764,48 +1785,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaRemoveVirtualCoord::doit( INT32 coord_service,
-                                       BOOLEAN &result )
+   INT32 _omaRemoveVirtualCoord::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       BSONObj rval ;
       BSONObj detail ;
-      BSONObj subObj ;
-      CHAR prog_agent[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      CHAR prog_sequoiadb[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-
-      // get program path
-      rc = getProgramPath( prog_agent ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR,
-                     "Failed to get omagent program path, rc = %d", rc ) ;
-         goto error ;
-      }
-      rc = ossLocateExecutable ( prog_agent, "sdbstop", prog_sequoiadb,
-                                 OSS_MAX_PATHSIZE ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR,
-                     "Failed to get sequoiadb program path, rc = %d", rc ) ;
-         goto error ;
-      }
-
-      // build js arguments
-      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
-                   " var USERNAME = \"%s\"; var PASSWORD = \"%s\"; "
-                   "var PROGRAM = \"%s\"; var COORD_SERVICE = \"%d\";  ",
-                   _username, _password, prog_sequoiadb, coord_service ) ;
-
-      PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: "
-                        "var USERNAME = %s; var PASSWORD = %s; "
-                        "var PROGRAM = %s; var COORD_SERVICE = %d;",
-                        "xxx", "xxx", prog_sequoiadb, coord_service ) ;
-
-      _content.clear() ;
-      _content += _jsFileArgs ;
-      _content += OSS_NEWLINE ;
-      _content += _fileBuff ;
+      BSONObj tmpObj ;
 
       // execute js
       rc = _scope->eval( _content.c_str(), _content.size(),
@@ -1816,31 +1801,13 @@ namespace engine
                       _jsFileName, detail.toString().c_str(), rc ) ;
          goto error ;
       }
-      rc = omaGetObjElement( rval, "", subObj ) ;
+      rc = omaGetObjElement( rval, "", tmpObj ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
          goto error ;
       }
-      // extract return rc
-      {
-      INT32 retRc = SDB_OK ;
-      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR,
-                      "Get field[%s] failed, rc= %d", OMA_FIELD_RC, rc ) ;
-         goto error ;
-      }
-      if ( retRc )
-      {
-         PD_LOG_MSG( PDERROR,
-                     "Omagent failed to start virtual coord, rc = %d",
-                     retRc ) ;
-         goto error;
-      }
-      }
-      result = TRUE ;
+      retObj = tmpObj.getOwned() ;
 
    done:
       return rc ;
@@ -1848,25 +1815,43 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaRemoveVirtualCoord::removeVirtualCoord( INT32 coord_service,
-                                                     BOOLEAN &result )
+   INT32 _omaRemoveVirtualCoord::removeVirtualCoord( BOOLEAN &result )
    {
       INT32 rc = SDB_OK ;
-      rc = init() ;
+      INT32 retRc = SDB_OK ;
+      BSONObj retObj ;
+
+      rc = init( NULL ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR,
-                      "Failed to init for creating virtual coord, rc = %d",
-                      rc ) ;
+         PD_LOG ( PDERROR, "Failed to init for creating virtual coord, "
+                  "rc = %d", rc ) ;
          goto error ;
       }
-      rc = doit( coord_service, result ) ;
+      rc = doit( retObj ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR,
-                      "Failed to create virtual coord, rc = %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
          goto error ;
       }
+      // extract return rc
+      rc = omaGetIntElement ( retObj, OMA_FIELD_RC, retRc ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc= %d",
+                      OMA_FIELD_RC, rc ) ;
+         goto error ;
+      }
+      if ( retRc )
+      {
+         PD_LOG_MSG( PDERROR,
+                     "Omagent failed to remove virtual coord, rc = %d",
+                     retRc ) ;
+         result = FALSE ;
+         goto error;
+      }
+      result = TRUE ;
+
    done:
       return rc ;
    error:

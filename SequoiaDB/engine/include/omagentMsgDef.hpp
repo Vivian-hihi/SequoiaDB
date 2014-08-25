@@ -42,11 +42,10 @@
 #define OMA_CMD_BASIE_CHECK_HOST                   OM_BASIC_CHECK_REQ
 #define OMA_CMD_INSTALL_REMOTE_AGENT               OM_INSTALL_REMOTE_AGENT
 #define OMA_CMD_CHECK_HOST                         OM_CHECK_HOST_REQ
-// #define OMA_CMD_EXIT_AGENT                         OM_AGENT_EXIT_REQ
 #define OMA_CMD_UNINSTALL_REMOTE_AGENT             OM_UNINSTALL_REMOTE_AGENT
 #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
 #define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ
-#define OMA_CMD_QUERY_PROGRESS                     OM_QUERY_PROGRESS
+#define OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS OM_QUERY_PROGRESS
 #define OMA_CMD_ROLLBACK_INSTALL_DB_BUSINESS       OM_ROLLBACK_TRANSACTION_REQ
 
 // field
@@ -59,6 +58,7 @@
 #define OMA_FIELD_INSTALLPATH                      OM_HOST_FIELD_INSTALLPATH
 #define OMA_FIELD_TRANSACTION_ID                   OM_BSON_FIELD_TRANSACTION_ID
 #define OMA_FIELD_PACKET_PATH                      OM_BSON_FIELD_PATCKET_PATH
+#define OMA_FIELD_CONFIG                           OM_CONFIGURE_FIELD_CONFIG
 
 #define OMA_FIELD_HOSTS                            "Hosts"
 #define OMA_FIELD_HOSTNAME                         "HostName"
