@@ -54,6 +54,7 @@
 /*
  *@brief     macro to cast C++ object to a python object 
  **/
+
 #define MAKE_PYOBJECT( cpp_object )  \
    ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
    
@@ -73,7 +74,7 @@
 #define MAKE_RETURN_INT_PYSTRING( ret_value, c_string ) \
    ( PyObject * )Py_BuildValue( "(i,s)", ret_value, c_string )
 
-#define MAKE_RETURN_INT_PYSTRING_BYSIZE( ret_value, c_string, c_stringsize ) \
+#define MAKE_RETURN_INT_PYSTRING_SIZE( ret_value, c_string, c_stringsize ) \
    ( PyObject * )Py_BuildValue( "(i,s#)", ret_value, c_string, c_stringsize )
 
 #define MAKE_RETURN_INT_INT_INT_STRING( verion, sub_verion, release, build)\

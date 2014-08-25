@@ -61,7 +61,6 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj     = NULL ;
    sdbCursor *cursor = NULL ;
    bson::BSONObj bson ;
-
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -74,8 +73,9 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
    {
       goto error ;
    }
+
 done :
-   return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }
@@ -100,7 +100,7 @@ static PYOBJECT *current( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }
