@@ -23,8 +23,6 @@ if 'win32' == sys.platform:
    for file in glob.glob(dlls):
       newname = file[:-3] + '.pyd'
       shutil.copy(file, newname)
-      #newname = file.replace(".dll", ".pyd")
-      os.rename(file, newname)
    modules = ['err.prop', '*.lib', '*.pyd', '*.exp']
 else:
    modules = ['err.prop', '*.so']
