@@ -81,7 +81,7 @@ function getCPUInfo()
 function getMemInfo()
 {
    var memInfo = eval( '(' + System.getMemInfo() + ')' ) ;
-   objRet.Memery = memInfo ;
+   objRet.Memory = memInfo ;
 }
 
 // disk

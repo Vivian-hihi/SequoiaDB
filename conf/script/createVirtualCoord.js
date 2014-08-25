@@ -20,73 +20,79 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 */
-// todo::add path in windows
-if ( typeof(PROGRAM) == "undefined" ) { PROGRAM_PATH = "/opt/sequoiadb/bin/sequoiadb" ; }
-if ( typeof(COORD_SERVICE) == "undefined" ) { COORD_SERVICE = "11810" ; }
-if ( typeof(CONFIG_PATH) == "undefined" ) { CONFIG_PATH = "/tmp/virtualCoord" ; }
-if ( typeof(CONFIG_FILE) == "undefined" ) { CONFIG_FILE = "/tmp/virtualCoord/sdb.conf" ; }
-if ( typeof(DB_PATH) == "undefined" ) { DB_PATH = "/tmp/virtualCoord/coord" ; }
+if ( typeof(OMA_HOST_NAME) == "undefined" )
+{
+}
+if ( typeof(OMA_SVC_NAME)  == "undefined" )
+{
+}
+if ( typeof(V_COORD_SVC_NAME)  == "undefined" )
+{
+   V_COORD_SVC_NAME = "13579" ;
+}
+if ( typeof(V_COORD_INSTALL_PATH) == "undefined" )
+{
+   V_COORD_INSTALL_PATH = "/tmp/virtualCoord" ;
+}
+if ( typeof(V_COORD_CFG_OPTION) == "undefined" )
+{
+   V_COORD_CFG_OPTION = eval( '(' + '{}' + ')' ) ;
+}
 
 var objRet = new Object() ;
 
 objRet.Rc = 0 ;
 objRet.Detail = "" ;
 
-function createNewConfFile()
+function createVirtualCoord( oma )
 {
-   // remove the old config folder
-   try
-   {
-      File.remove( CONFIG_PATH ) ;
-   }
-   catch ( e )
-   {
-      if ( -4 != e )
-         throw e ;
-   }
-   // create a new folder
-// todo:think about windows
-   var cmd = " mkdir " + CONFIG_PATH ;
-   Cmd.run( cmd ) ;
-   // contents
-   // todo: windows
-   var confPath = "confpath = " + CONFIG_PATH + "\n" ;
-   var dbPath = "dbpath = " + DB_PATH + "\n" ;
-   var svcName = "svcname = " + COORD_SERVICE + "\n" ;
-   try
-   {
-      var file = new File( CONFIG_FILE ) ;
-      file.write( confPath ) ;
-      file.write( dbPath ) ;
-      file.write( svcName ) ;
-      file.close() ;
-   }
-   catch ( e )
-   {
-      throw e
-   }
+   oma.createCoord( V_COORD_SVC_NAME,
+                    V_COORD_INSTALL_PATH,
+                    V_COORD_CFG_OPTION ) ;
+}
+
+function startVirtualCoord( oma )
+{
+   oma.startNode( V_COORD_SVC_NAME ) ;
 }
 
 function main()
 {
-/*
-println( "PROGRAM is " + PROGRAM ) ;
-println( "COORD_SERVICE is " + COORD_SERVICE ) ;
-println( "CONFIG_PATH is " + CONFIG_PATH ) ;
-println( "CONFIG_FILE is " + CONFIG_FILE ) ;
-println( "DB_PATH is " + DB_PATH ) ;
-*/
+   var oma = null ;
+
    try
    {
-      // prepare conf file
-      createNewConfFile() ;
+      // check argument
+      if ( typeof(OMA_HOST_NAME) == "undefined" ||
+           typeof(OMA_SVC_NAME) == "undefined" )
+      {
+         objRet.Rc = -6 ;
+         objRet.Detail = "not specified host name or service name for omagent" ;
+         return objRet ;
+      }
+
+      // new oma object
+      oma = new Oma( OMA_HOST_NAME, OMA_SVC_NAME ) ;
+print("111111111111\n") ;
+      // create virtual coord
+      createVirtualCoord( oma ) ;
+ print("22222222222\n") ;
       // start virtual coord
-      var cmd = PROGRAM + " -c " + CONFIG_PATH
-      Cmd.run( cmd ) ;
+      startVirtualCoord( oma ) ;
+print("3333333333333333\n");
+      // close connection
+      oma.close() ;
+      oma = null ;
+
       return objRet ;
    }
    catch ( e )
    {
+print("44444444 e = " + e + "\n") ;
+      if ( null != oma )
+      {
+         oma.close() ;
+      }
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
