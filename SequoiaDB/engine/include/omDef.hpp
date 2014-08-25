@@ -228,6 +228,7 @@ namespace engine
 
    #define  OM_WAIT_AGENT_EXIT_RES_INTERVAL  (5000)
    #define  OM_WAIT_AGENT_UNISTALL_INTERVAL  (5000)
+   #define  OM_WAIT_UPDATE_HOST_INTERVAL     (5000)
    // *****************************************************************
 
    // *********************om rest check_host_req**********************
@@ -384,6 +385,9 @@ namespace engine
    // om stop business req
    //******************************************************************
 
+
+   // 
+   #define OM_UPDATE_HOST_REQ                "update host"
    // milliseconds
    #define  OM_WAIT_EVENT_INTERVAL           (500)
 

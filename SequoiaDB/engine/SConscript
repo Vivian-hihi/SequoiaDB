@@ -337,7 +337,8 @@ omsvcFiles = [
       "omsvc/omGetFileCommand.cpp",
       "omsvc/omConfigGenerator.cpp",
       "omsvc/omCommandInterface.cpp",
-      "omsvc/omMsgEventHandler.cpp"
+      "omsvc/omMsgEventHandler.cpp",
+      "omsvc/omManagerJob.cpp"
       ]
 
 barFiles = [

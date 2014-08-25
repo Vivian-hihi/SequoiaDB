@@ -871,7 +871,7 @@ namespace engine
    }
 
    void omScanHostCommand::_clearSession( omManager *om, 
-                                          pmdRemoteSession *remoteSession) 
+                                          pmdRemoteSession *remoteSession ) 
    {
       if ( NULL != remoteSession )
       {
