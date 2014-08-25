@@ -44,6 +44,7 @@ ssl_dir = join(crypto_dir, 'openssl-1.0.1c')
 gtest_dir = join(engine_dir,'gtest')
 ncursesinclude_dir = join(engine_dir, 'ncurses/include')
 driver_dir = join(db_dir,'driver')
+java_dir = join(root_dir,'java')
 buildscripts.bb.checkOk()
 # --- options ----
 
@@ -332,7 +333,25 @@ def findVersion( root , choices ):
     raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
 
 # add database include, boost include here
-env.Append( CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir] )
+hdfsJniPath = ""
+hdfsJniMdPath = ""
+if guess_os == "linux":
+    if guess_arch == "ia32":
+        hdfsJniPath = join(java_dir,"jdk_linux32/include")
+        hdfsJniMdPath = join(java_dir,"jdk_linux32/include/linux")
+    elif guess_arch == "ia64":
+        hdfsJniPath = join(java_dir,"jdk_linux64/include")
+        hdfsJniMdPath = join(java_dir,"jdk_linux64/include/linux")
+elif guess_os == "win32":
+    if guess_arch == "ia32":
+        hdfsJniPath = join(java_dir,"jdk_win32/include")
+        hdfsJniMdPath = join(java_dir,"jdk_win32/include/win32")
+    elif guess_arch == "ia64":
+        hdfsJniPath = join(java_dir,"jdk_win64/include")
+        hdfsJniMdPath = join(java_dir,"jdk_win64/include/win32")
+
+env.Append( CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir, hdfsJniPath, hdfsJniMdPath] )
+
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
 env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 # specify dependent libraries for javascript engine and boost
