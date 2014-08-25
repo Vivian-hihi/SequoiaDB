@@ -34,9 +34,9 @@ public class SdbTime extends Task{
 		long diff = 0;
 
 		try{
-			DateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+			DateFormat format1 = new SimpleDateFormat("yyyy-MM-dd-hh.mm.ss");
 			timeBegin=format1.parse(beginTime);	
-			DateFormat format2 = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+			DateFormat format2 = new SimpleDateFormat("yyyy-MM-dd-hh.mm.ss");
 			timeEnd=format2.parse(endTime);
 			
 			diff=timeEnd.getTime()-timeBegin.getTime();
