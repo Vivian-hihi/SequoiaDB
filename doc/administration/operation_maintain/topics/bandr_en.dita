@@ -3,10 +3,10 @@
 <topic id="topic_fbs_5t3_y4">
   <title>Backup and Recovery</title>
   <body>
-    <p>本节介绍集群的备份与恢复</p>
+    <p>This section introduces the cluster backup and recovery.</p>
     <p><xref href="data_backup_en.dita">Data Backup</xref></p>
     <p><xref href="search_en.dita">List Backup Information</xref></p>
     <p><xref href="data_recovery_en.dita">Data Recovery</xref></p>
-    <p><xref href="instructions_en.dita">SequoiaDB 备份恢复操作指导书</xref></p>
+    <p><xref href="instructions_en.dita">SequoiaDB Backup Recovery Instruction</xref></p>
   </body>
 </topic>

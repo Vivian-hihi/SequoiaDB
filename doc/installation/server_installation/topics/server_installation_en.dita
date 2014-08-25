@@ -7,13 +7,11 @@
     <simpletable>
       <sthead>
         <stentry>Installation</stentry>
-        <stentry>Linux</stentry>
-        <stentry>Windows</stentry>
+        <stentry>Linux</stentry>        
       </sthead>
       <strow>
         <stentry>Wizard Installation</stentry>
-        <stentry>Yes</stentry>
-        <stentry>Yes</stentry>
+        <stentry>Yes</stentry>        
       </strow>
     </simpletable>
     <section><title>Wizard Installation</title><p>Wizard installation is a GUI installation program

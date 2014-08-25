@@ -41,17 +41,17 @@
       <ul class="ul">
         <li class="li">System configuration requirement <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d89018e24" class="stentry">Configuration Item</th>
+              <th valign="bottom" align="left" id="d88979e24" class="stentry">Configuration Item</th>
 
-              <th valign="bottom" align="left" id="d89018e27" class="stentry">Configuration method</th>
+              <th valign="bottom" align="left" id="d88979e27" class="stentry">Configuration method</th>
 
-              <th valign="bottom" align="left" id="d89018e30" class="stentry">Verification method</th>
+              <th valign="bottom" align="left" id="d88979e30" class="stentry">Verification method</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d89018e24" class="stentry">Set hostname</td>
+              <td valign="top" headers="d88979e24" class="stentry">Set hostname</td>
 
-              <td valign="top" headers="d89018e27" class="stentry"> 1. Log in with root privileges, perform hostname sdbserver1(sdbserver1 hostname can be modified as needed);<p class="p"/>
+              <td valign="top" headers="d88979e27" class="stentry"> 1. Log in with root privileges, perform hostname sdbserver1(sdbserver1 hostname can be modified as needed);<p class="p"/>
 <ul class="ul">
                 <li class="li">For SUSE: <p class="p">2. Open the /etc/HOSTNAME file;</p>
 <p class="p">  vi /etc/HOSTNAME</p>
@@ -76,15 +76,15 @@
               </ul>
 </td>
 
-              <td valign="top" headers="d89018e30" class="stentry">Execute hostname command to verify whether the information is printed "sdbserver1" </td>
+              <td valign="top" headers="d88979e30" class="stentry">Execute hostname command to verify whether the information is printed "sdbserver1" </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d89018e24" class="stentry">
+              <td valign="top" headers="d88979e24" class="stentry">
                 Enable server nodes to visit each other through hostname
               </td>
 
-              <td valign="top" headers="d89018e27" class="stentry">
+              <td valign="top" headers="d88979e27" class="stentry">
                 <ul class="ul">
                   <li class="li">Log in the system in the role of root, open "/etc/hosts" with the command "vi
                     /etc/hosts"</li>
@@ -102,7 +102,7 @@
 
               </td>
 
-              <td valign="top" headers="d89018e30" class="stentry">Check with "ping sdbserver1"<p class="p"/>
+              <td valign="top" headers="d88979e30" class="stentry">Check with "ping sdbserver1"<p class="p"/>
 Check with "ping sdbserver2"</td>
 
             </tr>
@@ -112,18 +112,18 @@ Check with "ping sdbserver2"</td>
         <li class="li"><p class="p">Close the firewall</p>
  <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d89018e129" class="stentry">Configuration Item </th>
+            <th valign="bottom" align="left" id="d88979e129" class="stentry">Configuration Item </th>
 
-            <th valign="bottom" align="left" id="d89018e132" class="stentry">Configuration method</th>
+            <th valign="bottom" align="left" id="d88979e132" class="stentry">Configuration method</th>
 
-            <th valign="bottom" align="left" id="d89018e135" class="stentry">Verification method</th>
+            <th valign="bottom" align="left" id="d88979e135" class="stentry">Verification method</th>
 
           </tr>
 <tr class="strow"/>
 <tr class="strow">
-            <td valign="top" headers="d89018e129" class="stentry"> Close the firewall</td>
+            <td valign="top" headers="d88979e129" class="stentry"> Close the firewall</td>
 
-            <td valign="top" headers="d89018e132" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
+            <td valign="top" headers="d88979e132" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
 <ul class="ul">
               <li class="li">For SUSE:<p class="p">1. SuSEfirewall2 stop;</p>
 
@@ -140,7 +140,7 @@ Check with "ping sdbserver2"</td>
             </ul>
 </td>
 
-            <td valign="top" headers="d89018e135" class="stentry"><ul class="ul">
+            <td valign="top" headers="d88979e135" class="stentry"><ul class="ul">
               <li class="li">For SUSE:<p class="p"> chkconfig -list | grep fire;</p>
 
               </li>
@@ -217,14 +217,15 @@ cat /proc/sys/vm/min_free_kbytes</pre>
           2. Adding the following params to the file of "/etc/sysctl.conf" to adjust kernel params.
             <pre class="pre codeblock">vm.swappiness = 0
 vm.dirty_ratio = 100
-vm.dirty_background_ratio = 10
-vm.dirty_expire_centisecs = 50000
+vm.dirty_background_ratio = 40
+vm.dirty_expire_centisecs = 3000
 vm.vfs_cache_pressure = 200
 vm.min_free_kbytes =  &lt;8% of physical memory size,unit is KB&gt; </pre>
 <div class="note note"><span class="notetitle">Note:</span> When
             the available physical memory size of database isn't enough 8GB, doesn't need to set
-            "vm.swappiness = 0".</div>
- 3. Executing the following command to be
+            "vm.swappiness = 0".上述dirty类参数只是建议值，具体系统设置时请按原则（控制系统的flush进程只采用脏页超时机制刷新脏页，而不采用脏页比例超支刷新脏页）进行设置。</div>
+ 
+          3. Executing the following command to be
             effective.<pre class="pre codeblock">/sbin/sysctl -p</pre>
 <div class="note note"><span class="notetitle">Note:</span> Each database server should be
             configured.</div>
