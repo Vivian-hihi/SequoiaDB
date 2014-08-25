@@ -83,11 +83,12 @@ Sequoiadb
       </dl>
 
       <ul class="ul">
-        <li class="li">Recommend to directly use the database instance initialized during the stored procedure, for example: <strong class="ph b">db.createProcedure( function getAll(){return
-          db.foo.bar.find();} )</strong> . But if authentication is required, the global database will fail. A new database instance need to be initialized.</li>
+        <li class="li"> Recommended direct use stored procedures have been initialized global db, and the global db using authentication information currently executing the stored procedure session. such as:  <strong class="ph b">db.createProcedure( function getAll(){return
+          db.foo.bar.find();} )</strong>.</li>
 
-        <li class="li">Database initialization is in the form of: <strong class="ph b">var db=new Sdb()</strong>. If user name and password are needed, it will be: <strong class="ph b">var db=new Sdb('usrname','passwd')</strong>. 
-          Note that the stored procedure can only run on its own connected database, it does not support remote connection methods with other databases. In the case that authentication is not required, <strong class="ph b">var db = new Sdb('hostname', 'servicename')</strong> can still execute successfully, the returned database is still the local database.</li>
+        <li class="li"> Db initialization own form of <strong class="ph b">var db=new Sdb()</strong>. DB the authentication information for the current session to execute the stored procedure. If you need to add other user name and password, as <strong class="ph b">var db=new Sdb('usrname','passwd')</strong>. 
+          It should be noted that when the stored procedure can only be run on a connected db, db does not provide remote connection to other methods. Without 
+          the need for authentication, even if <strong class="ph b">var db = new Sdb('hostname', 'servicename')</strong> statement is executed normally. Db still get local db.</li>
 
         <li class="li">Database's role must be a coord node. Standalone mode cannot support procedure function.</li>
 

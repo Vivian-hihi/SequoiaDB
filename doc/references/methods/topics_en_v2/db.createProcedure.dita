@@ -34,10 +34,11 @@
         </plentry>        
       </parml>
       <ul>
-        <li>Recommend to directly use the database instance initialized during the stored procedure, for example: <b>db.createProcedure( function getAll(){return
-          db.foo.bar.find();} )</b> . But if authentication is required, the global database will fail. A new database instance need to be initialized.</li>
-        <li>Database initialization is in the form of: <b>var db=new Sdb()</b>. If user name and password are needed, it will be: <b>var db=new Sdb('usrname','passwd')</b>. 
-          Note that the stored procedure can only run on its own connected database, it does not support remote connection methods with other databases. In the case that authentication is not required, <b>var db = new Sdb('hostname', 'servicename')</b> can still execute successfully, the returned database is still the local database.</li>
+        <li> Recommended direct use stored procedures have been initialized global db, and the global db using authentication information currently executing the stored procedure session. such as:  <b>db.createProcedure( function getAll(){return
+          db.foo.bar.find();} )</b>.</li>
+        <li> Db initialization own form of <b>var db=new Sdb()</b>. DB the authentication information for the current session to execute the stored procedure. If you need to add other user name and password, as <b>var db=new Sdb('usrname','passwd')</b>. 
+          It should be noted that when the stored procedure can only be run on a connected db, db does not provide remote connection to other methods. Without 
+          the need for authentication, even if <b>var db = new Sdb('hostname', 'servicename')</b> statement is executed normally. Db still get local db.</li>
         <li>Database's role must be a coord node. Standalone mode cannot support procedure function.</li>
         </ul>
     </section>

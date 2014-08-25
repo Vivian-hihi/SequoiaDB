@@ -42,22 +42,22 @@ Create a stored procedure in the database instance.
 .sp 2
 
 .sp 2
-   *  Recommend to directly use the database instance initialized
-   during the stored procedure, for example:
-   \fBdb.createProcedure( function getAll(){return
-   db.foo.bar.find();} )\fR . But if authentication is required,
-   the global database will fail. A new database instance need to
-   be initialized.
+   *  Recommended direct use stored procedures have been
+   initialized global db, and the global db using authentication
+   information currently executing the stored procedure session.
+   such as: \fBdb.createProcedure( function getAll(){return
+   db.foo.bar.find();} )\fR.
 .sp 2
-   *  Database initialization is in the form of: \fBvar db=new
-   Sdb()\fR. If user name and password are needed, it will be:
-   \fBvar db=new Sdb('usrname','passwd')\fR. Note that the stored
-   procedure can only run on its own connected database, it does
-   not support remote connection methods with other databases. In
-   the case that authentication is not required, \fBvar db = new
-   Sdb('hostname', 'servicename')\fR can still execute
-   successfully, the returned database is still the local
-   database.
+   *  Db initialization own form of \fBvar db=new Sdb()\fR. DB
+   the authentication information for the current session to
+   execute the stored procedure. If you need to add other user
+   name and password, as \fBvar db=new
+   Sdb('usrname','passwd')\fR. It should be noted that when the
+   stored procedure can only be run on a connected db, db does
+   not provide remote connection to other methods. Without the
+   need for authentication, even if \fBvar db = new
+   Sdb('hostname', 'servicename')\fR statement is executed
+   normally. Db still get local db.
 .sp 2
    *  Database's role must be a coord node. Standalone mode
    cannot support procedure function.
