@@ -37,10 +37,11 @@
     <target name="test-CPP-one-case" depends="">
     <echo message="exec ${case-full-name}  ${append} ...path is /opt/sequoiadb/lib ..." />
     <echo message="env is LD_LIBRARY_PATH=/opt/sequoiadb/lib" />
-        <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build" >
+        <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
             <arg line=" ${append} " />
             <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
         </exec>
+        <echo message="${screen.output}" />
     </target>
 
     <target name="exec-test-over" depends="exec-driver-CPP-test">

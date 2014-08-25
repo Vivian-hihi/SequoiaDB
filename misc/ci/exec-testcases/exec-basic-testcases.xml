@@ -158,7 +158,7 @@
 
 		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}';var COORDSVCNAME='${COORD_SVC_NAME}';&quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option},${test.case.fullname}&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 			<arg line="${sdb.cmd.argument}" />
 		</exec>
 		<echo message="${screen.output}" />
