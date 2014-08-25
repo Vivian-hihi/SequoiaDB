@@ -101,12 +101,13 @@ cat /proc/sys/vm/min_free_kbytes</codeblock>
           2. Adding the following params to the file of "/etc/sysctl.conf" to adjust kernel params.
             <codeblock>vm.swappiness = 0
 vm.dirty_ratio = 100
-vm.dirty_background_ratio = 10
-vm.dirty_expire_centisecs = 50000
+vm.dirty_background_ratio = 40
+vm.dirty_expire_centisecs = 3000
 vm.vfs_cache_pressure = 200
 vm.min_free_kbytes =  &lt;8% of physical memory size,unit is KB> </codeblock><note>When
             the available physical memory size of database isn't enough 8GB, doesn't need to set
-            "vm.swappiness = 0".</note> 3. Executing the following command to be
+            "vm.swappiness = 0".上述dirty类参数只是建议值，具体系统设置时请按原则（控制系统的flush进程只采用脏页超时机制刷新脏页，而不采用脏页比例超支刷新脏页）进行设置。</note> 
+          3. Executing the following command to be
             effective.<codeblock>/sbin/sysctl -p</codeblock><note>Each database server should be
             configured.</note></li>
         <li>Database directory structure<p>The users had better put the directory of data, index, and

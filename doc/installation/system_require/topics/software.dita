@@ -107,11 +107,11 @@ cat /proc/sys/vm/min_free_kbytes</codeblock>
         <p>2. 添加下列参数至 /etc/sysctl.conf 文件调整内核参数：</p>
         <codeblock>vm.swappiness = 0
 vm.dirty_ratio = 100
-vm.dirty_background_ratio = 10
-vm.dirty_expire_centisecs = 5000
+vm.dirty_background_ratio = 40
+vm.dirty_expire_centisecs = 3000
 vm.vfs_cache_pressure = 200
 vm.min_free_kbytes = &lt;物理内存大小的8%，单位KB></codeblock>
-        <note>当数据库可用物理内存不足 8GB 时不需使用 vm.swappiness = 0。</note>
+        <note>当数据库可用物理内存不足 8GB 时不需使用 vm.swappiness = 0；上述 dirty 类参数只是建议值，具体系统设置时请按原则（控制系统的 flush 进程只采用脏页超时机制刷新脏页，而不采用脏页比例超支刷新脏页）进行设置。</note>
         <p>3. 执行如下命令，使配置生效：</p>
         <codeblock>/sbin/sysctl -p</codeblock>
         <note>每台作为数据库服务器的机器都需要配置。</note></li>
