@@ -45,7 +45,7 @@ extra_opts['package_data'] = { 'pysequoiadb':modules,
 setup(name = 'pysequoiadb',
       version = '1.0',
       author = 'SequoiaDB Inc.',
-      license = 'AGPL',
+      license = 'GNU Affero GPL',
       description = 'This is a sequoiadb python driver use adapter package',
       url = 'http://www.sequoiadb.com',
       **extra_opts)
