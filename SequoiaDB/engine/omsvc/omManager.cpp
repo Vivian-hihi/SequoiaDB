@@ -41,6 +41,7 @@
 #include "../bson/lib/md5.hpp"
 #include "ossProc.hpp"
 #include "rtn.hpp"
+#include "omManagerJob.hpp"
 
 
 using namespace bson ;
@@ -78,11 +79,17 @@ namespace engine
 
       _pKrcb               = NULL ;
       _pDmsCB              = NULL ;
+      _hostVersion         = SDB_OSS_NEW omHostVersion() ;
    }
 
    _omManager::~_omManager()
    {
       SDB_ASSERT( _vecFixBuf.size() == 0, "Fix buff catch must be empty" ) ;
+      if ( NULL != _hostVersion )
+      {
+         SDB_OSS_DEL _hostVersion ;
+         _hostVersion = NULL ;
+      }
    }
 
    INT32 _omManager::init ()
@@ -109,6 +116,14 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to restore task:rc=%d", 
                     rc ) ;
 
+      rc = _createJobs() ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
+                    rc ) ;
+
+      rc = refreshVersions() ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to update cluster version:rc=%d", 
+                    rc ) ;
+
       _readAgentPort() ;
 
       rc = _restAdptor.init( _fixBufSize, _maxRestBodySize, _restTimeout ) ;
@@ -121,6 +136,102 @@ namespace engine
    error:
       goto done;
 
+   }
+
+   INT32 _omManager::_createJobs()
+   {
+      INT32 rc                = SDB_OK ;
+      BOOLEAN returnResult    = FALSE ;
+      omHostNotifierJob *pJob = NULL ;
+      EDUID jobID             = PMD_INVALID_EDUID ;
+      pJob = SDB_OSS_NEW omHostNotifierJob( this, _hostVersion ) ;
+      if ( !pJob )
+      {
+         rc = SDB_OOM ;
+         PD_LOG ( PDERROR, "failed to create omHostNotifierJob:rc=%d", rc ) ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, &jobID,
+                                     returnResult ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "create omHostNotifierJob failed:rc=%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omManager::refreshVersions()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObjBuilder builder ;
+      SINT64 contextID = -1 ;
+
+      BSONObjBuilder resultBuilder ;
+      BSONObj result ;
+      pmdKRCB *pKrcb     = pmdGetKRCB() ;
+      _SDB_DMSCB *pDMSCB = pKrcb->getDMSCB() ;
+      _SDB_RTNCB *pRTNCB = pKrcb->getRTNCB() ;
+      _pmdEDUCB *pEDUCB  = pmdGetThreadEDUCB() ;
+
+      selector = BSON( OM_CLUSTER_FIELD_NAME << "" ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
+                     pEDUCB, 0, -1, pDMSCB, pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "fail to query table:%s,rc=%d", 
+                 OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore( contextID, 1, buffObj, startingPos, pEDUCB, pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            PD_LOG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                    OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         string clusterName = record.getStringField( OM_CLUSTER_FIELD_NAME ) ;
+         _hostVersion->incVersion( clusterName ) ;
+      }
+   done:
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         pRTNCB->contextDelete( contextID, pEDUCB ) ;
+      }
+      goto done ;
+   }
+
+   void _omManager::updateClusterVersion( string cluster )
+   {
+      _hostVersion->incVersion( cluster ) ;
+   }
+
+   void _omManager::removeClusterVersion( string cluster )
+   {
+      _hostVersion->removeVersion( cluster ) ;
    }
 
    INT32 _omManager::_initOmTables() 

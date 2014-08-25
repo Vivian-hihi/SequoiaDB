@@ -103,6 +103,7 @@ namespace engine
       string   _service ;
    } ;
 
+   class omHostVersion ;
    /*
       _omManager define
    */
@@ -187,6 +188,10 @@ namespace engine
          INT32             updateTaskID( string oldID, long long newID ) ;
          INT32             removeTask( string taskID ) ;
 
+         INT32             refreshVersions() ;
+         void              updateClusterVersion( string cluster ) ;
+         void              removeClusterVersion( string cluster ) ;
+
       protected:
          virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
 
@@ -202,6 +207,8 @@ namespace engine
          void              _checkSession( UINT32 interval ) ;
 
          INT32             _initOmTables() ;
+
+         INT32             _createJobs() ;
 
          INT32             _createCollectionIndex ( const CHAR *pCollection,
                                                     const CHAR *pIndex,
@@ -274,6 +281,7 @@ namespace engine
          UINT32                                 _checkTaskTimer ;
 
          string                                 _localAgentPort ;
+         omHostVersion                          *_hostVersion ;
    } ;
 
    typedef _omManager omManager ;

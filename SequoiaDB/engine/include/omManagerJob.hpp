@@ -49,6 +49,7 @@ namespace engine
 
       public:
          void    incVersion( string clusterName ) ;
+         void    removeVersion( string clusterName ) ;
          void    getVersionMap( map< string, UINT32 > &mapClusterVersion ) ;
          UINT32  getVersion( string clusterName ) ;
 

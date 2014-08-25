@@ -2333,6 +2333,7 @@ namespace engine
          goto error ;
       }
 
+      sdbGetOMManager()->updateClusterVersion( clusterName ) ;
       bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;

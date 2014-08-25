@@ -66,6 +66,13 @@ namespace engine
       _lock.release() ;
    }
 
+   void omHostVersion::removeVersion( string clusterName )
+   {
+      _lock.get() ;
+      _mapClusterVersion.erase( clusterName ) ;
+      _lock.release() ;
+   }
+
    void omHostVersion::getVersionMap( map<string, UINT32> &mapClusterVersion )
    {
       mapClusterVersion.clear() ;
@@ -314,8 +321,20 @@ namespace engine
       for ( ; i < _vAllHosts.size(); i++ )
       {
          omHostContent &agentInfo = _vAllHosts[i] ;
-         BSONObj tmp = BSON ( OM_BSON_FIELD_HOST_NAME << agentInfo.hostName
-                              << OM_BSON_FIELD_HOST_IP << agentInfo.ip ) ;
+         BSONObj tmp ;
+         if ( agentInfo.serviceName 
+                              == boost::lexical_cast<string>( SDBCM_DFT_PORT ) )
+         {
+            tmp = BSON ( OM_BSON_FIELD_HOST_NAME << agentInfo.hostName
+                         << OM_BSON_FIELD_HOST_IP << agentInfo.ip ) ;
+         }
+         else
+         {
+            tmp = BSON ( OM_BSON_FIELD_HOST_NAME << agentInfo.hostName
+                        << OM_BSON_FIELD_HOST_IP << agentInfo.ip
+                        << OM_BSON_FIELD_AGENT_PORT << agentInfo.serviceName ) ;
+         }
+
          arrayBuilder.append( tmp ) ;
       }
 
@@ -455,7 +474,7 @@ namespace engine
    INT32 omHostNotifierJob::doit()
    {
       INT32 rc = SDB_OK ;
-
+      _om->getRSManager()->registerEDU( eduCB() ) ;
       while ( TRUE )
       {
          map< string, UINT32 > mapClusterVersion ;
@@ -473,7 +492,9 @@ namespace engine
 
          ossSleep( OSS_ONE_SEC ) ;
       }
+
    done:
+      _om->getRSManager()->unregEUD( eduCB() );
       return rc ;
    error:
       goto done ;
