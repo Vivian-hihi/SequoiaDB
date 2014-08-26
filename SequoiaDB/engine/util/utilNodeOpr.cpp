@@ -38,6 +38,7 @@
 #include "pmdDef.hpp"
 #include "pmdCommon.hpp"
 #include "ossProc.hpp"
+#include "ossUtil.hpp"
 #include "pd.hpp"
 
 #if defined( _LINUX )
