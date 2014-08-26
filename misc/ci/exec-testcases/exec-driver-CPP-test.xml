@@ -41,7 +41,7 @@
         <echo message="This testcase begin time is ${testcase.begin.time}"/> -->
 
         <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-        <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build">
+        <!-- <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build"> -->
             <arg line=" ${append} " />
             <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
         </exec>
