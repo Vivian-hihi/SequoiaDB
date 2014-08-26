@@ -22,7 +22,6 @@ if 'win32' == sys.platform:
    dlls = './pysequoiadb/*.dll'
    for file in glob.glob(dlls):
       newname = file[:-3] + 'pyd'
-      print "########", newname
       shutil.copy(file, newname)
    modules = ['err.prop', '*.lib', '*.pyd', '*.exp']
 else:
