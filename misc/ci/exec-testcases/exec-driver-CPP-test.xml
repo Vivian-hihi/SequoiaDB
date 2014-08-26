@@ -6,9 +6,9 @@
 <project name="exec-driver-CPP-test" default="exec-test-over">
     <property name="test_name" value="*" /> 
     <property name="append" value=" --gtest_filter=${test_name}  --gtest_output=xml:${reports.path}/ " />
-    <taskdef resource="net/sf/antcontrib/antlib.xml">
+    <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
-            <pathelement location="/usr/share/java/ant-contrib.jar" />
+            <fileset dir="${antTask.jar.path}" includes="*.jar" />
         </classpath>
     </taskdef>
 
