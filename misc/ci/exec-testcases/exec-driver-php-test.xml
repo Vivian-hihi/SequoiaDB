@@ -7,9 +7,9 @@
 <project name="exec-driver-php-test" default="exec-driver-php-test">
 	<property name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
 	<property name="phpunit.phar.dir" value="${testcase.path}/tools/phpunit.phar" />
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
+			<fileset dir="${antTask.jar.path}" includes="*.jar" />
 		</classpath>
 	</taskdef>
 
