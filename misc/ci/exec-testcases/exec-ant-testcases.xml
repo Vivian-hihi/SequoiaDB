@@ -10,13 +10,18 @@
 	<property name="cata.service.port" value="60000" />
 	<property name="data.service.port" value="51000" />
 	<property name="coord.service.port" value="50000" />
-	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+<!-- 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${testcase.path}/../../ant-sdbtasks" includes="*.jar" />
 			<pathelement location="${STAF.PATH}/lib/JSTAF.jar" />
 			<pathelement location="${STAF.PATH}/samples/demo/STAFDemo.jar" />
 		</classpath>
-	</taskdef> 
+	</taskdef>  -->
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<fileset dir="${antTask.jar.path}" includes="*.jar" />
+		</classpath>
+	</taskdef>
 
 	<target name="clean-test-reports" depends="">
 		<echo message="Begin to clean test result reports..." />
@@ -38,11 +43,6 @@
 	</target>
 
 	<target name="test-one-suite" depends="">
-		<tstamp>
-			<format property="testsuite.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="This suite begin time is ${testsuite.begin.time}"/>
-
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<echo message="Execute test suite(${test.suite.name}) test.suite.fullname=${test.suite.fullname}" />
 		<hostinfo prefix="host" />
@@ -50,7 +50,7 @@
 		<property name="test.suite.class.name" value="com.sequoiadb.testcases-ant.${deploy.name}.${host.NAME}-${parallel.num}-${test.suite.name}" />
 		<property name="reportfile.fullname" value="${reports.path}/TEST-${test.suite.class.name}.xml" />
 
-		<echo file="${reportfile.fullname}" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot; time=&quot;0.55&quot; timestamp=&quot;${current.time}&quot;&gt;" />
+		<echo file="${reportfile.fullname}" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot;&gt;" />
 
 		<foreach target="test-one-case" param="test.case.fullname">
 			<fileset dir="${test.suite.fullname}" includes="*.xml" />
@@ -62,11 +62,6 @@
 		</foreach>
 
 		<echo file="${reportfile.fullname}" message="&lt;system-out&gt;&lt;![CDATA[${on screen}]]&gt;&lt;/system-out&gt;&lt;/testsuite&gt;" append="true" />
-
-		<tstamp>
-			<format property="testsuite.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="This suite end time is ${testsuite.end.time}"/>
 	</target>
 
 	<target name="test-one-case" depends="">
@@ -83,7 +78,7 @@
 		</tstamp>
 		<echo message="This testcase begin time is ${testcase.begin.time}"/>
 
-		<echo file="${reportfile.fullname}" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; time=&quot;${current.time}&quot;&gt;" />
+		<echo file="${reportfile.fullname}" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot;&gt;" />
 
 		<mkdir dir="${testcase.path}/logs/TEST-${test.suite.class.name}/" />
 		<record name="${testcase.path}/logs/TEST-${test.suite.class.name}/${test.case.name}.log" loglevel="verbose" action="start" />
@@ -113,16 +108,26 @@
 				<equals arg1="${ret.code}" arg2="0" />
 			</not>
 			<then>
+				<tstamp>
+					<format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+				</tstamp>
+				<echo message="This testcase end time is ${testcase.failure.end.time}"/>
+				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
+				<echo message="The testcase ${test.case.name}.js cost ${testcase.failure.timeOutput} s in total..." />
+
 				<loadfile property="ant.test.message" srcFile="${testcase.path}/logs/TEST-${test.suite.class.name}/${test.case.name}.log" failonerror="false" />
-				<echo file="${reportfile.fullname}" append="true" message="&lt;failure message=&quot;&quot; type=&quot;junit.framework.AssertionFailedError&quot;&gt;error.msg=&lt;![CDATA[${error.msg}]]&gt; &lt;![CDATA[${ant.test.message}]]&gt;&lt;/failure&gt;" />
+				<echo file="${reportfile.fullname}" append="true" message="&lt;failure message=&quot;&quot; type=&quot;junit.framework.AssertionFailedError&quot; time=&quot;${testcase.failure.timeOutput}&quot;&gt;error.msg=&lt;![CDATA[${error.msg}]]&gt; &lt;![CDATA[${ant.test.message}]]&gt;&lt;/failure&gt;" />
 			</then>
+			<else>
+				<tstamp>
+					<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+				</tstamp>
+				<echo message="This testcase end time is ${testcase.end.time}"/>
+				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
+				<echo message="The testcase ${test.case.name}.js cost ${testcase.timeOutput} s in total..." />
+			</else>
 		</if>
 
 		<echo file="${reportfile.fullname}" append="true" message="&lt;/testcase&gt;" />
-		
-		<tstamp>
-			<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="This testcase end time is ${testcase.end.time}"/>
 	</target>
 </project>
