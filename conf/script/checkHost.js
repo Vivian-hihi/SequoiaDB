@@ -32,7 +32,7 @@ objRet.HostName   = null ;
 objRet.User       = null ;
 objRet.Password   = null ;
  
-objRet.HostsTable = null ;
+//objRet.Host       = null ;
 objRet.OS         = null ;
 objRet.CPU        = null ;
 objRet.Memory     = null ;
@@ -45,22 +45,13 @@ objRet.Safety     = null ;
 
 objRet.HostName   = null ;
 objRet.Rc         = 0 ;
-objRet.Detail     = null ;
-/*
-// hostname
-function getHostName( ssh )
-{
-   var name = ssh.exec( "hostname" ) ;
-   var i = name.indexOf( "\n" ) ;
-   var substr = name.substring(0, i);
-   objRet.HostName = substr ;
-}
-*/
+objRet.Detail     = "" ;
+
 // hosts table
 function getHostsTableInfo()
 {
    var hostsInfo = eval( '(' + System.getHostsMap() + ')' ) ;
-   objRet.HostsTable = hostsInfo ;
+   objRet.Host = hostsInfo ;
 }
 
 // os info
@@ -99,8 +90,21 @@ function getNetCardInfo()
 }
 
 // port status 
-// servic
+function getPortInfo()
+{
+   objRet.Port       = eval( '(' + '{}' + ')' ) ;
+}
+
+// service
+function getServiceInfo()
+{
+   objRet.Service    = eval( '(' + '{}' + ')' ) ;
+}
 // om status and version
+function getOMInfo()
+{
+   objRet.OM         = eval( '(' + '{}' + ')' ) ;
+}
 
 // safety
 function getSafetyInfo()
@@ -124,22 +128,22 @@ function main()
          return objRet ;
       }
       objRet.HostName   = HOSTNAME ;
-//      objRet.IP         = IP ;
       objRet.User       = USERNAME ;
       objRet.Password   = PASSWORD ;
 
       // get local host info
-      getHostsTableInfo()
-      getOSInfo()
-      getCPUInfo()
-      getMemInfo()
-      getDiskInfo()
-      getNetCardInfo()
-      getSafetyInfo()
-      // TODO: tanzhaobo
-      objRet.Port       = eval( '(' + '{}' + ')' ) ;
-      objRet.Service    = eval( '(' + '{}' + ')' ) ;
-      objRet.OM         = eval( '(' + '{}' + ')' ) ;
+//      getHostsTableInfo()
+      getOSInfo() ;
+      getCPUInfo() ;
+      getMemInfo() ;
+      getDiskInfo() ;
+      getNetCardInfo() ;
+      getSafetyInfo() ;
+      getPortInfo() ;
+      getServiceInfo() ;
+      getOMInfo() ;
+
+      return objRet ;
    }
    catch ( e )
    {
@@ -158,7 +162,6 @@ function main()
             objRet.Detail = eval( '(' + errMsg + ')' ) ;
          }
       }
-      return objRet ;
    }
    return objRet ;
 }
