@@ -49,7 +49,7 @@ namespace engine
 {
 
 #if defined (_LINUX)
-   INT32 utilListNodes( UTIL_VEC_NODES & nodes, INT32 typeFilter,
+   /*INT32 utilListNodes( UTIL_VEC_NODES & nodes, INT32 typeFilter,
                         const CHAR * svcnameFilter,
                         OSSPID pidFilter )
    {
@@ -173,7 +173,7 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
+   }*/
 
 
 #else
