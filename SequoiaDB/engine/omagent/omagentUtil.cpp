@@ -434,13 +434,13 @@ namespace engine
       isRuning = FALSE ;
 
 #if defined( _WINDOWS )
-      CHAR enginePipeName [ PROC_PIPE_NAME_LEN + 1 ] = { 0 } ;
+      CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = { 0 } ;
       vector< string > names ;
       OSSNPIPE handle ;
       INT64 readSize = 0 ;
       BOOLEAN isOpen = FALSE ;
 
-      ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN,
+      ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
                     ENGINE_NPIPE_PATTERN, svcname ) ;
 
       rc = ossEnumNamedPipes ( names, enginePipeName ) ;

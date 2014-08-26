@@ -43,7 +43,6 @@ using namespace bson ;
 
 namespace engine
 {
-
    /*
       When recieve quit event or signal, will call
    */
@@ -57,6 +56,7 @@ namespace engine
       SDB_ROLE                      _dbrole ;
       MsgRouteID                    _nodeID ;
       ossAtomic32                   _isPrimary ;
+      SDB_TYPE                      _dbType ;
 
       BOOLEAN                       _quitFlag ;
       PMD_ON_QUIT_FUNC              _pQuitFunc ;
@@ -67,12 +67,15 @@ namespace engine
          _dbrole        = SDB_ROLE_STANDALONE ;
          _nodeID.value  = MSG_INVALID_ROUTEID ;
          _quitFlag      = FALSE ;
+         _dbType        = SDB_TYPE_DB ;
          _pQuitFunc     = NULL ;
       }
    } pmdSysInfo ;
 
    SDB_ROLE       pmdGetDBRole() ;
    void           pmdSetDBRole( SDB_ROLE role ) ;
+   SDB_TYPE       pmdGetDBType() ;
+   void           pmdSetDBType( SDB_TYPE type ) ;
    MsgRouteID     pmdGetNodeID() ;
    void           pmdSetNodeID( MsgRouteID id ) ;
    BOOLEAN        pmdIsPrimary() ;

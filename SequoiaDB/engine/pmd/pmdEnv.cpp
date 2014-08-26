@@ -57,6 +57,15 @@ namespace engine
    void  pmdSetDBRole( SDB_ROLE role )
    {
       pmdGetSysInfo()->_dbrole = role ;
+      pmdSetDBType( pmdRoleToType( role ) ) ;
+   }
+   SDB_TYPE pmdGetDBType()
+   {
+      return pmdGetSysInfo()->_dbType ;
+   }
+   void pmdSetDBType( SDB_TYPE type )
+   {
+      pmdGetSysInfo()->_dbType = type ;
    }
    MsgRouteID pmdGetNodeID()
    {

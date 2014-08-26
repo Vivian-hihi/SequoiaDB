@@ -62,6 +62,8 @@ namespace engine
          return SDB_ROLE_COORD;
       else if ( 0 == ossStrcmp( role, SDB_ROLE_OM_STR ) )
          return SDB_ROLE_OM ;
+      else if ( 0 == ossStrcmp( role, SDB_ROLE_OMA_STR ) )
+         return SDB_ROLE_OMA ;
       else
          return SDB_ROLE_MAX;
    }
@@ -80,10 +82,72 @@ namespace engine
             return SDB_ROLE_STANDALONE_STR ;
          case SDB_ROLE_OM :
             return SDB_ROLE_OM_STR ;
+         case SDB_ROLE_OMA :
+            return SDB_ROLE_OMA_STR ;
          default :
             break ;
       }
       return "" ;
+   }
+
+   SDB_TYPE pmdGetTypeEnum( const CHAR * type )
+   {
+      if ( NULL == type )
+      {
+         return SDB_TYPE_MAX ;
+      }
+      else if ( 0 == *type ||
+                0 == ossStrcmp( type, SDB_TYPE_DB_STR ) )
+      {
+         return SDB_TYPE_DB ;
+      }
+      else if ( 0 == ossStrcmp( type, SDB_TYPE_OM_STR ) )
+      {
+         return SDB_TYPE_OM ;
+      }
+      else if ( 0 == ossStrcmp( type, SDB_TYPE_OMA_STR ) )
+      {
+         return SDB_TYPE_OMA ;
+      }
+      else
+      {
+         return SDB_TYPE_MAX ;
+      }
+   }
+
+   const CHAR* pmdDBTypeStr( SDB_TYPE type )
+   {
+      switch ( type )
+      {
+         case SDB_TYPE_DB :
+            return SDB_TYPE_DB_STR ;
+         case SDB_TYPE_OM :
+            return SDB_TYPE_OM_STR ;
+         case SDB_TYPE_OMA :
+            return SDB_TYPE_OMA_STR ;
+         default :
+            break ;
+      }
+      return "Unknow" ;
+   }
+
+   SDB_TYPE pmdRoleToType( SDB_ROLE role )
+   {
+      switch ( role )
+      {
+         case SDB_ROLE_DATA :
+         case SDB_ROLE_COORD :
+         case SDB_ROLE_CATALOG :
+         case SDB_ROLE_STANDALONE :
+            return SDB_TYPE_DB ;
+         case SDB_ROLE_OM :
+            return SDB_TYPE_OM ;
+         case SDB_ROLE_OMA :
+            return SDB_TYPE_OMA ;
+         default :
+            break ;
+      }
+      return SDB_TYPE_MAX ;
    }
 
    INT32 pmdPrefReplStr2Enum( const CHAR * prefReplStr )

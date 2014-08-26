@@ -45,27 +45,26 @@
 #include "ossNPipe.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+
 namespace engine
 {
-// 1 seconds timeout
-#define PMD_WL_NPIPE_TIMEOUT 1
-#define PMD_WL_NPIPE_NAME_PREFIX "sequoiadb_engine_"
-#define PMD_WL_NPIPE_BUFSZ 1024
+   // 1 seconds timeout
+   #define PMD_WL_NPIPE_TIMEOUT        1
+   #define PMD_WL_NPIPE_NAME_PREFIX    "sequoiadb_engine_"
+   #define PMD_WL_NPIPE_BUFSZ          1024
 
-#define PMD_WL_NPIPE_MSG_SHUTDOWN "$shutdown"
-#define PMD_WL_NPIPE_MSG_PID      "$pid"
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDWINLSTNNPNTPNT, "pmdWindowsListenerEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDWINLSTNNPNTPNT, "pmdWindowsListenerEntryPoint" )
    INT32 pmdWindowsListenerEntryPoint ( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDWINLSTNNPNTPNT );
       EDUID myEDUID = cb->getID () ;
-      pmdKRCB *krcb = pmdGetKRCB () ;
       CHAR namedPipe [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
       OSSNPIPE pipeHandle ;
       BOOLEAN pipeCreated = FALSE ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       CHAR tempBuffer [ PMD_WL_NPIPE_BUFSZ ] = {0} ;
+      const CHAR *pSvcName = ( const CHAR* )pData ;
 
       INT32 dataSize = 0 ;
       INT64 readSize = 0 ;
@@ -73,13 +72,11 @@ namespace engine
       rc = eduMgr->activateEDU ( myEDUID ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to activate EDU" ) ;
+         PD_LOG ( PDERROR, "Failed to activate EDU, rc: %d", rc ) ;
          goto error ;
       }
       ossSnprintf ( namedPipe, OSS_NPIPE_MAX_NAME_LEN,
-                    PMD_WL_NPIPE_NAME_PREFIX"%s",
-                    pmdGetOptionCB()->getServiceAddr() ) ;
+                    PMD_WL_NPIPE_NAME_PREFIX"%s", pSvcName ) ;
       PD_LOG ( PDINFO, "Attempt to create named pipe: %s",
                namedPipe ) ;
 
@@ -145,14 +142,14 @@ namespace engine
          {
             PD_LOG ( PDEVENT, "Received message from windows listener: %s",
                      tempBuffer ) ;
-            if ( ossStrncmp ( tempBuffer, PMD_WL_NPIPE_MSG_SHUTDOWN,
-                              sizeof(PMD_WL_NPIPE_MSG_SHUTDOWN) ) == 0 )
+            if ( ossStrncmp ( tempBuffer, ENGINE_NPIPE_MSG_SHUTDOWN,
+                              sizeof(ENGINE_NPIPE_MSG_SHUTDOWN) ) == 0 )
             {
                PD_LOG ( PDEVENT, "Shutdown message is received" ) ;
                PMD_SHUTDOWN_DB( SDB_OK ) ;
             }
-            else if ( ossStrncmp ( tempBuffer, PMD_WL_NPIPE_MSG_PID,
-                                   sizeof(PMD_WL_NPIPE_MSG_PID) ) == 0 )
+            else if ( ossStrncmp ( tempBuffer, ENGINE_NPIPE_MSG_PID,
+                                   sizeof(ENGINE_NPIPE_MSG_PID) ) == 0 )
             {
                INT64 writeSize = 0 ;
                OSSPID currentProcessPID = ossGetCurrentProcessID () ;
@@ -162,6 +159,19 @@ namespace engine
                if ( rc )
                {
                   PD_LOG ( PDWARNING, "Failed to write pid to named pipe, "
+                           "rc = %d", rc ) ;
+               }
+            }
+            else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_TYPE,
+                                       sizeof( ENGINE_NPIPE_MSG_TYPE ) ) )
+            {
+               INT64 writeSize = 0 ;
+               INT32 type = pmdGetDBType() ;
+               rc = ossWriteNamedPipe ( pipeHandle, (CHAR*)&type,
+                                        sizeof(type), &writeSize ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDWARNING, "Failed to write type to named pipe, "
                            "rc = %d", rc ) ;
                }
             }
@@ -184,11 +194,12 @@ namespace engine
          break ;
       default :
          PD_LOG ( PDSEVERE, "Internal error" ) ;
-
       }
       PD_LOG ( PDSEVERE, "Shutdown database" ) ;
       PMD_SHUTDOWN_DB( rc ) ;
       goto done ;
    }
 }
-#endif
+
+#endif // _WINDOWS
+

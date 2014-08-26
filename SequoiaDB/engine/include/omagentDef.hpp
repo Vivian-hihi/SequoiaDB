@@ -91,7 +91,6 @@ namespace engine
    #define SDBOMA_SCRIPT_PATH          SDB_CM_ROOT_PATH SDBOMA_SCRIPT_DIR_NAME
 
 #if defined (_LINUX)
-      #define SDBCM_NAME_PATTERN       "sdbcm(%s)"
       #define SDBSTARTPROG             "sdbstart"
       #define SDBSTOPPROG              "sdbstop"
 #elif defined (_WINDOWS)

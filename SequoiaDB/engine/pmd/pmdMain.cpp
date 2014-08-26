@@ -255,7 +255,9 @@ namespace engine
          EDUID agentEDU = PMD_INVALID_EDUID ;
          pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
          // Then start windows listener thread for "backdoor" listening
-         eduMgr->startEDU ( EDU_TYPE_WINDOWSLISTENER, NULL, &agentEDU ) ;
+         eduMgr->startEDU ( EDU_TYPE_WINDOWSLISTENER,
+                            (void*)pmdGetOptionCB()->getServiceAddr(),
+                            &agentEDU ) ;
          eduMgr->regSystemEDU ( EDU_TYPE_WINDOWSLISTENER, agentEDU ) ;
       }
 #endif

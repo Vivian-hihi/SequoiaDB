@@ -57,6 +57,14 @@ namespace engine
    const CHAR* pmdDBRoleStr( SDB_ROLE dbrole ) ;
 
    /*
+      PMD ROLE_TYPE ENUM AND STRING TRANSFER
+   */
+   SDB_TYPE pmdGetTypeEnum( const CHAR *type ) ;
+   const CHAR* pmdDBTypeStr( SDB_TYPE type ) ;
+
+   SDB_TYPE pmdRoleToType( SDB_ROLE role ) ;
+
+   /*
       PMD Pref instance enum and string transfer
    */
    INT32 pmdPrefReplStr2Enum( const CHAR *prefReplStr ) ;

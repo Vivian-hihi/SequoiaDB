@@ -57,6 +57,11 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_OMNET, TRUE,
                                 pmdAsyncNetEntryPoint,
                                 "OMNet" ),
+#if defined (_WINDOWS)
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_WINDOWSLISTENER, TRUE,
+                                pmdWindowsListenerEntryPoint,
+                                "WindowsListener" ),
+#endif
 
          // For the end
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_MAXIMUM, FALSE,

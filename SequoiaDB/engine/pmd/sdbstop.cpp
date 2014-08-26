@@ -409,7 +409,7 @@ INT32 terminateProcess ( const CHAR *pPipeName )
    PD_TRACE_ENTRY ( SDB_TERMPROC2 );
    OSSNPIPE handle ;
    INT32 round = 0 ;
-   CHAR localBuf [ PROC_PIPE_NAME_LEN ] ;
+   CHAR localBuf [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = { 0 } ;
    convertPipeToName ( pPipeName, localBuf, sizeof(localBuf) ) ;
    ossPrintf ( "Terminating engine service %s"OSS_NEWLINE, localBuf ) ;
    rc = ossOpenNamedPipe ( pPipeName, OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
@@ -472,7 +472,7 @@ void stopEngine ( string serviceName, INT32 &success, INT32 &total )
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_STOPENGINE2 );
    vector<string> names ;
-   CHAR enginePipeName [ PROC_PIPE_NAME_LEN + 1 ] = {0} ;
+   CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
    BOOLEAN stopAll = FALSE ;
    rc = ossEnumNamedPipes ( names, NULL ) ;
    if ( rc )
@@ -483,13 +483,13 @@ void stopEngine ( string serviceName, INT32 &success, INT32 &total )
 
    if ( !serviceName.empty () )
    {
-      ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN, ENGINE_NPIPE_PATTERN,
-                    serviceName.c_str() ) ;
+      ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PATTERN, serviceName.c_str() ) ;
    }
    else
    {
-      ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN, ENGINE_NPIPE_PATTERN,
-                    "" ) ;
+      ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PATTERN, "" ) ;
       stopAll = TRUE ;
    }
    for ( INT32 i = 0; i < names.size(); ++i )

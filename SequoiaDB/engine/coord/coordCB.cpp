@@ -144,6 +144,9 @@ namespace engine
       pmdEDUMgr* pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
       EDUID eduID = PMD_INVALID_EDUID ;
 
+      // set to primary
+      pmdSetPrimary( TRUE ) ;
+
       // 1. start coord net work
       rc = pEDUMgr->startEDU ( EDU_TYPE_COORDNETWORK, (void*)netWork(),
                                &eduID ) ;

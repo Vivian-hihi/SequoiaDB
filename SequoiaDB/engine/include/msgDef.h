@@ -399,6 +399,7 @@
 #define SDB_ROLE_CATALOG_STR                 "catalog"
 #define SDB_ROLE_STANDALONE_STR              "standalone"
 #define SDB_ROLE_OM_STR                      "om"
+#define SDB_ROLE_OMA_STR                     "cm"
 
 #define SDB_AUTH_USER                        "User"
 #define SDB_AUTH_PASSWD                      "Passwd"
@@ -412,6 +413,7 @@ enum SDB_ROLE
    SDB_ROLE_CATALOG,
    SDB_ROLE_STANDALONE,
    SDB_ROLE_OM,
+   SDB_ROLE_OMA,
    SDB_ROLE_MAX
 } ;
 

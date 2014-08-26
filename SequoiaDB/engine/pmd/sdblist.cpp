@@ -43,11 +43,12 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdDef.hpp"
+#include "pmdOptions.h"
+#include "ossVer.h"
+#include "utilParam.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
 
 #if defined (_LINUX)
 #include <dirent.h>
@@ -58,152 +59,115 @@
 #endif
 
 using namespace std;
-namespace po = boost::program_options;
 
-#define OPTION_HELP "help"
-#define OPTION_SVCNAME "svcname"
-
-#define ADD_PARAM_OPTIONS_BEGIN( desc )\
-        desc.add_options()
-
-#define ADD_PARAM_OPTIONS_END ;
-
-#define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
-#define COMMANDS_OPTIONS \
-       ( COMMANDS_STRING(OPTION_HELP, ",h"),                          "help" )\
-       ( COMMANDS_STRING(OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name" )
-
-
-#define SERVICE_SEPARATOR ","
-
-vector<string> stopServices ;
-// initialize options
-void init ( po::options_description &desc )
+namespace engine
 {
-   ADD_PARAM_OPTIONS_BEGIN ( desc )
-      COMMANDS_OPTIONS
-   ADD_PARAM_OPTIONS_END
-}
 
-void displayArg ( po::options_description &desc )
-{
-   std::cout << desc << std::endl ;
-}
+   #define COMMANDS_OPTIONS \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h"), "help" ) \
+       ( PMD_OPTION_VERSION, "show version" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name, use ',' to seperator" )
 
-static OSS_INLINE std::string &ltrim ( std::string &s )
-{
-   s.erase ( s.begin(), std::find_if ( s.begin(), s.end(),
-             std::not1 ( std::ptr_fun<int, int>(std::isspace)))) ;
-   return s ;
-}
+   vector<string> listServices ;
 
-static OSS_INLINE std::string &rtrim ( std::string &s )
-{
-   s.erase ( std::find_if ( s.rbegin(), s.rend(),
-             std::not1 ( std::ptr_fun<int, int>(std::isspace))).base(),
-             s.end() ) ;
-   return s ;
-}
-
-static OSS_INLINE std::string &trim ( std::string &s )
-{
-   return ltrim ( rtrim ( s ) ) ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SVCSPLIT2, "serviceSplit" )
-INT32 serviceSplit ( string &input )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_SVCSPLIT2 );
-   CHAR *cstr, *p ;
-   CHAR *pContext = NULL ;
-   INT32 bufSize = input.size() ;
-   cstr = (CHAR*)SDB_OSS_MALLOC ( bufSize+1 ) ;
-   if ( !cstr )
+   // initialize options
+   void init ( po::options_description &desc )
    {
-      PD_LOG ( PDERROR, "Failed to allocate memory" ) ;
-      rc = SDB_OOM ;
-      goto error ;
-   }
-   ossMemset ( cstr, 0, bufSize + 1 ) ;
-   ossStrncpy ( cstr, input.c_str(), bufSize ) ;
-   p = ossStrtok ( cstr, SERVICE_SEPARATOR, &pContext ) ;
-   while ( p )
-   {
-      string ts ( p ) ;
-      stopServices.push_back ( trim ( ts ) ) ;
-      p = ossStrtok ( NULL, SERVICE_SEPARATOR, &pContext ) ;
-   }
-done :
-   if ( cstr )
-      SDB_OSS_FREE ( cstr ) ;
-   PD_TRACE_EXITRC ( SDB_SVCSPLIT2, rc );
-   return rc ;
-error :
-   goto done ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_RESVARG, "resolveArgument" )
-INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_SDBLIST_RESVARG );
-   po::variables_map vm ;
-   try
-   {
-      po::store ( po::parse_command_line ( argc, argv, desc ), vm ) ;
-      po::notify ( vm ) ;
-   }
-   catch ( po::unknown_option &e )
-   {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-            ( ( std::string ) "Unknown argument: " +
-                e.get_option_name ()).c_str () ) ;
-              std::cerr <<  "Unknown argument: "
-                        << e.get_option_name () << std::endl ;
-              rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch ( po::invalid_option_value &e )
-   {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-             ( ( std::string ) "Invalid argument: " +
-               e.get_option_name () ).c_str () ) ;
-      std::cerr <<  "Invalid argument: "
-                << e.get_option_name () << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch( po::error &e )
-   {
-      std::cerr << e.what () << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
+         COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
    }
 
-   if ( vm.count ( OPTION_HELP ) )
+   void displayArg ( po::options_description &desc )
    {
-      displayArg ( desc ) ;
-      rc = SDB_PMD_HELP_ONLY ;
-      goto done ;
+      std::cout << desc << std::endl ;
    }
-   if ( vm.count ( OPTION_SVCNAME ) )
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SVCSPLIT2, "serviceSplit" )
+   INT32 serviceSplit ( const string &input )
    {
-      string svcname = vm[OPTION_SVCNAME].as<string>() ;
-      // break service names using ';'
-      rc = serviceSplit ( svcname ) ;
-      if ( rc )
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_SVCSPLIT2 );
+      CHAR *cstr = NULL ;
+      CHAR *p = NULL ;
+      CHAR *pContext = NULL ;
+      INT32 bufSize = input.size() ;
+
+      cstr = (CHAR*)SDB_OSS_MALLOC ( bufSize + 1 ) ;
+      if ( !cstr )
       {
-         PD_LOG ( PDERROR, "Failed to split service names, rc = %d", rc ) ;
+         std::cout << "Alloc memory(" << bufSize + 1 << ") failed" << endl ;
+         rc = SDB_OOM ;
          goto error ;
       }
+      ossMemset ( cstr, 0, bufSize + 1 ) ;
+      ossStrncpy ( cstr, input.c_str(), bufSize ) ;
+
+      p = ossStrtok ( cstr, ", \t", &pContext ) ;
+      while ( p )
+      {
+         string ts ( p ) ;
+         listServices.push_back ( ts ) ;
+         p = ossStrtok ( NULL, ", \t", &pContext ) ;
+      }
+
+   done :
+      if ( cstr )
+      {
+         SDB_OSS_FREE ( cstr ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_SVCSPLIT2, rc );
+      return rc ;
+   error :
+      goto done ;
    }
-done :
-   PD_TRACE_EXITRC ( SDB_SDBLIST_RESVARG, rc );
-   return rc ;
-error :
-   goto done ;
-}
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_RESVARG, "resolveArgument" )
+   INT32 resolveArgument ( po::options_description &desc,
+                           INT32 argc, CHAR **argv )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_SDBLIST_RESVARG ) ;
+      po::variables_map vm ;
+
+      rc = utilReadCommandLine( argc, argv,  desc, vm ) ;
+      if ( rc )
+      {
+         std::cout << "Read command line failed: " << rc << endl ;
+         goto error ;
+      }
+
+      if ( vm.count ( PMD_OPTION_HELP ) )
+      {
+         displayArg ( desc ) ;
+         rc = SDB_PMD_HELP_ONLY ;
+         goto error ;
+      }
+      else if ( vm.count( PMD_OPTION_VERSION ) )
+      {
+         ossPrintVersion( "Sdb list" ) ;
+         rc = SDB_PMD_VERSION_ONLY ;
+         goto error ;
+      }
+
+      if ( vm.count ( PMD_OPTION_SVCNAME ) )
+      {
+         string svcname = vm[PMD_OPTION_SVCNAME].as<string>() ;
+         // break service names using ';'
+         rc = serviceSplit ( svcname ) ;
+         if ( rc )
+         {
+            std::cout << "Parse svcname failed: " << rc << endl ;
+            goto error ;
+         }
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_SDBLIST_RESVARG, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
 
 #if defined (_LINUX)
 void displayProcess ( pid_t &pid, CHAR *pName )
@@ -331,7 +295,7 @@ void convertPipeToName ( const CHAR *pPipeName, CHAR *pName, INT32 len )
    while ( p )
    {
       string ts ( p ) ;
-      splitedString.push_back ( trim ( ts ) ) ;
+      splitedString.push_back ( ts ) ;
       p = ossStrtok ( NULL, ENGINE_NPIPE_PATTERN_SEP, &pContext ) ;
    }
    ossMemset ( pName, 0, len ) ;
@@ -367,7 +331,7 @@ void displayProcess ( const CHAR *pPipeName )
    OSSPID pid ;
    INT64 readSize = 0 ;
    INT32 round = 0 ;
-   CHAR localBuf [ PROC_PIPE_NAME_LEN ] ;
+   CHAR localBuf [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = { 0 } ;
    rc = ossOpenNamedPipe ( pPipeName, OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
                            OSS_NPIPE_INFINITE_TIMEOUT,
                            handle ) ;
@@ -415,7 +379,7 @@ void listEngine ( string serviceName, INT32 &total )
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_LISTENGINE2 );
    vector<string> names ;
-   CHAR enginePipeName [ PROC_PIPE_NAME_LEN + 1 ] = {0} ;
+   CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
    BOOLEAN stopAll = FALSE ;
    rc = ossEnumNamedPipes ( names, NULL ) ;
    if ( rc )
@@ -426,13 +390,13 @@ void listEngine ( string serviceName, INT32 &total )
 
    if ( !serviceName.empty () )
    {
-      ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN, ENGINE_NPIPE_PATTERN,
-                    serviceName.c_str() ) ;
+      ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PATTERN, serviceName.c_str() ) ;
    }
    else
    {
-      ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN, ENGINE_NPIPE_PATTERN,
-                    "" ) ;
+      ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PATTERN, "" ) ;
       stopAll = TRUE ;
    }
    for ( INT32 i = 0; i < names.size(); ++i )
@@ -464,42 +428,52 @@ error :
 }
 #endif
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_MAIN, "main" )
-INT32 main ( INT32 argc, CHAR **argv )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_SDBLIST_MAIN );
-   INT32 total = 0 ;
-   po::options_description desc ( "Command options" ) ;
-   init ( desc ) ;
-   // validate arguments
-   rc = resolveArgument ( desc, argc, argv ) ;
-   if ( rc )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_MAIN, "mainEtnry" )
+   INT32 mainEtnry ( INT32 argc, CHAR **argv )
    {
-      if ( SDB_PMD_HELP_ONLY != rc )
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_SDBLIST_MAIN );
+      INT32 total = 0 ;
+      po::options_description desc ( "Command options" ) ;
+      init ( desc ) ;
+
+      // validate arguments
+      rc = resolveArgument ( desc, argc, argv ) ;
+      if ( rc )
       {
-         PD_LOG ( PDERROR, "Invalid argument" ) ;
-         displayArg ( desc ) ;
+         if ( SDB_PMD_HELP_ONLY != rc &&
+              SDB_PMD_VERSION_ONLY != rc )
+         {
+            std::cout << "Invalid argument" << endl ;
+            displayArg ( desc ) ;
+         }
+         goto done ;
       }
-      goto done ;
+
+      if ( 0 == listServices.size() )
+      {
+         listEngine ( "", total ) ;
+      }
+      else
+      {
+         for ( UINT32 i = 0; i < listServices.size(); ++i )
+         {
+            listEngine ( listServices[i], total ) ;
+         }
+      }
+
+      ossPrintf ( "Total: %d"OSS_NEWLINE, total ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_SDBLIST_MAIN, rc );
+      return SDB_OK == rc ? 0 : 1 ;
    }
 
-   if ( 0 == stopServices.size() )
-   {
-      listEngine ( "", total ) ;
-      ossPrintf ( "Total: %d"OSS_NEWLINE,
-                  total ) ;
-   }
-   else
-   {
-      for ( UINT32 i = 0; i < stopServices.size(); ++i )
-      {
-         listEngine ( stopServices[i], total ) ;
-      }
-      ossPrintf ( "Total: %d"OSS_NEWLINE,
-                  total ) ;
-   }
-done :
-   PD_TRACE_EXITRC ( SDB_SDBLIST_MAIN, rc );
-   return SDB_OK == rc ? 0 : 1 ;
 }
+
+INT32 main ( INT32 argc, CHAR **argv )
+{
+   return engine::mainEtnry( argc, argv ) ;
+}
+
+

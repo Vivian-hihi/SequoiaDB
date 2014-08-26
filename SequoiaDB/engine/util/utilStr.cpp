@@ -37,6 +37,9 @@
 #include "ossUtil.hpp"
 #include "pd.hpp"
 #include <boost/xpressive/xpressive_dynamic.hpp>
+#include <algorithm>
+#include <functional>
+#include <cctype>
 
 using namespace boost::xpressive ;
 namespace engine
@@ -127,6 +130,26 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   std::string &utilStrLtrim ( std::string &s )
+   {
+      s.erase ( s.begin(), std::find_if ( s.begin(), s.end(),
+                std::not1 ( std::ptr_fun<int, int>(std::isspace)))) ;
+      return s ;
+   }
+
+   std::string &utilStrRtrim ( std::string &s )
+   {
+      s.erase ( std::find_if ( s.rbegin(), s.rend(),
+                std::not1 ( std::ptr_fun<int, int>(std::isspace))).base(),
+                s.end() ) ;
+      return s ;
+   }
+
+   std::string &utilStrTrim ( std::string &s )
+   {
+      return utilStrLtrim ( utilStrRtrim ( s ) ) ;
    }
 
    INT32 utilStrToUpper( const CHAR *src, CHAR *&upper )

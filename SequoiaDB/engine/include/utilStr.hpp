@@ -38,17 +38,21 @@
 #define UTILSTR_HPP_
 
 #include "core.hpp"
+#include <string>
 
 namespace engine
 {
    /// skip spaces at begin.
    INT32 utilStrTrimBegin( const CHAR *src, const CHAR *&begin ) ;
+   std::string &utilStrLtrim ( std::string &s ) ;
 
    /// remove spaces at end.
    INT32 utilStrTrimEnd( CHAR *src ) ;
+   std::string &utilStrRtrim ( std::string &s ) ;
 
    /// trim spaces at begin or end .
    INT32 utilStrTrim( CHAR *src, const CHAR *&begin ) ;
+   std::string &utilStrTrim ( std::string &s ) ;
 
    INT32 utilStrToUpper( const CHAR *src, CHAR *&upper ) ;
 

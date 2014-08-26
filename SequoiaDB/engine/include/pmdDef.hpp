@@ -211,6 +211,13 @@ namespace engine
    #define PMD_IS_EDU_DESTROY(x)       ( PMD_EDU_DESTROY  == x )
 
    /*
+      SDB_TYPE_STR DEFINE
+   */
+   #define SDB_TYPE_DB_STR             "sequoiadb"
+   #define SDB_TYPE_OM_STR             "sdbom"
+   #define SDB_TYPE_OMA_STR            "sdbcm"
+
+   /*
       define
    */
    #define PMD_DFT_CONF                "sdb.conf"
@@ -225,9 +232,9 @@ namespace engine
    #if defined (_LINUX)
    #define PROC_PATH                   "/proc"
    #define PROC_CMDLINE_PATH_FORMAT    PROC_PATH"/%s/cmdline"
-   #define ENGINE_NAME                 "sequoiadb"
+   #define ENGINE_NAME                 SDB_TYPE_DB_STR
    #define MODIFIED_ENGINE_NAME        ENGINE_NAME "("
-   #define ENGINE_NAME_PATTERN1        "sequoiadb("
+   #define ENGINE_NAME_PATTERN1        SDB_TYPE_DB_STR"("
    #define ENGINE_NAME_PATTERN2        ")"
    #define ENGINE_NAME_PATTERN         ENGINE_NAME_PATTERN1 "%s" ENGINE_NAME_PATTERN2
    #elif defined (_WINDOWS)
@@ -238,10 +245,11 @@ namespace engine
    #define ENGINE_NPIPE_PATTERN        ENGINE_NPIPE_PATTERN1 ENGINE_NPIPE_PATTERN_SEP \
                                        ENGINE_NPIPE_PATTERN2 ENGINE_NPIPE_PATTERN_SEP \
                                        "%s"
-   #endif
+   #endif // _LINUX
 
-   #define PROC_PIPE_NAME_LEN          255
    #define ENGINE_NPIPE_MSG_PID        "$pid"
+   #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"
+   #define ENGINE_NPIPE_MSG_TYPE       "$type"
    #define LIST_TIMEOUT                0
 
    /*
@@ -264,6 +272,19 @@ namespace engine
    #define PMD_ADD_PARAM_OPTIONS_BEGIN( desc )  desc.add_options()
    #define PMD_ADD_PARAM_OPTIONS_END ;
    #define PMD_COMMANDS_STRING( a, b )       (string(a) +string( b)).c_str()
+
+
+   /*
+      SDB_TYPE define
+   */
+   enum SDB_TYPE
+   {
+      SDB_TYPE_DB  = 1,    // sequoiadb: data, standalone, coord, catalog
+      SDB_TYPE_OM,         // om
+      SDB_TYPE_OMA,        // omagent
+
+      SDB_TYPE_MAX
+   } ;
 
 }
 

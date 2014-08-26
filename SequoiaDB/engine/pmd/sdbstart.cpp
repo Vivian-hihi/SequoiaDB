@@ -148,15 +148,15 @@ BOOLEAN serviceExists ( const CHAR *pServiceName  )
    INT32 rc = SDB_OK ;
    OSSPID pid ;
    vector<string> names ;
-   CHAR enginePipeName [ PROC_PIPE_NAME_LEN + 1 ] = {0} ;
+   CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
    rc = ossEnumNamedPipes ( names, NULL ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to enum named pipes, rc = %d", rc ) ;
       goto error ;
    }
-   ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN, ENGINE_NPIPE_PATTERN,
-                 pServiceName ) ;
+   ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
+                 ENGINE_NPIPE_PATTERN, pServiceName ) ;
    for ( INT32 i = 0; i < names.size(); ++i )
    {
       const CHAR *pName = names[i].c_str() ;
@@ -439,9 +439,9 @@ INT32 findEngine ( OSSPID pid )
    PD_TRACE1 ( SDB_FINDENGINE, PD_PACK_INT(pid) );
    vector<string> names ;
    INT32 round = 0 ;
-   CHAR enginePipeName [ PROC_PIPE_NAME_LEN + 1 ] = {0} ;
-   ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN, ENGINE_NPIPE_PATTERN,
-                 "" ) ;
+   CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
+   ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
+                 ENGINE_NPIPE_PATTERN, "" ) ;
 
    //while ( round < PROC_START_TIMEOUT )
    // we do not timeout. Because in crash recovery mode we may stay in recovery
