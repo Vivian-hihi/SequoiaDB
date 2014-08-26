@@ -179,12 +179,25 @@ namespace engine
 
 #else
 
-   static INT32 utilWriteReadPipe( const CHAR *pPipeName, OSSNPIPE &handle,
+   static INT32 utilWriteReadPipe( const CHAR *pPipeName,
                                    const CHAR *pWriteBuf, INT64 writeLen,
                                    CHAR *pReadBuf, INT64 readLen,
                                    INT64 *bufRead )
    {
       INT32 rc = SDB_OK ;
+      OSSNPIPE handle ;
+      BOOLEAN isOpen = FALSE ;
+
+      rc = ossOpenNamedPipe( pPipeName,
+                             OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
+                             OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc: %d",
+                  pPipeName, rc ) ;
+         goto error ;
+      }
+      isOpen = TRUE ;
 
       rc = ossWriteNamedPipe( handle, pWriteBuf, writeLen, NULL ) ;
       if ( rc )
@@ -212,6 +225,10 @@ namespace engine
       }
 
    done:
+      if ( isOpen )
+      {
+         ossCloseNamedPipe( handle ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -223,9 +240,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       vector< string > names ;
       utilNodeInfo findNode ;
-      OSSNPIPE handle ;
       INT64 readSize = 0 ;
-      BOOLEAN isOpen = FALSE ;
       UINT32 prefixLen = ossStrlen( ENGINE_NPIPE_PREFIX ) ;
 
       rc = ossEnumNamedPipes ( names, NULL ) ;
@@ -239,12 +254,6 @@ namespace engine
             continue ;
          }
 
-         if ( isOpen )
-         {
-            ossCloseNamedPipe( handle ) ;
-            isOpen = FALSE ;
-         }
-
          // 1. svcname
          if ( svcnameFilter && 0 != *svcnameFilter &&
               0 != ossStrcmp( names[ i ].c_str() + prefixLen, svcnameFilter ) )
@@ -253,18 +262,7 @@ namespace engine
          }
 
          // 2. type
-         rc = ossOpenNamedPipe( names[ i ].c_str(),
-                                OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
-                                OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle ) ;
-         if ( rc && SDB_FE != rc )
-         {
-            PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc: %d",
-                     names[ i ].c_str(), rc ) ;
-            continue ;
-         }
-         isOpen = TRUE ;
-
-         rc = utilWriteReadPipe( names[ i ].c_str(), handle,
+         rc = utilWriteReadPipe( names[ i ].c_str(),
                                  ENGINE_NPIPE_MSG_TYPE,
                                  sizeof( ENGINE_NPIPE_MSG_TYPE ),
                                  (CHAR*)&findNode._type,
@@ -274,14 +272,13 @@ namespace engine
          {
             continue ;
          }
-
          if ( -1 != typeFilter && typeFilter != findNode._type )
          {
             continue ;
          }
 
          // 3. pid
-         rc = utilWriteReadPipe( names[ i ].c_str(), handle,
+         rc = utilWriteReadPipe( names[ i ].c_str(),
                                  ENGINE_NPIPE_MSG_PID,
                                  sizeof( ENGINE_NPIPE_MSG_PID ),
                                  (CHAR *)&findNode._pid,
@@ -291,8 +288,7 @@ namespace engine
          {
             continue ;
          }
-         if ( pidFilter != OSS_INVALID_PID &&
-              pidFilter != findNode._pid )
+         if ( pidFilter != OSS_INVALID_PID && pidFilter != findNode._pid )
          {
             continue ;
          }
@@ -311,10 +307,6 @@ namespace engine
       }
 
    done:
-      if ( isOpen )
-      {
-         ossCloseNamedPipe( handle );
-      }
       return rc ;
    error:
       goto done ;
