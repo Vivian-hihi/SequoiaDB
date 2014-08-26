@@ -145,7 +145,6 @@ env = Environment( BUILD_DIR=variantDir )
 
 env.Append ( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 env.Append ( CPPDEFINES=[ "SDB_CLIENT" ] )
-
 if guess_os == "win32":
    # check VC compiler
    for pathdir in env['ENV']['PATH'].split(os.pathsep):
@@ -157,14 +156,16 @@ if guess_os == "win32":
          env['ENV'] = dict(os.environ)
 
    env.Append( CPPDEFINES=["HAVE_SOCKLEN_T",
-               "WIN32", "NDEBUG", "_MBCS", "_USRDLL", "_EXPORTS",
-               "COMPILE_DL_SEQUOIADB", "ZTS=1", "HAVE_SEQUOIADB=1"] )
+               "WIN32", "NDEBUG", "_USRDLL", "_MBCS", "_EXPORTS",
+               "COMPILE_DL_SEQUOIADB", "HAVE_SEQUOIADB=1"] ) # 
 
    winLibString = "ws2_32.lib kernel32.lib advapi32.lib Psapi.lib"
    winLibString += " user32.lib gdi32.lib winspool.lib comdlg32.lib shell32.lib ole32.lib oleaut32.lib "
    winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
 
    env.Append( LIBS=Split(winLibString) )
+   env.Append( CPPDEFINES=[ "_UNICODE" ] )
+   env.Append( CPPDEFINES=[ "UNICODE" ] )
 
    if guess_arch == "ia64":
       env.Append( LIBPATH=[join(boost_lib_dir,'win64')] )
@@ -173,21 +174,23 @@ if guess_os == "win32":
       env.Append( LIBPATH=[join(boost_lib_dir,'win32')] )
 
    env.Append( CPPDEFINES=[ "_CRT_RAND_S" ] )
-   env.Append( CPPDEFINES=[ "UNICODE" ] )
    env.Append( CPPFLAGS=" /EHsc /W3 " )
    if debugBuild:
       env.Append( CPPFLAGS=" /RTC1 /MDd /Z7 /errorReport:none " )
       env.Append( LINKFLAGS=" /debug " )
       env.Append( CPPFLAGS=" /Od " )
+      env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  /NODEFAULTLIB:MSVCRT  " )
+
    else:
       env.Append( CPPDEFINES=[ "NDEBUG" ] )
       env.Append( CPPFLAGS= " /O2 /Gy " )
       env.Append( CPPFLAGS= " /MT /Zi /errorReport:none " )
       env.Append( CPPFLAGS= " /GL " )
       env.Append( LINKFLAGS=" /LTCG " )
+      env.Append( LINKFLAGS=" /DEBUG " )
+      env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  " )
 
    env.Append( CPPDEFINES=["_CONSOLE", "_CRT_SECURE_NO_WARNINGS", "PSAPI_VERSION=1", "_CRT_RAND_S" ] )
-
 
 elif guess_os == "linux":
    env.Append( CPPDEFINES=["HAVE_CONFIG_H","PIC"])

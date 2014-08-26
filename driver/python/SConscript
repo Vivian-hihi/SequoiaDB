@@ -5,36 +5,8 @@ Import("curPath")
 import sys
 import os
 
-pyclientFile = [
-   "pysequoiadb/pyclient.cpp"
-   ]
-
-pyclFile = [
-   "pysequoiadb/pycollection.cpp"
-   ]
-
-pycsFile = [
-   "pysequoiadb/pycollectionspace.cpp"
-   ]
-
-pycursorFile = [
-   "pysequoiadb/pycursor.cpp"
-   ]
-
-pygroupFile = [
-   "pysequoiadb/pyreplicagroup.cpp"
-   ]
-
-pynodeFile = [
-   "pysequoiadb/pyreplicanode.cpp"
-   ]
-
-clientFiles = [
-   path + "SequoiaDB/engine/client/clientcpp.cpp"
-   ]
-
-clientThreadSafe = [
-   path + "SequoiaDB/engine/oss/ossLatch.cpp"
+driverFiles = [
+   "pysequoiadb/pysequoiadb.cpp"
    ]
 
 clientLibFiles = [
@@ -83,8 +55,6 @@ clientLibFiles2 = [
 env.Execute(Mkdir(curPath + "/build/temp"))
 env.Execute(Mkdir(curPath + "/build/temp/bson"))
 
-for file in clientFiles:
-   env.Execute(Copy(curPath + "/build/temp", file))
 for file in clientLibFiles:
    env.Execute(Copy(curPath + "/build/temp", file))
 for file in clientLibFiles2:
@@ -120,40 +90,13 @@ srcFiles = [
    curPath + "nonce.cpp",
 ]
 
-pyclient = env.SharedLibrary("libsdbclient", [pyclientFile, srcFiles])
-pycs     = env.SharedLibrary("libsdbcs",     [pycsFile, srcFiles])
-pycl     = env.SharedLibrary("libsdbcl",     [pyclFile, srcFiles])
-pycursor = env.SharedLibrary("libsdbcursor", [pycursorFile, srcFiles])
-pygroup  = env.SharedLibrary("libsdbgroup",  [pygroupFile, srcFiles])
-pynode   = env.SharedLibrary("libsdbnode",   [pynodeFile, srcFiles])
+driver   = env.SharedLibrary("libsequoiadb",   [driverFiles, srcFiles])
 
 base = []
-base.append(env.Install("#/pysequoiadb", pyclient))
-base.append(env.Install("#/pysequoiadb", pycs))
-base.append(env.Install("#/pysequoiadb", pycl))
-base.append(env.Install("#/pysequoiadb", pycursor))
-base.append(env.Install("#/pysequoiadb", pygroup))
-base.append(env.Install("#/pysequoiadb", pynode))
+base.append(env.Install("#/pysequoiadb", driver))
 
 if sys.platform == 'win32':
-
-   """def rename(*nargs, **kwargs):
-      import glob
-      import shutil
-      path = os.getcwd()
-      dlls = './pysequoiadb/*.dll'
-      print "rename begin................................................"
-      for file in glob.glob(dlls):
-         newname = file[:-3] + '.pyd'
-         #newname = file.replace(".dll", ".pyd")
-         os.rename(file, newname )
-
-   env.AddMethod(rename, "rename_dlls")
-   run = env.rename_dlls()
-   env.Depends(run, base)
-   env.AlwaysBuild(run)
-   """
-
+   pass
 else:
    act = "tar -zcvf pysequoiadb.tar.gz   \
           ./bson ./pysequoiadb ./setup.py \
