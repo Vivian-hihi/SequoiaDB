@@ -45,6 +45,7 @@
 #include "pmdDef.hpp"
 #include "pmdOptions.h"
 #include "utilNodeOpr.hpp"
+#include "utilCommon.hpp"
 #include "ossVer.h"
 #include "utilParam.hpp"
 #include <string>
