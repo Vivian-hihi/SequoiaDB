@@ -162,7 +162,8 @@ namespace engine
       while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
       {
          // sniff wether has data
-         rc = sniffData( PMD_REST_SESSION_SNIFF_TIMEOUT ) ;
+         rc = sniffData( _pSessionInfo ? OSS_ONE_SEC :
+                         PMD_REST_SESSION_SNIFF_TIMEOUT ) ;
          if ( SDB_TIMEOUT == rc )
          {
             if ( _pSessionInfo )
@@ -592,6 +593,34 @@ namespace engine
       }
 
       return "" ;
+   }
+
+   INT32 _pmdRestSession::doLogin( const string & username,
+                                   UINT32 localIP )
+   {
+      INT32 rc = SDB_OK ;
+
+      doLogout() ;
+
+      _pSessionInfo = sdbGetOMManager()->newSessionInfo( username, localIP ) ;
+      if ( !_pSessionInfo )
+      {
+         rc = SDB_OOM ;
+      }
+      else
+      {
+         _pSessionInfo->_authOK = TRUE ;
+      }
+      return rc ;
+   }
+
+   void _pmdRestSession::doLogout()
+   {
+      if ( _pSessionInfo )
+      {
+         sdbGetOMManager()->releaseSessionInfo( _pSessionInfo->_id ) ;
+         _pSessionInfo = NULL ;
+      }
    }
 
 }

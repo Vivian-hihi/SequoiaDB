@@ -169,6 +169,10 @@ namespace engine
          string            getLoginUserName() ;
          const CHAR*       getSessionID() ;
 
+         void              doLogout () ;
+         INT32             doLogin ( const string &username,
+                                     UINT32 localIP ) ;
+
       protected:
          virtual void      _onAttach () ;
          virtual void      _onDetach () ;

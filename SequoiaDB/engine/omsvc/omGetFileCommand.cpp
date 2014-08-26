@@ -97,7 +97,6 @@ namespace engine
       const CHAR *pTime            = NULL ;
       INT32 rc                     = SDB_OK ;
       ossSocket *socket            = NULL ;
-      restSessionInfo *sessionInfo = NULL ;
       BSONObjBuilder authBuilder ;
       BSONObjBuilder resBuilder ;
       BSONObj bsonRes ;
@@ -151,35 +150,23 @@ namespace engine
          goto error ;
       }
 
-      if ( _restSession->isAuthOK() )
+      rc = _restSession->doLogin( pUserName, socket->getLocalIP() ) ;
+      if ( rc )
       {
-         sdbGetOMManager()->releaseSessionInfo( _restSession->getSessionID() ) ;
-      }
-
-      sessionInfo = sdbGetOMManager()->newSessionInfo( pUserName, 
-                                                       socket->getLocalIP() ) ;
-      if ( NULL == sessionInfo )
-      {
-         PD_LOG( PDERROR, "new session failed:user=%s, ip=%u", pUserName,
+         PD_LOG( PDERROR, "do login failed:user=%s, ip=%u", pUserName,
                  socket->getLocalIP() ) ;
          _sendErrorRes2Web( SDB_SYS, "system error" ) ;
+         goto error ;
       }
 
-      sessionInfo->_authOK = TRUE ;
       resBuilder.append( OM_REST_RES_RETCODE, rc ) ;
       resBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_INDEX_HTML ) ;
       _restAdaptor->appendHttpHeader( _restSession, FIELD_NAME_SESSIONID, 
-                                      sessionInfo->_id.c_str() ) ;
+                                      _restSession->getSessionID() ) ;
       _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
    done:
-      if ( sessionInfo )
-      {
-         // need to detach session
-         sdbGetOMManager()->detachSessionInfo( sessionInfo ) ;
-         sessionInfo = NULL ;
-      }
       return SDB_OK ;
    error:
       goto done ;
@@ -199,10 +186,8 @@ namespace engine
    INT32 omLogoutCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
-      if ( _restSession->isAuthOK() )
-      {
-         sdbGetOMManager()->releaseSessionInfo( _restSession->getSessionID() ) ;
-      }
+
+      _restSession->doLogout() ;
 
       BSONObjBuilder resBuilder ;
       resBuilder.append( OM_REST_RES_RETCODE, rc ) ;
