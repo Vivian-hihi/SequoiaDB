@@ -78,7 +78,6 @@ pdFiles = [
       ]
 
 pmdFiles = [
-      "pmd/pmdCommon.cpp",
 	  "pmd/pmdMemPool.cpp",
       "pmd/pmdDaemon.cpp",
       "pmd/pmdWinService.cpp",
@@ -108,6 +107,7 @@ utilFiles = [
       "util/text.cpp",
       "util/utilStr.cpp",
       "util/utilParam.cpp",
+      "util/utilCommon.cpp",
       "util/utilNodeOpr.cpp",
       "util/utilSdb.cpp",
       "util/csv2rawbson.cpp",

@@ -36,7 +36,7 @@
 
 #include "pmdOptionsMgr.hpp"
 #include "pd.hpp"
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "msg.hpp"
 #include "msgCatalog.hpp"
 #include "ossMem.hpp"
@@ -1148,7 +1148,7 @@ namespace engine
       }
 
       // dbrole check
-      if ( SDB_ROLE_MAX == ( dbRole = pmdGetRoleEnum( _krcbRole ) ) )
+      if ( SDB_ROLE_MAX == ( dbRole = utilGetRoleEnum( _krcbRole ) ) )
       {
          std::cerr << "db role: " << _krcbRole << " error" << std::endl ;
          rc = SDB_INVALIDARG ;
@@ -1171,7 +1171,7 @@ namespace engine
       _syncStrategyStr[0] = 0 ;
 
       // preferreplica check
-      _preferReplica = pmdPrefReplStr2Enum( _prefReplStr ) ;
+      _preferReplica = utilPrefReplStr2Enum( _prefReplStr ) ;
 
       if ( 0 == ossStrlen( _replServiceName ) )
       {
@@ -1409,8 +1409,8 @@ namespace engine
       clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
 
-      pmdPrefReplEnum2Str( _preferReplica, _prefReplStr,
-                           sizeof(_prefReplStr) ) ;
+      utilPrefReplEnum2Str( _preferReplica, _prefReplStr,
+                            sizeof(_prefReplStr) ) ;
 
       return SDB_OK ;
    }

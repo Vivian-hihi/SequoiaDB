@@ -39,7 +39,7 @@
 #include "pmd.hpp"
 #include "rtn.hpp"
 #include "ossProc.hpp"
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "pmdStartup.hpp"
 #include "optQgmStrategy.hpp"
 #include "pdTrace.hpp"

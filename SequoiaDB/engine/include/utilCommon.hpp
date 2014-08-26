@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = pmdCommon.hpp
+   Source File Name = utilCommon.hpp
 
    Descriptive Name = Process MoDel Main
 
@@ -29,13 +29,13 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          24/04/2014  XJH Initial Draft
+          26/08/2014  XJH Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
-#ifndef PMDCOMMON_HPP_
-#define PMDCOMMON_HPP_
+#ifndef UTILCOMMON_HPP_
+#define UTILCOMMON_HPP_
 
 #include "core.hpp"
 #include "msgDef.h"
@@ -51,36 +51,36 @@ namespace engine
 {
 
    /*
-      PMD ROLE ENUM AND STRING TRANSFER
+      ROLE ENUM AND STRING TRANSFER
    */
-   SDB_ROLE pmdGetRoleEnum( const CHAR *role ) ;
-   const CHAR* pmdDBRoleStr( SDB_ROLE dbrole ) ;
+   SDB_ROLE utilGetRoleEnum( const CHAR *role ) ;
+   const CHAR* utilDBRoleStr( SDB_ROLE dbrole ) ;
 
    /*
-      PMD ROLE_TYPE ENUM AND STRING TRANSFER
+      ROLE_TYPE ENUM AND STRING TRANSFER
    */
-   SDB_TYPE pmdGetTypeEnum( const CHAR *type ) ;
-   const CHAR* pmdDBTypeStr( SDB_TYPE type ) ;
+   SDB_TYPE utilGetTypeEnum( const CHAR *type ) ;
+   const CHAR* utilDBTypeStr( SDB_TYPE type ) ;
 
-   SDB_TYPE pmdRoleToType( SDB_ROLE role ) ;
+   SDB_TYPE utilRoleToType( SDB_ROLE role ) ;
 
    /*
-      PMD Pref instance enum and string transfer
+      util Pref instance enum and string transfer
    */
-   INT32 pmdPrefReplStr2Enum( const CHAR *prefReplStr ) ;
+   INT32 utilPrefReplStr2Enum( const CHAR *prefReplStr ) ;
 
-   INT32 pmdPrefReplEnum2Str( INT32 enumPrefRepl,
-                              CHAR *prefReplStr,
-                              UINT32 len ) ;
+   INT32 utilPrefReplEnum2Str( INT32 enumPrefRepl,
+                               CHAR *prefReplStr,
+                               UINT32 len ) ;
 
    /*
-      PMD get error bson
+      util get error bson
    */
-   BSONObj        pmdGetErrorBson( INT32 flags, const CHAR *detail ) ;
+   BSONObj        utilGetErrorBson( INT32 flags, const CHAR *detail ) ;
 
 }
 
 
 
-#endif //PMDCOMMON_HPP_
+#endif //UTILCOMMON_HPP_
 

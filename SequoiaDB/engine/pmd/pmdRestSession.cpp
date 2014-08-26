@@ -34,7 +34,7 @@
 #include "omManager.hpp"
 #include "pmdEDUMgr.hpp"
 #include "msgDef.h"
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "ossMem.hpp"
 #include "rtnCommand.hpp"
 #include "../omsvc/omGetFileCommand.hpp"
@@ -54,8 +54,8 @@ namespace engine
                            pmdRestSession *pRestSession,
                            pmdEDUCB* pEduCB )
    {
-      BSONObj _errorInfo = pmdGetErrorBson( rc, pEduCB->getInfo( 
-                                            EDU_INFO_ERROR ) ) ;
+      BSONObj _errorInfo = utilGetErrorBson( rc, pEduCB->getInfo( 
+                                             EDU_INFO_ERROR ) ) ;
       pAdptor->setOPResult( pRestSession, rc, _errorInfo ) ;
       pAdptor->sendResponse( pRestSession, HTTP_OK ) ;
    }

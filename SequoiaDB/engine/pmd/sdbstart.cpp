@@ -47,7 +47,7 @@
 #include "pmdDef.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "pmdOptions.h"
 #include "utilParam.hpp"
 #include "ossVer.h"

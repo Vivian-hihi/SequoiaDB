@@ -57,7 +57,7 @@ namespace engine
    void  pmdSetDBRole( SDB_ROLE role )
    {
       pmdGetSysInfo()->_dbrole = role ;
-      pmdSetDBType( pmdRoleToType( role ) ) ;
+      pmdSetDBType( utilRoleToType( role ) ) ;
    }
    SDB_TYPE pmdGetDBType()
    {

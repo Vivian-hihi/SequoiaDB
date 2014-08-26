@@ -533,8 +533,8 @@ namespace engine
             }
          }
 
-         _errorInfo = pmdGetErrorBson( rc, _pEDUCB->getInfo(
-                                       EDU_INFO_ERROR ) ) ;
+         _errorInfo = utilGetErrorBson( rc, _pEDUCB->getInfo(
+                                        EDU_INFO_ERROR ) ) ;
          buffLen = _errorInfo.objsize() ;
          pReponseBuff = _errorInfo.objdata() ;
 

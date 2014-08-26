@@ -40,7 +40,7 @@
 #include "msgMessage.hpp"
 #include "ossStackDump.hpp"
 #include "ossEDU.hpp"
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "rtn.hpp"
 #include "pmdCB.hpp"
 #include "barRestoreJob.hpp"

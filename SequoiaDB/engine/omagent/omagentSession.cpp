@@ -32,7 +32,7 @@
 
 #include "omagentSession.hpp"
 #include "omagentMgr.hpp"
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "msgMessage.hpp"
 #include "omagentHelper.hpp"
 #include "omagentMsgDef.hpp"
@@ -181,8 +181,8 @@ namespace engine
 
       if ( flags )
       {
-         _errorInfo = pmdGetErrorBson( flags, _pEDUCB->getInfo(
-                                       EDU_INFO_ERROR ) ) ;
+         _errorInfo = utilGetErrorBson( flags, _pEDUCB->getInfo(
+                                        EDU_INFO_ERROR ) ) ;
          bodyLen  = _errorInfo.objsize() ;
          pBody    = _errorInfo.objdata() ;
          _replyHeader.header.messageLength += bodyLen ;

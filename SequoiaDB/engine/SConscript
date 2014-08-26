@@ -75,7 +75,6 @@ pmdFiles = [
       "pmd/pmdWindowsListener.cpp",
       "pmd/pmdLoggW.cpp",
       "pmd/pmdCluster.cpp",
-      "pmd/pmdCommon.cpp",
       "pmd/pmdMemPool.cpp",
       "pmd/pmdEnv.cpp",
       "pmd/pmdOptionsMgr.cpp",
@@ -120,6 +119,7 @@ utilFiles = [
       "client/cJSON.c",
       "client/jstobs.c",
       "util/csv2rawbson.cpp",
+      "util/utilCommon.cpp",
       "util/url.c"
       ]
 

@@ -263,7 +263,7 @@ namespace engine
 
    void _SDB_KRCB::onConfigInit ()
    {
-      _role = pmdGetRoleEnum( _optioncb.krcbRole() ) ;
+      _role = utilGetRoleEnum( _optioncb.krcbRole() ) ;
       pmdSetDBRole( _role ) ;
    }
 

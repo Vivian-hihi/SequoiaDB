@@ -496,8 +496,8 @@ namespace engine
       {
          if ( rc && bodyLen == 0 )
          {
-            _errorInfo = pmdGetErrorBson( rc, _pEDUCB->getInfo(
-                                          EDU_INFO_ERROR ) ) ;
+            _errorInfo = utilGetErrorBson( rc, _pEDUCB->getInfo(
+                                           EDU_INFO_ERROR ) ) ;
             pBody = _errorInfo.objdata() ;
             bodyLen = (INT32)_errorInfo.objsize() ;
             _replyHeader.numReturned = 1 ;

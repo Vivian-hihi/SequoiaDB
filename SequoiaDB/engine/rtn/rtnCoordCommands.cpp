@@ -4456,7 +4456,7 @@ namespace engine
          // assign role if it doesn't include
          if ( !hasRoleKey )
          {
-            roleStr = pmdDBRoleStr( role ) ;
+            roleStr = utilDBRoleStr( role ) ;
             if ( *roleStr == 0 )
             {
                goto error ;

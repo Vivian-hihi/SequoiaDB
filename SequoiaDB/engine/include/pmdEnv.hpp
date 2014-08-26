@@ -36,7 +36,7 @@
 #ifndef PMDENV_HPP_
 #define PMDENV_HPP_
 
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "ossAtomic.hpp"
 
 using namespace bson ;

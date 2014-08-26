@@ -237,7 +237,7 @@ namespace engine
       if ( rc != SDB_OK && NULL == *ppErrorObj )
       {
          replyHeader.header.messageLength = sizeof ( MsgOpReply )
-            + pmdGetErrorBson( rc, NULL ).objsize() ;
+            + utilGetErrorBson( rc, NULL ).objsize() ;
          replyHeader.numReturned = 1;
       }
       if ( NULL != newMsg )
@@ -707,8 +707,8 @@ namespace engine
                }
 
                UINT32 flag = rc ;
-               BSONObj errorObj = pmdGetErrorBson( rc, cb->getInfo(
-                                                   EDU_INFO_ERROR ) ) ;
+               BSONObj errorObj = utilGetErrorBson( rc, cb->getInfo(
+                                                    EDU_INFO_ERROR ) ) ;
                BSONObj *pErrObj = &errorObj ;
 
                if ( ppErrorObj && cb->getInfo( EDU_INFO_ERROR ) )
@@ -859,7 +859,7 @@ namespace engine
                                     needFetch ) ;
       if ( rc )
       {
-         BSONObj errorObj = pmdGetErrorBson( rc, NULL ) ;
+         BSONObj errorObj = utilGetErrorBson( rc, NULL ) ;
          PD_LOG ( PDERROR, "Failed to get http request, rc = %d", rc ) ;
          if ( SDB_NETWORK == rc || SDB_NETWORK_CLOSE == rc )
          {
@@ -948,7 +948,7 @@ namespace engine
       // let's see if we hit any error
       if ( rc )
       {
-         BSONObj errorObj = pmdGetErrorBson( rc, NULL ) ;
+         BSONObj errorObj = utilGetErrorBson( rc, NULL ) ;
          BSONObj *pObj = &errorObj ;
          if ( pErrorObj )
          {
@@ -1603,7 +1603,7 @@ namespace engine
             // when we get here, sendRC is SDB_OK but rc may be fault, we know
             // when rc is 0, we either have empty data for Insert/Update/Delete,
             // or something from query. However if rc != 0, that means we are
-            // going to send rc from pmdGetErrorBson( rc, NULL ).objsize()
+            // going to send rc from utilGetErrorBson( rc, NULL ).objsize()
             if ( rc )
             {
                BSONObj errorObj = pmdGetErrorBson( rc, NULL ) ;

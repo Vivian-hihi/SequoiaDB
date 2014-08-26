@@ -1061,7 +1061,7 @@ namespace engine
       PD_TRACE_ENTRY ( PMD_SESSMGR_REPLY ) ;
 
       MsgOpReply reply ;
-      BSONObj obj = pmdGetErrorBson( rc, "can't create session" ) ;
+      BSONObj obj = utilGetErrorBson( rc, "can't create session" ) ;
 
       if ( !_pRTAgent )
       {

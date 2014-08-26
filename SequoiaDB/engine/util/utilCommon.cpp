@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = pmdMain.cpp
+   Source File Name = utilCommon.cpp
 
    Descriptive Name = Process MoDel Main
 
@@ -35,20 +35,19 @@
 
 *******************************************************************************/
 
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "ossUtil.hpp"
-#include "ossIO.hpp"
 #include "msg.h"
 #include "ossLatch.hpp"
 #include "pdTrace.hpp"
-#include "pmdTrace.hpp"
+#include "utilTrace.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
 
-   SDB_ROLE pmdGetRoleEnum( const CHAR *role )
+   SDB_ROLE utilGetRoleEnum( const CHAR *role )
    {
       if ( NULL == role )
          return SDB_ROLE_MAX;
@@ -68,7 +67,7 @@ namespace engine
          return SDB_ROLE_MAX;
    }
 
-   const CHAR* pmdDBRoleStr( SDB_ROLE dbrole )
+   const CHAR* utilDBRoleStr( SDB_ROLE dbrole )
    {
       switch ( dbrole )
       {
@@ -90,7 +89,7 @@ namespace engine
       return "" ;
    }
 
-   SDB_TYPE pmdGetTypeEnum( const CHAR * type )
+   SDB_TYPE utilGetTypeEnum( const CHAR * type )
    {
       if ( NULL == type )
       {
@@ -115,7 +114,7 @@ namespace engine
       }
    }
 
-   const CHAR* pmdDBTypeStr( SDB_TYPE type )
+   const CHAR* utilDBTypeStr( SDB_TYPE type )
    {
       switch ( type )
       {
@@ -131,7 +130,7 @@ namespace engine
       return "Unknow" ;
    }
 
-   SDB_TYPE pmdRoleToType( SDB_ROLE role )
+   SDB_TYPE utilRoleToType( SDB_ROLE role )
    {
       switch ( role )
       {
@@ -150,7 +149,7 @@ namespace engine
       return SDB_TYPE_MAX ;
    }
 
-   INT32 pmdPrefReplStr2Enum( const CHAR * prefReplStr )
+   INT32 utilPrefReplStr2Enum( const CHAR * prefReplStr )
    {
       INT32 enumPrefRepl = PREFER_REPL_ANYONE ;
 
@@ -173,8 +172,8 @@ namespace engine
       return enumPrefRepl ;
    }
 
-   INT32 pmdPrefReplEnum2Str( INT32 enumPrefRepl, CHAR * prefReplStr,
-                              UINT32 len )
+   INT32 utilPrefReplEnum2Str( INT32 enumPrefRepl, CHAR * prefReplStr,
+                               UINT32 len )
    {
       ossMemset( prefReplStr, 0, len ) ;
 
@@ -198,7 +197,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   BSONObj pmdGetErrorBson( INT32 flags, const CHAR *detail )
+   BSONObj utilGetErrorBson( INT32 flags, const CHAR *detail )
    {
       static BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
       static BOOLEAN _init = FALSE ;

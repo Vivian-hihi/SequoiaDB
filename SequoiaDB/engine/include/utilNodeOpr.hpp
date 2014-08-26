@@ -58,7 +58,6 @@ namespace engine
 
       _utilNodeInfo()
       {
-         _type = -1 ;
          _pid  = OSS_INVALID_PID ;
       }
    } ;
@@ -70,7 +69,7 @@ namespace engine
       list nodes
    */
    INT32    utilListNodes( UTIL_VEC_NODES &nodes,
-                           INT32 typeFilter = -1,
+                           INT32 typeFilter,
                            const CHAR *svcnameFilter = NULL,
                            OSSPID pidFilter = OSS_INVALID_PID ) ;
 

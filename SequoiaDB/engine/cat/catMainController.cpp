@@ -895,8 +895,8 @@ namespace engine
                     pMsg->routeID.columns.serviceID ) ;
             rc = SDB_UNKNOWN_MESSAGE ;
 
-            BSONObj err = pmdGetErrorBson( rc, _pEDUCB->getInfo(
-                                           EDU_INFO_ERROR ) ) ;
+            BSONObj err = utilGetErrorBson( rc, _pEDUCB->getInfo(
+                                            EDU_INFO_ERROR ) ) ;
             MsgOpReply reply ;
             reply.header.opCode = MAKE_REPLY_TYPE( pMsg->opCode ) ;
             reply.header.messageLength = sizeof( MsgOpReply ) + err.objsize() ;

@@ -187,7 +187,7 @@ namespace engine
       {
          CHAR pmdProcessName [ OSS_RENAME_PROCESS_BUFFER_LEN + 1 ] = {0} ;
          ossSnprintf ( pmdProcessName, OSS_RENAME_PROCESS_BUFFER_LEN,
-                       "%s(%s)", pmdDBTypeStr( pmdGetDBType() ),
+                       "%s(%s)", utilDBTypeStr( pmdGetDBType() ),
                        sdbGetOMAgentOptions()->getCMServiceName() ) ;
          ossEnableNameChanges ( argc, argv ) ;
          ossRenameProcess ( pmdProcessName ) ;

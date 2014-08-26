@@ -36,7 +36,7 @@
 
 #include "utilNodeOpr.hpp"
 #include "pmdDef.hpp"
-#include "pmdCommon.hpp"
+#include "utilCommon.hpp"
 #include "ossProc.hpp"
 #include "ossUtil.hpp"
 #include "pd.hpp"
@@ -49,7 +49,8 @@ namespace engine
 {
 
 #if defined (_LINUX)
-   /*INT32 utilListNodes( UTIL_VEC_NODES & nodes, INT32 typeFilter,
+   INT32 utilListNodes( UTIL_VEC_NODES & nodes,
+                        INT32 typeFilter,
                         const CHAR * svcnameFilter,
                         OSSPID pidFilter )
    {
@@ -119,10 +120,10 @@ namespace engine
          while ( beginType < SDB_TYPE_MAX )
          {
             pStr = ossStrstr( commandLine,
-                              pmdDBTypeStr( (SDB_TYPE)beginType ) ) ;
+                              utilDBTypeStr( (SDB_TYPE)beginType ) ) ;
             if ( pStr == commandLine &&
                  (UINT32)( pSvcBegin - pStr) ==
-                 (UINT32)ossStrlen( pmdDBTypeStr( (SDB_TYPE)beginType ) ) )
+                 (UINT32)ossStrlen( utilDBTypeStr( (SDB_TYPE)beginType ) ) )
             {
                ++matchNum ;
                findNode._type = beginType ;
@@ -173,7 +174,7 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }*/
+   }
 
 
 #else
