@@ -9,6 +9,9 @@ driverFiles = [
    "pysequoiadb/pysequoiadb.cpp"
    ]
 
+clientFiles = [
+   path + "SequoiaDB/engine/client/clientcpp.cpp"
+      ]
 clientLibFiles = [
    path + "SequoiaDB/engine/oss/oss.c",
    path + "SequoiaDB/engine/oss/oss.cpp",
@@ -55,13 +58,14 @@ clientLibFiles2 = [
 env.Execute(Mkdir(curPath + "/build/temp"))
 env.Execute(Mkdir(curPath + "/build/temp/bson"))
 
+for file in clientFiles:
+   env.Execute(Copy(curPath + "/build/temp", file))
 for file in clientLibFiles:
    env.Execute(Copy(curPath + "/build/temp", file))
 for file in clientLibFiles2:
    env.Execute(Copy(curPath + "/build/temp/bson", file))
 
 curPath += "/build/temp/"
-
 srcFiles = [
    curPath + "clientcpp.cpp",
    curPath + "oss.cpp",
