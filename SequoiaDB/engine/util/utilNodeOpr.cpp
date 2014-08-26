@@ -120,7 +120,7 @@ namespace engine
          {
             pStr = ossStrstr( commandLine, pmdDBTypeStr( beginType ) ) ;
             if ( pStr == commandLine &&
-                 pSvcBegin - pStr = ossStrlen( pmdDBTypeStr( beginType ) ) )
+                 pSvcBegin - pStr == ossStrlen( pmdDBTypeStr( beginType ) ) )
             {
                ++matchNum ;
                findNode._type = beginType ;
