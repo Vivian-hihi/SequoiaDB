@@ -38,7 +38,7 @@
         <tstamp>
             <format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
         </tstamp>
-        <echo message="This testcase begin time is ${testcase.begin.time}"/> -->
+        <echo message="This testcase begin time is ${testcase.begin.time}"/>
 
         <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
         <!-- <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build"> -->
