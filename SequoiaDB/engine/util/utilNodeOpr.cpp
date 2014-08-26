@@ -58,7 +58,7 @@ namespace engine
       struct dirent *pDirent     = NULL ;
       BOOLEAN isOpen = FALSE ;
       CHAR *pStr                 = NULL ;
-      SDB_TYPE beginType         = SDB_TYPE_DB ;
+      INT32 beginType            = SDB_TYPE_DB ;
       CHAR *pSvcBegin            = NULL ;
       CHAR *pSvcEnd              = NULL ;
       UINT32 matchNum            = 0 ;
@@ -118,9 +118,11 @@ namespace engine
          // 2. type
          while ( beginType < SDB_TYPE_MAX )
          {
-            pStr = ossStrstr( commandLine, pmdDBTypeStr( beginType ) ) ;
+            pStr = ossStrstr( commandLine,
+                              pmdDBTypeStr( (SDB_TYPE)beginType ) ) ;
             if ( pStr == commandLine &&
-                 pSvcBegin - pStr == ossStrlen( pmdDBTypeStr( beginType ) ) )
+                 (UINT32)( pSvcBegin - pStr) ==
+                 (UINT32)ossStrlen( pmdDBTypeStr( (SDB_TYPE)beginType ) ) )
             {
                ++matchNum ;
                findNode._type = beginType ;
@@ -130,7 +132,7 @@ namespace engine
                }
             }
 
-            if ( typeFilter == (INT32)beginType )
+            if ( typeFilter == beginType )
             {
                break ;
             }
