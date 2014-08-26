@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
       #create a cl
       cl_name = "sports"
-      cl = cs.create_collection(cl_name)
+      cl = cs.create_collection(cl_name, {"ReplSize":0})
 
       # get all indexes before create index
       pysequoiadb._print("Before create index:")
@@ -59,3 +59,4 @@ if __name__ == "__main__":
 
    except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)
+      pysequoiadb._print(e.detail)

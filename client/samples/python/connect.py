@@ -12,6 +12,7 @@ if "__main__" == __name__:
    # host= 'localhost', port= 11810, user= '', password= ''
    try:
       db_default = client()
+      pysequoiadb._print( db_default )
       del db_default
    except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)
