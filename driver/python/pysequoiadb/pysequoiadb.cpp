@@ -2709,8 +2709,8 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cr_current",                      cr_current,                      METH_VARARGS},
    {"cr_close",                        cr_close,                        METH_VARARGS},
    /** gp */
-   {"create_replicagroup",             create_group,                    METH_VARARGS},
-   {"release_replicagroup",            release_group,                   METH_VARARGS},
+   {"create_group",                    create_group,                    METH_VARARGS},
+   {"release_group",                   release_group,                   METH_VARARGS},
    {"gp_get_nodenum",                  gp_get_nodenum,                  METH_VARARGS},
    {"gp_get_detail",                   gp_get_detail,                   METH_VARARGS},
    {"gp_get_master",                   gp_get_master,                   METH_VARARGS},
