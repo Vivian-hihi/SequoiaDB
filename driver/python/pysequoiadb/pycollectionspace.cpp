@@ -57,7 +57,7 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
    PYOBJECT *cl_object    = NULL ;
-   const char *cl_name    = NULL ;
+   const CHAR *cl_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
    sdbCollection *cl      = NULL ;
 
@@ -85,7 +85,7 @@ static PYOBJECT *create_collection( PYOBJECT *self, PYOBJECT *args )
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
    PYOBJECT *cl_object    = NULL ;
-   const char *cl_name    = NULL ;
+   const CHAR *cl_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
    sdbCollection *cl      = NULL ;
 
@@ -114,7 +114,7 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj               = NULL ;
    PYOBJECT *cl_object         = NULL ;
    PYOBJECT *bson_option       = NULL ;
-   const char *cl_name         = NULL ;
+   const CHAR *cl_name         = NULL ;
    sdbCollectionSpace *cs      = NULL ;
    sdbCollection *cl           = NULL ;
    const bson::BSONObj *option = NULL ;
@@ -145,7 +145,7 @@ static PYOBJECT *drop_collection( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
-   const char *cl_name    = NULL ;
+   const CHAR *cl_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &cl_name ) )
@@ -170,7 +170,7 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
-   const char *cs_name    = NULL ;
+   const CHAR *cs_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )

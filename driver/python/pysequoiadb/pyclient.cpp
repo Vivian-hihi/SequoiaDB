@@ -57,10 +57,10 @@ static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
    sdb *client         = NULL ;
-   const char *host    = NULL ;
-   const char *service = NULL ;
-   const char *user    = NULL ;
-   const char *psw     = NULL ;
+   const CHAR *host    = NULL ;
+   const CHAR *service = NULL ;
+   const CHAR *user    = NULL ;
+   const CHAR *psw     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Ossss", &obj, &host, &service, &user, &psw ) )
    {
@@ -101,8 +101,8 @@ static PYOBJECT *create_user( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    sdb *client           = NULL ;
-   const char *user_name = NULL ;
-   const char *psw       = NULL ;
+   const CHAR *user_name = NULL ;
+   const CHAR *psw       = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Oss", &obj, &user_name, &psw ) )
    {
@@ -123,8 +123,8 @@ static PYOBJECT *remove_user( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    sdb *client           = NULL ;
-   const char *user_name = NULL ;
-   const char *psw       = NULL ;
+   const CHAR *user_name = NULL ;
+   const CHAR *psw       = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Oss", &obj, &user_name, &psw ) )
    {
@@ -252,7 +252,7 @@ static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
    PYOBJECT *cs_obj       = NULL ;
-   const char *cs_name    = NULL ;
+   const CHAR *cs_name    = NULL ;
    sdb *client            = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
@@ -280,7 +280,7 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
    PYOBJECT *cl_obj       = NULL ;
-   const char *cl_name    = NULL ;
+   const CHAR *cl_name    = NULL ;
    sdb *client            = NULL ;
    sdbCollection *cl      = NULL ;
 
@@ -309,7 +309,7 @@ static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
    INT32 page_size        = 0 ;
    PYOBJECT *obj          = NULL ;
    PYOBJECT *cs_obj       = NULL ;
-   const char *cs_name    = NULL ;
+   const CHAR *cs_name    = NULL ;
    sdb *client            = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
@@ -337,7 +337,7 @@ static PYOBJECT *drop_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
-   const char *cs_name = NULL ;
+   const CHAR *cs_name = NULL ;
    sdb *client         = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &cs_name ) )
@@ -446,7 +446,7 @@ static PYOBJECT *get_replica_group_by_name( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *group_obj    = NULL ;
    sdb *client            = NULL ;
    sdbReplicaGroup *group = NULL ;
-   const char *group_name = NULL ;
+   const CHAR *group_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &group_name, &group_obj ) )
    {
@@ -502,7 +502,7 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *group_obj    = NULL ;
    sdb *client            = NULL ;
    sdbReplicaGroup *group = NULL ;
-   const char *group_name = NULL ;
+   const CHAR *group_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &group_name, &group_obj ) )
    {
@@ -527,7 +527,7 @@ static PYOBJECT *remove_replica_group( PYOBJECT *self, PYOBJECT *args )
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
    sdb *client            = NULL ;
-   const char *group_name = NULL ;
+   const CHAR *group_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &group_name ) )
    {
@@ -553,9 +553,9 @@ static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj                  = NULL ;
    PYOBJECT *bson_configure       = NULL ;
    sdb *client                    = NULL ;
-   const char *host               = NULL ;
-   const char *service            = NULL ;
-   const char *db_path            = NULL ;
+   const CHAR *host               = NULL ;
+   const CHAR *service            = NULL ;
+   const CHAR *db_path            = NULL ;
    const bson::BSONObj *configure = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsssO", &obj, &host, &service, &db_path,
@@ -584,7 +584,7 @@ static PYOBJECT *exec_update( PYOBJECT *self, PYOBJECT *args )
    INT32 rc        = 0 ;
    PYOBJECT *obj   = NULL ;
    sdb *client     = NULL ;
-   const char *sql = NULL ;
+   const CHAR *sql = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &sql ) )
    {
@@ -611,7 +611,7 @@ static PYOBJECT *exec_sql( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *cursor_obj = NULL ;
    sdb *client          = NULL ;
    sdbCursor *cursor    = NULL ;
-   const char *sql      = NULL ;
+   const CHAR *sql      = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &sql, &cursor_obj ) )
    {
@@ -725,7 +725,7 @@ static PYOBJECT *create_JS_procedure( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    sdb *client           = NULL ;
-   const char *str_code  = NULL ;
+   const CHAR *str_code  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &str_code ) )
    {
@@ -750,7 +750,7 @@ static PYOBJECT *remove_procedure( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    sdb *client           = NULL ;
-   const char *spname  = NULL ;
+   const CHAR *spname  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &spname ) )
    {
@@ -810,7 +810,7 @@ static PYOBJECT *eval_JS( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *cursor_object           = NULL ;
    sdb *client                       = NULL ;
    sdbCursor *cursor                 = NULL ;
-   const char *code                  = NULL ;
+   const CHAR *code                  = NULL ;
    const bson::BSONObj errmsg;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOs", &obj, &cursor_object, &code ) )
@@ -1124,7 +1124,7 @@ static PYOBJECT *get_version( PYOBJECT *self, PYOBJECT *args )
    int version = 0 ;
    int sub_version = 0 ;
    int release = 0 ;
-   const char *build = NULL ;
+   const CHAR *build = NULL ;
 
    ossGetVersion( &version, &sub_version, &release, &build ) ;
 

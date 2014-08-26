@@ -102,7 +102,7 @@ static PYOBJECT *get_hostname( PYOBJECT *self, PYOBJECT *args )
 {
    INT32  rc            = 0 ;
    PYOBJECT *obj        = NULL ;
-   const char *hostname = "" ;
+   const CHAR *hostname = "" ;
    sdbNode *node        = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -123,7 +123,7 @@ static PYOBJECT *get_servicename( PYOBJECT *self, PYOBJECT *args )
 {
    INT32  rc               = 0 ;
    PYOBJECT *obj           = NULL ;
-   const char *servicename = "" ;
+   const CHAR *servicename = "" ;
    sdbNode *node           = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -144,7 +144,7 @@ static PYOBJECT *get_nodename( PYOBJECT *self, PYOBJECT *args )
 {
    INT32  rc            = 0 ;
    PYOBJECT *obj        = NULL ;
-   const char *nodename = "" ;
+   const CHAR *nodename = "" ;
    sdbNode *node        = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )

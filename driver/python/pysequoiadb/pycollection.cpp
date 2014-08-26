@@ -86,8 +86,8 @@ static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj                      = NULL ;
    PYOBJECT *bson_condition           = NULL ;
    PYOBJECT *bson_end_condition       = NULL ;
-   const char *src_name               = NULL ;
-   const char *dst_name               = NULL ;
+   const CHAR *src_name               = NULL ;
+   const CHAR *dst_name               = NULL ;
    sdbCollection *cl                  = NULL ;
    const bson::BSONObj *condition     = NULL ;
    const bson::BSONObj *end_condition = NULL ;
@@ -119,8 +119,8 @@ static PYOBJECT *split_by_percent( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
-   const char *dst_name = NULL ;
-   const char *src_name = NULL ;
+   const CHAR *dst_name = NULL ;
+   const CHAR *src_name = NULL ;
    sdbCollection *cl    = NULL ;
    FLOAT64 percent      = 0 ;
 
@@ -149,8 +149,8 @@ static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj                      = NULL ;
    PYOBJECT *bson_condition           = NULL ;
    PYOBJECT *bson_end_condition       = NULL ;
-   const char *src_name               = NULL ;
-   const char *dst_name               = NULL ;
+   const CHAR *src_name               = NULL ;
+   const CHAR *dst_name               = NULL ;
    sdbCollection *cl                  = NULL ;
    const bson::BSONObj *condition     = NULL ;
    const bson::BSONObj *end_condition = NULL ;
@@ -184,8 +184,8 @@ static PYOBJECT *splite_async_by_percent( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
-   const char *src_name = NULL ;
-   const char *dst_name = NULL ;
+   const CHAR *src_name = NULL ;
+   const CHAR *dst_name = NULL ;
    sdbCollection *cl    = NULL ;
    FLOAT64 percent      = 0 ;
    SINT64 task_id       = 0 ;
@@ -427,7 +427,7 @@ static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_index_def       = NULL ;
    sdbCollection *cl              = NULL ;
    const bson::BSONObj *index_def = NULL ;
-   const char *name               = NULL ;
+   const CHAR *name               = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOsii", &obj, &bson_index_def, &name,
                                   &is_unique, &is_enforced ) )
@@ -457,7 +457,7 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *cursor_object = NULL ;
    sdbCollection *cl       = NULL ;
    sdbCursor *cursor       = NULL ;
-   const char *index_name  = NULL ;
+   const CHAR *index_name  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOs", &obj, &cursor_object, &index_name ) )
    {
@@ -488,7 +488,7 @@ static PYOBJECT *drop_index( PYOBJECT *self, PYOBJECT *args )
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
    sdbCollection *cl      = NULL ;
-   const char *index_name = NULL ;
+   const CHAR *index_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &index_name ) )
    {
@@ -513,7 +513,7 @@ static PYOBJECT *get_collection_name( PYOBJECT *self, PYOBJECT *args )
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
    sdbCollection *cl   = NULL ;
-   const char *cl_name = NULL ;
+   const CHAR *cl_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
@@ -534,7 +534,7 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
    sdbCollection *cl   = NULL ;
-   const char *cs_name = NULL ;
+   const CHAR *cs_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
@@ -555,7 +555,7 @@ static PYOBJECT *get_full_name( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    sdbCollection *cl     = NULL ;
-   const char *full_name = NULL ;
+   const CHAR *full_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
@@ -650,7 +650,7 @@ static PYOBJECT *attach_collection( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
    PYOBJECT *bson_option       = NULL ;
-   const char *sub_full_name   = NULL ;
+   const CHAR *sub_full_name   = NULL ;
    sdbCollection *cl           = NULL ;
    const bson::BSONObj *option = NULL ;
 
@@ -677,7 +677,7 @@ static PYOBJECT *detach_collection( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                  = 0 ;
    PYOBJECT *obj             = NULL ;
-   const char *sub_full_name = NULL ;
+   const CHAR *sub_full_name = NULL ;
    sdbCollection *cl         = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &sub_full_name ) )

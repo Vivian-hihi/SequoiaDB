@@ -15,8 +15,8 @@
    limitations under the License.
 
 *******************************************************************************/
-#include "util.hpp"
 #include "client.hpp"
+#include "util.hpp"
 
 using namespace sdbclient ;
 
@@ -60,7 +60,8 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
    INT32 rc          = 0 ;
    PYOBJECT *obj     = NULL ;
    sdbCursor *cursor = NULL ;
-   bson::BSONObj bson ;
+   bson::BSONObj retObj ;
+
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -68,14 +69,15 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCursor, cursor ) ;
-   rc = cursor->next( bson ) ;
+   rc = cursor->next( retObj ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 
 done :
-   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING_SIZE( rc, retObj.objdata(), 
+                                         retObj.objsize() ) ;
 error :
    goto done ;
 }

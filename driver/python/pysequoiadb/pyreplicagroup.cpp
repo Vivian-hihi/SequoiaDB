@@ -171,7 +171,7 @@ static PYOBJECT *get_nodebyname( PYOBJECT *self, PYOBJECT *args )
    INT32 rc             = 0 ;
    PYOBJECT *group_obj  = NULL ;
    PYOBJECT *node_obj   = NULL ;
-   const char *nodename = NULL ;
+   const CHAR *nodename = NULL ;
    sdbNode *node        = NULL ;
    Group *replica_group = NULL ;
 
@@ -200,8 +200,8 @@ static PYOBJECT *get_nodebyendpoint( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                = 0 ;
    PYOBJECT *group_obj     = NULL ;
    PYOBJECT *node_obj      = NULL ;
-   const char *hostname    = NULL ;
-   const char *servicename = NULL ;
+   const CHAR *hostname    = NULL ;
+   const CHAR *servicename = NULL ;
    sdbNode *node           = NULL ;
    Group *replica_group    = NULL ;
 
@@ -240,7 +240,7 @@ static INT32 pydict_to_cmap( PYOBJECT *pyobj, std::map<std::string,std::string>&
    for ( int i = 0; i < PyList_GET_SIZE( keys ); ++i )
    {
      key = PyList_GET_ITEM( keys, i ) ;
-     const char *key_name = PyString_AsString( key );
+     const CHAR *key_name = PyString_AsString( key );
      
      PyObject *val = PyDict_GetItemString( pyobj, key_name );
      if ( NULL == val || !PyString_Check( val ) )
@@ -260,9 +260,9 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
-   const char *nodename    = NULL ;
-   const char *servicename = NULL ;
-   const char *nodepath    = NULL ;
+   const CHAR *nodename    = NULL ;
+   const CHAR *servicename = NULL ;
+   const CHAR *nodepath    = NULL ;
    PYOBJECT *dict          = NULL ;
    std::map<std::string,std::string> config ;
    Group *replica_group    = NULL ;
@@ -298,8 +298,8 @@ static PYOBJECT *remove_node( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
    PYOBJECT *pybson        = NULL ;
-   const char *hostname    = NULL ;
-   const char *servicename = NULL ;
+   const CHAR *hostname    = NULL ;
+   const CHAR *servicename = NULL ;
    Group *replica_group    = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Oss|O", &obj, &hostname, &servicename, pybson ) )
@@ -315,7 +315,7 @@ static PYOBJECT *remove_node( PYOBJECT *self, PYOBJECT *args )
    }
    else
    {
-     const char *bson_string = PyBytes_AsString( pybson );
+     const CHAR *bson_string = PyBytes_AsString( pybson );
      bson::BSONObj cbson( bson_string );
 
      rc = replica_group->removeNode( hostname, servicename, cbson ) ;
