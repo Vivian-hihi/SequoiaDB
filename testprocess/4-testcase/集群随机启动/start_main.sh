@@ -3,7 +3,7 @@
 #execute all testcase
 sh start_test.sh > temp.txt
 
-#calcute the fial test count
+#calcute the fail test count
 count=$(grep "execute fail" temp.txt | wc -l)
 
 
