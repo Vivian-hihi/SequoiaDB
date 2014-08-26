@@ -50,7 +50,6 @@ namespace engine
 {
    // 1 seconds timeout
    #define PMD_WL_NPIPE_TIMEOUT        1
-   #define PMD_WL_NPIPE_NAME_PREFIX    "sequoiadb_engine_"
    #define PMD_WL_NPIPE_BUFSZ          1024
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDWINLSTNNPNTPNT, "pmdWindowsListenerEntryPoint" )
@@ -76,7 +75,7 @@ namespace engine
          goto error ;
       }
       ossSnprintf ( namedPipe, OSS_NPIPE_MAX_NAME_LEN,
-                    PMD_WL_NPIPE_NAME_PREFIX"%s", pSvcName ) ;
+                    ENGINE_NPIPE_PREFIX"%s", pSvcName ) ;
       PD_LOG ( PDINFO, "Attempt to create named pipe: %s",
                namedPipe ) ;
 

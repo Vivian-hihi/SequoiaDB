@@ -44,19 +44,12 @@
 #include "pmdTrace.hpp"
 #include "pmdDef.hpp"
 #include "pmdOptions.h"
+#include "utilNodeOpr.hpp"
 #include "ossVer.h"
 #include "utilParam.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
-
-#if defined (_LINUX)
-#include <dirent.h>
-#include <sys/types.h>
-#include <signal.h>
-#elif defined (_WINDOWS)
-#include "ossNPipe.hpp"
-#endif
 
 using namespace std;
 
@@ -67,8 +60,6 @@ namespace engine
        ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "show version" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name, use ',' to seperator" )
-
-   vector<string> listServices ;
 
    // initialize options
    void init ( po::options_description &desc )
@@ -84,7 +75,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SVCSPLIT2, "serviceSplit" )
-   INT32 serviceSplit ( const string &input )
+   INT32 serviceSplit ( const string &input, vector<string> &listServices )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SVCSPLIT2 );
@@ -124,7 +115,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_RESVARG, "resolveArgument" )
    INT32 resolveArgument ( po::options_description &desc,
-                           INT32 argc, CHAR **argv )
+                           INT32 argc, CHAR **argv,
+                           vector<string> &listServices )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBLIST_RESVARG ) ;
@@ -154,7 +146,7 @@ namespace engine
       {
          string svcname = vm[PMD_OPTION_SVCNAME].as<string>() ;
          // break service names using ';'
-         rc = serviceSplit ( svcname ) ;
+         rc = serviceSplit ( svcname, listServices ) ;
          if ( rc )
          {
             std::cout << "Parse svcname failed: " << rc << endl ;
@@ -169,276 +161,21 @@ namespace engine
       goto done ;
    }
 
-#if defined (_LINUX)
-void displayProcess ( pid_t &pid, CHAR *pName )
-{
-   ossPrintf ( "%s (%d)"OSS_NEWLINE, pName, pid ) ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_LISTENGINE, "listEngine" )
-void listEngine ( string serviceName, INT32 &total )
-{
-   PD_TRACE_ENTRY ( SDB_LISTENGINE );
-   DIR *dirp ;
-   struct dirent *dp ;
-   CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-   BOOLEAN listAll = FALSE ;
-   if ( !serviceName.empty () )
-   {
-      ossSnprintf ( engineName, OSS_MAX_PATHSIZE, ENGINE_NAME_PATTERN,
-                    serviceName.c_str() ) ;
-   }
-   else
-   {
-      listAll = TRUE ;
-   }
-   if ( ( dirp = opendir ( "/proc" )) == NULL )
-   {
-      PD_LOG ( PDERROR, "Failed to open /proc, errno = %d",
-               ossGetLastError () ) ;
-      goto error ;
-   }
-   do
-   {
-      if ( ( dp = readdir ( dirp ) ) != NULL )
-      {
-         FILE *fp = NULL ;
-         CHAR *p = NULL ;
-         pid_t pid ;
-         CHAR pathName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         CHAR tempName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%s/cmdline",
-                       dp->d_name ) ;
-         fp = fopen ( pathName, "r" ) ;
-         if ( !fp )
-         {
-            // we do not care if we can't open the file
-            continue ;
-         }
-         if ( NULL == fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) )
-         {
-            // we do not care if the file is empty (even thou it shouldn't
-            // happen )
-            fclose ( fp ) ;
-            continue ;
-         }
-         fclose ( fp ) ;
-         if ( listAll )
-         {
-            // if we ask to stop all engines in the box, we don't need to test
-            // specific engine name
-            if ( NULL == ( p = ossStrstr ( commandLine, ENGINE_NAME_PATTERN1 )))
-            {
-               // if it doens't include sequoiadb(, we just continue
-               continue ;
-            }
-            if ( NULL == ( p = ossStrstr ( p, ENGINE_NAME_PATTERN2 ) ) ||
-                 ossStrlen ( p ) != 1 )
-            {
-               // if it's not end with ), let's continue
-               continue ;
-            }
-         }
-         else
-         {
-            // if we were told to stop specific service name, so we have to
-            // compare each process name with engineName
-            if ( NULL == ( p = ossStrstr ( commandLine, engineName ) ) )
-            {
-               // if it's not including what we need, let's continue
-               continue ;
-            }
-            if ( ossStrlen ( p ) != ossStrlen ( engineName ) )
-            {
-               // if it's not the final command ( part of path ), let's skip
-               continue ;
-            }
-         }
-         // get pid
-         pid = atoi ( dp->d_name ) ;
-         // verify
-         ossSnprintf ( tempName, OSS_MAX_PATHSIZE, "%d", pid ) ;
-         if ( ossStrncmp ( tempName, dp->d_name, OSS_MAX_PATHSIZE ) == 0 )
-         {
-            displayProcess ( pid, commandLine ) ;
-            ++total ;
-         }
-      }
-   } while ( dp != NULL ) ;
-   closedir ( dirp ) ;
-done :
-   PD_TRACE_EXIT ( SDB_LISTENGINE );
-   return ;
-error :
-   goto done ;
-}
-
-#elif defined (_WINDOWS)
-// PD_TRACE_DECLARE_FUNCTION ( SDB_CONVERT2NAME, "convertPipeToName" )
-void convertPipeToName ( const CHAR *pPipeName, CHAR *pName, INT32 len )
-{
-   PD_TRACE_ENTRY ( SDB_CONVERT2NAME );
-   vector<string> splitedString ;
-   INT32 strLen = ossStrlen(pPipeName)+1 ;
-   CHAR *pContext = NULL ;
-   // free by end of the function
-   CHAR *pBuffer = (CHAR*)SDB_OSS_MALLOC ( strLen ) ;
-   if ( !pBuffer )
-   {
-      ossPrintf ( "Cannot allocate memory for %d bytes"OSS_NEWLINE,
-                  strLen ) ;
-      goto error  ;
-   }
-   ossMemcpy ( pBuffer, pPipeName, strLen ) ;
-   CHAR *p = ossStrtok ( pBuffer, ENGINE_NPIPE_PATTERN_SEP, &pContext ) ;
-   while ( p )
-   {
-      string ts ( p ) ;
-      splitedString.push_back ( ts ) ;
-      p = ossStrtok ( NULL, ENGINE_NPIPE_PATTERN_SEP, &pContext ) ;
-   }
-   ossMemset ( pName, 0, len ) ;
-   if ( splitedString.size() == 3 )
-   {
-      // if the type is xxxx_yyyy_zzzz
-      // first let's check yyyy
-      if ( splitedString[1] == ENGINE_NPIPE_PATTERN2 )
-      {
-         // so we are in engine, the expected string should be xxxx(zzzz)
-         ossSnprintf ( pName, len, "%s(%s)", splitedString[0].c_str(),
-                                             splitedString[2].c_str() ) ;
-      }
-   }
-done :
-   if ( pBuffer )
-   {
-      SDB_OSS_FREE ( pBuffer ) ;
-      pBuffer = NULL ;
-   }
-   PD_TRACE_EXIT ( SDB_CONVERT2NAME );
-   return ;
-error :
-   goto done ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_DSPPROC, "displayProcess" )
-void displayProcess ( const CHAR *pPipeName )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_DSPPROC );
-   OSSNPIPE handle ;
-   OSSPID pid ;
-   INT64 readSize = 0 ;
-   INT32 round = 0 ;
-   CHAR localBuf [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = { 0 } ;
-   rc = ossOpenNamedPipe ( pPipeName, OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
-                           OSS_NPIPE_INFINITE_TIMEOUT,
-                           handle ) ;
-   if ( rc && SDB_FE != rc )
-   {
-      PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc %d",
-               pPipeName, rc ) ;
-      goto error ;
-   }
-
-   rc = ossWriteNamedPipe ( handle, ENGINE_NPIPE_MSG_PID,
-                            sizeof(ENGINE_NPIPE_MSG_PID),
-                            NULL ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to send "ENGINE_NPIPE_MSG_PID" to %s "
-               "rc = %d", pPipeName, rc ) ;
-   }
-   rc = ossReadNamedPipe ( handle, (CHAR*)&pid, sizeof(pid), &readSize,
-                           LIST_TIMEOUT ) ;
-   if ( rc || ( readSize != sizeof(pid) ) )
-   {
-      ossPrintf ( "Failed to read pid from pipe %s"OSS_NEWLINE,
-                  pPipeName ) ;
-   }
-   rc = ossCloseNamedPipe ( handle ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to close named pipe" ) ;
-      goto error ;
-   }
-   convertPipeToName ( pPipeName, localBuf, sizeof(localBuf) ) ;
-   ossPrintf ( "%s (%d)"OSS_NEWLINE, localBuf, pid ) ;
-done :
-   PD_TRACE1 ( SDB_DSPPROC, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_DSPPROC );
-   return ;
-error :
-   goto done ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_LISTENGINE2, "listEngine" )
-void listEngine ( string serviceName, INT32 &total )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_LISTENGINE2 );
-   vector<string> names ;
-   CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
-   BOOLEAN stopAll = FALSE ;
-   rc = ossEnumNamedPipes ( names, NULL ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to enum named pipes, rc = %d", rc ) ;
-      goto error ;
-   }
-
-   if ( !serviceName.empty () )
-   {
-      ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
-                    ENGINE_NPIPE_PATTERN, serviceName.c_str() ) ;
-   }
-   else
-   {
-      ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
-                    ENGINE_NPIPE_PATTERN, "" ) ;
-      stopAll = TRUE ;
-   }
-   for ( INT32 i = 0; i < names.size(); ++i )
-   {
-      const CHAR *pName = names[i].c_str() ;
-      // if it matches the pattern
-      // stopAll: "sequoiadb_engine_"
-      // otherwise: "sequoiadb_engine_<servicename>"
-      if ( ossStrncmp ( pName, enginePipeName,
-                        ossStrlen ( enginePipeName ) ) == 0 )
-      {
-         // in stopAll mode, we terminate process as long as it matches pattern
-         // in stop specific service mode, make sure the length of pName
-         //   and enginePipeName are the same ( if strlen same, and strncmp =0,
-         //   then it's safe to say the string are the same )
-         if ( stopAll || ossStrlen ( pName ) == ossStrlen ( enginePipeName ) )
-         {
-            total ++ ;
-            displayProcess ( pName ) ;
-         }
-      }
-   }
-done :
-   PD_TRACE1 ( SDB_LISTENGINE2, PD_PACK_INT(rc) );
-   PD_TRACE_EXIT ( SDB_LISTENGINE2 );
-   return ;
-error :
-   goto done ;
-}
-#endif
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_MAIN, "mainEtnry" )
    INT32 mainEtnry ( INT32 argc, CHAR **argv )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBLIST_MAIN );
       INT32 total = 0 ;
+      vector<string> listServices ;
+      UTIL_VEC_NODES listNodes ;
+      BOOLEAN bFind = TRUE ;
+
       po::options_description desc ( "Command options" ) ;
       init ( desc ) ;
 
       // validate arguments
-      rc = resolveArgument ( desc, argc, argv ) ;
+      rc = resolveArgument ( desc, argc, argv, listServices ) ;
       if ( rc )
       {
          if ( SDB_PMD_HELP_ONLY != rc &&
@@ -450,15 +187,36 @@ error :
          goto done ;
       }
 
-      if ( 0 == listServices.size() )
+      utilListNodes( listNodes, SDB_TYPE_DB ) ;
+
+      for ( UINT32 i = 0 ; i < listNodes.size() ; ++i )
       {
-         listEngine ( "", total ) ;
-      }
-      else
-      {
-         for ( UINT32 i = 0; i < listServices.size(); ++i )
+         utilNodeInfo &info = listNodes[ i ] ;
+
+         if ( listServices.size() > 0 )
          {
-            listEngine ( listServices[i], total ) ;
+            bFind = FALSE ;
+            for ( UINT32 j = 0 ; j < listServices.size() ; ++j )
+            {
+               if ( 0 == ossStrcmp( info._svcname.c_str(),
+                                    listServices[ j ].c_str() ) )
+               {
+                  bFind = TRUE ;
+                  break ;
+               }
+            }
+         }
+         else
+         {
+            bFind = TRUE ;
+         }
+
+         if ( bFind )
+         {
+            ++total ;
+            ossPrintf( "%s(%s) (%s)"OSS_NEWLINE,
+                       utilDBTypeStr( (SDB_TYPE)info._type ),
+                       info._svcname.c_str(), info._pid ) ;
          }
       }
 

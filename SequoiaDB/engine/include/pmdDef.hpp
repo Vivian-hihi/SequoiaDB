@@ -245,6 +245,7 @@ namespace engine
    #define ENGINE_NPIPE_PATTERN        ENGINE_NPIPE_PATTERN1 ENGINE_NPIPE_PATTERN_SEP \
                                        ENGINE_NPIPE_PATTERN2 ENGINE_NPIPE_PATTERN_SEP \
                                        "%s"
+   #define ENGINE_NPIPE_PREFIX         "sequoiadb_engine_"
    #endif // _LINUX
 
    #define ENGINE_NPIPE_MSG_PID        "$pid"

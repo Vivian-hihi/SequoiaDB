@@ -179,6 +179,146 @@ namespace engine
 
 #else
 
+   static INT32 utilWriteReadPipe( const CHAR *pPipeName, OSSNPIPE &handle,
+                                   const CHAR *pWriteBuf, INT64 writeLen,
+                                   CHAR *pReadBuf, INT64 readLen,
+                                   INT64 *bufRead )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = ossWriteNamedPipe( handle, pWriteBuf, writeLen, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to send %s to %s, rc: %d",
+                  pWriteBuf, pPipeName, rc ) ;
+         goto error ;
+      }
+
+      rc = ossReadNamedPipe( handle, pReadBuf, readLen, bufRead,
+                             LIST_TIMEOUT ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
+                  pWriteBuf, pPipeName, rc ) ;
+         goto error ;
+      }
+
+      if ( readLen != *bufRead )
+      {
+         PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
+                  pWriteBuf, pPipeName, rc ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 utilListNodes( UTIL_VEC_NODES & nodes, INT32 typeFilter,
+                        const CHAR * svcnameFilter, OSSPID pidFilter )
+   {
+      INT32 rc = SDB_OK ;
+      vector< string > names ;
+      utilNodeInfo findNode ;
+      OSSNPIPE handle ;
+      INT64 readSize = 0 ;
+      BOOLEAN isOpen = FALSE ;
+      UINT32 prefixLen = ossStrlen( ENGINE_NPIPE_PREFIX ) ;
+
+      rc = ossEnumNamedPipes ( names, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to enum pipes, rc: %d", rc ) ;
+
+      for ( UINT32 i = 0 ; i < names.size() ; ++i )
+      {
+         if ( 0 != ossStrncmp( names[ i ].c_str(), ENGINE_NPIPE_PREFIX,
+                               prefixLen ) )
+         {
+            continue ;
+         }
+
+         if ( isOpen )
+         {
+            ossCloseNamedPipe( handle ) ;
+            isOpen = FALSE ;
+         }
+
+         // 1. svcname
+         if ( svcnameFilter && 0 != *svcnameFilter &&
+              0 != ossStrcmp( names[ i ].c_str() + prefixLen, svcnameFilter ) )
+         {
+            continue ;
+         }
+
+         // 2. type
+         rc = ossOpenNamedPipe( names[ i ].c_str(),
+                                OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
+                                OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle ) ;
+         if ( rc && SDB_FE != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc: %d",
+                     names[ i ].c_str(), rc ) ;
+            continue ;
+         }
+         isOpen = TRUE ;
+
+         rc = utilWriteReadPipe( names[ i ].c_str(), handle,
+                                 ENGINE_NPIPE_MSG_TYPE,
+                                 sizeof( ENGINE_NPIPE_MSG_TYPE ),
+                                 (CHAR*)&findNode._type,
+                                 sizeof( findNode._type ),
+                                 &readSize ) ;
+         if ( rc )
+         {
+            continue ;
+         }
+
+         if ( -1 != typeFilter && typeFilter != findNode._type )
+         {
+            continue ;
+         }
+
+         // 3. pid
+         rc = utilWriteReadPipe( names[ i ].c_str(), handle,
+                                 ENGINE_NPIPE_MSG_PID,
+                                 sizeof( ENGINE_NPIPE_MSG_PID ),
+                                 (CHAR *)&findNode._pid,
+                                 sizeof( findNode._pid ),
+                                 &readSize ) ;
+         if ( rc )
+         {
+            continue ;
+         }
+         if ( pidFilter != OSS_INVALID_PID &&
+              pidFilter != findNode._pid )
+         {
+            continue ;
+         }
+
+         // find it
+         findNode._orgname = names[ i ].c_str() ;
+         findNode._svcname = names[ i ].substr( prefixLen ) ;
+
+         nodes.push_back( findNode ) ;
+
+         if ( pidFilter != OSS_INVALID_PID ||
+              ( svcnameFilter && 0 != *svcnameFilter ) )
+         {
+            break ;
+         }
+      }
+
+   done:
+      if ( isOpen )
+      {
+         ossCloseNamedPipe( handle );
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
 
 
 #endif // _LINUX
