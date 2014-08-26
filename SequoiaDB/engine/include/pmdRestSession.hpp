@@ -130,8 +130,8 @@ namespace engine
       }
       void unlock()
       {
-         _inLatch.release() ;
          _isLock = FALSE ;
+         _inLatch.release() ;
       }
       BOOLEAN isLock() const
       {
