@@ -39,11 +39,26 @@
 
 	<target name="test-one-case" depends="">
 		<basename property="php.name" file="${one.php.fullname}" suffix=".php" />
+
+		<tstamp>
+			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="This testcase begin time is ${testcase.begin.time}"/>
+
 		<echo message="test one case is ${php.name}" />
-		<exec executable="${php-bin.dir}/php-bin" failonerror="false" dir="${php-bin.dir}">
+		<exec executable="${php-bin.dir}/php-bin" failonerror="false" dir="${php-bin.dir}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
 			<arg line="${phpunit.phar.dir}   --log-junit ${reports.path}/${php.name}.xml ${one.php.fullname}"/>
 			<arg line="${phpunit.phar.dir}   --log-junit ${reports.path}/${php.name}.xml ${one.php.fullname}"/>
 		</exec>
+		<echo message="${screen.output}" />
+
+		<tstamp>
+			<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="This testcase end time is ${testcase.end.time}"/>
+		<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
+		<echo message="The testcase ${test.case.name}.js cost ${testcase.timeOutput} s in total..." />
+
 		<antcall target="overWriteReportFile">
 			<param name="php.name" value="${php.name}" />
 		</antcall>
