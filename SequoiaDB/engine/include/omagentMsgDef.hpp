@@ -66,6 +66,7 @@
 #define OMA_FIELD_PASSWORD                         "Password"
 #define OMA_FIELD_PASSWD                           "Passwd"
 #define OMA_FIELD_IP                               "IP"
+#define OMA_FIELD_IP2                              "Ip"
 
 
 #define OMA_FIELD_PING                             "Ping"
@@ -92,35 +93,41 @@
 #define OMA_FIELD_ERRMSG                           "ErrMsg"
 
 // host info
-#define OMA_FIELD_HOSTSTABLE                       "HostsTable"
+#define OMA_FIELD_HOST                             "Host"
 #define OMA_FIELD_OS                               "OS"
 #define OMA_FIELD_OM                               "OM"
 #define OMA_FIELD_TIME                             "Time"
 #define OMA_FIELD_MEMORY                           "Memory"
 #define OMA_FIELD_DISK                             "Disk"
+#define OMA_FIELD_DISKS                            "Disks"
 #define OMA_FIELD_CPU                              "CPU"
-#define OMA_FIELD_Net                              "Net"
+#define OMA_FIELD_CPUS                             "Cpus"
+#define OMA_FIELD_NET                              "Net"
+#define OMA_FIELD_NETCARDS                         "Netcards"
 #define OMA_FIELD_PORT                             "Port"
 #define OMA_FIELD_SERVICE                          "Service"
 #define OMA_FIELD_SAFETY                           "Safety"
 
 // om
 #define OMA_FIELD_VERSION                          "Version"
-#define OMA_FIELD_Path                             "Path"
+#define OMA_FIELD_PATH                             "Path"
 
 // memory
 #define OMA_FIELD_SIZE                             "Size"
 #define OMA_FIELD_MODEL                            "Model"
 #define OMA_FIELD_FREE                             "Free"
+#define OMA_FIELD_UNIT                             "Unit"
 
 // Disk
 #define OMA_FIELD_NAME                             "Name"
-#define OMA_FIELD_Mount                            "Mount"
+#define OMA_FIELD_FILESYSTEM                       "Filesystem"
+#define OMA_FIELD_MOUNT                            "Mount"
 #define OMA_FIELD_USED                             "Used"
 
 // cpu
 #define OMA_FIELD_ID                               "ID"
 #define OMA_FIELD_CORE                             "Core"
+#define OMA_FIELD_MODEL                            "Model"
 #define OMA_FIELD_FREQ                             "Freq"
 
 // net

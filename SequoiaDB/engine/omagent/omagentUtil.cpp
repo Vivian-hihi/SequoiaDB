@@ -202,6 +202,38 @@ namespace engine
       goto done ;
    }
 
+   INT32 omaGetSubObjArrayElement ( const BSONObj &obj,
+                                    const CHAR *objFieldName,
+                                    const CHAR *subObjFieldName,
+                                    const CHAR *subObjNewFieldName,
+                                    BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      BSONObj value ;
+      
+      rc = omaGetObjElement( obj, objFieldName, value ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
+                  objFieldName, rc ) ;
+         goto error ;
+      }
+      ele = value.getField ( subObjFieldName ) ;
+      if ( Array != ele.type () )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Wrong bson format, rc = %d", rc ) ;
+         goto error ;
+      }
+      builder.appendAs( ele, subObjNewFieldName ) ;
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 omaGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
                                 BOOLEAN &value )
    {

@@ -199,6 +199,17 @@ namespace engine
          virtual INT32 doit ( BSONObj& retObj ) ;
 
       private:
+         INT32 _adaptTheResult ( BSONObj &obj, BSONObj &result ) ;
+         INT32 _adaptIP ( BSONObj &obj, BSONObjBuilder &builder ) ;
+         INT32 _adaptCpu ( BSONObj &obj, BSONObjBuilder &builder ) ;
+         INT32 _adaptNet ( BSONObj &obj, BSONObjBuilder &builder ) ;
+         INT32 _adaptDisk ( BSONObj &obj, BSONObjBuilder &builder ) ;
+         INT32 _adaptMemory ( BSONObj &obj, BSONObjBuilder &builder ) ;
+         INT32 _adaptPortStatus ( BSONObj &obj, BSONObjBuilder &builder ) ;
+         INT32 _adaptService ( BSONObj &obj, BSONObjBuilder &builder ) ;
+         INT32 _adaptOMStatus ( BSONObj &obj, BSONObjBuilder &builder ) ;
+         INT32 _adaptSafety ( BSONObj &obj, BSONObjBuilder &builder ) ;
+
          const CHAR *_pIp ;
          const CHAR *_pHostName ;
          const CHAR *_pUserName ;

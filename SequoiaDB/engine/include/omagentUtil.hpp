@@ -64,6 +64,12 @@ namespace engine
    INT32 omaGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
                             BSONObj &value ) ;
 
+   INT32 omaGetSubObjArrayElement ( const BSONObj &obj,
+                                    const CHAR *objFieldName, 
+                                    const CHAR *subObjFieldName, 
+                                    const CHAR *subObjNewFieldName,
+                                    BSONObjBuilder &builder ) ;
+
    INT32 omaGetBooleanElement ( const BSONObj &obj, const CHAR *fieldName,
                                 BOOLEAN &value ) ;
 

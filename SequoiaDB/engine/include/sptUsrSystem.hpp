@@ -44,15 +44,16 @@
 #define SPT_USR_SYSTEM_IP "Ip"
 #define SPT_USR_SYSTEM_HOSTS "Hosts"
 #define SPT_USR_SYSTEM_HOSTNAME "HostName"
-#define SPT_USR_SYSTEM_CORENUM "CoreNum"
+#define SPT_USR_SYSTEM_FILESYSTEM "Filesystem"
+#define SPT_USR_SYSTEM_CORE "Core"
 #define SPT_USR_SYSTEM_INFO "Info"
-#define SPT_USR_SYSTEM_FREQUENCY "Frequency"
+#define SPT_USR_SYSTEM_FREQ "Freq"
 #define SPT_USR_SYSTEM_CPUS "Cpus"
 #define SPT_USR_SYSTEM_USER "User"
 #define SPT_USR_SYSTEM_SYS "Sys"
 #define SPT_USR_SYSTEM_IDLE "Idle"
 #define SPT_USR_SYSTEM_OTHER "Other"
-#define SPT_USR_SYSTEM_TOTAL "Total"
+#define SPT_USR_SYSTEM_SIZE "Size"
 #define SPT_USR_SYSTEM_FREE "Free"
 #define SPT_USR_SYSTEM_USED "Used"
 #define SPT_USR_SYSTEM_ISLOCAL "IsLocal"
@@ -62,6 +63,8 @@
 #define SPT_USR_SYSTEM_NETCARDS "Netcards"
 #define SPT_USR_SYSTEM_TARGET "Target"
 #define SPT_USR_SYSTEM_REACHABLE "Reachable"
+
+#define SPT_USR_SYSTEM_UNIT "Unit"
 
 namespace engine
 {

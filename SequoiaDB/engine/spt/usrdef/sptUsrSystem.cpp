@@ -582,9 +582,9 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-         arrBuilder << BSON( SPT_USR_SYSTEM_CORENUM << coreNum
+         arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
                              << SPT_USR_SYSTEM_INFO << info.str()
-                             << SPT_USR_SYSTEM_FREQUENCY << *frequency ) ;
+                             << SPT_USR_SYSTEM_FREQ << *frequency ) ;
       }
 
       builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
@@ -606,7 +606,7 @@ namespace engine
       CHAR buf[bufLen + 1] = { 0 } ;
       BSONObjBuilder builder ;
 #if defined (_LINUX)
-      rc = runner.exec( "free |grep Mem", exitCode ) ;
+      rc = runner.exec( "free -m |grep Mem", exitCode ) ;
 #elif defined (_WINDOWS)
       rc = SDB_SYS ;
 #endif
@@ -687,12 +687,13 @@ namespace engine
 
       try
       {
-         builder.append( SPT_USR_SYSTEM_TOTAL,
+         builder.append( SPT_USR_SYSTEM_SIZE,
                          boost::lexical_cast<UINT32>(splited.at( 1 ) ) ) ;
          builder.append( SPT_USR_SYSTEM_USED,
                          boost::lexical_cast<UINT32>(splited.at( 2 ) ) ) ;
          builder.append( SPT_USR_SYSTEM_FREE,
                          boost::lexical_cast<UINT32>(splited.at( 3) ) ) ;
+         builder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
       }
       catch ( std::exception &e )
       {
@@ -718,7 +719,7 @@ namespace engine
       CHAR buf[bufLen + 1] = { 0 } ;
       BSONObjBuilder builder ;
 #if defined (_LINUX)
-      rc = runner.exec( "df |grep -v \"Use%\"", exitCode ) ;
+      rc = runner.exec( "df -m |grep -v \"Use%\"", exitCode ) ;
 #elif defined (_WINDOWS)
       rc = SDB_SYS ;
 #endif
@@ -760,7 +761,7 @@ namespace engine
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
-
+      
       rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
    done:
       return rc ;
@@ -842,8 +843,11 @@ namespace engine
                   usedNumber = boost::lexical_cast<SINT64>( used ) ;
                   avaNumber = boost::lexical_cast<SINT64>( available ) ;
                   total = usedNumber + avaNumber ;
-                  lineBuilder.appendNumber( SPT_USR_SYSTEM_TOTAL, total ) ;
+                  lineBuilder.append( SPT_USR_SYSTEM_FILESYSTEM,
+                                      fileSystem.c_str() ) ;
+                  lineBuilder.appendNumber( SPT_USR_SYSTEM_SIZE, total ) ;
                   lineBuilder.appendNumber( SPT_USR_SYSTEM_USED, usedNumber ) ;
+                  lineBuilder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
                   lineBuilder.append( SPT_USR_SYSTEM_MOUNT, mount ) ;
                   lineBuilder.appendBool( SPT_USR_SYSTEM_ISLOCAL,
                                           string::npos != fileSystem.find( "/dev/sd", 0, 7 )) ;

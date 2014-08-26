@@ -838,11 +838,12 @@ namespace engine
    INT32 _omaCheckHost::doit( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
+      INT32 retRc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONObj rval ;
       BSONObj detail ;
       BSONObj subObj ;
-
+      
       // execute js
       rc = _scope->eval( _content.c_str(), _content.size(),
                          _jsFileName, 1, 1, rval, detail ) ;
@@ -852,10 +853,6 @@ namespace engine
          PD_LOG_MSG ( PDERROR,
                       "Failed to eval js file[%s]: %s, rc = %d",
                       _jsFileName, detail.toString().c_str(), rc ) ;
-         bob.append( OMA_FIELD_IP, _pIp ) ;
-         bob.append( OMA_FIELD_RC, rc ) ;
-         bob.append( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
-         retObj = bob.obj() ;
          goto error ;
       }
       // extract result
@@ -865,10 +862,532 @@ namespace engine
          PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d", "", rc ) ;
          goto error ;
       }
-      bob.append( OMA_FIELD_IP, _pIp ) ;
-      bob.appendElements( subObj ) ;
-      retObj = bob.obj() ;
+      // check result
+      rc = omaGetIntElement( subObj, OMA_FIELD_RC, retRc ) ;
+      if ( retRc )
+      {
+         const CHAR *pDetail = "" ;
+         omaGetStringElement( subObj, OMA_FIELD_DETAIL, &pDetail ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to chek host[%s]:%s, rc = %d",
+                      _pIp, pDetail, retRc ) ;
+         rc = retRc ;
+         goto error ;
+         
+      }
+      // format the result for omsvc
+      rc = _adaptTheResult( subObj, retObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to build result for check host, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptTheResult ( BSONObj &obj, BSONObj &result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      BSONElement ele ;
+      BSONObj pattern ;
+      BSONObj tmpObj ;
+
+      // adopt ip
+      rc = _adaptIP( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt ip info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // adopt cpu
+      rc = _adaptCpu( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt cpu info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // adopt net
+      rc = _adaptNet( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt net card info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // adopt disk
+      rc = _adaptDisk( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt disk info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // adopt memory
+      rc = _adaptMemory( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt memory info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // adopt port 
+      rc = _adaptPortStatus( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt port status info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // adopt service
+      rc = _adaptService( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt service info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // adopt om status
+      rc = _adaptOMStatus( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt om svc info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // adopt safety
+      rc = _adaptSafety( obj, builder ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to adapt safety info for check host, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+
+      // append the other info
+      pattern = BSON ( OMA_FIELD_IP << 1 <<
+                       OMA_FIELD_CPU << 1 << 
+                       OMA_FIELD_NET << 1 << 
+                       OMA_FIELD_DISK << 1 <<
+                       OMA_FIELD_MEMORY << 1 <<
+                       OMA_FIELD_OM << 1 <<
+                       OMA_FIELD_SERVICE << 1 <<
+                       OMA_FIELD_PORT << 1 <<
+                       OMA_FIELD_SAFETY << 1 <<
+                       OMA_FIELD_RC << 1 <<
+                       OMA_FIELD_DETAIL << 1 ) ;
+      tmpObj = obj.filterFieldsUndotted( pattern, false ) ;
+      builder.appendElements( tmpObj ) ;
+      result = builder.obj() ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptIP ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONArrayBuilder bab ;
+      BSONObj ip ;
+
+      try
+      {
+         bab.append( _pIp ) ;
+         builder.append( OMA_FIELD_IP, bab.arr() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Failed to build bson, "
+                  "received unexpect error: %s", e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   INT32 _omaCheckHost::_adaptCpu ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      BSONElement ele ;
+      BSONObj tmpObj ;
+
+      // adopt disk
+      rc = omaGetSubObjArrayElement ( obj, OMA_FIELD_CPU,
+                                      OMA_FIELD_CPUS,
+                                      OMA_FIELD_CPU, bob ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get sub obj array's element, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+      tmpObj = bob.obj() ;
+      ele = tmpObj.getField( OMA_FIELD_CPU ) ;        
+      if ( Array == ele.type() )
+      {
+         const CHAR *pID = NULL ;
+         const CHAR *pModel = NULL ;
+         INT32 coreNum = NULL ;
+         const CHAR *pFreq = NULL ;
+         BSONObj cpu ;
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+
+         while ( itr.more() )
+         {
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG_MSG ( PDERROR, "Wrong bson format" ) ;
+               goto error ;
+            }
+            BSONObj subObj = ele.embeddedObject() ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_ID, &pID ) ;
+            if ( SDB_OK != rc ) pID = "" ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_MODEL, &pModel ) ;
+            if ( SDB_OK != rc ) pModel = "" ;
+            rc = omaGetIntElement( subObj, OMA_FIELD_CORE, coreNum ) ;
+            if ( SDB_OK != rc ) coreNum = 0 ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_FREQ, &pFreq ) ;
+            if ( SDB_OK != rc ) pFreq = "" ;
+            rc = SDB_OK ;
+            cpu = BSON( OMA_FIELD_ID << pID <<
+                        OMA_FIELD_MODEL << pModel <<
+                        OMA_FIELD_CORE << coreNum <<
+                        OMA_FIELD_FREQ << pFreq ) ;
+            bab.append ( cpu ) ;
+         }
+         builder.appendArray( OMA_FIELD_CPU, bab.arr() ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Wrong bson format: %s",
+                  obj.toString( FALSE, TRUE ).c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptNet ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      BSONElement ele ;
+      BSONObj tmpObj ;
+
+      // adopt disk
+      rc = omaGetSubObjArrayElement ( obj, OMA_FIELD_NET,
+                                      OMA_FIELD_NETCARDS,
+                                      OMA_FIELD_NET, bob ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get sub obj array's element, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+      tmpObj = bob.obj() ;
+      ele = tmpObj.getField( OMA_FIELD_NET ) ;
+      if ( Array == ele.type() )
+      {
+         const CHAR *pName      = NULL ;
+         const CHAR *pModel     = NULL ;
+         const CHAR *pBandwidth = NULL ;
+         const CHAR *pIP        = NULL ;
+         BSONObj net ;
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+
+         while ( itr.more() )
+         {
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG_MSG ( PDERROR, "Wrong bson format" ) ;
+               goto error ;
+            }
+            BSONObj subObj = ele.embeddedObject() ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_NAME, &pName ) ;
+            if ( SDB_OK != rc ) pName = "" ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_MODEL, &pModel ) ;
+            if ( SDB_OK != rc ) pModel = "" ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_BANDWIDTH,
+                                      &pBandwidth ) ;
+            if ( SDB_OK != rc ) pBandwidth = "" ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_IP2, &pIP ) ;
+            if ( SDB_OK != rc ) pIP = "" ;
+            rc = SDB_OK ;
+            net = BSON( OMA_FIELD_NAME << pName <<
+                        OMA_FIELD_MODEL << pModel <<
+                        OMA_FIELD_BANDWIDTH << pBandwidth <<
+                        OMA_FIELD_IP << pIP ) ;
+            bab.append ( net ) ;
+         }
+         builder.appendArray( OMA_FIELD_NET, bab.arr() ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Wrong bson format: %s",
+                  obj.toString( FALSE, TRUE ).c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptDisk ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      BSONElement ele ;
+      BSONObj tmpObj ;
+
+      // adopt disk
+      rc = omaGetSubObjArrayElement ( obj, OMA_FIELD_DISK,
+                                      OMA_FIELD_DISKS,
+                                      OMA_FIELD_DISK, bob ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get sub obj array's element, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+      tmpObj = bob.obj() ;
+      ele = tmpObj.getField( OMA_FIELD_DISK ) ;        
+      if ( Array == ele.type() )
+      {
+         const CHAR *pName  = NULL ;
+         const CHAR *pMount = NULL ;
+         const CHAR *pUnit  = NULL ;
+         INT64 size         = 0 ;
+         INT64 free         = 0 ;
+         INT64 use          = 0 ;
+         BOOLEAN used       = TRUE ;
+         BSONObj disk ;
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+
+         while ( itr.more() )
+         {
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_SYS ;
+               PD_LOG_MSG ( PDERROR, "Wrong bson format" ) ;
+               goto error ;
+            }
+            BSONObj subObj = ele.embeddedObject() ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_FILESYSTEM, &pName ) ;
+            if ( SDB_OK != rc ) pName = "" ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_MOUNT, &pMount ) ;
+            if ( SDB_OK != rc ) pMount = "" ;
+            size = subObj.getField( OMA_FIELD_SIZE ).numberLong() ;
+            use = subObj.getField( OMA_FIELD_USED ).numberLong() ;
+            free = size - use ;
+            rc = omaGetStringElement( subObj, OMA_FIELD_UNIT, &pUnit ) ;
+            if ( SDB_OK != rc ) pUnit = "" ;
+            rc = omaGetBooleanElement( subObj, OMA_FIELD_USED, used ) ;
+            if ( SDB_OK != rc ) used = TRUE ;
+            rc = SDB_OK ;
+            disk = BSON( OMA_FIELD_NAME << pName <<
+                         OMA_FIELD_MOUNT << pMount <<
+                         OMA_FIELD_SIZE << size <<
+                         OMA_FIELD_FREE << free <<
+                         OMA_FIELD_UNIT << pUnit <<
+                         OMA_FIELD_USED << used ) ;
+            bab.append ( disk ) ;
+         }
+         builder.appendArray( OMA_FIELD_DISK, bab.arr() ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Wrong bson format: %s",
+                  obj.toString( FALSE, TRUE ).c_str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptMemory ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      BSONObj memory ;
+      const CHAR *pModel = NULL ;
+      const CHAR *pUnit  = NULL ;
+      INT64 size = 0 ;
+      INT64 free = 0 ;
+     
+      try
+      { 
+         BSONObj tmpObj = obj.getObjectField( OMA_FIELD_MEMORY ) ;
+         pModel = tmpObj.getStringField( OMA_FIELD_MODEL ) ;
+         pUnit = tmpObj.getStringField( OMA_FIELD_UNIT ) ;
+         ele = tmpObj.getField( OMA_FIELD_SIZE ) ;
+         size = ele.numberLong() ;
+         ele = tmpObj.getField( OMA_FIELD_FREE ) ;
+         free = ele.numberLong() ;
+   
+         memory = BSON( OMA_FIELD_MODEL << pModel << 
+                        OMA_FIELD_SIZE << size <<
+                        OMA_FIELD_FREE << free <<
+                        OMA_FIELD_UNIT << pUnit ) ;
+         builder.append ( OMA_FIELD_MEMORY, memory ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Failed to build bson, "
+                  "received unexpect error: %s", e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptPortStatus ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONArrayBuilder bab ;
+      INT32 port = 0 ;
+      BOOLEAN status = FALSE ;
+
+      try
+      {
+         // TODO: tanzhaobo
+         bab.append( BSON( OMA_FIELD_PORT << port <<
+                           OMA_FIELD_STATUS << status ) ) ;
+         builder.append( OMA_FIELD_HOST, bab.arr() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Failed to build bson, "
+                  "received unexpect error: %s", e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptService ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONArrayBuilder bab ;   
+      const CHAR *pName    = "" ;
+      const CHAR *pVersion = "" ;
+      BOOLEAN status       = FALSE ;
+
+      try
+      {
+         // TODO: tanzhaobo
+         bab.append( BSON( OMA_FIELD_NAME << pName <<
+                           OMA_FIELD_STATUS << status <<
+                           OMA_FIELD_VERSION << pVersion ) ) ;
+         builder.append( OMA_FIELD_SERVICE, bab.arr() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Failed to build bson, "
+                  "received unexpect error: %s", e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptOMStatus ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj omStatus ;
+      BOOLEAN status = FALSE ;
+      const CHAR *pVersion = "" ;
+
+      try
+      {
+         BSONObj tmpObj = obj.getObjectField( OMA_FIELD_OM ) ;
+         status = tmpObj.getBoolField( OMA_FIELD_STATUS ) ;
+         pVersion = tmpObj.getStringField( OMA_FIELD_VERSION ) ;
+   
+         omStatus = BSON( OMA_FIELD_STATUS << status <<
+                          OMA_FIELD_VERSION << pVersion ) ;
+         builder.append ( OMA_FIELD_OM, omStatus ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Failed to build bson, "
+                  "received unexpect error: %s", e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCheckHost::_adaptSafety ( BSONObj &obj, BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj safety ;
+      const CHAR *pName    = NULL ;
+      const CHAR *pContext = NULL ;
+      BOOLEAN status       = FALSE ;
+
+      try
+      {
+         BSONObj tmpObj = obj.getObjectField( OMA_FIELD_SAFETY ) ;
+         pName = tmpObj.getStringField( OMA_FIELD_NAME ) ;
+         pContext = tmpObj.getStringField( OMA_FIELD_CONTEXT ) ;
+         status = tmpObj.getBoolField( OMA_FIELD_STATUS ) ;
+   
+         safety = BSON( OMA_FIELD_NAME << pName <<
+                        OMA_FIELD_CONTEXT << pContext <<
+                        OMA_FIELD_STATUS << status ) ;
+         builder.append ( OMA_FIELD_SAFETY, safety ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Failed to build bson, "
+                  "received unexpect error: %s", e.what() ) ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
