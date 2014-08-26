@@ -16,14 +16,13 @@
 """
 
 try:
-   import libsdbgroup as sdbreplicagroup
+   import libsequoiadb as sdb
 except ImportError:
-   raise Exception("cannot find C module file: libsdbgroup")
+   raise Exception("cannot find Extension: libsequoiadb")
 
 import bson
 import types
 import pysequoiadb
-
 from pysequoiadb.replicanode import replicanode
 from pysequoiadb.common import const
 from pysequoiadb import common
@@ -65,7 +64,7 @@ class replicagroup(object):
 
       self._client = client
       try:
-         self._group = sdbreplicagroup.create_replicagroup()
+         self._group = sdb.create_group()
       except SystemError:
          raise SDBBaseError("Failed to alloc replica group", const.SDB_OOM)
 
@@ -77,7 +76,7 @@ class replicagroup(object):
       """
       if self._group is not None:
          try:
-            rc = sdbreplicagroup.release_replicagroup(self._group)
+            rc = sdb.release_group(self._group)
             pysequoiadb._raise_if_error("Failed to release replica group", rc)
          except SDBBaseError:
             raise
@@ -110,7 +109,7 @@ class replicagroup(object):
          raise SDBTypeError("nodestatus invalid")
 
       try:
-         rc, nodenum = sdbreplicagroup.get_nodenum(self._group, nodestatus)
+         rc, nodenum = sdb.gp_get_nodenum(self._group, nodestatus)
          pysequoiadb._raise_if_error("Failed to get count of node", rc)
       except SDBBaseError:
           nodenum = 0
@@ -127,7 +126,7 @@ class replicagroup(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc, bson_string = sdbreplicagroup.get_detail(self._group)
+         rc, bson_string = sdb.gp_get_detail(self._group)
          pysequoiadb._raise_if_error("Failed to get detail", rc)
       except SDBBaseError:
          detail=None
@@ -147,7 +146,7 @@ class replicagroup(object):
       """
       try:
          node = replicanode(self._client)
-         rc = sdbreplicagroup.get_master(self._group, node._node)
+         rc = sdb.gp_get_master(self._group, node._node)
          pysequoiadb._raise_if_error("Failed to get master", rc)
       except SDBBaseError:
          del node
@@ -167,7 +166,7 @@ class replicagroup(object):
       """
       try:
          node = replicanode(self._client)
-         rc = sdbreplicagroup.get_slave(self._group, node._node)
+         rc = sdb.gp_get_slave(self._group, node._node)
          pysequoiadb._raise_if_error("Failed to get slave", rc)
       except SDBBaseError:
          del node
@@ -196,7 +195,7 @@ class replicagroup(object):
 
       try:
          node = replicanode(self._client)
-         rc = sdbreplicagroup.get_nodebyendpoint(self._group, node._node,
+         rc = sdb.gp_get_nodebyendpoint(self._group, node._node,
                                                  hostname, servicename)
          pysequoiadb._raise_if_error("Failed to get node", rc)
       except SDBBaseError:
@@ -223,7 +222,7 @@ class replicagroup(object):
 
       try:
          node = replicanode(self._client)
-         rc = sdbreplicagroup.get_nodebyname(self._group, node._node, nodename)
+         rc = sdb.gp_get_nodebyname(self._group, node._node, nodename)
          pysequoiadb._raise_if_error("Failed to get node", rc)
       except SDBBaseError:
          del node
@@ -258,7 +257,7 @@ class replicagroup(object):
          config = {}
 
       try:
-         rc = sdbreplicagroup.create_node(self._group, hostname, servicename,
+         rc = sdb.gp_create_node(self._group, hostname, servicename,
                                           dbpath, config)
          pysequoiadb._raise_if_error("Failed to create node", rc)
       except SDBBaseError:
@@ -286,10 +285,10 @@ class replicagroup(object):
       try:
          if config is not None:
             bson_config = bson.BSON.encode(config)
-            rc = sdbreplicagroup.remove_node(self._group, hostname,
+            rc = sdb.gp_remove_node(self._group, hostname,
                                              servicename, bson_config)
          else:
-            rc = sdbreplicagroup.remove_node(self._group, hostname, servicename)
+            rc = sdb.gp_remove_node(self._group, hostname, servicename)
          pysequoiadb._raise_if_error("Failed to remove node", rc)
       except SDBBaseError:
          raise
@@ -301,7 +300,7 @@ class replicagroup(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc = sdbreplicagroup.start(self._group)
+         rc = sdb.gp_start(self._group)
          pysequoiadb._raise_if_error("Failed to start", rc)
       except SDBBaseError:
          raise
@@ -313,7 +312,7 @@ class replicagroup(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc = sdbreplicagroup.stop(self._group)
+         rc = sdb.gp_stop(self._group)
          pysequoiadb._raise_if_error("Failed to stop", rc)
       except SDBBaseError:
          raise
@@ -327,7 +326,7 @@ class replicagroup(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc = sdbreplicagroup.is_catalog(self._group)
+         rc = sdb.gp_is_catalog(self._group)
          if (const.SDB_OK == rc):
             iscatalog = False
          elif (const.TRUE == rc):

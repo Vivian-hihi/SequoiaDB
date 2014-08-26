@@ -16,9 +16,9 @@
 """
 
 try:
-   import libsdbcs as sdbcs
+   import libsequoiadb as sdb
 except ImportError:
-   raise Exception("cannot find C module file: libsdbcs")
+   raise Exception("cannot find Extension: libsequoiadb")
 
 import bson
 import pysequoiadb
@@ -64,7 +64,7 @@ class collectionspace(object):
       """
       #'cs' is short for collection space
       try:
-         self._cs = sdbcs.create_cs()
+         self._cs = sdb.create_cs()
       except SystemError:
          raise SDBBaseError("Failed to alloc collection space", const.SDB_OOM)
 
@@ -76,7 +76,7 @@ class collectionspace(object):
       """
       if self._cs is not None:
          try:
-            rc = sdbcs.release_cs(self._cs)
+            rc = sdb.release_cs(self._cs)
             pysequoiadb._raise_if_error("Failed to release collection space",
                                         rc)
          except SDBBaseError:
@@ -85,7 +85,7 @@ class collectionspace(object):
 
    def __repr__(self):
 
-      return "Collection Space %s" % (self.get_collection_space_name())
+      return "Collection Space: %s" % (self.get_collection_space_name())
 
    def __getattr__(self, name):
       """support client.cs to access to collection.
@@ -109,7 +109,7 @@ class collectionspace(object):
       else:
          try:
             cl = collection()
-            rc = sdbcs.get_collection(self._cs, name, cl._cl)
+            rc = sdb.cs_get_collection(self._cs, name, cl._cl)
             pysequoiadb._raise_if_error("Failed to get collection: %s" %
                                         name, rc)
          except SDBBaseError:
@@ -149,7 +149,7 @@ class collectionspace(object):
 
       try:
          cl = collection()
-         rc = sdbcs.get_collection(self._cs, cl_name, cl._cl)
+         rc = sdb.cs_get_collection(self._cs, cl_name, cl._cl)
          pysequoiadb._raise_if_error("Failed to get collection: %s" %
                                      cl_name, rc)
       except SDBBaseError:
@@ -186,9 +186,9 @@ class collectionspace(object):
       try:
          cl = collection()
          if bson_options is None:
-            rc = sdbcs.create_collection(self._cs, cl_name, cl._cl)
+            rc = sdb.cs_create_collection(self._cs, cl_name, cl._cl)
          else:
-            rc = sdbcs.create_collection_use_opt(self._cs, cl_name,
+            rc = sdb.cs_create_collection_use_opt(self._cs, cl_name,
                                                  bson_options, cl._cl)
          pysequoiadb._raise_if_error("Failed to create collection", rc)
       except SDBBaseError:
@@ -212,7 +212,7 @@ class collectionspace(object):
          raise SDBTypeError("collection must be an instance of basestring")
 
       try:
-         rc = sdbcs.drop_collection(self._cs, cl_name)
+         rc = sdb.cs_drop_collection(self._cs, cl_name)
          pysequoiadb._raise_if_error("Failed to drop collection", rc)
       except SDBBaseError:
          raise
@@ -226,7 +226,7 @@ class collectionspace(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc, cs_name = sdbcs.get_collection_space_name(self._cs)
+         rc, cs_name = sdb.cs_get_collection_space_name(self._cs)
          pysequoiadb._raise_if_error("Failed to get collection space name", rc)
       except SDBBaseError:
          raise

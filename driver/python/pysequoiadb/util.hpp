@@ -27,11 +27,17 @@
 #define SDB_OK          0
 #define SDB_OOM         -2 
 #define SDB_INVALIDARGS -6
- 
+
 
 /* some useful macros
  **/
 #define PYOBJECT PyObject
+
+#define __METHOD_DECLARE(name) \
+   static PYOBJECT* name( PYOBJECT *self, PYOBJECT *args )
+
+#define __IMP_FUNCTION(name) \
+   __METHOD_DECLARE(name)
 
 #define PARSE_PYTHON_ARGS PyArg_ParseTuple
 

@@ -16,9 +16,9 @@
 """
 
 try:
-   import libsdbcl as sdbcl
+   import libsequoiadb as sdb
 except ImportError:
-   raise Exception("cannot find C module file: libsdbcl")
+   raise Exception("cannot find Extension: libsequoiadb")
 
 import bson
 from bson.objectid import ObjectId
@@ -64,7 +64,7 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         self._cl = sdbcl.create_cl()
+         self._cl = sdb.create_cl()
       except SystemError:
          raise SDBBaseError("Failed to alloc collection", const.SDB_OOM)
 
@@ -76,7 +76,7 @@ class collection(object):
       """
       if self._cl is not None:
          try:
-            rc = sdbcl.release_cl(self._cl)
+            rc = sdb.release_cl(self._cl)
             pysequoiadb._raise_if_error("Failed to release collection", rc)
          except SDBBaseError:
             raise
@@ -107,7 +107,7 @@ class collection(object):
          bson_condition = bson.BSON.encode(condition)
 
       try:
-         rc, count = sdbcl.get_count(self._cl, bson_condition)
+         rc, count = sdb.cl_get_count(self._cl, bson_condition)
          pysequoiadb._raise_if_error("Failed to get count of record", rc)
       except SDBBaseError:
          count = 0
@@ -162,7 +162,7 @@ class collection(object):
          bson_end_condition = bson.BSON.encode(split_end_condition)
 
       try:
-         rc = sdbcl.split_by_condition(self._cl, source_group_name,
+         rc = sdb.cl_split_by_condition(self._cl, source_group_name,
                                                  target_group_name,
                                                  bson_split_condition,
                                                  bson_end_condition)
@@ -191,7 +191,7 @@ class collection(object):
          raise SDBTypeError("precent must be an instance of float")
 
       try:
-         rc = sdbcl.split_by_percent(self._cl, source_group_name,
+         rc = sdb.cl_split_by_percent(self._cl, source_group_name,
                                                target_group_name, percent)
          pysequoiadb._raise_if_error("Failed to split by precent", rc)
       except SDBBaseError:
@@ -244,7 +244,7 @@ class collection(object):
          bson_end_condition = bson.BSON.encode(split_end_condition)
 
       try:
-         rc, task_id = sdbcl.split_async_by_condition(self._cl,
+         rc, task_id = sdb.cl_split_async_by_condition(self._cl,
                                                       source_group_name,
                                                       target_group_name,
                                                       bson_split_condition,
@@ -281,7 +281,7 @@ class collection(object):
          raise SDBTypeError("percent must be an instance of float")
 
       try:
-         rc, task_id = sdbcl.splite_async_by_percent(self._cl,
+         rc, task_id = sdb.cl_splite_async_by_percent(self._cl,
                                                      source_group_name,
                                                      target_group_name,
                                                      percent)
@@ -318,7 +318,7 @@ class collection(object):
          container.append( record )
 
       try:
-         rc = sdbcl.bulk_insert(self._cl, flags, container)
+         rc = sdb.cl_bulk_insert(self._cl, flags, container)
          pysequoiadb._raise_if_error("Failed to insert records", rc)
       except SDBBaseError:
          raise
@@ -340,7 +340,7 @@ class collection(object):
 
       bson_record = bson.BSON.encode(record)
       try:
-         rc, id_str = sdbcl.insert(self._cl, bson_record)
+         rc, id_str = sdb.cl_insert(self._cl, bson_record)
          pysequoiadb._raise_if_error("Failed to insert record", rc)
       except SDBBaseError:
          raise
@@ -383,7 +383,7 @@ class collection(object):
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
 
       try:
-         rc = sdbcl.update(self._cl, bson_rule, bson_condition, bson_hint)
+         rc = sdb.cl_update(self._cl, bson_rule, bson_condition, bson_hint)
          pysequoiadb._raise_if_error("Failed to update", rc)
       except SDBBaseError:
          raise
@@ -424,7 +424,7 @@ class collection(object):
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
 
       try:
-         rc = sdbcl.upsert(self._cl, bson_rule, bson_condition, bson_hint)
+         rc = sdb.cl_upsert(self._cl, bson_rule, bson_condition, bson_hint)
          pysequoiadb._raise_if_error("Failed to update", rc)
       except SDBBaseError:
          raise
@@ -456,7 +456,7 @@ class collection(object):
          bson_hint = bson.BSON.encode(kwargs.get("hint"))
 
       try:
-         rc = sdbcl.delete(self._cl, bson_condition, bson_hint)
+         rc = sdb.cl_delete(self._cl, bson_condition, bson_hint)
          pysequoiadb._raise_if_error("Failed to delete", rc)
       except SDBBaseError:
          raise
@@ -524,7 +524,7 @@ class collection(object):
 
       try:
          result = cursor()
-         rc = sdbcl.query(self._cl, result._cursor,
+         rc = sdb.cl_query(self._cl, result._cursor,
                           bson_condition, bson_selector,
                           bson_order_by, bson_hint,
                           num_to_skip, num_to_return)
@@ -571,7 +571,7 @@ class collection(object):
          enforced = 1
 
       try:
-         rc = sdbcl.create_index(self._cl, bson_index_def, idx_name,
+         rc = sdb.cl_create_index(self._cl, bson_index_def, idx_name,
                                            is_unique, is_enforced)
          pysequoiadb._raise_if_error("Failed to create index", rc)
       except SDBBaseError:
@@ -597,7 +597,7 @@ class collection(object):
 
       try:
          result = cursor()
-         rc = sdbcl.get_index(self._cl, result._cursor, idx_name)
+         rc = sdb.cl_get_index(self._cl, result._cursor, idx_name)
          pysequoiadb._raise_if_error("Failed to get indexes", rc)
       except SDBBaseError:
          del result
@@ -620,7 +620,7 @@ class collection(object):
          raise SDBTypeError("index name must be an instance of basestring")
 
       try:
-         rc = sdbcl.drop_index(self._cl, idx_name)
+         rc = sdb.cl_drop_index(self._cl, idx_name)
          pysequoiadb._raise_if_error("Failed to drop index", rc)
       except SDBBaseError:
          raise
@@ -634,7 +634,7 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc, cl_name = sdbcl.get_collection_name(self._cl)
+         rc, cl_name = sdb.cl_get_collection_name(self._cl)
          pysequoiadb._raise_if_error("Failed to get collection name", rc)
       except SDBBaseError:
          raise
@@ -650,7 +650,7 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc, cs_name = sdbcl.get_collection_space_name(self._cl)
+         rc, cs_name = sdb.cl_get_collection_space_name(self._cl)
          pysequoiadb._raise_if_error("Failed to get collection space name", rc)
       except SDBBaseError:
          raise
@@ -666,7 +666,7 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc, full_name = sdbcl.get_full_name(self._cl)
+         rc, full_name = sdb.cl_get_full_name(self._cl)
          pysequoiadb._raise_if_error("Failed to get full name", rc)
       except SDBBaseError:
          raise
@@ -702,7 +702,7 @@ class collection(object):
 
       try:
          result = cursor()
-         rc = sdbcl.aggregate(self._cl, result._cursor, container)
+         rc = sdb.cl_aggregate(self._cl, result._cursor, container)
          pysequoiadb._raise_if_error("Failed to aggregate", rc)
       except SDBBaseError:
          del result
@@ -769,7 +769,7 @@ class collection(object):
 
       try:
          result = cursor()
-         rc = sdbcl.get_query_meta(self._cl, result._cursor, condition,
+         rc = sdb.cl_get_query_meta(self._cl, result._cursor, condition,
                                 order_by, hint, num_to_skip, num_to_return)
          pysequoiadb._raise_if_error("Failed to query meta", rc)
       except SDBBaseError:
@@ -802,7 +802,7 @@ class collection(object):
          bson_options = bson.BSON.encode(options)
 
       try:
-         rc = sdbcl.attach_collection(self._cl, cl_full_name, bson_options)
+         rc = sdb.cl_attach_collection(self._cl, cl_full_name, bson_options)
          pysequoiadb._raise_if_error("Failed to attach collection", rc)
       except SDBBaseError:
          raise
@@ -821,7 +821,7 @@ class collection(object):
          raise SDBTypeError("name of subcollection must be an instance of basestring")
 
       try:
-         rc = sdbcl.detach_collection(self._cl, sub_cl_full_name)
+         rc = sdb.cl_detach_collection(self._cl, sub_cl_full_name)
          pysequoiadb._raise_if_error("Failed to detach collection", rc)
       except SDBBaseError:
          raise

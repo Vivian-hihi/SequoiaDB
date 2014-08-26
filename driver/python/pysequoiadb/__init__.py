@@ -52,12 +52,12 @@ from pysequoiadb.error import (SDBTypeError,
 
 import sys
 try:
-   import libsdbclient as sdbclient
+   import libsequoiadb as sdb
 except ImportError:
-   raise Exception("cannot find C module file: libsdbclient")
+   raise Exception("cannot find Extension: libsequoiadb")
 
 def get_version():
-   ver, sub_version, release, build = sdbclient.get_version()
+   ver, sub_version, release, build = sdb.sdb_get_version()
    return ("( Version: %s , subVersion: %s , Release: %s , build: %s )"
             % (ver, sub_version, release, build))
 

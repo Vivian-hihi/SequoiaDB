@@ -13,9 +13,9 @@
 #   limitations under the License.
 
 try:
-   import libsdbcursor as sdbcursor
+   import libsequoiadb as sdb
 except ImportError:
-   raise Exception("cannot find C module file: libsdbcursor")
+   raise Exception("cannot find Extension: libsequoiadb")
 
 import bson
 import pysequoiadb
@@ -57,7 +57,7 @@ class cursor(object):
       """
       self._cursor = None
       try:
-         self._cursor = sdbcursor.create_cursor()
+         self._cursor = sdb.create_cursor()
       except SystemError:
          raise SDBBaseError("Failed to alloc cursor", const.SDB_OOM)
 
@@ -69,7 +69,7 @@ class cursor(object):
       """
       if self._cursor is not None:
          try:
-            rc = sdbcursor.release_cursor(self._cursor)
+            rc = sdb.release_cursor(self._cursor)
             pysequoiadb._raise_if_error("Failed to release cursor", rc)
          except SDBBaseError:
             raise
@@ -84,7 +84,7 @@ class cursor(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc, bson_string = sdbcursor.next(self._cursor)
+         rc, bson_string = sdb.cr_next(self._cursor)
          if const.SDB_OK != rc:
             if const.SDB_DMS_EOC == rc:
                record = None
@@ -107,7 +107,7 @@ class cursor(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc, bson_string = sdbcursor.current(self._cursor)
+         rc, bson_string = sdb.cr_current(self._cursor)
          if const.SDB_OK != rc:
             if const.SDB_DMS_EOC == rc:
                record = None
@@ -129,7 +129,7 @@ class cursor(object):
          pysequoiadb.error.SDBBaseError
       """
       try:
-         rc = sdbcursor.close(self._cursor)
+         rc = sdb.cr_close(self._cursor)
          pysequoiadb._raise_if_error("Failed to close cursor", rc)
       except SDBBaseError:
          raise
