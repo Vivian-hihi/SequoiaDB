@@ -27,6 +27,7 @@
 					<param name="install.path" value="${install.path}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
 				<echo message="... test ant-testcases is over ..." />
 			</case>
@@ -39,6 +40,7 @@
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="coord_port" value="50000" />
 					<param name="data_port" value="21100" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
 				<echo message="... test python driver is over ..." />
 			</case>
@@ -49,6 +51,7 @@
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/php_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
 				<echo message="... test php driver is over ..." />
 			</case>
@@ -70,6 +73,7 @@
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases" />
 					<param name="test_name" value="${testCcases}"  />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
 				<echo message="... test C driver is over ..." />
 			</case>
@@ -81,6 +85,7 @@
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases" />
 					<param name="test_name" value="${testCPPcases}"  />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
 				<echo message="... test CPP driver is over ..." />
 			</case>
@@ -90,6 +95,7 @@
 				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/samples_testcases/CPP/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/samples_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
 				<echo message="... client sample test is over ..." />
 			</case>
