@@ -4,9 +4,9 @@
 <!--@param ${deploy.case.fullname}: The file name ( .xml )this file name is -->
 <project name="exec-samples-testcases" default="exec-samples-testcases">
     <property environment="env" />
-    <taskdef resource="net/sf/antcontrib/antlib.xml">
+    <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
-            <pathelement location="/usr/share/java/ant-contrib.jar" />
+            <fileset dir="${antTask.jar.path}" includes="*.jar" />
         </classpath>
     </taskdef>
 
