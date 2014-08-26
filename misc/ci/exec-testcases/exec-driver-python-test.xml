@@ -18,7 +18,7 @@
 		<mkdir dir="${reports.path}" />
 	</target>
 
-	<target name="exec-driver-python-test" depends="clean-env">
+	<target name="init-python-driver" depends="clean-env">
 		<property name="python.tar" value="pysequoiadb.tar.gz" />
 
 		<echo message="begin to init python driver..." />
@@ -28,23 +28,44 @@
 		<exec executable="/usr/bin/python" dir="${install.path}/sequoiadb/python">
 			<arg line=" setup.py install" />
 		</exec>
-		
-		<echo message="test one case is TestPySequoiadb.py" />
-<!-- 		<copy todir="${install.path}/sequoiadb/python">
-			<fileset dir="${testcase.path}" includes="**/*.py" />
-		</copy> -->
+	</target>
+
+	<target name="exec-driver-python-test" depends="init-python-driver">
+		<echo message="Begin to test TestPySequoiadb.py..." />
+
+		<tstamp>
+			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="This testcase begin time is ${testcase.begin.time}"/>
 
 		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;testsuite hostname=&quot;${host.NAME}&quot; errors=&quot;0&quot; failures=&quot;0&quot; tests=&quot;1&quot;&gt;&#10;&lt;testcase name=&quot;TestPySequoiadb.py&quot; &gt;&#10;" />
-		<exec executable="/usr/bin/python" failonerror="false" dir="${testcase.path}" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
+		<exec executable="/usr/bin/python" failonerror="false" dir="${testcase.path}" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
 			<arg line=" TestPySequoiadb.py -H ${test.machine.no2.basic} -p ${coord_port} -d ${data_port}" />
 		</exec>
+		<echo message="${screen.output}" />
+
 		<if>
 			<not>
 				<equals arg1="${ret.code}" arg2="0" />
 			</not>
 			<then>
-				 <echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;failure command=&quot;python TestPySequoiadb.py&quot; dir=&quot;${install.path}/sequoiadb/python&quot; returncode=&quot;${ret.code};&quot; &gt;&#10;&lt;![CDATA[errormessage=${error.output} ]]&gt;&#10; &lt;screen error=&quot; ${screen.output}&quot; /&gt;&#10;&lt;/failure&gt;&#10;" />
+				<tstamp>
+					<format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+				</tstamp>
+				<echo message="This testcase end time is ${testcase.failure.end.time}"/>
+				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
+				<echo message="The testcase ${test.case.name}.js cost ${testcase.failure.timeOutput} s in total..." />
+
+				 <echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;failure command=&quot;python TestPySequoiadb.py&quot; dir=&quot;${install.path}/sequoiadb/python&quot; time=&quot;${testcase.failure.timeOutput}&quot; returncode=&quot;${ret.code};&quot; &gt;&#10;&lt;![CDATA[errormessage=${error.output} ]]&gt;&#10; &lt;screen error=&quot; ${screen.output}&quot; /&gt;&#10;&lt;/failure&gt;&#10;" />
 			</then>
+			<else>
+				<tstamp>
+					<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+				</tstamp>
+				<echo message="This testcase end time is ${testcase.end.time}"/>
+				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
+				<echo message="The testcase ${test.case.name}.js cost ${testcase.timeOutput} s in total..." />
+			</else>
 		</if>
 		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;/testcase&gt;&#10;&lt;/testsuite&gt;&#10;" />
 	</target>
