@@ -19,7 +19,7 @@ if __name__ == "__main__":
       cs = db.create_collection_space(cs_name)
 
       cl_name = "sports"
-      cl = cs.create_collection(cl_name)
+      cl = cs.create_collection(cl_name, {"ReplSize":0})
 
       # insert single record for query()
       basketball = {"Item":"basketball", "id":0}
