@@ -58,10 +58,6 @@
 		<property name="test.suite.class.name" value="com.sequoiadb.testcases-js.${test.package.name}.${host.NAME}-${parallel.num}-${test.suite.name}" />
 
 		<echo message="now testsuite ${test.suite.name}" />
-		<tstamp>
-			<format property="testsuite.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="This suite begin time is ${testsuite.begin.time}"/>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot;&gt;&#10;" />
 
@@ -89,13 +85,6 @@
 		</foreach>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
-
-		<tstamp>
-			<format property="testsuite.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<echo message="This suite end time is ${testsuite.end.time}"/>
-		<sdbTime beginTime="${testsuite.begin.time}" endTime="${testsuite.end.time}" output="timeOutput" />
-		<echo message="The testsuite ${test.suite.name} cost ${timeOutput} s in total..." />
 	</target>
 
 	<target name="test-one-case" depends="">
