@@ -132,7 +132,8 @@ namespace engine
       private:
          INT32           _getClusterInfo( string &clusterName, string &desc,
                                           string &sdbUsr, string &sdbPasswd,
-                                          string &sdbUsrGroup) ;
+                                          string &sdbUsrGroup,
+                                          string &installPath ) ;
    };
 
    class omQueryClusterCommand : public omCreateClusterCommand 
@@ -262,6 +263,8 @@ namespace engine
          INT32           _getSdbUsrInfo( string clusterName, string &sdbUser, 
                                          string &sdbPasswd, 
                                          string &sdbUserGroup ) ;
+         INT32           _getClusterInstallPath( string clusterName, 
+                                                 string &installPath ) ;
          INT32           _getPacketFullPath( char *path ) ;
    };
 

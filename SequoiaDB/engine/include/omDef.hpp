@@ -76,6 +76,7 @@ namespace engine
    #define OM_CLUSTER_FIELD_SDBUSER          "SdbUser"
    #define OM_CLUSTER_FIELD_SDBPASSWD        "SdbPasswd"
    #define OM_CLUSTER_FIELD_SDBUSERGROUP     "SdbUserGroup"
+   #define OM_CLUSTER_FIELD_INSTALLPATH      "InstallPath"
 
    #define OM_CS_DEPLOY_CL_CLUSTERIDX1       "{name:\"SYSDEPLOY_CLUSTER_IDX1\",key: {"\
                                              OM_CLUSTER_FIELD_NAME":1}, unique: true, enforced: true } "
@@ -178,6 +179,8 @@ namespace engine
    #define  OM_DEFAULT_SDB_PASSWD            "sdbadmin"
    #define  OM_DEFAULT_SDB_USERGROUP         "sdbadmin_group"
 
+   #define  OM_DEFAULT_INSTALL_PATH          "/opt/sequoiadb/"
+
    // *****************************************************************
 
    // *********************om rest query_cluster_req*******************
@@ -223,11 +226,15 @@ namespace engine
    #define  OM_BSON_FIELD_AGENT_PORT         "AgentPort"
 
    // milliseconds
+   #define  OM_BASICCHECK_INTERVAL           (10000)
+   #define  OM_INSTALL_AGET_INTERVAL         (20000)
+   #define  OM_CHECK_HOST_INTERVAL           (20000)
+   #define  OM_WAIT_AGENT_UNISTALL_INTERVAL  (5000)
+   
    #define  OM_WAIT_SCAN_RES_INTERVAL        (60000)
    #define  OM_WAIT_PROGRESS_RES_INTERVAL    (500)
 
    #define  OM_WAIT_AGENT_EXIT_RES_INTERVAL  (5000)
-   #define  OM_WAIT_AGENT_UNISTALL_INTERVAL  (5000)
    #define  OM_WAIT_UPDATE_HOST_INTERVAL     (5000)
    // *****************************************************************
 

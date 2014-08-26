@@ -402,7 +402,8 @@ namespace engine
                                                   string &desc,
                                                   string &sdbUsr, 
                                                   string &sdbPasswd,
-                                                  string &sdbUsrGroup )
+                                                  string &sdbUsrGroup,
+                                                  string &installPath )
    {
       const CHAR *pClusterInfo = NULL ;
       BSONObj clusterInfo ;
@@ -432,6 +433,7 @@ namespace engine
       sdbUsr      = clusterInfo.getStringField( OM_BSON_FIELD_SDB_USER ) ;
       sdbPasswd   = clusterInfo.getStringField( OM_BSON_FIELD_SDB_PASSWD ) ;
       sdbUsrGroup = clusterInfo.getStringField( OM_BSON_FIELD_SDB_USERGROUP ) ;
+      installPath = clusterInfo.getStringField( OM_BSON_FIELD_INSTALL_PATH ) ;
       if ( 0 == clusterName.length() || 0 == sdbUsr.length()
            || 0 == sdbPasswd.length() || 0 == sdbUsrGroup.length() )
       {
@@ -442,6 +444,11 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
+      }
+
+      if ( 0 == installPath.length() )
+      {
+         installPath = OM_DEFAULT_INSTALL_PATH ;
       }
 
    done:
@@ -457,13 +464,14 @@ namespace engine
       string sdbUser ;
       string sdbPasswd ;
       string sdbUserGroup ;
+      string sdbinstallPath ;
       BSONObjBuilder bsonBuilder ;
       BSONObjBuilder resBuilder ;
       BSONObj bsonCluster ;
       INT32 rc                 = SDB_OK ;
 
       rc = _getClusterInfo( clusterName, desc, sdbUser, sdbPasswd, 
-                            sdbUserGroup ) ;
+                            sdbUserGroup, sdbinstallPath ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get cluster info failed:rc=%d", rc ) ;
@@ -476,6 +484,7 @@ namespace engine
       bsonBuilder.append( OM_CLUSTER_FIELD_SDBUSER, sdbUser ) ;
       bsonBuilder.append( OM_CLUSTER_FIELD_SDBPASSWD, sdbPasswd ) ;
       bsonBuilder.append( OM_CLUSTER_FIELD_SDBUSERGROUP, sdbUserGroup ) ;
+      bsonBuilder.append( OM_CLUSTER_FIELD_INSTALLPATH, sdbinstallPath ) ;
       // duplicate check depends on the unique index of table(OM_CS_DEPLOY_CL_CLUSTERIDX1)
       bsonCluster = bsonBuilder.obj() ;
       rc = rtnInsert( OM_CS_DEPLOY_CL_CLUSTER, bsonCluster, 1, 0, _cb );
@@ -1201,7 +1210,7 @@ namespace engine
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
-                                                      OM_WAIT_SCAN_RES_INTERVAL,
+                                                      OM_BASICCHECK_INTERVAL,
                                                       NULL ) ;
       if ( NULL == remoteSession )
       {
@@ -1220,6 +1229,7 @@ namespace engine
          _errorDetail = "send message to agent failed" ;
          PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
          goto error ;
       }
 
@@ -1320,7 +1330,7 @@ namespace engine
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
-                                                      OM_WAIT_SCAN_RES_INTERVAL,
+                                                      OM_INSTALL_AGET_INTERVAL,
                                                       NULL ) ;
       if ( NULL == remoteSession )
       {
@@ -1337,6 +1347,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
          SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
          goto error ;
       }
 
@@ -1435,7 +1446,7 @@ namespace engine
       // create remote session
       om            = sdbGetOMManager() ;
       remoteSession = om->getRSManager()->addSession( _cb, 
-                                                      OM_WAIT_SCAN_RES_INTERVAL,
+                                                      OM_CHECK_HOST_INTERVAL,
                                                       NULL ) ;
       if ( NULL == remoteSession )
       {
@@ -1660,6 +1671,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
          SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
          goto error ;
       }
 
@@ -1679,6 +1691,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       list<BSONObj> agentInstalledHost ;
 
+      PD_LOG( PDEVENT, "start to _installAgent" ) ;
       rc = _installAgent( hostInfoList ) ;
       if ( SDB_OK != rc )
       {
@@ -1689,6 +1702,7 @@ namespace engine
 
       agentInstalledHost.assign( hostInfoList.begin(), hostInfoList.end() ) ;
 
+      PD_LOG( PDEVENT, "start to _checkHostEnv" ) ;
       rc = _checkHostEnv( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
       {
@@ -1698,6 +1712,7 @@ namespace engine
       }
 
    done:
+      PD_LOG( PDEVENT, "start to _uninstallAgent" ) ;
       _uninstallAgent( agentInstalledHost ) ;
       return rc ;
    error:
@@ -1715,7 +1730,7 @@ namespace engine
       rc = _getHostList( clusterName, hostInfoList ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG(PDERROR, "fail to get host list:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "fail to get host list:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -1724,10 +1739,11 @@ namespace engine
       _filterExistHost( hostInfoList, hostResult ) ;
 
       // move the check failed host to the hostResult
+      PD_LOG( PDEVENT, "start to do BasicCheck" ) ;
       rc = _doBasicCheck( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG(PDERROR, "do basic check failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "do basic check failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -1735,7 +1751,7 @@ namespace engine
       rc = _doCheck( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG(PDERROR, "do check failed:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "do check failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -1771,7 +1787,7 @@ namespace engine
       const CHAR* pGlobalSshPort   = NULL ;
       const CHAR* pGlobalAgentPort = NULL ;
       const CHAR* pHostInfo        = NULL ;
-      const CHAR* pInstallPath     = NULL ;
+      string installPath ;
       BSONObj bsonHostInfo ;
       BSONElement element ;
 
@@ -1803,20 +1819,23 @@ namespace engine
                                        OM_BSON_FIELD_AGENT_PORT ) ;
       clusterName    = bsonHostInfo.getStringField( 
                                        OM_BSON_FIELD_CLUSTER_NAME ) ;
-      pInstallPath   = bsonHostInfo.getStringField( 
-                                       OM_BSON_FIELD_INSTALL_PATH ) ;
       if ( 0 == ossStrlen( pGlobalUser ) || 0 == ossStrlen( pGlobalPasswd )
            || 0 == ossStrlen( pGlobalSshPort ) || 0 == clusterName.length()
-           || 0 == ossStrlen( pGlobalAgentPort ) 
-           || 0 == ossStrlen( pInstallPath) )
+           || 0 == ossStrlen( pGlobalAgentPort ) )
       {
          _errorDetail = string( OM_BSON_FIELD_HOST_USER ) + " is null"
                         + " or " + OM_BSON_FIELD_HOST_PASSWD + " is null"
                         + " or " + OM_BSON_FIELD_HOST_SSHPORT + " is null"
                         + " or " + OM_BSON_FIELD_AGENT_PORT + " is null"
-                        + " or " + OM_BSON_FIELD_CLUSTER_NAME + " is null"
-                        + " or " + OM_BSON_FIELD_INSTALL_PATH + " is null";
+                        + " or " + OM_BSON_FIELD_CLUSTER_NAME + " is null" ;
          rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s:info=%s", _errorDetail.c_str(), pHostInfo ) ;
+         goto error ;
+      }
+
+      rc = _getClusterInstallPath( clusterName, installPath ) ;
+      if ( SDB_OK != rc )
+      {
          PD_LOG( PDERROR, "%s:info=%s", _errorDetail.c_str(), pHostInfo ) ;
          goto error ;
       }
@@ -1864,7 +1883,7 @@ namespace engine
 
             if ( !oneHost.hasField( OM_BSON_FIELD_INSTALL_PATH ) )
             {
-               builder.append( OM_BSON_FIELD_INSTALL_PATH, pInstallPath ) ;
+               builder.append( OM_BSON_FIELD_INSTALL_PATH, installPath) ;
             }
 
             tmp = builder.obj() ;
@@ -1937,6 +1956,67 @@ namespace engine
       bsonRequest = builder.obj() ;
 
    done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omAddHostCommand::_getClusterInstallPath( string clusterName, 
+                                                   string &installPath )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder resultBuilder ;
+      BSONObj result ;
+
+      BSONObjBuilder builder ;
+      builder.append( OM_CLUSTER_FIELD_NAME, clusterName ) ;
+      BSONObj matcher ;
+      matcher = builder.obj() ;
+
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID             = -1 ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "failed to query table:" ) 
+                        + OM_CS_DEPLOY_CL_CLUSTER ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               _errorDetail = string( "cluster is not exist:cluster=" ) 
+                              + clusterName ;
+               PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+               goto error ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_CLUSTER ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         installPath = record.getStringField( OM_CLUSTER_FIELD_INSTALLPATH ) ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -2254,6 +2334,7 @@ namespace engine
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "addSession failed" ) ;
+         SDB_OSS_FREE( pContent ) ;
          goto error ;
       }
 
@@ -2263,22 +2344,15 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
+         SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
          goto error ;
       }
 
       remoteSession->waitReply( TRUE ) ;
 
    done:
-      if ( NULL != pContent )
-      {
-         SDB_OSS_FREE( pContent ) ;
-      }
-
-      if ( NULL != remoteSession )
-      {
-         remoteSession->clearSubSession() ;
-         om->getRSManager()->removeSession( remoteSession ) ;
-      }
+      _clearSession( om, remoteSession ) ;
       return ;
    error:
       goto done ;
