@@ -5,7 +5,6 @@
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${parallel.num}:  The parallel number when parallel in same host.-->
 <!--@param ${excludes.dir.patterns}: A comma- or space-sparated list of patterns of directories that must be excluded.-->
-<!--@param ${to.copy.test.log}: If it is true ,then copy the test log for everyone to down them , default is true-->
 <!--@param ${ci.properties.path}: where is the ci.properties file -->
 <!--@param ${report.suffix}:this is for long time test, default is NULL-->
 <project name="test-basic-testcases" default="test-basic-testcases">
@@ -60,7 +59,7 @@
 
 		<echo message="now testsuite ${test.suite.name}" />
 		<tstamp>
-			<format property="testsuite.begin.time" pattern="yyyy-MM-dd HH-mm-ss" />
+			<format property="testsuite.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="This suite begin time is ${testsuite.begin.time}"/>
 
@@ -92,7 +91,7 @@
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
 
 		<tstamp>
-			<format property="testsuite.end.time" pattern="yyyy-MM-dd HH-mm-ss" />
+			<format property="testsuite.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="This suite end time is ${testsuite.end.time}"/>
 		<sdbTime beginTime="${testsuite.begin.time}" endTime="${testsuite.end.time}" output="timeOutput" />
@@ -132,7 +131,7 @@
 
 		<echo message="now testcase ${test.case.name}.js" />
 		<tstamp>
-			<format property="testcase.begin.time" pattern="yyyy-MM-dd HH-mm-ss" />
+			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
 		<echo message="This testcase begin time is ${testcase.begin.time}"/>
 
@@ -186,7 +185,7 @@
 							<then>
 								<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
 								<tstamp>
-									<format property="current.time.log" pattern="yyyy-MM-dd HH-mm-ss" />
+									<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss" />
 								</tstamp>
 
 								<echo message="mkdir ${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
@@ -270,7 +269,7 @@
 						</if>
 
 						<tstamp>
-							<format property="testcase.failure.end.time" pattern="yyyy-MM-dd HH-mm-ss" />
+							<format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 						</tstamp>
 						<echo message="This testcase end time is ${testcase.failure.end.time}"/>
 						<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
@@ -296,7 +295,7 @@
 			</then>
 			<else>
 				<tstamp>
-					<format property="testcase.end.time" pattern="yyyy-MM-dd HH-mm-ss" />
+					<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 				</tstamp>
 				<echo message="This testcase end time is ${testcase.end.time}"/>
 				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
