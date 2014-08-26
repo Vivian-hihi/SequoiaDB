@@ -215,7 +215,7 @@ namespace engine
          if ( bFind )
          {
             ++total ;
-            ossPrintf( "%s(%s) (%s)"OSS_NEWLINE,
+            ossPrintf( "%s(%s) (%d)"OSS_NEWLINE,
                        utilDBTypeStr( (SDB_TYPE)info._type ),
                        info._svcname.c_str(), info._pid ) ;
          }
