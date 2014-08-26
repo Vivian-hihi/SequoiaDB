@@ -1606,7 +1606,7 @@ namespace engine
             // going to send rc from utilGetErrorBson( rc, NULL ).objsize()
             if ( rc )
             {
-               BSONObj errorObj = pmdGetErrorBson( rc, NULL ) ;
+               BSONObj errorObj = utilGetErrorBson( rc, NULL ) ;
                BSONObj *pObj = &errorObj ;
                if ( pErrorObj )
                {
