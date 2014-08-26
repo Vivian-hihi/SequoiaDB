@@ -22,7 +22,7 @@ using namespace sdbclient ;
 static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
 {
    sdbNode *node = NULL;
-   if ( !PyArg_ParseTuple(args, "") )
+   if ( !PARSE_PYTHON_ARGS(args, "") )
    {
       return NULL ;
    }
@@ -62,7 +62,7 @@ static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
    sdbNode *node    = NULL ;
    sdb *client      = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "OO", &obj, &sdbodj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &sdbodj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
@@ -84,7 +84,7 @@ static PYOBJECT *get_status( PYOBJECT *self, PYOBJECT *args )
    INT32 nodestatus = SDB_NODE_UNKNOWN ;
    sdbNode *node    = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
@@ -105,7 +105,7 @@ static PYOBJECT *get_hostname( PYOBJECT *self, PYOBJECT *args )
    const char *hostname = "" ;
    sdbNode *node        = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
@@ -126,7 +126,7 @@ static PYOBJECT *get_servicename( PYOBJECT *self, PYOBJECT *args )
    const char *servicename = "" ;
    sdbNode *node           = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
@@ -147,7 +147,7 @@ static PYOBJECT *get_nodename( PYOBJECT *self, PYOBJECT *args )
    const char *nodename = "" ;
    sdbNode *node        = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
@@ -167,7 +167,7 @@ static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj = NULL ;
    sdbNode *node = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
@@ -187,7 +187,7 @@ static PYOBJECT *start( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj = NULL ;
    sdbNode *node = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;

@@ -23,7 +23,7 @@ using namespace sdbclient ;
 static PYOBJECT *create_cursor( PYOBJECT *self, PYOBJECT *args )
 {
    sdbCursor *cursor = NULL;
-   if ( !PyArg_ParseTuple(args, "") )
+   if ( !PARSE_PYTHON_ARGS(args, "") )
    {
       return NULL ;
    }
@@ -61,7 +61,7 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj     = NULL ;
    sdbCursor *cursor = NULL ;
    bson::BSONObj bson ;
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
@@ -87,7 +87,7 @@ static PYOBJECT *current( PYOBJECT *self, PYOBJECT *args )
    sdbCursor *cursor = NULL ;
    bson::BSONObj bson ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
@@ -111,7 +111,7 @@ static PYOBJECT *close( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj     = NULL ;
    sdbCursor *cursor = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
