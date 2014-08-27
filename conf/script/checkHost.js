@@ -28,11 +28,7 @@ if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
 
 var objRet = new Object() ;
 objRet.HostName   = null ;
-//objRet.IP         = null ;
-objRet.User       = null ;
-objRet.Password   = null ;
  
-//objRet.Host       = null ;
 objRet.OS         = null ;
 objRet.CPU        = null ;
 objRet.Memory     = null ;
@@ -47,12 +43,6 @@ objRet.HostName   = null ;
 objRet.Rc         = 0 ;
 objRet.Detail     = "" ;
 
-// hosts table
-function getHostsTableInfo()
-{
-   var hostsInfo = eval( '(' + System.getHostsMap() + ')' ) ;
-   objRet.Host = hostsInfo ;
-}
 
 // os info
 function getOSInfo()
@@ -128,11 +118,8 @@ function main()
          return objRet ;
       }
       objRet.HostName   = HOSTNAME ;
-      objRet.User       = USERNAME ;
-      objRet.Password   = PASSWORD ;
 
       // get local host info
-//      getHostsTableInfo()
       getOSInfo() ;
       getCPUInfo() ;
       getMemInfo() ;
