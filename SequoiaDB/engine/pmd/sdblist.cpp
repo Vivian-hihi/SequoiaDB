@@ -48,6 +48,7 @@
 #include "utilCommon.hpp"
 #include "ossVer.h"
 #include "utilParam.hpp"
+#include "utilStr.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -57,9 +58,12 @@ using namespace std;
 namespace engine
 {
 
+   #define SDB_LIST_TYPE_STR              "type"
+
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "show version" ) \
+       ( PMD_COMMANDS_STRING( SDB_LIST_TYPE_STR, ",t"), boost::program_options::value<string>(), "node type: db/om/cm, default: db" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name, use ',' to seperator" )
 
    // initialize options
@@ -75,49 +79,11 @@ namespace engine
       std::cout << desc << std::endl ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_SVCSPLIT2, "serviceSplit" )
-   INT32 serviceSplit ( const string &input, vector<string> &listServices )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_SVCSPLIT2 );
-      CHAR *cstr = NULL ;
-      CHAR *p = NULL ;
-      CHAR *pContext = NULL ;
-      INT32 bufSize = input.size() ;
-
-      cstr = (CHAR*)SDB_OSS_MALLOC ( bufSize + 1 ) ;
-      if ( !cstr )
-      {
-         std::cout << "Alloc memory(" << bufSize + 1 << ") failed" << endl ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      ossMemset ( cstr, 0, bufSize + 1 ) ;
-      ossStrncpy ( cstr, input.c_str(), bufSize ) ;
-
-      p = ossStrtok ( cstr, ", \t", &pContext ) ;
-      while ( p )
-      {
-         string ts ( p ) ;
-         listServices.push_back ( ts ) ;
-         p = ossStrtok ( NULL, ", \t", &pContext ) ;
-      }
-
-   done :
-      if ( cstr )
-      {
-         SDB_OSS_FREE ( cstr ) ;
-      }
-      PD_TRACE_EXITRC ( SDB_SVCSPLIT2, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_RESVARG, "resolveArgument" )
    INT32 resolveArgument ( po::options_description &desc,
                            INT32 argc, CHAR **argv,
-                           vector<string> &listServices )
+                           vector<string> &listServices,
+                           INT32 &typeFilter )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBLIST_RESVARG ) ;
@@ -147,10 +113,32 @@ namespace engine
       {
          string svcname = vm[PMD_OPTION_SVCNAME].as<string>() ;
          // break service names using ';'
-         rc = serviceSplit ( svcname, listServices ) ;
+         rc = utilSplitStr( svcname, listServices, ", \t" ) ;
          if ( rc )
          {
             std::cout << "Parse svcname failed: " << rc << endl ;
+            goto error ;
+         }
+      }
+      if ( vm.count( SDB_LIST_TYPE_STR ) )
+      {
+         string listType = vm[ SDB_LIST_TYPE_STR ].as<string>() ;
+         if ( 0 == ossStrcasecmp( listType.c_str(), "db" ) )
+         {
+            typeFilter = SDB_TYPE_DB ;
+         }
+         else if ( 0 == ossStrcasecmp( listType.c_str(), "om" ) )
+         {
+            typeFilter = SDB_TYPE_OM ;
+         }
+         else if ( 0 == ossStrcasecmp( listType.c_str(), "cm" ) )
+         {
+            typeFilter = SDB_TYPE_OMA ;
+         }
+         else
+         {
+            std::cout << "type invalid" << endl ;
+            rc = SDB_INVALIDARG ;
             goto error ;
          }
       }
@@ -171,16 +159,16 @@ namespace engine
       vector<string> listServices ;
       UTIL_VEC_NODES listNodes ;
       BOOLEAN bFind = TRUE ;
+      INT32 typeFilter = SDB_TYPE_DB ;
 
       po::options_description desc ( "Command options" ) ;
       init ( desc ) ;
 
       // validate arguments
-      rc = resolveArgument ( desc, argc, argv, listServices ) ;
+      rc = resolveArgument ( desc, argc, argv, listServices, typeFilter ) ;
       if ( rc )
       {
-         if ( SDB_PMD_HELP_ONLY != rc &&
-              SDB_PMD_VERSION_ONLY != rc )
+         if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
          {
             std::cout << "Invalid argument" << endl ;
             displayArg ( desc ) ;
@@ -188,7 +176,7 @@ namespace engine
          goto done ;
       }
 
-      utilListNodes( listNodes, SDB_TYPE_DB ) ;
+      utilListNodes( listNodes, typeFilter ) ;
 
       for ( UINT32 i = 0 ; i < listNodes.size() ; ++i )
       {

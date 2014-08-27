@@ -206,6 +206,11 @@ namespace engine
          goto error ;
       }
 
+      if ( !pReadBuf || 0 == readLen )
+      {
+         goto done ;
+      }
+
       rc = ossReadNamedPipe( handle, pReadBuf, readLen, bufRead,
                              LIST_TIMEOUT ) ;
       if ( rc )
@@ -293,7 +298,7 @@ namespace engine
          }
 
          // find it
-         findNode._orgname = names[ i ].c_str() ;
+         findNode._orgname = names[ i ] ;
          findNode._svcname = names[ i ].substr( prefixLen ) ;
 
          nodes.push_back( findNode ) ;
@@ -352,6 +357,57 @@ namespace engine
          }
 
          // sleep one seconds
+         ossSleep( OSS_ONE_SEC ) ;
+      }
+      rc = SDB_TIMEOUT ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 utilStopNode( utilNodeInfo & node, INT32 timeout )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( timeout < 0 )
+      {
+         timeout = 0x7FFFFFFF ;
+      }
+      else if ( timeout == 0 )
+      {
+         timeout = 1 ;
+      }
+
+#if defined( _LINUX )
+      rc = ossTerminateProcess( node._pid, FALSE ) ;
+#else
+      rc = utilWriteReadPipe( node._orgname.c_str(),
+                              ENGINE_NPIPE_MSG_SHUTDOWN,
+                              sizeof( ENGINE_NPIPE_MSG_SHUTDOWN ),
+                              NULL, 0, NULL ) ;
+#endif // _LINUX
+      if ( rc && ossIsProcessRunning( node._pid ) )
+      {
+         PD_LOG( PDERROR, "kill or $shutdown node[%d] failed, rc: %d",
+                 node._pid, rc ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
+      while ( timeout > 0 )
+      {
+         --timeout ;
+         if ( !ossIsProcessRunning( node._pid ) )
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
          ossSleep( OSS_ONE_SEC ) ;
       }
       rc = SDB_TIMEOUT ;

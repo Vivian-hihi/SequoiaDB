@@ -39,6 +39,9 @@
 
 #include "core.hpp"
 #include <string>
+#include <vector>
+
+using namespace std ;
 
 namespace engine
 {
@@ -60,6 +63,9 @@ namespace engine
                       UINT32 cnt,
                       CHAR *join,
                       UINT32 &joinSize ) ;
+
+   INT32 utilSplitStr( const string &input, vector<string> &listServices,
+                       const string &seperators ) ;
 
    /// non-reentrant
    INT32 utilStr2TimeT( const CHAR *str,

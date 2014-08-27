@@ -73,7 +73,7 @@ namespace engine
                            const CHAR *svcnameFilter = NULL,
                            OSSPID pidFilter = OSS_INVALID_PID ) ;
 
-   #define UTIL_WAIT_NODE_TIMEOUT         ( 15 * 60 )
+   #define UTIL_WAIT_NODE_TIMEOUT         ( 15 * 60 ) // second
 
    /*
       wait node bussiness ok
@@ -83,6 +83,14 @@ namespace engine
                             OSSPID pid = OSS_INVALID_PID,
                             INT32 typeFilter = -1,
                             INT32 timeout = UTIL_WAIT_NODE_TIMEOUT ) ;
+
+   #define UTIL_STOP_NODE_TIMEOUT         ( 5 * 60 ) // second
+
+   /*
+      stop node
+   */
+   INT32    utilStopNode ( utilNodeInfo &node,
+                           INT32 timeout = UTIL_STOP_NODE_TIMEOUT ) ;
 
 }
 

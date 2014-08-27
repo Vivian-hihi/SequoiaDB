@@ -211,6 +211,44 @@ namespace engine
       return rc ;
    }
 
+   INT32 utilSplitStr( const string & input,
+                       vector < string > & listServices,
+                       const string & seperators )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *cstr = NULL ;
+      CHAR *p = NULL ;
+      CHAR *pContext = NULL ;
+      INT32 bufSize = input.size() ;
+
+      cstr = (CHAR*)SDB_OSS_MALLOC ( bufSize + 1 ) ;
+      if ( !cstr )
+      {
+         std::cout << "Alloc memory(" << bufSize + 1 << ") failed" << endl ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ossMemset ( cstr, 0, bufSize + 1 ) ;
+      ossStrncpy ( cstr, input.c_str(), bufSize ) ;
+
+      p = ossStrtok ( cstr, seperators.c_str(), &pContext ) ;
+      while ( p )
+      {
+         string ts ( p ) ;
+         listServices.push_back ( ts ) ;
+         p = ossStrtok ( NULL, seperators.c_str(), &pContext ) ;
+      }
+
+   done :
+      if ( cstr )
+      {
+         SDB_OSS_FREE ( cstr ) ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 utilStr2TimeT( const CHAR *str,
                         time_t &tm,
                         UINT64 *usec )

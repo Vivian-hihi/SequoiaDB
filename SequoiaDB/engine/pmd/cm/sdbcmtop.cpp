@@ -62,31 +62,34 @@
 
 using namespace std;
 
-/*
-   Macro define
-*/
-#define SDBCMTOP_LOG_FILE_NAME      "sdbcmtop.log"
-#define SDBCMTOP_TIMEOUT            ( 30000 )
+namespace engine
+{
 
-#define COMMANDS_OPTIONS \
+   /*
+      Macro define
+   */
+   #define SDBCMTOP_LOG_FILE_NAME      "sdbcmtop.log"
+   #define SDBCMTOP_TIMEOUT            ( 30000 )
+
+   #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" )
 
-/*
-   Function implement
-*/
-void init ( po::options_description &desc )
-{
-   PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
-      COMMANDS_OPTIONS
-   PMD_ADD_PARAM_OPTIONS_END
-}
+   /*
+      Function implement
+   */
+   void init ( po::options_description &desc )
+   {
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
+         COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
+   }
 
-void displayArg ( po::options_description &desc )
-{
-   std::cout << "Usage:  sdbcmtop [OPTION]" <<std::endl;
-   std::cout << desc << std::endl ;
-}
+   void displayArg ( po::options_description &desc )
+   {
+      std::cout << "Usage:  sdbcmtop [OPTION]" <<std::endl;
+      std::cout << desc << std::endl ;
+   }
 
 #if defined (_LINUX)
 
@@ -218,80 +221,87 @@ void displayArg ( po::options_description &desc )
 
 #endif // _LINUX
 
-// PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_MAIN, "main" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_MAIN, "mainEntry" )
+   INT32 mainEntry ( INT32 argc, CHAR **argv )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CMSTOP_MAIN ) ;
+      po::options_description desc ( "Command options" ) ;
+      po::variables_map vm ;
+      ossResultCode result ;
+      CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+
+      rc = ossGetEWD ( dialogFile, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         ossPrintf ( "Failed to get excutable file's working "
+                     "directory"OSS_NEWLINE ) ;
+         goto error ;
+      }
+      rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE, SDBCM_LOG_PATH ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to build dialog path: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+      rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE,
+                                SDBCMTOP_LOG_FILE_NAME ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to build dialog file: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+      // enable pd log
+      sdbEnablePD( dialogFile ) ;
+      setPDLevel( PDINFO ) ;
+
+      init ( desc ) ;
+      // validate arguments
+      rc = engine::utilReadCommandLine ( argc, argv, desc, vm ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;
+         displayArg ( desc ) ;
+         goto done ;
+      }
+      /// read cmd first
+      if ( vm.count( PMD_OPTION_HELP ) )
+      {
+         displayArg( desc ) ;
+         rc = SDB_PMD_HELP_ONLY ;
+         goto done ;
+      }
+      if ( vm.count( PMD_OPTION_VERSION ) )
+      {
+         ossPrintVersion( "Sdb CM Stop version" ) ;
+         rc = SDB_PMD_VERSION_ONLY ;
+         goto done ;
+      }
+
+      // stop cm
+      rc = stopSdbcm () ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to stop sdbcm, rc: %d", rc ) ;
+         ossPrintf ( "Failed to stop sdbcm, rc: %d"OSS_NEWLINE, rc ) ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "Successful to stop sdbcm" ) ;
+         ossPrintf ( "Successful to stop sdbcm"OSS_NEWLINE ) ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_CMSTOP_MAIN, rc ) ;
+      return SDB_OK == rc ? 0 : 1 ;
+   error:
+      goto error ;
+   }
+
+}
+
 INT32 main ( INT32 argc, CHAR **argv )
 {
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_CMSTOP_MAIN ) ;
-   po::options_description desc ( "Command options" ) ;
-   po::variables_map vm ;
-   ossResultCode result ;
-   CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-
-   rc = ossGetEWD ( dialogFile, OSS_MAX_PATHSIZE ) ;
-   if ( rc )
-   {
-      ossPrintf ( "Failed to get excutable file's working "
-                  "directory"OSS_NEWLINE ) ;
-      goto error ;
-   }
-   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE, SDBCM_LOG_PATH ) ;
-   if ( rc )
-   {
-      ossPrintf( "Failed to build dialog path: %d"OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
-   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE,
-                             SDBCMTOP_LOG_FILE_NAME ) ;
-   if ( rc )
-   {
-      ossPrintf( "Failed to build dialog file: %d"OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
-   // enable pd log
-   sdbEnablePD( dialogFile ) ;
-   setPDLevel( PDINFO ) ;
-
-   init ( desc ) ;
-   // validate arguments
-   rc = engine::utilReadCommandLine ( argc, argv, desc, vm ) ;
-   if ( rc )
-   {
-      PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;
-      displayArg ( desc ) ;
-      goto done ;
-   }
-   /// read cmd first
-   if ( vm.count( PMD_OPTION_HELP ) )
-   {
-      displayArg( desc ) ;
-      rc = SDB_PMD_HELP_ONLY ;
-      goto done ;
-   }
-   if ( vm.count( PMD_OPTION_VERSION ) )
-   {
-      ossPrintVersion( "Sdb CM Stop version" ) ;
-      rc = SDB_PMD_VERSION_ONLY ;
-      goto done ;
-   }
-
-   // stop cm
-   rc = stopSdbcm () ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to stop sdbcm, rc: %d", rc ) ;
-      ossPrintf ( "Failed to stop sdbcm, rc: %d"OSS_NEWLINE, rc ) ;
-   }
-   else
-   {
-      PD_LOG ( PDEVENT, "Successful to stop sdbcm" ) ;
-      ossPrintf ( "Successful to stop sdbcm"OSS_NEWLINE ) ;
-   }
-
-done:
-   PD_TRACE_EXITRC ( SDB_CMSTOP_MAIN, rc ) ;
-   return SDB_OK == rc ? 0 : 1 ;
-error:
-   goto error ;
+   return engine::mainEntry( argc, argv ) ;
 }
 

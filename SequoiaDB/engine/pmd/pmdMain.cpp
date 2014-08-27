@@ -245,7 +245,7 @@ namespace engine
          // process. Otherwise if TcpListener failed
          CHAR pmdProcessName [ OSS_RENAME_PROCESS_BUFFER_LEN + 1 ] = {0} ;
          ossSnprintf ( pmdProcessName, OSS_RENAME_PROCESS_BUFFER_LEN,
-                       ENGINE_NAME_PATTERN,
+                       "%s(%s)", utilDBTypeStr( pmdGetDBType() ),
                        pmdGetOptionCB()->getServiceAddr() ) ;
          ossEnableNameChanges ( argc, argv ) ;
          ossRenameProcess ( pmdProcessName ) ;
