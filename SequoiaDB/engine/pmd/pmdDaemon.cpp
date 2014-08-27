@@ -57,8 +57,8 @@ namespace engine
       Local define
    */
    #define PMDDMN_SHMSTAT_EXPRIRED_TIMES        10
-   #define PMDDMN_STOP_CHILD_MAX_TRY_TIMES      60
-   #define PMDDMN_STOP_CHILD_WAIT_TIME          (5*1000)
+   #define PMDDMN_STOP_CHILD_MAX_TRY_TIMES      180
+   #define PMD_QUIT_CHL_WAIT_TIMES              ( 15 )
    #define PMDDMN_SHM_TAG                       "sequoiadbDMN"
 
    /*
@@ -493,8 +493,11 @@ namespace engine
       {
          INT32 tryTimes = 0;
          BOOLEAN isForce = FALSE ;
+         INT32 waitTimes = PMD_QUIT_CHL_WAIT_TIMES ;
+
          while( isChildRunning() )
          {
+            ++waitTimes ;
             if ( tryTimes++ >= PMDDMN_STOP_CHILD_MAX_TRY_TIMES )
             {
                isForce = TRUE ;
@@ -503,25 +506,33 @@ namespace engine
             {
                if ( !isForce && _procInfo )
                {
-                  _procInfo->stat = PMDDMN_SHM_STAT_CHILDREN ;
-                  _procInfo->setCHLCMD( PMDDMN_SHM_CMD_CHL_QUIT ) ;
+                  if ( waitTimes >= PMD_QUIT_CHL_WAIT_TIMES )
+                  {
+                     _procInfo->stat = PMDDMN_SHM_STAT_CHILDREN ;
+                     _procInfo->setCHLCMD( PMDDMN_SHM_CMD_CHL_QUIT ) ;
+                     waitTimes = 0 ;
+#if defined ( _LINUX )
+                     if ( tryTimes >= PMD_QUIT_CHL_WAIT_TIMES )
+                     {
+                        ossTerminateProcess( _pid, FALSE ) ;
+                     }
+#endif // _LINUX
+                     PD_LOG( PDEVENT, "stop the service process(%d)...",
+                             _pid ) ;
+                  }
                }
-#if defined ( _WINDOWS )
                else
                {
-#endif // _WINDOWS
                   ossTerminateProcess( _pid, isForce ) ;
-#if defined ( _WINDOWS )
+                  PD_LOG( PDEVENT, "Terminate the service process(%d)...",
+                          _pid ) ;
                }
-#endif // _WINDOWS
-               ossSleep( PMDDMN_STOP_CHILD_WAIT_TIME ) ;
-               PD_LOG( PDEVENT, "stop the service process(%d)...", _pid ) ;
             }
             else if ( tryTimes >= PMDDMN_STOP_CHILD_MAX_TRY_TIMES )
             {
                break;
             }
-            ossSleep( 2 * OSS_ONE_SEC ) ;
+            ossSleep( OSS_ONE_SEC ) ;
          }
       }
       return SDB_OK;
