@@ -2735,4 +2735,4 @@ static PyMethodDef sequoiadb_methods[] = {
    {NULL, NULL}
 };
 
-CREATE_MODULE( libsequoiadb, sequoiadb_methods )
+CREATE_MODULE( sdb, sequoiadb_methods )

@@ -94,7 +94,7 @@ srcFiles = [
    curPath + "nonce.cpp",
 ]
 
-driver   = env.SharedLibrary("libsequoiadb",   [driverFiles, srcFiles])
+driver   = env.SharedLibrary("sdb",   [driverFiles, srcFiles])
 
 base = []
 base.append(env.Install("#/pysequoiadb", driver))
@@ -102,9 +102,11 @@ base.append(env.Install("#/pysequoiadb", driver))
 if sys.platform == 'win32':
    pass
 else:
-   act = "tar -zcvf pysequoiadb.tar.gz   \
-          ./bson ./pysequoiadb ./setup.py \
-          --exclude-vcs"
+   act = []
+   act.append("mv ./pysequoiadb/libsdb.so ./pyseuoiadb/sdb.so")
+   act.append("tar -zcvf pysequoiadb.tar.gz   \
+               ./bson ./pysequoiadb ./setup.py \
+               --exclude-vcs")
 
    run = env.Command(target = None, source = base, action = act )
    env.Depends(run, base)

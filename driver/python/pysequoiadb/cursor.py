@@ -13,9 +13,9 @@
 #   limitations under the License.
 
 try:
-   import libsequoiadb as sdb
+   import sdb
 except ImportError:
-   raise Exception("cannot find Extension: libsequoiadb")
+   raise Exception("Cannot find extension: sdb")
 
 import bson
 import pysequoiadb

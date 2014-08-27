@@ -12,17 +12,16 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-"""
-Module of client for python driver of SequoiaDB
+"""Module of client for python driver of SequoiaDB
 
 """
 import socket
 import random
 
 try:
-   import libsequoiadb as sdb
+   import sdb
 except ImportError:
-   raise Exception("cannot find Extension: libsequoiadb")
+   raise Exception("Cannot find extension: sdb")
 
 import bson
 import pysequoiadb

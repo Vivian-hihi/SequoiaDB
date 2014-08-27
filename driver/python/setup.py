@@ -15,16 +15,23 @@
 from distutils.core import Extension, setup
 import sys
 import os
+import glob
+import shutil
 
 if 'win32' == sys.platform:
-   import glob
-   import shutil
    dlls = './pysequoiadb/*.dll'
    for file in glob.glob(dlls):
+      if file.startswith('lib'):
+         newname = file[3:]
       newname = file[:-3] + 'pyd'
       shutil.copy(file, newname)
-   modules = ['err.prop', '*.lib', '*.pyd', '*.exp']
+   modules = ['err.prop','*.pyd'] #, '*.exp', '*.lib', 
 else:
+   sos = './pysequoiadb/*.so'
+   for file in glob.glob(sos):
+      if file.startswith('lib'):
+         newname = file[3:]
+      os.rename()
    modules = ['err.prop', '*.so']
 
 extra_opts = {}
@@ -51,9 +58,6 @@ setup(name = 'pysequoiadb',
       **extra_opts)
 
 if 'win32' == sys.platform:
-   import glob
-   import shutil
-   dlls = './pysequoiadb/*.pyd'
-   for file in glob.glob(dlls):
+   pyds = './pysequoiadb/*.pyd'
+   for file in glob.glob(pyds):
       os.remove(file)
-
