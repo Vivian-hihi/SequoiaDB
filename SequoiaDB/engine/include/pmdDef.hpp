@@ -232,9 +232,9 @@ namespace engine
    #if defined (_LINUX)
    #define PROC_PATH                   "/proc"
    #define PROC_CMDLINE_PATH_FORMAT    PROC_PATH"/%s/cmdline"
-   #define ENGINE_NAME                 SDB_TYPE_DB_STR
-   #define MODIFIED_ENGINE_NAME        ENGINE_NAME "("
-   #define ENGINE_NAME_PATTERN1        SDB_TYPE_DB_STR"("
+   #define ENGINE_NAME                 "sequoiadb"
+   #define MODIFIED_ENGINE_NAME        "sequoiadb("
+   #define ENGINE_NAME_PATTERN1        "sequoiadb("
    #define ENGINE_NAME_PATTERN2        ")"
    #define ENGINE_NAME_PATTERN         ENGINE_NAME_PATTERN1 "%s" ENGINE_NAME_PATTERN2
    #elif defined (_WINDOWS)

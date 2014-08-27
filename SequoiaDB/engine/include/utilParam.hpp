@@ -38,11 +38,13 @@
 #define UTILPARAM_HPP__
 
 #include "core.hpp"
+#include <string>
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
 
 namespace po = boost::program_options ;
+using namespace std ;
 
 namespace engine
 {
@@ -57,6 +59,9 @@ namespace engine
 
    INT32 utilWriteConfigFile( const CHAR * pFile, const CHAR * pData,
                               BOOLEAN createOnly = FALSE ) ;
+
+   INT32 utilGetServiceByConfigPath( const string& confPath,
+                                     string &svcname ) ;
 
 }
 

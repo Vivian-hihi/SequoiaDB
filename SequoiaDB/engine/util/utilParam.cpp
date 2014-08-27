@@ -38,9 +38,13 @@
 #include "utilParam.hpp"
 #include "ossIO.hpp"
 #include "ossUtil.hpp"
+#include "utilStr.hpp"
+#include "pmdDef.hpp"
+#include "oss.h"
+#include "pmdOptions.hpp"
 #include <iostream>
 
-#include <string>
+#include <boost/algorithm/string.hpp>
 
 namespace engine
 {
@@ -209,6 +213,49 @@ namespace engine
             ossRenamePath( tmpFile.c_str(), pFile ) ;
          }
       }
+      goto done ;
+   }
+
+   INT32 utilGetServiceByConfigPath( const string & confPath,
+                                     string & svcname )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ;
+      po::variables_map vm ;
+      desc.add_options()
+         ( PMD_OPTION_SVCNAME, po::value<string>(), "" ) ;
+      CHAR conf[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+      svcname = boost::lexical_cast<string>(OSS_DFT_SVCPORT) ;
+
+      rc = utilBuildFullPath ( confPath.c_str(), PMD_DFT_CONF,
+                               OSS_MAX_PATHSIZE, conf ) ;
+      if ( rc )
+      {
+         std::cerr << "Failed to build full path, rc: " << rc << std::endl ;
+         goto error ;
+      }
+
+      rc = utilReadConfigureFile( conf, desc, vm ) ;
+      if ( SDB_IO == rc )
+      {
+         // if the file does not exist, let's just continue so that sequoiadb
+         // is able to create the file
+         rc = SDB_OK ;
+         goto done ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( vm.count ( PMD_OPTION_SVCNAME ) )
+      {
+         svcname = vm [ PMD_OPTION_SVCNAME ].as<string>() ;
+      }
+
+   done :
+      return rc ;
+   error :
       goto done ;
    }
 

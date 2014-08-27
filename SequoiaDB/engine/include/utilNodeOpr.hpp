@@ -69,9 +69,20 @@ namespace engine
       list nodes
    */
    INT32    utilListNodes( UTIL_VEC_NODES &nodes,
-                           INT32 typeFilter,
+                           INT32 typeFilter = -1,
                            const CHAR *svcnameFilter = NULL,
                            OSSPID pidFilter = OSS_INVALID_PID ) ;
+
+   #define UTIL_WAIT_NODE_TIMEOUT         ( 15 * 60 )
+
+   /*
+      wait node bussiness ok
+   */
+   INT32    utilWaitNodeOK( utilNodeInfo &node,
+                            const CHAR *svcname,
+                            OSSPID pid = OSS_INVALID_PID,
+                            INT32 typeFilter = -1,
+                            INT32 timeout = UTIL_WAIT_NODE_TIMEOUT ) ;
 
 }
 

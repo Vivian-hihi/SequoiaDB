@@ -38,548 +38,298 @@
 
 #include "core.hpp"
 #include "ossUtil.hpp"
-#include "ossProc.hpp"
 #include "ossMem.hpp"
 #include "pd.hpp"
+#include "ossPath.hpp"
 #include "ossProc.hpp"
-#include "ossNPipe.hpp"
-#include "ossNPipe.hpp"
 #include "pmdDef.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "utilCommon.hpp"
+#include "utilNodeOpr.hpp"
 #include "pmdOptions.h"
 #include "utilParam.hpp"
 #include "ossVer.h"
+#include "omagentDef.hpp"
 
+#include <vector>
 #include <string>
-#include <iostream>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
-
-#if defined (_LINUX)
-#include <dirent.h>
-#include <sys/types.h>
-#include <signal.h>
-#elif defined (_WINDOWS)
-#include "ossNPipe.hpp"
-#endif
+#include <list>
 
 using namespace std;
-namespace po = boost::program_options;
 
-#define COMMANDS_OPTIONS \
+namespace engine
+{
+
+   #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
        ( PMD_COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configure file path" )
 
-// initialize options
-void init ( po::options_description &desc )
-{
-   PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
-      COMMANDS_OPTIONS
-   PMD_ADD_PARAM_OPTIONS_END
-}
-
-void displayArg ( po::options_description &desc )
-{
-   std::cout << desc << std::endl ;
-}
-
-#if defined (_WINDOWS)
-BOOLEAN checkProcess ( const CHAR *pPipeName, OSSPID expPid ) ;
-#endif
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_SERVICEEXISTS, "serviceExists" )
-BOOLEAN serviceExists ( const CHAR *pServiceName  )
-{
-   BOOLEAN exists = FALSE ;
-   PD_TRACE_ENTRY ( SDB_SDBSTART_SERVICEEXISTS ) ;
-// in linux, we iterate /proc file system and find if any process get cmdline
-// matches the service name
-#if defined (_LINUX)
-   DIR *dirp ;
-   struct dirent *dp ;
-   CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-   ossSnprintf ( engineName, OSS_MAX_PATHSIZE, ENGINE_NAME_PATTERN,
-                 pServiceName ) ;
-   if ( ( dirp = opendir ( "/proc" ) ) == NULL )
+   // initialize options
+   void init ( po::options_description &desc )
    {
-      PD_LOG ( PDERROR, "Failed to open /proc, errno = %d",
-               ossGetLastError () ) ;
-      goto error ;
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
+         COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
    }
-   do
+
+   void displayArg ( po::options_description &desc )
    {
-      if ( ( dp = readdir ( dirp ) ) != NULL )
+      std::cout << desc << std::endl ;
+   }
+
+   BOOLEAN serviceExists ( const CHAR *pServiceName,
+                           utilNodeInfo &info )
+   {
+      UTIL_VEC_NODES nodes ;
+      INT32 rc = utilListNodes( nodes, -1, pServiceName ) ;
+      if ( SDB_OK == rc && nodes.size() > 0 )
       {
-         FILE *fp = NULL ;
-         CHAR pathName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%s/cmdline",
-                       dp->d_name ) ;
-         fp = fopen ( pathName, "r" ) ;
-         if ( !fp )
-         {
-            // we do not care if we can't open the file
-            continue ;
-         }
-         if ( NULL == fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) )
-         {
-            // we do not care if the file is empty (even thou it shouldn't
-            // happen )
-            fclose ( fp ) ;
-            continue ;
-         }
-         fclose ( fp ) ;
-         // if match, let's mark exists
-         if ( ossStrcmp ( commandLine, engineName ) == 0 )
-         {
-            exists = TRUE ;
-            ossPrintf ( "Success: SequoiaDB engine is already "
-                        "started (%s)"OSS_NEWLINE, dp->d_name ) ;
-            break ;
-         }
+         info = (*nodes.begin()) ;
+         return TRUE ;
       }
-   } while ( dp != NULL ) ;
-   closedir ( dirp ) ;
-// in windows, we enumerate all pipes and compare the pipe name
-#elif defined (_WINDOWS)
-   INT32 rc = SDB_OK ;
-   OSSPID pid ;
-   vector<string> names ;
-   CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
-   rc = ossEnumNamedPipes ( names, NULL ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to enum named pipes, rc = %d", rc ) ;
-      goto error ;
-   }
-   ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
-                 ENGINE_NPIPE_PATTERN, pServiceName ) ;
-   for ( INT32 i = 0; i < names.size(); ++i )
-   {
-      const CHAR *pName = names[i].c_str() ;
-      if ( ossStrcmp ( pName, enginePipeName ) == 0 )
-      {
-         exists = TRUE ;
-         if ( checkProcess ( pName, pid ) )
-         {
-            ossPrintf ( "Success: SequoiaDB engine is already "
-                        "started (%d)"OSS_NEWLINE, pid ) ;
-            goto done ;
-         }
-         break ;
-      }
-   }
-#endif
-done :
-   PD_TRACE_EXIT ( SDB_SDBSTART_SERVICEEXISTS ) ;
-   return exists ;
-error :
-   goto done ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_CHECKSTARTEDSERVICES, "checkStartedServices" )
-INT32 checkStartedServices ( const CHAR *pConfPath )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_SDBSTART_CHECKSTARTEDSERVICES ) ;
-   po::options_description desc ;
-   po::variables_map vm ;
-   desc.add_options()
-      ( PMD_OPTION_SVCNAME, boost::program_options::value<string>(), "" ) ;
-   CHAR conf[OSS_MAX_PATHSIZE + 1] = {0} ;
-   rc = engine::utilBuildFullPath ( pConfPath, PMD_DFT_CONF,
-                                    OSS_MAX_PATHSIZE + 1, conf ) ;
-   if ( rc )
-   {
-      std::cerr << "Failed to build full path, rc = " << rc << std::endl ;
-      goto error ;
+      return FALSE ;
    }
 
-   rc = engine::utilReadConfigureFile( conf, desc, vm ) ;
-   if ( SDB_IO == rc )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_RESVARG, "resolveArgument" )
+   INT32 resolveArgument ( po::options_description &desc, INT32 argc,
+                           CHAR **argv, vector< string > &configs,
+                           vector< utilNodeInfo > &nodesinfo )
    {
-      // if the file does not exist, let's just continue so that sequoiadb is
-      // able to create the file
-      rc = SDB_OK ;
-      goto done ;
-   }
-   if ( rc )
-   {
-      goto error ;
-   }
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_SDBSTART_RESVARG );
+      po::variables_map vm ;
+      string confPath ;
+      utilNodeInfo info ;
 
-   if ( vm.count ( PMD_OPTION_SVCNAME ) )
-   {
-      const CHAR *pServiceName =
-            vm [ PMD_OPTION_SVCNAME ].as<string>().c_str() ;
-      // if service already exists, let's just return duplicate service error
-      if ( serviceExists ( pServiceName ) )
-      {
-         rc = SDB_DUPLICATED_SERVICE ;
-         goto error ;
-      }
-   }
-done :
-   PD_TRACE_EXITRC ( SDB_SDBSTART_CHECKSTARTEDSERVICES, rc ) ;
-   return rc ;
-error :
-   goto done ;
-}
-
-// in this function we only validate whether there's unexpected input, we do not
-// actually doing anything. We will simply pass all parameters to sequoiadb
-// engine
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_RESVARG, "resolveArgument" )
-INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_SDBSTART_RESVARG );
-   po::variables_map vm ;
-
-   rc = engine::utilReadCommandLine( argc, argv, desc, vm ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-
-   if ( vm.count ( PMD_OPTION_HELP ) )
-   {
-      displayArg ( desc ) ;
-      rc = SDB_PMD_HELP_ONLY ;
-      goto done ;
-   }
-   else if ( vm.count( PMD_OPTION_VERSION ) )
-   {
-      ossPrintVersion( "SDB Start Version" ) ;
-      rc = SDB_PMD_VERSION_ONLY ;
-      goto done ;
-   }
-
-   if ( vm.count ( PMD_OPTION_CONFPATH ) )
-   {
-      const CHAR *pConfPath = vm[PMD_OPTION_CONFPATH].as<string>().c_str() ;
-      PD_LOG ( PDDEBUG, "confpath=%s", pConfPath ) ;
-      rc = checkStartedServices ( pConfPath ) ;
-   }
-
-   // we do not actually doing anything, we just parse the input parameter and
-   // forward the arguments to server
-done :
-   PD_TRACE_EXITRC ( SDB_SDBSTART_RESVARG, rc );
-   return rc ;
-error :
-   goto done ;
-}
-
-// resolve engine path name from a given input path ( not full path name )
-// Basically we assume the input path is <xxx>/something, where <xxx> is the
-// path where sequoiadb locates
-// PD_TRACE_DECLARE_FUNCTION ( SDB_ENGINEPATH, "enginePath" )
-CHAR *enginePath ( const CHAR *pInputPath, CHAR *pOutputPath )
-{
-   PD_TRACE_ENTRY ( SDB_ENGINEPATH );
-   // find '\\' or '/'
-   CHAR *t = OSS_FILE_SEP ;
-   const CHAR *p = ossStrrchr ( pInputPath, t[0] ) ;
-   // if we can find it
-   if ( p )
-   {
-      // let's move to the next character after '\\' or '/'
-      if ( p - pInputPath + ossStrlen ( ENGINE_NAME ) + 1 > OSS_MAX_PATHSIZE )
-      {
-         PD_LOG ( PDERROR, "Path is too long: %s", pInputPath ) ;
-         return NULL ;
-      }
-      // copy everything before '\\' or '/' to output
-      ossMemcpy ( pOutputPath, pInputPath, p-pInputPath+1 ) ;
-      // concat engine name
-      ossStrncat ( pOutputPath, ENGINE_NAME, OSS_MAX_PATHSIZE ) ;
-   }
-   else
-   {
-      // if we can't find path spliter
-      SDB_ASSERT ( ossStrlen ( ENGINE_NAME ) <= OSS_MAX_PATHSIZE,
-                   "Engine name is too long: "ENGINE_NAME ) ;
-      // let's just build engine name
-      ossStrncpy ( pOutputPath, ENGINE_NAME, OSS_MAX_PATHSIZE ) ;
-   }
-   PD_TRACE1 ( SDB_ENGINEPATH, PD_PACK_STRING(pOutputPath) );
-   PD_TRACE_EXIT ( SDB_ENGINEPATH );
-   return pOutputPath ;
-}
-
-// calculate how much space we need after using engine name
-// PD_TRACE_DECLARE_FUNCTION ( SDB_CALCBUFFSIZE, "calcBufferSize" )
-INT32 calcBufferSize ( INT32 argc, CHAR **argv )
-{
-   PD_TRACE_ENTRY ( SDB_CALCBUFFSIZE );
-   INT32 totalSize = 0 ;
-   CHAR pathBuffer [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-   // get the path name for engine
-   CHAR *progName = enginePath ( argv[0], pathBuffer ) ;
-   if ( !progName )
-   {
-      PD_LOG ( PDERROR, "Failed to get engine path" ) ;
-      totalSize = -1 ;
-      goto done ;
-   }
-   PD_LOG ( PDDEBUG, "progName = %s\n", progName ) ;
-   totalSize += ossStrlen ( progName ) + 1 ;
-   // count size of rest arguments
-   for ( INT32 i = 1; i < argc; ++i )
-   {
-      PD_LOG ( PDDEBUG, "argv[%d] = %s\n", i, argv[i] ) ;
-      totalSize += ossStrlen ( argv[i] ) + 1 ;
-   }
-   totalSize ++ ;
-done :
-   PD_TRACE1 ( SDB_CALCBUFFSIZE, PD_PACK_INT(totalSize) );
-   PD_TRACE_EXIT ( SDB_CALCBUFFSIZE );
-   return totalSize ;
-}
-
-// copy over buffer from input argument. Here we are going to use engine path
-// name plus other input parameters
-// Note engine path and parameters are all sitting in the same buffer. Each
-// arguments are separated by '\0'. Two adjcent '\0\0' represent end of buffer
-// PD_TRACE_DECLARE_FUNCTION ( SDB_COPYBUFFER, "copyBuffer" )
-void copyBuffer ( CHAR *pBuffer, INT32 bufSize, INT32 argc, CHAR **argv )
-{
-   PD_TRACE_ENTRY ( SDB_COPYBUFFER );
-   INT32 pos = 0 ;
-   CHAR pathBuffer [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-   CHAR *progName = enginePath ( argv[0], pathBuffer ) ;
-   SDB_ASSERT ( progName, "progName can't be NULL" ) ;
-
-   // copy program name to buffer
-   ossStrncpy ( &pBuffer[0], progName, bufSize ) ;
-   pos += ossStrlen ( progName ) ;
-   pBuffer[pos] = '\0' ;
-   ++pos ;
-
-   // copy other arguments
-   for ( INT32 i = 1; i < argc; ++i )
-   {
-      SDB_ASSERT ( pos < bufSize, "invalid position" ) ;
-      ossStrncpy ( &pBuffer[pos], argv[i], bufSize - pos ) ;
-      pos += ossStrlen ( argv[i] ) ;
-      // each arguments are separated by '\0'
-      pBuffer[pos] = '\0' ;
-      ++pos ;
-   }
-   // add another '\0' for end of input
-   pBuffer[pos] = '\0' ;
-   ++pos ;
-   PD_TRACE_EXIT ( SDB_COPYBUFFER );
-   SDB_ASSERT ( pos == bufSize, "invalid position" ) ;
-}
-
-//#define PROC_START_TIMEOUT 10
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_CHKPROC, "checkProcess" )
-#if defined (_WINDOWS)
-BOOLEAN checkProcess ( const CHAR *pPipeName, OSSPID expPid )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_CHKPROC );
-   BOOLEAN ret = FALSE ;
-   OSSNPIPE handle ;
-   OSSPID pid ;
-   INT64 readSize = 0 ;
-   rc = ossOpenNamedPipe ( pPipeName, OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
-                           OSS_NPIPE_BLOCK_WITH_TIMEOUT,
-                           handle ) ;
-   if ( rc && SDB_FE != rc )
-   {
-      PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc %d",
-               pPipeName, rc ) ;
-      ret = FALSE ;
-      goto error ;
-   }
-
-   rc = ossWriteNamedPipe ( handle, ENGINE_NPIPE_MSG_PID,
-                            sizeof(ENGINE_NPIPE_MSG_PID),
-                            NULL ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to send "ENGINE_NPIPE_MSG_PID" to %s "
-               "rc = %d", pPipeName, rc ) ;
-   }
-   rc = ossReadNamedPipe ( handle, (CHAR*)&pid, sizeof(pid), &readSize,
-                           LIST_TIMEOUT ) ;
-   if ( rc || ( readSize != sizeof(pid) ) )
-   {
-      ossPrintf ( "Failed to read pid from pipe %s"OSS_NEWLINE,
-                  pPipeName ) ;
-   }
-   rc = ossCloseNamedPipe ( handle ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to close named pipe" ) ;
-      goto error ;
-   }
-   if ( pid == expPid )
-      ret = TRUE ;
-done :
-   PD_TRACE1 ( SDB_CHKPROC, PD_PACK_INT(ret) );
-   PD_TRACE_EXIT ( SDB_CHKPROC );
-   return ret ;
-error :
-   goto done ;
-}
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_FINDENGINE, "findEngine" )
-INT32 findEngine ( OSSPID pid )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_FINDENGINE );
-   PD_TRACE1 ( SDB_FINDENGINE, PD_PACK_INT(pid) );
-   vector<string> names ;
-   INT32 round = 0 ;
-   CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
-   ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
-                 ENGINE_NPIPE_PATTERN, "" ) ;
-
-   //while ( round < PROC_START_TIMEOUT )
-   // we do not timeout. Because in crash recovery mode we may stay in recovery
-   // state for long time, in this case we should keep waiting until it success
-   // or fail
-   while ( TRUE )
-   {
-      rc = ossEnumNamedPipes ( names, NULL ) ;
+      rc = engine::utilReadCommandLine( argc, argv, desc, vm ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to enum named pipes, rc = %d", rc ) ;
          goto error ;
       }
 
-      for ( UINT32 i = 0; i < names.size(); ++i )
+      if ( vm.count ( PMD_OPTION_HELP ) )
       {
-         const CHAR *pName = names[i].c_str() ;
-         // if it matches the pattern
-         // "sequoiadb_engine_"
-         if ( ossStrncmp ( pName, enginePipeName,
-                           ossStrlen ( enginePipeName ) ) == 0 )
-         {
-            if ( checkProcess ( pName, pid ) )
-            {
-               ossPrintf ( "Success: SequoiaDB engine is successfully "
-                           "started (%d)"OSS_NEWLINE, pid ) ;
-               goto done ;
-            }
-         }
-      }
-      if ( !ossIsProcessRunning ( pid ) )
-      {
-         ossPrintf ( "Error: Unable to start SequoiaDB engine"OSS_NEWLINE ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      ++round ;
-      // sleep for 1 second every round
-      ossSleepsecs ( 1 ) ;
-   }
-
-   /*if ( round == PROC_START_TIMEOUT )
-   {
-      ossPrintf ( "Error: Starting SequoiaDB engine timeout (%d)"OSS_NEWLINE,
-                  pid ) ;
-      rc = SDB_SYS ;
-      goto error ;
-   }*/
-done :
-   PD_TRACE_EXITRC ( SDB_FINDENGINE, rc );
-   return rc ;
-error :
-   goto done ;
-}
-#endif
-
-// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_MAIN, "main" )
-INT32 main ( INT32 argc, CHAR **argv )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_SDBSTART_MAIN );
-   CHAR *pArgumentBuffer = NULL ;
-   INT32 bufferSize = 0 ;
-   po::options_description desc ( "Command options" ) ;
-   OSSPID pid ;
-   ossResultCode result ;
-   init ( desc ) ;
-   // validate arguments
-   rc = resolveArgument ( desc, argc, argv ) ;
-   if ( rc )
-   {
-      // if the service is already running, let's just return
-      if ( SDB_DUPLICATED_SERVICE == rc )
-      {
-         // we consider the startup success when the service is already running
-         rc = SDB_OK ;
-      }
-      else if ( SDB_PMD_HELP_ONLY != rc &&
-                SDB_PMD_VERSION_ONLY != rc )
-      {
-         PD_LOG ( PDERROR, "Invalid argument" ) ;
          displayArg ( desc ) ;
+         rc = SDB_PMD_HELP_ONLY ;
+         goto done ;
       }
+      else if ( vm.count( PMD_OPTION_VERSION ) )
+      {
+         ossPrintVersion( "SDB Start Version" ) ;
+         rc = SDB_PMD_VERSION_ONLY ;
+         goto done ;
+      }
+
+      if ( vm.count ( PMD_OPTION_CONFPATH ) )
+      {
+         confPath = vm[PMD_OPTION_CONFPATH].as<string>() ;
+         configs.push_back( confPath ) ;
+         nodesinfo.push_back( info ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_SDBSTART_RESVARG, rc ) ;
+      return rc ;
+   error :
       goto done ;
    }
-   // estimate the size of final buffer
-   bufferSize = calcBufferSize ( argc, argv ) ;
-   if ( bufferSize <= 0 )
-   {
-      PD_LOG ( PDERROR, "Failed to calculate buffer size" ) ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   // allocate buffer
-   pArgumentBuffer = (CHAR*)SDB_OSS_MALLOC ( bufferSize ) ;
-   if ( !pArgumentBuffer )
-   {
-      PD_LOG ( PDERROR, "Failed to allocate buffer for %d bytes",
-               bufferSize ) ;
-      rc = SDB_OOM ;
-      goto error ;
-   }
-   // copy arguments into buffer
-   copyBuffer ( pArgumentBuffer, bufferSize, argc, argv ) ;
 
-   // call exec to run the command with arguments, do NOT wait until program
-   // finish
-   rc = ossExec ( pArgumentBuffer, pArgumentBuffer, NULL,
-                  0, pid, result, NULL, NULL ) ;
-   if ( rc )
+   void buildListArgs( const CHAR * pEnginePathName,
+                       BOOLEAN useAgrs,
+                       INT32 argc, CHAR **argv,
+                       const CHAR *pConfPath,
+                       list< const CHAR *> &listArgv )
    {
-      PD_LOG ( PDERROR, "Failed to execute engine, rc = %d", rc ) ;
-      goto error ;
+      listArgv.clear() ;
+      listArgv.push_back( pEnginePathName ) ;
+
+      if ( useAgrs )
+      {
+         for ( INT32 i = 1 ; i < argc ; ++i )
+         {
+            listArgv.push_back( argv[ i ] ) ;
+         }
+      }
+      else
+      {
+         listArgv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_CONFPATH ) ;
+         listArgv.push_back( pConfPath ) ;
+      }
    }
 
-#if defined (_LINUX)
-   // in linux, creating process is separated by two steps: fork + exec
-   // If we do not have OSS_EXEC_SSAVE option, we do not wait for child. That
-   // means as long as fork completes, we consider the program is started.
-   // However that is not the case in real world, because exec() may fail due to
-   // different reasons. So we have to use extra logic to verify the process is
-   // really started after ossExec.
-   // We don't need to do that in Windows, because CreateProcess is able to
-   // garentee the process starts and run.
-   rc = ossVerifyPID ( pid, MODIFIED_ENGINE_NAME, "SequoiaDB engine" ) ;
-   if ( rc )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_MAIN, "mainEntry" )
+   INT32 mainEntry ( INT32 argc, CHAR **argv )
    {
-      PD_LOG ( PDERROR, "Failed to verify PID, rc = %d", rc ) ;
-      goto error ;
+      INT32 rc = SDB_OK ;
+      INT32 tmpRC = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_SDBSTART_MAIN ) ;
+      CHAR rootPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR enginePathName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      vector< string > configs ;
+      vector< utilNodeInfo > nodesInfo ;
+      list<const CHAR*> listArgs ;
+      BOOLEAN useAgr = TRUE ;
+      INT32 total = 0 ;
+      INT32 succeedNum = 0 ;
+      INT32 failedNum = 0 ;
+      po::options_description desc ( "Command options" ) ;
+      string svcname ;
+      init ( desc ) ;
+
+      // validate arguments
+      rc = resolveArgument ( desc, argc, argv, configs, nodesInfo ) ;
+      if ( rc )
+      {
+         if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
+         {
+            ossPrintf( "Error: Invalid argument: %d"OSS_NEWLINE, rc ) ;
+            displayArg ( desc ) ;
+         }
+         goto done ;
+      }
+
+      // make path
+      rc = ossGetEWD( rootPath, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         ossPrintf( "Error: Get module self path failed:  %d"OSS_NEWLINE,
+                    rc ) ;
+         goto error ;
+      }
+      rc = utilBuildFullPath( rootPath, ENGINE_NAME, OSS_MAX_PATHSIZE,
+                              enginePathName ) ;
+      if ( rc )
+      {
+         ossPrintf( "Error: Build engine path name failed: %d"OSS_NEWLINE,
+                    rc ) ;
+         goto error ;
+      }
+
+      if ( configs.size() == 0 )
+      {
+         useAgr = FALSE ;
+         vector< string > svcnames ;
+         utilNodeInfo info ;
+         // get all configs
+         CHAR localPath [ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         // build 'conf/local' file path
+         rc = utilBuildFullPath( rootPath, SDBCM_LOCAL_PATH,
+                                 OSS_MAX_PATHSIZE, localPath ) ;
+         if ( rc )
+         {
+            ossPrintf( "Error: Build local config path failed: %d"OSS_NEWLINE,
+                       rc ) ;
+            goto error ;
+         }
+
+         rc = ossEnumSubDirs( localPath, svcnames, 1 ) ;
+         if ( rc )
+         {
+            ossPrintf( "Error: Enum [%s] sub dirs failed: %d"OSS_NEWLINE,
+                       localPath, rc ) ;
+            goto error ;
+         }
+
+         for ( UINT32 i = 0 ; i < svcnames.size() ; ++i )
+         {
+            configs.push_back( string( localPath ) +
+                               string( OSS_FILE_SEP ) +
+                               svcnames[ i ] ) ;
+            nodesInfo.push_back( info ) ;
+         }
+      }
+
+      SDB_ASSERT( configs.size() == nodesInfo.size(),
+                  "config size must equal with node info size" ) ;
+
+      // start nodes
+      for ( UINT32 j = 0 ; j < configs.size() ; ++j )
+      {
+         ++total ;
+         utilNodeInfo &info = nodesInfo[ j ] ;
+         // first check
+         rc = utilGetServiceByConfigPath( configs[ j ], svcname ) ;
+         if ( SDB_OK == rc && !svcname.empty() &&
+              serviceExists( svcname.c_str(), info ) )
+         {
+            ossPrintf ( "Success: %s(%s) is already started (%d)"OSS_NEWLINE,
+                        utilDBTypeStr( (SDB_TYPE)info._type ),
+                        info._svcname.c_str(), info._pid ) ;
+            ++succeedNum ;
+            continue ;
+         }
+
+         // start node
+         buildListArgs( enginePathName, useAgr, argc, argv,
+                        configs[ j ].c_str(), listArgs ) ;
+         tmpRC = ossStartProcess( listArgs, info._pid ) ;
+         if ( tmpRC )
+         {
+            rc = tmpRC ;
+            ossPrintf( "Error: Start [%s] failed, rc: %d"OSS_NEWLINE,
+                       configs[ j ].c_str(), tmpRC ) ;
+            ++failedNum ;
+            continue ;
+         }
+         info._svcname = svcname ;
+      }
+
+      // wait node to ok
+      for ( UINT32 j = 0 ; j < configs.size() ; ++j )
+      {
+         utilNodeInfo &info = nodesInfo[ j ] ;
+         if ( !info._orgname.empty() )
+         {
+            // alread start node
+            continue ;
+         }
+         if ( info._pid == OSS_INVALID_PID && info._svcname.empty() )
+         {
+            // failed node
+            continue ;
+         }
+         tmpRC = utilWaitNodeOK( info, info._svcname.c_str(), info._pid ) ;
+         if ( SDB_OK == tmpRC )
+         {
+            ossPrintf ( "Success: %s(%s) is successfully started (%d)"
+                        OSS_NEWLINE, utilDBTypeStr( (SDB_TYPE)info._type ),
+                        info._svcname.c_str(), info._pid ) ;
+            ++succeedNum ;
+         }
+         else
+         {
+            rc = tmpRC ;
+            ossPrintf( "Error: Start [%s] failed, rc: %d"OSS_NEWLINE,
+                       configs[ j ].c_str(), tmpRC ) ;
+            ++failedNum ;
+         }
+      }
+
+      if ( 0 == total )
+      {
+         ossPrintf( "No node configs"OSS_NEWLINE ) ;
+         rc = SDB_INVALIDARG ;
+      }
+      else
+      {
+         ossPrintf( "Total: %d; Succeed: %d; Failed: %d"OSS_NEWLINE,
+                    total, succeedNum, failedNum ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_SDBSTART_MAIN, rc );
+      return SDB_OK == rc ? 0 : 1 ;
+   error :
+      goto done ;
    }
-#elif defined (_WINDOWS)
-   findEngine ( pid ) ;
-#endif
-done :
-   if ( pArgumentBuffer )
-      SDB_OSS_FREE ( pArgumentBuffer ) ;
-   PD_TRACE_EXITRC ( SDB_SDBSTART_MAIN, rc );
-   return SDB_OK == rc ? 0 : 1 ;
-error :
-   goto done ;
+
 }
+
+INT32 main ( INT32 argc, CHAR **argv )
+{
+   return engine::mainEntry( argc, argv ) ;
+}
+
+

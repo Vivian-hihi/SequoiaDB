@@ -1622,15 +1622,15 @@ error:
 }
 
 // PD_TRACE_DECLARE_FUNCTION( SDB_OSS_STARTPROCESS, "ossStartProcess" )
-INT32 ossStartProcess( std::list<const CHAR*> &argv )
+INT32 ossStartProcess( std::list<const CHAR*> &argv,
+                       OSSPID &pid, INT32 flag,
+                       ossResultCode *pRetCode )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSS_STARTPROCESS );
    CHAR *pArgumentBuffer = NULL ;
    INT32 buffSize = 0 ;
-   OSSPID pid ;
    ossResultCode result ;
-   const CHAR *pShortName = NULL ;
 
    rc = ossBuildArguments ( &pArgumentBuffer, buffSize, argv ) ;
    if ( rc )
@@ -1638,44 +1638,29 @@ INT32 ossStartProcess( std::list<const CHAR*> &argv )
       PD_LOG ( PDERROR, "Failed to build arguments, rc: %d", rc ) ;
       goto error ;
    }
-   pShortName = ossStrrchr( argv.front(), OSS_FILE_SEP_CHAR ) ;
-   if ( pShortName )
-   {
-      pShortName = pShortName + 1 ;
-   }
-   else
-   {
-      pShortName = argv.front() ;
-   }
 
-   PD_LOG ( PDEVENT, "Starting process, bin=%s", argv.front() ) ;
    rc = ossExec ( pArgumentBuffer, pArgumentBuffer, NULL,
-                  0, pid, result, NULL, NULL ) ;
+                  flag, pid, result, NULL, NULL ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to execute %s, rc = %d", pShortName, rc ) ;
-      goto error ;
-   }
-
-#if defined (_LINUX)
-   rc = ossVerifyPID ( pid, pShortName ) ;
-#else
-   rc = ossIsProcessRunning( pid ) ? SDB_OK : SDB_SYS ;
-#endif
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to verify PID, rc = %d", rc ) ;
+      PD_LOG ( PDERROR, "Failed to execute [%s], rc = %d",
+               pArgumentBuffer, rc ) ;
       goto error ;
    }
    else
    {
-      PD_LOG ( PDEVENT, "Successful to start %s(%d)", pShortName, pid ) ;
+      PD_LOG ( PDEVENT, "Starting process succeed, cmd:[%s], pid:[%d]",
+               pArgumentBuffer, pid ) ;
    }
 
 done :
    if ( pArgumentBuffer )
    {
       SDB_OSS_FREE ( pArgumentBuffer ) ;
+   }
+   if ( pRetCode )
+   {
+      *pRetCode = result ;
    }
    PD_TRACE_EXITRC ( SDB_OSS_STARTPROCESS, rc ) ;
    return rc ;

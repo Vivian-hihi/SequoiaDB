@@ -38,10 +38,7 @@
 #include "ossPath.hpp"
 #include "ossIO.hpp"
 #include "pmdDef.hpp"
-
-#if defined( _LINUX )
-#include <dirent.h>
-#endif //_LINUX
+#include "utilNodeOpr.hpp"
 
 namespace engine
 {
@@ -259,6 +256,7 @@ namespace engine
    */
    INT32 omStartDBNode( const CHAR *pExecName,
                         const CHAR *pCfgPath,
+                        const CHAR *pSvcName,
                         OSSPID &pid )
    {
       INT32 rc                = SDB_OK ;
@@ -306,25 +304,18 @@ namespace engine
       if ( result.termcode == OSS_EXIT_NORMAL &&
            result.exitcode == SDB_OK  )
       {
-         // if execute sdbStart succeed
-         INT64 bufRead ;
-         rc = ossReadNamedPipe ( outNPipe, pNPipeBuf, CM_NPIPE_SIZE,
-                                 &bufRead, 0 ) ;
-         if ( rc )
+         UTIL_VEC_NODES nodes ;
+
+         rc = utilListNodes( nodes, -1, pSvcName ) ;
+         if ( SDB_OK == rc && nodes.size() > 0 )
          {
-            PD_LOG ( PDERROR, "Failed to trace the PID, rc: %d", rc ) ;
-            goto error ;
-         }
-         CHAR *p = ossStrrchr ( pNPipeBuf, '(' ) ;
-         if ( p )
-         {
-            // start successfully
-            pid = (OSSPID) ossAtoi ( p + 1 ) ;
+            pid = (*nodes.begin())._pid ;
+            goto done ;
          }
          else
          {
+            PD_LOG( PDERROR, "List node[%s] failed", pSvcName ) ;
             rc = SDBCM_FAIL ;
-            goto error ;
          }
       }
       else
@@ -432,117 +423,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       isRuning = FALSE ;
+      UTIL_VEC_NODES nodes ;
 
-#if defined( _WINDOWS )
-      CHAR enginePipeName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = { 0 } ;
-      vector< string > names ;
-      OSSNPIPE handle ;
-      INT64 readSize = 0 ;
-      BOOLEAN isOpen = FALSE ;
-
-      ossSnprintf ( enginePipeName, OSS_NPIPE_MAX_NAME_LEN,
-                    ENGINE_NPIPE_PATTERN, svcname ) ;
-
-      rc = ossEnumNamedPipes ( names, enginePipeName ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to enum pipes, rc: %d", rc ) ;
-
-      if ( names.size() == 0 )
+      rc = utilListNodes( nodes, -1, svcname ) ;
+      if ( SDB_OK == rc && nodes.size() > 0 )
       {
-         // process is not running
-         goto done ;
-      }
-      else if ( names.size() != 1 )
-      {
-         PD_LOG( PDWARNING, "Name pipe[%s] size[%d] more than 1",
-                 enginePipeName, names.size() ) ;
-      }
-
-      rc = ossOpenNamedPipe( enginePipeName, OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
-                             OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle ) ;
-      if ( rc && SDB_FE != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc: %d",
-                  enginePipeName, rc ) ;
-         goto error ;
-      }
-      isOpen = TRUE ;
-      rc = ossWriteNamedPipe( handle, ENGINE_NPIPE_MSG_PID,
-                              sizeof( ENGINE_NPIPE_MSG_PID ),
-                              NULL ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to send "ENGINE_NPIPE_MSG_PID" to %s, "
-                  "rc: %d", enginePipeName, rc ) ;
-         goto error ;
-      }
-
-      rc = ossReadNamedPipe( handle, (CHAR *)&pid, sizeof(pid), &readSize,
-                             LIST_TIMEOUT ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to read pid from pipe %s",
-                   enginePipeName ) ;
-      PD_CHECK( sizeof( pid ) == readSize, SDB_SYS, error, PDERROR,
-                "Failed to read pid from pipe %s", enginePipeName ) ;
-
-      isRuning = TRUE ;
-
-   done:
-      if ( isOpen )
-      {
-         ossCloseNamedPipe( handle );
-      }
-#else
-      DIR *pDir                  = NULL ;
-      struct dirent *pDirent     = NULL ;
-      CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-      BOOLEAN isOpen = FALSE ;
-
-      pDir = opendir( PROC_PATH ) ;
-      PD_CHECK( pDir != NULL, SDB_IO, error, PDERROR,
-                "Failed to open the directory:%s, errno=%d",
-                PROC_PATH, ossGetLastError() ) ;
-      isOpen = TRUE ;
-      ossSnprintf ( engineName, OSS_MAX_PATHSIZE, ENGINE_NAME_PATTERN,
-                    svcname ) ;
-
-      while( (pDirent = readdir( pDir )) != NULL )
-      {
-         CHAR pathName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-         ossSnprintf( pathName, OSS_MAX_PATHSIZE, PROC_CMDLINE_PATH_FORMAT,
-                      pDirent->d_name ) ;
-         FILE *fp = NULL ;
-         fp = fopen( pathName, "r" ) ;
-         if ( !fp )
-         {
-            continue ;
-         }
-         CHAR commandLine[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-         CHAR *pTmp = fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) ;
-         fclose(fp) ;
-         if ( NULL == pTmp )
-         {
-            continue ;
-         }
-         if ( 0 != ossStrcmp( commandLine, engineName ) )
-         {
-            continue ;
-         }
-         pid = ossAtoi( pDirent->d_name ) ;
          isRuning = TRUE ;
-         break ;
+         pid = (*nodes.begin())._pid ;
       }
-      if ( NULL == pDirent )
-      {
-         rc = SDBCM_NODE_NOTEXISTED ;
-      }
-   done:
-      if ( isOpen )
-      {
-         closedir( pDir ) ;
-      }
-#endif // _WINDOWS
+
       return rc ;
-   error:
-      goto done ;
    }
 
 }

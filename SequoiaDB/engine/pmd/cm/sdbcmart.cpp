@@ -44,6 +44,7 @@
 #include "pmdDaemon.hpp"
 #include "pmdDef.hpp"
 #include "utilParam.hpp"
+#include "utilNodeOpr.hpp"
 #include "pmdOptions.h"
 #include "utilStr.hpp"
 #include "ossVer.h"
@@ -78,16 +79,16 @@ namespace engine
 
 #if defined (_WINDOWS)
 
-      INT32 startSdbcm ( list<const CHAR*> &argv )
+      INT32 startSdbcm ( list<const CHAR*> &argv, OSSPID &pid )
       {
          return ossStartService( PMDDMN_SVCNAME_DEFAULT ) ;
       }
 
 #elif defined (_LINUX)
 
-      INT32 startSdbcm ( list<const CHAR*> &argv )
+      INT32 startSdbcm ( list<const CHAR*> &argv, OSSPID &pid )
       {
-         return ossStartProcess( argv ) ;
+         return ossStartProcess( argv, pid ) ;
       }
 #endif // _WINDOWS
 
@@ -101,7 +102,8 @@ namespace engine
       CHAR progName[OSS_MAX_PATHSIZE+1] = {0};
       po::options_description desc ( "Command options" ) ;
       po::variables_map vm ;
-      ossResultCode result ;
+      OSSPID pid = OSS_INVALID_PID ;
+      utilNodeInfo cmInfo ;
 
       rc = ossGetEWD ( progName, OSS_MAX_PATHSIZE ) ;
       if ( rc )
@@ -163,14 +165,31 @@ namespace engine
          argvs.push_back(argv[i]) ;
       }
 
-      rc = startSdbcm ( argvs ) ;
+      rc = startSdbcm ( argvs, pid ) ;
       if ( rc )
       {
-         ossPrintf ( "Failed to start sdbcm"OSS_NEWLINE ) ;
+         ossPrintf ( "Error: Failed to start sdbcm, rc: %d"OSS_NEWLINE,
+                     rc ) ;
+         goto error ;
       }
       else
       {
-         ossPrintf ( "Successful to start sdbcm"OSS_NEWLINE ) ;
+         ossPrintf( "Success: sdbcmd is successfully started (%d)"OSS_NEWLINE,
+                    pid ) ;
+      }
+
+      rc = utilWaitNodeOK( cmInfo, NULL, OSS_INVALID_PID, SDB_TYPE_OMA ) ;
+      if ( SDB_OK == rc )
+      {
+         ossPrintf ( "Success: Successful to start %s(%s) (%d)"OSS_NEWLINE,
+                     SDB_TYPE_OMA_STR, cmInfo._svcname.c_str(),
+                     cmInfo._pid ) ;
+      }
+      else
+      {
+         ossPrintf ( "Error: Failed to wait sdbcm ok, rc: %d"OSS_NEWLINE,
+                     rc ) ;
+         goto error ;
       }
 
    done:

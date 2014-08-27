@@ -636,7 +636,7 @@ namespace engine
 
       // start node
       rc = omStartDBNode( sdbGetOMAgentOptions()->getStartProcFile(),
-                          cfgPath, pInfo->_pid ) ;
+                          cfgPath, svcname, pInfo->_pid ) ;
       if ( SDB_OK == rc )
       {
          pInfo->_errNum = 0 ;

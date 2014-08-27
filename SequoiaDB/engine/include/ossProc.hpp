@@ -135,7 +135,9 @@ INT32    ossBuildArguments ( CHAR **pArgumentBuffer,
                              INT32 &buffSize,
                              std::list<const CHAR*> &argv ) ;
 
-INT32    ossStartProcess( std::list<const CHAR*> &argv ) ;
+INT32    ossStartProcess( std::list<const CHAR*> &argv,
+                          OSSPID &pid, INT32 flag = 0,
+                          ossResultCode *pRetCode = NULL ) ;
 
 #if defined (_WINDOWS)
 

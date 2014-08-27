@@ -176,7 +176,6 @@ namespace engine
       goto done ;
    }
 
-
 #else
 
    static INT32 utilWriteReadPipe( const CHAR *pPipeName,
@@ -305,6 +304,7 @@ namespace engine
             break ;
          }
       }
+      rc = SDB_OK ;
 
    done:
       return rc ;
@@ -312,8 +312,55 @@ namespace engine
       goto done ;
    }
 
-
 #endif // _LINUX
+
+   INT32 utilWaitNodeOK( utilNodeInfo & node, const CHAR * svcname,
+                         OSSPID pid, INT32 typeFilter,
+                         INT32 timeout )
+   {
+      INT32 rc = SDB_OK ;
+      UTIL_VEC_NODES nodes ;
+
+      if ( timeout < 0 )
+      {
+         timeout = 0x7FFFFFFF ;
+      }
+      else if ( timeout == 0 )
+      {
+         timeout = 1 ;
+      }
+
+      while ( timeout > 0 )
+      {
+         --timeout ;
+
+         nodes.clear() ;
+         rc = utilListNodes( nodes, typeFilter, svcname, pid ) ;
+         if ( SDB_OK == rc && nodes.size() > 0 )
+         {
+            node = ( *nodes.begin() ) ;
+            rc = SDB_OK ;
+            goto done ;
+         }
+
+         if ( pid != OSS_INVALID_PID && !ossIsProcessRunning( pid ) )
+         {
+            PD_LOG( PDERROR, "Process[%d] has exist", pid ) ;
+            // process exist
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         // sleep one seconds
+         ossSleep( OSS_ONE_SEC ) ;
+      }
+      rc = SDB_TIMEOUT ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
 }
 
