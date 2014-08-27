@@ -78,6 +78,9 @@ class replicanode(object):
          self._node = None
       self._client = None
 
+   def __repr__(self):
+      return "Replica Node: %s" % self.get_nodename()
+
    def connect(self):
       """Connect to the current node.
       

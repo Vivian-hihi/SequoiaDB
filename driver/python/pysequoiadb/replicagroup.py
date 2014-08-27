@@ -84,6 +84,15 @@ class replicagroup(object):
 
       self._client = None
 
+   def __repr__(self):
+      try:
+         detail = self.get_detail()
+         name = detail['GroupName']
+         id   = detail['GroupID']
+         return "Replica Group: %s, ID:%d" % (name, id)
+      except:
+         pass
+
    def get_nodenum(self, nodestatus):
       """Get the count of node with given status in current replica group.
       
