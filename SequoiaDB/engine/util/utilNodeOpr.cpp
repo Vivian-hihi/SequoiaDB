@@ -125,10 +125,10 @@ namespace engine
                  (UINT32)( pSvcBegin - pStr) ==
                  (UINT32)ossStrlen( utilDBTypeStr( (SDB_TYPE)beginType ) ) )
             {
-               ++matchNum ;
-               findNode._type = beginType ;
-               if ( -1 == typeFilter )
+               if ( -1 == typeFilter || typeFilter == beginType )
                {
+                  ++matchNum ;
+                  findNode._type = beginType ;
                   break ;
                }
             }

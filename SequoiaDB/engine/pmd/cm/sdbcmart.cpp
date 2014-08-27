@@ -181,7 +181,7 @@ namespace engine
       rc = utilWaitNodeOK( cmInfo, NULL, OSS_INVALID_PID, SDB_TYPE_OMA ) ;
       if ( SDB_OK == rc )
       {
-         ossPrintf ( "Success: Successful to start %s(%s) (%d)"OSS_NEWLINE,
+         ossPrintf ( "Success: %s(%s) is successfully started (%d)"OSS_NEWLINE,
                      SDB_TYPE_OMA_STR, cmInfo._svcname.c_str(),
                      cmInfo._pid ) ;
       }
