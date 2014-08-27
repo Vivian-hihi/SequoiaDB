@@ -317,7 +317,8 @@ namespace engine
    {
       SDB_ASSERT( _procInfo,
                   "_procInfo can't be null, call active at first" );
-      BOOLEAN isRunning = FALSE;
+      BOOLEAN isRunning = FALSE ;
+      OSSPID tmppid = _pid ;
       _pid = OSS_INVALID_PID ;
 
       if ( _procInfo != NULL )
@@ -345,6 +346,10 @@ namespace engine
             ++( _procInfo->sn ) ;
             _procInfo->pid = OSS_INVALID_PID ;
             _procInfo->stat = PMDDMN_SHM_STAT_CHILDREN ;
+         }
+         else if ( OSS_INVALID_PID != tmppid )
+         {
+            isRunning = ossIsProcessRunning( tmppid ) ;
          }
          else if ( _deadTime++ < PMDDMN_SHMSTAT_EXPRIRED_TIMES )
          {
