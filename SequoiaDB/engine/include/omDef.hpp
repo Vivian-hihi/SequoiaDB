@@ -407,6 +407,13 @@ namespace engine
 
    //******************************************************************
 
+   // om remove host req
+   #define  OM_REMOVE_HOST_REQ            "remove host"
+
+   #define  OM_REST_HOST_NAME             OM_BSON_FIELD_HOST_NAME
+
+   //******************************************************************
+
    // 
    #define OM_UPDATE_HOST_REQ                "update host"
    // milliseconds

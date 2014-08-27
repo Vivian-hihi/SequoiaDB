@@ -4931,8 +4931,8 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "failed to delete taskinfo from table:%s,"
                      "%s=%s,rc=%d", OM_CS_DEPLOY_CL_CLUSTER, 
-                     OM_HOST_FIELD_CLUSTERNAME, 
-                     clusterName.c_str(), rc ) ;
+                     OM_CLUSTER_FIELD_NAME, clusterName.c_str(), rc ) ;
+         _errorDetail = _cb->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -5008,6 +5008,226 @@ namespace engine
       result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omRemoveHostCommand *****************************
+   omRemoveHostCommand::omRemoveHostCommand( restAdaptor *pRestAdaptor, 
+                                             pmdRestSession *pRestSession )
+                       :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+   
+   omRemoveHostCommand::~omRemoveHostCommand()
+   {
+   }
+
+   INT32 omRemoveHostCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *hostName        = NULL ;
+      BOOLEAN isHostExist         = FALSE ;
+      BSONObj result ;
+      BOOLEAN isHostExistBusiness = FALSE ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, 
+                              &hostName ) ;
+      if ( NULL == hostName )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_HOST_NAME )
+                        + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _getHostExistFlag( hostName, isHostExist ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      if ( !isHostExist )
+      {
+         result = BSON( OM_REST_RES_RETCODE << SDB_OK 
+                        << OM_REST_RES_DETAIL << "host is not exist" ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         goto done ;
+      }
+
+      rc = _getHostExistBusinessFlag( hostName, isHostExistBusiness ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      if ( isHostExistBusiness )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( "business exist in host, business should be "
+                                "removed first:host=" ) + hostName ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _removeHost( hostName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRemoveHostCommand::_getHostExistBusinessFlag( const string &hostName, 
+                                                         BOOLEAN &flag )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+
+      matcher = BSON( OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_CONFIGURE ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               flag = FALSE ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_CONFIGURE ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         flag = TRUE ;
+         break ;
+      }
+   done:
+      return SDB_OK ;
+   error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      goto done ;
+   }
+
+   INT32 omRemoveHostCommand::_getHostExistFlag( const string & hostName, 
+                                                 BOOLEAN & flag )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_HOST ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               flag = FALSE ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_HOST ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         flag = TRUE ;
+         break ;
+      }
+   done:
+      return SDB_OK ;
+   error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      goto done ;
+   }
+   
+   INT32 omRemoveHostCommand::_removeHost( const string &hostName )
+   {
+      INT32 rc          = SDB_OK ;
+      BSONObj condition = BSON( OM_HOST_FIELD_NAME << hostName ) ;
+      BSONObj hint ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_HOST, condition, hint, 0, _cb );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to delete taskinfo from table:%s,"
+                     "%s=%s,rc=%d", OM_CS_DEPLOY_CL_HOST, 
+                     OM_HOST_FIELD_NAME, hostName.c_str(), rc ) ;
+         _errorDetail = _cb->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
 
    done:
       return rc ;

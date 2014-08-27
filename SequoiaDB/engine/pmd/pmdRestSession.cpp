@@ -468,6 +468,10 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omRemoveClusterCommand( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_HOST_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omRemoveHostCommand( pAdptor, this ) ;
+         }
          else
          {
             BSONObjBuilder builder ;
