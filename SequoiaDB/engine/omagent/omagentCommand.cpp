@@ -1280,7 +1280,7 @@ namespace engine
          // TODO: tanzhaobo
          bab.append( BSON( OMA_FIELD_PORT << port <<
                            OMA_FIELD_STATUS << status ) ) ;
-         builder.append( OMA_FIELD_HOST, bab.arr() ) ;
+         builder.append( OMA_FIELD_PORT, bab.arr() ) ;
       }
       catch ( std::exception &e )
       {
