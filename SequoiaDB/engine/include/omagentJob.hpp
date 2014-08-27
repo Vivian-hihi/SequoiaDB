@@ -119,6 +119,31 @@ namespace engine
 
    } ;
 
+   /*
+      create remove virtual coord job
+   */
+   class _omaRemoveVirtualCoordJob : public _rtnBaseJob
+   {
+      public:
+         _omaRemoveVirtualCoordJob ( const CHAR *hostName,
+                                     const CHAR *svcName,
+                                     const CHAR *vCoordSvcName ) ;
+         virtual ~_omaRemoveVirtualCoordJob () ;
+
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR*  name () const ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32        doit () ;
+
+     private:
+         std::string               _localHostName ;
+         std::string               _omaSvcName ;
+         std::string               _vCoordSvcName ;
+
+   } ;
+
+
    // start create catalog job
    INT32 startCreateCatalogJob ( std::vector<BSONObj> &catalog,
                                  InstallJobResult &catalogResult,
@@ -133,6 +158,13 @@ namespace engine
                               std::vector<BSONObj> &data,
                               InstallJobResult &dataResult,
                               EDUID *pEDUID ) ;
+
+   // start create remove virtual coord job
+   INT32 startRemoveVirtualCoordJob ( const CHAR *hostName,
+                                      const CHAR *svcName,
+                                      const CHAR *vCoordSvcName,
+                                      EDUID *pEDUID ) ;
+
 
 }
 
