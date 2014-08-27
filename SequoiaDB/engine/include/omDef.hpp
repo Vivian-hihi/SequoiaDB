@@ -115,7 +115,7 @@ namespace engine
    #define OM_BUSINESS_FIELD_NAME            "Name"
    #define OM_BUSINESS_FIELD_TYPE            "Type"
    #define OM_BUSINESS_FIELD_DEPLOYMOD       "DeployMod"
-   #define OM_BUSINESS_FIELD_CLUSTERNAME     "ClusterName"
+   #define OM_BUSINESS_FIELD_CLUSTERNAME     OM_HOST_FIELD_CLUSTERNAME
    #define OM_BUSINESS_FIELD_TIME            "Time"
    #define OM_BUSINESS_FIELD_LOCATION        "Location"
 
@@ -169,7 +169,7 @@ namespace engine
 
    #define  OM_REST_CLUSTER_INFO             "ClusterInfo"
 
-   #define  OM_BSON_FIELD_CLUSTER_NAME       "ClusterName"
+   #define  OM_BSON_FIELD_CLUSTER_NAME       OM_HOST_FIELD_CLUSTERNAME
    #define  OM_BSON_FIELD_CLUSTER_DESC       "Desc"
    #define  OM_BSON_FIELD_SDB_USER           "SdbUser"
    #define  OM_BSON_FIELD_SDB_PASSWD         "SdbPasswd"
@@ -379,7 +379,7 @@ namespace engine
    // om query business req
    #define  OM_QUERY_BUSINESS_REQ            "query business"
 
-   #define  OM_REST_CLUSTER_NAME             "ClusterName"
+   #define  OM_REST_CLUSTER_NAME             OM_BSON_FIELD_CLUSTER_NAME
    #define  OM_BSON_BUSINESS_INFO            "BusinessInfo"
    //******************************************************************
 
@@ -392,6 +392,10 @@ namespace engine
    // om stop business req
    //******************************************************************
 
+   // om remove cluster req
+   #define  OM_REMOVE_CLUSTER_REQ            "remove cluster"
+
+   //******************************************************************
 
    // 
    #define OM_UPDATE_HOST_REQ                "update host"

@@ -490,7 +490,24 @@ namespace engine
       public:
          virtual INT32  doCommand() ;
    } ;
-   
+
+   class omRemoveClusterCommand : public omAuthCommand
+   {
+      public:
+         omRemoveClusterCommand( restAdaptor *pRestAdaptor, 
+                                pmdRestSession *pRestSession ) ;
+         virtual ~omRemoveClusterCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      private:
+         INT32          _getClusterExistHostFlag( const string &clusterName, 
+                                                  BOOLEAN &flag ) ;
+         INT32          _getClusterExistFlag( const string &clusterName, 
+                                              BOOLEAN &flag ) ;
+         INT32          _removeCluster( const string &clusterName ) ;
+   } ;
 
    class omGetFileCommand : public omCommandInterface
    {

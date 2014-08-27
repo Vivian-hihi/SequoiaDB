@@ -1397,7 +1397,7 @@ namespace engine
          agentIP   = ite->getStringField( OM_BSON_FIELD_HOST_IP ) ;
          agentHost = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
          agentPort = ite->getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
-         routeID   = om->updateAgentInfo( agentHost, agentPort ) ;
+         routeID   = om->updateAgentInfo( agentIP, agentPort ) ;
          subSession = remoteSession->addSubSession( routeID.value ) ;
          if ( NULL == subSession )
          {
@@ -4660,7 +4660,7 @@ namespace engine
 
             contextID = -1 ;
             _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_CONFIGURE ;
+                           + OM_CS_DEPLOY_CL_BUSINESS ;
             PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
             goto error ;
          }
@@ -4705,6 +4705,228 @@ namespace engine
       }
 
       _sendBusinessInfo2Web( listBusiness ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omRemoveClusterCommand *****************************
+   omRemoveClusterCommand::omRemoveClusterCommand( restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+                          :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omRemoveClusterCommand::~omRemoveClusterCommand()
+   {
+   }
+
+   INT32 omRemoveClusterCommand::_getClusterExistFlag( 
+                                                      const string &clusterName, 
+                                                      BOOLEAN &flag )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+
+      matcher = BSON( OM_CLUSTER_FIELD_NAME << clusterName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_CLUSTER ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               flag = FALSE ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_CLUSTER ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         flag = TRUE ;
+         break ;
+      }
+   done:
+      return SDB_OK ;
+   error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      goto done ;
+   }
+
+   INT32 omRemoveClusterCommand::_getClusterExistHostFlag( 
+                                                      const string &clusterName, 
+                                                      BOOLEAN &flag )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+
+      matcher = BSON( OM_HOST_FIELD_CLUSTERNAME << clusterName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_HOST ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               flag = FALSE ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_HOST ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         flag = TRUE ;
+         break ;
+      }
+   done:
+      return SDB_OK ;
+   error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      goto done ;
+   }
+
+   INT32 omRemoveClusterCommand::_removeCluster( const string &clusterName )
+   {
+      INT32 rc          = SDB_OK ;
+      BSONObj condition = BSON( OM_CLUSTER_FIELD_NAME << clusterName ) ;
+      BSONObj hint ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_CLUSTER, condition, hint, 0, _cb );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to delete taskinfo from table:%s,"
+                     "%s=%s,rc=%d", OM_CS_DEPLOY_CL_CLUSTER, 
+                     OM_HOST_FIELD_CLUSTERNAME, 
+                     clusterName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRemoveClusterCommand::doCommand()
+   {
+      INT32 rc                   = SDB_OK ;
+      const CHAR *clusterName    = NULL ;
+      BOOLEAN isClusterExist     = FALSE ;
+      BSONObj result ;
+      BOOLEAN isClusterExistHost = FALSE ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_CLUSTER_NAME, 
+                              &clusterName ) ;
+      if ( NULL == clusterName )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_CLUSTER_NAME )
+                        + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _getClusterExistFlag( clusterName, isClusterExist ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      if ( !isClusterExist )
+      {
+         result = BSON( OM_REST_RES_RETCODE << SDB_OK 
+                        << OM_REST_RES_DETAIL << "cluster is not exist" ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         goto done ;
+      }
+
+      rc = _getClusterExistHostFlag( clusterName, isClusterExistHost ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      if ( isClusterExistHost )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = string( "host exist in cluster, host should be "
+                                "removed first:cluster=" ) + clusterName ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _removeCluster( clusterName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
    done:
       return rc ;
    error:

@@ -464,6 +464,10 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omQueryBusinessCommand( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_CLUSTER_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omRemoveClusterCommand( pAdptor, this ) ;
+         }
          else
          {
             BSONObjBuilder builder ;
