@@ -12,8 +12,8 @@ if __name__ == "__main__":
 
    try:
       # connect to local db, using default args value.
-      # host= 'localhost', port= 11810, user= '', password= ''
-      db = client()
+      # host= '192.168.20.48', port= 11810, user= '', password= ''
+      db = client("192.168.20.48", 11810)
 
       cs_name = "gymnasium"
       cs = db.create_collection_space(cs_name)

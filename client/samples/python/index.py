@@ -12,8 +12,8 @@ if __name__ == "__main__":
 
    try:
       # connect to local db, using default args value.
-      # host= 'localhost', port= 11810, user= '', password= ''
-      db = client()
+      # host= '192.168.20.48', port= 11810, user= '', password= ''
+      db = client("192.168.20.48", 11810)
 
       # create a cs
       cs_name = "gymnasium"

@@ -18,9 +18,10 @@ if "__main__" == __name__:
       pysequoiadb._print(e)
 
    # connect to db, using default args value.
-   # host= '192.168.20.111', port= 50000, user= 'db_admin', password= 'password'
+   # host= '192.168.20.111', port= 11810, user= '', password= ''
+   # 192.168.20.111 is not a valid 
    try:
-      db_to_1 = client('192.168.20.111', 50000, 'db_admin', 'password')
+      db_to_1 = client('192.168.20.48', 11810, '', '')
       del db_to_1
    except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)
@@ -28,11 +29,10 @@ if "__main__" == __name__:
    # connect to db, using default args value.
    # host= 'localhost', port= 11810, user= '', password= ''
    try:
-      db = client()
+      db = client("ubuntu-dev9", 11810)
 
       host = "192.168.20.48"
-      service = '11840'
-      db.connect(host, 11820)
+      service = '11860'
 
       # try to connect another db server by service
       db.connect(host, service)
@@ -41,7 +41,7 @@ if "__main__" == __name__:
       hosts = [ {'host':'192.168.20.48', 'service':11810},
                 {'host':'192.168.20.111', 'service':50000},
                 {'host':'localhost', 'service':11810} ]
-      db.connect_to_hosts(hosts)
+      db.connect_to_hosts(hosts, user="", password="")
 
       # close connection to db server
       db.disconnect()
