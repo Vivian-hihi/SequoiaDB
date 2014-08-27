@@ -81,6 +81,14 @@ namespace engine
                         _sptReturnVal &rval,
                         bson::BSONObj &detail ) ;
 
+      INT32 createOM( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
+      INT32 removeOM( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
       INT32 startNode( const _sptArguments &arg,
                        _sptReturnVal &rval,
                        bson::BSONObj &detail ) ;
@@ -92,6 +100,17 @@ namespace engine
       INT32 close( const _sptArguments &arg,
                    _sptReturnVal &rval,
                    bson::BSONObj &detail ) ;
+
+   protected:
+      INT32 _createNode( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail,
+                         const CHAR *pNodeStr ) ;
+
+      INT32 _removeNode( const _sptArguments &arg,
+                         _sptReturnVal &rval,
+                         bson::BSONObj &detail,
+                         const CHAR *pNodeStr ) ;
 
    private:
       sptUsrOmaAssit          _assit ;

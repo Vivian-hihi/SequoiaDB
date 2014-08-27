@@ -191,6 +191,11 @@ namespace engine
                {
                   _roleStr = SDB_ROLE_STANDALONE_STR ;
                }
+               else if ( 0 == ossStrcmp( e.valuestrsafe(),
+                                         SDB_ROLE_OM_STR ) )
+               {
+                  _roleStr = SDB_ROLE_OM_STR ;
+               }
                continue ;
             }
 

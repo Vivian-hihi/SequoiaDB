@@ -51,6 +51,8 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, removeCoord)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, createData)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, removeData)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, createOM)
+   JS_MEMBER_FUNC_DEFINE(_sptUsrOma, removeOM)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, startNode)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, stopNode)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, close)
@@ -67,6 +69,8 @@ namespace engine
       JS_ADD_MEMBER_FUNC("removeCoord", removeCoord)
       JS_ADD_MEMBER_FUNC("createData", createData)
       JS_ADD_MEMBER_FUNC("removeData", removeData)
+      JS_ADD_MEMBER_FUNC("createOM", createOM)
+      JS_ADD_MEMBER_FUNC("removeOM", removeOM)
       JS_ADD_MEMBER_FUNC("startNode", startNode)
       JS_ADD_MEMBER_FUNC("stopNode", stopNode)
       JS_ADD_MEMBER_FUNC("close", close)
@@ -147,6 +151,8 @@ namespace engine
          << "   removeCoord( svcname )" << endl
          << "   createData( svcname, dbpath, [config obj])  -standalone" << endl
          << "   removeData( svcname )                       -standalone" << endl
+         << "   createOM( svcname, dbpath, [config obj])" << endl
+         << "   removeOM( svcname )" << endl
          << "   startNode( svcname )" << endl
          << "   stopNode( svcname )" << endl
          << "   close()" << endl ;
@@ -163,86 +169,20 @@ namespace engine
                                   _sptReturnVal & rval,
                                   BSONObj & detail )
    {
-      INT32 rc = SDB_OK ;
-      string svcname ;
-      string dbpath ;
-      BSONObj config ;
-
-      rc = arg.getString( 0, svcname ) ;
-      if ( SDB_OUT_OF_BOUND == rc )
-      {
-         detail = BSON( SPT_ERR << "svcname must be config" ) ;
-      }
-      else if ( rc )
-      {
-         detail = BSON( SPT_ERR << "svcname must be string" ) ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
-
-      rc = arg.getString( 1, dbpath ) ;
-      if ( SDB_OUT_OF_BOUND == rc )
-      {
-         detail = BSON( SPT_ERR << "dbpath must be config" ) ;
-      }
-      else if ( rc )
-      {
-         detail = BSON( SPT_ERR << "dbpath must be string" ) ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get dbpath, rc: %d", rc ) ;
-
-      if ( arg.argc() >= 3 )
-      {
-         rc = arg.getBsonobj( 2, config ) ;
-         if ( rc )
-         {
-            detail = BSON( SPT_ERR << "config must be object" ) ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Failed to get config, rc: %d", rc ) ;
-      }
-
-      rc = _assit.createNode( svcname.c_str(), dbpath.c_str(),
-                              config.objdata() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to create coord[%s], rc: %d",
-                   svcname.c_str(), rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _createNode( arg, rval, detail, SDB_ROLE_COORD_STR ) ;
    }
 
    INT32 _sptUsrOma::removeCoord( const _sptArguments & arg,
                                   _sptReturnVal & rval,
                                   BSONObj & detail )
    {
-      INT32 rc = SDB_OK ;
-      string svcname ;
-      BSONObj config = BSON( PMD_OPTION_ROLE << SDB_ROLE_COORD_STR ) ;
-
-      rc = arg.getString( 0, svcname ) ;
-      if ( SDB_OUT_OF_BOUND == rc )
-      {
-         detail = BSON( SPT_ERR << "svcname must be config" ) ;
-      }
-      else if ( rc )
-      {
-         detail = BSON( SPT_ERR << "svcname must be string" ) ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
-
-      rc = _assit.removeNode( svcname.c_str(), config.objdata() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to remove coord[%s], rc: %d",
-                   svcname.c_str(), rc ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return _removeNode( arg, rval, detail, SDB_ROLE_COORD_STR ) ;
    }
 
-   INT32 _sptUsrOma::createData( const _sptArguments & arg,
-                                 _sptReturnVal & rval,
-                                 BSONObj & detail )
+   INT32 _sptUsrOma::_createNode( const _sptArguments & arg,
+                                  _sptReturnVal & rval,
+                                  BSONObj & detail,
+                                  const CHAR *pNodeStr )
    {
       INT32 rc = SDB_OK ;
       string svcname ;
@@ -294,14 +234,14 @@ namespace engine
             }
             builder.append( e ) ;
          }
-         builder.append( PMD_OPTION_ROLE, SDB_ROLE_STANDALONE_STR ) ;
+         builder.append( PMD_OPTION_ROLE, pNodeStr ) ;
          config = builder.obj() ;
       }
 
       rc = _assit.createNode( svcname.c_str(), dbpath.c_str(),
                               config.objdata() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to create data[%s], rc: %d",
-                   svcname.c_str(), rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to create %s[%s], rc: %d",
+                   pNodeStr, svcname.c_str(), rc ) ;
 
    done:
       return rc ;
@@ -309,13 +249,21 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrOma::removeData( const _sptArguments & arg,
+   INT32 _sptUsrOma::createData( const _sptArguments & arg,
                                  _sptReturnVal & rval,
                                  BSONObj & detail )
    {
+      return _createNode( arg, rval, detail, SDB_ROLE_STANDALONE_STR ) ;
+   }
+
+   INT32 _sptUsrOma::_removeNode( const _sptArguments & arg,
+                                  _sptReturnVal & rval,
+                                  BSONObj & detail,
+                                  const CHAR *pNodeStr )
+   {
       INT32 rc = SDB_OK ;
       string svcname ;
-      BSONObj config = BSON( PMD_OPTION_ROLE << SDB_ROLE_STANDALONE_STR ) ;
+      BSONObj config = BSON( PMD_OPTION_ROLE << pNodeStr ) ;
 
       rc = arg.getString( 0, svcname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
@@ -329,13 +277,34 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
 
       rc = _assit.removeNode( svcname.c_str(), config.objdata() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to remove data[%s], rc: %d",
-                   svcname.c_str(), rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to remove %s[%s], rc: %d",
+                   pNodeStr, svcname.c_str(), rc ) ;
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrOma::removeData( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
+   {
+      return _removeNode( arg, rval, detail, SDB_ROLE_STANDALONE_STR ) ;
+   }
+
+   INT32 _sptUsrOma::createOM( const _sptArguments & arg,
+                               _sptReturnVal & rval,
+                               BSONObj & detail )
+   {
+      return _createNode( arg, rval, detail, SDB_ROLE_OM_STR ) ;
+   }
+
+   INT32 _sptUsrOma::removeOM( const _sptArguments & arg,
+                               _sptReturnVal & rval,
+                               BSONObj & detail )
+   {
+      return _removeNode( arg, rval, detail, SDB_ROLE_OM_STR ) ;
    }
 
    INT32 _sptUsrOma::startNode( const _sptArguments & arg,
