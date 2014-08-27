@@ -229,7 +229,7 @@ namespace engine
 
    // milliseconds
    #define  OM_BASICCHECK_INTERVAL           (10000)
-   #define  OM_INSTALL_AGET_INTERVAL         (20000)
+   #define  OM_INSTALL_AGET_INTERVAL         (40000)
    #define  OM_CHECK_HOST_INTERVAL           (20000)
    #define  OM_WAIT_AGENT_UNISTALL_INTERVAL  (5000)
    
