@@ -512,10 +512,7 @@ namespace engine
                      _procInfo->setCHLCMD( PMDDMN_SHM_CMD_CHL_QUIT ) ;
                      waitTimes = 0 ;
 #if defined ( _LINUX )
-                     if ( tryTimes >= PMD_QUIT_CHL_WAIT_TIMES )
-                     {
-                        ossTerminateProcess( _pid, FALSE ) ;
-                     }
+                     ossTerminateProcess( _pid, FALSE ) ;
 #endif // _LINUX
                      PD_LOG( PDEVENT, "stop the service process(%d)...",
                              _pid ) ;
