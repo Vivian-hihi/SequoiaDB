@@ -27,11 +27,6 @@ if 'win32' == sys.platform:
       shutil.copy(file, newname)
    modules = ['err.prop','*.pyd'] #, '*.exp', '*.lib', 
 else:
-   sos = './pysequoiadb/*.so'
-   for file in glob.glob(sos):
-      if file.startswith('lib'):
-         newname = file[3:]
-      os.rename()
    modules = ['err.prop', '*.so']
 
 extra_opts = {}

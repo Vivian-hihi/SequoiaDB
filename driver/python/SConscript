@@ -103,7 +103,7 @@ if sys.platform == 'win32':
    pass
 else:
    act = []
-   act.append("mv ./pysequoiadb/libsdb.so ./pyseuoiadb/sdb.so")
+   act.append("mv ./pysequoiadb/libsdb.so ./pysequoiadb/sdb.so")
    act.append("tar -zcvf pysequoiadb.tar.gz   \
                ./bson ./pysequoiadb ./setup.py \
                --exclude-vcs")
