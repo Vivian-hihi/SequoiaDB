@@ -582,6 +582,8 @@ namespace engine
                             result.getStringField( OM_CLUSTER_FIELD_SDBUSER )) ;
          innerBuilder.append( OM_BSON_FIELD_SDB_USERGROUP, 
                        result.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP )) ;
+         innerBuilder.append( OM_BSON_FIELD_INSTALLPATH, 
+                       result.getStringField( OM_CLUSTER_FIELD_INSTALLPATH )) ;
          tmp = innerBuilder.obj() ;
          rc = _restAdaptor->appendHttpBody( _restSession, tmp.objdata(), 
                                             tmp.objsize(), 1 ) ;
@@ -1147,14 +1149,30 @@ namespace engine
    {
    }
 
-   void omCheckHostCommand::_eraseFromList( list<BSONObj> &hostInfoList, 
-                                            const string &hostName )
+   void omCheckHostCommand::_eraseFromListByIP( list<BSONObj> &hostInfoList, 
+                                                const string &ip )
    {
       list<BSONObj>::iterator ite = hostInfoList.begin() ;
       while ( ite != hostInfoList.end() )
       {
-         string tmpHostName = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         if ( tmpHostName.compare( hostName ) == 0 )
+         string tmpIP = ite->getStringField( OM_BSON_FIELD_HOST_IP ) ;
+         if ( tmpIP.compare( ip ) == 0 )
+         {
+            hostInfoList.erase( ite ) ;
+            return ;
+         }
+         ite++ ;
+      }
+   }
+
+   void omCheckHostCommand::_eraseFromListByHost( list<BSONObj> &hostInfoList, 
+                                                  const string &hostName )
+   {
+      list<BSONObj>::iterator ite = hostInfoList.begin() ;
+      while ( ite != hostInfoList.end() )
+      {
+         string tmpHost = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         if ( tmpHost.compare( hostName ) == 0 )
          {
             hostInfoList.erase( ite ) ;
             return ;
@@ -1168,16 +1186,7 @@ namespace engine
    {
       list<BSONObj>::iterator ite = hostInfoList.begin() ;
       string hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-      while ( ite != hostInfoList.end() )
-      {
-         string tmpHostName = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         if ( tmpHostName.compare( hostName ) == 0 )
-         {
-            hostInfoList.erase( ite ) ;
-            return ;
-         }
-         ite++ ;
-      }
+      _eraseFromListByHost( hostInfoList, hostName ) ;
    }
 
    // check ping and ssh
@@ -1304,7 +1313,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omCheckHostCommand::_installAgent( list<BSONObj> &hostInfoList )
+   INT32 omCheckHostCommand::_installAgent( list<BSONObj> &hostInfoList, 
+                                            list<BSONObj> &needUninstallHost )
    {
       INT32 rc          = SDB_OK ;
       CHAR *pContent    = NULL ;
@@ -1314,6 +1324,7 @@ namespace engine
       pmdRemoteSession *remoteSession = NULL ;
       BSONObj bsonRequest ;
       BSONObj result ;
+      BSONObj hostResults ;
       BSONElement rcElement ;
 
       _generateArray( hostInfoList, OM_BSON_FIELD_HOST_INFO, bsonRequest ) ;
@@ -1368,6 +1379,32 @@ namespace engine
       }
 
       rc = result.getIntField( OM_REST_RES_RETCODE ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      needUninstallHost.assign( hostInfoList.begin(), hostInfoList.end() ) ;
+      hostResults = result.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
+      {
+         BSONObjIterator iter( hostResults ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele ;
+            BSONObj oneResult ;
+            string ip ;
+            bool isNeedUninstall ;
+            ele       = iter.next() ;
+            oneResult = ele.embeddedObject() ;
+            ip        = oneResult.getStringField( OM_BSON_FIELD_HOST_IP ) ;
+            isNeedUninstall = oneResult.getBoolField( 
+                                                 OM_BSON_FIELD_NEEDUNINSTALL ) ;
+            if ( !isNeedUninstall )
+            {
+               _eraseFromListByIP( needUninstallHost, ip ) ;
+            }
+         }
+      }
 
    done:
       _clearSession( om, remoteSession ) ;
@@ -1430,6 +1467,52 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void omCheckHostCommand::_updateDiskInfo( BSONObj &onehost )
+   {
+      BSONObj filter = BSON( OM_BSON_FIELD_DISK << "" ) ;
+      BSONObj others ;
+      BSONObj disk ;
+      others = onehost.filterFieldsUndotted( filter, false ) ;
+      disk   = onehost.filterFieldsUndotted( filter, true ) ;
+
+      BSONArrayBuilder arrayBuilder ;
+
+      BSONObj disks = disk.getObjectField( OM_BSON_FIELD_DISK ) ;
+      BSONObjIterator iter( disks ) ;
+      while ( iter.more() )
+      {
+         BSONElement ele ;
+         BSONObj oneDisk ;
+         ele     = iter.next() ;
+         oneDisk = ele.embeddedObject() ;
+
+         BSONObjBuilder builder ;
+         builder.appendElements( oneDisk ) ;
+
+         BSONElement sizeEle ;
+         sizeEle = oneDisk.getField( OM_BSON_FIELD_DISK_FREE_SIZE ) ;
+         INT64 freeSize = sizeEle.Long() ;
+         if ( freeSize < OM_MIN_DISK_FREE_SIZE )
+         {
+            builder.append( OM_BSON_FIELD_DISK_CANUSE, false ) ;
+         }
+         else
+         {
+            builder.append( OM_BSON_FIELD_DISK_CANUSE, true ) ;
+         }
+
+         BSONObj tmp = builder.obj() ;
+         arrayBuilder.append( tmp ) ;
+      }
+
+      disk = BSON( OM_BSON_FIELD_DISK << arrayBuilder.arr() ) ;
+
+      BSONObjBuilder builder ;
+      builder.appendElements( others ) ;
+      builder.appendElements( disk ) ;
+      onehost = builder.obj() ;
    }
 
    INT32 omCheckHostCommand::_checkHostEnv( list<BSONObj> &hostInfoList, 
@@ -1510,6 +1593,7 @@ namespace engine
          }
 
          BSONObj result = objVec[0] ;
+         _updateDiskInfo( result ) ;
          hostResult.push_back( result ) ;
          //TODO: get /etc/hosts, and check 
          _eraseFromList( hostInfoList, result ) ;
@@ -1557,7 +1641,7 @@ namespace engine
          agentIP   = ite->getStringField( OM_BSON_FIELD_HOST_IP ) ;
          agentHost = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
          agentPort = ite->getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
-         routeID   = om->updateAgentInfo( agentHost, agentPort ) ;
+         routeID   = om->updateAgentInfo( agentIP, agentPort ) ;
          subSession = remoteSession->addSubSession( routeID.value ) ;
          if ( NULL == subSession )
          {
@@ -1689,18 +1773,16 @@ namespace engine
                                        list<BSONObj> &hostResult )
    {
       INT32 rc = SDB_OK ;
-      list<BSONObj> agentInstalledHost ;
+      list<BSONObj> needUninstallHost ;
 
       PD_LOG( PDEVENT, "start to _installAgent" ) ;
-      rc = _installAgent( hostInfoList ) ;
+      rc = _installAgent( hostInfoList, needUninstallHost ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = "install agent failed" ;
          PD_LOG(PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
-
-      agentInstalledHost.assign( hostInfoList.begin(), hostInfoList.end() ) ;
 
       PD_LOG( PDEVENT, "start to _checkHostEnv" ) ;
       rc = _checkHostEnv( hostInfoList, hostResult ) ;
@@ -1713,7 +1795,7 @@ namespace engine
 
    done:
       PD_LOG( PDEVENT, "start to _uninstallAgent" ) ;
-      _uninstallAgent( agentInstalledHost ) ;
+      _uninstallAgent( needUninstallHost ) ;
       return rc ;
    error:
       goto done ;

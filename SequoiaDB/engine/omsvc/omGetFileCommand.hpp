@@ -210,17 +210,21 @@ namespace engine
                                         list<BSONObj> &hostResult ) ;
          INT32           _doCheck( list<BSONObj> &hostInfoList, 
                                         list<BSONObj> &hostResult ) ;
-         INT32           _installAgent( list<BSONObj> &hostInfoList ) ;
+         INT32           _installAgent( list<BSONObj> &hostInfoList,
+                                        list<BSONObj> &needUninstallHost ) ;
          INT32           _addCheckHostReq( omManager *om,
                                            pmdRemoteSession *remoteSession,
                                            list<BSONObj> &hostInfoList ) ;
+         void            _updateDiskInfo( BSONObj &onehost ) ;
          INT32           _checkHostEnv( list<BSONObj> &hostInfoList, 
                                         list<BSONObj> &hostResult ) ;
          INT32           _uninstallAgent( list<BSONObj> &hostInfoList ) ;
          void            _eraseFromList( list<BSONObj> &hostInfoList, 
                                          BSONObj &oneHost ) ;
-         void            _eraseFromList( list<BSONObj> &hostInfoList, 
-                                         const string &hostName ) ;
+         void            _eraseFromListByIP( list<BSONObj> &hostInfoList, 
+                                             const string &ip ) ;
+         void            _eraseFromListByHost( list<BSONObj> &hostInfoList, 
+                                               const string &hostName ) ;
 
          INT32           _notifyAgentExit( list<BSONObj> &hostInfoList ) ;
          INT32           _addAgentExitReq( omManager *om,

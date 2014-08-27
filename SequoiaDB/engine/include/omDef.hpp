@@ -185,6 +185,8 @@ namespace engine
 
    // *********************om rest query_cluster_req*******************
    #define  OM_QUERY_CLUSTER_REQ             "query cluster"
+
+   #define  OM_BSON_FIELD_INSTALLPATH        OM_CLUSTER_FIELD_INSTALLPATH
    // *****************************************************************
 
    // *********************om rest login_req***************************
@@ -234,7 +236,7 @@ namespace engine
    #define  OM_WAIT_SCAN_RES_INTERVAL        (60000)
    #define  OM_WAIT_PROGRESS_RES_INTERVAL    (500)
 
-   #define  OM_WAIT_AGENT_EXIT_RES_INTERVAL  (5000)
+   #define  OM_WAIT_AGENT_EXIT_RES_INTERVAL  (1000)
    #define  OM_WAIT_UPDATE_HOST_INTERVAL     (5000)
    // *****************************************************************
 
@@ -258,6 +260,12 @@ namespace engine
    #define  OM_BSON_FIELD_DISK_MOUNT         "Mount"
    #define  OM_BSON_FIELD_DISK_FREE_SIZE     "Free"
    #define  OM_BSON_FIELD_DISK_USED          "Used"
+
+   #define  OM_BSON_FIELD_DISK_CANUSE        "CanUse"
+
+   // MB
+   #define  OM_MIN_DISK_FREE_SIZE            (600)
+   
    // array
    #define  OM_BSON_FIELD_CPU                "CPU"
    // array
@@ -267,6 +275,8 @@ namespace engine
    #define  OM_BSON_FIELD_SAFETY             "Safety"
    //
    #define  OM_BSON_FIELD_CONFIG             OM_CONFIGURE_FIELD_CONFIG
+
+   #define  OM_BSON_FIELD_NEEDUNINSTALL      "IsNeedUninstall"
 
    // *****************************************************************
 
