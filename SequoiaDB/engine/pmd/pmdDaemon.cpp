@@ -76,7 +76,7 @@ namespace engine
                   "share-memory-tag is out of length" ) ;
       if ( !isInit() )
       {
-         stat     = PMDDMN_SHM_STAT_CHILDREN ;
+         stat     = PMDDMN_SHM_STAT_DAEMON ;
          pid      = OSS_INVALID_PID ;
          cmd      = PMDDMN_SHM_CMD_INVALID ;
          exitCode = SDB_OK ;
@@ -318,7 +318,6 @@ namespace engine
       SDB_ASSERT( _procInfo,
                   "_procInfo can't be null, call active at first" );
       BOOLEAN isRunning = FALSE;
-      static BOOLEAN isFirstRun = TRUE;
       _pid = OSS_INVALID_PID ;
 
       if ( _procInfo != NULL )
@@ -329,7 +328,7 @@ namespace engine
             INT32 rc = SDB_OK;
             isRunning = TRUE;
             _deadTime = 0;
-            if ( OSS_INVALID_PID == procInfo.pid && !isFirstRun )
+            if ( OSS_INVALID_PID == procInfo.pid )
             {
                isRunning = FALSE;
             }
@@ -356,7 +355,6 @@ namespace engine
             _deadTime = 0;
          }
       }
-      isFirstRun = FALSE;
       return isRunning;
    }
 
