@@ -32,6 +32,7 @@
 
 #include "omagentUtil.hpp"
 #include "omagentJob.hpp"
+#include "omagentCommand.hpp"
 
 namespace engine
 {
@@ -231,6 +232,58 @@ namespace engine
       goto done ;
    }
 
+   /*
+      omagent remove virtual coord job
+   */
+   _omaRemoveVirtualCoordJob::_omaRemoveVirtualCoordJob (
+                                                    const CHAR *hostName,
+                                                    const CHAR *svcName,
+                                                    const CHAR *vCoordSvcName )
+   {
+      _localHostName = hostName ;
+      _omaSvcName    = svcName ; 
+      _vCoordSvcName = vCoordSvcName ;
+   }
+
+   _omaRemoveVirtualCoordJob::~_omaRemoveVirtualCoordJob()
+   {
+   }
+
+   RTN_JOB_TYPE _omaRemoveVirtualCoordJob::type () const
+   {
+      return RTN_JOB_REMOVEVIRTUALCOORD ;
+   }
+
+   const CHAR* _omaRemoveVirtualCoordJob::name () const
+   {
+      return "" ;
+   }
+
+   BOOLEAN _omaRemoveVirtualCoordJob::muteXOn ( const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omaRemoveVirtualCoordJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasVCoordRemove = FALSE ;
+      _omaRemoveVirtualCoord removeVCoord( _localHostName.c_str(),
+                                           _omaSvcName.c_str(),
+                                           _vCoordSvcName.c_str() ) ;
+      rc = removeVCoord.removeVirtualCoord ( hasVCoordRemove ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 startCreateDataJob ( const CHAR *groupname,
                               std::vector<BSONObj> &data,
                               InstallJobResult &dataResult,
@@ -248,6 +301,31 @@ namespace engine
       }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 startRemoveVirtualCoordJob ( const CHAR *hostName,
+                                      const CHAR *svcName,
+                                      const CHAR *vCoordSvcName,
+                                      EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaRemoveVirtualCoordJob *pJob = NULL ;
+      pJob = SDB_OSS_NEW _omaRemoveVirtualCoordJob( hostName, svcName,
+                                                    vCoordSvcName ) ;
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for remove virtual coord job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+
    done:
       return rc ;
    error:

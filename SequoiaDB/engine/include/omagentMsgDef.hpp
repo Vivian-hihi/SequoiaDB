@@ -122,6 +122,7 @@
 #define OMA_FIELD_NAME                             "Name"
 #define OMA_FIELD_FILESYSTEM                       "Filesystem"
 #define OMA_FIELD_MOUNT                            "Mount"
+#define OMA_FIELD_ISLOCAL                          "IsLocal"
 #define OMA_FIELD_USED                             "Used"
 
 // cpu

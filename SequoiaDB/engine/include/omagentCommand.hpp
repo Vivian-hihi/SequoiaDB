@@ -320,10 +320,10 @@ namespace engine
          CHAR _omaSvcName[OSS_MAX_SERVICENAME + 1] ;
          CHAR _vCoordSvcName[OSS_MAX_SERVICENAME + 1] ;
 
-         std::vector<BSONObj> _coord ;
-         std::vector<BSONObj> _catalog ;
-         std::vector<BSONObj> _data ;
-         std::vector<BSONObj> _standalone ;
+         std::vector<BSONObj>             _coord ;
+         std::vector<BSONObj>             _catalog ;
+         std::vector<BSONObj>             _data ;
+         std::vector<BSONObj>             _standalone ;
 
          _omaTaskMgr* _taskMrg ;
 

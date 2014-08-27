@@ -142,7 +142,10 @@ namespace engine
       public:
          INT32 init( std::vector<BSONObj> coord,
                      std::vector<BSONObj> catalog,
-                     std::vector<BSONObj> data ) ;
+                     std::vector<BSONObj> data,
+                     const CHAR *localHostName,
+                     const CHAR *omaSvcName,
+                     const CHAR *vCoordSvcName ) ;
 
          // start job
          INT32 doit() ;
@@ -154,6 +157,12 @@ namespace engine
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
          INT32 _installData() ;
+         INT32 _removeVirtualCoord() ;
+
+         // reomve virtual coord
+         std::string                                    _localHostName ;
+         std::string                                    _omaSvcName ;
+         std::string                                    _vCoordSvcName ;
 
          std::vector<BSONObj>                           _coord ;
          std::vector<BSONObj>                           _catalog ;

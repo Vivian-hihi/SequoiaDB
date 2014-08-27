@@ -994,13 +994,10 @@ namespace engine
    INT32 _omaCheckHost::_adaptIP ( BSONObj &obj, BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
-      BSONArrayBuilder bab ;
-      BSONObj ip ;
 
       try
       {
-         bab.append( _pIp ) ;
-         builder.append( OMA_FIELD_IP, bab.arr() ) ;
+         builder.append( OMA_FIELD_IP, _pIp ) ;
       }
       catch ( std::exception &e )
       {
@@ -1182,11 +1179,10 @@ namespace engine
       {
          const CHAR *pName  = NULL ;
          const CHAR *pMount = NULL ;
-         const CHAR *pUnit  = NULL ;
          INT64 size         = 0 ;
          INT64 free         = 0 ;
          INT64 use          = 0 ;
-         BOOLEAN used       = TRUE ;
+         BOOLEAN isLocal    = FALSE ;
          BSONObj disk ;
          BSONObjIterator itr( ele.embeddedObject() ) ;
 
@@ -1201,23 +1197,23 @@ namespace engine
             }
             BSONObj subObj = ele.embeddedObject() ;
             rc = omaGetStringElement( subObj, OMA_FIELD_FILESYSTEM, &pName ) ;
-            if ( SDB_OK != rc ) pName = "" ;
+            if ( SDB_OK != rc )
+               pName = "" ;
             rc = omaGetStringElement( subObj, OMA_FIELD_MOUNT, &pMount ) ;
-            if ( SDB_OK != rc ) pMount = "" ;
+            if ( SDB_OK != rc )
+               pMount = "" ;
             size = subObj.getField( OMA_FIELD_SIZE ).numberLong() ;
             use = subObj.getField( OMA_FIELD_USED ).numberLong() ;
             free = size - use ;
-            rc = omaGetStringElement( subObj, OMA_FIELD_UNIT, &pUnit ) ;
-            if ( SDB_OK != rc ) pUnit = "" ;
-            rc = omaGetBooleanElement( subObj, OMA_FIELD_USED, used ) ;
-            if ( SDB_OK != rc ) used = TRUE ;
+            rc = omaGetBooleanElement( subObj, OMA_FIELD_ISLOCAL, isLocal ) ;
+            if ( SDB_OK != rc )
+               isLocal = FALSE ;
             rc = SDB_OK ;
             disk = BSON( OMA_FIELD_NAME << pName <<
                          OMA_FIELD_MOUNT << pMount <<
                          OMA_FIELD_SIZE << size <<
                          OMA_FIELD_FREE << free <<
-                         OMA_FIELD_UNIT << pUnit <<
-                         OMA_FIELD_USED << used ) ;
+                         OMA_FIELD_ISLOCAL << isLocal ) ;
             bab.append ( disk ) ;
          }
          builder.appendArray( OMA_FIELD_DISK, bab.arr() ) ;
@@ -1242,7 +1238,6 @@ namespace engine
       BSONElement ele ;
       BSONObj memory ;
       const CHAR *pModel = NULL ;
-      const CHAR *pUnit  = NULL ;
       INT64 size = 0 ;
       INT64 free = 0 ;
      
@@ -1250,7 +1245,6 @@ namespace engine
       { 
          BSONObj tmpObj = obj.getObjectField( OMA_FIELD_MEMORY ) ;
          pModel = tmpObj.getStringField( OMA_FIELD_MODEL ) ;
-         pUnit = tmpObj.getStringField( OMA_FIELD_UNIT ) ;
          ele = tmpObj.getField( OMA_FIELD_SIZE ) ;
          size = ele.numberLong() ;
          ele = tmpObj.getField( OMA_FIELD_FREE ) ;
@@ -1258,8 +1252,7 @@ namespace engine
    
          memory = BSON( OMA_FIELD_MODEL << pModel << 
                         OMA_FIELD_SIZE << size <<
-                        OMA_FIELD_FREE << free <<
-                        OMA_FIELD_UNIT << pUnit ) ;
+                        OMA_FIELD_FREE << free ) ;
          builder.append ( OMA_FIELD_MEMORY, memory ) ;
       }
       catch ( std::exception &e )
@@ -1750,7 +1743,7 @@ namespace engine
                       _sdb_user, _sdb_passwd, _sdb_user_group,
                       pIp, pHostName, pUserName, pPassword,
                       _packet_path, pInstallPath ) ;
-         PD_LOG ( PDDEBUG, " Install db business passes arguments: "
+         PD_LOG ( PDDEBUG, " Add host passes arguments: "
                   "var SDBUSER = %s; var SDBPASSWD = %s; "
                   "var SDBUSERGROUP = %s; var IP = %s; "
                   "var HOSTNAME = %s; var USERNAME = %s; "
@@ -1962,13 +1955,13 @@ namespace engine
       UINT64 taskID                    = pTaskMgr->getTaskID() ;
       _omaInstallDBBusinessTask *pTask = NULL ;
       BOOLEAN hasVCoordStart           = FALSE ;
-      _omaCreateVirtualCoord vCoord( _localHostName, _omaSvcName,
-                                     _vCoordSvcName ) ;
+      _omaCreateVirtualCoord createVCoord( _localHostName, _omaSvcName,
+                                           _vCoordSvcName ) ;
       BSONObjBuilder bob ;
       BSONObj retObj ;
 
       // create virtual coord
-      rc = vCoord.createVirtualCoord( hasVCoordStart ) ;
+      rc = createVCoord.createVirtualCoord( hasVCoordStart ) ;
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
@@ -1987,7 +1980,8 @@ namespace engine
       // register install db task
       pTaskMgr->addTask( pTask ) ;
       // start install db task
-      rc = pTask->init( _coord, _catalog, _data ) ;
+      rc = pTask->init( _coord, _catalog, _data,
+                        _localHostName, _omaSvcName, _vCoordSvcName ) ;
       if ( rc  )
       {
          PD_LOG_MSG( PDERROR,
@@ -2009,15 +2003,15 @@ namespace engine
 
    done:
 /*
-      // create remove virtual coord task
       if ( hasVCoordStart )
       {
-//         pTask2 = SDB_OSS_NEW _omaRemoveVirtualCoordTask( taskID ) ;
-         _omaRemoveVirtualCoordTask removeVCoordTask( taskID ) ;
-         rc = removeVCoordTask.doit() ;
+         BOOLEAN hasVCoordRemove = FALSE ;
+         _omaRemoveVirtualCoord removeVCoord( _localHostName, _omaSvcName,
+                                              _vCoordSvcName ) ;
+         rc = removeVCoord.removeVirtualCoord ( hasVCoordRemove ) ;
          if ( rc )
          {
-            PD_LOG_MSG( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
          }
       }
 */
@@ -2367,6 +2361,7 @@ namespace engine
                      "Omagent failed to remove virtual coord, rc = %d",
                      retRc ) ;
          result = FALSE ;
+         rc = retRc ;
          goto error;
       }
       result = TRUE ;

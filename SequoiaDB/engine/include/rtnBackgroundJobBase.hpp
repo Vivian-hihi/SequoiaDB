@@ -59,6 +59,7 @@ namespace engine
       RTN_JOB_CREATEDATA         = 12, // create data node
       RTN_JOB_STARTNODE          = 13, // start node
       RTN_JOB_CMSYNC             = 14, // cm and cmd sync info
+      RTN_JOB_REMOVEVIRTUALCOORD = 15, // remove virtual coord
 
       RTN_JOB_MAX
    } ;

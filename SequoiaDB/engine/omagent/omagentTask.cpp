@@ -153,9 +153,16 @@ namespace engine
 
    INT32 _omaInstallDBBusinessTask::init( std::vector<BSONObj> coord,
                                           std::vector<BSONObj> catalog,
-                                          std::vector<BSONObj> data )
+                                          std::vector<BSONObj> data,
+                                          const CHAR *localHostName,
+                                          const CHAR *omaSvcName,
+                                          const CHAR *vCoordSvcName )
    {
       INT32 rc = SDB_OK ;
+      // init arguments for remove virtual coord
+      _localHostName = localHostName ;
+      _omaSvcName    = omaSvcName ;
+      _vCoordSvcName = vCoordSvcName ;
       // init _coord and _coordResult
       _coord = coord ;
       _coordResult._rc = SDB_OK ;
@@ -231,6 +238,12 @@ namespace engine
          goto error ;
       }
    done:
+      // remove virtual coord
+      rc = _removeVirtualCoord() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -351,6 +364,31 @@ namespace engine
          }
          it++ ;
       }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBBusinessTask::_removeVirtualCoord() 
+   {
+      INT32 rc = SDB_OK ;
+      EDUID removeVirtualCoordJobID = PMD_INVALID_EDUID ;
+      // start remove virtual coord job
+      rc = startRemoveVirtualCoordJob( _localHostName.c_str(), _omaSvcName.c_str(),
+                                       _vCoordSvcName.c_str(),
+                                       &removeVirtualCoordJobID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to start remove vittual coord job, "
+                 "rc = %d", rc ) ;
+         goto error ;
+      }
+      while ( rtnGetJobMgr()->findJob ( removeVirtualCoordJobID ) )
+      {
+         ossSleep ( OSS_ONE_SEC ) ;
+      }
+
    done:
       return rc ;
    error:
