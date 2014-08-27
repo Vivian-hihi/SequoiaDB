@@ -145,7 +145,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_LNX_STOPSDBCM ) ;
       DIR *dirp = NULL ;
       struct dirent *dp = NULL ;
-      UINT32 timecount = 0 ;
 
       if ( ( dirp = opendir ( "/proc" )) == NULL )
       {
@@ -158,7 +157,6 @@ namespace engine
       {
          if ( ( dp = readdir ( dirp ) ) != NULL )
          {
-            timecount = 0 ;
             FILE *fp = NULL ;
             pid_t pid ;
             CHAR pathName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
