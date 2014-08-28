@@ -1188,6 +1188,7 @@ namespace engine
 
          while ( itr.more() )
          {
+            BSONObjBuilder bob2 ;
             ele = itr.next() ;
             if ( Object != ele.type() )
             {
@@ -1209,11 +1210,12 @@ namespace engine
             if ( SDB_OK != rc )
                isLocal = FALSE ;
             rc = SDB_OK ;
-            disk = BSON( OMA_FIELD_NAME << pName <<
-                         OMA_FIELD_MOUNT << pMount <<
-                         OMA_FIELD_SIZE << size <<
-                         OMA_FIELD_FREE << free <<
-                         OMA_FIELD_ISLOCAL << isLocal ) ;
+            bob2.append ( OMA_FIELD_NAME, pName ) ;
+            bob2.append ( OMA_FIELD_MOUNT, pMount ) ;
+            bob2.append ( OMA_FIELD_SIZE, size ) ;
+            bob2.append ( OMA_FIELD_FREE, free ) ;
+            bob2.appendBool ( OMA_FIELD_ISLOCAL, isLocal ) ;
+            disk = bob2.obj() ;
             bab.append ( disk ) ;
          }
          builder.appendArray( OMA_FIELD_DISK, bab.arr() ) ;
@@ -1271,15 +1273,17 @@ namespace engine
    INT32 _omaCheckHost::_adaptPortStatus ( BSONObj &obj, BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
       BSONArrayBuilder bab ;
-      INT32 port = 0 ;
+      const CHAR *pPort = "50000" ;
       BOOLEAN status = FALSE ;
 
       try
       {
          // TODO: tanzhaobo
-         bab.append( BSON( OMA_FIELD_PORT << port <<
-                           OMA_FIELD_STATUS << status ) ) ;
+         bob.append( OMA_FIELD_PORT, pPort ) ;
+         bob.appendBool ( OMA_FIELD_STATUS, status ) ;
+         bab.append( bob.obj() ) ;
          builder.append( OMA_FIELD_PORT, bab.arr() ) ;
       }
       catch ( std::exception &e )
@@ -1298,6 +1302,7 @@ namespace engine
    INT32 _omaCheckHost::_adaptService ( BSONObj &obj, BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
       BSONArrayBuilder bab ;   
       const CHAR *pName    = "" ;
       const CHAR *pVersion = "" ;
@@ -1306,9 +1311,10 @@ namespace engine
       try
       {
          // TODO: tanzhaobo
-         bab.append( BSON( OMA_FIELD_NAME << pName <<
-                           OMA_FIELD_STATUS << status <<
-                           OMA_FIELD_VERSION << pVersion ) ) ;
+         bob.append( OMA_FIELD_NAME, pName ) ;
+         bob.appendBool( OMA_FIELD_STATUS, status ) ;
+         bob.append( OMA_FIELD_VERSION, pVersion ) ;
+         bab.append( bob.obj() ) ;
          builder.append( OMA_FIELD_SERVICE, bab.arr() ) ;
       }
       catch ( std::exception &e )
@@ -1327,6 +1333,7 @@ namespace engine
    INT32 _omaCheckHost::_adaptOMStatus ( BSONObj &obj, BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
       BSONObj omStatus ;
       BOOLEAN status = FALSE ;
       const CHAR *pVersion = "" ;
@@ -1337,8 +1344,9 @@ namespace engine
          status = tmpObj.getBoolField( OMA_FIELD_STATUS ) ;
          pVersion = tmpObj.getStringField( OMA_FIELD_VERSION ) ;
    
-         omStatus = BSON( OMA_FIELD_STATUS << status <<
-                          OMA_FIELD_VERSION << pVersion ) ;
+         bob.appendBool( OMA_FIELD_STATUS, status ) ;
+         bob.append ( OMA_FIELD_VERSION, pVersion ) ;
+         omStatus = bob.obj() ;
          builder.append ( OMA_FIELD_OM, omStatus ) ;
       }
       catch ( std::exception &e )
@@ -1357,6 +1365,7 @@ namespace engine
    INT32 _omaCheckHost::_adaptSafety ( BSONObj &obj, BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
       BSONObj safety ;
       const CHAR *pName    = NULL ;
       const CHAR *pContext = NULL ;
@@ -1369,9 +1378,10 @@ namespace engine
          pContext = tmpObj.getStringField( OMA_FIELD_CONTEXT ) ;
          status = tmpObj.getBoolField( OMA_FIELD_STATUS ) ;
    
-         safety = BSON( OMA_FIELD_NAME << pName <<
-                        OMA_FIELD_CONTEXT << pContext <<
-                        OMA_FIELD_STATUS << status ) ;
+         bob.append( OMA_FIELD_NAME, pName ) ;
+         bob.append( OMA_FIELD_CONTEXT, pContext ) ;
+         bob.appendBool( OMA_FIELD_STATUS, status ) ;
+         safety = bob.obj() ;
          builder.append ( OMA_FIELD_SAFETY, safety ) ;
       }
       catch ( std::exception &e )

@@ -238,12 +238,14 @@ namespace engine
          goto error ;
       }
    done:
+/*
       // remove virtual coord
       rc = _removeVirtualCoord() ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
       }
+*/
       return rc ;
    error:
       goto done ;

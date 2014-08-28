@@ -497,7 +497,7 @@ namespace engine
                          OMA_OPTION_SVCNAME << 1 <<
                          OMA_OPTION_DBPATH << 1 ) ;
          conf = (*it).filterFieldsUndotted( pattern, false ) ;
-         info._conf = conf ;
+         info._conf = conf.getOwned() ;
          // save info
          _installInfos.push_back( info ) ;
          // get next install info
