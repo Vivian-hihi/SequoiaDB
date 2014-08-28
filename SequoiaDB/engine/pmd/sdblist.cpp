@@ -231,7 +231,8 @@ namespace engine
 
    done :
       PD_TRACE_EXITRC ( SDB_SDBLIST_MAIN, rc );
-      return SDB_OK == rc ? 0 : 1 ;
+      // return SDB_OK == rc ? 0 : 1 ;
+      return total > 0 ? 0 : 1 ;
    }
 
 }
