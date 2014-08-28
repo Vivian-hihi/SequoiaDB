@@ -61,13 +61,15 @@ function installSdb()
    ret=0
    while [ $ret -eq 0 ]
    do
-      outStr=`ps -ef|grep "sdbcm(" |grep -v grep`
+      #outStr=`ps -ef|grep "sdbcm(" |grep -v grep`
+      outStr=`bin/sdblist -t cm`
       ret=$?
       if [ $ret -eq 0 ] ; then
-         echo "stopping sdbcm..."
-         killall -e sdbcmd
-         killall -e sdbcm
-         sleep 4
+         echo "cm is running, stopping sdbcm..."
+         #killall -e sdbcmd
+         #killall -e sdbcm
+         #sleep 4
+         bin/sdbcmtop
       fi
    done
 
@@ -75,12 +77,14 @@ function installSdb()
    ret=0
    while [ $ret -eq 0 ]
    do
-      outStr=`ps -ef|grep "sequoiadb(" |grep -v grep`
+      #outStr=`ps -ef|grep "sequoiadb(" |grep -v grep`
+      outStr=`bin/sdblist`
       ret=$?
       if [ $ret -eq 0 ] ; then
          echo "sequoiadb is running, stopping..."
-         killall -e sequoiadb
-         sleep 5
+         #killall -e sequoiadb
+         #sleep 5
+         bin/sdbstop
       fi
    done
 
