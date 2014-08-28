@@ -45,6 +45,7 @@
 #include "pd.hpp"
 #if defined (_WINDOWS)
 #include <WinBase.h>
+#include <boost/thread/mutex.hpp>
 #else
 #include <unistd.h>
 #include <pthread.h>
@@ -261,27 +262,31 @@ class _ossSpinXLatch : public ossXLatch
 // _WIN64 is only for 64 bit windows
 #if defined(_WIN32)
 private :
-   CRITICAL_SECTION _cs ;
+   boost::mutex _lock ;
+   //CRITICAL_SECTION _cs ;
 public:
    _ossSpinXLatch ()
    {
-      InitializeCriticalSectionAndSpinCount( &_cs, 4000 ) ;
+      //InitializeCriticalSectionAndSpinCount( &_cs, 4000 ) ;
    }
    ~_ossSpinXLatch ()
    {
-      DeleteCriticalSection ( &_cs ) ;
+      //DeleteCriticalSection ( &_cs ) ;
    }
    void get ()
    {
-      EnterCriticalSection ( &_cs ) ;
+      lock () ;
+      //EnterCriticalSection ( &_cs ) ;
    }
    void release ()
    {
-      LeaveCriticalSection ( &_cs ) ;
+      unlock () ;
+      //LeaveCriticalSection ( &_cs ) ;
    }
    BOOLEAN try_get ()
    {
-      return TryEnterCriticalSection ( &_cs ) ;
+      return (BOOLEAN) try_lock () ;
+      //return TryEnterCriticalSection ( &_cs ) ;
    }
 /*#elif defined (__USE_XOPEN2K)
 private :
