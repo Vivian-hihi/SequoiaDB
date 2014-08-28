@@ -331,11 +331,11 @@ namespace engine
             _deadTime = 0;
             if ( OSS_INVALID_PID == procInfo.pid )
             {
-               isRunning = FALSE;
+               isRunning = FALSE ;
             }
             else
             {
-               isRunning = TRUE;
+               isRunning = TRUE ;
             }
             rc = DMNProcessCMD( _procInfo->getDMNCMD() );
             if ( SDB_OK != rc )
@@ -355,11 +355,13 @@ namespace engine
          {
             isRunning = TRUE;
          }
-         else
-         {
-            _deadTime = 0;
-         }
       }
+
+      if ( isRunning )
+      {
+         _deadTime = 0 ;
+      }
+
       return isRunning;
    }
 
@@ -368,6 +370,7 @@ namespace engine
       if ( PMDDMN_SHM_CMD_DMN_QUIT == cmd )
       {
          iPmdProc::stop( 0 ) ;
+         _deadTime = PMDDMN_SHMSTAT_EXPRIRED_TIMES ;
          PD_LOG( PDEVENT, "stop by children-process!" ) ;
       }
       return SDB_OK;
@@ -574,7 +577,7 @@ namespace engine
             _procInfo->pid = OSS_INVALID_PID ;
             _procInfo->stat = PMDDMN_SHM_STAT_DAEMON ;
             rc = _procInfo->setDMNCMD( PMDDMN_SHM_CMD_DMN_QUIT ) ;
-            if ( SDB_OK !=rc )
+            if ( SDB_OK ==rc )
             {
                PD_LOG( PDWARNING, "daemon process is not stop!" );
             }
