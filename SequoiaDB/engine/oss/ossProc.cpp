@@ -47,6 +47,7 @@
    #include <sys/ipc.h>
    #include <sys/msg.h>
    #include <sys/prctl.h>
+   #include <dirent.h>
 #elif defined (_WINDOWS)
    #include <ShlObj.h>
    #include <windows.h>
