@@ -61,12 +61,53 @@
 BOOLEAN ossIsProcessRunning ( OSSPID pid )
 {
    PD_TRACE_ENTRY ( SDB_OSSISPROCRUNNING );
-   CHAR buffer [ OSS_MAX_PATHSIZE + 1 ] ;
-   ossMemset ( buffer, 0, sizeof(buffer) ) ;
-   ossSnprintf ( buffer, OSS_MAX_PATHSIZE, "/proc/%d", pid ) ;
-   BOOLEAN ret = access ( buffer, F_OK ) != -1 ;
+
+   BOOLEAN isRunning                          = FALSE ;
+   CHAR pathName [ OSS_MAX_PATHSIZE + 1 ]     = {0} ;
+
+   ossSnprintf ( pathName, OSS_PROCESS_NAME_LEN, "/proc/%d", pid ) ;
+   isRunning = ossAccess ( pathName, F_OK ) != -1 ? TRUE : FALSE ;
+
+   if ( isRunning )
+   {
+      // need to check whether process status is 'Z'
+      INT32 numScaned                            = 0 ;
+      INT32 readpid                              = 0 ;
+      INT32 ppid                                 = 0 ;
+      CHAR procName [ OSS_PROCESS_NAME_LEN + 1]  = {0} ;
+      CHAR status [ OSS_PROCESS_NAME_LEN + 1]    = {0} ;
+         // since we are single-thread program, it's safe to use FILE
+      FILE *fp                                   = NULL ;
+
+      // read /proc/pid/stat can get both pid and ppid
+      ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%d/stat", pid ) ;
+
+      // open proc/pid/stat file
+      fp = fopen ( pathName, "r" ) ;
+      if ( fp )
+      {
+         // get first 4 elements
+         numScaned = fscanf ( fp, "%d%s%s%d",
+                              &readpid,      // process pid
+                              procName,      // process name
+                              status,        // process status
+                              &ppid ) ;      // parent process id
+         if ( 4 == numScaned )
+         {
+            if ( status[0] == PROC_STATUS_ZOMBIE )
+            {
+               PD_LOG( PDERROR, "Process[%d, %d] is zombie", procName,
+                       readpid ) ;
+               isRunning = FALSE ;
+            }
+         }
+         fclose ( fp ) ;
+         fp = NULL ;
+      }
+   }
+
    PD_TRACE_EXIT ( SDB_OSSISPROCRUNNING );
-   return ret ;
+   return isRunning ;
 }
 
 #define OSS_INVALID_MSG_QUEUE_ID -1
@@ -756,13 +797,30 @@ INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName,
          rc = SDB_SYS ;
          loop = FALSE ;
       }
-      fclose ( fp ) ;
-      fclose ( fp1 ) ;
-      fp = NULL ;
-      fp1 = NULL ;
+      if ( fp )
+      {
+         fclose ( fp ) ;
+         fp = NULL ;
+      }
+      if ( fp1 )
+      {
+         fclose ( fp1 ) ;
+         fp1 = NULL ;
+      }
       // sleep for 1 second every round
       sleep ( 1 ) ;
    } // end while
+
+   if ( fp )
+   {
+      fclose ( fp ) ;
+      fp = NULL ;
+   }
+   if ( fp1 )
+   {
+      fclose ( fp1 ) ;
+      fp1 = NULL ;
+   }
 
    PD_TRACE_EXITRC ( SDB_OSSVERIFYPID, rc );
    return rc ;
