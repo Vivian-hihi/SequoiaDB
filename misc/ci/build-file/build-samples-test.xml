@@ -129,6 +129,10 @@
 				<property name="jdk.name" value="${jdk.name.os}32" />
 			</else>
 		</if>
+
+		<mkdir dir="${deploy.path}/hlt/samples_testcases/Java/build" />
+		<mkdir dir="${deploy.path}/hlt/samples_testcases/Java/lib" />
+		
 		<javac srcdir="${build.testcases.Java}" destdir="${deploy.path}/hlt/samples_testcases/Java/build" fork="yes" debug="true" executable="${WORKSPACE}/sequoiadb/java/${jdk.name}/bin/javac" includeAntRuntime="false" includeJavaRuntime="false" >
 			<classpath>
 				<pathelement location="${junit4.jar.dir}" />
