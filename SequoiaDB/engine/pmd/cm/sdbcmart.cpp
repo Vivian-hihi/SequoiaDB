@@ -192,6 +192,7 @@ namespace engine
             {
                ossPrintf( "Success: sdbcmd is successfully started (%d)"
                           OSS_NEWLINE, (*procs.begin())._pid ) ;
+               break ;
             }
             ossSleep( 200 ) ;
          }
