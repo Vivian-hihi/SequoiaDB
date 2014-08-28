@@ -238,6 +238,7 @@ namespace engine
    #define ENGINE_NPIPE_PREFIX         "sequoiadb_engine_"
    #define PMD_OPTION_AS_PROC          "asproc"
    #endif // _LINUX
+   #define PMD_OPTION_TYPE             "type"
 
    #define ENGINE_NPIPE_MSG_PID        "$pid"
    #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"

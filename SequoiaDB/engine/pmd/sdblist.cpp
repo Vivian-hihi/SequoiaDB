@@ -59,12 +59,10 @@ using namespace std;
 namespace engine
 {
 
-   #define SDB_LIST_TYPE_STR              "type"
-
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "show version" ) \
-       ( PMD_COMMANDS_STRING( SDB_LIST_TYPE_STR, ",t"), boost::program_options::value<string>(), "node type: db/om/cm/all, default: db" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t"), boost::program_options::value<string>(), "node type: db/om/cm/all, default: db" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name, use ',' to seperator" )
 
    // initialize options
@@ -121,9 +119,9 @@ namespace engine
             goto error ;
          }
       }
-      if ( vm.count( SDB_LIST_TYPE_STR ) )
+      if ( vm.count( PMD_OPTION_TYPE ) )
       {
-         string listType = vm[ SDB_LIST_TYPE_STR ].as<string>() ;
+         string listType = vm[ PMD_OPTION_TYPE ].as<string>() ;
          if ( 0 == ossStrcasecmp( listType.c_str(), "db" ) )
          {
             typeFilter = SDB_TYPE_DB ;
