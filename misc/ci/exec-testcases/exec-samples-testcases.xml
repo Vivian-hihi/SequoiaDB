@@ -149,13 +149,14 @@
                 <include name="*" />
                 <exclude name="*.so" />
                 <exclude name="*.dat" />
-                
+
                 <exclude name="*.php" />
                 <exclude name="*.htm" />
                 <exclude name="*.js" />
                 <exclude name="*.css" />
                 <exclude name="*.bat" />
                 <exclude name="*.dll" />
+                <exclide name="*.cs" />
             </fileset>
             <param name="test-suite-casename" value="${test-suite-casename}" />
             <param name="test-suite-fullname" value="${test-suite-fullname}" />
