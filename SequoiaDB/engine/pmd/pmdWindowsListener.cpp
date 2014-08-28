@@ -139,7 +139,7 @@ namespace engine
 
          if ( readSize > 0 )
          {
-            PD_LOG ( PDEVENT, "Received message from windows listener: %s",
+            PD_LOG ( PDINFO, "Received message from windows listener: %s",
                      tempBuffer ) ;
             if ( ossStrncmp ( tempBuffer, ENGINE_NPIPE_MSG_SHUTDOWN,
                               sizeof(ENGINE_NPIPE_MSG_SHUTDOWN) ) == 0 )
