@@ -4059,8 +4059,8 @@ namespace engine
          CHAR type[ OM_INT32_LENGTH ] ;
          ossItoa( taskElement.type(), type, OM_INT32_LENGTH ) ;
          rc = SDB_INVALIDARG ;
-         _errorDetail = string( "agent's response format error:bson field=" )
-                        + OM_BSON_TASKID + ",type=" + type ;
+         _errorDetail = string( "agent's response format error:res=" )
+                        + result.toString( false, true ) ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
@@ -4582,7 +4582,6 @@ namespace engine
                                              map<string, BSONObj> &mapHostConf )
    {
       BSONObjBuilder opBuilder ;
-      BSONArrayBuilder arrayBuilder ;
       map<string, BSONObj>::iterator iter = mapHostConf.begin() ;
       while ( iter != mapHostConf.end() )
       {
@@ -4594,14 +4593,14 @@ namespace engine
             {
                BSONElement ele = iter.next() ;
                BSONObj oneNode = ele.embeddedObject() ;
-               arrayBuilder.append( oneNode ) ;
+               _restAdaptor->appendHttpBody( _restSession, oneNode.objdata(), 
+                                             oneNode.objsize(), 1 ) ;
             }
          }
          iter++ ;
       }
 
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      opBuilder.append( OM_BSON_NODE_INFO, arrayBuilder.arr() ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
@@ -4686,16 +4685,15 @@ namespace engine
                                                    list<BSONObj> &listBusiness )
    {
       BSONObjBuilder opBuilder ;
-      BSONArrayBuilder arrayBuilder ;
       list<BSONObj>::iterator iter = listBusiness.begin() ;
       while ( iter != listBusiness.end() )
       {
-         arrayBuilder.append( *iter ) ;
+         _restAdaptor->appendHttpBody( _restSession, (*iter).objdata(), 
+                                            (*iter).objsize(), 1 ) ;
          iter++ ;
       }
 
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      opBuilder.append( OM_BSON_BUSINESS_INFO, arrayBuilder.arr() ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
@@ -5344,7 +5342,7 @@ namespace engine
       {
          _errorDetail = string( "agent's response error:res=" )
                         + bsonResponse.toString( false, true ) ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
    done:
@@ -5368,11 +5366,48 @@ namespace engine
          }
       }
 
+      _errorDetail = "" ;
       rc = _deleteHostRecord( hostInfo.hostName ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "delete host's record failed:host=%s,rc=%d", 
                  hostInfo.hostName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omRemoveBusinessCommand *****************************
+   omRemoveBusinessCommand::omRemoveBusinessCommand( restAdaptor *pRestAdaptor, 
+                                                   pmdRestSession *pRestSession,
+                                                   string localAgentHost, 
+                                                   string localAgentService )
+                           :omScanHostCommand( pRestAdaptor, pRestSession, 
+                                           localAgentHost, localAgentService )
+   {
+   }
+
+   omRemoveBusinessCommand::~omRemoveBusinessCommand()
+   {
+   }
+
+   INT32 omRemoveBusinessCommand::doCommand()
+   {
+      INT32 rc                  = SDB_OK ;
+      const CHAR *pBusinessName = NULL ;
+      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
+                              &pBusinessName ) ;
+      if ( NULL == pBusinessName )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_BUSINESS_NAME )
+                        + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 

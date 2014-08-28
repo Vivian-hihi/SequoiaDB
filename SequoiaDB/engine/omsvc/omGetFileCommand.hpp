@@ -547,6 +547,19 @@ namespace engine
          INT32          _getHostName( string &hostName, BOOLEAN &isForced ) ;
    } ;
 
+   class omRemoveBusinessCommand : public omScanHostCommand
+   {
+      public:
+         omRemoveBusinessCommand( restAdaptor *pRestAdaptor, 
+                                  pmdRestSession *pRestSession,
+                                  string localAgentHost, 
+                                  string localAgentService ) ;
+         virtual ~omRemoveBusinessCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+   } ;
+
    class omGetFileCommand : public omCommandInterface
    {
       public:
@@ -568,7 +581,6 @@ namespace engine
          pmdRestSession* _restSession ;
          string          _rootPath ;
          string          _subPath ;
-
    };
 
    class restFileController : public SDBObject

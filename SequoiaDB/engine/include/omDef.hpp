@@ -179,8 +179,11 @@ namespace engine
    #define  OM_DEFAULT_SDB_PASSWD            "sdbadmin"
    #define  OM_DEFAULT_SDB_USERGROUP         "sdbadmin_group"
 
-   //TODO: windows and linux
+#if defined _WINDOWS
+   #define  OM_DEFAULT_INSTALL_PATH          "C:\\Program Files\\sequoiadb\\"
+#else 
    #define  OM_DEFAULT_INSTALL_PATH          "/opt/sequoiadb/"
+#endif
 
    // *****************************************************************
 
