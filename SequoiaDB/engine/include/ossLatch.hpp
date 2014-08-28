@@ -275,17 +275,17 @@ public:
    }
    void get ()
    {
-      lock () ;
+      _lock.lock () ;
       //EnterCriticalSection ( &_cs ) ;
    }
    void release ()
    {
-      unlock () ;
+      _lock.unlock () ;
       //LeaveCriticalSection ( &_cs ) ;
    }
    BOOLEAN try_get ()
    {
-      return (BOOLEAN) try_lock () ;
+      return (BOOLEAN) _lock.try_lock () ;
       //return TryEnterCriticalSection ( &_cs ) ;
    }
 /*#elif defined (__USE_XOPEN2K)
