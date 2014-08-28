@@ -66,7 +66,7 @@ BOOLEAN ossIsProcessRunning ( OSSPID pid )
    CHAR pathName [ OSS_MAX_PATHSIZE + 1 ]     = {0} ;
 
    ossSnprintf ( pathName, OSS_PROCESS_NAME_LEN, "/proc/%d", pid ) ;
-   isRunning = ossAccess ( pathName, F_OK ) != -1 ? TRUE : FALSE ;
+   isRunning = access ( pathName, F_OK ) != -1 ? TRUE : FALSE ;
 
    if ( isRunning )
    {
