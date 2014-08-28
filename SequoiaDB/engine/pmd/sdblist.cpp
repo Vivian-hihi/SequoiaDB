@@ -49,6 +49,7 @@
 #include "ossVer.h"
 #include "utilParam.hpp"
 #include "utilStr.hpp"
+#include "pmdDaemon.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
