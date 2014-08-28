@@ -64,7 +64,7 @@ namespace engine
       INT32 open() ;
 
       virtual INT32 exec( const CHAR *cmd, INT32 &exit,
-                          CHAR *outBuf, UINT32 size, UINT32 &read ) = 0 ;
+                          std::string &outStr ) = 0 ;
 
 //      virtual INT32 read( CHAR *buf, UINT32 len, UINT32 &readSize ) = 0 ;
 

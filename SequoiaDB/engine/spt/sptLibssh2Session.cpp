@@ -48,6 +48,9 @@ namespace engine
    #define SPT_PUBLICKEY_FILE    "~/.ssh/id_rsa.pub"
    #define SPT_PRIVATEKEY_FILE   "~/.ssh/id_rsa"
 
+   #define MAX_OUT_STRING_LEN    ( 64 * 1024 )
+   #define READ_OUT_STR_LINE_LEN ( 1024 )
+
    /*
       _sptLibSshAssit implement
    */
@@ -201,9 +204,7 @@ namespace engine
 
    INT32 _sptLibssh2Session::exec( const CHAR *cmd,
                                    INT32 &exit,
-                                   CHAR *outBuf,
-                                   UINT32 len,
-                                   UINT32 &read )
+                                   std::string &outStr )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != cmd, "can not be null" ) ;
@@ -230,7 +231,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _read( outBuf, len, read, 0 ) ;
+      rc = _read( outStr, 0 ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read output:%d", rc ) ;
@@ -248,9 +249,9 @@ namespace engine
       {
          rc = SDB_SPT_EVAL_FAIL ;
          PD_LOG( PDERROR, "exit number is:%d", exit ) ;
-         if ( 0 == read )
+         if ( outStr.empty() )
          {
-            _read( outBuf, len, read, SSH_EXTENDED_DATA_STDERR ) ;
+            _read( outStr, SSH_EXTENDED_DATA_STDERR ) ;
          }
          goto error ;
       }
@@ -262,16 +263,17 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptLibssh2Session::_read( CHAR *buf,
-                                    UINT32 len,
-                                    UINT32 &readSize,
+   INT32 _sptLibssh2Session::_read( std::string &outStr,
                                     INT32 streamId )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != buf &&  0 < len, "impossible" ) ;
       SDB_ASSERT( NULL != _channel, "can not be null" ) ;
 
-      readSize = 0 ;
+      CHAR szReadBuf[ READ_OUT_STR_LINE_LEN + 1 ] = { 0 } ;
+
+      UINT32 readSize = 0 ;
+      outStr = "" ;
+
       if ( libssh2_channel_eof( _channel ) )
       {
          _getLastError( _errmsg ) ;
@@ -279,24 +281,30 @@ namespace engine
          goto done ;
       }
 
-      rc = libssh2_channel_read_ex( _channel, streamId, buf, len ) ;
-      if ( 0 == rc )
+      while ( readSize < MAX_OUT_STRING_LEN )
       {
-         PD_LOG( PDDEBUG, "read 0 bytes from channel" ) ;
-         goto done ;
+         rc = libssh2_channel_read_ex( _channel, streamId,
+                                       szReadBuf, READ_OUT_STR_LINE_LEN ) ;
+         if ( 0 == rc )
+         {
+            PD_LOG( PDDEBUG, "read 0 bytes from channel" ) ;
+            goto done ;
+         }
+         else if ( 0 < rc )
+         {
+            readSize += rc ;
+            outStr += szReadBuf ;
+            ossMemset( szReadBuf, 0, sizeof( szReadBuf ) ) ;
+            rc = SDB_OK ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "failed to read from channel:%d", rc ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
       }
-      else if ( 0 < rc )
-      {
-         readSize = rc ;
-         rc = SDB_OK ;
-         goto done ;
-      }
-      else
-      {
-         PD_LOG( PDERROR, "failed to read from channel:%d", rc ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
+
    done:
       return rc ;
    error:

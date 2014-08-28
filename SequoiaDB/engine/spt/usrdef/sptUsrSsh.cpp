@@ -309,28 +309,24 @@ JS_MAPPING_END()
       PD_RC_CHECK( rc, PDERROR, "Failed to get command, rc: %d", rc ) ;
 
       {
-#define READ_LEN 8192
-      CHAR buf[READ_LEN + 1] ;
-      UINT32 read = 0 ;
-
-      rc = _session->exec( cmd.c_str(), exit, buf, READ_LEN, read ) ;
-      buf[read] = '\0' ;
+      std::string outStr ;
+      rc = _session->exec( cmd.c_str(), exit, outStr ) ;
       if ( SDB_OK != rc || SDB_OK != exit )
       {
          PD_LOG( PDERROR, "failed to read data from session:%d", rc ) ;
          rc = SDB_SPT_EVAL_FAIL ;
-         if ( 0 == read )
+         if ( outStr.empty() )
          {
             _session->getLastError( errMsg ) ;
          }
          else
          {
-            errMsg.assign( buf ) ;
+            errMsg = outStr ;
          }
          goto error ;
       }
 
-      rc = rval.setStringVal( "", buf ) ;
+      rc = rval.setStringVal( "", outStr.c_str() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to set string to return val." ) ;
