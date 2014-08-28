@@ -55,9 +55,12 @@
 namespace engine
 {
 
+   #define SDB_LIST_TYPE_STR              "type"
+
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" )\
        ( PMD_OPTION_VERSION, "version" ) \
+       ( PMD_COMMANDS_STRING( SDB_LIST_TYPE_STR, ",t"), boost::program_options::value<string>(), "node type: db/om/all, default: db" ) \
        ( PMD_COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name, use ',' to seperator" )
 
    // initialize options
@@ -75,7 +78,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_RESVARG, "resolveArgument" )
    INT32 resolveArgument ( po::options_description &desc, INT32 argc,
-                           CHAR **argv, vector<string> &listServices )
+                           CHAR **argv, vector<string> &listServices,
+                           INT32 &typeFilter )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTOP_RESVARG );
@@ -112,6 +116,28 @@ namespace engine
             goto error ;
          }
       }
+      if ( vm.count( SDB_LIST_TYPE_STR ) )
+      {
+         string listType = vm[ SDB_LIST_TYPE_STR ].as<string>() ;
+         if ( 0 == ossStrcasecmp( listType.c_str(), "db" ) )
+         {
+            typeFilter = SDB_TYPE_DB ;
+         }
+         else if ( 0 == ossStrcasecmp( listType.c_str(), "om" ) )
+         {
+            typeFilter = SDB_TYPE_OM ;
+         }
+         else if ( 0 == ossStrcasecmp( listType.c_str(), "all" ) )
+         {
+            typeFilter = -1 ;
+         }
+         else
+         {
+            std::cout << "type invalid" << endl ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB_SDBSTOP_RESVARG, rc );
@@ -130,11 +156,12 @@ namespace engine
       vector<string> listServices ;
       UTIL_VEC_NODES listNodes ;
       BOOLEAN bFind = TRUE ;
+      INT32 typeFilter = SDB_TYPE_DB ;
       po::options_description desc ( "Command options" ) ;
       init ( desc ) ;
 
       // validate arguments
-      rc = resolveArgument ( desc, argc, argv, listServices ) ;
+      rc = resolveArgument ( desc, argc, argv, listServices, typeFilter ) ;
       if ( rc )
       {
          if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
@@ -146,7 +173,7 @@ namespace engine
       }
 
       // list all nodes
-      utilListNodes( listNodes, -1 ) ;
+      utilListNodes( listNodes, typeFilter ) ;
 
       for ( UINT32 i = 0 ; i < listNodes.size() ; ++i )
       {
@@ -154,12 +181,6 @@ namespace engine
 
          // can't stop oma
          if ( SDB_TYPE_OMA == info._type )
-         {
-            continue ;
-         }
-         // if not use -p, not stop om
-         if ( listServices.size() == 0 &&
-              SDB_TYPE_OM == info._type )
          {
             continue ;
          }

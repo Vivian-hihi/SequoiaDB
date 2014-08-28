@@ -145,7 +145,7 @@ namespace engine
       for ( UINT32 i = 0 ; i < procs.size() ; ++i )
       {
          ossPrintf( "Terminating process %d: %s"OSS_NEWLINE,
-                    procs[ i ]._pid, procs[ i ]._procName.c_str() ) ;
+                    procs[ i ]._pid, PMDDMN_SVCNAME_DEFAULT ) ;
          rctmp = _terminateWithTimeout( procs[ i ]._pid ) ;
          if ( rctmp )
          {

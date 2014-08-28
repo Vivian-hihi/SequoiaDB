@@ -63,7 +63,7 @@ namespace engine
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "show version" ) \
-       ( PMD_COMMANDS_STRING( SDB_LIST_TYPE_STR, ",t"), boost::program_options::value<string>(), "node type: db/om/cm, default: db" ) \
+       ( PMD_COMMANDS_STRING( SDB_LIST_TYPE_STR, ",t"), boost::program_options::value<string>(), "node type: db/om/cm/all, default: db" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name, use ',' to seperator" )
 
    // initialize options
@@ -134,6 +134,10 @@ namespace engine
          else if ( 0 == ossStrcasecmp( listType.c_str(), "cm" ) )
          {
             typeFilter = SDB_TYPE_OMA ;
+         }
+         else if ( 0 == ossStrcasecmp( listType.c_str(), "all" ) )
+         {
+            typeFilter = -1 ;
          }
          else
          {
@@ -206,6 +210,21 @@ namespace engine
             ossPrintf( "%s(%s) (%d)"OSS_NEWLINE,
                        utilDBTypeStr( (SDB_TYPE)info._type ),
                        info._svcname.c_str(), info._pid ) ;
+         }
+      }
+
+      // if no -p, and list all/list cm, need to show sdbcmd
+      if ( listServices.size() == 0 && ( SDB_TYPE_OMA == typeFilter ||
+           -1 == typeFilter ) )
+      {
+         vector < ossProcInfo > procs ;
+         ossEnumProcesses( procs, PMDDMN_EXE_NAME, TRUE, FALSE ) ;
+
+         for ( UINT32 i = 0 ; i < procs.size() ; ++i )
+         {
+            ++total ;
+            ossPrintf( "%s (%d)"OSS_NEWLINE, PMDDMN_SVCNAME_DEFAULT,
+                       procs[ i ]._pid ) ;
          }
       }
 
