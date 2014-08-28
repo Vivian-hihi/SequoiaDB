@@ -142,6 +142,7 @@
   		<delete dir="${CODE_DIR}/driver/php5/build}" />
   		<mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
   	
+  		<chmod perm="u+x" file="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" />
   		<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php" failonerror="true">
 			<arg line="  ${php.version} " />
 		</exec>
