@@ -768,7 +768,7 @@ INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName,
    return rc ;
 }
 
-INT32 ossEnumProcesses( std::vector < ossProcInfo > procs,
+INT32 ossEnumProcesses( std::vector < ossProcInfo > &procs,
                         const CHAR * pNameFilter,
                         BOOLEAN matchWhole,
                         BOOLEAN findOne )
@@ -1531,7 +1531,7 @@ error :
    goto done ;
 }
 
-INT32 ossEnumProcesses( std::vector < ossProcInfo > procs,
+INT32 ossEnumProcesses( std::vector < ossProcInfo > &procs,
                         const CHAR * pNameFilter,
                         BOOLEAN matchWhole,
                         BOOLEAN findOne )

@@ -165,7 +165,7 @@ struct _ossProcInfo
 } ;
 typedef _ossProcInfo ossProcInfo ;
 
-INT32 ossEnumProcesses( std::vector< ossProcInfo > procs,
+INT32 ossEnumProcesses( std::vector< ossProcInfo > &procs,
                         const CHAR *pNameFilter,
                         BOOLEAN matchWhole = TRUE,
                         BOOLEAN findOne = FALSE ) ;
