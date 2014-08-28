@@ -236,6 +236,7 @@ namespace engine
    #elif defined (_WINDOWS)
    #define ENGINE_NAME                 "sequoiadb.exe"
    #define ENGINE_NPIPE_PREFIX         "sequoiadb_engine_"
+   #define PMD_OPTION_AS_PROC          "asproc"
    #endif // _LINUX
 
    #define ENGINE_NPIPE_MSG_PID        "$pid"

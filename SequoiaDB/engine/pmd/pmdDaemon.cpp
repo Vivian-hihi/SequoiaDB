@@ -688,11 +688,19 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 cPmdDaemon::run( INT32 argc, CHAR **argv )
+   INT32 cPmdDaemon::run( INT32 argc, CHAR **argv, BOOLEAN asProc )
    {
       INT32 rc = SDB_OK ;
+
 #if defined (_WINDOWS)
-      rc = pmdWinstartService( _procName, &cPmdDaemon::_run ) ;
+      if ( asProc )
+      {
+         rc = _run( argc, argv ) ;
+      }
+      else
+      {
+         rc = pmdWinstartService( _procName, &cPmdDaemon::_run ) ;
+      }
 #elif defined (_LINUX)
       ossEnableNameChanges ( argc, argv ) ;
       ossRenameProcess ( _procName ) ;

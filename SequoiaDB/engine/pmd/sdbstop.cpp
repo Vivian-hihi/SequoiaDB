@@ -157,6 +157,12 @@ namespace engine
          {
             continue ;
          }
+         // if not use -p, not stop om
+         if ( listServices.size() == 0 &&
+              SDB_TYPE_OM == info._type )
+         {
+            continue ;
+         }
 
          if ( listServices.size() > 0 )
          {

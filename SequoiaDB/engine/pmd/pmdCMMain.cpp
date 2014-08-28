@@ -110,7 +110,7 @@ namespace engine
       INT32 delSig[] = { 17, 0 } ; // del SIGCHLD
 
       rc = initArgs( argc, argv ) ;
-      if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
+      if ( rc )
       {
          goto done ;
       }

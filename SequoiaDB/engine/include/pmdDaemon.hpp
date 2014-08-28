@@ -188,7 +188,7 @@ namespace engine
       cPmdDaemon( const CHAR *pDMNSvcName ) ;
       virtual ~cPmdDaemon() ;
 
-      INT32 run( INT32 argc, CHAR **argv ) ;
+      INT32 run( INT32 argc, CHAR **argv, BOOLEAN asProc ) ;
       INT32 addChildrenProcess( iPmdDMNChildProc *childProc ) ;
       void  stop() ;
 

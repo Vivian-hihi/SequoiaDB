@@ -55,14 +55,22 @@
 
 using namespace std ;
 
-#define SDBCMART_LOG_FILE_NAME      "sdbcmart.log"
-
-#define COMMANDS_OPTIONS \
-       ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
-       ( PMD_OPTION_VERSION, "version" )
-
 namespace engine
 {
+
+   #define SDBCMART_LOG_FILE_NAME      "sdbcmart.log"
+
+#if defined( _WINDOWS )
+   #define COMMANDS_OPTIONS \
+       ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
+       ( PMD_OPTION_VERSION, "version" ) \
+       ( PMD_OPTION_AS_PROC, "as process, not service" )
+#else
+   #define COMMANDS_OPTIONS \
+       ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
+       ( PMD_OPTION_VERSION, "version" )
+#endif // _WINDOWS
+
    // initialize options
    void init ( po::options_description &desc )
    {
@@ -79,14 +87,21 @@ namespace engine
 
 #if defined (_WINDOWS)
 
-      INT32 startSdbcm ( list<const CHAR*> &argv, OSSPID &pid )
+      INT32 startSdbcm ( list<const CHAR*> &argv, OSSPID &pid, BOOLEAN asProc )
       {
-         return ossStartService( PMDDMN_SVCNAME_DEFAULT ) ;
+         if ( asProc )
+         {
+            return ossStartProcess( argv, pid ) ;
+         }
+         else
+         {
+            return ossStartService( PMDDMN_SVCNAME_DEFAULT ) ;
+         }
       }
 
 #elif defined (_LINUX)
 
-      INT32 startSdbcm ( list<const CHAR*> &argv, OSSPID &pid )
+      INT32 startSdbcm ( list<const CHAR*> &argv, OSSPID &pid, BOOLEAN asProc )
       {
          return ossStartProcess( argv, pid ) ;
       }
@@ -105,6 +120,7 @@ namespace engine
       OSSPID pid = OSS_INVALID_PID ;
       utilNodeInfo cmInfo ;
       vector < ossProcInfo > procs ;
+      BOOLEAN asProc = FALSE ;
 
       rc = ossGetEWD ( progName, OSS_MAX_PATHSIZE ) ;
       if ( rc )
@@ -159,6 +175,12 @@ namespace engine
          rc = SDB_PMD_VERSION_ONLY ;
          goto done ;
       }
+#if defined( _WINDOWS )
+      if ( vm.count( PMD_OPTION_AS_PROC ) )
+      {
+         asProc = TRUE ;
+      }
+#endif //_WINDOWS
 
       argvs.push_back( progName ) ;
       for ( INT32 i = 1; i < argc ; ++i )
@@ -176,7 +198,7 @@ namespace engine
       }
       else
       {
-         rc = startSdbcm ( argvs, pid ) ;
+         rc = startSdbcm ( argvs, pid, asProc ) ;
          if ( rc )
          {
             ossPrintf ( "Error: Failed to start sdbcm, rc: %d"OSS_NEWLINE,
@@ -223,7 +245,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CMMINTHREADENTY, rc );
       return SDB_OK == rc ? 0 : 1 ;
    error:
-      goto error ;
+      goto done ;
    }
 
 }

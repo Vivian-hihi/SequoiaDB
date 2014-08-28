@@ -47,18 +47,14 @@
 #include "ossVer.h"
 #include "pmdDef.hpp"
 #include "utilParam.hpp"
+#include "utilNodeOpr.hpp"
+#include "utilCommon.hpp"
 #include "pmdOptions.h"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
-
-#if defined (_LINUX)
-   #include <dirent.h>
-   #include <sys/types.h>
-   #include <signal.h>
-#endif
 
 using namespace std;
 
@@ -71,9 +67,16 @@ namespace engine
    #define SDBCMTOP_LOG_FILE_NAME      "sdbcmtop.log"
    #define SDBCMTOP_TIMEOUT            ( 30000 )
 
+#if defined( _WINDOWS )
+   #define COMMANDS_OPTIONS \
+       ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
+       ( PMD_OPTION_VERSION, "version" ) \
+       ( PMD_OPTION_AS_PROC, "as process, not service" )
+#else
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" )
+#endif // _WINDOWS
 
    /*
       Function implement
@@ -91,10 +94,8 @@ namespace engine
       std::cout << desc << std::endl ;
    }
 
-#if defined (_LINUX)
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_TERMPROC, "terminateWithTimeout" )
-   INT32 terminateWithTimeout ( pid_t &pid )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_TERMPROC, "_terminateWithTimeout" )
+   static INT32 _terminateWithTimeout ( OSSPID &pid )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CMSTOP_TERMPROC );
@@ -104,7 +105,7 @@ namespace engine
       rc = ossTerminateProcess( pid, FALSE ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed sending SIGTERM to %d, errno=%d",
+         PD_LOG ( PDERROR, "Failed terminate process %d, errno=%d",
                   pid, ossGetLastError() ) ;
          rc = SDB_SYS ;
          goto error ;
@@ -123,12 +124,7 @@ namespace engine
 
       if ( timeout > SDBCMTOP_TIMEOUT )
       {
-         ossPrintf ( "FAILED"OSS_NEWLINE ) ;
          rc = SDB_TIMEOUT ;
-      }
-      else
-      {
-         ossPrintf ( "DONE"OSS_NEWLINE ) ;
       }
 
    done :
@@ -138,83 +134,111 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_LNX_STOPSDBCM, "stopSdbcm" )
-   INT32 stopSdbcm ()
+   static INT32 _stopSdbcmd ()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_LNX_STOPSDBCM ) ;
-      DIR *dirp = NULL ;
-      struct dirent *dp = NULL ;
+      INT32 rctmp = SDB_OK ;
+      vector < ossProcInfo > procs ;
 
-      if ( ( dirp = opendir ( "/proc" )) == NULL )
+      ossEnumProcesses( procs, PMDDMN_EXE_NAME, TRUE, FALSE ) ;
+
+      for ( UINT32 i = 0 ; i < procs.size() ; ++i )
       {
-         PD_LOG ( PDERROR, "Failed to open /proc, errno = %d",
-                  ossGetLastError () ) ;
-         rc = SDB_SYS;
-         goto error ;
-      }
-      do
-      {
-         if ( ( dp = readdir ( dirp ) ) != NULL )
+         ossPrintf( "Terminating process %d: %s"OSS_NEWLINE,
+                    procs[ i ]._pid, procs[ i ]._procName.c_str() ) ;
+         rctmp = _terminateWithTimeout( procs[ i ]._pid ) ;
+         if ( rctmp )
          {
-            FILE *fp = NULL ;
-            pid_t pid ;
-            CHAR pathName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-            CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-            CHAR tempName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-            ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%s/cmdline",
-                          dp->d_name ) ;
-            fp = fopen ( pathName, "r" ) ;
-            if ( !fp )
-            {
-               // we do not care if we can't open the file
-               continue ;
-            }
-            if ( NULL == fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) )
-            {
-               // we do not care if the file is empty (even thou it shouldn't
-               // happen )
-               fclose ( fp ) ;
-               continue ;
-            }
-            fclose ( fp ) ;
-
-            if ( 0 != ossStrcmp( commandLine, PMDDMN_SVCNAME_DEFAULT ) )
-            {
-               continue ;
-            }
-
-            // get pid
-            pid = atoi ( dp->d_name ) ;
-            // verify
-            ossSnprintf ( tempName, OSS_MAX_PATHSIZE, "%d", pid ) ;
-            if ( ossStrncmp ( tempName, dp->d_name, OSS_MAX_PATHSIZE ) == 0 )
-            {
-               rc = terminateWithTimeout( pid ) ;
-               if ( rc )
-               {
-                  PD_LOG ( PDERROR, "Failed to terminate process %d, rc = %d",
-                           pid, rc ) ;
-               }
-            }
+            ossPrintf ( "FAILED"OSS_NEWLINE ) ;
+            PD_LOG ( PDERROR, "Failed to terminate process %d, rc = %d",
+                     procs[ i ]._pid, rc ) ;
+            rc = rctmp ;
          }
-      } while ( dp != NULL ) ;
+         else
+         {
+            ossPrintf ( "DONE"OSS_NEWLINE ) ;
+         }
+      }
 
-      closedir ( dirp ) ;
-
-   done :
-      PD_TRACE_EXITRC ( SDB_LNX_STOPSDBCM, rc );
       return rc ;
-   error :
-      goto done ;
+   }
+
+   static INT32 _stopSdbcm ()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 rctmp = SDB_OK ;
+      UTIL_VEC_NODES nodes ;
+
+      utilListNodes( nodes, SDB_TYPE_OMA ) ;
+
+      for ( UINT32 i = 0 ; i < nodes.size() ; ++i )
+      {
+         utilNodeInfo &info = nodes[ i ] ;
+         ossPrintf ( "Terminating process %d: %s(%s)"OSS_NEWLINE,
+                     info._pid, utilDBTypeStr( (SDB_TYPE)info._type ),
+                     info._svcname.c_str() ) ;
+         rctmp = utilStopNode( info ) ;
+         if ( SDB_OK == rctmp )
+         {
+            ossPrintf ( "DONE"OSS_NEWLINE ) ;
+         }
+         else
+         {
+            rc = rctmp ;
+            ossPrintf ( "FAILED"OSS_NEWLINE ) ;
+         }
+      }
+
+      return rc ;
+   }
+
+#if defined (_LINUX)
+
+   INT32 stopSdbcm ( BOOLEAN asProc )
+   {
+      return _stopSdbcmd() ;
    }
 
 #elif defined (_WINDOWS)
 
-   INT32 stopSdbcm ()
+   static INT32 _stopSdbcmByProc()
    {
-      return ossStopService( PMDDMN_SVCNAME_DEFAULT,
-                             SDBCMTOP_TIMEOUT ) ;
+      INT32 rc = SDB_OK ;
+      vector < ossProcInfo > procs ;
+      UINT32 timewait = 5 ;
+
+      _stopSdbcm() ;
+
+      // wait sdbcmd quit
+      while ( timewait > 0 )
+      {
+         --timewait ;
+         procs.clear() ;
+         ossEnumProcesses( procs, PMDDMN_EXE_NAME, TRUE, TRUE ) ;
+         if ( procs.size() == 0 )
+         {
+            goto done ;
+         }
+         ossSleep( OSS_ONE_SEC ) ;
+      }
+
+      rc = _stopSdbcmd() ;
+
+   done:
+      return rc ;
+   }
+
+   INT32 stopSdbcm ( BOOLEAN asProc )
+   {
+      if ( asProc )
+      {
+         return _stopSdbcmByProc() ;
+      }
+      else
+      {
+         return ossStopService( PMDDMN_SVCNAME_DEFAULT,
+                                SDBCMTOP_TIMEOUT ) ;
+      }
    }
 
 #endif // _LINUX
@@ -228,6 +252,7 @@ namespace engine
       po::variables_map vm ;
       ossResultCode result ;
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+      BOOLEAN asProc = FALSE ;
 
       rc = ossGetEWD ( dialogFile, OSS_MAX_PATHSIZE ) ;
       if ( rc )
@@ -275,9 +300,15 @@ namespace engine
          rc = SDB_PMD_VERSION_ONLY ;
          goto done ;
       }
+#if defined( _WINDOWS )
+      if ( vm.count( PMD_OPTION_AS_PROC ) )
+      {
+         asProc = TRUE ;
+      }
+#endif // _WINDOWS
 
       // stop cm
-      rc = stopSdbcm () ;
+      rc = stopSdbcm ( asProc ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to stop sdbcm, rc: %d", rc ) ;
@@ -293,7 +324,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_CMSTOP_MAIN, rc ) ;
       return SDB_OK == rc ? 0 : 1 ;
    error:
-      goto error ;
+      goto done ;
    }
 
 }
