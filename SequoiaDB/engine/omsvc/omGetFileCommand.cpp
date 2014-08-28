@@ -1608,8 +1608,8 @@ namespace engine
                          ite->getStringField( OM_BSON_FIELD_HOST_IP ) ) ;
          builder.append( OM_BSON_FIELD_HOST_NAME,
                          ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
-         builder.append( OM_REST_RES_RETCODE, SDB_TIMEOUT ) ;
-         builder.append( OM_REST_RES_DETAIL, "timeout" ) ;
+         builder.append( OM_REST_RES_RETCODE, SDB_NETWORK ) ;
+         builder.append( OM_REST_RES_DETAIL, "network error" ) ;
 
          tmp = builder.obj() ;
          hostResult.push_back( tmp ) ;
@@ -4853,7 +4853,7 @@ namespace engine
          break ;
       }
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       if ( -1 != contextID )
       {
@@ -4911,7 +4911,7 @@ namespace engine
          break ;
       }
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       if ( -1 != contextID )
       {
@@ -5017,36 +5017,69 @@ namespace engine
 
    // *****************omRemoveHostCommand *****************************
    omRemoveHostCommand::omRemoveHostCommand( restAdaptor *pRestAdaptor, 
-                                             pmdRestSession *pRestSession )
-                       :omAuthCommand( pRestAdaptor, pRestSession )
+                                             pmdRestSession *pRestSession,
+                                             string localAgentHost, 
+                                             string localAgentService )
+                       :omScanHostCommand( pRestAdaptor, pRestSession, 
+                                           localAgentHost, localAgentService )
    {
    }
-   
+
    omRemoveHostCommand::~omRemoveHostCommand()
    {
    }
 
-   INT32 omRemoveHostCommand::doCommand()
+   INT32 omRemoveHostCommand::_getHostName( string &hostName, 
+                                            BOOLEAN &isForced )
    {
-      INT32 rc = SDB_OK ;
-      const CHAR *hostName        = NULL ;
-      BOOLEAN isHostExist         = FALSE ;
-      BSONObj result ;
-      BOOLEAN isHostExistBusiness = FALSE ;
-
+      INT32 rc              = SDB_OK ;
+      const CHAR *pHostName = NULL ;
+      const CHAR *pForce    = NULL ;
       _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, 
-                              &hostName ) ;
-      if ( NULL == hostName )
+                              &pHostName ) ;
+      if ( NULL == pHostName )
       {
          _errorDetail = "rest field:" + string( OM_REST_HOST_NAME )
                         + " is null" ;
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         goto error ;
+      }
+
+      hostName = pHostName ;
+      isForced = FALSE ;
+      _restAdaptor->getQuery( _restSession, OM_REST_ISFORCE, 
+                              &pForce ) ;
+      if ( ( NULL != pForce ) && ( ossStrcasecmp( pForce, "1" ) == 0 ) )
+      {
+         isForced = TRUE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRemoveHostCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      string hostName ;
+      BSONObj result ;
+      simpleHostInfo hostInfo ;
+      BOOLEAN isForced            = FALSE ;
+      BOOLEAN isHostExist         = FALSE ;
+      BOOLEAN isHostExistBusiness = FALSE ;
+
+      rc = _getHostName( hostName, isForced ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
-      rc = _getHostExistFlag( hostName, isHostExist ) ;
+      rc = _getHostInfo( hostName, hostInfo, isHostExist ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
@@ -5075,13 +5108,13 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          _errorDetail = string( "business exist in host, business should be "
-                                "removed first:host=" ) + hostName ;
+                                "removed first:host=" ) + hostName.c_str() ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
-      rc = _removeHost( hostName ) ;
+      rc = _removeHost( hostInfo, isForced ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
@@ -5147,7 +5180,7 @@ namespace engine
          break ;
       }
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       if ( -1 != contextID )
       {
@@ -5156,8 +5189,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 omRemoveHostCommand::_getHostExistFlag( const string & hostName, 
-                                                 BOOLEAN & flag )
+   INT32 omRemoveHostCommand::_getHostInfo( const string &hostName,
+                                            simpleHostInfo &hostInfo,
+                                            BOOLEAN &isExistFlag )
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;
@@ -5188,8 +5222,8 @@ namespace engine
          {
             if ( SDB_DMS_EOC == rc )
             {
-               rc = SDB_OK ;
-               flag = FALSE ;
+               rc          = SDB_OK ;
+               isExistFlag = FALSE ;
                break ;
             }
 
@@ -5200,11 +5234,19 @@ namespace engine
             goto error ;
          }
 
-         flag = TRUE ;
+         BSONObj result( buffObj.data() ) ;
+         hostInfo.hostName    = result.getStringField( OM_HOST_FIELD_NAME ) ;
+         hostInfo.ip          = result.getStringField( OM_HOST_FIELD_IP ) ;
+         hostInfo.user        = result.getStringField( OM_HOST_FIELD_USER ) ;
+         hostInfo.passwd      = result.getStringField( 
+                                                   OM_HOST_FIELD_PASSWORD ) ;
+         hostInfo.installPath = result.getStringField( 
+                                                   OM_HOST_FIELD_INSTALLPATH ) ;
+         isExistFlag = TRUE ;
          break ;
       }
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       if ( -1 != contextID )
       {
@@ -5212,8 +5254,8 @@ namespace engine
       }
       goto done ;
    }
-   
-   INT32 omRemoveHostCommand::_removeHost( const string &hostName )
+
+   INT32 omRemoveHostCommand::_deleteHostRecord( const string &hostName )
    {
       INT32 rc          = SDB_OK ;
       BSONObj condition = BSON( OM_HOST_FIELD_NAME << hostName ) ;
@@ -5226,6 +5268,111 @@ namespace engine
                      "%s=%s,rc=%d", OM_CS_DEPLOY_CL_HOST, 
                      OM_HOST_FIELD_NAME, hostName.c_str(), rc ) ;
          _errorDetail = _cb->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRemoveHostCommand::_removeHostByAgent( 
+                                                const simpleHostInfo &hostInfo )
+   {
+      INT32 rc          = SDB_OK ;
+      CHAR *pContent    = NULL ;
+      INT32 contentSize = 0 ;
+      omManager *om     = NULL ;
+      MsgHeader *pMsg   = NULL ;
+
+      pmdRemoteSession *remoteSession = NULL ;
+      BSONObj bsonResponse ;
+      BSONObj bsonRequest ;
+      bsonRequest = BSON( OM_BSON_FIELD_HOST_NAME << hostInfo.hostName 
+                       << OM_BSON_FIELD_HOST_IP << hostInfo.ip 
+                       << OM_BSON_FIELD_HOST_USER << hostInfo.user 
+                       << OM_BSON_FIELD_HOST_PASSWD << hostInfo.passwd 
+                       << OM_BSON_FIELD_INSTALLPATH << hostInfo.installPath ) ;
+
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_REMOVE_HOST_REQ, 
+                             0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = string( "build message failed:cmd=" ) 
+                        + OM_REMOVE_HOST_REQ ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      // send request to agent
+      om   = sdbGetOMManager() ;
+      remoteSession = om->getRSManager()->addSession( _cb, 
+                                                      OM_MSG_TIMEOUT_TWO_HOUR,
+                                                      NULL ) ;
+      if ( NULL == remoteSession )
+      {
+         rc = SDB_OOM ;
+         _errorDetail = string( "create remote session failed" ) ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         SDB_OSS_FREE( pContent ) ;
+         goto error ;
+      }
+
+      pMsg = (MsgHeader *)pContent ;
+      rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = string( "send message to agent failed" ) ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
+         goto error ;
+      }
+
+      rc = _receiveFromAgent( remoteSession, bsonResponse ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = string( "receive from agent failed" ) ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = bsonResponse.getIntField( OM_REST_RES_RETCODE ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = string( "agent's response error:res=" )
+                        + bsonResponse.toString( false, true ) ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+   done:
+      _clearSession( om, remoteSession ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRemoveHostCommand::_removeHost( const simpleHostInfo &hostInfo, 
+                                           BOOLEAN isForced )
+   {
+      INT32 rc = SDB_OK ;
+      rc = _removeHostByAgent( hostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "agent remove host failed:rc=%d", rc ) ;
+         if ( !isForced )
+         {
+            goto error ;
+         }
+      }
+
+      rc = _deleteHostRecord( hostInfo.hostName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "delete host's record failed:host=%s,rc=%d", 
+                 hostInfo.hostName.c_str(), rc ) ;
          goto error ;
       }
 

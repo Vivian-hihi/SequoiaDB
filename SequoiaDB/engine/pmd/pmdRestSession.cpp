@@ -470,7 +470,9 @@ namespace engine
          }
          else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_HOST_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omRemoveHostCommand( pAdptor, this ) ;
+            commandIf = SDB_OSS_NEW omRemoveHostCommand( pAdptor, this,
+                                                         OM_DEFAULT_LOCAL_HOST, 
+                                                         localAgentPort ) ;
          }
          else
          {

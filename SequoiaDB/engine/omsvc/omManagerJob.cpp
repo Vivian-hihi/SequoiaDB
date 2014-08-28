@@ -362,7 +362,7 @@ namespace engine
                          << OM_BSON_FIELD_HOST_PASSWD << agentInfo.passwd
                          << OM_BSON_FIELD_HOST_INFO << arrayBuilder.arr() ) ;
          rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                                CMD_ADMIN_PREFIX OM_UPDATE_HOST_REQ,
+                                CMD_ADMIN_PREFIX OM_UPDATE_HOSTNAME_REQ,
                                 0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
          if ( SDB_OK != rc )
          {

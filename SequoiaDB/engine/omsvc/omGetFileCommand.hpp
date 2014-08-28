@@ -513,11 +513,22 @@ namespace engine
          INT32          _removeCluster( const string &clusterName ) ;
    } ;
 
-   class omRemoveHostCommand : public omAuthCommand
+   struct simpleHostInfo
+   {
+      string hostName ;
+      string ip ;
+      string user ;
+      string passwd ;
+      string installPath ;
+   } ;
+
+   class omRemoveHostCommand : public omScanHostCommand
    {
       public:
          omRemoveHostCommand( restAdaptor *pRestAdaptor, 
-                              pmdRestSession *pRestSession ) ;
+                              pmdRestSession *pRestSession,
+                              string localAgentHost, 
+                              string localAgentService ) ;
          virtual ~omRemoveHostCommand() ;
 
       public:
@@ -526,9 +537,14 @@ namespace engine
       private:
          INT32          _getHostExistBusinessFlag( const string &hostName, 
                                                    BOOLEAN &flag ) ;
-         INT32          _getHostExistFlag( const string &hostName, 
-                                              BOOLEAN &flag ) ;
-         INT32          _removeHost( const string &hostName ) ;
+         INT32          _getHostInfo( const string &hostName,
+                                      simpleHostInfo &hostInfo,
+                                      BOOLEAN &isExistFlag ) ;
+         INT32          _removeHost( const simpleHostInfo &hostInfo, 
+                                     BOOLEAN isForced ) ;
+         INT32          _removeHostByAgent( const simpleHostInfo &hostInfo ) ;
+         INT32          _deleteHostRecord( const string &hostName ) ;
+         INT32          _getHostName( string &hostName, BOOLEAN &isForced ) ;
    } ;
 
    class omGetFileCommand : public omCommandInterface

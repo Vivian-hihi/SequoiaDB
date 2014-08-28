@@ -179,6 +179,7 @@ namespace engine
    #define  OM_DEFAULT_SDB_PASSWD            "sdbadmin"
    #define  OM_DEFAULT_SDB_USERGROUP         "sdbadmin_group"
 
+   //TODO: windows and linux
    #define  OM_DEFAULT_INSTALL_PATH          "/opt/sequoiadb/"
 
    // *****************************************************************
@@ -228,14 +229,15 @@ namespace engine
    #define  OM_BSON_FIELD_AGENT_PORT         "AgentPort"
 
    // milliseconds
-   #define  OM_BASICCHECK_INTERVAL           (10000)
-   #define  OM_INSTALL_AGET_INTERVAL         (40000)
-   #define  OM_CHECK_HOST_INTERVAL           (20000)
-   #define  OM_WAIT_AGENT_UNISTALL_INTERVAL  (5000)
-   
-   #define  OM_WAIT_SCAN_RES_INTERVAL        (60000)
-   #define  OM_WAIT_PROGRESS_RES_INTERVAL    (500)
+   //one hours
+   #define  OM_MSG_TIMEOUT_TWO_HOUR          (2 * 3600 * 1000)
+   #define  OM_BASICCHECK_INTERVAL           OM_MSG_TIMEOUT_TWO_HOUR
+   #define  OM_INSTALL_AGET_INTERVAL         OM_MSG_TIMEOUT_TWO_HOUR
+   #define  OM_CHECK_HOST_INTERVAL           OM_MSG_TIMEOUT_TWO_HOUR
+   #define  OM_WAIT_AGENT_UNISTALL_INTERVAL  OM_MSG_TIMEOUT_TWO_HOUR
+   #define  OM_WAIT_SCAN_RES_INTERVAL        OM_MSG_TIMEOUT_TWO_HOUR
 
+   #define  OM_WAIT_PROGRESS_RES_INTERVAL    (1000)
    #define  OM_WAIT_AGENT_EXIT_RES_INTERVAL  (1000)
    #define  OM_WAIT_UPDATE_HOST_INTERVAL     (5000)
    // *****************************************************************
@@ -246,7 +248,6 @@ namespace engine
    // sub command with agent
    #define  OM_BASIC_CHECK_REQ               "basic check"
    #define  OM_INSTALL_REMOTE_AGENT          "install remote agent"
-   #define  OM_AGENT_EXIT_REQ                "exit agent"
    #define  OM_UNINSTALL_REMOTE_AGENT        "uninstall remote agent"
 
    #define  OM_BSON_FIELD_OS                 "OS"
@@ -408,14 +409,15 @@ namespace engine
    //******************************************************************
 
    // om remove host req
-   #define  OM_REMOVE_HOST_REQ            "remove host"
+   #define  OM_REMOVE_HOST_REQ               "remove host"
 
-   #define  OM_REST_HOST_NAME             OM_BSON_FIELD_HOST_NAME
+   #define  OM_REST_HOST_NAME                OM_BSON_FIELD_HOST_NAME
+   #define  OM_REST_ISFORCE                  "IsForce"
 
    //******************************************************************
 
    // 
-   #define OM_UPDATE_HOST_REQ                "update host"
+   #define OM_UPDATE_HOSTNAME_REQ            "update hostname"
    // milliseconds
    #define  OM_WAIT_EVENT_INTERVAL           (500)
 
