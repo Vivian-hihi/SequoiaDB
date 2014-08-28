@@ -129,14 +129,15 @@ if testBuild or clienttestBuild :
     print "build test program file ! "
 else:
     if ( has_option( "phpEdition" ) ) :
+       sys_os = GuessOS()
        phpedition = get_option ( 'phpEdition' )
-       main_dir = join(root_dir,'../../thirdparty/php/' + 'php-' + phpedition + '/main')
-       Zend_dir = join(root_dir,'../../thirdparty/php/' + 'php-' + phpedition + '/Zend')
-       TSRM_dir = join(root_dir, '../../thirdparty/php/' + 'php-' + phpedition + '/TSRM')
-       regex_dir = join(root_dir,'../../thirdparty/php/' + 'php-' + phpedition + '/regex')
-       source_dir = join(root_dir,'../../thirdparty/php/' + 'php-' + phpedition)
-       lib_dir = join(root_dir, '../../thirdparty/php/' + 'php-' + phpedition + '/lib')
-       ext_dir = join(root_dir, '../../thirdparty/php/' + 'php-' + phpedition)
+       main_dir = join(root_dir,'../../thirdparty/php/' + sys_os + '/php-' + phpedition + '/main')
+       Zend_dir = join(root_dir,'../../thirdparty/php/' + sys_os + '/php-' + phpedition + '/Zend')
+       TSRM_dir = join(root_dir, '../../thirdparty/php/' + sys_os + '/php-' + phpedition + '/TSRM')
+       regex_dir = join(root_dir,'../../thirdparty/php/' + sys_os + '/php-' + phpedition + '/regex')
+       source_dir = join(root_dir,'../../thirdparty/php/' + sys_os + '/php-' + phpedition)
+       lib_dir = join(root_dir, '../../thirdparty/php/' + sys_os + '/php-' + phpedition + '/lib')
+       ext_dir = join(root_dir, '../../thirdparty/php/' + sys_os + '/php-' + phpedition)
     else:
        print "Please input the version information,For example: 'scons --phpversion=5.3.10' "
        exit(0)
