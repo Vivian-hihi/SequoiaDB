@@ -350,6 +350,10 @@ namespace engine
          else if ( OSS_INVALID_PID != tmppid )
          {
             isRunning = ossIsProcessRunning( tmppid ) ;
+            if ( isRunning )
+            {
+               _pid = tmppid ;
+            }
          }
          else if ( _deadTime++ < PMDDMN_SHMSTAT_EXPRIRED_TIMES )
          {
