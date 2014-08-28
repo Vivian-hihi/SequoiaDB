@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <list>
 #include <vector>
+#include <string>
 
 #if defined (_LINUX)
 #define PROC_SELF_EXE                  "/proc/self/exe"
@@ -156,6 +157,18 @@ INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName,
                      const CHAR *promptName = NULL ) ;
 
 #endif // _WINDOWS
+
+struct _ossProcInfo
+{
+   std::string       _procName ;
+   OSSPID            _pid ;
+} ;
+typedef _ossProcInfo ossProcInfo ;
+
+INT32 ossEnumProcesses( std::vector< ossProcInfo > procs,
+                        const CHAR *pNameFilter,
+                        BOOLEAN matchWhole = TRUE,
+                        BOOLEAN findOne = FALSE ) ;
 
 #endif // OSSPROC_HPP__
 

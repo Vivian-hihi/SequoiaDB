@@ -58,8 +58,10 @@ namespace engine
 
 #if defined (_LINUX)
    #define PMDDMN_SHMKEY_DEFAULT             50010
+   #define PMDDMN_EXE_NAME                   PMDDMN_SVCNAME_DEFAULT
 #elif defined (_WINDOWS)
    #define PMDDMN_SHMKEY_DEFAULT             "50010"
+   #define PMDDMN_EXE_NAME                   PMDDMN_SVCNAME_DEFAULT".exe"
 #endif
 
    /*

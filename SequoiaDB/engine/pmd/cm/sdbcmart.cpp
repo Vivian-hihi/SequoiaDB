@@ -104,6 +104,7 @@ namespace engine
       po::variables_map vm ;
       OSSPID pid = OSS_INVALID_PID ;
       utilNodeInfo cmInfo ;
+      vector < ossProcInfo > procs ;
 
       rc = ossGetEWD ( progName, OSS_MAX_PATHSIZE ) ;
       if ( rc )
@@ -133,8 +134,8 @@ namespace engine
       sdbEnablePD( dialogFile ) ;
       setPDLevel( PDINFO ) ;
 
-      ossStrncat ( progName, PMDDMN_SVCNAME_DEFAULT,
-                   sizeof( PMDDMN_SVCNAME_DEFAULT ) ) ;
+      ossStrncat ( progName, PMDDMN_EXE_NAME,
+                   sizeof( PMDDMN_EXE_NAME ) ) ;
 
       init ( desc ) ;
       // validate arguments
@@ -165,17 +166,42 @@ namespace engine
          argvs.push_back(argv[i]) ;
       }
 
-      rc = startSdbcm ( argvs, pid ) ;
-      if ( rc )
+      // first to check whether the process exist
+      ossEnumProcesses( procs, PMDDMN_EXE_NAME, TRUE, TRUE ) ;
+      if ( procs.size() > 0 )
       {
-         ossPrintf ( "Error: Failed to start sdbcm, rc: %d"OSS_NEWLINE,
-                     rc ) ;
-         goto error ;
+         // find it
+         ossPrintf( "Success: sdbcmd is already started (%d)"OSS_NEWLINE,
+                    (*procs.begin())._pid ) ;
       }
       else
       {
-         ossPrintf( "Success: sdbcmd is successfully started (%d)"OSS_NEWLINE,
-                    pid ) ;
+         rc = startSdbcm ( argvs, pid ) ;
+         if ( rc )
+         {
+            ossPrintf ( "Error: Failed to start sdbcm, rc: %d"OSS_NEWLINE,
+                        rc ) ;
+            goto error ;
+         }
+
+         while ( ossIsProcessRunning( pid ) )
+         {
+            procs.clear() ;
+            ossEnumProcesses(  procs, PMDDMN_EXE_NAME, TRUE, TRUE ) ;
+            if ( procs.size() > 0 )
+            {
+               ossPrintf( "Success: sdbcmd is successfully started (%d)"
+                          OSS_NEWLINE, (*procs.begin())._pid ) ;
+            }
+            ossSleep( 200 ) ;
+         }
+
+         if ( procs.size() == 0 )
+         {
+            ossPrintf ( "Error: Failed to start sdbcm, rc: %d"OSS_NEWLINE,
+                        rc ) ;
+            goto error ;
+         }
       }
 
       rc = utilWaitNodeOK( cmInfo, NULL, OSS_INVALID_PID, SDB_TYPE_OMA ) ;

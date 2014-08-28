@@ -50,6 +50,7 @@
 #elif defined (_WINDOWS)
    #include <ShlObj.h>
    #include <windows.h>
+   #include <tlhelp32.h>
 #endif
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
@@ -766,6 +767,82 @@ INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName,
    return rc ;
 }
 
+INT32 ossEnumProcesses( std::vector < ossProcInfo > procs,
+                        const CHAR * pNameFilter,
+                        BOOLEAN matchWhole,
+                        BOOLEAN findOne )
+{
+   INT32 rc                   = SDB_OK ;
+   DIR *pDir                  = NULL ;
+   struct dirent *pDirent     = NULL ;
+   BOOLEAN isOpen             = FALSE ;
+   BOOLEAN bMatch             = TRUE ;
+   ossProcInfo info ;
+
+   pDir = opendir( "/proc" ) ;
+   PD_CHECK( pDir != NULL, SDB_IO, error, PDERROR,
+             "Failed to open the directory:%s, errno=%d",
+             "/proc", ossGetLastError() ) ;
+   isOpen = TRUE ;
+
+   while( (pDirent = readdir( pDir )) != NULL )
+   {
+      bMatch = TRUE ;
+      CHAR pathName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      ossSnprintf( pathName, OSS_MAX_PATHSIZE, "/proc/%s/cmdline",
+                   pDirent->d_name ) ;
+      FILE *fp = NULL ;
+      fp = fopen( pathName, "r" ) ;
+      if ( !fp )
+      {
+         continue ;
+      }
+      CHAR commandLine[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR *pTmp = fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) ;
+      fclose(fp) ;
+      if ( NULL == pTmp )
+      {
+         continue ;
+      }
+
+      if ( pNameFilter && 0 != *pNameFilter )
+      {
+         bMatch = FALSE ;
+         if ( matchWhole && 0 == ossStrcmp( commandLine,
+                                            pNameFilter ) )
+         {
+            bMatch = TRUE ;
+         }
+         else if ( !matchWhole && NULL != ossStrstr( commandLine,
+                                                     pNameFilter ) )
+         {
+            bMatch = TRUE ;
+         }
+      }
+
+      if ( bMatch )
+      {
+         info._procName = commandLine ;
+         info._pid = ossAtoi( pDirent->d_name ) ;
+         procs.push_back( info ) ;
+
+         if ( findOne )
+         {
+            break ;
+         }
+      }
+   }
+
+done:
+   if ( isOpen )
+   {
+      closedir( pDir ) ;
+   }
+   return rc ;
+error:
+   goto done ;
+}
+
 #elif defined (_WINDOWS)
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRSVPATH, "ossResolvePath" )
 static INT32 ossResolvePath ( const CHAR *pPathToResolve,
@@ -1452,6 +1529,85 @@ error :
    } 
    goto done ;
 }
+
+INT32 ossEnumProcesses( std::vector < ossProcInfo > procs,
+                        const CHAR * pNameFilter,
+                        BOOLEAN matchWhole,
+                        BOOLEAN findOne )
+{
+   INT32 rc = SDB_OK ;
+   HANDLE procSnap = INVALID_HANDLE_VALUE ;
+   PROCESSENTRY32 procEntry = { 0 } ;
+   BOOLEAN bMatch = TRUE ;
+   ossProcInfo info ;
+   CHAR *pExeName = NULL ;
+
+   procSnap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 ) ;
+   if ( INVALID_HANDLE_VALUE == procSnap )
+   {
+      PD_LOG( PDERROR, "CreateToolhelp32Snapshot failed, rc: %d",
+              GetLastError() ) ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   procEntry.dwSize = sizeof( PROCESSENTRY32 ) ;
+   BOOL bRet = Process32First( procSnap, &procEntry ) ;
+   while ( bRet )
+   {
+      if ( pExeName )
+      {
+         SDB_OSS_FREE( pExeName ) ;
+         pExeName = NULL ;
+      }
+      rc = ossWC2ANSI( procEntry.szExeFile, &pExeName, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "WC2ASSI failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      bMatch = TRUE ;
+      if ( pNameFilter && 0 != *pNameFilter )
+      {
+         bMatch = FALSE ;
+         if ( matchWhole && 0 == ossStrcmp( pExeName, pNameFilter ) )
+         {
+            bMatch = TRUE ;
+         }
+         else if ( !matchWhole && NULL != ossStrstr( pExeName, pNameFilter ) )
+         {
+            bMatch = TRUE ;
+         }
+
+         if ( bMatch )
+         {
+            info._pid = procEntry.th32ProcessID ;
+            info._procName = pExeName ;
+            procs.push_back( info ) ;
+            if ( findOne )
+            {
+               break ;
+            }
+         }
+         bRet = Process32Next( procSnap, &procEntry ) ;
+      }
+   }
+
+   // close handle
+   CloseHandle( procSnap ) ;
+
+done:
+   if ( pExeName )
+   {
+      SDB_OSS_FREE( pExeName ) ;
+      pExeName = NULL ;
+   }
+   return rc ;
+error:
+   goto done ;
+}
+
 #endif
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETEWD, "ossGetEWD" )
