@@ -142,7 +142,7 @@
   		<delete dir="${CODE_DIR}/driver/php5/build}" />
   		<mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
   	
-  		<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php" failonerror="true">
+  		<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php" failonerror="true">
 			<arg line="  ${php.version} " />
 		</exec>
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/php5" failonerror="true">
