@@ -247,13 +247,8 @@ namespace engine
 
       if ( SDB_OK != exit )
       {
-         rc = SDB_SPT_EVAL_FAIL ;
          PD_LOG( PDERROR, "exit number is:%d", exit ) ;
-         if ( outStr.empty() )
-         {
-            _read( outStr, SSH_EXTENDED_DATA_STDERR ) ;
-         }
-         goto error ;
+         _read( outStr, SSH_EXTENDED_DATA_STDERR ) ;
       }
 
    done:
@@ -271,8 +266,7 @@ namespace engine
 
       CHAR szReadBuf[ READ_OUT_STR_LINE_LEN + 1 ] = { 0 } ;
 
-      UINT32 readSize = 0 ;
-      outStr = "" ;
+      UINT32 readSize = outStr.size() ;
 
       if ( libssh2_channel_eof( _channel ) )
       {

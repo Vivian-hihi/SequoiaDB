@@ -72,14 +72,25 @@ namespace engine
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;
 
+      INT32 getLastRet( const _sptArguments &arg,
+                        _sptReturnVal &rval,
+                        bson::BSONObj &detail ) ;
+
+      INT32 getLastOutStr( const _sptArguments &arg,
+                           _sptReturnVal &rval,
+                           bson::BSONObj &detail ) ;
+
       static INT32 help( const _sptArguments &arg,
                          _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
 
    private:
       _sptSshSession *_session ;
-      string _host ;
-      string _user ;
+      string         _host ;
+      string         _user ;
+      INT32          _lastRet ;
+      string         _lastOutStr ;
+
    } ;
    typedef class _sptUsrSsh sptUsrSsh ;
 }

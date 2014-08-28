@@ -45,6 +45,8 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, exec )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, copy2Remote )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, copyFromRemote )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, toString )
+JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLastRet )
+JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLastOutStr )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrSsh, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrSsh, destruct )
 JS_STATIC_FUNC_DEFINE(_sptUsrSsh, help)
@@ -54,6 +56,8 @@ JS_BEGIN_MAPPING( _sptUsrSsh, "Ssh" )
    JS_ADD_MEMBER_FUNC( "push", copy2Remote )
    JS_ADD_MEMBER_FUNC( "pull", copyFromRemote )
    JS_ADD_MEMBER_FUNC( "toString", toString )
+   JS_ADD_MEMBER_FUNC( "getLastRet", getLastRet )
+   JS_ADD_MEMBER_FUNC( "getLastOut", getLastOutStr )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
    JS_ADD_STATIC_FUNC( "help", help)
@@ -62,7 +66,7 @@ JS_MAPPING_END()
    _sptUsrSsh::_sptUsrSsh()
    :_session( NULL )
    {
-
+      _lastRet = 0 ;
    }
 
    _sptUsrSsh::~_sptUsrSsh()
@@ -292,10 +296,11 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != _session, "can not be null" ) ;
-      INT32 exit = 0 ;
       string cmd ;
       string errMsg ;
       string sig ;
+      _lastRet = 0 ;
+      _lastOutStr = "" ;
 
       rc = arg.getString( 0, cmd ) ;
       if ( SDB_OUT_OF_BOUND == rc )
@@ -308,30 +313,27 @@ JS_MAPPING_END()
       }
       PD_RC_CHECK( rc, PDERROR, "Failed to get command, rc: %d", rc ) ;
 
-      {
-      std::string outStr ;
-      rc = _session->exec( cmd.c_str(), exit, outStr ) ;
-      if ( SDB_OK != rc || SDB_OK != exit )
+      rc = _session->exec( cmd.c_str(), _lastRet, _lastOutStr ) ;
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read data from session:%d", rc ) ;
          rc = SDB_SPT_EVAL_FAIL ;
-         if ( outStr.empty() )
+         if ( _lastOutStr.empty() )
          {
             _session->getLastError( errMsg ) ;
          }
          else
          {
-            errMsg = outStr ;
+            errMsg = _lastOutStr ;
          }
          goto error ;
       }
 
-      rc = rval.setStringVal( "", outStr.c_str() ) ;
+      rc = rval.setStringVal( "", _lastOutStr.c_str() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to set string to return val." ) ;
          goto error ;
-      }
       }
 
    done:
@@ -351,10 +353,28 @@ JS_MAPPING_END()
       stringstream ss ;
       ss << "Ssh functions:" << endl
          << "var ssh = new Ssh( hostname, [user], [password], [port] )" << endl
+         << "   getLastRet()       --- get the last cmd remote exec return number" << endl
+         << "   getLastOut()       --- get the last cmd remote exec out string" << endl
          << "   exec( command )" << endl
          << "   push( local_file, dst_file, [mode] )" << endl
          << "   pull( remote_file, local_file, [mode] )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrSsh::getLastRet( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
+   {
+      rval.setNativeVal( "",  NumberInt, ( const void *)&_lastRet ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrSsh::getLastOutStr( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
+   {
+      rval.setStringVal( "", _lastOutStr.c_str() ) ;
       return SDB_OK ;
    }
 
