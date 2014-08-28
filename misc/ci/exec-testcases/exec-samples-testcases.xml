@@ -154,7 +154,7 @@
                 <exclude name="*.htm" />
                 <exclude name="*.js" />
                 <exclude name="*.css" />
-                <exclude name="*.bat" />
+<!--                 <exclude name="buildApp.bat" /> -->
                 <exclude name="*.dll" />
                 <exclide name="*.cs" />
             </fileset>
