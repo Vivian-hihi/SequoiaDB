@@ -6003,8 +6003,15 @@ static JSBool sdb_trace_off ( JSContext *cx, uintN argc, jsval *vp )
    }
    if ( argc == 1 )
    {
-      pFileName = (CHAR*)JS_EncodeString ( cx, JSVAL_TO_STRING(argv[0]) ) ;
-      VERIFY ( pFileName ) ;
+      if ( JSVAL_IS_STRING(argv[0]) )
+      {
+         pFileName = (CHAR*)JS_EncodeString ( cx, JSVAL_TO_STRING(argv[0]) ) ;
+         VERIFY ( pFileName ) ;
+      }
+      else
+      {
+         REPORT ( FALSE, "Sdb.traceOff([dump file]): wrong arguments" ) ;
+      }
    }
    rc = sdbTraceStop ( *connection, pFileName ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.traceOff()", rc ) ;
