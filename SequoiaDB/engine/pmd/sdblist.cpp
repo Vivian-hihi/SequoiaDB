@@ -88,7 +88,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_SDBLIST_RESVARG ) ;
       po::variables_map vm ;
 
-      rc = utilReadCommandLine( argc, argv,  desc, vm ) ;
+      rc = utilReadCommandLine( argc, argv,  desc, vm, FALSE ) ;
       if ( rc )
       {
          std::cout << "Read command line failed: " << rc << endl ;

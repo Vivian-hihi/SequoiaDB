@@ -57,7 +57,7 @@ namespace engine
 
       try
       {
-         po::store ( po::parse_config_file<char> ( file, desc, TRUE ), vm ) ;
+         po::store( po::parse_config_file<char> ( file, desc, TRUE ), vm ) ;
          po::notify ( vm ) ;
       }
       catch( po::reading_file )
@@ -96,14 +96,22 @@ namespace engine
 
    INT32 utilReadCommandLine( INT32 argc, CHAR **argv,
                               po::options_description &desc,
-                              po::variables_map &vm )
+                              po::variables_map &vm,
+                              BOOLEAN allowUnreg )
    {
       INT32 rc = SDB_OK;
 
       try
       {
-         po::store ( po::command_line_parser( argc, argv).options(
-                     desc ).allow_unregistered().run(), vm ) ;
+         if ( allowUnreg )
+         {
+            po::store ( po::command_line_parser( argc, argv).options(
+                        desc ).allow_unregistered().run(), vm ) ;
+         }
+         else
+         {
+            po::store( po::parse_command_line( argc, argv, desc ), vm ) ;
+         }
          po::notify ( vm ) ;
       }
       catch ( po::unknown_option &e )

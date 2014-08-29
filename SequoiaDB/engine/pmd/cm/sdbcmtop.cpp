@@ -280,7 +280,7 @@ namespace engine
 
       init ( desc ) ;
       // validate arguments
-      rc = engine::utilReadCommandLine ( argc, argv, desc, vm ) ;
+      rc = utilReadCommandLine ( argc, argv, desc, vm, FALSE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;

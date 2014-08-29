@@ -103,7 +103,7 @@ namespace engine
       string confPath ;
       utilNodeInfo info ;
 
-      rc = engine::utilReadCommandLine( argc, argv, desc, vm ) ;
+      rc = utilReadCommandLine( argc, argv, desc, vm, FALSE ) ;
       if ( rc )
       {
          goto error ;
