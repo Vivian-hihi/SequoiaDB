@@ -50,6 +50,7 @@
 #include "ossVer.h"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+#include "ossIO.hpp"
 #include <string>
 #include <iostream>
 
@@ -139,6 +140,14 @@ namespace engine
          ossPrintf( "Failed to build dialog path: %d"OSS_NEWLINE, rc ) ;
          goto error ;
       }
+      // make sure the dir exist
+      rc = ossMkdir( dialogFile, OSS_CREATE|OSS_READWRITE ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         ossPrintf( "Create dialog dir[%s] failed, rc: %d"OSS_NEWLINE,
+                    dialogFile, rc ) ;
+         goto error ;
+      }
       rc = utilCatPath( dialogFile, OSS_MAX_PATHSIZE,
                         SDBCMART_LOG_FILE_NAME ) ;
       if ( rc )
@@ -155,7 +164,7 @@ namespace engine
 
       init ( desc ) ;
       // validate arguments
-      rc = utilReadCommandLine( argc, argv, desc, vm ) ;
+      rc = utilReadCommandLine( argc, argv, desc, vm, FALSE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;

@@ -41,6 +41,7 @@
 #include "pmdDef.hpp"
 #include "pmdOptions.h"
 #include "utilParam.hpp"
+#include "ossIO.hpp"
 #include "pd.hpp"
 #include "ossUtil.h"
 #include "ossVer.h"
@@ -127,6 +128,14 @@ namespace engine
       if ( rc )
       {
          ossPrintf( "Failed to make dialog path, rc: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+      // make sure the dir exist
+      rc = ossMkdir( dialogFile, OSS_CREATE|OSS_READWRITE ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         ossPrintf( "Create dialog dir[%s] failed, rc: %d"OSS_NEWLINE,
+                    dialogFile, rc ) ;
          goto error ;
       }
       rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE,

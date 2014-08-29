@@ -50,6 +50,7 @@
 #include "utilNodeOpr.hpp"
 #include "utilCommon.hpp"
 #include "pmdOptions.h"
+#include "ossIO.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include <string>
@@ -265,6 +266,14 @@ namespace engine
       if ( rc )
       {
          ossPrintf( "Failed to build dialog path: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+      // make sure the dir exist
+      rc = ossMkdir( dialogFile, OSS_CREATE|OSS_READWRITE ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         ossPrintf( "Create dialog dir[%s] failed, rc: %d"OSS_NEWLINE,
+                    dialogFile, rc ) ;
          goto error ;
       }
       rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE,
