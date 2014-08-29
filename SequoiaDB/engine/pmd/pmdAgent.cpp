@@ -84,7 +84,8 @@ namespace engine
                    "receive buffer size should not be smaller "
                    "than msg info request" ) ;
 
-      rc = pmdRecv ( &pReceiveBuffer[sizeof(SINT32)], recvSize,
+      rc = pmdRecv ( &pReceiveBuffer[sizeof(SINT32)],
+                     recvSize - sizeof(SINT32),
                      &sock, cb ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to receive packet, rc = %d", rc ) ;
 

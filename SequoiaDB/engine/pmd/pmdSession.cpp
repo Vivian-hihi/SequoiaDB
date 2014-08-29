@@ -245,7 +245,7 @@ namespace engine
       *(INT32*)(*ppBuff) = msgSize ;
 
       // recv recvSize1
-      rc = recvData( *ppBuff + sizeof(UINT32), recvSize ) ;
+      rc = recvData( *ppBuff + sizeof(UINT32), recvSize - sizeof( UINT32 ) ) ;
       if ( rc )
       {
          if ( SDB_APP_FORCED != rc )
