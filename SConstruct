@@ -790,4 +790,5 @@ if pkgType == "rpm":
       os.chdir("script")
       rs=os.system( "./pkgrpm.sh" )
       os.chdir( oldPwd )
-sys.exit( rs )
+if rs != 0:
+   exit( rs )
