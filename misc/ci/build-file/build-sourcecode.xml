@@ -120,8 +120,9 @@
 			<fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
 		</copy>
 
-	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
-		<for list="${test-type-list}" param="php.version">
+	  	<property name="test-type-linux-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0" />
+	  	<property name="test-type-win32-list" value="5.3.18,5.4.15" />
+		<for list="${test-type-linux-list}" param="php.version">
 			<sequential>
 				<antcall target="build-and-copy-php" inheritAll="true">
 					<param name="php.version" value="@{php.version}" />
@@ -143,7 +144,7 @@
   		<mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
   	
   		<chmod perm="u+x" file="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" />
-  		<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php" failonerror="true">
+  		<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/linux/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php/linux" failonerror="true">
 			<arg line="  ${php.version} " />
 		</exec>
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/php5" failonerror="true">
