@@ -64,6 +64,16 @@ namespace engine
    INT32 utilGetServiceByConfigPath( const string& confPath,
                                      string &svcname ) ;
 
+   struct _utilInstallInfo
+   {
+      string      _run ;
+      string      _user ;
+      string      _path ;
+   } ;
+   typedef _utilInstallInfo utilInstallInfo ;
+
+   INT32 utilGetInstallInfo( utilInstallInfo &info ) ;
+
 }
 
 #endif // UTILPARAM_HPP__

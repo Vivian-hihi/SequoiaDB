@@ -49,6 +49,15 @@
 namespace engine
 {
 
+#if defined( _LINUX )
+   #define SDB_INSTALL_FILE_NAME             "/etc/default/sequoiadb"
+#else
+   #define SDB_INSTALL_FILE_NAME             "C:\\default\\sequoiadb"
+#endif // _LINUX
+   #define SDB_INSTALL_RUN_FILED             "NAME"
+   #define SDB_INSTALL_USER_FIELD            "SDBADMIN_USER"
+   #define SDB_INSTALL_PATH_FIELD            "INSTALL_DIR"
+
    INT32 utilReadConfigureFile( const CHAR *file,
                                 po::options_description &desc,
                                 po::variables_map &vm )
@@ -264,6 +273,45 @@ namespace engine
    done :
       return rc ;
    error :
+      goto done ;
+   }
+
+   INT32 utilGetInstallInfo( utilInstallInfo & info )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ;
+      po::variables_map vm ;
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
+         ( SDB_INSTALL_RUN_FILED, po::value<string>(), "after to run cmd" ) \
+         ( SDB_INSTALL_USER_FIELD, po::value<string>(), "user" ) \
+         ( SDB_INSTALL_PATH_FIELD, po::value<string>(), "install path" )
+      PMD_ADD_PARAM_OPTIONS_END
+
+      rc = utilReadConfigureFile( SDB_INSTALL_FILE_NAME, desc, vm ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to read install info from file, rc: %d",
+                 rc ) ;
+         goto error ;
+      }
+
+      if ( vm.count( SDB_INSTALL_RUN_FILED ) )
+      {
+         info._run = vm[ SDB_INSTALL_RUN_FILED ].as<string>() ;
+      }
+      if ( vm.count( SDB_INSTALL_USER_FIELD ) )
+      {
+         info._user = vm[ SDB_INSTALL_USER_FIELD ].as<string>() ;
+      }
+      if ( vm.count( SDB_INSTALL_PATH_FIELD ) )
+      {
+         info._path = vm[ SDB_INSTALL_PATH_FIELD ].as<string>() ;
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
