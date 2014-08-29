@@ -211,8 +211,9 @@ public class JSONSerializers {
 		////@Override
 		public void serialize(Object obj, StringBuilder buf) {
 			Date d = (Date) obj;
-			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-			format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+//			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+//			format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
 			serializer.serialize(new BasicBSONObject("$date", format.format(d)), buf);
 		}
 
