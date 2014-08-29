@@ -228,18 +228,12 @@ namespace engine
       goto done ;
    }
 
-   // compatible with the old msg: 12 bytes
-   // new msg size is the same with MsgHeader(28 bytes)
    INT32 _pmdLocalSession::_recvSysInfoMsg( UINT32 msgSize,
                                             CHAR **ppBuff,
                                             INT32 &buffLen )
    {
       INT32 rc = SDB_OK ;
       INT32 recvSize = (INT32)sizeof(MsgSysInfoRequest) ;
-      INT32 recvSize1 = ( INT32 )offsetof( MsgSysInfoRequest, padding ) ;
-      BOOLEAN endianConvert         = FALSE ;
-      MsgSysInfoRequest *pSysInfo   = NULL ;
-      INT32 realSize                = 0 ;
 
       *ppBuff = getBuff( recvSize ) ;
       if ( !*ppBuff )
@@ -251,43 +245,7 @@ namespace engine
       *(INT32*)(*ppBuff) = msgSize ;
 
       // recv recvSize1
-      rc = recvData( *ppBuff + sizeof(UINT32), recvSize1 - sizeof(UINT32) ) ;
-      if ( rc )
-      {
-         if ( SDB_APP_FORCED != rc )
-         {
-            PD_LOG( PDERROR, "Session[%s] failed to recv sys info req rest "
-                    "msg, rc: %d", sessionName(), rc ) ;
-         }
-         goto error ;
-      }
-
-      rc = msgExtractSysInfoRequest( *ppBuff, endianConvert ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Session[%s] failed to extract sys info request, "
-                 "rc: %d", sessionName(), rc ) ;
-         goto error ;
-      }
-
-      pSysInfo = ( MsgSysInfoRequest* )( *ppBuff ) ;
-      ossEndianConvertIf4( pSysInfo->header.realMessageLength,
-                           realSize,
-                           endianConvert ) ;
-      if ( realSize == recvSize1 )
-      {
-         goto done ;
-      }
-      else if ( realSize != recvSize )
-      {
-         PD_LOG( PDERROR, "Session[%s] recv error sys info request[ realSize: "
-                 "%u, ednianConvert: %d ]", sessionName(), realSize,
-                 endianConvert ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      // recv rest
-      rc = recvData( *ppBuff + recvSize1, recvSize - recvSize1 ) ;
+      rc = recvData( *ppBuff + sizeof(UINT32), recvSize ) ;
       if ( rc )
       {
          if ( SDB_APP_FORCED != rc )

@@ -356,8 +356,6 @@ typedef struct _MsgSysInfoHeader MsgSysInfoHeader ;
 struct _MsgSysInfoRequest
 {
    MsgSysInfoHeader header ;
-   CHAR             padding[ 16 ] ;  // keep the msg size the
-                                     // same with _MsgHeader
 } ;
 typedef struct _MsgSysInfoRequest MsgSysInfoRequest ;
 

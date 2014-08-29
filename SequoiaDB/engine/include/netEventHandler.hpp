@@ -56,8 +56,9 @@ namespace engine
    */
    enum NET_EVENT_HANDLER_STATE
    {
-      NET_EVENT_HANDLER_STATE_HEADER = 0,
-      NET_EVENT_HANDLER_STATE_BODY = 1,
+      NET_EVENT_HANDLER_STATE_HEADER         = 0,
+      NET_EVENT_HANDLER_STATE_HEADER_LAST,
+      NET_EVENT_HANDLER_STATE_BODY
    } ;
 
    class _netFrame ;
@@ -152,6 +153,7 @@ namespace engine
          NET_HANDLE                       _handle ;
          BOOLEAN                          _isConnected ;
          BOOLEAN                          _isInAsync ;
+         BOOLEAN                          _hasRecvMsg ;
 
    };
 

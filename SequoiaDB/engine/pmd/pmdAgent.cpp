@@ -77,20 +77,14 @@ namespace engine
       MsgSysInfoReply reply ;
       PD_TRACE_ENTRY ( SDB_PMDHANDLESYSINFOREQUEST ) ;
       MsgSysInfoReply *pReply = &reply ;
-      MsgSysInfoRequest *pSysInfo = NULL ;
       INT32 replySize = sizeof(reply) ;
-
       INT32 recvSize    = (INT32)sizeof( MsgSysInfoRequest ) ;
-      INT32 recvSize1   = (INT32)offsetof( MsgSysInfoRequest, padding ) ;
-      INT32 realSize    = 0 ;
 
       SDB_ASSERT ( recvSize < receiveBufferSize,
                    "receive buffer size should not be smaller "
                    "than msg info request" ) ;
 
-      // recv size1(12 bytes)
-      rc = pmdRecv ( &pReceiveBuffer[sizeof(SINT32)],
-                     recvSize1-sizeof(SINT32),
+      rc = pmdRecv ( &pReceiveBuffer[sizeof(SINT32)], recvSize,
                      &sock, cb ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to receive packet, rc = %d", rc ) ;
 
@@ -98,27 +92,6 @@ namespace engine
       rc = msgExtractSysInfoRequest ( pReceiveBuffer, endianConvert ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to extract sys info request, rc = %d", rc ) ;
-
-      // calc the realSize
-      pSysInfo = ( MsgSysInfoRequest* )pReceiveBuffer ;
-      ossEndianConvertIf4( pSysInfo->header.realMessageLength,
-                           realSize, endianConvert ) ;
-      if ( realSize != recvSize && realSize != recvSize1 )
-      {
-         PD_LOG( PDERROR, "Sys info request real size[%d] is error, "
-                 "endianConvert: %d", realSize, endianConvert ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      // recv the rest
-      if ( realSize == recvSize )
-      {
-         rc = pmdRecv ( &pReceiveBuffer[recvSize1],
-                        recvSize-recvSize1,
-                        &sock, cb ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to receive rest msg, rc: %d", rc ) ;
-      }
 
       rc = msgBuildSysInfoReply ( (CHAR**)&pReply, &replySize ) ;
       PD_RC_CHECK ( rc, PDERROR,

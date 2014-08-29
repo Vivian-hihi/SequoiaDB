@@ -48,16 +48,17 @@ using namespace boost::asio::ip ;
 namespace engine
 {
    _netEventHandler::_netEventHandler( _netFrame *frame ):
-                                      _sock(frame->ioservice()),
-                                      _buf(NULL),
-                                      _bufLen(0),
-                                      _state(NET_EVENT_HANDLER_STATE_HEADER),
-                                      _frame(frame),
-                                      _handle(_frame->allocateHandle())
+                                       _sock(frame->ioservice()),
+                                       _buf(NULL),
+                                       _bufLen(0),
+                                       _state(NET_EVENT_HANDLER_STATE_HEADER),
+                                       _frame(frame),
+                                       _handle(_frame->allocateHandle())
    {
       _id.value      = MSG_INVALID_ROUTEID ;
       _isConnected   = FALSE ;
       _isInAsync     = FALSE ;
+      _hasRecvMsg    = FALSE ;
    }
 
    _netEventHandler::~_netEventHandler()
@@ -310,7 +311,8 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND_ASYNCRD ) ;
 
-      if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
+      if ( NET_EVENT_HANDLER_STATE_HEADER == _state ||
+           NET_EVENT_HANDLER_STATE_HEADER_LAST == _state )
       {
          _isInAsync = TRUE ;
          if ( !_isConnected )
@@ -320,19 +322,35 @@ namespace engine
                     _id.columns.serviceID, _handle ) ;
             goto error ;
          }
-         async_read( _sock, buffer(&_header, sizeof(_MsgHeader)),
-                     boost::bind(&_netEventHandler::_readCallback,
-                                 shared_from_this(),
-                                 boost::asio::placeholders::error )) ;
+
+         if ( NET_EVENT_HANDLER_STATE_HEADER_LAST == _state )
+         {
+            async_read( _sock, buffer(
+                        (CHAR*)&_header + sizeof(MsgSysInfoRequest),
+                        sizeof(_MsgHeader) - sizeof(MsgSysInfoRequest) ),
+                        boost::bind(&_netEventHandler::_readCallback,
+                                    shared_from_this(),
+                                    boost::asio::placeholders::error ) ) ;
+         }
+         // for MsgSysInfoRequest msg(12bytes)
+         else if ( FALSE == _hasRecvMsg )
+         {
+            async_read( _sock, buffer(&_header, sizeof(MsgSysInfoRequest)),
+                        boost::bind(&_netEventHandler::_readCallback,
+                                    shared_from_this(),
+                                    boost::asio::placeholders::error )) ;
+         }
+         else
+         {
+            async_read( _sock, buffer(&_header, sizeof(_MsgHeader)),
+                        boost::bind(&_netEventHandler::_readCallback,
+                                    shared_from_this(),
+                                    boost::asio::placeholders::error )) ;
+         }
       }
       else
       {
          UINT32 len = _header.messageLength ;
-         if ( (UINT32)MSG_SYSTEM_INFO_LEN == len )
-         {
-            len = sizeof( MsgSysInfoRequest ) ;
-         }
-
          if ( SDB_OK != _allocateBuf( len ) )
          {
             goto error ;
@@ -347,9 +365,9 @@ namespace engine
                     _id.columns.serviceID, _handle ) ;
             goto error ;
          }
-         async_read( _sock, buffer((CHAR *)((ossValuePtr)_buf +
-                                            sizeof(_MsgHeader)),
-                                    len - sizeof(_MsgHeader)),
+         async_read( _sock, buffer(
+                     (CHAR *)((ossValuePtr)_buf + sizeof(_MsgHeader)),
+                     len - sizeof(_MsgHeader)),
                      boost::bind( &_netEventHandler::_readCallback,
                                   shared_from_this(),
                                   boost::asio::placeholders::error ) ) ;
@@ -461,6 +479,16 @@ namespace engine
          if ( ( UINT32 )MSG_SYSTEM_INFO_LEN == (UINT32)_header.messageLength )
          {
             // sys info request
+            if ( SDB_OK != _allocateBuf( sizeof(MsgSysInfoRequest) ))
+            {
+               goto error_close ;
+            }
+            _hasRecvMsg = TRUE ;
+            ossMemcpy( _buf, &_header, sizeof( MsgSysInfoRequest ) ) ;
+            _frame->handleMsg( shared_from_this() ) ;
+            _state = NET_EVENT_HANDLER_STATE_HEADER ;
+            asyncRead() ;
+            goto done ;
          }
          else if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength ||
                    SDB_MAX_MSG_LENGTH < (UINT32)_header.messageLength )
@@ -475,6 +503,16 @@ namespace engine
          }
          else
          {
+            if ( FALSE == _hasRecvMsg )
+            {
+               _hasRecvMsg = TRUE ;
+               // need to recv the last header msg
+               _state = NET_EVENT_HANDLER_STATE_HEADER_LAST ;
+               asyncRead() ;
+               _state = NET_EVENT_HANDLER_STATE_HEADER ;
+               goto done ;
+            }
+
             PD_LOG( PDDEBUG, "msg header: [len:%d], [opCode: [%d]%d], "
                              "[TID:%d], [groupID:%d], [nodeID:%d], "
                              "[ADDR:%s], [PORT:%d]",
@@ -494,9 +532,7 @@ namespace engine
             }
          }
          /// msg has only header
-         if ( (UINT32)sizeof(_MsgHeader) == (UINT32)_header.messageLength ||
-              ( (UINT32)MSG_SYSTEM_INFO_LEN == (UINT32)_header.messageLength &&
-                sizeof( _MsgHeader ) == sizeof( MsgSysInfoRequest ) ) )
+         if ( (UINT32)sizeof(_MsgHeader) == (UINT32)_header.messageLength )
          {
             if ( SDB_OK != _allocateBuf( sizeof(_MsgHeader) ))
             {

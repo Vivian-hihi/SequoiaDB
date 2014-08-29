@@ -1801,7 +1801,6 @@ INT32 clientBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize )
    request->header.specialSysInfoLen         = MSG_SYSTEM_INFO_LEN ;
    request->header.eyeCatcher                = MSG_SYSTEM_INFO_EYECATCHER ;
    request->header.realMessageLength         = sizeof(MsgSysInfoRequest) ;
-   ossMemset( request->padding, 0, sizeof( request->padding ) ) ;
 done :
    return rc ;
 error :
