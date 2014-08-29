@@ -165,6 +165,7 @@ add_option( "testcase", "build testcases", 0, False)
 add_option( "shell", "build shell", 0, False)
 add_option( "client", "build C/C++ clients", 0, False)
 add_option( "fmp", "build fmp", 0, False)
+add_option( "pkg", "build all and generate installation package", 1, False)
 
 # language could be en or cn
 add_option( "language" , "description language" , 1 , False )
@@ -254,6 +255,24 @@ hasTool = has_option( "tool" )
 hasShell = has_option( "shell" )
 hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
+hasPkg = has_option( "pkg" )
+
+pkgType = ""
+import commands
+if hasPkg:
+   hasAll = True
+   pkgVal = ""
+   pkgVal = get_option('pkg')
+   if pkgVal == "rpm":
+      pkgType = "rpm"
+   else:
+      print "ERROR: Type of the package(%s) is not supported!" % (pkgVal)
+      sys.exit(1)
+if pkgType == "rpm":
+   rpmchk,outputtmp = commands.getstatusoutput('rpmbuild --version')
+   if rpmchk != 0 :
+      print( 'ERROR: rpm-build is not installed!' )
+      sys.exit(1)
 
 # if everything are set, let's set everything to true
 if hasAll:
@@ -763,3 +782,12 @@ if hasFmp:
 #   env.SConscript( 'SequoiaDB/SConscript', variant_dir=variantDir, duplicate=False )
 
 
+# generate the package
+rs=0
+if pkgType == "rpm":
+   if guess_os == "linux":
+      oldPwd = os.getcwd()
+      os.chdir("script")
+      rs=os.system( "./pkgrpm.sh" )
+      os.chdir( oldPwd )
+sys.exit( rs )
