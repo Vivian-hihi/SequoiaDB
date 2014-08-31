@@ -192,9 +192,13 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
                   --useBlockNum ;
                }
                ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
+               _curBuffer = _buffer ;
+               pReadBuffer = _buffer + isReadSize ;
+               pCursor = pReadBuffer ;
                newReadSize = isReadSize % _blockSize ;
                if ( newReadSize == 0 )
                {
+                  pCursor = _buffer + isReadSize ;
                   ++_pBlock ;
                   continue ;
                }
@@ -215,6 +219,9 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
                }
                ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
                newReadSize = _blockSize - isReadSize ;
+               _curBuffer = _buffer ;
+               pReadBuffer = _buffer + isReadSize ;
+               pCursor = pReadBuffer ;
                if ( newReadSize == 0 )
                {
                   ++_pBlock ;
@@ -222,9 +229,6 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
                }
                //ossMemset ( _buffer + isReadSize, 0, newReadSize ) ;
             }
-            _curBuffer = _buffer ;
-            pReadBuffer = _buffer + isReadSize ;
-            pCursor = pReadBuffer ;
          }
          else
          {

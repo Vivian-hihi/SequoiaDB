@@ -175,6 +175,9 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
                   --useBlockNum ;
                }
                ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
+               _curBuffer = _buffer ;
+               pReadBuffer = _buffer + isReadSize ;
+               pCursor = pReadBuffer ;
                newReadSize = isReadSize % _blockSize ;
                if ( newReadSize == 0 )
                {
@@ -197,6 +200,9 @@ size %d, clear bucket data", _bufferSize ) ;
                   ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
                }
                ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
+               _curBuffer = _buffer ;
+               pReadBuffer = _buffer + isReadSize ;
+               pCursor = pReadBuffer ;
                newReadSize = _blockSize - isReadSize ;
                if ( newReadSize == 0 )
                {
@@ -205,9 +211,6 @@ size %d, clear bucket data", _bufferSize ) ;
                }
                //ossMemset ( _buffer + isReadSize, 0, newReadSize ) ;
             }
-            _curBuffer = _buffer ;
-            pReadBuffer = _buffer + isReadSize ;
-            pCursor = pReadBuffer ;
          }
          else
          {
