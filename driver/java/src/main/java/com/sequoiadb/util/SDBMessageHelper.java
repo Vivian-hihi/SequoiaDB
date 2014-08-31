@@ -55,7 +55,7 @@ import com.sequoiadb.exception.BaseException;
 public class SDBMessageHelper {
 
 	// msg.h - struct _MsgSysInfoRequest
-	private final static int MESSAGE_SYSINFOREQUEST_LENGTH = 28;
+	private final static int MESSAGE_SYSINFOREQUEST_LENGTH = 12;
 
 	// msg.h - struct _MsgHeader
 	private final static int MESSAGE_HEADER_LENGTH = 28;
@@ -85,10 +85,6 @@ public class SDBMessageHelper {
 		buf.putInt(SequoiadbConstants.MSG_SYSTEM_INFO_LENGTH);
 		buf.putInt(SequoiadbConstants.MSG_SYSTEM_INFO_EYECATCHER);
 		buf.putInt(MESSAGE_SYSINFOREQUEST_LENGTH);
-		buf.putInt(0);
-		buf.putInt(0);
-		buf.putInt(0);
-		buf.putInt(0);
 		return buf.array();
 	}
 
