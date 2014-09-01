@@ -2630,6 +2630,7 @@ namespace
             std::cout << "Not found any "
                       << ( hasCL ? "match " : "" )
                       << "collection" << std::endl ;
+            rc = CI_INSPECT_CL_NOT_FOUND ;
             goto done ;
          }
       }
@@ -3150,6 +3151,13 @@ INT32 _sdbCi::inspect()
          ossSnprintf( tmpFile, OSS_MAX_PATHSIZE, CI_TMP_FILE, curLoop ) ;
          rc = inspectWithoutFile( coord, &_header, tmpFile, totalRecord ) ;
       }while ( CI_INSPECT_ERROR == rc ) ;
+
+      if ( CI_INSPECT_CL_NOT_FOUND == rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+
       CHECK_VALUE( ( SDB_OK != rc ), error ) ;
 
       if ( 0 == totalRecord )

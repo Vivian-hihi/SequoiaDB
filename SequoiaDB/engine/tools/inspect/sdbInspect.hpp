@@ -66,7 +66,9 @@
    }while( FALSE )
 
 // macros
-#define CI_INSPECT_ERROR     0x10001000
+#define CI_INSPECT_ERROR         0x10001000
+#define CI_INSPECT_CL_NOT_FOUND  0x10001001
+
 #define CI_BUFFER_BLOCK      1024
 #define CI_HEADER_SIZE       65536
 #define CI_TAIL_SIZE         65536
