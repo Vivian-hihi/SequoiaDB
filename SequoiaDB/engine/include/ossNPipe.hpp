@@ -41,7 +41,16 @@
 #if defined (_WINDOWS)
 #include <vector>
 #include <string>
-#endif
+#endif // _WINDOWS
+
+#if defined (_WINDOWS)
+   #define  ossPopen(cmd,mode)         _popen(cmd,mode)
+   #define  ossPclose(file)            _pclose(file)
+#else
+   #define  ossPopen(cmd,mode)         popen(cmd,mode)
+   #define  ossPclose(file)            pclose(file)
+#endif // _WINDOWS
+
 /*
  * Steps to create OSS named pipe
  * Server

@@ -92,6 +92,21 @@ namespace engine
    INT32    utilStopNode ( utilNodeInfo &node,
                            INT32 timeout = UTIL_STOP_NODE_TIMEOUT ) ;
 
+   struct _utilNodeVerInfo
+   {
+      INT32    _version ;
+      INT32    _subVersion ;
+      INT32    _release ;
+      string   _buildStr ;
+   } ;
+   typedef _utilNodeVerInfo utilNodeVerInfo ;
+
+   /*
+      get node version info
+   */
+   INT32    utilGetNodeVerInfo( const CHAR* pCommand,
+                                utilNodeVerInfo &verInfo ) ;
+
 }
 
 #endif // UTIL_NODE_OPR_HPP__

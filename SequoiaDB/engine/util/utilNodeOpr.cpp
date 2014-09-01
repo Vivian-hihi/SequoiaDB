@@ -418,6 +418,48 @@ namespace engine
       goto done ;
    }
 
+   INT32 utilGetNodeVerInfo( const CHAR *pCommand,
+                             utilNodeVerInfo & verInfo )
+   {
+      INT32 rc = SDB_OK ;
+      FILE *fp = NULL ;
+      CHAR buff[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      if ( !pCommand )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      fp = ossPopen( pCommand, "r" ) ;
+      if ( !fp )
+      {
+         PD_LOG( PDERROR, "File to popen[%s], rc: %d", pCommand,
+                 ossGetLastError() ) ;
+         rc = SDB_SYS ;
+      }
+
+      fread( buff, OSS_MAX_PATHSIZE, 1, fp ) ;
+
+      rc = utilParseVersion( buff, verInfo._version, verInfo._subVersion,
+                             verInfo._release, verInfo._buildStr ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to parse version info[%s], rc: %d",
+                 buff, rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( fp )
+      {
+         ossPclose( fp ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 
 

@@ -82,6 +82,8 @@ utilFiles = [
       "util/utilLinenoiseWrapper.cpp",
       "util/utilPipe.cpp",
       "util/utilPath.cpp",
+      "util/utilCommon.cpp",
+      "util/utilNodeOpr.cpp",
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",

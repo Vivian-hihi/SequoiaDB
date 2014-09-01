@@ -424,5 +424,95 @@ namespace engine
       
    }
 
+   INT32 utilParseVersion( CHAR * pVersionStr,
+                           INT32 &version,
+                           INT32 &subVersion,
+                           INT32 &release,
+                           string &buildInfo )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pDelim = " \r\n" ;
+      CHAR *pToken = NULL ;
+      CHAR *pLast = NULL ;
+
+      if ( !pVersionStr )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      pToken = ossStrtok( pVersionStr, pDelim, &pLast ) ;
+      // XXX version: 1.8
+      if ( !pToken )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         CHAR *pTokenTmp = NULL ;
+         CHAR *pLastTmp = NULL ;
+         // 1.8
+         CHAR *pVerPtr = ossStrstr( pToken, ":" ) ;
+         if ( !pVerPtr )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         // 1
+         pTokenTmp = ossStrtok( pVerPtr, " .", &pLastTmp ) ;
+         if ( !pTokenTmp )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         version = ossAtoi( pTokenTmp ) ;
+
+         // 8
+         pTokenTmp = ossStrtok( NULL, " .", &pLastTmp ) ;
+         if ( !pTokenTmp )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         subVersion = ossAtoi( pTokenTmp ) ;
+      }
+
+      // Release: 14702
+      pToken = ossStrtok( NULL, pDelim, &pLast ) ;
+      if ( !pToken )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         string releaseStr ;
+         CHAR *pReleasePtr = ossStrstr( pToken, ":" ) ;
+         if ( !pReleasePtr )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         releaseStr = pReleasePtr ;
+         utilStrLtrim( releaseStr ) ;
+         release = ossAtoi( releaseStr.c_str() ) ;
+      }
+
+      // 2014-08-31-23.18.18(Debug)
+      pToken = ossStrtok( NULL, pDelim, &pLast ) ;
+      if ( !pToken )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      buildInfo = pToken ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 
