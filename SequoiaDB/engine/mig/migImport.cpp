@@ -230,7 +230,7 @@ INT32 migImport::_getRecord ( bson &record )
    if ( !isValidUTF8WSize ( pBuffer + startOffset, size ) &&
         !_pMigArg->force )
    {
-      rc = SDB_INVALIDARG ;
+      rc = SDB_MIG_DATA_NON_UTF ;
       PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
       goto error ;
    }
@@ -239,6 +239,7 @@ INT32 migImport::_getRecord ( bson &record )
       rc = _csvParser.csv2bson( pBuffer + startOffset, size, pObj ) ;
       if ( rc )
       {
+         rc = SDB_UTIL_PARSE_CSV_INVALID ;
          PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
          goto error ;
       }
@@ -461,10 +462,20 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
             rc = SDB_OK ;
             break ;
          }
-         else
+         else if( SDB_MIG_DATA_NON_UTF == rc ||
+                  SDB_UTIL_PARSE_CSV_INVALID == rc ||
+                  SDB_UTIL_PARSE_JSON_INVALID == rc )
          {
             ++count ;
-            PD_LOG ( PDERROR, "Bad record in %d", count ) ;
+            if( SDB_MIG_DATA_NON_UTF == rc )
+            {
+               PD_LOG ( PDERROR, "Data encoding is not utf8, in the %d line",
+                        count ) ;
+            }
+            else
+            {
+               PD_LOG ( PDERROR, "Data format error, in the %d line", count ) ;
+            }
             if ( _pMigArg->errorStop )
             {
                goto error ;
@@ -473,6 +484,12 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
             {
                continue ;
             }
+         }
+         else
+         {
+            ++count ;
+            PD_LOG ( PDERROR, "Failed to get record, rc=%d", rc ) ;
+            goto error ;
          }
       }
       bsonSize = tempObj->dataSize ;
@@ -578,10 +595,20 @@ INT32 migImport::run ( INT32 &total, INT32 &succeed )
             rc = SDB_OK ;
             break ;
          }
-         else
+         else if( SDB_MIG_DATA_NON_UTF == rc ||
+                  SDB_UTIL_PARSE_CSV_INVALID == rc ||
+                  SDB_UTIL_PARSE_JSON_INVALID == rc )
          {
             ++count ;
-            PD_LOG ( PDERROR, "Bad record in %d", count ) ;
+            if( SDB_MIG_DATA_NON_UTF == rc )
+            {
+               PD_LOG ( PDERROR, "Data encoding is not utf8, in the %d line",
+                        count ) ;
+            }
+            else
+            {
+               PD_LOG ( PDERROR, "Data format error, in the %d line", count ) ;
+            }
             if ( _pMigArg->errorStop )
             {
                goto error ;
@@ -590,6 +617,12 @@ INT32 migImport::run ( INT32 &total, INT32 &succeed )
             {
                continue ;
             }
+         }
+         else
+         {
+            ++count ;
+            PD_LOG ( PDERROR, "Failed to get record, rc=%d", rc ) ;
+            goto error ;
          }
       }
       if ( bsonObj.dataSize <= 5 )
