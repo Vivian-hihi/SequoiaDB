@@ -902,6 +902,38 @@ error:
    goto done ;
 }
 
+OSSUID ossGetCurrentProcessUID()
+{
+   return getuid() ;
+}
+
+OSSGID ossGetCurrentProcessGID()
+{
+   return getgid() ;
+}
+
+INT32 ossSetCurrentProcessUID( OSSUID uid )
+{
+   INT32 rc = setuid( uid ) ;
+   if ( -1 == rc )
+   {
+      std::cout << "setuid() failed: " << ossGetLastError() << std::endl ;
+      rc = SDB_SYS ;
+   }
+   return rc ;
+}
+
+INT32 ossSetCurrentProcessGID( OSSGID gid )
+{
+   INT32 rc = setgid( gid ) ;
+   if ( -1 == rc )
+   {
+      std::cout << "setgid() failed: " << ossGetLastError() << std::endl ;
+      rc = SDB_SYS ;
+   }
+   return rc ;
+}
+
 #elif defined (_WINDOWS)
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRSVPATH, "ossResolvePath" )
 static INT32 ossResolvePath ( const CHAR *pPathToResolve,
@@ -1667,7 +1699,27 @@ error:
    goto done ;
 }
 
-#endif
+OSSUID ossGetCurrentProcessUID()
+{
+   return OSS_INVALID_UID + 1 ;
+}
+
+OSSGID ossGetCurrentProcessGID()
+{
+   return OSS_INVALID_GID + 1 ;
+}
+
+INT32 ossSetCurrentProcessUID( OSSUID uid )
+{
+   return SDB_OK ;
+}
+
+INT32 ossSetCurrentProcessGID( OSSGID gid )
+{
+   return SDB_OK ;
+}
+
+#endif // _LINUX
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETEWD, "ossGetEWD" )
 INT32 ossGetEWD ( CHAR *pBuffer, INT32 maxlen )

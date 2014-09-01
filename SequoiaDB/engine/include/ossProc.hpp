@@ -170,5 +170,10 @@ INT32 ossEnumProcesses( std::vector< ossProcInfo > &procs,
                         BOOLEAN matchWhole = TRUE,
                         BOOLEAN findOne = FALSE ) ;
 
+OSSUID ossGetCurrentProcessUID() ;
+OSSGID ossGetCurrentProcessGID() ;
+INT32 ossSetCurrentProcessUID( OSSUID uid ) ;
+INT32 ossSetCurrentProcessGID( OSSGID gid ) ;
+
 #endif // OSSPROC_HPP__
 

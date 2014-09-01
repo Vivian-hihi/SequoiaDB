@@ -101,6 +101,8 @@ typedef INT32 SOCKET ;
    typedef pid_t      OSSPID ;
    typedef pthread_t  OSSTID ;
    #define OSS_INVALID_TID      ( ( OSSTID )NULL )
+   typedef uid_t      OSSUID ;
+   typedef gid_t      OSSGID ;
    #define OSS_INLINE inline
    // any attempt to get TLS variable should use OSS_FORCE_INLINE
    // It may avoid calling __tls_get_addr (x86 only)instruction repeatedly if
@@ -118,6 +120,8 @@ typedef INT32 SOCKET ;
    typedef DWORD      OSSPID ;
    typedef DWORD      OSSTID ;
    #define OSS_INVALID_TID      ( ( OSSTID )0 )
+   typedef DWORD      OSSUID ;
+   typedef DWORD      OSSGID ;
    #define OSS_INLINE inline
    // any attempt to get TLS variable should use OSS_FORCE_INLINE
    // It may avoid calling __tls_get_addr (x86 only)instruction repeatedly if
@@ -140,6 +144,8 @@ typedef INT32 SOCKET ;
 
 typedef UINT64 EDUID ;
 #define OSS_INVALID_PID       ( ( OSSPID )-1 )
+#define OSS_INVALID_UID       ( ( OSSUID )-1 )
+#define OSS_INVALID_GID       ( ( OSSGID )-1 )
 
 
 // return the minimum of two values

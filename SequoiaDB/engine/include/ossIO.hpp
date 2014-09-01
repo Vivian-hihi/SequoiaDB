@@ -551,5 +551,9 @@ INT32 ossWriteN( OSSFILE *file,
                  const CHAR *buf,
                  SINT64 len ) ;
 
+INT32 ossGetFileUserInfo( const CHAR *filename, OSSUID &uid, OSSGID &gid ) ;
 
-#endif
+INT32 ossGetUserInfo( const CHAR *username, OSSUID &uid, OSSGID &gid ) ;
+
+#endif // OSSIO_HPP_
+

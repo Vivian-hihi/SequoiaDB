@@ -55,6 +55,7 @@
 
 #if defined (_LINUX)
    #include <sys/statfs.h>
+   #include <pwd.h>
 #endif
 
 #ifdef _WINDOWS
@@ -2187,4 +2188,84 @@ done:
 error:
    goto done ;
 }
+
+INT32 ossGetFileUserInfo( const CHAR * filename, OSSUID & uid, OSSGID & gid )
+{
+   INT32 rc = SDB_OK ;
+
+#if defined( _LINUX )
+   struct stat sb ;
+   rc = stat ( filename, &sb ) ;
+   if ( -1 == rc )
+   {
+      INT32 err = ossGetLastError() ;
+      // handle errors
+      PD_LOG( PDERROR, "Failed to stat() : %s, Error: %d", filename, err ) ;
+      switch(err)
+      {
+      case EACCES:
+         rc = SDB_PERM ;
+         break ;
+      case ENOENT:
+         rc = SDB_FNE ;
+         break ;
+      default:
+         rc = SDB_IO ;
+         break ;
+      }
+   }
+   else
+   {
+      uid = sb.st_uid ;
+      gid = sb.st_gid ;
+   }
+#else
+   // nothing
+#endif // _LINUX
+   return rc ;
+}
+
+INT32 ossGetUserInfo( const CHAR * username, OSSUID & uid, OSSGID & gid )
+{
+   INT32 rc = SDB_OK ;
+
+#if defined( _LINUX )
+   struct passwd pwdinfo ;
+   struct passwd *pwd = NULL ;
+   UINT32 buffLen = 0 ;
+   CHAR *pBuff = NULL ;
+
+   buffLen = sysconf( _SC_GETPW_R_SIZE_MAX ) * sizeof( CHAR ) ;
+   pBuff = ( CHAR* )SDB_OSS_MALLOC( buffLen ) ;
+   if ( !pBuff )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   getpwnam_r( username, &pwdinfo, pBuff, buffLen, &pwd ) ;
+   if ( !pwd )
+   {
+      std::cout << "getpwnam_r failed: " << ossGetLastError() << std::endl ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   uid = pwd->pw_uid ;
+   gid = pwd->pw_gid ;
+
+done:
+   if ( pBuff )
+   {
+      SDB_OSS_FREE( pBuff ) ;
+   }
+   return rc ;
+error:
+   goto done ;
+
+#else
+   return SDB_OK ;
+#endif // _LINUX
+}
+
 
