@@ -1,4 +1,4 @@
-<!--@param ${testcase.path}: The path where test case direcotry.-->
+<!--@param ${samples.testcase.path}: The path where test case direcotry.-->
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${deploy.case.fullname}: The file name ( .xml )this file name is -->
@@ -19,17 +19,17 @@
     <target name="exec-samples-testcases" depends="clean-env">
         <foreach target="test-suite-case" param="test-suite-fullname">
             <path>
-                <dirset dir="${testcase.path}" />
+                <dirset dir="${samples.testcase.path}" />
             </path>
         </foreach>
     </target>
 
     <target name="exec-java-samples-testcases" depends="exec-samples-testcases">
-        <property name="java_samples.dir" value="${testcase.path}/Java/build" />
-        <property name="java_samples.jar.dir" value="${testcase.path}/Java/lib/java_samples.jar" />
-        <property name="sequoiadb.jar.dir" value="${testcase.path}/../drivers_testcases/java/lib/sequoiadb.jar" />
+        <property name="java_samples.dir" value="${samples.testcase.path}/Java/build" />
+        <property name="java_samples.jar.dir" value="${samples.testcase.path}/Java/lib/java_samples.jar" />
+        <property name="sequoiadb.jar.dir" value="${samples.testcase.path}/../drivers_testcases/java/lib/sequoiadb.jar" />
         <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-        <classpath>
+            <classpath>
                 <pathelement location="/usr/share/java/ant-junit.jar" />
             </classpath>
         </taskdef>
@@ -69,7 +69,7 @@
 
         <foreach target="exec-python-samples-testcases" param="test-case-fullname">
             <path>
-                <dirset dir="${testcase.path}" />
+                <dirset dir="${samples.testcase.path}" />
             </path>
         </foreach>
     </target>
@@ -96,11 +96,11 @@
         </tstamp>
         <echo message="This testcase begin time is ${testcase.begin.time}"/>
 
-        <property name="test.samples.python.name" value="com.sequoiadb.testcases-samples.${test-samples-casename}.${deploy.name}-${host.NAME}.${test-samples-casename}.${test-samples-casename}" />
+        <property name="test.samples.python.name" value="com.sequoiadb.testcases-samples.${test-samples-casename}.${deploy.name}-${host.NAME}" />
 
         <echo file="${reports.path}/TEST-${test.samples.python.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test-samples-casename}&quot; tests=&quot;1&quot;&gt;&#10;" />
 
-        <exec executable="/usr/bin/python" failonerror="false" dir="${testcase.path}/Python" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
+        <exec executable="/usr/bin/python" failonerror="false" dir="${samples.testcase.path}/Python" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
             <arg line=" ${test-samples-casename}" />
         </exec>
         <echo message="${screen.output}" />

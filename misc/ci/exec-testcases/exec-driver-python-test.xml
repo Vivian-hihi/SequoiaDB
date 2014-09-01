@@ -1,4 +1,4 @@
-<!--@param ${testcase.path}: The path where test case direcotry.-->
+<!--@param ${python.testcase.path}: The path where test case direcotry.-->
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${deploy.case.fullname}: The run in which env -->
 <!--@param ${python-bin.dir} : The python-bin's director-->
@@ -12,13 +12,13 @@
 		</classpath>
 	</taskdef>
 
-	<target name="clean-env" depends="">
+	<target name="Clean-Python-Reports" depends="">
 		<echo message="reports.path=${reports.path}" />
 		<delete dir="${reports.path}" failonerror="false" />
 		<mkdir dir="${reports.path}" />
 	</target>
 
-	<target name="init-python-driver" depends="clean-env">
+	<target name="Init-Python-Driver" depends="Clean-Python-Reports">
 		<property name="python.tar" value="pysequoiadb.tar.gz" />
 
 		<echo message="begin to init python driver..." />
@@ -30,7 +30,118 @@
 		</exec>
 	</target>
 
-	<target name="exec-driver-python-test" depends="init-python-driver">
+<!-- 	name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases"   js
+	name="python.testcase.path" value="${testcase.path}/drivers_testcases/python"   python
+	name="samples.testcase.path" value="${testcase.path}/samples_testcases"  sample -->
+
+	<target name="Test-Python-Samples" depends="Init-Python-Driver">
+		<echo message="Begin test python samples testcases..." />
+		<echo message="perform the python samples testcases,with testcase.path=${samples.testcase.path}" />
+		<foreach target="test-one-suite" param="test.suite.fullname">
+			<path>
+				<dirset dir="${samples.testcase.path}/Python" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
+			</path>
+			<param name="testcases.path" value="${samples.testcase.path}" />
+			<param name="test-type" value="samples-python" />
+			<param name="includes.case.patterns" value="*.py" />
+			<param name="excludes.case.patterns" value="" />
+		</foreach>
+	</target>
+
+	<target name="exec-driver-python-test" depends="Init-Python-Driver">
+		<echo message="Begin test driver python testcases..." />
+		<echo message="perform the driver python testcases,with testcase.path=${python.testcase.path}" />
+		<foreach target="test-one-suite" param="test.suite.fullname">
+			<path>
+				<dirset dir="${python.testcase.path}" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
+			</path>
+			<param name="testcases.path" value="${python.testcase.path}" />
+			<param name="test-type" value="driver-python" />
+			<param name="includes.case.patterns" value="*.py" />
+			<param name="excludes.case.patterns" value="" />
+		</foreach>
+	</target>
+
+	<target name="test-one-suite" depends="">
+		<hostinfo prefix="host" />
+		<basename property="test.suite.name" file="${test.suite.fullname}" />
+		<basename property="deploy.name" file="${deploy.case.fullname}" />		
+		<property name="test.suite.class.name" value="testcases-${test-type}-${deploy.name}-${host.NAME}-${test.suite.name}-${parallel.num}" />
+
+		<echo message="now testsuite ${test.suite.name} ..." />
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite NAME=&quot;${test.suite.name}&quot; TYPE=&quot;${test-type}&quot; DEPLOY=&quot;${deploy.name}&quot; HOSTNAME=&quot;${host.NAME}&quot; TESTS=&quot;1&quot; FAILURES=&quot;0&quot;&gt;&#10;" />
+
+		<foreach target="test-one-case" param="test.case.fullname">
+			<fileset dir="${test.suite.fullname}" includes="${includes.case.patterns}" excludes="${excludes.case.patterns}" />
+			<param name="testcases.path" value="${testcases.path}" />
+			<param name="test-type" value="${test-type}" />
+			<param name="test.suite.class.name" value="${test.suite.class.name}" />
+		</foreach>
+
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
+	</target>
+
+	<target name="test-one-case" depends="">
+		<property name="testcase.status" value="succ" />	
+		<tstamp>
+			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo message="Now testcase ${test.case.name}.py begin with ${testcase.begin.time}"/>
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot;&gt;&#10;" />
+
+		<if>
+			<equals arg1="${test-type}" arg2="driver-python" />
+			<then>
+				<property name="command" value="python ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord_port} -d ${data_port}" />
+				<echo message="Command:${command}" />
+				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
+				<exec executable="/usr/bin/python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
+					<arg line=" ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord_port} -d ${data_port}" />
+				</exec>
+				<echo message="${screen.output}" />
+				<echo message="The result = ${ret.code} after exec ${test.case.fullname} testcase." />
+			</then>
+			<else>
+				<property name="command" value="python ${test.case.fullname}" />
+				<echo message="Command:${command}" />
+				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
+				<exec executable="/usr/bin/python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
+					<arg line=" ${test.case.fullname}" />
+				</exec>
+				<echo message="${screen.output}" />
+				<echo message="The result = ${ret.code} after exec ${test.case.fullname} testcase." />
+			</else>
+		</if>
+		
+		<if>
+			<not>
+				<equals arg1="${ret.code}" arg2="0" />
+			</not>
+			<then>
+				<property name="testcase.status" value="fail" />
+				<tstamp>
+					<format property="testcase.failure.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+				</tstamp>
+				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
+				<echo message="The testcase ${test.case.name}.py end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
+
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot; ENDTIME=&quot;${testcase.failure.end.time}&quot; TIME=&quot;${testcase.failure.timeOutput}&quot; PATH=&quot;${testcases.path}&quot; STATUS=&quot;${testcase.status}&quot;&gt;&#10;&lt;![CDATA[COMMAND= ${command} RETURNCODE=${ret.code}; ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;" />
+			</then>
+			<else>
+				<tstamp>
+					<format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+				</tstamp>
+				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
+				<echo message="The testcase ${test.case.name}.py end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />
+
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot; ENDTIME=&quot;${testcase.end.time}&quot; TIME=&quot;${testcase.timeOutput}&quot; PATH=&quot;${testcases.path}&quot; STATUS=&quot;${testcase.status}&quot;&gt;&#10;" />
+			</else>
+		</if>
+
+		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;/testcase&gt;&#10;" />
+	</target>
+
+<!-- 	<target name="exec-driver-python-test" depends="init-python-driver">
 		<echo message="Begin to test TestPySequoiadb.py..." />
 
 		<tstamp>
@@ -68,5 +179,5 @@
 			</else>
 		</if>
 		<echo file="${reports.path}/TEST-driver-python.xml" append="true" message="&lt;/testcase&gt;&#10;&lt;/testsuite&gt;&#10;" />
-	</target>
+	</target> -->
 </project>

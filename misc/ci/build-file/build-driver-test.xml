@@ -31,8 +31,7 @@
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/CPP/build" />
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/CPP/lib" />
 
-		<mkdir dir="${deploy.path}/hlt/drivers_testcases/python/build" />
-		<mkdir dir="${deploy.path}/hlt/drivers_testcases/python/lib" />
+		<mkdir dir="${deploy.path}/hlt/drivers_testcases/python" />
 
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/java/build" />
 		<mkdir dir="${deploy.path}/hlt/drivers_testcases/java/lib" />
@@ -121,7 +120,7 @@
 		<echo message="...over scons the c and c++ ..." />
 
 		<echo message="...Begin to copy the python test code..." />
-		<copy todir="${deploy.path}/hlt/drivers_testcases/python/build">
+		<copy todir="${deploy.path}/hlt/drivers_testcases/python">
 			<fileset dir="${build.testcases}/python" includes="**/*" />
 		</copy>
 		<echo message="...over copy the python test code..." />
