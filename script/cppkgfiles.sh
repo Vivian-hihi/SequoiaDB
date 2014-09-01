@@ -2,8 +2,8 @@
 
 ###########################################
 # parameter description:
-# $1: dest path          e.g: /home/sequoiadb/sequoiadb-1.8
-# $2: build type         e.g: debug
+# $1: dest path(e.g: /home/sequoiadb/sequoiadb-1.8)
+# $2: build type(debug or release)
 ###########################################
 
 function copy_file()
