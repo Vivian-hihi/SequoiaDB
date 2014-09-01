@@ -265,7 +265,6 @@ namespace engine
       CHAR pNPipeBuf[ CM_NPIPE_SIZE + 1 ] = { 0 } ;
 
       list< const CHAR* > argv ;
-      OSSNPIPE outNPipe ;
       ossResultCode result ;
       OSSPID tmppid ;
 
@@ -291,8 +290,7 @@ namespace engine
       // call exec to run the command with arguments, 
       // do NOT wait until program finish
       rc = ossExec ( pArgumentBuffer, pArgumentBuffer, NULL,
-                     OSS_EXEC_SSAVE, tmppid, result, NULL,
-                     &outNPipe ) ;
+                     OSS_EXEC_SSAVE, tmppid, result, NULL, NULL ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to execute %s, rc: %d",
