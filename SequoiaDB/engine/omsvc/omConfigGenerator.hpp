@@ -223,6 +223,7 @@ namespace engine
       private:
          INT32      _initNodeInfo( const BSONObj &config ) ;
          INT32      _initCounter() ;
+         void       _ignoreLocalService( INT32 &service ) ;
          void       _increaseNodeCount( string dbpath, string role ) ;
          void       _getBestDisk( string role, omDiskInfo &disk ) ;
 

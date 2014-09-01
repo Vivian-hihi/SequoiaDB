@@ -53,6 +53,16 @@ using namespace boost::property_tree;
 
 namespace engine
 {
+   struct simpleHostInfo
+   {
+      string hostName ;
+      string clusterName ;
+      string ip ;
+      string user ;
+      string passwd ;
+      string installPath ;
+   } ;
+
    class omAuthCommand : public omCommandInterface
    {
       public:
@@ -270,6 +280,7 @@ namespace engine
          INT32           _getClusterInstallPath( string clusterName, 
                                                  string &installPath ) ;
          INT32           _getPacketFullPath( char *path ) ;
+         INT32           _checkHostExistence( list<BSONObj> &hostInfoList ) ;
    };
 
    class omQueryHostCommand : public omCreateClusterCommand
@@ -438,12 +449,12 @@ namespace engine
          void           _testFinishTask() ;
    } ;
 
-   class omQueryNodeCommand : public omAuthCommand
+   class omQueryNodeConfCommand : public omAuthCommand
    {
       public:
-         omQueryNodeCommand( restAdaptor *pRestAdaptor, 
+         omQueryNodeConfCommand( restAdaptor *pRestAdaptor, 
                              pmdRestSession *pRestSession ) ;
-         virtual ~omQueryNodeCommand() ;
+         virtual ~omQueryNodeConfCommand() ;
 
       public:
          virtual INT32  doCommand() ;
@@ -513,15 +524,6 @@ namespace engine
          INT32          _removeCluster( const string &clusterName ) ;
    } ;
 
-   struct simpleHostInfo
-   {
-      string hostName ;
-      string ip ;
-      string user ;
-      string passwd ;
-      string installPath ;
-   } ;
-
    class omRemoveHostCommand : public omScanHostCommand
    {
       public:
@@ -558,6 +560,25 @@ namespace engine
 
       public:
          virtual INT32  doCommand() ;
+
+      private:
+         INT32          _getBusinessExistFlag( const string &businessName, 
+                                               BOOLEAN &flag ) ;
+         INT32          _getNodeInfo( const string &businessName, 
+                                      BSONObj &nodeInfos,
+                                      BOOLEAN &isExistFlag ) ;
+         INT32          _getHostInfo( const string &hostName,
+                                      simpleHostInfo &hostInfo ) ;
+         INT32          _getHostNameInfo( const string &businessName,
+                                       map<string, simpleHostInfo> &mapHosts) ;
+         INT32          _removeBusinessByAgent( const BSONObj &nodeInfos ) ;
+         INT32          _removeBusiness( const string &businessName,
+                                         const BSONObj &nodeInfos, 
+                                         BOOLEAN isExistNode ) ;
+         INT32          _deleteConfigureRecord( const string &businessName ) ;
+         INT32          _deleteBusinessRecord( const string &businessName ) ;
+         INT32          _expandNodeInfoToBuilder( const BSONObj &record, 
+                                             BSONArrayBuilder &arrayBuilder ) ;
    } ;
 
    class omGetFileCommand : public omCommandInterface

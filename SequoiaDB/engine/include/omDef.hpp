@@ -382,11 +382,9 @@ namespace engine
    //******************************************************************
 
    // om query node req
-   #define  OM_QUERY_NODE_REQ                "query node"
+   #define  OM_QUERY_NODE_CONF_REQ           "query node configure"
 
    #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
-
-   #define  OM_BSON_NODE_INFO                "NodeInfo"
    
    //******************************************************************
 
@@ -416,6 +414,11 @@ namespace engine
 
    #define  OM_REST_HOST_NAME                OM_BSON_FIELD_HOST_NAME
    #define  OM_REST_ISFORCE                  "IsForce"
+
+   //******************************************************************
+
+   // om remove business req
+   #define  OM_REMOVE_BUSINESS_REQ           "remove business"
 
    //******************************************************************
 

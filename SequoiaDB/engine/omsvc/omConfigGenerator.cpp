@@ -37,6 +37,8 @@
 #include "ossUtil.hpp"
 #include "pmdOptions.hpp"
 #include "pmdEDU.hpp"
+#include "pmd.hpp"
+#include "pmdOptionsMgr.hpp"
 
 using namespace bson ;
 
@@ -545,6 +547,30 @@ namespace engine
       }
    }
 
+   void omHostInfo::_ignoreLocalService( INT32 &service )
+   {
+      CHAR local[ OSS_MAX_HOSTNAME + 1 ] = "" ;
+      ossGetHostName( local, OSS_MAX_HOSTNAME ) ;
+      if ( _hostName.compare( local ) != 0 )
+      {
+         return ;
+      }
+
+      pmdKRCB *pKrcb       = pmdGetKRCB() ;
+      _pmdOptionsMgr *pOpt = pKrcb->getOptionCB() ;
+      INT32 svcPort        = pOpt->getServicePort() ;
+
+      if ( service <= svcPort )
+      {
+         service = svcPort + OM_SVCNAME_STEP ;
+      }
+
+      if ( service < svcPort + OM_SVCNAME_STEP )
+      {
+         service += OM_SVCNAME_STEP ;
+      }
+   }
+
    INT32 omHostInfo::_initCounter()
    {
       CONFIGITEMMAP_ITER iterMap ;
@@ -600,6 +626,9 @@ namespace engine
       {
          _availableSvcName += OM_SVCNAME_STEP ;
       }
+
+      // if hostname is local, ignore the om & omagent's port
+      _ignoreLocalService( _availableSvcName ) ;
 
       _nodeCounter.unUsedDiskCount = _nodeCounter.diskCount - 
                                                           _usedDiskSet.size() ;
@@ -961,6 +990,29 @@ namespace engine
          }
 
          iter++ ;
+      }
+
+      CHAR local[ OSS_MAX_HOSTNAME + 1 ] = "" ;
+      ossGetHostName( local, OSS_MAX_HOSTNAME ) ;
+      if ( _hostName.compare( local ) == 0 )
+      {
+         pmdKRCB *pKrcb       = pmdGetKRCB() ;
+         _pmdOptionsMgr *pOpt = pKrcb->getOptionCB() ;
+         INT32 svcPort        = pOpt->getServicePort() ;
+         if ( (iSvcName - svcPort >= OM_SVCNAME_STEP) 
+              || (svcPort - iSvcName >= OM_SVCNAME_STEP)  )
+         {
+            return FALSE ;
+         }
+         else
+         {
+            CHAR tmpName[ OM_INT32_LENGTH + 1 ] ;
+            ossItoa( svcPort, tmpName, OM_INT32_LENGTH ) ;
+            _errorDetail = string( OM_CONF_DETAIL_SVCNAME ) + 
+                           " is conflict:" + svcName + ",exist svcName="
+                           + tmpName ;
+            return TRUE ;
+         }
       }
 
       return FALSE ;
@@ -2119,7 +2171,7 @@ namespace engine
 
       while ( catalogCount < _confTemplate.catalogNum )
       {
-         omHostInfo *host = _getBestHost( OM_NODE_ROLE_CATALOG) ;
+         omHostInfo *host = _getBestHost( OM_NODE_ROLE_CATALOG ) ;
          if ( NULL == host )
          {
             rc = SDB_DMS_RECORD_NOTEXIST ;

@@ -456,9 +456,9 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omQueryInstallProgress( pAdptor, this ) ;
          }
-         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_NODE_REQ ) == 0 )
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_NODE_CONF_REQ ) == 0 )
          {
-            commandIf = SDB_OSS_NEW omQueryNodeCommand( pAdptor, this ) ;
+            commandIf = SDB_OSS_NEW omQueryNodeConfCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_REQ ) == 0 )
          {
@@ -471,6 +471,12 @@ namespace engine
          else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omRemoveHostCommand( pAdptor, this,
+                                                         OM_DEFAULT_LOCAL_HOST, 
+                                                         localAgentPort ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omRemoveBusinessCommand( pAdptor, this,
                                                          OM_DEFAULT_LOCAL_HOST, 
                                                          localAgentPort ) ;
          }

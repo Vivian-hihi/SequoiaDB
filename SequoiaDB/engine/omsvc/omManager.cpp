@@ -1015,13 +1015,13 @@ namespace engine
             if it can't recovered. we should manually store it 
                and delete the task info
             */
-            PD_LOG( PDERROR, "store business info failed:rc=%d", rc ) ;   
+            PD_LOG( PDERROR, "store business info failed:rc=%d", rc ) ;
             goto error ;
          }
          rc = _storeConfigInfo() ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "store config info failed:rc=%d", rc ) ;   
+            PD_LOG( PDERROR, "store config info failed:rc=%d", rc ) ;
             goto error ;
          }
 
@@ -1043,7 +1043,7 @@ namespace engine
          */
          PD_LOG( PDERROR, "task is done and delete task info failed:taskID=%s,"
                  "status=%d", _omTaskInfo._taskID.c_str(), _omTaskInfo._status, 
-                 rc ) ;   
+                 rc ) ;
          goto error ;
       }
    done:
@@ -1457,9 +1457,14 @@ namespace engine
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       INT32 rc     = SDB_OK ;
       BSONArrayBuilder arrayBuilder ;
+      BSONObj filter  = BSON( OM_BSON_FIELD_HOST_NAME << "" 
+                              << OM_BSON_FIELD_HOST_USER << "" 
+                              << OM_BSON_FIELD_HOST_PASSWD << "" ) ;
+      BSONObj oneConf = oneNode.filterFieldsUndotted( filter, false ) ;
+      arrayBuilder.append( oneConf ) ;
+
       BSONObj condition = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
                                 << OM_CONFIGURE_FIELD_HOSTNAME << hostName );
-      arrayBuilder.append( oneNode ) ;
       BSONObj tmp = BSON( OM_CONFIGURE_FIELD_CONFIG << arrayBuilder.arr() ) ;
       BSONObj obj = BSON( "$addtoset" << tmp ) ;
       {
