@@ -2170,6 +2170,21 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_UTIL_PARSE_CSV_INVALID</name>
+         <description>
+            <en>parse csv error</en>
+            <cn>解析csv文件错误</cn>
+         </description>
+      </code>
+
+      <code>
+         <name>SDB_MIG_DATA_NON_UTF</name>
+         <description>
+            <en>the data is not utf8</en>
+            <cn>数据不是utf8编码</cn>
+         </description>
+      </code>
 
    </codelist>
 </rclist>
