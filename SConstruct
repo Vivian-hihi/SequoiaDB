@@ -672,11 +672,6 @@ toolEnv = env.Clone() ;
 fmpEnv = None
 fmpEnv = env.Clone() ;
 
-if release and ( linux64 ):
-    shellEnv["LINKFLAGS"] = env["LINKFLAGS_CLEAN"]
-    shellEnv["LIBS"] = env["LIBS_CLEAN"]
-    #shellEnv["SLIBS"] = ""
-
 if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
