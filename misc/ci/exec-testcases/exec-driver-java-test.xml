@@ -15,7 +15,7 @@
         </classpath>
     </taskdef> -->
 
-    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+    <taskdef name="junit">
         <classpath>
             <pathelement location="/usr/share/java/junit-4.11.jar" />
             <pathelement location="/usr/share/java/hamcrest-core-1.3.jar" />
