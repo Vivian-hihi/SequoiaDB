@@ -2,17 +2,8 @@
 
 ###########################################
 # script parameter description:
-# $1: build type         e.g: debug
+# $1: source files's path
 ###########################################
-
-phase_no=1
-function phase()
-{
-   echo "*******************************"
-   echo "phase$phase_no:$1"
-   echo "*******************************"
-   ((phase_no++))
-}
 
 function err_exit()
 {
@@ -62,6 +53,7 @@ dir_name=$(dirname $0)
 if [[ ${dir_name:0:1} != "/" ]]; then
    cur_path=$(pwd)
 fi
+files_src_path=$1
 script_path="$cur_path/$dir_name"
 sdb_path="$script_path/.."
 pkg_root_path="$sdb_path/package"
@@ -69,7 +61,6 @@ pkg_tmp_path=$pkg_root_path/tmp
 pkg_output_path="$pkg_root_path/output"
 pkg_conf_file=$pkg_root_path/conf/rpm/sequoiadb.spec
 mkdir -p $pkg_tmp_path
-build_type=$1
 
 ver_name="SDB_ENGINE_VERISON_CURRENT"
 subver_name="SDB_ENGINE_SUBVERSION_CURRENT"
@@ -78,16 +69,16 @@ begin_ver=`get_macro_val $ver_info_file $ver_name`
 sub_ver=`get_macro_val $ver_info_file $subver_name`
 sdb_name="sequoiadb-$begin_ver.$sub_ver"
 
-phase "collect source files"
+echo "collect source files..."
 pkg_src_path="$pkg_tmp_path/$sdb_name"
-$script_path/cppkgfiles.sh $pkg_src_path $build_type
+mkdir -p $pkg_src_path
+cp -rf $files_src_path/* $pkg_src_path
 err_exit $?
 
-phase "generate the RPM package"
+
+echo "generate the RPM package..."
 echo "package the source files"
-cd $pkg_tmp_path
-tar -czf $pkg_tmp_path/$sdb_name.tar.gz $sdb_name --remove-files
-cd -
+tar -czf $pkg_tmp_path/$sdb_name.tar.gz -C $pkg_tmp_path $sdb_name --remove-files
 echo "prepare the spec file"
 mkdir -p $pkg_tmp_path/rpm/SPECS
 cp -f $pkg_conf_file $pkg_tmp_path/rpm/SPECS
@@ -110,4 +101,3 @@ fi
 rm -rf $pkg_output_path/RPMS
 mv $pkg_tmp_path/rpm/RPMS $pkg_output_path
 rm -rf $pkg_tmp_path/rpm
-echo "completed!"

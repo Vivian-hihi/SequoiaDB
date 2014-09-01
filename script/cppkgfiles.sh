@@ -11,7 +11,7 @@ function copy_file()
    cp $1 $2
    if [ $? -ne 0 ]; then
       echo "ERROR: Failed to copy the file!"
-      exit 1;
+      #exit 1;
    fi
 }
 
@@ -20,7 +20,7 @@ function copy_folder()
    rsync -vaq --exclude=".svn" $1 $2
    if [ $? -ne 0 ]; then
       echo "ERROR: Failed to copy the folder!"
-      exit 1;
+      #exit 1;
    fi
 }
 
