@@ -174,6 +174,11 @@ namespace engine
       return _indexName.c_str() ;
    }
 
+   const CHAR* _rtnIndexJob::getCollectionName() const
+   {
+      return _clFullName ;
+   }
+
    RTN_JOB_TYPE _rtnIndexJob::type () const
    {
       return _type ;
@@ -199,7 +204,9 @@ namespace engine
       {
          _rtnIndexJob *pIndexJob = ( _rtnIndexJob* )pOther ;
 
-         if ( 0 == ossStrcmp ( getIndexName(), pIndexJob->getIndexName() ) )
+         if ( 0 == ossStrcmp( getIndexName(), pIndexJob->getIndexName() ) &&
+              0 == ossStrcmp( getCollectionName(),
+                              pIndexJob->getCollectionName() ) )
          {
             ret = TRUE ;
             goto done ;

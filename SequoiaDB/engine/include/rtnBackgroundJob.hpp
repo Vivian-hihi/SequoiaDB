@@ -60,6 +60,7 @@ namespace engine
 
          INT32 init () ;
          const CHAR* getIndexName () const ;
+         const CHAR* getCollectionName() const ;
 
       public:
          virtual RTN_JOB_TYPE type () const ;
