@@ -240,7 +240,7 @@ namespace
       const CHAR * nodeState[] =
       {
          "Normal",
-         "Cannot connect to node or caonnot get collection",
+         "Cannot connect to node or cannot get collection",
          "Cannot get cursor"
       } ;
 
@@ -2627,11 +2627,10 @@ namespace
                                                 CI_CL_NAME_SIZE ) ) ;
          if ( 0 >= tail._clCount )
          {
-            std::cout << "Error: cannot find any "
+            std::cout << "Not found any "
                       << ( hasCL ? "match " : "" )
                       << "collection" << std::endl ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            goto done ;
          }
       }
 
