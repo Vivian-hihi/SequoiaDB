@@ -3086,6 +3086,12 @@ INT32 _sdbCi::handle( const po::options_description &desc,
    }
 
    rc = inspect() ;
+   if ( CI_INSPECT_CL_NOT_FOUND == rc )
+   {
+      rc = SDB_OK ;
+      goto done ;
+   }
+   
    CHECK_VALUE( ( SDB_OK != rc ), error ) ;
    // report file
    if ( !useOutput )
@@ -3154,7 +3160,6 @@ INT32 _sdbCi::inspect()
 
       if ( CI_INSPECT_CL_NOT_FOUND == rc )
       {
-         rc = SDB_OK ;
          goto done ;
       }
 
