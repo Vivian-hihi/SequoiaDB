@@ -40,7 +40,7 @@
         <junit printsummary="yes" fork="yes" showoutput="true" timeout="1200000">
             <classpath>
                 <pathelement path="/usr/share/java/junit.jar" />
-                <!-- <pathelement path="/usr/share/java/junit4.jar" /> -->
+                <pathelement path="/usr/share/java/junit4.jar" />  <!-- delete -->
 
                 <pathelement path="${sequoiadb.jar.dir}" />
                 <pathelement path="${java_test.jar.dir}" />
