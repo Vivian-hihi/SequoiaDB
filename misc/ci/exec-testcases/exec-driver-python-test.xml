@@ -69,7 +69,8 @@
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
 		<!-- <basename property="deploy.name" file="${deploy.case.fullname}" />	 -->	
-		<property name="test.suite.class.name" value="testcases-${test-type}-${deploy.name}-${host.NAME}-${parallel.num}" />
+		<property name="test.suite.class.name" value="testcases-${test-type}-${host.NAME}-${parallel.num}" />
+		<!-- <property name="test.suite.class.name" value="testcases-${test-type}-${deploy.name}-${host.NAME}-${parallel.num}" /> -->
 
 		<echo message="Now testsuite ${test.suite.name} ..." />
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite NAME=&quot;${test.suite.name}&quot; TYPE=&quot;${test-type}&quot; DEPLOY=&quot;${deploy.name}&quot; HOSTNAME=&quot;${host.NAME}&quot; TESTS=&quot;1&quot; FAILURES=&quot;0&quot;&gt;&#10;" />
@@ -134,7 +135,7 @@
 				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
 				<echo message="The testcase ${test.case.name}.py end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot; ENDTIME=&quot;${testcase.failure.end.time}&quot; TIME=&quot;${testcase.failure.timeOutput}&quot; PATH=&quot;${testcases.path}&quot; STATUS=&quot;${testcase.status}&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[COMMAND= ${command} RETURNCODE=${ret.code}; ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;" />
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot; ENDTIME=&quot;${testcase.failure.end.time}&quot; TIME=&quot;${testcase.failure.timeOutput}s&quot; PATH=&quot;${testcases.path}&quot; STATUS=&quot;${testcase.status}&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[COMMAND= ${command} RETURNCODE=${ret.code}; ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;" />
 			</then>
 			<else>
 				<tstamp>
