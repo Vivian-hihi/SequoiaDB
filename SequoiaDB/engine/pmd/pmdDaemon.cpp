@@ -45,6 +45,7 @@
 #include "ossProc.hpp"
 #include "pmd.hpp"
 #include "pmdWinService.hpp"
+#include "utilNodeOpr.hpp"
 
 #if defined (_LINUX)
 #include <sys/types.h>
@@ -150,7 +151,7 @@ namespace engine
    iPmdDMNChildProc::iPmdDMNChildProc()
    {
       // first run: wait for 1 cycle to check if the child is start
-      _deadTime = PMDDMN_SHMSTAT_EXPRIRED_TIMES - 1;
+      _deadTime = PMDDMN_SHMSTAT_EXPRIRED_TIMES - 1 ;
       _procInfo = NULL;
       _pid = OSS_INVALID_PID;
       ossMemset( _execName, 0, sizeof( _execName) );
@@ -326,16 +327,16 @@ namespace engine
          pmdDMNProcInfo procInfo = *_procInfo;
          if ( PMDDMN_SHM_STAT_CHILDREN != procInfo.stat )
          {
-            INT32 rc = SDB_OK;
-            isRunning = TRUE;
-            _deadTime = 0;
+            INT32 rc = SDB_OK ;
             if ( OSS_INVALID_PID == procInfo.pid )
             {
                isRunning = FALSE ;
+               _deadTime = PMDDMN_SHMSTAT_EXPRIRED_TIMES ;
             }
             else
             {
                isRunning = TRUE ;
+               _deadTime = 0 ;
             }
             rc = DMNProcessCMD( _procInfo->getDMNCMD() );
             if ( SDB_OK != rc )
@@ -350,20 +351,22 @@ namespace engine
          else if ( OSS_INVALID_PID != tmppid )
          {
             isRunning = ossIsProcessRunning( tmppid ) ;
-            if ( isRunning )
+            _pid = tmppid ;
+         }
+         else
+         {
+            UTIL_VEC_NODES nodes ;
+            utilListNodes( nodes, SDB_TYPE_OMA ) ;
+            if ( nodes.size() > 0 )
             {
-               _pid = tmppid ;
+               _pid = (*nodes.begin())._pid ;
+               isRunning = TRUE ;
+            }
+            else if ( _deadTime++ < PMDDMN_SHMSTAT_EXPRIRED_TIMES )
+            {
+               isRunning = TRUE ;
             }
          }
-         else if ( _deadTime++ < PMDDMN_SHMSTAT_EXPRIRED_TIMES )
-         {
-            isRunning = TRUE;
-         }
-      }
-
-      if ( isRunning )
-      {
-         _deadTime = 0 ;
       }
 
       return isRunning;
@@ -461,7 +464,6 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       ossResultCode result;
-      OSSPID pid = OSS_INVALID_PID;
 #if defined  (_LINUX)
       OSSPID childPid = OSS_INVALID_PID;
       childPid = fork();
@@ -471,7 +473,7 @@ namespace engine
       {
 #endif
       rc = ossExec( getExecuteFile(), getArguments(), NULL,
-                     0, pid, result, NULL, NULL );
+                     0, _pid, result, NULL, NULL );
 #if defined  (_LINUX)
       if ( SDB_OK != rc )
       {
