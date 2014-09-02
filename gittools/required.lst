@@ -26,3 +26,7 @@ SConstruct
 README
 NOTICE
 GNU-AGPL-3.0.txt
+build.py
+script/cppkgfiles.sh
+script/package.py
+script/pkgrpm.sh
