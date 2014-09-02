@@ -71,7 +71,7 @@
 		<!-- <basename property="deploy.name" file="${deploy.case.fullname}" />	 -->	
 		<property name="test.suite.class.name" value="testcases-${test-type}-${deploy.name}-${host.NAME}-${parallel.num}" />
 
-		<!-- <echo message="Now testsuite ${test.suite.name} ..." /> -->
+		<echo message="Now testsuite ${test.suite.name} ..." />
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;&lt;testsuite NAME=&quot;${test.suite.name}&quot; TYPE=&quot;${test-type}&quot; DEPLOY=&quot;${deploy.name}&quot; HOSTNAME=&quot;${host.NAME}&quot; TESTS=&quot;1&quot; FAILURES=&quot;0&quot;&gt;&#10;" />
 
 		<foreach target="test-one-case" param="test.case.fullname">
@@ -89,7 +89,13 @@
 		<tstamp>
 			<format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 		</tstamp>
+		<echo message="Now testcase ${test.case.fullname}.py begin with ${testcase.begin.time}"/>
+		<basename property="test.case.name" file="${test.case.fullname}" suffix=".py" />
+		<exec executable="sed">
+			<arg line="-i 's/^\xEF\xBB\xBF//g'  ${test.case.fullname}"/>
+		</exec>
 		<echo message="Now testcase ${test.case.name}.py begin with ${testcase.begin.time}"/>
+
 		<!-- <echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot;&gt;&#10;" /> -->
 
 		<if>
@@ -128,7 +134,7 @@
 				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
 				<echo message="The testcase ${test.case.name}.py end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot; ENDTIME=&quot;${testcase.failure.end.time}&quot; TIME=&quot;${testcase.failure.timeOutput}&quot; PATH=&quot;${testcases.path}&quot; STATUS=&quot;${testcase.status}&quot;&gt;&#10;&lt;![CDATA[COMMAND= ${command} RETURNCODE=${ret.code}; ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;" />
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot; ENDTIME=&quot;${testcase.failure.end.time}&quot; TIME=&quot;${testcase.failure.timeOutput}&quot; PATH=&quot;${testcases.path}&quot; STATUS=&quot;${testcase.status}&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[COMMAND= ${command} RETURNCODE=${ret.code}; ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;" />
 			</then>
 			<else>
 				<tstamp>
@@ -137,7 +143,7 @@
 				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
 				<echo message="The testcase ${test.case.name}.py end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />
 
-				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot; ENDTIME=&quot;${testcase.end.time}&quot; TIME=&quot;${testcase.timeOutput}&quot; PATH=&quot;${testcases.path}&quot; STATUS=&quot;${testcase.status}&quot;&gt;&#10;" />
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase NAME=&quot;${test.case.name}&quot; BEGINTIME=&quot;${testcase.begin.time}&quot; ENDTIME=&quot;${testcase.end.time}&quot; TIME=&quot;${testcase.timeOutput}&quot; PATH=&quot;${testcases.path}&quot; STATUS=&quot;${testcase.status}&quot;&gt;&#10;" />
 			</else>
 		</if>
 
