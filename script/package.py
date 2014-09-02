@@ -10,7 +10,8 @@ def help_info():
    print ('   -t                       type of package: rpm')
    print ('   -s                       path of source files. Collect from source')
    print ('                            code directory if not specified.')
-   print ('   -b, --build-type         release or debug, default as release')
+   print ('   --dd                     debug build no optimization')
+   print ('   --release                release build')
    print ('   --rmsource               remove souce files when done')
    print ('   --nobuild                do not compile. Effective if "-s" is specified')
    print ('   -h, --help               show this help info')
@@ -42,7 +43,7 @@ code_path = scrpt_path + '/..'
 rmsrc = False
 need_build = True
 short_args = 'ht:w:s:b:'
-long_args = ['help', 'source-file-path=', 'build-type=', 'rmsource', 'nobuild']
+long_args = ['help', 'source-file-path=', 'dd', 'release', 'rmsource', 'nobuild']
 try:
    opts, args = getopt.getopt(sys.argv[1:], short_args, long_args )
 except getopt.GetoptError:
@@ -57,8 +58,10 @@ for opt, arg in opts:
       pkg_type = arg
    elif opt == '-s':
       src_path = arg
-   elif opt in ('-b', '--build-type'):
-      build_type = arg
+   elif opt == '--dd':
+      build_type = 'debug'
+   elif opt == '--release':
+      build_type = 'release'
    elif opt == '--rmsource':
       rmsrc = True
    elif opt == '--nobuild':
