@@ -417,7 +417,8 @@ namespace engine
          INT32          _extractHostInfo( BSONObj &bsonConfValue, 
                                           BSONObj &bsonHostInfo ) ;
 
-         INT32          _applyInstallRequest( const BSONObj &bsonConfValue ) ;
+         INT32          _applyInstallRequest( const BSONObj &bsonConfValue, 
+                                              UINT64 &taskID ) ;
 
          INT32          _sendMsgToLocalAgent( omManager *om,
                                               pmdRemoteSession *remoteSession, 

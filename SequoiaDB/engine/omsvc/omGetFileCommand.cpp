@@ -3987,7 +3987,8 @@ namespace engine
    }
 
    INT32 omInstallBusinessReq::_applyInstallRequest( 
-                                                  const BSONObj &bsonConfValue )
+                                                  const BSONObj &bsonConfValue,
+                                                  UINT64 &taskID )
    {
       INT32 rc          = SDB_OK ;
       BSONElement taskElement ;
@@ -4248,6 +4249,7 @@ namespace engine
       BSONObj bsonConfValue ;
       BSONObj bsonHostInfo ;
       BSONObj bsonAllConf ;
+      UINT64 taskID ;
 
       rc = _getRestInfo( bsonConfValue ) ;
       if ( SDB_OK != rc )
@@ -4302,10 +4304,10 @@ namespace engine
          bool isAllFinshed ;
          string detail ;
          BSONObj progress ;
-         string taskID ;
-         sdbGetOMManager()->getInstallTask( status, taskID, isAllFinshed, 
+         string tmpID ;
+         sdbGetOMManager()->getInstallTask( status, tmpID, isAllFinshed, 
                                             detail, progress ) ;
-         _errorDetail = "exist install task:taskid=" + taskID ;
+         _errorDetail = "exist install task:taskid=" + tmpID ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
 
@@ -4313,7 +4315,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _applyInstallRequest( bsonConfValue ) ;
+      rc = _applyInstallRequest( bsonConfValue, taskID ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_applyInstallRequest failed:rc=%d", rc ) ;
@@ -4324,6 +4326,7 @@ namespace engine
       sdbGetOMManager()->releaseTaskWriteLock() ;
 
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      opBuilder.append( OM_BSON_TASKID, (long long)taskID ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
