@@ -27,3 +27,5 @@ test.machine.no3.data=suse-test4
 basic_list1=aggregate,bakupRestore,collectionAlter,countHint,createCL,createCS,createIndex,cursor,delete
 basic_list2=domain,dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures
 basic_list3=query,split,sql,subCL,syndate,transaction,update,upsert
+
+testcase.path=/tmp/sequoiadb_test/deploy/hlt
