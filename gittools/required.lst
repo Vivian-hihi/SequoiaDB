@@ -17,9 +17,10 @@ java/jdk_win64
 license
 misc
 thirdparty/parser
-thirdparty/php/retriConfig.sh
-thirdparty/php/forlinux
-thirdparty/php/php-5.3.10
+thirdparty/php/win32/php-5.4.15
+thirdparty/php/linux/php-5.4.6
+thirdparty/php/linux/retriConfig.sh
+thirdparty/php/linux/forlinux
 SequoiaDB
 SConstruct
 README
