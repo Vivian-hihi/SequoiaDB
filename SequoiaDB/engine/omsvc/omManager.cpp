@@ -380,14 +380,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Wait OM Manager edu attach failed, rc: %d",
                    rc ) ;
 
-      // start om net
-      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (netRouteAgent*)&_netAgent,
-                              &eduID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to start om net, rc: %d", rc ) ;
-      // register
-      pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
-
-      // register timer
+      // register timer( must before start EDU_TYPE_OMNET )
       _checkSessionTimer = setTimer( 60 * OSS_ONE_SEC ) ;
       if ( NET_INVALID_TIMER_ID == _checkSessionTimer )
       {
@@ -404,6 +397,13 @@ namespace engine
          PD_LOG( PDERROR, "Failed to set timer" ) ;
          goto error ;
       }
+
+      // start om net
+      rc = pEDUMgr->startEDU( EDU_TYPE_OMNET, (netRouteAgent*)&_netAgent,
+                              &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start om net, rc: %d", rc ) ;
+      // register
+      pEDUMgr->regSystemEDU( EDU_TYPE_OMNET, eduID ) ;
 
    done:
       return rc ;
