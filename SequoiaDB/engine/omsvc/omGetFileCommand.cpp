@@ -59,15 +59,10 @@ namespace engine
 
    void omAuthCommand::_sendErrorRes2Web( INT32 rc, const CHAR* detail )
    {
-      BSONObjBuilder bsonBuilder ;
+      BSONObj res = BSON( OM_REST_RES_RETCODE << rc 
+                          << OM_REST_RES_DETAIL << detail ) ;
 
-      bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-      if ( NULL != detail )
-      {
-         bsonBuilder.append( OM_REST_RES_DETAIL, detail ) ;
-      }
-
-      _restAdaptor->setOPResult( _restSession, rc, bsonBuilder.obj() ) ;
+      _restAdaptor->setOPResult( _restSession, rc, res ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
    }
 
@@ -104,11 +99,11 @@ namespace engine
       if ( ( NULL == pUserName ) || ( NULL == pPasswd ) || ( NULL == pTime ) )
       {
          rc = SDB_INVALIDARG ;
-         string errorInfo = string( OM_REST_FIELD_LOGIN_NAME ) + " or " 
-                            + OM_REST_FIELD_LOGIN_PASSWD + " or " 
-                            + OM_REST_FIELD_TIMESTAMP + " is null" ;
-         PD_LOG( PDERROR, "%s", errorInfo.c_str() ) ;
-         _sendErrorRes2Web( rc, errorInfo ) ;
+         _errorDetail = string( OM_REST_FIELD_LOGIN_NAME ) + " or " 
+                        + OM_REST_FIELD_LOGIN_PASSWD + " or " 
+                        + OM_REST_FIELD_TIMESTAMP + " is null" ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
@@ -269,7 +264,6 @@ namespace engine
       md5::md5digest newDigest ;
       string time ;
 
-      BSONObjBuilder authBuilder ;
       BSONObj bsonAuth ;
 
       rc = _getRestDetail( user, oldPasswd, newPasswd, time ) ;
@@ -294,9 +288,8 @@ namespace engine
       _decryptPasswd( oldPasswd, time, oldDecryptPasswd ) ;
       md5::md5( ( const void * )oldDecryptPasswd.c_str(), 
                 oldDecryptPasswd.length(), oldDigest) ;
-      authBuilder.append( SDB_AUTH_USER, user ) ;
-      authBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( oldDigest ) ) ;
-      bsonAuth = authBuilder.obj() ;
+      bsonAuth = BSON( SDB_AUTH_USER << user 
+                      << SDB_AUTH_PASSWD << md5::digestToString( oldDigest ) ) ;
       rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
       {
@@ -457,7 +450,6 @@ namespace engine
       string sdbPasswd ;
       string sdbUserGroup ;
       string sdbinstallPath ;
-      BSONObjBuilder bsonBuilder ;
       BSONObjBuilder resBuilder ;
       BSONObj bsonCluster ;
       INT32 rc                 = SDB_OK ;
@@ -471,14 +463,13 @@ namespace engine
          goto error ;
       }
 
-      bsonBuilder.append( OM_CLUSTER_FIELD_NAME, clusterName ) ;
-      bsonBuilder.append( OM_CLUSTER_FIELD_DESC, desc ) ;
-      bsonBuilder.append( OM_CLUSTER_FIELD_SDBUSER, sdbUser ) ;
-      bsonBuilder.append( OM_CLUSTER_FIELD_SDBPASSWD, sdbPasswd ) ;
-      bsonBuilder.append( OM_CLUSTER_FIELD_SDBUSERGROUP, sdbUserGroup ) ;
-      bsonBuilder.append( OM_CLUSTER_FIELD_INSTALLPATH, sdbinstallPath ) ;
       // duplicate check depends on the unique index of table(OM_CS_DEPLOY_CL_CLUSTERIDX1)
-      bsonCluster = bsonBuilder.obj() ;
+      bsonCluster = BSON( OM_CLUSTER_FIELD_NAME << clusterName
+                          << OM_CLUSTER_FIELD_DESC << desc
+                          << OM_CLUSTER_FIELD_SDBUSER << sdbUser
+                          << OM_CLUSTER_FIELD_SDBPASSWD << sdbPasswd
+                          << OM_CLUSTER_FIELD_SDBUSERGROUP << sdbUserGroup
+                          << OM_CLUSTER_FIELD_INSTALLPATH << sdbinstallPath ) ;
       rc = rtnInsert( OM_CS_DEPLOY_CL_CLUSTER, bsonCluster, 1, 0, _cb );
       if ( rc )
       {
@@ -544,7 +535,6 @@ namespace engine
 
       while ( TRUE )
       {
-         BSONObjBuilder innerBuilder ;
          BSONObj tmp ;
          rtnContextBuf buffObj ;
          SINT64 startingPos = 0 ;
@@ -566,17 +556,16 @@ namespace engine
          }
 
          BSONObj result( buffObj.data() ) ;
-         innerBuilder.append( OM_BSON_FIELD_CLUSTER_NAME, 
-                              result.getStringField( OM_CLUSTER_FIELD_NAME )) ;
-         innerBuilder.append( OM_BSON_FIELD_CLUSTER_DESC, 
-                              result.getStringField( OM_CLUSTER_FIELD_DESC )) ;
-         innerBuilder.append( OM_BSON_FIELD_SDB_USER, 
-                            result.getStringField( OM_CLUSTER_FIELD_SDBUSER )) ;
-         innerBuilder.append( OM_BSON_FIELD_SDB_USERGROUP, 
-                       result.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP )) ;
-         innerBuilder.append( OM_BSON_FIELD_INSTALLPATH, 
-                       result.getStringField( OM_CLUSTER_FIELD_INSTALLPATH )) ;
-         tmp = innerBuilder.obj() ;
+         tmp = BSON( OM_BSON_FIELD_CLUSTER_NAME 
+                     << result.getStringField( OM_CLUSTER_FIELD_NAME )
+                     << OM_BSON_FIELD_CLUSTER_DESC
+                     << result.getStringField( OM_CLUSTER_FIELD_DESC )
+                     << OM_BSON_FIELD_SDB_USER
+                     << result.getStringField( OM_CLUSTER_FIELD_SDBUSER )
+                     << OM_BSON_FIELD_SDB_USERGROUP
+                     << result.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP )
+                     << OM_BSON_FIELD_INSTALLPATH
+                     << result.getStringField( OM_CLUSTER_FIELD_INSTALLPATH )) ;
          rc = _restAdaptor->appendHttpBody( _restSession, tmp.objdata(), 
                                             tmp.objsize(), 1 ) ;
          if ( rc )
@@ -679,15 +668,12 @@ namespace engine
       {
          if ( _isHostExist( *ite ) )
          {
-            BSONObjBuilder builder ;
-            BSONObj tmp ;
-            builder.append( OM_BSON_FIELD_HOST_IP, 
-                            ite->getStringField( OM_BSON_FIELD_HOST_IP ) ) ;
-            builder.append( OM_BSON_FIELD_HOST_NAME, 
-                            ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
-            builder.append( OM_REST_RES_RETCODE, SDB_IXM_DUP_KEY ) ;
-            builder.append( OM_REST_RES_DETAIL, "host is exist" ) ;
-            tmp = builder.obj() ;
+            BSONObj tmp = BSON( OM_BSON_FIELD_HOST_IP
+                               << ite->getStringField( OM_BSON_FIELD_HOST_IP )
+                               << OM_BSON_FIELD_HOST_NAME
+                               << ite->getStringField( OM_BSON_FIELD_HOST_NAME )
+                               << OM_REST_RES_RETCODE << SDB_IXM_DUP_KEY
+                               << OM_REST_RES_DETAIL << "host is exist" ) ;
             hostResult.push_back( tmp ) ;
 
             hostInfoList.erase( ite++ ) ;
@@ -4385,8 +4371,6 @@ namespace engine
       tmpTest = tmpTestBuilder.obj() ;
       sdbGetOMManager()->saveInstallTask( OM_DEFAULT_LOCAL_HOST, "11790", 
                                           tmpTest, BSONObj() ) ;
-//      sdbGetOMManager()->updateTaskID( OM_TASKINFO_FAKE_TASKID, 
-//                                       ( long long )123 ) ;
    }
 
    void omQueryInstallProgress::_testUpdateTask()
@@ -5484,7 +5468,7 @@ namespace engine
      }
 
      this function transfer record to a BSON like below, and add to arrayBuilder
-     
+
      {
        HostName:"", User:"", Passwd:"", dbpath:"", role:"", logfilesz:"", ...
      }
@@ -5576,7 +5560,7 @@ namespace engine
             PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
             goto error ;
          }
-         
+
          isExistFlag = TRUE ;
          BSONObj result( buffObj.data() ) ;
          rc = _expandNodeInfoToBuilder( result, arrayBuilder ) ;
@@ -5808,7 +5792,7 @@ namespace engine
                  businessName.c_str(), rc ) ;
          goto error ;
       }
-      
+
    done:
       return rc ;
    error:
@@ -5900,7 +5884,7 @@ namespace engine
       string realSubPath            = _subPath ;
 
       transfer = restFileController::getTransferInstance() ;
-      transfer->getTransferedPath(_subPath.c_str(), realSubPath) ;
+      transfer->getTransferedPath( _subPath.c_str(), realSubPath ) ;
 
       rc = _getFileContent( _rootPath + realSubPath, &pContent, 
                             contentLength ) ;
