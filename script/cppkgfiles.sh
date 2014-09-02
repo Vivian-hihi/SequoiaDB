@@ -11,7 +11,7 @@ function copy_file()
    cp $1 $2
    if [ $? -ne 0 ]; then
       echo "ERROR: Failed to copy the file!"
-      #exit 1;
+      exit 1;
    fi
 }
 
@@ -20,7 +20,7 @@ function copy_folder()
    rsync -vaq --exclude=".svn" $1 $2
    if [ $? -ne 0 ]; then
       echo "ERROR: Failed to copy the folder!"
-      #exit 1;
+      exit 1;
    fi
 }
 
@@ -85,12 +85,6 @@ copy_file $src_dir_conf_smp/sdbtop.xml $dest_dir_conf_smp/
 copy_file $sdb_path/conf/sdbcm.conf $pkg_src_tmp/conf/
 
 #########################################
-# folder: CSharp
-#########################################
-echo "collect the files of \"CSharp\""
-#mkdir -p $pkg_src_tmp/CSharp
-
-#########################################
 # folder: doc
 #########################################
 #TODO************************************************
@@ -100,21 +94,6 @@ echo "collect the files of \"doc\""
 mkdir -p $pkg_src_tmp/doc
 copy_folder "$sdb_path/doc/out/*" "$pkg_src_tmp/doc"
 copy_folder "$sdb_path/doc/manual" "$pkg_src_tmp/doc"
-
-#########################################
-# folder: hadoop
-#########################################
-#TODO************************************************
-#TODO***************test the driver******************
-#TODO************************************************
-echo "collect the files of \"hadoop\""
-hive_conn_name="hive-sequoiadb-apache.jar"
-cdh_hive_conn_name="hive-sequoiadb-cdh-5.0.0-beta-2.jar"
-src_dir_hdp_hv="$sdb_path/driver/hadoop/hive"
-dest_dir_hadoop="$pkg_src_tmp/hadoop"
-mkdir -p $dest_dir_hadoop
-copy_file $src_dir_hdp_hv/$hive_conn_name $dest_dir_hadoop
-copy_file $src_dir_hdp_hv/$cdh_hive_conn_name $dest_dir_hadoop
 
 #########################################
 # folder: include
@@ -163,10 +142,9 @@ copy_file $sdb_path/driver/java/sequoiadb.jar $pkg_src_tmp/java
 # folder: lib
 #########################################
 #**************************************
-#TODO: save the php version to file: 5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15
+#TODO: save the php version to file: 5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0
 #*****************************************
 echo "collect the files of \"lib\""
-php_ver_list=()
 src_dir_lib="$sdb_path/client/lib"
 dest_dir_lib="$pkg_src_tmp/lib"
 mkdir -p $dest_dir_lib
@@ -175,21 +153,17 @@ if [ "sc_$build_type" == "sc_debug" ];then
 else
    build_dir="normal"
 fi
-while read LINE
-do
-   if [[ -n "$LINE" ]];then
-      php_ver_list[${#php_ver_list[@]}]="$LINE"
-   fi
-done < $sdb_path/driver/php5/php_ver.list
 copy_file $src_dir_lib/libsdbcpp.so $dest_dir_lib
 copy_file $src_dir_lib/libsdbc.so $dest_dir_lib
 copy_file $src_dir_lib/libstaticsdbc.a $dest_dir_lib
 copy_file $src_dir_lib/libstaticsdbcpp.a $dest_dir_lib
 mkdir -p $dest_dir_lib/phplib
-for i in "${!php_ver_list[@]}";
+while read LINE
 do
-   copy_file $sdb_path/driver/php5/build/$build_dir/libsdbphp-${php_ver_list[$i]}.so $dest_dir_lib/phplib
-done
+   if [[ -n "$LINE" ]];then
+      copy_file $sdb_path/driver/php5/build/$build_dir/libsdbphp-$LINE.so $dest_dir_lib/phplib
+   fi
+done < $sdb_path/driver/php5/php_ver_linux.list
 
 #########################################
 # folder: license
@@ -287,8 +261,8 @@ copy_file $src_dir_smp_php/css/style.css $dest_dir_smp_php_css
 dest_dir_smp_php_js="$dest_dir_smp_php/js"
 mkdir -p $dest_dir_smp_php_js
 copy_file $src_dir_smp_php/js/common.js $dest_dir_smp_php_js
-src_dir_pyt="$sdb_path/client/samples/python"
-dest_dir_pyt="$pkg_src_tmp/samples/python"
+src_dir_pyt="$sdb_path/client/samples/Python"
+dest_dir_pyt="$pkg_src_tmp/samples/Python"
 mkdir -p $dest_dir_pyt
 copy_file $src_dir_pyt/collectionspace.py $dest_dir_pyt
 copy_file $src_dir_pyt/connect.py $dest_dir_pyt

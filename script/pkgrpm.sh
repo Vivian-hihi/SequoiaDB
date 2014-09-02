@@ -45,9 +45,6 @@ function get_macro_val()
    echo "$val"
 }
 
-echo "###############################################"
-echo "          begin to generate rpm-package"
-echo "###############################################"
 cur_path=""
 dir_name=$(dirname $0)
 if [[ ${dir_name:0:1} != "/" ]]; then
@@ -69,16 +66,13 @@ begin_ver=`get_macro_val $ver_info_file $ver_name`
 sub_ver=`get_macro_val $ver_info_file $subver_name`
 sdb_name="sequoiadb-$begin_ver.$sub_ver"
 
-echo "collect source files..."
+echo "package the source files"
 pkg_src_path="$pkg_tmp_path/$sdb_name"
 mkdir -p $pkg_src_path
 cp -rf $files_src_path/* $pkg_src_path
 err_exit $?
-
-
-echo "generate the RPM package..."
-echo "package the source files"
 tar -czf $pkg_tmp_path/$sdb_name.tar.gz -C $pkg_tmp_path $sdb_name --remove-files
+err_exit $?
 echo "prepare the spec file"
 mkdir -p $pkg_tmp_path/rpm/SPECS
 cp -f $pkg_conf_file $pkg_tmp_path/rpm/SPECS
@@ -88,7 +82,7 @@ echo "build the RPM package"
 mkdir -p $pkg_tmp_path/rpm/SOURCES
 rm -rf $pkg_tmp_path/rpm/SOURCES/*
 mv $pkg_tmp_path/$sdb_name.tar.gz $pkg_tmp_path/rpm/SOURCES
-rpmbuild --quiet --rmsource --define "_topdir $pkg_tmp_path/rpm" -bb $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
+rpmbuild --rmsource --define "_topdir $pkg_tmp_path/rpm" -bb $pkg_tmp_path/rpm/SPECS/sequoiadb.spec
 if [[ $? -ne 0 ]]; then
    exit 1;
 fi

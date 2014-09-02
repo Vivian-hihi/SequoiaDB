@@ -1,7 +1,7 @@
-#!/usr/bin/env python
 import os,sys
 import getopt
 import commands
+import platform
 
 def help_info():
    print ('usage: python package.py [OPTION]')
@@ -12,14 +12,14 @@ def help_info():
    print ('                            code directory if not specified.')
    print ('   -b, --build-type         release or debug, default as release')
    print ('   --rmsource               remove souce files when done')
+   print ('   --nobuild                do not compile. Effective if "-s" is specified')
+   print ('   -h, --help               show this help info')
    print ('')
    print ('')
    print ('Examples:')
    print ('   python package.py -t rpm -s ./package/source')
    print ('')
    print ('')
-   print ( sys.path[0] )
-   print ( os.getcwd())
 
 def check_para():
    if pkg_type == 'rpm':
@@ -38,9 +38,11 @@ src_path=""
 cur_dir = os.getcwd()
 scrpt_path = sys.path[0]
 work_dir = scrpt_path + '/../package'
+code_path = scrpt_path + '/..'
 rmsrc = False
+need_build = True
 short_args = 'ht:w:s:b:'
-long_args = ['help', 'source-file-path=', 'build-type=', 'rmsource']
+long_args = ['help', 'source-file-path=', 'build-type=', 'rmsource', 'nobuild']
 try:
    opts, args = getopt.getopt(sys.argv[1:], short_args, long_args )
 except getopt.GetoptError:
@@ -59,6 +61,8 @@ for opt, arg in opts:
       build_type = arg
    elif opt == '--rmsource':
       rmsrc = True
+   elif opt == '--nobuild':
+      need_build = False
    else:
       help_info()
       sys.exit(1)
@@ -67,6 +71,23 @@ check_para()
 
 rs = 0
 if src_path == "":
+   os_type = platform.system()
+   if os_type == 'Windows' or os_type == 'Microsoft':
+      print( 'TODO: prepare the source files in windows!' )
+      sys.exit(1)
+   if need_build:
+      print( 'build the source code...' )
+      build_scrpt_path = code_path + '/build.py'
+      build_cmd_pre = 'python ' + build_scrpt_path
+      build_type_tmp = ''
+      if build_type == 'debug':
+         build_type_tmp = ' --dd'
+      build_cmd = build_cmd_pre + build_type_tmp
+      rs = os.system( build_cmd )
+      if rs != 0:
+         print( 'Error: Failed to build the source code!' )
+         sys.exit( rs )
+
    src_path = work_dir + '/tmp/sequoiadb'
    print( 'prepare the source files...' )
    str_tmp = [ scrpt_path, '/cppkgfiles.sh ', src_path, ' ', build_type ]
@@ -74,7 +95,7 @@ if src_path == "":
    rs = os.system( cp_files_cmd )
    if rs != 0:
       print( 'ERROR: Failed to prepare the source files!' )
-      exit( rs )
+      sys.exit( rs )
 
 if pkg_type == "rpm":
    print( 'generate rpm-package...' )
@@ -83,7 +104,7 @@ if pkg_type == "rpm":
    rs = os.system( pkg_rpm_cmd )
    if rs != 0:
        print( 'ERROR: Failed to generate rpm-package!' )
-       exit( rs )
+       sys.exit( rs )
 
 if rmsrc == True:
    print( 'remove source files...' )
