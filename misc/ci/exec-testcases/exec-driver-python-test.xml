@@ -4,7 +4,8 @@
 <!--@param ${python-bin.dir} : The python-bin's director-->
 <!--@param ${pythonunit.phar.dir} : The pythonunit.pythonar's director-->
 
-<project name="Exec-Python-Testcases" default="Test-Driver-Python">
+<!-- <project name="Exec-Python-Testcases" default="Test-Driver-Python"> -->
+<project name="exec-driver-python-test" default="Test-Driver-Python">
 	<property file="${ci.properties.path}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
@@ -13,7 +14,7 @@
 	</taskdef>
 
 	<target name="Clean-Python-Reports" depends="">
-		<echo message="reports.path=${reports.path}" />
+		<echo message="Reports' path is ${reports.path}" />
 		<delete dir="${reports.path}" failonerror="false" />
 		<mkdir dir="${reports.path}" />
 	</target>
