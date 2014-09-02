@@ -70,7 +70,7 @@
 		</if>
 
 		<echo message="Begin to javac the driver java test" />
-		<javac srcdir="${build.testcases.java}" destdir="${deploy.path}/hlt/drivers_testcases/java/build" fork="yes" debug="true" executable="${WORKSPACE}/sequoiadb/java/${jdk.name}/bin/javac" includeAntRuntime="false" includeJavaRuntime="false" >
+		<javac srcdir="${build.testcases.java}" destdir="${deploy.path}/hlt/drivers_testcases/java/build" fork="yes" debug="true" executable="${WORKSPACE}/sequoiadb/java/${jdk.name}/bin/javac" includeAntRuntime="false" includeJavaRuntime="false" encoding="GBK">
 			<classpath>
 				<pathelement location="${junit4.jar.dir}" />
 				<pathelement location="${sequoiadb.jar.dir}" />
