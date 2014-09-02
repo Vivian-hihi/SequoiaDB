@@ -143,14 +143,13 @@ namespace engine
          return hash & DMS_BUCKETS_MODULO ;
       }
 
-      OSS_FORCE_INLINE INT32 _push2Bucket( UINT32 bucket,
-                                           DMS_LOB_PAGEID pageId,
-                                           _dmsLobDataMapBlk &blk) ;
+      INT32 _push2Bucket( UINT32 bucket, DMS_LOB_PAGEID pageId,
+                          _dmsLobDataMapBlk &blk) ;
 
-      OSS_FORCE_INLINE INT32 _find( const _dmsLobRecord &record,
-                                    DMS_LOB_PAGEID &page,
-                                    _dmsLobDataMapBlk *&blk,
-                                    UINT32 *bucket = NULL ) ;
+      INT32 _find( const _dmsLobRecord &record,
+                   DMS_LOB_PAGEID &page,
+                   _dmsLobDataMapBlk *&blk,
+                   UINT32 *bucket = NULL ) ;
 
       INT32 _allocatePage( const dmsLobRecord &record,
                            dmsMBContext *mbContext,
