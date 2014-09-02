@@ -6,7 +6,7 @@
 
 <project name="Exec-Python-Testcases" default="Test-Driver-Python">
 <!-- <project name="exec-driver-python-test" default="Test-Driver-Python"> -->
-	<!-- <property file="${ci.properties.path}" /> -->
+	<property file="${ci.properties.path}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
