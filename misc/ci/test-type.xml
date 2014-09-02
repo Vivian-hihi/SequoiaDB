@@ -65,7 +65,8 @@
 
 			<case value="driver-python">
 				<echo message="...test python driver..."/>
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
+				<!-- <sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}" antFileName="${antFileName}"> -->
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}">
 					<param name="python.testcase.path" value="${testcase.path}/drivers_testcases/python" />
 					<param name="excludes.dir.patterns" value="" />
 					<param name="includes.dir.patterns" value="*" />
