@@ -4,7 +4,7 @@
 <!--@param ${python-bin.dir} : The python-bin's director-->
 <!--@param ${pythonunit.phar.dir} : The pythonunit.pythonar's director-->
 
-<project name="exec-driver-python-test" default="exec-driver-python-test">
+<project name="Exec-Python-Testcases" default="Test-Driver-Python">
 	<property file="${ci.properties.path}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
