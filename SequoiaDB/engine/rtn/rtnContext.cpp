@@ -51,7 +51,6 @@
 #include "rtn.hpp"
 #include "rtnContextSort.hpp"
 #include "dpsOp2Record.hpp"
-#include "rtnExplainDef.hpp"
 #include "rtnLob.hpp"
 
 using namespace bson;
@@ -4639,7 +4638,7 @@ namespace engine
     _cbOfQuery( NULL ),
     _explained( FALSE )
    {
-   
+      _needRun = TRUE ;
    }
 
    _rtnContextExplain::~_rtnContextExplain()
@@ -4671,7 +4670,25 @@ namespace engine
          goto error ;
       }
 
-      _explainOptions = explainOptions.getOwned() ;
+      try
+      {
+         BSONElement e = explainOptions.getField( FIELD_NAME_RUN ) ;
+         if ( e.isNumber() )
+         {
+            _needRun = e.numberInt() == 0 ? FALSE : TRUE ;
+         }
+         else if ( e.isBoolean() )
+         {
+            _needRun = e.booleanSafe() ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Ocurr exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
    done:
@@ -4761,13 +4778,12 @@ namespace engine
          goto error ;
       }
 
-      _builder.append( RTN_EXPLAIN_FULLNAME, _options._fullName ) ;
-      _builder.append( RTN_EXPLAIN_SCANTYPE, IXSCAN == plan->getScanType() ?
-                                             RTN_EXPLAIN_IXMSCAN :
-          		                     RTN_EXPLAIN_TBLSCAN ) ;
-      _builder.append( RTN_EXPLAIN_IDXNAME,
+      _builder.append( FIELD_NAME_NAME, _options._fullName ) ;
+      _builder.append( FIELD_NAME_SCANTYPE, IXSCAN == plan->getScanType() ?
+                       VALUE_NAME_IXSCAN : VALUE_NAME_TBSCAN ) ;
+      _builder.append( FIELD_NAME_INDEXNAME,
                        plan->getIndexName() ) ; 
-      _builder.appendBool( RTN_EXPLAIN_USR_EX_SORT, plan->sortRequired() ) ;
+      _builder.appendBool( FIELD_NAME_USE_EXT_SORT, plan->sortRequired() ) ;
       rc = ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
       if ( SDB_OK != rc )
       {
@@ -4775,7 +4791,7 @@ namespace engine
          goto error ;
       }
       ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;
-      _builder.append( RTN_EXPLAIN_NODE, ss.str() ) ;
+      _builder.append( FIELD_NAME_NODE_NAME, ss.str() ) ;
 
       /// get some info before explain
       rc = _getMonInfo( cb, _beginMon ) ;
@@ -4861,7 +4877,7 @@ namespace engine
 
       /// here we do not use $count coz it does not surpport
       /// 'limit' and 'skip'.
-      while ( TRUE )
+      while ( _needRun )
       {
          rc = rtnGetMore( _queryContextID,
                           -1, ctxBuf, startingPos, cb,
@@ -4891,8 +4907,8 @@ namespace engine
                }
                else if ( SDB_OK != rc )
                {
-                  PD_LOG( PDERROR, "failed to get more from buf of context[%lld],"
-                    "rc:%d ", _queryContextID, rc ) ;
+                  PD_LOG( PDERROR, "Failed to get more from buf of "
+                          "context[%lld],rc:%d ", _queryContextID, rc ) ;
                   goto error ;
                }
                else
@@ -4924,17 +4940,17 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT ) ;
 
-      _builder.appendNumber( RTN_EXPLAIN_RETURNNUM, _recordNum ) ;
+      _builder.appendNumber( FIELD_NAME_RETURN_NUM, _recordNum ) ;
       UINT64 beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
       UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
-      _builder.append( RTN_EXPLAIN_ETIME,
+      _builder.append( FIELD_NAME_ELAPSED_TIME,
                        FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ; 
       
       BSONElement begin = _beginMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
       BSONElement end = _endMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
       if ( begin.isNumber() && end.isNumber() )
       {
-         _builder.appendNumber( RTN_EXPLAIN_IDXREAD,
+         _builder.appendNumber( FIELD_NAME_INDEXREAD,
                                 end.Long() - begin.Long() ) ;
       }
 
@@ -4942,7 +4958,7 @@ namespace engine
       end = _endMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
       if ( begin.isNumber() && end.isNumber() )
       {
-         _builder.appendNumber( RTN_EXPLAIN_DATAREAD,
+         _builder.appendNumber( FIELD_NAME_DATAREAD,
                                 end.Long() - begin.Long() ) ;
       }
 
@@ -4950,7 +4966,7 @@ namespace engine
       end = _endMon.getField( FIELD_NAME_USERCPU ) ;
       if ( begin.isNumber() && end.isNumber() )
       {
-         _builder.append( RTN_EXPLAIN_USRCPU,
+         _builder.append( FIELD_NAME_USERCPU,
                           FLOAT64( end.Number() - begin.Number() ) ) ;
       }
       
@@ -4958,7 +4974,7 @@ namespace engine
       end = _endMon.getField( FIELD_NAME_SYSCPU ) ;
       if ( begin.isNumber() && end.isNumber() )
       {
-         _builder.append( RTN_EXPLAIN_SYSCPU,
+         _builder.append( FIELD_NAME_SYSCPU,
                           FLOAT64( end.Number() - begin.Number() ) ) ;
       }
 

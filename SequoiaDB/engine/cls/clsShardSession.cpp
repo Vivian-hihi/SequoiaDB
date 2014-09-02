@@ -37,7 +37,6 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "rtnDataSet.hpp"
-#include "rtnExplainDef.hpp"
 
 using namespace bson ;
 
@@ -2298,7 +2297,7 @@ namespace engine
          goto error ;
       }
 
-      builder.append( RTN_EXPLAIN_FULLNAME, fullName ) ;
+      builder.append( FIELD_NAME_NAME, fullName ) ;
       {
       rtnDataSet dataSet( mainCLContextID, cb ) ;
       while ( TRUE )
@@ -2313,7 +2312,7 @@ namespace engine
 
          if ( !extractNode )
          {
-            ele = obj.getField( RTN_EXPLAIN_NODE ) ;
+            ele = obj.getField( FIELD_NAME_NODE_NAME ) ;
             if ( String != ele.type() )
             {
                PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2324,7 +2323,7 @@ namespace engine
             builder.append( ele ) ;
          }
 
-         ele = obj.getField( RTN_EXPLAIN_FULLNAME ) ;
+         ele = obj.getField( FIELD_NAME_NAME ) ;
          if ( String != ele.type() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2334,7 +2333,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_USR_EX_SORT ) ;
+         ele = obj.getField( FIELD_NAME_USE_EXT_SORT ) ;
          if ( Bool != ele.type() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2344,7 +2343,7 @@ namespace engine
          }
          tmp.append( ele ) ;
          
-         ele = obj.getField( RTN_EXPLAIN_SCANTYPE ) ;
+         ele = obj.getField( FIELD_NAME_SCANTYPE ) ;
          if ( String != ele.type() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2354,7 +2353,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_IDXNAME ) ;
+         ele = obj.getField( FIELD_NAME_INDEXNAME ) ;
          if ( String != ele.type() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2364,7 +2363,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_RETURNNUM ) ;
+         ele = obj.getField( FIELD_NAME_RETURN_NUM ) ;
          if ( !ele.isNumber() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2374,7 +2373,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_ETIME ) ;
+         ele = obj.getField( FIELD_NAME_ELAPSED_TIME ) ;
          if ( !ele.isNumber() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2384,7 +2383,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_IDXREAD ) ;
+         ele = obj.getField( FIELD_NAME_INDEXREAD ) ;
          if ( !ele.isNumber() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2394,7 +2393,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_DATAREAD ) ;
+         ele = obj.getField( FIELD_NAME_DATAREAD ) ;
          if ( !ele.isNumber() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2404,7 +2403,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_USRCPU ) ;
+         ele = obj.getField( FIELD_NAME_USERCPU ) ;
          if ( !ele.isNumber() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2414,7 +2413,7 @@ namespace engine
          }
          tmp.append( ele ) ;
 
-         ele = obj.getField( RTN_EXPLAIN_SYSCPU ) ;
+         ele = obj.getField( FIELD_NAME_SYSCPU ) ;
          if ( !ele.isNumber() )
          {
             PD_LOG( PDERROR, "invalid result of explaining:%s",
@@ -2434,7 +2433,7 @@ namespace engine
       }
       mainCLContextID = -1 ;
 
-      builder.append( RTN_EXPLAIN_SUBCL, arrBuilder.arr() ) ;
+      builder.append( FIELD_NAME_SUB_COLLECTIONS, arrBuilder.arr() ) ;
       }
 
       rc = context->monAppend( builder.obj() ) ;

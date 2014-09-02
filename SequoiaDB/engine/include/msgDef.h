@@ -230,6 +230,11 @@
 #define FIELD_NAME_ENABLE_DATEDIR            "EnableDateDir"
 #define FIELD_NAME_PREFIX                    "Prefix"
 #define FIELD_NAME_MAX_DATAFILE_SIZE         "MaxDataFileSize"
+#define FIELD_NAME_USE_EXT_SORT              "UseExtSort"
+#define FIELD_NAME_SUB_COLLECTIONS           "SubCollections"
+#define FIELD_NAME_ELAPSED_TIME              "ElapsedTime"
+#define FIELD_NAME_RETURN_NUM                "ReturnNum"
+#define FIELD_NAME_RUN                       "Run"
 
 #define FIELD_NAME_INSERT                    "Insert"
 #define FIELD_NAME_UPDATE                    "Update"

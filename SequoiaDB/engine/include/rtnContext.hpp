@@ -990,8 +990,8 @@ namespace engine
 
    private:
       _rtnQueryOptions _options ;
-      BSONObj _explainOptions ;
       INT64 _queryContextID ;
+      BOOLEAN _needRun ;
 
       /// info before explain
       BSONObj _beginMon ;
