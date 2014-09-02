@@ -140,7 +140,7 @@ else:
        ext_dir = join(root_dir, '../../thirdparty/php/' + sys_os + '/php-' + phpedition)
     else:
        print "Please input the version information,For example: 'scons --phpversion=5.3.10' "
-       exit(0)
+       exit(1)
 
 variantDir = get_variant_dir()
 env = Environment( BUILD_DIR=variantDir )
