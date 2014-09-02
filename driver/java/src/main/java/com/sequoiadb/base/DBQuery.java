@@ -56,6 +56,12 @@ public class DBQuery {
 	 */
 	public static final int FLG_QUERY_PARALLED = 0x00000100;
 	
+	/**
+	 * @memberof FLG_QUERY_EXPLAIN 0x00000400
+	 * @brief explain query
+	 */
+	public static final int FLG_QUERY_EXPLAIN  = 0x00000400;
+	
 	public DBQuery() {
 		matcher = null;
 		selector = null;

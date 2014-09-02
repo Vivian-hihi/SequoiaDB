@@ -576,6 +576,46 @@ public class DBCollection {
 			throws BaseException {
 		_update(SequoiadbConstants.FLG_UPDATE_UPSERT, matcher, modifier, hint);
 	}
+	
+	/**
+     * @fn DBCursor explain(BSONObject matcher, BSONObject selector,
+            BSONObject orderBy, BSONObject hint, long skipRows, long returnRows,
+            int flag, BSONObject options)
+     * @brief Get explain of current collection.
+     * @param matcher 
+     *            the matching rule, return all the documents if null
+     * @param selector
+     *            the selective rule, return the whole document if null
+     * @param orderBy
+     *            the ordered rule, never sort if null
+     * @param hint
+     *            the hint, automatically match the optimal hint if null
+     * @param skipRows
+     *            skip the first numToSkip documents, never skip if this parameter is 0
+     * @param returnRows
+     *            only return returnRows documents, return all if this parameter is -1
+     * @param flag the flag is used to choose the way to query, the optional options are as below:  
+     * @param options the options of explian
+     * @return a DBCursor instance of the result
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public DBCursor explain(BSONObject matcher, BSONObject selector,
+            BSONObject orderBy, BSONObject hint, long skipRows, long returnRows,
+            int flag, BSONObject options) throws BaseException {
+        
+        flag |= DBQuery.FLG_QUERY_EXPLAIN;
+        if ( null == hint ){
+            hint = options;
+        }
+        else{
+            if ( null != options){
+                hint.putAll(options);
+            }
+        }
+        
+        return query(matcher, selector, orderBy, hint, skipRows, 
+                returnRows, flag);
+    }
 
 	/**
 	 * @fn DBCursor query()
