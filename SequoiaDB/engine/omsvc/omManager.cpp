@@ -1210,7 +1210,7 @@ namespace engine
       builder.append( OM_BSON_TASKID, ossAtoll(taskID.c_str() ) ) ;
       msg = builder.obj() ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                             CMD_ADMIN_PREFIX OM_INSTALL_BUSINESS_REQ, 
+                             CMD_ADMIN_PREFIX OM_QUERY_PROGRESS, 
                              0, 0, 0, -1, &msg, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
