@@ -85,12 +85,12 @@
 		<echo message="Deploy ${deploy.case.fullname} complete. " />
 	</target>
 
-	<target name="copy-test-log" depends="deploy-test-all" >
+	<!-- <target name="copy-test-log" depends="deploy-test-all" >
 		<echo message="tarPath is : ${WORKSPACE}/${host.NAME}-copy-log" />
 		<echo message="saveHostName is ${target.deploy_tar_gz.ip}" />
 		<echo message="fileHostName is ${host.NAME}" />
 		<echo message="tar basedir=${WORKSPACE}/${host.NAME}-copy-log   destfile=${WORKSPACE}/${host.NAME}-copy-log.${BUILD_NUMBER}" />
 		<tar basedir="${WORKSPACE}" destfile="${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz" compression="gzip" includes="${host.NAME}-copy-log/**" />
 		<!-- <property environment="env" /> -->
-	</target>
+	</target> -->
 </project>

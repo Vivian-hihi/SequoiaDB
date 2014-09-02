@@ -67,14 +67,15 @@
 				<echo message="...test python driver..."/>
 				<!-- <sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}" antFileName="${antFileName}"> -->
 				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}">
-					<param name="python.testcase.path" value="${testcase.path}/drivers_testcases/python" />
-					<param name="excludes.dir.patterns" value="" />
-					<param name="includes.dir.patterns" value="*" />
-					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-					<param name="coord_port" value="50000" />
-					<param name="data_port" value="21100" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="python.testcase.path" value="${testcase.path}/drivers_testcases/python" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="excludes.dir.patterns" value="reports*" />
+					<param name="includes.dir.patterns" value="*" />
+					
+					<param name="coord_port" value="50000" />
+					<param name="data_port" value="21100" />				
 				</sdbtest>
 				<echo message="... test python driver is over ..." />
 			</case>
