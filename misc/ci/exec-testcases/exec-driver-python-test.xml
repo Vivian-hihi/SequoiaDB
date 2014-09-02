@@ -8,17 +8,6 @@
 <!--@param ${coord_port}:50000.-->
 <!--@param ${data_port}:21100.-->
 
-
-<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-<param name="python.testcase.path" value="${testcase.path}/drivers_testcases/python" />
-<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-<param name="excludes.dir.patterns" value="reports*" />
-<param name="includes.dir.patterns" value="*" />
-
-<param name="coord_port" value="50000" />
-<param name="data_port" value="21100" />
-
 <project name="Exec-Python-Testcases" default="Test-Driver-Python">
 	<property file="${ci.properties.path}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
