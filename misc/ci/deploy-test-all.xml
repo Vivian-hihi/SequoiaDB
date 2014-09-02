@@ -4,7 +4,7 @@
 <!--@param ${deploy.conffile.wildcard}: deploy config file wildcard. just for debug -->
 <!--@param ${is.test}: the flag for whether execute test, if set false, then just deploy. just for debug -->
 <!--@param ${BUILD_NUMBER} : what number is it build -->
-<project name="deploy-test-all" default="copy-test-log">
+<project name="deploy-test-all" default="deploy-one-case-and-test">
 	<hostinfo prefix="host" />
 	<property file="${ci.script.file.path}/ci.test.properties" />
 	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
