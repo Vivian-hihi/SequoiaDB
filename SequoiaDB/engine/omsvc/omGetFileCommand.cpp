@@ -4800,6 +4800,26 @@ namespace engine
       goto done ;
    }
 
+   // *****************omStartBusinessCommand *****************************
+   omStartBusinessCommand::omStartBusinessCommand( restAdaptor *pRestAdaptor, 
+                                                   pmdRestSession *pRestSession,
+                                                   string localAgentHost, 
+                                                   string localAgentService )
+                          :omScanHostCommand( pRestAdaptor, pRestSession,
+                                             localAgentHost, localAgentService ) 
+   {
+   }
+
+   omStartBusinessCommand::~omStartBusinessCommand()
+   {
+   }
+
+   INT32 omStartBusinessCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      return rc ;
+   }
+
    // *****************omRemoveClusterCommand *****************************
    omRemoveClusterCommand::omRemoveClusterCommand( restAdaptor *pRestAdaptor, 
                                                   pmdRestSession *pRestSession )

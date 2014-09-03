@@ -485,22 +485,26 @@ namespace engine
                                           list<BSONObj> &listBusiness ) ;
    } ;
 
-   class omStartBusinessCommand : public omAuthCommand
+   class omStartBusinessCommand : public omScanHostCommand
    {
       public:
          omStartBusinessCommand( restAdaptor *pRestAdaptor, 
-                                 pmdRestSession *pRestSession ) ;
+                                 pmdRestSession *pRestSession,
+                                 string localAgentHost, 
+                                 string localAgentService ) ;
          virtual ~omStartBusinessCommand() ;
 
       public:
          virtual INT32  doCommand() ;
    } ;
 
-   class omStopBusinessCommand : public omAuthCommand
+   class omStopBusinessCommand : public omScanHostCommand
    {
       public:
          omStopBusinessCommand( restAdaptor *pRestAdaptor, 
-                                pmdRestSession *pRestSession ) ;
+                                pmdRestSession *pRestSession,
+                                string localAgentHost, 
+                                string localAgentService ) ;
          virtual ~omStopBusinessCommand() ;
 
       public:

@@ -1434,7 +1434,11 @@ namespace engine
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       INT32 rc     = SDB_OK ;
       BSONArrayBuilder arrayBuilder ;
-      arrayBuilder.append( oneNode ) ;
+      BSONObj filter  = BSON( OM_BSON_FIELD_HOST_NAME << "" 
+                              << OM_BSON_FIELD_HOST_USER << "" 
+                              << OM_BSON_FIELD_HOST_PASSWD << "" ) ;
+      BSONObj oneConf = oneNode.filterFieldsUndotted( filter, false ) ;
+      arrayBuilder.append( oneConf ) ;
       BSONObj obj = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName 
                           << OM_CONFIGURE_FIELD_HOSTNAME << hostName 
                           << OM_CONFIGURE_FIELD_CONFIG << arrayBuilder.arr() ) ;
