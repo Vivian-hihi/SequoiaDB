@@ -46,7 +46,7 @@ function uninstallRemoteSdbcmPacket( ssh, osInfo )
    if ( osInfo == "LINUX" )
    {
       cmd = "rm -rf " + TOPDIR_L ;
-      ssh.exec( cmd ) ;
+//      ssh.exec( cmd ) ;
    }
    else
    {

@@ -22,9 +22,11 @@
 */
 if ( typeof(OMA_HOST_NAME) == "undefined" )
 {
+   OMA_HOST_NAME = "127.0.0.1" ;
 }
 if ( typeof(OMA_SVC_NAME)  == "undefined" )
 {
+   OMA_SVC_NAME = "11790" ;
 }
 if ( typeof(V_COORD_SVC_NAME)  == "undefined" )
 {

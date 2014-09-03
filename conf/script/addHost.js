@@ -42,6 +42,77 @@ objRet.Detail     = "" ;
 objRet.HasPush    = false ;
 objRet.HasInstall = false ;
 
+/*
+function hasCMInstalledInLocal( osInfo )
+{
+   var isLocalHost = false ;
+   var hostname = null ;
+   var hosts = null ;
+   var name = null ;
+   var ip = null ;
+   var len = 0 ;
+   var i = 0 ;
+
+   // get localhost name
+   hostname = Cmd.run("hostname") ;
+   if ( null != hostname )
+   {
+      if ( "LINUX" == osInfo )
+      {
+         i = hostname.indexOf( "\n" ) ;
+      }
+      else
+      {
+         i = hostname.indexOf( "\n\r" ) ;
+      }
+      if ( -1 != i )
+      {
+         hostname = hostname.substring(0, i);
+      }
+   }
+
+   // check whether it's in local host env
+   hosts = eval( '(' + System.getHostsMap() + ')' ) ;
+   if ( null != hosts )
+   {
+      len = hosts["Hosts"].length ;
+      for ( i = 0; i < len; i++ )
+      {
+         ip = hosts["Hosts"][i]["Ip"] ;
+         if ( IP == ip )
+         {
+            name = hosts["Hosts"][i]["HostName"] ;
+            if ( hostname == name )
+            {
+               isLocalHost = true ;
+               break ;
+            }
+         }
+      }
+   }
+   return isLocalHost ;
+}
+
+// check whether sdbcm is running, if so, not need to install
+function cmProgHasInstalled( ssh, osInfo )
+{
+   var hasInstalled = false ;
+   // case 1: check whether sdbcm has been installed
+   // in local machine
+   var flag = hasCMInstalledInLocal( osInfo ) ;
+   if ( flag )
+   {
+      hasInstalled = true ;
+      return hasInstalled ;
+   }
+   // TODO: tanzhaobo
+   // case 2: check whether sdbcm has been installed
+   // in remote machine
+
+   return hasInstalled ;
+}
+*/
+
 function getInstallPacketName( osInfo )
 {
    var s = "" ;

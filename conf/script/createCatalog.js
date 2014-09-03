@@ -48,7 +48,8 @@ function main()
            typeof(DB_PASSWORD) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified address to connect to database"
+         objRet.Detail = "not specified hostname, svcname"
+                         + " username or password to connect to database" ;
       }
       if ( typeof(INSTALL_HOSTNAME) == "undefined" ||
            typeof(INSTALL_SERVICE) == "undefined" ||
@@ -60,14 +61,14 @@ function main()
                          " are need for create catalog" ;
          return objRet ;
       }
-/*
-print("INSTALL_HOSTNAME is: " + INSTALL_HOSTNAME + '\n') ;
-print("INSTALL_SERVICE is: " + INSTALL_SERVICE + '\n') ;
-print("INSTALL_PATH is: " + INSTALL_PATH + '\n') ;
-print("CONFIG is: " + CONFIG + '\n') ;
-*/
+print("COORD_HOSTNAME is: " + COORD_HOSTNAME + '\n') ;
+print("COORD_SERVICE is: " + COORD_SERVICE + '\n') ;
+print("DB_USERNAME is: " + DB_USERNAME + '\n') ;
+print("DB_PASSWORD is: " + DB_PASSWORD + '\n') ;
+
       // connect to virtual coord
       var db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
+print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n") ;
       // try to get system catalog group
       var rg = null ;
       try
@@ -99,10 +100,13 @@ print("CONFIG is: " + CONFIG + '\n') ;
       var node = rg.createNode( INSTALL_HOSTNAME, INSTALL_SERVICE,
                                 INSTALL_PATH, CONFIG ) ;
       node.start() ;
+
+print("hahahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh ok !!!\n") ;
       return objRet ;
    }
    catch ( e )
    {
+print("error is e = " + e + "\n" ) ;
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
@@ -113,11 +117,12 @@ print("CONFIG is: " + CONFIG + '\n') ;
          var errMsg = "" ;
          objRet.Rc = e ;
          errMsg = getLastErrMsg() ;
-         if ( "" != errMsg )
+         if ( ( "" != errMsg ) && ( null != errMsg ) && ( undefined != errMsg ) )
          {
             objRet.Detail = eval( '(' + errMsg + ')' ) ;
          }
       }
+print("Errmsg is: " + objRet.Detail + "\n") ;
       return objRet ;
    }
 }

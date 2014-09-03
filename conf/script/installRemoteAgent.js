@@ -282,6 +282,7 @@ function main()
       // start the omagent program
       startCMProg( ssh, osInfo ) ;
 
+      sleep( 3000 ) ;
       // return the result
       return objRet ;
    }

@@ -20,8 +20,14 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 */
-if ( typeof(COORD_HOSTNAME) == "undefined" ) { COORD_HOSTNAME = "localhost" ; }
-if ( typeof(COORD_SERVICE) == "undefined" ) { COORD_SERVICE = "11810" ; }
+if ( typeof(INSTALL_HOSTNAME) == "undefined" ) {}
+if ( typeof(INSTALL_SERVICE) == "undefined" ) {}
+if ( typeof(INSTALL_PATH) == "undefined" ) {}
+if ( typeof(CONFIG) == "undefined" ) { CONFIG = eval( '(' + '{}' + ')') ; }
+if ( typeof(GROUPNAME) == "undefined" ) {}
+
+if ( typeof(COORD_HOSTNAME) == "undefined" ) { COORD_HOSTNAME = "127.0.0.1" ; }
+if ( typeof(COORD_SERVICE) == "undefined" ) { COORD_SERVICE = "13579" ; }
 if ( typeof(DB_USERNAME) == "undefined" ) { DB_USERNAME = "" ; }
 if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
 
@@ -38,11 +44,11 @@ function main()
       if ( typeof(INSTALL_HOSTNAME) == "undefined" ||
            typeof(INSTALL_SERVICE) == "undefined" ||
            typeof(INSTALL_PATH) == "undefined" ||
-           typeof(CONFIG) == "undefined" ||
            typeof(GROUPNAME) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "Invalid arguments for js to create data node" ;
+         objRet.Detail = "install hostname, svcname, path and the groupname are"
+                         + " need for creating data node" ;
          return objRet ;
       }
 // todo: remove this debug info
@@ -91,6 +97,7 @@ println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
    }
    catch ( e )
    {
+print("error is e = " + e + "\n") ;
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
