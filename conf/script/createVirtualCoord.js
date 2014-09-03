@@ -103,7 +103,7 @@ print("44444444 e = " + e + "\n") ;
          var errMsg = "" ;
          objRet.Rc = e ;
          errMsg = getLastErrMsg() ;
-         if ( "" != errMsg )
+         if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
             objRet.Detail = eval( '(' + errMsg + ')' ) ;
          }

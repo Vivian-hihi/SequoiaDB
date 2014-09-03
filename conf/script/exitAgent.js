@@ -170,7 +170,7 @@ function main()
          var errMsg = "" ;
          objRet.Rc = e ;
          errMsg = getLastErrMsg() ;
-         if ( "" != errMsg )
+         if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
             objRet.Detail = eval( '(' + errMsg + ')' ) ;
          }

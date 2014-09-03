@@ -97,7 +97,7 @@ println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
    }
    catch ( e )
    {
-print("error is e = " + e + "\n") ;
+//print("error is e = " + e + "\n") ;
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
@@ -107,8 +107,9 @@ print("error is e = " + e + "\n") ;
       {
          var errMsg = "" ;
          objRet.Rc = e ;
+         // TODO: getLastErrMsg may return nothing
          errMsg = getLastErrMsg() ;
-         if ( "" != errMsg )
+         if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
             objRet.Detail = eval( '(' + errMsg + ')' ) ;
          }
