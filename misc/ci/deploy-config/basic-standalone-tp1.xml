@@ -35,7 +35,7 @@
 			</ant>
 		</parallel>
 
-		<basename property="antFileName" file="${ant.file}" suffix=".xml" />
+		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
 		<for list="${test-type-list}" param="test-type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
@@ -44,7 +44,7 @@
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="test-type" value="@{test-type}" />
-					<property name="antFileName" value="${antFileName}" />
+					<!-- <property name="antFileName" value="${antFileName}" /> -->
 				</ant>
 			</sequential>
 		</for>
