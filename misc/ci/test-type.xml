@@ -72,9 +72,9 @@
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
 					
-					<property name="coord.service.port" value="50000" />
-					<property name="cata.service.port" value="60000" />
-					<property name="data.service.port" value="51000" />
+					<param name="coord.service.port" value="50000" />
+					<param name="cata.service.port" value="60000" />
+					<param name="data.service.port" value="51000" />
 				</sdbtest>
 				<echo message="... Test ant-testcases is over ..." />
 			</case>
