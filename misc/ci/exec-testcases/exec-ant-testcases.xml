@@ -49,10 +49,11 @@
 			<param name="testcases.path" value="${testcases.path}" />
 			<param name="test-type" value="${test-type}" />
 			<param name="test.suite.class.name" value="${test.suite.class.name}" />
+			<param name="host.NAME" value="${host.NAME}" />
 		</foreach>
 
 		<!-- <foreach target="test-one-case" param="test.case.fullname">
-			<param name="host.NAME" value="${host.NAME}" />
+			
 			<param name="parallel.num" value="${parallel.num}" />
 		</foreach> -->
 
@@ -75,7 +76,7 @@
 			<param name="${test.case.name}" value="${test.case.name}" />
 		</sdbprefix>
 		<echo message="${CS_PRIX}########CS_PRIX" />
-		<echo message="${ant.testcase.path}" />
+		<!-- <echo message="${ant.testcase.path}" /> -->
 
 		<echo message="Now testcase ${test.case.name}.xml begin with ${testcase.begin.time}"/>
 
