@@ -46,35 +46,25 @@ namespace engine
 // page length can be 4/8/16/32/64K
 // Note that windows memory allocation granulartiy is 64K, so we need to make
 // sure each segment must be multiple of 64K
-#if defined (_LINUX)
-#define DMS_PAGE_SIZE4K        4096ll
-#define DMS_PAGE_SIZE8K        8192ll
-#define DMS_PAGE_SIZE16K       16384ll
-#define DMS_PAGE_SIZE32K       32768ll
-#define DMS_PAGE_SIZE64K       65536ll
+
+#define DMS_PAGE_SIZE4K        4096    // 4K
+#define DMS_PAGE_SIZE8K        8192    // 8K
+#define DMS_PAGE_SIZE16K       16384   // 16K
+#define DMS_PAGE_SIZE32K       32768   // 32K
+#define DMS_PAGE_SIZE64K       65536   // 64K
 
 /// for lob
-#define DMS_PAGE_SIZE256B      256ll
-#define DMS_PAGE_SIZE256K      262144ll
-#define DMS_PAGE_SIZE512K      524288ll
+#define DMS_PAGE_SIZE256B      256
 
-#elif defined (_WINDOWS)
-#define DMS_PAGE_SIZE4K        4096LL
-#define DMS_PAGE_SIZE8K        8192LL
-#define DMS_PAGE_SIZE16K       16384LL
-#define DMS_PAGE_SIZE32K       32768LL
-#define DMS_PAGE_SIZE64K       65536LL
-
-#define DMS_PAGE_SIZE256B      256LL
-#define DMS_PAGE_SIZE256K      262144LL
-#define DMS_PAGE_SIZE512K      524288LL
-#endif
+#define DMS_PAGE_SIZE128K      131072  // 128K
+#define DMS_PAGE_SIZE256K      262144  // 256K
+#define DMS_PAGE_SIZE512K      524288  // 512K
 
 #define DMS_PAGE_SIZE_DFT      DMS_PAGE_SIZE64K
 #define DMS_PAGE_SIZE_MAX      DMS_PAGE_SIZE64K
 
-#define DMS_DEFAULT_LOB_PAGE_SZ DMS_PAGE_SIZE256K
-#define DMS_DO_NOT_CREATE_LOB 0
+#define DMS_DEFAULT_LOB_PAGE_SZ  DMS_PAGE_SIZE256K
+#define DMS_DO_NOT_CREATE_LOB    0
 
 // the maximum number of pages * size for the storage unit
 // this number does NOT count metadata
@@ -91,8 +81,6 @@ namespace engine
 // fixed segment size 128MB
 #define DMS_SEGMENT_SZ         (128*1024*1024)
 #define DMS_SEGMENT_PG(x)      (DMS_SEGMENT_SZ/(x))
-// max number of segments is max size of storage unit / size of each segment
-#define DMS_MAX_SEGMENT_NUM(x) (DMS_MAX_SZ(x)/DMS_SEGMENT_SZ)
 
 #define DMS_MAX_EXTENT_SZ      DMS_SEGMENT_SZ
 #define DMS_MIN_EXTENT_SZ(x)   (x)

@@ -35,18 +35,21 @@
 #define DMS_STORAGELOB_HPP_
 
 #include "dmsLobDef.hpp"
-#include "dmsStorageData.hpp"
 #include "dmsStorageLobData.hpp"
-#include "pmd.hpp"
+#include "dmsStorageData.hpp"
+#include "ossLatch.hpp"
 
 namespace engine
 {
-#define DMS_BME_OFFSET DMS_MME_OFFSET
+   #define DMS_BME_OFFSET        DMS_MME_OFFSET
 
    /// must be power of 2
-   const UINT32 DMS_BUCKETS_NUM = 16777216 ;
-   #define DMS_BUCKETS_MODULO 16777215
+   const UINT32 DMS_BUCKETS_NUM =   16777216 ; // 16MB
+   #define DMS_BUCKETS_MODULO       16777215
 
+   /*
+      _dmsBucketsManagementExtent define
+   */
    struct _dmsBucketsManagementExtent : public SDBObject
    {
       INT32 _buckets[DMS_BUCKETS_NUM] ;
@@ -61,12 +64,19 @@ namespace engine
 
    #define DMS_BME_SZ (sizeof( dmsBucketsManagementExtent ))
 
+
+   class _pmdEDUCB ;
+
+   /*
+      _dmsStorageLob define
+   */
    class _dmsStorageLob : public _dmsStorageBase
    {
    public:
       _dmsStorageLob( const CHAR *lobmFileName,
                       const CHAR *lobdFileName,
-                      dmsStorageInfo *info ) ;
+                      dmsStorageInfo *info,
+                      dmsStorageData *pDataSu ) ;
       virtual ~_dmsStorageLob() ;
 
    public:
@@ -80,13 +90,13 @@ namespace engine
 
       INT32 getLobMeta( const bson::OID &oid,
                         dmsMBContext *mbContext,
-                        pmdEDUCB *cb,
+                        _pmdEDUCB *cb,
                         BOOLEAN locked,
                         _dmsLobMeta &meta ) ;
 
       INT32 writeLobMeta( const bson::OID &oid,
                           dmsMBContext *mbContext,
-                          pmdEDUCB *cb,
+                          _pmdEDUCB *cb,
                           BOOLEAN locked,
                           const _dmsLobMeta &meta,
                           BOOLEAN isNew,
@@ -94,19 +104,19 @@ namespace engine
 
       INT32 write( const dmsLobRecord &record,
                    dmsMBContext *mbContext,
-                   pmdEDUCB *cb,
+                   _pmdEDUCB *cb,
                    BOOLEAN locked,
                    SDB_DPSCB *dpscb ) ;
 
       INT32 update( const dmsLobRecord &record,
                     dmsMBContext *mbContext,
-                    pmdEDUCB *cb,
+                    _pmdEDUCB *cb,
                     BOOLEAN locked,
                     SDB_DPSCB *dpscb ) ;
 
       INT32 remove( const dmsLobRecord &record,
                     dmsMBContext *mbContext,
-                    pmdEDUCB *cb,
+                    _pmdEDUCB *cb,
                     BOOLEAN locked,
                     SDB_DPSCB *dpscb ) ;
 
@@ -114,28 +124,31 @@ namespace engine
       ///  buf is enough
       INT32 read( const dmsLobRecord &record,
                   dmsMBContext *mbContext,
-                  pmdEDUCB *cb,
+                  _pmdEDUCB *cb,
                   BOOLEAN locked,
                   CHAR *buf,
                   UINT32 &len ) ;
 
-      void setDmsData( _dmsStorageData *dmsData )
-      {
-         _dmsData = dmsData ;
-         return ;
-      } 
+   protected:
+      INT32  _openLob( const CHAR *path,
+                       BOOLEAN createNew,
+                       BOOLEAN rmWhenExist ) ;
+      INT32 _delayOpen() ;
 
    private:
-      virtual INT32 _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
-      virtual INT32 _onMapMeta( UINT64 curOffSet ) ;
+      virtual INT32  _onCreate( OSSFILE *file, UINT64 curOffSet ) ;
+      virtual INT32  _onMapMeta( UINT64 curOffSet ) ;
       virtual UINT32 _getSegmentSize() const ;
       virtual UINT32 _extendThreshold() const ;
       virtual UINT64 _dataOffset() ;
-      virtual INT32 _extendSegments( UINT32 numSeg ) ;
+      virtual INT32  _extendSegments( UINT32 numSeg ) ;
       virtual const CHAR* _getEyeCatcher() const ;
       virtual UINT32 _curVersion() const ;
-      virtual INT32 _checkVersion( dmsStorageUnitHeader * ) ;
-      virtual void _onClosed() ;
+      virtual INT32  _checkVersion( dmsStorageUnitHeader *pHeader ) ;
+      virtual void   _onClosed() ;
+      virtual void   _initHeaderPageSize( dmsStorageUnitHeader *pHeader,
+                                          dmsStorageInfo *pInfo ) ;
+      virtual INT32  _checkPageSize( dmsStorageUnitHeader *pHeader ) ;
 
    private:
       OSS_INLINE UINT32 _getBucket( UINT32 hash )
@@ -165,16 +178,20 @@ namespace engine
 
       /// only release space of page. will not change other meta data.
       INT32 _releasePage( DMS_LOB_PAGEID page ) ;
-   private:
-      dmsBucketsManagementExtent *_dmsBME ;
-      UINT32 _segmentSize ;
-      dmsStorageInfo *_storageInfo ;
-      _dmsStorageData *_dmsData ;
-      _dmsStorageLobData _data ;
-   } ;
 
+   private:
+      dmsBucketsManagementExtent    *_dmsBME ;
+      UINT32                        _segmentSize ;
+      _dmsStorageData               *_dmsData ;
+      _dmsStorageLobData            _data ;
+      CHAR                          _path[ OSS_MAX_PATHSIZE + 1 ] ;
+      BOOLEAN                       _needDelayOpen ;
+      ossSpinXLatch                 _delayOpenLatch ;
+
+   } ;
    typedef class _dmsStorageLob dmsStorageLob ;
+
 }
 
-#endif
+#endif // DMS_STORAGELOB_HPP_
 

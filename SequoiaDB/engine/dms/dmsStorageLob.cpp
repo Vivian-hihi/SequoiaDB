@@ -33,26 +33,34 @@
 
 #include "dmsStorageLob.hpp"
 #include "dpsOp2Record.hpp"
+#include "pmd.hpp"
+#include "dpsTransCB.hpp"
 
 namespace engine
 {
-#define DMS_LOB_META( extent )\
-        ( ( _dmsLobDataMapBlk * )extent )
+   #define DMS_LOB_META( extent )\
+      ( ( _dmsLobDataMapBlk * )extent )
 
-#define DMS_LOBM_EYECATCHER "SDBLOBM"
-#define DMS_LOBM_EYECATCHER_LEN 8
+   #define DMS_LOBM_EYECATCHER               "SDBLOBM"
+   #define DMS_LOBM_EYECATCHER_LEN           8
 
+   #define DMS_LOB_EXTEND_THRESHOLD_SIZE     ( 65536 )   // 64K
+
+   /*
+      _dmsStorageLob implement
+   */
    _dmsStorageLob::_dmsStorageLob( const CHAR *lobmFileName,
                                    const CHAR *lobdFileName,
-                                   dmsStorageInfo *info )
+                                   dmsStorageInfo *info,
+                                   dmsStorageData *pDataSu )
    :_dmsStorageBase( lobmFileName, info ),
     _dmsBME( NULL ),
     _segmentSize( 0 ),
-    _storageInfo( info ),
+    _dmsData( pDataSu ),
     _data( lobdFileName )
    {
-      SDB_ASSERT( NULL != _storageInfo, "can not be null" ) ;
-      _segmentSize = DMS_SEGMENT_SZ / info->_lobdPageSize * DMS_LOB_DATA_MAP_BLK_LEN ;
+      ossMemset( _path, 0, sizeof( _path ) ) ;
+      _needDelayOpen = FALSE ;
    }
 
    _dmsStorageLob::~_dmsStorageLob()
@@ -65,6 +73,60 @@ namespace engine
                                BOOLEAN rmWhenExist )
    {
       INT32 rc = SDB_OK ;
+
+      // copy path
+      ossStrncpy( _path, path, OSS_MAX_PATHSIZE ) ;
+
+      // if not create lobs
+      if ( 0 == _dmsData->getHeader()->_createLobs )
+      {
+         _needDelayOpen = TRUE ;
+      }
+      else
+      {
+         rc = _openLob( path, createNew, rmWhenExist ) ;
+      }
+
+      return rc ;
+   }
+
+   INT32 _dmsStorageLob::_delayOpen()
+   {
+      INT32 rc = SDB_OK ;
+
+      _delayOpenLatch.get() ;
+
+      if ( !_needDelayOpen )
+      {
+         goto done ;
+      }
+
+      _needDelayOpen = FALSE ;
+
+      rc = _openLob( _path, TRUE, TRUE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Delay open[%s] failed, rc: %d",
+                 getSuName(), rc ) ;
+         goto error ;
+      }
+
+      // set data header
+      _dmsData->updateCreateLobs( 1 ) ;
+
+   done:
+      _delayOpenLatch.release() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _dmsStorageLob::_openLob( const CHAR *path,
+                                   BOOLEAN createNew,
+                                   BOOLEAN rmWhenExist )
+   {
+      INT32 rc = SDB_OK ;
+
       rc = openStorage( path, createNew, rmWhenExist ) ;
       if ( SDB_OK != rc )
       {
@@ -77,7 +139,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _data.open( path, createNew, rmWhenExist, *_storageInfo ) ;
+      rc = _data.open( path, createNew, rmWhenExist, *_pStorageInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open lobd file:%s, rc:%d",
@@ -92,6 +154,7 @@ namespace engine
          }
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -223,6 +286,19 @@ namespace engine
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
 
+      if ( _needDelayOpen )
+      {
+         rc = _delayOpen() ;
+         PD_RC_CHECK( rc, PDERROR, "Delay open failed in write, rc: %d", rc ) ;
+      }
+
+      if ( !isOpened() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "File[%s] is not open in write", getSuName() ) ;
+         goto error ;
+      }
+
       if ( NULL != dpscb )
       {
          rc = dpsLobW2Record( mbContext->mb()->_collectionName,
@@ -350,8 +426,10 @@ namespace engine
       SDB_ASSERT( NULL != mbContext && NULL != cb, "can not be null" ) ;
       SDB_ASSERT( _data.isOpened(), "storage is not opened yet" ) ;
       SDB_ASSERT( 0 == record._offset, "must be zero" ) ;
-      SDB_ASSERT( _dmsHeader->_lobdPageSize <= DMS_PAGE_SIZE512K, "can not over 512 KB" ) ;
-      SDB_ASSERT( record._offset + record._dataLen <= _dmsHeader->_lobdPageSize, "impossible" ) ;
+      SDB_ASSERT( _dmsHeader->_lobdPageSize <= DMS_PAGE_SIZE512K,
+                  "can not over 512 KB" ) ;
+      SDB_ASSERT( record._offset + record._dataLen <= _dmsHeader->_lobdPageSize,
+                  "impossible" ) ;
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
       _dmsLobDataMapBlk *blk = NULL ;
       dpsMergeInfo info ;
@@ -362,6 +440,19 @@ namespace engine
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
       CHAR oldData[DMS_PAGE_SIZE512K] ;
       UINT32 oldLen = 0 ;
+
+      if ( _needDelayOpen )
+      {
+         rc = _delayOpen() ;
+         PD_RC_CHECK( rc, PDERROR, "Delay open failed in update, rc: %d", rc ) ;
+      }
+
+      if ( !isOpened() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "File[%s] is not open in update", getSuName() ) ;
+         goto error ;
+      }
 
       if ( !locked )
       {
@@ -501,6 +592,19 @@ namespace engine
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
       _dmsLobDataMapBlk *blk = NULL ;
 
+      if ( _needDelayOpen )
+      {
+         rc = _delayOpen() ;
+         PD_RC_CHECK( rc, PDERROR, "Delay open failed in read, rc: %d", rc ) ;
+      }
+
+      if ( !isOpened() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "File[%s] is not open in read", getSuName() ) ;
+         goto error ;
+      }
+
       if ( !locked )
       {
          rc = mbContext->mbLock( SHARED ) ;
@@ -543,7 +647,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != record._oid && 0 <= record._sequence &&
-                  record._dataLen <= getHeader()->_lobdPageSize &&
+                  record._dataLen <= getLobdPageSize() &&
                   0 == record._offset, "invalid lob record" ) ;
 
       rc = _findFreeSpace( 1, page, context ) ;
@@ -615,6 +719,19 @@ namespace engine
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
       CHAR oldData[DMS_PAGE_SIZE512K] ;
       UINT32 oldLen = 0 ;
+
+      if ( _needDelayOpen )
+      {
+         rc = _delayOpen() ;
+         PD_RC_CHECK( rc, PDERROR, "Delay open failed in remove, rc: %d", rc ) ;
+      }
+
+      if ( !isOpened() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "File[%s] is not open in remove", getSuName() ) ;
+         goto error ;
+      }
 
       if ( !locked )
       {
@@ -798,8 +915,8 @@ namespace engine
          ossValuePtr extent = extentAddr( pageInBucket ) ;
          if ( !extent )
          {
-            PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
-                    pageInBucket ) ;
+            PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), "
+                    "pageid:%d", pageInBucket ) ;
             rc = SDB_SYS ;
             goto error ;
          }
@@ -937,7 +1054,7 @@ namespace engine
 
    UINT32 _dmsStorageLob::_extendThreshold() const
    {
-      return 0 ;
+      return (UINT32)( DMS_LOB_EXTEND_THRESHOLD_SIZE >> pageSizeSquareRoot() ) ;
    }
 
    UINT64 _dmsStorageLob::_dataOffset()
@@ -977,10 +1094,21 @@ namespace engine
       return DMS_LOB_CUR_VERSION ;
    }
 
-   INT32 _dmsStorageLob::_checkVersion( dmsStorageUnitHeader *header )
+   INT32 _dmsStorageLob::_checkVersion( dmsStorageUnitHeader *pHeader )
    {
-      return _curVersion() < header->_version ?
-             SDB_DMS_INCOMPATIBLE_VERSION : SDB_OK ;
+      INT32 rc = SDB_OK ;
+      if ( pHeader->_version > _curVersion() )
+      {
+         PD_LOG( PDERROR, "Incompatible version: %u", pHeader->_version ) ;
+         rc = SDB_DMS_INCOMPATIBLE_VERSION ;
+      }
+      else if ( pHeader->_secretValue != _pStorageInfo->_secretValue )
+      {
+         PD_LOG( PDERROR, "Secret value[%llu] not the same with data su[%llu]",
+                 pHeader->_secretValue, _pStorageInfo->_secretValue ) ;
+         rc = SDB_DMS_SECRETVALUE_NOT_SAME ;
+      }
+      return rc ;
    }
 
    void _dmsStorageLob::_onClosed()
@@ -989,5 +1117,49 @@ namespace engine
       _dmsBME = NULL ;
       return ;
    }
+
+   void _dmsStorageLob::_initHeaderPageSize( dmsStorageUnitHeader * pHeader,
+                                             dmsStorageInfo * pInfo )
+   {
+      pHeader->_pageSize = DMS_PAGE_SIZE256B ;
+      pHeader->_lobdPageSize = pInfo->_lobdPageSize ;
+   }
+
+   INT32 _dmsStorageLob::_checkPageSize( dmsStorageUnitHeader * pHeader )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( pHeader->_pageSize != DMS_PAGE_SIZE256B )
+      {
+         PD_LOG( PDERROR, "Lob meta page size[%d] must be %d in file[%s]",
+                 pHeader->_pageSize, DMS_PAGE_SIZE256B, getSuFileName() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else if ( DMS_PAGE_SIZE4K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE8K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE16K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE32K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE64K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE128K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE256K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE512K != pHeader->_lobdPageSize )
+      {
+         PD_LOG ( PDERROR, "Invalid lob page size: %u in file[%s], lob page "
+                  "size must be one of 4K/8K/16K/32K/64K/128K/256K/512K",
+                 getSuFileName(), pHeader->_lobdPageSize ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      _segmentSize = DMS_SEGMENT_SZ / pHeader->_lobdPageSize *
+                     DMS_LOB_DATA_MAP_BLK_LEN ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 

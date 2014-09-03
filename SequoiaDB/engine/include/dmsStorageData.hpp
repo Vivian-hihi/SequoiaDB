@@ -546,7 +546,7 @@ namespace engine
          _dmsStorageData ( const CHAR *pSuFileName, dmsStorageInfo *pInfo ) ;
          ~_dmsStorageData () ;
 
-         virtual void  syncMemToMmap () ;
+         void  syncMemToMmap () ;
 
          OSS_INLINE ossValuePtr   recordAddr ( const dmsRecordID &record ) ;
 
@@ -566,6 +566,8 @@ namespace engine
          // must hold mb exclusive lock
          INT32         addExtent2Meta( dmsExtentID extID, dmsExtent *extent,
                                        dmsMBContext *context ) ;
+
+         OSS_INLINE void   updateCreateLobs( UINT32 createLobs ) ;
 
       public:
 
@@ -800,6 +802,13 @@ namespace engine
       clFullName[ DMS_COLLECTION_FULL_NAME_SZ ] = 0 ;
 
       return clFullName ;
+   }
+   OSS_INLINE void _dmsStorageData::updateCreateLobs( UINT32 createLobs )
+   {
+      if ( _dmsHeader && _dmsHeader->_createLobs != createLobs )
+      {
+         _dmsHeader->_createLobs = createLobs ;
+      }
    }
    OSS_INLINE INT32 _dmsStorageData::getMBContext( dmsMBContext ** pContext,
                                                    UINT16 mbID, UINT32 clLID,

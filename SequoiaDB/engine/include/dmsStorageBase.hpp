@@ -84,7 +84,7 @@ namespace engine
          ossMemset( _suName, 0, sizeof( _suName ) ) ;
          _sequence      = 0 ;
          _secretValue   = 0 ;
-         _lobdPageSize = DMS_DO_NOT_CREATE_LOB ;
+         _lobdPageSize  = DMS_DO_NOT_CREATE_LOB ;
       }
    };
    typedef _dmsStorageInfo dmsStorageInfo ;
@@ -104,8 +104,9 @@ namespace engine
       UINT32 _MBHWM ;
       UINT32 _pageNum ;                                  // current page number
       UINT64 _secretValue ;                              // with the index
-      UINT32 _lobdPageSize ;                              // lobd page size
-      CHAR   _pad [ 65360 ] ;                          
+      UINT32 _lobdPageSize ;                             // lobd page size
+      UINT32 _createLobs ;                               // create lob files
+      CHAR   _pad [ 65356 ] ;                          
 
       _dmsStorageUnitHeader()
       {
@@ -201,6 +202,7 @@ namespace engine
          OSS_INLINE UINT32  pageSizeSquareRoot () const ;
          OSS_INLINE UINT32  segmentPages () const ;
          OSS_INLINE UINT32  segmentPagesSquareRoot () const ;
+         OSS_INLINE UINT32  maxSegmentNum() const ;
          OSS_INLINE UINT32  pageNum () const ;
          OSS_INLINE UINT32  freePageNum () const ;
          OSS_INLINE INT32   maxSegID () const ;
@@ -208,9 +210,9 @@ namespace engine
          OSS_INLINE BOOLEAN isTempSU () const { return _isTempSU ; }
 
          OSS_INLINE UINT32  extent2Segment( dmsExtentID extentID,
-                                        UINT32 *pSegOffset = NULL ) ;
+                                            UINT32 *pSegOffset = NULL ) ;
          OSS_INLINE dmsExtentID segment2Extent( UINT32 segID,
-                                            UINT32 segOffset = 0 ) ;
+                                                UINT32 segOffset = 0 ) ;
 
          OSS_INLINE ossValuePtr extentAddr ( INT32 extentID ) ;
          OSS_INLINE dmsExtentID extentID ( ossValuePtr extendAddr ) ;
@@ -230,7 +232,7 @@ namespace engine
 
          OSS_INLINE UINT32 getLobdPageSize() const
          {
-            return _dmsHeader->_lobdPageSize ;
+            return _lobPageSize ;
          }
 
       public:
@@ -252,6 +254,9 @@ namespace engine
          virtual void   _onClosed() { return ;}
          virtual UINT32 _extendThreshold() const ;
          virtual UINT32 _getSegmentSize() const ;
+         virtual void   _initHeaderPageSize( dmsStorageUnitHeader *pHeader,
+                                             dmsStorageInfo *pInfo ) ;
+         virtual INT32  _checkPageSize( dmsStorageUnitHeader *pHeader ) ;
 
       protected:
          // No space will extent new segment
@@ -280,6 +285,8 @@ namespace engine
          CHAR                          _suFileName[ DMS_SU_FILENAME_SZ + 1 ] ;
 
          dmsStorageInfo                *_pStorageInfo ;
+         UINT32                        _pageSize ;    // cache, not use header
+         UINT32                        _lobPageSize ; // cache, not use header
 
          CHAR                          *_dirtyList ;
 
@@ -312,15 +319,7 @@ namespace engine
    }
    OSS_INLINE UINT32 _dmsStorageBase::pageSize () const
    {
-      if ( NULL != _dmsHeader )
-      {
-         return _dmsHeader->_pageSize ;
-      }
-      else if ( _pStorageInfo )
-      {
-         return _pStorageInfo->_pageSize ;
-      }
-      return DMS_INVALID_PAGESIZE ;
+      return _pageSize ;
    }
    OSS_INLINE UINT32 _dmsStorageBase::pageSizeSquareRoot () const
    {
@@ -333,6 +332,10 @@ namespace engine
    OSS_INLINE UINT32 _dmsStorageBase::segmentPagesSquareRoot () const
    {
       return _segmentPagesSquare ;
+   }
+   OSS_INLINE UINT32 _dmsStorageBase::maxSegmentNum() const
+   {
+      return DMS_MAX_PG >> _segmentPagesSquare ;
    }
    OSS_INLINE UINT32 _dmsStorageBase::pageNum () const
    {
@@ -435,7 +438,7 @@ namespace engine
       // segment id is the real segment id minus the starting data segment id
       // position
       UINT32 segID = extent2Segment( extentID, NULL ) - _dataSegID ;
-      SDB_ASSERT ( segID < DMS_MAX_SEGMENT_NUM ( pageSize() ),
+      SDB_ASSERT ( segID < maxSegmentNum(),
                    "calculated segment id cannot be greater than max "
                    "number of segments in the storage unit" ) ;
       // _dirtyList [ segID / 8 ] |= ( 1 << ( segID % 8 ) )

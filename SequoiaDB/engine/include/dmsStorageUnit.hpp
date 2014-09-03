@@ -95,7 +95,7 @@ namespace engine
 
          dmsStorageData    *data() { return _pDataSu ; }
          dmsStorageIndex   *index() { return _pIndexSu ; }
-         dmsStorageLob *lob() { return _pLobSu ; }
+         dmsStorageLob     *lob() { return _pLobSu ; }
          rtnAccessPlanManager *getAPM () { return &_apm ; }
 
          INT32       getPageSize() const { return _storageInfo._pageSize ; }
@@ -232,7 +232,7 @@ namespace engine
          dmsStorageData                      *_pDataSu ;
          dmsStorageIndex                     *_pIndexSu ;
          dmsStorageInfo                      _storageInfo ;
-         _dmsStorageLob                       *_pLobSu ;
+         dmsStorageLob                       *_pLobSu ;
 
    } ;
    typedef _dmsStorageUnit dmsStorageUnit ;

@@ -40,6 +40,9 @@
 
 namespace engine
 {
+   /*
+      _dmsStorageLobData define
+   */
    class _dmsStorageLobData : public SDBObject
    {
    public:
@@ -86,8 +89,6 @@ namespace engine
 
       INT32 extend( INT64 len ) ;
 
-      //INT32 truncate( INT64 len ) ;
-
    private:
       INT32 _initFileHeader( const dmsStorageInfo &info ) ;
 
@@ -103,16 +104,20 @@ namespace engine
                 sizeof( _dmsStorageUnitHeader ) + offset ;
       }
 
+      INT32 _reopen() ;
+
    private:
-      std::string _fileName ;
-      std::string _fullPath ;
-      OSSFILE _file ;
-      INT64 _fileSz ;
-      UINT32 _pageSz ;
-      UINT32 _logarithmic ;
+      std::string       _fileName ;
+      CHAR              _fullPath[ OSS_MAX_PATHSIZE + 1 ] ;
+      OSSFILE           _file ;
+      INT64             _fileSz ;
+      INT64             _lastSz ;
+      UINT32            _pageSz ;
+      UINT32            _logarithmic ;
+
    } ;
    typedef class _dmsStorageLobData dmsStorageLobData ;
 }
 
-#endif
+#endif // DMS_STORAGELOBDATA_HPP_
 

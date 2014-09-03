@@ -47,10 +47,9 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU, "_dmsStorageUnit::_dmsStorageUnit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU, "_dmsStorageUnit::_dmsStorageUnit" )
    _dmsStorageUnit::_dmsStorageUnit ( const CHAR *pSUName, UINT32 sequence,
-                                      INT32 pageSize,
-                                      INT32 lobPageSize )
+                                      INT32 pageSize, INT32 lobPageSize )
    :_apm(this),
     _pDataSu( NULL ),
     _pIndexSu( NULL ),
@@ -88,10 +87,8 @@ namespace engine
                                                   _pDataSu ) ;
       }
 
-      if ( NULL != _pDataSu && NULL != _pIndexSu &&
-           DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize )
+      if ( NULL != _pDataSu && NULL != _pIndexSu )
       {
-         SDB_ASSERT( 0 < _storageInfo._lobdPageSize, "impossible" ) ;
          /// reuse buf for lob
          ossMemset( dataFileName, 0, sizeof( dataFileName ) ) ;
          ossMemset( idxFileName, 0 , sizeof( idxFileName ) ) ;
@@ -101,19 +98,15 @@ namespace engine
          ossSnprintf( idxFileName, DMS_SU_FILENAME_SZ, "%s.%d.%s",
                       _storageInfo._suName, _storageInfo._sequence,
                       DMS_LOB_DATA_SU_EXT_NAME ) ;
-         UINT32 pageSz = _storageInfo._pageSize ;
 
-         /// lobm's page size always be 256B.
-         _storageInfo._pageSize = DMS_PAGE_SIZE256B ;
          _pLobSu = SDB_OSS_NEW dmsStorageLob( dataFileName, idxFileName,
-                                              &_storageInfo ) ;
-         _storageInfo._pageSize = pageSz ;
+                                              &_storageInfo, _pDataSu ) ;
       }
 
       PD_TRACE_EXIT ( SDB__DMSSU ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DESC, "_dmsStorageUnit::~_dmsStorageUnit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DESC, "_dmsStorageUnit::~_dmsStorageUnit" )
    _dmsStorageUnit::~_dmsStorageUnit()
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_DESC ) ;
@@ -137,13 +130,13 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSU_DESC ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_OPEN, "_dmsStorageUnit::open" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_OPEN, "_dmsStorageUnit::open" )
    INT32 _dmsStorageUnit::open( const CHAR *pDataPath, const CHAR *pIndexPath,
                                 BOOLEAN createNew, BOOLEAN delWhenExist )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSU_OPEN ) ;
-      if ( !_pDataSu || !_pIndexSu ) 
+      if ( !_pDataSu || !_pIndexSu || !_pLobSu ) 
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "Alloc memory failed" ) ;
@@ -177,20 +170,10 @@ namespace engine
          goto error ;
       }
 
-      // open lob 
+      // open lob
       if ( DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize )
       {
-         UINT32 pageSz = _storageInfo._pageSize ;
-         if ( NULL == _pLobSu )
-         {
-            PD_LOG( PDERROR, "failed to allocate mem." ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-
-         _storageInfo._pageSize = DMS_PAGE_SIZE256B ;
          rc = _pLobSu->open( pDataPath, createNew, delWhenExist ) ;
-         _storageInfo._pageSize = pageSz ;
          if ( SDB_OK != rc )
          {
              PD_LOG( PDERROR, "failed to open storage lob, rc:%d", rc ) ;
@@ -200,8 +183,6 @@ namespace engine
             }
             goto error ;
          }
-
-         _pLobSu->setDmsData( _pDataSu ) ;
       }
 
    done:
@@ -232,7 +213,7 @@ namespace engine
       goto rmdata ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CLOSE, "_dmsStorageUnit::close" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CLOSE, "_dmsStorageUnit::close" )
    void _dmsStorageUnit::close ()
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_CLOSE ) ;
@@ -251,7 +232,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSU_CLOSE ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_REMOVE, "_dmsStorageUnit::remove" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_REMOVE, "_dmsStorageUnit::remove" )
    INT32 _dmsStorageUnit::remove ()
    {
       INT32 rc = SDB_OK ;
@@ -270,7 +251,7 @@ namespace engine
                       "index file, rc: %d", CSName(), rc ) ;
       }
 
-      if ( _pLobSu && DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize )
+      if ( _pLobSu )
       {
          _pLobSu->removeStorageFiles() ;
       }
@@ -284,7 +265,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__RESETCOLLECTION, "_dmsStorageUnit::_resetCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU__RESETCOLLECTION, "_dmsStorageUnit::_resetCollection" )
    INT32 _dmsStorageUnit::_resetCollection( dmsMBContext *context )
    {
       INT32 rc                     = SDB_OK ;
@@ -308,7 +289,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_LDEXTA, "_dmsStorageUnit::loadExtentA" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_LDEXTA, "_dmsStorageUnit::loadExtentA" )
    INT32 _dmsStorageUnit::loadExtentA ( dmsMBContext *mbContext,
                                         const CHAR *pBuffer,
                                         UINT16 numPages,
@@ -362,7 +343,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_LDEXT, "_dmsStorageUnit::loadExtent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_LDEXT, "_dmsStorageUnit::loadExtent" )
    INT32 _dmsStorageUnit::loadExtent ( dmsMBContext *mbContext,
                                        const CHAR *pBuffer,
                                        UINT16 numPages )
@@ -396,7 +377,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_INSERTRECORD, "_dmsStorageUnit::insertRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_INSERTRECORD, "_dmsStorageUnit::insertRecord" )
    INT32 _dmsStorageUnit::insertRecord ( const CHAR *pName,
                                          BSONObj &record,
                                          pmdEDUCB *cb,
@@ -436,7 +417,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_UPDATERECORDS, "_dmsStorageUnit::updateRecords" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_UPDATERECORDS, "_dmsStorageUnit::updateRecords" )
    INT32 _dmsStorageUnit::updateRecords ( const CHAR *pName,
                                           pmdEDUCB *cb,
                                           SDB_DPSCB *dpscb,
@@ -502,7 +483,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DELETERECORDS, "_dmsStorageUnit::deleteRecords" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DELETERECORDS, "_dmsStorageUnit::deleteRecords" )
    INT32 _dmsStorageUnit::deleteRecords ( const CHAR *pName,
                                           pmdEDUCB * cb,
                                           SDB_DPSCB *dpscb,
@@ -567,7 +548,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_REBUILDINDEXES, "_dmsStorageUnit::rebuildIndexes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_REBUILDINDEXES, "_dmsStorageUnit::rebuildIndexes" )
    INT32 _dmsStorageUnit::rebuildIndexes( const CHAR *pName,
                                           pmdEDUCB * cb,
                                           dmsMBContext *context )
@@ -602,7 +583,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CREATEINDEX, "_dmsStorageUnit::createIndex" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CREATEINDEX, "_dmsStorageUnit::createIndex" )
    INT32 _dmsStorageUnit::createIndex( const CHAR *pName, const BSONObj &index,
                                        pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                        BOOLEAN isSys, dmsMBContext * context )
@@ -637,7 +618,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX, "_dmsStorageUnit::dropIndex" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX, "_dmsStorageUnit::dropIndex" )
    INT32 _dmsStorageUnit::dropIndex( const CHAR *pName, const CHAR *indexName,
                                      pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                      BOOLEAN isSys, dmsMBContext *context )
@@ -673,7 +654,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX1, "_dmsStorageUnit::dropIndex" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DROPINDEX1, "_dmsStorageUnit::dropIndex" )
    INT32 _dmsStorageUnit::dropIndex( const CHAR *pName, OID &indexOID,
                                      pmdEDUCB *cb, SDB_DPSCB *dpscb,
                                      BOOLEAN isSys, dmsMBContext *context )
@@ -709,7 +690,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_COUNTCOLLECTION, "_dmsStorageUnit::countCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_COUNTCOLLECTION, "_dmsStorageUnit::countCollection" )
    INT32 _dmsStorageUnit::countCollection ( const CHAR *pName,
                                             INT64 &recordNum,
                                             pmdEDUCB *cb,
@@ -761,7 +742,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONFLAG, "_dmsStorageUnit::getCollectionFlag" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONFLAG, "_dmsStorageUnit::getCollectionFlag" )
    INT32 _dmsStorageUnit::getCollectionFlag( const CHAR *pName, UINT16 &flag,
                                              dmsMBContext *context )
    {
@@ -797,7 +778,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CHANGECOLLECTIONFLAG, "_dmsStorageUnit::changeCollectionFlag" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_CHANGECOLLECTIONFLAG, "_dmsStorageUnit::changeCollectionFlag" )
    INT32 _dmsStorageUnit::changeCollectionFlag( const CHAR *pName, UINT16 flag,
                                                 dmsMBContext *context )
    {
@@ -833,7 +814,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONATTRIBUTES, "_dmsStorageUnit::getCollectionAttributes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETCOLLECTIONATTRIBUTES, "_dmsStorageUnit::getCollectionAttributes" )
    INT32 _dmsStorageUnit::getCollectionAttributes( const CHAR *pName,
                                                    UINT32 &attributes,
                                                    dmsMBContext *context )
@@ -870,7 +851,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_UPDATECOLLECTIONATTRIBUTES, "_dmsStorageUnit::updateCollectionAttributes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_UPDATECOLLECTIONATTRIBUTES, "_dmsStorageUnit::updateCollectionAttributes" )
    INT32 _dmsStorageUnit::updateCollectionAttributes( const CHAR *pName,
                                                       UINT32 newAttributes,
                                                       dmsMBContext *context )
@@ -907,7 +888,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETSEGEXTENTS, "_dmsStorageUnit::getSegExtents" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETSEGEXTENTS, "_dmsStorageUnit::getSegExtents" )
    INT32 _dmsStorageUnit::getSegExtents( const CHAR *pName,
                                          vector < dmsExtentID > &segExtents,
                                          dmsMBContext *context )
@@ -966,7 +947,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEXES, "_dmsStorageUnit::getIndexes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEXES, "_dmsStorageUnit::getIndexes" )
    INT32 _dmsStorageUnit::getIndexes( const CHAR *pName,
                                       vector< _monIndex > &resultIndexes,
                                       dmsMBContext * context )
@@ -1020,7 +1001,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEX, "_dmsStorageUnit::getIndex" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETINDEX, "_dmsStorageUnit::getIndex" )
    INT32 _dmsStorageUnit::getIndex( const CHAR *pName,
                                     const CHAR *pIndexName,
                                     _monIndex &resultIndex,
@@ -1081,7 +1062,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO, "_dmsStorageUnit::dumpInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO, "_dmsStorageUnit::dumpInfo" )
    void _dmsStorageUnit::dumpInfo ( vector<CHAR*> &collectionList,
                                     BOOLEAN sys )
    {
@@ -1121,7 +1102,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO1, "_dmsStorageUnit::dumpInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO1, "_dmsStorageUnit::dumpInfo" )
    void _dmsStorageUnit::dumpInfo ( set<_monCollection> &collectionList,
                                     BOOLEAN sys )
    {
@@ -1171,7 +1152,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO1 ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO2, "_dmsStorageUnit::dumpInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_DUMPINFO2, "_dmsStorageUnit::dumpInfo" )
    void _dmsStorageUnit::dumpInfo ( set<_monStorageUnit> &storageUnitList,
                                     BOOLEAN sys )
    {
@@ -1200,7 +1181,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DMSSU_DUMPINFO2 ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALSIZE, "_dmsStorageUnit::totalSize" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALSIZE, "_dmsStorageUnit::totalSize" )
    INT64 _dmsStorageUnit::totalSize() const
    {
       INT64 totalSize = 0 ;
@@ -1219,7 +1200,7 @@ namespace engine
       return totalSize ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALDATAPAGES, "_dmsStorageUnit::totalDataPages" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALDATAPAGES, "_dmsStorageUnit::totalDataPages" )
    INT64 _dmsStorageUnit::totalDataPages() const
    {
       INT64 totalDataPages = 0 ;
@@ -1236,7 +1217,7 @@ namespace engine
       return totalDataPages ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALDATASIZE, "_dmsStorageUnit::totalDataSize" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALDATASIZE, "_dmsStorageUnit::totalDataSize" )
    INT64 _dmsStorageUnit::totalDataSize() const
    {
       INT64 totalSize = 0 ;
@@ -1252,7 +1233,7 @@ namespace engine
    }
 
    // 32 bit is enough for free pages
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALFREEPAGES, "_dmsStorageUnit::totalFreePages" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_TOTALFREEPAGES, "_dmsStorageUnit::totalFreePages" )
    INT32 _dmsStorageUnit::totalFreePages () const
    {
       INT32 freePages = 0 ;
@@ -1268,7 +1249,7 @@ namespace engine
       return freePages ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETSTATINFO, "_dmsStorageUnit::getStatInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_GETSTATINFO, "_dmsStorageUnit::getStatInfo" )
    void _dmsStorageUnit::getStatInfo( dmsStorageUnitStat & statInfo )
    {
       PD_TRACE_ENTRY ( SDB__DMSSU_GETSTATINFO ) ;

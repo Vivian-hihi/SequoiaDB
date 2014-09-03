@@ -39,10 +39,11 @@
 #include "dmsStorageData.hpp"
 #include "dmsStorageIndex.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
+#include "dpsTransCB.hpp"
 #include "dpsOp2Record.hpp"
 #include "mthModifier.hpp"
 #include "dmsCompress.hpp"
+#include "ixm.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 

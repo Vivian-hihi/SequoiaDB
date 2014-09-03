@@ -43,48 +43,50 @@
 #include "pd.hpp"
 #include "../bson/bson.hpp"
 
-
 namespace engine
 {
-#define DMS_LOB_OID_LEN 12 
-#define DMS_LOB_DATA_MAP_BLK_LEN 256
-#define DMS_LOB_INVALID_PAGEID DMS_INVALID_EXTENT
-typedef SINT32 DMS_LOB_PAGEID ;
-#define DMS_LOB_CUR_VERSION 1
-#define DMS_LOB_META_SEQUENCE 0
+   #define DMS_LOB_OID_LEN                   12 
+   #define DMS_LOB_DATA_MAP_BLK_LEN          DMS_PAGE_SIZE256B
+   #define DMS_LOB_INVALID_PAGEID            DMS_INVALID_EXTENT
 
-#define DMS_LOB_COMPLETE 1
-#define DMS_LOB_UNCOMPLETE 0
+   typedef SINT32 DMS_LOB_PAGEID ;
 
-#define RTN_LOB_GET_SEQUENCE( offset, log ) \
-        (( (offset) >> (log))+1)
+   #define DMS_LOB_CUR_VERSION               1
+   #define DMS_LOB_META_SEQUENCE             0
 
+   #define DMS_LOB_COMPLETE                  1
+   #define DMS_LOB_UNCOMPLETE                0
 
-#define RTN_LOB_GET_OFFSET_IN_SEQUENCE( offset, pagesize )\
-        ((offset) & ((pagesize)-1))
+   #define RTN_LOB_GET_SEQUENCE( offset, log ) \
+     (( (offset) >> (log))+1)
 
+   #define RTN_LOB_GET_OFFSET_IN_SEQUENCE( offset, pagesize ) \
+     ((offset) & ((pagesize)-1))
 
-#define RTN_LOB_GET_SEQUENCE_NUM( len, pagesize, num )\
-        do\
-        {\
-          if ( 0 == ((len) & ((pagesize)-1)) )\
-          {\
-             num = (len) / (pagesize) + 1;\
-          }\
-          else\
-          {\
-             num = (len) / (pagesize) + 2 ;\
-          }\
-        } while ( FALSE )
+   #define RTN_LOB_GET_SEQUENCE_NUM( len, pagesize, num )\
+     do\
+     {\
+       if ( 0 == ((len) & ((pagesize)-1)) )\
+       {\
+          num = (len) / (pagesize) + 1;\
+       }\
+       else\
+       {\
+          num = (len) / (pagesize) + 2 ;\
+       }\
+     } while ( FALSE )
 
+   /*
+      _dmsLobRecord define
+   */
    struct _dmsLobRecord : public SDBObject
    {
-      const bson::OID *_oid ;
-      UINT32 _sequence ;
-      UINT32 _offset ;  /// offset in a page, not the offset of lob
-      UINT32 _hash ;
-      UINT32 _dataLen ;
-      const CHAR *_data ;
+      const bson::OID   *_oid ;
+      UINT32            _sequence ;
+      UINT32            _offset ;  /// offset in a page, not the offset of lob
+      UINT32            _hash ;
+      UINT32            _dataLen ;
+      const CHAR        *_data ;
 
       _dmsLobRecord()
       :_oid( NULL ),
@@ -94,7 +96,6 @@ typedef SINT32 DMS_LOB_PAGEID ;
        _dataLen( 0 ),
        _data( NULL )
       {
-      
       }
 
       void clear()
@@ -132,20 +133,24 @@ typedef SINT32 DMS_LOB_PAGEID ;
    } ;
    typedef struct _dmsLobRecord dmsLobRecord ;
 
-#pragma pack(1)
+   #pragma pack(1)
+
+   /*
+      _dmsLobMeta define
+   */
    struct _dmsLobMeta : public SDBObject
    {
-      SINT64 _lobLen ;
-      UINT64 _createTime ;
-      UINT8 _status ;
-      CHAR _pad[35] ;
+      SINT64      _lobLen ;
+      UINT64      _createTime ;
+      UINT8       _status ;
+      CHAR        _pad[35] ;
 
       _dmsLobMeta()
       :_lobLen( 0 ),
        _createTime( 0 ),
        _status( DMS_LOB_UNCOMPLETE )
       {
-         ossMemset( _pad, 0, 35 ) ;
+         ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }
 
       void clear()
@@ -153,26 +158,29 @@ typedef SINT32 DMS_LOB_PAGEID ;
          _lobLen = 0 ;
          _createTime = 0 ;
          _status = DMS_LOB_UNCOMPLETE ;
-         ossMemset( _pad, 0, 35 ) ;
+         ossMemset( _pad, 0, sizeof( _pad ) ) ;
       }
 
       BOOLEAN isDone() const
       {
-         return DMS_LOB_COMPLETE == _status ;
+         return ( DMS_LOB_COMPLETE == _status ) ? TRUE : FALSE ;
       }
    } ;
    typedef struct _dmsLobMeta dmsLobMeta ;
 
+   /*
+      _dmsLobDataMapBlk define
+   */
    struct _dmsLobDataMapBlk: public SDBObject
    {
-      CHAR _pad1[4] ;
-      BYTE _oid[DMS_LOB_OID_LEN] ;
-      UINT32 _sequence ;
-      UINT32 _dataLen ;
-      SINT32 _lastPageInBucket ;
-      SINT32 _nextPageInBucket ;
-      UINT32 _clLogicalID ;
-      CHAR _pad2[214];  /// DMS_LOB_DATA_MAP_BLK_LEN - 4 * 7 - DMS_LOB_OID_LEN
+      CHAR           _pad1[4] ;
+      BYTE           _oid[DMS_LOB_OID_LEN] ;
+      UINT32         _sequence ;
+      UINT32         _dataLen ;
+      SINT32         _lastPageInBucket ;
+      SINT32         _nextPageInBucket ;
+      UINT32         _clLogicalID ;
+      CHAR           _pad2[214];  /// DMS_LOB_DATA_MAP_BLK_LEN - 4 * 7 - DMS_LOB_OID_LEN
 
       _dmsLobDataMapBlk()
       :_sequence( 0 ),
@@ -190,13 +198,16 @@ typedef SINT32 DMS_LOB_PAGEID ;
       BOOLEAN equals( const BYTE *oid, UINT32 sequence ) const
       {
          /// compare sequence first.
-         return _sequence == sequence &&
-                0 == ossMemcmp( _oid, oid, DMS_LOB_OID_LEN )  ;
+         return ( _sequence == sequence &&
+                  0 == ossMemcmp( _oid, oid, DMS_LOB_OID_LEN ) ) ?
+                TRUE : FALSE ;
       }
    } ;
    typedef struct _dmsLobDataMapBlk dmsLobDataMapBlk ;
-#pragma pack()
+
+   #pragma pack()
+
 }
 
-#endif
+#endif // DMS_LOBDEF_HPP_
 

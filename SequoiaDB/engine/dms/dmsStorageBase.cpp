@@ -42,6 +42,7 @@
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "pmdStartup.hpp"
+#include "utilStr.hpp"
 
 using namespace bson ;
 
@@ -90,6 +91,8 @@ namespace engine
       _segmentPagesSquare = 0 ;
       _pageSizeSquare     = 0 ;
       _isTempSU           = FALSE ;
+      _pageSize           = 0 ;
+      _lobPageSize        = 0 ;
 
       ossStrncpy( _suFileName, pSuFileName, DMS_SU_FILENAME_SZ ) ;
       _suFileName[ DMS_SU_FILENAME_SZ ] = 0 ;
@@ -154,34 +157,16 @@ namespace engine
          }
       }
 
-      // if we specify the path, let's copy it to full file path
-      ossStrncpy ( _fullPathName, pPath, OSS_MAX_PATHSIZE ) ;
-      pathLength = ossStrlen( _fullPathName ) ;
-      // and see if we have path separator at the end
-      if ( pathLength > 0 &&
-           ossStrncmp ( &_fullPathName[pathLength-1],
-                        OSS_FILE_SEP, 1 ) != 0 )
-      {
-         if ( OSS_MAX_PATHSIZE <= pathLength + 1 )
-         {
-            PD_LOG ( PDERROR, "Path length is too long: %s", _fullPathName ) ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         // concat separator if it's not end up with
-         ossStrncat ( _fullPathName, OSS_FILE_SEP, 1 ) ;
-      }
+      rc = utilBuildFullPath( pPath, _suFileName, OSS_MAX_PATHSIZE,
+                              _fullPathName ) ;
 
-      if ( OSS_MAX_PATHSIZE <= ossStrlen(_fullPathName) +
-                               ossStrlen( _suFileName ) )
+      if ( rc )
       {
-         PD_LOG ( PDERROR, "Path+filename are too long: %s; %s", _fullPathName,
+         PD_LOG ( PDERROR, "Path+filename are too long: %s; %s", pPath,
                   _suFileName ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      ossStrncat ( _fullPathName, _suFileName,
-                   OSS_MAX_PATHSIZE - ossStrlen( _fullPathName ) ) ;
 
       PD_LOG ( PDDEBUG, "Open storage unit file %s", _fullPathName ) ;
 
@@ -336,16 +321,15 @@ namespace engine
          SDB_OSS_FREE ( _dirtyList ) ;
       }
       // memory will be freed in destructor
-      _dirtyList = (CHAR*)SDB_OSS_MALLOC ( DMS_MAX_SEGMENT_NUM ( pageSize() ) / 8 ) ;
+      _dirtyList = (CHAR*)SDB_OSS_MALLOC ( maxSegmentNum() / 8 ) ;
       if ( !_dirtyList )
       {
          rc = SDB_OOM ;
-         PD_LOG ( PDERROR,
-                  "Failed to allocate memory for dirty list for %d bytes",
-                  DMS_MAX_SEGMENT_NUM ( pageSize() ) / 8 ) ;
+         PD_LOG ( PDERROR, "Failed to allocate memory for dirty list for "
+                  "%d bytes", maxSegmentNum() / 8 ) ;
          goto error ;
       }
-      ossMemset ( _dirtyList, 0, DMS_MAX_SEGMENT_NUM ( pageSize() ) / 8 ) ;
+      ossMemset ( _dirtyList, 0, maxSegmentNum() / 8 ) ;
 
    done:
       return rc ;
@@ -382,8 +366,7 @@ namespace engine
 
       if ( _fullPathName[0] == 0 )
       {
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         goto done ;
       }
 
       // close
@@ -394,6 +377,7 @@ namespace engine
                    "rc: %d", _fullPathName, rc ) ;
 
       PD_LOG( PDEVENT, "Remove storage unit file[%s] succeed", _fullPathName ) ;
+      _fullPathName[ 0 ] = 0 ;
 
    done:
       return rc ;
@@ -506,20 +490,73 @@ namespace engine
       goto done ;
    }
 
+   void _dmsStorageBase::_initHeaderPageSize( dmsStorageUnitHeader * pHeader,
+                                              dmsStorageInfo * pInfo )
+   {
+      pHeader->_pageSize      = pInfo->_pageSize ;
+      pHeader->_lobdPageSize  = pInfo->_lobdPageSize ;
+   }
+
    void _dmsStorageBase::_initHeader( dmsStorageUnitHeader * pHeader )
    {
       ossStrncpy( pHeader->_eyeCatcher, _getEyeCatcher(),
                   DMS_HEADER_EYECATCHER_LEN ) ;
       pHeader->_version = _curVersion() ;
-      pHeader->_pageSize = _pStorageInfo->_pageSize ;
-      pHeader->_storageUnitSize = _dataOffset() / _pStorageInfo->_pageSize ;
+      _initHeaderPageSize( pHeader, _pStorageInfo ) ;
+      pHeader->_storageUnitSize = _dataOffset() / pHeader->_pageSize ;
       ossStrncpy ( pHeader->_name, _pStorageInfo->_suName, DMS_SU_NAME_SZ ) ;
       pHeader->_sequence = _pStorageInfo->_sequence ;
       pHeader->_numMB    = 0 ;
       pHeader->_MBHWM    = 0 ;
       pHeader->_pageNum  = 0 ;
       pHeader->_secretValue = _pStorageInfo->_secretValue ;
-      pHeader->_lobdPageSize = _pStorageInfo->_lobdPageSize ;
+      pHeader->_createLobs = 0 ;
+   }
+
+   INT32 _dmsStorageBase::_checkPageSize( dmsStorageUnitHeader * pHeader )
+   {
+      INT32 rc = SDB_OK ;
+
+      // check page size
+      if ( DMS_PAGE_SIZE4K  != pHeader->_pageSize &&
+           DMS_PAGE_SIZE8K  != pHeader->_pageSize &&
+           DMS_PAGE_SIZE16K != pHeader->_pageSize &&
+           DMS_PAGE_SIZE32K != pHeader->_pageSize &&
+           DMS_PAGE_SIZE64K != pHeader->_pageSize )
+      {
+         PD_LOG ( PDERROR, "Invalid page size: %u, page size must be one of "
+                  "4K/8K/16K/32K/64K", pHeader->_pageSize ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else if ( DMS_DO_NOT_CREATE_LOB != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE4K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE8K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE16K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE32K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE64K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE128K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE256K != pHeader->_lobdPageSize &&
+                DMS_PAGE_SIZE512K != pHeader->_lobdPageSize )
+      {
+         PD_LOG ( PDERROR, "Invalid lob page size: %u in file[%s], lob page "
+                  "size must be one of 4K/8K/16K/32K/64K/128K/256K/512K",
+                  getSuFileName(), pHeader->_lobdPageSize ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // set storage info page size, lob meta page size is 256B,
+      // so can't be assign to storage info
+      if ( (UINT32)_pStorageInfo->_pageSize != pHeader->_pageSize )
+      {
+         _pStorageInfo->_pageSize = pHeader->_pageSize ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _dmsStorageBase::_validateHeader( dmsStorageUnitHeader * pHeader )
@@ -544,21 +581,15 @@ namespace engine
          goto error ;
       }
       // check page size
-      else if ( DMS_PAGE_SIZE4K  != pHeader->_pageSize &&
-                DMS_PAGE_SIZE8K  != pHeader->_pageSize &&
-                DMS_PAGE_SIZE16K != pHeader->_pageSize &&
-                DMS_PAGE_SIZE32K != pHeader->_pageSize &&
-                DMS_PAGE_SIZE64K != pHeader->_pageSize &&
-                /// for lob pagesize
-                DMS_PAGE_SIZE256B != pHeader->_pageSize &&
-                DMS_PAGE_SIZE256K != pHeader->_pageSize &&
-                DMS_PAGE_SIZE512K != pHeader->_pageSize )
+      rc = _checkPageSize( pHeader ) ;
+      if ( rc )
       {
-         PD_LOG ( PDERROR, "Invalid page size: %u, page size must be one of "
-                  "4K/8K/16K/32K/64K", pHeader->_pageSize ) ;
-         rc = SDB_INVALIDARG ;
+         goto error ;
       }
-      else if ( 0 != _dataOffset() % pHeader->_pageSize )
+      _pageSize = pHeader->_pageSize ;
+      _lobPageSize = pHeader->_lobdPageSize ;
+
+      if ( 0 != _dataOffset() % pHeader->_pageSize )
       {
          rc = SDB_SYS ;
          PD_LOG( PDSEVERE, "Dms storage meta size[%llu] is not a mutiple of "
@@ -596,10 +627,6 @@ namespace engine
          goto error ;
       }
 
-      if ( (UINT32)_pStorageInfo->_pageSize != pHeader->_pageSize )
-      {
-         _pStorageInfo->_pageSize = pHeader->_pageSize ;
-      }
       if ( _pStorageInfo->_secretValue != pHeader->_secretValue )
       {
          _pStorageInfo->_secretValue = pHeader->_secretValue ;
@@ -892,7 +919,7 @@ namespace engine
                    "starting data segment can't be 0, and "
                    "dirty list can't be NULL" ) ;
       SDB_ASSERT ( (UINT32)_maxSegID <=
-                   DMS_MAX_SEGMENT_NUM ( pageSize() ) + _dataSegID,
+                   maxSegmentNum() + _dataSegID,
                    "current top segment id can't be greater than "
                    "maximum number of segment for storage unit" ) ;
       // calculate how many "segment groups" we should go through

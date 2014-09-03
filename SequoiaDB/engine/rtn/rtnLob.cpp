@@ -356,7 +356,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       lockMb = TRUE ;
 
-      pageSize = su->lob()->getHeader()->_lobdPageSize ;
+      pageSize = su->lob()->getLobdPageSize() ;
 
       rc = su->lob()->getLobMeta( oid, mbContext, cb,
                                   TRUE, lobMeta ) ;
