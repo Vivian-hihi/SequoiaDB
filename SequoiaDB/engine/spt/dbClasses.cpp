@@ -3962,26 +3962,42 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
       INT32 portNameLen = 0 ;
       const CHAR *pNodename = NULL ;
       const CHAR *pSplit = NULL ;
+      CHAR portBuffer[OSS_MAX_SERVICENAME + 1] = {0};
       pNodename = ( CHAR* ) JS_EncodeString( cx, strHost ) ;
       VERIFY ( pNodename ) ;
 
       pSplit = ossStrchr ( pNodename, NODE_NAME_SPLIT ) ;
-      VERIFY ( pSplit ) ;
-
-      portNameLen = ossStrlen ( pSplit+1 ) ;
-      VERIFY ( portNameLen != 0 ) ;
-
-      host = ( CHAR* ) JS_malloc ( cx, pSplit-pNodename+1 ) ;
-      VERIFY ( host ) ;
-
-      ossStrncpy ( host, pNodename, pSplit-pNodename ) ;
-      host[pSplit-pNodename] = '\0' ;
-
-      port = ( CHAR* ) JS_malloc ( cx, portNameLen+1 );
-      VERIFY ( port ) ;
-
-      ossStrncpy ( port, pSplit+1, portNameLen );
-      port[portNameLen] = '\0' ;
+      if ( NULL != pSplit )
+      {
+         portNameLen = ossStrlen ( pSplit+1 ) ;
+         VERIFY ( portNameLen != 0 ) ;
+   
+         host = ( CHAR* ) JS_malloc ( cx, pSplit-pNodename+1 ) ;
+         VERIFY ( host ) ;
+   
+         ossStrncpy ( host, pNodename, pSplit-pNodename ) ;
+         host[pSplit-pNodename] = '\0' ;
+   
+         port = ( CHAR* ) JS_malloc ( cx, portNameLen+1 );
+         VERIFY ( port ) ;
+   
+         ossStrncpy ( port, pSplit+1, portNameLen );
+         port[portNameLen] = '\0' ;
+      }
+      else
+      {
+         // host
+         // host will be freed in done:
+         host = (CHAR *) JS_EncodeString ( cx , strHost ) ;
+         VERIFY ( host ) ;
+         // port
+         portNameLen = sprintf( portBuffer, "%d", SDB_DEF_COORD_PORT ) ;
+         VERIFY ( portNameLen != 0 ) ;
+         port = ( CHAR* ) JS_malloc ( cx, portNameLen + 1 ) ;
+         VERIFY ( port ) ;
+         ossStrncpy ( port, portBuffer, portNameLen ) ;
+         port[portNameLen] = '\0' ;
+      }
    }
    // in the case, we get host and port input by user
    else
