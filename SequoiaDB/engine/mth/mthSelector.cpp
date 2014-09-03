@@ -610,8 +610,8 @@ namespace engine
          }
          stringLength =
                ossStrlen ( &_stringOutputBuffer[FIRST_ELEMENT_STARTING_POS] ) ;
-         // assign object length, 1 for 0 at the end
-         *(INT32*)_stringOutputBuffer = FIRST_ELEMENT_STARTING_POS + 1 +
+         // assign object length, 1 for 0 at the end, 1 for the eoo
+         *(INT32*)_stringOutputBuffer = FIRST_ELEMENT_STARTING_POS + 2 +
                                         stringLength ;
          // assign string length, 1 for 0 at the end
          *(INT32*)(&_stringOutputBuffer[FIRST_ELEMENT_STARTING_POS-4]) =
