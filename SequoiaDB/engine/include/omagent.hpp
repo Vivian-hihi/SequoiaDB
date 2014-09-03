@@ -39,35 +39,51 @@
 #include "sptApi.hpp"
 #include "omagentMsgDef.hpp"
 
+using namespace std ;
 using namespace bson ;
 
-#define JS_FILE_NAME_LEN 512
-#define JS_ARG_LEN       1024
+#define JS_FILE_NAME_LEN                 (512)
+#define JS_ARG_LEN                       (1024)
+
+#define ROLE_COORD                       "coord"
+#define ROLE_CATA                        "catalog"
+#define ROLE_DATA                        "data"
+#define ROLE_STANDALONE                  "standalone"
+
 
 namespace engine
 {
 
    struct _InstallInfo
    {
-      const CHAR *_hostName ;
-      const CHAR *_svcName ;
-      const CHAR *_dbPath ;
-      const CHAR *_confPath ;
-      const CHAR *_dataGroupName ;
+      string _hostName ;
+      string _svcName ;
+      string _dbPath ;
+      string _confPath ;
+      string _dataGroupName ;
       BSONObj _conf ;
    } ;
    typedef struct _InstallInfo InstallInfo ;
 
-   struct _InstallJobResult
+   struct _InstalledNode
+   {
+      string _role ;
+      string _dataGroupName ;
+      string _hostName ;
+      string _svcName ;
+   } ;
+   typedef struct _InstalledNode InstalledNode ;
+
+   struct _InstallResult
    {
       INT32 _rc ;
-      std::string _errMsg ;
-      std::string _desc ;
       INT32 _totalNum ;
       INT32 _finishNum ;
-      std::vector< InstallInfo > _finishNode ;
+      string _errMsg ;
+      string _desc ;
+      vector< InstalledNode > _installedNodes ;
    } ;
-   typedef struct _InstallJobResult InstallJobResult ;
+   typedef struct _InstallResult InstallResult ;
 
    struct _AddHost
    {
@@ -77,6 +93,18 @@ namespace engine
       std::string _installPath ;
    } ;
    typedef struct _AddHost AddHost ;
+
+   enum OMA_JOB_STATUS
+   {
+      OMA_JOB_STATUS_INIT         = 1 ,
+      OMA_JOB_STATUS_RUNNING      = 2 ,
+      OMA_JOB_STATUS_FINISH       = 3 ,
+      OMA_JOB_STATUS_FAIL         = 4 ,
+
+      OMA_JOB_STATUS_END          = 10
+   } ;
+
+
 }
 
 
