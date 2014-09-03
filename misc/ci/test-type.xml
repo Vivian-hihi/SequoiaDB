@@ -67,7 +67,7 @@
 				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${testcase.path}/ant_testcases/reports" masterreports="${test.reports.path}">
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-					<param name="ant.testcase.path" value="${testcase.path}/ant_testcases/" />
+					<param name="ant.testcase.path" value="${testcase.path}/ant_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />

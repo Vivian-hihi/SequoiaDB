@@ -100,7 +100,7 @@
 				<property name="command" value="python ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord.service.port} -d ${data.service.port}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<exec executable="/usr/bin/python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
+				<exec executable="python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
 					<arg line=" ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord.service.port} -d ${data.service.port}" />
 				</exec>
 				<echo message="${screen.output}" />
@@ -110,7 +110,7 @@
 				<property name="command" value="python ${test.case.fullname}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<exec executable="/usr/bin/python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
+				<exec executable="python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
 					<arg line=" ${test.case.fullname}" />
 				</exec>
 				<echo message="${screen.output}" />
@@ -130,7 +130,7 @@
 				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
 				<echo message="The testcase ${test.case.name}.py end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;${testcase.status}&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[COMMAND= ${command} RETURNCODE=${ret.code}; ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;" />
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;${testcase.status}&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[COMMAND= ${command}&#10; RETURNCODE=${ret.code}&#10; ERRORMESSAGE=&#10;${screen.output}&#10;]]&gt;&#10;&lt;/failure&gt;&#10;" />
 			</then>
 			<else>
 				<tstamp>
