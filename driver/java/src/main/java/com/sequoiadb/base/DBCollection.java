@@ -604,16 +604,16 @@ public class DBCollection {
             int flag, BSONObject options) throws BaseException {
         
         flag |= DBQuery.FLG_QUERY_EXPLAIN;
-        if ( null == hint ){
-            hint = options;
-        }
-        else{
-            if ( null != options){
-                hint.putAll(options);
-            }
+        BSONObject innerHint = new BasicBSONObject();
+        if ( null != hint ){
+            innerHint.put(SequoiadbConstants.FIELD_NAME_HINT, hint);
         }
         
-        return query(matcher, selector, orderBy, hint, skipRows, 
+        if ( null != options){
+            innerHint.put(SequoiadbConstants.FIELD_NAME_OPTIONS, options);
+        }
+        
+        return query(matcher, selector, orderBy, innerHint, skipRows, 
                 returnRows, flag);
     }
 
