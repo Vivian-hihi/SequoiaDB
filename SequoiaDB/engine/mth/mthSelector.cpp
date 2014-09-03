@@ -613,6 +613,7 @@ namespace engine
          // assign object length, 1 for 0 at the end, 1 for the eoo
          *(INT32*)_stringOutputBuffer = FIRST_ELEMENT_STARTING_POS + 2 +
                                         stringLength ;
+         _stringOutputBuffer[ *(INT32*)_stringOutputBuffer -1 ] = EOO ;
          // assign string length, 1 for 0 at the end
          *(INT32*)(&_stringOutputBuffer[FIRST_ELEMENT_STARTING_POS-4]) =
                stringLength + 1 ;
