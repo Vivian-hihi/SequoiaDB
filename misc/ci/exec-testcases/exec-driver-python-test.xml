@@ -5,8 +5,8 @@
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${excludes.dir.patterns}.-->
 <!--@param ${includes.dir.patterns}.-->
-<!--@param ${coord_port}:50000.-->
-<!--@param ${data_port}:21100.-->
+<!--@param ${coord.service.port}:50000.-->
+<!--@param ${data.service.port}:21100.-->
 
 <project name="Exec-Python-Testcases" default="Test-Driver-Python">
 	<property file="${ci.properties.path}" />
@@ -20,6 +20,7 @@
 		<echo message="Reports' path is ${reports.path}" />
 		<delete dir="${reports.path}" failonerror="false" />
 		<mkdir dir="${reports.path}" />
+		<echo message="Clean deploy result reports compeleted." />
 	</target>
 
 	<target name="Init-Python-Driver" depends="Clean-Python-Reports">
@@ -96,11 +97,11 @@
 		<if>
 			<equals arg1="${test-type}" arg2="driver-python" />
 			<then>
-				<property name="command" value="python ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord_port} -d ${data_port}" />
+				<property name="command" value="python ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord.service.port} -d ${data.service.port}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
 				<exec executable="/usr/bin/python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
-					<arg line=" ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord_port} -d ${data_port}" />
+					<arg line=" ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord.service.port} -d ${data.service.port}" />
 				</exec>
 				<echo message="${screen.output}" />
 				<echo message="The result = ${ret.code} after exec ${test.case.fullname} testcase." />
