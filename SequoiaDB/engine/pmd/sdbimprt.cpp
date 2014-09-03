@@ -140,6 +140,10 @@ INT32 on_main( void *pData )
       PD_LOG ( PDERROR, "Failed to execute parser, rc = %d", rc ) ;
       goto error ;
    }
+   if( total > succ )
+   {
+      rc = SDB_MIG_SUCC_WITH_INFO ;
+   }
    ossPrintf ( "%d records in file, %d records import"OSS_NEWLINE, total, succ ) ;
 
 done:
@@ -175,6 +179,7 @@ INT32 on_end( void *pData )
 INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
+   INT32 returnRc = 0 ;
    util_sdb_settings setting ;
 
    setting.on_init = on_init ;
@@ -234,7 +239,23 @@ done :
       ossPrintf ( "Detail in log path: %s"OSS_NEWLINE, getDialogName() ) ;
       PD_LOG ( PDEVENT, "Import Completed" ) ;
    }
-   return SDB_OK == rc ? 0 : 1 ;
+   if( SDB_OK == rc || SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
+   {
+      returnRc = 0 ;
+   }
+   else if( SDB_MIG_SUCC_WITH_INFO == rc )
+   {
+      returnRc = 1 ;
+   }
+   else if( SDB_INVALIDARG == rc )
+   {
+      returnRc = 127 ;
+   }
+   else
+   {
+      returnRc = 2 ;
+   }
+   return returnRc ;
 error :
    goto done ;
 }
