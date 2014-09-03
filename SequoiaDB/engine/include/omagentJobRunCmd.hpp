@@ -40,12 +40,13 @@
 #include "../bson/bson.h"
 #include "ossMem.h"
 #include "omagent.hpp"
+#include "omagentCommand.hpp"
 #include "omagentMsgDef.hpp"
-#include "omagent.hpp"
 #include "sptScope.hpp"
 #include <map>
 #include <string>
 
+using namespace std ;
 using namespace bson ;
 
 namespace engine
@@ -58,8 +59,9 @@ namespace engine
          virtual INT32 setJSFile ( const CHAR *fileName ) ;
  
       public:
-         virtual INT32 init ( std::vector<BSONObj> &objs ) = 0 ;
-         virtual INT32 doit ( InstallJobResult &result ) = 0 ;
+         virtual const CHAR* name () = 0 ;
+         virtual INT32 init ( BSONObj &installInfo ) = 0 ;
+         virtual INT32 doit ( BSONObj &result ) = 0 ;
 
      protected:
          _sptScope *_scope ;
@@ -71,46 +73,55 @@ namespace engine
          std::string _content ;
    } ;
 
-   class _omaJobRunInstallCatalogCmd : public _omaJobRunCmd
+   class _omaJobRunInstallCatalogCmd : public _omaCommand
    {
       public:
-         _omaJobRunInstallCatalogCmd () ;
+         _omaJobRunInstallCatalogCmd ( InstallInfo &info ) ;
          virtual ~_omaJobRunInstallCatalogCmd () ;
 
       public:
-         virtual INT32 init ( std::vector<BSONObj> &objs ) ;
-         virtual INT32 doit ( InstallJobResult &result ) ;
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         std::vector<InstallInfo> _installInfos ;
+         BSONObj _installInfo ;
+         InstallInfo _info ;
+
    } ;
 
-   class _omaJobRunInstallCoordCmd : public _omaJobRunCmd
+   class _omaJobRunInstallCoordCmd : public _omaCommand
    {
       public:
-         _omaJobRunInstallCoordCmd () ;
+         _omaJobRunInstallCoordCmd ( InstallInfo &info ) ;
          virtual ~_omaJobRunInstallCoordCmd () ;
 
       public:
-         virtual INT32 init ( std::vector<BSONObj> &objs ) ;
-         virtual INT32 doit ( InstallJobResult &result ) ;
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
-      private:
-         std::vector<InstallInfo> _installInfos ;
+      public:
+         BSONObj _installInfo ;
+         InstallInfo _info ;
+
    } ;
 
-   class _omaJobRunInstallDataCmd : public _omaJobRunCmd
+   class _omaJobRunInstallDataCmd : public _omaCommand
    {
       public:
-         _omaJobRunInstallDataCmd () ;
+         _omaJobRunInstallDataCmd ( InsallInfo &info ) ;
          virtual ~_omaJobRunInstallDataCmd () ;
 
       public:
-         virtual INT32 init ( std::vector<BSONObj> &objs ) ;
-         virtual INT32 doit ( InstallJobResult &result ) ;
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
 
-      private:
-         std::vector<InstallInfo> _installInfos ;
+      public:
+         BSONObj _installInfo ;
+         InstallInfo _info ;
+
    } ;
 
 

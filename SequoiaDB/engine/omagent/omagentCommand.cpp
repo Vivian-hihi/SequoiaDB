@@ -59,11 +59,6 @@ using namespace bson ;
 #define FILE_GET_HOST_NAME               "getHostName.js"
 #define FILE_ADDHOST_ROLLBACK_INTERNAL   "addHostRollbackInternal.js"
 
-#define ROLE_COORD                       "coord"
-#define ROLE_CATA                        "catalog"
-#define ROLE_DATA                        "data"
-#define ROLE_STANDALONE                  "standalone"
-
 // TODO:tanzhaobo
 // what is the path in windows
 #if defined (_WINDOWS)
@@ -256,12 +251,12 @@ namespace engine
    {
    }
 
-   INT32 _omaScanHost::init ( const CHAR *pInfomation )
+   INT32 _omaScanHost::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
       BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
       ele = arg.getField ( OMA_FIELD_HOSTINFO ) ;
       if ( Array == ele.type() )
       {
@@ -434,12 +429,12 @@ namespace engine
    {
    }
 
-   INT32 _omaInstallRemoteAgent::init ( const CHAR *pInfomation )
+   INT32 _omaInstallRemoteAgent::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
       BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
       ele = arg.getField ( OMA_FIELD_HOSTINFO ) ;
       if ( Array == ele.type() )
       {
@@ -755,11 +750,11 @@ namespace engine
    {
    }
 
-   INT32 _omaCheckHost::init( const CHAR *pInfomation )
+   INT32 _omaCheckHost::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
-      BSONObj host( pInfomation ) ;
+      BSONObj host( pInstallInfo ) ;
       // get fields
       rc = omaGetStringElement( host, OMA_FIELD_IP, &_pIp ) ;
       if ( rc )
@@ -1409,12 +1404,12 @@ namespace engine
    {
    }
 
-   INT32 _omaUninstallRemoteAgent::init( const CHAR *pInfomation )
+   INT32 _omaUninstallRemoteAgent::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
       BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
       ele = arg.getField ( OMA_FIELD_HOSTINFO ) ;
       if ( Array == ele.type() )
       {
@@ -1581,7 +1576,7 @@ namespace engine
       ossMemset ( _sdb_user_group, 0, OSS_MAX_PATHSIZE + 1 ) ;
    }
 
-   INT32 _omaAddHost::init( const CHAR *pInfomation )
+   INT32 _omaAddHost::init( const CHAR *pInstallInfo )
    {
       INT32 rc                  = SDB_OK ;
       const CHAR *pSdbUser      = NULL ;
@@ -1589,7 +1584,7 @@ namespace engine
       const CHAR *pSdbUserGroup = NULL ;
       const CHAR *pPacketPath   = NULL ;
       // parse bson and get arguments info for js file
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
       BSONElement ele ;
       // get sdbuser/sdbpasswd/sdbusergroup
       rc = omaGetStringElement( arg, OMA_FIELD_SDBUSER, &pSdbUser ) ;
@@ -1876,11 +1871,11 @@ namespace engine
    {
    }
 
-   INT32 _omaInstallDBBusiness::init( const CHAR *pInfomation )
+   INT32 _omaInstallDBBusiness::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
 
       // get localhost name
       rc = ossGetHostName( _localHostName, OSS_MAX_HOSTNAME ) ;
@@ -1961,14 +1956,14 @@ namespace engine
    INT32 _omaInstallDBBusiness::doit( BSONObj &objRet )
    {
       INT32 rc                         = SDB_OK ;
-      _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
-      UINT64 taskID                    = pTaskMgr->getTaskID() ;
       _omaInstallDBBusinessTask *pTask = NULL ;
       BOOLEAN hasVCoordStart           = FALSE ;
+      _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
+      UINT64 taskID                    = pTaskMgr->getTaskID() ;
       _omaCreateVirtualCoord createVCoord( _localHostName, _omaSvcName,
                                            _vCoordSvcName ) ;
       BSONObjBuilder bob ;
-      BSONObj retObj ;
+//      BSONObj retObj ;
 
       // create virtual coord
       rc = createVCoord.createVirtualCoord( hasVCoordStart ) ;
@@ -2000,16 +1995,17 @@ namespace engine
          goto error ;
       }
       rc = pTask->doit() ;
+      if ( rc )
       {
          PD_LOG_MSG( PDERROR,
                      "Failed to do db busniness task, rc = %d", rc ) ;
          goto error ;
       }
       // return taskID
-      bob.append( OMA_FIELD_RC, rc ) ;
-      bob.append( OMA_FIELD_DETAIL, "" ) ;
-      bob.appendNumber( OMA_FIELD_TASKID, (INT64)taskID ) ;
-      retObj = bob.obj() ;
+//      bob.append( OMA_FIELD_RC, rc ) ;
+//      bob.append( OMA_FIELD_DETAIL, "" ) ;
+      bob.append( OMA_FIELD_TASKID, (SINT64)taskID ) ;
+      objRet = bob.obj() ;
 
    done:
 /*
@@ -2048,12 +2044,12 @@ namespace engine
    {
    }
 
-   INT32 _omaInstallDBStatus::init ( const CHAR *pInfomation )
+   INT32 _omaInstallDBStatus::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson to get task id
       BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
       try
       {
          ele = arg.getField ( OMA_FIELD_TASKID ) ;
@@ -2120,7 +2116,7 @@ namespace engine
    {
    }
 
-   INT32 _omaCreateVirtualCoord::init( const CHAR *pInfomation )
+   INT32 _omaCreateVirtualCoord::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // set js file
@@ -2258,7 +2254,7 @@ namespace engine
    {
    }
 
-   INT32 _omaRemoveVirtualCoord::init( const CHAR *pInfomation )
+   INT32 _omaRemoveVirtualCoord::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // get js file
@@ -2391,12 +2387,12 @@ namespace engine
    {
    }
 
-   INT32 _omaGetRemoteAgentStatus::init( const CHAR *pInfomation )
+   INT32 _omaGetRemoteAgentStatus::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
       BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
       ele = arg.getField ( OMA_FIELD_HOSTS ) ;
       if ( Array == ele.type() )
       {
@@ -2749,12 +2745,12 @@ namespace engine
    {
    }
 
-   INT32 _omaRegHosts::init( const CHAR *pInfomation )
+   INT32 _omaRegHosts::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
       BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
       ele = arg.getField ( OMA_FIELD_HOSTS ) ;
       if ( Array == ele.type() )
       {
@@ -3060,12 +3056,12 @@ namespace engine
    {
    }
 
-   INT32 _omaGetHostNames::init( const CHAR *pInfomation )
+   INT32 _omaGetHostNames::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson and get arguments info for js file
       BSONElement ele ;
-      BSONObj arg( pInfomation ) ;
+      BSONObj arg( pInstallInfo ) ;
       ele = arg.getField ( OMA_FIELD_HOSTS ) ;
       if ( Array == ele.type() )
       {
@@ -3268,7 +3264,7 @@ namespace engine
    {
    }
 
-   INT32 _omaAddHostRollbackInternal::init( const CHAR *pInfomation )
+   INT32 _omaAddHostRollbackInternal::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // get js file

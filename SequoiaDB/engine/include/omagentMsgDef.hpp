@@ -59,6 +59,8 @@
 #define OMA_FIELD_TRANSACTION_ID                   OM_BSON_FIELD_TRANSACTION_ID
 #define OMA_FIELD_PACKET_PATH                      OM_BSON_FIELD_PATCKET_PATH
 #define OMA_FIELD_CONFIG                           OM_CONFIGURE_FIELD_CONFIG
+#define OMA_FIELD_STAGE_INSTALL                    OM_TASK_STATUS_INSTALL
+#define OMA_FIELD_STAGE_ROLLBACK                   OM_TASK_STATUS_ROLLBACK
 
 #define OMA_FIELD_HOSTS                            "Hosts"
 #define OMA_FIELD_HOSTNAME                         "HostName"
@@ -91,6 +93,9 @@
 #define OMA_FIELD_CATALOG                          "Catalog"
 #define OMA_FIELD_DATA                             "Data"
 #define OMA_FIELD_ERRMSG                           "ErrMsg"
+#define OMA_FIELD_TOTALNUM                         "TotalNum"
+#define OMA_FIELD_FINISHNUM                        "FinishNum"
+#define OMA_FIELD_SVCNAME                          "svcname"
 
 // host info
 #define OMA_FIELD_HOST                             "Host"
@@ -144,6 +149,9 @@
 
 // business
 #define OMA_FIELD_CLUSTERNAME                      "ClusterName"
+
+// install db business result
+
 
 // config file
 #define OMA_OPTION_DATAGROUPNAME                   "datagroupname"

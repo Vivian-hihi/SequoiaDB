@@ -31,7 +31,8 @@
 *******************************************************************************/
 
 #include "omagentUtil.hpp"
-#include "omagentJobRunCmd.hpp"
+#include "omagentCommand.hpp"
+//#include "omagentJobRunCmd.hpp"
 #include "utilStr.hpp"
 #include "omagentMgr.hpp"
 
@@ -46,6 +47,7 @@ namespace engine
    /*
       _omaJobRunCmd
    */
+/*
    _omaJobRunCmd::_omaJobRunCmd ()
    {
       _scope      = NULL ;
@@ -92,64 +94,65 @@ namespace engine
    error:
       goto done ;
    }
+*/
 
    /*
       _omaJobRunInstallCatalogCmd
    */
-   _omaJobRunInstallCatalogCmd::_omaJobRunInstallCatalogCmd()
+   _omaJobRunInstallCatalogCmd::_omaJobRunInstallCatalogCmd(
+                                                      InstallInfo &info )
+   {
+      _info._hostName = info._hostName ;
+      _info._svcName = info._svcName ;
+      _info._dbPath = info._dbPath ;
+      _info._confPath = info._dataGroupName ;
+      _info._conf = info._conf.getOwned() ;
+   }
+
+   _omaJobRunInstallCatalogCmd::~_omaJobRunInstallCatalogCmd()
    {
    }
 
-   _omaJobRunInstallCatalogCmd::~_omaJobRunInstallCatalogCmd() {}
-
-   INT32 _omaJobRunInstallCatalogCmd::init ( std::vector<BSONObj> &objs )
+   INT32 _omaJobRunInstallCatalogCmd::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
-      std::vector<BSONObj>::iterator it = objs.begin() ;
-      while( it != objs.end() )
-      {
-         InstallInfo info ;
-         BSONObj conf ;
-         BSONObj pattern ;
+/*
+      BSONObj arg( pInstallInfo ) ;
+      BSONObj conf ;
+      BSONObj pattern ;
 
-         // _dataGroupName
-         rc = omaGetStringElement( *it, OMA_OPTION_DATAGROUPNAME,
-                                       &info._dataGroupName ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d",
-                   OMA_OPTION_DATAGROUPNAME, rc ) ;
-         // _hostname
-         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME,
-                                       &info._hostName ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
-         // _svcName
-         rc = omaGetStringElement( *it, OMA_OPTION_SVCNAME,
-                                       &info._svcName ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_OPTION_SVCNAME, rc ) ;
-         // _dbPath
-         rc = omaGetStringElement( *it, OMA_OPTION_DBPATH,
-                                       &info._dbPath ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
-         // _conf
-         pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
-                         OMA_OPTION_DATAGROUPNAME << 1 <<
-                         OMA_OPTION_SVCNAME << 1 <<
-                         OMA_OPTION_DBPATH << 1 ) ;
-         conf = (*it).filterFieldsUndotted( pattern, false ) ;
-         info._conf = conf ;
-         // save info
-         _installInfos.push_back( info ) ;
-         // get next install info
-         it++ ;
-      }
+      // _dataGroupName
+      rc = omaGetStringElement( arg, OMA_OPTION_DATAGROUPNAME,
+                                &_info._dataGroupName ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",
+                OMA_OPTION_DATAGROUPNAME, rc ) ;
+      // _hostname
+      rc = omaGetStringElement( arg, OMA_FIELD_HOSTNAME, &_info._hostName ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+      // _svcName
+      rc = omaGetStringElement( arg, OMA_OPTION_SVCNAME, &_info._svcName ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_OPTION_SVCNAME, rc ) ;
+      // _dbPath
+      rc = omaGetStringElement( arg, OMA_OPTION_DBPATH, &_info._dbPath ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
+      // _conf
+      pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
+                      OMA_OPTION_DATAGROUPNAME << 1 <<
+                      OMA_OPTION_SVCNAME << 1 <<
+                      OMA_OPTION_DBPATH << 1 ) ;
+      conf = (*it).filterFieldsUndotted( pattern, false ) ;
+      _info._conf = conf.getOwned() ;
+*/
       // set js file
       rc = setJSFile( FILE_CREATE_CATALOG ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d",
+                      FILE_CREATE_CATALOG, rc ) ;
          goto error ;
       }
       // read js from file
@@ -160,6 +163,25 @@ namespace engine
                   _jsFileName, rc ) ;
          goto error ;
       }
+      // build js arguments
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
+                   " var INSTALL_HOSTNAME = \'%s\'; "
+                   "var INSTALL_SERVICE = \'%s\'; "
+                   "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
+                   _info._hostName.c_str(), _info._svcName.c_str(),
+                   _info._dbPath.c_str(), _info._conf.toString().c_str() ) ;
+  
+      PD_LOG ( PDDEBUG, "Create catalog passes arguments: "
+               "var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; "
+               "var INSTALL_PATH = %s; var CONFIG = %s;",
+               _info._hostName.c_str(), _info._svcName.c_str(),
+               _info._dbPath.c_str(),
+               _info._conf.toString().c_str() ) ;
+      _content.clear() ;
+      _content += _jsFileArgs ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
       // get scope
       _scope = sdbGetOMAgentMgr()->getScope() ;
       if ( !_scope )
@@ -175,107 +197,79 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaJobRunInstallCatalogCmd::doit ( InstallJobResult &result )
+   INT32 _omaJobRunInstallCatalogCmd::doit ( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
+//      INT32 retRc = SDB_OK ;
       BSONObj rval ;
       BSONObj detail ;
-      std::string errMsg = "" ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-      std::vector<InstallInfo>::iterator it ;
+      BSONObj subObj ;
 
-      if ( 0 == _installInfos.size() )
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+      if ( rc )
       {
-         rc = SDB_INVALIDARG ;
-         errMsg = "No catalog info for install" ;
-         PD_LOG( PDERROR, errMsg.c_str() ) ;
-         goto done ;
+         PD_LOG ( PDERROR,
+                  "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         BSONObjBuilder bob ;
+         bob.append ( OMA_FIELD_RC, rc ) ;
+         bob.append ( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
+         retObj = bob.obj() ;
+         goto error ;
       }
-      it = _installInfos.begin() ;
-      while( it != _installInfos.end() )
+      // extract subObj
+      // TODO: tanzhaobo
+      // how to deal with this kill of error
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", "", rc ) ;
+      retObj = subObj.getOwned() ;
+/*
+      // extract return rc
+      rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
+      if ( rc )
       {
-         const CHAR* conf = (*it)._conf.toString().c_str() ;
-         BSONObj subObj ;
-
-         // build js arguments
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var INSTALL_HOSTNAME = \'%s\'; "
-                      "var INSTALL_SERVICE = \'%s\'; "
-                      "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
-                      (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
-
-         PD_LOG ( PDDEBUG, "Create catalog passes arguments: "
-                  "var INSTALL_HOSTNAME = %s; var INSTALL_SERVICE = %s; "
-                  "var INSTALL_PATH = %s; var CONFIG = %s;",
-                  (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
-         _content.clear() ;
-         _content += tempBuff ;
-         _content += OSS_NEWLINE ;
-         _content += _fileBuff ;
-
-         // execute js
-         rc = _scope->eval( _content.c_str(), _content.size(),
-                            _jsFileName, 1, 1, rval, detail ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR,
-                     "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
-            errMsg = errMsg + "Install catalog " +
-                     (*it)._hostName + ":" +(*it)._svcName + "failed" ;
-            goto error ;
-         }
-         // extract subObj
-         rc = omaGetObjElement( rval, "", subObj ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", "", rc ) ;
-         // extract return rc
-         {
-         INT32 retRc = SDB_OK ;
-         rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d",
-                     OMA_FIELD_RC, rc ) ;
-            errMsg += "system error" ;
-            goto error ;
-         }
-         if ( retRc )
-         {
-            rc = retRc ;
-            errMsg = errMsg + "Install catalog [" +
-                     (*it)._hostName + ":" +(*it)._svcName + "] failed" ;
-            PD_LOG( PDERROR, (errMsg + ", rc = %d").c_str(), retRc ) ;
-            goto error;
-         }
-         }
-         // record successful node for rollback when install error happen
-         result._finishNode.push_back( *it ) ;
-         result._finishNum++ ;
-         // go to next
-         it++ ;
+         PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d",
+                  OMA_FIELD_RC, rc ) ;
+         goto error ;
       }
+      if ( retRc )
+      {
+         rc = retRc ;
+         PD_LOG_MSG ( PDERROR, "Failed to install catalog[%s:%s]",
+                      _host._hostName, _host._svcName ) ;
+         goto error;
+      }
+*/
    done:
       return rc ;
    error:
-      result._rc = rc ;
-      result._errMsg = errMsg ;
       goto done ;
    }
-
 
    /*
       _omaJobRunInstallCoordCmd
    */
-   _omaJobRunInstallCoordCmd::_omaJobRunInstallCoordCmd()
+   _omaJobRunInstallCoordCmd::_omaJobRunInstallCoordCmd( InstallInfo &info )
+   {
+      _info._hostName = info._hostName ;
+      _info._svcName = info._svcName ;
+      _info._dbPath = info._dbPath ;
+      _info._confPath = info._dataGroupName ;
+      _info._conf = info._conf.getOwned() ;
+   }
+
+   _omaJobRunInstallCoordCmd::~_omaJobRunInstallCoordCmd()
    {
    }
 
-   _omaJobRunInstallCoordCmd::~_omaJobRunInstallCoordCmd() {}
-
-   INT32 _omaJobRunInstallCoordCmd::init ( std::vector<BSONObj> &objs )
+   INT32 _omaJobRunInstallCoordCmd::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+/*
       std::vector<BSONObj>::iterator it = objs.begin() ;
       while( it != objs.end() )
       {
@@ -304,13 +298,13 @@ namespace engine
                                        &info._dbPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
-/*
-         // _confPath
-         rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
-                                       &info._confPath ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
-*/
+
+//         // _confPath
+//         rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
+//                                       &info._confPath ) ;
+//         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+//                   "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
+
          // _conf
          pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                          OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -323,6 +317,7 @@ namespace engine
          // get next install info
          it++ ;
       }
+*/
       // read js from file
       rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
       if ( rc )
@@ -338,6 +333,26 @@ namespace engine
          PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d", rc ) ;
          goto error ;
       }
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN,
+                   " var INSTALL_HOSTNAME = \'%s\'; "
+                   "var INSTALL_SERVICE = \'%s\'; "
+                   "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
+                   _info._hostName.c_str(), _info._svcName.c_str(),
+                   _info._dbPath.c_str(), _info._conf.toString().c_str() ) ;
+
+      PD_LOG ( PDDEBUG, "Create coord passes arguments: "
+                        "var INSTALL_HOSTNAME = %s; "
+                        "var INSTALL_SERVICE = %s;  "
+                        "var INSTALL_PATH = %s; var CONFIG = %s;",
+                        _info._hostName.c_str(), _info._svcName.c_str(),
+                        _info._dbPath.c_str(),
+                        _info._conf.toString().c_str() ) ;
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
       // get scope
       _scope = sdbGetOMAgentMgr()->getScope() ;
       if ( !_scope )
@@ -353,93 +368,37 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaJobRunInstallCoordCmd::doit ( InstallJobResult &result )
+   INT32 _omaJobRunInstallCoordCmd::doit ( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       BSONObj rval ;
       BSONObj detail ;
-      std::string errMsg = "" ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-      std::vector<InstallInfo>::iterator it ;
+      BSONObj subObj ;
 
-      if ( 0 == _installInfos.size() )
+
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+      if ( rc )
       {
-         rc = SDB_INVALIDARG ;
-         errMsg = "No coord info for install" ;
-         PD_LOG( PDERROR, errMsg.c_str() ) ;
-         goto done ;
+         PD_LOG ( PDERROR,
+                  "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         BSONObjBuilder bob ;
+         bob.append ( OMA_FIELD_RC, rc ) ;
+         bob.append ( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
+         retObj = bob.obj() ;
+         goto error ;
       }
-      it = _installInfos.begin() ;
-      while( it != _installInfos.end() )
-      {
-         const CHAR* conf = (*it)._conf.toString().c_str() ;
-         BSONObj subObj ;
+      // extract subObj
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", "", rc ) ;
+      retObj = subObj.getOwned() ;
 
-         // build js arguments
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var INSTALL_HOSTNAME = \'%s\'; "
-                      "var INSTALL_SERVICE = \'%s\'; "
-                      "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
-                      (*it)._hostName, (*it)._svcName, (*it)._dbPath, conf ) ;
-
-         PD_LOG ( PDDEBUG, "Create coord passes arguments: "
-                           "var INSTALL_HOSTNAME = %s; "
-                           "var INSTALL_SERVICE = %s;  "
-                           "var INSTALL_PATH = %s; var CONFIG = %s;",
-                           (*it)._hostName, (*it)._svcName,
-                           (*it)._dbPath, conf ) ;
-         _content.clear() ;
-         _content += tempBuff ;
-         _content += OSS_NEWLINE ;
-         _content += _fileBuff ;
-
-         // execute js
-         rc = _scope->eval( _content.c_str(), _content.size(),
-                            _jsFileName, 1, 1, rval, detail ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR,
-                     "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
-            errMsg = errMsg + "Install coord " +
-                     (*it)._hostName + ":" +(*it)._svcName + "failed" ;
-            goto error ;
-         }
-         // extract subObj
-         rc = omaGetObjElement( rval, "", subObj ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", "", rc ) ;
-         // extract return rc
-         {
-         INT32 retRc = SDB_OK ;
-         rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d",
-                     OMA_FIELD_RC, rc ) ;
-            errMsg += "system error" ;
-            goto error ;
-         }
-         if ( retRc )
-         {
-            rc = retRc ;
-            errMsg = errMsg + "Install coord [" +
-                     (*it)._hostName + ":" +(*it)._svcName + "] failed" ;
-            PD_LOG( PDERROR, (errMsg + ", rc = %d").c_str(), retRc ) ;
-            goto error;
-         }
-         }
-         // record successful node for rollback when install error happen
-         result._finishNode.push_back( *it ) ;
-         result._finishNum++ ;
-         // go to next
-         it++ ;
-      }
    done:
       return rc ;
    error:
-      result._rc = rc ;
-      result._errMsg = errMsg ;
       goto done ;
    }
 
@@ -447,15 +406,24 @@ namespace engine
    /*
       _omaJobRunInstallDataCmd
    */
-   _omaJobRunInstallDataCmd::_omaJobRunInstallDataCmd()
+   _omaJobRunInstallDataCmd::_omaJobRunInstallDataCmd( InstallInfo &info )
+   {
+      _info._hostName = info._hostName ;
+      _info._svcName = info._svcName ;
+      _info._dbPath = info._dbPath ;
+      _info._dataGroupName = info._dataGroupName ;
+      _info._conf = info._conf.getOwned() ;
+   }
+
+   _omaJobRunInstallDataCmd::~_omaJobRunInstallDataCmd()
    {
    }
 
-   _omaJobRunInstallDataCmd::~_omaJobRunInstallDataCmd() {}
-
-   INT32 _omaJobRunInstallDataCmd::init ( std::vector<BSONObj> &objs )
+   INT32 _omaJobRunInstallDataCmd::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+/*
       std::vector<BSONObj>::iterator it = objs.begin() ;
       while( it != objs.end() )
       {
@@ -484,13 +452,13 @@ namespace engine
                                        &info._dbPath ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
-/*
-         // _confPath
-         rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
-                                       &info._confPath ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
-*/
+
+//         // _confPath
+//         rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
+//                                       &info._confPath ) ;
+//         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+//                   "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
+
          // _conf
          pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                          OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -503,6 +471,7 @@ namespace engine
          // get next install info
          it++ ;
       }
+*/
       // set js file
       rc = setJSFile( FILE_CREATE_DATANODE ) ;
       if ( rc )
@@ -518,6 +487,31 @@ namespace engine
                   _jsFileName, rc ) ;
          goto error ;
       }
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN,
+                   " var GROUPNAME = \'%s\'; "
+                   "var INSTALL_HOSTNAME = \'%s\'; "
+                   "var INSTALL_SERVICE = \'%s\';  "
+                   "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
+                   _info._dataGroupName.c_str(),
+                   _info._hostName.c_str(),
+                   _info._svcName.c_str(),
+                   _info._dbPath.c_str(),
+                   _info._conf.toString().c_str() ) ;
+
+      PD_LOG ( PDDEBUG, "Create data node passes arguments: "
+               "groupname = %s; hostname = %s; svcname = %s; "
+               "dbpath = %s; config = %s;",
+               _info._dataGroupName.c_str(),
+               _info._hostName.c_str(),
+               _info._svcName.c_str(),
+               _info._dbPath.c_str(),
+               _info._conf.toString().c_str() ) ;
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
       // get scope
       _scope = sdbGetOMAgentMgr()->getScope() ;
       if ( !_scope )
@@ -533,98 +527,39 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaJobRunInstallDataCmd::doit ( InstallJobResult &result )
+   INT32 _omaJobRunInstallDataCmd::doit ( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       BSONObj rval ;
       BSONObj detail ;
-      std::string errMsg = "" ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-      std::vector<InstallInfo>::iterator it ;
+      BSONObj subObj ;
 
-      if ( 0 == _installInfos.size() )
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+      if ( rc )
       {
-         rc = SDB_INVALIDARG ;
-         errMsg = "No data node infos for install" ;
-         PD_LOG( PDERROR, errMsg.c_str() ) ;
-         goto done ;
+         PD_LOG ( PDERROR, "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         BSONObjBuilder bob ;
+         bob.append ( OMA_FIELD_RC, rc ) ;
+         bob.append ( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
+         retObj = bob.obj() ;
+         goto error ;
       }
-      it = _installInfos.begin() ;
-      while( it != _installInfos.end() )
-      {
-         const CHAR* conf = (*it)._conf.toString().c_str() ;
-         BSONObj subObj ;
+      // extract subObj
+      // TODO: tanzhaobo
+      // how to deal with this kill of error
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", "", rc ) ;
+      retObj = subObj.getOwned() ;
 
-         // build js arguments
-         ossSnprintf( tempBuff, JS_ARG_LEN,
-                      " var GROUPNAME = \'%s\'; "
-                      "var INSTALL_HOSTNAME = \'%s\'; "
-                      "var INSTALL_SERVICE = \'%s\';  "
-                      "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
-                      (*it)._dataGroupName, (*it)._hostName,
-                      (*it)._svcName, (*it)._dbPath, conf ) ;
-
-         PD_LOG ( PDDEBUG, "Create data node passes arguments: "
-                  "groupname = %s; hostname = %s; svcname = %s; "
-                  "dbpath = %s; config = %s;",
-                  (*it)._dataGroupName, (*it)._hostName,
-                  (*it)._svcName, (*it)._dbPath, conf ) ;
-         _content.clear() ;
-         _content += tempBuff ;
-         _content += OSS_NEWLINE ;
-         _content += _fileBuff ;
-
-         // execute js
-         rc = _scope->eval( _content.c_str(), _content.size(),
-                            _jsFileName, 1, 1, rval, detail ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDDEBUG, "Js file is: \n%s\n", _content.c_str() ) ;
-            PD_LOG ( PDERROR,
-                     "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                     _jsFileName, rc, detail.toString().c_str() ) ;
-            errMsg = errMsg + "Install data node " +
-                     (*it)._hostName + ":" +(*it)._svcName + "failed" ;
-            goto error ;
-         }
-         // extract subObj
-         rc = omaGetObjElement( rval, "", subObj ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", "", rc ) ;
-         // extract return rc
-         {
-         INT32 retRc = SDB_OK ;
-         rc = omaGetIntElement ( subObj, OMA_FIELD_RC, retRc ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d",
-                     OMA_FIELD_RC, rc ) ;
-            errMsg += "system error" ;
-            goto error ;
-         }
-         if ( retRc )
-         {
-            rc = retRc ;
-            errMsg = errMsg + "Install data node [" +
-                     (*it)._hostName + ":" +(*it)._svcName + "] failed" ;
-            PD_LOG( PDERROR, (errMsg + ", rc = %d").c_str(), retRc ) ;
-            goto error;
-         }
-         }
-         // record successful node for rollback when install error happen
-         result._finishNode.push_back( *it ) ;
-         result._finishNum++ ;
-         // go to next
-         it++ ;
-      }
    done:
       return rc ;
    error:
-      result._rc = rc ;
-      result._errMsg = errMsg ;
       goto done ;
    }
-
 
 
 }

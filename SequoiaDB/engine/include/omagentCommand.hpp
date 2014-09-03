@@ -77,7 +77,7 @@ namespace engine
       public:
          virtual const CHAR * name () = 0 ;
 
-         virtual INT32 init ( const CHAR *pInfomation ) = 0 ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) = 0 ;
 
          virtual INT32 doit ( BSONObj &retObj ) = 0 ;
 
@@ -161,7 +161,7 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_SCAN_HOST ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
    } ;
@@ -194,7 +194,7 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_CHECK_HOST ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj& retObj ) ;
 
@@ -230,7 +230,7 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_INSTALL_REMOTE_AGENT ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj& retObj ) ;
 
@@ -260,7 +260,7 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_UNINSTALL_REMOTE_AGENT ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -279,7 +279,7 @@ namespace engine
 
          virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -300,6 +300,7 @@ namespace engine
    /*
       _omaInstallDBBusiness
    */
+   class _omaTaskMgr ;
    class _omaInstallDBBusiness : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
@@ -309,7 +310,7 @@ namespace engine
 
          virtual const CHAR* name () { return OMA_CMD_INSTALL_DB_BUSINESS ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -345,7 +346,7 @@ namespace engine
             return OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS ;
          }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -370,7 +371,7 @@ namespace engine
       private:
          virtual const CHAR* name () { return "" ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -395,7 +396,7 @@ namespace engine
       private:
          virtual const CHAR* name () { return "" ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -414,7 +415,7 @@ namespace engine
 
          virtual const CHAR* name () { return "get remote agent status" ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -439,7 +440,7 @@ namespace engine
       private:
          virtual const CHAR* name () { return "" ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) { return 0 ; } 
+         virtual INT32 init ( const CHAR *pInstallInfo ) { return 0 ; } 
 
          virtual INT32 doit ( BSONObj &retObj ) { return 0 ; }
 
@@ -462,7 +463,7 @@ namespace engine
 
          virtual const CHAR* name () { return "" ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -484,7 +485,7 @@ namespace engine
 
          virtual const CHAR* name () { return "get host name" ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -501,7 +502,7 @@ namespace engine
 
          virtual const CHAR* name () { return "" ; }
 
-         virtual INT32 init ( const CHAR *pInfomation ) ;
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
@@ -512,6 +513,61 @@ namespace engine
          const CHAR *_pPassword ;
          const CHAR *_pInstallPath ;
    } ;
+
+   // run install catalog job
+   class _omaJobRunInstallCatalogCmd : public _omaCommand
+   {
+      public:
+         _omaJobRunInstallCatalogCmd ( InstallInfo &info ) ;
+         virtual ~_omaJobRunInstallCatalogCmd () ;
+
+      public:
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      private:
+         BSONObj _installInfo ;
+         InstallInfo _info ;
+
+   } ;
+
+   // run install coord job
+   class _omaJobRunInstallCoordCmd : public _omaCommand
+   {
+      public:
+         _omaJobRunInstallCoordCmd ( InstallInfo &info ) ;
+         virtual ~_omaJobRunInstallCoordCmd () ;
+
+      public:
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      public:
+         BSONObj _installInfo ;
+         InstallInfo _info ;
+
+   } ;
+
+   // run install data node job
+   class _omaJobRunInstallDataCmd : public _omaCommand
+   {
+      public:
+         _omaJobRunInstallDataCmd ( InstallInfo &info ) ;
+         virtual ~_omaJobRunInstallDataCmd () ;
+
+      public:
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      public:
+         BSONObj _installInfo ;
+         InstallInfo _info ;
+
+   } ;
+
 
 }
 

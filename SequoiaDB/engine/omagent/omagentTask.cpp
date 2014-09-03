@@ -36,8 +36,41 @@
 #include "omagentJob.hpp"
 #include "pmdDef.hpp"
 
+#define WAITING_TIME (3000)
+
 namespace engine
 {
+
+   /*
+      omagent task
+   */
+   INT32 _omaTask::setJobStatus( string &name, OMA_JOB_STATUS status )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !name.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Invalid job name" ) ;
+         goto error ;
+      }
+      _jobStatus[name] = status ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   OMA_JOB_STATUS _omaTask::getJobStatus( string &name )
+   {
+      OMA_JOB_STATUS ret = OMA_JOB_STATUS_END ;
+      map< string, OMA_JOB_STATUS >::iterator it ;
+
+      it = _jobStatus.find( name ) ;
+      if ( _jobStatus.end() != it )
+         ret = it->second ;
+      return ret ;
+   }
+
 
    /*
       omagent manager
@@ -143,6 +176,7 @@ namespace engine
    : _omaTask( taskID )
    {
       _taskName = "install db business task" ;
+      _stage = OMA_FIELD_STAGE_INSTALL ;
       _taskType = OMA_TASK_INSTALL_DB ;
       _needRollBack = FALSE ;
    }
@@ -179,29 +213,29 @@ namespace engine
       while( it != data.end() )
       {
          const CHAR *name = NULL ;
-         std::string key = "" ;
+         string key = "" ;
          rc = omaGetStringElement ( *it, OMA_OPTION_DATAGROUPNAME,
                                     &name ) ;
          PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                    "Get field[%s] failed, rc: %d",
                    OMA_OPTION_DATAGROUPNAME, rc ) ;
-         key = std::string( name ) ;
+         key = string( name ) ;
          _mapGroups[key].push_back( *it ) ;
          it++ ;
       }
       // init data node result
       {
-      std::map<std::string, std::vector<BSONObj> >::iterator iter ;
+      map<string, std::vector<BSONObj> >::iterator iter ;
       iter = _mapGroups.begin() ;
       while ( iter != _mapGroups.end() )
       {
-         std::string groupname = iter->first ;
-         InstallJobResult jobResult ;
+         string groupname = iter->first ;
+         InstallResult jobResult ;
          jobResult._rc = 0 ;
          jobResult._totalNum = (iter->second).size() ;
          jobResult._finishNum = 0 ;
-         _mapGroupsResult.insert( std::pair<std::string,
-                                  InstallJobResult>( groupname, jobResult ) ) ;
+         _mapGroupsResult.insert( std::pair<string,
+                                  InstallResult>( groupname, jobResult ) ) ;
          iter++ ;
       }
       }
@@ -251,6 +285,166 @@ namespace engine
       goto done ;
    }
 
+   vector<BSONObj>& _omaInstallDBBusinessTask::getInstallCatalogInfo()
+   {
+      return _catalog ;
+   }
+
+   vector<BSONObj>& _omaInstallDBBusinessTask::getInstallCoordInfo()
+   {
+      return _coord ;
+   }
+
+   INT32 _omaInstallDBBusinessTask::getInstallDataGroupInfo( string &name,
+                                        vector<BSONObj> &dataGroupInstallInfo )
+   {
+      INT32 rc  = SDB_OK ;
+      map< string, vector<BSONObj> >::iterator it ;
+
+      it = _mapGroups.find( name ) ;
+      if ( it != _mapGroups.end() )
+      {
+         dataGroupInstallInfo = it->second ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "No group[%s] install info", name.c_str() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBBusinessTask::updateInstallResult( INT32 retRc,
+                                                         const CHAR *pRole,
+                                                         const CHAR *pErrMsg,
+                                                         const CHAR *pDesc,
+                                                         const CHAR *pGroupName,
+                                                         BOOLEAN isFinish,
+                                                         InstalledNode *pNode )
+   {
+      INT32 rc = SDB_OK ;
+      ossScopedLock lock ( &_jobLatch, EXCLUSIVE ) ;
+
+      // check argument
+      if ( NULL == pRole )
+      {
+         PD_LOG ( PDERROR, "Not speciefy role for updating install result" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      if ( ( 0 == ossStrncmp( pRole, ROLE_DATA, ossStrlen( ROLE_DATA ) ) ) &&
+           ( NULL == pGroupName ) )
+      {
+         PD_LOG ( PDERROR, "Not speciefy data group for updating install result" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      if ( ( TRUE == isFinish ) && ( NULL == pNode ) )
+      {
+         PD_LOG ( PDERROR, "The info of finish installed node is empty for register" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      if ( NULL == pErrMsg ) pErrMsg = "" ;
+      if ( NULL == pDesc ) pDesc = "" ;
+      if ( NULL == pGroupName ) pGroupName = "" ;
+
+      // update the install result
+      if ( 0 == ossStrncmp( pRole, ROLE_DATA, ossStrlen( ROLE_DATA ) ) )
+      {
+         map<string, InstallResult>::iterator it ; 
+         string groupname = pGroupName ;
+         it = _mapGroupsResult.find( groupname ) ;
+         if ( it != _mapGroupsResult.end() )
+         {
+            InstallResult &result = it->second ;
+            if ( retRc )
+            {
+               result._rc = retRc ;
+               result._errMsg = pErrMsg ;
+               goto done ;
+            }
+            result._desc = pDesc ;
+            if ( isFinish )
+            {
+               result._finishNum++ ;
+               result._installedNodes.push_back( *pNode ) ;
+            }
+         }
+      }
+      else if ( 0 == ossStrncmp( pRole, ROLE_COORD, ossStrlen( ROLE_COORD ) ) )
+      {
+         if ( retRc )
+         {
+            _coordResult._rc = retRc ;
+            _coordResult._errMsg = pErrMsg ;
+            goto done ;
+         }
+         _coordResult._desc = pDesc ;
+         if ( isFinish )
+         {
+            _coordResult._finishNum++ ;
+            _coordResult._installedNodes.push_back( *pNode ) ;
+         }
+      }
+      else if ( 0 == ossStrncmp( pRole, ROLE_CATA, ossStrlen( ROLE_CATA ) ) )
+      {
+         if ( retRc )
+         {
+            _catalogResult._rc = retRc ;
+            _catalogResult._errMsg = pErrMsg ;
+            goto done ;
+         }
+         _catalogResult._desc = pDesc ;
+         if ( isFinish )
+         {
+            _catalogResult._finishNum++ ;
+            _catalogResult._installedNodes.push_back( *pNode ) ;
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to update install result, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _omaInstallDBBusinessTask::isFinish ()
+   {
+      map<string, InstallResult>::iterator it ;
+
+      if ( _catalogResult._totalNum > _catalogResult._finishNum )
+      {
+         return FALSE ;
+      }
+/*
+      if ( _coordResult._totalNum > _coordResult._finishNum )
+      {
+         return FALSE ;
+      }
+*/
+      it = _mapGroupsResult.begin() ;
+      while( it != _mapGroupsResult.end() )
+      {
+         InstallResult &result = it->second ;
+         if ( result._totalNum > result._finishNum )
+         {
+            return FALSE ;
+         }
+         it++ ;
+      }
+      return TRUE ;
+   }
+
    INT32 _omaInstallDBBusinessTask::getInstallStatus ( BSONObj &progress )
    {
       INT32 rc = SDB_OK ;
@@ -258,38 +452,45 @@ namespace engine
       BSONArrayBuilder bab ;
       BSONObj coordResult ;
       BSONObj catalogResult ;
+      BOOLEAN finish = isFinish() ;
       try
       {
-      // get coord status
-      coordResult = BSON ( OMA_FIELD_NAME << OMA_FIELD_COORD <<
-                           OMA_FIELD_TOTALCOUNT << _coordResult._totalNum <<
-                           OMA_FIELD_INSTALLEDCOUNT << _coordResult._finishNum <<
-                           OMA_FIELD_DESC << _coordResult._desc.c_str() ) ;
-      bab.append ( coordResult ) ;
-      // get catalog status
-      catalogResult = BSON ( OMA_FIELD_NAME << OMA_FIELD_COORD <<
-                             OMA_FIELD_TOTALCOUNT << _coordResult._totalNum <<
-                             OMA_FIELD_INSTALLEDCOUNT << _coordResult._finishNum <<
-                             OMA_FIELD_DESC << _coordResult._desc.c_str() ) ;
-      bab.append ( catalogResult ) ;
-      // get data group status
-      std::map< std::string, InstallJobResult >::iterator it ;
-      it = _mapGroupsResult.begin() ;
-      while ( it != _mapGroupsResult.end() )
-      {
-         std::string groupname = it->first ;
-         InstallJobResult result = it->second ;
-         BSONObj groupResult ;
-         groupResult = BSON ( OMA_FIELD_NAME << groupname.c_str() <<
-                              OMA_FIELD_TOTALCOUNT << result._totalNum <<
-                              OMA_FIELD_INSTALLEDCOUNT << result._finishNum <<
-                              OMA_FIELD_DESC << result._desc.c_str() ) ;
-         bab.append ( groupResult ) ;
-         it++ ;
-      }
-      // set return result
-      bob.appendArray( OMA_FIELD_PROGRESS, bab.arr() ) ;
-      progress = bob.obj() ;
+         // taskID
+         bob.append( OMA_FIELD_TASKID, (SINT64)_taskID ) ;
+         // isFinish
+         bob.appendBool( OMA_FIELD_ISFINISH, finish ) ;
+         // status
+         bob.append( OMA_FIELD_STATUS, _stage ) ;
+         // get coord status
+         coordResult = BSON ( OMA_FIELD_NAME << OMA_FIELD_COORD <<
+                              OMA_FIELD_TOTALCOUNT << _coordResult._totalNum <<
+                              OMA_FIELD_INSTALLEDCOUNT << _coordResult._finishNum <<
+                              OMA_FIELD_DESC << _coordResult._desc.c_str() ) ;
+         bab.append ( coordResult ) ;
+         // get catalog status
+         catalogResult = BSON ( OMA_FIELD_NAME << OMA_FIELD_CATALOG <<
+                                OMA_FIELD_TOTALCOUNT << _catalogResult._totalNum <<
+                                OMA_FIELD_INSTALLEDCOUNT << _catalogResult._finishNum <<
+                                OMA_FIELD_DESC << _catalogResult._desc.c_str() ) ;
+         bab.append ( catalogResult ) ;
+         // get data group status
+         std::map< string, InstallResult >::iterator it ;
+         it = _mapGroupsResult.begin() ;
+         while ( it != _mapGroupsResult.end() )
+         {
+            string groupname = it->first ;
+            InstallResult &result = it->second ;
+            BSONObj groupResult ;
+            groupResult = BSON ( OMA_FIELD_NAME << groupname.c_str() <<
+                                 OMA_FIELD_TOTALCOUNT << result._totalNum <<
+                                 OMA_FIELD_INSTALLEDCOUNT << result._finishNum <<
+                                 OMA_FIELD_DESC << result._desc.c_str() ) ;
+            bab.append ( groupResult ) ;
+            it++ ;
+         }
+         // set return result
+         bob.appendArray( OMA_FIELD_PROGRESS, bab.arr() ) ;
+         progress = bob.obj() ;
       }
       catch ( std::exception &e )
       {
@@ -310,8 +511,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       EDUID installCatalogJobID = PMD_INVALID_EDUID ;
       // start create catalog job
+/*
       rc = startCreateCatalogJob( _catalog, _catalogResult,
                                   &installCatalogJobID ) ;
+*/
+      rc = startCreateCatalogJob( this, &installCatalogJobID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to start create catalog job, rc = %d", rc ) ;
@@ -321,6 +525,8 @@ namespace engine
       {
          ossSleep ( OSS_ONE_SEC ) ;
       }
+      // waiting for coord to start
+      ossSleep( WAITING_TIME ) ;
    done:
       return rc ;
    error:
@@ -332,8 +538,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       EDUID installCoordJobID = PMD_INVALID_EDUID ;
       // start coord job
-      rc = startCreateCoordJob( _coord, _coordResult,
-                                &installCoordJobID ) ;
+      rc = startCreateCoordJob( this, &installCoordJobID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to start create coord job, rc = %d", rc ) ;
@@ -348,16 +553,15 @@ namespace engine
    INT32 _omaInstallDBBusinessTask::_installData()
    {
       INT32 rc = SDB_OK ;
-      std::map< std::string, std::vector<BSONObj> >::iterator it ;
+      map< string, vector<BSONObj> >::iterator it ;
       it = _mapGroups.begin() ;
       while( it != _mapGroups.end() )
       {
-         std::string groupname = it->first ;
-         vector<BSONObj> dataInfo = it->second ;
+         string groupname = it->first ;
+//         vector<BSONObj> dataInfo = it->second ;
          EDUID installDataJobID = PMD_INVALID_EDUID ;
-         InstallJobResult &jobResult = _mapGroupsResult[groupname] ;
          // start data job
-         rc = startCreateDataJob( groupname.c_str(), dataInfo, jobResult,
+         rc = startCreateDataJob( groupname.c_str(), this,
                                   &installDataJobID ) ;
          if ( rc )
          {

@@ -37,7 +37,9 @@
 #include "ossUtil.hpp"
 #include "pmd.hpp"
 #include "omagent.hpp"
-#include "omagentJobRunCmd.hpp"
+//#include "omagentJobRunCmd.hpp"
+#include "omagentTask.hpp"
+#include "omagentCommand.hpp"
 #include "rtnBackgroundJob.hpp"
 #include <string>
 #include <vector>
@@ -46,6 +48,7 @@ using namespace bson ;
 
 namespace engine
 {
+   class _omaInstallDBBusinessTask ;
 
    /*
       create catalog job
@@ -53,8 +56,7 @@ namespace engine
    class _omaCreateCatalogJob : public _rtnBaseJob
    {
       public:
-         _omaCreateCatalogJob ( std::vector<BSONObj> &catalog,
-                                InstallJobResult &catalogResult ) ;
+         _omaCreateCatalogJob ( _omaInstallDBBusinessTask *pTask ) ;
          virtual ~_omaCreateCatalogJob () ;
 
       public:
@@ -63,11 +65,30 @@ namespace engine
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
 
+         OMA_JOB_STATUS getJobStatus ()
+         {
+            return _status ;
+         }
+         void setJobStatus ( OMA_JOB_STATUS status )
+         {
+            _status = status ;
+         }
       private:
-         std::string                 _name ;
-         std::vector<BSONObj>        _catalog ;
-         InstallJobResult            &_catalogResult ;
-         _omaJobRunInstallCatalogCmd _runCmd ;
+
+         INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
+         INT32 _checkInstallResult( const CHAR *pHostName,
+                                    const CHAR *pSvcName,
+                                    BSONObj &obj ) ;
+         INT32 _updateInstallStatus( INT32 retRc,
+                                     const CHAR *pErrMsg,
+                                     const CHAR *pDesc,
+                                     BOOLEAN isFinish,
+                                     InstalledNode *pNode ) ;
+
+      private:
+         OMA_JOB_STATUS                      _status ;
+         string                              _name ;
+         _omaInstallDBBusinessTask*          _pTask ;
    } ;
 
    /*
@@ -76,8 +97,7 @@ namespace engine
    class _omaCreateCoordJob : public _rtnBaseJob
    {
       public:
-         _omaCreateCoordJob ( std::vector<BSONObj> &coord,
-                              InstallJobResult &coordResult ) ;
+         _omaCreateCoordJob ( _omaInstallDBBusinessTask *pTask ) ;
          virtual ~_omaCreateCoordJob () ;
 
       public:
@@ -86,11 +106,30 @@ namespace engine
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
 
-     private:
-         std::string               _name ;
-         std::vector<BSONObj>      _coord ;
-         InstallJobResult          &_coordResult ;
-         _omaJobRunInstallCoordCmd _runCmd ;
+         OMA_JOB_STATUS getJobStatus ()
+         {
+            return _status ;
+         }
+         void setJobStatus ( OMA_JOB_STATUS status )
+         {
+            _status = status ;
+         }
+      private:
+
+         INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
+         INT32 _checkInstallResult( const CHAR *pHostName,
+                                    const CHAR *pSvcName,
+                                    BSONObj &obj ) ;
+         INT32 _updateInstallStatus( INT32 retRc,
+                                     const CHAR *pErrMsg,
+                                     const CHAR *pDesc,
+                                     BOOLEAN isFinish,
+                                     InstalledNode *pNode ) ;
+
+      private:
+         OMA_JOB_STATUS                      _status ;
+         string                              _name ;
+         _omaInstallDBBusinessTask*          _pTask ;
 
    } ;
 
@@ -100,8 +139,8 @@ namespace engine
    class _omaCreateDataJob : public _rtnBaseJob
    {
       public:
-         _omaCreateDataJob ( const CHAR *groupname, std::vector<BSONObj> &coord,
-                             InstallJobResult &coordResult ) ;
+         _omaCreateDataJob ( const CHAR *pGroupName,
+                             _omaInstallDBBusinessTask *pTask ) ;
          virtual ~_omaCreateDataJob () ;
 
       public:
@@ -110,12 +149,30 @@ namespace engine
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
 
+         OMA_JOB_STATUS getJobStatus ()
+         {
+            return _status ;
+         }
+         void setJobStatus ( OMA_JOB_STATUS status )
+         {
+            _status = status ;
+         }
+      private:
+
+         INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
+         INT32 _checkInstallResult( const CHAR *pHostName,
+                                    const CHAR *pSvcName,
+                                    BSONObj &obj ) ;
+         INT32 _updateInstallStatus( INT32 retRc,
+                                    const CHAR *pErrMsg,
+                                    const CHAR *pDesc,
+                                    BOOLEAN isFinish,
+                                    InstalledNode *pNode ) ;
      private:
-         std::string               _groupname ;
-         std::string               _name ;
-         std::vector<BSONObj>      _data ;
-         InstallJobResult          &_dataResult ;
-         _omaJobRunInstallDataCmd  _runCmd ;
+         string                              _groupname ;
+         OMA_JOB_STATUS                      _status ;
+         string                              _name ;
+         _omaInstallDBBusinessTask*          _pTask ;
 
    } ;
 
@@ -136,29 +193,34 @@ namespace engine
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
 
-     private:
-         std::string               _localHostName ;
-         std::string               _omaSvcName ;
-         std::string               _vCoordSvcName ;
+         OMA_JOB_STATUS getJobStatus ()
+         {
+            return _status ;
+         }
+         void setJobStatus ( OMA_JOB_STATUS status )
+         {
+            _status = status ;
+         }
+
+      private:
+         OMA_JOB_STATUS            _status ;
+         string                    _localHostName ;
+         string                    _omaSvcName ;
+         string                    _vCoordSvcName ;
 
    } ;
 
 
    // start create catalog job
-   INT32 startCreateCatalogJob ( std::vector<BSONObj> &catalog,
-                                 InstallJobResult &catalogResult,
+   INT32 startCreateCatalogJob ( _omaInstallDBBusinessTask *pTask,
                                  EDUID *pEDUID ) ;
    // start create coord job
-   INT32 startCreateCoordJob ( std::vector<BSONObj> &coord,
-                               InstallJobResult &coordResult,
+   INT32 startCreateCoordJob ( _omaInstallDBBusinessTask *pTask,
                                EDUID *pEDUID ) ;
-
    // start create data job
-   INT32 startCreateDataJob ( const CHAR *groupname,
-                              std::vector<BSONObj> &data,
-                              InstallJobResult &dataResult,
+   INT32 startCreateDataJob ( const CHAR *pGroupName,
+                              _omaInstallDBBusinessTask *pTask,
                               EDUID *pEDUID ) ;
-
    // start create remove virtual coord job
    INT32 startRemoveVirtualCoordJob ( const CHAR *hostName,
                                       const CHAR *svcName,

@@ -39,10 +39,12 @@
 #include "ossLatch.hpp"
 #include "../bson/bson.h"
 #include "omagent.hpp"
+//#include "omagentJob.hpp"
 #include <map>
 #include <vector>
 #include <string>
 
+using namespace std ;
 using namespace bson ;
 
 #define OMA_INVALID_TASKID     (0)
@@ -61,6 +63,7 @@ namespace engine
       OMA_TASK_STATUS_READY       = 0, // when initially created
       OMA_TASK_STATUS_RUN         = 1, // when starts running
       OMA_TASK_STATUS_FINISH      = 2, // when finish doing something
+      OMA_TASK_STATUS_FAIL        = 3, // when error happen
 
       OMA_TASK_STATUS_END         = 10 // nothing should have this status
    } ;
@@ -78,16 +81,24 @@ namespace engine
          virtual ~_omaTask () {}
 
          UINT64          taskID () const { return _taskID ; }
+
          OMA_TASK_STATUS status () const { return _status ; }
+
          void setStatus( OMA_TASK_STATUS status ) { _status = status ; }
+
+         INT32 setJobStatus( string &name, OMA_JOB_STATUS status ) ;
+
+         OMA_JOB_STATUS getJobStatus( string &name ) ;
 
       public:
          virtual OMA_TASK_TYPE taskType () const = 0 ;
+
          virtual const CHAR*   taskName () const = 0 ;
 
       protected:
-         UINT64                _taskID ;
-         OMA_TASK_STATUS       _status ;
+         UINT64                               _taskID ;
+         OMA_TASK_STATUS                      _status ;
+         map< string, OMA_JOB_STATUS >        _jobStatus ;
    } ;
    typedef _omaTask omaTask ;
 
@@ -153,29 +164,51 @@ namespace engine
          // respond query of install status
          INT32 getInstallStatus( BSONObj &progress ) ;
 
+      public:
+         vector<BSONObj>& getInstallCatalogInfo() ;
+
+         vector<BSONObj>& getInstallCoordInfo() ;
+
+         INT32 getInstallDataGroupInfo( string &name,
+                                      vector<BSONObj> &dataGroupInstallInfo ) ;
+         INT32 updateInstallResult( INT32 retRc,
+                                    const CHAR *pRole,
+                                    const CHAR *pErrMsg,
+                                    const CHAR *pDesc,
+                                    const CHAR *pGroupName,
+                                    BOOLEAN isFinish,
+                                    InstalledNode *pNode ) ;
+         BOOLEAN isFinish() ;
+
+         void setStage ( const CHAR *stage ) { _stage = stage ; }
+      
       private:
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
          INT32 _installData() ;
          INT32 _removeVirtualCoord() ;
 
+         // install info
+         vector<BSONObj>                                _catalog ;
+         vector<BSONObj>                                _coord ;
+         map< string, vector<BSONObj> >                 _mapGroups ;
+         
+         // install result
+         InstallResult                                  _catalogResult ;
+         InstallResult                                  _coordResult ;
+         map<string, InstallResult>                     _mapGroupsResult ;
+
          // reomve virtual coord
-         std::string                                    _localHostName ;
-         std::string                                    _omaSvcName ;
-         std::string                                    _vCoordSvcName ;
+         string                                         _localHostName ;
+         string                                         _omaSvcName ;
+         string                                         _vCoordSvcName ;
+         string                                         _taskName ;
 
-         std::vector<BSONObj>                           _coord ;
-         std::vector<BSONObj>                           _catalog ;
-         std::map< std::string, std::vector<BSONObj> >  _mapGroups ;
-
-         InstallJobResult                               _coordResult ;
-         InstallJobResult                               _catalogResult ;
-         std::map<std::string, InstallJobResult>        _mapGroupsResult ;
-
-         std::string                                    _taskName ;
+         ossSpinSLatch                                  _jobLatch ;
          OMA_TASK_TYPE                                  _taskType ;
-
+         string                                         _stage ;
          BOOLEAN                                        _needRollBack ;
+
    } ;
    typedef _omaInstallDBBusinessTask omaInstallDBBusinessTask ;
 
