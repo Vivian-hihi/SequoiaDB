@@ -51,22 +51,37 @@
 				<echo message="...test js tests are over ..." />
 			</case> -->
 
-			<case value="ant">
-				<echo message="... test ant-testcases ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/ant_testcases/reports" masterreports="${test.reports.path}" antFileName="${antFileName}">
+			<!-- <case value="ant">
+				<echo message="... Test ant-testcases ..." />
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/ant_testcases/reports" masterreports="${test.reports.path}">
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/ant_testcases/" />
 					<param name="install.path" value="${install.path}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				</sdbtest>
-				<echo message="... test ant-testcases is over ..." />
+				<echo message="... Test ant-testcases is over ..." />
+			</case> -->
+			<case value="ant">
+				<echo message="... Test ant-testcases ..." />
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${testcase.path}/ant_testcases/reports" masterreports="${test.reports.path}">
+					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="ant.testcase.path" value="${testcase.path}/ant_testcases/" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="excludes.dir.patterns" value="reports*" />
+					<param name="includes.dir.patterns" value="*" />
+					
+					<property name="coord.service.port" value="50000" />
+					<property name="cata.service.port" value="60000" />
+					<property name="data.service.port" value="51000" />
+				</sdbtest>
+				<echo message="... Test ant-testcases is over ..." />
 			</case>
 
 			<case value="driver-python">
-				<echo message="...test python driver..."/>
-				<!-- <sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}" antFileName="${antFileName}"> -->
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/python/reports" masterreports="${test.reports.path}">
+				<echo message="...Test python driver..."/>
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${testcase.path}/drivers_testcases/python/reports" masterreports="${test.reports.path}">
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="python.testcase.path" value="${testcase.path}/drivers_testcases/python" />
@@ -74,10 +89,10 @@
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
 					
-					<param name="coord_port" value="50000" />
-					<param name="data_port" value="21100" />				
+					<param name="coord.service.port" value="50000" />
+					<param name="data.service.port" value="21100" />				
 				</sdbtest>
-				<echo message="... test python driver is over ..." />
+				<echo message="... Test python driver is over ..." />
 			</case>
 
 			<case value="driver-php" >
