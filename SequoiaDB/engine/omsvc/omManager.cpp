@@ -999,11 +999,7 @@ namespace engine
          _omTaskInfo._status = OM_TASK_STATUS_ERROR_ROLLBACK ;
       }
 
-      if ( OM_TASK_STATUS_ERROR_ROLLBACK == _omTaskInfo._status )
-      {
-         _omTaskInfo._status = OM_TASK_STATUS_ERROR_FINISH ;
-      }
-      else
+      if ( OM_TASK_STATUS_DOING == _omTaskInfo._status )
       {
          rc = _storeBusinessInfo() ;
          if ( SDB_OK != rc )
@@ -1025,13 +1021,20 @@ namespace engine
             goto error ;
          }
 
-         _omTaskInfo._detail        = taskDetail.getStringField( 
+         _omTaskInfo._detail   = taskDetail.getStringField( 
                                                        OM_REST_RES_DETAIL );
-         _omTaskInfo._progress      = taskDetail.getObjectField( 
+         _omTaskInfo._progress = taskDetail.getObjectField( 
                                                        OM_BSON_TASK_PROGRESS ) ;
-         _omTaskInfo._status        = OM_TASK_STATUS_FINISH ;
-         _omTaskInfo._isAllFinished = taskDetail.getBoolField( 
-                                                       OM_BSON_ISFINISHED ) ;
+      }
+
+      _omTaskInfo._isAllFinished = true ;
+      if ( OM_TASK_STATUS_DOING == _omTaskInfo._status )
+      {
+         _omTaskInfo._status = OM_TASK_STATUS_FINISH ;
+      }
+      else
+      {
+         _omTaskInfo._status = OM_TASK_STATUS_ERROR_FINISH ;
       }
 
       rc = removeTask( _omTaskInfo._taskID ) ;
@@ -1046,6 +1049,7 @@ namespace engine
                  rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -1201,8 +1205,8 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObj msg ;
 
-      if ( OM_TASK_STATUS_IDLE == _omTaskInfo._status 
-           || _omTaskInfo._isAllFinished )
+
+      if ( !isInstallTaskExist() )
       {
          goto done ;
       }
@@ -1572,12 +1576,14 @@ namespace engine
             else
             {
                rc = _insertConfigure( hostName, businessName, oneNode ) ;
-               PD_LOG( PDERROR, "insert configure failed:host=%s,"
-                                "business=%s, node=%s, rc=%d", 
-                                hostName.c_str(), businessName.c_str(), 
-                                oneNode.toString(false, false).c_str(), 
-                                rc ) ;
-               goto error ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "insert configure failed:host=%s,"
+                                   "business=%s, node=%s, rc=%d", 
+                          hostName.c_str(), businessName.c_str(), 
+                          oneNode.toString(false, false).c_str(), rc ) ;
+                  goto error ;
+               }
             }
          }
       }

@@ -579,7 +579,8 @@ namespace engine
          INT32          _removeBusinessByAgent( const BSONObj &nodeInfos ) ;
          INT32          _removeBusiness( const string &businessName,
                                          const BSONObj &nodeInfos, 
-                                         BOOLEAN isExistNode ) ;
+                                         BOOLEAN isExistNode,
+                                         BOOLEAN isForced ) ;
          INT32          _deleteConfigureRecord( const string &businessName ) ;
          INT32          _deleteBusinessRecord( const string &businessName ) ;
          INT32          _expandNodeInfoToBuilder( const BSONObj &record, 

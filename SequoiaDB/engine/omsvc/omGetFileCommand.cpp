@@ -4075,6 +4075,7 @@ namespace engine
       }
 
       //TODO: we assume thas this should not fail;
+      taskID = taskElement.numberLong() ;
       om->updateTaskID( fakeTaskID, taskElement.numberLong() ) ;
       rc = om->saveInstallTask( _localAgentHost, _localAgentService, result, 
                                 bsonConfValue ) ;
@@ -4575,7 +4576,7 @@ namespace engine
          string hostName ;
          hostName = result.getStringField( OM_CONFIGURE_FIELD_HOSTNAME ) ;
          mapHostConf.insert( map<string, BSONObj>::value_type( hostName, 
-                                                                      result ) ) ;
+                                                             result.copy() ) ) ;
       }
    done:
       return SDB_OK ;
@@ -4595,15 +4596,21 @@ namespace engine
       while ( iter != mapHostConf.end() )
       {
          string hostName = iter->first ;
-         BSONObj confs   = iter->second.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+         BSONObj config  = iter->second ;
+         BSONObj confs   = config.getObjectField( OM_BSON_FIELD_CONFIG ) ;
          {
-            BSONObjIterator iter( confs ) ;
-            while ( iter.more() )
+            BSONObjIterator iterBson( confs ) ;
+            while ( iterBson.more() )
             {
-               BSONElement ele = iter.next() ;
+               BSONObjBuilder builder ;
+               BSONElement ele = iterBson.next() ;
                BSONObj oneNode = ele.embeddedObject() ;
-               _restAdaptor->appendHttpBody( _restSession, oneNode.objdata(), 
-                                             oneNode.objsize(), 1 ) ;
+               builder.appendElements( oneNode ) ;
+               builder.append( OM_BSON_FIELD_HOST_NAME, hostName ) ;
+
+               BSONObj tmp = builder.obj() ;
+               _restAdaptor->appendHttpBody( _restSession, tmp.objdata(), 
+                                             tmp.objsize(), 1 ) ;
             }
          }
          iter++ ;
@@ -4721,7 +4728,7 @@ namespace engine
       SINT64 contextID = -1 ;
       INT32 rc         = SDB_OK ;
 
-      matcher = BSON( OM_BUSINESS_FIELD_NAME << clusterName ) ;
+      matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
@@ -4999,8 +5006,9 @@ namespace engine
 
       if ( !isClusterExist )
       {
-         result = BSON( OM_REST_RES_RETCODE << SDB_OK 
-                        << OM_REST_RES_DETAIL << "cluster is not exist" ) ;
+         result = BSON( OM_REST_RES_RETCODE << SDB_DMS_RECORD_NOTEXIST 
+                        << OM_REST_RES_DETAIL 
+                        << ( string( clusterName ) + " is not exist" ) ) ;
          _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
          goto done ;
@@ -5365,8 +5373,9 @@ namespace engine
 
       if ( !isHostExist )
       {
-         result = BSON( OM_REST_RES_RETCODE << SDB_OK 
-                        << OM_REST_RES_DETAIL << "host is not exist" ) ;
+         result = BSON( OM_REST_RES_RETCODE << SDB_DMS_RECORD_NOTEXIST 
+                        << OM_REST_RES_DETAIL 
+                        << ( hostName + " is not exist" ) ) ;
          _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
          goto done ;
@@ -5786,7 +5795,8 @@ namespace engine
 
    INT32 omRemoveBusinessCommand::_removeBusiness( const string &businessName,
                                                    const BSONObj &nodeInfos, 
-                                                   BOOLEAN isExistNode )
+                                                   BOOLEAN isExistNode,
+                                                   BOOLEAN isForced )
    {
       INT32 rc = SDB_OK ;
       if ( isExistNode )
@@ -5794,9 +5804,12 @@ namespace engine
          rc = _removeBusinessByAgent( nodeInfos ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "agent remove business failed:business=%s,rc=%d",
-                    businessName.c_str(), rc ) ;
-            goto error ;
+            if ( !isForced )
+            {
+               PD_LOG( PDERROR, "agent remove business failed:business=%s,rc=%d",
+                       businessName.c_str(), rc ) ;
+               goto error ;
+            }
          }
       }
 
@@ -5825,10 +5838,13 @@ namespace engine
    INT32 omRemoveBusinessCommand::doCommand()
    {
       BSONObj nodeInfos ;
+      BSONObj result ;
+      BOOLEAN isForced            = FALSE ;
       BOOLEAN isBusinessExist     = FALSE ;
       BOOLEAN isBusinessExistNode = FALSE ;
       INT32 rc                    = SDB_OK ;
       const CHAR *pBusinessName   = NULL ;
+      const CHAR *pForce          = NULL ;
       _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
                               &pBusinessName ) ;
       if ( NULL == pBusinessName )
@@ -5841,6 +5857,12 @@ namespace engine
          goto error ;
       }
 
+      _restAdaptor->getQuery( _restSession, OM_REST_ISFORCE, &pForce ) ;
+      if ( ( NULL != pForce ) && ( ossStrcasecmp( pForce, "1" ) == 0 ) )
+      {
+         isForced = TRUE ;
+      }
+
       rc = _getBusinessExistFlag( pBusinessName, isBusinessExist ) ;
       if ( SDB_OK != rc )
       {
@@ -5851,8 +5873,9 @@ namespace engine
 
       if ( !isBusinessExist )
       {
-         BSONObj result = BSON( OM_REST_RES_RETCODE << SDB_OK 
-                            << OM_REST_RES_DETAIL << "business is not exist" ) ;
+         BSONObj result = BSON( OM_REST_RES_RETCODE << SDB_DMS_RECORD_NOTEXIST 
+                            << OM_REST_RES_DETAIL 
+                            << ( string( pBusinessName ) + " is not exist" ) ) ;
          _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
          goto done ;
@@ -5867,7 +5890,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _removeBusiness( pBusinessName, nodeInfos, isBusinessExistNode ) ;
+      rc = _removeBusiness( pBusinessName, nodeInfos, isBusinessExistNode, 
+                            isForced ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "remove business failed:business=%s,rc=%d", 
@@ -5875,6 +5899,10 @@ namespace engine
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
+
+      result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
    done:
       return rc ;
