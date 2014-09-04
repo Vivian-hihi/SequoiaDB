@@ -4638,7 +4638,7 @@ namespace engine
     _cbOfQuery( NULL ),
     _explained( FALSE )
    {
-      _needRun = TRUE ;
+      _needRun = FALSE ;
    }
 
    _rtnContextExplain::~_rtnContextExplain()
