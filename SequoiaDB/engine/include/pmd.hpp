@@ -116,7 +116,7 @@ namespace engine
       INT32             registerCB( IControlBlock *pCB, void *pOrg ) ;
 
       virtual void      onConfigChange ( UINT32 changeID ) ;
-      virtual void      onConfigInit () ;
+      virtual INT32     onConfigInit () ;
 
    public:
       const CHAR*       getHostName() const { return _hostName ; }

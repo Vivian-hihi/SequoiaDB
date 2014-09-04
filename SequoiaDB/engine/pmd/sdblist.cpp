@@ -179,6 +179,12 @@ namespace engine
          goto done ;
       }
 
+      if ( listServices.size() > 0 )
+      {
+         // if used -p, so list all nodes
+         typeFilter = -1 ;
+      }
+
       utilListNodes( listNodes, typeFilter ) ;
 
       for ( UINT32 i = 0 ; i < listNodes.size() ; ++i )

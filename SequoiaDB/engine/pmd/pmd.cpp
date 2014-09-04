@@ -37,7 +37,7 @@
 #include <string.h>
 #include "core.hpp"
 #include "pmd.hpp"
-
+#include "pdTrace.hpp"
 
 namespace engine
 {
@@ -261,10 +261,21 @@ namespace engine
       }
    }
 
-   void _SDB_KRCB::onConfigInit ()
+   INT32 _SDB_KRCB::onConfigInit ()
    {
       _role = utilGetRoleEnum( _optioncb.krcbRole() ) ;
       pmdSetDBRole( _role ) ;
+
+      if ( _optioncb.isTraceOn() && _optioncb.traceBuffSize() != 0 )
+      {
+         sdbGetPDTraceCB()->start ( (UINT64)_optioncb.traceBuffSize(),
+                                    0xFFFFFFFF ) ;
+      }
+
+      ossEnableMemDebug( _optioncb.memDebugEnabled(),
+                         _optioncb.memDebugSize() ) ;
+
+      return _optioncb.makeAllDir() ;
    }
 
    ossTick _SDB_KRCB::getCurTime()

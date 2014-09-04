@@ -172,7 +172,7 @@ namespace engine
          virtual ~_IConfigHandle () {}
 
          virtual void   onConfigChange ( UINT32 changeID ) = 0 ;
-         virtual void   onConfigInit () = 0 ;
+         virtual INT32  onConfigInit () = 0 ;
    } ;
    typedef _IConfigHandle IConfigHandle ;
 

@@ -1093,16 +1093,8 @@ namespace engine
       BOOLEAN backupDialog = FALSE ;
       CHAR  cfgPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR  cfgFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-
+      pmdOptionsCB nodeOptions ;
       BOOLEAN hasLock = FALSE ;
-
-      pmdOptionsCB nodeOptions( TRUE ) ;
-      po::options_description desc ( "Command options" ) ;
-      po::variables_map vm ;
-      PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
-         PMD_COMMANDS_OPTIONS
-         PMD_HIDDEN_COMMANDS_OPTIONS
-      PMD_ADD_PARAM_OPTIONS_END
 
       if ( !pSvcName )
       {
@@ -1152,14 +1144,7 @@ namespace engine
       hasLock = TRUE ;
 
       // read config
-      rc = utilReadConfigureFile( cfgFile, desc, vm ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Read config file[%s] failed, rc: %d",
-                 cfgFile, rc ) ;
-         goto error ;
-      }
-      rc = ((pmdCfgRecord*)&nodeOptions)->init( &vm, NULL ) ;
+      rc = nodeOptions.initFromFile( cfgFile, FALSE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Extract node[%s] config failed, rc: %d",
@@ -1183,36 +1168,26 @@ namespace engine
       if ( backupDialog )
       {
          CHAR bakPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-         CHAR srcPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
          ossStrncpy( bakPath, nodeOptions.getDbPath(),
                      OSS_MAX_PATHSIZE ) ;
          ossStrncat( bakPath, "_bak", OSS_MAX_PATHSIZE ) ;
 
-         if ( 0 == *(nodeOptions.getDiagLogPath() ) )
-         {
-            utilBuildFullPath( nodeOptions.getDbPath(), PMD_OPTION_DIAG_PATH,
-                               OSS_MAX_PATHSIZE, srcPath ) ;
-         }
-         else
-         {
-            ossStrncpy( srcPath, nodeOptions.getDiagLogPath(),
-                        OSS_MAX_PATHSIZE ) ;
-         }
-
          if ( SDB_OK == ossAccess( bakPath ) )
          {
             ossDelete( bakPath ) ;
          }
-         if ( SDB_OK == ( rc = ossRenamePath( srcPath, bakPath ) ) )
+         if ( SDB_OK == ( rc = ossRenamePath( nodeOptions.getDiagLogPath(),
+                                              bakPath ) ) )
          {
             PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
-                    pSvcName, srcPath, bakPath ) ;
+                    pSvcName, nodeOptions.getDiagLogPath(), bakPath ) ;
          }
          else
          {
             PD_LOG( PDERROR, "Move node[%s] dialog[%s] to path[%s] failed, "
-                    "rc: %d", pSvcName, srcPath, bakPath, rc ) ;
+                    "rc: %d", pSvcName, nodeOptions.getDiagLogPath(),
+                    bakPath, rc ) ;
          }
       }
 

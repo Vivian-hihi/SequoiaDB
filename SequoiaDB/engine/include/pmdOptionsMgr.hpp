@@ -135,7 +135,7 @@ namespace engine
    class _pmdCfgRecord : public SDBObject
    {
       public:
-         _pmdCfgRecord ( BOOLEAN readOnly = FALSE ) ;
+         _pmdCfgRecord () ;
          virtual ~_pmdCfgRecord () ;
 
          void  setConfigHandler( IConfigHandle *pConfigHandler ) ;
@@ -153,8 +153,6 @@ namespace engine
          INT32 toString( std::string &str ) ;
 
          UINT32 getChangeID () const { return _changeID ; }
-
-         BOOLEAN isReadOnly() const { return _readOnly ; }
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) = 0 ;
@@ -208,7 +206,6 @@ namespace engine
          INT32                               _result ;
          UINT32                              _changeID ;
          IConfigHandle                       *_pConfigHander ;
-         BOOLEAN                             _readOnly ;
 
    } ;
    typedef _pmdCfgRecord pmdCfgRecord ;
@@ -219,7 +216,7 @@ namespace engine
    class _pmdOptionsMgr : public _pmdCfgRecord
    {
       public:
-         _pmdOptionsMgr( BOOLEAN readOnly = FALSE ) ;
+         _pmdOptionsMgr() ;
          ~_pmdOptionsMgr() ;
 
       public:
@@ -241,15 +238,14 @@ namespace engine
 
          INT32 init( INT32 argc, CHAR **argv ) ;
 
+         INT32 initFromFile( const CHAR *pConfigFile,
+                             BOOLEAN allowFileNotExist = FALSE ) ;
+
          INT32 removeAllDir() ;
 
+         INT32 makeAllDir() ;
+
          INT32 reflush2File() ;
-
-      private:
-         INT32 _joinDir( const CHAR *dir1, const CHAR *dir2,
-                         CHAR *path, INT32 size ) ;
-
-         INT32 _mkdir() ;
 
       public:
          OSS_INLINE const CHAR *getConfPath() const
@@ -383,6 +379,8 @@ namespace engine
          OSS_INLINE BOOLEAN isDpsLocal() const { return _dpslocal ; }
          OSS_INLINE UINT32 sharingBreakTime() const { return _sharingBreakTime ; }
          OSS_INLINE UINT32 startShiftTime() const { return _startShiftTime * OSS_ONE_SEC ; }
+         OSS_INLINE BOOLEAN isTraceOn() const { return _traceOn ; }
+         OSS_INLINE UINT32 traceBuffSize() const { return _traceBufSz ; }
 
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;

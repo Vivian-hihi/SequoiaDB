@@ -170,6 +170,12 @@ namespace engine
          goto done ;
       }
 
+      if ( listServices.size() > 0 )
+      {
+         // if used -p, list all nodes
+         typeFilter = -1 ;
+      }
+
       // list all nodes
       utilListNodes( listNodes, typeFilter ) ;
 

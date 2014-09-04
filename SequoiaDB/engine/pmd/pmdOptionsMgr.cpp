@@ -37,6 +37,7 @@
 #include "pmdOptionsMgr.hpp"
 #include "pd.hpp"
 #include "utilCommon.hpp"
+#include "utilStr.hpp"
 #include "msg.hpp"
 #include "msgCatalog.hpp"
 #include "ossMem.hpp"
@@ -309,12 +310,11 @@ namespace engine
    /*
       _pmdCfgRecord implement
    */
-   _pmdCfgRecord::_pmdCfgRecord ( BOOLEAN readOnly )
+   _pmdCfgRecord::_pmdCfgRecord ()
    {
       _result = SDB_OK ;
       _changeID = 0 ;
       _pConfigHander = NULL ;
-      _readOnly = readOnly ;
    }
    _pmdCfgRecord::~_pmdCfgRecord ()
    {
@@ -348,10 +348,6 @@ namespace engine
             goto error ;
          }
       }
-      if ( isReadOnly() )
-      {
-         goto done ;
-      }
       rc = postLoaded() ;
       if ( rc )
       {
@@ -360,7 +356,11 @@ namespace engine
 
       if ( getConfigHandler() )
       {
-         getConfigHandler()->onConfigInit() ;
+         rc = getConfigHandler()->onConfigInit() ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
    done:
@@ -383,10 +383,6 @@ namespace engine
       if ( rc )
       {
          goto restore ;
-      }
-      if ( isReadOnly() )
-      {
-         goto done ;
       }
       rc = postLoaded() ;
       if ( rc )
@@ -419,10 +415,6 @@ namespace engine
       {
          goto error ;
       }
-      if ( isReadOnly() )
-      {
-         goto done ;
-      }
       rc = postLoaded() ;
       if ( rc )
       {
@@ -432,7 +424,11 @@ namespace engine
 
       if ( getConfigHandler() )
       {
-         getConfigHandler()->onConfigInit() ;
+         rc = getConfigHandler()->onConfigInit() ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
    done:
@@ -893,8 +889,7 @@ namespace engine
    /*
       _pmdOptionsMgr implement
    */
-   _pmdOptionsMgr::_pmdOptionsMgr( BOOLEAN readOnly )
-   :_pmdCfgRecord( readOnly )
+   _pmdOptionsMgr::_pmdOptionsMgr()
    {
       // rdx members
       ossMemset( _krcbDbPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
@@ -1210,8 +1205,9 @@ namespace engine
       }
       if ( 0 == _krcbDiagLogPath[0] )
       {
-         if ( SDB_OK != _joinDir( _krcbDbPath, PMD_OPTION_DIAG_PATH,
-                                  _krcbDiagLogPath, OSS_MAX_PATHSIZE ) )
+         if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_DIAG_PATH,
+                                           OSS_MAX_PATHSIZE,
+                                           _krcbDiagLogPath ) )
          {
             std::cerr << "diaglog path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1220,8 +1216,8 @@ namespace engine
       }
       if ( 0 == _krcbLogPath[0] )
       {
-         if ( SDB_OK != _joinDir( _krcbDbPath, PMD_OPTION_LOG_PATH,
-                                  _krcbLogPath, OSS_MAX_PATHSIZE ) )
+         if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_LOG_PATH,
+                                           OSS_MAX_PATHSIZE, _krcbLogPath ) )
          {
             std::cerr << "repicalog path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1230,8 +1226,8 @@ namespace engine
       }
       if ( 0 == _krcbBkupPath[0] )
       {
-         if ( SDB_OK != _joinDir( _krcbDbPath, PMD_OPTION_BK_PATH,
-                                  _krcbBkupPath, OSS_MAX_PATHSIZE ) )
+         if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_BK_PATH,
+                                           OSS_MAX_PATHSIZE, _krcbBkupPath ) )
          {
             std::cerr << "bakup path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1240,8 +1236,9 @@ namespace engine
       }
       if ( 0 == _krcbWWWPath[0] )
       {
-         if ( SDB_OK != _joinDir( PMD_CURRENT_PATH, PMD_OPTION_WWW_PATH_DIR,
-                                  _krcbWWWPath, OSS_MAX_PATHSIZE ) )
+         if ( SDB_OK != utilBuildFullPath( PMD_CURRENT_PATH,
+                                           PMD_OPTION_WWW_PATH_DIR,
+                                           OSS_MAX_PATHSIZE, _krcbWWWPath ) )
          {
             std::cerr << "www path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1251,8 +1248,8 @@ namespace engine
 
       if ( 0 == _dmsTmpBlkPath[0] )
       {
-         if ( SDB_OK != _joinDir( _krcbDbPath, PMD_OPTION_TMPBLK_PATH,
-                                  _dmsTmpBlkPath, OSS_MAX_PATHSIZE ) )
+         if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_TMPBLK_PATH,
+                                           OSS_MAX_PATHSIZE, _dmsTmpBlkPath ) )
          {
             std::cerr << "diaglog path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1311,24 +1308,19 @@ namespace engine
          goto error ;
       }
 
-      if ( _traceOn && _traceBufSz != 0 )
-      {
-         sdbGetPDTraceCB()->start ( (UINT64)_traceBufSz, 0xFFFFFFFF ) ;
-      }
-
       // if start is stanalone, must enable dps local
       if ( SDB_ROLE_STANDALONE == dbRole && _transactionOn )
       {
          _dpslocal = TRUE ;
       }
 
-      rc = _mkdir() ;
-      if ( rc )
+      // om and catalog, prefetch and preload not enable
+      if ( SDB_ROLE_CATALOG == dbRole || SDB_ROLE_OM == dbRole )
       {
-         goto error ;
+         _numPreLoaders    = 0 ;
+         _maxPrefPool      = 0 ;
+         _maxSubQuery      = 0 ;
       }
-
-      ossEnableMemDebug( _memDebugEnabled, _memDebugSize ) ;
 
    done:
       return rc ;
@@ -1413,6 +1405,42 @@ namespace engine
                             sizeof(_prefReplStr) ) ;
 
       return SDB_OK ;
+   }
+
+   INT32 _pmdOptionsMgr::initFromFile( const CHAR * pConfigFile,
+                                       BOOLEAN allowFileNotExist )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ( "Command options" ) ;
+      po::variables_map vm ;
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
+         PMD_COMMANDS_OPTIONS
+         PMD_HIDDEN_COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
+
+      rc = utilReadConfigureFile( pConfigFile, desc, vm ) ;
+      if ( rc )
+      {
+         if ( SDB_IO != rc || allowFileNotExist )
+         {
+            PD_LOG( PDERROR, "Failed to read config from file[%s], rc: %d",
+                    pConfigFile, rc ) ;
+            goto error ;
+         }
+      }
+
+      rc = pmdCfgRecord::init( &vm, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Init config record failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR_INIT, "_pmdOptionsMgr::init" )
@@ -1589,8 +1617,8 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR__MKDIR, "_pmdOptionsMgr::_mkdir" )
-   INT32 _pmdOptionsMgr::_mkdir()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR__MKDIR, "_pmdOptionsMgr::makeAllDir" )
+   INT32 _pmdOptionsMgr::makeAllDir()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDOPTMGR__MKDIR );
@@ -1679,44 +1707,6 @@ namespace engine
 
    done:
       PD_TRACE_EXIT ( SDB__PMDOPTMGR_REFLUSH2FILE) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR__JNDIR, "_pmdOptionsMgr::_joinDir" )
-   INT32 _pmdOptionsMgr::_joinDir( const CHAR *dir1, const CHAR *dir2,
-                                   CHAR *path, INT32 size )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__PMDOPTMGR__JNDIR );
-      INT32 dir1Len = 0 ;
-      INT32 dir2Len = 0 ;
-
-      if ( NULL == dir1 || NULL == dir2 ||
-           NULL == path )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      dir1Len = ossStrlen( dir1 ) ;
-      dir2Len = ossStrlen( dir2 ) ;
-      if ( dir1Len + dir2Len + 1 > size )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      ossStrcpy( path, dir1 ) ;
-      if ( dir1Len > 0 && 0 != ossStrcmp(&dir1[dir1Len-1],OSS_FILE_SEP) )
-      {
-         ossStrncat( path, OSS_FILE_SEP, 1 ) ;
-      }
-      ossStrncat( path, dir2, dir2Len ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB__PMDOPTMGR__JNDIR, rc );
       return rc ;
    error:
       goto done ;
