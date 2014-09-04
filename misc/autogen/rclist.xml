@@ -2178,13 +2178,5 @@
          </description>
       </code>
 
-      <code>
-         <name>SDB_MIG_SUCC_WITH_INFO</name>
-         <description>
-            <en>success with information</en>
-            <cn>成功但有警告信息</cn>
-         </description>
-      </code>
-
    </codelist>
 </rclist>
