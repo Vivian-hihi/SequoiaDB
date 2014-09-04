@@ -1205,13 +1205,12 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObj msg ;
 
-
       if ( !isInstallTaskExist() )
       {
          goto done ;
       }
 
-      builder.append( OM_BSON_TASKID, ossAtoll(taskID.c_str() ) ) ;
+      builder.append( OM_BSON_TASKID, ossAtoll( taskID.c_str() ) ) ;
       msg = builder.obj() ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_QUERY_PROGRESS, 

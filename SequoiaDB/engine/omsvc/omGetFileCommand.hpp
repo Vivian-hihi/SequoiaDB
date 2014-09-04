@@ -293,6 +293,13 @@ namespace engine
 
       public:
          virtual INT32   doCommand() ;
+
+      private:
+         void            _sendHostInfo2Web( list<BSONObj> &hosts ) ;
+         INT32           _queryHostInfoByHost( string hostName, 
+                                               list<BSONObj> &hosts ) ;
+         INT32           _queryHostInfoByCluster( string cluster, 
+                                                  list<BSONObj> &hosts ) ;
    } ;
 
 
@@ -481,8 +488,10 @@ namespace engine
 
       private:
          void           _sendBusinessInfo2Web( list<BSONObj> &listBusiness ) ;
-         INT32          _getBusinessInfo( string clusterName, 
-                                          list<BSONObj> &listBusiness ) ;
+         INT32          _getBusinessInfoByCluster( string clusterName, 
+                                                 list<BSONObj> &listBusiness ) ;
+         INT32          _getBusinessInfoByBusiness( string business, 
+                                                 list<BSONObj> &listBusiness ) ;
    } ;
 
    class omStartBusinessCommand : public omScanHostCommand
@@ -496,6 +505,18 @@ namespace engine
 
       public:
          virtual INT32  doCommand() ;
+
+      protected:
+         INT32          _getNodeInfo( const string &businessName, 
+                                      BSONObj &nodeInfos,
+                                      BOOLEAN &isExistFlag ) ;
+         INT32          _getHostInfo( const string &hostName,
+                                      simpleHostInfo &hostInfo,
+                                      BOOLEAN &isExistFlag ) ;
+
+      private:
+         INT32          _expandNodeInfoToBuilder( const BSONObj &record, 
+                                             BSONArrayBuilder &arrayBuilder ) ;
    } ;
 
    class omStopBusinessCommand : public omScanHostCommand
@@ -529,7 +550,7 @@ namespace engine
          INT32          _removeCluster( const string &clusterName ) ;
    } ;
 
-   class omRemoveHostCommand : public omScanHostCommand
+   class omRemoveHostCommand : public omStartBusinessCommand
    {
       public:
          omRemoveHostCommand( restAdaptor *pRestAdaptor, 
@@ -544,9 +565,6 @@ namespace engine
       private:
          INT32          _getHostExistBusinessFlag( const string &hostName, 
                                                    BOOLEAN &flag ) ;
-         INT32          _getHostInfo( const string &hostName,
-                                      simpleHostInfo &hostInfo,
-                                      BOOLEAN &isExistFlag ) ;
          INT32          _removeHost( const simpleHostInfo &hostInfo, 
                                      BOOLEAN isForced ) ;
          INT32          _removeHostByAgent( const simpleHostInfo &hostInfo ) ;
@@ -554,7 +572,7 @@ namespace engine
          INT32          _getHostName( string &hostName, BOOLEAN &isForced ) ;
    } ;
 
-   class omRemoveBusinessCommand : public omScanHostCommand
+   class omRemoveBusinessCommand : public omStartBusinessCommand
    {
       public:
          omRemoveBusinessCommand( restAdaptor *pRestAdaptor, 
@@ -569,11 +587,7 @@ namespace engine
       private:
          INT32          _getBusinessExistFlag( const string &businessName, 
                                                BOOLEAN &flag ) ;
-         INT32          _getNodeInfo( const string &businessName, 
-                                      BSONObj &nodeInfos,
-                                      BOOLEAN &isExistFlag ) ;
-         INT32          _getHostInfo( const string &hostName,
-                                      simpleHostInfo &hostInfo ) ;
+
          INT32          _getHostNameInfo( const string &businessName,
                                        map<string, simpleHostInfo> &mapHosts) ;
          INT32          _removeBusinessByAgent( const BSONObj &nodeInfos ) ;
@@ -583,8 +597,6 @@ namespace engine
                                          BOOLEAN isForced ) ;
          INT32          _deleteConfigureRecord( const string &businessName ) ;
          INT32          _deleteBusinessRecord( const string &businessName ) ;
-         INT32          _expandNodeInfoToBuilder( const BSONObj &record, 
-                                             BSONArrayBuilder &arrayBuilder ) ;
    } ;
 
    class omGetFileCommand : public omCommandInterface
