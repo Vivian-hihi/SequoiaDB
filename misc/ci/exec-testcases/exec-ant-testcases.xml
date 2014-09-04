@@ -103,6 +103,9 @@
 		</trycatch>
 
 		<echo message="ret.code=${ret.code}####error.msg=${error.msg}" />
+		<echo message="###############################################" />
+		<echo message="${e}" />
+		<echo message="###############################################" />
 
 		<if>
 			<not>
