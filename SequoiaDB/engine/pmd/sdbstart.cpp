@@ -190,6 +190,8 @@ namespace engine
          goto done ;
       }
 
+      UTIL_CHECK_AND_CHG_USER() ;
+
       // make path
       rc = ossGetEWD( rootPath, OSS_MAX_PATHSIZE ) ;
       if ( rc )

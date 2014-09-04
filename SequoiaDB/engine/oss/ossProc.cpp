@@ -918,7 +918,7 @@ INT32 ossSetCurrentProcessUID( OSSUID uid )
    if ( -1 == rc )
    {
       INT32 err = ossGetLastError() ;
-      std::cout << "setuid() failed: " << err << std::endl ;
+      std::cout << "setuid(" << uid << ") failed: " << err << std::endl ;
       rc = ( EPERM == err ) ? SDB_PERM : SDB_SYS ;
    }
    return rc ;
@@ -930,7 +930,7 @@ INT32 ossSetCurrentProcessGID( OSSGID gid )
    if ( -1 == rc )
    {
       INT32 err = ossGetLastError() ;
-      std::cout << "setgid() failed: " << err << std::endl ;
+      std::cout << "setgid(" << gid << ") failed: " << err << std::endl ;
       rc = ( EPERM == err ) ? SDB_PERM : SDB_SYS ;
    }
    return rc ;

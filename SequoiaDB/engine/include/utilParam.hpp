@@ -74,6 +74,21 @@ namespace engine
 
    INT32 utilGetInstallInfo( utilInstallInfo &info ) ;
 
+   INT32 utilCheckAndChangeUserInfo( const CHAR *curFileName ) ;
+
+   /*
+      Check start user info
+   */
+   #define UTIL_CHECK_AND_CHG_USER() \
+      do \
+      { \
+         rc = utilCheckAndChangeUserInfo( argv[ 0 ] ) ; \
+         if ( rc ) \
+         { \
+            goto error ; \
+         } \
+      } while ( 0 )
+
 }
 
 #endif // UTILPARAM_HPP__

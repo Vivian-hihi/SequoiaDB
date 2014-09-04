@@ -255,6 +255,38 @@ namespace engine
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       BOOLEAN asProc = FALSE ;
 
+      init ( desc ) ;
+      // validate arguments
+      rc = utilReadCommandLine ( argc, argv, desc, vm, FALSE ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;
+         displayArg ( desc ) ;
+         goto done ;
+      }
+      /// read cmd first
+      if ( vm.count( PMD_OPTION_HELP ) )
+      {
+         displayArg( desc ) ;
+         rc = SDB_PMD_HELP_ONLY ;
+         goto done ;
+      }
+      if ( vm.count( PMD_OPTION_VERSION ) )
+      {
+         ossPrintVersion( "Sdb CM Stop version" ) ;
+         rc = SDB_PMD_VERSION_ONLY ;
+         goto done ;
+      }
+#if defined( _WINDOWS )
+      if ( vm.count( PMD_OPTION_AS_PROC ) )
+      {
+         asProc = TRUE ;
+      }
+#endif // _WINDOWS
+
+      // check user before create dir or files
+      UTIL_CHECK_AND_CHG_USER() ;
+
       rc = ossGetEWD ( dialogFile, OSS_MAX_PATHSIZE ) ;
       if ( rc )
       {
@@ -286,35 +318,6 @@ namespace engine
       // enable pd log
       sdbEnablePD( dialogFile ) ;
       setPDLevel( PDINFO ) ;
-
-      init ( desc ) ;
-      // validate arguments
-      rc = utilReadCommandLine ( argc, argv, desc, vm, FALSE ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;
-         displayArg ( desc ) ;
-         goto done ;
-      }
-      /// read cmd first
-      if ( vm.count( PMD_OPTION_HELP ) )
-      {
-         displayArg( desc ) ;
-         rc = SDB_PMD_HELP_ONLY ;
-         goto done ;
-      }
-      if ( vm.count( PMD_OPTION_VERSION ) )
-      {
-         ossPrintVersion( "Sdb CM Stop version" ) ;
-         rc = SDB_PMD_VERSION_ONLY ;
-         goto done ;
-      }
-#if defined( _WINDOWS )
-      if ( vm.count( PMD_OPTION_AS_PROC ) )
-      {
-         asProc = TRUE ;
-      }
-#endif // _WINDOWS
 
       // stop cm
       rc = stopSdbcm ( asProc ) ;

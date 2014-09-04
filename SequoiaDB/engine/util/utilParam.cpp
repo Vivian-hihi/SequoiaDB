@@ -37,6 +37,7 @@
 
 #include "utilParam.hpp"
 #include "ossIO.hpp"
+#include "ossProc.hpp"
 #include "ossUtil.hpp"
 #include "utilStr.hpp"
 #include "pmdDef.hpp"
@@ -312,6 +313,65 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 utilCheckAndChangeUserInfo( const CHAR * curFileName )
+   {
+      INT32 rc = SDB_OK ;
+      utilInstallInfo info ;
+      OSSUID fileUID = OSS_INVALID_UID ;
+      OSSGID fileGID = OSS_INVALID_GID ;
+      OSSUID curUID  = OSS_INVALID_UID ;
+      OSSGID curGID  = OSS_INVALID_GID ;
+
+      // first compage file:cur uid/gid
+      ossGetFileUserInfo( curFileName, fileUID, fileGID ) ;
+      curUID = ossGetCurrentProcessUID() ;
+      curGID = ossGetCurrentProcessGID() ;
+
+      if ( OSS_INVALID_UID == fileUID || 0 == fileUID ||
+           OSS_INVALID_GID == fileGID || 0 == fileGID )
+      {
+         // get install user info
+         rc = utilGetInstallInfo( info ) ;
+         if ( rc )
+         {
+            // no install info, not change
+            rc = SDB_OK ;
+            goto done ;
+         }
+         // get install user uid and gid
+         rc = ossGetUserInfo( info._user.c_str(), fileUID, fileGID ) ;
+         if ( rc )
+         {
+            // no install user, not change
+            rc = SDB_OK ;
+            goto done ;
+         }
+      }
+
+      if ( curGID != fileGID )
+      {
+         rc = ossSetCurrentProcessGID( fileGID ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+      if ( curUID != fileUID )
+      {
+         rc = ossSetCurrentProcessUID( fileUID ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      std::cout << "Please run it by user: " << info._user << std::endl ;
       goto done ;
    }
 
