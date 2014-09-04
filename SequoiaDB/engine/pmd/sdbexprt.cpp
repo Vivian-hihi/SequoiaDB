@@ -217,10 +217,6 @@ done :
    {
       returnRc = 0 ;
    }
-   else if( SDB_MIG_SUCC_WITH_INFO == rc )
-   {
-      returnRc = 1 ;
-   }
    else if( SDB_INVALIDARG == rc )
    {
       returnRc = 127 ;

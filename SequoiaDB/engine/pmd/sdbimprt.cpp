@@ -92,6 +92,7 @@ INT32 on_main( void *pData )
    INT32 rc = SDB_OK ;
    INT32 total = 0 ;
    INT32 succ = 0 ;
+   BOOLEAN *pIsFull = (BOOLEAN *)pData ;
    migImport   parser ;
    migImprtArg imprtArg ;
 
@@ -142,7 +143,7 @@ INT32 on_main( void *pData )
    }
    if( total > succ )
    {
-      rc = SDB_MIG_SUCC_WITH_INFO ;
+      *pIsFull = FALSE ;
    }
    ossPrintf ( "%d records in file, %d records import"OSS_NEWLINE, total, succ ) ;
 
@@ -180,6 +181,7 @@ INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
    INT32 returnRc = 0 ;
+   BOOLEAN isFull = TRUE ;
    util_sdb_settings setting ;
 
    setting.on_init = on_init ;
@@ -210,7 +212,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    APPENDARGBOOL  ( utilSdbObj, OPTION_ERRORSTOP,    OPTION_ERRORSTOP,         EXPLAIN_ERRORSTOP,        FALSE, FALSE  ) ;
    APPENDARGBOOL  ( utilSdbObj, OPTION_FORCE,        OPTION_FORCE,             EXPLAIN_FORCE,            FALSE, FALSE  ) ;
 
-   rc = utilSdbObj.init( setting, NULL ) ;
+   rc = utilSdbObj.init( setting, &isFull ) ;
    if ( rc )
    {
       goto error ;
@@ -239,13 +241,13 @@ done :
       ossPrintf ( "Detail in log path: %s"OSS_NEWLINE, getDialogName() ) ;
       PD_LOG ( PDEVENT, "Import Completed" ) ;
    }
-   if( SDB_OK == rc || SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
-   {
-      returnRc = 0 ;
-   }
-   else if( SDB_MIG_SUCC_WITH_INFO == rc )
+   if( FALSE == isFull )
    {
       returnRc = 1 ;
+   }
+   else if( SDB_OK == rc || SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
+   {
+      returnRc = 0 ;
    }
    else if( SDB_INVALIDARG == rc )
    {
