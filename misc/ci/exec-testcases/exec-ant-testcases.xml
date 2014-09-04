@@ -82,7 +82,7 @@
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
 
-				<echo message="coord.service.port=${coord.service.port}####data.service.port=${data.service.port}####cata.service.port=${cata.service.port}" />
+				<echo message="coord.service.port=${coord.service.port}####data.service.port=${data.service.port}####cata.service.port=${cata.service.port}####host.NAME=${host.NAME}####CS_PRIX=${CS_PRIX}####install.path=${install.path}" />
 
 				<antfetch antfile="${test.case.fullname}" target="test" inheritAll="false" return="ret.code,error.msg">
 					<property name="host.NAME" value="${host.NAME}" />
@@ -92,6 +92,9 @@
 					<property name="CS_PRIX" value="${CS_PRIX}" />
 					<property name="install.path" value="${install.path}" />
 				</antfetch>
+
+				<echo message="ret.code=${ret.code}####error.msg=${error.msg}" />
+
 			</try>
 			<catch>
 				<property name="ret.code" value="-1" />
