@@ -1091,6 +1091,12 @@ namespace engine
       CHAR **ppResultBuffer = NULL ;
       INT32 packetLength = 0 ;
       MsgHeader *authRes = NULL ;
+
+      reply.header.TID = 0 ;
+      reply.header.requestID = 0 ;
+      reply.header.opCode = MSG_AUTH_VERIFY_RES ;
+      reply.header.messageLength = sizeof( reply ) ;
+
    retry :
       rc = pmdRecv( pBuffer, sizeof(SINT32), &sock,
                     cb ) ;
@@ -1171,6 +1177,9 @@ namespace engine
       cb->incEventCount () ;
 
       header = (MsgHeader *)pBuffer ;
+      reply.header.TID = header->TID ;
+      reply.header.requestID = header->requestID ;
+
       if ( (UINT32)(header->messageLength) < sizeof (MsgHeader) )
       {
          probe = 60 ;
@@ -1274,13 +1283,6 @@ namespace engine
          SDB_OSS_FREE( authRes ) ;
       }
       reply.flags = rc ;
-      if ( header )
-      {
-         reply.header.TID = header->TID ;
-         reply.header.requestID = header->requestID ;
-         reply.header.opCode = MAKE_REPLY_TYPE(header->opCode) ;
-         reply.header.messageLength = sizeof( reply ) ;
-      }
       PD_TRACE_EXITRC ( SDB_PMDAUTHENTICATE, rc );
       return rc ;
    error:
