@@ -93,7 +93,7 @@
 					<property name="install.path" value="${install.path}" />
 				</antfetch>
 
-				<echo message="ret.code=${ret.code}####error.msg=${error.msg}" />
+
 
 			</try>
 			<catch>
@@ -103,6 +103,7 @@
 			</catch>
 		</trycatch>
 
+		<echo message="ret.code=${ret.code}####error.msg=${error.msg}" />
 		
 		<if>
 			<not>
