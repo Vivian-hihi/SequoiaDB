@@ -39,7 +39,7 @@
 
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
-				<dirset dir="${testcase.path}/js" includes="sql" excludes="vote" />
+				<dirset dir="${testcase.path}/js" includes="*" excludes="vote" />
 			</path>
 			<param name="testcase.path" value="${testcase.path}" />
 			<param name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
@@ -77,7 +77,7 @@
 
 		<foreach target="test-one-case" param="test.case.fullname">
 			<!-- <fileset dir="${test.suite.fullname}" includes="*.js" excludes="commlib.js" /> -->
-			<fileset dir="${test.suite.fullname}" includes="as.js" excludes="commlib.js" />
+			<fileset dir="${test.suite.fullname}" includes="*.js" excludes="commlib.js" />
 			<param name="testcase.path" value="${testcase.path}" />
 			<param name="sdb.fullname" value="${sdb.fullname}" />
 			<param name="host.NAME" value="${host.NAME}" />

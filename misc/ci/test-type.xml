@@ -70,7 +70,7 @@
 					<param name="ant.testcase.path" value="${testcase.path}/ant_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="excludes.dir.patterns" value="reports*" />
-					<param name="includes.dir.patterns" value="index_concurrency" />
+					<param name="includes.dir.patterns" value="*" />
 					
 					<param name="coord.service.port" value="50000" />
 					<param name="cata.service.port" value="60000" />
