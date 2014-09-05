@@ -91,7 +91,7 @@
 				</antfetch>
 			</try>
 			<catch>
-				<property name="ret.code" value="-1" />
+				<!-- <property name="ret.code" value="-1" /> -->
 				<property name="error.msg" value="${e}" />
 				<echo message="${error.msg}" />
 			</catch>
