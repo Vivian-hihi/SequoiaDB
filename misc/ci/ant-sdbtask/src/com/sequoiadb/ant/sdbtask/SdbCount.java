@@ -70,8 +70,7 @@ public class SdbCount extends Task {
 
       } catch (BaseException e) {
          e.printStackTrace();
-         /*throw new BuildException(e);*/
-         throw new BaseException(e);
+         throw new BuildException(e);
       }
    }
 }
