@@ -103,7 +103,7 @@ namespace engine
       string confPath ;
       utilNodeInfo info ;
 
-      rc = utilReadCommandLine( argc, argv, desc, vm, FALSE ) ;
+      rc = utilReadCommandLine( argc, argv, desc, vm, TRUE ) ;
       if ( rc )
       {
          goto error ;
