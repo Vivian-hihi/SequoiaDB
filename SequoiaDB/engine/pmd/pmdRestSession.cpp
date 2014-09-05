@@ -419,6 +419,10 @@ namespace engine
                                                       OM_DEFAULT_LOCAL_HOST, 
                                                       localAgentPort ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_LIST_HOST_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omListHostCommand( pAdptor, this ) ;
+         }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omQueryHostCommand( pAdptor, this ) ;

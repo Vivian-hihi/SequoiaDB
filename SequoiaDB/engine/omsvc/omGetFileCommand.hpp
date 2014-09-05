@@ -283,7 +283,27 @@ namespace engine
          INT32           _checkHostExistence( list<BSONObj> &hostInfoList ) ;
    };
 
-   class omQueryHostCommand : public omCreateClusterCommand
+   class omListHostCommand : public omCreateClusterCommand
+   {
+      public:
+         omListHostCommand( restAdaptor *pRestAdaptor, 
+                            pmdRestSession *pRestSession ) ;
+         ~omListHostCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      protected:
+         void            _sendHostInfo2Web( list<BSONObj> &hosts ) ;
+
+      private:
+         INT32           _listHostByCluster( string cluster, 
+                                                 list<BSONObj> &hosts ) ;
+         INT32           _listHostByBusiness( string business, 
+                                              list<BSONObj> &hosts ) ;
+   } ;
+
+   class omQueryHostCommand : public omListHostCommand
    {
       public:
          omQueryHostCommand( restAdaptor *pRestAdaptor, 
@@ -295,15 +315,8 @@ namespace engine
          virtual INT32   doCommand() ;
 
       private:
-         void            _sendHostInfo2Web( list<BSONObj> &hosts ) ;
          INT32           _queryHostInfoByHost( string hostName, 
                                                list<BSONObj> &hosts ) ;
-         INT32           _queryHostInfoByCluster( string cluster, 
-                                                  list<BSONObj> &hosts ) ;
-         INT32           _queryHostInfoBusiness( string businessName, 
-                                                 list<BSONObj> &hosts ) ;
-         INT32           _getHostNameByBusiness( string businessName,
-                                                 set<string> &hostNames ) ;
    } ;
 
 
@@ -465,7 +478,7 @@ namespace engine
    {
       public:
          omQueryNodeConfCommand( restAdaptor *pRestAdaptor, 
-                             pmdRestSession *pRestSession ) ;
+                                 pmdRestSession *pRestSession ) ;
          virtual ~omQueryNodeConfCommand() ;
 
       public:
@@ -473,10 +486,12 @@ namespace engine
 
       protected:
          INT32          _getNodeInfo( string businessName, 
-                                      map<string, BSONObj> &mapHostConf ) ;
+                                      list<BSONObj> &nodeInfoList ) ;
 
       private:
-         void           _sendNodeInfo2Web( map<string, BSONObj> &mapHostConf ) ;
+         void           _sendNodeInfo2Web( list<BSONObj> &nodeInfoList ) ;
+         void           _expandNodeInfo( BSONObj &oneConfig, 
+                                         list<BSONObj> &nodeinfos ) ;
          INT32          _test() ;
    } ;
 
