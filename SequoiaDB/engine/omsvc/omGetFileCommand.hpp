@@ -300,6 +300,10 @@ namespace engine
                                                list<BSONObj> &hosts ) ;
          INT32           _queryHostInfoByCluster( string cluster, 
                                                   list<BSONObj> &hosts ) ;
+         INT32           _queryHostInfoBusiness( string businessName, 
+                                                 list<BSONObj> &hosts ) ;
+         INT32           _getHostNameByBusiness( string businessName,
+                                                 set<string> &hostNames ) ;
    } ;
 
 

@@ -385,6 +385,7 @@ namespace engine
    #define  OM_QUERY_NODE_CONF_REQ           "query node configure"
 
    #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
+   #define  OM_REST_SVCNAME                  FIELD_NAME_SERVICE_NAME
    
    //******************************************************************
 
