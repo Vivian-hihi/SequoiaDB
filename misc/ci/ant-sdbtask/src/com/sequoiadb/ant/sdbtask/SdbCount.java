@@ -58,12 +58,12 @@ public class SdbCount extends Task {
 
          if (record != null) {
             size = cl.getCount(record.toBSONObj());
-            System.out.println("size"=size);
-            System.out.println("CountProp"=CountProp);
+            System.out.println("size="+size);
+            System.out.println("CountProp="+CountProp);
          } else {
             size = cl.getCount((BSONObject)null);
-            System.out.println("size"=size);
-            System.out.println("CountProp"=CountProp);
+            System.out.println("size="+size);
+            System.out.println("CountProp="+CountProp);
          }
 
          this.getProject().setProperty(CountProp, Long.toString(size));
