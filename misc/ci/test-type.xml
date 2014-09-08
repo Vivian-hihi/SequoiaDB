@@ -8,7 +8,7 @@
 	<target name="test-type" depends="">
 		<property file="${basedir}/ci.test.properties" />
 		<switch value="${test-type}">
-			<!-- <case value="basic">
+			<case value="basic">
 				<echo message="begin to test js tests ..." />
 				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" >
 					<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -20,9 +20,9 @@
 					<param name="coord.service.port" value="50000" />
 				</sdbtest>
 				<echo message="...test js tests are over ..." />
-			</case> -->
+			</case>
 
-			<case value="basic">
+			<!-- <case value="basic">
 				<echo message="begin to test js tests ..." />
 				<parallel>
 					<sdbtest host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" >
@@ -57,7 +57,7 @@
 					</sdbtest>
 				</parallel>
 				<echo message="...test js tests are over ..." />
-			</case>
+			</case> -->
 
 			<!-- <case value="ant">
 				<echo message="... Test ant-testcases ..." />
@@ -136,6 +136,20 @@
 				<echo message="... test C driver is over ..." />
 			</case>
 
+			<!-- <case value="driver-C">
+				<echo message="... test the C driver ..." />
+				<property name="testCcases" value="*-*sdbConnect_with_usr*:*sdbCreateCollection1_doubtful*:*sdbCreateUsr*:*sdbListReplicaGroups*:*sdbRemoveUsr*:*sdbResetSnapshot*:*sdbSplitCollection*" />     
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-C-test.xml" remotereports="${testcase.path}/drivers_testcases/C/reports" masterreports="${test.reports.path}" >
+					<param name="C.testcase.path" value="${testcase.path}/drivers_testcases/C/build" />
+					<param name="test_name" value="${testCcases}"  />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="excludes.dir.patterns" value="" />
+					<param name="includes.dir.patterns" value="*" />
+				</sdbtest>
+				<echo message="... test C driver is over ..." />
+			</case> -->
+
 			<case value="driver-CPP">
 				<echo message="... test the CPP driver ..." />		
 				<property name="testCPPcases" value="*-*create*:*drop*:*insert_with_iterator*:*rename*:*split*:*createCollection_with_Sharding_and_replSize*:*resetSnapshot*:*transactionBegin*:*transactionCommit*:*transactionRollback*:*getList_SDB_LIST_GROUPS*" />
@@ -147,6 +161,20 @@
 				</sdbtest>
 				<echo message="... test CPP driver is over ..." />
 			</case>
+
+			<!-- <case value="driver-CPP">
+				<echo message="... test the CPP driver ..." />
+				<property name="testCPPcases" value="*-*create*:*drop*:*insert_with_iterator*:*rename*:*split*:*createCollection_with_Sharding_and_replSize*:*resetSnapshot*:*transactionBegin*:*transactionCommit*:*transactionRollback*:*getList_SDB_LIST_GROUPS*" />    
+				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-CPP-test.xml" remotereports="${testcase.path}/drivers_testcases/CPP/reports" masterreports="${test.reports.path}" >
+					<param name="CPP.testcase.path" value="${testcase.path}/drivers_testcases/CPP/build" />
+					<param name="test_name" value="${testCPPcases}"  />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+					<param name="excludes.dir.patterns" value="rg" />
+					<param name="includes.dir.patterns" value="*" />
+				</sdbtest>
+				<echo message="... test CPP driver is over ..." />
+			</case> -->
 
 			<case value="samples">
 				<echo message="... test the client sample test ..." />
