@@ -555,5 +555,7 @@ INT32 ossGetFileUserInfo( const CHAR *filename, OSSUID &uid, OSSGID &gid ) ;
 
 INT32 ossGetUserInfo( const CHAR *username, OSSUID &uid, OSSGID &gid ) ;
 
+INT32 ossGetUserInfo( OSSUID uid, CHAR *pUserName, UINT32 nameLen ) ;
+
 #endif // OSSIO_HPP_
 

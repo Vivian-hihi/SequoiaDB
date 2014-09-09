@@ -2268,4 +2268,53 @@ error:
 #endif // _LINUX
 }
 
+INT32 ossGetUserInfo( OSSUID uid, CHAR *pUserName, UINT32 nameLen )
+{
+   INT32 rc = SDB_OK ;
+   if ( nameLen > 0 )
+   {
+      pUserName[ nameLen - 1 ] = 0 ;
+   }
+
+#if defined( _LINUX )
+   struct passwd pwdinfo ;
+   struct passwd *pwd = NULL ;
+   UINT32 buffLen = 0 ;
+   CHAR *pBuff = NULL ;
+
+   buffLen = sysconf( _SC_GETPW_R_SIZE_MAX ) * sizeof( CHAR ) ;
+   pBuff = ( CHAR* )SDB_OSS_MALLOC( buffLen ) ;
+   if ( !pBuff )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+
+   getpwuid_r( uid, &pwdinfo, pBuff, buffLen, &pwd ) ;
+   if ( !pwd )
+   {
+      std::cout << "getpwuid_r failed: " << ossGetLastError() << std::endl ;
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   if ( nameLen > 0 )
+   {
+      ossStrncpy( pUserName, pwd->pw_name, nameLen -1 ) ;
+   }
+
+done:
+   if ( pBuff )
+   {
+      SDB_OSS_FREE( pBuff ) ;
+   }
+   return rc ;
+error:
+   goto done ;
+
+#else
+   return SDB_OK ;
+#endif // _LINUX
+}
+
 

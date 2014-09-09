@@ -325,7 +325,7 @@ namespace engine
       OSSUID curUID  = OSS_INVALID_UID ;
       OSSGID curGID  = OSS_INVALID_GID ;
 
-      // first compage file:cur uid/gid
+      // first compare file:cur uid/gid
       ossGetFileUserInfo( curFileName, fileUID, fileGID ) ;
       curUID = ossGetCurrentProcessUID() ;
       curGID = ossGetCurrentProcessGID() ;
@@ -349,6 +349,12 @@ namespace engine
             rc = SDB_OK ;
             goto done ;
          }
+      }
+      else
+      {
+         CHAR usrName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         ossGetUserInfo( fileUID, usrName, OSS_MAX_PATHSIZE ) ;
+         info._user = usrName ;
       }
 
       if ( curGID != fileGID )
