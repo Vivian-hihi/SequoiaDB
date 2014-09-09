@@ -782,7 +782,7 @@ namespace engine
                      pmdEDUCB *cb, MsgOpReply &replyHeader,
                      BSONObj **ppErrorObj );
       virtual INT32 processCatReply( MsgOpReply *pReply,
-                                    CoordGroupList &groupLst )
+                                     CoordGroupList &groupLst )
       {
          return MSG_CAT_DEL_NODE_RSP == (UINT32)(pReply->header.opCode) ?
                 pReply->flags :

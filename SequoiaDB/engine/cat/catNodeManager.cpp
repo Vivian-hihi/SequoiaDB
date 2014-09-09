@@ -824,24 +824,13 @@ namespace engine
          if ( beGroupName.eoo() || beGroupName.type()!=String )
          {
             rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "failed to get the field:%s",
+            PD_LOG ( PDERROR, "failed to get the field:%s",
                      CAT_GROUPNAME_NAME );
             goto error;
          }
          strGroupName = beGroupName.valuestr();
          PD_TRACE1 ( SDB_CATNODEMGR_PCREATEGRP,
                      PD_PACK_STRING ( strGroupName ) ) ;
-         // make sure group name can't start with SYS
-         if ( ossStrncmp ( strGroupName, SYS_PREFIX,
-                           ossStrlen(SYS_PREFIX) ) == 0 )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "invalid group-name(%s),group-name can't begine with(%s)",
-                     strGroupName, SYS_PREFIX );
-            goto error;
-         }
       }
       catch ( std::exception &e )
       {
@@ -1733,18 +1722,17 @@ namespace engine
       INT32   status = SDB_CAT_GRP_DEACTIVE ;
 
       // check name is valid
-      rc = catGroupNameValidate( groupName, FALSE ) ;
-      if ( rc )
+      if ( 0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
       {
-         if ( 0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
-         {
-            rc = SDB_OK ;
-            newGroupID = COORD_GROUPID ;
-            role = SDB_ROLE_COORD ;
-            status = SDB_CAT_GRP_ACTIVE ;
-         }
+         newGroupID = COORD_GROUPID ;
+         role = SDB_ROLE_COORD ;
+         status = SDB_CAT_GRP_ACTIVE ;
       }
-      PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
+      else
+      {
+         rc = catGroupNameValidate( groupName, FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
+      }
 
       // check whetch the group is exist or not
       rc = catGroupCheck( groupName, bExist, _pEduCB ) ;
@@ -1806,25 +1794,26 @@ namespace engine
       UINT32 groupID = 0 ;
       BOOLEAN isDeleted = FALSE;
 
+      // check name is valid
+      if ( 0 != ossStrcmp( groupName, COORD_GROUPNAME ) )
+      {
+         rc = catGroupNameValidate( groupName, FALSE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
+      }
+
       rc = catGetGroupObj( groupName, FALSE, groupInfo, _pEduCB ) ;
       if ( SDB_CLS_GRP_NOT_EXIST == rc )
       {
          rc = SDB_CAT_GRP_NOT_EXIST;
-         PD_LOG ( PDERROR,
-                  "the group(%s) is not exist",
+         PD_LOG ( PDERROR, "the group(%s) is not exist",
                   groupName );
          goto error ;
       }
       else if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR,
-                  "failed to check if group exist(rc=%d)",
+         PD_LOG ( PDERROR, "failed to check if group exist(rc=%d)",
                   rc );
          goto error ;
-      }
-      else
-      {
-         /// do nothing.
       }
 
       try
@@ -1837,13 +1826,11 @@ namespace engine
             rc = SDB_SYS ;
             goto error ;
          }
-
          groupID = ele.Number() ;
       }
       catch ( std::exception &e )
       {
-         PD_LOG( PDERROR, "unexpected err happened:%s",
-                 e.what() ) ;
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
          rc = SDB_SYS ;
          goto error ;
       }

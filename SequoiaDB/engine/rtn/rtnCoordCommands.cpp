@@ -4330,8 +4330,7 @@ namespace engine
       }
 
       /// exec on catalog
-      rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent,
-                                cb ) ;
+      rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent, cb ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to execute on catalog, rc = %d", rc ) ;
@@ -4378,7 +4377,7 @@ namespace engine
          }
       }
 
-      rtnCoordRemoveGroup(group->getGroupID()) ;
+      rtnCoordRemoveGroup (group->getGroupID() ) ;
 
       {
          CoordSession *session = cb->getCoordSession();
@@ -4780,7 +4779,7 @@ namespace engine
                                          CHAR **ppResultBuffer,
                                          pmdEDUCB *cb,
                                          MsgOpReply &replyHeader,
-                                         BSONObj **ppErrorObj)
+                                         BSONObj **ppErrorObj )
    {
       PD_TRACE_ENTRY ( SDB_RTNCOCMDRMN_EXE ) ;
       INT32 rc = SDB_OK ;
@@ -4805,19 +4804,19 @@ namespace engine
       BSONObj rInfo ;
 
       /// fill default-reply
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID = rHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID = rHeader->TID;
-      replyHeader.contextID = -1;
-      replyHeader.flags = SDB_OK;
-      replyHeader.numReturned =  0;
-      replyHeader.startFrom = 0;
+      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      replyHeader.header.opCode = MSG_BS_QUERY_RES ;
+      replyHeader.header.requestID = rHeader->requestID ;
+      replyHeader.header.routeID.value = 0 ;
+      replyHeader.header.TID = rHeader->TID ;
+      replyHeader.contextID = -1 ;
+      replyHeader.flags = SDB_OK ;
+      replyHeader.numReturned = 0 ;
+      replyHeader.startFrom = 0 ;
 
-      forward = (MsgOpQuery *)pReceiveBuffer;
-      forward->header.routeID.value = 0;
-      forward->header.TID = cb->getTID();
+      forward = (MsgOpQuery *)pReceiveBuffer ;
+      forward->header.routeID.value = 0 ;
+      forward->header.TID = cb->getTID() ;
       forward->header.opCode = MSG_CAT_DEL_NODE_REQ ;
 
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCommandName,
@@ -4897,43 +4896,45 @@ namespace engine
 
       /// notify the other nodes to update groupinfo.
       /// here we do not care whether they succeed.
+      if ( COORD_GROUPID != group->getGroupID() )
       {
-      _MsgClsGInfoUpdated updated ;
-      updated.groupID = group->getGroupID() ;
-      clsGroupItem *groupItem = group->getGroupItem() ;
-      MsgRouteID routeID ;
-      UINT32 index = 0 ;
+         _MsgClsGInfoUpdated updated ;
+         updated.groupID = group->getGroupID() ;
+         clsGroupItem *groupItem = group->getGroupItem() ;
+         MsgRouteID routeID ;
+         UINT32 index = 0 ;
 
-      while ( SDB_OK == groupItem->getNodeID( index++, routeID,
-                                              MSG_ROUTE_SHARD_SERVCIE ) )
-      {
-         rtnCoordSendRequestToNodeWithoutReply((void *)(&updated),
-                                                routeID, pRouteAgent );
-      }
-      }
-
-      {
-      SINT32 retCode;
-      INT32 rrc = SDB_OK ;
-      rrc = rtnRemoteExec ( SDBSTOP, host.c_str(),
-                            &retCode, &rInfo ) ;
-      if ( SDB_OK != rrc )
-      {
-         PD_LOG( PDERROR,
-                 "remote node execute(configure) failed(rc=%d)",
-                 rrc );
-         rc = SDB_CATA_FAILED_TO_CLEANUP ;
+         while ( SDB_OK == groupItem->getNodeID( index++, routeID,
+                                                 MSG_ROUTE_SHARD_SERVCIE ) )
+         {
+            rtnCoordSendRequestToNodeWithoutReply( (void *)(&updated),
+                                                    routeID, pRouteAgent );
+         }
       }
 
-      rrc = rtnRemoteExec ( SDBRM, host.c_str(),
-                            &retCode, &rInfo ) ;
-      if ( SDB_OK != rrc )
+      // remove node by cm
       {
-         PD_LOG( PDERROR,
-                 "remote node execute(configure) failed(rc=%d)",
-                 rrc );
-         rc = SDB_CATA_FAILED_TO_CLEANUP ;
-      }
+         SINT32 retCode;
+         INT32 rrc = SDB_OK ;
+         rrc = rtnRemoteExec ( SDBSTOP, host.c_str(),
+                               &retCode, &rInfo ) ;
+         if ( SDB_OK != rrc )
+         {
+            PD_LOG( PDERROR,
+                    "remote node execute(configure) failed(rc=%d)",
+                    rrc );
+            rc = SDB_CATA_FAILED_TO_CLEANUP ;
+         }
+
+         rrc = rtnRemoteExec ( SDBRM, host.c_str(),
+                               &retCode, &rInfo ) ;
+         if ( SDB_OK != rrc )
+         {
+            PD_LOG( PDERROR,
+                    "remote node execute(configure) failed(rc=%d)",
+                    rrc );
+            rc = SDB_CATA_FAILED_TO_CLEANUP ;
+         }
       }
 
       if ( SDB_OK != rc )
@@ -5909,13 +5910,11 @@ namespace engine
          CHAR *pOrderBy;
          CHAR *pHint;
          rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
-                           &numToReturn, &pQuery, &pFieldSelector, &pOrderBy,
-                           &pHint );
+                               &numToReturn, &pQuery, &pFieldSelector,
+                               &pOrderBy, &pHint );
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                  "failed to parse the request(rc=%d)",
-                  rc );
+            PD_LOG ( PDERROR, "failed to parse the request(rc=%d)", rc );
             break;
          }
          const CHAR *strHostName = NULL ;
@@ -5927,8 +5926,7 @@ namespace engine
             if ( beHostName.eoo() || beHostName.type()!=String )
             {
                rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
+               PD_LOG ( PDERROR, "failed to get the field(%s)",
                         FIELD_NAME_HOST );
                break;
             }
@@ -5937,8 +5935,7 @@ namespace engine
             if ( beSvcName.eoo() || beSvcName.type()!=String )
             {
                rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
+               PD_LOG ( PDERROR, "failed to get the field(%s)",
                         PMD_OPTION_SVCNAME );
                break;
             }
@@ -5949,8 +5946,7 @@ namespace engine
          catch ( std::exception &e )
          {
             rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "occured unexpected error:%s",
+            PD_LOG ( PDERROR, "occured unexpected error:%s",
                      e.what() );
             break;
          }
@@ -5960,21 +5956,17 @@ namespace engine
                               &retCode, &boNodeConf ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG( PDERROR,
-                  "operate failed(rc=%d)",
-                  rc );
+            PD_LOG( PDERROR, "operate failed(rc=%d)", rc );
             break;
          }
          if ( retCode != SDB_OK )
          {
             rc = retCode;
-            PD_LOG ( PDERROR,
-                  "remote node execute failed(rc=%d)",
-                  rc );
+            PD_LOG ( PDERROR, "remote node execute failed(rc=%d)", rc ) ;
          }
-         break;
+         break ;
       }while ( FALSE );
-      replyHeader.flags = rc;
+      replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDOPONNODE_EXE, rc ) ;
       return rc;
    }
@@ -6137,8 +6129,7 @@ namespace engine
             if ( beGroup.eoo() || beGroup.type()!=Array )
             {
                rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
+               PD_LOG ( PDERROR, "failed to get the field(%s)",
                         FIELD_NAME_GROUP );
                break;
             }
@@ -6151,8 +6142,7 @@ namespace engine
                if ( beHostName.eoo() || beHostName.type()!=String )
                {
                   rc = SDB_INVALIDARG;
-                  PD_LOG ( PDERROR,
-                           "failed to get the HostName");
+                  PD_LOG ( PDERROR, "failed to get the HostName");
                   break;
                }
                std::string strHostName = beHostName.str();
@@ -6160,19 +6150,17 @@ namespace engine
                if ( beService.eoo() || beService.type()!=Array )
                {
                   rc = SDB_INVALIDARG;
-                  PD_LOG ( PDWARNING,
-                           "failed to get the field(%s)",
+                  PD_LOG ( PDWARNING, "failed to get the field(%s)",
                            FIELD_NAME_SERVICE );
                   break;
                }
                std::string strServiceName;
                rc = getServiceName( beService, MSG_ROUTE_LOCAL_SERVICE,
-                                 strServiceName );
+                                    strServiceName );
                if ( rc != SDB_OK )
                {
                   rc = SDB_INVALIDARG;
-                  PD_LOG ( PDWARNING,
-                           "failed to get local-service-name" );
+                  PD_LOG ( PDWARNING, "failed to get local-service-name" );
                   break;
                }
                SINT32 retCode;
@@ -6219,7 +6207,7 @@ namespace engine
          rc = SDB_CM_OP_NODE_FAILED;
       }
       PD_TRACE_EXITRC ( SDB_RTN_COCOMDOPONGR_OPONGR, rc ) ;
-      return rc;
+      return rc ;
    }
    SINT32 rtnCoordCMDShutdownGroup::getOpType()
    {
