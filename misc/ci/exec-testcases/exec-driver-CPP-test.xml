@@ -25,10 +25,11 @@
 
         <chmod dir="${CPP.testcase.path}" perm="u+x" includes="*" />
         <foreach target="test-one-case" param="case-full-name">
-            <path>
-                <dirset dir="${CPP.testcase.path}" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
-            </path>
-            <param name="test-type" value="driver-cpp" />
+            <fileset dir="${CPP.testcase.path}">
+                <include name="${includes.dir.patterns}" />
+                <exclude name="${excludes.dir.patterns}" />
+                <!-- <param name="test-type" value="driver-cpp" /> -->
+            </fileset>
         </foreach>
     </target>
 
@@ -40,7 +41,7 @@
         <tstamp>
             <format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
         </tstamp>
-        <echo message="Now testcase ${case-full-name}.cpp begin with ${testcase.begin.time}"/>
+        <echo message="Now testcase ${case-full-name} begin with ${testcase.begin.time}"/>
 
         <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
             <arg line=" ${append} " />
