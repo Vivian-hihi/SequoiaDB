@@ -19,14 +19,15 @@
 
 	<target name="Clean-Basic-Reports" depends="">
 		<echo message="Reports' path is ${reports.path}" />
-		<delete dir="${basic.testcase.path}/reports${parallel.num}" failonerror="false" />
+		<!-- <delete dir="${basic.testcase.path}/reports${parallel.num}" failonerror="false" /> -->
+		<delete dir="${reports.path}" failonerror="false" />
 		<mkdir dir="${reports.path}" />
 		<echo message="Clean deploy result reports compeleted." />
 	</target>
 
 	<target name="Test-Basic-Testcases" depends="Clean-Basic-Reports">
 		<echo message="Begin test basic testcases..." />
-		<echo message="Perform the basic testcases,with testcase.path=${basic.testcase.path}" />
+		<echo message="Perform the basic testcases,with testcase.path=${basic.testcase.path}/js" />
 
 		<property name="sdb.cmd.allPrepare" value=" -e &quot;var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_prepare.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
@@ -144,7 +145,7 @@
 					<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testBeginStr}');db.close(); &quot;" />
 				</exec>
 
-				<property name="sdb.cmd.beforeTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js ${commlib.option} ,${testcases.path}/libs/before_usecase.js&quot;" />
+				<property name="sdb.cmd.beforeTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/before_usecase.js&quot;" />
 				<echo message="Exec:${sdb.fullname}${sdb.cmd.beforeTestcase}" />
 				<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
 					<arg line="${sdb.cmd.beforeTestcase}" />
@@ -160,14 +161,14 @@
 				</exec>
 				<echo message="${screen.output}" />
 				
-				<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js ${commlib.option} ,${testcases.path}/libs/after_usecase.js&quot;" />
+				<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
 				<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
 				<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
 					<arg line="${sdb.cmd.afterTestcase}" />
 				</exec>
 				<echo message="${afterTestcase.screen.output}" />
 
-				<echo message="the result = ${ret.code} after exec ${test.case.fullname} testcase." />
+				<!-- <echo message="the result = ${ret.code} after exec ${test.case.fullname} testcase." /> -->
 				<exec executable="${sdb.fullname}" dir="" timeout="300000">
 					<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testEndStr}');db.close(); &quot;" />
 				</exec>
@@ -176,8 +177,6 @@
 				<!-- samples testcases path -->
 			</else>
 		</if>
-
-		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; &gt;&#10;" />
 
 		<if>
 			<not>
@@ -279,9 +278,9 @@
 						</tstamp>
 						<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.failure.end.time}" output="testcase.failure.timeOutput" />
 						<echo message="The result code is ${ret.code} and it's fail ..." />
-						<echo message="The testcase ${test.case.name}.py end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
+						<echo message="The testcase ${test.case.name}.js end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;ERRORMESSAGE=&#10;${screen.output}&#10;TESTBEGINSTR=${testBeginStr}&#10;TESTENDSTR=${testEndStr}&#10;db.listReplicaGroups():&#10;${db.RG.info} &#10;download the test log :&#10;${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;" />
+						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;ERRORMESSAGE=&#10;${screen.output}&#10;TESTBEGINSTR=${testBeginStr}&#10;TESTENDSTR=${testEndStr}&#10;db.listReplicaGroups():&#10;${db.RG.info} &#10;download the test log :&#10;${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;" />
 
 						<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
 						<echo message="${haveMaster}" />
@@ -304,7 +303,7 @@
 				</tstamp>
 				<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
 				<echo message="The result code is ${ret.code} and it's succ ..." />
-				<echo message="The testcase ${test.case.name}.py end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />
+				<echo message="The testcase ${test.case.name}.js end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />
 
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;succ&quot;&gt;&#10;" />
 			</else>
