@@ -1730,6 +1730,7 @@ namespace engine
       BOOLEAN bExist = FALSE ;
       UINT32  newGroupID = CAT_INVALID_GROUPID ;
       INT32   role = SDB_ROLE_DATA ;
+      INT32   status = SDB_CAT_GRP_DEACTIVE ;
 
       // check name is valid
       rc = catGroupNameValidate( groupName, FALSE ) ;
@@ -1740,6 +1741,7 @@ namespace engine
             rc = SDB_OK ;
             newGroupID = COORD_GROUPID ;
             role = SDB_ROLE_COORD ;
+            status = SDB_CAT_GRP_ACTIVE ;
          }
       }
       PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
@@ -1769,7 +1771,7 @@ namespace engine
          bobGroupInfo.append( CAT_GROUPID_NAME, newGroupID ) ;
          bobGroupInfo.append( CAT_ROLE_NAME, role ) ;
          bobGroupInfo.append( CAT_VERSION_NAME, CAT_VERSION_BEGIN ) ;
-         bobGroupInfo.append( CAT_GROUP_STATUS, SDB_CAT_GRP_DEACTIVE ) ;
+         bobGroupInfo.append( CAT_GROUP_STATUS, status ) ;
          BSONObjBuilder sub( bobGroupInfo.subarrayStart( CAT_GROUP_NAME ) ) ;
          sub.done() ;
          BSONObj boGroupInfo = bobGroupInfo.obj() ;
