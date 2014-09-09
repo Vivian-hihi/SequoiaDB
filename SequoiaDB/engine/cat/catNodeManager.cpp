@@ -2093,10 +2093,12 @@ namespace engine
                      "failed to parse group info(rc=%d)",
                      rc );
          // coord group not limited
-         PD_CHECK( groupInfo.getGroupID() != COORD_GROUPID &&
-                   groupInfo.getGroupSize() < CLS_REPLSET_MAX_NODE_SIZE,
-                   SDB_DMS_REACHED_MAX_NODES, error, PDERROR,
-                   "reached the maximum number of nodes!" );
+         if ( groupInfo.getGroupID() != COORD_GROUPID )
+         {
+            PD_CHECK( groupInfo.getGroupSize() < CLS_REPLSET_MAX_NODE_SIZE,
+                      SDB_DMS_REACHED_MAX_NODES, error, PDERROR,
+                      "reached the maximum number of nodes!" ) ;
+         }
          }
          if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) ||
               0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
