@@ -3824,6 +3824,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "forceSession",
                                    "help",
                                    "getCatalogRG",
+                                   "removeCatalogRG",
                                    "createCoordRG",
                                    "removeCoordRG",
                                    "getCoordRG"

@@ -406,6 +406,10 @@ Sdb.prototype.getCatalogRG = function() {
    return this.getRG( SDB_CATALOG_GROUP_NAME ) ;
 }
 
+Sdb.prototype.removeCatalogRG = function() {
+   return this.removeRG( SDB_CATALOG_GROUP_NAME ) ;
+}
+
 Sdb.prototype.createCoordRG = function() {
    return this.createRG( SDB_COORD_GROUP_NAME ) ;
 }
