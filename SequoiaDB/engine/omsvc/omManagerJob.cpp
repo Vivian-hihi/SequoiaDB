@@ -490,7 +490,7 @@ namespace engine
          // for delete cluster
          _checkDeleteCluster( mapClusterVersion ) ;
 
-         ossSleep( OSS_ONE_SEC ) ;
+         ossSleep( 10 * OSS_ONE_SEC ) ;
       }
 
    done:

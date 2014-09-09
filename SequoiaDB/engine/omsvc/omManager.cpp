@@ -117,9 +117,9 @@ namespace engine
                     rc ) ;
 
       //TODO: open this code
-      //rc = _createJobs() ;
-      //PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
-      //              rc ) ;
+      rc = _createJobs() ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
+                    rc ) ;
 
       rc = refreshVersions() ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to update cluster version:rc=%d", 
