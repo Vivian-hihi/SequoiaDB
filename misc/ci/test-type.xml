@@ -14,6 +14,7 @@
 					<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
 					<param name="includes.dir.patterns" value="*" />
 					<param name="excludes.dir.patterns" value="vote" />
+					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 
@@ -30,6 +31,7 @@
 
 						<param name="excludes.dir.patterns" value="vote" />
 						<param name="includes.dir.patterns" value="${basic_list1}" />
+						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 
@@ -40,6 +42,7 @@
 
 						<param name="excludes.dir.patterns" value="vote" />
 						<param name="includes.dir.patterns" value="${basic_list2}" />
+						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 
@@ -50,6 +53,7 @@
 
 						<param name="excludes.dir.patterns" value="vote" />
 						<param name="includes.dir.patterns" value="${basic_list3}" />
+						<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 						<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 
