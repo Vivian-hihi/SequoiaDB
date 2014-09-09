@@ -1,12 +1,99 @@
-<!--@param ${testcase.path}: The path where test case direcotry.-->
+<!--@param ${C.testcase.path}: The path where test case direcotry.-->
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test_name}: will not test name. -->
 <!--@param ${deploy.case.fullname}: The run in which env -->
 
-<project name="exec-driver-C-test" default="exec-test-over">
+<project name="exec-driver-C-test" default="Test-Driver-C-Over">
+    <property file="${ci.properties.path}" />
     <property name="test_name" value="*" /> 
     <property name="append" value=" --gtest_filter=${test_name}  --gtest_output=xml:${reports.path}/ " />
+    <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+        <classpath>
+            <fileset dir="${antTask.jar.path}" includes="*.jar" />
+        </classpath>
+    </taskdef>
+
+    <target name="Clean-C-Reports" depends="">
+        <echo message="Reports' path is ${reports.path}" />
+        <delete dir="${reports.path}" failonerror="false" />
+        <mkdir dir="${reports.path}" />
+        <echo message="Clean deploy result reports compeleted." />
+    </target>
+
+    <target name="Test-Driver-C" depends="Clean-C-Reports">
+        <echo message="Begin test driver c testcases..." />
+        <echo message="Perform the driver c testcases,with testcase.path=${C.testcase.path}" />
+
+        <chmod dir="${C.testcase.path}" perm="u+x" includes="*" />
+        <foreach target="test-one-case" param="case-full-name">
+            <path>
+                <dirset dir="${C.testcase.path}" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
+            </path>
+            <param name="test-type" value="driver-c" />
+        </foreach>
+        <!-- <foreach target="test-C-one-case" param="case-full-name">
+            <fileset dir="${testcase.path}/C/build">
+                <include name="*" />
+            </fileset>
+        </foreach> -->
+    </target>
+
+    <target name="test-one-case" depends="">   
+        <echo message="Exec ${case-full-name}  ${append} ...path is /opt/sequoiadb/lib ..." />
+        <echo message="Env is LD_LIBRARY_PATH=/opt/sequoiadb/lib" />
+
+        <tstamp>
+            <format property="testcase.begin.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+        </tstamp>
+
+        <exec executable="${case-full-name}" dir="${testcase.path}/C/build" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+        <!-- <exec executable="${case-full-name}" dir="${testcase.path}/C/build"> -->
+            <arg line=" ${append} " />
+            <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
+        </exec>
+        <echo message="${screen.output}" />
+
+        <tstamp>
+            <format property="testcase.end.time" pattern="yyyy-MM-dd-hh.mm.ss" />
+        </tstamp>
+        <sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
+        <echo message="The result code is ${ret.code} and it's succ ..." />
+        <echo message="The testcase ${test.case.name}.cpp end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />           
+    </target>
+
+    <target name="Test-Driver-C-Over" depends="Test-Driver-C">
+        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+        <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+        <replaceregexp match="&lt;/testsuites(.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+        <replaceregexp match='classname="' replace='classname="com.sequoiadb.testcases-driverC.${deploy.name}.' flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+        <replace token="AllTests" value="com.sequoiadb.testcases-driverC.${deploy.name}">
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace>
+        <replace token="testsuites" value="testsuite">
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace>
+    </target>
+</project>
+
+
+<!-- <project name="exec-driver-C-test" default="exec-test-over">
+    
      <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+        <classpath>
+            <fileset dir="${antTask.jar.path}" includes="*.jar" />
+        </classpath>
+    </taskdef>
+
+    <property file="${ci.properties.path}" />
+    <property name="test_name" value="*" /> 
+    <property name="append" value=" --gtest_filter=${test_name}  --gtest_output=xml:${reports.path}/ " />
+    <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
             <fileset dir="${antTask.jar.path}" includes="*.jar" />
         </classpath>
@@ -40,7 +127,6 @@
         <echo message="This testcase begin time is ${testcase.begin.time}"/>
 
         <exec executable="${case-full-name}" dir="${testcase.path}/C/build" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
-        <!-- <exec executable="${case-full-name}" dir="${testcase.path}/C/build"> -->
             <arg line=" ${append} " />
             <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
         </exec>
@@ -72,4 +158,4 @@
             <fileset dir="${reports.path}/"  includes="*" />
         </replace>
     </target>
-</project>
+</project> -->
