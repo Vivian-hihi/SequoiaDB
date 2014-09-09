@@ -8,7 +8,7 @@
 	<target name="test-type" depends="">
 		<property file="${basedir}/ci.test.properties" />
 		<switch value="${test-type}">
-			<case value="basic">
+			<!-- <case value="basic">
 				<echo message="begin to test js tests ..." />
 				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 					<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -20,9 +20,9 @@
 					<param name="coord.service.port" value="50000" />
 				</sdbtest>
 				<echo message="...test js tests are over ..." />
-			</case>
+			</case> -->
 
-			<!-- <case value="basic">
+			<case value="basic">
 				<echo message="begin to test js tests ..." />
 				<parallel>
 					<sdbtest host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
@@ -57,7 +57,7 @@
 					</sdbtest>
 				</parallel>
 				<echo message="...test js tests are over ..." />
-			</case> -->
+			</case>
 
 			<!-- <case value="ant">
 				<echo message="... Test ant-testcases ..." />
