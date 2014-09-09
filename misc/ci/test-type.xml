@@ -10,7 +10,7 @@
 		<switch value="${test-type}">
 			<case value="basic">
 				<if>
-					<equals arg1="${deploy.conffile.wildcard}" arg2="standalone-tp1" />
+					<equals arg1="${deploy.conffile.wildcard}" arg2="unparallel" />
 					<then>
 						<echo message="Begin to test basic tests ..." />
 						<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
