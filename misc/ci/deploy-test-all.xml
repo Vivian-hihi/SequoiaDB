@@ -38,6 +38,7 @@
 				<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
 			</path>
 			<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+			<param name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" />
 		</foreach>
 	</target>
 
@@ -67,6 +68,7 @@
 			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
 			<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 			<property name="deploy.path" value="${WORKSPACE}/deploy" />
+<!-- 			<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" /> -->
 		</ant>
 
 		<if>
@@ -79,6 +81,7 @@
 					<property name="test.reports.path" value="${WORKSPACE}/reports" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
+					<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" />
 				</ant>
 			</then>
 		</if>

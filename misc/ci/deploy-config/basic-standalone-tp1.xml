@@ -44,6 +44,7 @@
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="test-type" value="@{test-type}" />
+					<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" />
 					<!-- <property name="antFileName" value="${antFileName}" /> -->
 				</ant>
 			</sequential>
