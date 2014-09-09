@@ -375,7 +375,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCCATANODEID, "sdbCatalogueCB::AllocCataNodeID" )
    UINT16 sdbCatalogueCB::AllocCataNodeID()
    {
-      INT32 i = 0;
+      INT32 i = 0 ;
       UINT16 id = 0 ;
       PD_TRACE_ENTRY ( SDB_CATALOGCB_ALLOCCATANODEID ) ;
       while ( i++ < CATA_NODE_MAX_NUM )

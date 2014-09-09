@@ -4418,7 +4418,6 @@ namespace engine
          BSONObj boInput( pQuery ) ;
          BSONObjBuilder bobNodeConf ;
          BSONObjIterator iter( boInput ) ;
-         BOOLEAN hasRoleKey = FALSE ;
          BOOLEAN hasCatalogAddrKey = FALSE ;
 
          // loop through each input parameter
@@ -4427,7 +4426,8 @@ namespace engine
             BSONElement beField = iter.next();
             std::string strFieldName(beField.fieldName());
             // make sure to skip hostname and group name
-            if ( strFieldName == FIELD_NAME_HOST )
+            if ( strFieldName == FIELD_NAME_HOST ||
+                 strFieldName == PMD_OPTION_ROLE )
             {
                continue;
             }
@@ -4437,6 +4437,10 @@ namespace engine
                {
                   role = SDB_ROLE_CATALOG ;
                }
+               else if ( 0 == ossStrcmp( COORD_GROUPNAME, beField.valuestr() ) )
+               {
+                  role = SDB_ROLE_COORD ;
+               }
                continue ;
             }
 
@@ -4444,25 +4448,19 @@ namespace engine
             bobNodeConf.append( beField );
 
             // for the ones we need to add default value
-            if ( PMD_OPTION_ROLE == strFieldName )
-            {
-               hasRoleKey = TRUE ;
-            }
-            else if ( PMD_OPTION_CATALOG_ADDR == strFieldName )
+            if ( PMD_OPTION_CATALOG_ADDR == strFieldName )
             {
                hasCatalogAddrKey = TRUE ;
             }
          }
          // assign role if it doesn't include
-         if ( !hasRoleKey )
+         roleStr = utilDBRoleStr( role ) ;
+         if ( *roleStr == 0 )
          {
-            roleStr = utilDBRoleStr( role ) ;
-            if ( *roleStr == 0 )
-            {
-               goto error ;
-            }
-            bobNodeConf.append ( PMD_OPTION_ROLE, roleStr ) ;
+            goto error ;
          }
+         bobNodeConf.append ( PMD_OPTION_ROLE, roleStr ) ;
+
          // assign catalog address, make sure to include all catalog nodes
          // that configured in the system ( for HA ), each system should be
          // separated by "," and sit in a single key: PMD_OPTION_CATALOG_ADDR
