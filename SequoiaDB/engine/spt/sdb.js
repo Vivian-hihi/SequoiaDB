@@ -33,6 +33,10 @@ var SDB_INSERT_RETURN_ID         = 2 ; // only available when inserting only one
 
 var SDB_TRACE_FLW                = 0 ;
 var SDB_TRACE_FMT                = 1 ;
+
+var SDB_COORD_GROUP_NAME         = "SYSCoord" ;
+var SDB_CATALOG_GROUP_NAME       = "SYSCatalogGroup" ;
+
 // end Global Constants
 
 // Global functions
@@ -44,10 +48,6 @@ function println ( val ) {
 // return a double number between 0 and 1
 function rand () {
    return Math.random() ;
-}
-
-function test() {
-   return man("attachCL") ;
 }
 
 // end Global functions
@@ -401,6 +401,24 @@ Sdb.prototype.listReplicaGroups = function() {
 Sdb.prototype._resolveCS = function(csName) {
    this.getCS( csName ) ;
 }
+
+Sdb.prototype.getCatalogRG = function() {
+   return this.getRG( SDB_CATALOG_GROUP_NAME ) ;
+}
+
+Sdb.prototype.createCoordRG = function() {
+   return this.createRG( SDB_COORD_GROUP_NAME ) ;
+}
+
+Sdb.prototype.removeCoordRG = function() {
+   return this.removeRG( SDB_COORD_GROUP_NAME ) ;
+}
+
+Sdb.prototype.getCoordRG = function() {
+   return this.getRG( SDB_COORD_GROUP_NAME ) ;
+}
+
+// end Sdb
 
 function printCallStack()
 {

@@ -245,15 +245,16 @@ INT32 manHelp::scanFile()
             r_beg = ossStrstr( file_buffer, READ_CUTLINE_BEGIN ) ;
             if ( !r_beg )
             {
-               ossPrintf( "Failed to deal with file %s, for having no tag \"NAME\""OSS_NEWLINE, pfPath ) ;
+               ossPrintf( "Failed to deal with file %s, for having no "
+                          "tag \"NAME\""OSS_NEWLINE, pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
             r_end = ossStrstr( file_buffer, READ_CUTLINE_END ) ;
             if ( !r_end )
             {
-               ossPrintf( "Failed to deal with file %s,\
-                           for having no tag \"SYNOPSIS\""OSS_NEWLINE, pfPath ) ;
+               ossPrintf( "Failed to deal with file %s, for having no "
+                          "tag \"SYNOPSIS\""OSS_NEWLINE, pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -262,8 +263,9 @@ INT32 manHelp::scanFile()
             r_pos =  ossStrstr( r_beg, pSplit ) ;
             if ( !r_pos )
             {
-               ossPrintf ( "Failed to deal with file %s, for the content of tag\
-                            \"NAME\" having no short name %s"OSS_NEWLINE, pfPath, pSplit ) ;
+               ossPrintf ( "Failed to deal with file %s, for the content of "
+                           "tag \"NAME\" having no short name %s"OSS_NEWLINE,
+                           pfPath, pSplit ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -296,8 +298,8 @@ INT32 manHelp::scanFile()
             r_end = ossStrstr( r_beg, READ_SYN_END ) ;
             if ( !r_end )
             {
-               ossPrintf( "Failed to deal with file %s, for having no tag\
-                          \"CATEGORY\""OSS_NEWLINE, pfPath ) ;
+               ossPrintf( "Failed to deal with file %s, for having no tag "
+                          "\"CATEGORY\""OSS_NEWLINE, pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -306,8 +308,9 @@ INT32 manHelp::scanFile()
             r_pos = ossStrstr ( r_beg, pSplit ) ;
             if ( !r_pos )
             {
-               ossPrintf ( "Failed to deal with file %s, for the content of tag\
-                           \"SYNOPIS\" having no short name %s"OSS_NEWLINE, pfPath, pSplit ) ;
+               ossPrintf ( "Failed to deal with file %s, for the content of "
+                           "tag \"SYNOPIS\" having no short name %s"OSS_NEWLINE,
+                           pfPath, pSplit ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -336,43 +339,54 @@ INT32 manHelp::scanFile()
             synopsis = tmp_buffer ;
 
             // put synopsis and cutline in map
-            if ( ossMemcmp( pFileName, DB_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            if ( 0 == ossMemcmp( pFileName, DB_CATEGORY,
+                                 ossStrlen( pFileName ) ) )
             {
                _mdb.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
-            else if ( ossMemcmp( pFileName, CS_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            else if ( 0 == ossMemcmp( pFileName, CS_CATEGORY,
+                                      ossStrlen( pFileName ) ) )
             {
                _mcs.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
-            else if ( ossMemcmp( pFileName, CL_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            else if ( ossMemcmp( pFileName, CL_CATEGORY,
+                                 ossStrlen( pFileName ) ) == 0 )
             {
                _mcl.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
-            else if ( ossMemcmp( pFileName, RG_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            else if ( ossMemcmp( pFileName, RG_CATEGORY,
+                                 ossStrlen( pFileName ) ) == 0 )
             {
                _mrg.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
-            else if ( ossMemcmp( pFileName, NODE_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            else if ( ossMemcmp( pFileName, NODE_CATEGORY,
+                                 ossStrlen( pFileName ) ) == 0 )
             {
                _mnode.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
-            else if ( ossMemcmp( pFileName, CURSOR_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            else if ( ossMemcmp( pFileName, CURSOR_CATEGORY,
+                                 ossStrlen( pFileName ) ) == 0 )
             {
-               _mcursor.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mcursor.insert( std::pair<string, string>(synopsis,
+                                cutline) ) ;
             }
-            else if ( ossMemcmp( pFileName, CLCOUNT_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            else if ( ossMemcmp( pFileName, CLCOUNT_CATEGORY,
+                                 ossStrlen( pFileName ) ) == 0 )
             {
-               _mclcount.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mclcount.insert( std::pair<string, string>(synopsis,
+                                 cutline) ) ;
             }
-            else if ( ossMemcmp( pFileName, DOMAIN_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            else if ( ossMemcmp( pFileName, DOMAIN_CATEGORY,
+                                 ossStrlen( pFileName ) ) == 0 )
             {
-               _mdomain.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mdomain.insert( std::pair<string, string>(synopsis,
+                                cutline) ) ;
             }
 
             else
             {
-               ossPrintf( "Failed to deal with file %s,\
-                           for the wrong file name %s"OSS_NEWLINE, pfPath, pFileName ) ;
+               ossPrintf( "Failed to deal with file %s, for the wrong file "
+                          "name %s"OSS_NEWLINE, pfPath, pFileName ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -386,8 +400,8 @@ INT32 manHelp::scanFile()
          }
          else
          {
-            ossPrintf( "Failed to deal with file %s,\
-                        for the wrong file name %s"OSS_NEWLINE, pfPath, pFileName ) ;
+            ossPrintf( "Failed to deal with file %s, for the wrong file "
+                       "name %s"OSS_NEWLINE, pfPath, pFileName ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -436,7 +450,8 @@ INT32 manHelp::getFileHelp( const CHAR* name )
    // check argument
    if ( name == NULL || ossStrcmp(name, "") == 0 )
    {
-      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__,
+                 __LINE__ ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -460,12 +475,16 @@ INT32 manHelp::getFileHelp( const CHAR* name )
    }
    // if we not find any matched file name, tell the user directly
    if ( fuzzy_match.size() == 0 )
-      ossPrintf( "No manual for method %s"OSS_NEWLINE, name );
-   else if ( fuzzy_match.size() > 1 ) // if we get more than 1 file names, let the user fill again
    {
-      ossPrintf( "%d methods related to \"%s\", please fill in the full name: \n",
-                 (INT32)fuzzy_match.size(), name );
-      for ( sset::const_iterator it(fuzzy_match.begin()), it_end(fuzzy_match.end());
+      ossPrintf( "No manual for method %s"OSS_NEWLINE, name );
+   }
+   // if we get more than 1 file names, let the user fill again
+   else if ( fuzzy_match.size() > 1 )
+   {
+      ossPrintf( "%d methods related to \"%s\", please fill in the full "
+                 "name: \n", (INT32)fuzzy_match.size(), name );
+      for ( sset::const_iterator it(fuzzy_match.begin()),
+            it_end(fuzzy_match.end());
             it != it_end; it++ )
       {
          ossPrintf( "    %s"OSS_NEWLINE, (*it).c_str() );
@@ -537,35 +556,43 @@ typedef std::map<string, string> ssmap ;
 
 ssmap& manHelp::getCategoryMap( const CHAR *category )
 {
-    if ( ossMemcmp( category, DB_CATEGORY, ossStrlen( category ) ) == 0 )
+    if ( ossMemcmp( category, DB_CATEGORY,
+                    ossStrlen( category ) ) == 0 )
     {
        return _mdb ;
     }
-    else if ( ossMemcmp( category, CS_CATEGORY, ossStrlen( category ) ) == 0 )
+    else if ( ossMemcmp( category, CS_CATEGORY,
+                         ossStrlen( category ) ) == 0 )
     {
        return _mcs ;
     }
-    else if ( ossMemcmp( category, CL_CATEGORY, ossStrlen( category ) ) == 0 )
+    else if ( ossMemcmp( category, CL_CATEGORY,
+                         ossStrlen( category ) ) == 0 )
     {
        return _mcl ;
     }
-    else if ( ossMemcmp( category, RG_CATEGORY, ossStrlen( category ) ) == 0 )
+    else if ( ossMemcmp( category, RG_CATEGORY,
+                         ossStrlen( category ) ) == 0 )
     {
        return _mrg ;
     }
-    else if ( ossMemcmp( category, NODE_CATEGORY, ossStrlen( category ) ) == 0 )
+    else if ( ossMemcmp( category, NODE_CATEGORY,
+                         ossStrlen( category ) ) == 0 )
     {
        return _mnode ;
     }
-    else if ( ossMemcmp( category, CURSOR_CATEGORY, ossStrlen( category ) ) == 0 )
+    else if ( ossMemcmp( category, CURSOR_CATEGORY,
+                         ossStrlen( category ) ) == 0 )
     {
        return _mcursor ;
     }
-    else if ( ossMemcmp( category, CLCOUNT_CATEGORY, ossStrlen( category ) ) == 0 )
+    else if ( ossMemcmp( category, CLCOUNT_CATEGORY,
+                         ossStrlen( category ) ) == 0 )
     {
        return _mclcount ;
     }
-    else if ( ossMemcmp( category, DOMAIN_CATEGORY, ossStrlen( category ) ) == 0 )
+    else if ( ossMemcmp( category, DOMAIN_CATEGORY,
+                         ossStrlen( category ) ) == 0 )
     {
        return _mdomain ;
     }
@@ -736,8 +763,8 @@ INT32 replaceSubStr( CHAR *buffer, INT32 buffer_len,
       // check
       if ( offset + str2_len > buffer_len - 1 )
       {
-         ossPrintf( "Failed to replace sub str1 with str2 in buffer, %s:%d "OSS_NEWLINE,
-                        __FILE__, __LINE__ ) ;
+         ossPrintf( "Failed to replace sub str1 with str2 in buffer, "
+                    "%s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -746,8 +773,8 @@ INT32 replaceSubStr( CHAR *buffer, INT32 buffer_len,
       // check
       if ( offset + str2_len + less_part_len > buffer_len - 1 )
       {
-         ossPrintf( "Failed to replace sub str1 with str2 in buffer, %s:%d "OSS_NEWLINE,
-                        __FILE__, __LINE__ ) ;
+         ossPrintf( "Failed to replace sub str1 with str2 in buffer, "
+                    "%s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

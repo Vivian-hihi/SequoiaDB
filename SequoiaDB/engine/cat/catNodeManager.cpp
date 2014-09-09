@@ -1729,9 +1729,19 @@ namespace engine
 
       BOOLEAN bExist = FALSE ;
       UINT32  newGroupID = CAT_INVALID_GROUPID ;
+      INT32   role = SDB_ROLE_DATA ;
 
       // check name is valid
       rc = catGroupNameValidate( groupName, FALSE ) ;
+      if ( rc )
+      {
+         if ( 0 == ossStrcmp( groupName, COORD_GROUPNAME ) )
+         {
+            rc = SDB_OK ;
+            newGroupID = COORD_GROUPID ;
+            role = SDB_ROLE_COORD ;
+         }
+      }
       PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
 
       // check whetch the group is exist or not
@@ -1742,9 +1752,12 @@ namespace engine
                 "Create group failed, the group[%s] existed", groupName ) ;
 
       // assign group id
-      newGroupID = _pCatCB->AllocGroupID() ;
-      PD_CHECK( CAT_INVALID_GROUPID != newGroupID, SDB_SYS, error, PDERROR,
-                "Failed to assign group id, maybe group if full" ) ;
+      if ( CAT_INVALID_GROUPID == newGroupID )
+      {
+         newGroupID = _pCatCB->AllocGroupID() ;
+         PD_CHECK( CAT_INVALID_GROUPID != newGroupID, SDB_SYS, error, PDERROR,
+                   "Failed to assign group id, maybe group if full" ) ;
+      }
 
       PD_TRACE1 ( SDB_CATNODEMGR_CREATEGRP, PD_PACK_UINT ( newGroupID ) ) ;
 
@@ -1754,7 +1767,7 @@ namespace engine
          BSONObjBuilder bobGroupInfo ;
          bobGroupInfo.append( CAT_GROUPNAME_NAME, groupName ) ;
          bobGroupInfo.append( CAT_GROUPID_NAME, newGroupID ) ;
-         bobGroupInfo.append( CAT_ROLE_NAME, SDB_ROLE_DATA ) ;
+         bobGroupInfo.append( CAT_ROLE_NAME, role ) ;
          bobGroupInfo.append( CAT_VERSION_NAME, CAT_VERSION_BEGIN ) ;
          bobGroupInfo.append( CAT_GROUP_STATUS, SDB_CAT_GRP_DEACTIVE ) ;
          BSONObjBuilder sub( bobGroupInfo.subarrayStart( CAT_GROUP_NAME ) ) ;

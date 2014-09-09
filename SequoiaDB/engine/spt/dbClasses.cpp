@@ -3822,7 +3822,11 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "msg",
                                    "invalidateCache",
                                    "forceSession",
-                                   "help"
+                                   "help",
+                                   "getCatalogRG",
+                                   "createCoordRG",
+                                   "removeCoordRG",
+                                   "getCoordRG"
    };
    JSBool   in = JS_FALSE ;
    INT32    i  = 0 ;
