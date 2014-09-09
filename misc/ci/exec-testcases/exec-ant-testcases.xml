@@ -39,11 +39,6 @@
 	</target>
 
 	<target name="test-one-suite" depends="">
-		<tstamp>
-			<format property="time1" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-
-
 		<hostinfo prefix="host" />
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
@@ -62,13 +57,6 @@
 		</foreach>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;/testsuite&gt;&#10;" append="true" />
-
-		<tstamp>
-			<format property="time2" pattern="yyyy-MM-dd-hh.mm.ss" />
-		</tstamp>
-		<sdbTime beginTime="${time1}" endTime="${time2}" output="suite-time" />
-
-		<echo file="/opt/suit-time.xml" append="true" message="&lt;testsuite name=&quot;${test.case.name}&quot; begin_time=&quot;${time1}&quot; end_time=&quot;${time2}&quot; time=&quot;${suite-time}&quot;&gt;&#10;&lt;/testsuite&gt;&#10;" />
 	</target>
 
 	<target name="test-one-case" depends="">	
