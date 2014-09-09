@@ -56,9 +56,9 @@
 	<target name="test-one-suite" depends="">
 		<hostinfo prefix="host" />
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
-		<!-- <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-		<property name="test.suite.class.name" value="testcases-${test-type}-${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" /> -->
-		<property name="test.suite.class.name" value="com.sequoiadb.testcases-js.${test.package.name}.${host.NAME}-${parallel.num}-${test.suite.name}" />
+		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+		<property name="test.suite.class.name" value="testcases-${test-type}-${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
+		<!-- <property name="test.suite.class.name" value="com.sequoiadb.testcases-js.${test.package.name}.${host.NAME}-${parallel.num}-${test.suite.name}" /> -->
 
 		<echo message="###test.package.name=${test.package.name}###" />
 
