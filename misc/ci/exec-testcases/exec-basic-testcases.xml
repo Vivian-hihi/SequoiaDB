@@ -33,7 +33,7 @@
 		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="allPrepare.screen.output"  resultproperty="allPrepare.ret.code">
 			<arg line="${sdb.cmd.allPrepare}" />
 		</exec>
-		<echo message="allPrepare.screen.output" />
+		<echo message="${allPrepare.screen.output}" />
 
 		<foreach target="test-one-suite" param="test.suite.fullname" >
 			<path>
@@ -50,7 +50,7 @@
 		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="allClean.screen.output" resultproperty="allClean.ret.code">
 			<arg line="${sdb.cmd.allClean}" />
 		</exec>
-		<echo message="allClean.screen.output" />
+		<echo message="${allClean.screen.output}" />
 	</target>
 
 	<target name="test-one-suite" depends="">
@@ -149,7 +149,7 @@
 				<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
 					<arg line="${sdb.cmd.beforeTestcase}" />
 				</exec>
-				<echo message="beforeTestcase.screen.output" />
+				<echo message="${beforeTestcase.screen.output}" />
 
 				<property name="sdb.cmd.argument" value=" -e &quot;var CSPREFIX='${CS_PRIX}';var COORDSVCNAME='${coord.service.port}';&quot; -f &quot;${testcases.path}/libs/func.js ${commlib.option},${test.case.fullname}&quot;" />
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
@@ -161,11 +161,11 @@
 				<echo message="${screen.output}" />
 				
 				<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js ${commlib.option} ,${testcases.path}/libs/after_usecase.js&quot;" />
-				<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterUsecase}" />
+				<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
 				<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
 					<arg line="${sdb.cmd.afterTestcase}" />
 				</exec>
-				<echo message="afterTestcase.screen.output" />
+				<echo message="${afterTestcase.screen.output}" />
 
 				<echo message="the result = ${ret.code} after exec ${test.case.fullname} testcase." />
 				<exec executable="${sdb.fullname}" dir="" timeout="300000">
@@ -259,18 +259,18 @@
 						</if>
 						<if>
 							<not>
-								<equals arg1="${beforeUsecase.ret.code}" arg2="0" />
+								<equals arg1="${beforeTestcase.ret.code}" arg2="0" />
 							</not>
 							<then>
-								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;${beforeUsecase.screen.output}&quot;/&gt;&#10;" />
+								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;${beforeTestcase.screen.output}&quot;/&gt;&#10;" />
 							</then>
 						</if>
 						<if>
 							<not>
-								<equals arg1="${afterUsecase.ret.code}" arg2="0" />
+								<equals arg1="${afterTestcase.ret.code}" arg2="0" />
 							</not>
 							<then>
-								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;${afterUsecase.screen.output}&quot;/&gt;&#10;" />		
+								<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;message error=&quot;${afterTestcase.screen.output}&quot;/&gt;&#10;" />		
 							</then>
 						</if>
 
