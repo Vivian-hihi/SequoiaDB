@@ -73,6 +73,10 @@ namespace engine
 
       while( (pDirent = readdir( pDir )) != NULL )
       {
+         if ( 0 == ossStrcmp( pDirent->d_name, "self" ) )
+         {
+            continue ;
+         }
          CHAR pathName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          ossSnprintf( pathName, OSS_MAX_PATHSIZE, PROC_CMDLINE_PATH_FORMAT,
                       pDirent->d_name ) ;
