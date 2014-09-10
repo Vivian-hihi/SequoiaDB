@@ -105,7 +105,15 @@ namespace engine
    #define OM_HOST_FIELD_OS                  "OS"
    #define OM_HOST_FIELD_OM                  "OM"
    #define OM_HOST_FIELD_MEMORY              "Memory"
+   
    #define OM_HOST_FIELD_DISK                "Disk"
+   
+   #define OM_HOST_FIELD_DISK_NAME           "Name"
+   #define OM_HOST_FIELD_DISK_SIZE           "Size"
+   #define OM_HOST_FIELD_DISK_MOUNT          "Mount"
+   #define OM_HOST_FIELD_DISK_FREE_SIZE      "Free"
+   #define OM_HOST_FIELD_DISK_USED           "Used"
+   
    #define OM_HOST_FIELD_CPU                 "CPU"
    #define OM_HOST_FIELD_NET                 "Net"
    #define OM_HOST_FIELD_PORT                "Port"
@@ -270,12 +278,12 @@ namespace engine
    // array
    #define  OM_BSON_FIELD_MEMORY             "Memory"
    // array
-   #define  OM_BSON_FIELD_DISK               "Disk"
-   #define  OM_BSON_FIELD_DISK_NAME          "Name"
-   #define  OM_BSON_FIELD_DISK_SIZE          "Size"
-   #define  OM_BSON_FIELD_DISK_MOUNT         "Mount"
-   #define  OM_BSON_FIELD_DISK_FREE_SIZE     "Free"
-   #define  OM_BSON_FIELD_DISK_USED          "Used"
+   #define  OM_BSON_FIELD_DISK               OM_HOST_FIELD_DISK
+   #define  OM_BSON_FIELD_DISK_NAME          OM_HOST_FIELD_DISK_NAME
+   #define  OM_BSON_FIELD_DISK_SIZE          OM_HOST_FIELD_DISK_SIZE
+   #define  OM_BSON_FIELD_DISK_MOUNT         OM_HOST_FIELD_DISK_MOUNT
+   #define  OM_BSON_FIELD_DISK_FREE_SIZE     OM_HOST_FIELD_DISK_FREE_SIZE
+   #define  OM_BSON_FIELD_DISK_USED          OM_HOST_FIELD_DISK_USED
 
    #define  OM_BSON_FIELD_DISK_CANUSE        "CanUse"
 

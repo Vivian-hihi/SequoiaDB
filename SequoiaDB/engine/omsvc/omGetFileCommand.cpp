@@ -1240,8 +1240,7 @@ namespace engine
          BSONObjIterator i( hostElement.embeddedObject() ) ;
          while ( i.more() )
          {
-            BSONObjBuilder builder ;
-            BSONObj tmp ;
+            INT32 tmpRc ;
             BSONElement ele = i.next() ;
             BSONObj oneHost = ele.embeddedObject() ;
             rcElement       = oneHost.getField( OM_REST_RES_RETCODE ) ;
@@ -1254,8 +1253,8 @@ namespace engine
                goto error ;
             }
             // remove the basic check failure host to the hostResult 
-            rc = oneHost.getIntField( OM_REST_RES_RETCODE ) ;
-            if ( SDB_OK != rc )
+            tmpRc = rcElement.Int() ;
+            if ( SDB_OK != tmpRc )
             {
                hostResult.push_back( oneHost ) ;
                _eraseFromList( hostInfoList, oneHost ) ;
@@ -6420,11 +6419,14 @@ namespace engine
             BSONObjIterator iter( diskArray ) ;
             while ( iter.more() )
             {
-//               BSONElement ele = iter.next() ;
-//               BSONObj oneDisk = ele.embeddedObject() ;
-//               simpleDiskInfo diskInfo ;
-//               diskInfo.diskName = oneDisk.getStringField( OM_HOST_FIELD_)
-//               hostDisk.diskInfo.push_back( ) ;
+               BSONElement ele = iter.next() ;
+               BSONObj oneDisk = ele.embeddedObject() ;
+               simpleDiskInfo diskInfo ;
+               diskInfo.diskName  = oneDisk.getStringField( 
+                                                    OM_HOST_FIELD_DISK_NAME ) ;
+               diskInfo.mountPath = oneDisk.getStringField( 
+                                                    OM_HOST_FIELD_DISK_MOUNT ) ;
+               hostDisk.diskInfo.push_back( diskInfo ) ;
             }
          }
       }
