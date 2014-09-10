@@ -107,6 +107,7 @@ function installSdb()
       rm -r ${homePath}/41000 2>/dev/null
       rm -r ${homePath}/42000 2>/dev/null
       rm -rf conf/local 2>/dev/null
+      rm -rf conf/log 2>/dev/null
       mkdir conf/local
       echo "Remove sdb ok"
       sleep 2
@@ -150,8 +151,7 @@ function installSdb()
       bin/sdb -s " var cataRG = db.getRG('SYSCatalogGroup') ;"
       bin/sdb -s " node1 = cataRG.createNode('${hostName}', '30010', '${homePath}/30010' ) ; sleep(5000) ;"
       bin/sdb -s " node2 = cataRG.createNode('${hostName}', '30020', '${homePath}/30020' ) ; sleep(5000) ;"
-      bin/sdb -s " node1.start(); sleep(5000) ;"
-      bin/sdb -s " node2.start(); sleep(5000) ;"
+      bin/sdb -s " cataRG.start() ; sleep(5000) ;"
       echo "Adding catalog nodes succeed"
       bin/sdb -s " var db ; try { db = new Sdb('localhost', '50000') ; var rg1=db.createRG('db1') ; rg1.createNode('${hostName}', '20000', '${homePath}/20000'); } catch( e) { println('Create db1 failed: ' + e ) ; throw e; } "
       if [ $? -eq 0 ] ; then
@@ -191,7 +191,7 @@ function autoTest()
    sleep 10
    chmod 777 runtest.sh
    echo "=============================Begin to test usecases============================"
-   ./runtest.sh
+   ./runtest.sh -s 0
    echo "=============================End test usecases================================="
 }
 
