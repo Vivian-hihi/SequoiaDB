@@ -88,8 +88,8 @@ namespace engine
          CHAR                 *_fileBuff ;
          UINT32               _buffSize ;
          UINT32               _readSize ;
-         std::vector<BSONObj> _hosts ;
-         std::string          _content ;
+         vector<BSONObj> _hosts ;
+         string          _content ;
    } ;
 
    typedef _omaCommand* (*OA_NEW_FUNC) () ;
@@ -292,7 +292,7 @@ namespace engine
          CHAR _sdb_user_group[ OSS_MAX_PATHSIZE + 1 ] ;
 
          BOOLEAN                          _needRollback ;
-         std::vector<AddHost>             _hasAddHosts ;
+         vector<AddHost>                  _hasAddHosts ;
          INT32                            _transactionID ;
    } ;
 
@@ -315,16 +315,17 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
+         INT32 _genVCoordSvcName( CHAR *pSvcName, INT32 bufLen ) ;
 //         BOOLEAN _createVirtualCoordSucced ;
 //         BOOLEAN _removeVirtualCoordSucced ;
-         CHAR _localHostName[OSS_MAX_HOSTNAME + 1] ;
+         CHAR _omaHostName[OSS_MAX_HOSTNAME + 1] ;
          CHAR _omaSvcName[OSS_MAX_SERVICENAME + 1] ;
          CHAR _vCoordSvcName[OSS_MAX_SERVICENAME + 1] ;
 
-         std::vector<BSONObj>             _coord ;
-         std::vector<BSONObj>             _catalog ;
-         std::vector<BSONObj>             _data ;
-         std::vector<BSONObj>             _standalone ;
+         vector<BSONObj>             _coord ;
+         vector<BSONObj>             _catalog ;
+         vector<BSONObj>             _data ;
+         vector<BSONObj>             _standalone ;
 
          _omaTaskMgr* _taskMrg ;
 
@@ -376,7 +377,7 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         const CHAR *_omaHostname ;
+         const CHAR *_omaHostName ;
          const CHAR *_omaSvcName ;
          const CHAR *_vCoordSvcName ;
    } ;
@@ -471,7 +472,7 @@ namespace engine
          INT32 _getHostsTableInfo () ;
 
          INT32 _getHostsToReg ( const CHAR *pIp,
-                                std::vector<string> &hostsInfo ) ;
+                                vector<string> &hostsInfo ) ;
 
          std::map<string, string> _hostsTableInfo ;
    } ;
@@ -506,7 +507,7 @@ namespace engine
 
          virtual INT32 doit ( BSONObj &retObj ) ;
 
-         INT32 rollback( std::vector<AddHost> &hosts ) ;
+         INT32 rollback( vector<AddHost> &hosts ) ;
       private:
          const CHAR *_pIp ;
          const CHAR *_pUserName ;
@@ -544,7 +545,7 @@ namespace engine
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
          virtual INT32 doit ( BSONObj &retObj ) ;
 
-      public:
+      private:
          BSONObj _installInfo ;
          InstallInfo _info ;
 
@@ -562,11 +563,81 @@ namespace engine
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
          virtual INT32 doit ( BSONObj &retObj ) ;
 
-      public:
+      private:
          BSONObj _installInfo ;
          InstallInfo _info ;
 
    } ;
+
+   // install db business task run rollback coord job
+   class _omaRunRollbackCoordJob : public _omaCommand
+   {
+      public:
+         _omaRunRollbackCoordJob ( string &vCoordHostName,
+                                   string &vCoordSvcName, 
+                                   map< string, vector<InstalledNode> > &info
+                                 ) ;
+         ~_omaRunRollbackCoordJob () ;
+
+      public:
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      private:
+         void _getInstalledCoordInfo( BSONObj& obj ) ;         
+
+         map< string, vector< InstalledNode > >         &_info ;
+         string                                         _vCoordHostName ;
+         string                                         _vCoordSvcName ;
+   } ;
+
+   // install db business task run rollback catalog job
+   class _omaRunRollbackCatalogJob : public _omaCommand
+   {
+      public:
+         _omaRunRollbackCatalogJob ( string &vCoordHostName,
+                                     string &vCoordSvcName, 
+                                     map< string, vector<InstalledNode> > &info
+                                   ) ;
+         ~_omaRunRollbackCatalogJob () ;
+
+      public:
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      private:
+         void _getInstalledCatalogInfo( BSONObj &obj ) ;
+
+         map< string, vector< InstalledNode > >         &_info ;
+         string                                         _vCoordHostName ;
+         string                                         _vCoordSvcName ;
+   } ;
+
+   // install db business task run rollback data nodes job
+   class _omaRunRollbackDataNodeJob : public _omaCommand
+   {
+      public:
+         _omaRunRollbackDataNodeJob ( string &vCoordHostName,
+                                      string &vCoordSvcNamem,
+                                      map< string, vector<InstalledNode> > &info
+                                    ) ;
+         ~_omaRunRollbackDataNodeJob () ;
+
+      public:
+         virtual const CHAR* name () { return "" ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+
+      private:
+         void _getInstalledDataGroupInfo( BSONObj& obj ) ;         
+
+         map< string, vector< InstalledNode > >         &_info ;
+         string                                         _vCoordHostName ;
+         string                                         _vCoordSvcName ;
+   } ;
+
 
 
 }

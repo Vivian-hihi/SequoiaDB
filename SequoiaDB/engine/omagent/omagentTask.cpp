@@ -60,15 +60,27 @@ namespace engine
       goto done ;
    }
 
-   OMA_JOB_STATUS _omaTask::getJobStatus( string &name )
+   INT32 _omaTask::getJobStatus( string &name, OMA_JOB_STATUS &status )
    {
-      OMA_JOB_STATUS ret = OMA_JOB_STATUS_END ;
+      INT32 rc =SDB_OK ;
       map< string, OMA_JOB_STATUS >::iterator it ;
 
       it = _jobStatus.find( name ) ;
       if ( _jobStatus.end() != it )
-         ret = it->second ;
-      return ret ;
+      {
+         status = it->second ;
+      }
+      else
+      {
+         PD_LOG ( PDERROR, "Failed to get job status, no such job named %s",
+                  name.c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
 
@@ -175,28 +187,31 @@ namespace engine
    _omaInstallDBBusinessTask::_omaInstallDBBusinessTask( UINT64 taskID )
    : _omaTask( taskID )
    {
-      _taskName = "install db business task" ;
-      _stage = OMA_FIELD_STAGE_INSTALL ;
-      _taskType = OMA_TASK_INSTALL_DB ;
-      _needRollBack = FALSE ;
+      _taskType         = OMA_TASK_INSTALL_DB ;
+      _taskName         = "install db business task" ;
+      _stage            = OMA_INSTALL_INSTALL ;
+      _isTaskFinish     = FALSE ;
+      _isRollingBack    = FALSE ;
    }
 
    _omaInstallDBBusinessTask::~_omaInstallDBBusinessTask()
    {
    }
 
-   INT32 _omaInstallDBBusinessTask::init( std::vector<BSONObj> coord,
-                                          std::vector<BSONObj> catalog,
-                                          std::vector<BSONObj> data,
-                                          const CHAR *localHostName,
+   INT32 _omaInstallDBBusinessTask::init( vector<BSONObj> coord,
+                                          vector<BSONObj> catalog,
+                                          vector<BSONObj> data,
+                                          const CHAR *omaHostName,
                                           const CHAR *omaSvcName,
+                                          const CHAR *vCoordHostName,
                                           const CHAR *vCoordSvcName )
    {
       INT32 rc = SDB_OK ;
       // init arguments for remove virtual coord
-      _localHostName = localHostName ;
-      _omaSvcName    = omaSvcName ;
-      _vCoordSvcName = vCoordSvcName ;
+      _omaHostName    = omaHostName ;
+      _omaSvcName     = omaSvcName ;
+      _vCoordHostName = vCoordHostName ;
+      _vCoordSvcName  = vCoordSvcName ;
       // init _coord and _coordResult
       _coord = coord ;
       _coordResult._rc = SDB_OK ;
@@ -208,7 +223,7 @@ namespace engine
       _catalogResult._totalNum = _catalog.size() ;
       _catalogResult._finishNum = 0 ;
       // init _mapGroups and _mapGroupsResult
-      std::vector<BSONObj>::iterator it = data.begin() ;
+      vector<BSONObj>::iterator it = data.begin() ;
       // let data node sort by group name
       while( it != data.end() )
       {
@@ -225,7 +240,7 @@ namespace engine
       }
       // init data node result
       {
-      map<string, std::vector<BSONObj> >::iterator iter ;
+      map<string, vector<BSONObj> >::iterator iter ;
       iter = _mapGroups.begin() ;
       while ( iter != _mapGroups.end() )
       {
@@ -285,6 +300,16 @@ namespace engine
       goto done ;
    }
 
+   void _omaInstallDBBusinessTask::setTaskStage( OMA_INSTALL_DB_STAGE stage )
+   {
+      _stage = stage ;
+   }
+
+   void _omaInstallDBBusinessTask::setIsTaskFinish( BOOLEAN isTaskFinish )
+   {
+      _isTaskFinish = isTaskFinish ;
+   }   
+
    vector<BSONObj>& _omaInstallDBBusinessTask::getInstallCatalogInfo()
    {
       return _catalog ;
@@ -318,12 +343,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::updateInstallResult( INT32 retRc,
+   INT32 _omaInstallDBBusinessTask::updateInstallStatus( BOOLEAN isFinish,
+                                                         INT32 retRc,
                                                          const CHAR *pRole,
                                                          const CHAR *pErrMsg,
                                                          const CHAR *pDesc,
                                                          const CHAR *pGroupName,
-                                                         BOOLEAN isFinish,
                                                          InstalledNode *pNode )
    {
       INT32 rc = SDB_OK ;
@@ -332,20 +357,23 @@ namespace engine
       // check argument
       if ( NULL == pRole )
       {
-         PD_LOG ( PDERROR, "Not speciefy role for updating install result" ) ;
+         PD_LOG ( PDERROR,
+                  "Not speciefy role for updating install result" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
       if ( ( 0 == ossStrncmp( pRole, ROLE_DATA, ossStrlen( ROLE_DATA ) ) ) &&
            ( NULL == pGroupName ) )
       {
-         PD_LOG ( PDERROR, "Not speciefy data group for updating install result" ) ;
+         PD_LOG ( PDERROR,
+                  "Not speciefy data group for updating install result" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
       if ( ( TRUE == isFinish ) && ( NULL == pNode ) )
       {
-         PD_LOG ( PDERROR, "The info of finish installed node is empty for register" ) ;
+         PD_LOG ( PDERROR, "The info of finish installed node "
+                  "is empty for register" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -376,7 +404,8 @@ namespace engine
             }
          }
       }
-      else if ( 0 == ossStrncmp( pRole, ROLE_COORD, ossStrlen( ROLE_COORD ) ) )
+      else if ( 0 == ossStrncmp( pRole, ROLE_COORD,
+                                 ossStrlen( ROLE_COORD ) ) )
       {
          if ( retRc )
          {
@@ -391,7 +420,8 @@ namespace engine
             _coordResult._installedNodes.push_back( *pNode ) ;
          }
       }
-      else if ( 0 == ossStrncmp( pRole, ROLE_CATA, ossStrlen( ROLE_CATA ) ) )
+      else if ( 0 == ossStrncmp( pRole, ROLE_CATA,
+                                 ossStrlen( ROLE_CATA ) ) )
       {
          if ( retRc )
          {
@@ -409,16 +439,51 @@ namespace engine
       else
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to update install result, rc = %d", rc ) ;
+         PD_LOG ( PDERROR,
+                  "Failed to update install result, rc = %d", rc ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::isFinish ()
+   void _omaInstallDBBusinessTask::getInstalledNodeResult ( string role,
+                                   map< string, vector<InstalledNode> >& info )
+   {
+      InstalledNode result ;
+      
+      if ( string(ROLE_DATA) == role )
+      {
+         map< string, InstallResult >::iterator it = _mapGroupsResult.begin() ;
+         for( ; it != _mapGroupsResult.end(); it++ )
+         {
+            vector< InstalledNode > &nodes = (it->second)._installedNodes ;
+            info.insert (
+               pair< string, vector<InstalledNode> >( string(it->first), nodes )
+            ) ;
+         }
+      }
+      else if ( string(ROLE_CATA) == role )
+      {
+         vector< InstalledNode > &nodes = _catalogResult._installedNodes ;
+         info.insert (
+            pair< string, vector<InstalledNode> >( string(ROLE_CATA), nodes )
+         ) ;
+      }
+      else if ( string(ROLE_COORD) == role )
+      {
+         vector< InstalledNode > &nodes = _coordResult._installedNodes ;
+         info.insert (
+            pair< string, vector<InstalledNode> >( string(ROLE_COORD), nodes )
+         ) ;
+      }
+
+   }
+
+   BOOLEAN _omaInstallDBBusinessTask::isInstallFinish ()
    {
       map<string, InstallResult>::iterator it ;
 
@@ -445,6 +510,57 @@ namespace engine
       return TRUE ;
    }
 
+   INT32 _omaInstallDBBusinessTask::setJobStatus( string &name,
+                                                  OMA_JOB_STATUS status )
+   {
+      INT32 rc = SDB_OK ;
+      map< string, OMA_JOB_STATUS >::iterator it ;
+      ossScopedLock lock ( &_jobLatch, EXCLUSIVE ) ;
+     
+      it = _jobStatus.find( name ) ;
+      if ( it != _jobStatus.end() )
+      {
+         it->second = status ;
+      }
+      else
+      {
+         PD_LOG ( PDERROR, "No such job in current task named [%s]",
+                  name.c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBBusinessTask::getJobStatus( string &name,
+                                                  OMA_JOB_STATUS &status )
+   {
+      INT32 rc = SDB_OK ;
+      map< string, OMA_JOB_STATUS >::iterator it ;
+
+      it = _jobStatus.find( name ) ;
+      if ( it != _jobStatus.end() )
+      {
+         status = it->second ;
+      }
+      else
+      {
+         PD_LOG ( PDERROR, "No such job in current task named [%s]",
+                  name.c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _omaInstallDBBusinessTask::getInstallStatus ( BSONObj &progress )
    {
       INT32 rc = SDB_OK ;
@@ -452,15 +568,31 @@ namespace engine
       BSONArrayBuilder bab ;
       BSONObj coordResult ;
       BSONObj catalogResult ;
-      BOOLEAN finish = isFinish() ;
+      const CHAR *pStage = NULL ;
+  
+      if ( OMA_INSTALL_INSTALL == _stage )
+      {
+         _isTaskFinish = isInstallFinish() ;
+         pStage = STAGE_INSTALL ;
+      }
+      else if ( OMA_INSTALL_ROLLBACK == _stage )
+      {
+         pStage = STAGE_ROLLBACK ;
+      }
+      else
+      {
+         PD_LOG ( PDERROR, "Invalid task's stage" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
       try
       {
          // taskID
          bob.append( OMA_FIELD_TASKID, (SINT64)_taskID ) ;
          // isFinish
-         bob.appendBool( OMA_FIELD_ISFINISH, finish ) ;
+         bob.appendBool( OMA_FIELD_ISFINISH, _isTaskFinish ) ;
          // status
-         bob.append( OMA_FIELD_STATUS, _stage ) ;
+         bob.append( OMA_FIELD_STATUS, pStage ) ;
          // get coord status
          coordResult = BSON ( OMA_FIELD_NAME << OMA_FIELD_COORD <<
                               OMA_FIELD_TOTALCOUNT << _coordResult._totalNum <<
@@ -500,6 +632,51 @@ namespace engine
                   e.what() ) ;
          goto error ;
       }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBBusinessTask::tryToRollbackInternal()
+   {
+      ossScopedLock lock ( &_jobLatch, EXCLUSIVE ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN rollback = TRUE ;
+      map< string, OMA_JOB_STATUS >::iterator it ;
+
+      if ( _isRollingBack )
+      {
+         goto done ;
+      }
+      else
+      {
+         for( it = _jobStatus.begin(); it != _jobStatus.end(); it++ )
+         {
+            if( OMA_JOB_STATUS_RUNNING == it->second )
+            {
+               rollback = FALSE ;
+            }
+         }
+      }
+      if ( rollback )
+      {
+         EDUID taskRollbackJobID = PMD_INVALID_EDUID ;
+         rc = startInstallDBBusinessTaskRollbackJob ( _vCoordHostName,
+                                                      _vCoordSvcName,
+                                                      this,
+                                                      &taskRollbackJobID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to start install db business task "
+                    "rollback job, rc = %d", rc ) ;
+            goto error ;
+         }
+         // set task stage
+         setTaskStage ( OMA_INSTALL_ROLLBACK ) ;
+         setIsTaskFinish( FALSE ) ;
+      }
+      
    done:
       return rc ;
    error:
@@ -581,7 +758,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       EDUID removeVirtualCoordJobID = PMD_INVALID_EDUID ;
       // start remove virtual coord job
-      rc = startRemoveVirtualCoordJob( _localHostName.c_str(), _omaSvcName.c_str(),
+      rc = startRemoveVirtualCoordJob( _omaHostName.c_str(), _omaSvcName.c_str(),
                                        _vCoordSvcName.c_str(),
                                        &removeVirtualCoordJobID ) ;
       if ( rc )

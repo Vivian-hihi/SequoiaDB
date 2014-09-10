@@ -39,6 +39,7 @@
 #include "ossIO.hpp"
 #include "pmdDef.hpp"
 #include "utilNodeOpr.hpp"
+#include "ossSocket.hpp"
 
 namespace engine
 {
@@ -136,6 +137,40 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   BOOLEAN portCanUsed ( UINT32 port, INT32 timeoutMilli )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN result = FALSE ;
+      _ossSocket sock( port, timeoutMilli ) ;
+
+      if ( port <= 1024 || port > 65535 )
+      {
+         goto error ;
+      }
+      rc = sock.initSocket() ;
+      if ( rc )
+      {
+         PD_LOG ( PDEVENT, "Failed to connect to port[%s], "
+                  "rc = %d", port, rc ) ;
+         goto error ;
+      }
+      rc = sock.bind_listen() ;
+      if ( rc )
+      {
+         PD_LOG ( PDEVENT, "Failed to bind/listen socket, rc = %d", rc ) ;
+         goto error ;
+      }
+      result = TRUE ;
+      // close the socket
+      sock.close() ;
+
+   done:
+      return result ;
+   error:
+      goto done ;
+
    }
 
    // get bson field

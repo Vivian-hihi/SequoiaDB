@@ -88,7 +88,7 @@ namespace engine
 
          INT32 setJobStatus( string &name, OMA_JOB_STATUS status ) ;
 
-         OMA_JOB_STATUS getJobStatus( string &name ) ;
+         INT32 getJobStatus( string &name, OMA_JOB_STATUS &status ) ;
 
       public:
          virtual OMA_TASK_TYPE taskType () const = 0 ;
@@ -151,42 +151,44 @@ namespace engine
          }
 
       public:
-         INT32 init( std::vector<BSONObj> coord,
-                     std::vector<BSONObj> catalog,
-                     std::vector<BSONObj> data,
-                     const CHAR *localHostName,
+         INT32 init( vector<BSONObj> coord,
+                     vector<BSONObj> catalog,
+                     vector<BSONObj> data,
+                     const CHAR *omaHostName,
                      const CHAR *omaSvcName,
+                     const CHAR *vCoordHostName,
                      const CHAR *vCoordSvcName ) ;
-
          // start job
          INT32 doit() ;
-
          // respond query of install status
          INT32 getInstallStatus( BSONObj &progress ) ;
 
       public:
+         void setTaskStage( OMA_INSTALL_DB_STAGE stage ) ;
+         void setIsTaskFinish( BOOLEAN isTaskFinish ) ;
+         INT32 setJobStatus( string &name, OMA_JOB_STATUS status ) ;
+         INT32 getJobStatus( string &name, OMA_JOB_STATUS &status ) ;
          vector<BSONObj>& getInstallCatalogInfo() ;
-
          vector<BSONObj>& getInstallCoordInfo() ;
-
          INT32 getInstallDataGroupInfo( string &name,
-                                      vector<BSONObj> &dataGroupInstallInfo ) ;
-         INT32 updateInstallResult( INT32 retRc,
+                                        vector<BSONObj> &dataGroupInstallInfo ) ;
+         void getInstalledNodeResult( string role,
+                                      map< string, vector<InstalledNode> >& info ) ;
+         INT32 updateInstallStatus( BOOLEAN isFinish,
+                                    INT32 retRc,
                                     const CHAR *pRole,
                                     const CHAR *pErrMsg,
                                     const CHAR *pDesc,
                                     const CHAR *pGroupName,
-                                    BOOLEAN isFinish,
                                     InstalledNode *pNode ) ;
-         BOOLEAN isFinish() ;
-
-         void setStage ( const CHAR *stage ) { _stage = stage ; }
-      
+         INT32 tryToRollbackInternal() ;         
+ 
       private:
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
          INT32 _installData() ;
          INT32 _removeVirtualCoord() ;
+         BOOLEAN isInstallFinish() ;
 
          // install info
          vector<BSONObj>                                _catalog ;
@@ -196,18 +198,24 @@ namespace engine
          // install result
          InstallResult                                  _catalogResult ;
          InstallResult                                  _coordResult ;
-         map<string, InstallResult>                     _mapGroupsResult ;
+         map< string, InstallResult >                   _mapGroupsResult ;
 
-         // reomve virtual coord
-         string                                         _localHostName ;
+         // job status
+         map< string, OMA_JOB_STATUS >                  _jobStatus ;
+
+         string                                         _omaHostName ;
          string                                         _omaSvcName ;
+         string                                         _vCoordHostName ;
          string                                         _vCoordSvcName ;
-         string                                         _taskName ;
+
 
          ossSpinSLatch                                  _jobLatch ;
          OMA_TASK_TYPE                                  _taskType ;
-         string                                         _stage ;
-         BOOLEAN                                        _needRollBack ;
+         string                                         _taskName ;
+//         string                                         _stage ;
+         OMA_INSTALL_DB_STAGE                           _stage ;
+         BOOLEAN                                        _isTaskFinish ;
+         BOOLEAN                                        _isRollingBack ;
 
    } ;
    typedef _omaInstallDBBusinessTask omaInstallDBBusinessTask ;

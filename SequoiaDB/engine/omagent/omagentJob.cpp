@@ -74,6 +74,9 @@ namespace engine
       vector<BSONObj> &catalogInstallInfo = _pTask->getInstallCatalogInfo() ;
       vector<BSONObj>::iterator itr ;
 
+      // change job status
+      setJobStatus( OMA_JOB_STATUS_RUNNING ) ;
+      // begin to run  
       if ( 0 == catalogInstallInfo.size() )
       {
          rc = SDB_INVALIDARG ;
@@ -85,7 +88,7 @@ namespace engine
       {
          BSONObj retObj ;
          InstallInfo installInfo ;
-         CHAR buffer [OMA_BUFF_SIZE + 1] = { 0 } ;
+         CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
 
          // check task's status and decide to do or stop
          OMA_TASK_STATUS taskStatus = _pTask->status() ;
@@ -104,10 +107,10 @@ namespace engine
             goto error ;
          }
          // update install status for web before install catalog
-         ossSnprintf( buffer, OMA_BUFF_SIZE, "Installing catalog[%s:%s]",
+         ossSnprintf( desc, OMA_BUFF_SIZE, "Installing catalog[%s:%s]",
                       installInfo._hostName.c_str(),
                       installInfo._svcName.c_str() ) ;
-         rc = _updateInstallStatus( SDB_OK, NULL, buffer, FALSE, NULL ) ;
+         rc = _updateInstallStatus( FALSE, SDB_OK, NULL, desc, NULL ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to update status before install catalog "
@@ -137,17 +140,30 @@ namespace engine
                                     retObj ) ;
          if ( rc ) 
          {
-            PD_LOG ( PDERROR, "Failed to check install result, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to check install catalog[%s:%s] "
+                     "result, rc = %d", installInfo._hostName.c_str(),
+                     installInfo._svcName.c_str(), rc ) ;
             goto error ;
          }
          // get next
          itr++ ;
       }
+      // set job status to be successful
+      setJobStatus( OMA_JOB_STATUS_FINISH ) ;
    done:
       return rc ;
    error:
-      // set task status to be false
+      // set job status to be failing
+      setJobStatus( OMA_JOB_STATUS_FAIL ) ;
+      // set task status to be failing
       _pTask->setStatus( OMA_TASK_STATUS_FAIL ) ;
+      // try to rollback
+      rc = _pTask->tryToRollbackInternal() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Install db business task failed to rollback, "
+                  "rc = %d", rc ) ;
+      }
       goto done ;
    }
 
@@ -241,9 +257,9 @@ namespace engine
          ossSnprintf( desc, OMA_BUFF_SIZE,
                       "Failed to install catalog[%s:%s]",
                       pHostName, pSvcName ) ;
-         PD_LOG_MSG ( PDERROR, "Failed to install data node[%s:%s]: %s",
+         PD_LOG_MSG ( PDERROR, "Failed to install catalog[%s:%s]: %s",
                       pHostName, pSvcName, pErrMsg ) ;
-         _updateInstallStatus( retRc, pErrMsg, desc, FALSE, NULL ) ;
+         _updateInstallStatus( FALSE, retRc, pErrMsg, desc, NULL ) ;
          rc = retRc ;
          goto error ;
       }
@@ -259,7 +275,7 @@ namespace engine
                       pHostName, pSvcName ) ;
          PD_LOG ( PDDEBUG, "Sucessed to install catalog[%s:%s]",
                   pHostName, pSvcName ) ;
-         _updateInstallStatus( retRc, pErrMsg, desc, TRUE, &node ) ;
+         _updateInstallStatus( FALSE, retRc, pErrMsg, desc, &node ) ;
       }
 
    done:
@@ -268,17 +284,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaCreateCatalogJob::_updateInstallStatus(
-                                                  INT32 retRc,
-                                                  const CHAR *pErrMsg,
-                                                  const CHAR *pDesc,
-                                                  BOOLEAN isFinish,
-                                                  InstalledNode *pNode )
+   INT32 _omaCreateCatalogJob::_updateInstallStatus( BOOLEAN isFinish,
+                                                     INT32 retRc,
+                                                     const CHAR *pErrMsg,
+                                                     const CHAR *pDesc,
+                                                     InstalledNode *pNode )
    {
       INT32 rc = SDB_OK ;
 
-      rc = _pTask->updateInstallResult( retRc, ROLE_CATA, pErrMsg,
-                                        pDesc, NULL, isFinish, pNode ) ;
+      rc = _pTask->updateInstallStatus( isFinish, retRc, ROLE_CATA,
+                                        pErrMsg, pDesc, NULL, pNode ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to update install catalog information, "
@@ -349,6 +364,9 @@ namespace engine
       vector<BSONObj> &coordInstallInfo = _pTask->getInstallCoordInfo() ;
       vector<BSONObj>::iterator itr ;
 
+      // change job status
+      setJobStatus( OMA_JOB_STATUS_RUNNING ) ;
+      // 
       if ( 0 == coordInstallInfo.size() )
       {
          rc = SDB_INVALIDARG ;
@@ -360,7 +378,7 @@ namespace engine
       {
          BSONObj retObj ;
          InstallInfo installInfo ;
-         CHAR buffer [OMA_BUFF_SIZE + 1] = { 0 } ;
+         CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
 
          // check task's status and decide to do or stop
          OMA_TASK_STATUS taskStatus = _pTask->status() ;
@@ -379,10 +397,10 @@ namespace engine
             goto error ;
          }
          // update install status for web before install coord
-         ossSnprintf( buffer, OMA_BUFF_SIZE, "Installing coord[%s:%s]",
+         ossSnprintf( desc, OMA_BUFF_SIZE, "Installing coord[%s:%s]",
                       installInfo._hostName.c_str(),
                       installInfo._svcName.c_str() ) ;
-         rc = _updateInstallStatus( SDB_OK, NULL, buffer, FALSE, NULL ) ;
+         rc = _updateInstallStatus( FALSE, SDB_OK, NULL, desc, NULL ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to update status before install catalog "
@@ -412,17 +430,30 @@ namespace engine
                                     retObj ) ;
          if ( rc ) 
          {
-            PD_LOG ( PDERROR, "Failed to check install result, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to check install coord[%s:%s] "
+                     "result, rc = %d", installInfo._hostName.c_str(),
+                     installInfo._svcName.c_str(), rc ) ;
             goto error ;
          }
          // get next
          itr++ ;
       }
+      // set job status to be successful
+      setJobStatus( OMA_JOB_STATUS_FINISH ) ;
    done:
       return rc ;
    error:
+      // set job status to be failing
+      setJobStatus( OMA_JOB_STATUS_FAIL ) ;
       // set task status to be false
       _pTask->setStatus( OMA_TASK_STATUS_FAIL ) ;
+      // try to rollback
+      rc = _pTask->tryToRollbackInternal() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Install db business task failed to rollback, "
+                  "rc = %d", rc ) ;
+      }
       goto done ;
    }
 
@@ -494,7 +525,7 @@ namespace engine
                       pHostName, pSvcName ) ;
          PD_LOG_MSG ( PDERROR, "Failed to install data node[%s:%s]: %s",
                       pHostName, pSvcName, pErrMsg ) ;
-         _updateInstallStatus( retRc, pErrMsg, desc, FALSE, NULL ) ;
+         _updateInstallStatus( FALSE, retRc, pErrMsg, desc, NULL ) ;
          rc = retRc ;
          goto error ;
       }
@@ -509,7 +540,7 @@ namespace engine
                       pHostName, pSvcName ) ;
          PD_LOG ( PDDEBUG, "Sucessed to install coord[%s:%s]",
                   pHostName, pSvcName ) ;
-         _updateInstallStatus( retRc, pErrMsg, desc, TRUE, &node ) ;
+         _updateInstallStatus( TRUE, retRc, pErrMsg, desc, &node ) ;
       }
 
    done:
@@ -518,17 +549,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaCreateCoordJob::_updateInstallStatus(
-                                                  INT32 retRc,
-                                                  const CHAR *pErrMsg,
-                                                  const CHAR *pDesc,
-                                                  BOOLEAN isFinish,
-                                                  InstalledNode *pNode )
+   INT32 _omaCreateCoordJob::_updateInstallStatus( BOOLEAN isFinish,
+                                                   INT32 retRc,
+                                                   const CHAR *pErrMsg,
+                                                   const CHAR *pDesc,
+                                                   InstalledNode *pNode )
    {
       INT32 rc = SDB_OK ;
 
-      rc = _pTask->updateInstallResult( retRc, ROLE_COORD, pErrMsg,
-                                        pDesc, NULL, isFinish, pNode ) ;
+      rc = _pTask->updateInstallStatus( isFinish, retRc, ROLE_COORD,
+                                        pErrMsg, pDesc, NULL, pNode ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to update install coord information, "
@@ -600,6 +630,8 @@ namespace engine
       vector<BSONObj>::iterator itr ;
       vector<BSONObj> dataNodeInstallInfo ;
 
+      // change job status
+      setJobStatus( OMA_JOB_STATUS_RUNNING ) ;
       // get install data group information 
       rc = _pTask->getInstallDataGroupInfo( _groupname,
                                             dataNodeInstallInfo ) ;
@@ -622,7 +654,7 @@ namespace engine
       {
          BSONObj retObj ;
          InstallInfo installInfo ;
-         CHAR buffer [OMA_BUFF_SIZE + 1] = { 0 } ;
+         CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
 
          // check task's status and decide to do or stop
          OMA_TASK_STATUS taskStatus = _pTask->status() ;
@@ -642,10 +674,10 @@ namespace engine
             goto error ;
          }
          // update install status for web before install data node
-         ossSnprintf( buffer, OMA_BUFF_SIZE, "Installing data node[%s:%s]",
+         ossSnprintf( desc, OMA_BUFF_SIZE, "Installing data node[%s:%s]",
                       installInfo._hostName.c_str(),
                       installInfo._svcName.c_str() ) ;
-         rc = _updateInstallStatus( SDB_OK, NULL, buffer, FALSE, NULL ) ;
+         rc = _updateInstallStatus( FALSE, SDB_OK, NULL, desc, NULL ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to update status before "
@@ -664,7 +696,7 @@ namespace engine
          rc = runCmd.doit( retObj ) ;
          if ( rc )
          {
-            PD_LOG( PDERROR, "Job failed to create catalog, rc = %d", rc ) ;
+            PD_LOG( PDERROR, "Job failed to create data node, rc = %d", rc ) ;
             goto error ;
          }
          // check the install result
@@ -675,18 +707,32 @@ namespace engine
                                     retObj ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to check install result, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to check install data node[%s:%s] "
+                     "result, rc = %d", installInfo._hostName.c_str(),
+                     installInfo._svcName.c_str(), rc ) ;
             goto error ;
          }
          // get next
          itr++ ;
       }
+      // set job status to be successful
+      // change job status
+      setJobStatus( OMA_JOB_STATUS_FINISH ) ;
 
    done:
       return rc ;
    error:
+      // set job status to be failing
+      setJobStatus( OMA_JOB_STATUS_FAIL ) ;
       // set task status to be false
       _pTask->setStatus( OMA_TASK_STATUS_FAIL ) ;
+      // try to rollback
+      rc = _pTask->tryToRollbackInternal() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Install db business task failed to rollback, "
+                  "rc = %d", rc ) ;
+      }
       goto done ;
    }
 
@@ -771,7 +817,7 @@ namespace engine
                       pHostName, pSvcName ) ;
          PD_LOG_MSG ( PDERROR, "Failed to install data node[%s:%s]: %s",
                       pHostName, pSvcName, pErrMsg ) ;
-         _updateInstallStatus( retRc, pErrMsg, desc, FALSE, NULL ) ;
+         _updateInstallStatus( FALSE, retRc, pErrMsg, desc, NULL ) ;
          rc = retRc ;
          goto error ;
       }
@@ -787,7 +833,7 @@ namespace engine
                       pHostName, pSvcName ) ;
          PD_LOG ( PDDEBUG, "Sucessed to install data node[%s:%s]",
                   pHostName, pSvcName ) ;
-         _updateInstallStatus( retRc, pErrMsg, desc, TRUE, &node ) ;
+         _updateInstallStatus( TRUE, retRc, pErrMsg, desc, &node ) ;
       }
 
    done:
@@ -796,16 +842,17 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaCreateDataJob::_updateInstallStatus( INT32 retRc,
+   INT32 _omaCreateDataJob::_updateInstallStatus( BOOLEAN isFinish,
+                                                  INT32 retRc,
                                                   const CHAR *pErrMsg,
                                                   const CHAR *pDesc,
-                                                  BOOLEAN isFinish,
                                                   InstalledNode *pNode )
    {
       INT32 rc = SDB_OK ;
 
-      rc = _pTask->updateInstallResult( retRc, ROLE_DATA, pErrMsg, pDesc,
-                                        _groupname.c_str(), isFinish, pNode ) ;
+      rc = _pTask->updateInstallStatus( isFinish, retRc,
+                                        ROLE_DATA, pErrMsg, pDesc,
+                                        _groupname.c_str(), pNode ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to update install data node information, "
@@ -819,17 +866,231 @@ namespace engine
       goto done ;
    }
 
+
+  /*
+      install db business task rollback job
+   */
+   _omaInstallDBBusinessTaskRollbackJob::_omaInstallDBBusinessTaskRollbackJob (
+                                              string &vCoordHostName,
+                                              string &vCoordSvcName,
+                                              _omaInstallDBBusinessTask *pTask )
+   {
+      _status = OMA_JOB_STATUS_INIT ;
+      _name = "install db business task rollback job" ;
+      _vCoordHostName = vCoordHostName ;
+      _vCoordSvcName = vCoordSvcName ;
+      _pTask = pTask ;
+   }
+
+   _omaInstallDBBusinessTaskRollbackJob::~_omaInstallDBBusinessTaskRollbackJob()
+   {
+   }
+
+   RTN_JOB_TYPE _omaInstallDBBusinessTaskRollbackJob::type () const
+   {
+      return RTN_JOB_REMOVEVIRTUALCOORD ;
+   }
+
+   const CHAR* _omaInstallDBBusinessTaskRollbackJob::name () const
+   {
+      return _name.c_str() ;
+   }
+
+   BOOLEAN _omaInstallDBBusinessTaskRollbackJob::muteXOn (
+                                                    const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omaInstallDBBusinessTaskRollbackJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      RollbackInfo info ;
+      BSONObj retObj ;
+
+      _getRollbackInfo ( info ) ;
+      PD_LOG ( PDDEBUG, "install db business rollback info: " ) ;
+      // rollback data nodes
+      rc = _rollbackDataNode ( _vCoordHostName,
+                               _vCoordSvcName,
+                               info._dataGroupRollbackInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to rollback data nodes, rc = %d", rc ) ;
+         goto error ;
+      }
+      // rollback coord nodes
+      rc = _rollbackCoord ( _vCoordHostName,
+                            _vCoordSvcName,
+                            info._coordRollbackInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to rollback coord nodes, rc = %d", rc ) ;
+         goto error ;
+      }
+      // rollback catalog nodes
+      rc = _rollbackCatalog ( _vCoordHostName,
+                              _vCoordSvcName,
+                              info._catalogRollbackInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to rollback catalog nodes, rc = %d", rc ) ;
+         goto error ;
+      }      
+      // set task stage
+      _pTask->setTaskStage( OMA_INSTALL_ROLLBACK ) ;
+      _pTask->setIsTaskFinish( TRUE ) ;
+ 
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _omaInstallDBBusinessTaskRollbackJob::_getRollbackInfo(
+                                                           RollbackInfo &info )
+   {
+      _pTask->getInstalledNodeResult ( ROLE_COORD, info._coordRollbackInfo ) ;
+      _pTask->getInstalledNodeResult ( ROLE_CATA, info._catalogRollbackInfo ) ;
+      _pTask->getInstalledNodeResult ( ROLE_DATA, info._dataGroupRollbackInfo ) ;
+      
+   }
+
+   INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackCoord (
+                                  string &vCoordHostName,
+                                  string &vCoordSvcName,
+                                  map< string, vector< InstalledNode> > &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj retObj ;
+      _omaRunRollbackCoordJob rollbackCoord ( vCoordHostName,
+                                              vCoordSvcName, info ) ;
+      map< string, vector< InstalledNode> >::iterator it = info.begin() ;
+      
+      if ( ( 1 != info.size() ) && ( string( ROLE_COORD ) != it->first ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Invalid coord's rollback info" ) ;
+         goto error ;
+      }
+      // rollback data group
+      rc = rollbackCoord.init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to do rollback create coord "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = rollbackCoord.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to do rollback create coord, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      PD_LOG ( PDEVENT, "The rollback coord's result is: %s",
+               retObj.toString().c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ; 
+   }
+
+   INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackCatalog (
+                                  string &vCoordHostName,
+                                  string &vCoordSvcName,
+                                  map< string, vector< InstalledNode> > &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj retObj ;
+      _omaRunRollbackCatalogJob rollbackCatalog ( vCoordHostName,
+                                                  vCoordSvcName, info ) ;
+      map< string, vector< InstalledNode> >::iterator it = info.begin() ;
+
+      if ( ( 1 != info.size() ) && ( string( ROLE_CATA ) != it->first ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Invalid catalog's rollback info" ) ;
+         goto error ;
+      }
+      // rollback data group
+      rc = rollbackCatalog.init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to do rollback create catalog "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = rollbackCatalog.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to do rollback create catalog, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      PD_LOG ( PDEVENT, "The rollback catalog's result is: %s",
+               retObj.toString().c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackDataNode (
+                                  string &vCoordHostName,
+                                  string &vCoordSvcName,
+                                  map< string, vector< InstalledNode> > &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj retObj ;
+      _omaRunRollbackDataNodeJob rollbackDataNode ( vCoordHostName,
+                                                    vCoordSvcName, info ) ;
+      map< string, vector< InstalledNode> >::iterator it = info.begin() ;
 /*
+      if ( ( 1 != info.size() ) && ( string( ROLE_COORD ) != it->first ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Invalid data group's rollback info" ) ;
+         goto error ;
+      }
+*/
+      // rollback data group
+      rc = rollbackDataNode.init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to do rollback create data "
+                  "node job, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = rollbackDataNode.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to do rollback create data node job, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      PD_LOG ( PDEVENT, "The rollback data groups' result is: %s",
+               retObj.toString().c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+  /*
       omagent remove virtual coord job
    */
    _omaRemoveVirtualCoordJob::_omaRemoveVirtualCoordJob (
-                                                    const CHAR *hostName,
-                                                    const CHAR *svcName,
+                                                    const CHAR *omaHostName,
+                                                    const CHAR *omaSvcName,
                                                     const CHAR *vCoordSvcName )
    {
-      _localHostName = hostName ;
-      _omaSvcName    = svcName ; 
-      _vCoordSvcName = vCoordSvcName ;
+      _omaHostName    = omaHostName ;
+      _omaSvcName     = omaSvcName ; 
+      _vCoordSvcName  = vCoordSvcName ;
    }
 
    _omaRemoveVirtualCoordJob::~_omaRemoveVirtualCoordJob()
@@ -855,7 +1116,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BOOLEAN hasVCoordRemove = FALSE ;
-      _omaRemoveVirtualCoord removeVCoord( _localHostName.c_str(),
+      _omaRemoveVirtualCoord removeVCoord( _omaHostName.c_str(),
                                            _omaSvcName.c_str(),
                                            _vCoordSvcName.c_str() ) ;
       rc = removeVCoord.removeVirtualCoord ( hasVCoordRemove ) ;
@@ -893,15 +1154,42 @@ namespace engine
       goto done ;
    }
 
-   INT32 startRemoveVirtualCoordJob ( const CHAR *hostName,
-                                      const CHAR *svcName,
+   INT32 startInstallDBBusinessTaskRollbackJob (
+                                              string &vCoordHostName,
+                                              string &vCoordSvcName,
+                                              _omaInstallDBBusinessTask *pTask,
+                                              EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaInstallDBBusinessTaskRollbackJob *pJob = NULL ;
+      pJob = SDB_OSS_NEW _omaInstallDBBusinessTaskRollbackJob( vCoordHostName,
+                                                               vCoordSvcName,
+                                                               pTask ) ;
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for install db business rollback job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 startRemoveVirtualCoordJob ( const CHAR *omaHostName,
+                                      const CHAR *omaSvcName,
                                       const CHAR *vCoordSvcName,
                                       EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN returnResult = FALSE ;
       _omaRemoveVirtualCoordJob *pJob = NULL ;
-      pJob = SDB_OSS_NEW _omaRemoveVirtualCoordJob( hostName, svcName,
+      pJob = SDB_OSS_NEW _omaRemoveVirtualCoordJob( omaHostName, omaSvcName,
                                                     vCoordSvcName ) ;
       if ( !pJob )
       {

@@ -42,7 +42,10 @@
 using namespace bson ;
 
 #define HOSTS_FILE_PROMPT "##############add by omagent##############"
-#define DEF_VIRTUAL_COORD_SERVICE        "13579"
+#define DEF_VIRTUAL_COORD_SERVICE        (10000)
+#define MAX_PORT_SERVICE                 (65535)
+#define RESERVED_PORT UINT32 reserved_port[] = { 11790, \
+        11791, 11792, 11793, 11800, 11801, 11802, 11803 } ;
 
 #define FILE_SCAN_HOST                   "scanHost.js"
 #define FILE_BASIC_CHECK_HOST            "basicCheckHost.js"
@@ -1862,7 +1865,7 @@ namespace engine
    // _omaInstallDBBusiness
    _omaInstallDBBusiness::_omaInstallDBBusiness ()
    {
-      ossMemset( _localHostName, OSS_MAX_HOSTNAME + 1, 0 ) ;
+      ossMemset( _omaHostName, OSS_MAX_HOSTNAME + 1, 0 ) ;
       ossMemset( _omaSvcName, OSS_MAX_SERVICENAME + 1, 0 ) ;
       ossMemset( _vCoordSvcName, OSS_MAX_SERVICENAME + 1, 0 ) ;
    }
@@ -1878,19 +1881,24 @@ namespace engine
       BSONObj arg( pInstallInfo ) ;
 
       // get localhost name
-      rc = ossGetHostName( _localHostName, OSS_MAX_HOSTNAME ) ;
+      rc = ossGetHostName( _omaHostName, OSS_MAX_HOSTNAME ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to get localhost name, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to get localhost name as the virtual "
+                      "coord host name, rc = %d", rc ) ;
          goto error ;
       }
       // get local sdbcm service name
       ossStrncpy( _omaSvcName, sdbGetOMAgentOptions()->getCMServiceName(),
                   OSS_MAX_SERVICENAME ) ;
       // get a  service name for creating virtual coord
-      // TODO:
-      ossStrncpy ( _vCoordSvcName, DEF_VIRTUAL_COORD_SERVICE,
-                   OSS_MAX_SERVICENAME ) ;
+      rc = _genVCoordSvcName ( _vCoordSvcName, OSS_MAX_SERVICENAME ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to get a port for virtual coord, "
+                      "rc = %d", rc ) ;
+         goto error ;
+      }
 
       // parse bson and get arguments info for js file
       ele = arg.getField ( OMA_FIELD_CONFIG ) ;
@@ -1960,10 +1968,9 @@ namespace engine
       BOOLEAN hasVCoordStart           = FALSE ;
       _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
       UINT64 taskID                    = pTaskMgr->getTaskID() ;
-      _omaCreateVirtualCoord createVCoord( _localHostName, _omaSvcName,
+      _omaCreateVirtualCoord createVCoord( _omaHostName, _omaSvcName,
                                            _vCoordSvcName ) ;
       BSONObjBuilder bob ;
-//      BSONObj retObj ;
 
       // create virtual coord
       rc = createVCoord.createVirtualCoord( hasVCoordStart ) ;
@@ -1985,8 +1992,8 @@ namespace engine
       // register install db task
       pTaskMgr->addTask( pTask ) ;
       // start install db task
-      rc = pTask->init( _coord, _catalog, _data,
-                        _localHostName, _omaSvcName, _vCoordSvcName ) ;
+      rc = pTask->init( _coord, _catalog, _data, _omaHostName,
+                        _omaSvcName, _omaHostName, _vCoordSvcName ) ;
       if ( rc  )
       {
          PD_LOG_MSG( PDERROR,
@@ -2012,7 +2019,7 @@ namespace engine
       if ( hasVCoordStart )
       {
          BOOLEAN hasVCoordRemove = FALSE ;
-         _omaRemoveVirtualCoord removeVCoord( _localHostName, _omaSvcName,
+         _omaRemoveVirtualCoord removeVCoord( _omaHostName, _omaSvcName,
                                               _vCoordSvcName ) ;
          rc = removeVCoord.removeVirtualCoord ( hasVCoordRemove ) ;
          if ( rc )
@@ -2021,6 +2028,52 @@ namespace engine
          }
       }
 */
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBBusiness::_genVCoordSvcName( CHAR *pSvcName,
+                                                   INT32 bufLen )
+   {
+      INT32 rc = SDB_OK ;
+      RESERVED_PORT ;
+      UINT32 port = DEF_VIRTUAL_COORD_SERVICE ; 
+      INT32 i = 0 ;
+      INT32 len = sizeof( reserved_port ) / sizeof( reserved_port[0] ) ;
+
+      for ( ; port < MAX_PORT_SERVICE; port++ )
+      {
+         // ckeck whether the port is reserved port or not
+         INT32 flag = 0 ;
+         for ( i = 0; i < len; i++ )
+         {
+            if ( port == reserved_port[i] )
+            {
+               flag = 1 ;
+               break ;
+            }
+         }
+         if ( 1 == flag )
+         {
+            continue ;
+         }
+         // check whether the port can be used or not
+         BOOLEAN result = portCanUsed( port ) ;
+         if ( TRUE == result )
+         {
+            ossItoa ( port, pSvcName, bufLen ) ;
+            break ;
+         }
+      }
+      if ( MAX_PORT_SERVICE == port )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "No available port" ) ;
+         goto error ;
+      }
+      
+   done:
       return rc ;
    error:
       goto done ;
@@ -2107,7 +2160,7 @@ namespace engine
                                                     const CHAR *omaSvcName,
                                                     const CHAR *vCoordSvcName )
    {
-      _omaHostname = omaHostName ;
+      _omaHostName = omaHostName ;
       _omaSvcName = omaSvcName ;
       _vCoordSvcName = vCoordSvcName ;
    }
@@ -2139,12 +2192,12 @@ namespace engine
       ossSnprintf( _jsFileArgs, JS_ARG_LEN,
                    " var OMA_HOST_NAME = \"%s\"; var OMA_SVC_NAME = \"%s\"; "
                    "var V_COORD_SVC_NAME = \"%s\"; ",
-                   _omaHostname, _omaSvcName, _vCoordSvcName ) ;
+                   _omaHostName, _omaSvcName, _vCoordSvcName ) ;
 
       PD_LOG ( PDDEBUG, "Create virtual coord passes arguments: "
                "var OMA_HOST_NAME = %s; var OMA_SVC_NAME = %s; "
                "var V_COORD_SVC_NAME = %s; ",
-               _omaHostname, _omaSvcName, _vCoordSvcName ) ;
+               _omaHostName, _omaSvcName, _vCoordSvcName ) ;
 
       _content.clear() ;
       _content += _jsFileArgs ;
@@ -2245,9 +2298,9 @@ namespace engine
                                                     const CHAR *omaSvcName,
                                                     const CHAR *vCoordSvcName )
    {
-      _omaHostName = omaHostName ;
-      _omaSvcName = omaSvcName ;
-      _vCoordSvcName = vCoordSvcName ;
+      _omaHostName    = omaHostName ;
+      _omaSvcName     = omaSvcName ;
+      _vCoordSvcName  = vCoordSvcName ;
    }
 
    _omaRemoveVirtualCoord::~_omaRemoveVirtualCoord ()

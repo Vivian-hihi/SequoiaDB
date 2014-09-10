@@ -53,6 +53,7 @@ namespace engine
 
    INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * bufSize,
                     UINT32 * readSize ) ;
+   BOOLEAN portCanUsed ( UINT32 port, INT32 timeoutMilli = 1000 ) ; 
 
    // get bson field
    INT32 omaGetIntElement ( const BSONObj &obj, const CHAR *fieldName,

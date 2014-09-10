@@ -50,6 +50,10 @@ using namespace bson ;
 #define ROLE_DATA                        "data"
 #define ROLE_STANDALONE                  "standalone"
 
+#define STAGE_INSTALL                    OMA_FIELD_STAGE_INSTALL
+#define STAGE_ROLLBACK                   OMA_FIELD_STAGE_ROLLBACK
+
+#define INSTALL_STAGE_INSTALL            ""
 
 namespace engine
 {
@@ -85,6 +89,17 @@ namespace engine
    } ;
    typedef struct _InstallResult InstallResult ;
 
+   struct _RollbackInfo
+   {
+      // coord
+      map< string, vector<InstalledNode> > _coordRollbackInfo ;
+      // catalog
+      map< string, vector<InstalledNode> > _catalogRollbackInfo ;
+      // data node
+      map< string, vector<InstalledNode> > _dataGroupRollbackInfo ;
+   } ;
+   typedef struct _RollbackInfo RollbackInfo ;
+
    struct _AddHost
    {
       std::string _ip ;
@@ -104,6 +119,13 @@ namespace engine
       OMA_JOB_STATUS_END          = 10
    } ;
 
+   enum OMA_INSTALL_DB_STAGE
+   {
+      OMA_INSTALL_INSTALL         = 1,
+      OMA_INSTALL_ROLLBACK        = 2,
+
+      OMA_INSTALL_END             = 3
+   } ;
 
 }
 

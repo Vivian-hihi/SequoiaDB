@@ -79,7 +79,7 @@
 #define OMA_FIELD_INSTALL_PATH                     "InstallPath"
 
 #define OMA_FIELD_RC                               "Rc"
-#define OMA_FIELD_DETAIL                           "Detail"
+#define OMA_FIELD_DETAIL                           "detail"
 #define OMA_FIELD_HASRUNNING                       "HasRunning"
 #define OMA_FIELD_HASPUSH                          "HasPush"
 #define OMA_FIELD_PORTHASUSED                      "PortHasUsed"
@@ -96,6 +96,7 @@
 #define OMA_FIELD_TOTALNUM                         "TotalNum"
 #define OMA_FIELD_FINISHNUM                        "FinishNum"
 #define OMA_FIELD_SVCNAME                          "svcname"
+#define OMA_FIELD_GROUPNAME                        "GroupName"
 
 // host info
 #define OMA_FIELD_HOST                             "Host"

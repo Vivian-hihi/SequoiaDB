@@ -374,7 +374,7 @@ namespace engine
       }
 
       // consturct reply
-      builder.append( OMA_FIELD_RC, rc ) ;
+//      builder.append( OMA_FIELD_RC, rc ) ;
       builder.appendElements( retObj ) ;
 
    done :
@@ -387,6 +387,7 @@ namespace engine
       retObj = builder.obj() ;
       _replyHeader.header.messageLength += retObj.objsize() ;
       _replyHeader.numReturned = 1 ;
+      _replyHeader.flags = rc ;
 
       ossGetCurrentTime ( tmEnd ) ;
       // time takes
@@ -408,7 +409,6 @@ namespace engine
          PD_LOG ( PDERROR, "Error code error[rc:%d]", rc ) ;
          rc = SDB_SYS ;
       }
-      builder.append( OMA_FIELD_RC, rc ) ;
       if ( eduCB()->getInfo( EDU_INFO_ERROR ) &&
            0 != *( eduCB()->getInfo( EDU_INFO_ERROR ) ) )
       {
@@ -419,7 +419,7 @@ namespace engine
       {
          builder.append( OMA_FIELD_DETAIL, getErrDesp( rc ) ) ;
       }
-      _replyHeader.flags = rc ;
+
       goto done ;
    }
 
