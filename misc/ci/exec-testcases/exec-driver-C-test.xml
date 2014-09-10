@@ -94,7 +94,7 @@
         <echo message="The testcase ${test.case.name} end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." /> 
 
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-        <property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.case.name}" />
+        <property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}" />
         <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
             <fileset dir="${reports.path}/" includes="*" />
         </replaceregexp>
@@ -110,7 +110,7 @@
         <replace token="AllTests" value="${test.suite.class.name}">
             <fileset dir="${reports.path}/"  includes="*" />
         </replace>
-        
+
         <replace token="testsuites" value="testsuite">
             <fileset dir="${reports.path}/"  includes="*" />
         </replace>          
