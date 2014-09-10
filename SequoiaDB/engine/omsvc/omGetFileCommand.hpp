@@ -53,7 +53,7 @@ using namespace boost::property_tree;
 
 namespace engine
 {
-   struct simpleHostInfo
+   struct simpleHostInfo : public SDBObject
    {
       string hostName ;
       string clusterName ;
@@ -61,9 +61,10 @@ namespace engine
       string user ;
       string passwd ;
       string installPath ;
+      string agentPort ;
    } ;
 
-   struct simpleNodeInfo
+   struct simpleNodeInfo : public SDBObject
    {
       string hostName ;
       string svcName ;
@@ -325,7 +326,6 @@ namespace engine
          INT32           _queryHostInfoByHost( string hostName, 
                                                list<BSONObj> &hosts ) ;
    } ;
-
 
    class omQueryBusinessTypeCommand : public omCreateClusterCommand
    {
@@ -652,6 +652,40 @@ namespace engine
                                          BOOLEAN isForced ) ;
          INT32          _deleteConfigureRecord( const string &businessName ) ;
          INT32          _deleteBusinessRecord( const string &businessName ) ;
+   } ;
+
+   struct simpleDiskInfo: public SDBObject
+   {
+      string diskName ;
+      string mountPath ;
+   } ;
+   
+   struct simpleHostDisk : public SDBObject 
+   {
+      string hostName ;
+      string user ;
+      string passwd ;
+      string agentPort ;
+      list<simpleDiskInfo> diskInfo ;
+   } ;
+
+   class omQueryHostStatusCommand : public omStartBusinessCommand
+   {
+      public:
+         omQueryHostStatusCommand( restAdaptor *pRestAdaptor, 
+                                   pmdRestSession *pRestSession,
+                                   string localAgentHost, 
+                                   string localAgentService ) ;
+
+         ~omQueryHostStatusCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      private:
+         INT32           _getRestHostList( list<string> &hostNameList ) ;
+         INT32           _verifyHostInfo( list<string> &hostNameList, 
+                                          list<simpleHostDisk> &hostInfoList ) ;
    } ;
 
    class omGetFileCommand : public omCommandInterface

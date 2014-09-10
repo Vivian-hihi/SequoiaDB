@@ -1254,7 +1254,7 @@ namespace engine
                goto error ;
             }
             // remove the basic check failure host to the hostResult 
-            rc = result.getIntField( OM_REST_RES_RETCODE ) ;
+            rc = oneHost.getIntField( OM_REST_RES_RETCODE ) ;
             if ( SDB_OK != rc )
             {
                hostResult.push_back( oneHost ) ;
@@ -5417,6 +5417,8 @@ namespace engine
                                                    OM_HOST_FIELD_PASSWORD ) ;
          hostInfo.installPath = result.getStringField( 
                                                    OM_HOST_FIELD_INSTALLPATH ) ;
+         hostInfo.agentPort   = result.getStringField( 
+                                                   OM_HOST_FIELD_AGENT_PORT ) ;
          isExistFlag = TRUE ;
          break ;
       }
@@ -6283,6 +6285,194 @@ namespace engine
          goto error ;
       }
 
+      result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omGetFileCommand *****************************
+   omQueryHostStatusCommand::omQueryHostStatusCommand( 
+                                                   restAdaptor *pRestAdaptor, 
+                                                   pmdRestSession *pRestSession,
+                                                   string localAgentHost, 
+                                                   string localAgentService )
+                            :omStartBusinessCommand( pRestAdaptor, pRestSession, 
+                                                    localAgentHost, 
+                                                    localAgentService )
+   {
+   }
+
+   omQueryHostStatusCommand::~omQueryHostStatusCommand()
+   {
+   }
+
+   INT32 omQueryHostStatusCommand::_getRestHostList( 
+                                                    list<string> &hostNameList )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pHostInfo = NULL ;
+      BSONObj hostInfo ;
+      BSONObj hostInfoArray ;
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO, 
+                              &pHostInfo ) ;
+      if ( NULL == pHostInfo )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_FIELD_HOST_INFO )
+                        + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pHostInfo, hostInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = string( "change rest field " ) + OM_REST_FIELD_HOST_INFO
+                        + " to BSONObj failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d,src=%s", _errorDetail.c_str(), rc, 
+                 pHostInfo ) ;
+         goto error ;
+      }
+
+      hostInfoArray = hostInfo.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
+      {
+         BSONObjIterator iter( hostInfoArray ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj oneHost = ele.embeddedObject() ;
+            hostNameList.push_back( 
+                           oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryHostStatusCommand::_verifyHostInfo( 
+                                           list<string> &hostNameList, 
+                                           list<simpleHostDisk> &hostInfoList )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+
+      BSONArrayBuilder arrayBuilder ;
+      list<string>::iterator iterList = hostNameList.begin() ;
+      while ( iterList != hostNameList.end() )
+      {
+         BSONObj tmp = BSON( OM_HOST_FIELD_NAME << *iterList ) ;
+         arrayBuilder.append( tmp ) ;
+         iterList++ ;
+      }
+      matcher = BSON( "$or" << arrayBuilder.arr() ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_HOST ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_HOST ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         BSONObj diskArray ;
+         simpleHostDisk hostDisk ;
+         hostDisk.hostName  = result.getStringField( OM_HOST_FIELD_NAME ) ;
+         hostDisk.user      = result.getStringField( OM_HOST_FIELD_USER ) ;
+         hostDisk.passwd    = result.getStringField( OM_HOST_FIELD_PASSWORD ) ;
+         hostDisk.agentPort = result.getStringField( OM_HOST_FIELD_AGENT_PORT ) ;
+         diskArray = result.getObjectField( OM_HOST_FIELD_DISK ) ;
+         {
+            BSONObjIterator iter( diskArray ) ;
+            while ( iter.more() )
+            {
+//               BSONElement ele = iter.next() ;
+//               BSONObj oneDisk = ele.embeddedObject() ;
+//               simpleDiskInfo diskInfo ;
+//               diskInfo.diskName = oneDisk.getStringField( OM_HOST_FIELD_)
+//               hostDisk.diskInfo.push_back( ) ;
+            }
+         }
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryHostStatusCommand::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      list<string> hostNameList ;
+      list<simpleHostDisk> hostInfoList ;
+      BSONObjBuilder statusBuilder ;
+      BSONObj status ;
+      BSONObj result ;
+      rc = _getRestHostList( hostNameList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getRestHostList failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _verifyHostInfo( hostNameList, hostInfoList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_verifyHostInfo failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+//      rc = _getHostStatus( hostInfoList, statusBuilder ) ;
+//      if ( SDB_OK != rc )
+//      {
+//         PD_LOG( PDERROR, "_getHostStatus failed:rc=%d", rc ) ;
+//         _sendErrorRes2Web( rc, _errorDetail ) ;
+//         goto error ;
+//      }
+
+      status = statusBuilder.obj() ;
+      _restAdaptor->appendHttpBody( _restSession, status .objdata(), 
+                                    status .objsize(), 1 ) ;
       result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
