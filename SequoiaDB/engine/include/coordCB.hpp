@@ -39,19 +39,12 @@ namespace engine
       virtual INT32  fini () ;
       virtual void   onConfigChange() ;
 
-      _netRouteAgent* netWork()
-      {
-         return _pNetWork;
-      }
-
-      netMultiRouteAgent* getRouteAgent()
-      {
-         return &_multiRouteAgent;
-      }
+      _netRouteAgent* netWork() { return _pNetWork ; }
+      netMultiRouteAgent* getRouteAgent() { return &_multiRouteAgent ; }
 
       rtnCoordProcesserFactory *getProcesserFactory()
       {
-         return &_processerFactory;
+         return &_processerFactory ;
       }
 
       void getLock( OSS_LATCH_MODE mode )
@@ -91,8 +84,8 @@ namespace engine
       {
          CoordGroupInfoPtr catGroupInfoTmp;
          {
-         ossScopedLock _lock(&_mutex, SHARED) ;
-         catGroupInfoTmp = _catGroupInfo;
+            ossScopedLock _lock(&_mutex, SHARED) ;
+            catGroupInfoTmp = _catGroupInfo ;
          }
          return catGroupInfoTmp;
       }
@@ -115,120 +108,28 @@ namespace engine
          _catGroupInfo->setPrimary( primary );
       }
 
-      INT32 groupID2Name ( UINT32 id, std::string &name )
-      {
-         ossScopedLock _lock( &_nodeGroupMutex, SHARED ) ;
+      INT32 groupID2Name ( UINT32 id, std::string &name ) ;
 
-         CoordGroupMap::iterator it = _nodeGroupInfo.find( id ) ;
-         if ( it == _nodeGroupInfo.end() )
-         {
-            return SDB_COOR_NO_NODEGROUP_INFO ;
-         }
-         name = it->second->groupName() ;
+      INT32 groupName2ID ( const CHAR* name, UINT32 &id ) ;
 
-         return SDB_OK ;
-      }
+      void  addGroupInfo ( CoordGroupInfoPtr &groupInfo ) ;
 
-      INT32 groupName2ID ( const CHAR* name, UINT32 &id )
-      {
-         ossScopedLock _lock( &_nodeGroupMutex, SHARED ) ;
+      void  removeGroupInfo( UINT32 groupID ) ;
 
-         GROUP_NAME_MAP::iterator it = _groupNameMap.find( name ) ;
-         if ( it == _groupNameMap.end() )
-         {
-            return SDB_COOR_NO_NODEGROUP_INFO ;
-         }
-         id = it->second ;
+      INT32 getGroupInfo ( UINT32 groupID, CoordGroupInfoPtr &groupInfo ) ;
 
-         return SDB_OK ;
-      }
-
-      void  addGroupInfo ( CoordGroupInfoPtr &groupInfo )
-      {
-         // TODO:delete the outTime groupInfo
-         // TODO:check version
-         ossScopedLock _lock( &_nodeGroupMutex, EXCLUSIVE ) ;
-
-         _nodeGroupInfo[groupInfo->getGroupID()] = groupInfo ;
-
-         // clear group name map
-         _clearGroupName( groupInfo->getGroupID() ) ;
-
-         // add to group name map
-         _addGroupName( groupInfo->groupName(), groupInfo->getGroupID() ) ;
-      }
-
-      void  removeGroupInfo( UINT32 groupID )
-      {
-         ossScopedLock _lock(&_nodeGroupMutex, EXCLUSIVE) ;
-         _nodeGroupInfo.erase( groupID ) ;
-
-         // clear group name map
-         _clearGroupName( groupID ) ;
-      }
-
-      INT32 getGroupInfo ( UINT32 groupID, CoordGroupInfoPtr &groupInfo )
-      {
-         INT32 rc = SDB_OK;
-         ossScopedLock _lock( &_nodeGroupMutex, SHARED ) ;
-         CoordGroupMap::iterator iter = _nodeGroupInfo.find ( groupID );
-         if ( _nodeGroupInfo.end() == iter )
-         {
-            rc = SDB_COOR_NO_NODEGROUP_INFO;
-         }
-         else
-         {
-            groupInfo = iter->second;
-         }
-         return rc;
-      }
-
-      INT32 getGroupInfo ( const CHAR *groupName, CoordGroupInfoPtr &groupInfo )
-      {
-         UINT32 groupID = 0 ;
-         INT32 rc = groupName2ID( groupName, groupID ) ;
-         if ( SDB_OK == rc )
-         {
-            rc = getGroupInfo( groupID, groupInfo ) ;
-         }
-         return rc ;
-      }
+      INT32 getGroupInfo ( const CHAR *groupName,
+                           CoordGroupInfoPtr &groupInfo ) ;
 
       void updateCataInfo ( const std::string &collectionName,
-                            CoordCataInfoPtr &cataInfo )
-      {
-         // TODO:update catalogue info
-         // TODO:delete the outTime groupInfo
-         ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );
-         _cataInfoMap[collectionName] = cataInfo ;
-      }
+                            CoordCataInfoPtr &cataInfo ) ;
 
       INT32 getCataInfo ( const std::string &strCollectionName,
-                          CoordCataInfoPtr &cataInfo )
-      {
-         INT32 rc = SDB_CAT_NO_MATCH_CATALOG;
-         ossScopedLock _lock( &_cataInfoMutex, SHARED );
-         CoordCataMap::iterator iter
-                              = _cataInfoMap.find( strCollectionName );
-         if ( iter != _cataInfoMap.end() )
-         {
-            rc = SDB_OK;
-            cataInfo = iter->second;
-         }
-         return rc;
-      }
+                          CoordCataInfoPtr &cataInfo ) ;
 
-      void delCataInfo ( const std::string &collectionName )
-      {
-         ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );
-         _cataInfoMap.erase( collectionName );
-      }
+      void delCataInfo ( const std::string &collectionName ) ;
 
-      void invalidateCataInfo()
-      {
-         ossScopedLock _lock( &_cataInfoMutex, EXCLUSIVE );
-         _cataInfoMap.clear() ;
-      }
+      void invalidateCataInfo() ;
 
    protected:
       INT32         _addGroupName ( const std::string& name, UINT32 id ) ;
