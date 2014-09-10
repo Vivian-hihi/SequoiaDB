@@ -91,7 +91,7 @@
             <fileset dir="${reports.path}/" includes="*" />
         </replaceregexp>
 
-        <replace token="AllTests" value="${test.suite.class.name}">
+        <replace token="AllTests" value="testcases-driver-cpp">
             <fileset dir="${reports.path}/"  includes="*" />
         </replace>
         
