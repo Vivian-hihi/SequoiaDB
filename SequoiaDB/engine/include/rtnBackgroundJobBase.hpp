@@ -98,6 +98,7 @@ namespace engine
          std::map<EDUID, _rtnBaseJob*>        _mapJobs ;
          std::map<EDUID, INT32>               _mapResult ;
          ossSpinSLatch                        _latch ;
+         ossSpinSLatch                        _latchRemove ;
          pmdEDUMgr                            *_eduMgr ;
    } ;
    typedef _rtnJobMgr rtnJobMgr ;

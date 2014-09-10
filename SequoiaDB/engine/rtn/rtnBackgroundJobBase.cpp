@@ -144,7 +144,16 @@ namespace engine
                else
                {
                   _stopJob ( it->first ) ;
+                  // need to get remove latch to ensure job not delete
+                  _latchRemove.get() ;
+                  // need to release _latch for the case job to start job
+                  _latch.release() ;
+                  // wait job detach
                   itJob->waitDetach () ;
+                  // need to get _latch
+                  _latch.get() ;
+                  // need to release remove latch for job to delete
+                  _latchRemove.release() ;
                }
             }
             ++it ;
@@ -196,7 +205,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNJOBMGR__REMOVEJOB ) ;
-      ossScopedLock lock ( &_latch, EXCLUSIVE ) ;
+      rtnBaseJob *pJob = NULL ;
+
+      _latch.get() ;
+
       /*std::map<EDUID, INT32>::iterator itRes = _mapResult.find( eduID ) ;
       if ( itRes != _mapResult.end() )
       {
@@ -211,18 +223,24 @@ namespace engine
       if ( it == _mapJobs.end() )
       {
          rc = SDB_RTN_JOB_NOT_EXIST ;
-         goto error ;
+      }
+      else
+      {
+         pJob = it->second ;
+         _mapJobs.erase ( it ) ;
       }
 
-      // free memory and erase map item
-      SDB_OSS_DEL it->second ;
-      _mapJobs.erase ( it ) ;
+      _latch.release() ;
 
-   done:
+      // free memory
+      if ( pJob )
+      {
+         ossScopedLock lock( &_latchRemove, EXCLUSIVE ) ;
+         SDB_OSS_DEL pJob ;
+      }
+
       PD_TRACE_EXITRC ( SDB__RTNJOBMGR__REMOVEJOB, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    /*
