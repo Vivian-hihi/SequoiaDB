@@ -100,6 +100,8 @@ namespace engine
    INT32 catGroupID2Name( INT32 groupID, string &groupName, pmdEDUCB *cb ) ;
    INT32 catGroupName2ID( const CHAR *groupName, INT32 &groupID, pmdEDUCB *cb ) ;
 
+   INT32 catGroupCount( INT64 & count, pmdEDUCB * cb ) ;
+
    /* Collection[CAT_DOMAIN_COLLECTION] functions: */
    INT32 catGetDomainObj( const CHAR *domainName, BSONObj &obj, pmdEDUCB *cb ) ;
    INT32 catDomainCheck( const CHAR *domainName, BOOLEAN &exist, pmdEDUCB *cb ) ;

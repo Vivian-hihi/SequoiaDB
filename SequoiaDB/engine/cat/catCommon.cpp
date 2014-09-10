@@ -614,6 +614,42 @@ namespace engine
       goto done ;
    }
 
+   INT32 catGroupCount( INT64 & count, pmdEDUCB * cb )
+   {
+      INT32 rc                = SDB_OK ;
+      SDB_DMSCB *dmsCB        = pmdGetKRCB()->getDMSCB() ;
+      dmsStorageUnit *su      = NULL ;
+      dmsStorageUnitID suID   = DMS_INVALID_CS ;
+      const CHAR *pCollectionShortName = NULL ;
+
+      rc = rtnResolveCollectionNameAndLock ( CAT_NODE_INFO_COLLECTION,
+                                             dmsCB, &su,
+                                             &pCollectionShortName, suID ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  CAT_NODE_INFO_COLLECTION, rc ) ;
+         goto error ;
+      }
+
+      rc = su->countCollection( pCollectionShortName, count, cb, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to count collection: %s, rc: %d",
+                 pCollectionShortName, rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock( suID ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINOBJ, "catGetDomainObj" )
    INT32 catGetDomainObj( const CHAR * domainName, BSONObj & obj, pmdEDUCB * cb )
    {

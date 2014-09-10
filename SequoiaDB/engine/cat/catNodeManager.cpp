@@ -1791,11 +1791,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_REMOVEGRP ) ;
       BSONObj groupInfo ;
+      BSONObj matcher ;
       UINT32 groupID = 0 ;
-      BOOLEAN isDeleted = FALSE;
+      BOOLEAN isDeleted = FALSE ;
 
       // check name is valid
-      if ( 0 != ossStrcmp( groupName, COORD_GROUPNAME ) )
+      if ( 0 != ossStrcmp( groupName, COORD_GROUPNAME ) &&
+           0 != ossStrcmp( groupName, CATALOG_GROUPNAME ) )
       {
          rc = catGroupNameValidate( groupName, FALSE ) ;
          PD_RC_CHECK( rc, PDERROR, "Group name[%s] is invalid", groupName ) ;
@@ -1835,41 +1837,54 @@ namespace engine
          goto error ;
       }
 
-      pmdGetKRCB()->getCATLOGUECB()->removeGroupID( groupID ) ;
-      isDeleted = TRUE;
+      if ( CATALOG_GROUPID == groupID )
+      {
+         INT64 count = 0 ;
+         rc = catGroupCount( count, _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to count groups, rc: %d", rc ) ;
 
-      {
-      const CHAR *cl = CAT_COLLECTION_INFO_COLLECTION ;
-      UINT64 count = 0 ;
-      /// hard code.
-      BSONObj matcher = BSON( FIELD_NAME_CATALOGINFO".GroupID" << groupID ) ;
-
-      /// confirm that no there is no data in this group.
-      rc = _count( cl, matcher, count ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      else if ( 0 != count )
-      {
-         PD_LOG( PDERROR, "can not remove a group with data in it" ) ;
-         rc = SDB_CAT_RM_GRP_FORBIDDEN ;
-         goto error ;
+         if ( count > 1 )
+         {
+            rc = SDB_CATA_RM_CATA_FORBIDDEN ;
+            PD_LOG( PDERROR, "Cant not remove catalog group when has other "
+                    "group exist(%lld)", count ) ;
+            goto error ;
+         }
       }
       else
       {
-         cl = CAT_NODE_INFO_COLLECTION ;
-         BSONObj hint ;
+         UINT64 count = 0 ;
+         /// hard code.
+         matcher = BSON( FIELD_NAME_CATALOGINFO".GroupID" << groupID ) ;
+
+         /// confirm that no there is no data in this group.
+         rc = _count( CAT_COLLECTION_INFO_COLLECTION, matcher, count ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to count collection: %s, match: "
+                      "%s, rc: %d", CAT_COLLECTION_INFO_COLLECTION,
+                      matcher.toString().c_str(), rc ) ;
+
+         if ( 0 != count )
+         {
+            PD_LOG( PDERROR, "can not remove a group with data in it" ) ;
+            rc = SDB_CAT_RM_GRP_FORBIDDEN ;
+            goto error ;
+         }
+
+         // remove group
+         pmdGetKRCB()->getCATLOGUECB()->removeGroupID( groupID ) ;
+         isDeleted = TRUE ;
+
          matcher = BSON( FIELD_NAME_GROUPNAME << groupName ) ;
-         rc = rtnDelete( cl, matcher, hint, 0, _pEduCB,
-                         _pDmsCB, _pDpsCB, _majoritySize() ) ;
+         rc = rtnDelete( CAT_NODE_INFO_COLLECTION, matcher,
+                         BSONObj(), 0, _pEduCB, _pDmsCB, _pDpsCB,
+                         _majoritySize() ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to delete record:%s", rc ) ;
             goto error ;
          }
       }
-      }
+
    done:
       return rc ;
    error:

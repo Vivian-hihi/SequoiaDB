@@ -4314,13 +4314,6 @@ namespace engine
          goto error ;
       }
 
-      if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) )
-      {
-         PD_LOG( PDERROR, "can not remove catalog group." ) ;
-         rc = SDB_CATA_RM_CATA_FORBIDDEN ;
-         goto error ;
-      }
-
       /// get group info, for cleanup.
       rc = rtnCoordGetGroupInfo( cb, groupName, TRUE, group ) ;
       if ( SDB_OK != rc )
@@ -4335,6 +4328,22 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to execute on catalog, rc = %d", rc ) ;
          goto error ;
+      }
+
+      if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) )
+      {
+         // clean catalog info
+         sdbGetCoordCB()->getLock( EXCLUSIVE ) ;
+         sdbGetCoordCB()->clearCatNodeAddrList() ;
+         sdbGetCoordCB()->releaseLock( EXCLUSIVE ) ;
+
+         CoordGroupInfo *pEmptyGroupInfo = NULL ;
+         pEmptyGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID ) ;
+         if ( NULL != pEmptyGroupInfo )
+         {
+            CoordGroupInfoPtr groupInfo( pEmptyGroupInfo ) ;
+            sdbGetCoordCB()->updateCatGroupInfo( groupInfo ) ;
+         }
       }
 
       /// clean up
@@ -4377,7 +4386,7 @@ namespace engine
          }
       }
 
-      rtnCoordRemoveGroup (group->getGroupID() ) ;
+      rtnCoordRemoveGroup ( group->getGroupID() ) ;
 
       {
          CoordSession *session = cb->getCoordSession();
