@@ -1255,7 +1255,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DMSSU_GETSTATINFO ) ;
       ossMemset( &statInfo, 0, sizeof( dmsStorageUnitStat ) ) ;
 
-      dmsMB *mb = NULL ;
       dmsMBStatInfo *mbStat = NULL ;
 
       // lock meta
@@ -1264,7 +1263,6 @@ namespace engine
       dmsStorageData::COLNAME_MAP_IT it = _pDataSu->_collectionNameMap.begin() ;
       while ( it != _pDataSu->_collectionNameMap.end() )
       {
-         mb = &_pDataSu->_dmsMME->_mbList[it->second] ;
          mbStat = &_pDataSu->_mbStatInfo[it->second] ;
 
          ++statInfo._clNum ;
