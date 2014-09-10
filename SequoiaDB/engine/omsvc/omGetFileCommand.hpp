@@ -63,6 +63,13 @@ namespace engine
       string installPath ;
    } ;
 
+   struct simpleNodeInfo
+   {
+      string hostName ;
+      string svcName ;
+      string role ;
+   } ;
+
    class omAuthCommand : public omCommandInterface
    {
       public:
@@ -183,7 +190,7 @@ namespace engine
                                                pmdRemoteSession *remoteSession, 
                                                MsgHeader *pMsg ) ;
          INT32           _receiveFromAgent( pmdRemoteSession *remoteSession,
-                                            BSONObj &result ) ;
+                                            SINT32 &flag, BSONObj &result ) ;
          INT32           _getHostList( string &clusterName, 
                                        list<BSONObj> &hostInfo ) ;
          void            _clearSession( omManager *om, 
@@ -448,7 +455,7 @@ namespace engine
                                               pmdRemoteSession *remoteSession, 
                                               MsgHeader *pMsg ) ;
          INT32          _receiveFromAgent( pmdRemoteSession *remoteSession,
-                                           BSONObj &result ) ;
+                                           SINT32 &flag, BSONObj &result ) ;
          void           _compeleteConfValue( const BSONObj &bsonHostInfo, 
                                              BSONObj &bsonConfValue ) ;
          void           _clearSession( omManager *om, 
@@ -474,6 +481,22 @@ namespace engine
          void           _testFinishTask() ;
    } ;
 
+   class omListNodeCommand : public omAuthCommand
+   {
+      public:
+         omListNodeCommand( restAdaptor *pRestAdaptor,
+                            pmdRestSession *pRestSession ) ;
+         virtual ~omListNodeCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      private:
+         INT32          _getNodeList( string businessName,
+                                      list<simpleNodeInfo> &nodeList ) ;
+         void           _sendNodeList2Web( list<simpleNodeInfo> &nodeList ) ;
+   } ;
+
    class omQueryNodeConfCommand : public omAuthCommand
    {
       public:
@@ -485,14 +508,13 @@ namespace engine
          virtual INT32  doCommand() ;
 
       protected:
-         INT32          _getNodeInfo( string businessName, 
-                                      list<BSONObj> &nodeInfoList ) ;
+         INT32          _getNodeInfo( string businessName, string svcName,
+                                      BSONObj &nodeInfo ) ;
 
       private:
-         void           _sendNodeInfo2Web( list<BSONObj> &nodeInfoList ) ;
-         void           _expandNodeInfo( BSONObj &oneConfig, 
-                                         list<BSONObj> &nodeinfos ) ;
-         INT32          _test() ;
+         void           _sendNodeInfo2Web( BSONObj &nodeInfo ) ;
+         void           _expandNodeInfo( BSONObj &oneConfig, string svcName,
+                                         BSONObj &nodeinfo ) ;
    } ;
 
    class omQueryBusinessCommand : public omAuthCommand
@@ -506,12 +528,26 @@ namespace engine
          virtual INT32  doCommand() ;
 
       private:
-         void           _sendBusinessInfo2Web( list<BSONObj> &listBusiness ) ;
-         INT32          _getBusinessInfoByCluster( string clusterName, 
-                                                 list<BSONObj> &listBusiness ) ;
-         INT32          _getBusinessInfoByBusiness( string business, 
-                                                 list<BSONObj> &listBusiness ) ;
+         void           _sendBusinessInfo2Web( BSONObj &businessInfo ) ;
+         INT32          _getBusinessInfo( string business, 
+                                          BSONObj &businessInfo ) ;
    } ;
+
+   class omListBusinessCommand : public omAuthCommand
+   {
+      public:
+         omListBusinessCommand( restAdaptor *pRestAdaptor, 
+                                pmdRestSession *pRestSession ) ;
+         virtual ~omListBusinessCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      private:
+         INT32          _getBusinessList( string clusterName,
+                                          list<string> &businessList ) ;
+         void           _sendBusinessList2Web( list<string> &businessList ) ;
+   };
 
    class omStartBusinessCommand : public omScanHostCommand
    {

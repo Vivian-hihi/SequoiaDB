@@ -155,7 +155,7 @@ namespace engine
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       goto done ;
    }
@@ -496,7 +496,7 @@ namespace engine
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       goto done ;
    }
@@ -584,12 +584,12 @@ namespace engine
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
    done:
-      return SDB_OK ;
-   error:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -897,12 +897,11 @@ namespace engine
    }
 
    INT32 omScanHostCommand::_receiveFromAgent( pmdRemoteSession *remoteSession,
-                                               BSONObj &result )
+                                               SINT32 &flag, BSONObj &result )
    {
       VEC_SUB_SESSIONPTR subSessionVec ;
       INT32 rc           = SDB_OK ;
       MsgHeader *pRspMsg = NULL ;
-      SINT32 flag        = 0 ;
       SINT64 contextID   = -1 ;
       SINT32 startFrom   = 0 ;
       SINT32 numReturned = 0 ;
@@ -947,14 +946,10 @@ namespace engine
          goto error ;
       }
 
-      if ( 1 != objVec.size() )
+      if ( objVec.size() > 0 )
       {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "unexpected response size:rc=%d", rc ) ;
-         goto error ;
+         result = objVec[0] ;
       }
-
-      result = objVec[0] ;
 
    done:
       return rc ;
@@ -967,27 +962,7 @@ namespace engine
                                             list<BSONObj> &bsonResult )
    {
       INT32 rc           = SDB_OK ;
-
-      BSONElement agentRCElement ;
       BSONElement hostElement ;
-
-      agentRCElement = response.getField( OM_REST_RES_RETCODE ) ;
-      if ( agentRCElement.eoo() || NumberInt != agentRCElement.type())
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         _errorDetail = string( "agent's response is unreconigzed" ) ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      rc = response.getIntField( OM_REST_RES_RETCODE ) ;
-      if ( SDB_OK != rc )
-      {
-         _errorDetail = string( "agent process failed:detail=" ) 
-                        + response.getStringField( OM_REST_RES_DETAIL ) ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
 
       hostElement = response.getField( OM_BSON_FIELD_HOST_INFO ) ;
       if ( hostElement.isNull() || Array != hostElement.type() )
@@ -1023,6 +998,7 @@ namespace engine
       INT32 rc                        = SDB_OK ;
       CHAR* pContent                  = NULL ;
       INT32 contentSize               = 0 ;
+      SINT32 flag                     = SDB_OK ;
       MsgHeader *pMsg                 = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
       BSONObj bsonRequest ;
@@ -1088,11 +1064,21 @@ namespace engine
          goto error ;
       }
 
-      rc = _receiveFromAgent( remoteSession, bsonResponse ) ;
+      rc = _receiveFromAgent( remoteSession, flag, bsonResponse ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = string( "receive from agent failed" ) ;
          PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != flag )
+      {
+         rc = flag ;
+         _errorDetail = bsonResponse.getStringField( OP_ERR_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                 _errorDetail.c_str(), rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -1175,6 +1161,7 @@ namespace engine
       INT32 rc          = SDB_OK ;
       CHAR *pContent    = NULL ;
       INT32 contentSize = 0 ;
+      SINT32 flag       = SDB_OK ;
       MsgHeader *pMsg   = NULL ;
       omManager *om     = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
@@ -1222,7 +1209,7 @@ namespace engine
       }
 
       // receiving for agent's response
-      rc = _receiveFromAgent( remoteSession, result ) ;
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = "receive response from agent failed" ;
@@ -1230,21 +1217,12 @@ namespace engine
          goto error ;
       }
 
-      rcElement = result.getField( OM_REST_RES_RETCODE ) ;
-      if ( rcElement.eoo() || NumberInt != rcElement.type())
+      if ( SDB_OK != flag )
       {
-         rc = SDB_UNEXPECTED_RESULT ;
-         _errorDetail = "agent's response is unreconigzed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      rc = result.getIntField( OM_REST_RES_RETCODE ) ;
-      if ( SDB_OK != rc )
-      {
-         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
-         PD_LOG( PDERROR, "agent process %s failed:detail=%s,rc=%d", 
-                 OM_BASIC_CHECK_REQ, _errorDetail.c_str(), rc ) ;
+         rc = flag ;
+         _errorDetail = result.getStringField( OP_ERR_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                 _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1296,6 +1274,7 @@ namespace engine
                                             list<BSONObj> &needUninstallHost )
    {
       INT32 rc          = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
       CHAR *pContent    = NULL ;
       INT32 contentSize = 0 ;
       MsgHeader *pMsg   = NULL ;
@@ -1342,24 +1321,19 @@ namespace engine
       }
 
       // receiving for agent's response
-      rc = _receiveFromAgent( remoteSession, result ) ;
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rcElement = result.getField( OM_REST_RES_RETCODE ) ;
-      if ( rcElement.eoo() || NumberInt != rcElement.type())
+      if ( SDB_OK != flag )
       {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "receive unexpected response:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = result.getIntField( OM_REST_RES_RETCODE ) ;
-      if ( SDB_OK != rc )
-      {
+         rc = flag ;
+         _errorDetail = result.getStringField( OP_ERR_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                 _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1525,7 +1499,7 @@ namespace engine
 
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
       rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
-      if ( SDB_OK != rc && SDB_TIMEOUT != rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
          goto error ;
@@ -1534,7 +1508,7 @@ namespace engine
       for ( UINT32 i = 0 ; i < subSessionVec.size() ; i++ )
       {
          vector<BSONObj> objVec ;
-         SINT32 flag               = 0 ;
+         SINT32 flag               = SDB_OK ;
          SINT64 contextID          = -1 ;
          SINT32 startFrom          = 0 ;
          SINT32 numReturned        = 0 ;
@@ -1561,6 +1535,18 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "extract reply failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         if ( SDB_OK != flag )
+         {
+            rc = flag ;
+            if ( objVec.size() > 0 )
+            {
+               _errorDetail = objVec[0].getStringField( OP_ERR_DETAIL ) ;
+            }
+            PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                    _errorDetail.c_str(), rc ) ;
             goto error ;
          }
 
@@ -2186,6 +2172,7 @@ namespace engine
                                      INT32 &transationID )
    {
       INT32 rc          = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
       CHAR *pContent    = NULL ;
       INT32 contentSize = 0 ;
       MsgHeader *pMsg   = NULL ;
@@ -2240,7 +2227,7 @@ namespace engine
       }
 
       // receiving for agent's response
-      rc = _receiveFromAgent( remoteSession, result ) ;
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = "receive from agent failed" ;
@@ -2248,12 +2235,12 @@ namespace engine
          goto error ;
       }
 
-      rc = result.getIntField( OM_REST_RES_RETCODE ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OK != flag )
       {
-         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
-         PD_LOG( PDERROR, "agent process %s failed:detail=%s,rc=%d", 
-                 OM_BASIC_CHECK_REQ, _errorDetail.c_str(), rc ) ;
+         rc = flag ;
+         _errorDetail = result.getStringField( OP_ERR_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                 _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -2553,12 +2540,12 @@ namespace engine
          hosts.push_back( record.copy() ) ;
       }
    done:
-      return rc ;
-   error:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -2608,12 +2595,12 @@ namespace engine
          hosts.push_back( record.copy() ) ;
       }
    done:
-      return rc ;
-   error:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -2739,12 +2726,12 @@ namespace engine
          hosts.push_back( record.copy() ) ;
       }
    done:
-      return rc ;
-   error:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -3574,12 +3561,12 @@ namespace engine
       bsonHostInfo = bsonBuilder.obj() ;
 
    done:
-      return rc ;
-   error:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -4065,12 +4052,12 @@ namespace engine
 
    INT32 omInstallBusinessReq::_receiveFromAgent( 
                                                 pmdRemoteSession *remoteSession,
+                                                SINT32 &flag,
                                                 BSONObj &result )
    {
       VEC_SUB_SESSIONPTR subSessionVec ;
       INT32 rc           = SDB_OK ;
       MsgHeader *pRspMsg = NULL ;
-      SINT32 flag        = 0 ;
       SINT64 contextID   = -1 ;
       SINT32 startFrom   = 0 ;
       SINT32 numReturned = 0 ;
@@ -4115,14 +4102,10 @@ namespace engine
          goto error ;
       }
 
-      if ( 1 != objVec.size() )
+      if ( objVec.size() > 0 )
       {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "unexpected response size:rc=%d", rc ) ;
-         goto error ;
+         result = objVec[0] ;
       }
-
-      result = objVec[0] ;
 
    done:
       return rc ;
@@ -4186,6 +4169,7 @@ namespace engine
                                                   UINT64 &taskID )
    {
       INT32 rc          = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
       BSONElement taskElement ;
       BSONObj result ;
       CHAR* pContent    = NULL ;
@@ -4242,7 +4226,7 @@ namespace engine
       }
 
       // receiving for agent's response
-      rc = _receiveFromAgent( remoteSession, result ) ;
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = "receive from agent failed" ;
@@ -4250,10 +4234,10 @@ namespace engine
          goto error ;
       }
 
-      rc = result.getIntField( OM_REST_RES_RETCODE ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OK != flag )
       {
-         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
+         rc = flag ;
+         _errorDetail = result.getStringField( OP_ERR_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          goto error ;
@@ -4711,6 +4695,142 @@ namespace engine
       goto done ;
    }
 
+   // *****************omListNodeCommand *****************************
+   omListNodeCommand::omListNodeCommand( restAdaptor *pRestAdaptor,
+                                         pmdRestSession *pRestSession )
+                     :omAuthCommand( pRestAdaptor, pRestSession ) 
+   {
+   }
+
+   omListNodeCommand::~omListNodeCommand()
+   {
+   }
+
+   INT32 omListNodeCommand::doCommand()
+   {
+      INT32 rc                  = SDB_OK ;
+      const CHAR *businessName  = NULL ;
+      list<simpleNodeInfo> nodeList ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
+                              &businessName ) ;
+      if ( NULL == businessName )
+      {
+         _errorDetail = "rest field miss:" + string( OM_REST_BUSINESS_NAME ) ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _getNodeList( businessName, nodeList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getNodeList failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      _sendNodeList2Web( nodeList ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omListNodeCommand::_getNodeList( string businessName,
+                                          list<simpleNodeInfo> &nodeList )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID = -1 ;
+
+      matcher  = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_CONFIGURE ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_CONFIGURE ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         BSONObj confs ;
+         confs    = record.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
+         {
+            BSONObjIterator iterBson( confs ) ;
+            while ( iterBson.more() )
+            {
+               BSONObjBuilder builder ;
+               BSONElement ele = iterBson.next() ;
+               BSONObj oneNode = ele.embeddedObject() ;
+               simpleNodeInfo nodeInfo ;
+               nodeInfo.hostName = record.getStringField( 
+                                                 OM_CONFIGURE_FIELD_HOSTNAME ) ;
+               nodeInfo.role     = oneNode.getStringField( 
+                                                 OM_CONF_DETAIL_ROLE ) ;
+               nodeInfo.svcName  = oneNode.getStringField( 
+                                                 OM_CONF_DETAIL_SVCNAME ) ;
+               nodeList.push_back( nodeInfo ) ;
+            }
+         }
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void omListNodeCommand::_sendNodeList2Web( list<simpleNodeInfo> &nodeList )
+   {
+      BSONObjBuilder opBuilder ;
+      list<simpleNodeInfo>::iterator iter = nodeList.begin() ;
+      while ( iter != nodeList.end() )
+      {
+         BSONObj node ;
+         node = BSON( OM_BSON_FIELD_HOST_NAME << (*iter).hostName 
+                      << OM_BSON_FIELD_SVCNAME << (*iter).svcName ) ;
+         _restAdaptor->appendHttpBody( _restSession, node.objdata(), 
+                                       node.objsize(), 1 ) ;
+         iter++ ;
+      }
+
+      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+      return ;
+   }
+
    // *****************omQueryNodeConfCommand *****************************
    omQueryNodeConfCommand::omQueryNodeConfCommand( restAdaptor *pRestAdaptor, 
                                                   pmdRestSession *pRestSession )
@@ -4723,7 +4843,8 @@ namespace engine
    }
 
    void omQueryNodeConfCommand::_expandNodeInfo( BSONObj &oneConfig, 
-                                                 list<BSONObj> &nodeinfos )
+                                                 string svcName,
+                                                 BSONObj &nodeinfo )
    {
       string hostName ;
       string business ;
@@ -4738,18 +4859,21 @@ namespace engine
             BSONObjBuilder builder ;
             BSONElement ele = iterBson.next() ;
             BSONObj oneNode = ele.embeddedObject() ;
-            builder.append( OM_BSON_BUSINESS_NAME, business ) ;
-            builder.append( OM_BSON_FIELD_HOST_NAME, hostName ) ;
-            builder.appendElements( oneNode ) ;
 
-            BSONObj tmp = builder.obj() ;
-            nodeinfos.push_back( tmp.copy() ) ;
+            if ( oneNode.getStringField( OM_CONF_DETAIL_SVCNAME ) == svcName )
+            {
+               builder.append( OM_BSON_BUSINESS_NAME, business ) ;
+               builder.append( OM_BSON_FIELD_HOST_NAME, hostName ) ;
+               builder.appendElements( oneNode ) ;
+               nodeinfo = builder.obj() ;
+               break ;
+            }
          }
       }
    }
 
-   INT32 omQueryNodeConfCommand::_getNodeInfo( string businessName, 
-                                               list<BSONObj> &nodeinfos )
+   INT32 omQueryNodeConfCommand::_getNodeInfo( string hostName, string svcName, 
+                                               BSONObj &nodeinfo )
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;
@@ -4760,7 +4884,10 @@ namespace engine
       SINT64 contextID = -1 ;
       INT32 rc         = SDB_OK ;
 
-      matcher = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
+      BSONObj tmpSvcName = BSON( OM_CONF_DETAIL_SVCNAME << svcName ) ;
+      BSONObj elemMatch  = BSON( "$elemMatch" << tmpSvcName ) ;
+      matcher = BSON( OM_CONFIGURE_FIELD_HOSTNAME << hostName 
+                      << OM_CONFIGURE_FIELD_CONFIG << elemMatch ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
@@ -4792,28 +4919,27 @@ namespace engine
          }
 
          BSONObj result( buffObj.data() ) ;
-         _expandNodeInfo( result, nodeinfos ) ;
+         _expandNodeInfo( result, svcName, nodeinfo ) ;
+         break ;
       }
    done:
-      return SDB_OK ;
-   error:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 
-   void omQueryNodeConfCommand::_sendNodeInfo2Web( list<BSONObj> &nodeInfoList )
+   void omQueryNodeConfCommand::_sendNodeInfo2Web( BSONObj &nodeInfo )
    {
       BSONObjBuilder opBuilder ;
-      list<BSONObj>::iterator iter = nodeInfoList.begin() ;
-      while ( iter != nodeInfoList.end() )
-      {
 
-         _restAdaptor->appendHttpBody( _restSession, (*iter).objdata(), 
-                                       (*iter).objsize(), 1 ) ;
-         iter++ ;
+      if ( !nodeInfo.isEmpty() )
+      {
+         _restAdaptor->appendHttpBody( _restSession, nodeInfo.objdata(), 
+                                       nodeInfo.objsize(), 1 ) ;
       }
 
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
@@ -4823,62 +4949,25 @@ namespace engine
       return ;
    }
 
-   INT32 omQueryNodeConfCommand::_test()
-   {
-      string business = "b1" ;
-      string host     = "h1" ;
-      if ( sdbGetOMManager()->_isHostConfExist( host, business ) )
-      {
-         BSONObj conf = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "hh" ) ;
-         sdbGetOMManager()->_appendConfigure( host, business, conf ) ;
-      }
-      else
-      {
-         BSONObj conf = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "hh" ) ;
-         sdbGetOMManager()->_insertConfigure( host, business, conf ) ;
-      }
-
-      if ( sdbGetOMManager()->_isHostConfExist( host, business ) )
-      {
-         BSONObj conf = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "kk" ) ;
-         sdbGetOMManager()->_appendConfigure( host, business, conf ) ;
-      }
-      else
-      {
-         BSONObj conf = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "kk" ) ;
-         sdbGetOMManager()->_insertConfigure( host, business, conf ) ;
-      }
-
-      return SDB_OK ;
-   }
-
-   /* three way's of query node's configure
-        1. query all node's configure by BusinessName
-        2. query all node's configure by HostName
-        3. query one node's configure by HostName and node's ServiceName
-   */
    INT32 omQueryNodeConfCommand::doCommand()
    {
       INT32 rc                 = SDB_OK ;
-      const CHAR *businessName = NULL ;
+      const CHAR *svcName      = NULL ;
       const CHAR *hostName     = NULL ;
-      list<BSONObj> nodeInfoList ;
+      BSONObj nodeInfo ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
-                              &businessName ) ;
-      if ( NULL == businessName )
+      _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &hostName ) ;
+      _restAdaptor->getQuery( _restSession, OM_REST_SVCNAME, &svcName ) ;
+      if ( NULL == hostName || NULL == svcName )
       {
-         _errorDetail = "rest field:" + string( OM_REST_BUSINESS_NAME )
-                        + " is null" ;
+         _errorDetail = "rest field miss:" + string( OM_REST_HOST_NAME ) 
+                        + " or " + OM_REST_SVCNAME ;
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &hostName ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_SVCNAME, &hostName ) ;
-      rc = _getNodeInfo( businessName, nodeInfoList ) ;
+      rc = _getNodeInfo( hostName, svcName, nodeInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
@@ -4886,58 +4975,70 @@ namespace engine
          goto error ;
       }
 
-      _sendNodeInfo2Web( nodeInfoList ) ;
+      _sendNodeInfo2Web( nodeInfo ) ;
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   // *****************omQueryBusinessCommand *****************************
-   omQueryBusinessCommand::omQueryBusinessCommand( restAdaptor *pRestAdaptor, 
-                                                  pmdRestSession *pRestSession )
-                          :omAuthCommand( pRestAdaptor, pRestSession )
+   // *****************omListBusinessCommand *****************************
+   omListBusinessCommand::omListBusinessCommand( restAdaptor *pRestAdaptor, 
+                                                 pmdRestSession *pRestSession )
+                         :omAuthCommand( pRestAdaptor, pRestSession )
    {
    }
 
-   omQueryBusinessCommand::~omQueryBusinessCommand()
+   omListBusinessCommand::~omListBusinessCommand()
    {
    }
 
-   void omQueryBusinessCommand::_sendBusinessInfo2Web( 
-                                                   list<BSONObj> &listBusiness )
+   INT32 omListBusinessCommand::doCommand()
    {
-      BSONObjBuilder opBuilder ;
-      list<BSONObj>::iterator iter = listBusiness.begin() ;
-      while ( iter != listBusiness.end() )
+      INT32 rc                  = SDB_OK ;
+      const CHAR *pClusterName  = NULL ;
+      list<string> businessList ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_CLUSTER_NAME, 
+                              &pClusterName ) ;
+      if ( NULL == pClusterName )
       {
-         _restAdaptor->appendHttpBody( _restSession, (*iter).objdata(), 
-                                            (*iter).objsize(), 1 ) ;
-         iter++ ;
+         _errorDetail = "rest field miss:" + string( OM_REST_CLUSTER_NAME ) ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
       }
 
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      rc = _getBusinessList( pClusterName, businessList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getBusinessList failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
 
-      return ;
+      _sendBusinessList2Web( businessList ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
-   INT32 omQueryBusinessCommand::_getBusinessInfoByCluster( string clusterName, 
-                                                   list<BSONObj> &listBusiness )
+   INT32 omListBusinessCommand::_getBusinessList( string clusterName,
+                                                  list<string> &businessList )
    {
-      BSONObjBuilder bsonBuilder ;
+      INT32 rc = SDB_OK ;
       BSONObj selector ;
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
-      BSONObj result ;
       SINT64 contextID = -1 ;
-      INT32 rc         = SDB_OK ;
 
-      matcher = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 
-                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      selector = BSON( OM_BUSINESS_FIELD_NAME << "" ) ;
+      matcher  = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 0, 
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
          _errorDetail = string( "fail to query table:" ) 
@@ -4948,8 +5049,6 @@ namespace engine
 
       while ( TRUE )
       {
-         BSONObjBuilder innerBuilder ;
-         BSONObj tmp ;
          rtnContextBuf buffObj ;
          SINT64 startingPos = 0 ;
          rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
@@ -4968,21 +5067,69 @@ namespace engine
             goto error ;
          }
 
-         BSONObj result( buffObj.data() ) ;
-         listBusiness.push_back( result.copy() ) ;
+         BSONObj record( buffObj.data() ) ;
+         businessList.push_back( 
+                              record.getStringField( OM_BUSINESS_FIELD_NAME )) ;
       }
    done:
-      return SDB_OK ;
-   error:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 
-   INT32 omQueryBusinessCommand::_getBusinessInfoByBusiness( string business, 
-                                                   list<BSONObj> &listBusiness )
+   void omListBusinessCommand::_sendBusinessList2Web( 
+                                                    list<string> &businessList )
+   {
+      BSONObjBuilder opBuilder ;
+      list<string>::iterator iter = businessList.begin() ;
+      while ( iter != businessList.end() )
+      {
+         BSONObj business = BSON( OM_BSON_BUSINESS_NAME << *iter ) ;
+         _restAdaptor->appendHttpBody( _restSession, business.objdata(), 
+                                       business.objsize(), 1 ) ;
+         iter++ ;
+      }
+
+      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+      return ;
+   }
+
+   // *****************omQueryBusinessCommand *****************************
+   omQueryBusinessCommand::omQueryBusinessCommand( restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+                          :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omQueryBusinessCommand::~omQueryBusinessCommand()
+   {
+   }
+
+   void omQueryBusinessCommand::_sendBusinessInfo2Web( BSONObj &businessInfo )
+   {
+      BSONObjBuilder opBuilder ;
+      if ( !businessInfo.isEmpty() )
+      {
+         _restAdaptor->appendHttpBody( _restSession, businessInfo.objdata(), 
+                                       businessInfo.objsize(), 1 ) ;
+      }
+
+      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+      return ;
+   }
+
+   INT32 omQueryBusinessCommand::_getBusinessInfo( string business, 
+                                                   BSONObj &businessInfo )
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;
@@ -5027,66 +5174,45 @@ namespace engine
          }
 
          BSONObj result( buffObj.data() ) ;
-         listBusiness.push_back( result.copy() ) ;
+         businessInfo = result.copy() ;
          break ;
       }
    done:
-      return SDB_OK ;
-   error:
       if ( -1 != contextID )
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 
-   /* two way's of query business
-         1. query one business by BusinessName
-         2. query all businesses by ClusterName
-   */
    INT32 omQueryBusinessCommand::doCommand()
    {
       INT32 rc                 = SDB_OK ;
-      const CHAR *clusterName  = NULL ;
-      const CHAR *business     = NULL ;
-      list<BSONObj> listBusiness ;
+      const CHAR *businessName = NULL ;
+      BSONObj businessInfo ;
 
-      _restAdaptor->getQuery( _restSession, OM_REST_CLUSTER_NAME, 
-                              &clusterName ) ;
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, &business ) ;
-      if ( NULL != business )
+      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
+                              &businessName ) ;
+      if ( NULL == businessName )
       {
-         // 1. query one business by BusinessName
-         rc = _getBusinessInfoByBusiness( business, listBusiness ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-      }
-      else if ( NULL != clusterName )
-      {
-         // 2. query all businesses by ClusterName
-         rc = _getBusinessInfoByCluster( clusterName, listBusiness ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-      }
-      else
-      {
-         _errorDetail = "rest field miss:" + string( OM_REST_CLUSTER_NAME ) 
-                        + " or " + OM_REST_BUSINESS_NAME ;
+         _errorDetail = "rest field miss:" + string( OM_REST_BUSINESS_NAME ) ;
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
 
-      _sendBusinessInfo2Web( listBusiness ) ;
+      rc = _getBusinessInfo( businessName, businessInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      _sendBusinessInfo2Web( businessInfo ) ;
    done:
       return rc ;
    error:
@@ -5682,6 +5808,7 @@ namespace engine
                                                 const simpleHostInfo &hostInfo )
    {
       INT32 rc          = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
       CHAR *pContent    = NULL ;
       INT32 contentSize = 0 ;
       omManager *om     = NULL ;
@@ -5732,7 +5859,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _receiveFromAgent( remoteSession, bsonResponse ) ;
+      rc = _receiveFromAgent( remoteSession, flag, bsonResponse ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = string( "receive from agent failed" ) ;
@@ -5740,14 +5867,15 @@ namespace engine
          goto error ;
       }
 
-      rc = bsonResponse.getIntField( OM_REST_RES_RETCODE ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OK != flag )
       {
-         _errorDetail = string( "agent's response error:res=" )
-                        + bsonResponse.toString( false, true ) ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         rc = flag ;
+         _errorDetail = bsonResponse.getStringField( OP_ERR_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                 _errorDetail.c_str(), rc ) ;
          goto error ;
       }
+
    done:
       _clearSession( om, remoteSession ) ;
       return rc ;
@@ -5931,6 +6059,7 @@ namespace engine
                                              const BSONObj &nodeInfos )
    {
       INT32 rc          = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
       CHAR *pContent    = NULL ;
       INT32 contentSize = 0 ;
       omManager *om     = NULL ;
@@ -5974,7 +6103,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _receiveFromAgent( remoteSession, bsonResponse ) ;
+      rc = _receiveFromAgent( remoteSession, flag, bsonResponse ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = string( "receive from agent failed" ) ;
@@ -5982,14 +6111,15 @@ namespace engine
          goto error ;
       }
 
-      rc = bsonResponse.getIntField( OM_REST_RES_RETCODE ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OK != flag )
       {
-         _errorDetail = string( "agent's response error:res=" )
-                        + bsonResponse.toString( false, true ) ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         rc = flag ;
+         _errorDetail = bsonResponse.getStringField( OP_ERR_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                 _errorDetail.c_str(), rc ) ;
          goto error ;
       }
+
    done:
       _clearSession( om, remoteSession ) ;
       return rc ;
@@ -6216,7 +6346,7 @@ namespace engine
       _restSession->releaseBuff( pContent, contentLength ) ;
 
    done:
-      return SDB_OK ;
+      return rc ;
    error:
       goto done ;
    }

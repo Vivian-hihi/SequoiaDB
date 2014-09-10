@@ -460,9 +460,17 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omQueryInstallProgress( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_LIST_NODE_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omListNodeCommand( pAdptor, this ) ;
+         }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_NODE_CONF_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omQueryNodeConfCommand( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_LIST_BUSINESS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omListBusinessCommand( pAdptor, this ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_BUSINESS_REQ ) == 0 )
          {

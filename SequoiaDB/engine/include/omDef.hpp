@@ -63,6 +63,18 @@ namespace engine
    #define  OM_DEFAULT_LOGIN_USER            "admin"
    #define  OM_DEFAULT_LOGIN_PASSWD          "admin"
 
+
+   #define OM_CONF_DETAIL_DBPATH             PMD_OPTION_DBPATH
+   #define OM_CONF_DETAIL_SVCNAME            PMD_OPTION_SVCNAME
+   #define OM_CONF_DETAIL_DIAGLEVEL          PMD_OPTION_DIAGLEVEL
+   #define OM_CONF_DETAIL_ROLE               PMD_OPTION_ROLE
+   #define OM_CONF_DETAIL_LOGFSIZE           PMD_OPTION_LOGFILESZ
+   #define OM_CONF_DETAIL_LOGFNUM            PMD_OPTION_LOGFILENUM
+   #define OM_CONF_DETAIL_TRANSACTION        PMD_OPTION_TRANSACTIONON
+   #define OM_CONF_DETAIL_PREINSTANCE        PMD_OPTION_PREFINST
+   #define OM_CONF_DETAIL_PCNUM              PMD_OPTION_NUMPAGECLEANERS
+   #define OM_CONF_DETAIL_PCINTERVAL         PMD_OPTION_PAGECLEANINTERVAL
+
    /*
       OM Field Define
    */
@@ -385,6 +397,13 @@ namespace engine
    #define  OM_TASK_STATUS_ROLLBACK          "rollback"
    //******************************************************************
 
+   // om list node req
+   #define  OM_LIST_NODE_REQ                 "list node"
+
+
+   #define  OM_BSON_FIELD_SVCNAME            "SvcName"
+   //******************************************************************
+
    // om query node req
    #define  OM_QUERY_NODE_CONF_REQ           "query node configure"
 
@@ -393,14 +412,15 @@ namespace engine
    
    //******************************************************************
 
+   // om list business req
+   #define  OM_LIST_BUSINESS_REQ             "list business"
+   //******************************************************************
+
    // om query business req
    #define  OM_QUERY_BUSINESS_REQ            "query business"
 
    #define  OM_REST_CLUSTER_NAME             OM_BSON_FIELD_CLUSTER_NAME
    #define  OM_BSON_BUSINESS_INFO            "BusinessInfo"
-   //******************************************************************
-
-   // om query business req
    //******************************************************************
 
    // om start business req

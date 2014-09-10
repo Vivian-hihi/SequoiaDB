@@ -44,37 +44,26 @@ using namespace bson ;
 
 namespace engine
 {
-   #define OM_GENERATOR_DOT    ","
-   #define OM_GENERATOR_LINE   "-"
-
-   #define OM_CONF_DETAIL_DBPATH       PMD_OPTION_DBPATH
-   #define OM_CONF_DETAIL_SVCNAME      PMD_OPTION_SVCNAME
-   #define OM_CONF_DETAIL_DIAGLEVEL    PMD_OPTION_DIAGLEVEL
-   #define OM_CONF_DETAIL_ROLE         PMD_OPTION_ROLE
-   #define OM_CONF_DETAIL_LOGFSIZE     PMD_OPTION_LOGFILESZ
-   #define OM_CONF_DETAIL_LOGFNUM      PMD_OPTION_LOGFILENUM
-   #define OM_CONF_DETAIL_TRANSACTION  PMD_OPTION_TRANSACTIONON
-   #define OM_CONF_DETAIL_PREINSTANCE  PMD_OPTION_PREFINST
-   #define OM_CONF_DETAIL_PCNUM        PMD_OPTION_NUMPAGECLEANERS
-   #define OM_CONF_DETAIL_PCINTERVAL   PMD_OPTION_PAGECLEANINTERVAL
+   #define OM_GENERATOR_DOT               ","
+   #define OM_GENERATOR_LINE              "-"
 
    #define OM_CONF_DETAIL_DATAGROUPNAME   "datagroupname"
 
-   #define OM_DG_NAME_PATTERN          "DATAGROUP"
+   #define OM_DG_NAME_PATTERN             "DATAGROUP"
 
-   #define OM_DEPLOY_MOD_STANDALONE    "standalone"
-   #define OM_DEPLOY_MOD_DISTRIBUTION  "distribution"
+   #define OM_DEPLOY_MOD_STANDALONE       "standalone"
+   #define OM_DEPLOY_MOD_DISTRIBUTION     "distribution"
+   
+   #define OM_NODE_ROLE_STANDALONE        SDB_ROLE_STANDALONE_STR
+   #define OM_NODE_ROLE_COORD             SDB_ROLE_COORD_STR
+   #define OM_NODE_ROLE_CATALOG           SDB_ROLE_CATALOG_STR
+   #define OM_NODE_ROLE_DATA              SDB_ROLE_DATA_STR
 
-   #define OM_NODE_ROLE_STANDALONE     "standalone"
-   #define OM_NODE_ROLE_COORD          "coord"
-   #define OM_NODE_ROLE_CATALOG        "catalog"
-   #define OM_NODE_ROLE_DATA           "data"
+   #define OM_SVCNAME_STEP                (10)
+   #define OM_PATH_LENGTH                 (256)
+   #define OM_INT32_MAXVALUE_STR          "2147483647"
 
-   #define OM_SVCNAME_STEP             (10)
-   #define OM_PATH_LENGTH              (256)
-   #define OM_INT32_MAXVALUE_STR       "2147483647"
-
-   #define OM_CONF_VALUE_INT_TYPE      "int"
+   #define OM_CONF_VALUE_INT_TYPE         "int"
 
 
    static INT32 getBsonStringField( const BSONObj &bsonTemplate, 

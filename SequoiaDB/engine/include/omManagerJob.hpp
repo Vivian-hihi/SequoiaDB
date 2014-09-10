@@ -89,8 +89,12 @@ namespace engine
          omManager               *_om ;
          string                  _clusterName ;
          UINT32                  _version ;
+
+         // store all the host's info
          vector< omHostContent > _vAllHosts ;
+         // store the agent's info that need to update hostname
          map< string, omHostContent > _mapAgents ;
+
          typedef map< string, omHostContent >::iterator _MAPAGENT_ITER ;
          typedef map< string, omHostContent >::value_type _MAPAGENT_VALUE ;
    } ;

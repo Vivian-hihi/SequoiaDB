@@ -117,9 +117,9 @@ namespace engine
                     rc ) ;
 
       //TODO: open this code
-      rc = _createJobs() ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
-                    rc ) ;
+//      rc = _createJobs() ;
+//      PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
+//                    rc ) ;
 
       rc = refreshVersions() ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to update cluster version:rc=%d", 
@@ -131,6 +131,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to init rest adptor, rc: %d", rc ) ;
 
       _checkTaskTimer = NET_INVALID_TIMER_ID ;
+      _timerTickCount = 0 ;
 
    done:
       return rc;
@@ -499,7 +500,13 @@ namespace engine
       }
       else if ( timerID == _checkTaskTimer )
       {
-         checkTaskStatus( _omTaskInfo._taskID ) ;
+         _timerTickCount++ ;
+         // _checkTaskTimer is a one second timer, so that means we check task 
+         // status per 10 seconds
+         if ( _timerTickCount%10 == 0 )
+         {
+            checkTaskStatus( _omTaskInfo._taskID ) ;
+         }
       }
    }
 
@@ -1105,12 +1112,11 @@ namespace engine
    }
 
    INT32 _omManager::_receiveFromAgent( pmdRemoteSession *remoteSession,
-                                        BSONObj &result )
+                                        SINT32 &flag, BSONObj &result )
    {
       VEC_SUB_SESSIONPTR subSessionVec ;
       INT32 rc           = SDB_OK ;
       MsgHeader *pRspMsg = NULL ;
-      SINT32 flag        = 0 ;
       SINT64 contextID   = -1 ;
       SINT32 startFrom   = 0 ;
       SINT32 numReturned = 0 ;
@@ -1155,14 +1161,10 @@ namespace engine
          goto error ;
       }
 
-      if ( 1 != objVec.size() )
+      if ( objVec.size() > 0 )
       {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "unexpected response size:rc=%d", rc ) ;
-         goto error ;
+         result = objVec[0] ;
       }
-
-      result = objVec[0] ;
 
    done:
       return rc ;
@@ -1197,6 +1199,7 @@ namespace engine
       bool isFinished ;
       BSONObj result ;
       INT32 rc          = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
       _pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
       MsgHeader *pMsg   = NULL ;
       CHAR* pContent    = NULL ;
@@ -1243,17 +1246,17 @@ namespace engine
          goto error ;
       }
 
-      rc = _receiveFromAgent( remoteSession, result ) ;
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      rc = result.getIntField( OM_REST_RES_RETCODE ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OK != flag )
       {
-         string errorInfo = result.getStringField( OM_REST_RES_DETAIL ) ;
+         rc = flag ;
+         string errorInfo = result.getStringField( OP_ERR_DETAIL ) ;
          PD_LOG( PDERROR, "agent process error:detail=%s,rc=%d", 
                  errorInfo.c_str(), rc ) ;
          goto error ;

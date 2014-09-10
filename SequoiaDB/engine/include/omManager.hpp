@@ -222,14 +222,13 @@ namespace engine
                                                 pmdRemoteSession *remoteSession, 
                                                 MsgHeader *pMsg ) ;
          INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
-                                              BSONObj &result ) ;
+                                              SINT32 &flag, BSONObj &result ) ;
          void              _readAgentPort() ;
 
          INT32             _storeBusinessInfo() ;
 
          INT32             _restoreTask() ;
 
-      public:
          INT32             _insertConfigure( string hostName, 
                                              string businessName ,
                                              BSONObj &oneNode ) ;
@@ -279,6 +278,7 @@ namespace engine
          omTaskInfo                             _omTaskInfo ;
          ossSpinSLatch                          _taskLatch ;
          UINT32                                 _checkTaskTimer ;
+         UINT32                                 _timerTickCount ;
 
          string                                 _localAgentPort ;
          omHostVersion                          *_hostVersion ;

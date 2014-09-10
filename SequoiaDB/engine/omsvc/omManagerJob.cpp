@@ -246,7 +246,7 @@ namespace engine
 
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
       rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
-      if ( SDB_OK != rc && SDB_TIMEOUT != rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
          goto error ;
@@ -255,12 +255,11 @@ namespace engine
       for ( UINT32 i = 0 ; i < subSessionVec.size() ; i++ )
       {
          vector<BSONObj> objVec ;
-         SINT32 flag               = 0 ;
+         SINT32 flag               = SDB_OK ;
          SINT64 contextID          = -1 ;
          SINT32 startFrom          = 0 ;
          SINT32 numReturned        = 0 ;
          MsgHeader* pRspMsg        = NULL ;
-         INT32 res                 = SDB_OK ;
          BSONObj result ;
          pmdSubSession *subSession = subSessionVec[i] ;
          if ( subSession->isDisconnect() )
@@ -287,6 +286,19 @@ namespace engine
             goto error ;
          }
 
+         if ( SDB_OK != flag )
+         {
+            rc = flag ;
+            string detail ;
+            if ( objVec.size() > 0 )
+            {
+               detail = objVec[0].getStringField( OP_ERR_DETAIL ) ;
+            }
+            PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                    detail.c_str(), rc ) ;
+            goto error ;
+         }
+
          if ( 1 != objVec.size() )
          {
             rc = SDB_UNEXPECTED_RESULT ;
@@ -294,9 +306,7 @@ namespace engine
             goto error ;
          }
 
-         result = objVec[0] ;
-         res = result.getIntField( OM_REST_RES_RETCODE ) ;
-         if ( SDB_OK == res )
+         // this agent add hostname success, no need to send request anymore
          {
             string host ;
             string service ;
