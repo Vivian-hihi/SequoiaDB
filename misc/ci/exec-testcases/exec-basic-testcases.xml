@@ -58,8 +58,7 @@
 		<hostinfo prefix="host" />
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-		<property name="test.suite.class.name" value="testcases-${test-type}-${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
-		<!-- <property name="test.suite.class.name" value="com.sequoiadb.testcases-js.${test.package.name}.${host.NAME}-${parallel.num}-${test.suite.name}" /> -->
+		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
 
 		<echo message="###test.package.name=${test.package.name}###" />
 
@@ -278,7 +277,7 @@
 						<echo message="The result code is ${ret.code} and it's fail ..." />
 						<echo message="The testcase ${test.case.name}.js end with ${testcase.failure.end.time} and cost ${testcase.failure.timeOutput} s in total..." />
 
-						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;ERRORMESSAGE=&#10;${screen.output}&#10;TESTBEGINSTR=${testBeginStr}&#10;TESTENDSTR=${testEndStr}&#10;db.listReplicaGroups():&#10;${db.RG.info} &#10;download the test log :&#10;${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;" />
+						<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;ERRORMESSAGE=&#10;${screen.output}&#10;TESTBEGINSTR=${testBeginStr}&#10;TESTENDSTR=${testEndStr}&#10;db.listReplicaGroups():&#10;${db.RG.info} &#10;download the test log :&#10;${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;&lt;/failure&gt;&#10;" />
 
 						<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost" failonerror="false" />
 						<echo message="${haveMaster}" />
@@ -303,7 +302,7 @@
 				<echo message="The result code is ${ret.code} and it's succ ..." />
 				<echo message="The testcase ${test.case.name}.js end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />
 
-				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;succ&quot;&gt;&#10;" />
+				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;succ&quot;&gt;&#10;" />
 			</else>
 		</if>
 
