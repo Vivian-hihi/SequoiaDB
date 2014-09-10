@@ -30,7 +30,7 @@
         <echo message="Perform the c samples testcases,with testcase.path=${samples.testcase.path}/C" />
 
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-        <property name="test.suite.class.name" value="testcases-samples-c.${deploy.name}-${host.NAME}-${parallel.num}." />
+        <property name="test.suite.class.name" value="testcases-samples-c.${deploy.name}-${host.NAME}-${parallel.num}" />
 
         <chmod dir="${samples.testcase.path}/C" perm="u+x" includes="*" />
         <foreach target="test-one-case" param="case-full-name">
@@ -39,7 +39,6 @@
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
             <param name="testcases.path" value="${samples.testcase.path}/C" />
-            <param name="test.suite.class.name" value="${test.suite.class.name}" />
         </foreach>
 
         <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
@@ -69,7 +68,7 @@
         <echo message="Perform the driver c testcases,with testcase.path=${C.testcase.path}" />
 
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-        <property name="test.suite.class.name" value="testcases-driver-c.${deploy.name}-${host.NAME}-${parallel.num}." />
+        <property name="test.suite.class.name" value="testcases-driver-c.${deploy.name}-${host.NAME}-${parallel.num}" />
 
         <chmod dir="${C.testcase.path}" perm="u+x" includes="*" />
         <foreach target="test-one-case" param="case-full-name">
@@ -78,7 +77,6 @@
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
             <param name="testcases.path" value="${C.testcase.path}" />
-            <param name="test.suite.class.name" value="${test.suite.class.name}" />
         </foreach>
 
         <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
@@ -89,7 +87,7 @@
             <fileset dir="${reports.path}/" includes="*" />
         </replaceregexp>
 
-        <replaceregexp match='classname="' replace='classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
+        <replaceregexp match='classname="' replace='classname="${test.suite.class.name}.' flags="g" byline="true" encoding="utf-8">
             <fileset dir="${reports.path}/" includes="*" />
         </replaceregexp>
 
