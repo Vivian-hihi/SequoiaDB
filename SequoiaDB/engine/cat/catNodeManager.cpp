@@ -2393,64 +2393,61 @@ namespace engine
                 "Local service[%s] is invalid, translate to port 0",
                 localSvc ) ;
 
-      if ( SDB_ROLE_COORD != nodeRole )
+      // repl service
+      rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_REPLNAME,
+                                &replSvc ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
       {
-         // repl service
-         rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_REPLNAME,
-                                   &replSvc ) ;
+         strReplSvc = _getServiceName( svcPort, MSG_ROUTE_REPL_SERVICE ) ;
+         replSvc = strReplSvc.c_str() ;
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                   PMD_OPTION_REPLNAME, rc ) ;
+
+      rc = catServiceCheck( hostName, replSvc, exist, _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check repl service[%s], "
+                   "rc: %d", replSvc, rc ) ;
+      PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
+                "Repl service[%s] conflict", replSvc ) ;
+
+      // shard service
+      rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_SHARDNAME,
+                                &shardSvc ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         strShardSvc = _getServiceName( svcPort, MSG_ROUTE_SHARD_SERVCIE ) ;
+         shardSvc = strShardSvc.c_str() ;
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
+                   PMD_OPTION_SHARDNAME, rc ) ;
+
+      rc = catServiceCheck( hostName, shardSvc, exist, _pEduCB ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to check shard service[%s], "
+                   "rc: %d", shardSvc, rc ) ;
+      PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
+                "Shard service[%s] conflict", shardSvc ) ;
+
+      // cata service
+      if ( SDB_ROLE_CATALOG == nodeRole )
+      {
+         rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_CATANAME,
+                                   &cataSvc ) ;
          if ( SDB_FIELD_NOT_EXIST == rc )
          {
-            strReplSvc = _getServiceName( svcPort, MSG_ROUTE_REPL_SERVICE ) ;
-            replSvc = strReplSvc.c_str() ;
+            strCataSvc = _getServiceName( svcPort, MSG_ROUTE_CAT_SERVICE ) ;
+            cataSvc = strCataSvc.c_str() ;
             rc = SDB_OK ;
          }
          PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                      PMD_OPTION_REPLNAME, rc ) ;
+                      PMD_OPTION_CATANAME, rc ) ;
 
-         rc = catServiceCheck( hostName, replSvc, exist, _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check repl service[%s], "
-                      "rc: %d", replSvc, rc ) ;
+         rc = catServiceCheck( hostName, cataSvc, exist, _pEduCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to check cata service[%s], "
+                      "rc: %d", cataSvc, rc ) ;
          PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
-                   "Repl service[%s] conflict", replSvc ) ;
-
-         // shard service
-         rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_SHARDNAME,
-                                   &shardSvc ) ;
-         if ( SDB_FIELD_NOT_EXIST == rc )
-         {
-            strShardSvc = _getServiceName( svcPort, MSG_ROUTE_SHARD_SERVCIE ) ;
-            shardSvc = strShardSvc.c_str() ;
-            rc = SDB_OK ;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                      PMD_OPTION_SHARDNAME, rc ) ;
-
-         rc = catServiceCheck( hostName, shardSvc, exist, _pEduCB ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to check shard service[%s], "
-                      "rc: %d", shardSvc, rc ) ;
-         PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
-                   "Shard service[%s] conflict", shardSvc ) ;
-
-         // cata service
-         if ( SDB_ROLE_CATALOG == nodeRole )
-         {
-            rc = rtnGetStringElement( boNodeInfo, PMD_OPTION_CATANAME,
-                                      &cataSvc ) ;
-            if ( SDB_FIELD_NOT_EXIST == rc )
-            {
-               strCataSvc = _getServiceName( svcPort, MSG_ROUTE_CAT_SERVICE ) ;
-               cataSvc = strCataSvc.c_str() ;
-               rc = SDB_OK ;
-            }
-            PD_RC_CHECK( rc, PDERROR, "Failed to get the field[%s], rc: %d",
-                         PMD_OPTION_CATANAME, rc ) ;
-
-            rc = catServiceCheck( hostName, cataSvc, exist, _pEduCB ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to check cata service[%s], "
-                         "rc: %d", cataSvc, rc ) ;
-            PD_CHECK( !exist, SDB_CM_CONFIG_CONFLICTS, error, PDERROR,
-                      "Cata service[%s] conflict", cataSvc ) ;
-         }
+                   "Cata service[%s] conflict", cataSvc ) ;
       }
 
       // translate
@@ -2467,27 +2464,25 @@ namespace engine
          sub1.append( FIELD_NAME_NAME, localSvc ) ;
          sub1.done() ;
 
-         if ( SDB_ROLE_COORD != nodeRole )
+         // repl
+         BSONObjBuilder sub2( sub.subobjStart("1") ) ;
+         sub2.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_REPL_SERVICE ) ;
+         sub2.append( FIELD_NAME_NAME, replSvc ) ;
+         sub2.done() ;
+         // shard
+         BSONObjBuilder sub3( sub.subobjStart("2") ) ;
+         sub3.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_SHARD_SERVCIE ) ;
+         sub3.append( FIELD_NAME_NAME, shardSvc ) ;
+         sub3.done() ;
+         // cata
+         if ( SDB_ROLE_CATALOG == nodeRole )
          {
-            // repl
-            BSONObjBuilder sub2( sub.subobjStart("1") ) ;
-            sub2.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_REPL_SERVICE ) ;
-            sub2.append( FIELD_NAME_NAME, replSvc ) ;
-            sub2.done() ;
-            // shard
-            BSONObjBuilder sub3( sub.subobjStart("2") ) ;
-            sub3.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_SHARD_SERVCIE ) ;
-            sub3.append( FIELD_NAME_NAME, shardSvc ) ;
-            sub3.done() ;
-            // cata
-            if ( SDB_ROLE_CATALOG == nodeRole )
-            {
-               BSONObjBuilder sub4( sub.subobjStart("3") ) ;
-               sub4.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_CAT_SERVICE ) ;
-               sub4.append( FIELD_NAME_NAME, cataSvc ) ;
-               sub4.done() ;
-            }
+            BSONObjBuilder sub4( sub.subobjStart("3") ) ;
+            sub4.append( FIELD_NAME_SERVICE_TYPE, MSG_ROUTE_CAT_SERVICE ) ;
+            sub4.append( FIELD_NAME_NAME, cataSvc ) ;
+            sub4.done() ;
          }
+
          sub.done() ;
       }
 
