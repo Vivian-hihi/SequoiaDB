@@ -340,7 +340,8 @@ namespace engine
          UTIL_VEC_NODES nodes ;
 
          rc = utilListNodes( nodes, -1, pSvcName ) ;
-         if ( SDB_OK == rc && nodes.size() > 0 )
+         if ( SDB_OK == rc && nodes.size() > 0 &&
+              SDB_TYPE_OMA != (*nodes.begin())._type )
          {
             pid = (*nodes.begin())._pid ;
             goto done ;
@@ -459,19 +460,11 @@ namespace engine
       UTIL_VEC_NODES nodes ;
 
       rc = utilListNodes( nodes, -1, svcname ) ;
-      if ( SDB_OK == rc && nodes.size() > 0 )
+      if ( SDB_OK == rc && nodes.size() > 0 &&
+           SDB_TYPE_OMA != (*nodes.begin())._type )
       {
-         for ( UINT32 i = 0 ; i < nodes.size() ; ++i )
-         {
-            utilNodeInfo &info = nodes[ i ] ;
-            if ( SDB_TYPE_OMA == info._type )
-            {
-               continue ;
-            }
-            isRuning = TRUE ;
-            pid = info._pid ;
-            break ;
-         }
+         isRuning = TRUE ;
+         pid = (*nodes.begin())._pid ;
       }
 
       return rc ;

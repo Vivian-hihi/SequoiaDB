@@ -84,17 +84,11 @@ namespace engine
    {
       UTIL_VEC_NODES nodes ;
       INT32 rc = utilListNodes( nodes, -1, pServiceName ) ;
-      if ( SDB_OK == rc )
+      if ( SDB_OK == rc && nodes.size() > 0 &&
+           SDB_TYPE_OMA != (*nodes.begin())._type )
       {
-         for ( UINT32 i = 0 ; i < nodes.size() ; ++i )
-         {
-            if ( SDB_TYPE_OMA == nodes[ i ]._type )
-            {
-               continue ;
-            }
-            info = nodes[ i ] ;
-            return TRUE ;
-         }
+         info = *nodes.begin() ;
+         return TRUE ;
       }
       return FALSE ;
    }
