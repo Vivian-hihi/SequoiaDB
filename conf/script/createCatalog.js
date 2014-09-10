@@ -35,7 +35,7 @@ if ( typeof(typeof(CONFIG) == "undefined") )
 var objRet = new Object() ;
 
 objRet.Rc = 0 ;
-objRet.Detail = "" ;
+objRet.detail = "" ;
 
 function waitCatalogRGAvailable( db )
 {
@@ -108,7 +108,7 @@ function main()
            typeof(DB_PASSWORD) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified hostname, svcname"
+         objRet.detail = "not specified hostname, svcname"
                          + " username or password to connect to database" ;
       }
       if ( typeof(INSTALL_HOSTNAME) == "undefined" ||
@@ -117,7 +117,7 @@ function main()
            typeof(CONFIG) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "hostname, svcname, install path and config info" +
+         objRet.detail = "hostname, svcname, install path and config info" +
                          " are need for create catalog" ;
          return objRet ;
       }
@@ -135,7 +135,7 @@ function main()
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "system error" ;
+         objRet.detail = "system error" ;
       }
       else
       {
@@ -144,7 +144,7 @@ function main()
          errMsg = getLastErrMsg() ;
          if ( ( "" != errMsg ) && ( null != errMsg ) && ( undefined != errMsg ) )
          {
-            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+            objRet.detail = eval( '(' + errMsg + ')' ) ;
          }
       }
       return objRet ;

@@ -42,7 +42,7 @@ if ( typeof(V_COORD_CFG_OPTION) == "undefined" )
 var objRet = new Object() ;
 
 objRet.Rc = 0 ;
-objRet.Detail = "" ;
+objRet.detail = "" ;
 
 function createVirtualCoord( oma )
 {
@@ -67,7 +67,7 @@ function main()
            typeof(OMA_SVC_NAME) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified host name or service name of omagent" ;
+         objRet.detail = "not specified host name or service name of omagent" ;
          return objRet ;
       }
 
@@ -96,7 +96,7 @@ print("44444444 e = " + e + "\n") ;
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "system error" ;
+         objRet.detail = "system error" ;
       }
       else
       {
@@ -105,7 +105,7 @@ print("44444444 e = " + e + "\n") ;
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
-            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+            objRet.detail = eval( '(' + errMsg + ')' ) ;
          }
       }
       return objRet ;

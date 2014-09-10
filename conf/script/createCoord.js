@@ -33,7 +33,7 @@ if ( typeof(CONFIG) == "undefined" ) { CONFIG = "{}" ; }
 var objRet = new Object() ;
 
 objRet.Rc = 0 ;
-objRet.Detail = "" ;
+objRet.detail = "" ;
 
 function main()
 {
@@ -51,7 +51,7 @@ function main()
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "system error" ;
+         objRet.detail = "system error" ;
       }
       else
       {
@@ -60,7 +60,7 @@ function main()
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
-            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+            objRet.detail = eval( '(' + errMsg + ')' ) ;
          }
       }
       return objRet ;

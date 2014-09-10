@@ -31,7 +31,7 @@ objRet.IsRunning     = false ;
 objRet.Version       = "" ;
 
 objRet.Rc            = 0 ;
-objRet.Detail        = "" ;
+objRet.detail        = "" ;
 
 
 // TODO: not finish yet
@@ -76,7 +76,7 @@ function main()
            typeof(IP)       == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified user name, password or ip" ;
+         objRet.detail = "not specified user name, password or ip" ;
          return objRet ;
       }
       // ssh
@@ -92,7 +92,7 @@ function main()
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "system error" ;
+         objRet.detail = "system error" ;
       }
       else
       {
@@ -101,7 +101,7 @@ function main()
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
-            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+            objRet.detail = eval( '(' + errMsg + ')' ) ;
          }
       }
       return objRet ;

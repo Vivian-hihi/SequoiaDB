@@ -38,7 +38,7 @@ var INSTALL_PACKET_PATH_W = "" ;
 
 var objRet = new Object() ;
 objRet.Rc         = 0 ;
-objRet.Detail     = "" ;
+objRet.detail     = "" ;
 objRet.HasPush    = false ;
 objRet.HasInstall = false ;
 
@@ -203,7 +203,7 @@ function main()
            typeof(SDBUSERGROUP) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified user name, password or user group for program" ;
+         objRet.detail = "not specified user name, password or user group for program" ;
          return objRet ;
       }
       if ( typeof(USERNAME) == "undefined"      ||
@@ -211,14 +211,14 @@ function main()
            typeof(IP) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified username, password or ip" ;
+         objRet.detail = "not specified username, password or ip" ;
          return objRet ;
       }
       if ( typeof(PACKET_PATH) == "undefined" ||
            typeof(INSTALL_PATH) == "undefined" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "not specified installation packet or installation path" ;
+         objRet.detail = "not specified installation packet or installation path" ;
          return objRet ;
       }
       // get os info
@@ -236,7 +236,7 @@ function main()
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "system error" ;
+         objRet.detail = "system error" ;
       }
       else
       {
@@ -245,7 +245,7 @@ function main()
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
-            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+            objRet.detail = eval( '(' + errMsg + ')' ) ;
          }
       }
       return objRet ;

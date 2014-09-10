@@ -58,7 +58,7 @@ var FILE_CHECK_HOST        = "checkHost.js" ;
 
 var objRet = new Object() ;
 objRet.Rc              = 0 ;
-objRet.Detail          = "" ;
+objRet.detail          = "" ;
 objRet.IsNeedUninstall = true ;
 
 function createTmpDir( ssh, osInfo )
@@ -242,7 +242,7 @@ function main()
            typeof(IP) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified username, password or ip" ;
+         objRet.detail = "not specified username, password or ip" ;
          return objRet ;
       }
       if ( typeof(LOCAL_PROG_PATH) == "undefined" ||
@@ -250,7 +250,7 @@ function main()
            typeof(LOCAL_CM_CONF) == "undefined" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "not specified sdbcm, js script or sdbcm config file" ;
+         objRet.detail = "not specified sdbcm, js script or sdbcm config file" ;
          return objRet ;
       }
 
@@ -291,7 +291,7 @@ function main()
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "system error" ;
+         objRet.detail = "system error" ;
       }
       else
       {
@@ -300,7 +300,7 @@ function main()
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
-            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+            objRet.detail = eval( '(' + errMsg + ')' ) ;
          }
       }
       return objRet ;

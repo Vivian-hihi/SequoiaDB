@@ -34,7 +34,7 @@ if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
 var objRet = new Object() ;
 
 objRet.Rc = 0 ;
-objRet.Detail = "" ;
+objRet.detail = "" ;
 
 function main()
 {
@@ -47,7 +47,7 @@ function main()
            typeof(GROUPNAME) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "install hostname, svcname, path and the groupname are"
+         objRet.detail = "install hostname, svcname, path and the groupname are"
                          + " need for creating data node" ;
          return objRet ;
       }
@@ -101,7 +101,7 @@ println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "system error" ;
+         objRet.detail = "system error" ;
       }
       else
       {
@@ -111,7 +111,7 @@ println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
-            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+            objRet.detail = eval( '(' + errMsg + ')' ) ;
          }
       }
       return objRet ;

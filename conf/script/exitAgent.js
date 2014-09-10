@@ -49,7 +49,7 @@ var FILE_CHECK_HOST        = "checkHost.js" ;
 
 var objRet = new Object() ;
 objRet.Rc = 0 ;
-objRet.Detail = "" ;
+objRet.detail = "" ;
 objRet.HasExit = false ;
 
 function createTmpDir( ssh, osInfo )
@@ -145,7 +145,7 @@ function main()
            typeof(PASSWORD) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified username, password" ;
+         objRet.detail = "not specified username, password" ;
          return objRet ;
       }
       // get os info
@@ -163,7 +163,7 @@ function main()
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;
-         objRet.Detail = "system error" ;
+         objRet.detail = "system error" ;
       }
       else
       {
@@ -172,7 +172,7 @@ function main()
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {
-            objRet.Detail = eval( '(' + errMsg + ')' ) ;
+            objRet.detail = eval( '(' + errMsg + ')' ) ;
          }
       }
       return objRet ;
