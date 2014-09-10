@@ -37,12 +37,12 @@
 
 	<target name="Test-Python-Samples" depends="Init-Python-Driver">
 		<echo message="Begin test python samples testcases..." />
-		<echo message="Perform the python samples testcases,with testcase.path=${samples.testcase.path}" />
+		<echo message="Perform the python samples testcases,with testcase.path=${samples.testcase.path}/Python" />
 		<foreach target="test-one-suite" param="test.suite.fullname">
 			<path>
 				<dirset dir="${samples.testcase.path}/Python" includes="${includes.dir.patterns}" excludes="${excludes.dir.patterns}" />
 			</path>
-			<param name="testcases.path" value="${samples.testcase.path}" />
+			<param name="testcases.path" value="${samples.testcase.path}/Python" />
 			<param name="test-type" value="samples-python" />
 			<param name="includes.case.patterns" value="*.py" />
 			<param name="excludes.case.patterns" value="" />
