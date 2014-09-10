@@ -30,7 +30,7 @@ if ( typeof(OMA_SVC_NAME)  == "undefined" )
 }
 if ( typeof(V_COORD_SVC_NAME)  == "undefined" )
 {
-   V_COORD_SVC_NAME = "13579" ;
+   V_COORD_SVC_NAME = "10000" ;
 }
 
 var objRet = new Object() ;

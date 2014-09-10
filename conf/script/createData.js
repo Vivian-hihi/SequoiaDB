@@ -27,7 +27,7 @@ if ( typeof(CONFIG) == "undefined" ) { CONFIG = eval( '(' + '{}' + ')') ; }
 if ( typeof(GROUPNAME) == "undefined" ) {}
 
 if ( typeof(COORD_HOSTNAME) == "undefined" ) { COORD_HOSTNAME = "127.0.0.1" ; }
-if ( typeof(COORD_SERVICE) == "undefined" ) { COORD_SERVICE = "13579" ; }
+if ( typeof(COORD_SERVICE) == "undefined" ) { COORD_SERVICE = "10000" ; }
 if ( typeof(DB_USERNAME) == "undefined" ) { DB_USERNAME = "" ; }
 if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
 

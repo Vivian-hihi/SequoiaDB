@@ -23,12 +23,12 @@
 if ( typeof(OMA_HOST_NAME) == "undefined" )
 {
 }
-if ( typeof(OMA_SVC_NAME)  == "undefined" )
+if ( typeof(OMA_SVC_NAME) == "undefined" )
 {
 }
-if ( typeof(V_COORD_SVC_NAME)  == "undefined" )
+if ( typeof(V_COORD_SVC_NAME) == "undefined" )
 {
-   V_COORD_SVC_NAME = "13579" ;
+   V_COORD_SVC_NAME = "10000" ;
 }
 if ( typeof(V_COORD_INSTALL_PATH) == "undefined" )
 {
@@ -67,7 +67,7 @@ function main()
            typeof(OMA_SVC_NAME) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.Detail = "not specified host name or service name for omagent" ;
+         objRet.Detail = "not specified host name or service name of omagent" ;
          return objRet ;
       }
 
