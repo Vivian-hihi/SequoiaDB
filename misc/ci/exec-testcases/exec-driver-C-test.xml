@@ -25,8 +25,12 @@
     </target>
 
     <target name="Test-C-Samples" depends="Clean-C-Reports">
+        <hostinfo prefix="host" />
         <echo message="Begin test c samples testcases..." />
         <echo message="Perform the c samples testcases,with testcase.path=${samples.testcase.path}/C" />
+
+        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+        <property name="test.suite.class.name" value="testcases-samples-c.${deploy.name}-${host.NAME}-${parallel.num}." />
 
         <chmod dir="${samples.testcase.path}/C" perm="u+x" includes="*" />
         <foreach target="test-one-case" param="case-full-name">
@@ -34,14 +38,38 @@
                 <include name="${includes.dir.patterns}" />
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
-            <param name="test-type" value="samples-c" />
             <param name="testcases.path" value="${samples.testcase.path}/C" />
+            <param name="test.suite.class.name" value="${test.suite.class.name}" />
         </foreach>
+
+        <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+
+        <replaceregexp match="&lt;/testsuites(.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+
+        <replaceregexp match='classname="' replace='classname="${test.suite.class.name}.' flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+
+        <replace token="AllTests" value="${test.suite.class.name}">
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace>
+
+        <replace token="testsuites" value="testsuite">
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace> 
     </target>
 
     <target name="Test-Driver-C" depends="Clean-C-Reports">
+        <hostinfo prefix="host" />
         <echo message="Begin test driver c testcases..." />
         <echo message="Perform the driver c testcases,with testcase.path=${C.testcase.path}" />
+
+        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+        <property name="test.suite.class.name" value="testcases-driver-c.${deploy.name}-${host.NAME}-${parallel.num}." />
 
         <chmod dir="${C.testcase.path}" perm="u+x" includes="*" />
         <foreach target="test-one-case" param="case-full-name">
@@ -49,13 +77,32 @@
                 <include name="${includes.dir.patterns}" />
                 <exclude name="${excludes.dir.patterns}" />
             </fileset>
-            <param name="test-type" value="driver-c" />
             <param name="testcases.path" value="${C.testcase.path}" />
+            <param name="test.suite.class.name" value="${test.suite.class.name}" />
         </foreach>
+
+        <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+
+        <replaceregexp match="&lt;/testsuites(.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+
+        <replaceregexp match='classname="' replace='classname="${test.suite.class.name}.' flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+
+        <replace token="AllTests" value="${test.suite.class.name}">
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace>
+
+        <replace token="testsuites" value="testsuite">
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace> 
     </target>
 
     <target name="test-one-case" depends="">  
-        <hostinfo prefix="host" /> 
         <echo message="Exec ${case-full-name} ${append}" />
         <echo message="Env:LD_LIBRARY_PATH=/opt/sequoiadb/lib" />
 
@@ -91,29 +138,7 @@
         </tstamp>
         <sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
         <echo message="The result code is ${ret.code} and it's succ ..." />
-        <echo message="The testcase ${test.case.name} end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." /> 
-
-        <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-        <property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}" />
-        <replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
-            <fileset dir="${reports.path}/" includes="*" />
-        </replaceregexp>
-
-        <replaceregexp match="&lt;/testsuites(.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
-            <fileset dir="${reports.path}/" includes="*" />
-        </replaceregexp>
-
-        <replaceregexp match='classname="' replace='classname="${test.suite.class.name}' flags="g" byline="true" encoding="utf-8">
-            <fileset dir="${reports.path}/" includes="*" />
-        </replaceregexp>
-
-        <replace token="AllTests" value="${test.suite.class.name}">
-            <fileset dir="${reports.path}/"  includes="*" />
-        </replace>
-
-        <replace token="testsuites" value="testsuite">
-            <fileset dir="${reports.path}/"  includes="*" />
-        </replace>          
+        <echo message="The testcase ${test.case.name} end with ${testcase.end.time} and cost ${testcase.timeOutput} s in total..." />          
     </target>
 </project>
 
