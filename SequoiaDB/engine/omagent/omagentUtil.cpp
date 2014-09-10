@@ -461,8 +461,17 @@ namespace engine
       rc = utilListNodes( nodes, -1, svcname ) ;
       if ( SDB_OK == rc && nodes.size() > 0 )
       {
-         isRuning = TRUE ;
-         pid = (*nodes.begin())._pid ;
+         for ( UINT32 i = 0 ; i < nodes.size() ; ++i )
+         {
+            utilNodeInfo &info = nodes[ i ] ;
+            if ( SDB_TYPE_OMA == info._type )
+            {
+               continue ;
+            }
+            isRuning = TRUE ;
+            pid = info._pid ;
+            break ;
+         }
       }
 
       return rc ;
