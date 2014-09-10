@@ -329,7 +329,7 @@ namespace engine
 
    // *****************************************************************
    // query host status
-   #define  OM_QUERY_HOST_STATUS             "query host status"
+   #define  OM_QUERY_HOST_STATUS_REQ         "query host status"
    // *****************************************************************
 
    // om rest query_business_type_req

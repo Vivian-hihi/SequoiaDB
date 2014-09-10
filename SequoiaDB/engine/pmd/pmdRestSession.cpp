@@ -404,20 +404,17 @@ namespace engine
          else if ( ossStrcasecmp( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omScanHostCommand( pAdptor, this, 
-                                                       OM_DEFAULT_LOCAL_HOST, 
-                                                       localAgentPort ) ;
+                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omCheckHostCommand( pAdptor, this, 
-                                                        OM_DEFAULT_LOCAL_HOST, 
-                                                        localAgentPort ) ;
+                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omAddHostCommand( pAdptor, this, 
-                                                      OM_DEFAULT_LOCAL_HOST, 
-                                                      localAgentPort ) ;
+                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_LIST_HOST_REQ ) == 0 )
          {
@@ -431,30 +428,24 @@ namespace engine
                                                                           == 0 )
          {
             commandIf = SDB_OSS_NEW omQueryBusinessTypeCommand( pAdptor, this, 
-                                                           _wwwRootPath.c_str(), 
-                                                           pFilePath ) ;
+                                       _wwwRootPath.c_str(), pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, 
                                   OM_QUERY_BUSINESS_TEMPLATE_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omQueryBusinessTemplateCommand( pAdptor, 
-                                                                    this, 
-                                                                    _wwwRootPath.c_str(), 
-                                                                    pFilePath ) ;
+                                       this, _wwwRootPath.c_str(), pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CONFIG_BUSINESS_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omConfigBusinessCommand( pAdptor, this, 
-                                                             _wwwRootPath.c_str(), 
-                                                             pFilePath ) ;
+                                       _wwwRootPath.c_str(), pFilePath ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_INSTALL_BUSINESS_REQ) == 0 )
          {
             commandIf = SDB_OSS_NEW omInstallBusinessReq( pAdptor, this, 
-                                                          _wwwRootPath.c_str(), 
-                                                          pFilePath, 
-                                                          OM_DEFAULT_LOCAL_HOST, 
-                                                          localAgentPort ) ;
+                                       _wwwRootPath.c_str(), pFilePath, 
+                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_PROGRESS ) == 0 )
          {
@@ -483,14 +474,17 @@ namespace engine
          else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omRemoveHostCommand( pAdptor, this,
-                                                         OM_DEFAULT_LOCAL_HOST, 
-                                                         localAgentPort ) ;
+                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_BUSINESS_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omRemoveBusinessCommand( pAdptor, this,
-                                                         OM_DEFAULT_LOCAL_HOST, 
-                                                         localAgentPort ) ;
+                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_STATUS_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omQueryHostStatusCommand( pAdptor, this,
+                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
          }
          else
          {

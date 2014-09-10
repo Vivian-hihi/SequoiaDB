@@ -686,6 +686,11 @@ namespace engine
          INT32           _getRestHostList( list<string> &hostNameList ) ;
          INT32           _verifyHostInfo( list<string> &hostNameList, 
                                           list<simpleHostDisk> &hostInfoList ) ;
+         INT32           _addQuerHostStatusReq( omManager *om,
+                                          pmdRemoteSession *remoteSession,
+                                          list<simpleHostDisk> &hostInfoList ) ;
+         INT32           _getHostStatus( list<simpleHostDisk> &hostInfoList, 
+                                         BSONObj &bsonStatus ) ;
    } ;
 
    class omGetFileCommand : public omCommandInterface

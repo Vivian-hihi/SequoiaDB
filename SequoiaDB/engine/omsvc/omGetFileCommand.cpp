@@ -1290,8 +1290,9 @@ namespace engine
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG(PDERROR, "build query msg failed:cmd=%s,rc=%d", 
-                OM_INSTALL_REMOTE_AGENT, rc ) ;
+         _errorDetail = string( "build query msg failed:cmd=" ) 
+                        + OM_INSTALL_REMOTE_AGENT ;
+         PD_LOG(PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1303,6 +1304,7 @@ namespace engine
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
+         _errorDetail = "addSession failed" ;
          PD_LOG( PDERROR, "addSession failed" ) ;
          SDB_OSS_FREE( pContent ) ;
          goto error ;
@@ -1313,7 +1315,8 @@ namespace engine
       rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
+         _errorDetail = "send message to local agent failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          SDB_OSS_FREE( pContent ) ;
          remoteSession->clearSubSession() ;
          goto error ;
@@ -1323,7 +1326,8 @@ namespace engine
       rc = _receiveFromAgent( remoteSession, flag, result ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
+         _errorDetail = "receive from agent failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1486,13 +1490,15 @@ namespace engine
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
-         PD_LOG( PDERROR, "addSession failed" ) ;
+         _errorDetail = "addSession failed" ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          goto error ;
       }
       rc = _addCheckHostReq( om, remoteSession, hostInfoList ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "addCheckHostReq failed:rc=%d", rc ) ;
+         _errorDetail = "generate check host request failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto done ;
       }
 
@@ -1500,7 +1506,8 @@ namespace engine
       rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
+         _errorDetail = "wait agent's replay failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1515,7 +1522,6 @@ namespace engine
          pmdSubSession *subSession = subSessionVec[i] ;
          if ( subSession->isDisconnect() )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
             PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
                    routeID2String(subSession->getNodeID()).c_str(), rc ) ;
             continue ;
@@ -1525,7 +1531,8 @@ namespace engine
          if ( NULL == pRspMsg )
          {
             rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG(PDERROR, "unexpected result:rc=%d", rc ) ;
+            _errorDetail = "unexpected result" ;
+            PD_LOG(PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
             goto error ;
          }
 
@@ -1533,7 +1540,8 @@ namespace engine
                                &numReturned, objVec ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "extract reply failed:rc=%d", rc ) ;
+            _errorDetail = "extract reply failed" ;
+            PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
             goto error ;
          }
 
@@ -1552,7 +1560,8 @@ namespace engine
          if ( 1 != objVec.size() )
          {
             rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG( PDERROR, "unexpected response size:rc=%d", rc ) ;
+            _errorDetail = "unexpected response size" ;
+            PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
             goto error ;
          }
 
@@ -1743,7 +1752,6 @@ namespace engine
       rc = _installAgent( hostInfoList, needUninstallHost ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "install agent failed" ;
          PD_LOG(PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
@@ -1752,7 +1760,6 @@ namespace engine
       rc = _checkHostEnv( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "check host env failed" ;
          PD_LOG(PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
@@ -6349,6 +6356,15 @@ namespace engine
                            oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
          }
       }
+
+      if ( hostNameList.size() == 0 )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_FIELD_HOST_INFO )
+                        + " is invalid" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s:rest=%s", _errorDetail.c_str(), pHostInfo ) ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
@@ -6429,6 +6445,16 @@ namespace engine
                hostDisk.diskInfo.push_back( diskInfo ) ;
             }
          }
+
+         hostInfoList.push_back( hostDisk ) ;
+      }
+
+      if ( hostInfoList.size() == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         _errorDetail = "host is not found" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
       }
    done:
       if ( -1 != contextID )
@@ -6440,13 +6466,183 @@ namespace engine
       goto done ;
    }
 
+   INT32 omQueryHostStatusCommand::_addQuerHostStatusReq( omManager *om,
+                                            pmdRemoteSession *remoteSession,
+                                            list<simpleHostDisk> &hostInfoList ) 
+   {
+      INT32 rc = SDB_OK ;
+      list<simpleHostDisk>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
+      {
+         MsgRouteID routeID ;
+         BSONArrayBuilder arrayBuilder ;
+         BSONObj bsonRequest ;
+         pmdSubSession *subSession   = NULL ;
+         CHAR *pContent              = NULL ;
+         INT32 contentSize           = 0 ;
+         simpleHostDisk *pHostDisk   = &(*iter) ;
+         routeID   = om->updateAgentInfo( pHostDisk->hostName, 
+                                          pHostDisk->agentPort ) ;
+         subSession = remoteSession->addSubSession( routeID.value ) ;
+         if ( NULL == subSession )
+         {
+            rc = SDB_OOM ;
+            PD_LOG( PDERROR, "addSubSessin failed" ) ;
+            goto error ;
+         }
+
+         list<simpleDiskInfo>::iterator diskIter = pHostDisk->diskInfo.begin() ;
+         while ( diskIter != pHostDisk->diskInfo.end() ) 
+         {
+            BSONObj tmp = BSON( OM_BSON_FIELD_DISK_NAME << diskIter->diskName
+                                << OM_BSON_FIELD_DISK_MOUNT 
+                                << diskIter->mountPath ) ;
+            arrayBuilder.append( tmp ) ;
+            diskIter++ ;
+         }
+
+         bsonRequest = BSON( OM_BSON_FIELD_HOST_NAME << pHostDisk->hostName 
+                             << OM_BSON_FIELD_HOST_USER << pHostDisk->user 
+                             << OM_BSON_FIELD_HOST_PASSWD 
+                             << pHostDisk->passwd 
+                             << OM_BSON_FIELD_DISK << arrayBuilder.arr() ) ;
+         rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                                CMD_ADMIN_PREFIX OM_CHECK_HOST_REQ,
+                                0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "msgBuildQueryMsg failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         subSession->setReqMsg( (MsgHeader *)pContent ) ;
+         iter++;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryHostStatusCommand::_getHostStatus( 
+                                             list<simpleHostDisk> &hostInfoList, 
+                                             BSONObj &bsonStatus )
+   {
+      INT32 rc      = SDB_OK ;
+      omManager *om = NULL ;
+      BSONArrayBuilder arrayBuilder ;
+      pmdRemoteSession *remoteSession = NULL ;
+      VEC_SUB_SESSIONPTR subSessionVec ;
+      INT32 sucNum   = 0 ; 
+      INT32 totalNum = 0 ;
+
+      // create remote session
+      om            = sdbGetOMManager() ;
+      remoteSession = om->getRSManager()->addSession( _cb, 
+                                                      OM_CHECK_HOST_INTERVAL,
+                                                      NULL ) ;
+      if ( NULL == remoteSession )
+      {
+         rc = SDB_OOM ;
+         _errorDetail = "" ;
+         PD_LOG( PDERROR, "addSession failed" ) ;
+         goto error ;
+      }
+      rc = _addQuerHostStatusReq( om, remoteSession, hostInfoList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_addQuerHostStatusReq failed:rc=%d", rc ) ;
+         goto done ;
+      }
+
+      remoteSession->sendMsg( &sucNum, &totalNum ) ;
+      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      for ( UINT32 i = 0 ; i < subSessionVec.size() ; i++ )
+      {
+         vector<BSONObj> objVec ;
+         SINT32 flag               = SDB_OK ;
+         SINT64 contextID          = -1 ;
+         SINT32 startFrom          = 0 ;
+         SINT32 numReturned        = 0 ;
+         MsgHeader* pRspMsg        = NULL ;
+         pmdSubSession *subSession = subSessionVec[i] ;
+         if ( subSession->isDisconnect() )
+         {
+            string tmpHost = "" ;
+            string tmpService ;
+            om->getHostInfoByID( subSession->getNodeID(), tmpHost, 
+                                 tmpService ) ;
+            if ( tmpHost != "" )
+            {
+               BSONObj obj = BSON( OM_BSON_FIELD_HOST_NAME << tmpHost 
+                                   << OM_REST_RES_RETCODE << SDB_NETWORK ) ;
+               arrayBuilder.append( obj ) ;
+            }
+            PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
+                   routeID2String(subSession->getNodeID()).c_str(), rc ) ;
+            continue ;
+         }
+
+         pRspMsg = subSession->getRspMsg() ;
+         if ( NULL == pRspMsg )
+         {
+            rc = SDB_UNEXPECTED_RESULT ;
+            PD_LOG(PDERROR, "unexpected result:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
+                               &numReturned, objVec ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "extract reply failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         if ( SDB_OK != flag )
+         {
+            rc = flag ;
+            if ( objVec.size() > 0 )
+            {
+               _errorDetail = objVec[0].getStringField( OP_ERR_DETAIL ) ;
+            }
+            PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                    _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         if ( 1 != objVec.size() )
+         {
+            rc = SDB_UNEXPECTED_RESULT ;
+            PD_LOG( PDERROR, "unexpected response size:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         BSONObj result = objVec[0] ;
+         arrayBuilder.append( result ) ;
+      }
+
+      bsonStatus = BSON( OM_BSON_FIELD_HOST_INFO << arrayBuilder.arr() ) ;
+   done:
+      _clearSession( om, remoteSession ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omQueryHostStatusCommand::doCommand()
    {
       INT32 rc = SDB_OK ;
       list<string> hostNameList ;
       list<simpleHostDisk> hostInfoList ;
-      BSONObjBuilder statusBuilder ;
-      BSONObj status ;
+      BSONObj bsonStatus ;
       BSONObj result ;
       rc = _getRestHostList( hostNameList ) ;
       if ( SDB_OK != rc )
@@ -6464,17 +6660,16 @@ namespace engine
          goto error ;
       }
 
-//      rc = _getHostStatus( hostInfoList, statusBuilder ) ;
-//      if ( SDB_OK != rc )
-//      {
-//         PD_LOG( PDERROR, "_getHostStatus failed:rc=%d", rc ) ;
-//         _sendErrorRes2Web( rc, _errorDetail ) ;
-//         goto error ;
-//      }
-
-      status = statusBuilder.obj() ;
-      _restAdaptor->appendHttpBody( _restSession, status .objdata(), 
-                                    status .objsize(), 1 ) ;
+      rc = _getHostStatus( hostInfoList, bsonStatus ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getHostStatus failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+      
+      _restAdaptor->appendHttpBody( _restSession, bsonStatus .objdata(), 
+                                    bsonStatus .objsize(), 1 ) ;
       result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
