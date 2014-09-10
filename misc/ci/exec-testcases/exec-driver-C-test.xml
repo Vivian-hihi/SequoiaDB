@@ -10,8 +10,7 @@
 
 <project name="Exec-C-Testcases" default="Test-Driver-C-Over">
     <property file="${ci.properties.path}" />
-    <!-- <property name="test_name" value="*" /> --> 
-    <!-- <property name="append" value=" --gtest_filter=${test_name}  --gtest_output=xml:${reports.path}/ " /> -->
+
     <property name="append" value=" --gtest_filter=${includes.dir.patterns}  --gtest_output=xml:${reports.path}/ " />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>

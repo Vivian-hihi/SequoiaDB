@@ -9,7 +9,7 @@
 <!--@param ${test_name}: will not test name. -->
 
 <project name="Exec-CPP-Testcases" default="Test-Driver-CPP-Over">
-    <!-- <property name="test_name" value="*" /> --> 
+
     <property name="append" value=" --gtest_filter=${includes.dir.patterns}  --gtest_output=xml:${reports.path}/ " />
     <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
         <classpath>
