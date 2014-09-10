@@ -98,8 +98,9 @@
 			</ant>
 		</parallel>
 
-		<basename property="antFileName" file="${ant.file}" suffix=".xml" />
+		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
 		<parallel>
+			<echo message="Begin to test basic tests under parallel env on a machine..." />
 			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" antFileName="${antFileName}" >
 				<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
 				<param name="excludes.dir.patterns" value="vote" />
