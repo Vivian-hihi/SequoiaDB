@@ -126,7 +126,7 @@
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="test-type" value="@{test-type}" />
 					<!-- <property name="antFileName" value="${antFileName}" /> -->
-					<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" />
+					<property name="parallel.flag" value="parallel" />
 				</ant>
 			</sequential>
 		</for>

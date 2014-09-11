@@ -46,6 +46,7 @@
 					<property name="test-type" value="@{test-type}" />
 					<property name="deploy.conffile.wildcard" value="unparallel" />
 					<!-- <property name="antFileName" value="${antFileName}" /> -->
+					<property name="parallel.flag" value="unparallel" />
 				</ant>
 			</sequential>
 		</for>
