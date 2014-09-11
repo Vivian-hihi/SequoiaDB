@@ -22,7 +22,7 @@
 		<property name="db.path" value="${install.path}/sequoiadb" />
 
 		<echo message="Begin to clean install env..." />
-		<available file="${db.path}/bin/sdbstop" property="sdb.installed" />
+		<available property="sdb.installed" file="${db.path}/bin/sdbstop" />
 		<if>
 			<equals arg1="${sdb.installed}" arg2="true" />
 			<then>
@@ -37,6 +37,7 @@
 				<echo message="Clean install env compeleted." />
 			</then>
 		</if>
+		<sleep seconds="10"/>
 	</target>
 
 
