@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <functional>
 #include <cctype>
+#include <iostream>
 
 using namespace boost::xpressive ;
 namespace engine
@@ -224,7 +225,8 @@ namespace engine
       cstr = (CHAR*)SDB_OSS_MALLOC ( bufSize + 1 ) ;
       if ( !cstr )
       {
-         std::cout << "Alloc memory(" << bufSize + 1 << ") failed" << endl ;
+         std::cout << "Alloc memory(" << bufSize + 1 << ") failed"
+                   << std::endl ;
          rc = SDB_OOM ;
          goto error ;
       }
