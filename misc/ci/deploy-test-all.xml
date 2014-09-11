@@ -81,7 +81,7 @@
 					<property name="deploy.path" value="${WORKSPACE}/deploy" />
 					<property name="test.reports.path" value="${WORKSPACE}/reports" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
-					<property name="WORKSPACE" value="${WORKSPACE}" />
+					<!-- <property name="WORKSPACE" value="${WORKSPACE}" /> -->
 					<!-- <property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" /> -->
 				</ant>
 			</then>
