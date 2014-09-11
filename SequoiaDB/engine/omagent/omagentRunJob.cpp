@@ -94,12 +94,12 @@ namespace engine
       }
       // build js arguments
       ossSnprintf( _jsFileArgs, JS_ARG_LEN,
-                   "var COORD_HOSTNAME = \'%s\' "
-                   "var COORD_SVCNAME = \'%s\' "
+                   "var COORD_HOSTNAME = \'%s\'; "
+                   "var COORD_SVCNAME = \'%s\'; "
                    "var INSTALL_HOSTNAME = \'%s\'; "
                    "var INSTALL_SERVICE = \'%s\'; "
                    "var INSTALL_PATH = \'%s\'; var CONFIG = \'%s\'; ",
-                   _vCoordHostName.c_str(), _vCoordSvcName.c_str();
+                   _vCoordHostName.c_str(), _vCoordSvcName.c_str(),
                    _info._hostName.c_str(), _info._svcName.c_str(),
                    _info._dbPath.c_str(), _info._conf.toString().c_str() ) ;
   
@@ -134,7 +134,6 @@ namespace engine
    INT32 _omaRunInstallCatalogJob::doit ( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-//      INT32 retRc = SDB_OK ;
       BSONObj rval ;
       BSONObj detail ;
       BSONObj subObj ;
@@ -191,69 +190,21 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-/*
-      std::vector<BSONObj>::iterator it = objs.begin() ;
-      while( it != objs.end() )
-      {
-         InstallInfo info ;
-         BSONObj conf ;
-         BSONObj pattern ;
 
-         // _dataGroupName
-         rc = omaGetStringElement( *it, OMA_OPTION_DATAGROUPNAME,
-                                       &info._dataGroupName ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d",
-                   OMA_OPTION_DATAGROUPNAME, rc ) ;
-         // _hostname
-         rc = omaGetStringElement( *it, OMA_FIELD_HOSTNAME,
-                                       &info._hostName ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
-         // _svcName
-         rc = omaGetStringElement( *it, OMA_OPTION_SVCNAME,
-                                       &info._svcName ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_OPTION_SVCNAME, rc ) ;
-         // _dbPath
-         rc = omaGetStringElement( *it, OMA_OPTION_DBPATH,
-                                       &info._dbPath ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
-
-//         // _confPath
-//         rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH,
-//                                       &info._confPath ) ;
-//         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-//                   "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
-
-         // _conf
-         pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
-                         OMA_OPTION_DATAGROUPNAME << 1 <<
-                         OMA_OPTION_SVCNAME << 1 <<
-                         OMA_OPTION_DBPATH << 1 ) ;
-         conf = (*it).filterFieldsUndotted( pattern, false ) ;
-         info._conf = conf ;
-         // save info
-         _installInfos.push_back( info ) ;
-         // get next install info
-         it++ ;
-      }
-*/
-      // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
-         goto error ;
-      }
       // set js file
       rc = setJSFile( FILE_CREATE_COORD ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d",
                       FILE_CREATE_COORD, rc ) ;
+         goto error ;
+      }
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
          goto error ;
       }
       // build js arguments
@@ -473,11 +424,8 @@ namespace engine
    INT32 _omaRunRollbackCoordJob::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
-      BSONObj installedCoord ;
       CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
 
-      // get installed coord node info
-      _getInstalledCoordInfo( installedCoord ) ;
       // set js file
       rc = setJSFile( FILE_ROLLBACK_COORD ) ;
       if ( rc )
@@ -497,17 +445,13 @@ namespace engine
       // build js arguments
       ossSnprintf( tempBuff, JS_ARG_LEN,
                    "var COORD_HOSTNAME = \'%s\'; "
-                   "var COORD_SERVICE = \'%s\'; "
-                   "var INSTALLED_COORD = \'%S\' ",
+                   "var COORD_SERVICE = \'%s\'; " ,
                    _vCoordHostName.c_str(),
-                   _vCoordSvcName.c_str(),
-                   installedCoord.toString().c_str() ) ;
+                   _vCoordSvcName.c_str() ) ;
 
-      PD_LOG ( PDDEBUG, "Create data node passes arguments: "
-               "var COORD_HOSTNAME = %s; var COORD_SERVICE = %s;"
-               "var INSTALLED_COORD = %s ",
-               _vCoordHostName.c_str(), _vCoordSvcName.c_str(),
-               installedCoord.toString().c_str() ) ;
+      PD_LOG ( PDDEBUG, "Rollback coord nodes passes arguments: "
+               "var COORD_HOSTNAME = %s; var COORD_SERVICE = %s;" ,
+               _vCoordHostName.c_str(), _vCoordSvcName.c_str() ) ;
 
       _content.clear() ;
       _content += tempBuff ;
@@ -563,26 +507,6 @@ namespace engine
       goto done ;
    }
 
-   void _omaRunRollbackCoordJob::_getInstalledCoordInfo( BSONObj &obj )
-   {
-      BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
-      map< string, vector< InstalledNode > >::iterator it = _info.begin() ;
-
-      for( ; it != _info.end(); it++ )
-      {
-         vector< InstalledNode > &nodes = it->second ;
-         vector< InstalledNode >::iterator itr = nodes.begin() ;
-         for( ; itr != nodes.end(); itr++ )
-         {
-            bab.append( BSON( OMA_FIELD_HOSTNAME << itr->_hostName <<
-                              OMA_FIELD_SVCNAME <<  itr->_svcName ) ) ;
-         }
-      }
-      bob.appendArray( OMA_FIELD_HOSTS, bab.arr() ) ;
-      obj = bob.obj() ;
-   }
-
    /*
       install db business task run rollback catalog job
    */
@@ -603,11 +527,8 @@ namespace engine
    INT32 _omaRunRollbackCatalogJob::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
-      BSONObj catalogInstalledNodeInfo ;
       CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
 
-      // get installed catalog node info
-      _getInstalledCatalogInfo( catalogInstalledNodeInfo ) ;
       // set js file
       rc = setJSFile( FILE_ROLLBACK_CATALOG ) ;
       if ( rc )
@@ -631,7 +552,7 @@ namespace engine
                    _vCoordHostName.c_str(),
                    _vCoordSvcName.c_str() ) ;
 
-      PD_LOG ( PDDEBUG, "Create data node passes arguments: "
+      PD_LOG ( PDDEBUG, "Rollback catalog nodes passes arguments: "
                "var COORD_HOSTNAME = %s; var COORD_SERVICE = %s;",
                _vCoordHostName.c_str(), _vCoordSvcName.c_str() ) ;
 
@@ -689,26 +610,6 @@ namespace engine
       goto done ;
    }
 
-   void _omaRunRollbackCatalogJob::_getInstalledCatalogInfo ( BSONObj &obj )
-   {
-      BSONObjBuilder bob ;
-      BSONArrayBuilder bab ;
-      map< string, vector< InstalledNode > >::iterator it = _info.begin() ;
-
-      for( ; it != _info.end(); it++ )
-      {
-         vector< InstalledNode > &nodes = it->second ;
-         vector< InstalledNode >::iterator itr = nodes.begin() ;
-         for( ; itr != nodes.end(); itr++ )
-         {
-            bab.append ( BSON( OMA_FIELD_HOSTNAME << itr->_hostName <<
-                               OMA_FIELD_SVCNAME << itr->_svcName ) ) ;
-         }
-      }
-      bob.appendArray( OMA_FIELD_HOSTS, bab.arr() ) ;
-      obj = bob.obj() ;
-   }
-
    /*
       install db business task run rollback data node job
    */
@@ -733,7 +634,7 @@ namespace engine
       BSONObj dataGroupInfo ;
       CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
 
-      // get installed catalog node info
+      // get installed data nodes info
       _getInstalledDataGroupInfo( dataGroupInfo ) ;
       // set js file
       rc = setJSFile( FILE_ROLLBACK_DATANODE ) ;
@@ -760,7 +661,7 @@ namespace engine
                    _vCoordSvcName.c_str(),
                    dataGroupInfo.toString().c_str() ) ;
 
-      PD_LOG ( PDDEBUG, "Create data node passes arguments: "
+      PD_LOG ( PDDEBUG, "Rollback data nodes passes arguments: "
                "var COORD_HOSTNAME = %s; var COORD_SERVICE = %s;"
                "var CREATED_DATA_GROUP = %s",
                _vCoordHostName.c_str(), _vCoordSvcName.c_str(),
