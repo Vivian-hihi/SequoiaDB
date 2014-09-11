@@ -1040,11 +1040,11 @@ namespace engine
          // callback
          if ( pHandle && !disSubs.empty() )
          {
-            itPtr = _mapReq2SubSession.begin() ;
-            while ( itPtr != _mapReq2SubSession.end() )
+            MAP_SUB_SESSIONPTR_IT disSubPtr = disSubs.begin() ;
+            while ( disSubPtr != disSubs.end() )
             {
-               pSubSession = itPtr->second ;
-               ++itPtr ;
+               pSubSession = disSubPtr->second ;
+               ++disSubPtr ;
                pHandle->onReply( pSubSession->parent(), &pSubSession,
                                  pSubSession->getRspMsg( FALSE ) ) ;
             }

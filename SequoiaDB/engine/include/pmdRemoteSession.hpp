@@ -70,6 +70,9 @@ namespace engine
                                       _pmdSubSession **ppSub,
                                       INT32 flag ) = 0 ;
 
+         /*
+            include disconnect: MSG_BS_DISCONNECT or isDisconnect()
+         */
          virtual void   onReply( _pmdRemoteSession *pSession,
                                  _pmdSubSession **ppSub,
                                  const MsgHeader *pReply ) = 0 ;
