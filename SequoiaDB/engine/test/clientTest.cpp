@@ -56,6 +56,7 @@ int inBufferSize           = 0 ;
 INT64 requestID            = 0 ;
 INT32 g_Version            = 1 ;
 INT32 g_W                  = 1 ;
+INT32 g_tid                = -1 ;
 ossSpinXLatch _mutex ;
 
 // reply related variables
@@ -246,7 +247,14 @@ INT32 msgSend ( BOOLEAN incRequestID )
       goto error ;
    }
 
-   header->TID = tid ;
+   if ( g_tid == -1 )
+   {
+      header->TID = tid ;
+   }
+   else
+   {
+      header->TID = ( UINT32 )g_tid ;
+   }
    header->routeID.value = 0 ;
 
    if ( incRequestID )
@@ -617,7 +625,7 @@ void displayHelp ( vector<string> subHelp )
                   TABSPACE, ADMIN_COMMAND ) ;
          printf ( "%s%s{get datablocks < collection name >}\n", TABSPACE,
                   ADMIN_COMMAND ) ;
-         printf ( "%s%s{set {pdlevel [0~5]|localver <version>|localw <w>}}\n",
+         printf ( "%s%s{set {pdlevel [0~5]|localver <version>|localw <w>|tid [tid]}}\n",
                   TABSPACE, ADMIN_COMMAND ) ;
          printf ( "%s%s shutdown|backup offline [To path]|command\n", TABSPACE,
                   ADMIN_COMMAND ) ;
@@ -687,13 +695,6 @@ INT32 admin ( string Command, vector<string> arg )
    //BOOLEAN receiveResultSet = FALSE ;
    BOOLEAN querySuccess = FALSE ;
    INT32 flags = 0 ;
-
-   if ( !sock )
-   {
-      printf ( "-Error: Connection doesn't exist\n" ) ;
-      rc = SDB_SYS ;
-      goto error ;
-   }
 
    if ( "create" == Command || "drop" == Command )
    {
@@ -789,7 +790,7 @@ INT32 admin ( string Command, vector<string> arg )
       }
       else if ( arg.size() >= 1 && "localver" == arg[0] )
       {
-         if ( arg.size() != 2 )
+         if ( arg.size() < 2 )
          {
             printf("-Error: command %s need version\n", "set localver" ) ;
             rc = SDB_INVALIDARG ;
@@ -801,7 +802,7 @@ INT32 admin ( string Command, vector<string> arg )
       }
       else if ( arg.size() >= 1 && "localw" == arg[0] )
       {
-         if ( arg.size() != 2 )
+         if ( arg.size() < 2 )
          {
             printf("-Error: command %s need w\n", "set localw" ) ;
             rc = SDB_INVALIDARG ;
@@ -809,6 +810,20 @@ INT32 admin ( string Command, vector<string> arg )
          }
          g_W = atoi( arg[1].c_str() ) ;
          printf(" change lcoal w to %d\n", g_W ) ;
+         goto done ;
+      }
+      else if ( arg.size() >= 1 && "tid" == arg[ 0 ] )
+      {
+         if ( arg.size() < 2 )
+         {
+            g_tid = -1 ;
+            printf(" change local tid to %d\n", ossGetCurrentThreadID() ) ;
+         }
+         else
+         {
+            g_tid = atoi( arg[1].c_str() ) ;
+            printf(" change local tid to %d\n", g_tid ) ;
+         }
          goto done ;
       }
       else
