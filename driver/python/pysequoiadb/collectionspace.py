@@ -165,7 +165,7 @@ class collectionspace(object):
       Parameters:
          Name      Type     Info:
          cl_name   str      The collection name.
-         options   str      The options for creating collection, including
+         options   dict     The options for creating collection, including
                                   "ShardingKey", "ReplSize", "IsMainCL" and
                                   "Compressed" informations, no options, if None.
       Return values:
