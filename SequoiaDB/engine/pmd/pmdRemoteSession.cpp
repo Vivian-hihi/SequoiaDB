@@ -62,6 +62,7 @@ namespace engine
       _processResult    = SDB_OK ;
       _userData         = 0 ;
       _needToDel        = FALSE ;
+      _hasStop          = FALSE ;
    }
 
    _pmdSubSession::~_pmdSubSession()
@@ -71,8 +72,6 @@ namespace engine
 
    void _pmdSubSession::clearReplyInfo()
    {
-      _isDisconnect  = FALSE ;
-
       if ( _event._Data && PMD_EDU_MEM_NONE != _event._dataMemType )
       {
          pmdEduEventRelase( _event, _parent->getEDUCB() ) ;
@@ -158,6 +157,7 @@ namespace engine
       {
          _isDisconnect = FALSE ;
          _needToDel    = TRUE ;
+         _hasStop      = FALSE ;
       }
    }
 
@@ -260,6 +260,11 @@ namespace engine
             }
             else if ( PMD_SSITR_DISCONNECT == _filter &&
                       pSub->isDisconnect() )
+            {
+               break ;
+            }
+            else if ( PMD_SSITR_CONNECT == _filter &&
+                      !pSub->isDisconnect() )
             {
                break ;
             }
@@ -369,6 +374,30 @@ namespace engine
       _mapSubSession.clear() ;
    }
 
+   void _pmdRemoteSession::stopSubSession()
+   {
+      INT32 rc = SDB_OK ;
+      pmdSubSession *pSubSession = NULL ;
+      MsgHeader interruptMsg ;
+      interruptMsg.messageLength = sizeof( MsgHeader ) ;
+      interruptMsg.opCode = MSG_BS_INTERRUPTE_SELF ;
+
+      pmdSubSessionItr itr = getSubSessionItr( PMD_SSITR_UNREPLY ) ;
+      while ( itr.more() )
+      {
+         pSubSession = itr.next() ;
+         if ( pSubSession->hasStop() )
+         {
+            continue ;
+         }
+         rc = postMsg( &interruptMsg, pSubSession ) ;
+         if ( SDB_OK == rc )
+         {
+            pSubSession->setStop( TRUE ) ;
+         }
+      }
+   }
+
    UINT32 _pmdRemoteSession::getSubSessionCount( PMD_SSITR_FILTER filter )
    {
       UINT32 count = 0 ;
@@ -379,7 +408,7 @@ namespace engine
       else
       {
          pmdSubSessionItr itr = getSubSessionItr( filter ) ;
-         
+
          while ( itr.more() )
          {
             itr.next() ;
@@ -751,7 +780,7 @@ namespace engine
       else
       {
          MAP_SUB_SESSIONPTR mapSessionPtrs ;
-         INT32 rc = waitReply1( waitAll, &mapSessionPtrs ) ;
+         rc = waitReply1( waitAll, &mapSessionPtrs ) ;
          if ( SDB_OK == rc )
          {
             MAP_SUB_SESSIONPTR_IT it = mapSessionPtrs.begin() ;
@@ -848,7 +877,8 @@ namespace engine
          }
 
          pSubSession = NULL ;
-         rc = _pSite->processEvent( event, _mapSubSession, &pSubSession ) ;
+         rc = _pSite->processEvent( event, _mapSubSession, &pSubSession,
+                                    _pHandle ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to process event, rc: %d", rc ) ;
 
          if ( pSubSession )
@@ -871,6 +901,54 @@ namespace engine
    void _pmdRemoteSession::addPending( pmdSubSession *pSubSession )
    {
       _mapPendingSubSession[ pSubSession->getNodeIDUInt() ] = pSubSession ;
+   }
+
+   INT32 _pmdRemoteSession::postMsg( MsgHeader * pMsg, UINT64 nodeID )
+   {
+      INT32 rc = SDB_OK ;
+      pmdSubSession *pSub = getSubSession( nodeID ) ;
+      if ( !pSub )
+      {
+         PD_LOG( PDERROR, "Session[%s] can't find sub session[%s]",
+                 _pEDUCB->toString().c_str(), routeID2String(nodeID).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      rc = postMsg( pMsg, pSub ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdRemoteSession::postMsg( MsgHeader * pMsg, pmdSubSession * pSub )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !pMsg || !pSub )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      pMsg->requestID = _pEDUCB->incCurRequestID() ;
+      pMsg->routeID.value = MSG_INVALID_ROUTEID ;
+      pMsg->TID = _pEDUCB->getTID() ;
+
+      rc = _pAgent->syncSend( pSub->getNodeID(), (void*)pMsg ) ;
+      if ( rc )
+      {
+         PD_LOG( PDWARNING, "Session[%s] send msg to node[%s] failed, "
+                 "rc: %d", _pEDUCB->toString().c_str(),
+                 routeID2String(pSub->getNodeID()).c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    /*
@@ -898,13 +976,15 @@ namespace engine
 
    INT32 _pmdRemoteSessionSite::processEvent( pmdEDUEvent &event,
                                               MAP_SUB_SESSION &mapSessions,
-                                              pmdSubSession **ppSub )
+                                              pmdSubSession **ppSub,
+                                              IRemoteSessionHandler *pHandle )
    {
       INT32 rc = SDB_OK ;
       MAP_SUB_SESSION_IT it ;
       MAP_SUB_SESSIONPTR_IT itPtr ;
       MsgHeader *pReply = NULL ;
       UINT64 nodeID = 0 ;
+      pmdSubSession *pSubSession = NULL ;
 
       SDB_ASSERT( ppSub, "ppSub can't be NULL" ) ;
 
@@ -922,6 +1002,8 @@ namespace engine
       // if is MSG_BS_DISCONNECT, the remote node is disconnect
       if ( MSG_BS_DISCONNECT == pReply->opCode )
       {
+         MAP_SUB_SESSIONPTR disSubs ;
+
          itPtr = _mapReq2SubSession.begin() ;
          while ( itPtr != _mapReq2SubSession.end() )
          {
@@ -931,23 +1013,41 @@ namespace engine
             }
             else if ( itPtr->second->getNodeIDUInt() == nodeID )
             {
-               itPtr->second->processEvent( event ) ;
-               itPtr->second->setNeedToDel( FALSE ) ;
+               pSubSession = itPtr->second ;
+               pSubSession->processEvent( event ) ;
+               pSubSession->setNeedToDel( FALSE ) ;
                if ( !*ppSub && ( it = mapSessions.find( nodeID ) ) !=
-                    mapSessions.end() &&
-                    &(it->second) == itPtr->second )
+                    mapSessions.end() && &(it->second) == pSubSession )
                {
-                  *ppSub = &(it->second) ;
+                  *ppSub = pSubSession ;
                }
                else
                {
-                  itPtr->second->parent()->addPending( itPtr->second ) ;
+                  pSubSession->parent()->addPending( pSubSession ) ;
                }
                // remove from request id map
                _mapReq2SubSession.erase( itPtr++ ) ;
+
+               if ( pHandle )
+               {
+                  disSubs[ pSubSession->getNodeIDUInt() ] = pSubSession ;
+               }
                continue ;
             }
             ++itPtr ;
+         }
+
+         // callback
+         if ( pHandle && !disSubs.empty() )
+         {
+            itPtr = _mapReq2SubSession.begin() ;
+            while ( itPtr != _mapReq2SubSession.end() )
+            {
+               pSubSession = itPtr->second ;
+               ++itPtr ;
+               pHandle->onReply( pSubSession->parent(), &pSubSession,
+                                 pSubSession->getRspMsg( FALSE ) ) ;
+            }
          }
       }
       else
@@ -955,21 +1055,27 @@ namespace engine
          itPtr = _mapReq2SubSession.find( pReply->requestID ) ;
          if ( itPtr != _mapReq2SubSession.end() )
          {
-            itPtr->second->processEvent( event ) ;
-            itPtr->second->setNeedToDel( FALSE ) ;
-            nodeID = itPtr->second->getNodeIDUInt() ;
+            pSubSession = itPtr->second ;
+            pSubSession->processEvent( event ) ;
+            pSubSession->setNeedToDel( FALSE ) ;
+            nodeID = pSubSession->getNodeIDUInt() ;
             if ( !*ppSub && ( it = mapSessions.find( nodeID ) ) !=
-                 mapSessions.end() &&
-                 &(it->second) == itPtr->second )
+                 mapSessions.end() && &(it->second) == pSubSession )
             {
-               *ppSub = &(it->second) ;
+               *ppSub = pSubSession ;
             }
             else
             {
-               itPtr->second->parent()->addPending( itPtr->second ) ;
+               pSubSession->parent()->addPending( pSubSession ) ;
             }
             // remove from request id map
             _mapReq2SubSession.erase( itPtr ) ;
+
+            if ( pHandle )
+            {
+               pHandle->onReply( pSubSession->parent(), &pSubSession,
+                                 pSubSession->getRspMsg( FALSE ) ) ;
+            }
          }
          else
          {

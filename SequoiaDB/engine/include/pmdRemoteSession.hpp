@@ -70,6 +70,10 @@ namespace engine
                                       _pmdSubSession **ppSub,
                                       INT32 flag ) = 0 ;
 
+         virtual void   onReply( _pmdRemoteSession *pSession,
+                                 _pmdSubSession **ppSub,
+                                 const MsgHeader *pReply ) = 0 ;
+
    } ;
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
 
@@ -123,6 +127,7 @@ namespace engine
          BOOLEAN     isDisconnect() const { return _isDisconnect ; }
          BOOLEAN     isSend() const { return _isSend ; }
          BOOLEAN     hasReply() const { return _event._Data ? TRUE : FALSE ; }
+         BOOLEAN     hasStop() const { return _hasStop ; }
          void        clearSend() { _isSend = FALSE ; }
 
       protected:
@@ -131,9 +136,11 @@ namespace engine
          void        setReqID( UINT64 reqID ) { _reqID = reqID ; }
          void        setSendResult( BOOLEAN isSend ) ;
          void        processEvent( pmdEDUEvent &event ) ;
+         void        setStop( BOOLEAN isStop ) { _hasStop = isStop ; }
 
          BOOLEAN     isNeedToDel() const { return _needToDel ; }
          void        setNeedToDel( BOOLEAN needToDel ) { _needToDel = needToDel ; }
+         void        setDisconnect( BOOLEAN disconnect ) { _isDisconnect = disconnect ; }
 
       protected:
          _pmdRemoteSession          *_parent ;
@@ -152,6 +159,7 @@ namespace engine
 
          UINT64                     _userData ;
          BOOLEAN                    _needToDel ;
+         BOOLEAN                    _hasStop ;
    } ;
    typedef _pmdSubSession pmdSubSession ;
 
@@ -179,7 +187,8 @@ namespace engine
       PMD_SSITR_PROCESSED,             // recv reply, and processed
       PMD_SSITR_PROCESS_SUC,           // has process, and result = SDB_OK
       PMD_SSITR_PROCESS_FAIL,          // has process, but result != SDB_OK
-      PMD_SSITR_DISCONNECT             // send, but disconnect
+      PMD_SSITR_DISCONNECT,            // send, but disconnect
+      PMD_SSITR_CONNECT                // has connected
    } ;
 
    /*
@@ -228,6 +237,10 @@ namespace engine
          pmdSubSession* getSubSession( UINT64 nodeID ) ;
          void           delSubSession( UINT64 nodeID ) ;
          void           clearSubSession() ;
+         /*
+            Send MSG_BS_INTERRUPT_SELF to running sub sessions
+         */
+         void           stopSubSession() ;
 
          UINT32         getSubSessionCount( PMD_SSITR_FILTER filter =
                                             PMD_SSITR_ALL ) ;
@@ -266,7 +279,7 @@ namespace engine
                            INT32 *pTotalNum = NULL ) ;
 
          /*
-            Send to specail sub session, if the sub has sent, will not send.
+            Send to special sub session, if the sub has sent, will not send.
             if send failed, doesn't to call the handle callback
          */
          INT32    sendMsg( UINT64 nodeID ) ;
@@ -276,6 +289,14 @@ namespace engine
                               MAP_SUB_SESSIONPTR *pSubs = NULL ) ;
          INT32    waitReply( BOOLEAN waitAll = FALSE,
                              VEC_SUB_SESSIONPTR *pSubs = NULL ) ;
+
+         /*
+            Post msg to specail sub session, the msg will not save to pSub.
+            For msg: MSG_BS_INTERRUPT, MSG_BS_INTERRUPT_SELF,
+                     MSG_BS_DISCONNECT
+         */
+         INT32    postMsg( MsgHeader *pMsg, pmdSubSession *pSub ) ;
+         INT32    postMsg( MsgHeader *pMsg, UINT64 nodeID ) ;
 
       protected:
          void     addPending( pmdSubSession *pSubSession ) ;
@@ -326,10 +347,12 @@ namespace engine
       protected:
          INT32    processEvent( pmdEDUEvent &event,
                                 MAP_SUB_SESSION &mapSessions,
-                                pmdSubSession **ppSub ) ;
+                                pmdSubSession **ppSub,
+                                IRemoteSessionHandler *pHandle ) ;
          void     addSubSession( pmdSubSession *pSub ) ;
          void     delSubSession( UINT64 reqID ) ;
          void     addNodeID( UINT64 nodeID ) { _setNodeID.insert( nodeID ) ; }
+         void     removeNodeID( UINT64 nodeID ) { _setNodeID.erase( nodeID ) ; }
 
       private:
          MAP_SUB_SESSIONPTR               _mapReq2SubSession ;

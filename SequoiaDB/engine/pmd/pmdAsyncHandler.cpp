@@ -298,6 +298,13 @@ namespace engine
          // For interrupt message, we have to continue in order to push the
          // message
       }
+      else if ( MSG_BS_INTERRUPTE_SELF == header->opCode )
+      {
+         PD_LOG( PDEVENT, "Session[%s] recieved interrupt self message",
+                 pSession->sessionName() ) ;
+         pSession->eduCB()->interrupt() ;
+         goto done ;
+      }
 
       // push the mssage into session manager
       rc = _pSessionMgr->pushMessage( pSession, header, handle ) ;
