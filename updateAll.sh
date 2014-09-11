@@ -98,7 +98,7 @@ function installSdb()
 
    if [ $needInstall -ne 0 ] ; then
       echo "Begin to remove sdb...."
-      rm -r ${homePath}/17643 2>/del/null
+      rm -r ${homePath}/17643 2>/dev/null
       rm -r ${homePath}/50000 2>/dev/null
       rm -r ${homePath}/30000 2>/dev/null
       rm -r ${homePath}/30010 2>/dev/null
