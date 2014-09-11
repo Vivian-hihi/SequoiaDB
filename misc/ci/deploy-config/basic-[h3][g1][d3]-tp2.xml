@@ -83,6 +83,7 @@
 	</target>
 
 	<target name="test" depends="">
+		<property name="test-type-list" value="basic" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
@@ -99,7 +100,36 @@
 		</parallel>
 
 		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
+		<echo message="Begin to test basic tests under parallel env on a machine..." />
 		<parallel>
+			<for list="${test-type-list}" param="test-type">
+				<sequential>
+					<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+						<property name="test.machine.deploy.path" value="${test.machine.deploy.path}" />
+						<property name="install.path" value="${install.path}" />
+						<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+						<property name="test.reports.path" value="${test.reports.path}" />
+						<property name="test-type" value="@{test-type}" />
+						<!-- <property name="antFileName" value="${antFileName}" /> -->
+						<property name="parallel.flag" value="parallel" />
+					</ant>
+				</sequential>
+			</for>
+			<for list="${test-type-list}" param="test-type">
+				<sequential>
+					<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+						<property name="test.machine.deploy.path" value="${test.machine.deploy.path}" />
+						<property name="install.path" value="${install.path}" />
+						<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+						<property name="test.reports.path" value="${test.reports.path}" />
+						<property name="test-type" value="@{test-type}" />
+						<!-- <property name="antFileName" value="${antFileName}" /> -->
+						<property name="parallel.flag" value="parallel" />
+					</ant>
+				</sequential>
+			</for>
+		</parallel>
+		<!-- <parallel>
 			<echo message="Begin to test basic tests under parallel env on a machine..." />
 			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 				<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -119,6 +149,6 @@
 
 				<param name="coord.service.port" value="50000" />
 			</sdbtest>
-		</parallel>
+		</parallel> -->
 	</target>
 </project>
