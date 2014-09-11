@@ -316,8 +316,6 @@ namespace engine
 
       private:
          INT32 _genVCoordSvcName( CHAR *pSvcName, INT32 bufLen ) ;
-//         BOOLEAN _createVirtualCoordSucced ;
-//         BOOLEAN _removeVirtualCoordSucced ;
          CHAR _omaHostName[OSS_MAX_HOSTNAME + 1] ;
          CHAR _omaSvcName[OSS_MAX_SERVICENAME + 1] ;
          CHAR _vCoordSvcName[OSS_MAX_SERVICENAME + 1] ;
@@ -516,11 +514,13 @@ namespace engine
    } ;
 
    // run install catalog job
-   class _omaJobRunInstallCatalogCmd : public _omaCommand
+   class _omaRunInstallCatalogJob : public _omaCommand
    {
       public:
-         _omaJobRunInstallCatalogCmd ( InstallInfo &info ) ;
-         virtual ~_omaJobRunInstallCatalogCmd () ;
+         _omaRunInstallCatalogJob ( string &vCoordHostName,
+                                    string &vCoordSvcName,
+                                    InstallInfo &info ) ;
+         virtual ~_omaRunInstallCatalogJob () ;
 
       public:
          virtual const CHAR* name () { return "" ; }
@@ -528,17 +528,20 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         BSONObj _installInfo ;
-         InstallInfo _info ;
-
+         BSONObj                                        _installInfo ;
+         InstallInfo                                    _info ;
+         string                                         _vCoordHostName ;
+         string                                         _vCoordSvcName ;
    } ;
 
    // run install coord job
-   class _omaJobRunInstallCoordCmd : public _omaCommand
+   class _omaRunInstallCoordJob : public _omaCommand
    {
       public:
-         _omaJobRunInstallCoordCmd ( InstallInfo &info ) ;
-         virtual ~_omaJobRunInstallCoordCmd () ;
+         _omaRunInstallCoordJob ( string &vCoordHostName,
+                                  string &vCoordSvcName,
+                                  InstallInfo &info ) ;
+         virtual ~_omaRunInstallCoordJob () ;
 
       public:
          virtual const CHAR* name () { return "" ; }
@@ -546,17 +549,20 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         BSONObj _installInfo ;
-         InstallInfo _info ;
-
+         BSONObj                                        _installInfo ;
+         InstallInfo                                    _info ;
+         string                                         _vCoordHostName ;
+         string                                         _vCoordSvcName ;
    } ;
 
    // run install data node job
-   class _omaJobRunInstallDataCmd : public _omaCommand
+   class _omaRunInstallDataNodeJob : public _omaCommand
    {
       public:
-         _omaJobRunInstallDataCmd ( InstallInfo &info ) ;
-         virtual ~_omaJobRunInstallDataCmd () ;
+         _omaRunInstallDataNodeJob ( string &vCoordHostName,
+                                     string &vCoordSvcName,
+                                     InstallInfo &info ) ;
+         virtual ~_omaRunInstallDataNodeJob () ;
 
       public:
          virtual const CHAR* name () { return "" ; }
@@ -564,9 +570,10 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         BSONObj _installInfo ;
-         InstallInfo _info ;
-
+         BSONObj                                        _installInfo ;
+         InstallInfo                                    _info ;
+         string                                         _vCoordHostName ;
+         string                                         _vCoordSvcName ;
    } ;
 
    // install db business task run rollback coord job
@@ -585,8 +592,6 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         void _getInstalledCoordInfo( BSONObj& obj ) ;         
-
          map< string, vector< InstalledNode > >         &_info ;
          string                                         _vCoordHostName ;
          string                                         _vCoordSvcName ;
@@ -608,8 +613,6 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
 
       private:
-         void _getInstalledCatalogInfo( BSONObj &obj ) ;
-
          map< string, vector< InstalledNode > >         &_info ;
          string                                         _vCoordHostName ;
          string                                         _vCoordSvcName ;

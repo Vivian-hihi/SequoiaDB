@@ -39,7 +39,6 @@
 #include "ossLatch.hpp"
 #include "../bson/bson.h"
 #include "omagent.hpp"
-//#include "omagentJob.hpp"
 #include <map>
 #include <vector>
 #include <string>
@@ -82,9 +81,9 @@ namespace engine
 
          UINT64          taskID () const { return _taskID ; }
 
-         OMA_TASK_STATUS status () const { return _status ; }
+         OMA_TASK_STATUS status () ;
 
-         void setStatus( OMA_TASK_STATUS status ) { _status = status ; }
+         void setStatus( OMA_TASK_STATUS status ) ;
 
          INT32 setJobStatus( string &name, OMA_JOB_STATUS status ) ;
 
@@ -98,6 +97,8 @@ namespace engine
       protected:
          UINT64                               _taskID ;
          OMA_TASK_STATUS                      _status ;
+         ossSpinSLatch                        _taskLatch ;
+         ossSpinSLatch                        _jobLatch ;
          map< string, OMA_JOB_STATUS >        _jobStatus ;
    } ;
    typedef _omaTask omaTask ;
@@ -133,7 +134,9 @@ namespace engine
    */
    _omaTaskMgr* getTaskMgr() ;
 
-   // install database business
+   /*
+      install database business
+   */
    class _omaInstallDBBusinessTask : public _omaTask
    {
       public:
@@ -166,8 +169,8 @@ namespace engine
       public:
          void setTaskStage( OMA_INSTALL_DB_STAGE stage ) ;
          void setIsTaskFinish( BOOLEAN isTaskFinish ) ;
-         INT32 setJobStatus( string &name, OMA_JOB_STATUS status ) ;
-         INT32 getJobStatus( string &name, OMA_JOB_STATUS &status ) ;
+         string& getVCoordHostName() { return _vCoordHostName ; }
+         string& getVCoordSvcName() { return _vCoordSvcName ; }
          vector<BSONObj>& getInstallCatalogInfo() ;
          vector<BSONObj>& getInstallCoordInfo() ;
          INT32 getInstallDataGroupInfo( string &name,
@@ -182,13 +185,13 @@ namespace engine
                                     const CHAR *pGroupName,
                                     InstalledNode *pNode ) ;
          INT32 tryToRollbackInternal() ;         
- 
+         INT32 tryToRemoveVirtualCoord() ;
+          
       private:
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
          INT32 _installData() ;
-         INT32 _removeVirtualCoord() ;
-         BOOLEAN isInstallFinish() ;
+         BOOLEAN _isInstallFinish() ;
 
          // install info
          vector<BSONObj>                                _catalog ;
@@ -200,9 +203,6 @@ namespace engine
          InstallResult                                  _coordResult ;
          map< string, InstallResult >                   _mapGroupsResult ;
 
-         // job status
-         map< string, OMA_JOB_STATUS >                  _jobStatus ;
-
          string                                         _omaHostName ;
          string                                         _omaSvcName ;
          string                                         _vCoordHostName ;
@@ -212,7 +212,6 @@ namespace engine
          ossSpinSLatch                                  _jobLatch ;
          OMA_TASK_TYPE                                  _taskType ;
          string                                         _taskName ;
-//         string                                         _stage ;
          OMA_INSTALL_DB_STAGE                           _stage ;
          BOOLEAN                                        _isTaskFinish ;
          BOOLEAN                                        _isRollingBack ;

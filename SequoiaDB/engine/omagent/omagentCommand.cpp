@@ -2009,25 +2009,10 @@ namespace engine
          goto error ;
       }
       // return taskID
-//      bob.append( OMA_FIELD_RC, rc ) ;
-//      bob.append( OMA_FIELD_DETAIL, "" ) ;
       bob.append( OMA_FIELD_TASKID, (SINT64)taskID ) ;
       objRet = bob.obj() ;
 
    done:
-/*
-      if ( hasVCoordStart )
-      {
-         BOOLEAN hasVCoordRemove = FALSE ;
-         _omaRemoveVirtualCoord removeVCoord( _omaHostName, _omaSvcName,
-                                              _vCoordSvcName ) ;
-         rc = removeVCoord.removeVirtualCoord ( hasVCoordRemove ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
-         }
-      }
-*/
       return rc ;
    error:
       goto done ;
@@ -2140,12 +2125,19 @@ namespace engine
 
       if ( ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) ) )
       {
-         pChildTask->getInstallStatus( objRet ) ;
+         rc = pChildTask->getInstallStatus( objRet ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get install db business status, "
+                     "rc = %d", rc ) ;
+            goto error ;
+         }
       }
       else
       {
-         rc = SDB_SYS ;
-         PD_LOG_MSG ( PDERROR, "Failed to get install db progress" ) ;
+         rc = SDB_CAT_TASK_NOTFOUND ;
+         PD_LOG_MSG ( PDERROR, "No such task with id[%ld], "
+                      "failed to get install status", (INT64)_taskID ) ;
          goto error ;
       }
 
@@ -2280,10 +2272,11 @@ namespace engine
       }
       if ( retRc )
       {
-         PD_LOG_MSG( PDERROR, "Omagent failed to create virtual "
+         PD_LOG_MSG( PDERROR, "Failed to create virtual "
                      "coord, rc = %d", retRc ) ;
          result = FALSE ;
-         goto done;
+         rc = retRc ;
+         goto error;
       }
       result = TRUE ;
 
@@ -2431,7 +2424,7 @@ namespace engine
       goto done ;
    }
 
-   //   _omaGetRemoteAgentStatus
+   // _omaGetRemoteAgentStatus
    _omaGetRemoteAgentStatus::_omaGetRemoteAgentStatus ()
    {
    }

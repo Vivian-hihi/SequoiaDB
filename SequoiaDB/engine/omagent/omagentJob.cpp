@@ -89,15 +89,6 @@ namespace engine
          BSONObj retObj ;
          InstallInfo installInfo ;
          CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
-
-         // check task's status and decide to do or stop
-         OMA_TASK_STATUS taskStatus = _pTask->status() ;
-         if ( OMA_TASK_STATUS_FAIL == taskStatus )
-         {
-            rc = SDB_SYS ;
-            PD_LOG ( PDEVENT, "Stop installing catalog, task has failed" ) ;
-            goto done ;
-         }
          // get installl catalog information
          rc = _getInstallInfo( *itr, installInfo ) ;
          if ( rc )
@@ -118,7 +109,9 @@ namespace engine
             goto error ;
          }
          // install catalog
-         _omaJobRunInstallCatalogCmd runCmd( installInfo ) ;
+         _omaRunInstallCatalogJob runCmd( _pTask->getVCoordHostName(),
+                                          _pTask->getVCoordSvcName(),
+                                          installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
          {
@@ -133,8 +126,6 @@ namespace engine
             goto error ;
          }
          // check the install result
-         // TODO: retObj contant hostname, port
-         // and this function will update install status at the same time
          rc = _checkInstallResult ( installInfo._hostName.c_str(),
                                     installInfo._svcName.c_str(),
                                     retObj ) ;
@@ -151,6 +142,7 @@ namespace engine
       // set job status to be successful
       setJobStatus( OMA_JOB_STATUS_FINISH ) ;
    done:
+      _pTask->tryToRemoveVirtualCoord() ;
       return rc ;
    error:
       // set job status to be failing
@@ -219,9 +211,8 @@ namespace engine
       INT32 retRc = SDB_OK ;
       CHAR desc[OMA_BUFF_SIZE + 1] = { 0 } ;
       const CHAR *pErrMsg = "" ;
-//      const CHAR *pHostName = "" ;
-//      const CHAR *pSvcName = "" ;
 
+      // TODO:
       // extract return rc
       rc = omaGetIntElement ( obj, OMA_FIELD_RC, retRc ) ;
       if ( rc )
@@ -230,21 +221,6 @@ namespace engine
                   OMA_FIELD_RC, rc ) ;
 //         goto error ;
       }
-/*
-      rc = omaGetStringElement ( obj, OMA_FIELD_HOSTNAME, pHostName ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                  OMA_FIELD_HOSTNAME, rc ) ;
-//         goto error ;
-      }
-      rc = omaGetStringElement ( obj, OMA_FIELD_SVCNAME,, pSvcName ) ;
-      {
-         PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                  OMA_FIELD_SVCNAME, rc ) ;
-//         goto error ;
-      }
-*/
       if ( retRc )
       {
          rc = omaGetStringElement ( obj, OMA_FIELD_DETAIL, &pErrMsg ) ;
@@ -275,7 +251,7 @@ namespace engine
                       pHostName, pSvcName ) ;
          PD_LOG ( PDDEBUG, "Sucessed to install catalog[%s:%s]",
                   pHostName, pSvcName ) ;
-         _updateInstallStatus( FALSE, retRc, pErrMsg, desc, &node ) ;
+         _updateInstallStatus( TRUE, retRc, pErrMsg, desc, &node ) ;
       }
 
    done:
@@ -361,6 +337,7 @@ namespace engine
    INT32 _omaCreateCoordJob::doit()
    {
       INT32 rc = SDB_OK ;
+      OMA_TASK_STATUS taskStatus = OMA_TASK_STATUS_END ;
       vector<BSONObj> &coordInstallInfo = _pTask->getInstallCoordInfo() ;
       vector<BSONObj>::iterator itr ;
 
@@ -381,12 +358,12 @@ namespace engine
          CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
 
          // check task's status and decide to do or stop
-         OMA_TASK_STATUS taskStatus = _pTask->status() ;
+         taskStatus = _pTask->status() ;
          if ( OMA_TASK_STATUS_FAIL == taskStatus )
          {
-            rc = SDB_SYS ;
-            PD_LOG ( PDEVENT, "Stop installing coord, task has failed" ) ;
-            goto done ;
+            rc = SDB_OMA_TASK_FAIL ;
+            PD_LOG ( PDWARNING, "Stop installing coord, task has failed" ) ;
+            goto error ;
          }
          // get installl coord information
          rc = _getInstallInfo( *itr, installInfo ) ;
@@ -403,12 +380,14 @@ namespace engine
          rc = _updateInstallStatus( FALSE, SDB_OK, NULL, desc, NULL ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to update status before install catalog "
-                     "node, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to update status before install coord, "
+                     "rc = %d", rc ) ;
             goto error ;
          }
          // install coord
-         _omaJobRunInstallCatalogCmd runCmd( installInfo ) ;
+         _omaRunInstallCoordJob runCmd( _pTask->getVCoordHostName(),
+                                        _pTask->getVCoordSvcName(),
+                                        installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
          {
@@ -423,8 +402,6 @@ namespace engine
             goto error ;
          }
          // check the install result
-         // TODO: retObj contant hostname, port
-         // and this function will update install status at the same time
          rc = _checkInstallResult ( installInfo._hostName.c_str(),
                                     installInfo._svcName.c_str(),
                                     retObj ) ;
@@ -440,13 +417,28 @@ namespace engine
       }
       // set job status to be successful
       setJobStatus( OMA_JOB_STATUS_FINISH ) ;
+
+      // ckeck task's status before return,
+      // for task may be failing because of
+      // other job's error
+      taskStatus = _pTask->status() ;
+      if ( OMA_TASK_STATUS_FAIL == taskStatus )
+      {
+         rc = SDB_OMA_TASK_FAIL ;
+         PD_LOG ( PDWARNING, "Task[%s] has failed", _pTask->taskName() ) ;
+         goto rollback ;
+      }
+
    done:
+      _pTask->tryToRemoveVirtualCoord() ;
       return rc ;
    error:
       // set job status to be failing
       setJobStatus( OMA_JOB_STATUS_FAIL ) ;
       // set task status to be false
       _pTask->setStatus( OMA_TASK_STATUS_FAIL ) ;
+   rollback:
+      INT32 tmpRc = rc ;
       // try to rollback
       rc = _pTask->tryToRollbackInternal() ;
       if ( rc )
@@ -454,6 +446,7 @@ namespace engine
          PD_LOG ( PDERROR, "Install db business task failed to rollback, "
                   "rc = %d", rc ) ;
       }
+      rc = tmpRc ;
       goto done ;
    }
 
@@ -629,6 +622,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       vector<BSONObj>::iterator itr ;
       vector<BSONObj> dataNodeInstallInfo ;
+      OMA_TASK_STATUS taskStatus = OMA_TASK_STATUS_END ;
 
       // change job status
       setJobStatus( OMA_JOB_STATUS_RUNNING ) ;
@@ -657,13 +651,13 @@ namespace engine
          CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
 
          // check task's status and decide to do or stop
-         OMA_TASK_STATUS taskStatus = _pTask->status() ;
+         taskStatus = _pTask->status() ;
          if ( OMA_TASK_STATUS_FAIL == taskStatus )
          {
-            rc = SDB_SYS ;
-            PD_LOG ( PDEVENT, "Stop installing data node in group %s, "
+            rc = SDB_OMA_TASK_FAIL ;
+            PD_LOG ( PDWARNING, "Stop installing data node in group %s, "
                      "task has failed", _groupname.c_str() ) ;
-            goto done ;
+            goto error ;
          }
          // get installl data node information
          rc = _getInstallInfo( *itr, installInfo ) ;
@@ -685,7 +679,9 @@ namespace engine
             goto error ;
          }
          // install data node
-         _omaJobRunInstallDataCmd runCmd( installInfo ) ;
+         _omaRunInstallDataNodeJob runCmd( _pTask->getVCoordHostName(),
+                                           _pTask->getVCoordSvcName(),
+                                           installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
          {
@@ -700,8 +696,6 @@ namespace engine
             goto error ;
          }
          // check the install result
-         // TODO: retObj contant hostname, port
-         // and this function will update install status at the same time
          rc = _checkInstallResult ( installInfo._hostName.c_str(),
                                     installInfo._svcName.c_str(),
                                     retObj ) ;
@@ -718,14 +712,27 @@ namespace engine
       // set job status to be successful
       // change job status
       setJobStatus( OMA_JOB_STATUS_FINISH ) ;
+      // ckeck task's status before return,
+      // for task may be failing because of 
+      // other job's error
+      taskStatus = _pTask->status() ;
+      if ( OMA_TASK_STATUS_FAIL == taskStatus )
+      {
+         rc = SDB_OMA_TASK_FAIL ;
+         PD_LOG ( PDWARNING, "Task[%s] has failed", _pTask->taskName() ) ;
+         goto rollback ;
+      }
 
    done:
+      _pTask->tryToRemoveVirtualCoord() ;
       return rc ;
    error:
       // set job status to be failing
       setJobStatus( OMA_JOB_STATUS_FAIL ) ;
       // set task status to be false
       _pTask->setStatus( OMA_TASK_STATUS_FAIL ) ;
+   rollback:
+      INT32 tmpRc = rc ;
       // try to rollback
       rc = _pTask->tryToRollbackInternal() ;
       if ( rc )
@@ -733,6 +740,7 @@ namespace engine
          PD_LOG ( PDERROR, "Install db business task failed to rollback, "
                   "rc = %d", rc ) ;
       }
+      rc = tmpRc ;
       goto done ;
    }
 
@@ -765,13 +773,6 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
       installInfo._dbPath = pStr ;
-/*
-      // _confPath
-      rc = omaGetStringElement( *it, OMA_OPTION_CONFPATH, &pStr ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d", OMA_OPTION_CONFPATH, rc ) ;
-      installInfo._confPath = pStr ;
-*/
       // _conf
       pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
                       OMA_OPTION_DATAGROUPNAME << 1 <<
@@ -942,6 +943,7 @@ namespace engine
       _pTask->setIsTaskFinish( TRUE ) ;
  
    done:
+      _pTask->tryToRemoveVirtualCoord() ;
       return rc ;
    error:
       goto done ;
@@ -1047,15 +1049,8 @@ namespace engine
       BSONObj retObj ;
       _omaRunRollbackDataNodeJob rollbackDataNode ( vCoordHostName,
                                                     vCoordSvcName, info ) ;
-      map< string, vector< InstalledNode> >::iterator it = info.begin() ;
-/*
-      if ( ( 1 != info.size() ) && ( string( ROLE_COORD ) != it->first ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Invalid data group's rollback info" ) ;
-         goto error ;
-      }
-*/
+      map< string, vector<InstalledNode> >::iterator it = info.begin() ;
+
       // rollback data group
       rc = rollbackDataNode.init( NULL ) ;
       if ( rc )
