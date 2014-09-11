@@ -1,5 +1,6 @@
 <!--@param ${install.package.fullname}: The path where place software package.-->
 <!--@param ${deploy.host.name} :  The host name for deploy test scripts and install software-->
+
 <!--@param ${coord.service.port}:  coord's service port-->
 <!--@param ${is.standalone.mode}:  the flag whether start with standalone mode-->
 <!--@param ${is.coord.master}: flag this node is coord master or no-->
