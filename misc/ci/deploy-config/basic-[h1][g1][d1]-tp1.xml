@@ -11,7 +11,7 @@
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
 
-	<target name="deploy" depends="">
+	<target name="Deploy" depends="">
 		<echo message="Begin install software and test files to ${test.machine.no2.data}" />
 
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
@@ -42,7 +42,7 @@
 		</sdbdeploy>
 	</target>
 
-	<target name="test" depends="">
+	<target name="Test" depends="">
 		<property name="test-type-list" value="basic,driver-php" />
 		<!-- <property name="test-type-list" value="driver-php" /> -->
 		<parallel>

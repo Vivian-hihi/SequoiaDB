@@ -7,14 +7,14 @@
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${properties.dir} : where the ci.test.properties file is it -->
 
-<project name="deploy" default="test"> 
+<project name="deploy" default="Test"> 
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
 	</taskdef>
 
-	<target name="deploy" depends="">
+	<target name="Deploy" depends="">
 		<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 		<property file="${properties.dir}" />
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
@@ -25,7 +25,7 @@
 		</ant>
 	</target>
 
-	<target name="test" depends="">
+	<target name="Test" depends="">
 		<property name="test-type-list" value="driver-C,driver-CPP" />
 		<!-- <property name="test-type-list" value="ant" /> -->
 		<parallel>

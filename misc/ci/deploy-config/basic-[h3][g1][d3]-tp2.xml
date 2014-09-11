@@ -7,8 +7,8 @@
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${properties.dir} : where the ci.test.properties file is it -->
 
-<project name="deploy" default="test">
-	<target name="deploy" depends="">
+<project name="deploy" default="Test">
+	<target name="Deploy" depends="">
 		<echo message="Begin install software and test files to ${test.machine.no1.basic}" />
 		<!-- <hostinfo prefix="host" /> -->
 		<property name="properties.dir" value="${basedir}/../ci.test.properties" />
@@ -82,7 +82,7 @@
 		</sdbdeploy>
 	</target>
 
-	<target name="test" depends="">
+	<target name="Test" depends="">
 		<property name="test-type-list" value="basic" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">

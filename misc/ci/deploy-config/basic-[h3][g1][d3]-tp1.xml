@@ -6,8 +6,8 @@
 <!--@param ${test.reports.path}: The path where test reports directory. -->
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${properties.dir} : where the ci.test.properties file is it -->
-<project name="deploy" default="test">
-	<target name="deploy" depends="">
+<project name="deploy" default="Test">
+	<target name="Deploy" depends="">
 		<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 		<property file="${properties.dir}" />
 
@@ -76,7 +76,7 @@
 		</sdbdeploy>	
 	</target>
 
-	<target name="test" depends="">
+	<target name="Test" depends="">
 		<property name="test-type-list" value="basic,driver-java" />
 		<!-- <property name="test-type-list" value="driver-java" /> -->
 		<parallel>
