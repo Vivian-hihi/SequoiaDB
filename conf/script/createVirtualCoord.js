@@ -20,23 +20,19 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 */
-if ( typeof(OMA_HOST_NAME) == "undefined" )
-{
-}
-if ( typeof(OMA_SVC_NAME) == "undefined" )
-{
-}
+if ( typeof(OMA_HOST_NAME) == "undefined" ) {}
+if ( typeof(OMA_SVC_NAME) == "undefined" ) {}
 if ( typeof(V_COORD_SVC_NAME) == "undefined" )
 {
    V_COORD_SVC_NAME = "10000" ;
 }
 if ( typeof(V_COORD_INSTALL_PATH) == "undefined" )
 {
-   V_COORD_INSTALL_PATH = "/tmp/virtualCoord" ;
+   V_COORD_INSTALL_PATH = "/tmp/omatmp/data/vCoord" ;
 }
 if ( typeof(V_COORD_CFG_OPTION) == "undefined" )
 {
-   V_COORD_CFG_OPTION = eval( '(' + '{}' + ')' ) ;
+   V_COORD_CFG_OPTION = {} ;
 }
 
 var objRet = new Object() ;

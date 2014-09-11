@@ -97,7 +97,7 @@ println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
    }
    catch ( e )
    {
-//print("error is e = " + e + "\n") ;
+print("error is e = " + e + "\n") ;
       if ( typeof(e) != "number" )
       {
          objRet.Rc = -10 ;

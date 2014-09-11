@@ -30,23 +30,12 @@ if ( typeof(OMA_SVC_NAME)  == "undefined" )
 }
 if ( typeof(V_COORD_SVC_NAME)  == "undefined" )
 {
-   V_COORD_SVC_NAME = "10000" ;
 }
 
 var objRet = new Object() ;
 
 objRet.Rc = 0 ;
 objRet.detail = "" ;
-
-function stopVirtualCoord( oma )
-{
-   oma.stopNode( V_COORD_SVC_NAME ) ;
-}
-
-function removeVirtualCoord( oma )
-{
-   oma.removeCoord( V_COORD_SVC_NAME ) ;
-}
 
 function main()
 {
@@ -58,18 +47,23 @@ function main()
            typeof(OMA_SVC_NAME) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.detail = "not specified host name or service name for omagent" ;
+         objRet.detail = "not specified sdbom's hostname or svcname" ;
          return objRet ;
       }
-
+      if ( typeof(V_COORD_SVC_NAME) == "undefined" )
+      {
+         objRet.Rc = -6 ;
+         objRet.detail = "not specified virtual coord's svcname" ;
+         return objRet ;
+      }
       // new oma object
       oma = new Oma( OMA_HOST_NAME, OMA_SVC_NAME ) ;
       
       // stop virtual coord
-      stopVirtualCoord( oma ) ; 
+      oma.stopNode( V_COORD_SVC_NAME ) ;
 
       // remomve virtual coord
-      removeVirtualCoord( oma ) ;
+      oma.removeCoord( V_COORD_SVC_NAME ) ;
  
       // close connection
       oma.close() ;

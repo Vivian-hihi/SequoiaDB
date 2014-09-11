@@ -20,30 +20,76 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 */
-// todo:windows
-if ( typeof(COORD_HOSTNAME) == "undefined" ) { HOSTNAME = "localhost" ; }
-if ( typeof(COORD_SERVICE) == "undefined" ) { SERVICE = "11810" ; }
-if ( typeof(DB_USERNAME) == "undefined" ) { SERVICE = "" ; }
-if ( typeof(DB_PASSWORD) == "undefined" ) { SERVICE = "" ; }
-if ( typeof(INSTALL_HOSTNAME) == "undefined" ) { HOSTNAME = "localhost" ; }
-if ( typeof(INSTALL_SERVICE) == "undefined" ) { SERVICE = "11810" ; }
-if ( typeof(INSTALL_PATH) == "undefined" ) { INSTALL_PATH = "/opt/sequoiadb/database/coord/11810" ; }
-if ( typeof(CONFIG) == "undefined" ) { CONFIG = "{}" ; }
+if ( typeof(COORD_HOSTNAME) == "undefined" ) { COORD_HOSTNAME = "127.0.0.1" ; }
+if ( typeof(COORD_SERVICE) == "undefined" ) { COORD_SERVICE = "10000" ; }
+if ( typeof(DB_USERNAME) == "undefined" ) { DB_USERNAME = "" ; }
+if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
+if ( typeof(INSTALL_HOSTNAME) == "undefined" ) {}
+if ( typeof(INSTALL_SERVICE) == "undefined" ) {}
+if ( typeof(INSTALL_PATH) == "undefined" ) {}
+if ( typeof(CONFIG) == "undefined" ) { CONFIG = eval( '(' + '{}' + ')' ) ; }
 
 var objRet = new Object() ;
 
 objRet.Rc = 0 ;
 objRet.detail = "" ;
 
-function main()
+function createCoordNode( db )
 {
+   var rg = null ;
+   var node = null ;
    try
    {
+      rg = db.getRG("SYSCoord") ;
+   }
+   catch ( e )
+   {
+      if ( -154 == e )
+      {
+         // create coord replica group
+         rg = db = db.createCoordRG() ;
+      }
+      else
+      {
+         throw e ;
+      }
+   }
+   // create and start coord node
+   node = rg.createNode( INSTALL_HOSTNAME, INSTALL_SERVICE,
+                         INSTALL_PATH, CONFIG ) ;
+   node.start() ;
+}
+
+function main()
+{
+   var db = null ;
+   try
+   {
+      // check arguments
+      if ( typeof(COORD_HOSTNAME) == "undefined" ||
+           typeof(COORD_SERVICE) == "undefined"  ||
+           typeof(DB_USERNAME) == "undefined"    ||
+           typeof(DB_PASSWORD) == "undefined" )
+      {
+         objRet.Rc = -6 ;
+         objRet.detail = "not specified hostname, svcname"
+                         + " username or password to connect to database" ;
+      }
+      if ( typeof(INSTALL_HOSTNAME) == "undefined" ||
+           typeof(INSTALL_SERVICE) == "undefined"  ||
+           typeof(INSTALL_PATH) == "undefined"     ||
+           typeof(CONFIG) == "undefined" )
+      {
+         objRet.Rc = -6 ;
+         objRet.detail = "hostname, svcname, install path and config info" +
+                         " are need for create coord" ;
+         return objRet ;
+      }
       // connect to coord
-      var db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
-      // create cataRG
-      var coord = db.createCoord( INSTALL_HOSTNAME, INSTALL_SERVICE,
-                                  INSTALL_PATH, CONFIG ) ;
+      db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
+      // create coord node
+      createCoordNode( db ) ;
+
       return objRet ;
    }
    catch ( e )
