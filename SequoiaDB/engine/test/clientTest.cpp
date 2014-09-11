@@ -57,6 +57,7 @@ INT64 requestID            = 0 ;
 INT32 g_Version            = 1 ;
 INT32 g_W                  = 1 ;
 INT32 g_tid                = -1 ;
+BOOLEAN g_auth             = TRUE ;
 ossSpinXLatch _mutex ;
 
 // reply related variables
@@ -539,7 +540,8 @@ void displayHelp ( vector<string> subHelp )
       }
       else if ( CONNECT_COMMAND == (*it) )
       {
-         printf ( "%s%s <hostname> <port>: connect to a given server\n",
+         printf ( "%s%s <hostname> <port> [username] [password]: "
+                  "connect to a given server\n",
                   TABSPACE, CONNECT_COMMAND ) ;
       }
       else if ( INSERT_COMMAND == (*it) )
@@ -625,7 +627,8 @@ void displayHelp ( vector<string> subHelp )
                   TABSPACE, ADMIN_COMMAND ) ;
          printf ( "%s%s{get datablocks < collection name >}\n", TABSPACE,
                   ADMIN_COMMAND ) ;
-         printf ( "%s%s{set {pdlevel [0~5]|localver <version>|localw <w>|tid [tid]}}\n",
+         printf ( "%s%s{set {pdlevel [0~5]|localver <version>|localw <w>|"
+                  "tid [tid]|auth [0/1]}}\n",
                   TABSPACE, ADMIN_COMMAND ) ;
          printf ( "%s%s shutdown|backup offline [To path]|command\n", TABSPACE,
                   ADMIN_COMMAND ) ;
@@ -823,6 +826,26 @@ INT32 admin ( string Command, vector<string> arg )
          {
             g_tid = atoi( arg[1].c_str() ) ;
             printf(" change local tid to %d\n", g_tid ) ;
+         }
+         goto done ;
+      }
+      else if ( arg.size() >= 1 && "auth" == arg[ 0 ] )
+      {
+         if ( arg.size() < 2 )
+         {
+            g_auth = TRUE ;
+         }
+         else
+         {
+            g_auth = atoi( arg[1].c_str() ) == 0 ? FALSE : TRUE ;
+         }
+         if ( g_auth )
+         {
+            printf(" enabled auth\n" ) ;
+         }
+         else
+         {
+            printf(" disabled auth\n" ) ;
          }
          goto done ;
       }
