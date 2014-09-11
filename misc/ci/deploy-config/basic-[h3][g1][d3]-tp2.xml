@@ -100,7 +100,7 @@
 		</parallel>
 
 		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
-		<echo message="Begin to test basic tests under parallel env on a machine..." />
+		<!-- <echo message="Begin to test basic tests under parallel env on a machine..." />
 		<parallel>
 			<for list="${test-type-list}" param="test-type">
 				<sequential>
@@ -110,7 +110,6 @@
 						<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<property name="test.reports.path" value="${test.reports.path}" />
 						<property name="test-type" value="@{test-type}" />
-						<!-- <property name="antFileName" value="${antFileName}" /> -->
 						<property name="parallel.flag" value="parallel" />
 					</ant>
 				</sequential>
@@ -123,13 +122,12 @@
 						<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 						<property name="test.reports.path" value="${test.reports.path}" />
 						<property name="test-type" value="@{test-type}" />
-						<!-- <property name="antFileName" value="${antFileName}" /> -->
 						<property name="parallel.flag" value="parallel" />
 					</ant>
 				</sequential>
 			</for>
-		</parallel>
-		<!-- <parallel>
+		</parallel> -->
+		<parallel>
 			<echo message="Begin to test basic tests under parallel env on a machine..." />
 			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 				<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -149,6 +147,6 @@
 
 				<param name="coord.service.port" value="50000" />
 			</sdbtest>
-		</parallel> -->
+		</parallel>
 	</target>
 </project>
