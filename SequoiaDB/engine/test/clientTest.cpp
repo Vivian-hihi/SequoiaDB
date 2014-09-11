@@ -1148,28 +1148,31 @@ INT32 connect ( vector<string> arg )
    }
    sock->disableNagle();
 
-   rc = buildAuthMsg( &pOutBuffer, &outBufferSize,
-                       username.c_str(), password.c_str(), requestID ) ;
-   if ( rc )
+   if ( g_auth )
    {
-      goto error ;
-   }
+      rc = buildAuthMsg( &pOutBuffer, &outBufferSize,
+                          username.c_str(), password.c_str(), requestID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
-   rc = msgSend ( FALSE ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
+      rc = msgSend ( FALSE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
-   rc = msgReceiveExtract ( &querySuccess ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-   if ( FALSE == querySuccess )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      rc = msgReceiveExtract ( &querySuccess ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      if ( FALSE == querySuccess )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
    }
 
    printf (" Successfully connected to server\n" ) ;
