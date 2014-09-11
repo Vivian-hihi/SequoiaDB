@@ -645,13 +645,15 @@ namespace engine
 
          INT32          _getHostNameInfo( const string &businessName,
                                        map<string, simpleHostInfo> &mapHosts) ;
-         INT32          _removeBusinessByAgent( const BSONObj &nodeInfos ) ;
+         INT32          _removeBusinessByAgent( const BSONObj &request ) ;
          INT32          _removeBusiness( const string &businessName,
-                                         const BSONObj &nodeInfos, 
+                                         const BSONObj &request, 
                                          BOOLEAN isExistNode,
                                          BOOLEAN isForced ) ;
          INT32          _deleteConfigureRecord( const string &businessName ) ;
          INT32          _deleteBusinessRecord( const string &businessName ) ;
+         INT32          _generateRequest( BSONObj &nodeInfos, 
+                                          BSONObj &request ) ;
    } ;
 
    struct simpleDiskInfo: public SDBObject

@@ -5351,8 +5351,9 @@ namespace engine
          while ( iter.more() )
          {
             BSONElement ele = iter.next() ;
+            BSONObj tmp = ele.embeddedObject() ;
             BSONObjBuilder builder ;
-            builder.append( ele ) ;
+            builder.appendElements( tmp ) ;
             builder.append( OM_BSON_FIELD_HOST_NAME, hostInfo.hostName ) ;
             builder.append( OM_BSON_FIELD_HOST_USER, hostInfo.user ) ;
             builder.append( OM_BSON_FIELD_HOST_PASSWD, hostInfo.passwd ) ;
@@ -6064,7 +6065,7 @@ namespace engine
    }
 
    INT32 omRemoveBusinessCommand::_removeBusinessByAgent( 
-                                             const BSONObj &nodeInfos )
+                                             const BSONObj &request )
    {
       INT32 rc          = SDB_OK ;
       SINT32 flag       = SDB_OK ;
@@ -6077,7 +6078,7 @@ namespace engine
       BSONObj bsonResponse ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_REMOVE_BUSINESS_REQ, 
-                             0, 0, 0, -1, &nodeInfos, NULL, NULL, NULL ) ;
+                             0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = string( "build message failed:cmd=" ) 
@@ -6185,14 +6186,14 @@ namespace engine
    }
 
    INT32 omRemoveBusinessCommand::_removeBusiness( const string &businessName,
-                                                   const BSONObj &nodeInfos, 
+                                                   const BSONObj &request, 
                                                    BOOLEAN isExistNode,
                                                    BOOLEAN isForced )
    {
       INT32 rc = SDB_OK ;
       if ( isExistNode )
       {
-         rc = _removeBusinessByAgent( nodeInfos ) ;
+         rc = _removeBusinessByAgent( request ) ;
          if ( SDB_OK != rc )
          {
             if ( !isForced )
@@ -6226,10 +6227,25 @@ namespace engine
       goto done ;
    }
 
+   INT32 omRemoveBusinessCommand::_generateRequest( BSONObj &nodeInfos, 
+                                                    BSONObj &request )
+   {
+      //TODO: now we do not send SDBUser and SDBPasswd to agent
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder builder ;
+      builder.appendElements( nodeInfos ) ;
+      builder.append( OM_SDB_AUTH_USER, "" ) ;
+      builder.append( OM_SDB_AUTH_PASSWD, "" ) ;
+      request = builder.obj() ;
+
+      return rc ;
+   }
+
    INT32 omRemoveBusinessCommand::doCommand()
    {
       BSONObj nodeInfos ;
       BSONObj result ;
+      BSONObj request ;
       BOOLEAN isForced            = FALSE ;
       BOOLEAN isBusinessExist     = FALSE ;
       BOOLEAN isBusinessExistNode = FALSE ;
@@ -6281,7 +6297,15 @@ namespace engine
          goto error ;
       }
 
-      rc = _removeBusiness( pBusinessName, nodeInfos, isBusinessExistNode, 
+      rc = _generateRequest( nodeInfos, request ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_generateRequest failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+      
+      rc = _removeBusiness( pBusinessName, request, isBusinessExistNode, 
                             isForced ) ;
       if ( SDB_OK != rc )
       {

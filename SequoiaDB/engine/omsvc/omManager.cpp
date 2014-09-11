@@ -55,7 +55,7 @@ namespace engine
       Message Map
    */
    BEGIN_OBJ_MSG_MAP( _omManager, _pmdObjBase )
-
+      ON_MSG( MSG_BS_QUERY_REQ, _onAgentQueryTaskReq )
    END_OBJ_MSG_MAP()
 
    /*
@@ -101,6 +101,8 @@ namespace engine
       _pDmsCB = _pKrcb->getDMSCB() ;
       _pRtnCB = _pKrcb->getRTNCB() ;
 
+      _pmdOptionsMgr *pOptMgr = _pKrcb->getOptionCB() ;
+
       // get options
       _wwwRootPath = pmdGetOptionCB()->getWWWPath() ;
 
@@ -132,6 +134,21 @@ namespace engine
 
       _checkTaskTimer = NET_INVALID_TIMER_ID ;
       _timerTickCount = 0 ;
+
+      _myNodeID.value             = MSG_INVALID_ROUTEID ;
+      _myNodeID.columns.serviceID = MSG_ROUTE_LOCAL_SERVICE ;
+      _netAgent.updateRoute( _myNodeID, _pKrcb->getHostName(), 
+                             pOptMgr->getOMService() ) ;
+      rc = _netAgent.listen( _myNodeID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Create listen failed:host=%s,port=%s", 
+                  _pKrcb->getHostName(), pOptMgr->getOMService() ) ;
+         goto error ;
+      }
+
+      PD_LOG ( PDEVENT, "Create listen success:host=%s,port=%s",
+               _pKrcb->getHostName(), pOptMgr->getOMService() ) ;
 
    done:
       return rc;
@@ -414,6 +431,7 @@ namespace engine
 
    INT32 _omManager::deactive ()
    {
+      _netAgent.closeListen() ;
       // stop io
       _netAgent.stop() ;
 
@@ -1701,6 +1719,48 @@ namespace engine
       {
          _pRtnCB->contextDelete ( contextID, cb ) ;
       }
+      goto done ;
+   }
+
+   BOOLEAN _omManager::_isCommand( const CHAR *pCheckName )
+   {
+      if ( pCheckName && '$' == pCheckName[0] )
+      {
+         return TRUE ;
+      }
+
+      return FALSE ;
+   }
+
+   INT32 _omManager::_onAgentQueryTaskReq( NET_HANDLE handle, MsgHeader *pMsg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flags             = 0 ;
+      CHAR *pCollectionName   = NULL ;
+      CHAR *pQuery            = NULL ;
+      CHAR *pFieldSelector    = NULL ;
+      CHAR *pOrderByBuffer    = NULL ;
+      CHAR *pHintBuffer       = NULL ;
+      SINT64 numToSkip        = -1 ;
+      SINT64 numToReturn      = -1 ;
+      // extract command
+      rc = msgExtractQuery ( (CHAR *)pMsg, &flags, &pCollectionName,
+                             &numToSkip, &numToReturn, &pQuery,
+                             &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "extract omAgent's command msg failed:rc=%d", rc ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( _isCommand( pCollectionName ) )
+      {
+         PD_LOG( PDEVENT, "receive command: %s", pCollectionName ) ;
+      }
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

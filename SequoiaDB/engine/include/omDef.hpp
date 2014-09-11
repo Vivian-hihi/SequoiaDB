@@ -458,6 +458,9 @@ namespace engine
    // om remove business req
    #define  OM_REMOVE_BUSINESS_REQ           "remove business"
 
+   #define  OM_SDB_AUTH_USER                 "AuthUser"
+   #define  OM_SDB_AUTH_PASSWD               "AuthPasswd"
+
    //******************************************************************
 
    // 

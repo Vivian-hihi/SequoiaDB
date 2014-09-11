@@ -239,6 +239,10 @@ namespace engine
                                              string businessName ) ;
          INT32             _storeConfigInfo() ;
 
+         INT32             _onAgentQueryTaskReq( NET_HANDLE handle, 
+                                                 MsgHeader *pMsg ) ;
+         BOOLEAN           _isCommand( const CHAR *pCheckName ) ;
+
 
       // Msg functions
       protected:
@@ -265,6 +269,7 @@ namespace engine
          omMsgHandler                           _msgHandler ;
          omTimerHandler                         _timerHandler ;
          netRouteAgent                          _netAgent ;
+         MsgRouteID                             _myNodeID ;
 
          // configure info
          INT32                                  _maxRestBodySize ;
