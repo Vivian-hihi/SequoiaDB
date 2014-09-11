@@ -20,7 +20,7 @@ except ImportError:
 import bson
 import pysequoiadb
 from pysequoiadb.common import const
-from pysequoiadb.error import SDBBaseError
+from pysequoiadb.error import (SDBBaseError, SDBEndOfCursor)
 
 class cursor(object):
    """Cursor of SequoiaDB
@@ -79,15 +79,16 @@ class cursor(object):
       """Return the next document of current cursor, and move forward.
 
       Return values:
-         an dict object of record
+         a dict object of record
       Exceptions:
          pysequoiadb.error.SDBBaseError
+         pysequoiadb.error.SDBEndOfCursor
       """
       try:
          rc, bson_string = sdb.cr_next(self._cursor)
          if const.SDB_OK != rc:
             if const.SDB_DMS_EOC == rc:
-               record = None
+               raise SDBEndOfCursor
             else:
                raise SDBBaseError("Failed to get next record", rc)
          else:
@@ -96,21 +97,22 @@ class cursor(object):
       except SDBBaseError:
          raise
 
-      return rc, record
+      return record
 
    def current(self):
       """Return the current document of cursor, and don't move.
 
       Return values:
-         an dict object of record
+         a dict object of record
       Exceptions:
          pysequoiadb.error.SDBBaseError
+         pysequoiadb.error.SDBEndOfCursor
       """
       try:
          rc, bson_string = sdb.cr_current(self._cursor)
          if const.SDB_OK != rc:
             if const.SDB_DMS_EOC == rc:
-               record = None
+               raise SDBEndOfCursor
             else:
                raise SDBBaseError("Failed to get current record", rc)
          else:
@@ -119,7 +121,7 @@ class cursor(object):
       except SDBBaseError:
          raise
 
-      return rc, record
+      return record
 
    def close(self):
       """Close the cursor's connection to database, we can't use this handle to

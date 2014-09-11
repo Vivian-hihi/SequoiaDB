@@ -63,6 +63,12 @@ class SDBBaseError(Exception):
       """
       return self.__detail()
 
+class SDBEndOfCursor(Exception):
+   """Invalid Parameter Error
+   """
+   def __init__(self):
+      Exception.__init__(self, "End of Cursor")
+
 class SDBError(SDBBaseError):
    """Gerneral Error of SequoiaDB
    """
