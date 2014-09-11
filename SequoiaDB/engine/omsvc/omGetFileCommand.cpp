@@ -6507,7 +6507,7 @@ namespace engine
                              << pHostDisk->passwd 
                              << OM_BSON_FIELD_DISK << arrayBuilder.arr() ) ;
          rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                                CMD_ADMIN_PREFIX OM_CHECK_HOST_REQ,
+                                CMD_ADMIN_PREFIX OM_QUERY_HOST_STATUS_REQ,
                                 0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
          if ( SDB_OK != rc )
          {
