@@ -143,7 +143,8 @@ const static UINT32 utf8Table[] =
    0xE38087, //©ñ
    0xE383BC, //©`
    0xE28095, //®D
-   0xE28090, //?   0xEFBC8F, //£Ø
+   0xE28090, //©
+   0xEFBC8F, //£Ø
    0xEFBCBC, //£‹
    0xEFBD9E, //°´
    0xE288A5, //°Œ
@@ -774,7 +775,8 @@ const static UINT32 utf8Table[] =
    0xE9968F, //Èc
    0xE59982, //ág
    0xE4BA91, //‘∆
-   0xE9818B, //?   0xE99BB2, //ÎÖ
+   0xE9818B, //ﬂ
+   0xE99BB2, //ÎÖ
    0xE88D8F, //‹Û
    0xE9A48C, //D
    0xE58FA1, //Ö±
@@ -803,7 +805,8 @@ const static UINT32 utf8Table[] =
    0xE8AC81, //÷]
    0xE8B68A, //‘Ω
    0xE996B2, //Èá
-   0xE6A68E, //?   0xE58EAD, //Öí
+   0xE6A68E, //ò
+   0xE58EAD, //Öí
    0xE58686, //É“
    0xE59C92, //à@
    0xE5A0B0, //—ﬂ
@@ -843,7 +846,8 @@ const static UINT32 utf8Table[] =
    0xE6AEB4, //≈π
    0xE78E8B, //Õı
    0xE7BF81, //ŒÃ
-   0xE8A596, //?   0xE9B4AC, //¯ä
+   0xE8A596, //“
+   0xE9B4AC, //¯ä
    0xE9B48E, //¯k
    0xE9BB84, //ª∆
    0xE5B2A1, //å˘
@@ -1261,7 +1265,8 @@ const static UINT32 utf8Table[] =
    0xE58BA4, //«⁄
    0xE59D87, //æ˘
    0xE5B7BE, //ΩÌ
-   0xE98CA6, //?   0xE696A4, //ΩÔ
+   0xE98CA6, //Â
+   0xE696A4, //ΩÔ
    0xE6ACA3, //–¿
    0xE6ACBD, //öJ
    0xE790B4, //«Ÿ
@@ -1308,7 +1313,8 @@ const static UINT32 utf8Table[] =
    0xE7AA9F, //øﬂ
    0xE6B293, //Ì≥
    0xE99DB4, //—•
-   0xE8BDA1, //?   0xE7AAAA, //∏D
+   0xE8BDA1, //ﬁ
+   0xE7AAAA, //∏D
    0xE7868A, //–‹
    0xE99A88, //⁄Ò
    0xE7B282, //ªy
@@ -1575,7 +1581,8 @@ const static UINT32 utf8Table[] =
    0xE7A980, //∑Y
    0xE985B7, //ø·
    0xE9B5A0, //˘]
-   0xE9BB92, //?   0xE78D84, //™z
+   0xE9BB92, //¸
+   0xE78D84, //™z
    0xE6BC89, //‰ı
    0xE885B0, //—¸
    0xE79491, //Íµ
@@ -1881,7 +1888,8 @@ const static UINT32 utf8Table[] =
    0xE887AD, //≥Ù
    0xE8889F, //÷€
    0xE89290, //…L
-   0xE8A186, //?   0xE8A5B2, //“u
+   0xE8A186, //–
+   0xE8A5B2, //“u
    0xE8AE90, //◊â
    0xE8B9B4, //ıÌ
    0xE8BCAF, //›ã
@@ -2030,7 +2038,8 @@ const static UINT32 utf8Table[] =
    0xE4B88A, //…œ
    0xE4B888, //’…
    0xE4B89E, //ÿ©
-   0xE4B997, //?   0xE58697, //»ﬂ
+   0xE4B997, //Å
+   0xE58697, //»ﬂ
    0xE589B0, //Ñè
    0xE59F8E, //≥«
    0xE5A0B4, //àˆ
@@ -2090,7 +2099,8 @@ const static UINT32 utf8Table[] =
    0xE88AAF, //–æ
    0xE896AA, //–Ω
    0xE8A6AA, //”H
-   0xE8A8BA, //?   0xE8BAAB, //…Ì
+   0xE8A8BA, //‘
+   0xE8BAAB, //…Ì
    0xE8BE9B, //–¡
    0xE980B2, //ﬂM
    0xE9879D, //·ò
@@ -2175,7 +2185,8 @@ const static UINT32 utf8Table[] =
    0xE5A3B0, //…˘
    0xE8A3BD, //—u
    0xE8A5BF, //Œ˜
-   0xE8AAA0, //?   0xE8AA93, // ƒ
+   0xE8AAA0, //’
+   0xE8AA93, // ƒ
    0xE8AB8B, //’à
    0xE9809D, // ≈
    0xE98692, //–—
@@ -2348,7 +2359,8 @@ const static UINT32 utf8Table[] =
    0xE9809F, //ÀŸ
    0xE4BF97, //À◊
    0xE5B19E, // Ù
-   0xE8B38A, //?   0xE6978F, //◊Â
+   0xE8B38A, //Ÿ
+   0xE6978F, //◊Â
    0xE7B69A, //æA
    0xE58D92, //◊‰
    0xE8A296, //–‰
@@ -2571,7 +2583,8 @@ const static UINT32 utf8Table[] =
    0xE6BCAC, //ùn
    0xE69F98, //Ëœ
    0xE8BEBB, //ﬁy
-   0xE894A6, //?   0xE7B6B4, //æY
+   0xE894A6, // 
+   0xE7B6B4, //æY
    0xE98D94, //Âä
    0xE6A4BF, //¥ª
    0xE6BDB0, //ù¢
@@ -2906,7 +2919,8 @@ const static UINT32 utf8Table[] =
    0xE79591, //Æx
    0xE795A0, //ÆÉ
    0xE585AB, //∞À
-   0xE989A2, //?   0xE6BA8C, //ú¬
+   0xE989A2, //„
+   0xE6BA8C, //ú¬
    0xE799BA, //∞k
    0xE98697, //·e
    0xE9ABAA, //Ûä
@@ -3211,7 +3225,8 @@ const static UINT32 utf8Table[] =
    0xE7B4A1, //ºè
    0xE882AA, //∑æ
    0xE886A8, //≈Ú
-   0xE8AC80, //?   0xE8B28C, //√≤
+   0xE8AC80, //÷
+   0xE8B28C, //√≤
    0xE8B2BF, //ŸQ
    0xE989BE, //„w
    0xE998B2, //∑¿
@@ -3571,7 +3586,8 @@ const static UINT32 utf8Table[] =
    0xE6BC8F, //¬©
    0xE789A2, //¿Œ
    0xE78BBC, //¿«
-   0xE7AFAD, //?   0xE88081, //¿œ
+   0xE7AFAD, //∫
+   0xE88081, //¿œ
    0xE881BE, //√@
    0xE89D8B, //Œ`
    0xE9838E, //¿…
@@ -4068,7 +4084,8 @@ const static UINT32 utf8Table[] =
    0xE5A5A2, //…›
    0xE5A5A0, //µÏ
    0xE5A5A7, //äW
-   0xE5A5AC, //?   0xE5A5A9, //äY
+   0xE5A5AC, //ä
+   0xE5A5A9, //äY
    0xE5A5B8, //ºÈ
    0xE5A681, //Â˘
    0xE5A69D, //äy
@@ -4467,7 +4484,8 @@ const static UINT32 utf8Table[] =
    0xE68A93, //◊•
    0xE68A96, //∂∂
    0xE68B94, //∞Œ
-   0xE68A83, //?   0xE68A94, //íg
+   0xE68A83, //í
+   0xE68A94, //íg
    0xE68B97, //ﬁ÷
    0xE68B91, //íÉ
    0xE68ABB, //ﬁ”
@@ -4651,7 +4669,8 @@ const static UINT32 utf8Table[] =
    0xE99CB8, //∞‘
    0xE69CAE, //ñX
    0xE69CBF, //ñc
-   0xE69CB6, //?   0xE69D81, //ñd
+   0xE69CB6, //ñ
+   0xE69D81, //ñd
    0xE69CB8, //ñ^
    0xE69CB7, //ñ]
    0xE69D86, //∏À
@@ -4953,7 +4972,8 @@ const static UINT32 utf8Table[] =
    0xE6B7A8, //úQ
    0xE6B792, //úD
    0xE6B785, //‰¿
-   0xE6B7BA, //?   0xE6B799, //‰»
+   0xE6B7BA, //ú
+   0xE6B799, //‰»
    0xE6B7A4, //”Ÿ
    0xE6B795, //úG
    0xE6B7AA, //úS
@@ -5282,7 +5302,8 @@ const static UINT32 utf8Table[] =
    0xE79998, //∞O
    0xE799A1, //∞V
    0xE799A2, //∞W
-   0xE799A8, //?   0xE799A9, //∞]
+   0xE799A8, //∞
+   0xE799A9, //∞]
    0xE799AA, //∞^
    0xE799A7, //∞[
    0xE799AC, //∞_
@@ -5389,7 +5410,8 @@ const static UINT32 utf8Table[] =
    0xE7A492, //µE
    0xE7A491, //µD
    0xE7A499, //µK
-   0xE7A4AC, //?   0xE7A4AB, //µ[
+   0xE7A4AC, //µ
+   0xE7A4AB, //µ[
    0xE7A580, //ÏÎ
    0xE7A5A0, //ÏÙ
    0xE7A597, //ÏÛ
@@ -5425,7 +5447,8 @@ const static UINT32 utf8Table[] =
    0xE7A8BB, //µæ
    0xE7A8BE, //∑X
    0xE7A8B7, //¢
-   0xE7A983, //?   0xE7A997, //ÀÎ
+   0xE7A983, //∑
+   0xE7A997, //ÀÎ
    0xE7A989, //∑a
    0xE7A9A1, //∑w
    0xE7A9A2, //∑x
@@ -5510,7 +5533,8 @@ const static UINT32 utf8Table[] =
    0xE7B094, //∫z
    0xE7AFA6, //Û˜
    0xE7AFA5, //Ûˆ
-   0xE7B1A0, //?   0xE7B080, //∫j
+   0xE7B1A0, //ª
+   0xE7B080, //∫j
    0xE7B087, //¥ÿ
    0xE7B093, //∫y
    0xE7AFB3, //∫`
@@ -5675,7 +5699,8 @@ const static UINT32 utf8Table[] =
    0xE7BDA9, //’÷
    0xE7BDA7, //¡K
    0xE7BDB8, //¡U
-   0xE7BE82, //?   0xE7BE86, //¡`
+   0xE7BE82, //¡
+   0xE7BE86, //¡`
    0xE7BE83, //¡]
    0xE7BE88, //¡b
    0xE7BE87, //¡a
@@ -5977,7 +6002,8 @@ const static UINT32 utf8Table[] =
    0xE897BA, //ÃA
    0xE89886, //ÃJ
    0xE898A2, //Ãd
-   0xE8989A, //?   0xE898B0, //Ãp
+   0xE8989A, //Ã
+   0xE898B0, //Ãp
    0xE898BF, //Ã}
    0xE8998D, //ÚÆ
    0xE4B995, //Å[
@@ -6304,7 +6330,8 @@ const static UINT32 utf8Table[] =
    0xE8B79F, //∏˙
    0xE8B7A3, //ı–
    0xE8B7BC, //€R
-   0xE8B888, //?   0xE8B889, //ı‘
+   0xE8B888, //€
+   0xE8B889, //ı‘
    0xE8B7BF, //€T
    0xE8B89D, //ı◊
    0xE8B89E, //æ·
@@ -6338,7 +6365,8 @@ const static UINT32 utf8Table[] =
    0xE8BA93, //‹W
    0xE8BA91, //‹U
    0xE8BA94, //ı
-   0xE8BA99, //?   0xE8BAAA, //‹k
+   0xE8BA99, //‹
+   0xE8BAAA, //‹k
    0xE8BAA1, //‹b
    0xE8BAAC, //π™
    0xE8BAB0, //‹n
@@ -6608,7 +6636,8 @@ const static UINT32 utf8Table[] =
    0xE99AAA, //ÎU
    0xE99AA7, //ÀÌ
    0xE99AB1, //Î[
-   0xE99AB2, //?   0xE99AB0, //⁄Ù
+   0xE99AB2, //Î
+   0xE99AB0, //⁄Ù
    0xE99AB4, //Î]
    0xE99AB6, //¡•
    0xE99AB8, //Î`
@@ -6637,7 +6666,8 @@ const static UINT32 utf8Table[] =
    0xE99CB9, //≈˘
    0xE99CBD, //ÏV
    0xE99CBE, //ˆ≤
-   0xE99D84, //?   0xE99D86, //Ï^
+   0xE99D84, //Ï
+   0xE99D86, //Ï^
    0xE99D88, //Ï`
    0xE99D82, //ÏZ
    0xE99D89, //Ïa
@@ -6791,7 +6821,8 @@ const static UINT32 utf8Table[] =
    0xE9ACA3, //˜‡
    0xE9ACA5, //ÙY
    0xE9ACA7, //Ù[
-   0xE9ACA8, //?   0xE9ACA9, //Ù]
+   0xE9ACA8, //Ù
+   0xE9ACA9, //Ù]
    0xE9ACAA, //Ù^
    0xE9ACAE, //Ùb
    0xE9ACAF, //€À
@@ -7093,7 +7124,8 @@ const static UINT32 utf8Table[] =
    0xE698BB, //ïn
    0xE69889, //ïP
    0xE698AE, //ïf
-   0xE6989E, //?   0xE698A4, //ï`
+   0xE6989E, //ï
+   0xE698A4, //ï`
    0xE699A5, //ïà
    0xE69997, //Íœ
    0xE69999, //ïÄ
