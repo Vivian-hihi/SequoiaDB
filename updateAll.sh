@@ -98,6 +98,7 @@ function installSdb()
 
    if [ $needInstall -ne 0 ] ; then
       echo "Begin to remove sdb...."
+      rm -r ${homePath}/17643 2>/del/null
       rm -r ${homePath}/50000 2>/dev/null
       rm -r ${homePath}/30000 2>/dev/null
       rm -r ${homePath}/30010 2>/dev/null
@@ -127,9 +128,9 @@ function installSdb()
    # install coord db1 and db2
    if [ $needInstall -ne 0 ] ; then
       # create coord and start coord
-      bin/sdb -s " var oma = new Oma() ; oma.createCoord('50000', '${homePath}/50000') ; oma.startNode('50000') ; "
+      bin/sdb -s " var oma = new Oma() ; oma.createCoord('17643', '${homePath}/17643') ; oma.startNode('17643') ; "
       # check coord
-      bin/sdb -s " var db ; for ( var i=0; i < 60; ++i ) { try { db = new Sdb('localhost', '50000') ; break; } catch( e ) { sleep(1000) ; } } "
+      bin/sdb -s " var db ; for ( var i=0; i < 60; ++i ) { try { db = new Sdb('localhost', '17643') ; break; } catch( e ) { sleep(1000) ; } } "
       if [ $? -eq 0 ] ; then
          echo "Coord is ok"
       else
@@ -153,7 +154,7 @@ function installSdb()
       bin/sdb -s " node2 = cataRG.createNode('${hostName}', '30020', '${homePath}/30020' ) ; sleep(5000) ;"
       bin/sdb -s " cataRG.start() ; sleep(5000) ;"
       echo "Adding catalog nodes succeed"
-      bin/sdb -s " var db ; try { db = new Sdb('localhost', '50000') ; var rg1=db.createRG('db1') ; rg1.createNode('${hostName}', '20000', '${homePath}/20000'); } catch( e) { println('Create db1 failed: ' + e ) ; throw e; } "
+      bin/sdb -s " var db ; try { db = new Sdb('localhost', '17643') ; var rg1=db.createRG('db1') ; rg1.createNode('${hostName}', '20000', '${homePath}/20000'); } catch( e) { println('Create db1 failed: ' + e ) ; throw e; } "
       if [ $? -eq 0 ] ; then
          echo "Create group db1 Succeed"
       else
@@ -164,13 +165,24 @@ function installSdb()
       bin/sdb -s " rg2.createNode('${hostName}', '40000', '${homePath}/40000');"
       bin/sdb -s " rg2.createNode('${hostName}', '41000', '${homePath}/41000');"
       bin/sdb -s " rg2.createNode('${hostName}', '42000', '${homePath}/42000');"
-      bin/sdb -s " db.startRG('db1', 'db2'); db.close(); "
+      bin/sdb -s " db.startRG('db1', 'db2') ; "
       if [ $? -eq 0 ] ; then
          echo "Create group db2 Succeed"
       else
          echo "Create group db2 Failed*******"
          exit 1
       fi
+
+      echo "Start adding coordGroup, and remove virtual coord..."
+	  bin/sdb -s " var coordRG = db.createCoordRG() ; coordRG.createNode( '${hostName}', '50000', '${homePath}/50000' ) ; "
+	  bin/sdb -s " coordRG.start() ; oma.removeCoord( '17643' ) ; db.close() ; "
+	  if [ $? -eq 0 ] ; then
+	     echo "Create coord group succeed"
+      else
+	     echo "Create coord group failed*******"
+		 exit 1
+      fi
+
       echo "Install sdb succeed."
    else
       sleep 15
