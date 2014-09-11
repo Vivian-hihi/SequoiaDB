@@ -546,6 +546,8 @@ namespace engine
       private:
          INT32          _getBusinessList( string clusterName,
                                           list<string> &businessList ) ;
+         INT32          _getBusinessListByHost( string hostName,
+                                                list<string> &businessList ) ;
          void           _sendBusinessList2Web( list<string> &businessList ) ;
    };
 

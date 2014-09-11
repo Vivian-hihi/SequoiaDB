@@ -1019,6 +1019,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       _omTaskInfo._isAllFinished = true ;
       string status = taskDetail.getStringField( OM_BSON_TASK_STATUS ) ;
+      if ( status.compare( OM_TASK_STATUS_ROLLBACK ) != 0
+           && status.compare( OM_TASK_STATUS_INSTALL ) != 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "agent's response field error:field=%s,value=%s,"
+                 "rc=%d", OM_BSON_TASK_STATUS, status.c_str(), rc ) ;
+         goto error ;
+      }
+
       if ( status.compare( OM_TASK_STATUS_ROLLBACK ) == 0 )
       {
          _omTaskInfo._status = OM_TASK_STATUS_ERROR_ROLLBACK ;
@@ -1091,8 +1100,11 @@ namespace engine
 
       if ( OM_TASK_STATUS_DOING == _omTaskInfo._status )
       {
-         _omTaskInfo._progress = taskDetail.getObjectField( 
+         if ( taskDetail.hasField( OM_BSON_TASK_PROGRESS ) )
+         {
+            _omTaskInfo._progress = taskDetail.getObjectField( 
                                                        OM_BSON_TASK_PROGRESS ) ;
+         }
       }
    }
 
@@ -1280,12 +1292,19 @@ namespace engine
          goto error ;
       }
 
+      if ( !result.hasField( OM_BSON_ISFINISHED ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "receive unreconigzed response:res=%s,rc=%d", 
+                 result.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
       isFinished = result.getBoolField( OM_BSON_ISFINISHED ) ;
       getTaskWriteLock() ;
       if ( isFinished )
       {
          rc = finishInstallTask( result ) ;
-         //TODO: get transactionID and add config to the table
       }
       else
       {
@@ -1758,6 +1777,8 @@ namespace engine
       {
          PD_LOG( PDEVENT, "receive command: %s", pCollectionName ) ;
       }
+
+      
    done:
       return rc ;
    error:
