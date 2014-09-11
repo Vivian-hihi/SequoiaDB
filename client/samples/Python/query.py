@@ -4,7 +4,8 @@ import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
 from pysequoiadb.error import (SDBTypeError,
-                               SDBBaseError)
+                               SDBBaseError,
+                               SDBEndOfCursor)
 
 from bson.objectid import ObjectId
 
@@ -29,10 +30,14 @@ if __name__ == "__main__":
       pysequoiadb._print("query one record, using condition=%s" % cond)
 
       cr = cl.query(condition=cond)
-      rc, record = cr.next()
-      while const.SDB_DMS_EOC != rc:
+      while True:
+         try:
+            record = cr.next()
+         except SDBEndOfCursor :
+            break
+         except SDBBaseError:
+            raise
          pysequoiadb._print(record)
-         rc, record = cr.next()
 
       # bulk_insert
       records = []
@@ -43,10 +48,14 @@ if __name__ == "__main__":
 
       pysequoiadb._print("query all records:")
       cr = cl.query()
-      rc, record = cr.next()
-      while const.SDB_DMS_EOC != rc:
+      while True:
+         try:
+            record = cr.next()
+         except SDBEndOfCursor :
+            break
+         except SDBBaseError:
+            raise
          pysequoiadb._print(record)
-         rc, record = cr.next()
 
       cs.drop_collection( cl_name )
       del cl

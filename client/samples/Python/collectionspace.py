@@ -4,7 +4,8 @@ import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
 from pysequoiadb.error import (SDBTypeError,
-                               SDBBaseError)
+                               SDBBaseError,
+                               SDBEndOfCursor)
 
 if __name__ == "__main__":
 

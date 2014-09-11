@@ -4,7 +4,8 @@ import pysequoiadb
 from pysequoiadb import client
 from pysequoiadb import const
 from pysequoiadb.error import (SDBTypeError,
-                               SDBBaseError)
+                               SDBBaseError,
+                               SDBEndOfCursor)
 
 from bson.objectid import ObjectId
 
@@ -27,10 +28,14 @@ if __name__ == "__main__":
       pysequoiadb._print("Before create index:")
       cr = cl.get_indexes()
       # print indexes
-      state, record = cr.next()
-      while ( const.SDB_DMS_EOC != state ):
+      while True:
+         try:
+            record = cr.next()
+         except SDBEndOfCursor :
+            break
+         except SDBBaseError:
+            raise
          pysequoiadb._print(record)
-         state, record = cr.next()
 
       #create an index
       index = {'Item':1, 'Rank':-1}
@@ -42,10 +47,14 @@ if __name__ == "__main__":
       cr = cl.get_indexes()
 
       # print indexes
-      state, record = cr.next()
-      while ( const.SDB_DMS_EOC != state ):
+      while True:
+         try:
+            record = cr.next()
+         except SDBEndOfCursor :
+            break
+         except SDBBaseError, e:
+            raise
          pysequoiadb._print(record)
-         state, record = cr.next()
 
       # release all
       cs.drop_collection(cl_name)
