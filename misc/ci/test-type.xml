@@ -10,7 +10,7 @@
 		<switch value="${test-type}">
 			<case value="basic">
 				<if>
-					<equals arg1="${deploy.conffile.wildcard}" arg2="unparallel" />
+					<equals arg1="${parallel.flag}" arg2="unparallel" />
 					<then>
 						<echo message="Begin to test basic tests under unparallel env..." />
 						<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
@@ -23,7 +23,6 @@
 
 							<param name="coord.service.port" value="50000" />
 						</sdbtest>
-						<echo message="Test basic tests are over ..." />
 					</then>
 					<else>
 						<echo message="Begin to test basic tests under parallel env..." />
@@ -62,9 +61,9 @@
 								<param name="coord.service.port" value="50000" />
 							</sdbtest>
 						</parallel>
-						<echo message="Test basic tests are over ..." />
 					</else>
 				</if>
+				<echo message="Test basic tests are over ..." />
 			</case>
 
 			<!-- <case value="ant">
