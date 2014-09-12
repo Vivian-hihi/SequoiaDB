@@ -35,6 +35,7 @@
 #include "sptCmdRunner.hpp"
 #include "ossUtil.hpp"
 #include "utilStr.hpp"
+#include "ossSocket.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #if defined (_LINUX)
@@ -58,6 +59,7 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getNetcardInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getIpTablesInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHostName )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, sniffPort )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, help )
 
    JS_BEGIN_MAPPING( _sptUsrSystem, "System" )
@@ -71,6 +73,7 @@ namespace engine
       JS_ADD_STATIC_FUNC( "getNetcardInfo", getNetcardInfo )
       JS_ADD_STATIC_FUNC( "getIpTablesInfo", getIpTablesInfo )
       JS_ADD_STATIC_FUNC( "getHostName", getHostName )
+      JS_ADD_STATIC_FUNC( "sniffPort", sniffPort )
       JS_ADD_STATIC_FUNC( "help", help )
    JS_MAPPING_END()
 
@@ -1036,6 +1039,65 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrSystem::sniffPort ( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      UINT64 port = 0 ;
+      BOOLEAN result = FALSE ;
+      stringstream ss ;
+      BSONObjBuilder builder ;
+     
+      if ( 0 == arg.argc() )
+      {
+         rc = SDB_INVALIDARG ;
+         ss << "not specified the port to sniff" ;
+         goto error ;
+      }
+      rc = arg.getNative( 0, &port, SPT_NATIVE_INT64 ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "failed to get port argument: %d", rc ) ;
+         ss << "port is not a number" ;
+         goto error ;
+      }
+      {
+      PD_LOG ( PDDEBUG, "sniff port is: %d", port ) ;
+      _ossSocket sock( port, 1000 ) ;
+      rc = sock.initSocket() ;
+      if ( rc )
+      {
+         PD_LOG ( PDWARNING, "failed to connect to port[%d], "
+                  "rc: %d", port, rc ) ;
+         ss << "failed to sniff port" ;
+         goto error ;
+      }
+      rc = sock.bind_listen() ;
+      if ( rc )
+      {
+         PD_LOG ( PDDEBUG, "port[%d] is busy, rc: %d", port, rc ) ;
+         result = FALSE ;
+         rc = SDB_OK ;
+      }
+      else
+      {
+         PD_LOG ( PDDEBUG, "port[%d] is usable", port ) ;
+         result = TRUE ;
+      }
+      builder.appendBool( SPT_USR_SYSTEM_USABLE, result ) ;
+      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
+      //close the socket
+      sock.close() ;
+      } 
+
+   done:
+      return rc ;
+   error:
+      detail = BSON( SPT_ERR << ss.str() ) ;
+      goto done ;
+   }
+
    INT32 _sptUsrSystem::help( const _sptArguments & arg,
                               _sptReturnVal & rval,
                               BSONObj & detail )
@@ -1051,7 +1113,8 @@ namespace engine
          << " System.getDiskInfo()" << endl
          << " System.getNetcardInfo()" << endl
          << " System.getIpTablesInfo()" << endl
-         << " System.getHostName()" << endl ;
+         << " System.getHostName()" << endl
+         << " System.sniffPort()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
