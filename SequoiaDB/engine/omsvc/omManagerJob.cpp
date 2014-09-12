@@ -121,6 +121,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       if ( _version != newVersion )
       {
+         // if version changed, generate the hosttable in _vHostTable
+         // and record which host need to update in _mapTargetAgents
          rc = _updateNotifier() ;
          if ( SDB_OK != rc )
          {
@@ -171,8 +173,8 @@ namespace engine
          goto error ;
       }
 
-      _mapAgents.clear() ;
-      _vAllHosts.clear() ;
+      _mapTargetAgents.clear() ;
+      _vHostTable.clear() ;
       while ( TRUE )
       {
          rtnContextBuf buffObj ;
@@ -200,8 +202,8 @@ namespace engine
          tmp.user        = record.getStringField( OM_HOST_FIELD_USER ) ;
          tmp.passwd      = record.getStringField( OM_HOST_FIELD_PASSWORD ) ;
 
-         _vAllHosts.push_back( tmp ) ;
-         _mapAgents.insert( _MAPAGENT_VALUE( tmp.hostName, tmp ) ) ;
+         _vHostTable.push_back( tmp ) ;
+         _mapTargetAgents.insert( _MAPAGENT_VALUE( tmp.hostName, tmp ) ) ;
       }
    done:
       return rc ;
@@ -222,7 +224,8 @@ namespace engine
 
       VEC_SUB_SESSIONPTR subSessionVec ;
 
-      if ( _mapAgents.size() == 0 )
+      // if all agent have update hosttable, do nothing
+      if ( _mapTargetAgents.size() == 0 )
       {
          goto done ;
       }
@@ -255,6 +258,7 @@ namespace engine
       for ( UINT32 i = 0 ; i < subSessionVec.size() ; i++ )
       {
          vector<BSONObj> objVec ;
+         INT32 innerRC             = SDB_OK ;
          SINT32 flag               = SDB_OK ;
          SINT64 contextID          = -1 ;
          SINT32 startFrom          = 0 ;
@@ -264,46 +268,43 @@ namespace engine
          pmdSubSession *subSession = subSessionVec[i] ;
          if ( subSession->isDisconnect() )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
-                   routeID2String(subSession->getNodeID()).c_str(), rc ) ;
+            PD_LOG(PDERROR, "session disconnected:id=%s", 
+                   routeID2String(subSession->getNodeID()).c_str() ) ;
             continue ;
          }
 
          pRspMsg = subSession->getRspMsg() ;
          if ( NULL == pRspMsg )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG(PDERROR, "unexpected result:rc=%d", rc ) ;
-            goto error ;
+            PD_LOG(PDERROR, "unexpected result" ) ;
+            continue ;
          }
 
-         rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
-                               &numReturned, objVec ) ;
-         if ( SDB_OK != rc )
+         innerRC = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, 
+                                    &startFrom, &numReturned, objVec ) ;
+         if ( SDB_OK != innerRC )
          {
-            PD_LOG( PDERROR, "extract reply failed:rc=%d", rc ) ;
-            goto error ;
+            PD_LOG( PDERROR, "extract reply failed" ) ;
+            continue ;
          }
 
          if ( SDB_OK != flag )
          {
-            rc = flag ;
             string detail ;
             if ( objVec.size() > 0 )
             {
                detail = objVec[0].getStringField( OP_ERR_DETAIL ) ;
             }
-            PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
-                    detail.c_str(), rc ) ;
-            goto error ;
+            PD_LOG( PDERROR, "agent process failed:detail=%s", 
+                    detail.c_str() ) ;
+            continue ;
          }
 
          if ( 1 != objVec.size() )
          {
-            rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG( PDERROR, "unexpected response size:rc=%d", rc ) ;
-            goto error ;
+            PD_LOG( PDERROR, "unexpected response size:size=%d", 
+                    objVec.size() ) ;
+            continue ;
          }
 
          // this agent add hostname success, no need to send request anymore
@@ -311,7 +312,7 @@ namespace engine
             string host ;
             string service ;
             _om->getHostInfoByID( subSession->getNodeID(), host, service ) ;
-            _mapAgents.erase( host ) ;
+            _mapTargetAgents.erase( host ) ;
          }
       }
 
@@ -328,9 +329,9 @@ namespace engine
       BSONArrayBuilder arrayBuilder ;
       BSONObj request ;
       UINT32 i     = 0 ;
-      for ( ; i < _vAllHosts.size(); i++ )
+      for ( ; i < _vHostTable.size(); i++ )
       {
-         omHostContent &agentInfo = _vAllHosts[i] ;
+         omHostContent &agentInfo = _vHostTable[i] ;
          BSONObj tmp ;
          if ( agentInfo.serviceName 
                               == boost::lexical_cast<string>( SDBCM_DFT_PORT ) )
@@ -348,8 +349,8 @@ namespace engine
          arrayBuilder.append( tmp ) ;
       }
 
-      _MAPAGENT_ITER iter = _mapAgents.begin() ;
-      while ( iter != _mapAgents.end() )
+      _MAPAGENT_ITER iter = _mapTargetAgents.begin() ;
+      while ( iter != _mapTargetAgents.end() )
       {
          MsgRouteID routeID ;
          pmdSubSession *subSession = NULL ;
@@ -453,7 +454,8 @@ namespace engine
             clusterIter = _mapClusters.find( clusterName ) ;
          }
 
-         clusterIter->second->notify( version ) ;
+         omClusterNotifier *pNotifier = clusterIter->second ;
+         pNotifier->notify( version ) ;
 
          iter++ ;
       }
@@ -494,10 +496,13 @@ namespace engine
             goto error ;
          }
 
+         // get all cluster's hostname version
          _shareVersion->getVersionMap( mapClusterVersion );
-         // for update cluster
+
+         // notify agent to update /etc/hosts if cluster's version changed
          _checkUpdateCluster( mapClusterVersion ) ;
-         // for delete cluster
+
+         // delete if cluster is not exist
          _checkDeleteCluster( mapClusterVersion ) ;
 
          ossSleep( 10 * OSS_ONE_SEC ) ;

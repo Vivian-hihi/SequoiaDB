@@ -91,9 +91,9 @@ namespace engine
          UINT32                  _version ;
 
          // store all the host's info
-         vector< omHostContent > _vAllHosts ;
+         vector< omHostContent > _vHostTable ;
          // store the agent's info that need to update hostname
-         map< string, omHostContent > _mapAgents ;
+         map< string, omHostContent > _mapTargetAgents ;
 
          typedef map< string, omHostContent >::iterator _MAPAGENT_ITER ;
          typedef map< string, omHostContent >::value_type _MAPAGENT_VALUE ;
