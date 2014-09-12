@@ -56,6 +56,7 @@
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
 		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
+		<!-- <property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}" /> -->
 
 		<echo message="Now testsuite ${test.suite.name} ..." />
 		
@@ -102,7 +103,7 @@
 		<replaceregexp match="&lt;(.*)testsuites&gt;" replace="" flags="g" byline="true" encoding="utf-8">
 			<fileset dir="${reports.path}/" includes="${test.case.name}*" />
 		</replaceregexp>
-		<replaceregexp match='&lt;testsuite name="(.*)" file' replace='&lt;testsuite name="${test.suite.name}" file' flags="g" byline="true" encoding="utf-8">
+		<replaceregexp match='&lt;testsuite name="(.*)" file' replace='&lt;testsuite name="${test.suite.class.name}" file' flags="g" byline="true" encoding="utf-8">
 			<fileset dir="${reports.path}/" includes="${test.case.name}*" />
 		</replaceregexp>
 		<replaceregexp match='&lt;testcase n' replace='&lt;testcase classname="${test.suite.class.name}" n' flags="g" byline="true" encoding="utf-8">
