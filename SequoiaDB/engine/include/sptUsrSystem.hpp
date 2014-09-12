@@ -63,7 +63,7 @@
 #define SPT_USR_SYSTEM_NETCARDS "Netcards"
 #define SPT_USR_SYSTEM_TARGET "Target"
 #define SPT_USR_SYSTEM_REACHABLE "Reachable"
-
+#define SPT_USR_SYSTEM_USABLE "Usable"
 #define SPT_USR_SYSTEM_UNIT "Unit"
 
 namespace engine
@@ -116,6 +116,10 @@ namespace engine
       static INT32 getHostName( const _sptArguments &arg,
                                 _sptReturnVal &rval,
                                 bson::BSONObj &detail ) ;
+
+      static INT32 sniffPort ( const _sptArguments &arg,
+                               _sptReturnVal &rval,
+                               bson::BSONObj &detail ) ;
 
       static INT32 help( const _sptArguments &arg,
                          _sptReturnVal &rval,
