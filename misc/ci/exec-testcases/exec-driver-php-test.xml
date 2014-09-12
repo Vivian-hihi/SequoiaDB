@@ -8,7 +8,7 @@
 <!--@param ${php-bin.dir} : The php-bin's director-->
 <!--@param ${phpunit.phar.dir} : The phpunit.phpar's director-->
 
-<project name="exec-driver-php-test" default="exec-driver-php-test">
+<project name="Exec-PHP-Testcases" default="Test-Driver-PHP">
 	<property file="${ci.properties.path}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
