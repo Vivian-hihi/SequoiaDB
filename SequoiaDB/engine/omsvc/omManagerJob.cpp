@@ -327,6 +327,7 @@ namespace engine
    {
       INT32 rc    = SDB_OK ;
       BSONArrayBuilder arrayBuilder ;
+      BSONObj hosttable ;
       BSONObj request ;
       UINT32 i     = 0 ;
       for ( ; i < _vHostTable.size(); i++ )
@@ -349,6 +350,8 @@ namespace engine
          arrayBuilder.append( tmp ) ;
       }
 
+      hosttable = arrayBuilder.arr() ;
+      
       _MAPAGENT_ITER iter = _mapTargetAgents.begin() ;
       while ( iter != _mapTargetAgents.end() )
       {
@@ -367,11 +370,12 @@ namespace engine
             goto error ;
          }
 
+         
          request = BSON( OM_BSON_FIELD_HOST_NAME << agentInfo.hostName
                          << OM_BSON_FIELD_HOST_IP << agentInfo.ip
                          << OM_BSON_FIELD_HOST_USER << agentInfo.user
                          << OM_BSON_FIELD_HOST_PASSWD << agentInfo.passwd
-                         << OM_BSON_FIELD_HOST_INFO << arrayBuilder.arr() ) ;
+                         << OM_BSON_FIELD_HOST_INFO << hosttable ) ;
          rc = msgBuildQueryMsg( &pContent, &contentSize, 
                                 CMD_ADMIN_PREFIX OM_UPDATE_HOSTNAME_REQ,
                                 0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
