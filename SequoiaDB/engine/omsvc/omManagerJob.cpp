@@ -159,10 +159,10 @@ namespace engine
 
       matcher  = BSON( OM_HOST_FIELD_CLUSTERNAME << _clusterName ) ;
       selector = BSON( OM_HOST_FIELD_NAME << ""
-                       OM_HOST_FIELD_IP << "" 
-                       OM_HOST_FIELD_USER << ""
-                       OM_HOST_FIELD_PASSWORD << ""
-                       OM_HOST_FIELD_AGENT_PORT << "" ) ;
+                       << OM_HOST_FIELD_IP << "" 
+                       << OM_HOST_FIELD_USER << ""
+                       << OM_HOST_FIELD_PASSWORD << ""
+                       << OM_HOST_FIELD_AGENT_PORT << "" ) ;
 
       rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 0, 
                      _cb, 0, -1, pDMSCB, pRTNCB, contextID );
