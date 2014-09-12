@@ -100,8 +100,8 @@
 	</target>
 
 	<target name="OverWriteReportFile" depends="">
-		<replaceregexp match="&lt;(.*)testsuites&gt;" replace="" flags="g" byline="true" encoding="utf-8">
-			<fileset dir="${reports.path}/" includes="${test.case.name}*" />
+		<!-- <replaceregexp match="&lt;(.*)testsuites&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+			<fileset dir="${reports.path}/" includes="*" />
 		</replaceregexp>
 		<replaceregexp match='&lt;testsuite name="(.*)" file' replace='&lt;testsuite name="${test.suite.class.name}" file' flags="g" byline="true" encoding="utf-8">
 			<fileset dir="${reports.path}/" includes="${test.case.name}*" />
@@ -109,5 +109,21 @@
 		<replaceregexp match='&lt;testcase n' replace='&lt;testcase classname="${test.suite.class.name}" n' flags="g" byline="true" encoding="utf-8">
 			<fileset dir="${reports.path}/" includes="${test.case.name}*" />
 		</replaceregexp>
+
+		<replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+        <replaceregexp match="&lt;/testsuites(.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+        <replaceregexp match='classname="' replace='classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
+            <fileset dir="${reports.path}/" includes="*" />
+        </replaceregexp>
+        <replace token="AllTests" value="${test.suite.class.name}">
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace>
+        <replace token="testsuites" value="testsuite">
+            <fileset dir="${reports.path}/"  includes="*" />
+        </replace>  -->
 	</target>
 </project>
