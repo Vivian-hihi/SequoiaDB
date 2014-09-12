@@ -1084,6 +1084,10 @@
             <stentry>LOB creation is not completed</stentry>
             <stentry>-269</stentry>
          </strow>
+         <strow>
+            <stentry>the data is not utf8</stentry>
+            <stentry>-270</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

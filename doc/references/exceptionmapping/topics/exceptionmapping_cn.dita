@@ -1084,6 +1084,10 @@
             <stentry>大对象正在创建中</stentry>
             <stentry>-269</stentry>
          </strow>
+         <strow>
+            <stentry>数据不是utf8编码</stentry>
+            <stentry>-270</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

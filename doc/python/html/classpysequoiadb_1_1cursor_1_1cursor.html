@@ -218,9 +218,10 @@ Exceptions:
 <pre class="fragment">Return the current document of cursor, and don't move.
 
 Return values:
-   a return value(used to check if cursor is end) and a dict object of record
+   a dict object of record
 Exceptions:
    pysequoiadb.error.SDBBaseError
+   pysequoiadb.error.SDBEndOfCursor
 </pre> 
 </div>
 </div>
@@ -240,9 +241,10 @@ Exceptions:
 <pre class="fragment">Return the next document of current cursor, and move forward.
 
 Return values:
-   a return value(used to check if cursor is end) and a dict object of record
+   a dict object of record
 Exceptions:
    pysequoiadb.error.SDBBaseError
+   pysequoiadb.error.SDBEndOfCursor
 </pre> 
 </div>
 </div>
@@ -252,7 +254,7 @@ Exceptions:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 11 2014 17:50:25 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Sep 11 2014 18:59:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>
