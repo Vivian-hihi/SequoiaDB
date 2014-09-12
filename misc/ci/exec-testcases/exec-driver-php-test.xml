@@ -92,11 +92,20 @@
 		<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
 		<echo message="The testcase ${test.case.name}.php cost ${testcase.timeOutput} s in total..." />
 
-		<antcall target="OverWriteReportFile">
+		<!-- <antcall target="OverWriteReportFile">
 			<param name="test.case.name" value="${test.case.name}" />
 			<param name="test.suite.class.name" value="${test.suite.class.name}" />
 			<param name="test.suite.name" value="${test.suite.name}" />
-		</antcall>
+		</antcall> -->
+		<replaceregexp match="&lt;(.*)testsuites&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+			<fileset dir="${reports.path}/" includes="*" />
+		</replaceregexp>
+		<replaceregexp match='&lt;testsuite name="(.*)" file' replace='&lt;testsuite name="${test.suite.name}" file' flags="g" byline="true" encoding="utf-8">
+			<fileset dir="${reports.path}/" includes="*" />
+		</replaceregexp>
+		<replaceregexp match='&lt;testcase n' replace='&lt;testcase classname="${test.suite.class.name}" n' flags="g" byline="true" encoding="utf-8">
+			<fileset dir="${reports.path}/" includes="*" />
+		</replaceregexp>
 	</target>
 
 	<target name="OverWriteReportFile" depends="">
