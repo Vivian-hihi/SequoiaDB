@@ -56,7 +56,6 @@
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
 		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
-		<!-- <property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}" /> -->
 
 		<echo message="Now testsuite ${test.suite.name} ..." />
 		
@@ -92,11 +91,6 @@
 		<sdbTime beginTime="${testcase.begin.time}" endTime="${testcase.end.time}" output="testcase.timeOutput" />
 		<echo message="The testcase ${test.case.name}.php cost ${testcase.timeOutput} s in total..." />
 
-		<!-- <antcall target="OverWriteReportFile">
-			<param name="test.case.name" value="${test.case.name}" />
-			<param name="test.suite.class.name" value="${test.suite.class.name}" />
-			<param name="test.suite.name" value="${test.suite.name}" />
-		</antcall> -->
 		<replaceregexp match="&lt;(.*)testsuites&gt;" replace="" flags="g" byline="true" encoding="utf-8">
 			<fileset dir="${reports.path}/" includes="*" />
 		</replaceregexp>
@@ -106,33 +100,5 @@
 		<replaceregexp match='&lt;testcase n' replace='&lt;testcase classname="${test.suite.class.name}" n' flags="g" byline="true" encoding="utf-8">
 			<fileset dir="${reports.path}/" includes="*" />
 		</replaceregexp>
-	</target>
-
-	<target name="OverWriteReportFile" depends="">
-		<!-- <replaceregexp match="&lt;(.*)testsuites&gt;" replace="" flags="g" byline="true" encoding="utf-8">
-			<fileset dir="${reports.path}/" includes="*" />
-		</replaceregexp>
-		<replaceregexp match='&lt;testsuite name="(.*)" file' replace='&lt;testsuite name="${test.suite.class.name}" file' flags="g" byline="true" encoding="utf-8">
-			<fileset dir="${reports.path}/" includes="${test.case.name}*" />
-		</replaceregexp>
-		<replaceregexp match='&lt;testcase n' replace='&lt;testcase classname="${test.suite.class.name}" n' flags="g" byline="true" encoding="utf-8">
-			<fileset dir="${reports.path}/" includes="${test.case.name}*" />
-		</replaceregexp>
-
-		<replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
-            <fileset dir="${reports.path}/" includes="*" />
-        </replaceregexp>
-        <replaceregexp match="&lt;/testsuites(.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
-            <fileset dir="${reports.path}/" includes="*" />
-        </replaceregexp>
-        <replaceregexp match='classname="' replace='classname="${test.suite.class.name}-' flags="g" byline="true" encoding="utf-8">
-            <fileset dir="${reports.path}/" includes="*" />
-        </replaceregexp>
-        <replace token="AllTests" value="${test.suite.class.name}">
-            <fileset dir="${reports.path}/"  includes="*" />
-        </replace>
-        <replace token="testsuites" value="testsuite">
-            <fileset dir="${reports.path}/"  includes="*" />
-        </replace>  -->
 	</target>
 </project>
