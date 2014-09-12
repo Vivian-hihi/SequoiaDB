@@ -135,6 +135,7 @@
 				<param name="includes.dir.patterns" value="*" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+				<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 
 				<param name="coord.service.port" value="50000" />
 			</sdbtest>
@@ -144,6 +145,7 @@
 				<param name="includes.dir.patterns" value="*" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 				<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+				<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 
 				<param name="coord.service.port" value="50000" />
 			</sdbtest>

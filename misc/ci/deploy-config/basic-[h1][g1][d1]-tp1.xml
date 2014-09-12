@@ -43,7 +43,7 @@
 	</target>
 
 	<target name="Test" depends="">
-		<property name="test-type-list" value="basic,driver-php" />
+		<property name="test-type-list" value="driver-php" />
 		<!-- <property name="test-type-list" value="driver-php" /> -->
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">

@@ -67,7 +67,6 @@
 		<hostinfo prefix="host" />
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
-		<!-- <property name="test.suite.class.name" value="testcases-${test-type}-${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" /> -->  
 		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
 
 		<echo message="Now testsuite ${test.suite.name} ..." />
@@ -99,7 +98,7 @@
 			<then>
 				<property name="command" value="python ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord.service.port} -d ${data.service.port}" />
 				<echo message="Command:${command}" />
-				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
+				<echo message="The testcase ${test.case.name}.py path on ${testcases.path}" />
 				<exec executable="python" dir="${testcases.path}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code">
 					<arg line=" ${test.case.fullname} -H ${test.machine.no2.basic} -p ${coord.service.port} -d ${data.service.port}" />
 				</exec>
