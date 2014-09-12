@@ -119,9 +119,9 @@ namespace engine
                     rc ) ;
 
       //TODO: open this code
-//      rc = _createJobs() ;
-//      PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
-//                    rc ) ;
+      rc = _createJobs() ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to create jobs:rc=%d", 
+                    rc ) ;
 
       rc = refreshVersions() ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to update cluster version:rc=%d", 
@@ -1098,13 +1098,10 @@ namespace engine
          _omTaskInfo._status = OM_TASK_STATUS_ERROR_ROLLBACK ;
       }
 
-      if ( OM_TASK_STATUS_DOING == _omTaskInfo._status )
+      if ( taskDetail.hasField( OM_BSON_TASK_PROGRESS ) )
       {
-         if ( taskDetail.hasField( OM_BSON_TASK_PROGRESS ) )
-         {
-            _omTaskInfo._progress = taskDetail.getObjectField( 
-                                                       OM_BSON_TASK_PROGRESS ) ;
-         }
+         _omTaskInfo._progress = taskDetail.getObjectField( 
+                                                    OM_BSON_TASK_PROGRESS ) ;
       }
    }
 
@@ -1282,6 +1279,8 @@ namespace engine
          PD_LOG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
          goto error ;
       }
+
+      PD_LOG( PDEVENT, "receive from agent:%s", result.toString().c_str() ) ;
 
       if ( SDB_OK != flag )
       {
@@ -1772,13 +1771,8 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      if ( _isCommand( pCollectionName ) )
-      {
-         PD_LOG( PDEVENT, "receive command: %s", pCollectionName ) ;
-      }
-
       
+      PD_LOG( PDEVENT, "receive command: %s", pCollectionName ) ;
    done:
       return rc ;
    error:

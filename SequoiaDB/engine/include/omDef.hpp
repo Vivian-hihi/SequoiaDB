@@ -260,7 +260,7 @@ namespace engine
    #define  OM_WAIT_AGENT_UNISTALL_INTERVAL  OM_MSG_TIMEOUT_TWO_HOUR
    #define  OM_WAIT_SCAN_RES_INTERVAL        OM_MSG_TIMEOUT_TWO_HOUR
 
-   #define  OM_WAIT_PROGRESS_RES_INTERVAL    (1000)
+   #define  OM_WAIT_PROGRESS_RES_INTERVAL    (3000)
    #define  OM_WAIT_AGENT_EXIT_RES_INTERVAL  (1000)
    #define  OM_WAIT_UPDATE_HOST_INTERVAL     (5000)
    // *****************************************************************
