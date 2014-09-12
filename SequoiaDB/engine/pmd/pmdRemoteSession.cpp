@@ -63,6 +63,8 @@ namespace engine
       _userData         = 0 ;
       _needToDel        = FALSE ;
       _hasStop          = FALSE ;
+      _handle           = NET_INVALID_HANDLE ;
+      _addPos           = -1 ;
    }
 
    _pmdSubSession::~_pmdSubSession()
@@ -312,6 +314,7 @@ namespace engine
    {
       _pAgent        = NULL ;
       _pHandle       = NULL ;
+      _inHandle      = FALSE ;
       _pSite         = NULL ;
    }
 
@@ -353,6 +356,7 @@ namespace engine
          if ( it->second.isNeedToDel() )
          {
             _pSite->delSubSession( it->second.getReqID() ) ;
+            _pSite->removeAssitNode( it->second.getAddPos() ) ;
          }
          _mapSubSession.erase( it ) ;
       }
@@ -368,6 +372,7 @@ namespace engine
          if ( it->second.isNeedToDel() )
          {
             _pSite->delSubSession( it->second.getReqID() ) ;
+            _pSite->removeAssitNode( it->second.getAddPos() ) ;
          }
          ++it ;
       }
@@ -467,7 +472,6 @@ namespace engine
       {
          subSession.setNodeID( nodeID ) ;
          subSession.setParent( this ) ;
-         _pSite->addNodeID( nodeID ) ;
       }
       return &subSession ;
    }
@@ -702,6 +706,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT64 oldReqID = 0 ;
+      INT32 oldAddPos = NULL ;
+      BOOLEAN hasSend = FALSE ;
 
       if ( !pSub )
       {
@@ -719,52 +725,127 @@ namespace engine
       // has send msg
       if ( pSub->isSend() )
       {
-         PD_LOG( PDDEBUG, "Session[%s] has already send msg to "
+         PD_LOG( PDWARNING, "Session[%s] has already send msg to "
                  "node[%s]", _pEDUCB->toString().c_str(),
                  routeID2String(pSub->getNodeID()).c_str() ) ;
-         goto done ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
       oldReqID = pSub->getReqID() ;
+      oldAddPos = *pSub->getAddPos() ;
       pSub->setReqID( _pEDUCB->incCurRequestID() ) ;
       pSub->getReqMsg()->requestID = pSub->getReqID() ;
       pSub->getReqMsg()->routeID.value = MSG_INVALID_ROUTEID ;
       pSub->getReqMsg()->TID = _pEDUCB->getTID() ;
+      // add to assit node
+      *pSub->getAddPos() = _pSite->addAssitNode(
+         pSub->getNodeID().columns.nodeID ) ;
 
-      // prepare send
-      if ( pSub->getIODatas()->size() > 0 )
+      // first connect
+      if ( NET_INVALID_HANDLE == pSub->getHandle() && _pHandle &&
+           FALSE == _inHandle )
       {
-         pSub->getReqMsg()->messageLength = sizeof( MsgHeader ) +
-                                            pSub->getIODataLen() ;
-         rc = _pAgent->syncSendv( pSub->getNodeID(), pSub->getReqMsg(),
-                                  *(pSub->getIODatas()) ) ;
-      }
-      else
-      {
-         rc = _pAgent->syncSend( pSub->getNodeID(),
-                                 (void*)pSub->getReqMsg() ) ;
-      }
-
-      if ( SDB_OK == rc )
-      {
-         if ( pSub->isNeedToDel() )
+         _inHandle = TRUE ;
+         rc = _pHandle->onSendConnect( pSub, pSub->getReqMsg(), TRUE ) ;
+         _inHandle = FALSE ;
+         if ( rc )
          {
-            _pSite->delSubSession( oldReqID ) ;
+            PD_LOG( PDERROR, "Session[%s] onSendConnect failed, rc: %d",
+                    _pEDUCB->toString().c_str(), rc ) ;
+            goto error ;
          }
-         pSub->setSendResult( TRUE ) ;
-         // add to request map
-         _pSite->addSubSession( pSub ) ;
       }
-      else
+
+      // send by net handle
+      if ( NET_INVALID_HANDLE != pSub->getHandle() )
       {
+         // prepare send
+         if ( pSub->getIODatas()->size() > 0 )
+         {
+            pSub->getReqMsg()->messageLength = sizeof( MsgHeader ) +
+                                               pSub->getIODataLen() ;
+            rc = _pAgent->syncSendv( pSub->getHandle(), pSub->getReqMsg(),
+                                     *(pSub->getIODatas()) ) ;
+         }
+         else
+         {
+            rc = _pAgent->syncSend( pSub->getHandle(),
+                                    (void*)pSub->getReqMsg() ) ;
+         }
+
+         if ( SDB_OK == rc )
+         {
+            hasSend = TRUE ;
+         }
+         else if ( SDB_NET_INVALID_HANDLE != rc )
+         {
+            PD_LOG( PDERROR, "Session[%s] send msg to node[%s] failed, "
+                    "rc: %d", _pEDUCB->toString().c_str(),
+                    routeID2String(pSub->getNodeID()).c_str(), rc ) ;
+            goto error ;
+         }
+         else
+         {
+            _pSite->removeNetHandle( pSub->getHandle() ) ;
+            if ( _pHandle && FALSE == _inHandle )
+            {
+               _inHandle = TRUE ;
+               rc = _pHandle->onSendConnect( pSub, pSub->getReqMsg(), FALSE ) ;
+               _inHandle = FALSE ;
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "Session[%s] onSendConnect failed, rc: %d",
+                          _pEDUCB->toString().c_str(), rc ) ;
+                  goto error ;
+               }
+            }
+            rc = SDB_OK ;
+         }
+      }
+
+      // send by route id
+      if ( !hasSend )
+      {
+         // prepare send
+         if ( pSub->getIODatas()->size() > 0 )
+         {
+            pSub->getReqMsg()->messageLength = sizeof( MsgHeader ) +
+                                               pSub->getIODataLen() ;
+            rc = _pAgent->syncSendv( pSub->getNodeID(), pSub->getReqMsg(),
+                                     *(pSub->getIODatas()),
+                                     &(pSub->_handle) ) ;
+         }
+         else
+         {
+            rc = _pAgent->syncSend( pSub->getNodeID(),
+                                    (void*)pSub->getReqMsg(),
+                                    &(pSub->_handle) ) ;
+         }
+
          PD_RC_CHECK( rc, PDERROR, "Session[%s] send msg to node[%s] failed, "
                       "rc: %d", _pEDUCB->toString().c_str(),
                       routeID2String(pSub->getNodeID()).c_str(), rc ) ;
+         hasSend = TRUE ;
+         _pSite->addNetHandle( pSub->getHandle() ) ;
       }
+
+      if ( pSub->isNeedToDel() )
+      {
+         _pSite->delSubSession( oldReqID ) ;
+         _pSite->removeAssitNode( &oldAddPos ) ;
+      }
+      pSub->setSendResult( TRUE ) ;
+      // add to request map
+      _pSite->addSubSession( pSub ) ;
 
    done:
       return rc ;
    error:
+      if ( pSub )
+      {
+         _pSite->removeAssitNode( pSub->getAddPos() ) ;
+      }
       goto done ;
    }
 
@@ -931,12 +1012,17 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+      else if ( NET_INVALID_HANDLE == pSub->getHandle() )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       pMsg->requestID = _pEDUCB->incCurRequestID() ;
       pMsg->routeID.value = MSG_INVALID_ROUTEID ;
       pMsg->TID = _pEDUCB->getTID() ;
 
-      rc = _pAgent->syncSend( pSub->getNodeID(), (void*)pMsg ) ;
+      rc = _pAgent->syncSend( pSub->getHandle(), (void*)pMsg ) ;
       if ( rc )
       {
          PD_LOG( PDWARNING, "Session[%s] send msg to node[%s] failed, "
@@ -957,6 +1043,17 @@ namespace engine
    _pmdRemoteSessionSite::_pmdRemoteSessionSite()
    {
       _pEDUCB = NULL ;
+      _pAgent = NULL ;
+
+      ossMemset( _assitNodeBuff, 0, sizeof( _assitNodeBuff ) ) ;
+      _nodeBuffSize = 0 ;
+
+      _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos = 0 ;
+      for ( UINT32 i = 0 ; i < PMD_SITE_NODEID_BUFF_SIZE ; ++i )
+      {
+         _assitNodeBuff[ i ]._pos = i + 1 ;
+      }
+      _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE - 1 ]._pos = -1 ;
    }
 
    _pmdRemoteSessionSite::~_pmdRemoteSessionSite()
@@ -974,6 +1071,131 @@ namespace engine
       _mapReq2SubSession.erase( reqID ) ;
    }
 
+   void _pmdRemoteSessionSite::addNetHandle( NET_HANDLE handle )
+   {
+      if ( NET_INVALID_HANDLE != handle &&
+           _setNetHandle.find( handle ) == _setNetHandle.end() )
+      {
+         // not exist
+         _setNetHandle.insert( handle ) ;
+      }
+   }
+
+   void _pmdRemoteSessionSite::removeNetHandle( NET_HANDLE handle )
+   {
+      _setNetHandle.erase( handle ) ;
+   }
+
+   INT32 _pmdRemoteSessionSite::addAssitNode( UINT16 nodeID )
+   {
+      INT32 pos = -1 ;
+      if ( -1 != _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos )
+      {
+         ++_nodeBuffSize ;
+         pos = _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos ;
+         _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos =
+            _assitNodeBuff[ pos ]._pos ;
+         _assitNodeBuff[ pos ]._nodeID = nodeID ;
+      }
+      return pos ;
+   }
+
+   void _pmdRemoteSessionSite::removeAssitNode( INT32 *pos )
+   {
+      if ( *pos >= 0 && *pos < PMD_SITE_NODEID_BUFF_SIZE )
+      {
+         _assitNodeBuff[ *pos ]._nodeID = 0 ;
+         _assitNodeBuff[ *pos ]._pos =
+            _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos ;
+         _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE ]._pos = *pos ;
+         --_nodeBuffSize ;
+         *pos = -1 ;
+      }
+   }
+
+   BOOLEAN _pmdRemoteSessionSite::existNode( UINT16 nodeID )
+   {
+      for ( UINT32 i = 0 ; i < PMD_SITE_NODEID_BUFF_SIZE ; ++i )
+      {
+         if ( _assitNodeBuff[ i ]._nodeID == nodeID )
+         {
+            return TRUE ;
+         }
+      }
+      return FALSE ;
+   }
+
+   void _pmdRemoteSessionSite::handleClose( const NET_HANDLE & handle,
+                                            const _MsgRouteID & id )
+   {
+      // if assit node is not full and can't find the nodeID
+      // not to send disconnect
+      if ( getAssitNodeSize() < PMD_SITE_NODEID_BUFF_SIZE &&
+           FALSE == existNode( id.columns.nodeID ) )
+      {
+         goto done ;
+      }
+      else
+      {
+         MsgOpReply *pMsg = NULL ;
+         pMsg = ( MsgOpReply* )SDB_OSS_MALLOC( sizeof( MsgOpReply ) ) ;
+         if ( pMsg )
+         {
+            pMsg->header.messageLength = sizeof( MsgOpReply ) ;
+            pMsg->header.opCode = MSG_BS_DISCONNECT ;
+            pMsg->header.requestID = eduCB()->incCurRequestID() ;
+            pMsg->header.TID = eduCB()->getTID() ;
+            pMsg->header.routeID.value = id.value ;
+            pMsg->contextID = -1 ;
+            pMsg->flags = SDB_COORD_REMOTE_DISC ;
+            pMsg->numReturned = 0 ;
+            pMsg->startFrom = 0 ;
+
+            eduCB()->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                             PMD_EDU_MEM_ALLOC,
+                                             (CHAR*)pMsg,
+                                             (UINT64)handle ) ) ;
+         }
+      }
+
+   done:
+      return ;
+   }
+
+   void _pmdRemoteSessionSite::interruptAllSubSession()
+   {
+      MsgHeader interruptMsg ;
+      interruptMsg.messageLength = sizeof( MsgHeader ) ;
+      interruptMsg.opCode = MSG_BS_INTERRUPTE ;
+      interruptMsg.requestID = eduCB()->incCurRequestID() ;
+      interruptMsg.routeID.value = MSG_INVALID_ROUTEID ;
+      interruptMsg.TID = eduCB()->getTID() ;
+
+      SET_NETHANDLE::iterator it = _setNetHandle.begin() ;
+      while ( it != _setNetHandle.end() )
+      {
+         _pAgent->syncSend( *it, (void*)&interruptMsg ) ;
+         ++it ;
+      }
+   }
+
+   void _pmdRemoteSessionSite::disconnectAllSubSession()
+   {
+      MsgHeader disconnectMsg ;
+      disconnectMsg.messageLength = sizeof( MsgHeader ) ;
+      disconnectMsg.opCode = MSG_BS_DISCONNECT ;
+      disconnectMsg.requestID = eduCB()->incCurRequestID() ;
+      disconnectMsg.routeID.value = MSG_INVALID_ROUTEID ;
+      disconnectMsg.TID = eduCB()->getTID() ;
+
+      SET_NETHANDLE::iterator it = _setNetHandle.begin() ;
+      while ( it != _setNetHandle.end() )
+      {
+         _pAgent->syncSend( *it, (void*)&disconnectMsg ) ;
+         ++it ;
+      }
+   }
+
    INT32 _pmdRemoteSessionSite::processEvent( pmdEDUEvent &event,
                                               MAP_SUB_SESSION &mapSessions,
                                               pmdSubSession **ppSub,
@@ -985,6 +1207,7 @@ namespace engine
       MsgHeader *pReply = NULL ;
       UINT64 nodeID = 0 ;
       pmdSubSession *pSubSession = NULL ;
+      NET_HANDLE handle = (NET_HANDLE)event._userData ;
 
       SDB_ASSERT( ppSub, "ppSub can't be NULL" ) ;
 
@@ -1011,7 +1234,8 @@ namespace engine
             {
                break ;
             }
-            else if ( itPtr->second->getNodeIDUInt() == nodeID )
+            else if ( itPtr->second->getNodeIDUInt() == nodeID &&
+                      itPtr->second->getHandle() == handle )
             {
                pSubSession = itPtr->second ;
                pSubSession->processEvent( event ) ;
@@ -1027,6 +1251,7 @@ namespace engine
                }
                // remove from request id map
                _mapReq2SubSession.erase( itPtr++ ) ;
+               removeAssitNode( pSubSession->getAddPos() ) ;
 
                if ( pHandle )
                {
@@ -1070,6 +1295,7 @@ namespace engine
             }
             // remove from request id map
             _mapReq2SubSession.erase( itPtr ) ;
+            removeAssitNode( pSubSession->getAddPos() ) ;
 
             if ( pHandle )
             {
@@ -1154,12 +1380,21 @@ namespace engine
       ossScopedLock lock( &_edusLatch, EXCLUSIVE ) ;
       pmdRemoteSessionSite &site = _mapTID2EDU[ cb->getTID() ] ;
       site.setEduCB( cb ) ;
+      site.setRouteAgent( _pAgent ) ;
    }
 
    void _pmdRemoteSessionMgr::unregEUD( _pmdEDUCB * cb )
    {
-      ossScopedLock lock( &_edusLatch, EXCLUSIVE ) ;
-      _mapTID2EDU.erase( cb->getTID() ) ;
+      pmdRemoteSessionSite *pSite = getSite( cb ) ;
+      if ( pSite )
+      {
+         // first to disconnect all sub session
+         pSite->disconnectAllSubSession() ;
+
+         _edusLatch.get() ;
+         _mapTID2EDU.erase( cb->getTID() ) ;
+         _edusLatch.release() ;
+      }
    }
 
    pmdRemoteSessionSite* _pmdRemoteSessionMgr::getSite( _pmdEDUCB * cb )
@@ -1226,35 +1461,12 @@ namespace engine
    void _pmdRemoteSessionMgr::handleClose( const NET_HANDLE &handle,
                                            const _MsgRouteID &id )
    {
-      pmdEDUCB *cb = NULL ;
-      MsgOpReply *pMsg = NULL ;
-
-      if ( sessionCount() > 0 )
+      ossScopedLock lock( &_edusLatch, SHARED ) ;
+      MAP_TID_2_EDU_IT it = _mapTID2EDU.begin() ;
+      while ( it != _mapTID2EDU.end() )
       {
-         // push disconnect reply to each edu
-         ossScopedLock lock( &_edusLatch, SHARED ) ;
-         MAP_TID_2_EDU_IT it = _mapTID2EDU.begin() ;
-         while ( it != _mapTID2EDU.end() )
-         {
-            cb = it->second.eduCB() ;
-            pMsg = ( MsgOpReply* )SDB_OSS_MALLOC( sizeof( MsgOpReply ) ) ;
-            if ( pMsg )
-            {
-               pMsg->header.messageLength = sizeof( MsgOpReply ) ;
-               pMsg->header.opCode = MSG_BS_DISCONNECT ;
-               pMsg->header.requestID = cb->incCurRequestID() ;
-               pMsg->header.TID = cb->getTID() ;
-               pMsg->header.routeID.value = id.value ;
-               pMsg->contextID = -1 ;
-               pMsg->flags = SDB_COORD_REMOTE_DISC ;
-               pMsg->numReturned = 0 ;
-               pMsg->startFrom = 0 ;
-
-               cb->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG, PMD_EDU_MEM_ALLOC,
-                                           (CHAR*)pMsg, (UINT64)handle ) ) ;
-            }
-            ++it ;
-         }
+         it->second.handleClose( handle, id ) ;
+         ++it ;
       }
    }
 

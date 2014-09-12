@@ -111,7 +111,8 @@ namespace engine
                             UINT32 buffSize ) ;
 
          INT32 syncSend( const  _MsgRouteID &id,
-                         void *header ) ;
+                         void *header,
+                         NET_HANDLE *pHandle = NULL ) ;
 
          INT32 syncSend( const NET_HANDLE &handle,
                          MsgHeader *header,
@@ -121,9 +122,15 @@ namespace engine
          INT32 syncSend( const _MsgRouteID &id,
                          MsgHeader *header,
                          const void *body,
-                         UINT32 bodyLen ) ;
+                         UINT32 bodyLen,
+                         NET_HANDLE *pHandle = NULL ) ;
 
          INT32 syncSendv( const _MsgRouteID &id,
+                          MsgHeader *header,
+                          const netIOVec &iov,
+                          NET_HANDLE *pHandle = NULL ) ;
+
+         INT32 syncSendv( const NET_HANDLE &handle,
                           MsgHeader *header,
                           const netIOVec &iov ) ;
 

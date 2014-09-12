@@ -77,6 +77,14 @@ namespace engine
                                  _pmdSubSession **ppSub,
                                  const MsgHeader *pReply ) = 0 ;
 
+         /*
+            if return SDB_OK, will continue
+            else, send failed
+         */
+         virtual INT32  onSendConnect( _pmdSubSession *pSub,
+                                       const MsgHeader *pReq,
+                                       BOOLEAN isFirst ) = 0 ;
+
    } ;
    typedef _IRemoteSessionHandler IRemoteSessionHandler ;
 
@@ -132,6 +140,7 @@ namespace engine
          BOOLEAN     hasReply() const { return _event._Data ? TRUE : FALSE ; }
          BOOLEAN     hasStop() const { return _hasStop ; }
          void        clearSend() { _isSend = FALSE ; }
+         NET_HANDLE  getHandle() const { return _handle ; }
 
       protected:
          void        setParent( _pmdRemoteSession *parent ) { _parent = parent ; }
@@ -143,7 +152,7 @@ namespace engine
 
          BOOLEAN     isNeedToDel() const { return _needToDel ; }
          void        setNeedToDel( BOOLEAN needToDel ) { _needToDel = needToDel ; }
-         void        setDisconnect( BOOLEAN disconnect ) { _isDisconnect = disconnect ; }
+         INT32*      getAddPos() { return &_addPos ; }
 
       protected:
          _pmdRemoteSession          *_parent ;
@@ -163,6 +172,8 @@ namespace engine
          UINT64                     _userData ;
          BOOLEAN                    _needToDel ;
          BOOLEAN                    _hasStop ;
+         NET_HANDLE                 _handle ;
+         INT32                      _addPos ;
    } ;
    typedef _pmdSubSession pmdSubSession ;
 
@@ -175,6 +186,7 @@ namespace engine
    typedef vector< pmdSubSession* >                VEC_SUB_SESSIONPTR ;
 
    typedef set< UINT64 >                           SET_NODEID ;
+   typedef set< NET_HANDLE >                       SET_NETHANDLE ;
 
    /*
       PMD_SUB_SESSION_FILTER define
@@ -294,7 +306,9 @@ namespace engine
                              VEC_SUB_SESSIONPTR *pSubs = NULL ) ;
 
          /*
-            Post msg to specail sub session, the msg will not save to pSub.
+            Post msg to specail sub session by net handle, is sub session
+            net handle is invalid will return error,
+            the msg will not save to pSub.
             For msg: MSG_BS_INTERRUPT, MSG_BS_INTERRUPT_SELF,
                      MSG_BS_DISCONNECT
          */
@@ -322,6 +336,7 @@ namespace engine
          MAP_SUB_SESSION               _mapSubSession ;
          MAP_SUB_SESSIONPTR            _mapPendingSubSession ;
          IRemoteSessionHandler         *_pHandle ;
+         BOOLEAN                       _inHandle ;
          _pmdRemoteSessionSite         *_pSite ;
          netRouteAgent                 *_pAgent ;
          _pmdEDUCB                     *_pEDUCB ;
@@ -331,21 +346,36 @@ namespace engine
    } ;
    typedef _pmdRemoteSession pmdRemoteSession ;
 
+   #define PMD_SITE_NODEID_BUFF_SIZE      ( 128 )
    /*
       _pmdRemoteSessionSite define
    */
    class _pmdRemoteSessionSite : public SDBObject
    {
+      struct posAndNode
+      {
+         INT16    _pos ;
+         UINT16   _nodeID ;
+      } ;
+
       friend class _pmdRemoteSession ;
       public:
          _pmdRemoteSessionSite() ;
          ~_pmdRemoteSessionSite() ;
 
          void setEduCB( _pmdEDUCB *cb ) { _pEDUCB = cb ; }
+         void setRouteAgent( netRouteAgent *pAgent ) { _pAgent = pAgent ; }
+
          _pmdEDUCB* eduCB() { return _pEDUCB ; }
 
-         const SET_NODEID& getAllNodeSet() { return _setNodeID ; }
-         const SET_NODEID* getAllNodeSetPtr() { return &_setNodeID ; }
+         void     handleClose( const NET_HANDLE &handle,
+                               const _MsgRouteID &id ) ;
+
+         void     interruptAllSubSession() ;
+         void     disconnectAllSubSession() ;
+
+         const SET_NETHANDLE& getAllHandle() { return _setNetHandle ; }
+         const SET_NETHANDLE* getAddHandlePtr() { return &_setNetHandle ; }
 
       protected:
          INT32    processEvent( pmdEDUEvent &event,
@@ -354,13 +384,23 @@ namespace engine
                                 IRemoteSessionHandler *pHandle ) ;
          void     addSubSession( pmdSubSession *pSub ) ;
          void     delSubSession( UINT64 reqID ) ;
-         void     addNodeID( UINT64 nodeID ) { _setNodeID.insert( nodeID ) ; }
-         void     removeNodeID( UINT64 nodeID ) { _setNodeID.erase( nodeID ) ; }
+         void     addNetHandle( NET_HANDLE handle ) ;
+         void     removeNetHandle( NET_HANDLE handle ) ;
+
+         INT32    addAssitNode( UINT16 nodeID ) ;
+         void     removeAssitNode( INT32 *pos ) ;
+         UINT32   getAssitNodeSize() const { return _nodeBuffSize ; }
+         BOOLEAN  existNode( UINT16 nodeID ) ;
 
       private:
-         MAP_SUB_SESSIONPTR               _mapReq2SubSession ;
-         SET_NODEID                       _setNodeID ;
-         _pmdEDUCB                        *_pEDUCB ;
+         MAP_SUB_SESSIONPTR   _mapReq2SubSession ;
+         SET_NETHANDLE        _setNetHandle ;
+         _pmdEDUCB            *_pEDUCB ;
+         netRouteAgent        *_pAgent ;
+
+         // last for free entry
+         posAndNode           _assitNodeBuff[ PMD_SITE_NODEID_BUFF_SIZE + 1 ] ;
+         UINT32               _nodeBuffSize ;
 
    } ;
    typedef _pmdRemoteSessionSite pmdRemoteSessionSite ;

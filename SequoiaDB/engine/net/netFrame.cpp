@@ -214,7 +214,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND, "_netFrame::syncSend" )
    INT32 _netFrame::syncSend( const _MsgRouteID &id,
-                              void *header )
+                              void *header,
+                              NET_HANDLE *pHandle )
    {
       SDB_ASSERT( NULL != header, "header should not be NULL") ;
       SDB_ASSERT( MSG_INVALID_ROUTEID != id.value,
@@ -240,6 +241,10 @@ namespace engine
       }
       eh->mtx().get() ;
       rc = eh->syncSend( msgHeader, msgHeader->messageLength ) ;
+      if ( pHandle )
+      {
+         *pHandle = eh->handle() ;
+      }
       eh->mtx().release() ;
       if ( SDB_OK != rc )
       {
@@ -351,8 +356,7 @@ namespace engine
       UINT32 headLen = header->messageLength - bodyLen ;
       NET_EH eh ;
       _mtx.get_shared() ;
-      map<NET_HANDLE, NET_EH>::iterator itr =
-                                _opposite.find( handle ) ;
+      map<NET_HANDLE, NET_EH>::iterator itr = _opposite.find( handle ) ;
       if ( _opposite.end() == itr )
       {
          _mtx.release_shared() ;
@@ -391,11 +395,86 @@ namespace engine
       goto done ;
    }
 
+   INT32 _netFrame::syncSendv( const NET_HANDLE & handle,
+                               MsgHeader * header,
+                               const netIOVec & iov )
+   {
+      SDB_ASSERT( NULL != header, "should not be NULL" ) ;
+      SDB_ASSERT( NET_INVALID_HANDLE != handle, "invalid handle" ) ;
+
+      INT32 rc = SDB_OK ;
+      NET_EH eh ;
+      map<NET_HANDLE, NET_EH>::iterator itHandle ;
+
+#ifdef _DEBUG
+      UINT32 totalLen = 0 ;
+      for ( netIOVec::const_iterator itr = iov.begin();
+            itr != iov.end();
+            itr++ )
+      {
+         SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
+         totalLen += itr->iovLen ;
+      }
+
+      if ( (SINT32)(totalLen + sizeof(MsgHeader)) != header->messageLength )
+      {
+         PD_LOG( PDERROR, "the length in header[%d] not equal to"
+                 " the whole msg's len[%d]",
+                  header->messageLength,
+                  totalLen + sizeof(MsgHeader)) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+#endif
+
+      _mtx.get_shared() ;
+      itHandle = _opposite.find( handle ) ;
+      if ( _opposite.end() == itHandle )
+      {
+         _mtx.release_shared() ;
+         rc = SDB_NET_INVALID_HANDLE ;
+         goto error ;
+      }
+      eh = itHandle->second ;
+      _mtx.release_shared() ;
+
+      eh->mtx().get() ;
+      rc = eh->syncSend( header, sizeof(MsgHeader) ) ;
+      if ( SDB_OK != rc )
+      {
+         eh->mtx().release() ;
+         eh->close() ;
+         goto error ;
+      }
+      _netOut.add( sizeof(MsgHeader) ) ;
+
+      for ( netIOVec::const_iterator itr = iov.begin();
+            itr != iov.end();
+            itr++ )
+      {
+         rc = eh->syncSend( itr->iovBase, itr->iovLen ) ;
+         if ( SDB_OK != rc )
+         {
+            eh->mtx().release() ;
+            eh->close() ;
+            goto error ;
+         }
+         _netOut.add( itr->iovLen ) ;
+      }
+      eh->mtx().release() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND4, "_netFrame::syncSend" )
    INT32 _netFrame::syncSend( const  _MsgRouteID &id,
                               MsgHeader *header,
                               const void *body,
-                              UINT32 bodyLen )
+                              UINT32 bodyLen,
+                              NET_HANDLE *pHandle )
    {
       SDB_ASSERT( NULL != header && NULL != body, "should not be NULL") ;
       SDB_ASSERT( MSG_INVALID_ROUTEID != id.value,
@@ -419,6 +498,10 @@ namespace engine
          header->routeID = _local ;
       }
       eh->mtx().get() ;
+      if ( pHandle )
+      {
+         *pHandle = eh->handle() ;
+      }
       rc = eh->syncSend( header, headLen ) ;
       if ( SDB_OK != rc )
       {
@@ -427,8 +510,7 @@ namespace engine
          goto error ;
       }
       _netOut.add( headLen ) ;
-      rc = eh->syncSend( body,
-                         bodyLen ) ;
+      rc = eh->syncSend( body, bodyLen ) ;
       eh->mtx().release() ;
       if ( SDB_OK != rc )
       {
@@ -446,7 +528,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSENDV, "_netFrame::syncSendv" )
    INT32 _netFrame::syncSendv( const _MsgRouteID &id,
                                MsgHeader *header,
-                               const netIOVec &iov )
+                               const netIOVec &iov,
+                               NET_HANDLE *pHandle )
    {
       SDB_ASSERT( NULL != header, "should not be NULL" ) ;
       SDB_ASSERT( MSG_INVALID_ROUTEID != id.value,
@@ -491,6 +574,10 @@ namespace engine
       }
 
       eh->mtx().get() ;
+      if ( pHandle )
+      {
+         *pHandle = eh->handle() ;
+      }
       rc = eh->syncSend( header, sizeof(MsgHeader) ) ;
       if ( SDB_OK != rc )
       {

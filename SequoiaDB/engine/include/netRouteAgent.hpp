@@ -123,7 +123,8 @@ namespace engine
          INT32 listen( const _MsgRouteID &id ) ;
 
          INT32 syncSend( const _MsgRouteID &id,
-                         void *header ) ;
+                         void *header,
+                         NET_HANDLE *pHandle = NULL ) ;
 
          INT32 syncSend( const NET_HANDLE &handle,
                          void *header ) ;
@@ -135,7 +136,8 @@ namespace engine
          INT32 syncSend( const _MsgRouteID &id,
                          MsgHeader *header,
                          void *body,
-                         UINT32 bodyLen ) ;
+                         UINT32 bodyLen,
+                         NET_HANDLE *pHandle = NULL ) ;
 
          INT32 syncSend( const NET_HANDLE &handle,
                          MsgHeader *header,
@@ -143,6 +145,11 @@ namespace engine
                          UINT32 bodyLen ) ;
 
          INT32 syncSendv( const _MsgRouteID &id,
+                          MsgHeader *header,
+                          const netIOVec &iov,
+                          NET_HANDLE *pHandle = NULL ) ;
+
+         INT32 syncSendv( const NET_HANDLE &handle,
                           MsgHeader *header,
                           const netIOVec &iov ) ;
 

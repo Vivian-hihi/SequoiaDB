@@ -156,7 +156,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND, "_netRouteAgent::syncSend" )
    INT32 _netRouteAgent::syncSend( const _MsgRouteID &id,
-                                   void *header )
+                                   void *header,
+                                   NET_HANDLE *pHandle )
    {
       SDB_ASSERT( NULL != header,
                   "should not be NULL" ) ;
@@ -164,7 +165,7 @@ namespace engine
       /// todo: trans to _netFrame
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSND );
-      rc = _frame.syncSend( id, header ) ;
+      rc = _frame.syncSend( id, header, pHandle ) ;
       if ( SDB_OK == rc )
       {
          goto done ;
@@ -186,15 +187,13 @@ namespace engine
          goto error ;
       }
 
-      rc = _frame.syncConnect( host,
-                               service,
-                               id ) ;
+      rc = _frame.syncConnect( host, service, id ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
 
-      rc = _frame.syncSend( id, header ) ;
+      rc = _frame.syncSend( id, header, pHandle ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -226,13 +225,14 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND2, "_netRouteAgent::syncSend" )
    INT32 _netRouteAgent::syncSend( const _MsgRouteID &id,
                                    MsgHeader *header, void *body,
-                                   UINT32 bodyLen )
+                                   UINT32 bodyLen,
+                                   NET_HANDLE *pHandle )
    {
       SDB_ASSERT( NULL != header && NULL != body,
                   "should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSND2 );
-      rc = _frame.syncSend( id, header, body, bodyLen ) ;
+      rc = _frame.syncSend( id, header, body, bodyLen, pHandle ) ;
       if ( SDB_OK == rc )
       {
          goto done ;
@@ -250,14 +250,12 @@ namespace engine
          {
             goto error ;
          }
-         rc = _frame.syncConnect( host,
-                                  service,
-                                  id ) ;
+         rc = _frame.syncConnect( host, service, id ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
-         rc = _frame.syncSend( id, header, body, bodyLen ) ;
+         rc = _frame.syncSend( id, header, body, bodyLen, pHandle ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -297,12 +295,13 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSNDV, "_netRouteAgent::syncSendv" )
    INT32 _netRouteAgent::syncSendv( const _MsgRouteID &id,
                                     MsgHeader *header,
-                                    const netIOVec &iov )
+                                    const netIOVec &iov,
+                                    NET_HANDLE *pHandle )
    {
       PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSNDV ) ;
       SDB_ASSERT( NULL != header, "should not be NULL" ) ;
       INT32 rc = SDB_OK ;
-      rc = _frame.syncSendv( id, header, iov ) ;
+      rc = _frame.syncSendv( id, header, iov, pHandle ) ;
       if ( SDB_OK == rc )
       {
          goto done ;
@@ -320,15 +319,13 @@ namespace engine
          {
             goto error ;
          }
-         rc = _frame.syncConnect( host,
-                                  service,
-                                  id ) ;
+         rc = _frame.syncConnect( host, service, id ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
 
-         rc = _frame.syncSendv( id, header, iov ) ;
+         rc = _frame.syncSendv( id, header, iov, pHandle ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
@@ -339,6 +336,13 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _netRouteAgent::syncSendv( const NET_HANDLE & handle,
+                                    MsgHeader * header,
+                                    const netIOVec & iov )
+   {
+      return _frame.syncSendv( handle, header, iov ) ;
    }
 
    INT64 _netRouteAgent::netIn()
