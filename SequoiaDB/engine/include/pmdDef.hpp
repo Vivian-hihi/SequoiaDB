@@ -218,12 +218,6 @@ namespace engine
    #define SDB_TYPE_OMA_STR            "sdbcm"
 
    /*
-      SDB_RUN_MODE_TYPE_STR DEFINE
-   */
-   #define SDB_RUN_MODE_TYPE_LOCAL_STR  "local"
-   #define SDB_RUN_MODE_TYPE_RUN_STR    "run"
-
-   /*
       define
    */
    #define PMD_DFT_CONF                "sdb.conf"
@@ -245,16 +239,6 @@ namespace engine
    #define PMD_OPTION_AS_PROC          "asproc"
    #endif // _LINUX
    #define PMD_OPTION_TYPE             "type"
-   #define PMD_OPTION_MODE             "mode"
-   #define PMD_OPTION_ROLE             "role"
-   #define PMD_OPTION_DETAIL           "detail"
-   #define PMD_OPTION_EXPAND           "expand"
-   #define PMD_OPTION_DBPATH           "dbpath"
-   #define PMD_OPTION_CATALOGADDR      "catalogaddr"
-   #define PMD_OPTION_CM_PORT          "defaultPort"
-   #define SDB_CONF_LOCAL_PATH         ".."OSS_FILE_SEP"conf"OSS_FILE_SEP"local"
-   #define SDB_CONF_FILE_PATH_FORMAT   ".."OSS_FILE_SEP"conf"OSS_FILE_SEP"local"OSS_FILE_SEP"%s"OSS_FILE_SEP"sdb.conf"
-   #define SDB_CM_FILE_PATH            ".."OSS_FILE_SEP"conf"OSS_FILE_SEP"sdbcm.conf"
 
    #define ENGINE_NPIPE_MSG_PID        "$pid"
    #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"
@@ -293,16 +277,6 @@ namespace engine
       SDB_TYPE_OMA,        // omagent
 
       SDB_TYPE_MAX
-   } ;
-
-   /*
-      SDB_RUN_MODE_TYPE
-   */
-   enum SDB_RUN_MODE_TYPE
-   {
-       LOCAL = 1,
-       RUN,
-       SDB_RUN_MODE_TYPE_MAX
    } ;
 
 }
