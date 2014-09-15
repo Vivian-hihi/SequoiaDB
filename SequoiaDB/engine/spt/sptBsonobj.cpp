@@ -37,11 +37,9 @@ namespace engine
 JS_CONSTRUCT_FUNC_DEFINE( _sptBsonobj, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptBsonobj, destruct)
 JS_MEMBER_FUNC_DEFINE( _sptBsonobj, toJson )
-JS_MEMBER_FUNC_DEFINE( _sptBsonobj, toString )
 
 JS_BEGIN_MAPPING( _sptBsonobj, "BSONObj" )
   JS_ADD_MEMBER_FUNC( "toJson", toJson )
-  JS_ADD_MEMBER_FUNC( "toString", toString )
   JS_ADD_CONSTRUCT_FUNC( construct )
   JS_ADD_DESTRUCT_FUNC( destruct )
 JS_MAPPING_END()
@@ -75,14 +73,6 @@ JS_MAPPING_END()
    {
       rval.setStringVal( "", _obj.toString().c_str()) ;
       return SDB_OK ;      
-   }
-
-   INT32 _sptBsonobj::toString( const _sptArguments & arg,
-                                _sptReturnVal & rval,
-                                BSONObj & detail )
-   {
-      rval.setStringVal( "", _obj.toString().c_str() ) ;
-      return SDB_OK ;
    }
 
    INT32 _sptBsonobj::destruct()
