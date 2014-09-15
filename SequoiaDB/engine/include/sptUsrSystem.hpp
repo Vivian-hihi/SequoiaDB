@@ -63,6 +63,7 @@
 #define SPT_USR_SYSTEM_NETCARDS           "Netcards"
 #define SPT_USR_SYSTEM_TARGET             "Target"
 #define SPT_USR_SYSTEM_REACHABLE          "Reachable"
+#define SPT_USR_SYSTEM_USABLE             "Usable"
 #define SPT_USR_SYSTEM_UNIT               "Unit"
 
 namespace engine
