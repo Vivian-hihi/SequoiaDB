@@ -439,8 +439,9 @@ namespace engine
       {
          if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
                                            SDBCM_CONF_PATH_FILE,
-                                            OSS_MAX_PATHSIZE,
-                                            confFile ) )
+                                           OSS_MAX_PATHSIZE,
+                                           confFile ) &&
+              SDB_OK == ossAccess( confFile ) )
          {
             goto done ;
          }
