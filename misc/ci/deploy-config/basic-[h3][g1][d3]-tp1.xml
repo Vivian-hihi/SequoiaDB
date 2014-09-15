@@ -77,7 +77,7 @@
 	</target>
 
 	<target name="Test" depends="">
-		<property name="test-type-list" value="driver-java" />
+		<property name="test-type-list" value="basic" />
 		<!-- <property name="test-type-list" value="driver-java" /> -->
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
