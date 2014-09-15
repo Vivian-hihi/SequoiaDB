@@ -35,6 +35,7 @@
 #include "ossUtil.hpp"
 #include "msgDef.h"
 #include "pmdOptions.h"
+#include "utilParam.hpp"
 #include "../bson/bsonobj.h"
 
 using namespace bson ;
@@ -81,7 +82,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC("stopNode", stopNode)
       JS_ADD_MEMBER_FUNC("close", close)
       JS_ADD_STATIC_FUNC("help", help)
-      JS_ADD_STATIC_FUNC("getInstallInfo", getOmaInstallInfo)
+      JS_ADD_STATIC_FUNC("getOmaInstallInfo", getOmaInstallInfo)
       JS_ADD_STATIC_FUNC("getOmaConfigs", getOmaConfigs)
       JS_ADD_STATIC_FUNC("setOmaConfigs", setOmaConfigs)
       JS_ADD_STATIC_FUNC("getAOmaSvcName", getAOmaSvcName)
@@ -393,8 +394,25 @@ namespace engine
                                         _sptReturnVal & rval,
                                         BSONObj & detail )
    {
-      //TODO:XUJIANHUI
-      return SDB_OK ;
+      utilInstallInfo info ;
+      INT32 rc = utilGetInstallInfo( info ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      else
+      {
+         BSONObjBuilder builder ;
+         builder.append( SDB_INSTALL_RUN_FILED, info._run ) ;
+         builder.append( SDB_INSTALL_USER_FIELD, info._user ) ;
+         builder.append( SDB_INSTALL_PATH_FIELD, info._path ) ;
+         rval.setBSONObj( "", builder.obj() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOma::getOmaConfigs( const _sptArguments & arg,

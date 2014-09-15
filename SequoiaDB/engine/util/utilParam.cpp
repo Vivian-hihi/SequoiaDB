@@ -55,9 +55,6 @@ namespace engine
 #else
    #define SDB_INSTALL_FILE_NAME             "C:\\default\\sequoiadb"
 #endif // _LINUX
-   #define SDB_INSTALL_RUN_FILED             "NAME"
-   #define SDB_INSTALL_USER_FIELD            "SDBADMIN_USER"
-   #define SDB_INSTALL_PATH_FIELD            "INSTALL_DIR"
 
    INT32 utilReadConfigureFile( const CHAR *file,
                                 po::options_description &desc,

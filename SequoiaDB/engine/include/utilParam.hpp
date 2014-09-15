@@ -64,11 +64,16 @@ namespace engine
    INT32 utilGetServiceByConfigPath( const string& confPath,
                                      string &svcname ) ;
 
+
+   #define SDB_INSTALL_RUN_FILED             "NAME"
+   #define SDB_INSTALL_USER_FIELD            "SDBADMIN_USER"
+   #define SDB_INSTALL_PATH_FIELD            "INSTALL_DIR"
+
    struct _utilInstallInfo
    {
-      string      _run ;
-      string      _user ;
-      string      _path ;
+      string      _run ;   // SDB_INSTALL_RUN_FILED
+      string      _user ;  // SDB_INSTALL_USER_FIELD
+      string      _path ;  // SDB_INSTALL_PATH_FIELD
    } ;
    typedef _utilInstallInfo utilInstallInfo ;
 
