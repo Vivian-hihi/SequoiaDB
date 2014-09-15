@@ -85,7 +85,7 @@
 
 	<target name="Archive-Test-Result" depends="">
 		<property name="copy.test.log" value="true"/>
-		<property name="test.log.path" value="${WORKSPACE}/reports/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}">
+		<property name="test.log.path" value="${WORKSPACE}/reports/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}" />
 		<trycatch>
 			<try>
 				<if>
