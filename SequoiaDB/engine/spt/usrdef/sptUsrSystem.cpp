@@ -1077,7 +1077,8 @@ namespace engine
       UINT32 port = 0 ;
       BOOLEAN result = FALSE ;
       stringstream ss ;
-     
+      BSONObjBuilder builder ;
+
       if ( 0 == arg.argc() )
       {
          rc = SDB_INVALIDARG ;
@@ -1111,10 +1112,12 @@ namespace engine
       }
       else
       {
+         printf( "error: %d\n", rc ) ;
          PD_LOG ( PDDEBUG, "port[%d] is usable", port ) ;
          result = TRUE ;
       }
-      rval.setNativeVal( "",  Bool, (const void*)&result ) ;
+      builder.appendBool( SPT_USR_SYSTEM_USABLE, result ) ;
+      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
       //close the socket
       sock.close() ;
       }
