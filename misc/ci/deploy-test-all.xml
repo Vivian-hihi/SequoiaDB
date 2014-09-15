@@ -141,7 +141,7 @@
 			</catch>
 			<finally>
 				<echo message="Delete the uninstall configure file on test machine:/tmp... " />
-				<property name="delete.cmd" value="find ./ -name 'bitrock_installer*.log'" />
+				<property name="delete.cmd" value="rm -f bitrock_installer*.log" />
 				
 				<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="/tmp" common="${delete.cmd}" failonerror="false" />
 				<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="/tmp" common="${delete.cmd}" failonerror="false" />
