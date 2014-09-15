@@ -349,6 +349,7 @@ JS_MAPPING_END()
       {
          fileExist = TRUE ;
       }
+      rc = SDB_OK ;
       rval.setNativeVal( "",  Bool, (const void*)&fileExist ) ;
 
    done:
