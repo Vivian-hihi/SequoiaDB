@@ -163,6 +163,13 @@ namespace engine
       }
    }
 
+   void _pmdSubSession::resetForResend()
+   {
+      clearSend() ;
+      clearReplyInfo() ;
+      clearProcessInfo() ;
+   }
+
    void _pmdSubSession::processEvent( pmdEDUEvent &event )
    {
       MsgHeader *pRsp = ( MsgHeader* )event._Data ;
@@ -306,6 +313,8 @@ namespace engine
       _pEDUCB        = NULL ;
       _sessionID     = sessionID ;
       _pSite         = pSite ;
+      _sessionChange = FALSE ;
+      _userData      = 0 ;
 
       setTimeout( timeout ) ;
    }
@@ -314,7 +323,6 @@ namespace engine
    {
       _pAgent        = NULL ;
       _pHandle       = NULL ;
-      _inHandle      = FALSE ;
       _pSite         = NULL ;
    }
 
@@ -472,6 +480,7 @@ namespace engine
       {
          subSession.setNodeID( nodeID ) ;
          subSession.setParent( this ) ;
+         subSession._handle = _pSite->getNodeNet( nodeID ) ;
       }
       return &subSession ;
    }
@@ -743,12 +752,9 @@ namespace engine
          pSub->getNodeID().columns.nodeID ) ;
 
       // first connect
-      if ( NET_INVALID_HANDLE == pSub->getHandle() && _pHandle &&
-           FALSE == _inHandle )
+      if ( NET_INVALID_HANDLE == pSub->getHandle() && _pHandle )
       {
-         _inHandle = TRUE ;
          rc = _pHandle->onSendConnect( pSub, pSub->getReqMsg(), TRUE ) ;
-         _inHandle = FALSE ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Session[%s] onSendConnect failed, rc: %d",
@@ -787,12 +793,10 @@ namespace engine
          }
          else
          {
-            _pSite->removeNetHandle( pSub->getHandle() ) ;
-            if ( _pHandle && FALSE == _inHandle )
+            _pSite->removeNodeNet( pSub->getNodeIDUInt() ) ;
+            if ( _pHandle )
             {
-               _inHandle = TRUE ;
                rc = _pHandle->onSendConnect( pSub, pSub->getReqMsg(), FALSE ) ;
-               _inHandle = FALSE ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Session[%s] onSendConnect failed, rc: %d",
@@ -827,7 +831,7 @@ namespace engine
                       "rc: %d", _pEDUCB->toString().c_str(),
                       routeID2String(pSub->getNodeID()).c_str(), rc ) ;
          hasSend = TRUE ;
-         _pSite->addNetHandle( pSub->getHandle() ) ;
+         _pSite->addNodeNet( pSub->getNodeIDUInt(), pSub->getHandle() ) ;
       }
 
       if ( pSub->isNeedToDel() )
@@ -835,6 +839,7 @@ namespace engine
          _pSite->delSubSession( oldReqID ) ;
          _pSite->removeAssitNode( &oldAddPos ) ;
       }
+      _sessionChange = TRUE ;
       pSub->setSendResult( TRUE ) ;
       // add to request map
       _pSite->addSubSession( pSub ) ;
@@ -885,30 +890,27 @@ namespace engine
       UINT32 totalUnReplyNum        = 0 ;
       UINT32 replyNum               = 0 ;
       pmdSubSession *pSubSession    = NULL ;
-
-      // if pending sessions is not empty
-      if ( _mapPendingSubSession.size() > 0 )
-      {
-         if ( pSubs )
-         {
-            MAP_SUB_SESSIONPTR_IT itPending = _mapPendingSubSession.begin() ;
-            while ( itPending != _mapPendingSubSession.end() )
-            {
-               (*pSubs)[ itPending->first ] = itPending->second ;
-               ++itPending ;
-               ++replyNum ;
-            }
-         }
-         else
-         {
-            replyNum = _mapPendingSubSession.size() ;
-         }
-         _mapPendingSubSession.clear() ;
-      }
+      _sessionChange                = FALSE ;
 
       totalUnReplyNum = getSubSessionCount( PMD_SSITR_UNREPLY ) ;
       while ( totalUnReplyNum > 0 )
       {
+         // if pending sessions is not empty
+         if ( _mapPendingSubSession.size() > 0 )
+         {
+            MAP_SUB_SESSIONPTR_IT itPending = _mapPendingSubSession.begin() ;
+            while ( itPending != _mapPendingSubSession.end() )
+            {
+               if ( pSubs )
+               {
+                  (*pSubs)[ itPending->first ] = itPending->second ;
+               }
+               ++itPending ;
+               ++replyNum ;
+            }
+            _mapPendingSubSession.clear() ;
+         }
+
          if ( _pEDUCB->isInterrupted() )
          {
             rc = SDB_APP_INTERRUPT ;
@@ -970,6 +972,13 @@ namespace engine
             {
                (*pSubs)[ pSubSession->getNodeIDUInt() ] = pSubSession ;
             }
+         }
+
+         if ( _sessionChange )
+         {
+            // maybe in onReply, add sub session(send msg) or del sub session
+            totalUnReplyNum = getSubSessionCount( PMD_SSITR_UNREPLY ) ;
+            _sessionChange = FALSE ;
          }
       }
 
@@ -1071,19 +1080,25 @@ namespace engine
       _mapReq2SubSession.erase( reqID ) ;
    }
 
-   void _pmdRemoteSessionSite::addNetHandle( NET_HANDLE handle )
+   void _pmdRemoteSessionSite::addNodeNet( UINT64 nodeID, NET_HANDLE handle )
    {
-      if ( NET_INVALID_HANDLE != handle &&
-           _setNetHandle.find( handle ) == _setNetHandle.end() )
-      {
-         // not exist
-         _setNetHandle.insert( handle ) ;
-      }
+      _mapNode2Net[ nodeID ] = handle ;
    }
 
-   void _pmdRemoteSessionSite::removeNetHandle( NET_HANDLE handle )
+   void _pmdRemoteSessionSite::removeNodeNet( UINT64 nodeID )
    {
-      _setNetHandle.erase( handle ) ;
+      _mapNode2Net.erase( nodeID ) ;
+   }
+
+   NET_HANDLE _pmdRemoteSessionSite::getNodeNet( UINT64 nodeID )
+   {
+      NET_HANDLE handle = NET_INVALID_HANDLE ;
+      MAP_NODE2NET::iterator it = _mapNode2Net.find( nodeID ) ;
+      if ( it != _mapNode2Net.end() )
+      {
+         handle = it->second ;
+      }
+      return handle ;
    }
 
    INT32 _pmdRemoteSessionSite::addAssitNode( UINT16 nodeID )
@@ -1171,10 +1186,10 @@ namespace engine
       interruptMsg.routeID.value = MSG_INVALID_ROUTEID ;
       interruptMsg.TID = eduCB()->getTID() ;
 
-      SET_NETHANDLE::iterator it = _setNetHandle.begin() ;
-      while ( it != _setNetHandle.end() )
+      MAP_NODE2NET::iterator it = _mapNode2Net.begin() ;
+      while ( it != _mapNode2Net.end() )
       {
-         _pAgent->syncSend( *it, (void*)&interruptMsg ) ;
+         _pAgent->syncSend( it->second, (void*)&interruptMsg ) ;
          ++it ;
       }
    }
@@ -1188,10 +1203,10 @@ namespace engine
       disconnectMsg.routeID.value = MSG_INVALID_ROUTEID ;
       disconnectMsg.TID = eduCB()->getTID() ;
 
-      SET_NETHANDLE::iterator it = _setNetHandle.begin() ;
-      while ( it != _setNetHandle.end() )
+      MAP_NODE2NET::iterator it = _mapNode2Net.begin() ;
+      while ( it != _mapNode2Net.end() )
       {
-         _pAgent->syncSend( *it, (void*)&disconnectMsg ) ;
+         _pAgent->syncSend( it->second, (void*)&disconnectMsg ) ;
          ++it ;
       }
    }
@@ -1270,8 +1285,18 @@ namespace engine
             {
                pSubSession = disSubPtr->second ;
                ++disSubPtr ;
-               pHandle->onReply( pSubSession->parent(), &pSubSession,
-                                 pSubSession->getRspMsg( FALSE ) ) ;
+               if ( pSubSession == *ppSub )
+               {
+                  pHandle->onReply( pSubSession->parent(), ppSub,
+                                    pSubSession->getRspMsg( FALSE ),
+                                    FALSE ) ;
+               }
+               else
+               {
+                  pHandle->onReply( pSubSession->parent(), &pSubSession,
+                                    pSubSession->getRspMsg( FALSE ),
+                                    TRUE ) ;
+               }
             }
          }
       }
@@ -1299,8 +1324,18 @@ namespace engine
 
             if ( pHandle )
             {
-               pHandle->onReply( pSubSession->parent(), &pSubSession,
-                                 pSubSession->getRspMsg( FALSE ) ) ;
+               if ( pSubSession == *ppSub )
+               {
+                  pHandle->onReply( pSubSession->parent(), ppSub,
+                                    pSubSession->getRspMsg( FALSE ),
+                                    FALSE ) ;
+               }
+               else
+               {
+                  pHandle->onReply( pSubSession->parent(), &pSubSession,
+                                    pSubSession->getRspMsg( FALSE ),
+                                    TRUE ) ;
+               }
             }
          }
          else
