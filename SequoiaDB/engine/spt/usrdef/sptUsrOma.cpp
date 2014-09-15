@@ -62,6 +62,7 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, close)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, help)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaInstallInfo)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaConfigFile)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaConfigs)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, setOmaConfigs)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, getAOmaSvcName)
@@ -86,6 +87,7 @@ namespace engine
       JS_ADD_MEMBER_FUNC("close", close)
       JS_ADD_STATIC_FUNC("help", help)
       JS_ADD_STATIC_FUNC("getOmaInstallInfo", getOmaInstallInfo)
+      JS_ADD_STATIC_FUNC("getOmaConfigFile", getOmaConfigFile)
       JS_ADD_STATIC_FUNC("getOmaConfigs", getOmaConfigs)
       JS_ADD_STATIC_FUNC("setOmaConfigs", setOmaConfigs)
       JS_ADD_STATIC_FUNC("getAOmaSvcName", getAOmaSvcName)
@@ -174,6 +176,7 @@ namespace engine
       stringstream ss ;
       ss << "Oma functions:" << endl
          << " Oma.getOmaInstallInfo()" << endl
+         << " Oma.getOmaConfigFile()" << endl
          << " Oma.getOmaConfigs( [confFile] )" << endl
          << " Oma.setOmaConfigs( obj )" << endl
          << " Oma.getAOmaSvcName( hostname )" << endl
@@ -519,6 +522,15 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrOma::getOmaConfigFile( const _sptArguments & arg,
+                                       _sptReturnVal & rval,
+                                       BSONObj & detail )
+   {
+      string confFile = _getConfFile() ;
+      rval.setStringVal( "", confFile.c_str() ) ;
+      return SDB_OK ;
    }
 
    INT32 _sptUsrOma::getOmaConfigs( const _sptArguments & arg,

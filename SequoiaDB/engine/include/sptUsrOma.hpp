@@ -108,6 +108,10 @@ namespace engine
                                       _sptReturnVal &rval,
                                       bson::BSONObj &detail ) ;
 
+      static INT32 getOmaConfigFile( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     bson::BSONObj &detail ) ;
+
       static INT32 getOmaConfigs( const _sptArguments &arg,
                                   _sptReturnVal &rval,
                                   bson::BSONObj &detail ) ;

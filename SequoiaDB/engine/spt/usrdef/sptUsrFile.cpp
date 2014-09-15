@@ -47,6 +47,7 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrFile, toString )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrFile, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrFile, destruct )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, remove )
+JS_STATIC_FUNC_DEFINE( _sptUsrFile, exist )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, help )
 
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
@@ -54,6 +55,7 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC( "write", write )
    JS_ADD_MEMBER_FUNC( "close", close )
    JS_ADD_STATIC_FUNC( "remove", remove )
+   JS_ADD_STATIC_FUNC( "exist", exist )
    JS_ADD_STATIC_FUNC( "help", help )
    JS_ADD_MEMBER_FUNC( "seek", seek )
    JS_ADD_MEMBER_FUNC( "toString", toString )
@@ -318,6 +320,43 @@ JS_MAPPING_END()
       goto done ;
    }
 
+   INT32 _sptUsrFile::exist( const _sptArguments & arg,
+                             _sptReturnVal & rval,
+                             BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string fullPath ;
+      BOOLEAN fileExist = FALSE ;
+
+      rc = arg.getString( 0, fullPath ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "filepath must be config" ) ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "filepath must be string" ) ;
+      }
+      PD_RC_CHECK( rc, PDERROR, "Failed to get filepath, rc: %d", rc ) ;
+
+      rc = ossAccess( fullPath.c_str() ) ;
+      if ( SDB_OK != rc && SDB_FNE != rc )
+      {
+         detail = BSON( SPT_ERR << "access file failed" ) ;
+         goto error ;
+      }
+      else if ( SDB_OK == rc )
+      {
+         fileExist = TRUE ;
+      }
+      rval.setNativeVal( "",  Bool, (const void*)&fileExist ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrFile::close( const _sptArguments &arg,
                              _sptReturnVal &rval,
                              bson::BSONObj &detail )
@@ -349,7 +388,8 @@ JS_MAPPING_END()
          << "   write( content )" << endl
          << "   seek( offset, [where] ) " << endl
          << "   close()" << endl
-         << " File.remove( filepath )" << endl ;
+         << " File.remove( filepath )" << endl
+         << " File.exist( filepath )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
