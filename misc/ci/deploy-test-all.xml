@@ -25,13 +25,9 @@
 	<target name="Clean-Last-Build-Reports" depends="Tar-Deploy-File">
 		<delete dir="${WORKSPACE}/reports" />
 		<mkdir dir="${WORKSPACE}/reports" />
-		<!-- <delete dir="${WORKSPACE}/${host.NAME}-copy-log" />
-		<mkdir dir="${WORKSPACE}/${host.NAME}-copy-log" /> -->
 	</target>
 
 	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
-		<!-- <property name="deploy.conffile.wildcard" value="*" /> -->
-		
 		<foreach target="deploy-one-case-and-test" param="deploy.case.fullname">
 			<path>
 				<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
@@ -69,7 +65,6 @@
 			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
 			<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 			<property name="deploy.path" value="${WORKSPACE}/deploy" />
-<!-- 			<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" /> -->
 		</ant>
 
 		<if>
@@ -82,7 +77,6 @@
 					<property name="test.reports.path" value="${WORKSPACE}/reports" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
-					<!-- <property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" /> -->
 				</ant>
 			</then>
 		</if>
