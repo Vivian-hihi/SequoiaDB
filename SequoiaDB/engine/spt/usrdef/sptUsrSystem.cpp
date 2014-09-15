@@ -1112,7 +1112,6 @@ namespace engine
       }
       else
       {
-         printf( "error: %d\n", rc ) ;
          PD_LOG ( PDDEBUG, "port[%d] is usable", port ) ;
          result = TRUE ;
       }
