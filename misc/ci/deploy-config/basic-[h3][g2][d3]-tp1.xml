@@ -100,7 +100,7 @@
 	</target>
 
 	<target name="Test" depends="">
-		<property name="test-type-list" value="driver-python" />
+		<property name="test-type-list" value="basic,driver-python" />
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
