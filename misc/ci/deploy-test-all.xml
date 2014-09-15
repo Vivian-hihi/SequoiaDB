@@ -83,9 +83,9 @@
 		<echo message="Deploy ${deploy.case.fullname} complete. " />
 	</target>
 
-	<target name="Archive-Test-Result" depends="">
+	<target name="Archive-Test-Result" depends="Deploy-Test-All">
 		<property name="copy.test.log" value="true"/>
-		<property name="test.log.path" value="${WORKSPACE}/reports/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}" />
+		
 		<trycatch>
 			<try>
 				<if>
@@ -96,6 +96,7 @@
 							<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss" />
 						</tstamp>
 
+						<property name="test.log.path" value="${WORKSPACE}/reports/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}" />
 						<echo message="Mkdir ${test.log.path}" />
 						<mkdir dir="${test.log.path}" />
 
