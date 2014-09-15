@@ -33,6 +33,9 @@
 #include "sptUsrOma.hpp"
 #include "omagentDef.hpp"
 #include "ossUtil.hpp"
+#include "utilStr.hpp"
+#include "ossProc.hpp"
+#include "ossIO.hpp"
 #include "msgDef.h"
 #include "pmdOptions.h"
 #include "utilParam.hpp"
@@ -89,6 +92,17 @@ namespace engine
       JS_ADD_STATIC_FUNC("addAOmaSvcName", addAOmaSvcName)
       JS_ADD_STATIC_FUNC("delAOmaSvcName", delAOmaSvcName)
    JS_MAPPING_END()
+
+   /*
+      define config
+   */
+   #define MAP_CONFIG_DESC( desc ) \
+      desc.add_options() \
+      ( SDBCM_RESTART_COUNT, po::value<INT32>(), "" ) \
+      ( SDBCM_RESTART_INTERVAL, po::value<INT32>(), "" ) \
+      ( SDBCM_AUTO_START, po::value<string>(), "" ) \
+      ( SDBCM_DIALOG_LEVEL, po::value<INT32>(), "" ) \
+      ( "*", po::value<string>(), "" )
 
    /*
       _sptUsrOma Implement
@@ -160,7 +174,7 @@ namespace engine
       stringstream ss ;
       ss << "Oma functions:" << endl
          << " Oma.getOmaInstallInfo()" << endl
-         << " Oma.getOmaConfigs()" << endl
+         << " Oma.getOmaConfigs( [confFile] )" << endl
          << " Oma.setOmaConfigs( obj )" << endl
          << " Oma.getAOmaSvcName( hostname )" << endl
          << " Oma.addAOmaSvcName( hostname, svcname, [isReplace])" << endl
@@ -398,6 +412,7 @@ namespace engine
       INT32 rc = utilGetInstallInfo( info ) ;
       if ( rc )
       {
+         detail = BSON( SPT_ERR << "Install file is not exist" ) ;
          goto error ;
       }
       else
@@ -415,12 +430,129 @@ namespace engine
       goto done ;
    }
 
+   string _sptUsrOma::_getConfFile()
+   {
+      utilInstallInfo info ;
+      CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      if ( SDB_OK == utilGetInstallInfo( info ) )
+      {
+         if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
+                                           SDBCM_CONF_PATH_FILE,
+                                            OSS_MAX_PATHSIZE,
+                                            confFile ) )
+         {
+            goto done ;
+         }
+      }
+
+      // exePath + ../conf/sdbcm.conf
+      ossGetEWD( confFile, OSS_MAX_PATHSIZE ) ;
+      utilCatPath( confFile, OSS_MAX_PATHSIZE, SDBCM_CONF_PATH_FILE ) ;
+
+   done:
+      return confFile ;
+   }
+
+   INT32 _sptUsrOma::_getConfInfo( const string & confFile, BSONObj &conf,
+                                   BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ;
+      po ::variables_map vm ;
+
+      MAP_CONFIG_DESC( desc ) ;
+
+      rc = ossAccess( confFile.c_str() ) ;
+      if ( rc )
+      {
+         stringstream ss ;
+         ss << "conf file[" << confFile << "] is not exist" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      rc = utilReadConfigureFile( confFile.c_str(), desc, vm ) ;
+      if ( SDB_IO == rc )
+      {
+         stringstream ss ;
+         ss << "conf file[" << confFile << "] is not exist" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         stringstream ss ;
+         ss << "read conf file[" << confFile << "] error" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjBuilder builder ;
+         po ::variables_map::iterator it = vm.begin() ;
+         while ( it != vm.end() )
+         {
+            if ( SDBCM_RESTART_COUNT == it->first ||
+                 SDBCM_RESTART_INTERVAL == it->first ||
+                 SDBCM_DIALOG_LEVEL == it->first )
+            {
+               builder.append( it->first, it->second.as<INT32>() ) ;
+            }
+            else if ( SDBCM_AUTO_START == it->first )
+            {
+               BOOLEAN autoStart = TRUE ;
+               ossStrToBoolean( it->second.as<string>().c_str(), &autoStart ) ;
+               builder.appendBool( it->first, autoStart ) ;
+            }
+            else
+            {
+               builder.append( it->first, it->second.as<string>() ) ;
+            }
+            ++it ;
+         }
+         conf = builder.obj() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrOma::getOmaConfigs( const _sptArguments & arg,
                                     _sptReturnVal & rval,
                                     BSONObj & detail )
    {
-      //TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string confFile ;
+      BSONObj conf ;
+
+      if ( arg.argc() > 0 )
+      {
+         rc = arg.getString( 0, confFile ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "confFile must be string" ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         confFile = _getConfFile() ;
+      }
+
+      rc = _getConfInfo( confFile, conf, detail ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rval.setBSONObj( "", conf ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOma::setOmaConfigs( const _sptArguments & arg,

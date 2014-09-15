@@ -139,6 +139,12 @@ namespace engine
                          bson::BSONObj &detail,
                          const CHAR *pNodeStr ) ;
 
+      static string _getConfFile() ;
+
+      static INT32  _getConfInfo( const string &confFile,
+                                  bson::BSONObj &conf,
+                                  bson::BSONObj &detail ) ;
+
    private:
       sptUsrOmaAssit          _assit ;
       string                  _hostname ;

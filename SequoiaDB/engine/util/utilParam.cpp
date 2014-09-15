@@ -286,6 +286,14 @@ namespace engine
          ( SDB_INSTALL_PATH_FIELD, po::value<string>(), "install path" )
       PMD_ADD_PARAM_OPTIONS_END
 
+      rc = ossAccess( SDB_INSTALL_FILE_NAME ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Access file[%s] failed, rc: %d",
+                 SDB_INSTALL_FILE_NAME, rc ) ;
+         goto error ;
+      }
+
       rc = utilReadConfigureFile( SDB_INSTALL_FILE_NAME, desc, vm ) ;
       if ( rc )
       {
