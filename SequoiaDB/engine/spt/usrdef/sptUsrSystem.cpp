@@ -1075,7 +1075,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       UINT32 port = 0 ;
-      bool result = false ;
+      BOOLEAN result = FALSE ;
       stringstream ss ;
      
       if ( 0 == arg.argc() )
@@ -1106,13 +1106,13 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDDEBUG, "port[%d] is busy, rc: %d", port, rc ) ;
-         result = false ;
+         result = FALSE ;
          rc = SDB_OK ;
       }
       else
       {
          PD_LOG ( PDDEBUG, "port[%d] is usable", port ) ;
-         result = true ;
+         result = TRUE ;
       }
       rval.setNativeVal( "",  Bool, (const void*)&result ) ;
       //close the socket
