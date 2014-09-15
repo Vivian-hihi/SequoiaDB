@@ -101,6 +101,33 @@ namespace engine
                    _sptReturnVal &rval,
                    bson::BSONObj &detail ) ;
 
+      /*
+         static functions
+      */
+      static INT32 getOmaInstallInfo( const _sptArguments &arg,
+                                      _sptReturnVal &rval,
+                                      bson::BSONObj &detail ) ;
+
+      static INT32 getOmaConfigs( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail ) ;
+
+      static INT32 setOmaConfigs( const _sptArguments &arg,
+                                  _sptReturnVal &rval,
+                                  bson::BSONObj &detail ) ;
+
+      static INT32 getAOmaSvcName( const _sptArguments &arg,
+                                   _sptReturnVal &rval,
+                                   bson::BSONObj &detail ) ;
+
+      static INT32 addAOmaSvcName( const _sptArguments &arg,
+                                   _sptReturnVal &rval,
+                                   bson::BSONObj &detail ) ;
+
+      static INT32 delAOmaSvcName( const _sptArguments &arg,
+                                   _sptReturnVal &rval,
+                                   bson::BSONObj &detail ) ;
+
    protected:
       INT32 _createNode( const _sptArguments &arg,
                          _sptReturnVal &rval,

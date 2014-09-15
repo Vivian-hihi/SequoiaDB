@@ -57,6 +57,12 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, stopNode)
    JS_MEMBER_FUNC_DEFINE(_sptUsrOma, close)
    JS_STATIC_FUNC_DEFINE(_sptUsrOma, help)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaInstallInfo)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, getOmaConfigs)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, setOmaConfigs)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, getAOmaSvcName)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, addAOmaSvcName)
+   JS_STATIC_FUNC_DEFINE(_sptUsrOma, delAOmaSvcName)
 
    /*
       Function Map
@@ -75,6 +81,12 @@ namespace engine
       JS_ADD_MEMBER_FUNC("stopNode", stopNode)
       JS_ADD_MEMBER_FUNC("close", close)
       JS_ADD_STATIC_FUNC("help", help)
+      JS_ADD_STATIC_FUNC("getInstallInfo", getOmaInstallInfo)
+      JS_ADD_STATIC_FUNC("getOmaConfigs", getOmaConfigs)
+      JS_ADD_STATIC_FUNC("setOmaConfigs", setOmaConfigs)
+      JS_ADD_STATIC_FUNC("getAOmaSvcName", getAOmaSvcName)
+      JS_ADD_STATIC_FUNC("addAOmaSvcName", addAOmaSvcName)
+      JS_ADD_STATIC_FUNC("delAOmaSvcName", delAOmaSvcName)
    JS_MAPPING_END()
 
    /*
@@ -146,6 +158,13 @@ namespace engine
    {
       stringstream ss ;
       ss << "Oma functions:" << endl
+         << " Oma.getOmaInstallInfo()" << endl
+         << " Oma.getOmaConfigs()" << endl
+         << " Oma.setOmaConfigs( obj )" << endl
+         << " Oma.getAOmaSvcName( hostname )" << endl
+         << " Oma.addAOmaSvcName( hostname, svcname, [isReplace])" << endl
+         << " Oma.delAOmaSvcName( hostname )" << endl
+         << endl
          << "var oma = new Oma( [hostname], [svcname] )" << endl
          << "   createCoord( svcname, dbpath, [config obj])" << endl
          << "   removeCoord( svcname )" << endl
@@ -368,6 +387,54 @@ namespace engine
                             BSONObj & detail )
    {
       return _assit.disconnect() ;
+   }
+
+   INT32 _sptUsrOma::getOmaInstallInfo( const _sptArguments & arg,
+                                        _sptReturnVal & rval,
+                                        BSONObj & detail )
+   {
+      //TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::getOmaConfigs( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
+   {
+      //TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::setOmaConfigs( const _sptArguments & arg,
+                                    _sptReturnVal & rval,
+                                    BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::getAOmaSvcName( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::addAOmaSvcName( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrOma::delAOmaSvcName( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
    }
 
 }
