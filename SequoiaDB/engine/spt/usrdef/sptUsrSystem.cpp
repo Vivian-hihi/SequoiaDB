@@ -1136,7 +1136,7 @@ namespace engine
          << " System.type()" << endl
          << " System.getReleaseInfo()" << endl
          << " System.getHostsMap()" << endl
-         << " System.getAHostMap( host )" << endl
+         << " System.getAHostMap( hostname )" << endl
          << " System.addAHostMap( hostname, ip, [isReplace] )" << endl
          << " System.delAHostMap( hostname )" << endl
          << " System.getCpuInfo()" << endl
