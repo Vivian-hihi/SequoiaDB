@@ -87,6 +87,7 @@ print("3333333333333333\n");
 print("44444444 e = " + e + "\n") ;
       if ( null != oma )
       {
+         oma.removeNode( OMA_SVC_NAME ) ;
          oma.close() ;
       }
       if ( typeof(e) != "number" )
