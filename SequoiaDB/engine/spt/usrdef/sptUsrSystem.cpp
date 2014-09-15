@@ -129,7 +129,8 @@ namespace engine
 
       builder.append( SPT_USR_SYSTEM_TARGET, host ) ;
       builder.appendBool( SPT_USR_SYSTEM_REACHABLE, SDB_OK == exitCode ) ;
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
+      rval.setBSONObj( "", builder.obj() ) ;
+
    done:
       return rc ;
    error:
@@ -265,8 +266,8 @@ namespace engine
       {
          builder.append( SPT_USR_SYSTEM_BIT, 32 ) ;
       }
+      rval.setBSONObj( "", builder.obj() ) ;
 
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
    done:
       return rc ;
    error:
@@ -381,8 +382,8 @@ namespace engine
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
+      rval.setBSONObj( "", builder.obj() ) ;
 
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
    done:
       return rc ;
    error:
@@ -546,7 +547,8 @@ namespace engine
       builder.appendNumber( SPT_USR_SYSTEM_IDLE, idle ) ;
       builder.appendNumber( SPT_USR_SYSTEM_OTHER, other ) ;
       }
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
+      rval.setBSONObj( "", builder.obj() ) ;
+
    done:
       return rc ;
    error:
@@ -681,8 +683,8 @@ namespace engine
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
+      rval.setBSONObj( "", builder.obj() ) ;
 
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
    done:
       return rc ;
    error:
@@ -794,8 +796,8 @@ namespace engine
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
-      
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
+      rval.setBSONObj( "", builder.obj() ) ;
+
    done:
       return rc ;
    error:
@@ -928,8 +930,8 @@ namespace engine
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ; 
       }
+      rval.setBSONObj( "", builder.obj() ) ;
 
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
    done:
       return rc ;
    error:
@@ -998,8 +1000,9 @@ namespace engine
 
       {
       BSONObj info = BSON( "FireWall" << "unknown" ) ;
-      rval.setStringVal( "", info.toString().c_str() ) ;
+      rval.setBSONObj( "", info ) ;
       }
+
    done:
       return rc ;
    error:
@@ -1116,7 +1119,8 @@ namespace engine
          result = TRUE ;
       }
       builder.appendBool( SPT_USR_SYSTEM_USABLE, result ) ;
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
+      //rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
+      rval.setBSONObj( "", builder.obj() ) ;
       //close the socket
       sock.close() ;
       }
