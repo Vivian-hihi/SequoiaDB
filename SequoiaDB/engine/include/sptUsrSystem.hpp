@@ -38,33 +38,32 @@
 #include "oss.hpp"
 #include "sptApi.hpp"
 
-#define SPT_USR_SYSTEM_DISTRIBUTOR "Distributor"
-#define SPT_USR_SYSTEM_RELASE "Release"
-#define SPT_USR_SYSTEM_BIT "Bit"
-#define SPT_USR_SYSTEM_IP "Ip"
-#define SPT_USR_SYSTEM_HOSTS "Hosts"
-#define SPT_USR_SYSTEM_HOSTNAME "HostName"
-#define SPT_USR_SYSTEM_FILESYSTEM "Filesystem"
-#define SPT_USR_SYSTEM_CORE "Core"
-#define SPT_USR_SYSTEM_INFO "Info"
-#define SPT_USR_SYSTEM_FREQ "Freq"
-#define SPT_USR_SYSTEM_CPUS "Cpus"
-#define SPT_USR_SYSTEM_USER "User"
-#define SPT_USR_SYSTEM_SYS "Sys"
-#define SPT_USR_SYSTEM_IDLE "Idle"
-#define SPT_USR_SYSTEM_OTHER "Other"
-#define SPT_USR_SYSTEM_SIZE "Size"
-#define SPT_USR_SYSTEM_FREE "Free"
-#define SPT_USR_SYSTEM_USED "Used"
-#define SPT_USR_SYSTEM_ISLOCAL "IsLocal"
-#define SPT_USR_SYSTEM_MOUNT "Mount"
-#define SPT_USR_SYSTEM_DISKS "Disks"
-#define SPT_USR_SYSTEM_NAME "Name"
-#define SPT_USR_SYSTEM_NETCARDS "Netcards"
-#define SPT_USR_SYSTEM_TARGET "Target"
-#define SPT_USR_SYSTEM_REACHABLE "Reachable"
-#define SPT_USR_SYSTEM_USABLE "Usable"
-#define SPT_USR_SYSTEM_UNIT "Unit"
+#define SPT_USR_SYSTEM_DISTRIBUTOR        "Distributor"
+#define SPT_USR_SYSTEM_RELASE             "Release"
+#define SPT_USR_SYSTEM_BIT                "Bit"
+#define SPT_USR_SYSTEM_IP                 "Ip"
+#define SPT_USR_SYSTEM_HOSTS              "Hosts"
+#define SPT_USR_SYSTEM_HOSTNAME           "HostName"
+#define SPT_USR_SYSTEM_FILESYSTEM         "Filesystem"
+#define SPT_USR_SYSTEM_CORE               "Core"
+#define SPT_USR_SYSTEM_INFO               "Info"
+#define SPT_USR_SYSTEM_FREQ               "Freq"
+#define SPT_USR_SYSTEM_CPUS               "Cpus"
+#define SPT_USR_SYSTEM_USER               "User"
+#define SPT_USR_SYSTEM_SYS                "Sys"
+#define SPT_USR_SYSTEM_IDLE               "Idle"
+#define SPT_USR_SYSTEM_OTHER              "Other"
+#define SPT_USR_SYSTEM_SIZE               "Size"
+#define SPT_USR_SYSTEM_FREE               "Free"
+#define SPT_USR_SYSTEM_USED               "Used"
+#define SPT_USR_SYSTEM_ISLOCAL            "IsLocal"
+#define SPT_USR_SYSTEM_MOUNT              "Mount"
+#define SPT_USR_SYSTEM_DISKS              "Disks"
+#define SPT_USR_SYSTEM_NAME               "Name"
+#define SPT_USR_SYSTEM_NETCARDS           "Netcards"
+#define SPT_USR_SYSTEM_TARGET             "Target"
+#define SPT_USR_SYSTEM_REACHABLE          "Reachable"
+#define SPT_USR_SYSTEM_UNIT               "Unit"
 
 namespace engine
 {
@@ -90,6 +89,18 @@ namespace engine
                                    bson::BSONObj &detail ) ;
 
       static INT32 getHostsMap( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+      static INT32 getAHostMap( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+      static INT32 addAHostMap( const _sptArguments &arg,
+                                _sptReturnVal &rval,
+                                bson::BSONObj &detail ) ;
+
+      static INT32 delAHostMap( const _sptArguments &arg,
                                 _sptReturnVal &rval,
                                 bson::BSONObj &detail ) ;
 

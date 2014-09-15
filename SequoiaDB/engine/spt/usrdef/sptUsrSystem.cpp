@@ -53,6 +53,9 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, type )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getReleaseInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHostsMap )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getAHostMap )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, addAHostMap )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, delAHostMap )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getCpuInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getMemInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getDiskInfo )
@@ -67,6 +70,9 @@ namespace engine
       JS_ADD_STATIC_FUNC( "type", type )
       JS_ADD_STATIC_FUNC( "getReleaseInfo", getReleaseInfo )
       JS_ADD_STATIC_FUNC( "getHostsMap", getHostsMap )
+      JS_ADD_STATIC_FUNC( "getAHostMap", getAHostMap )
+      JS_ADD_STATIC_FUNC( "addAHostMap", addAHostMap )
+      JS_ADD_STATIC_FUNC( "delAHostMap", delAHostMap )
       JS_ADD_STATIC_FUNC( "getCpuInfo", getCpuInfo )
       JS_ADD_STATIC_FUNC( "getMemInfo", getMemInfo )
       JS_ADD_STATIC_FUNC( "getDiskInfo", getDiskInfo )
@@ -327,7 +333,7 @@ namespace engine
 
       if ( 0 < arg.argc() )
       {
-         PD_LOG( PDERROR, "type() should have non arguments" ) ;
+         PD_LOG( PDERROR, "getHostsMap() should have non arguments" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -381,6 +387,30 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrSystem::getAHostMap( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrSystem::addAHostMap( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrSystem::delAHostMap( const _sptArguments & arg,
+                                     _sptReturnVal & rval,
+                                     BSONObj & detail )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
    }
 
    INT32 _sptUsrSystem::_extractHosts( const CHAR *buf,
@@ -1044,10 +1074,9 @@ namespace engine
                                     bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      UINT64 port = 0 ;
-      BOOLEAN result = FALSE ;
+      UINT32 port = 0 ;
+      bool result = false ;
       stringstream ss ;
-      BSONObjBuilder builder ;
      
       if ( 0 == arg.argc() )
       {
@@ -1055,7 +1084,7 @@ namespace engine
          ss << "not specified the port to sniff" ;
          goto error ;
       }
-      rc = arg.getNative( 0, &port, SPT_NATIVE_INT64 ) ;
+      rc = arg.getNative( 0, &port, SPT_NATIVE_INT32 ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "failed to get port argument: %d", rc ) ;
@@ -1064,7 +1093,7 @@ namespace engine
       }
       {
       PD_LOG ( PDDEBUG, "sniff port is: %d", port ) ;
-      _ossSocket sock( port, 1000 ) ;
+      _ossSocket sock( port, OSS_ONE_SEC ) ;
       rc = sock.initSocket() ;
       if ( rc )
       {
@@ -1077,19 +1106,18 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDDEBUG, "port[%d] is busy, rc: %d", port, rc ) ;
-         result = FALSE ;
+         result = false ;
          rc = SDB_OK ;
       }
       else
       {
          PD_LOG ( PDDEBUG, "port[%d] is usable", port ) ;
-         result = TRUE ;
+         result = true ;
       }
-      builder.appendBool( SPT_USR_SYSTEM_USABLE, result ) ;
-      rval.setStringVal( "", builder.obj().toString( FALSE, TRUE ).c_str() ) ;
+      rval.setNativeVal( "",  Bool, (const void*)&result ) ;
       //close the socket
       sock.close() ;
-      } 
+      }
 
    done:
       return rc ;
@@ -1108,13 +1136,16 @@ namespace engine
          << " System.type()" << endl
          << " System.getReleaseInfo()" << endl
          << " System.getHostsMap()" << endl
+         << " System.getAHostMap( host )" << endl
+         << " System.addAHostMap( hostname, ip, [isReplace] )" << endl
+         << " System.delAHostMap( hostname )" << endl
          << " System.getCpuInfo()" << endl
          << " System.getMemInfo()" << endl
          << " System.getDiskInfo()" << endl
          << " System.getNetcardInfo()" << endl
          << " System.getIpTablesInfo()" << endl
          << " System.getHostName()" << endl
-         << " System.sniffPort()" << endl ;
+         << " System.sniffPort( port )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
