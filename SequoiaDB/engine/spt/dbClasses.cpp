@@ -4721,6 +4721,7 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
    sdbReplicaGroupHandle *rg = NULL ;
    CHAR *code = NULL ;
    bson *next = NULL ;
+   bson *subBson = NULL ;
    bson *copy = NULL ;
    bson errmsg  ;
    BOOLEAN needKill = FALSE ;
@@ -4811,10 +4812,14 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
          tmpObj = JS_NewObject ( cx , &bson_class , 0 , 0 ) ;
          VERIFY ( tmpObj ) ;
          JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( tmpObj ) ) ;
+         subBson = bson_create() ;
+         VERIFY ( subBson ) ;
+         bson_iterator_subobject( &it, subBson ) ;
+
          copy = bson_create() ;
          VERIFY ( copy ) ;
-         bson_iterator_subobject( &it, copy ) ;
-         bson_finish( copy ) ;
+         VERIFY ( BSON_OK == bson_copy ( copy , subBson ) ) ;
+
          ret = JS_SetPrivate ( cx , tmpObj , copy ) ;
          VERIFY ( ret ) ;
       }
@@ -4979,6 +4984,7 @@ done:
    }
    SAFE_JS_FREE ( cx, code ) ;
    SAFE_BSON_DISPOSE( next ) ;
+   SAFE_BSON_DISPOSE( subBson ) ;
    bson_destroy( &errmsg ) ;
    PD_TRACE_EXIT ( SDB_SDB_EVAL ) ;
    return ret ;
