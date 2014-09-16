@@ -1731,12 +1731,12 @@ namespace engine
       }
 
    done:
-      return rc ;
-   error:
       if ( -1 != contextID )
       {
          _pRtnCB->contextDelete ( contextID, cb ) ;
       }
+      return rc ;
+   error:
       goto done ;
    }
 

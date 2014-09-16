@@ -35,6 +35,7 @@
 #include "rtn.hpp"
 #include "omManager.hpp"
 #include "omConfigGenerator.hpp"
+#include "omTaskManager.hpp"
 #include "../bson/lib/md5.hpp"
 #include "ossPath.hpp"
 #include "ossProc.hpp"

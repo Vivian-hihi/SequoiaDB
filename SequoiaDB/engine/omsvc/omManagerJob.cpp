@@ -327,7 +327,7 @@ namespace engine
    {
       INT32 rc    = SDB_OK ;
       BSONArrayBuilder arrayBuilder ;
-      BSONObj hosttable ;
+      BSONArray hosttable ;
       BSONObj request ;
       UINT32 i     = 0 ;
       for ( ; i < _vHostTable.size(); i++ )
@@ -514,6 +514,53 @@ namespace engine
 
    done:
       _om->getRSManager()->unregEUD( eduCB() );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   omTaskJob::omTaskJob( omManager *om, omTaskManager *pTaskManager )
+             :_om( om ), _taskManager( pTaskManager )
+   {
+   }
+
+   omTaskJob::~omTaskJob()
+   {
+   }
+
+   RTN_JOB_TYPE omTaskJob::type() const
+   {
+      return RTN_JOB_MAX ;
+   }
+
+   const CHAR* omTaskJob::name() const
+   {
+      return "omTaskJob" ;
+   }
+
+   BOOLEAN omTaskJob::muteXOn( const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+   
+   INT32 omTaskJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      _om->getRSManager()->registerEDU( eduCB() ) ;
+      while ( TRUE )
+      {
+         if ( eduCB()->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+         _taskManager->run() ;
+         ossSleep( 10 * OSS_ONE_SEC ) ;
+      }
+
+      _om->getRSManager()->unregEUD( eduCB() );
+   done:
       return rc ;
    error:
       goto done ;

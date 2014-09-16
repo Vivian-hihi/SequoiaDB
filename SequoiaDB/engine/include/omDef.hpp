@@ -157,7 +157,10 @@ namespace engine
    #define OM_TASKINFO_FIELD_AGENTHOST       "AgentHost"
    #define OM_TASKINFO_FIELD_AGENTSERVICE    "AgentService"
    #define OM_TASKINFO_FIELD_INFO            "Info"
+   #define OM_TASKINFO_FIELD_PROGRESS        "Progress"
    #define OM_TASKINFO_FIELD_STATUS          "Status"
+   #define OM_TASKINFO_FIELD_ISFINISH        "IsFinish"
+   #define OM_TASKINFO_FIELD_ISENABLE        "IsEnable"
 
    #define OM_CS_DEPLOY_CL_TASKINFOIDX1      "{name:\"SYSDEPLOY_TASKINFO_IDX1\",key: {"\
                                              OM_TASKINFO_FIELD_TASKID":1}, unique: true, enforced: true } "
@@ -398,9 +401,9 @@ namespace engine
 
    #define  OM_REST_TASK_INFO                "Task"
 
-   #define  OM_BSON_ISFINISHED               "IsFinish"
-   #define  OM_BSON_TASK_STATUS              "Status"
-   #define  OM_BSON_TASK_PROGRESS            "Progress"
+   #define  OM_BSON_ISFINISHED               OM_TASKINFO_FIELD_ISFINISH
+   #define  OM_BSON_TASK_STATUS              OM_TASKINFO_FIELD_STATUS
+   #define  OM_BSON_TASK_PROGRESS            OM_TASKINFO_FIELD_PROGRESS
    #define  OM_BSON_ITEM_NAME                "Name"
    #define  OM_BSON_TOTAL_COUNT              "TotalCount"
    #define  OM_BSON_INSTALLED_COUNT          "InstalledCount"
