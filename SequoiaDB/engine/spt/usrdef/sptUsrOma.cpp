@@ -473,6 +473,7 @@ namespace engine
       {
          if ( allowNotExist )
          {
+            rc = SDB_OK ;
             goto done ;
          }
          stringstream ss ;
