@@ -4814,6 +4814,7 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
          copy = bson_create() ;
          VERIFY ( copy ) ;
          bson_iterator_subobject( &it, copy ) ;
+         bson_finish( copy ) ;
          ret = JS_SetPrivate ( cx , tmpObj , copy ) ;
          VERIFY ( ret ) ;
       }
