@@ -178,7 +178,7 @@ namespace engine
          << " Oma.getOmaInstallInfo()" << endl
          << " Oma.getOmaConfigFile()" << endl
          << " Oma.getOmaConfigs( [confFile] )" << endl
-         << " Oma.setOmaConfigs( obj )" << endl
+         << " Oma.setOmaConfigs( obj, [confFile] )" << endl
          << " Oma.getAOmaSvcName( hostname )" << endl
          << " Oma.addAOmaSvcName( hostname, svcname, [isReplace])" << endl
          << " Oma.delAOmaSvcName( hostname )" << endl
@@ -568,12 +568,108 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrOma::_confObj2Str( const BSONObj &conf, string &str,
+                                   BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+      BSONObjIterator it ( conf ) ;
+      while ( it.more() )
+      {
+         BSONElement e = it.next() ;
+         ss << e.fieldName() << "=" ;
+         if ( e.type() == String )
+         {
+            ss << e.valuestr() ;
+         }
+         else if ( e.type() == NumberInt )
+         {
+            ss << e.numberInt() ;
+         }
+         else if ( e.type() == NumberLong )
+         {
+            ss << e.numberLong() ;
+         }
+         else if ( e.type() == NumberDouble )
+         {
+            ss << e.numberDouble() ;
+         }
+         else if ( e.type() == Bool )
+         {
+            ss << e.boolean() ? "TRUE" : "FALSE" ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            stringstream errss ;
+            errss << e.toString() << " is invalid config" ;
+            detail = BSON( SPT_ERR << errss.str() ) ;
+            goto error ;
+         }
+         ss << endl ;
+      }
+      str = ss.str() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrOma::setOmaConfigs( const _sptArguments & arg,
                                     _sptReturnVal & rval,
                                     BSONObj & detail )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string confFile ;
+      BSONObj conf ;
+      string str ;
+
+      rc = arg.getBsonobj( 0, conf ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "obj must be config" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "obj must be object" ) ;
+         goto error ;
+      }
+
+      if ( arg.argc() > 1 )
+      {
+         rc = arg.getString( 1, confFile ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "confFile must be string" ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         confFile = _getConfFile() ;
+      }
+
+      rc = _confObj2Str( conf, str, detail ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = utilWriteConfigFile( confFile.c_str(), str.c_str(), FALSE ) ;
+      if ( rc )
+      {
+         stringstream ss ;
+         ss << "write conf file[" << confFile << "] failed" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOma::getAOmaSvcName( const _sptArguments & arg,

@@ -868,6 +868,8 @@ namespace engine
                   case String :
                      ss << e.valuestrsafe () ;
                      break ;
+                  case Bool :
+                     ss << e.boolean() ? "TRUE" : "FALSE" ;
                   default :
                      PD_LOG ( PDERROR, "Unexpected type[%d] for %s",
                               e.type(), e.toString().c_str() ) ;

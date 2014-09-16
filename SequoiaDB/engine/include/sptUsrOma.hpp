@@ -149,6 +149,9 @@ namespace engine
                                   bson::BSONObj &conf,
                                   bson::BSONObj &detail ) ;
 
+      static INT32  _confObj2Str( const bson::BSONObj &conf, string &str,
+                                  bson::BSONObj &detail ) ;
+
    private:
       sptUsrOmaAssit          _assit ;
       string                  _hostname ;
