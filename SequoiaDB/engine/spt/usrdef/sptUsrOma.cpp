@@ -835,7 +835,7 @@ namespace engine
          confFile = _getConfFile() ;
       }
 
-      rc = _getConfInfo( confFile, confObj, detail ) ;
+      rc = _getConfInfo( confFile, confObj, detail, TRUE ) ;
       if ( rc )
       {
          goto error ;
