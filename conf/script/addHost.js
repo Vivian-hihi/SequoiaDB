@@ -32,7 +32,9 @@ if ( typeof(PACKET_PATH) == "undefined" ) {}
 if ( typeof(INSTALL_PATH) == "undefined" ) {}
 
 // linux
-var INSTALL_PACKET_PATH_L = "/tmp/omatmp/packet/" ;
+var OMA_TMP_DIR              = "/tmp/omatmp" ;
+var OMA_INSTALL_PACKET_DIR_L = "/tmp/omatmp/packet/" ;
+var OMA_VCOORD_INSTALL_DIR_L = "/tmp/omatmp/data/vCoord/" ;
 // windows
 var INSTALL_PACKET_PATH_W = "" ;
 
@@ -42,10 +44,10 @@ objRet.detail     = "" ;
 objRet.HasPush    = false ;
 objRet.HasInstall = false ;
 
-/*
-function hasCMInstalledInLocal( osInfo )
+
+function isLocalHost( osInfo )
 {
-   var isLocalHost = false ;
+   var isLocal = false ;
    var hostname = null ;
    var hosts = null ;
    var name = null ;
@@ -84,34 +86,14 @@ function hasCMInstalledInLocal( osInfo )
             name = hosts["Hosts"][i]["HostName"] ;
             if ( hostname == name )
             {
-               isLocalHost = true ;
+               isLocal = true ;
                break ;
             }
          }
       }
    }
-   return isLocalHost ;
+   return isLocal ;
 }
-
-// check whether sdbcm is running, if so, not need to install
-function cmProgHasInstalled( ssh, osInfo )
-{
-   var hasInstalled = false ;
-   // case 1: check whether sdbcm has been installed
-   // in local machine
-   var flag = hasCMInstalledInLocal( osInfo ) ;
-   if ( flag )
-   {
-      hasInstalled = true ;
-      return hasInstalled ;
-   }
-   // TODO: tanzhaobo
-   // case 2: check whether sdbcm has been installed
-   // in remote machine
-
-   return hasInstalled ;
-}
-*/
 
 function getInstallPacketName( osInfo )
 {
@@ -140,7 +122,17 @@ function createTmpDir( ssh, osInfo )
    var cmd = "" ;
    if ( "LINUX" == osInfo )
    {
-      cmd = "mkdir -p " + INSTALL_PACKET_PATH_L ;
+      // mkdir /tmp/omatmp
+      cmd = "mkdir -p " + OMA_TMP_DIR ;
+      ssh.exec( cmd ) ;
+      // mkdir  /tmp/omatmp/packet
+      cmd = "mkdir -p " + OMA_INSTALL_PACKET_DIR_L ; 
+      ssh.exec( cmd ) ;
+      // mkdir  /tmp/omatmp/data/vCoord
+      cmd = "mkdir -p " + OMA_VCOORD_INSTALL_DIR_L ;
+      ssh.exec( cmd ) ;
+      // chmod
+      cmd = "chmod -R 777 " + OMA_TMP_DIR ;
       ssh.exec( cmd ) ;
    }
    else
@@ -161,9 +153,9 @@ function pushInstallationPacket( ssh, osInfo )
    {
       // installer.run
       src = PACKET_PATH;
-      dest = INSTALL_PACKET_PATH_L + packetName ;
+      dest = OMA_INSTALL_PACKET_DIR_L + packetName ;
       ssh.push( src, dest ) ;
-      var cmd = "chmod a+x " + INSTALL_PACKET_PATH_L + packetName ;
+      var cmd = "chmod a+x " + OMA_INSTALL_PACKET_DIR_L + packetName ;
       ssh.exec( cmd ) ;
    }
    else
@@ -182,7 +174,7 @@ function installPacket( ssh, osInfo )
    var packetName = getInstallPacketName( osInfo ) ; 
    if ( "LINUX" == osInfo )
    {
-      cmd = INSTALL_PACKET_PATH_L + packetName + option ;
+      cmd = OMA_INSTALL_PACKET_DIR_L + packetName + option ;
       ssh.exec( cmd ) ;
    }
    else
@@ -203,7 +195,7 @@ function main()
            typeof(SDBUSERGROUP) == "undefined" )
       {
          objRet.Rc = -6 ;
-         objRet.detail = "not specified user name, password or user group for program" ;
+         objRet.detail = "not specified user name, password or user group" ;
          return objRet ;
       }
       if ( typeof(USERNAME) == "undefined"      ||
@@ -218,13 +210,21 @@ function main()
            typeof(INSTALL_PATH) == "undefined" )
       {
          objRet.Rc = -10 ;
-         objRet.detail = "not specified installation packet or installation path" ;
+         objRet.detail = "not specified install packet or install path" ;
          return objRet ;
       }
       // get os info
       var osInfo = System.type() ;
       // ssh
       var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
+      // judge whether it's in local mathine, if so, no need to install
+      var isLocal = isLocalHost( osInfo ) ;
+      if ( isLocal )
+      {
+         objRet.HasPush    = false ;
+         objRet.HasInstall = true ;
+         return objRet ;
+      }
       // push packet to remote machine
       pushInstallationPacket( ssh, osInfo ) ;
       installPacket( ssh, osInfo ) ;

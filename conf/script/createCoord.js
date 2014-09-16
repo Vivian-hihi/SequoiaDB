@@ -47,7 +47,7 @@ function createCoordNode( db )
       if ( -154 == e )
       {
          // create coord replica group
-         rg = db = db.createCoordRG() ;
+         rg = db.createCoordRG() ;
       }
       else
       {
