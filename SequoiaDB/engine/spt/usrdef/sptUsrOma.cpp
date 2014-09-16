@@ -460,7 +460,7 @@ namespace engine
    }
 
    INT32 _sptUsrOma::_getConfInfo( const string & confFile, BSONObj &conf,
-                                   BSONObj & detail )
+                                   BSONObj & detail, BOOLEAN allowNotExist )
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ;
@@ -471,6 +471,10 @@ namespace engine
       rc = ossAccess( confFile.c_str() ) ;
       if ( rc )
       {
+         if ( allowNotExist )
+         {
+            goto done ;
+         }
          stringstream ss ;
          ss << "conf file[" << confFile << "] is not exist" ;
          detail = BSON( SPT_ERR << ss.str() ) ;

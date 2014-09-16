@@ -147,7 +147,8 @@ namespace engine
 
       static INT32  _getConfInfo( const string &confFile,
                                   bson::BSONObj &conf,
-                                  bson::BSONObj &detail ) ;
+                                  bson::BSONObj &detail,
+                                  BOOLEAN allowNotExist = FALSE ) ;
 
       static INT32  _confObj2Str( const bson::BSONObj &conf, string &str,
                                   bson::BSONObj &detail,
