@@ -32,46 +32,65 @@
 #include "sptGlobalFunc.hpp"
 #include "ossUtil.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
+JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, getLastErrorMsg )
+JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, setLastErrorMsg )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, getLastError )
+JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, setLastError )
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
 
 JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
-   JS_ADD_GLOBAL_FUNC( "getLastErrMsg", getLastError )
+   JS_ADD_GLOBAL_FUNC( "getLastErrMsg", getLastErrorMsg )
+   JS_ADD_GLOBAL_FUNC( "getLastErrMsg", setLastErrorMsg )
+   JS_ADD_GLOBAL_FUNC( "getLastError", getLastError )
+   JS_ADD_GLOBAL_FUNC( "setLastError", setLastError )
    JS_ADD_GLOBAL_FUNC( "sleep", sleep )
 JS_MAPPING_END()
-   
 
-   static OSS_THREAD_LOCAL CHAR *errmsg ;
-
-   const CHAR *getErrMsg()
+   INT32 _sptGlobalFunc::getLastErrorMsg( const _sptArguments &arg,
+                                          _sptReturnVal &rval,
+                                          bson::BSONObj &detail )
    {
-      return errmsg ;
+      if ( NULL != sdbGetErrMsg() )
+      {
+         rval.setStringVal( "", sdbGetErrMsg() ) ;
+      }
+      return SDB_OK ;
    }
 
-   void setErrmsg( const CHAR *err )
+   INT32 _sptGlobalFunc::setLastErrorMsg( const _sptArguments & arg,
+                                          _sptReturnVal & rval,
+                                          BSONObj & detail )
    {
-      if ( NULL != errmsg )
+      string msg ;
+      if ( SDB_OK == arg.getString( 0, msg ) )
       {
-         SDB_OSS_FREE( errmsg ) ;
-         errmsg = NULL ;
+         sdbSetErrmsg( msg.c_str() ) ;
       }
-      errmsg = ossStrdup( err ) ;
-      return ;
+      return SDB_OK ;
    }
 
-   INT32 _sptGlobalFunc::getLastError( const _sptArguments &arg,
-                                       _sptReturnVal &rval,
-                                       bson::BSONObj &detail )
+   INT32 _sptGlobalFunc::getLastError( const _sptArguments & arg,
+                                       _sptReturnVal & rval,
+                                       BSONObj & detail )
    {
-      if ( NULL != getErrMsg() )
-      {
-         rval.setStringVal( "", getErrMsg()) ;
-      }
+      INT32 error = sdbGetErrno() ;
+      rval.setNativeVal( "",  NumberInt, (const void*)&error ) ;
+      return SDB_OK ;
+   }
 
-      SDB_OSS_FREE( errmsg ) ;
-      errmsg = NULL ;
+   INT32 _sptGlobalFunc::setLastError( const _sptArguments & arg,
+                                       _sptReturnVal & rval,
+                                       BSONObj & detail )
+   {
+      INT32 errNum = SDB_OK ;
+      if( SDB_OK == arg.getNative( 0, (void*)&errNum, SPT_NATIVE_INT32 ) )
+      {
+         sdbSetErrno( errNum ) ;
+      }
       return SDB_OK ;
    }
 

@@ -79,6 +79,16 @@ namespace engine
       {
          return _jsClassName.empty() ;
       }
+
+      BOOLEAN isInstanceOf( JSContext *cx, JSObject *obj )
+      {
+         if ( !_init )
+         {
+            return FALSE ;
+         }
+         return JS_InstanceOf( cx, obj, &_classDef, NULL ) ;
+      }
+
    protected:
       std::string _jsClassName ;
       _sptFuncMap _funcMap ;

@@ -46,6 +46,12 @@ namespace engine
 
       virtual SPT_SCOPE_TYPE getType() const { return SPT_SCOPE_TYPE_SP ; }
 
+      template<typename T>
+      BOOLEAN isInstanceOf( JSContext *cx, JSObject *obj )
+      {
+         return T::__desc.isInstanceOf( cx, obj ) ;
+      }
+
    public:
       virtual INT32 start() ;
 

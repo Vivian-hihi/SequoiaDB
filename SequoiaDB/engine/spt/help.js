@@ -17,7 +17,10 @@ var help = function( val ) {
       println("   sleep(ms)                              sleep macro seconds");
       println("   traceFmt(<type>,<in>,<out>)            format trace input(in) to output(out) by type");
       println("   getErr(ret)                            print error description for return code");
+	  println("   getLastError()                         get last error number");
+	  println("   setLastError(<errno>)                  set last error number") ;
       println("   getLastErrMsg()                        get last error detail information");
+	  println("   setLastErrMsg(<msg>)                   set last error detail information");
       println("   clear                                  clear the terminal screen");
       println("   history -c                             clear the history");
       println("   quit                                   exit");

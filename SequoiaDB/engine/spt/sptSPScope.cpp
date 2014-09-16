@@ -38,6 +38,7 @@
 #include "sptBsonobj.hpp"
 #include "sptGlobalFunc.hpp"
 #include "sptConvertor2.hpp"
+#include "sptConvertorHelper.hpp"
 
 const UINT32 RUNTIME_SIZE = 8 * 1024 * 1024 ;
 
@@ -433,7 +434,6 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
 
       if ( JSVAL_IS_VOID( jsrval ) )
       {
-
       }
       else if ( JSVAL_IS_STRING( jsrval ) )
       {
@@ -443,7 +443,6 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
          {
             goto error ;
          }
-
          builder.append( SPT_RVAL_KEY, v ) ;
       }
       else if ( JSVAL_IS_INT( jsrval ) )
@@ -464,7 +463,6 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-
          builder.appendNumber( SPT_RVAL_KEY, v ) ;
       }
       else if ( JSVAL_IS_BOOLEAN( jsrval ) )
@@ -477,18 +475,45 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
          }
          builder.appendBool( SPT_RVAL_KEY, v ) ;
       }
-      else if ( JSVAL_IS_OBJECT( jsrval ) &&
-                !JSObjIsSdbObj(_context, JSVAL_TO_OBJECT( jsrval ) ) )
+      else if ( JSVAL_IS_OBJECT( jsrval ) )
       {
-         sptConvertor2 c( cx ) ;
-         bson::BSONObj v ;
-         rc = c.toBson( JSVAL_TO_OBJECT( jsrval ), v ) ;
-         if ( SDB_OK != rc )
+         JSObject *obj = JSVAL_TO_OBJECT( jsrval ) ;
+         if ( JSObjIsBsonobj( _context, obj ) )
          {
-            goto error ;
+            CHAR *rawData = NULL ;
+            rc = getBsonRawFromBsonClass( _context, obj, &rawData ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            else if ( !rawData )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            builder.append( SPT_RVAL_KEY, bson::BSONObj( rawData ) ) ;
          }
-
-         builder.append( SPT_RVAL_KEY, v ) ;
+         else if ( isInstanceOf<_sptBsonobj>( _context, obj ) )
+         {
+            bson::BSONObj *bs = (bson::BSONObj *)JS_GetPrivate( _context, obj ) ;
+            if ( NULL == bs )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            builder.append( SPT_RVAL_KEY, *bs ) ;
+         }
+         else if ( !JSObjIsSdbObj(_context, JSVAL_TO_OBJECT( jsrval ) ) )
+         {
+            sptConvertor2 c( cx ) ;
+            bson::BSONObj v ;
+            rc = c.toBson( JSVAL_TO_OBJECT( jsrval ), v ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            builder.append( SPT_RVAL_KEY, v ) ;
+         }
       }
       else
       {

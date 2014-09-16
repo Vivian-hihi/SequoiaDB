@@ -36,8 +36,42 @@ using namespace bson ;
 
 namespace engine
 {
-   void setErrmsg( const CHAR *err ) ;
 
+   /*
+      Global function
+   */
+   static OSS_THREAD_LOCAL CHAR *__errmsg__ = NULL ;
+   static OSS_THREAD_LOCAL INT32 __errno__ = SDB_OK ;
+
+   const CHAR *sdbGetErrMsg()
+   {
+      return __errmsg__ ;
+   }
+
+   void sdbSetErrmsg( const CHAR *err )
+   {
+      if ( NULL != __errmsg__ )
+      {
+         SDB_OSS_FREE( __errmsg__ ) ;
+         __errmsg__ = NULL ;
+      }
+      __errmsg__ = ossStrdup( err ) ;
+      return ;
+   }
+
+   INT32 sdbGetErrno()
+   {
+      return __errno__ ;
+   }
+
+   void sdbSetErrno( INT32 errNum )
+   {
+      __errno__ = errNum ;
+   }
+
+   /*
+      _sptInvoker implement
+   */
    INT32 _sptInvoker::_getValFromProperty( JSContext *cx,
                                            const sptProperty &pro,
                                            jsval &val )
@@ -209,10 +243,12 @@ namespace engine
       }
 
       /// clear the last errmsg when it is empty.
-      setErrmsg( detail.isEmpty() ?
-                 "" : detail.toString().c_str() ) ;
+      sdbSetErrmsg( detail.isEmpty() ?
+                    "" : detail.toString().c_str() ) ;
+      sdbSetErrno( rc ) ;
 
       return ;
    }
+
 }
 

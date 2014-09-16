@@ -45,7 +45,19 @@ namespace engine
       virtual ~_sptGlobalFunc() {} 
 
    public:
+      static INT32 getLastErrorMsg( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail ) ;
+
+      static INT32 setLastErrorMsg( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail ) ;
+
       static INT32 getLastError( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail ) ;
+
+      static INT32 setLastError( const _sptArguments &arg,
                                  _sptReturnVal &rval,
                                  bson::BSONObj &detail ) ;
 
