@@ -596,7 +596,7 @@ namespace engine
          }
          else if ( e.type() == Bool )
          {
-            ss << e.boolean() ? "TRUE" : "FALSE" ;
+            ss << ( e.boolean() ? "TRUE" : "FALSE" ) ;
          }
          else
          {
