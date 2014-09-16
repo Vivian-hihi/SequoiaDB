@@ -39,6 +39,9 @@
 
 #include <vector>
 #include <map>
+#include <string>
+
+using namespace std ;
 
 namespace engine
 {
@@ -49,11 +52,14 @@ namespace engine
       virtual ~_sptCmdRunner() ;
 
    public:
-      INT32 exec( const CHAR *cmd, UINT32 &exit ) ;
+      INT32 exec( const CHAR *cmd, UINT32 &exit,
+                  BOOLEAN isBackground = FALSE ) ;
 
       INT32 done() ;
 
-      INT32 read( CHAR *buf, SINT64 len, SINT64 &got ) ;
+      INT32 read( string &out, BOOLEAN readEOF = TRUE ) ;
+
+      OSSPID getPID() const { return _id ; }
 
    private:
       OSSNPIPE _out ;

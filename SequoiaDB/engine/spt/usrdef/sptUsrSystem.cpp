@@ -167,14 +167,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
       _sptCmdRunner runner ;
-      const SINT64 bufLen = 1024 * 5 ;
-      SINT64 read = 0 ;
-      CHAR buf[bufLen + 1] = { 0 } ;
+      string outStr ;
       BSONObjBuilder builder ;
 
       if ( 0 < arg.argc() )
       {
-         PD_LOG( PDERROR, "type() should have non arguments" ) ;
+         PD_LOG( PDERROR, "getReleaseInfo() should have non arguments" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -201,7 +199,7 @@ namespace engine
          goto error ;
       }
 
-      rc = runner.read( buf, bufLen, read ) ;
+      rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
@@ -212,19 +210,18 @@ namespace engine
          goto error ;
       }
 
-      rc = _extractReleaseInfo( buf, builder ) ;
+      rc = _extractReleaseInfo( outStr.c_str(), builder ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
          ss << "failed to extract info from release info:"
-            << buf ;
+            << outStr ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
 
-      ossMemset( buf, '\0', bufLen + 1 ) ;
-      read = 0 ;
+      outStr = "" ;
 #if defined (_LINUX)
       rc = runner.exec( "uname -a", exitCode ) ;
 #elif defined (_WINDOWS)
@@ -247,7 +244,7 @@ namespace engine
          goto error ;
       }
 
-      rc = runner.read( buf, bufLen, read ) ;
+      rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
@@ -258,7 +255,7 @@ namespace engine
          goto error ;
       }
 
-      if ( NULL != ossStrstr( buf, "x86_64") )
+      if ( NULL != ossStrstr( outStr.c_str(), "x86_64") )
       {
          builder.append( SPT_USR_SYSTEM_BIT, 64 ) ;
       }
@@ -327,9 +324,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
       _sptCmdRunner runner ;
-      const SINT64 bufLen = 1024 * 1024 ;
-      SINT64 read = 0 ;
-      CHAR buf[bufLen + 1] = { 0 } ;
+      string outStr ;
       BSONObjBuilder builder ;
 
       if ( 0 < arg.argc() )
@@ -361,7 +356,7 @@ namespace engine
          goto error ;
       }
 
-      rc = runner.read( buf, bufLen, read ) ;
+      rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
@@ -372,13 +367,13 @@ namespace engine
          goto error ;
       }
 
-      rc = _extractHosts( buf, builder ) ;
+      rc = _extractHosts( outStr.c_str(), builder ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extract host from file:%d", rc ) ;
          stringstream ss ;
          ss << "failed to read msg from buf:"
-            << buf ;
+            << outStr ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
@@ -475,6 +470,8 @@ namespace engine
       return rc ;
    }
 
+   #define CPU_CMD "cat /proc/cpuinfo |grep name | cut -f2 -d: |uniq -c"
+
    INT32 _sptUsrSystem::getCpuInfo( const _sptArguments &arg,
                                     _sptReturnVal &rval,
                                     bson::BSONObj &detail )
@@ -482,11 +479,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
       _sptCmdRunner runner ;
-      const SINT64 bufLen = 1024 * 100 ;
-      SINT64 read = 0 ;
-      CHAR buf[bufLen + 1] = { 0 } ;
+      string outStr ;
       BSONObjBuilder builder ;
-#define CPU_CMD "cat /proc/cpuinfo |grep name | cut -f2 -d: |uniq -c"
+
 #if defined (_LINUX)
       rc = runner.exec( CPU_CMD, exitCode ) ;
 #elif defined (_WINDOWS)
@@ -509,7 +504,7 @@ namespace engine
          goto error ;
       }
 
-      rc = runner.read( buf, bufLen, read ) ;
+      rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
@@ -520,13 +515,13 @@ namespace engine
          goto error ;
       }
 
-      rc = _extractCpuInfo( buf, builder ) ;
+      rc = _extractCpuInfo( outStr.c_str(), builder ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extract cpu info:%d", rc ) ;
          stringstream ss ;
          ss << "failed to read msg from buf:"
-            << buf ;
+            << outStr ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
@@ -636,10 +631,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
       _sptCmdRunner runner ;
-      const SINT64 bufLen = 1024 ;
-      SINT64 read = 0 ;
-      CHAR buf[bufLen + 1] = { 0 } ;
+      string outStr ;
       BSONObjBuilder builder ;
+
 #if defined (_LINUX)
       rc = runner.exec( "free -m |grep Mem", exitCode ) ;
 #elif defined (_WINDOWS)
@@ -662,7 +656,7 @@ namespace engine
          goto error ;
       }
 
-      rc = runner.read( buf, bufLen, read ) ;
+      rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
@@ -673,13 +667,13 @@ namespace engine
          goto error ;
       }
 
-      rc = _extractMemInfo( buf, builder ) ;
+      rc = _extractMemInfo( outStr.c_str(), builder ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extract mem info:%d", rc ) ;
          stringstream ss ;
          ss << "failed to read msg from buf:"
-            << buf ;
+            << outStr ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
@@ -749,10 +743,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 exitCode = 0 ;
       _sptCmdRunner runner ;
-      const SINT64 bufLen = 1024 * 1024 ;
-      SINT64 read = 0 ;
-      CHAR buf[bufLen + 1] = { 0 } ;
+      string outStr ;
       BSONObjBuilder builder ;
+
 #if defined (_LINUX)
       rc = runner.exec( "df -m |grep -v \"Use%\"", exitCode ) ;
 #elif defined (_WINDOWS)
@@ -775,7 +768,7 @@ namespace engine
          goto error ;
       }
 
-      rc = runner.read( buf, bufLen, read ) ;
+      rc = runner.read( outStr ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
@@ -786,13 +779,13 @@ namespace engine
          goto error ;
       }
 
-      rc = _extractDiskInfo( buf, builder ) ;
+      rc = _extractDiskInfo( outStr.c_str(), builder ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to extract disk info:%d", rc ) ;
          stringstream ss ;
          ss << "failed to read msg from buf:"
-            << buf ;
+            << outStr ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
@@ -885,7 +878,8 @@ namespace engine
                   lineBuilder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
                   lineBuilder.append( SPT_USR_SYSTEM_MOUNT, mount ) ;
                   lineBuilder.appendBool( SPT_USR_SYSTEM_ISLOCAL,
-                                          string::npos != fileSystem.find( "/dev/sd", 0, 7 )) ;
+                                          string::npos !=
+                                          fileSystem.find( "/dev/sd", 0, 7 )) ;
                   arrBuilder << lineBuilder.obj() ;
                }
                catch ( std::exception &e )
@@ -899,7 +893,6 @@ namespace engine
             available.clear() ;
             mount.clear() ;
             fileSystem.clear() ;
-
          }
       }
 
@@ -1010,62 +1003,26 @@ namespace engine
    }
 
    INT32 _sptUsrSystem::getHostName( const _sptArguments &arg,
-                                _sptReturnVal &rval,
-                                bson::BSONObj &detail )
+                                     _sptReturnVal &rval,
+                                     bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
+      CHAR hostName[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
       if ( 0 < arg.argc() )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
+      rc = ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
+      if ( rc )
       {
-      UINT32 exitCode = 0 ;
-      _sptCmdRunner runner ;
-      const SINT64 bufLen = 1024 ;
-      SINT64 read = 0 ;
-      CHAR buf[bufLen + 1] = { 0 } ;
-#if defined (_LINUX)
-      rc = runner.exec( "hostname", exitCode ) ;
-#elif defined (_WINDOWS)
-      rc = SDB_SYS ;
-#endif
-      if ( SDB_OK != rc || SDB_OK != exitCode )
-      {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
-                 rc, exitCode ) ;
-         if ( SDB_OK == rc )
-         {
-            rc = SDB_SYS ;
-         }
-         stringstream ss ;
-         ss << "failed to exec cmd \"hostname\",rc:"
-            << rc
-            << ",exit:"
-            << exitCode ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
+         detail = BSON( SPT_ERR << "get hostname failed" ) ;
          goto error ;
       }
 
-      rc = runner.read( buf, bufLen, read ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
-         stringstream ss ;
-         ss << "failed to read msg from cmd \"hostname\", rc:"
-            << rc ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
+      rval.setStringVal( "", hostName ) ;
 
-      if ( '\0' != buf[0] )
-      {
-         /// erase the last '\n'
-         buf[ossStrlen( buf ) - 1] = '\0' ;
-      }
-      rval.setStringVal( "", buf ) ;
-      }
    done:
       return rc ;
    error:

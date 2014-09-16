@@ -36,6 +36,10 @@
 #include "oss.hpp"
 #include "sptApi.hpp"
 
+#include <string>
+
+using namespace std ;
+
 namespace engine
 {
    class _sptCmdRunner ;
@@ -45,29 +49,51 @@ namespace engine
    JS_DECLARE_CLASS( _sptUsrCmd )
 
    public:
-      _sptUsrCmd(){}
-      virtual ~_sptUsrCmd(){}
+      _sptUsrCmd() ;
+      virtual ~_sptUsrCmd() ;
 
    public:
-/*
+
       INT32 construct( const _sptArguments &arg,
                        _sptReturnVal &rval,
                        bson::BSONObj &detail ) ;
-*/
 
-      static INT32 exec( const _sptArguments &arg,
-                         _sptReturnVal &rval,
-                         bson::BSONObj &detail ) ;
+      INT32 destruct() ;
+
+      INT32 toString( const _sptArguments &arg,
+                      _sptReturnVal &rval,
+                      bson::BSONObj &detail ) ;
+
+      INT32 getLastRet( const _sptArguments &arg,
+                        _sptReturnVal &rval,
+                        bson::BSONObj &detail ) ;
+
+      INT32 start( const _sptArguments &arg,
+                   _sptReturnVal &rval,
+                   bson::BSONObj &detail ) ;
+
+      INT32 getLastOut( const _sptArguments &arg,
+                        _sptReturnVal &rval,
+                        bson::BSONObj &detail ) ;
+
+      INT32 exec( const _sptArguments &arg,
+                  _sptReturnVal &rval,
+                  bson::BSONObj &detail ) ;
 
       static INT32 help( const _sptArguments &arg,
                          _sptReturnVal &rval,
                          bson::BSONObj &detail ) ;
 
    private:
-      static INT32 _setRVal( _sptCmdRunner *runner,
-                             _sptReturnVal &rval,
-                             BOOLEAN setToRVal,
-                             bson::BSONObj &detail ) ;
+      INT32 _setRVal( _sptCmdRunner *runner,
+                      _sptReturnVal &rval,
+                      BOOLEAN setToRVal,
+                      bson::BSONObj &detail ) ;
+
+   private:
+      UINT32         _retCode ;
+      string         _strOut ;
+
    } ;
    typedef class _sptUsrCmd sptUsrCmd ;
 }

@@ -90,6 +90,17 @@ public :
 #endif
    UINT32 _state ;
    CHAR   _name [ OSS_NPIPE_MAX_NAME_LEN + 1 ] ;
+
+   _OSSNPIPE()
+   {
+#if defined (_WINDOWS)
+      _handle = INVALID_HANDLE_VALUE ;
+      _overlapped.hEvent = INVALID_HANDLE_VALUE ;
+      _overlappedFlag = 0 ;
+#elif defined (_LINUX)
+      _handle = -1 ;
+#endif
+   }
 } ;
 typedef class _OSSNPIPE OSSNPIPE ;
 

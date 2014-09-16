@@ -36,23 +36,24 @@
 #include "ossUtil.hpp"
 
 #if defined (_LINUX)
-#define SPT_SHELL_CALL "/bin/sh"
-#define SPT_SHELL_CALL_LEN 7
-#define SPT_SHELL_ARG "-c"
-#define SPT_SHELL_ARG_LEN 2
+#define SPT_SHELL_CALL                 "/bin/sh"
+#define SPT_SHELL_CALL_LEN             7
+#define SPT_SHELL_ARG                  "-c"
+#define SPT_SHELL_ARG_LEN              2
 #elif defined (_WINDOWS)
-#define SPT_SHELL_CALL "cmd"
-#define SPT_SHELL_CALL_LEN 3
-#define SPT_SHELL_ARG "/c"
-#define SPT_SHELL_ARG_LEN 2
-#endif
+#define SPT_SHELL_CALL                 "cmd"
+#define SPT_SHELL_CALL_LEN             3
+#define SPT_SHELL_ARG                  "/c"
+#define SPT_SHELL_ARG_LEN              2
+#endif // _LINUX
 
+#define SPT_CMD_RUNNER_MAX_READ_BUF    ( 4 * 1024 * 1024 )
 
 namespace engine
 {
    _sptCmdRunner::_sptCmdRunner()
    {
-
+      _id = OSS_INVALID_PID ;
    }
 
    _sptCmdRunner::~_sptCmdRunner()
@@ -60,7 +61,8 @@ namespace engine
       done() ; 
    }
 
-   INT32 _sptCmdRunner::exec( const CHAR *cmd, UINT32 &exit )
+   INT32 _sptCmdRunner::exec( const CHAR *cmd, UINT32 &exit,
+                              BOOLEAN isBackground )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != cmd, "can not be null" ) ;
@@ -71,6 +73,12 @@ namespace engine
       //// arguments:   SPT_SHELL_CALL\0SPT_SHELL_ARG\0cmd\0\0
       UINT32 size = SPT_SHELL_CALL_LEN + SPT_SHELL_ARG_LEN + cmdLen + 4 ;
       ossResultCode res ;
+      INT32 flags = OSS_EXEC_SSAVE | OSS_EXEC_NORESIZEARGV ;
+
+      if ( isBackground )
+      {
+         flags = OSS_EXEC_NORESIZEARGV ;
+      }
 
       arguments = ( CHAR * )SDB_OSS_MALLOC( size ) ;
       if ( NULL == arguments )
@@ -88,9 +96,7 @@ namespace engine
       ossMemcpy( cp, cmd, cmdLen + 1 ) ;
       arguments[size - 1] = '\0' ;
 
-      /// TODO: how about to achieve ossPopen() ?
-      rc = ossExec( arguments, arguments, NULL,
-                    OSS_EXEC_SSAVE | OSS_EXEC_NORESIZEARGV,
+      rc = ossExec( arguments, arguments, NULL, flags,
                     _id, res, NULL, &_out ) ;
       if ( SDB_OK != rc )
       {
@@ -110,20 +116,40 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptCmdRunner::read( CHAR *buf,
-                              SINT64 len,
-                              SINT64 &got )
+   INT32 _sptCmdRunner::read( string &out, BOOLEAN readEOF )
    {
       INT32 rc = SDB_OK ;
-      rc = ossReadNamedPipe( _out, buf, len, &got ) ;
-      if ( SDB_OK != rc )
+      INT64 readLen = 0 ;
+      CHAR buff[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      INT64 totalSize = out.length() ;
+
+      while ( totalSize < SPT_CMD_RUNNER_MAX_READ_BUF )
       {
-         if ( SDB_EOF != rc )
+         rc = ossReadNamedPipe( _out, buff, OSS_MAX_PATHSIZE, &readLen ) ;
+         if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to read data from pipe:%d", rc ) ;
+            if ( SDB_EOF != rc )
+            {
+               PD_LOG( PDERROR, "failed to read data from pipe:%d", rc ) ;
+               goto error ;
+            }
+            else if ( readEOF )
+            {
+               rc = SDB_OK ;
+            }
+            break ;
          }
-         goto error ;
+         out += buff ;
+         totalSize += readLen ;
+         readLen = 0 ;
+         buff[ 0 ] = 0 ;
+
+         if ( !readEOF )
+         {
+            break ;
+         }
       }
+
    done:
       return rc ;
    error:
@@ -132,9 +158,10 @@ namespace engine
 
    INT32 _sptCmdRunner::done()
    {
-      if ( -1 != _id )
+      if ( OSS_INVALID_PID != _id )
       {
          ossCloseNamedPipe( _out ) ;
+         _id = OSS_INVALID_PID ;
       }
       return SDB_OK ;
    }

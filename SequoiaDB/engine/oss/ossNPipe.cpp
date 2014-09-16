@@ -784,6 +784,12 @@ INT32 ossCloseNamedPipe ( OSSNPIPE &handle )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSCLSNMP );
+
+   if ( INVALID_HANDLE_VALUE == handle._handle )
+   {
+      goto done ;
+   }
+
    if ( !CloseHandle ( handle._handle ) )
    {
       rc = ossGetLastError () ;
@@ -791,11 +797,14 @@ INT32 ossCloseNamedPipe ( OSSNPIPE &handle )
                 handle._name, rc ) ;
       goto error ;
    }
+
 done :
-   if ( handle._overlappedFlag && handle._overlapped.hEvent )
+   handle._handle = INVALID_HANDLE_VALUE ;
+   if ( handle._overlappedFlag &&
+        INVALID_HANDLE_VALUE != handle._overlapped.hEvent )
    {
       CloseHandle ( handle._overlapped.hEvent ) ;
-      handle._overlapped.hEvent = 0 ;
+      handle._overlapped.hEvent = INVALID_HANDLE_VALUE ;
    }
    PD_TRACE_EXITRC ( SDB_OSSCLSNMP, rc );
    return rc ;
@@ -1162,7 +1171,11 @@ INT32 ossDisconnectNamedPipe ( OSSNPIPE &handle )
 INT32 ossCloseNamedPipe ( OSSNPIPE &handle )
 {
    INT32 rc = SDB_OK ;
-   close ( handle._handle ) ;
+   if ( -1 != handle._handle )
+   {
+      close ( handle._handle ) ;
+      handle._handle = -1 ;
+   }
    return rc ;
 }
 

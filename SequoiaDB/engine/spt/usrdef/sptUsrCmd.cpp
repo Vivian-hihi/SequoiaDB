@@ -36,28 +36,73 @@
 
 using namespace bson ;
 
-static const UINT32 SPT_STACK_OUTPUT = 1024 * 2 ;
-
 namespace engine
 {
-   JS_STATIC_FUNC_DEFINE( _sptUsrCmd, exec )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, exec )
    JS_STATIC_FUNC_DEFINE( _sptUsrCmd, help )
-   //JS_CONSTRUCT_FUNC_DEFINE( _sptUsrCmd, construct )
+   JS_CONSTRUCT_FUNC_DEFINE( _sptUsrCmd, construct )
+   JS_DESTRUCT_FUNC_DEFINE( _sptUsrCmd, destruct )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, toString )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getLastRet )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, getLastOut )
+   JS_MEMBER_FUNC_DEFINE( _sptUsrCmd, start )
 
    JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
-      JS_ADD_STATIC_FUNC( "run", exec )
       JS_ADD_STATIC_FUNC( "help", help )
-      //JS_ADD_CONSTRUCT_FUNC( construct)
+      JS_ADD_CONSTRUCT_FUNC( construct )
+      JS_ADD_DESTRUCT_FUNC( destruct )
+      JS_ADD_MEMBER_FUNC( "toString", toString )
+      JS_ADD_MEMBER_FUNC( "getLastRet", getLastRet )
+      JS_ADD_MEMBER_FUNC( "getLastOut", getLastOut )
+      JS_ADD_MEMBER_FUNC( "run", exec )
+      JS_ADD_MEMBER_FUNC( "start", start )
    JS_MAPPING_END()
 
-/*
+   _sptUsrCmd::_sptUsrCmd()
+   {
+      _retCode    = 0 ;
+   }
+
+   _sptUsrCmd::~_sptUsrCmd()
+   {
+   }
+
    INT32 _sptUsrCmd::construct( const _sptArguments &arg,
                                 _sptReturnVal &rval,
                                 bson::BSONObj &detail )
    {
       return SDB_OK ;
    }
-*/
+
+   INT32 _sptUsrCmd::destruct()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrCmd::toString( const _sptArguments & arg,
+                               _sptReturnVal & rval,
+                               BSONObj & detail )
+   {
+      rval.setStringVal( "", "CommandRunner" ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrCmd::getLastRet( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
+   {
+      rval.setNativeVal( "", NumberInt, (const void*)&_retCode ) ;
+      return SDB_OK ;
+   }
+
+   INT32 _sptUsrCmd::getLastOut( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
+   {
+      rval.setStringVal( "", _strOut.c_str() ) ;
+      return SDB_OK ;
+   }
+
    INT32 _sptUsrCmd::exec( const _sptArguments &arg,
                            _sptReturnVal &rval,
                            bson::BSONObj &detail )
@@ -65,14 +110,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       string cmd ;
       string ev ;
-      UINT32 exit = SDB_OK ;
       sptCmdRunner runner ;
 
       rc = arg.getString( 0, cmd ) ;
       if ( SDB_OK != rc )
       {
          rc = SDB_INVALIDARG ;
-         detail = BSON( SPT_ERR << "need at least one argument" ) ;
+         detail = BSON( SPT_ERR << "cmd must be config" ) ;
          goto error ;
       }
 
@@ -89,26 +133,91 @@ namespace engine
          cmd += ev ;
       }
 
-      rc = runner.exec( cmd.c_str(), exit ) ; 
+      _strOut = "" ;
+      _retCode = 0 ;
+      rc = runner.exec( cmd.c_str(), _retCode, FALSE ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << BSON( "errno" << rc ) ) ;
-         rc = SDB_SPT_EVAL_FAIL ;
          goto error ;
       }
       else
       {
-         rc = _setRVal( &runner, rval, exit == SDB_OK, detail ) ;
-         if ( SDB_OK != rc )
+         rc = runner.read( _strOut ) ;
+         if ( rc )
          {
+            stringstream ss ;
+            ss << "read run command[" << cmd << "] result failed" ;
+            detail = BSON( SPT_ERR << ss.str() ) ;
             goto error ;
          }
 
-         if ( SDB_OK != exit )
+         rval.setStringVal( "", _strOut.c_str() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrCmd::start( const _sptArguments & arg,
+                            _sptReturnVal & rval,
+                            BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string cmd ;
+      string ev ;
+      sptCmdRunner runner ;
+
+      rc = arg.getString( 0, cmd ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "cmd must be config" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 1, ev ) ;
+      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "environment should be a string" ) ;
+         goto error ;
+      }
+      else if ( SDB_OK == rc )
+      {
+         cmd += " " ;
+         cmd += ev ;
+      }
+
+      _strOut = "" ;
+      _retCode = 0 ;
+      rc = runner.exec( cmd.c_str(), _retCode, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << BSON( "errno" << rc ) ) ;
+         goto error ;
+      }
+      else
+      {
+         OSSPID pid = runner.getPID() ;
+         rval.setNativeVal( "", NumberInt, (const void*)&pid ) ;
+
+         ossSleep( 100 ) ;
+         if ( !ossIsProcessRunning( pid ) )
          {
-            rc = SDB_SPT_EVAL_FAIL ;
+            rc = runner.read( _strOut ) ;
+            if ( rc )
+            {
+               stringstream ss ;
+               ss << "read run command[" << cmd << "] result failed" ;
+               detail = BSON( SPT_ERR << ss.str() ) ;
+               goto error ;
+            }
          }
       }
+
    done:
       return rc ;
    error:
@@ -121,7 +230,11 @@ namespace engine
    {
       stringstream ss ;
       ss << "Cmd functions:" << endl
-         << " Cmd.run( cmd, [args] )" << endl ;
+         << " var cmd = new Cmd()" << endl
+         << "   run( cmd, [args] )" << endl
+         << "   start( cmd, [args] )" << endl
+         << "   getLastRet()" << endl
+         << "   getLastOut()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
@@ -132,76 +245,25 @@ namespace engine
                                BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      CHAR stackBuf[SPT_STACK_OUTPUT + 1] ;
-      CHAR *allocateBuf = NULL ;
-      CHAR *mybuf = ( CHAR * )stackBuf ;
-      SINT64 total = 0 ;
-      SINT64 expected = SPT_STACK_OUTPUT ;
-      SINT64 maxLen = SPT_STACK_OUTPUT * 1024 ;
-      while ( TRUE )
+      string outStr ;
+
+      rc = runner->read( outStr ) ;
+      if ( rc )
       {
-         SINT64 once = 0 ;
-         rc = runner->read( mybuf + total, expected, once ) ;
-         if ( SDB_EOF == rc )
-         {
-            rc = SDB_OK ;
-            break ;
-         }
-         else if ( SDB_OK == rc )
-         {
-            total += once ;
-            if ( NULL != allocateBuf )
-            {
-               SDB_ASSERT( total <= maxLen, "impossible" ) ;
-               if ( maxLen == total )
-               {
-                  break ;
-               }
-               else
-               {
-                  expected = maxLen - total ;
-               }
-            }
-            else
-            {
-               SDB_ASSERT( total <= SPT_STACK_OUTPUT, "impossible" ) ;
-               if ( SPT_STACK_OUTPUT == total )
-               {
-                  allocateBuf = ( CHAR *)SDB_OSS_MALLOC( maxLen + 1 ) ;
-                  if ( NULL == mybuf )
-                  {
-                     PD_LOG( PDERROR, "failed to allocate mem." ) ;
-                     rc = SDB_OOM ;
-                     goto error ;
-                  }
-
-                  ossMemcpy( allocateBuf, stackBuf, SPT_STACK_OUTPUT ) ;
-                  expected = maxLen - total ;
-                  mybuf = allocateBuf ;
-               }
-               else
-               {
-                  expected = SPT_STACK_OUTPUT - total ;
-               }
-            }
-         }
+         detail = BSON( SPT_ERR << "read run result failed" ) ;
+         goto error ;
       }
-
-      mybuf[total] = '\0' ;
 
       if ( setToRVal )
       {
-         rval.setStringVal( "", mybuf ) ;
+         rval.setStringVal( "", outStr.c_str() ) ;
       }
       else
       {
-         detail = BSON( SPT_ERR << mybuf ) ;
+         detail = BSON( SPT_ERR << outStr ) ;
       }
+
    done:
-      if ( NULL != allocateBuf )
-      {
-         SDB_OSS_FREE( allocateBuf ) ;
-      }
       return rc  ;
    error:
       goto done ;
