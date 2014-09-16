@@ -182,7 +182,7 @@ namespace engine
          << " Oma.getAOmaSvcName( hostname, [confFile] )" << endl
          << " Oma.addAOmaSvcName( hostname, svcname, [isReplace], [confFile])"
          << endl
-         << " Oma.delAOmaSvcName( hostname )" << endl
+         << " Oma.delAOmaSvcName( hostname, [confFile] )" << endl
          << endl
          << "var oma = new Oma( [hostname], [svcname] )" << endl
          << "   createCoord( svcname, dbpath, [config obj])" << endl
@@ -903,8 +903,76 @@ namespace engine
                                      _sptReturnVal & rval,
                                      BSONObj & detail )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string hostname ;
+      string confFile ;
+      BSONObj confObj ;
+      string str ;
+
+      rc = arg.getString( 0, hostname ) ;
+      if ( rc == SDB_OUT_OF_BOUND )
+      {
+         detail = BSON( SPT_ERR << "hostname must be config" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "hostname must be string" ) ;
+         goto error ;
+      }
+
+      if ( arg.argc() > 1 )
+      {
+         rc = arg.getString( 1, confFile ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "confFile must be string" ) ;
+            goto error ;
+        }
+      }
+      else
+      {
+         confFile = _getConfFile() ;
+      }
+
+      rc = _getConfInfo( confFile, confObj, detail, TRUE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      else
+      {
+         const CHAR *p = ossStrstr( hostname.c_str(), SDBCM_CONF_PORT ) ;
+         if ( !p || ossStrlen( p ) != ossStrlen( SDBCM_CONF_PORT ) )
+         {
+            hostname += SDBCM_CONF_PORT ;
+         }
+         BSONElement e = confObj.getField( hostname ) ;
+         if ( e.eoo() )
+         {
+            // not exist, don't delete
+            goto done ;
+         }
+      }
+
+      rc = _confObj2Str( confObj, str, detail, hostname.c_str() ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = utilWriteConfigFile( confFile.c_str(), str.c_str(), FALSE ) ;
+      if ( rc )
+      {
+         stringstream ss ;
+         ss << "write conf file[" << confFile << "] failed" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
 }
