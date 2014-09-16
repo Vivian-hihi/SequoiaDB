@@ -766,7 +766,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string hostname ;
       string svcname ;
-      BOOLEAN isReplace = TRUE ;
+      INT32 isReplace = TRUE ;
       string confFile ;
       BSONObj confObj ;
       string str ;
