@@ -150,7 +150,8 @@ namespace engine
                                   bson::BSONObj &detail ) ;
 
       static INT32  _confObj2Str( const bson::BSONObj &conf, string &str,
-                                  bson::BSONObj &detail ) ;
+                                  bson::BSONObj &detail,
+                                  const CHAR* pExcept = NULL ) ;
 
    private:
       sptUsrOmaAssit          _assit ;

@@ -179,8 +179,9 @@ namespace engine
          << " Oma.getOmaConfigFile()" << endl
          << " Oma.getOmaConfigs( [confFile] )" << endl
          << " Oma.setOmaConfigs( obj, [confFile] )" << endl
-         << " Oma.getAOmaSvcName( hostname )" << endl
-         << " Oma.addAOmaSvcName( hostname, svcname, [isReplace])" << endl
+         << " Oma.getAOmaSvcName( hostname, [confFile] )" << endl
+         << " Oma.addAOmaSvcName( hostname, svcname, [isReplace], [confFile])"
+         << endl
          << " Oma.delAOmaSvcName( hostname )" << endl
          << endl
          << "var oma = new Oma( [hostname], [svcname] )" << endl
@@ -569,7 +570,8 @@ namespace engine
    }
 
    INT32 _sptUsrOma::_confObj2Str( const BSONObj &conf, string &str,
-                                   BSONObj &detail )
+                                   BSONObj &detail,
+                                   const CHAR* pExcept )
    {
       INT32 rc = SDB_OK ;
       stringstream ss ;
@@ -577,6 +579,13 @@ namespace engine
       while ( it.more() )
       {
          BSONElement e = it.next() ;
+
+         if ( pExcept && 0 != pExcept[0] &&
+              0 == ossStrcmp( pExcept, e.fieldName() ) )
+         {
+            continue ;
+         }
+
          ss << e.fieldName() << "=" ;
          if ( e.type() == String )
          {
@@ -676,16 +685,213 @@ namespace engine
                                      _sptReturnVal & rval,
                                      BSONObj & detail )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string hostname ;
+      string confFile ;
+      BSONObj confObj ;
+
+      rc = arg.getString( 0, hostname ) ;
+      if ( rc == SDB_OUT_OF_BOUND )
+      {
+         detail = BSON( SPT_ERR << "hostname must be config" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "hostname must be string" ) ;
+         goto error ;
+      }
+
+      if ( arg.argc() > 1 )
+      {
+         rc = arg.getString( 1, confFile ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "confFile must be string" ) ;
+            goto error ;
+        }
+      }
+      else
+      {
+         confFile = _getConfFile() ;
+      }
+
+      rc = _getConfInfo( confFile, confObj, detail ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      else
+      {
+         const CHAR *p = ossStrstr( hostname.c_str(), SDBCM_CONF_PORT ) ;
+         if ( !p || ossStrlen( p ) != ossStrlen( SDBCM_CONF_PORT ) )
+         {
+            hostname += SDBCM_CONF_PORT ;
+         }
+         BSONElement e = confObj.getField( hostname ) ;
+         if ( e.eoo() )
+         {
+            e = confObj.getField( SDBCM_CONF_DFTPORT ) ;
+         }
+
+         if ( e.type() == String )
+         {
+            rval.setStringVal( "", e.valuestr() ) ;
+         }
+         else
+         {
+            stringstream ss ;
+            ss << e.toString() << " is invalid" ;
+            detail = BSON( SPT_ERR << ss.str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOma::addAOmaSvcName( const _sptArguments & arg,
                                      _sptReturnVal & rval,
                                      BSONObj & detail )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string hostname ;
+      string svcname ;
+      BOOLEAN isReplace = TRUE ;
+      string confFile ;
+      BSONObj confObj ;
+      string str ;
+
+      // hostname
+      rc = arg.getString( 0, hostname ) ;
+      if ( rc == SDB_OUT_OF_BOUND )
+      {
+         detail = BSON( SPT_ERR << "hostname must be config" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "hostname must be string" ) ;
+         goto error ;
+      }
+      else if ( hostname.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "hostname can't be empty" ) ;
+         goto error ;
+      }
+
+      // svcname
+      rc = arg.getString( 1, svcname ) ;
+      if ( rc == SDB_OUT_OF_BOUND )
+      {
+         detail = BSON( SPT_ERR << "svcname must be config" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "svcname must be string" ) ;
+         goto error ;
+      }
+      else if ( svcname.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         detail = BSON( SPT_ERR << "svcname can't be empty" ) ;
+         goto error ;
+      }
+
+      // isReplace
+      if ( arg.argc() > 2 )
+      {
+         rc = arg.getNative( 2, (void*)&isReplace, SPT_NATIVE_INT32 ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "isReplace must be BOOLEAN" ) ;
+            goto error ;
+        }
+      }
+
+      // confFile
+      if ( arg.argc() > 3 )
+      {
+         rc = arg.getString( 3, confFile ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "confFile must be string" ) ;
+            goto error ;
+        }
+      }
+      else
+      {
+         confFile = _getConfFile() ;
+      }
+
+      rc = _getConfInfo( confFile, confObj, detail ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      else
+      {
+         const CHAR *p = ossStrstr( hostname.c_str(), SDBCM_CONF_PORT ) ;
+         if ( !p || ossStrlen( p ) != ossStrlen( SDBCM_CONF_PORT ) )
+         {
+            hostname += SDBCM_CONF_PORT ;
+         }
+         BSONElement e = confObj.getField( hostname ) ;
+         BSONElement e1 = confObj.getField( SDBCM_CONF_DFTPORT ) ;
+
+         if ( e.type() == String )
+         {
+            if ( 0 == ossStrcmp( e.valuestr(), svcname.c_str() ) )
+            {
+               // same with hostname, not change
+               goto done ;
+            }
+            else if ( !isReplace )
+            {
+               stringstream ss ;
+               ss << hostname << " already exist" ;
+               detail = BSON( SPT_ERR << ss.str() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+         }
+         else if ( e1.type() == String &&
+                   0 == ossStrcmp( e1.valuestr(), svcname.c_str() ) )
+         {
+            // same with default, not change
+            goto done ;
+         }
+      }
+
+      rc = _confObj2Str( confObj, str, detail, hostname.c_str() ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      str += hostname ;
+      str += "=" ;
+      str += svcname ;
+      str += OSS_NEWLINE ;
+
+      rc = utilWriteConfigFile( confFile.c_str(), str.c_str(), FALSE ) ;
+      if ( rc )
+      {
+         stringstream ss ;
+         ss << "write conf file[" << confFile << "] failed" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _sptUsrOma::delAOmaSvcName( const _sptArguments & arg,
