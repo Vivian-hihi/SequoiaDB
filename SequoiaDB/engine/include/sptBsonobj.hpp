@@ -47,6 +47,8 @@ namespace engine
       _sptBsonobj( const bson::BSONObj &obj ) ;
       virtual ~_sptBsonobj() ;
 
+      bson::BSONObj getBson() { return _obj ; }
+
    public:
       INT32 construct( const _sptArguments &arg,
                        _sptReturnVal &rval,

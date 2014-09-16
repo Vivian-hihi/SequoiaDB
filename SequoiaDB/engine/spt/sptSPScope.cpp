@@ -495,13 +495,13 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
          }
          else if ( isInstanceOf<_sptBsonobj>( _context, obj ) )
          {
-            bson::BSONObj *bs = (bson::BSONObj *)JS_GetPrivate( _context, obj ) ;
-            if ( NULL == bs )
+            _sptBsonobj *p = (_sptBsonobj *)JS_GetPrivate( _context, obj ) ;
+            if ( NULL == p )
             {
                rc = SDB_SYS ;
                goto error ;
             }
-            builder.append( SPT_RVAL_KEY, *bs ) ;
+            builder.append( SPT_RVAL_KEY, p->getBson() ) ;
          }
          else if ( !JSObjIsSdbObj(_context, JSVAL_TO_OBJECT( jsrval ) ) )
          {
