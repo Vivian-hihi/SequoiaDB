@@ -65,6 +65,11 @@ namespace engine
                                      string &svcname ) ;
 
 
+#if defined( _LINUX )
+   #define SDB_INSTALL_FILE_NAME             "/etc/default/sequoiadb"
+#else
+   #define SDB_INSTALL_FILE_NAME             "C:\\default\\sequoiadb"
+#endif // _LINUX
    #define SDB_INSTALL_RUN_FILED             "NAME"
    #define SDB_INSTALL_USER_FIELD            "SDBADMIN_USER"
    #define SDB_INSTALL_PATH_FIELD            "INSTALL_DIR"

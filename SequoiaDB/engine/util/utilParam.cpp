@@ -50,12 +50,6 @@
 namespace engine
 {
 
-#if defined( _LINUX )
-   #define SDB_INSTALL_FILE_NAME             "/etc/default/sequoiadb"
-#else
-   #define SDB_INSTALL_FILE_NAME             "C:\\default\\sequoiadb"
-#endif // _LINUX
-
    INT32 utilReadConfigureFile( const CHAR *file,
                                 po::options_description &desc,
                                 po::variables_map &vm )
