@@ -99,7 +99,7 @@ namespace engine
       }
       BOOLEAN isIn()
       {
-         return _inNum.compare( 0 ) ;
+         return !_inNum.compare( 0 ) ;
       }
       void invalidate()
       {
