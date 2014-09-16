@@ -1,0 +1,41 @@
+<!-- coord.service.port
+properties.dir
+ant.sdb.tasks.path
+cs.name
+cl.name
+import.file.name -->
+
+<project name="deploy-test-result" default="">
+	<property file="${properties.dir}" />
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<fileset dir="${ant.sdb.tasks.path}" includes="*.jar" />
+		</classpath>
+	</taskdef>
+
+	<target name="Copy-Data-To-Sequoiadb" depends="">
+		<hostinfo prefix="host" />
+		<property name="import.bin" value="${install.path}/sequoiadb/bin/sdbimprt" />
+
+		<sdbcreateconn hostname="${save.testLog.hostname}" port="${coord.service.port}" sdbhandleproperty="sdb.mgr.handle" />
+      	<sdbdropcs csname="${cs.name}" sdbhandle="${sdb.mgr.handle}" failonerror="false" />
+      	<sdbcreatecs csname="${cs.name}" sdbhandle="${sdb.mgr.handle}" failonerror="false" />
+      	<sdbcreatecl csname="${cs.name}" clname="${cl.name}" sdbhandle="${sdb.mgr.handle}" />
+      	<sleep seconds="5" />
+
+      	<echo message="${import.bin} -s ${save.testLog.hostname} -p ${coord.service.port} --type json --file ${import.file.name} -c ${cs.name} -l ${cl.name}" />
+      	<exec executable="${import.bin}" failonerror="true" >
+         	<arg line=" -s ${save.testLog.hostname} -p ${coord.service.port} --type json --file ${import.file.name} -c ${cs.name} -l ${cl.name} "/>
+      	</exec>
+      	<sleep seconds="5" />
+
+      	<sdbcount csname="${cs.name}" clname="${cl.name}" sdbhandle="${sdb.mgr.handle}" countproperty="count.size" >
+         	<query>
+            	<![CDATA[{}]]>
+         	</query>
+      	</sdbcount>
+
+      	<echo message="The DB cs:${cs.name} cl:${cl.name} and ${count.size} records" />
+      	<sdbcloseconn sdbhandle="${sdb.mgr.handle}" />
+	</target>
+</project>
