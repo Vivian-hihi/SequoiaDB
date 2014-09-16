@@ -106,10 +106,11 @@ namespace engine
 
 #if defined (_LINUX)
       cmd << "ping " << host << " -q -c 1" ;
-      rc = runner.exec( cmd.str().c_str(), exitCode ) ;
 #elif defined (_WINDOWS)
-      rc = SDB_SYS ;
+      cmd << "ping -n 2 -w 1000 " << host ;
 #endif
+
+      rc = runner.exec( cmd.str().c_str(), exitCode ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
