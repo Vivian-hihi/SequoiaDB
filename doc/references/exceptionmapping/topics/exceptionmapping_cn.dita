@@ -829,7 +829,7 @@
             <stentry>-205</stentry>
          </strow>
          <strow>
-            <stentry>不能删除编目节点和组</stentry>
+            <stentry>系统存在其它组时不能删除编目节点和组</stentry>
             <stentry>-206</stentry>
          </strow>
          <strow>
@@ -1087,6 +1087,10 @@
          <strow>
             <stentry>数据不是utf8编码</stentry>
             <stentry>-270</stentry>
+         </strow>
+         <strow>
+            <stentry>task 失败</stentry>
+            <stentry>-271</stentry>
          </strow>
       </simpletable>
    </body>

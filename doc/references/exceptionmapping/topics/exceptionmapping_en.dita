@@ -829,7 +829,7 @@
             <stentry>-205</stentry>
          </strow>
          <strow>
-            <stentry>can not remove node or group of catalog</stentry>
+            <stentry>can not remove node or group of catalog when other group exist</stentry>
             <stentry>-206</stentry>
          </strow>
          <strow>
@@ -1087,6 +1087,10 @@
          <strow>
             <stentry>the data is not utf8</stentry>
             <stentry>-270</stentry>
+         </strow>
+         <strow>
+            <stentry>task is failing</stentry>
+            <stentry>-271</stentry>
          </strow>
       </simpletable>
    </body>

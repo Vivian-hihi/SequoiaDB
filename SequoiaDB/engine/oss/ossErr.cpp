@@ -229,7 +229,7 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "log file is out of size",
                    "can not remove the only node in the group",
                    "need to manually complete the cleanup",
-                   "can not remove node or group of catalog",
+                   "can not remove node or group of catalog when other group exist",
                    "group is not exist",
                    "can not remove the group with data in it",
                    "end of queue",
@@ -292,7 +292,9 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "task is not exist",
                    "task is rolling back",
                    "LOB sequence does not exist",
-                   "LOB creation is not completed"
+                   "LOB creation is not completed",
+                   "the data is not utf8",
+                   "task is failing"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

@@ -241,7 +241,7 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_DPS_LOG_FILE_OUT_OF_SIZE    -203  /**< log file is out of size */
 #define SDB_CATA_RM_NODE_FORBIDDEN      -204  /**< can not remove the only node in the group */
 #define SDB_CATA_FAILED_TO_CLEANUP      -205  /**< need to manually complete the cleanup */
-#define SDB_CATA_RM_CATA_FORBIDDEN      -206  /**< can not remove node or group of catalog */
+#define SDB_CATA_RM_CATA_FORBIDDEN      -206  /**< can not remove node or group of catalog when other group exist */
 #define SDB_CAT_GRP_NOT_EXIST           -207  /**< group is not exist */
 #define SDB_CAT_RM_GRP_FORBIDDEN        -208  /**< can not remove the group with data in it */
 #define SDB_MIG_END_OF_QUEUE            -209  /**< end of queue */
@@ -305,4 +305,6 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_OM_TASK_ROLLBACK            -267  /**< task is rolling back */
 #define SDB_LOB_SEQUENCE_NOT_EXIST      -268  /**< LOB sequence does not exist */
 #define SDB_LOB_IS_UNDER_CRT            -269  /**< LOB creation is not completed */
+#define SDB_MIG_DATA_NON_UTF            -270  /**< the data is not utf8 */
+#define SDB_OMA_TASK_FAIL               -271  /**< task is failing */
 #endif /* OSSERR_HPP_ */

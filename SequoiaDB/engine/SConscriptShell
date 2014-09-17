@@ -1,7 +1,7 @@
 # -*- mode: python; -*-
 
 import os
-import buildscripts.utils as utils
+#import buildscripts.utils as utils
 
 Import("shellEnv")
 Import("ssllib_file")
