@@ -39,7 +39,7 @@ fi
 
 # remove files from exclusive list
 echo "Remove files"
-$SCRIPTPATH/removeFiles.sh $SCRIPTPATH/exclusive.lst
+$SCRIPTPATH/removeFiles.sh $SCRIPTPATH/exclusive.lst $1
 if [ $? -ne 0 ]; then
    echo "Failed to remove file from $1"
    exit 1
