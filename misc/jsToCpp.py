@@ -2,7 +2,7 @@ import os
 from os.path import join
 
 def jsToCpp(engineDir):
-   scriptFiles = ['error', 'sdb', 'help', 'sdbSP.js']
+   scriptFiles = ['error', 'sdb', 'help', 'sdbSP']
    sptDir = join(engineDir, 'spt')
    tbw = '' # short for to be written
 
