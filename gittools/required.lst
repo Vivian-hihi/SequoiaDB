@@ -1,6 +1,5 @@
 thirdparty/boost/boost
 thirdparty/boost/lib
-buildscripts
 client/samples
 client/admin/admintpl
 conf
