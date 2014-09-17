@@ -37,10 +37,8 @@
 #include "sptCommon.hpp"
 #include "utilPath.hpp"
 #include "ossIO.hpp"
-
-//#define ERRMSGBUFFERSIZE 256
-#define SAFE_JS_FREE( cx, p ) \
-   do { if ( p ) { JS_free( ( cx ), ( p ) ) ; ( p ) = NULL ; } } while ( 0 )
+#include "sptSPDef.hpp"
+#include "sptConvertorHelper.hpp"
 
 #define SAFE_BSON_DISPOSE( p ) \
    do { if ( p ) { bson_dispose( p ) ; ( p ) = NULL ; } } while ( 0 )
@@ -54,35 +52,6 @@
       }                                                  \
    } while ( 0 )
 
-/*
-#if defined (SDB_SHELL)
-#define REPORT_RC(cond, funcName, rc)                       \
-   do {                                                     \
-      gShellReturnCode = rc ;                               \
-      if ( ! (cond) ) {                                     \
-         ret = JS_FALSE ;                                   \
-         CHAR errMsg[ERRMSGBUFFERSIZE] ;                    \
-         ossSnprintf( errMsg, ERRMSGBUFFERSIZE, "(%d)%s", rc, getErrDesp( rc ) ) ; \
-         JS_SetPendingException ( cx, STRING_TO_JSVAL( JS_NewStringCopyN(          \
-                                  cx, errMsg, ossStrlen(errMsg) ) ) ) ;            \
-         goto error ;                                       \
-      }                                                     \
-   } while ( 0 )
-#else
-#define REPORT_RC(cond, funcName, rc)                       \
-   do {                                                     \
-      if ( ! (cond) ) {                                     \
-         ret = JS_FALSE ;                                   \
-         const char *errDesp = getErrDesp( rc ) ;           \
-         CHAR errMsg[ERRMSGBUFFERSIZE] ;                    \
-         ossSnprintf( errMsg, ERRMSGBUFFERSIZE, "(%d)%s", rc, getErrDesp( rc ) ) ; \
-         JS_SetPendingException ( cx, STRING_TO_JSVAL( JS_NewStringCopyN(          \
-                                  cx, errMsg, ossStrlen(errMsg) ) ) ) ;            \
-         goto error ;                                       \
-      }                                                     \
-   } while ( 0 )
-#endif
-*/
 #if defined (SDB_SHELL)
 #define REPORT_RC(cond, funcName, rc)                       \
    do {                                                     \
@@ -178,7 +147,6 @@
 #define SDB_DEF_COORD_NAME "localhost"
 #define SDB_DEF_COORD_PORT OSS_DFT_SVCPORT
 
-
 #if defined (SDB_SHELL)
 extern INT32 gShellReturnCode ;
 extern BOOLEAN gReadNothing ;
@@ -202,8 +170,6 @@ SDB_EXTERN_C_END
 #else
 #define TF_REL_PATH "../doc/manual/"
 #endif
-
-JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj ) ;
 
 OSS_INLINE JSObject *SDB_JSVAL_TO_OBJECT( jsval x )
 {

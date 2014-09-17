@@ -25,12 +25,10 @@
 #include "pdTrace.hpp"
 #include "sptTrace.hpp"
 #include "sptApi.hpp"
-
+#include "sptConvertorHelper.hpp"
+#include "sptSPDef.hpp"
 
 #define VERIFY(cond) if ( ! (cond) ) goto error
-
-#define SAFE_JS_FREE( cx, p ) \
-   do { if ( p ) { JS_free( ( cx ), ( p ) ) ; ( p ) = NULL ; } } while ( 0 )
 
 #include "js_in_cpp.hpp"
 
@@ -59,7 +57,7 @@ namespace engine {
 
 static ScriptEngine * globalEngine ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SE_GLBSE, "ScriptEngine::globalScriptEngine" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SE_GLBSE, "ScriptEngine::globalScriptEngine" )
 ScriptEngine * ScriptEngine::globalScriptEngine()
 {
    PD_TRACE_ENTRY ( SDB_SE_GLBSE );
@@ -106,7 +104,7 @@ BOOLEAN ScriptEngine::init()
    return _runtime ? TRUE : FALSE ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SE_NEWSCOPE, "ScriptEngine::newScope" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SE_NEWSCOPE, "ScriptEngine::newScope" )
 Scope *ScriptEngine::newScope()
 {
    PD_TRACE_ENTRY ( SDB_SE_NEWSCOPE );
@@ -161,7 +159,7 @@ Scope::~Scope()
    _global = NULL ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SCOPE_INIT, "Scope::init" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SCOPE_INIT, "Scope::init" )
 BOOLEAN Scope::init()
 {
    BOOLEAN ret = FALSE ;
@@ -195,31 +193,7 @@ error :
    goto done ;
 }
 
-// caller should free the return pointer using SAFE_JS_FREE
-PD_TRACE_DECLARE_FUNCTION ( SDB_CONVJS2STR, "convertJsvalToString" )
-CHAR *convertJsvalToString ( JSContext *cx , jsval val )
-{
-   PD_TRACE_ENTRY ( SDB_CONVJS2STR );
-   JSString *  str   = NULL ;
-   CHAR *      cstr  = NULL ;
-
-   str = JS_ValueToString ( cx , val ) ;
-   if ( ! str )
-      goto error ;
-
-   // cstr is freed by caller
-   cstr = JS_EncodeString ( cx , str ) ;
-   if ( ! cstr )
-      goto error ;
-
-done :
-   PD_TRACE_EXIT ( SDB_CONVJS2STR );
-   return cstr ;
-error :
-   goto done ;
-}
-
-PD_TRACE_DECLARE_FUNCTION ( SDB_SCOPE_EVALUATE, "Scope::evaluate" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SCOPE_EVALUATE, "Scope::evaluate" )
 INT32 Scope::evaluate ( const CHAR *code , UINT32 len , const CHAR *filename ,
                         UINT32 lineno , CHAR ** result )
 {
@@ -330,7 +304,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SCOPE_EVALUATE2, "Scope::evaluate2" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SCOPE_EVALUATE2, "Scope::evaluate2" )
 INT32 Scope::evaluate2 ( const CHAR *code, UINT32 len, UINT32 lineno,
                         jsval *rval, CHAR **errMsg )
 {

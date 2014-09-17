@@ -44,19 +44,14 @@ const UINT32 RUNTIME_SIZE = 8 * 1024 * 1024 ;
 
 const UINT32 FUNC_ARRAY_SIZE = 50 ;
 
-
-extern BOOLEAN JSObjIsSdbObj( JSContext *cx, JSObject *obj ) ;
 extern INT32 gShellReturnCode ;
 
 namespace engine
 {
-extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
-
    _sptSPScope::_sptSPScope()
    :_runtime( NULL ),
     _context( NULL )
    {
-
    }
 
    _sptSPScope::~_sptSPScope()
@@ -76,16 +71,16 @@ extern CHAR *convertJsvalToString ( JSContext *cx , jsval val ) ;
    JS_ConvertStub,               // convert
    JS_FinalizeStub,              // finalize
    JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
-   };
+   } ;
 
-   static void reportError(JSContext *cx, const char *msg, JSErrorReport *report)
+   static void reportError( JSContext *cx, const char *msg,
+                            JSErrorReport *report)
    {
       ossPrintf( "%s:%d %s\n" ,
                  report->filename ? report->filename : "(nofile)" ,
                  report->lineno ,
                  msg ) ;
    }
-
 
    INT32 _sptSPScope::start()
    {

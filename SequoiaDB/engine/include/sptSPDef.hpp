@@ -35,10 +35,10 @@
 
 namespace engine
 {
-#define SAFE_JS_FREE( cx, p ) \
-   do { if ( p ) { JS_free( ( cx ), ( p ) ) ; ( p ) = NULL ; } } while ( 0 )
+   #define SAFE_JS_FREE( cx, p ) \
+      do { if ( p ) { JS_free( ( cx ), ( p ) ) ; ( p ) = NULL ; } } while ( 0 )
 
 }
 
-#endif
+#endif // SPT_SPDEF_HPP_
 
