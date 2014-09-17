@@ -706,6 +706,8 @@ namespace engine
          goto done ;
       }
 
+      //TODO: get the agent's retcode, if task is error( like rollback failed )
+      // we should clean this task
       rc = _getProgressFromAgent( response ) ;
       if ( SDB_OK != rc )
       {

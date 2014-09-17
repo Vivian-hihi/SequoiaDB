@@ -166,28 +166,7 @@ namespace engine
          INT32             authUpdatePasswd( string user, string oldPasswd,
                                              string newPasswd, pmdEDUCB *cb ) ;
 
-         BOOLEAN           isInstallTaskExist( ) ;
-         void              getTaskWriteLock() ;
-         void              releaseTaskWriteLock() ;
-         INT32             saveInstallTask( string agentHost, 
-                                            string agentService ,
-                                            BSONObj &taskInfo, 
-                                            const BSONObj &confValue ) ;
-         void              getInstallTask( INT32 &status, string &taskID, 
-                                           bool &isAllFinished, string &detail, 
-                                           BSONObj &progress ) ;
-         INT32             finishInstallTask( BSONObj &result ) ;
-         void              checkTaskStatus( string taskID ) ;
-         void              updateInstallTask( BSONObj &taskDetail ) ;
          string            getLocalAgentPort() ;
-
-         INT32             storeTaskInfo( string taskID, string taskType, 
-                                          string agentHost, string agentService,
-                                          const BSONObj &confValue, 
-                                          INT32 status ) ;
-         INT32             updateTaskID( string oldID, string newID ) ;
-         INT32             updateTaskID( string oldID, long long newID ) ;
-         INT32             removeTask( string taskID ) ;
 
          INT32             refreshVersions() ;
          void              updateClusterVersion( string cluster ) ;
@@ -196,7 +175,7 @@ namespace engine
          omTaskManager     *getTaskManager() ;
 
       protected:
-         virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
+         virtual void      onTimer ( UINT64 timerID, UINT32 interval ) ;
 
          MsgRouteID        _incNodeID() ;
          string            _makeID( restSessionInfo *pSessionInfo ) ;
@@ -219,28 +198,9 @@ namespace engine
 
          INT32             _createCollection ( const CHAR *pCollection,
                                                pmdEDUCB *cb ) ;
-         void              _clearSession( _pmdEDUCB *cb, 
-                                          pmdRemoteSession *remoteSession) ;
-         INT32             _sendMsgToLocalAgent( 
-                                                pmdRemoteSession *remoteSession, 
-                                                MsgHeader *pMsg ) ;
-         INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
-                                              SINT32 &flag, BSONObj &result ) ;
          void              _readAgentPort() ;
 
-         INT32             _storeBusinessInfo() ;
-
          INT32             _restoreTask() ;
-
-         INT32             _insertConfigure( string hostName, 
-                                             string businessName ,
-                                             BSONObj &oneNode ) ;
-         INT32             _appendConfigure( string hostName,
-                                             string businessName ,
-                                             BSONObj &oneNode ) ;
-         BOOLEAN           _isHostConfExist( string hostName, 
-                                             string businessName ) ;
-         INT32             _storeConfigInfo() ;
 
          INT32             _onAgentQueryTaskReq( NET_HANDLE handle, 
                                                  MsgHeader *pMsg ) ;
@@ -283,10 +243,6 @@ namespace engine
          SDB_RTNCB*                             _pRtnCB ;
 
          string                                 _wwwRootPath ;
-         omTaskInfo                             _omTaskInfo ;
-         ossSpinSLatch                          _taskLatch ;
-         UINT32                                 _checkTaskTimer ;
-         UINT32                                 _timerTickCount ;
 
          string                                 _localAgentPort ;
          omHostVersion                          *_hostVersion ;
