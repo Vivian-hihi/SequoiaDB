@@ -69,7 +69,7 @@ namespace engine
       if ( _sock )
       {
          _sock->getLocalAddress( ipAddr, sizeof( ipAddr ) ) ;
-         return ipAddr ;
+         return string( ipAddr ) ;
       }
       return "" ;
    }
@@ -80,7 +80,7 @@ namespace engine
       if ( _sock )
       {
          _sock->getPeerAddress( ipAddr, sizeof( ipAddr ) ) ;
-         return ipAddr ;
+         return string( ipAddr ) ;
       }
       return "" ;
    }
