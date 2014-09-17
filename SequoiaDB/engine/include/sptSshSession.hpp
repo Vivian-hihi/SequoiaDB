@@ -38,6 +38,8 @@
 #include "ossSocket.hpp"
 #include <string>
 
+using namespace std ;
+
 namespace engine
 {
    enum SPT_CP_PROTOCOL
@@ -60,8 +62,8 @@ namespace engine
 
       const CHAR* getPassword() const { return _passwd.c_str() ; }
 
-      std::string& getLocalIPAddr() ;
-      std::string& getPeerIPAddr() ;
+      string& getLocalIPAddr() ;
+      string& getPeerIPAddr() ;
 
    public:
       INT32 open() ;
