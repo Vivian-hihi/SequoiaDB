@@ -46,39 +46,6 @@ namespace engine
    /*
       Local function define
    */
-   static void reportError( JSContext *cx, const char *msg,
-                            JSErrorReport *report )
-   {
-      BOOLEAN add = FALSE ;
-      if ( sdbIsErrMsgEmpty() && msg )
-      {
-         if ( report->filename )
-         {
-            stringstream ss ;
-            ss << report->filename << ":" << report->lineno << " "
-               << msg ;
-            sdbSetErrmsg( ss.str().c_str() ) ;
-         }
-         else
-         {
-            sdbSetErrmsg( msg ) ;
-         }
-         add = TRUE ;
-      }
-
-      if ( sdbNeedPrintError() )
-      {
-         ossPrintf( "%s:%d %s\n" ,
-                    report->filename ? report->filename : "(nofile)" ,
-                    report->lineno ,
-                    msg ) ;
-         if ( !add && !sdbIsErrMsgEmpty() )
-         {
-            ossPrintf( "%s\n", sdbGetErrMsg() ) ;
-         }
-      }
-   }
-
    static JSClass global_class = {
    "Global",                     // class name
    JSCLASS_GLOBAL_FLAGS,         // flags
@@ -139,7 +106,7 @@ namespace engine
 
       JS_SetOptions( _context, JSOPTION_VAROBJFIX );
       JS_SetVersion( _context, JSVERSION_LATEST );
-      JS_SetErrorReporter( _context, reportError );
+      JS_SetErrorReporter( _context, sdbReportError ) ;
 
       _global = JS_NewCompartmentAndGlobalObject( _context, &global_class,
                                                   NULL );

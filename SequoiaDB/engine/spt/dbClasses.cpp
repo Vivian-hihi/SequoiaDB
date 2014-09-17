@@ -52,26 +52,16 @@
       }                                                  \
    } while ( 0 )
 
-#if defined (SDB_SHELL)
 #define REPORT_RC(cond, funcName, rc)                       \
    do {                                                     \
-      gShellReturnCode = rc ;                               \
+      engine::sdbSetErrMsg( NULL ) ;                                \
+      engine::sdbSetErrno( rc ) ;                                   \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
          JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;   \
          goto error ;                                       \
       }                                                     \
    } while ( 0 )
-#else
-#define REPORT_RC(cond, funcName, rc)                       \
-   do {                                                     \
-      if ( ! (cond) ) {                                     \
-         ret = JS_FALSE ;                                   \
-         JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;   \
-         goto error ;                                       \
-      }                                                     \
-   } while ( 0 )
-#endif
 
 #define TRY_REPORT( cx, msg ) \
    if ( ! JS_IsExceptionPending( cx ) ) JS_ReportError( ( cx ), ( msg ) )
@@ -146,11 +136,6 @@
 #define NODE_NAME_SPLIT ':'
 #define SDB_DEF_COORD_NAME "localhost"
 #define SDB_DEF_COORD_PORT OSS_DFT_SVCPORT
-
-#if defined (SDB_SHELL)
-extern INT32 gShellReturnCode ;
-extern BOOLEAN gReadNothing ;
-#endif
 
 #if defined (SDB_FMP)
 extern CHAR FMP_COORD_SERVICE[OSS_MAX_PATHSIZE+1] ;
@@ -608,26 +593,29 @@ static JSBool cursor_next ( JSContext *cx , uintN argc , jsval *vp )
 
    if ( SDB_DMS_EOC == rc )
    {
-#if defined (SDB_SHELL)
       // we set readNothing = TRUE if cursor doesn't read anything when hitting
       // EOC
       // there is an culprit that if user has two collections:
       // cs.cl: 0 row
       // cs.cl1: 1 row
-      // db.cs.cl.find() ; db.cs.cl1.find() <--- this will set gReadNothing to
-      // TRUE at first round, and set gReadNothing to FALSE at second round
-      // db.cs.cl1.find() ; db.cs.cl.find () <--- this will set gReadNothing to
-      // FALSE at first round, and set gReadNothing to TRUE at second round
+      // db.cs.cl.find() ; db.cs.cl1.find() <--- this will set ReadData to
+      // FALSE at first round, and set ReadData to TRUE at second round
+      // db.cs.cl1.find() ; db.cs.cl.find () <--- this will set ReadData to
+      // TRUE at first round, and set ReadData to FALSE at second round
       // This means if users query empty collection then non-empty collection,
-      // the full statement will shows ReadNothing = FALSE, otherwise it will
-      // show ReadNothing = TRUE
-      // Thus, the rule can be represented as "gReadNothing" always represets
-      // the emptyness of LAST result set in a statement.
+      // the full statement will shows ReadData = TRUE, otherwise it will
+      // show ReadData = FALSE
+      // Thus, the rule can be represented as "ReadData" always represets
+      // the unemptyness of LAST result set in a statement.
       if ( 0 == ( ( (sdbCursorStruct*)*cursor )->_totalRead ) )
-         gReadNothing = TRUE ;
+      {
+         engine::sdbSetReadData( FALSE ) ;
+      }
       else
-         gReadNothing = FALSE ;
-#endif
+      {
+         engine::sdbSetReadData( TRUE ) ;
+      }
+
       SAFE_RELEASE_CURSOR ( cursor ) ;
       SAFE_JS_FREE ( cx , cursor ) ;
       JS_SetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) , NULL ) ;

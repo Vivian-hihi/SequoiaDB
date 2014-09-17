@@ -212,7 +212,7 @@ namespace engine
       }
 
       /// clear the last errmsg when it is empty.
-      sdbSetErrmsg( detail.isEmpty() ?
+      sdbSetErrMsg( detail.isEmpty() ?
                     "" : detail.toString().c_str() ) ;
       sdbSetErrno( rc ) ;
 

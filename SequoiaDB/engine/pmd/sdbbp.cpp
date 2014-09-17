@@ -22,9 +22,8 @@ using namespace engine ;
 #error "sdbbp should always have SDB_SHELL defined"
 #endif
 
-extern INT32 gShellReturnCode ;
 // caller should free output in the case of success
-PD_TRACE_DECLARE_FUNCTION ( SDB_READFROMPIPE, "readFromPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_READFROMPIPE, "readFromPipe" )
 static INT32 readFromPipe ( OSSNPIPE & npipe , CHAR ** output )
 {
    CHAR     c   = 0 ;
@@ -78,7 +77,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MONITOR_THREAD, "monitor_thread" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MONITOR_THREAD, "monitor_thread" )
 void monitor_thread ( const OSSPID  shpid ,
                       const CHAR * f2bName ,
                       const CHAR * b2fName )
@@ -102,7 +101,7 @@ void monitor_thread ( const OSSPID  shpid ,
    exit (0) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CREATESHMONTHREAD, "createShellMonitorThread" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CREATESHMONTHREAD, "createShellMonitorThread" )
 INT32 createShellMonitorThread ( const OSSPID & shpid ,
                                  const CHAR * f2bName ,
                                  const CHAR * b2fName )
@@ -128,7 +127,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERDAEMONMODE, "enterDaemonMode" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERDAEMONMODE, "enterDaemonMode" )
 INT32 enterDaemonMode ( sptScope *scope ,
                         const OSSPID & shpid ,
                         const CHAR * waitName ,
@@ -208,8 +207,8 @@ INT32 enterDaemonMode ( sptScope *scope ,
          scope->eval( code, ossStrlen( code ), "(sdbbp)", 1,
                       SPT_EVAL_FLAG_PRINT, rval, detail ) ;
       SAFE_OSS_FREE ( code ) ;
-      // shell always have gShellReturnCode defined
-      ossPrintf ( " %d", gShellReturnCode ) ;
+      // shell always have errno defined
+      ossPrintf ( " %d", sdbGetErrno() ) ;
       result = NULL ;
 
       *stdout = oldStdout ;
@@ -218,7 +217,9 @@ INT32 enterDaemonMode ( sptScope *scope ,
       SH_VERIFY_RC
 
       if ( exit )
+      {
          break ;
+      }
    }
 
 done :
@@ -232,7 +233,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBBP_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBBP_MAIN, "main" )
 int main ( int argc , const char * argv[] )
 {
    PD_TRACE_ENTRY ( SDB_SDBBP_MAIN );

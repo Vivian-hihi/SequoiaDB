@@ -47,6 +47,8 @@ JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, copyFromRemote )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, toString )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLastRet )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLastOutStr )
+JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLocalIP )
+JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getPeerIP )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrSsh, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrSsh, destruct )
 JS_STATIC_FUNC_DEFINE(_sptUsrSsh, help)
@@ -55,6 +57,8 @@ JS_BEGIN_MAPPING( _sptUsrSsh, "Ssh" )
    JS_ADD_MEMBER_FUNC( "exec", exec )
    JS_ADD_MEMBER_FUNC( "push", copy2Remote )
    JS_ADD_MEMBER_FUNC( "pull", copyFromRemote )
+   JS_ADD_MEMBER_FUNC( "getLocalIP", getLocalIP )
+   JS_ADD_MEMBER_FUNC( "getPeerIP", getPeerIP )
    JS_ADD_MEMBER_FUNC( "toString", toString )
    JS_ADD_MEMBER_FUNC( "getLastRet", getLastRet )
    JS_ADD_MEMBER_FUNC( "getLastOut", getLastOutStr )
@@ -376,6 +380,46 @@ JS_MAPPING_END()
    {
       rval.setStringVal( "", _lastOutStr.c_str() ) ;
       return SDB_OK ;
+   }
+
+   INT32 _sptUsrSsh::getLocalIP( const _sptArguments & arg,
+                                 _sptReturnVal & rval,
+                                 BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string ip = _session->getLocalIPAddr() ;
+      if ( ip.empty() )
+      {
+         detail = BSON( SPT_ERR << "not connect" ) ;
+         rc = SDB_NETWORK ;
+         goto error ;
+      }
+      rval.setStringVal( "", ip.c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrSsh::getPeerIP( const _sptArguments & arg,
+                                _sptReturnVal & rval,
+                                BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string ip = _session->getPeerIPAddr() ;
+      if ( ip.empty() )
+      {
+         detail = BSON( SPT_ERR << "not connect" ) ;
+         rc = SDB_NETWORK ;
+         goto error ;
+      }
+      rval.setStringVal( "", ip.c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
 }

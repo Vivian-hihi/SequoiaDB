@@ -63,6 +63,28 @@ namespace engine
       }
    }
 
+   string _sptSshSession::getLocalIPAddr()
+   {
+      CHAR ipAddr[ 50 ] = { 0 } ;
+      if ( _sock )
+      {
+         _sock->getLocalAddress( ipAddr, sizeof( ipAddr ) ) ;
+         return ipAddr ;
+      }
+      return "" ;
+   }
+
+   string _sptSshSession::getPeerIPAddr()
+   {
+      CHAR ipAddr[ 50 ] = { 0 } ;
+      if ( _sock )
+      {
+         _sock->getPeerAddress( ipAddr, sizeof( ipAddr ) ) ;
+         return ipAddr ;
+      }
+      return "" ;
+   }
+
    INT32 _sptSshSession::open()
    {
       INT32 rc = SDB_OK ;

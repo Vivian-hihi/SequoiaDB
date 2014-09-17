@@ -20,6 +20,10 @@
 #include "pd.hpp"
 #include "ossUtil.h"
 #include "ossMem.h"
+#include <string>
+#include <sstream>
+
+using namespace std ;
 
 namespace engine
 {
@@ -29,13 +33,14 @@ namespace engine
    static OSS_THREAD_LOCAL CHAR *__errmsg__ = NULL ;
    static OSS_THREAD_LOCAL INT32 __errno__ = SDB_OK ;
    static OSS_THREAD_LOCAL BOOLEAN __printError__ = TRUE ;
+   static OSS_THREAD_LOCAL BOOLEAN __hasReadData__ = FALSE ;
 
    const CHAR *sdbGetErrMsg()
    {
       return __errmsg__ ;
    }
 
-   void sdbSetErrmsg( const CHAR *err )
+   void sdbSetErrMsg( const CHAR *err )
    {
       static CHAR* s_emptyMsg = "" ;
       if ( NULL != __errmsg__ && s_emptyMsg != __errmsg__ )
@@ -71,7 +76,7 @@ namespace engine
    void sdbClearErrorInfo()
    {
       sdbSetErrno( SDB_OK ) ;
-      sdbSetErrmsg( NULL ) ;
+      sdbSetErrMsg( NULL ) ;
    }
 
    BOOLEAN sdbNeedPrintError()
@@ -82,6 +87,49 @@ namespace engine
    void sdbSetPrintError( BOOLEAN print )
    {
       __printError__ = print ;
+   }
+
+   void sdbSetReadData( BOOLEAN hasRead )
+   {
+      __hasReadData__ = hasRead ;
+   }
+
+   BOOLEAN sdbHasReadData()
+   {
+      return __hasReadData__ ;
+   }
+
+   void sdbReportError( JSContext *cx, const char *msg,
+                        JSErrorReport *report )
+   {
+      BOOLEAN add = FALSE ;
+      if ( sdbIsErrMsgEmpty() && msg )
+      {
+         if ( report->filename )
+         {
+            stringstream ss ;
+            ss << report->filename << ":" << report->lineno << " "
+               << msg ;
+            sdbSetErrMsg( ss.str().c_str() ) ;
+         }
+         else
+         {
+            sdbSetErrMsg( msg ) ;
+         }
+         add = TRUE ;
+      }
+
+      if ( sdbNeedPrintError() )
+      {
+         ossPrintf( "%s:%d %s\n" ,
+                    report->filename ? report->filename : "(nofile)" ,
+                    report->lineno ,
+                    msg ) ;
+         if ( !add && !sdbIsErrMsgEmpty() )
+         {
+            ossPrintf( "%s\n", sdbGetErrMsg() ) ;
+         }
+      }
    }
 
 }

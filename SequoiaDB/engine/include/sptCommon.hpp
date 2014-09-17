@@ -2,6 +2,7 @@
 #define SPTCOMMON_HPP__
 
 #include "core.h"
+#include "jsapi.h"
 
 #define CMD_HELP           "help"
 #define CMD_QUIT           "quit"
@@ -17,7 +18,7 @@ namespace engine
       Global function define
    */
    const CHAR *sdbGetErrMsg() ;
-   void  sdbSetErrmsg( const CHAR *err ) ;
+   void  sdbSetErrMsg( const CHAR *err ) ;
    BOOLEAN sdbIsErrMsgEmpty() ;
 
    INT32 sdbGetErrno() ;
@@ -28,6 +29,12 @@ namespace engine
 
    BOOLEAN  sdbNeedPrintError() ;
    void     sdbSetPrintError( BOOLEAN print ) ;
+
+   void     sdbSetReadData( BOOLEAN hasRead ) ;
+   BOOLEAN  sdbHasReadData() ;
+
+   void     sdbReportError( JSContext *cx, const char *msg,
+                            JSErrorReport *report ) ;
 
 }
 

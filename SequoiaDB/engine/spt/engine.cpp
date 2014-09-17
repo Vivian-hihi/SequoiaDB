@@ -27,31 +27,11 @@
 #include "sptApi.hpp"
 #include "sptConvertorHelper.hpp"
 #include "sptSPDef.hpp"
+#include "sptCommon.hpp"
 
 #define VERIFY(cond) if ( ! (cond) ) goto error
 
 #include "js_in_cpp.hpp"
-
-// In shell env, we use two global environments for
-// gShellReturnCode: the return code that we supposed to return to shell
-// gReadNothing: whether the last cursor returned anything before hitting EOC
-//
-// Those variables should only be used by SHELL since it's single threaded
-// Therefore we don't bother to inject them into evaluate() return code, since
-// nothing will be intereted in this EXCEPT shell
-// So we use this ugly hack to setup a global variable whenever evaluate() is
-// called.
-//
-// Those variables should be examed by two scenarios
-// 1) interactive mode and batch mode. In this case, gShellReturnCode should be
-// checked BEFORE the final return to shell
-// 2) front-end and backend mode. In this case, gShellREturnCode should be
-// examed by sdbbp, and inject the return code into the response message so that
-// front-end process knows which rc to return
-#if defined (SDB_SHELL)
-INT32 gShellReturnCode ;
-BOOLEAN gReadNothing ;
-#endif
 
 namespace engine {
 
@@ -86,10 +66,6 @@ void ScriptEngine::purgeGlobalScriptEngine()
 ScriptEngine::ScriptEngine() :
    _runtime( NULL )
 {
-#if defined (SDB_SHELL)
-   gShellReturnCode = SDB_OK ;
-   gReadNothing     = FALSE ;
-#endif
 }
 
 ScriptEngine::~ScriptEngine()
@@ -216,15 +192,11 @@ INT32 Scope::evaluate ( const CHAR *code , UINT32 len , const CHAR *filename ,
       goto error ;
    }
 
-#if defined (SDB_SHELL)
-   // if context does not show exception pending but we have gShellReturnCode
-   // set, that means the error is caught by try/catch, so we should reset
-   // gShellReturnCode to SDB_OK
-   if ( gShellReturnCode && ! JS_IsExceptionPending( _context ) )
+   // clear return error
+   if ( JS_IsExceptionPending( _context ) )
    {
-      gShellReturnCode = SDB_OK ;
+      sdbClearErrorInfo() ;
    }
-#endif
 
    if ( ! result )
       goto done ;
@@ -257,35 +229,6 @@ INT32 Scope::evaluate ( const CHAR *code , UINT32 len , const CHAR *filename ,
 done :
    SAFE_JS_FREE ( _context , cstr ) ;
    PD_TRACE_EXITRC ( SDB_SCOPE_EVALUATE, rc );
-#if defined (SDB_SHELL)
-   // we can rely on gShellReturnCode because SHELL is a single-threaded process
-   // only
-   // gShellReturnCode is NOT VALID for any multi-threaded environment
-   //
-   // gShellReturnCode was set to SDB_RC from dbClasses.
-   // Here we are going to map it into shell return code
-   // The rule is
-   // SDB_SYS : SDB_RETURNCODE_SYSTEM
-   // SDB_OK  : SDB_RETURNCODE_OK
-   // SDB_DMS_EOC && gReadNothing : SDB_RETURNCODE_EMPTY
-   // SDB_DMS_EOC && !gReadNothing : SDB_OK
-   // Others  : SDB_RETURNCODE_ERROR
-   switch ( gShellReturnCode )
-   {
-   case SDB_SYS :
-      gShellReturnCode = SDB_RETURNCODE_SYSTEM ;
-      break ;
-   case SDB_OK :
-      gShellReturnCode = SDB_RETURNCODE_OK ;
-      break ;
-   case SDB_DMS_EOC :
-      gShellReturnCode = (gReadNothing)?SDB_RETURNCODE_EMPTY:SDB_OK ;
-      gReadNothing = FALSE ;
-      break ;
-   default :
-      gShellReturnCode = SDB_RETURNCODE_ERROR ;
-   }
-#endif
    return rc ;
 error :
    if ( JS_GetPendingException ( _context , &exception ) )
@@ -306,7 +249,7 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SCOPE_EVALUATE2, "Scope::evaluate2" )
 INT32 Scope::evaluate2 ( const CHAR *code, UINT32 len, UINT32 lineno,
-                        jsval *rval, CHAR **errMsg )
+                         jsval *rval, CHAR **errMsg )
 {
    PD_TRACE_ENTRY ( SDB_SCOPE_EVALUATE2 );
    INT32 rc = SDB_OK ;

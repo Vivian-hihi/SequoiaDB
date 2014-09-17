@@ -43,8 +43,6 @@ po::variables_map vm ;
 #error "sdbbp should always have SDB_SHELL defined"
 #endif
 
-extern INT32 gShellReturnCode ;
-
 enum RunMode
 {
    INTERACTIVE_MODE,
@@ -556,6 +554,7 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
    CHAR    *pCurrentReceivePtr    = receiveBuffer1 ;
    CHAR *   p           = NULL ;
    INT32    id          = 0 ;
+   INT32    retCode     = SDB_OK ;
 
    ossMemset ( &f2dPipe , 0 , sizeof ( f2dPipe ) ) ;
    ossMemset ( &d2fPipe , 0 , sizeof ( d2fPipe ) ) ;
@@ -708,7 +707,6 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
          // something wrong, we should never hit here
          ossPrintf ( "SEVERE Error, we should never hit here"OSS_NEWLINE ) ;
          rc = SDB_SYS ;
-         gShellReturnCode = SDB_RETURNCODE_SYSTEM ;
          goto error ;
       }
    }
@@ -742,7 +740,7 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
    }
    if ( *pCurrentReceivePtr == ' ' )
    {
-      gShellReturnCode = ossAtoi ( pCurrentReceivePtr+1 ) ;
+      retCode = ossAtoi ( pCurrentReceivePtr+1 ) ;
    }
    *pCurrentReceivePtr = '\0' ;
    ossPrintf ( "%s" , receiveBufferFinal ) ;
@@ -752,12 +750,44 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
    SH_VERIFY_RC
 
 done :
+   if ( SDB_OK != retCode )
+   {
+      rc = retCode ;
+   }
    PD_TRACE_EXITRC ( SDB_ENTERFRONTENDMODE, rc );
    return rc ;
 error :
    ossCloseNamedPipe ( f2dPipe ) ;
    ossCloseNamedPipe ( d2fPipe ) ;
    goto done ;
+}
+
+INT32 rc2ReturnCode( INT32 rc )
+{
+   INT32 retCode = SDB_RETURNCODE_OK ;
+   // The rule is
+   // SDB_SYS : SDB_RETURNCODE_SYSTEM
+   // SDB_OK  : SDB_RETURNCODE_OK
+   // SDB_DMS_EOC && !sdbHasReadData() : SDB_RETURNCODE_EMPTY
+   // SDB_DMS_EOC && sdbHasReadData : SDB_OK
+   // Others  : SDB_RETURNCODE_ERROR
+   switch ( rc )
+   {
+   case SDB_SYS :
+      retCode = SDB_RETURNCODE_SYSTEM ;
+      break ;
+   case SDB_OK :
+      retCode = SDB_RETURNCODE_OK ;
+      break ;
+   case SDB_DMS_EOC :
+      retCode = sdbHasReadData() ? SDB_RETURNCODE_OK : SDB_RETURNCODE_EMPTY ;
+      sdbSetReadData( FALSE ) ;
+      break ;
+   default :
+      retCode = SDB_RETURNCODE_ERROR ;
+   }
+
+   return retCode ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_MAIN, "main" )
@@ -819,13 +849,7 @@ done :
    container.fini() ;
    PD_TRACE_EXITRC ( SDB_SDB_MAIN, rc );
 
-   if ( rc )
-   {
-      // if rc is here, that means something really goes off in either
-      // javascript engine or pipe
-      gShellReturnCode = SDB_RETURNCODE_SYSTEM ;
-   }
-   return gShellReturnCode ;
+   return rc2ReturnCode( rc ) ;
 error :
    goto done ;
 }

@@ -69,7 +69,7 @@ JS_MAPPING_END()
       string msg ;
       if ( SDB_OK == arg.getString( 0, msg ) )
       {
-         sdbSetErrmsg( msg.c_str() ) ;
+         sdbSetErrMsg( msg.c_str() ) ;
       }
       return SDB_OK ;
    }
