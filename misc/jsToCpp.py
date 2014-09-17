@@ -2,7 +2,7 @@ import os
 from os.path import join
 
 def jsToCpp(engineDir):
-   scriptFiles = ['error', 'sdb', 'help']
+   scriptFiles = ['error', 'sdb', 'help', 'sdbSP.js']
    sptDir = join(engineDir, 'spt')
    tbw = '' # short for to be written
 
@@ -68,6 +68,10 @@ def jsToCpp(engineDir):
    INT32 rc = SDB_OK ;
    for ( ; i < len ; i++ )
    {
+      if ( 0 == ossStrcmp( jsNameArray[i], "sdbSP.js" ) )
+      {
+         continue ;
+      }
       rc = scope->evaluate( jsTextArray[i] , jsLenArray[i] , jsNameArray[i] , 1 , NULL ) ;
       if ( rc != SDB_OK )
       {
