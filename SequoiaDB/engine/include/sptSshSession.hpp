@@ -60,8 +60,8 @@ namespace engine
 
       const CHAR* getPassword() const { return _passwd.c_str() ; }
 
-      string& getLocalIPAddr() ;
-      string& getPeerIPAddr() ;
+      std::string& getLocalIPAddr() ;
+      std::string& getPeerIPAddr() ;
 
    public:
       INT32 open() ;
