@@ -80,6 +80,7 @@ namespace engine
       _pKrcb               = NULL ;
       _pDmsCB              = NULL ;
       _hostVersion         = SDB_OSS_NEW omHostVersion() ;
+      _taskManager         = SDB_OSS_NEW omTaskManager( this ) ;
    }
 
    _omManager::~_omManager()
@@ -89,6 +90,12 @@ namespace engine
       {
          SDB_OSS_DEL _hostVersion ;
          _hostVersion = NULL ;
+      }
+
+      if ( NULL != _taskManager )
+      {
+         SDB_OSS_DEL _taskManager ;
+         _taskManager = NULL ;
       }
    }
 
@@ -161,7 +168,7 @@ namespace engine
    {
       INT32 rc                = SDB_OK ;
       BOOLEAN returnResult    = FALSE ;
-      omHostNotifierJob *pJob = NULL ;
+      _rtnBaseJob *pJob       = NULL ;
       EDUID jobID             = PMD_INVALID_EDUID ;
       pJob = SDB_OSS_NEW omHostNotifierJob( this, _hostVersion ) ;
       if ( !pJob )
@@ -175,6 +182,21 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "create omHostNotifierJob failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      pJob = SDB_OSS_NEW omTaskJob( this, this->getTaskManager() ) ;
+      if ( !pJob )
+      {
+         rc = SDB_OOM ;
+         PD_LOG ( PDERROR, "failed to create omTaskJob:rc=%d", rc ) ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, &jobID,
+                                     returnResult ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "create omTaskJob failed:rc=%d", rc ) ;
          goto error ;
       }
    done:
@@ -251,6 +273,11 @@ namespace engine
    void _omManager::removeClusterVersion( string cluster )
    {
       _hostVersion->removeVersion( cluster ) ;
+   }
+
+   omTaskManager *_omManager::getTaskManager()
+   {
+      return _taskManager ;
    }
 
    INT32 _omManager::_initOmTables() 
@@ -969,7 +996,7 @@ namespace engine
       _omTaskInfo._detail        = taskInfo.getStringField( 
                                                        OM_REST_RES_DETAIL ) ;
       _omTaskInfo._isAllFinished = taskInfo.getBoolField( 
-                                                       OM_BSON_ISFINISHED ) ;
+                                                     OM_BSON_TASK_ISFINISHED ) ;
       _omTaskInfo._progress      = taskInfo.getObjectField( 
                                                        OM_BSON_TASK_PROGRESS 
                                                        ).copy() ;
@@ -1291,7 +1318,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !result.hasField( OM_BSON_ISFINISHED ) )
+      if ( !result.hasField( OM_BSON_TASK_ISFINISHED ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "receive unreconigzed response:res=%s,rc=%d", 
@@ -1299,7 +1326,7 @@ namespace engine
          goto error ;
       }
 
-      isFinished = result.getBoolField( OM_BSON_ISFINISHED ) ;
+      isFinished = result.getBoolField( OM_BSON_TASK_ISFINISHED ) ;
       getTaskWriteLock() ;
       if ( isFinished )
       {
@@ -1680,64 +1707,75 @@ namespace engine
    INT32 _omManager::_restoreTask()
    {
       INT32 rc         = SDB_OK ;
-      pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
-      SINT64 contextID = -1 ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj orderBy ;
-      BSONObj hint ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy, hint, 
-                     0, cb, 0, -1, _pDmsCB, _pRtnCB, contextID ) ;
-      if ( rc )
+      rc = _taskManager->restoreTask() ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
-                     OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+         PD_LOG( PDERROR, "restore task failed:rc=%d", rc ) ;
          goto error ;
       }
 
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         SINT64 startingPos = 0 ;
-         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, cb, _pRtnCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               goto done ;
-            }
-
-            contextID = -1 ;
-            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
-                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
-            goto error ;
-         }
-
-         BSONObj record( buffObj.data() ) ;
-         _omTaskInfo._agentHostName = record.getStringField( 
-                                              OM_TASKINFO_FIELD_AGENTHOST ) ;
-         _omTaskInfo._agentSvcName  = record.getStringField( 
-                                              OM_TASKINFO_FIELD_AGENTSERVICE ) ;
-         _omTaskInfo._taskID        = record.getStringField( 
-                                              OM_TASKINFO_FIELD_TASKID ) ;
-         _omTaskInfo._isAllFinished = false ;
-          _omTaskInfo._status       = record.getIntField( 
-                                              OM_TASKINFO_FIELD_STATUS ) ;
-         _omTaskInfo._confValue     = record.getObjectField( 
-                                              OM_TASKINFO_FIELD_INFO ) ;
-         _omTaskInfo._detail        = "" ;
-         _omTaskInfo._progress      = BSONObj() ;
-      }
-
    done:
-      if ( -1 != contextID )
-      {
-         _pRtnCB->contextDelete ( contextID, cb ) ;
-      }
       return rc ;
    error:
       goto done ;
+//      pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
+//      SINT64 contextID = -1 ;
+//      BSONObj selector ;
+//      BSONObj matcher ;
+//      BSONObj orderBy ;
+//      BSONObj hint ;
+//      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy, hint, 
+//                     0, cb, 0, -1, _pDmsCB, _pRtnCB, contextID ) ;
+//      if ( rc )
+//      {
+//         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
+//                     OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+//         goto error ;
+//      }
+
+//      while ( TRUE )
+//      {
+//         rtnContextBuf buffObj ;
+//         SINT64 startingPos = 0 ;
+//         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, cb, _pRtnCB ) ;
+//         if ( rc )
+//         {
+//            if ( SDB_DMS_EOC == rc )
+//            {
+//               rc = SDB_OK ;
+//               goto done ;
+//            }
+
+//            contextID = -1 ;
+//            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+//                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+//            goto error ;
+//         }
+
+//         BSONObj record( buffObj.data() ) ;
+//         _omTaskInfo._agentHostName = record.getStringField( 
+//                                              OM_TASKINFO_FIELD_AGENTHOST ) ;
+//         _omTaskInfo._agentSvcName  = record.getStringField( 
+//                                              OM_TASKINFO_FIELD_AGENTSERVICE ) ;
+//         _omTaskInfo._taskID        = record.getStringField( 
+//                                              OM_TASKINFO_FIELD_TASKID ) ;
+//         _omTaskInfo._isAllFinished = false ;
+//          _omTaskInfo._status       = record.getIntField( 
+//                                              OM_TASKINFO_FIELD_STATUS ) ;
+//         _omTaskInfo._confValue     = record.getObjectField( 
+//                                              OM_TASKINFO_FIELD_INFO ) ;
+//         _omTaskInfo._detail        = "" ;
+//         _omTaskInfo._progress      = BSONObj() ;
+//      }
+
+//   done:
+//      if ( -1 != contextID )
+//      {
+//         _pRtnCB->contextDelete ( contextID, cb ) ;
+//      }
+//      return rc ;
+//   error:
+//      goto done ;
    }
 
    BOOLEAN _omManager::_isCommand( const CHAR *pCheckName )

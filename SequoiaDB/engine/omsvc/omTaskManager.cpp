@@ -54,6 +54,108 @@ namespace engine
    {
    }
 
+   INT32 omTaskBase::_saveFinishTask()
+   {
+      INT32 rc         = SDB_OK ;
+      pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
+      BSONObj selector ;
+      selector = BSON( OM_TASKINFO_FIELD_TASKID << ( long long )_taskID ) ;
+
+      BSONObj tmp ;
+      BSONObj updator ;
+      tmp     = BSON( OM_TASKINFO_FIELD_PROGRESS << _progress
+                      << OM_TASKINFO_FIELD_STATUS << _taskStatus
+                      << OM_TASKINFO_FIELD_ISFINISH << true ) ;
+      updator = BSON( "$set" << tmp ) ;
+
+      BSONObj hint ;
+      rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint,
+                         0, cb ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to delete taskinfo from table:%s,"
+                     "taskID="OSS_LL_PRINT_FORMAT",rc=%d", 
+                     OM_CS_DEPLOY_CL_TASKINFO, _taskID, rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omTaskBase::_getProgressFromAgent( BSONObj &response )
+   {
+      BSONObj result ;
+      INT32 rc          = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
+      _pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
+      MsgHeader *pMsg   = NULL ;
+      CHAR* pContent    = NULL ;
+      INT32 contentSize = 0 ;
+      pmdRemoteSession *remoteSession = NULL ;
+      BSONObjBuilder builder ;
+      BSONObj request ;
+      builder.append( OM_BSON_TASKID, ( long long )_taskID ) ;
+      request = builder.obj() ;
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_QUERY_PROGRESS, 
+                             0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "build query msg failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      remoteSession = _om->getRSManager()->addSession( cb, 
+                                                  OM_WAIT_PROGRESS_RES_INTERVAL,
+                                                  NULL ) ;
+      if ( NULL == remoteSession )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "addSession failed" ) ;
+         SDB_OSS_FREE( pContent ) ;
+         goto error ;
+      }
+
+      // send message to agent
+      pMsg = (MsgHeader *)pContent ;
+      rc   = _sendMsgToAgent( _agentHost, _agentService, remoteSession, pMsg ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
+         SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
+         goto error ;
+      }
+
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "receive from agent:%s", result.toString().c_str() ) ;
+
+      if ( SDB_OK != flag )
+      {
+         rc = flag ;
+         string errorInfo = result.getStringField( OP_ERR_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process error:detail=%s,rc=%d", 
+                 errorInfo.c_str(), rc ) ;
+         goto error ;
+      }
+
+      response = result.copy() ;
+   done:
+      _clearSession( cb, remoteSession ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omTaskBase::_sendMsgToAgent( string host, string port,
                                       pmdRemoteSession *remoteSession, 
                                       MsgHeader *pMsg )
@@ -166,13 +268,13 @@ namespace engine
    }
 
    omInstallTask::omInstallTask( omManager *om )
-                 :omTaskBase( om ), 
-                 _isEnable( false ), 
-                 _isFinished( false ),
-                 _taskID( OM_TASK_INVALID_ID ), 
-                 _taskType( OM_INSTALL_BUSINESS_REQ),
-                 _taskStatus( OM_TASK_STATUS_INSTALL )
+                 :omTaskBase( om )
    {
+      _isEnable   = false ;
+      _isFinished = false ;
+      _taskID     = OM_TASK_INVALID_ID ;
+      _taskType   = OM_INSTALL_BUSINESS_REQ ;
+      _taskStatus = OM_TASK_STATUS_INSTALL ;
    }
 
    omInstallTask::~omInstallTask()
@@ -181,20 +283,37 @@ namespace engine
 
    INT32 omInstallTask::restore( BSONObj &record )
    {
+      INT32 rc = SDB_OK ;
       BSONElement element ;
       element       = record.getField( OM_TASKINFO_FIELD_TASKID ) ;
       _taskID       = element.Long() ;
-      
+
+      // must copy the bson
       _agentHost    = record.getStringField( OM_TASKINFO_FIELD_AGENTHOST ) ;
       _agentService = record.getStringField( OM_TASKINFO_FIELD_AGENTSERVICE ) ;
-      _conf         = record.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
+      _taskInfo     = record.getObjectField( OM_TASKINFO_FIELD_INFO ).copy() ;
       _isFinished   = record.getBoolField( OM_TASKINFO_FIELD_ISFINISH ) ;
       _isEnable     = record.getBoolField( OM_TASKINFO_FIELD_ISENABLE ) ;
       _taskStatus   = record.getStringField( OM_TASKINFO_FIELD_STATUS ) ;
-      //_progress
-      _conf         = record.getObjectField( OM_TASKINFO_FIELD_INFO ) ;
+      _taskType     = record.getStringField( OM_TASKINFO_FIELD_TYPE ) ;
+      _progress = record.getObjectField( OM_TASKINFO_FIELD_PROGRESS ).copy() ;
 
-      return SDB_OK ;
+      if ( !_taskInfo.hasField( OM_BSON_BUSINESS_NAME )
+            || !_taskInfo.hasField( OM_BSON_DEPLOY_MOD )
+            || !_taskInfo.hasField( OM_BSON_BUSINESS_TYPE )
+            || !_taskInfo.hasField( OM_BSON_FIELD_CLUSTER_NAME ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "taskInfo error:taskInfo=%s", 
+                     _taskInfo.toString().c_str() ) ;
+         goto error ;
+      }
+
+      SDB_ASSERT( _taskType == OM_INSTALL_BUSINESS_REQ, "" ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 omInstallTask::init( const string &agentHost, 
@@ -207,12 +326,18 @@ namespace engine
       _taskID       = taskID ;
       _agentHost    = agentHost ;
       _agentService = agentService ;
-      _conf         = conf ;
+      _taskInfo     = conf ;
+      _isEnable     = false ;
+      _isFinished   = false ;
+      _taskType     = OM_INSTALL_BUSINESS_REQ ;
+      _taskStatus   = OM_TASK_STATUS_INSTALL ;
+      _progress     = BSONObj() ;
+      PD_LOG( PDDEBUG, "_taskInfo:%s", _taskInfo.toString().c_str() ) ;
 
-      if ( !_conf.hasField( OM_BSON_BUSINESS_NAME )
-            || !_conf.hasField( OM_BSON_DEPLOY_MOD )
-            || !_conf.hasField( OM_BSON_BUSINESS_TYPE )
-            || !_conf.hasField( OM_BSON_FIELD_CLUSTER_NAME ) )
+      if ( !_taskInfo.hasField( OM_BSON_BUSINESS_NAME )
+            || !_taskInfo.hasField( OM_BSON_DEPLOY_MOD )
+            || !_taskInfo.hasField( OM_BSON_BUSINESS_TYPE )
+            || !_taskInfo.hasField( OM_BSON_FIELD_CLUSTER_NAME ) )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG_MSG( PDERROR, "install task configure error:conf=%s", 
@@ -224,8 +349,8 @@ namespace engine
                   << OM_TASKINFO_FIELD_TYPE << _taskType
                   << OM_TASKINFO_FIELD_AGENTHOST << _agentHost 
                   << OM_TASKINFO_FIELD_AGENTSERVICE << _agentService
-                  << OM_TASKINFO_FIELD_INFO << _conf 
-                  << OM_TASKINFO_FIELD_PROGRESS << BSONObj()
+                  << OM_TASKINFO_FIELD_INFO << _taskInfo 
+                  << OM_TASKINFO_FIELD_PROGRESS << _progress
                   << OM_TASKINFO_FIELD_STATUS << _taskStatus
                   << OM_TASKINFO_FIELD_ISFINISH << _isFinished
                   << OM_TASKINFO_FIELD_ISENABLE << _isEnable ) ;
@@ -310,8 +435,11 @@ namespace engine
       goto done ;
    }
 
-   INT32 omInstallTask::getProgress( BSONObj &progress )
+   INT32 omInstallTask::getProgress( bool &isFinish, string &status, 
+                                     BSONObj &progress )
    {
+      isFinish = _isFinished ;
+      status   = _taskStatus ;
       progress = _progress ;
       return SDB_OK ;
    }
@@ -331,79 +459,6 @@ namespace engine
       return _taskStatus ;
    }
 
-   
-
-   INT32 omInstallTask::_getProgressFromAgent( BSONObj &response )
-   {
-      BSONObj result ;
-      INT32 rc          = SDB_OK ;
-      SINT32 flag       = SDB_OK ;
-      _pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
-      MsgHeader *pMsg   = NULL ;
-      CHAR* pContent    = NULL ;
-      INT32 contentSize = 0 ;
-      pmdRemoteSession *remoteSession = NULL ;
-      BSONObjBuilder builder ;
-      BSONObj request ;
-      builder.append( OM_BSON_TASKID, ( long long )_taskID ) ;
-      request = builder.obj() ;
-      rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                             CMD_ADMIN_PREFIX OM_QUERY_PROGRESS, 
-                             0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "build query msg failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      remoteSession = _om->getRSManager()->addSession( cb, 
-                                                  OM_WAIT_PROGRESS_RES_INTERVAL,
-                                                  NULL ) ;
-      if ( NULL == remoteSession )
-      {
-         rc = SDB_OOM ;
-         PD_LOG( PDERROR, "addSession failed" ) ;
-         SDB_OSS_FREE( pContent ) ;
-         goto error ;
-      }
-
-      // send message to agent
-      pMsg = (MsgHeader *)pContent ;
-      rc   = _sendMsgToAgent( _agentHost, _agentService, remoteSession, pMsg ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "send message to agent failed:rc=%d", rc ) ;
-         SDB_OSS_FREE( pContent ) ;
-         remoteSession->clearSubSession() ;
-         goto error ;
-      }
-
-      rc = _receiveFromAgent( remoteSession, flag, result ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "receive from agent failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      PD_LOG( PDEVENT, "receive from agent:%s", result.toString().c_str() ) ;
-
-      if ( SDB_OK != flag )
-      {
-         rc = flag ;
-         string errorInfo = result.getStringField( OP_ERR_DETAIL ) ;
-         PD_LOG( PDERROR, "agent process error:detail=%s,rc=%d", 
-                 errorInfo.c_str(), rc ) ;
-         goto error ;
-      }
-
-      response = result.copy() ;
-   done:
-      _clearSession( cb, remoteSession ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omInstallTask::_storeBusinessInfo()
    {
       INT32 rc = SDB_OK ;
@@ -415,10 +470,10 @@ namespace engine
       BSONObj configs ;
       pmdEDUCB *cb  = pmdGetThreadEDUCB() ;
 
-      businessName  = _conf.getStringField( OM_BSON_BUSINESS_NAME );
-      deployMod     = _conf.getStringField( OM_BSON_DEPLOY_MOD ) ;
-      businessType  = _conf.getStringField( OM_BSON_BUSINESS_TYPE );
-      clusterName   = _conf.getStringField( OM_BSON_FIELD_CLUSTER_NAME );
+      businessName  = _taskInfo.getStringField( OM_BSON_BUSINESS_NAME );
+      deployMod     = _taskInfo.getStringField( OM_BSON_DEPLOY_MOD ) ;
+      businessType  = _taskInfo.getStringField( OM_BSON_BUSINESS_TYPE );
+      clusterName   = _taskInfo.getStringField( OM_BSON_FIELD_CLUSTER_NAME );
 
       obj = BSON( OM_BUSINESS_FIELD_NAME << businessName 
                   << OM_BSON_BUSINESS_TYPE << businessType 
@@ -433,6 +488,8 @@ namespace engine
                         OM_CS_DEPLOY_CL_BUSINESS, rc ) ;
             goto error ;
          }
+
+         rc = SDB_OK ;
       }
    done:
       return rc ;
@@ -561,8 +618,8 @@ namespace engine
       string businessName ;
       BSONObj configs ;
       INT32 rc      = SDB_OK ;
-      businessName  = _conf.getStringField( OM_BSON_BUSINESS_NAME );
-      configs       = _conf.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      businessName  = _taskInfo.getStringField( OM_BSON_BUSINESS_NAME );
+      configs       = _taskInfo.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       {
          BSONObjIterator iter( configs ) ;
          while ( iter.more() )
@@ -604,37 +661,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 omInstallTask::_storeProgressToTable()
-   {
-      INT32 rc         = SDB_OK ;
-      pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
-      BSONObj selector ;
-      selector = BSON( OM_TASKINFO_FIELD_TASKID << ( long long )_taskID ) ;
-
-      BSONObj tmp ;
-      BSONObj updator ;
-      tmp     = BSON( OM_TASKINFO_FIELD_PROGRESS << _progress
-                      << OM_TASKINFO_FIELD_STATUS << _taskStatus
-                      << OM_TASKINFO_FIELD_ISFINISH << _isFinished ) ;
-      updator = BSON( "$set" << tmp ) ;
-
-      BSONObj hint ;
-      rc = rtnUpdate( OM_CS_DEPLOY_CL_TASKINFO, selector, updator, hint,
-                         0, cb ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "failed to delete taskinfo from table:%s,"
-                     "taskID="OSS_LL_PRINT_FORMAT",rc=%d", 
-                     OM_CS_DEPLOY_CL_TASKINFO, _taskID, rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omInstallTask::_finishTask()
    {
       INT32 rc = SDB_OK ;
@@ -655,7 +681,7 @@ namespace engine
          }
       }
 
-      rc = _storeProgressToTable() ;
+      rc = _saveFinishTask() ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "store config info failed:rc=%d", rc ) ;
@@ -672,6 +698,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj response ;
+      bool tmpFinished = false ;
 
       if ( !_isEnable )
       {
@@ -686,7 +713,7 @@ namespace engine
          goto error ;
       }
 
-      if ( !response.hasField( OM_BSON_ISFINISHED ) 
+      if ( !response.hasField( OM_BSON_TASK_ISFINISHED ) 
            || !response.hasField( OM_BSON_TASK_STATUS ) 
            || !response.hasField( OM_BSON_TASK_PROGRESS ) )
       {
@@ -698,16 +725,17 @@ namespace engine
 
       _taskStatus = response.getStringField( OM_BSON_TASK_STATUS ) ;
       _progress   = response.getObjectField( OM_BSON_TASK_PROGRESS ) ;
-      _isFinished = response.getBoolField( OM_BSON_ISFINISHED ) ;
-      if ( _isFinished )
+      tmpFinished = response.getBoolField( OM_BSON_TASK_ISFINISHED ) ;
+      if ( tmpFinished )
       {
          rc = _finishTask() ;
          if ( SDB_OK != rc )
          {
-            _isFinished = false ;
             PD_LOG( PDERROR, "finish task failed:rc=%d", rc ) ;
             goto error ;
          }
+
+         _isFinished = tmpFinished ;
       }
 
    done:
@@ -719,6 +747,273 @@ namespace engine
    BOOLEAN omInstallTask::isEnable()
    {
       return _isEnable ;
+   }
+
+   BOOLEAN omInstallTask::isFinish()
+   {
+      return _isFinished ;
+   }
+
+   omUninstallTask::omUninstallTask( omManager *om )
+                   :omInstallTask( om )
+   {
+      _taskType   = OM_REMOVE_BUSINESS_REQ ;
+      _taskStatus = OM_TASK_STATUS_UNINSTALL ;
+   }
+
+   omUninstallTask::~omUninstallTask()
+   {
+   }
+
+   INT32 omUninstallTask::_removeConfigInfo()
+   {
+      INT32 rc     = SDB_OK ;
+      pmdEDUCB *cb = NULL ;
+      string businessName ;
+      BSONObj condition ;
+      BSONObj hint ;
+      businessName = _taskInfo.getStringField( OM_BSON_BUSINESS_NAME );
+
+      cb           = pmdGetThreadEDUCB() ;
+      condition    = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_CONFIGURE, condition, hint, 0, cb );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to delete configure from table:%s,"
+                     "business=%s,rc=%d", OM_CS_DEPLOY_CL_CONFIGURE, 
+                     businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omUninstallTask::_removeBusinessInfo()
+   {
+      INT32 rc     = SDB_OK ;
+      pmdEDUCB *cb = NULL ;
+      string businessName ;
+      BSONObj condition ;
+      BSONObj hint ;
+      businessName = _taskInfo.getStringField( OM_BSON_BUSINESS_NAME );
+
+      cb           = pmdGetThreadEDUCB() ;
+      condition    = BSON( OM_BUSINESS_FIELD_NAME << businessName ) ;
+
+      rc = rtnDelete( OM_CS_DEPLOY_CL_BUSINESS, condition, hint, 0, cb );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "failed to delete business from table:%s,"
+                     "business=%s,rc=%d", OM_CS_DEPLOY_CL_BUSINESS, 
+                     businessName.c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omUninstallTask::_finishUninstallTask()
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _removeConfigInfo() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "remove config info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _removeBusinessInfo() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "remove business info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _saveFinishTask() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "update task progress failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omUninstallTask::updateProgress()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj response ;
+      bool tmpFinished = false ;
+
+      if ( !_isEnable )
+      {
+         PD_LOG( PDERROR, "should not happend here" ) ;
+         goto done ;
+      }
+
+      rc = _getProgressFromAgent( response ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getProgressFromAgent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !response.hasField( OM_BSON_TASK_ISFINISHED ) 
+           || !response.hasField( OM_BSON_TASK_STATUS ) 
+           || !response.hasField( OM_BSON_TASK_PROGRESS ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "agent's response format error:res=%s,rc=%d",
+                 response.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      _taskStatus = response.getStringField( OM_BSON_TASK_STATUS ) ;
+      _progress   = response.getObjectField( OM_BSON_TASK_PROGRESS ) ;
+      tmpFinished = response.getBoolField( OM_BSON_TASK_ISFINISHED ) ;
+      if ( tmpFinished )
+      {
+         rc = _finishUninstallTask() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "finish task failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         _isFinished = tmpFinished ;
+      }
+
+   done:
+      return rc  ;
+   error:
+      goto done ;
+   }
+
+   omAddHostTask::omAddHostTask( omManager *om )
+                 :omInstallTask( om )
+   {
+      _taskType   = OM_ADD_HOST_REQ ;
+      _taskStatus = OM_TASK_STATUS_ADDHOST ;
+   }
+
+   omAddHostTask::~omAddHostTask()
+   {
+   }
+
+   INT32 omAddHostTask::_storeHostInfo()
+   {
+      INT32 rc     = SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+
+      BSONObj hosts ;
+      hosts    = _taskInfo.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
+      {
+         BSONObjIterator iter( hosts ) ;
+         while ( iter.more() )
+         {
+            BSONElement ele = iter.next() ;
+            BSONObj oneHost = ele.embeddedObject() ;
+            rc = rtnInsert( OM_CS_DEPLOY_CL_HOST, oneHost, 1, 0, cb ) ;
+            if ( rc )
+            {
+               if ( SDB_IXM_DUP_KEY != rc )
+               {
+                  PD_LOG( PDERROR, "insert into table failed:%s,rc=%d", 
+                          OM_CS_DEPLOY_CL_HOST, rc ) ;
+                  goto error ;
+               }
+            }
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omAddHostTask::_finishAddHostTask()
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _storeHostInfo() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "store host info failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _saveFinishTask() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "update task progress failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omAddHostTask::updateProgress()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj response ;
+      bool tmpFinished = false ;
+
+      if ( !_isEnable )
+      {
+         PD_LOG( PDERROR, "should not happend here" ) ;
+         goto done ;
+      }
+
+      rc = _getProgressFromAgent( response ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getProgressFromAgent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( !response.hasField( OM_BSON_TASK_ISFINISHED ) 
+           || !response.hasField( OM_BSON_TASK_STATUS ) 
+           || !response.hasField( OM_BSON_TASK_PROGRESS ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "agent's response format error:res=%s,rc=%d",
+                 response.toString().c_str(), rc ) ;
+         goto error ;
+      }
+
+      _taskStatus = response.getStringField( OM_BSON_TASK_STATUS ) ;
+      _progress   = response.getObjectField( OM_BSON_TASK_PROGRESS ) ;
+      tmpFinished = response.getBoolField( OM_BSON_TASK_ISFINISHED ) ;
+      if ( tmpFinished )
+      {
+         rc = _finishAddHostTask() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "finish task failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         _isFinished = tmpFinished ;
+      }
+
+   done:
+      return rc  ;
+   error:
+      goto done ;
    }
 
    omTaskManager::omTaskManager( omManager *om )
@@ -735,6 +1030,15 @@ namespace engine
    {
       INT32 rc            = SDB_OK ;
       omInstallTask *task = NULL ;
+      UINT64 taskID ;
+
+      if ( _isTaskExist( OM_INSTALL_BUSINESS_REQ, taskID) )
+      {
+         rc = SDB_IXM_DUP_KEY ;
+         PD_LOG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
+                 OM_INSTALL_BUSINESS_REQ, taskID ) ;
+         goto error ;
+      }
 
       task = SDB_OSS_NEW omInstallTask( _om ) ;
       rc = task->restore( record ) ;
@@ -751,6 +1055,95 @@ namespace engine
       goto done ;
    }
 
+   INT32 omTaskManager::_restoreUninstallTask( BSONObj &record ) 
+   {
+      INT32 rc              = SDB_OK ;
+      omUninstallTask *task = NULL ;
+      UINT64 taskID ;
+
+      if ( _isTaskExist( OM_REMOVE_BUSINESS_REQ, taskID) )
+      {
+         rc = SDB_IXM_DUP_KEY ;
+         PD_LOG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
+                 OM_REMOVE_BUSINESS_REQ, taskID ) ;
+         goto error ;
+      }
+
+      task = SDB_OSS_NEW omUninstallTask( _om ) ;
+      rc = task->restore( record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "restore omUninstallTask failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _addTaskToMap( task ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omTaskManager::_getTaskRecord( UINT64 taskID, BSONObj &result )
+   {
+      INT32 rc           = SDB_OK ;
+      pmdEDUCB *cb       = pmdGetThreadEDUCB() ;
+      pmdKRCB *pKRCB     = pmdGetKRCB() ;
+      _SDB_DMSCB *pdmsCB = pKRCB->getDMSCB() ;
+      _SDB_RTNCB *pRtnCB = pKRCB->getRTNCB() ;
+      SINT64 contextID = -1 ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj orderBy ;
+      BSONObj hint ;
+      _maxTaskID = 0;
+
+      matcher = BSON( OM_TASKINFO_FIELD_TASKID << (long long)taskID ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy, hint, 
+                     0, cb, 0, -1, pdmsCB, pRtnCB, contextID ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
+                     OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, cb, pRtnCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               PD_LOG_MSG( PDERROR, "task is not exit in table:%s,taskID="
+                           OSS_LL_PRINT_FORMAT",rc=%d", 
+                           OM_CS_DEPLOY_CL_TASKINFO, taskID, rc ) ;
+               goto error ;
+            }
+
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         result = record.copy() ;
+         goto done ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         pRtnCB->contextDelete ( contextID, cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+   
    INT32 omTaskManager::restoreTask()
    {
       INT32 rc           = SDB_OK ;
@@ -766,8 +1159,7 @@ namespace engine
       _maxTaskID = 0;
 
       rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy, hint, 
-                     0, cb, 0, -1, pdmsCB, pRtnCB, 
-                     contextID ) ;
+                     0, cb, 0, -1, pdmsCB, pRtnCB, contextID ) ;
       if ( rc )
       {
          PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d", 
@@ -809,11 +1201,15 @@ namespace engine
             //ignore the diable or finished job
             continue ;
          }
-         
+
          string taskType = record.getStringField( OM_TASKINFO_FIELD_TYPE ) ;
          if ( taskType == OM_INSTALL_BUSINESS_REQ )
          {
             rc = _restoreInstallTask( record ) ;
+         }
+         else if ( taskType == OM_REMOVE_BUSINESS_REQ )
+         {
+            rc = _restoreUninstallTask( record ) ;
          }
          else
          {
@@ -846,19 +1242,16 @@ namespace engine
    BOOLEAN omTaskManager::_isTaskExist( string taskType, UINT64 &taskID )
    {
       BOOLEAN isTaskExist = FALSE ;
-      
+
       _lock.get() ;
+
       MAP_TASK_INTER iter = _mapTasks.find( taskID ) ;
       while ( iter != _mapTasks.end() )
       {
          shared_ptr< omTaskBase > sharedTask = iter->second ;
-         if ( sharedTask->getType() == taskType )
-         {
-            isTaskExist = TRUE ;
-            taskID      = sharedTask->getTaskID() ;
-            break ;
-         }
-         iter++ ;
+         isTaskExist = TRUE ;
+         taskID      = sharedTask->getTaskID() ;
+         break ;
       }
 
       _lock.release() ;
@@ -873,7 +1266,7 @@ namespace engine
                                  shared_ptr< omTaskBase >( task, taskDeleter ) ;
       _lock.release() ;
    }
-   
+
    INT32 omTaskManager::createInstallTask( const string &agentHost, 
                                            const string &agentService, 
                                            BSONObj &confValue, UINT64 &taskID )
@@ -897,6 +1290,42 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "init omInstallTask failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _addTaskToMap( task ) ;
+      PD_LOG( PDEVENT, "create task success:type=%s,taskID="OSS_LL_PRINT_FORMAT,
+              task->getType().c_str(), task->getTaskID() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omTaskManager::createUninstallTask( const string &agentHost, 
+                                             const string &agentService, 
+                                             BSONObj &confValue,
+                                             UINT64 &taskID )
+   {
+      INT32 rc            = SDB_OK ;
+      omInstallTask *task = NULL ;
+      if ( _isTaskExist( OM_REMOVE_BUSINESS_REQ, taskID ) )
+      {
+         rc = SDB_IXM_DUP_KEY ;
+         PD_LOG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
+                 OM_REMOVE_BUSINESS_REQ, taskID ) ;
+         goto error ;
+      }
+
+      _lock.get() ;
+      taskID = _generateTaskID() ;
+      _lock.release() ;
+
+      task = SDB_OSS_NEW omUninstallTask( _om ) ;
+      rc   = task->init( agentHost, agentService, confValue, taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "init omUninstallTask failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -972,31 +1401,44 @@ namespace engine
       goto done ;
    }
 
-   INT32 omTaskManager::getProgress( UINT64 taskID, BSONObj &progress )
+   INT32 omTaskManager::getProgress( UINT64 taskID, bool &isFinish, 
+                                     string &status, BSONObj &progress )
    {
-      INT32 rc          = SDB_OK ;
+      INT32 rc = SDB_OK ;
       shared_ptr< omTaskBase > shareTask ;
       _lock.get() ;
       MAP_TASK_INTER iter = _mapTasks.find( taskID ) ;
       if ( iter == _mapTasks.end() )
       {
          _lock.release() ;
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT, 
-                 taskID ) ;
-         goto error ;
+         // find task in table SYSDEPLOY.SYSTASKINFO
+         BSONObj result ;
+         rc = _getTaskRecord( taskID, result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "get task's record failed:taskID="
+                    OSS_LL_PRINT_FORMAT",rc=%d", taskID, rc ) ;
+            goto error ;
+         }
+
+         isFinish = result.getBoolField( OM_TASKINFO_FIELD_ISFINISH ) ;
+         status   = result.getStringField( OM_TASKINFO_FIELD_STATUS ) ;
+         progress = result.getObjectField( OM_TASKINFO_FIELD_PROGRESS ) ;
       }
-
-      shareTask = iter->second ;
-      _lock.release() ;
-
-      rc    = shareTask->getProgress( progress ) ;
-      if ( SDB_OK != rc )
+      else
       {
-         PD_LOG( PDERROR, "get task's progress failed:taskID="
-                 OSS_LL_PRINT_FORMAT",rc=%d", taskID, rc ) ;
-         goto error ;
+         shareTask = iter->second ;
+         _lock.release() ;
+
+         rc = shareTask->getProgress( isFinish, status, progress ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "get task's progress failed:taskID="
+                        OSS_LL_PRINT_FORMAT",rc=%d", taskID, rc ) ;
+            goto error ;
+         }
       }
+      
    done:
       return rc ;
    error:
@@ -1012,7 +1454,18 @@ namespace engine
       MAP_TASK_INTER iter = _mapTasks.begin() ;
       while ( iter != _mapTasks.end() )
       {
-         shareTaskList.push_back( iter->second ) ;
+         shared_ptr< omTaskBase > shareTask = iter->second ;
+         if ( shareTask->isFinish() )
+         {
+            _mapTasks.erase( iter++ ) ;
+            continue ;
+         }
+
+         if ( shareTask->isEnable() )
+         {
+            shareTaskList.push_back( iter->second ) ;
+         }
+
          iter++ ;
       }
       _lock.release() ;

@@ -49,7 +49,7 @@ using namespace bson ;
 
 namespace engine
 {
-   class omTaskManager ;
+   //class omTaskManager ;
 
    class omTaskBase : public SDBObject
    {
@@ -62,7 +62,8 @@ namespace engine
 
          virtual INT32     enable() = 0 ;
 
-         virtual INT32     getProgress( BSONObj &progress ) = 0 ;
+         virtual INT32     getProgress( bool &isFinish, string &status, 
+                                        BSONObj &progress ) = 0 ;
 
          virtual string    getType() = 0 ;
 
@@ -74,7 +75,11 @@ namespace engine
 
          virtual BOOLEAN   isEnable() = 0 ;
 
+         virtual BOOLEAN   isFinish() = 0 ;
+
       protected:
+         INT32             _saveFinishTask() ;
+         INT32             _getProgressFromAgent( BSONObj &response ) ;
          INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
                                               SINT32 &flag, BSONObj &result ) ;
          INT32             _sendMsgToAgent( string host, string port,
@@ -85,6 +90,16 @@ namespace engine
 
       protected:
          omManager         *_om ;
+         bool              _isEnable ;
+         bool              _isFinished ;
+         UINT64            _taskID ;
+         string            _taskType ;
+         string            _taskStatus ;
+         BSONObj           _taskInfo ;
+         string            _agentHost ;
+         string            _agentService ;
+
+         BSONObj           _progress ;
    };
 
    class omInstallTask : public omTaskBase
@@ -106,7 +121,8 @@ namespace engine
 
          virtual INT32     enable() ;
 
-         virtual INT32     getProgress( BSONObj &progress ) ;
+         virtual INT32     getProgress( bool &isFinish, string &status, 
+                                        BSONObj &progress ) ;
 
          virtual string    getType() ;
 
@@ -118,9 +134,11 @@ namespace engine
 
          virtual BOOLEAN   isEnable() ;
 
-      protected:
+         virtual BOOLEAN   isFinish() ;
 
-         INT32             _getProgressFromAgent( BSONObj &response ) ;
+      protected:
+         
+      private:
          INT32             _storeBusinessInfo() ;
          INT32             _isHostConfExist( string hostName, 
                                              string businessName ) ;
@@ -131,22 +149,83 @@ namespace engine
                                              string businessName ,
                                              BSONObj &oneNode ) ;
          INT32             _storeConfigInfo() ;
-         INT32             _storeProgressToTable() ;
+
          INT32             _finishTask() ;
 
-      private:
+      protected:
+         //TODO: to protect the progress ;
          ossSpinSLatch     _lock ;
-         bool              _isEnable ;
-         bool              _isFinished ;
-         UINT64            _taskID ;
-         string            _taskType ;
-         string            _taskStatus ;
-         string            _agentHost ;
-         string            _agentService ;
-         BSONObj           _progress ;
-         BSONObj           _conf ;
+      /*
+         _taskInfo:
+         {
+            "BusinessType":"sequoiadb", "BusinessName":"b1", "deployMod":"xxx", 
+            "ClusterName":"c1", 
+            "Config":
+            [
+               {"HostName": "host1", "datagroupname": "", 
+                "dbpath": "/home/db2/standalone/11830", "svcname": "11830", ...}
+               ,...
+            ]
+         }
+      */
    } ;
 
+   class omUninstallTask : public omInstallTask
+   {
+      public:
+         omUninstallTask( omManager *om ) ;
+         virtual ~omUninstallTask() ;
+
+      public:
+         virtual INT32     updateProgress() ;
+
+      private:
+         INT32             _finishUninstallTask() ;
+         INT32             _removeBusinessInfo() ;
+         INT32             _removeConfigInfo() ;
+
+      /*
+         _taskInfo:
+         {
+            "BusinessType":"sequoiadb", "BusinessName":"b1", "deployMod":"xxx", 
+            "ClusterName":"c1", 
+            "Config":
+            [
+               {"HostName": "host1", "datagroupname": "", 
+                "dbpath": "/home/db2/standalone/11830", "svcname": "11830", ...}
+               ,...
+            ]
+         }
+      */
+   } ;
+
+   class omAddHostTask : public omInstallTask
+   {
+      public:
+         omAddHostTask( omManager *om ) ;
+         virtual ~omAddHostTask() ;
+
+      public:
+         virtual INT32     updateProgress() ;
+
+      private:
+         INT32             _finishAddHostTask() ;
+         INT32             _storeHostInfo() ;
+
+      /*
+         _taskInfo:
+         {
+            "HostInfo":
+            [
+               {
+                  "HostName":"host1", "ClusterName":"c1", "IP":"", "OS":"",
+                  "CPU":{}, "NET":{}...
+               }
+               ,...
+            ]
+         }
+      */
+   } ;
 
    class omTaskManager : public SDBObject
    {
@@ -159,13 +238,18 @@ namespace engine
                                               const string &agentService, 
                                               BSONObj &confValue, 
                                               UINT64 &taskID ) ;
+         INT32             createUninstallTask( const string &agentHost, 
+                                                const string &agentService, 
+                                                BSONObj &confValue,
+                                                UINT64 &taskID ) ;
          INT32             restoreTask() ;
 
          INT32             cancelTask( UINT64 taskID ) ;
 
          INT32             enableTask( UINT64 taskID ) ;
 
-         INT32             getProgress( UINT64 taskID, BSONObj &progress ) ;
+         INT32             getProgress( UINT64 taskID, bool &isFinish, 
+                                        string &status, BSONObj &progress ) ;
 
          INT32             run() ;
 
@@ -173,7 +257,9 @@ namespace engine
          BOOLEAN           _isTaskExist( string taskType, UINT64 &taskID ) ;
          UINT64            _generateTaskID() ;
          INT32             _restoreInstallTask( BSONObj &record ) ;
+         INT32             _restoreUninstallTask( BSONObj &record ) ;
          void              _addTaskToMap( omTaskBase *task ) ;
+         INT32             _getTaskRecord( UINT64 taskID, BSONObj &result ) ;
 
       private:
          omManager                *_om ;

@@ -104,6 +104,7 @@ namespace engine
    } ;
 
    class omHostVersion ;
+   class omTaskManager ;
    /*
       _omManager define
    */
@@ -191,6 +192,8 @@ namespace engine
          INT32             refreshVersions() ;
          void              updateClusterVersion( string cluster ) ;
          void              removeClusterVersion( string cluster ) ;
+
+         omTaskManager     *getTaskManager() ;
 
       protected:
          virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
@@ -287,6 +290,8 @@ namespace engine
 
          string                                 _localAgentPort ;
          omHostVersion                          *_hostVersion ;
+
+         omTaskManager                          *_taskManager ;
    } ;
 
    typedef _omManager omManager ;

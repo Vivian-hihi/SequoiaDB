@@ -79,6 +79,70 @@ namespace engine
       decryptPasswd = encryptPasswd ;
    }
 
+   INT32 omAuthCommand::_getSdbUsrInfo( string clusterName, string &sdbUser, 
+                                        string &sdbPasswd, 
+                                        string &sdbUserGroup )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder resultBuilder ;
+      BSONObj result ;
+
+      BSONObjBuilder builder ;
+      builder.append( OM_CLUSTER_FIELD_NAME, clusterName ) ;
+      BSONObj matcher ;
+      matcher = builder.obj() ;
+
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID             = -1 ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "failed to query table:" ) 
+                        + OM_CS_DEPLOY_CL_CLUSTER ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               _errorDetail = string( "cluster is not exist:cluster=" ) 
+                              + clusterName ;
+               PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+               goto error ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_CLUSTER ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         sdbUser      = record.getStringField( OM_CLUSTER_FIELD_SDBUSER ) ;
+         sdbPasswd    = record.getStringField( OM_CLUSTER_FIELD_SDBPASSWD ) ;
+         sdbUserGroup = record.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP ) ;
+      }
+
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omAuthCommand::doCommand()
    {
       const CHAR *pUserName        = NULL ;
@@ -769,13 +833,14 @@ namespace engine
          goto error ;
       }
 
-      pGlobalUser      = bsonHostInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
-      pGlobalPasswd    = bsonHostInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
-      pGlobalSshPort   = bsonHostInfo.getStringField( 
-                                       OM_BSON_FIELD_HOST_SSHPORT ) ;
+      pGlobalUser    = bsonHostInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
+      pGlobalPasswd  = bsonHostInfo.getStringField( 
+                                                OM_BSON_FIELD_HOST_PASSWD ) ;
+      pGlobalSshPort = bsonHostInfo.getStringField( 
+                                                OM_BSON_FIELD_HOST_SSHPORT ) ;
       pGlobalAgentPort = _localAgentService.c_str() ;
       clusterName      = bsonHostInfo.getStringField( 
-                                       OM_BSON_FIELD_CLUSTER_NAME ) ;
+                                                OM_BSON_FIELD_CLUSTER_NAME ) ;
       if ( 0 == ossStrlen( pGlobalUser ) || 0 == ossStrlen( pGlobalPasswd )
            || 0 == ossStrlen( pGlobalSshPort ) || 0 == clusterName.length()
            || 0 == ossStrlen( pGlobalAgentPort ) )
@@ -1890,7 +1955,7 @@ namespace engine
       rc = _getClusterInstallPath( clusterName, installPath ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "%s:info=%s", _errorDetail.c_str(), pHostInfo ) ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
@@ -1952,8 +2017,8 @@ namespace engine
    }
 
    INT32 omAddHostCommand::_generateAddHostReq( string clusterName,
-                                               list<BSONObj> &hostInfoList, 
-                                               BSONObj &bsonRequest )
+                                                list<BSONObj> &hostInfoList, 
+                                                BSONObj &bsonRequest )
    {
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
@@ -2064,70 +2129,6 @@ namespace engine
 
          BSONObj record( buffObj.data() ) ;
          installPath = record.getStringField( OM_CLUSTER_FIELD_INSTALLPATH ) ;
-      }
-
-   done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 omAddHostCommand::_getSdbUsrInfo( string clusterName, string &sdbUser, 
-                                           string &sdbPasswd, 
-                                           string &sdbUserGroup )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjBuilder resultBuilder ;
-      BSONObj result ;
-
-      BSONObjBuilder builder ;
-      builder.append( OM_CLUSTER_FIELD_NAME, clusterName ) ;
-      BSONObj matcher ;
-      matcher = builder.obj() ;
-
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj hint ;
-      SINT64 contextID             = -1 ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
-                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
-      {
-         _errorDetail = string( "failed to query table:" ) 
-                        + OM_CS_DEPLOY_CL_CLUSTER ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      {
-         rtnContextBuf buffObj ;
-         SINT64 startingPos = 0 ;
-         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               _errorDetail = string( "cluster is not exist:cluster=" ) 
-                              + clusterName ;
-               PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-               goto error ;
-            }
-
-            contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_CLUSTER ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-            goto error ;
-         }
-
-         BSONObj record( buffObj.data() ) ;
-         sdbUser      = record.getStringField( OM_CLUSTER_FIELD_SDBUSER ) ;
-         sdbPasswd    = record.getStringField( OM_CLUSTER_FIELD_SDBPASSWD ) ;
-         sdbUserGroup = record.getStringField( OM_CLUSTER_FIELD_SDBUSERGROUP ) ;
       }
 
    done:
@@ -4173,32 +4174,25 @@ namespace engine
 
    INT32 omInstallBusinessReq::_applyInstallRequest( 
                                                   const BSONObj &bsonConfValue,
-                                                  UINT64 &taskID )
+                                                  UINT64 taskID )
    {
       INT32 rc          = SDB_OK ;
       SINT32 flag       = SDB_OK ;
-      BSONElement taskElement ;
       BSONObj result ;
       CHAR* pContent    = NULL ;
       INT32 contentSize = 0 ;
       omManager *om     = sdbGetOMManager() ;
       MsgHeader *pMsg   = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
-      string fakeTaskID = OM_TASKINFO_FAKE_TASKID ;
-
-      rc = om->storeTaskInfo( fakeTaskID, OM_INSTALL_BUSINESS_REQ, 
-                              _localAgentHost, _localAgentService, 
-                              bsonConfValue, OM_TASK_STATUS_DOING ) ;
-      if ( SDB_OK != rc )
-      {
-         _errorDetail = _cb->getInfo( EDU_INFO_ERROR ) ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
+      BSONObj request ;
+      BSONObjBuilder builder ;
+      builder.appendElements( bsonConfValue ) ;
+      builder.append( OM_BSON_TASKID, (long long)taskID ) ;
+      request = builder.obj() ;
 
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_INSTALL_BUSINESS_REQ, 
-                             0, 0, 0, -1, &bsonConfValue, NULL, NULL, NULL ) ;
+                             0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = string( "build msg failed:cmd=" ) 
@@ -4249,25 +4243,7 @@ namespace engine
                  _errorDetail.c_str(), rc ) ;
          goto error ;
       }
-
-      taskElement = result.getField( OM_BSON_TASKID ) ;
-      if ( taskElement.type() != NumberLong )
-      {
-         rc = SDB_INVALIDARG ;
-         _errorDetail = string( "agent's response format error:res=" )
-                        + result.toString( false, true ) ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         goto error ;
-      }
-
-      //TODO: we assume thas this should not fail;
-      taskID = taskElement.numberLong() ;
-      om->updateTaskID( fakeTaskID, taskElement.numberLong() ) ;
-      rc = om->saveInstallTask( _localAgentHost, _localAgentService, result, 
-                                bsonConfValue ) ;
-      SDB_ASSERT( ( SDB_OK == rc ), "" ) ;
    done:
-      om->removeTask( fakeTaskID ) ;
       _clearSession( om, remoteSession ) ;
       return rc ;
    error:
@@ -4354,7 +4330,22 @@ namespace engine
          }
       }
 
+      INT32 rc = SDB_OK ;
+      string clusterName ;
+      string sdbUser ;
+      string sdbUserGroup ;
+      string sdbPasswd ;
+      clusterName = bsonConfValue.getStringField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      rc = _getSdbUsrInfo( clusterName, sdbUser, sdbPasswd, sdbUserGroup ) ;
+
       BSONObjBuilder valueBuilder ;
+      if ( SDB_OK == rc )
+      {
+         valueBuilder.append( OM_BSON_FIELD_SDB_USER, sdbUser ) ;
+         valueBuilder.append( OM_BSON_FIELD_SDB_PASSWD, sdbPasswd ) ;
+         valueBuilder.append( OM_BSON_FIELD_SDB_USERGROUP, sdbUserGroup ) ;
+      }
+
       valueBuilder.append( OM_BSON_FIELD_CONFIG, arrayBuilder.arr() ) ;
       valueBuilder.appendElements( commons ) ;
 
@@ -4437,6 +4428,7 @@ namespace engine
       BSONObj bsonHostInfo ;
       BSONObj bsonAllConf ;
       UINT64 taskID ;
+      omTaskManager *taskManager = sdbGetOMManager()->getTaskManager() ;
 
       rc = _getRestInfo( bsonConfValue ) ;
       if ( SDB_OK != rc )
@@ -4482,35 +4474,35 @@ namespace engine
       }
 
       _compeleteConfValue( bsonHostInfo, bsonConfValue ) ;
-
-      sdbGetOMManager()->getTaskWriteLock() ;
-      if ( sdbGetOMManager()->isInstallTaskExist() )
+      rc = taskManager->createInstallTask( _localAgentHost, _localAgentService,
+                                           bsonConfValue, taskID ) ;
+      if ( SDB_OK != rc )
       {
-         rc = SDB_INVALIDARG ;
-         INT32 status ;
-         bool isAllFinshed ;
-         string detail ;
-         BSONObj progress ;
-         string tmpID ;
-         sdbGetOMManager()->getInstallTask( status, tmpID, isAllFinshed, 
-                                            detail, progress ) ;
-         _errorDetail = "exist install task:taskid=" + tmpID ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _errorDetail = "create install task failed" ;
+          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
-
-         sdbGetOMManager()->releaseTaskWriteLock() ;
          goto error ;
       }
 
       rc = _applyInstallRequest( bsonConfValue, taskID ) ;
       if ( SDB_OK != rc )
       {
+         taskManager->cancelTask( taskID ) ;
          PD_LOG( PDERROR, "_applyInstallRequest failed:rc=%d", rc ) ;
-         sdbGetOMManager()->releaseTaskWriteLock() ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
-      sdbGetOMManager()->releaseTaskWriteLock() ;
+
+      rc = taskManager->enableTask( taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         taskManager->cancelTask( taskID ) ;
+         PD_LOG_MSG( PDERROR, "enable task failed:taskID="OSS_LL_PRINT_FORMAT
+                 "rc=%d", taskID, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
 
       opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
       opBuilder.append( OM_BSON_TASKID, (long long)taskID ) ;
@@ -4541,7 +4533,7 @@ namespace engine
       tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
       tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
       tmpTestBuilder.append( OM_BSON_TASKID, 12345LL ) ;
-      tmpTestBuilder.append( OM_BSON_ISFINISHED, false ) ;
+      tmpTestBuilder.append( OM_BSON_TASK_ISFINISHED, false ) ;
       {
          BSONObjBuilder haha ;
          haha.append( OM_BSON_ITEM_NAME, "coord" ) ;
@@ -4570,7 +4562,7 @@ namespace engine
       tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
       tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
       tmpTestBuilder.append( OM_BSON_TASKID, "ad" ) ;
-      tmpTestBuilder.append( OM_BSON_ISFINISHED, false ) ;
+      tmpTestBuilder.append( OM_BSON_TASK_ISFINISHED, false ) ;
       {
          BSONObjBuilder haha ;
          haha.append( OM_BSON_ITEM_NAME, "coord" ) ;
@@ -4593,7 +4585,7 @@ namespace engine
       tmpTestBuilder.append( OM_REST_RES_RETCODE, 0 ) ;
       tmpTestBuilder.append( OM_REST_RES_DETAIL, "haha" ) ;
       tmpTestBuilder.append( OM_BSON_TASKID, "ad" ) ;
-      tmpTestBuilder.append( OM_BSON_ISFINISHED, true ) ;
+      tmpTestBuilder.append( OM_BSON_TASK_ISFINISHED, true ) ;
       {
          BSONObjBuilder haha ;
          haha.append( OM_BSON_ITEM_NAME, "coord" ) ;
@@ -4611,14 +4603,14 @@ namespace engine
 
    INT32 omQueryInstallProgress::doCommand()
    {
-      INT32 status ;
+      omTaskManager *tm = NULL ;
       string taskID ;
-      bool isAllFinished ;
-      string detail ;
+      UINT64 uTaskID ;
+      bool isFinished ;
+      string status ;
       BSONObj progress ;
 
       BSONObj restTask ;
-      string restTaskID ;
       INT32 rc          = SDB_OK ;
       const CHAR *pTask = NULL ;
       _restAdaptor->getQuery( _restSession, OM_REST_TASK_INFO, &pTask ) ;
@@ -4642,54 +4634,25 @@ namespace engine
          goto error ;
       }
 
-      sdbGetOMManager()->getTaskWriteLock() ;
-//      _testSaveTask() ;
-//      _testUpdateTask() ;
-      //_testFinishTask() ;
-      sdbGetOMManager()->getInstallTask( status, taskID, isAllFinished, detail,
-                                         progress ) ;
-      sdbGetOMManager()->releaseTaskWriteLock() ;
+      taskID  = restTask.getStringField( OM_BSON_TASKID ) ;
+      uTaskID = ossAtoll( taskID.c_str() ) ;
 
-      restTaskID = restTask.getStringField( OM_BSON_TASKID ) ;
-      if ( OM_TASK_STATUS_IDLE == status )
+      tm = sdbGetOMManager()->getTaskManager() ;
+      rc = tm->getProgress( uTaskID, isFinished, status, progress ) ;
+      if ( SDB_OK != rc )
       {
-         rc = SDB_OM_TASK_NOT_EXIST ;
-         _errorDetail = "task is not exist:task=" + restTaskID ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
       }
-      else
+
       {
          BSONObjBuilder opBuilder ;
          BSONObj op ;
-         INT32 restRC = SDB_OK ;
-         if ( taskID.compare( restTaskID ) != 0 )
-         {
-            rc = SDB_OM_TASK_NOT_EXIST ;
-            _errorDetail = "task is not exist:task=" + restTaskID ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-
-         if ( OM_TASK_STATUS_DOING == status )
-         {
-            restRC = SDB_OK ;
-         }
-         else if ( OM_TASK_STATUS_ERROR_ROLLBACK == status )
-         {
-            restRC = SDB_OM_TASK_ROLLBACK ;
-         }
-         else
-         {
-            //OM_TASK_STATUS_ERROR_FINISH/OM_TASK_STATUS_FINISH
-            SDB_ASSERT( isAllFinished, "" ) ;
-            restRC = SDB_OK ;
-         }
-
-         opBuilder.append( OM_REST_RES_RETCODE, restRC ) ;
-         opBuilder.append( OM_REST_RES_DETAIL, detail ) ;
+         opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
          opBuilder.append( OM_BSON_TASKID, taskID ) ;
-         opBuilder.append( OM_BSON_ISFINISHED, isAllFinished ) ;
+         opBuilder.append( OM_BSON_TASK_ISFINISHED, isFinished ) ;
+         opBuilder.append( OM_BSON_TASK_STATUS, status ) ;
          opBuilder.appendArray( OM_BSON_TASK_PROGRESS, progress ) ;
          op = opBuilder.obj() ;
          _restAdaptor->setOPResult( _restSession, SDB_OK, op ) ;
@@ -6055,6 +6018,8 @@ namespace engine
          goto error ;
       }
 
+      sdbGetOMManager()->updateClusterVersion( hostInfo.clusterName ) ;
+
       result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
@@ -6376,7 +6341,7 @@ namespace engine
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
-      
+
       rc = _removeBusiness( pBusinessName, request, isBusinessExistNode, 
                             isForced ) ;
       if ( SDB_OK != rc )
@@ -6763,7 +6728,7 @@ namespace engine
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
-      
+
       _restAdaptor->appendHttpBody( _restSession, bsonStatus .objdata(), 
                                     bsonStatus .objsize(), 1 ) ;
       result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;

@@ -1241,8 +1241,8 @@ namespace engine
          rc = pHost->checkDBPath( dbPath ) ;
          if ( SDB_OK != rc )
          {
-            _errorDetail = string( "check field:" ) + OM_CONF_DETAIL_DBPATH + 
-                           " failed." + pHost->getErrorDetail() ;
+            _errorDetail = string( "check field[" ) + OM_CONF_DETAIL_DBPATH + 
+                           "] failed. " + pHost->getErrorDetail() ;
             PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
             goto error ;
          }

@@ -361,7 +361,7 @@ namespace engine
          INT32 contentSize         = 0 ;
          omHostContent &agentInfo  = iter->second ;
          routeID   = _om->updateAgentInfo( agentInfo.hostName, 
-                                           agentInfo.serviceName) ;
+                                           agentInfo.serviceName ) ;
          subSession = remoteSession->addSubSession( routeID.value ) ;
          if ( NULL == subSession )
          {
@@ -370,7 +370,6 @@ namespace engine
             goto error ;
          }
 
-         
          request = BSON( OM_BSON_FIELD_HOST_NAME << agentInfo.hostName
                          << OM_BSON_FIELD_HOST_IP << agentInfo.ip
                          << OM_BSON_FIELD_HOST_USER << agentInfo.user
@@ -489,27 +488,32 @@ namespace engine
 
    INT32 omHostNotifierJob::doit()
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc     = SDB_OK ;
+      UINT64 count = 0 ;
       _om->getRSManager()->registerEDU( eduCB() ) ;
       while ( TRUE )
       {
-         map< string, UINT32 > mapClusterVersion ;
+         count++ ;
          if ( eduCB()->isInterrupted() )
          {
             rc = SDB_APP_INTERRUPT ;
             goto error ;
          }
 
-         // get all cluster's hostname version
-         _shareVersion->getVersionMap( mapClusterVersion );
+         if ( count % 10 == 0 )
+         {
+            map< string, UINT32 > mapClusterVersion ;
+            // get all cluster's hostname version
+            _shareVersion->getVersionMap( mapClusterVersion );
 
-         // notify agent to update /etc/hosts if cluster's version changed
-         _checkUpdateCluster( mapClusterVersion ) ;
+            // notify agent to update /etc/hosts if cluster's version changed
+            _checkUpdateCluster( mapClusterVersion ) ;
 
-         // delete if cluster is not exist
-         _checkDeleteCluster( mapClusterVersion ) ;
+            // delete if cluster is not exist
+            _checkDeleteCluster( mapClusterVersion ) ;
+         }
 
-         ossSleep( 10 * OSS_ONE_SEC ) ;
+         ossSleep( OSS_ONE_SEC ) ;
       }
 
    done:
@@ -546,21 +550,28 @@ namespace engine
    
    INT32 omTaskJob::doit()
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc     = SDB_OK ;
+      UINT64 count = 0 ;
       _om->getRSManager()->registerEDU( eduCB() ) ;
       while ( TRUE )
       {
+         count++ ;
          if ( eduCB()->isInterrupted() )
          {
             rc = SDB_APP_INTERRUPT ;
             goto error ;
          }
-         _taskManager->run() ;
-         ossSleep( 10 * OSS_ONE_SEC ) ;
+
+         if ( count % 10 == 0 )
+         {
+            _taskManager->run() ;
+         }
+         
+         ossSleep( OSS_ONE_SEC ) ;
       }
 
-      _om->getRSManager()->unregEUD( eduCB() );
    done:
+      _om->getRSManager()->unregEUD( eduCB() );
       return rc ;
    error:
       goto done ;

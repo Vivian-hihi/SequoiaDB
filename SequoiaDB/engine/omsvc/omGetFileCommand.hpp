@@ -88,6 +88,9 @@ namespace engine
          void            _decryptPasswd( const string encryptPasswd, 
                                          string time,
                                          string &decryptPasswd) ;
+         INT32           _getSdbUsrInfo( string clusterName, string &sdbUser, 
+                                         string &sdbPasswd, 
+                                         string &sdbUserGroup ) ;
 
       protected:
          restAdaptor*    _restAdaptor ;
@@ -146,6 +149,8 @@ namespace engine
 
       public:
          virtual INT32   doCommand() ;
+
+      protected:
 
       private:
          INT32           _getClusterInfo( string &clusterName, string &desc,
@@ -282,9 +287,6 @@ namespace engine
          INT32           _generateAddHostReq( string clusterName,
                                               list<BSONObj> &hostInfoList, 
                                               BSONObj &bsonRequest ) ;
-         INT32           _getSdbUsrInfo( string clusterName, string &sdbUser, 
-                                         string &sdbPasswd, 
-                                         string &sdbUserGroup ) ;
          INT32           _getClusterInstallPath( string clusterName, 
                                                  string &installPath ) ;
          INT32           _getPacketFullPath( char *path ) ;
@@ -449,7 +451,7 @@ namespace engine
                                           BSONObj &bsonHostInfo ) ;
 
          INT32          _applyInstallRequest( const BSONObj &bsonConfValue, 
-                                              UINT64 &taskID ) ;
+                                              UINT64 taskID ) ;
 
          INT32          _sendMsgToLocalAgent( omManager *om,
                                               pmdRemoteSession *remoteSession, 

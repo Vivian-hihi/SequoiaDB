@@ -401,7 +401,7 @@ namespace engine
 
    #define  OM_REST_TASK_INFO                "Task"
 
-   #define  OM_BSON_ISFINISHED               OM_TASKINFO_FIELD_ISFINISH
+   #define  OM_BSON_TASK_ISFINISHED          OM_TASKINFO_FIELD_ISFINISH
    #define  OM_BSON_TASK_STATUS              OM_TASKINFO_FIELD_STATUS
    #define  OM_BSON_TASK_PROGRESS            OM_TASKINFO_FIELD_PROGRESS
    #define  OM_BSON_ITEM_NAME                "Name"
@@ -411,6 +411,8 @@ namespace engine
 
    #define  OM_TASK_STATUS_INSTALL           "install"
    #define  OM_TASK_STATUS_ROLLBACK          "rollback"
+   #define  OM_TASK_STATUS_UNINSTALL         "uninstall"
+   #define  OM_TASK_STATUS_ADDHOST           "addhost"
    //******************************************************************
 
    // om list node req

@@ -358,7 +358,7 @@ namespace engine
             goto error ;
          }
 
-         PD_LOG( PDEVENT, "OM: command:command=%s", pSubCommand ) ;
+         PD_LOG( PDDEBUG, "OM: command:command=%s", pSubCommand ) ;
          //TODO temperately close authrity!!!!!!!!!!!
          if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
               && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
