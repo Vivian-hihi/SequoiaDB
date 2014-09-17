@@ -63,7 +63,7 @@ namespace engine
       }
    }
 
-   string _sptSshSession::getLocalIPAddr()
+   string& _sptSshSession::getLocalIPAddr()
    {
       CHAR ipAddr[ 50 ] = { 0 } ;
       if ( _sock )
@@ -74,7 +74,7 @@ namespace engine
       return "" ;
    }
 
-   string _sptSshSession::getPeerIPAddr()
+   string& _sptSshSession::getPeerIPAddr()
    {
       CHAR ipAddr[ 50 ] = { 0 } ;
       if ( _sock )
