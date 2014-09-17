@@ -1,5 +1,4 @@
 import os
-#import buildscripts.utils as utils
 
 Import("toolEnv")
 Import("linux")

@@ -22,10 +22,7 @@ import re
 import shutil
 import urllib
 import urllib2
-#import buildscripts
-#import buildscripts.bb
 import stat
-#from buildscripts import utils
 from os.path import join, dirname, abspath
 import libdeps
 root_dir = dirname(File('SConstruct').rfile().abspath)
@@ -45,7 +42,6 @@ gtest_dir = join(engine_dir,'gtest')
 ncursesinclude_dir = join(engine_dir, 'ncurses/include')
 driver_dir = join(db_dir,'driver')
 java_dir = join(root_dir,'java')
-#buildscripts.bb.checkOk()
 # --- options ----
 
 options = {}
@@ -221,7 +217,7 @@ elif release and debugBuild:
    debugBuild = True
 
 env = Environment( BUILD_DIR=variantDir,
-                   tools=["default", "gch", "jsheader", "mergelib" ],
+                   tools=["default", "gch", "mergelib" ],
                    PYSYSPLATFORM=os.sys.platform,
                    )
 
@@ -609,11 +605,6 @@ if nix:
         env.Append( CPPFLAGS=" -D_DEBUG" );
     else:
         env.Append( CPPFLAGS=" -O3 " )
-
-#if "uname" in dir(os):
-#    hacks = buildscripts.findHacks( os.uname() )
-#    if hacks is not None:
-#        hacks.insert( env , { "linux64" : linux64 } )
 
 try:
     umask = os.umask(022)
