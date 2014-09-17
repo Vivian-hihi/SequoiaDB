@@ -114,14 +114,6 @@ static JSClass global_class = {
    JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
 };
 
-static void reportError(JSContext *cx, const char *msg, JSErrorReport *report)
-{
-   ossPrintf( "%s:%d %s\n" ,
-              report->filename ? report->filename : "(nofile)" ,
-              report->lineno ,
-              msg ) ;
-}
-
 Scope::Scope() :
    _context( NULL ),
    _global( NULL )
@@ -149,7 +141,7 @@ BOOLEAN Scope::init()
 
    JS_SetOptions( _context, JSOPTION_VAROBJFIX );
    JS_SetVersion( _context, JSVERSION_LATEST );
-   JS_SetErrorReporter( _context, reportError );
+   JS_SetErrorReporter( _context, sdbReportError );
 
    _global = JS_NewCompartmentAndGlobalObject( _context, &global_class, NULL );
    VERIFY( _global );
