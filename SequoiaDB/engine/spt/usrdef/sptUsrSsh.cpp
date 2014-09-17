@@ -361,7 +361,9 @@ JS_MAPPING_END()
          << "   getLastOut()       --- get the last cmd remote exec out string" << endl
          << "   exec( command )" << endl
          << "   push( local_file, dst_file, [mode] )" << endl
-         << "   pull( remote_file, local_file, [mode] )" << endl ;
+         << "   pull( remote_file, local_file, [mode] )" << endl
+         << "   getLocalIP()" << endl
+         << "   getPeerIP()" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
