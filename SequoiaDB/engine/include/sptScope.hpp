@@ -37,8 +37,8 @@
 #include "oss.hpp"
 #include "../bson/bson.hpp"
 
-#define SPT_EVAL_FLAG_NONE 0
-#define SPT_EVAL_FLAG_PRINT 0x00000001
+#define SPT_EVAL_FLAG_NONE    0
+#define SPT_EVAL_FLAG_PRINT   0x00000001
 
 namespace engine
 {
@@ -66,7 +66,7 @@ namespace engine
       virtual INT32 eval( const CHAR *code, UINT32 len,
                           const CHAR *filename,
                           UINT32 lineno,
-                          INT32 flag,
+                          INT32 flag, // SPT_EVAL_FLAG_NONE/SPT_EVAL_FLAG_PRINT
                           bson::BSONObj &rval,
                           bson::BSONObj &detail ) = 0 ;
    public:

@@ -31,43 +31,12 @@
 
 #include "sptInvoker.hpp"
 #include "ossUtil.hpp"
+#include "sptCommon.hpp"
 
 using namespace bson ;
 
 namespace engine
 {
-
-   /*
-      Global function
-   */
-   static OSS_THREAD_LOCAL CHAR *__errmsg__ = NULL ;
-   static OSS_THREAD_LOCAL INT32 __errno__ = SDB_OK ;
-
-   const CHAR *sdbGetErrMsg()
-   {
-      return __errmsg__ ;
-   }
-
-   void sdbSetErrmsg( const CHAR *err )
-   {
-      if ( NULL != __errmsg__ )
-      {
-         SDB_OSS_FREE( __errmsg__ ) ;
-         __errmsg__ = NULL ;
-      }
-      __errmsg__ = ossStrdup( err ) ;
-      return ;
-   }
-
-   INT32 sdbGetErrno()
-   {
-      return __errno__ ;
-   }
-
-   void sdbSetErrno( INT32 errNum )
-   {
-      __errno__ = errNum ;
-   }
 
    /*
       _sptInvoker implement

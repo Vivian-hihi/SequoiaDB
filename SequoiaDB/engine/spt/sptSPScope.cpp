@@ -39,24 +39,44 @@
 #include "sptGlobalFunc.hpp"
 #include "sptConvertor2.hpp"
 #include "sptConvertorHelper.hpp"
-
-const UINT32 RUNTIME_SIZE = 8 * 1024 * 1024 ;
-
-const UINT32 FUNC_ARRAY_SIZE = 50 ;
-
-extern INT32 gShellReturnCode ;
+#include "sptCommon.hpp"
 
 namespace engine
 {
-   _sptSPScope::_sptSPScope()
-   :_runtime( NULL ),
-    _context( NULL )
+   /*
+      Local function define
+   */
+   static void reportError( JSContext *cx, const char *msg,
+                            JSErrorReport *report )
    {
-   }
+      BOOLEAN add = FALSE ;
+      if ( sdbIsErrMsgEmpty() && msg )
+      {
+         if ( report->filename )
+         {
+            stringstream ss ;
+            ss << report->filename << ":" << report->lineno << " "
+               << msg ;
+            sdbSetErrmsg( ss.str().c_str() ) ;
+         }
+         else
+         {
+            sdbSetErrmsg( msg ) ;
+         }
+         add = TRUE ;
+      }
 
-   _sptSPScope::~_sptSPScope()
-   {
-      shutdown() ;
+      if ( sdbNeedPrintError() )
+      {
+         ossPrintf( "%s:%d %s\n" ,
+                    report->filename ? report->filename : "(nofile)" ,
+                    report->lineno ,
+                    msg ) ;
+         if ( !add && !sdbIsErrMsgEmpty() )
+         {
+            ossPrintf( "%s\n", sdbGetErrMsg() ) ;
+         }
+      }
    }
 
    static JSClass global_class = {
@@ -73,13 +93,22 @@ namespace engine
    JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
    } ;
 
-   static void reportError( JSContext *cx, const char *msg,
-                            JSErrorReport *report)
+   #define SPT_RVAL_KEY          ""
+   const UINT32 RUNTIME_SIZE = 8 * 1024 * 1024 ;
+   const UINT32 FUNC_ARRAY_SIZE = 50 ;
+
+   /*
+      _sptSPScope define
+   */
+   _sptSPScope::_sptSPScope()
+   :_runtime( NULL ),
+    _context( NULL )
    {
-      ossPrintf( "%s:%d %s\n" ,
-                 report->filename ? report->filename : "(nofile)" ,
-                 report->lineno ,
-                 msg ) ;
+   }
+
+   _sptSPScope::~_sptSPScope()
+   {
+      shutdown() ;
    }
 
    INT32 _sptSPScope::start()
@@ -357,10 +386,13 @@ namespace engine
       jsval exception = JSVAL_VOID ;
       CHAR *print = NULL ;
 
+      // set error report
+      sdbSetPrintError( ( flag & SPT_EVAL_FLAG_PRINT ) ? TRUE : FALSE ) ;
+
       if ( !JS_EvaluateScript( _context, _global, code,
                                len, filename, lineno, &jsrval ) )
       {
-         rc = SDB_SPT_EVAL_FAIL ;
+         rc = sdbGetErrno() ? sdbGetErrno() : SDB_SPT_EVAL_FAIL ;
          PD_LOG( PDERROR, "failed to eval js code" ) ;
          goto error ;
       }
@@ -385,13 +417,12 @@ namespace engine
          }
       }
 
-#if defined (SDB_SHELL)
-      /// TODO: remove this return code.
-      if ( gShellReturnCode && ! JS_IsExceptionPending( _context ) )
+      // clear return error
+      if ( ! JS_IsExceptionPending( _context ) )
       {
-         gShellReturnCode = SDB_OK ;
+         sdbClearErrorInfo() ;
       }
-#endif // SDB_SHELL
+
    done:
       SAFE_JS_FREE ( _context , print ) ;
       return rc ;
@@ -423,7 +454,6 @@ namespace engine
                                  const jsval &jsrval,
                                  bson::BSONObj &rval )
    {
-#define SPT_RVAL_KEY ""
       INT32 rc = SDB_OK ;
       bson::BSONObjBuilder builder ;
 

@@ -48,14 +48,6 @@ namespace engine
    using namespace JS_INVOKER;
 
    /*
-      Global function define
-   */
-   const CHAR *sdbGetErrMsg() ;
-   void sdbSetErrmsg( const CHAR *err ) ;
-   INT32 sdbGetErrno() ;
-   void sdbSetErrno( INT32 errNum ) ;
-
-   /*
       _sptInvoker define
    */
    class _sptInvoker : public SDBObject
