@@ -37,6 +37,14 @@ if [ $? -ne 0 ]; then
    exit 1
 fi
 
+# remove files from exclusive list
+echo "Remove files"
+$SCRIPTPATH/removeFiles.sh $SCRIPTPATH/exclusive.lst
+if [ $? -ne 0 ]; then
+   echo "Failed to remove file from $1"
+   exit 1
+fi
+
 # create gitfile to prevent svn loopup during compile
 echo "Create gitbuild file"
 touch $1/gitbuild
