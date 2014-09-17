@@ -31,6 +31,7 @@
 
 #include "sptGlobalFunc.hpp"
 #include "ossUtil.hpp"
+#include "sptCommon.hpp"
 
 using namespace bson ;
 
@@ -44,7 +45,7 @@ JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
 
 JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "getLastErrMsg", getLastErrorMsg )
-   JS_ADD_GLOBAL_FUNC( "getLastErrMsg", setLastErrorMsg )
+   JS_ADD_GLOBAL_FUNC( "setLastErrMsg", setLastErrorMsg )
    JS_ADD_GLOBAL_FUNC( "getLastError", getLastError )
    JS_ADD_GLOBAL_FUNC( "setLastError", setLastError )
    JS_ADD_GLOBAL_FUNC( "sleep", sleep )
