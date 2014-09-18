@@ -23,7 +23,7 @@ thirdparty/php/linux/retriConfig.sh
 thirdparty/php/linux/forlinux
 SequoiaDB
 SConstruct
-README
+README.md
 NOTICE
 GNU-AGPL-3.0.txt
 build.py

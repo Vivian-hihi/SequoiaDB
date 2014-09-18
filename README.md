@@ -184,7 +184,7 @@ Running:
 
 Documentation:
 -----------------
-	http://www.sequoiadb.com/
+[SequoiaDB Home Page](http://www.sequoiadb.com/)
 
 
 Restrictions:
