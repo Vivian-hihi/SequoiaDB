@@ -4,6 +4,7 @@
 #include "pmdOptions.h"
 #include "pmdDef.hpp"
 #include "utilParam.hpp"
+#include "ossVer.h"
 
 using namespace std ;
 
