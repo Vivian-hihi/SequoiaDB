@@ -35,6 +35,8 @@ namespace engine
    static OSS_THREAD_LOCAL BOOLEAN __printError__ = TRUE ;
    static OSS_THREAD_LOCAL BOOLEAN __hasReadData__ = FALSE ;
 
+   static OSS_THREAD_LOCAL BOOLEAN __hasSetErr__ = FALSE ;
+
    const CHAR *sdbGetErrMsg()
    {
       return __errmsg__ ;
@@ -52,6 +54,7 @@ namespace engine
       {
          __errmsg__ = ossStrdup( err ) ;
       }
+      __hasSetErr__ = TRUE ;
    }
 
    BOOLEAN sdbIsErrMsgEmpty()
@@ -103,7 +106,13 @@ namespace engine
                         JSErrorReport *report )
    {
       BOOLEAN add = FALSE ;
-      if ( sdbIsErrMsgEmpty() && msg )
+
+      if ( SDB_OK == sdbGetErrno() )
+      {
+         sdbSetErrno( SDB_SPT_EVAL_FAIL ) ;
+      }
+
+      if ( ( sdbIsErrMsgEmpty() || !__hasSetErr__ ) && msg )
       {
          if ( report->filename )
          {
@@ -130,6 +139,7 @@ namespace engine
             ossPrintf( "%s\n", sdbGetErrMsg() ) ;
          }
       }
+      __hasSetErr__ = FALSE ;
    }
 
 }

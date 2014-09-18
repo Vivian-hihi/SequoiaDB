@@ -41,57 +41,61 @@
 #include "core.hpp"
 #include "jsapi.h"
 #include "oss.hpp"
+#include "sptSPDef.hpp"
 
 namespace engine
 {
 
-class Scope : public SDBObject
-{
-public:
-   Scope();
-   ~Scope();
+   class Scope : public SDBObject
+   {
+   public:
+      Scope();
+      ~Scope();
 
-   BOOLEAN init();
+      BOOLEAN init();
 
-   OSS_INLINE JSContext *context(){ return _context ;}
+      OSS_INLINE JSContext *context(){ return _context ;}
 
-   /**
-    * if len > 0, then assume code is a string of length len, which may
-    * contain embeded \0;
-    * if len = 0, then assume code is a C-style string ending with \0
-    *
-    * On success, *result points to the result of evalution, otherwise, it is
-    * NOT modified.
-    */
-   INT32 evaluate ( const CHAR *code , UINT32 len , const CHAR *filename ,
-                      UINT32 lineno , CHAR ** result ) ;
+      /**
+       * if len > 0, then assume code is a string of length len, which may
+       * contain embeded \0;
+       * if len = 0, then assume code is a C-style string ending with \0
+       *
+       * On success, *result points to the result of evalution, otherwise, it is
+       * NOT modified.
+       */
+      INT32 evaluate ( const CHAR *code , UINT32 len ,
+                       const CHAR *filename , UINT32 lineno ,
+                       CHAR ** result = NULL,
+                       INT32 printFlag = SPT_EVAL_FLAG_NONE ) ;
 
-   INT32 evaluate2 ( const CHAR *code, UINT32 len, UINT32 lineno,
-                    jsval *rval, CHAR **errMsg ) ;
+      INT32 evaluate2 ( const CHAR *code, UINT32 len, UINT32 lineno,
+                        jsval *rval, CHAR **errMsg,
+                        INT32 printFlag = SPT_EVAL_FLAG_NONE ) ;
 
-private:
-   JSContext *_context;
-   JSObject *_global;
-};
+   private:
+      JSContext *_context;
+      JSObject *_global;
+   };
 
-class ScriptEngine : public SDBObject
-{
-public:
-   ScriptEngine();
-   ~ScriptEngine();
+   class ScriptEngine : public SDBObject
+   {
+   public:
+      ScriptEngine();
+      ~ScriptEngine();
 
-   BOOLEAN init();
+      BOOLEAN init();
 
-   Scope *newScope();
+      Scope *newScope();
 
-   static ScriptEngine *globalScriptEngine();
-   static void purgeGlobalScriptEngine();
+      static ScriptEngine *globalScriptEngine();
+      static void purgeGlobalScriptEngine();
 
-   friend class Scope;
-private:
-   JSRuntime *_runtime;
-   JSErrorReporter _errorReporter ;
-};
+      friend class Scope;
+   private:
+      JSRuntime *_runtime;
+      JSErrorReporter _errorReporter ;
+   };
 
 } // namespace engine
 

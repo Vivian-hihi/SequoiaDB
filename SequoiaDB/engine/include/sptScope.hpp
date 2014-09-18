@@ -35,10 +35,8 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "sptSPDef.hpp"
 #include "../bson/bson.hpp"
-
-#define SPT_EVAL_FLAG_NONE    0
-#define SPT_EVAL_FLAG_PRINT   0x00000001
 
 namespace engine
 {

@@ -206,15 +206,61 @@ namespace engine
                                    INT32 rc,
                                    const bson::BSONObj &detail )
    {
+      sdbSetErrno( rc ) ;
+
       if ( SDB_OK != rc )
       {
+         stringstream ss ;
+         BSONObjIterator itr( detail) ;
+         INT32 fieldNum = detail.nFields() ;
+         INT32 count = 0 ;
+         while ( itr.more() )
+         {
+            if ( count > 0 )
+            {
+               ss << ", " ;
+            }
+            BSONElement e = itr.next() ;
+            if ( fieldNum > 1 ||
+                 0 != ossStrcmp( SPT_ERR, e.fieldName() ) )
+            {
+               ss << e.fieldName() << ": " ;
+            }
+
+            if ( String == e.type() )
+            {
+               ss << e.valuestr() ;
+            }
+            else if ( NumberInt == e.type() )
+            {
+               ss << e.numberInt() ;
+            }
+            else if ( NumberLong == e.type() )
+            {
+               ss << e.numberLong() ;
+            }
+            else if ( NumberDouble == e.type() )
+            {
+               ss << e.numberDouble() ;
+            }
+            else if ( Bool == e.type() )
+            {
+               ss << ( e.boolean() ? "true" : "false" ) ;
+            }
+            else
+            {
+               ss << e.toString( false, false ) ;
+            }
+            ++count ;
+         }
+         sdbSetErrMsg( ss.str().c_str() ) ;
+
          JS_SetPendingException( cx , INT_TO_JSVAL( rc ) ) ;
       }
-
-      /// clear the last errmsg when it is empty.
-      sdbSetErrMsg( detail.isEmpty() ?
-                    "" : detail.toString().c_str() ) ;
-      sdbSetErrno( rc ) ;
+      else
+      {
+         sdbSetErrMsg( NULL ) ;
+      }
 
       return ;
    }

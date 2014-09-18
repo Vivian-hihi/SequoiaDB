@@ -41,8 +41,6 @@
 #include "sptArguments.hpp"
 #include "sptReturnVal.hpp"
 
-#define SPT_ERR "ErrMsg"
-
 #define SPT_CLASS_DEF( c )\
         ( (c)->__desc.getClassDef() )
 
