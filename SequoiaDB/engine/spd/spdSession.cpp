@@ -45,6 +45,8 @@
 #include "spdFMP.hpp"
 #include "fmpDef.hpp"
 
+using namespace bson ;
+
 #define SPD_GET_RES( res )\
         do\
         {\
@@ -140,7 +142,7 @@ namespace engine
                                  FMP_CONTROL_STEP_FETCH ) ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to write begin msg:%d", rc ) ;
+            PD_LOG_MSG( PDERROR, "failed to write fetch msg:%d", rc ) ;
             goto error ;
          }
 
@@ -148,8 +150,8 @@ namespace engine
          value = tmp.getField( FMP_RES_VALUE ) ;
          if ( Object != value.type() )
          {
-            PD_LOG( PDERROR, "invalid type of obj fetched:%s",
-                              tmp.toString().c_str() ) ;
+            PD_LOG_MSG( PDERROR, "invalid type of obj fetched:%s",
+                        tmp.toString().c_str() ) ;
             rc = SDB_SYS ;
             goto error ;
          }
@@ -162,6 +164,14 @@ namespace engine
    done:
       return rc ;
    error:
+      if ( !_errmsg.isEmpty() )
+      {
+         BSONElement e = _errmsg.getField( FMP_ERR_MSG ) ;
+         if ( String == e.type() )
+         {
+            PD_LOG_MSG( PDERROR, e.valuestr() ) ;
+         }
+      }
       goto done ;
    }
 
@@ -183,6 +193,8 @@ namespace engine
           PD_LOG( PDERROR, "failed to get func type: %s",
                   procedures.toString().c_str() ) ;
           rc = SDB_INVALIDARG ;
+          _errmsg = BSON( FMP_ERR_MSG << "Failed to get func type" <<
+                          FMP_RES_CODE << rc ) ;
           goto error ;
        }
 
@@ -198,6 +210,8 @@ namespace engine
        if ( SDB_OK != rc )
        {
           PD_LOG( PDERROR, "failed to write begin msg:%d", rc ) ;
+          _errmsg = BSON( FMP_ERR_MSG << "Failed to write begin msg" <<
+                          FMP_RES_CODE << rc ) ;
           goto error ;
        }
 
@@ -216,6 +230,8 @@ namespace engine
        if ( SDB_OK != rc )
        {
           PD_LOG( PDERROR, "failed to download func:%d", rc ) ;
+          _errmsg = BSON( FMP_ERR_MSG << "Failed to download funcs" <<
+                          FMP_RES_CODE << rc ) ;
           goto error ;
        }
 
@@ -229,6 +245,8 @@ namespace engine
              if ( SDB_OK != rc )
              {
                 PD_LOG( PDERROR, "failed to write func msg:%d", rc ) ;
+                _errmsg = BSON( FMP_ERR_MSG << "Failed to write func msg" <<
+                                FMP_RES_CODE << rc ) ;
                 goto error ;
              }
 
@@ -242,6 +260,8 @@ namespace engine
           else
           {
              PD_LOG( PDERROR, "failed to download func:%d", rc ) ;
+             _errmsg = BSON( FMP_ERR_MSG << "Failed to download funcs" <<
+                             FMP_RES_CODE << rc ) ;
              goto error ;
           }
        }
@@ -263,6 +283,8 @@ namespace engine
        if ( SDB_OK != rc )
        {
           PD_LOG( PDERROR, "failed to write procedures msg:%d", rc ) ;
+          _errmsg = BSON( FMP_ERR_MSG << "Failed to write procedures msg" <<
+                          FMP_RES_CODE << rc ) ;
           goto error ;
        }
 

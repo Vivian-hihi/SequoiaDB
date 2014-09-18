@@ -151,10 +151,13 @@ namespace engine
 
       if ( sdbNeedPrintError() )
       {
-         ossPrintf( "%s:%d %s\n" ,
-                    report->filename ? report->filename : "(nofile)" ,
-                    report->lineno ,
-                    msg ) ;
+         if ( NULL == ossStrstr( sdbGetErrMsg(), msg ) )
+         {
+            ossPrintf( "%s:%d %s\n",
+                       report->filename ? report->filename : "(nofile)" ,
+                       report->lineno ,
+                       msg ) ;
+         }
          if ( !add && !sdbIsErrMsgEmpty() )
          {
             ossPrintf( "%s\n", sdbGetErrMsg() ) ;

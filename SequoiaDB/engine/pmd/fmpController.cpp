@@ -196,7 +196,6 @@ INT32 _fmpController::_runLoop()
          goto error ;
       }
 
-
       rc = _handleOneLoop( obj, step ) ;
       if ( SDB_OK != rc )
       {
@@ -205,7 +204,6 @@ INT32 _fmpController::_runLoop()
       }
 
       FMP_STEP_AUTO_CHANGE( step ) ;
-
    }
 done:
    return rc ;
@@ -367,17 +365,11 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
 
       if ( SDB_DMS_EOC == rc )
       {
-         res = BSON( FMP_RES_CODE << rc ) ;
          _clear() ;
       }
       else if ( SDB_OK != rc )
       {
-         res = BSON( FMP_RES_CODE << rc ) ;
          goto error ;
-      }
-      else
-      {
-         /// do noting.
       }
    }
    else

@@ -54,8 +54,19 @@
 
 #define REPORT_RC(cond, funcName, rc)                       \
    do {                                                     \
-      engine::sdbSetErrMsg( NULL ) ;                                \
-      engine::sdbSetErrno( rc ) ;                                   \
+      engine::sdbSetErrMsg( NULL ) ;                        \
+      engine::sdbSetErrno( rc ) ;                           \
+      if ( ! (cond) ) {                                     \
+         ret = JS_FALSE ;                                   \
+         JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;   \
+         goto error ;                                       \
+      }                                                     \
+   } while ( 0 )
+
+#define REPORT_RC_MSG(cond, funcName, rc, msg )             \
+   do {                                                     \
+      engine::sdbSetErrMsg( msg ) ;                         \
+      engine::sdbSetErrno( rc ) ;                           \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
          JS_SetPendingException ( cx , INT_TO_JSVAL( rc ) ) ;   \
@@ -4743,7 +4754,6 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
    code = ( CHAR *) JS_EncodeString ( cx, jsFunc ) ;
    VERIFY(code) ;
 
-
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
    *cursor = SDB_INVALID_HANDLE ;
@@ -4755,8 +4765,20 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
    if ( SDB_OK != rc )
    {
       bson_print( &errmsg ) ;
+      bson_iterator it ;
+      const CHAR *pErrMsg = NULL ;
+      bson_type iteType = bson_find( &it, next, FMP_ERR_MSG ) ;
+      if ( BSON_STRING == iteType )
+      {
+         pErrMsg = bson_iterator_string( &it ) ;
+      }
+      else
+      {
+         bson_print( &errmsg ) ;
+      }
+      REPORT_RC_MSG ( SDB_OK == rc, "Sdb.eval(): failed to eval", rc,
+                      pErrMsg ) ;
    }
-   REPORT_RC ( SDB_OK == rc, "Sdb.eval(): failed to eval", rc ) ;
 
    if ( FMP_RES_TYPE_VOID == valueType )
    {
