@@ -87,10 +87,11 @@ Building Prerequisites:
                 make ( 3.81 )
                 kernel ( 3.0.13-0.27-ppc64 )
 	Windows:
-		Windows SDK 7.1 ( Installation path must be C:\Program Files\Microsoft SDKs\Windows\v7.1 or C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1 )
+		Windows SDK 7.1 ( Installation path must be C:\Program Files\Microsoft SDKs\Windows\v7.1 or
+		C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1 )
 	Note:
-		The utility version is for recommendation only. Users may use different version of utilities but may need to deal with any incompatibility issues.
-		The kernel version is for recommendation only. Users may use different version of linux kernel but may need to deal with any incompatibility issues.
+		The utility and kernel version are for recommendation only.
+		Users may use different version but may need to deal with any incompatibility issues.
 
 
 Building Engine:
@@ -143,7 +144,7 @@ Building Connectors:
 		ant -Dhadoop.version=2.2
 	Hive Connector:
 		cd driver/java
-                scons
+		scons
 		cd driver/hadoop/hive
 		ant
 	Storm Connector:
