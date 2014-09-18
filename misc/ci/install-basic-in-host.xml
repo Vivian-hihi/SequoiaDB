@@ -8,7 +8,7 @@
 <!-- depends:deploy-software-in-host.xml -->
 <!-- call:null -->
 
-<project name="Install-Software" default="Install-Software">
+<project name="Install-Software" default="install-software">
 	<property file="${test.basedir}/ci.test.properties" />
 	<!-- <property environment="env" /> -->
 	<property name="db.path" value="${install.path}/sequoiadb" />
@@ -29,7 +29,7 @@
 		</classpath>
 	</taskdef> 
 
-	<target name="Clean-Install" depends="">
+	<target name="clean-install" depends="">
 		<echo message="Begin to clean install env..." />
 
 		<exec executable="service" dir="" failonerror="true">
@@ -50,7 +50,7 @@
 	</target>
 
 
-	<target name="Install-Software" depends="">
+	<target name="install-software" depends="">
 		<echo message="Begin to install..." />
 		<chmod file="${test.basedir}/${install.package.filename}" perm="u+x" />
 		<exec executable="${test.basedir}/${install.package.filename}">
