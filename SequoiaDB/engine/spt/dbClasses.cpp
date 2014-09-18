@@ -4767,7 +4767,7 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
       bson_print( &errmsg ) ;
       bson_iterator it ;
       const CHAR *pErrMsg = NULL ;
-      bson_type iteType = bson_find( &it, errmsg, FMP_ERR_MSG ) ;
+      bson_type iteType = bson_find( &it, &errmsg, FMP_ERR_MSG ) ;
       if ( BSON_STRING == iteType )
       {
          pErrMsg = bson_iterator_string( &it ) ;
