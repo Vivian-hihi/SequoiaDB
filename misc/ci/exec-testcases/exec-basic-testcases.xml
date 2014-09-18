@@ -8,13 +8,6 @@
 <!--@param ${ci.properties.path}: where is the ci.properties file -->
 <!--@param ${report.suffix}:this is for long time test, default is NULL-->
 
-<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
-								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list3}" />
-								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
-								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-
 <project name="test-basic-testcases" default="Test-Basic-Testcases">
 	<property file="${ci.properties.path}" />
 	<property name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
