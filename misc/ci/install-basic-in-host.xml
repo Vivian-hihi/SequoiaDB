@@ -25,7 +25,7 @@
 	</taskdef> -->
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
+			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
 	</taskdef> 
 
@@ -78,7 +78,7 @@
 				</exec>
 			</then>
 			<else>
-				<mkdir dir="${db.path}/conf/local/50000" />
+				<mkdir dir="${db.path}/conf/local/${coord.service.port}" />
 				<copy file="${db.path}/conf/samples/sdb.conf.coord" tofile="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
 
