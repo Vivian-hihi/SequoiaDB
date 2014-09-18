@@ -4764,7 +4764,6 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
    rc = sdbEvalJS( *connection, code, &valueType, cursor , &errmsg ) ;
    if ( SDB_OK != rc )
    {
-      bson_print( &errmsg ) ;
       bson_iterator it ;
       const CHAR *pErrMsg = NULL ;
       bson_type iteType = bson_find( &it, &errmsg, FMP_ERR_MSG ) ;
