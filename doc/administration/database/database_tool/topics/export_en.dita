@@ -85,6 +85,13 @@
       </simpletable>
     </section>
     <section>
+      <title>返回值</title>
+      <p>0：成功</p>
+      <p>1：成功但有警告</p>
+      <p>2：失败</p>
+      <p>127：参数错误</p>
+    </section>
+    <section>
       <title>Usage</title>
       <p>In the following sample, sdbexport will export data from the local database which port is
         11810, and collectionspace name is <i>foo</i>, collection name is<i> bar</i>, and export type

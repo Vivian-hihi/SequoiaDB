@@ -149,6 +149,13 @@
     </section>
     <note>linepriority 参数需要被特别关注，如果设置不当，可能会导入数据失败。当记录中包含“记录分隔符”并且 linepriority 为 true 时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当选择 linepriority 为 false 模式。</note>
     <section>
+      <title>返回值</title>
+      <p>0：成功</p>
+      <p>1：成功但有警告</p>
+      <p>2：失败</p>
+      <p>127：参数错误</p>
+    </section>
+    <section>
       <title>用法</title>
       <p>在下面的例子，sdbimprt 将数据导入到本地数据库端口11810中对应集合空间 foo 和集合 bar，导入类型是 csv，导入文件为 test.csv。</p>
       <codeblock>sdbimprt -s localhost -p 11810 --type csv --file test.csv -c foo -l bar</codeblock>

@@ -163,8 +163,14 @@
     </section>
     <note>Linepriority parameters need to be particularly concerned, if set properly, it may fail to import the data. When the record contains "record separator" 
       and linepriority is true, the tool will give priority in accordance with the "record separator" resolution, which led to the import fails. For example: 
-      If the record is {"name":"Mike\n"}, the false linepriority mode should be selected.
-    </note>
+      If the record is {"name":"Mike\n"}, the false linepriority mode should be selected.</note>
+    <section>
+      <title>返回值</title>
+      <p>0：成功</p>
+      <p>1：成功但有警告</p>
+      <p>2：失败</p>
+      <p>127：参数错误</p>
+    </section>
     <section>
       <title>Usage</title>
       <p>In the following sample, sdbimprt will import data into local database which port is 11810,

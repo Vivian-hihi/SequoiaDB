@@ -220,10 +220,11 @@ vm.dirty_ratio = 100
 vm.dirty_background_ratio = 40
 vm.dirty_expire_centisecs = 3000
 vm.vfs_cache_pressure = 200
-vm.min_free_kbytes =  &lt;8% of physical memory size,unit is KB&gt; </pre>
+vm.min_free_kbytes =  &lt;8% of physical memory size, unit is KB&gt; </pre>
 <div class="note note"><span class="notetitle">Note:</span> When
             the available physical memory size of database isn't enough 8GB, doesn't need to set
-            "vm.swappiness = 0".上述dirty类参数只是建议值，具体系统设置时请按原则（控制系统的flush进程只采用脏页超时机制刷新脏页，而不采用脏页比例超支刷新脏页）进行设置。</div>
+            "vm.swappiness = 0". The dirty parameter is only recommended values, the system settings press principle (the control system of flush process using only the dirty page timeout 
+            mechanism to refresh the new dirty page, instead of using a dirty page refresh ratio overruns dirty pages) set.</div>
  
           3. Executing the following command to be
             effective.<pre class="pre codeblock">/sbin/sysctl -p</pre>

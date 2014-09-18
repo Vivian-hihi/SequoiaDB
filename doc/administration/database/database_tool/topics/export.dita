@@ -99,6 +99,13 @@
       </simpletable>
     </section>
     <section>
+      <title>返回值</title>
+      <p>0：成功</p>
+      <p>1：成功但有警告</p>
+      <p>2：失败</p>
+      <p>127：参数错误</p>
+    </section>
+    <section>
       <title>用法</title>
       <p>在下面的例子，sdbexprt 从本地数据库端口11810中导出集合空间 foo 的集合 bar 的数据，导出类型是 csv，导出文件为 contact，导出字段是 field1 和 field2。</p>
       <codeblock>sdbexprt -s localhost -p 11810 --type csv --file contace --fields field1,field2 -c foo -l bar</codeblock>
