@@ -11,8 +11,7 @@
 <!-- call:install-basic-in-host.xml -->
 
 <project name="Install-Software" default="Install-Software">
-	<property file="${properties.dir}" />
-	<echo message="properties.dir=${properties.dir}" />
+	<property file="ci.test.properties" />
 	<!-- <property name="is.standalone.mode" value="false" />
 	<property name="catalog.addrs" value="" />
 	<property name="is.coord.master" value="true" /> -->

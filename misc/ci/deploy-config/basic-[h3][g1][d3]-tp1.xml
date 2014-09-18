@@ -28,7 +28,7 @@
 			   <property name="deploy.host.name" value="${test.machine.no1.basic}" />
 			   <!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
 
-			   <property name="properties.dir" value="${properties.dir}" />
+
 
 			   <property name="is.standalone.mode" value="false" />
 			   <property name="is.coord.master" value="true"/>
@@ -39,7 +39,7 @@
 				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
 				<!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
 
-				<property name="properties.dir" value="${properties.dir}" />
+
 
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="false"/>
@@ -50,8 +50,8 @@
 				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
 				<!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
 
-				<property name="properties.dir" value="${properties.dir}" />
-				
+
+
 				<property name="is.standalone.mode" value="false" />
 				<property name="is.coord.master" value="false"/>
 				<property name="catalog.addrs" value="${test.machine.no1.data}:30003,${test.machine.no2.data}:30003,${test.machine.no3.data}:30003" />
