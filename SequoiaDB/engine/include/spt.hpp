@@ -56,6 +56,9 @@ namespace engine
 
       OSS_INLINE JSContext *context(){ return _context ;}
 
+      INT32 getLastError() ;
+      const CHAR* getLastErrMsg() ;
+
       /**
        * if len > 0, then assume code is a string of length len, which may
        * contain embeded \0;

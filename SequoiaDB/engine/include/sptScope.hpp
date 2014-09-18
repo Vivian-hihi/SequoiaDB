@@ -56,6 +56,9 @@ namespace engine
 
       virtual SPT_SCOPE_TYPE getType() const = 0 ;
 
+      INT32  getLastError() ;
+      const CHAR* getLastErrMsg() ;
+
    public:
       virtual INT32 start() = 0 ;
 

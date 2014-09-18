@@ -161,6 +161,16 @@ namespace engine {
       goto done ;
    }
 
+   INT32 Scope::getLastError()
+   {
+      return sdbGetErrno() ;
+   }
+
+   const CHAR* Scope::getLastErrMsg()
+   {
+      return sdbGetErrMsg() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SCOPE_EVALUATE, "Scope::evaluate" )
    INT32 Scope::evaluate ( const CHAR *code , UINT32 len,
                            const CHAR *filename, UINT32 lineno,

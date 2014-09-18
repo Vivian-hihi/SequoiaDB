@@ -34,6 +34,7 @@
 #include "pd.hpp"
 #include "sptObjDesc.hpp"
 #include "ossUtil.hpp"
+#include "sptCommon.hpp"
 
 namespace engine
 {
@@ -47,6 +48,16 @@ namespace engine
    _sptScope::~_sptScope()
    {
 
+   }
+
+   INT32 _sptScope::getLastError()
+   {
+      return sdbGetErrno() ;
+   }
+
+   const CHAR* _sptScope::getLastErrMsg()
+   {
+      return sdbGetErrMsg() ;
    }
 
    INT32 _sptScope::loadUsrDefObj( _sptObjDesc *desc )
