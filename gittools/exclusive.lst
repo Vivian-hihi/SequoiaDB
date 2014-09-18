@@ -4,3 +4,4 @@ doc/sequoiadbdoc.docx
 misc/ci
 misc/ci-labs
 misc/dita2troff
+driver/hadoop/pig_connector
