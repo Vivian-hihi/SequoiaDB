@@ -34,7 +34,8 @@
 		<hostinfo prefix="host" />
 		<property name="test-type-list" value="basic,driver-C,driver-CPP" />
 		<property name="copy.test.log" value="true"/>
-		<!-- <property name="test-type-list" value="ant" /> -->
+		<property name="import.file.name" value="basic-testcases-time.json" />
+		
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />

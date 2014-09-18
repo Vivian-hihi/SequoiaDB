@@ -88,7 +88,7 @@
 		<hostinfo prefix="host" />
 		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
-		<property name="import.file.name" name="basic-testcases-time.json" />
+		<property name="import.file.name" value="basic-testcases-time.json" />
 
 		<!-- <property name="test-type-list" value="driver-java" /> -->
 		<parallel>

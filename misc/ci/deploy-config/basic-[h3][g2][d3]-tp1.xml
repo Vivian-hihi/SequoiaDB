@@ -111,6 +111,7 @@
 		<hostinfo prefix="host" />
 		<property name="test-type-list" value="basic,driver-python" />
 		<property name="copy.test.log" value="true"/>
+		<property name="import.file.name" value="basic-testcases-time.json" />
 
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
