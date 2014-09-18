@@ -58,8 +58,6 @@
 			</ant>
 		</parallel>
 
-		<echo message="coord.service.port=${coord.service.port}####cata.service.port=${cata.service.port}####data.service.port=${data.service.port}" />
-
 		<sdbdeploy host="${test.machine.no1.basic}" coordport="${coord.service.port}">
 			<catagroup name="cata1">
 				<node host="${test.machine.no1.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
