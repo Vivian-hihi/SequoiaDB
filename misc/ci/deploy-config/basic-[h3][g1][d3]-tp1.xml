@@ -89,7 +89,7 @@
 
 	<target name="Test" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic,driver-java" />
+		<property name="test-type-list" value="basic,ant" />
 		<property name="copy.test.log" value="true"/>
 
 		<!-- <property name="test-type-list" value="driver-java" /> -->
