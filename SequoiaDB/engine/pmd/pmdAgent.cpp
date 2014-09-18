@@ -113,7 +113,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPROCCOORDAGENTREQ, "pmdProcessCoordAgentRequest" )
    static INT32 pmdProcessCoordAgentRequest( CHAR *pReceiveBuffer,
                                              SINT32 packetSize,
-                                             rtnContextBuf &buffObj,
+                                             const CHAR **data,
                                              BOOLEAN *disconnect,
                                              pmdEDUCB *cb,
                                              MsgOpReply &replyHeader,
@@ -199,7 +199,16 @@ namespace engine
          }
       }while ( FALSE ) ;
 
-      SDB_ASSERT( pResultBuff == NULL, "Result must be NULL" ) ;
+      if ( ( MSG_BS_LOB_OPEN_REQ == pHead->opCode ||
+           MSG_BS_LOB_READ_REQ == pHead->opCode ) &&
+           NULL != pResultBuff )
+      {
+         *data = pResultBuff ;
+      }
+      else
+      {
+         SDB_ASSERT( pResultBuff == NULL, "Result must be NULL" ) ;
+      }
 
       if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
       {
@@ -779,6 +788,7 @@ namespace engine
       BOOLEAN disconnect       = FALSE ;
       CHAR *pReceiveBuffer     = NULL ;
       rtnContextBuf  buffObj ;
+      const CHAR *resultBuf = NULL ;
       BOOLEAN isSendHeader     = FALSE ;
       // create reply header
       MsgOpReply replyHeader ;
@@ -883,7 +893,7 @@ namespace engine
          // for coord node, we should create coord agent instead of regular
          // agent
          rc = pmdProcessCoordAgentRequest ( pReceiveBuffer, packetLength,
-                                            buffObj, &disconnect, cb,
+                                            &resultBuf, &disconnect, cb,
                                             replyHeader,
                                             &pErrorObj ) ;
       }
@@ -949,7 +959,12 @@ namespace engine
       // if rc = SDB_OK
       else
       {
-         sendRC = httpAdaptor.sendReply ( replyHeader, buffObj.data(),
+         if ( NULL != buffObj.data() )
+         {
+            resultBuf = buffObj.data() ;
+         }
+
+         sendRC = httpAdaptor.sendReply ( replyHeader, resultBuf,
                                           replyHeader.header.messageLength -
                                           sizeof(replyHeader),
                                           sock, needFetch, isSendHeader ) ;
@@ -1308,6 +1323,7 @@ namespace engine
       BOOLEAN disconnect = FALSE ;
       CHAR *pReceiveBuffer = NULL ;
       rtnContextBuf buffObj ;
+      const CHAR *resultBuf = NULL ;
       MsgOpReply replyHeader ;
       MsgOpReply authReply ;
       ossMemset ( &replyHeader, 0, sizeof(replyHeader)) ;
@@ -1515,7 +1531,7 @@ namespace engine
             // for coord node, we should create coord agent instead of regular
             // agent
             rc = pmdProcessCoordAgentRequest ( pReceiveBuffer, packetLength,
-                                               buffObj, &disconnect, cb,
+                                               &resultBuf, &disconnect, cb,
                                                replyHeader, &pErrorObj ) ;
          }
 
@@ -1608,9 +1624,12 @@ namespace engine
             }
             else if ( replyHeader.header.messageLength-sizeof(replyHeader)!= 0 )
             {
-               SDB_ASSERT ( buffObj.data(), "result buffer is NULL!" ) ;
+               if ( NULL != buffObj.data() )
+               {
+                  resultBuf = buffObj.data() ;
+               }
                // send rest of buffer
-               sendRC = pmdSend ( buffObj.data(),
+               sendRC = pmdSend ( resultBuf,
                         replyHeader.header.messageLength - sizeof(replyHeader),
                         &sock, cb ) ;
                buffObj.release() ; // release lock for data prepare
