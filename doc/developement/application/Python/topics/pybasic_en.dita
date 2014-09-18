@@ -19,8 +19,8 @@ from pysequoiadb.error import SequoiaDBError
 # host= 'localhost', port= 11810, user= '', password= ''
 try:
    db = client()
-except SequoiaDBError:
-   pysequoiadb.cout('SDB_OOM appeared. Please check available memory.' )
+except DBBaseError, e:
+   pysequoiadb._print(e)
    del db
    exit()
 
@@ -38,40 +38,38 @@ del db</codeblock>
           <codeblock># connect to a database
 try:
    db = client()
-except SequoiaDBError :
-   pysequoiadb.cout('Cannot allocate client')
+except SDBBaseError, e:
+   pysequoiadb._print(e)
 
 # success to connect to db
+try:
 cs_name = 'foo'
-rc, cs = db.create_collection_space(cs_name, 16384)
-if const.SDB_OK != rc:
-   pysequoiadb.cout("create collection space[%s] failed, %s" % (cs_name, pysequoiadb.getErr(rc)))
+   cs = db.create_collection_space(cs_name, 16384) except SDBBaseError, e:
+pysequoiadb._print(e)
 
 # success to create collection space
 cl_name = 'bar'
-rc, cs = cs.create_collection(cl_name)
-if const.SDB_OK != rc:
-   pysequoiadb.cout("create collection[%s] failed, %s" % (cl_name, pysequoiadb.getErr(rc)))
-</codeblock></li>
+try:
+   cs = cs.create_collection(cl_name)
+except SDBBaseError, e:
+pysequoiadb._print(e)</codeblock></li>
         <li>Insert data<p></p>
           <codeblock># firstly, create a object to be inserted named idct.
 record = {"name":"Tom", "age":24}
 # then insert this object dict into the collection.
-rc, oid = cl.insert ( record ) ;
-if const.SDB_OK != rc:
-   pysequoiadb.cout("insert record: %s failed, %s" % (record, pysequoiadb.getErr(rc)))</codeblock>
+oid = cl.insert ( record ) ;</codeblock>
           <p>record is the data to be inserted. dict object will be transformed into bson to insert into the collection. oid is a bson-structured objected to be returned after the data is inserted.</p></li>
         <li>Query<p><codeblock># query all the records, put the result into the cursor, and print each record in the cursor.
-rc, cr = cl.query()
-pysequoiadb.ASSERT(rc == const.SDB_OK)
+try:
+   cr = cl.query()
 
-rc, record = cr.next()
-while const.SDB_DMS_EOC != rc:
-   if const.SDB_OK != rc:
-      pysequoiadb.cout("get current record failed. %s", pysequoiadb.getErr(rc))
-   else:
-      pysequoiadb.cout(record)
-   rc, record = cr.next()</codeblock></p>
+   while True:
+      try:
+         record = cr.next()
+      except SDBEndOfCursor:
+         break
+      except SDBBaseError, e:
+         pysequoiadb._print(e)</codeblock></p>
           <p>Query operation needs a cursor object to store all the query results in the local. This sample uses the next API of the cursor operation which gets a record from the query result set. This sample only uses the default index without setting query condition, selecting condition, filtering condition, sorting condition.</p></li>
         <li>Index<p><codeblock>index_name = "index_name"
 # firest create a dict object includes all the information of the index to be created.
@@ -103,7 +101,7 @@ config = {}
 db.create_cata_replica_group ( HOST_NAME, SERVICE_NAME, CATALOG_GROUP_PATH , None)
 
 # create a data replica group.
-rc, rg = db.create_replica_group ( REPLICA_GROUP_NAME)
+rg = db.create_replica_group ( REPLICA_GROUP_NAME)
 
 # create a new data node.
 rg.create_node ( HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, config )
@@ -114,10 +112,10 @@ rg.start ()</codeblock></p></li>
           <p>Data node manipulation includes creating data node (sdbReplicaGroup::createNode), get the master data node (sdbReplicaGroup::getMaster), get the slave data node (sdbReplicaGroup::getSlave), start data node (sdbNode::start), stop data node (sdb::Stop), etc.</p>
           <p>The following code is a sample of data node manipulation. The real application includes error detection, etc.
             <codeblock># get the master data node.
-rc, master = rg.get_master() ;
+master = rg.get_master() ;
 
 # get the slave data node.
-rc, slave = rg.get_slave() ;</codeblock></p>
+slave = rg.get_slave() ;</codeblock></p>
         </li>
       </ul>
     </section>

@@ -40,11 +40,11 @@
     <p class="p">SequoiaDB 的查询用 dict（bson）对象表示，下表以例子的形式显示了 SQL 语句，SequoiaDB shell 语句和 SequoiaDB Python 驱动程序语法之间的对照。</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d53383e17" class="stentry">SQL</th>
+        <th valign="bottom" align="left" id="d53383e17" class="stentry" width="32.075471698113205%">SQL</th>
 
-        <th valign="bottom" align="left" id="d53383e20" class="stentry">SequoiaDB shell</th>
+        <th valign="bottom" align="left" id="d53383e20" class="stentry" width="31.446540880503143%">SequoiaDB shell</th>
 
-        <th valign="bottom" align="left" id="d53383e23" class="stentry">Python Driver</th>
+        <th valign="bottom" align="left" id="d53383e23" class="stentry" width="36.477987421383645%">Python Driver</th>
 
       </tr>
 <tr class="strow">
@@ -66,7 +66,7 @@
 
           <p class="p">selected = { "a":"","b":"" }</p>
 
-          <p class="p">rc, cr = cl.query(obj, selected )</p>
+          <p class="p">cr = cl.query(obj, selected )</p>
 </td>
 
       </tr>
@@ -75,7 +75,7 @@
 
         <td valign="top" headers="d53383e20" class="stentry">db.foo.bar.find()</td>
 
-        <td valign="top" headers="d53383e23" class="stentry">cl =  collection()<p class="p">rc, cr = cl.query () ;</p>
+        <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">cr = cl.query () ;</p>
 
         </td>
 
@@ -86,7 +86,8 @@
         <td valign="top" headers="d53383e20" class="stentry">db.foo.bar.find({age:20})</td>
 
         <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">condition ={"age":20}</p>
-<p class="p">rc, cr = cl.query ( condition ) </p>
+<p class="p">cr = cl.query ( condition )
+          </p>
 </td>
 
       </tr>
@@ -97,7 +98,8 @@
 
         <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">condition ={"age":20}</p>
 <p class="p">orderBy = {"name":1}</p>
-<p class="p">rc, cr = cl .query (condition , None, orderBy , None ) </p>
+<p class="p">cr = cl
+            .query (condition , None, orderBy , None ) </p>
 </td>
 
       </tr>
@@ -106,8 +108,9 @@
 
         <td valign="top" headers="d53383e20" class="stentry">db.foo.bar.find({age:{$gt:20,$lt:30}})</td>
 
-        <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">condition  = {"age":{"$gt":20","$lt":30}}</p>
-<p class="p">rc, cr = cl .query (condition ) ;</p>
+        <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">condition = {"age":{"$gt":20","$lt":30}}</p>
+<p class="p">cr = cl .query
+            (condition ) ;</p>
 </td>
 
       </tr>
@@ -117,7 +120,8 @@
         <td valign="top" headers="d53383e20" class="stentry">db.foo.bar.createIndex("testIndex",{name:1},false)</td>
 
         <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">obj = { "name":1 }</p>
-<p class="p">rc = cl.create_index ( &amp;obj, "testIndex", FALSE, FALSE )</p>
+<p class="p">cl.create_index ( &amp;obj,
+            "testIndex", FALSE, FALSE )</p>
 </td>
 
       </tr>
@@ -126,7 +130,8 @@
 
         <td valign="top" headers="d53383e20" class="stentry">db.foo.bar.find().limit(20).skip(10)</td>
 
-        <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">rc, cr = cl .query (None, None, None, None, 10, 20 ) ;</p>
+        <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">cr = cl .query (None, None, None, None, 10, 20 )
+          ;</p>
 </td>
 
       </tr>
@@ -137,7 +142,8 @@
 
         <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">count = 0L</p>
 <p class="p">condition = { "age":{"$gt":20}}</p>
-<p class="p">rc, count = cl.get_count (condition )</p>
+<p class="p">count =
+            cl.get_count (condition )</p>
 </td>
 
       </tr>
@@ -147,7 +153,8 @@
         <td valign="top" headers="d53383e20" class="stentry">db.foo.bar.update({$set:{a:2}},{b:-1})</td>
 
         <td valign="top" headers="d53383e23" class="stentry">cl = collection()<p class="p">condition = { "b":1 }</p>
-<p class="p">rule = { "$set":{"a":2} }</p>
+<p class="p">rule = { "$set":{"a":2}
+            }</p>
 <p class="p">cl.update ( rule, condition, None ) ;</p>
 </td>
 

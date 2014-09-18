@@ -55,8 +55,8 @@ from pysequoiadb.error import SequoiaDBError
 # host= 'localhost', port= 11810, user= '', password= ''
 try:
    db = client()
-except SequoiaDBError:
-   pysequoiadb.cout('SDB_OOM appeared. Please check available memory.' )
+except DBBaseError, e:
+   pysequoiadb._print(e)
    del db
    exit()
 
@@ -80,21 +80,21 @@ del db</pre>
           <pre class="pre codeblock"># 连接到数据库
 try:
    db = client()
-except SequoiaDBError :
-   pysequoiadb.cout('Cannot allocate client')
+except SDBBaseError, e:
+   pysequoiadb._print(e)
 
 # success to connect to db
+try:
 cs_name = 'foo'
-rc, cs = db.create_collection_space(cs_name, 16384)
-if const.SDB_OK != rc:
-   pysequoiadb.cout("create collection space[%s] failed, %s" % (cs_name, pysequoiadb.getErr(rc)))
+   cs = db.create_collection_space(cs_name, 16384) except SDBBaseError, e:
+pysequoiadb._print(e)
 
 # success to create collection space
 cl_name = 'bar'
-rc, cs = cs.create_collection(cl_name)
-if const.SDB_OK != rc:
-   pysequoiadb.cout("create collection[%s] failed, %s" % (cl_name, pysequoiadb.getErr(rc)))
-</pre>
+try:
+   cs = cs.create_collection(cl_name)
+except SDBBaseError, e:
+pysequoiadb._print(e)</pre>
 </li>
 
         <li class="li">插入数据（insert）<p class="p"/>
@@ -102,24 +102,23 @@ if const.SDB_OK != rc:
           <pre class="pre codeblock"># 首先，需要创建一个插入的 dict 对象。
 record = {"name":"Tom", "age":24}
 # 接着，把此 dict 对象插入集合中
-rc, oid = cl.insert ( record ) ;
-if const.SDB_OK != rc:
-   pysequoiadb.cout("insert record: %s failed, %s" % (record, pysequoiadb.getErr(rc)))</pre>
+oid = cl.insert ( record ) ;</pre>
 
           <p class="p">record 为输入参数，为要插入的数据。dict 对象将会被转换成 bson 插入到集合中。oid 是插入该记录，返回的 bson 结构的 objectid。</p>
 </li>
 
         <li class="li">查询（query）<div class="p"><pre class="pre codeblock"># 查询所有记录，把结果放入游标中，并循环打印游标中的每条记录
-rc, cr = cl.query()
-pysequoiadb.ASSERT(rc == const.SDB_OK)
+try:
+   cr = cl.query()
 
-rc, record = cr.next()
-while const.SDB_DMS_EOC != rc:
-   if const.SDB_OK != rc:
-      pysequoiadb.cout("get current record failed. %s", pysequoiadb.getErr(rc))
-   else:
-      pysequoiadb.cout(record)
-   rc, record = cr.next()</pre>
+   while True:
+      try:
+         record = cr.next()
+      except SDBEndOfCursor:
+         break
+      except SDBBaseError, e:
+         pysequoiadb._print(e)
+</pre>
 </div>
 
           <p class="p">查询操作需要一个游标对象存放查询的结果到本地。要获得查询的结果需要使用游标操作。本例使用了游标操作的 next 接口，表示从查询结果中取到一条记录。此示例中没有设置查询条件，筛选条件，排序情况，及仅使用默认索引。</p>
@@ -166,7 +165,7 @@ config = {}
 db.create_cata_replica_group ( HOST_NAME, SERVICE_NAME, CATALOG_GROUP_PATH , None)
 
 # 创建数据分区组
-rc, rg = db.create_replica_group ( REPLICA_GROUP_NAME)
+rg = db.create_replica_group ( REPLICA_GROUP_NAME)
 
 # 创建第一个数据节点
 rg.create_node ( HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, config )
@@ -181,10 +180,10 @@ rg.start ()</pre>
 
             <div class="p">以下为数据节点操作示例性的例子。真正的应用应包括错误检测等。
             <pre class="pre codeblock"># 获取主数据节点
-rc, master = rg.get_master() ;
+master = rg.get_master() ;
 
 # 获取从数据节点
-rc, slave = rg.get_slave() ;</pre>
+slave = rg.get_slave() ;</pre>
 </div>
 
         </li>
