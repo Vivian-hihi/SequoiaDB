@@ -134,7 +134,7 @@ namespace engine
 
       }
 
-      _netIOV( void *base, UINT32 len )
+      _netIOV( const void *base, UINT32 len )
       :iovBase(base),
        iovLen(len)
       {

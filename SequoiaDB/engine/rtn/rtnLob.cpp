@@ -37,6 +37,7 @@
 #include "pd.hpp"
 #include "rtnContextLob.hpp"
 #include "rtnTrace.hpp"
+#include "rtnLocalLobStream.hpp"
 
 namespace engine
 {
@@ -75,15 +76,8 @@ namespace engine
       rc = lobContext->getLobMetaData( meta ) ;
       if ( SDB_OK != rc )
       {
-         if ( SDB_LOB_IS_UNDER_CRT == rc )
-         {
-            rc = SDB_OK ;
-         }
-         else
-         {
-            PD_LOG( PDERROR, "failed to get meta data:%d", rc ) ;
-            goto error ;
-         }
+         PD_LOG( PDERROR, "failed to get meta data:%d", rc ) ;
+         goto error ;
       }
 
       if ( NULL != dpsCB && 1 < w )
@@ -213,7 +207,7 @@ namespace engine
       {
          if ( SDB_EOF != rc )
          {
-            PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
          }
 
          goto error ;
@@ -285,26 +279,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREMOVELOB, "rtnRemoveLob" )
    INT32 rtnRemoveLob( const BSONObj &meta,
-                       SINT32 flags,
                        SINT16 w,
                        _pmdEDUCB *cb,
                        SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNREMOVELOB ) ;
-      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
-      const CHAR *clName = NULL ;
-      _dmsStorageUnit *su = NULL ;
-      _dmsMBContext *mbContext = NULL ;
+      _rtnLocalLobStream stream ;
       BSONElement fullName ;
       BSONElement oidEle ;
-      _dmsLobMeta lobMeta ;
-      BOOLEAN lockDms = FALSE ;
-      BOOLEAN lockMb = FALSE ;
-      SINT32 pageSize = 0 ;
-      INT32 num = 0 ;
-      dmsLobRecord piece ;
       bson::OID oid ;
 
       fullName = meta.getField( FIELD_NAME_COLLECTION ) ;
@@ -324,112 +307,45 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-
       oid = oidEle.OID() ;
 
-      rc = rtnResolveCollectionNameAndLock( fullName.valuestr(), dmsCB,
-                                            &su, &clName, suID ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to resolve collection name:%s",
-                 fullName.valuestr() ) ;
-         goto error ;
-      }
-
-      rc = su->data()->getMBContext( &mbContext, clName, -1 ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to resolve collection name:%s",
-                 clName ) ;
-         goto error ;
-      }
-
-      rc = dmsCB->writable( cb ) ;
-      if ( SDB_OK !=rc )
-      {
-         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
-         goto error ;
-      }
-      lockDms = TRUE ;
-
-      rc = mbContext->mbLock( EXCLUSIVE ) ;
-      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
-      lockMb = TRUE ;
-
-      pageSize = su->lob()->getLobdPageSize() ;
-
-      rc = su->lob()->getLobMeta( oid, mbContext, cb,
-                                  TRUE, lobMeta ) ;
+      rc = stream.open( fullName.valuestr(),
+                        oid, SDB_LOB_MODE_REMOVE,
+                        cb ) ;
       if ( SDB_OK != rc && SDB_FNE != rc )
       {
-         PD_LOG( PDERROR, "failed to get lob meta:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to remove lob:%s, rc:%d",
+                 oid.str().c_str(), rc ) ;
          goto error ;
       }
       else if ( SDB_FNE == rc )
       {
          rc = SDB_OK ;
-         goto done ;
-      }
-      else if ( !lobMeta.isDone() )
-      {
-         /// other one is deleting or writing this lob.
-         rc = SDB_OK ;
-         goto done ;
+         goto error ;
       }
       else
       {
-         lobMeta._status = DMS_LOB_UNCOMPLETE ;
-         rc = su->lob()->writeLobMeta( oid, mbContext, cb,
-                                       TRUE, lobMeta, FALSE, dpsCB ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to write lob meta:%d", rc ) ;
-            goto error ;
-         }
-         mbContext->mbUnlock() ;
-         lockMb = FALSE ;
+         /// do nothing.
       }
 
-      RTN_LOB_GET_SEQUENCE_NUM( lobMeta._lobLen, pageSize, num ) ;
-      while ( 0 < num )
+      rc = stream.truncate( 0, cb ) ;
+      if ( SDB_OK != rc )
       {
-         --num ;
-         piece.set( &oid, num, 0, 0, NULL ) ;
-         rc = su->lob()->remove( piece, mbContext, cb,
-                                 FALSE, dpsCB ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to remove lob[%s],"
-                    "sequence:%d, rc:%d", piece._oid->str().c_str(),
-                    piece._sequence, rc ) ;
-            goto error ;
-         }
+         PD_LOG( PDERROR, "faield to truncate lob:%d", rc ) ;
+         goto error ;
       }
 
-      if ( NULL != dpsCB && 1 < w )
+      rc = stream.close( cb ) ;
+      if ( SDB_OK != rc )
       {
-         dpsCB->completeOpr( cb, w ) ;
-         cb->resetLsn () ;
+         PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+         goto error ;
       }
-
-      PD_LOG( PDEVENT, "remove lob[%s]", oid.str().c_str() ) ;    
    done:
-      if ( lockMb )
-      {
-         mbContext->mbUnlock() ;
-      }
-      if ( lockDms )
-      {
-         dmsCB->writeDown() ;
-      }
-      if ( NULL != su )
-      {
-         dmsCB->suUnlock ( su->CSID() ) ;
-      }
       PD_TRACE_EXITRC( SDB_RTNREMOVELOB, rc ) ;
       return rc ;
    error:
-      goto done ;
+     goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETLOBMETADATA, "rtnGetLobMetaData" )
@@ -484,6 +400,587 @@ namespace engine
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPREPARE4WRITELOB, "rtnPrepage4WriteLob" )
+   static INT32 rtnPrepage4WriteLob( const CHAR *fullName,
+                                     _pmdEDUCB *cb,
+                                     BOOLEAN acquireLock,
+                                     _dmsStorageUnit *&su,
+                                     _dmsMBContext *&mbContext )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNPREPARE4WRITELOB ) ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      const CHAR *clName = NULL ;
+      BOOLEAN lockDms = FALSE ;
+      _dmsStorageUnit *tmpSu = NULL ;
+      _dmsMBContext *tmpMb = NULL ;
+
+      rc = rtnResolveCollectionNameAndLock( fullName, dmsCB,
+                                            &tmpSu, &clName, suID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to resolve collection:%s, rc:%d",
+                 fullName, rc ) ;
+         goto error ;
+      }
+
+      rc = tmpSu->data()->getMBContext( &tmpMb, clName, -1 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to resolve collection name:%s",
+                 clName ) ;
+         goto error ;
+      }
+
+      rc = dmsCB->writable( cb ) ;
+      if ( SDB_OK !=rc )
+      {
+         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
+         goto error ;
+      }
+
+      if ( acquireLock )
+      {
+         rc = tmpMb->mbLock( EXCLUSIVE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get exclusive lock:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      su = tmpSu ;
+      mbContext = tmpMb ;
+   done:
+      PD_TRACE_EXITRC( SDB_RTNPREPARE4WRITELOB, rc ) ;
+      return rc ;
+   error:
+      if ( NULL != tmpMb &&
+           tmpMb->isMBLock() )
+      {
+         tmpMb->mbUnlock() ;
+      }
+       
+      if ( NULL != tmpMb && NULL != tmpSu )
+      {
+         tmpSu->data()->releaseMBContext( tmpMb ) ;
+         tmpMb = NULL ;
+      }
+
+      if ( NULL != tmpSu )
+      {
+         dmsCB->suUnlock ( tmpSu->CSID() ) ;
+         tmpSu = NULL ;
+      }
+
+      if ( lockDms )
+      {
+         dmsCB->writeDown() ;
+      }
+
+      su = NULL ;
+      mbContext = NULL ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNWRITELOBDONE, "rtnWriteLobDone" )
+   static void rtnWriteLobDone( _pmdEDUCB *cb,
+                                _dmsStorageUnit *&su,
+                                _dmsMBContext *&mbContext )
+   {
+      PD_TRACE_ENTRY( SDB_RTNWRITELOBDONE ) ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      if ( mbContext->isMBLock() )
+      {
+         mbContext->mbUnlock() ;
+      }
+      su->data()->releaseMBContext( mbContext ) ;
+      dmsCB->suUnlock ( su->CSID() ) ;
+      dmsCB->writeDown() ;
+      su = NULL ;
+      mbContext = NULL ;
+      PD_TRACE_EXIT( SDB_RTNWRITELOBDONE ) ;
+      return ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCREATELOB, "rtnCreateLob" )
+   INT32 rtnCreateLob( const CHAR *fullName,
+                       const bson::OID &oid,
+                       pmdEDUCB *cb,
+                       SINT16 w,
+                       SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCREATELOB ) ;
+      SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
+      _dmsStorageUnit *su = NULL ;
+      _dmsMBContext *mbContext = NULL ;
+      _dmsLobMeta meta ;
+      BOOLEAN prepared = FALSE ;
+   
+      rc = rtnPrepage4WriteLob( fullName, cb, TRUE,
+                                su, mbContext ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         goto error ;
+      }
+      prepared = TRUE ;
+
+      rc = su->lob()->getLobMeta( oid, mbContext,
+                                  cb, TRUE, meta ) ;
+      if ( SDB_FNE == rc )
+      {
+         /// do nothing.
+         rc = SDB_OK ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get meta data of lob:%d", rc ) ;
+         goto error ;
+      }
+      else if ( meta.isDone() )
+      {
+         PD_LOG( PDERROR, "lob[%s] exists", oid.str().c_str() ) ;
+         rc = SDB_FE ;
+         goto error ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "lob[%s] is not available",
+                 oid.str().c_str() ) ;
+         rc = SDB_LOB_IS_NOT_AVAILABLE ;
+         goto error ;
+      }
+
+      rc = su->lob()->writeLobMeta( oid, mbContext,
+                                    cb, TRUE, meta, TRUE,
+                                    dpsCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to ensure meta data:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( NULL != dpsCB && 1 < w )
+      {
+         dpsCB->completeOpr( cb, w ) ;
+         cb->resetLsn () ;
+      }
+   done:
+      if ( prepared )
+      {
+         rtnWriteLobDone( cb, su, mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNCREATELOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNWRITELOB2, "rtnWriteLob" ) 
+   INT32 rtnWriteLob( const CHAR *fullName,
+                      const bson::OID &oid,
+                      UINT32 sequence,
+                      UINT32 offset,
+                      UINT32 len,
+                      const CHAR *data,
+                      pmdEDUCB *cb,
+                      SINT16 w,
+                      SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNWRITELOB2 ) ;
+      SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
+      _dmsStorageUnit *su = NULL ;
+      _dmsMBContext *mbContext = NULL ;
+      _dmsLobRecord record ;
+      BOOLEAN prepared = FALSE ;
+
+      rc = rtnPrepage4WriteLob( fullName, cb, FALSE,
+                                su, mbContext ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         goto error ;
+      }
+      prepared = TRUE ;
+
+      record.set( &oid, sequence, offset,
+                  len, data ) ;
+      if ( DMS_LOB_META_SEQUENCE != sequence )
+      {
+         rc = su->lob()->write( record, mbContext, cb,
+                                FALSE, dpsCB ) ;
+      }
+      else
+      {
+         /// update meta data.
+         rc = su->lob()->update( record, mbContext, cb,
+                                FALSE, dpsCB ) ;
+      }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( NULL != dpsCB && 1 < w )
+      {
+         dpsCB->completeOpr( cb, w ) ;
+         cb->resetLsn () ;
+      }   
+   done:
+      if ( prepared )
+      {
+         rtnWriteLobDone( cb, su, mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNWRITELOB2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCLOSELOB2, "rtnCloseLob" )
+   INT32 rtnCloseLob( const CHAR *fullName,
+                      const bson::OID &oid,
+                      const dmsLobMeta &meta,
+                      pmdEDUCB *cb,
+                      SINT16 w,
+                      SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCLOSELOB2 ) ;
+      SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
+      _dmsStorageUnit *su = NULL ;
+      _dmsMBContext *mbContext = NULL ;
+      BOOLEAN prepared = FALSE ;
+
+      rc = rtnPrepage4WriteLob( fullName, cb, FALSE,
+                                su, mbContext ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         goto error ;
+      }
+      prepared = TRUE ;
+
+      rc = su->lob()->writeLobMeta( oid, mbContext, cb,
+                                    FALSE, meta, FALSE,
+                                    dpsCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to write meta data of lob:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( NULL != dpsCB && 1 < w )
+      {
+         dpsCB->completeOpr( cb, w ) ;
+         cb->resetLsn () ;
+      }
+   done:
+      if ( prepared )
+      {
+         rtnWriteLobDone( cb, su, mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNCLOSELOB2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPREPARE4READLOB, "rtnPrepage4ReadLob" )
+   static INT32 rtnPrepage4ReadLob( const CHAR *fullName,
+                                    _dmsStorageUnit *&su,
+                                    _dmsMBContext *&mbContext )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNPREPARE4READLOB ) ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      const CHAR *clName = NULL ;
+      BOOLEAN lockDms = FALSE ;
+      _dmsStorageUnit *tmpSu = NULL ;
+      _dmsMBContext *tmpMb = NULL ;
+
+      rc = rtnResolveCollectionNameAndLock( fullName, dmsCB,
+                                            &tmpSu, &clName, suID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to resolve collection:%s, rc:%d",
+                 fullName, rc ) ;
+         goto error ;
+      }
+
+      rc = tmpSu->data()->getMBContext( &tmpMb, clName, -1 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to resolve collection name:%s",
+                 clName ) ;
+         goto error ;
+      }
+
+      su = tmpSu ;
+      mbContext = tmpMb ;
+   done:
+      PD_TRACE_EXITRC( SDB_RTNPREPARE4READLOB, rc ) ;
+      return rc ;
+   error:
+      if ( NULL != tmpMb &&
+           tmpMb->isMBLock() )
+      {
+         tmpMb->mbUnlock() ;
+      }
+
+      if ( NULL != tmpMb && NULL != tmpSu )
+      {
+         tmpSu->data()->releaseMBContext( tmpMb ) ;
+         tmpMb = NULL ;
+      }
+
+      if ( NULL != tmpSu )
+      {
+         dmsCB->suUnlock ( tmpSu->CSID() ) ;
+         tmpSu = NULL ;
+      }
+
+      if ( lockDms )
+      {
+         dmsCB->writeDown() ;
+      }
+
+      su = NULL ;
+      mbContext = NULL ;
+      goto done ;
+   }
+
+   static void rtnReadLobDone( _pmdEDUCB *cb,
+                               _dmsStorageUnit *&su,
+                               _dmsMBContext *&mbContext )
+   {
+      PD_TRACE_ENTRY( SDB_RTNWRITELOBDONE ) ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      su->data()->releaseMBContext( mbContext ) ;
+      dmsCB->suUnlock ( su->CSID() ) ;
+      su = NULL ;
+      mbContext = NULL ;
+      PD_TRACE_EXIT( SDB_RTNWRITELOBDONE ) ;
+      return ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETLOBMETADATA2, "rtnGetLobMetaData" )
+   INT32 rtnGetLobMetaData( const CHAR *fullName,
+                            const bson::OID &oid,
+                            pmdEDUCB *cb,
+                            dmsLobMeta &meta )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNGETLOBMETADATA2 ) ;
+      _dmsStorageUnit *su = NULL ;
+      _dmsMBContext *mbContext = NULL ;
+      _dmsLobRecord record ;
+      BOOLEAN prepared = FALSE ;
+
+      rc = rtnPrepage4ReadLob( fullName, 
+                               su, mbContext ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare to read lob:%d", rc ) ;
+         goto error ;
+      }
+      prepared = TRUE ;
+
+      rc = su->lob()->getLobMeta( oid, mbContext,
+                                  cb, FALSE, meta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read lob[%s] in collection[%s], rc:%d",
+                 oid.str().c_str(), fullName, rc ) ;
+         goto error ;
+      }
+
+      if ( !meta.isDone() )
+      {
+         PD_LOG( PDERROR, "lob[%s] is not available",
+                 oid.str().c_str() ) ;
+         rc = SDB_LOB_IS_NOT_AVAILABLE ;
+         goto error ;
+      }
+   done:
+      if ( prepared )
+      {
+         rtnReadLobDone( cb, su, mbContext ) ; 
+      }
+      PD_TRACE_EXITRC( SDB_RTNGETLOBMETADATA2, rc ) ;
+      return rc ;
+   error:
+      meta.clear() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREADLOB2, "rtnReadLob" )
+   INT32 rtnReadLob( const CHAR *fullName,
+                     const bson::OID &oid,
+                     UINT32 sequence,
+                     UINT32 offset,
+                     UINT32 len,
+                     pmdEDUCB *cb,
+                     CHAR *data,
+                     UINT32 &read )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNREADLOB2 ) ;
+      _dmsStorageUnit *su = NULL ;
+      _dmsMBContext *mbContext = NULL ;
+      _dmsLobRecord record ;
+      BOOLEAN prepared = FALSE ;
+      const CHAR *np = NULL ;
+
+      rc = rtnPrepage4ReadLob( fullName,
+                               su, mbContext ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare to read lob:%d", rc ) ;
+         goto error ;
+      }
+      prepared = TRUE ;
+
+      record.set( &oid, sequence, offset, len, np ) ;
+      rc = su->lob()->read( record, mbContext, cb,
+                            FALSE, data, read ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      if ( prepared )
+      {
+         rtnReadLobDone( cb, su, mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNREADLOB2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREMOVELOBPIECE, "rtnRemoveLobPiece" )
+   INT32 rtnRemoveLobPiece( const CHAR *fullName,
+                            const bson::OID &oid,
+                            UINT32 sequence,
+                            pmdEDUCB *cb,
+                            SINT16 w,
+                            SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNREMOVELOBPIECE ) ;
+      dmsStorageUnit *su = NULL ;
+      _dmsMBContext *mbContext = NULL ;
+      _dmsLobRecord record ;
+      BOOLEAN prepared = FALSE ;
+
+      rc = rtnPrepage4WriteLob( fullName, cb, FALSE,
+                                su, mbContext ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         goto error ;
+      }
+      prepared = TRUE ;
+
+      record.set( &oid, sequence, 0, 0, NULL ) ;
+      rc = su->lob()->remove( record, mbContext, cb,
+                              FALSE, dpsCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to remove lob[%s],"
+                 "sequence:%d, rc:%d", oid.str().c_str(),
+                 sequence, rc ) ;
+         goto error ;
+      }
+
+      if ( NULL != dpsCB && 1 < w )
+      {
+         dpsCB->completeOpr( cb, w ) ;
+         cb->resetLsn () ;
+      }
+   done:
+      if ( prepared )
+      {
+         rtnWriteLobDone( cb, su, mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNREMOVELOBPIECE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNQUERYANDINVALIDAGELOB, "rtnQueryAndInvalidateLob" )
+   INT32 rtnQueryAndInvalidateLob( const CHAR *fullName,
+                                   const bson::OID &oid,
+                                   pmdEDUCB *cb,
+                                   SINT16 w,
+                                   SDB_DPSCB *dpsCB,
+                                   dmsLobMeta &meta )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNQUERYANDINVALIDAGELOB ) ;
+      BOOLEAN prepared = FALSE ;
+      dmsStorageUnit *su = NULL ;
+      _dmsMBContext *mbContext = NULL ;
+      dmsLobMeta lobMeta ;
+
+      rc = rtnPrepage4WriteLob( fullName, cb, TRUE,
+                                su, mbContext ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         goto error ;
+      }
+      prepared = TRUE ;
+
+      rc = su->lob()->getLobMeta( oid, mbContext, cb,
+                                  TRUE, lobMeta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get lob meta[%s], rc:%d",
+                 oid.str().c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( !lobMeta.isDone() )
+      {
+         rc = SDB_LOB_IS_NOT_AVAILABLE ;
+         goto error ;
+      }
+
+      meta = lobMeta ;
+      lobMeta._status = DMS_LOB_UNCOMPLETE ;
+
+      rc = su->lob()->writeLobMeta( oid, mbContext, cb,
+                                    TRUE, lobMeta, FALSE,
+                                    dpsCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to invalidate lob[%s], rc:%d",
+                 oid.str().c_str(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( prepared )
+      {
+         rtnWriteLobDone( cb, su, mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNQUERYANDINVALIDAGELOB, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 }

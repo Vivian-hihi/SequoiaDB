@@ -41,6 +41,11 @@
 
 namespace engine
 {
+#define RTN_LOB_WRITE_PIECE_NUM 10
+#define RTN_LOB_READ_PIECE_NUM 10
+#define RTN_LOB_REMOVE_PIECE_NUM 1000
+#define SDB_LOB_MODE_REMOVE 0x00000010
+
    class _pmdEDUCB ;
    class _dmsStorageUnit ;
    class _dpsLogWrapper ;
@@ -78,6 +83,9 @@ namespace engine
 
       INT32 seek( SINT64 offset,
                   _pmdEDUCB *cb ) ;
+
+      INT32 truncate( SINT64 len,
+                      _pmdEDUCB *cb ) ;
 
       INT32 closeWithException( _pmdEDUCB *cb ) ;
 
@@ -133,9 +141,15 @@ namespace engine
          return _pool ;
       }
 
+      INT32 _getMode() const
+      {
+         return _mode ;
+      }
+
    private:
       virtual INT32 _prepare( const CHAR *fullName,
                               const bson::OID &oid,
+                              INT32 mode,
                               _pmdEDUCB *cb ) = 0 ;
 
       virtual INT32 _queryLobMeta( _pmdEDUCB *cb,
@@ -167,12 +181,28 @@ namespace engine
       virtual INT32 _completeLob( const _dmsLobMeta &meta,
                                   _pmdEDUCB *cb ) = 0 ;
 
+      virtual INT32 _close( _pmdEDUCB *cb ) = 0 ;
+
       virtual INT32 _rollback( _pmdEDUCB *cb ) { return SDB_SYS ; }
 
+      virtual INT32 _queryAndInvalidateMetaData( _pmdEDUCB *cb,
+                                                 _dmsLobMeta &meta ) = 0 ;
+
+      virtual INT32 _removev( const _dmsLobRecord *pieces,
+                              UINT32 cnt,
+                              _pmdEDUCB *cb ) = 0 ;
+
+   private:
       INT32 _readFromPool( UINT32 len,
                            _rtnContextBase *context,
                            _pmdEDUCB *cb,
                            UINT32 &readLen ) ;
+
+      INT32 _open4Read( _pmdEDUCB *cb ) ;
+
+      INT32 _open4Create( _pmdEDUCB *cb ) ;
+
+      INT32 _open4Remove( _pmdEDUCB *cb ) ;
 
    private:
       CHAR _fullName[ DMS_COLLECTION_SPACE_NAME_SZ +

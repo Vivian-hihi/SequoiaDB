@@ -94,8 +94,8 @@ namespace engine
             return "EXPLAIN" ;
          case RTN_CONTEXT_LOB :
             return "LOB" ;
-         case RTN_CONTEXT_COORD_LOB :
-            return "COORDLOB" ;
+         case RTN_CONTEXT_SHARD_OF_LOB :
+            return "SHARD_OF_LOB" ;
          default :
             break ;
       }

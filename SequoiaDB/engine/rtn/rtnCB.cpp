@@ -39,6 +39,7 @@
 #include "rtnTrace.hpp"
 #include "rtnContextSort.hpp"
 #include "rtnContextLob.hpp"
+#include "rtnContextShdOfLob.hpp"
 
 using namespace std;
 namespace engine
@@ -189,6 +190,10 @@ namespace engine
             case RTN_CONTEXT_LOB :
                  (*context) = SDB_OSS_NEW rtnContextLob( _contextHWM,
                                                          pEDUCB->getID() ) ;
+                break ;
+            case RTN_CONTEXT_SHARD_OF_LOB :
+                 (*context) = SDB_OSS_NEW rtnContextShdOfLob( _contextHWM,
+                                                              pEDUCB->getID() ) ;
                 break ;
             default :
                PD_LOG( PDERROR, "Unknow context type: %d", type ) ;

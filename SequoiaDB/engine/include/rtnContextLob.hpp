@@ -18,10 +18,6 @@
 
    Descriptive Name = N/A
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of data management component. This file contains code logic for
-   data insert/update/delete. This file does NOT include index logic.
-
    Dependencies: N/A
 
    Restrictions: N/A

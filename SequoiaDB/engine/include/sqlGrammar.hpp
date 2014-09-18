@@ -19,9 +19,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of PMD component. This file contains functions for agent processing.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -41,13 +38,13 @@
 #include "core.hpp"
 #include "oss.hpp"
 
-#include <boost/spirit/include/classic_ast.hpp>
-#include <boost/spirit/include/classic_core.hpp>
-
 /// safe to share grammar across threads.
 #define BOOST_SPIRIT_THREADSAFE
 /// set the start limit
 #define BOOST_SPIRIT_GRAMMAR_STARTRULE_TYPE_LIMIT 20
+
+#include <boost/spirit/include/classic_ast.hpp>
+#include <boost/spirit/include/classic_core.hpp>
 
 using namespace boost ;
 using namespace BOOST_SPIRIT_CLASSIC_NS ;
@@ -673,7 +670,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
             sql = select | insert | update | del | crtindex | dropindex
                   | crtcl | dropcl | crtcs |dropcs | listcs| listcl
                   | begintran | rollback | commit ;
-
+/*
 #ifdef _DEBUG
             BOOST_SPIRIT_DEBUG_RULE(sql) ;
             BOOST_SPIRIT_DEBUG_RULE(insert) ;
@@ -694,7 +691,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
 
 #endif
 
-/*            this->start_parserT( select, insert,
+            this->start_parserT( select, insert,
                                  update, del,
                                  crtindex, dropindex,
                                  crtcl, dropcl,

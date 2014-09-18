@@ -2353,7 +2353,7 @@ INT32 clientBuildOpenLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
 {
    INT32 rc = SDB_OK ;
    rc = clientBuildLobMsg( ppBuffer, bufferSize,
-                           MSG_LOB_OPEN_REQ, meta,
+                           MSG_BS_LOB_OPEN_REQ, meta,
                            flags, w, -1, reqID, NULL,
                            NULL, NULL, endianConvert ) ;
 
@@ -2375,7 +2375,7 @@ INT32 clientBuildWriteLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
 {
    INT32 rc = SDB_OK ;
    rc = clientBuildLobMsg( ppBuffer, bufferSize,
-                           MSG_LOB_WRITE_REQ, NULL,
+                           MSG_BS_LOB_WRITE_REQ, NULL,
                            flags, w, contextID, reqID, &lobOffset,
                            &len, buf, endianConvert ) ;
    if ( SDB_OK != rc )
@@ -2396,7 +2396,7 @@ INT32 clientBuildReadLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
 {
    INT32 rc = SDB_OK ;
    rc = clientBuildLobMsg( ppBuffer, bufferSize,
-                           MSG_LOB_READ_REQ, NULL,
+                           MSG_BS_LOB_READ_REQ, NULL,
                            flags, 1, contextID, reqID,
                            &lobOffset, &len, NULL, endianConvert ) ;
    if ( SDB_OK != rc )
@@ -2416,7 +2416,7 @@ INT32 clientBuildCloseLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
 {
    INT32 rc = SDB_OK ;
    rc = clientBuildLobMsg( ppBuffer, bufferSize,
-                           MSG_LOB_CLOSE_REQ, NULL,
+                           MSG_BS_LOB_CLOSE_REQ, NULL,
                            flags, w, contextID, reqID,
                            NULL, NULL, NULL, endianConvert ) ;
    if ( SDB_OK != rc )
@@ -2437,7 +2437,7 @@ INT32 clientBuildRemoveLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
 {
    INT32 rc = SDB_OK ;
    rc = clientBuildLobMsg( ppBuffer, bufferSize,
-                           MSG_LOB_REMOVE_REQ, meta,
+                           MSG_BS_LOB_REMOVE_REQ, meta,
                            flags, w, -1, reqID,
                            NULL, NULL, NULL, endianConvert ) ;
    if ( SDB_OK != rc )

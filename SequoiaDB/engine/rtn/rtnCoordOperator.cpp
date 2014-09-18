@@ -59,6 +59,7 @@
 #include "rtnCoordSql.hpp"
 #include "rtnCoordAggregate.hpp"
 #include "coordDef.hpp"
+#include "rtnCoordLob.hpp"
 #include <stdlib.h>
 
 using namespace bson;
@@ -81,6 +82,11 @@ namespace engine
    RTN_COORD_OP_ADD( MSG_BS_TRANS_ROLLBACK_REQ, rtnCoordTransRollback )
    RTN_COORD_OP_ADD( MSG_BS_SQL_REQ, rtnCoordSql )
    RTN_COORD_OP_ADD( MSG_BS_MSG_REQ, rtnCoordMsg )
+   RTN_COORD_OP_ADD( MSG_BS_LOB_OPEN_REQ, rtnCoordOpenLob )
+   RTN_COORD_OP_ADD( MSG_BS_LOB_WRITE_REQ, rtnCoordWriteLob )
+   RTN_COORD_OP_ADD( MSG_BS_LOB_READ_REQ, rtnCoordReadLob )
+   RTN_COORD_OP_ADD( MSG_BS_LOB_CLOSE_REQ, rtnCoordCloseLob )
+   RTN_COORD_OP_ADD( MSG_BS_LOB_REMOVE_REQ, rtnCoordRemoveLob )
    RTN_COORD_OP_ADD( MSG_NULL, rtnCoordOperatorDefault )
    RTN_COORD_OP_END
 

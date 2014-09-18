@@ -268,20 +268,18 @@ enum MSG_TYPE
    MSG_AUTH_DELUSR_REQ                 = 7002,
    MSG_AUTH_DELUSR_RES                 = MAKE_REPLY_TYPE(MSG_AUTH_DELUSR_REQ),
 
-   MSG_LOB_BEGIN                       = 8000,
-   MSG_LOB_OPEN_REQ                    = 8001,
-   MSG_LOB_OPEN_RES                    = MAKE_REPLY_TYPE( MSG_LOB_OPEN_REQ ),
-   MSG_LOB_WRITE_REQ                   = 8002,
-   MSG_LOB_WRITE_RES                   = MAKE_REPLY_TYPE( MSG_LOB_WRITE_REQ ),
-   MSG_LOB_READ_REQ                    = 8003,
-   MSG_LOB_READ_RES                    = MAKE_REPLY_TYPE( MSG_LOB_READ_REQ ),
-   MSG_LOB_REMOVE_REQ                  = 8004,
-   MSG_LOB_REMOVE_RES                  = MAKE_REPLY_TYPE( MSG_LOB_REMOVE_REQ ),
-   MSG_LOB_CLOSE_REQ                   = 8005,
-   MSG_LOB_CLOSE_RES                   = MAKE_REPLY_TYPE( MSG_LOB_CLOSE_REQ ),
-   MSG_LOB_META_REQ                    = 8006,
-   MSG_LOB_META_RES                    = MAKE_REPLY_TYPE( MSG_LOB_META_REQ ),
-   MSG_LOB_END                         = 8999,
+   MSG_LOB_BEGIN                          = 8000,
+   MSG_BS_LOB_OPEN_REQ                    = 8001,
+   MSG_BS_LOB_OPEN_RES                    = MAKE_REPLY_TYPE( MSG_BS_LOB_OPEN_REQ ),
+   MSG_BS_LOB_WRITE_REQ                   = 8002,
+   MSG_BS_LOB_WRITE_RES                   = MAKE_REPLY_TYPE( MSG_BS_LOB_WRITE_REQ ),
+   MSG_BS_LOB_READ_REQ                    = 8003,
+   MSG_BS_LOB_READ_RES                    = MAKE_REPLY_TYPE( MSG_BS_LOB_READ_REQ ),
+   MSG_BS_LOB_REMOVE_REQ                  = 8004,
+   MSG_BS_LOB_REMOVE_RES                  = MAKE_REPLY_TYPE( MSG_BS_LOB_REMOVE_REQ ),
+   MSG_BS_LOB_CLOSE_REQ                   = 8005,
+   MSG_BS_LOB_CLOSE_RES                   = MAKE_REPLY_TYPE( MSG_BS_LOB_CLOSE_REQ ),
+   MSG_LOB_END                            = 8999,
 
    MSG_NULL                            = 999999        //reserved
 };
@@ -694,10 +692,11 @@ union _MsgLobTuple
    struct
    {
       UINT32 len ;
+      UINT32 sequence ;
       SINT64 offset ;
    } columns ;
 
-   CHAR data[12] ;
+   CHAR data[16] ;
 } ;
 typedef union _MsgLobTuple MsgLobTuple ;
 

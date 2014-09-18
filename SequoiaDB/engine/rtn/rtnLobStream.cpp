@@ -69,9 +69,6 @@ using namespace bson ;
            }\
         } while ( FALSE )
 
-#define RTN_LOB_WRITE_PIECE_NUM 10 
-#define RTN_LOB_READ_PIECE_NUM 10
-
 namespace engine
 {
    _rtnLobStream::_rtnLobStream()
@@ -99,7 +96,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_OPEN ) ;
 
-      rc = _prepare( fullName, oid, cb ) ;
+      rc = _prepare( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to prepare to open lob[%s]"
@@ -109,53 +106,27 @@ namespace engine
 
       ossMemcpy( _fullName, fullName, ossStrlen( fullName ) ) ;
       ossMemcpy( &_oid, &oid, sizeof( oid ) ) ;
+      _mode = mode ;
 
-      rc = _queryLobMeta( cb, _meta ) ;
-      if ( SDB_OK == rc )
+      if ( SDB_LOB_MODE_R == mode )
       {
-         /// can not create a lob when it exists.
-         if ( SDB_LOB_MODE_CREATEONLY & mode )
-         {
-            rc = SDB_FE ;
-            goto error ;
-         }
+         rc = _open4Read( cb ) ;
       }
-      else if ( SDB_FNE == rc )
+      else if ( SDB_LOB_MODE_CREATEONLY == mode )
       {
-         if ( SDB_LOB_MODE_CREATEONLY & mode )
-         {
-            rc = SDB_OK ;
-            BOOLEAN isNew = FALSE ;
-            rc = _ensureLob( cb, _meta, isNew ) ;
-            if ( SDB_OK == rc )
-            {
-               if ( !isNew )
-               {
-                  rc = SDB_FE ;
-                  goto error ;
-               }
-            }
-            else
-            {
-               PD_LOG( PDERROR, "failed to ensure lob meta:%d", rc ) ;
-               goto error ;
-            }
-         }
-         else
-         {
-            PD_LOG( PDERROR, "lob[%s] does not exist", oid.str().c_str() ) ;
-            goto error ;
-         }
+         rc = _open4Create( cb ) ;
+      }
+      else if ( SDB_LOB_MODE_REMOVE == mode )
+      {
+         rc = _open4Remove( cb ) ;
       }
       else
       {
-         PD_LOG( PDERROR, "failed to get meta of lob[%s], rc:%d",
-                 getOID().str().c_str(), rc ) ;
+         PD_LOG( PDERROR, "unknown open mode:%d", mode ) ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
-
-      _opened = TRUE ;
-
+      
       rc = _getLobPageSize( _lobPageSz ) ;
       if ( SDB_OK != rc )
       {
@@ -170,13 +141,7 @@ namespace engine
          goto error ;
       }
 
-      _mode = mode ;
-
-      if ( SDB_LOB_MODE_CREATEONLY & mode )
-      {
-         PD_LOG( PDEVENT, "lob[%s] in [%s] is created, wait to be completed",
-                 getOID().str().c_str(), fullName ) ;
-      }
+      _opened = TRUE ;
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_OPEN, rc ) ;
       return rc ;
@@ -254,7 +219,26 @@ namespace engine
          PD_LOG( PDEVENT, "lob [%s] is closed, len:%lld",
                  getOID().str().c_str(), _offset ) ;
       }
+      else if ( SDB_LOB_MODE_REMOVE & _mode )
+      {
+         _dmsLobRecord piece ;
+         piece.set( &_oid, 0, 0, 0, NULL ) ;
+         rc = _removev( &piece, 1, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to remove meta data of lob:%d", rc ) ;
+            goto error ;
+         }
+         PD_LOG( PDEVENT, "lob [%s] is removed",
+                 getOID().str().c_str() ) ;
+      }
 
+      rc = _close( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
+         goto error ;
+      }
       _opened = FALSE ;
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_CLOSE, rc ) ;
@@ -459,7 +443,7 @@ namespace engine
       rc = _readv( pieces, pieceNum, cb, needLen ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
+         PD_LOG( PDERROR, "failed to read lob[%s], rc:%d",
                     _oid.str().c_str(), rc ) ;
          goto error ;
       }
@@ -508,6 +492,67 @@ namespace engine
 
       _offset = offset ;
    done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_TRUNCATE, ""_rtnLobStream::truncate" )
+   INT32 _rtnLobStream::truncate( SINT64 len,
+                                  _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_TRUNCATE ) ;
+      SDB_ASSERT( SDB_LOB_MODE_REMOVE == _mode && 0 == len,
+                  "do not support other params now" ) ;
+
+      dmsLobRecord *pieces = NULL ;
+      UINT32 bufLen = sizeof( dmsLobRecord ) * RTN_LOB_REMOVE_PIECE_NUM ;
+      UINT32 pieceNum = 0 ;
+      UINT32 onceRmNum = 0 ;
+
+      pieces = ( dmsLobRecord * )SDB_OSS_MALLOC( bufLen ) ;
+      if ( NULL == pieces )
+      {
+         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ossMemset( pieces, 0 , bufLen ) ;
+
+      RTN_LOB_GET_SEQUENCE_NUM( _meta._lobLen, _lobPageSz, pieceNum ) ;
+      while ( 1 < pieceNum-- )
+      {
+         if ( RTN_LOB_REMOVE_PIECE_NUM == onceRmNum )
+         {
+            rc = _removev( pieces, onceRmNum, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to truncate lob:%d", rc ) ;
+               goto error ;
+            }
+
+            onceRmNum = 0 ;
+         }
+
+         {
+         dmsLobRecord &piece = pieces[onceRmNum++] ;
+         piece.set( &_oid, pieceNum, 0, 0, NULL ) ;
+         }
+      }
+
+      if ( 0 < onceRmNum )
+      {
+         rc = _removev( pieces, onceRmNum, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to truncate lob:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      SAFE_OSS_FREE( pieces ) ;
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_TRUNCATE, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -570,6 +615,78 @@ namespace engine
 
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__READFROMPOOL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4READ, "_rtnLobStream::_open4Read" )
+   INT32 _rtnLobStream::_open4Read( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4READ ) ;
+
+      rc = _queryLobMeta( cb, _meta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open lob[%d] in collection[%s], rc:%d",
+                 _oid.str().c_str(), _fullName, rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4READ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4CREATE, "_rtnLobStream::_open4Create" )
+   INT32 _rtnLobStream::_open4Create( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4CREATE ) ;
+      BOOLEAN isNew = TRUE ;
+      rc = _ensureLob( cb, _meta, isNew ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open lob[%s] in collection[%s], rc:%d",
+                 _oid.str().c_str(), _fullName, rc ) ;
+         goto error ;
+      }
+
+      if ( !isNew )
+      {
+         PD_LOG( PDERROR, "lob[%s] exists in collection[%s]",
+                 _oid.str().c_str(), _fullName ) ;
+         rc = SDB_FE ;
+         goto error ;
+      }
+
+      PD_LOG( PDEVENT, "lob[%s] in [%s] is created, wait to be completed",
+              getOID().str().c_str(), _fullName ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4CREATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM__OPEN4REMOVE, "_rtnLobStream::_open4Remove" )
+   INT32 _rtnLobStream::_open4Remove( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOBSTREAM__OPEN4REMOVE ) ;
+
+      rc = _queryAndInvalidateMetaData( cb, _meta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open lob[%s] in collection[%s], rc:%d",
+                 _oid.str().c_str(), _fullName, rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4REMOVE, rc ) ;
       return rc ;
    error:
       goto done ;

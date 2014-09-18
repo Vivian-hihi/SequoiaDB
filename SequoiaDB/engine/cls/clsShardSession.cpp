@@ -37,6 +37,7 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "rtnDataSet.hpp"
+#include "rtnContextShdOfLob.hpp"
 
 using namespace bson ;
 
@@ -69,6 +70,11 @@ namespace engine
       ON_MSG ( MSG_AUTH_CRTUSR_REQ, _onOPMsg )
       ON_MSG ( MSG_AUTH_DELUSR_REQ, _onOPMsg )
 #endif
+      ON_MSG ( MSG_BS_LOB_OPEN_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_LOB_WRITE_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_LOB_READ_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_LOB_CLOSE_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_LOB_REMOVE_REQ, _onOPMsg )
       ON_MSG ( MSG_CAT_GRP_CHANGE_NTY, _onCatalogChangeNtyMsg )
 
       ON_EVENT( PMD_EDU_EVENT_TRANS_STOP, _onTransStopEvnt )
@@ -450,6 +456,22 @@ namespace engine
                rc = _onCheckRouteIDReqMsg( msg );
                break;
 
+            case MSG_BS_LOB_OPEN_REQ:
+               rc = _onOpenLobReq( msg, contextID,
+                                   &pReponseBuff, buffLen ) ;
+               break ;
+            case MSG_BS_LOB_WRITE_REQ:
+               rc = _onWriteLobReq( msg ) ;
+               break ;
+            case MSG_BS_LOB_READ_REQ:
+               rc = _onReadLobReq( msg, &pReponseBuff, buffLen ) ;
+               break ;
+            case MSG_BS_LOB_CLOSE_REQ:
+               rc = _onCloseLobReq( msg ) ;
+               break ;
+            case MSG_BS_LOB_REMOVE_REQ:
+               rc = _onRemoveLobReq( msg ) ;
+               break ;
             default :
                rc = SDB_CLS_UNKNOW_MSG ;
                break ;
@@ -2455,5 +2477,384 @@ namespace engine
       goto done ;
    }
 
+   INT32 _clsShdSession::_onOpenLobReq( MsgHeader *msg,
+                                        SINT64 &contextID,
+                                        const CHAR **data,
+                                        INT32 &bufLen )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj lob ;
+      BSONObj meta ;
+      BSONElement fullName ;
+      INT16 w = 0 ;
+      _rtnContextShdOfLob *context = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      BOOLEAN isMainCL = FALSE ; 
+
+      rc = msgExtractOpenLobRequest( ( const CHAR * )msg, &header, lob ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract open msg:%d", rc ) ;
+         goto error ;
+      }
+
+      fullName = lob.getField( FIELD_NAME_COLLECTION ) ;
+      if ( String != fullName.type() )
+      {
+         PD_LOG( PDERROR, "invalid lob obj:%s",
+                 lob.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      w = header->w ;
+      rc = _checkCata( header->version, fullName.valuestr(),
+                       w, isMainCL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnCB->contextNew( RTN_CONTEXT_SHARD_OF_LOB,
+                              (rtnContext**)(&context),
+                              contextID, _pEDUCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open context:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = context->open( lob, header->version, w,
+                          _pDpsCB, _pEDUCB, meta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open lob context:%d", rc ) ;
+         goto error ;
+      }
+
+      /// if sequence 0 is not on this node, we have nothing to send back.
+      if ( !meta.isEmpty() )
+      {
+         *data = meta.objdata() ;
+         bufLen = meta.objsize() ;
+      }
+   done:
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete( contextID, _pEDUCB ) ;
+         contextID = -1 ;
+      }
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_onWriteLobReq( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj obj ;
+      const MsgLobTuple *tuple = NULL ;
+      UINT32 tSize = 0 ;
+      const MsgLobTuple *curTuple = NULL ;
+      UINT32 tupleNum = 0 ;
+      const CHAR *data = NULL ;
+      rtnContext *context = NULL ;
+      rtnContextShdOfLob *lobContext = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      INT16 w = 0 ;
+      BOOLEAN isMainCl = FALSE ;
+
+      rc = msgExtractLobRequest( ( const CHAR * )msg,
+                                 &header, obj,
+                                 &tuple, &tSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract write msg:%d", rc ) ;
+         goto error ;
+      }
+
+      context = (rtnCB->contextFind ( header->contextID )) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "context %lld does not exist", header->contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "invalid type of context:%d", context->getType() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextShdOfLob * )context ;
+      w = lobContext->getW() ;
+      rc = _checkCata( header->version, lobContext->getFullName(),
+                       w, isMainCl, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         BOOLEAN got = FALSE ;
+         rc = msgExtractTuplesAndData( &tuple, &tSize,
+                                       &curTuple, &data,
+                                       &got ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extract next tuple:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( !got )
+         {
+            break ;
+         }
+
+         rc = lobContext->write( curTuple->columns.sequence,
+                                 curTuple->columns.offset,
+                                 curTuple->columns.len,
+                                 data, _pEDUCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            goto error ;
+         }
+
+         ++tupleNum ;
+      }
+
+      PD_LOG( PDDEBUG, "%d pieces of lob[%s] write done",
+              tupleNum, lobContext->getOID().str().c_str() ) ;
+   done:
+      return rc ;
+   error:
+      if ( NULL != context )
+      {
+         rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
+      }
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_onCloseLobReq( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      rtnContextShdOfLob *lobContext = NULL ;
+      rtnContext *context = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      BOOLEAN isMainCl = FALSE ;
+      INT16 w = 0 ;
+
+      rc = msgExtractCloseLobRequest( ( const CHAR * )msg, &header ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract close msg:%d", rc ) ;
+         goto error ;
+      }
+
+      context = rtnCB->contextFind ( header->contextID ) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "context %lld does not exist",
+                  header->contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextShdOfLob * )context ;
+      w = lobContext->getW() ;
+      rc = _checkCata( header->version, lobContext->getFullName(),
+                       w, isMainCl, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = lobContext->close( _pEDUCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      if ( NULL != context )
+      {
+         rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_onReadLobReq( MsgHeader *msg,
+                                        const CHAR **pReponseBuff,
+                                        INT32 &buffLen )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      rtnContextShdOfLob *lobContext = NULL ;
+      rtnContext *context = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      const MsgLobTuple *tuple = NULL ;
+      UINT32 tuplesSize = 0 ;
+      bson::BSONObj meta ;
+      INT16 w = 0 ;
+      BOOLEAN isMainCl = FALSE ;
+      const CHAR *data = NULL ;
+      UINT32 read = 0 ;
+
+      rc = msgExtractLobRequest( ( const CHAR * )msg,
+                                 &header, meta, &tuple, &tuplesSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract read msg:%d", rc ) ;
+         goto error ;
+      }
+
+      context = rtnCB->contextFind ( header->contextID ) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "context %lld does not exist",
+                  header->contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextShdOfLob * )context ;
+      w = lobContext->getW() ;
+      rc = _checkCata( header->version, lobContext->getFullName(),
+                       w, isMainCl, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = lobContext->readv( tuple, tuplesSize / sizeof( MsgLobTuple ),
+                              _pEDUCB, &data, read ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+         goto error ;
+      }
+
+      *pReponseBuff = data ;
+      buffLen = ( INT32 )read ;
+   done:
+      return rc ;
+   error:
+      if ( NULL != context )
+      {
+         rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+      }
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_onRemoveLobReq( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      rtnContextShdOfLob *lobContext = NULL ;
+      rtnContext *context = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      const MsgLobTuple *begin = NULL ;
+      UINT32 tuplesSize = 0 ;
+      BSONObj obj ;
+      BOOLEAN isMainCl = FALSE ;
+      INT16 w = 0 ;
+
+      rc = msgExtractLobRequest( ( const CHAR * )msg, &header,
+                                 obj, &begin, &tuplesSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract close msg:%d", rc ) ;
+         goto error ;
+      }
+
+      context = rtnCB->contextFind ( header->contextID ) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "context %lld does not exist",
+                  header->contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "invalid context type:%d", context->getType() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextShdOfLob * )context ;
+      w = lobContext->getW() ;
+      rc = _checkCata( header->version, lobContext->getFullName(),
+                       w, isMainCl, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         BOOLEAN got = FALSE ;
+         const MsgLobTuple *curTuple = NULL ;
+         rc = msgExtractTuples( &begin, &tuplesSize,
+                                &curTuple, &got ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extract next tuple:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( !got )
+         {
+            break ;
+         }
+
+         rc = lobContext->remove( curTuple->columns.sequence,
+                                  _pEDUCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      if ( NULL != context )
+      {
+         rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+      }
+      goto done ;
+   }
 }
 

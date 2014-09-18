@@ -230,7 +230,7 @@ namespace engine
       RTN_CONTEXT_DELMAINCL,
       RTN_CONTEXT_EXPLAIN,
       RTN_CONTEXT_LOB,
-      RTN_CONTEXT_COORD_LOB,
+      RTN_CONTEXT_SHARD_OF_LOB,
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;

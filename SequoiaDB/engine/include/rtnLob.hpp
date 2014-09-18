@@ -39,7 +39,7 @@
 
 namespace engine
 {
-/// local interface
+/// interfaces for stream
 INT32 rtnOpenLob( const BSONObj &lob,
                   SINT32 flags,
                   BOOLEAN isLocal,
@@ -65,7 +65,6 @@ INT32 rtnCloseLob( SINT64 contextID,
                    pmdEDUCB *cb ) ;
 
 INT32 rtnRemoveLob( const BSONObj &lob,
-                    SINT32 flags,
                     SINT16 w,
                     _pmdEDUCB *cb,
                     SDB_DPSCB *dpsCB ) ;
@@ -73,6 +72,59 @@ INT32 rtnRemoveLob( const BSONObj &lob,
 INT32 rtnGetLobMetaData( SINT64 contextID,
                          pmdEDUCB *cb,
                          BSONObj &meta ) ;
+
+/// interfaces for non-stream
+INT32 rtnCreateLob( const CHAR *fullName,
+                    const bson::OID &oid,
+                    pmdEDUCB *cb,
+                    SINT16 w,
+                    SDB_DPSCB *dpsCB ) ;
+
+INT32 rtnGetLobMetaData( const CHAR *fullName,
+                         const bson::OID &oid,
+                         pmdEDUCB *cb,
+                         dmsLobMeta &meta ) ;
+
+INT32 rtnWriteLob( const CHAR *fullName,
+                   const bson::OID &oid,
+                   UINT32 sequence,
+                   UINT32 offset,
+                   UINT32 len,
+                   const CHAR *data,
+                   pmdEDUCB *cb,
+                   SINT16 w,
+                   SDB_DPSCB *dpsCB ) ;
+
+INT32 rtnReadLob( const CHAR *fullName,
+                  const bson::OID &oid,
+                  UINT32 sequence,
+                  UINT32 offset,
+                  UINT32 len,
+                  pmdEDUCB *cb,
+                  CHAR *data,
+                  UINT32 &read ) ;
+                   
+
+INT32 rtnCloseLob( const CHAR *fullName,
+                   const bson::OID &oid,
+                   const dmsLobMeta &meta,
+                   pmdEDUCB *cb,
+                   SINT16 w,
+                   SDB_DPSCB *dpsCB ) ;
+
+INT32 rtnRemoveLobPiece( const CHAR *fullName,
+                         const bson::OID &oid,
+                         UINT32 sequence,
+                         pmdEDUCB *cb,
+                         SINT16 w,
+                         SDB_DPSCB *dpsCB ) ;
+
+INT32 rtnQueryAndInvalidateLob( const CHAR *fullName,
+                                const bson::OID &oid,
+                                pmdEDUCB *cb,
+                                SINT16 w,
+                                SDB_DPSCB *dpsCB,
+                                dmsLobMeta &meta ) ;
 }
 
 #endif

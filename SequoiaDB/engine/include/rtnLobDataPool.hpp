@@ -18,10 +18,6 @@
 
    Descriptive Name =
 
-   When/how to use: this program may be used on binary and text-formatted
-   versions of data management component. This file contains structure for
-   DMS storage unit and its methods.
-
    Dependencies: N/A
 
    Restrictions: N/A
@@ -78,7 +74,7 @@ namespace engine
       INT32 push( const CHAR *data, UINT32 len,
                   SINT64 offset ) ;
 
-      void pushDown() ;
+      void pushDone() ;
 
       void entrust( CHAR *buf ) ;
 

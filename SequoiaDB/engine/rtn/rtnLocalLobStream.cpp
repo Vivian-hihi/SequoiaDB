@@ -36,6 +36,7 @@
 #include "dmsStorageUnit.hpp"
 #include "dmsCB.hpp"
 #include "rtn.hpp"
+#include "rtnLob.hpp"
 
 namespace engine
 {
@@ -64,6 +65,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__PREPARE, "_rtnLocalLobStream::_prepare" )
    INT32 _rtnLocalLobStream::_prepare( const CHAR *fullName,
                                        const bson::OID &oid,
+                                       INT32 mode,
                                        _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -118,7 +120,7 @@ namespace engine
       {
          if ( !meta.isDone() )
          {
-            rc = SDB_LOB_IS_UNDER_CRT ;
+            rc = SDB_LOB_IS_NOT_AVAILABLE ;
             goto error ;
          }
 
@@ -161,7 +163,7 @@ namespace engine
       {
          if ( !meta.isDone() )
          {
-            rc = SDB_LOB_IS_UNDER_CRT ;
+            rc = SDB_LOB_IS_NOT_AVAILABLE ;
             goto error ;
          }
          isNew = FALSE ;
@@ -372,7 +374,7 @@ namespace engine
          goto error ;
       }
 
-      _getPool().pushDown() ;
+      _getPool().pushDone() ;
    done:
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__READV, rc ) ;
       return rc ;
@@ -447,6 +449,67 @@ namespace engine
          dmsCB->writeDown() ;
       }
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__ROLLBACK, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__QUERYANDINVALIDATEMETADATA, "_rtnLocalLobStream::_queryAndInvalidateMetaData" )
+   INT32 _rtnLocalLobStream::_queryAndInvalidateMetaData( _pmdEDUCB *cb,
+                                                          _dmsLobMeta &meta )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__QUERYANDINVALIDATEMETADATA ) ;
+      rc = rtnQueryAndInvalidateLob( getFullName(), getOID(),
+                                     cb, 1, _getDPSCB(), meta ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to invalidate lob:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__QUERYANDINVALIDATEMETADATA, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__REMOVEV, "_rtnLocalLobStream::_removev" )
+   INT32 _rtnLocalLobStream::_removev( const _dmsLobRecord *pieces,
+                                       UINT32 cnt,
+                                       _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__REMOVEV ) ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      BOOLEAN lockDms = FALSE ;
+
+      rc = dmsCB->writable( cb ) ;
+      if ( SDB_OK !=rc )
+      {
+         PD_LOG ( PDERROR, "database is not writable, rc = %d", rc ) ;
+         goto error ;
+      }
+      lockDms = TRUE ;
+
+      for ( UINT32 i = 0 ; i < cnt; ++i )
+      {
+         rc = _su->lob()->remove( pieces[i], _mbContext, cb,
+                                  FALSE, _getDPSCB() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to remove lob[%s],"
+                    "sequence:%d, rc:%d", pieces[i]._oid->str().c_str(),
+                    pieces[i]._sequence, rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      if ( lockDms )
+      {
+         dmsCB->writeDown();
+      }
+      PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__REMOVEV, rc ) ;
       return rc ;
    error:
       goto done ;

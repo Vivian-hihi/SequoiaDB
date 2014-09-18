@@ -575,23 +575,20 @@ namespace engine
          case MSG_BS_AGGREGATE_REQ :
             rc = _onAggrReqMsg( msg, contextID ) ;
             break ;
-         case MSG_LOB_OPEN_REQ :
+         case MSG_BS_LOB_OPEN_REQ :
             rc = _onOpenLobMsg( msg, contextID, ppBody, bodyLen ) ;
             break ;
-         case MSG_LOB_WRITE_REQ:
+         case MSG_BS_LOB_WRITE_REQ:
             rc = _onWriteLobMsg( msg ) ;
             break ;
-         case MSG_LOB_READ_REQ:
+         case MSG_BS_LOB_READ_REQ:
             rc = _onReadLobMsg( msg, ppBody, bodyLen ) ;
             break ;
-         case MSG_LOB_CLOSE_REQ:
+         case MSG_BS_LOB_CLOSE_REQ:
             rc = _onCloseLobMsg( msg ) ;
             break ;
-         case MSG_LOB_REMOVE_REQ:
+         case MSG_BS_LOB_REMOVE_REQ:
             rc = _onRemoveLobMsg( msg ) ;
-            break ;
-         case MSG_LOB_META_REQ :
-            rc = _onGetLobMeta( msg, ppBody, bodyLen ) ;
             break ;
          default :
             PD_LOG( PDWARNING, "Session[%s] recv unknow msg[type:[%d]%d, "
@@ -1188,7 +1185,7 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnRemoveLob( meta, header->flags, header->w,
+      rc = rtnRemoveLob( meta, header->w,
                          _pEDUCB, _pDPSCB ) ;
       if ( SDB_OK != rc )
       {

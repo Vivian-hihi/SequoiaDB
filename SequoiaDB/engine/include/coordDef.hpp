@@ -165,6 +165,11 @@ namespace engine
          return _catlogSet.isSharding() ;
       }
 
+      BOOLEAN isRangeSharded() const
+      {
+         return _catlogSet.isRangeSharding() ;
+      }
+
       INT32 getGroupLowBound( UINT32 groupID, BSONObj &lowBound )
       {
          return _catlogSet.getGroupLowBound( groupID, lowBound ) ;
@@ -173,6 +178,13 @@ namespace engine
       clsCatalogSet* getCatalogSet()
       {
          return &_catlogSet ;
+      }
+
+      INT32 getLobGropuID( const bson::OID &oid,
+                           UINT32 sequence,
+                           UINT32 &groupID )
+      {
+         return _catlogSet.findGroupID( oid, sequence, groupID ) ;
       }
 
    private:

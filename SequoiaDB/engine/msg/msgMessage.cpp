@@ -1940,8 +1940,8 @@ error:
    goto done ;
 }
 
-INT32 msgExtractReadTuples( const MsgLobTuple **begin, UINT32 *tuplesSize,
-                            const MsgLobTuple **tuple, BOOLEAN *got )
+INT32 msgExtractTuples( const MsgLobTuple **begin, UINT32 *tuplesSize,
+                        const MsgLobTuple **tuple, BOOLEAN *got )
 {
    INT32 rc = SDB_OK ;
 
@@ -1977,26 +1977,28 @@ error:
    goto done ;
 }
 
-INT32 msgExtractWriteTuples( const MsgLobTuple **begin, UINT32 *tuplesSize,
-                             const MsgLobTuple **tuple, const CHAR **data,
-                             BOOLEAN *got )
+INT32 msgExtractTuplesAndData( const MsgLobTuple **begin, UINT32 *tuplesSize,
+                               const MsgLobTuple **tuple, const CHAR **data,
+                               BOOLEAN *got )
 {
-   INT32 rc = FALSE ;
+   INT32 rc = SDB_OK ;
    if ( NULL == *begin || 0 == *tuplesSize )
    {
+      *got = FALSE ;
       goto done ;
    }
 
    if ( sizeof( MsgLobTuple ) <= *tuplesSize )
    {
       const MsgLobTuple *t = *begin ;
-      UINT32 dataLen = ossRoundUpToMultipleX( t->columns.len, 4 ) ;
-      if ( sizeof( MsgLobTuple ) + dataLen < *tuplesSize )
+      //UINT32 dataLen = ossRoundUpToMultipleX( t->columns.len, 4 ) ;
+      UINT32 dataLen = t->columns.len ;
+      if ( sizeof( MsgLobTuple ) + dataLen <= *tuplesSize )
       {
          *tuple = *begin ;
          *tuplesSize -= sizeof( MsgLobTuple ) + dataLen ;
          *data = ( const CHAR * )( *begin ) + sizeof( MsgLobTuple ) ;
-         *begin += 1 ;
+         *begin = ( const MsgLobTuple * )( *data + dataLen ) ;
          *got = TRUE ;
       }
       else if ( sizeof( MsgLobTuple ) + dataLen == *tuplesSize )
@@ -2072,8 +2074,8 @@ INT32 msgExtractWriteLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
       goto error ;
    }
 
-   rc = msgExtractWriteTuples( &tuples, &size,
-                               &tuple, data, &got ) ;
+   rc = msgExtractTuplesAndData( &tuples, &size,
+                                 &tuple, data, &got ) ;
    if ( SDB_OK != rc )
    {
       PD_LOG( PDERROR, "failed to extract write msg:%d", rc ) ;
@@ -2120,7 +2122,7 @@ INT32 msgExtractReadLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
       goto error ;
    }
 
-   rc = msgExtractReadTuples( &tuples, &size,
+   rc = msgExtractTuples( &tuples, &size,
                               &tuple, &got ) ;
    if ( SDB_OK != rc )
    {
@@ -2184,3 +2186,30 @@ done:
 error:
    goto done ;
 }
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREREADRESULT, "msgExtraceReadResult" )
+INT32 msgExtraceReadResult( const MsgOpReply *header,
+                            const MsgLobTuple **begin,
+                            UINT32 *tupleSz )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_MSGEXTRACTREREADRESULT ) ;
+   SDB_ASSERT( NULL != header, "can not be null" ) ;
+   if ( ( (UINT32)header->header.messageLength ) <
+        sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   *begin = ( const MsgLobTuple * )
+            (( const CHAR * )header + sizeof( MsgOpReply ) ) ; 
+   *tupleSz = (UINT32)header->header.messageLength -
+              sizeof( MsgOpReply ) ;
+done:
+   PD_TRACE_EXITRC( SDB_MSGEXTRACTREREADRESULT, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+

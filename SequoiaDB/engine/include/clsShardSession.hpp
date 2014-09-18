@@ -107,6 +107,21 @@ namespace engine
 
          INT32 _onTransStopEvnt( pmdEDUEvent *event ) ;
 
+         INT32 _onOpenLobReq( MsgHeader *msg,
+                              SINT64 &contextID,
+                              const CHAR **data,
+                              INT32 &bufLen ) ;
+
+         INT32 _onWriteLobReq( MsgHeader *msg ) ;
+
+         INT32 _onReadLobReq( MsgHeader *msg,
+                              const CHAR **pReponseBuff,
+                              INT32 &buffLen ) ;
+
+         INT32 _onCloseLobReq( MsgHeader *msg ) ;
+
+         INT32 _onRemoveLobReq( MsgHeader *msg ) ;
+
       private:
          INT32 _includeShardingOrder( const CHAR *pCollectionName,
                                     const BSONObj &orderBy,

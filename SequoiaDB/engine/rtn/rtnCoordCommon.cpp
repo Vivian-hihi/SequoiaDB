@@ -1436,7 +1436,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTONODE, "rtnCoordSendRequestToNode" )
    INT32 rtnCoordSendRequestToNode( void *pBuffer,
-                                    MsgRouteID &routeID,
+                                    MsgRouteID routeID,
                                     netMultiRouteAgent *pRouteAgent,
                                     pmdEDUCB *cb,
                                     REQUESTID_MAP &sendNodes )
@@ -1460,6 +1460,33 @@ namespace engine
       goto done;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTONODE2, "rtnCoordSendRequestToNode" )
+   INT32 rtnCoordSendRequestToNode( void *pBuffer,
+                                    MsgRouteID routeID,
+                                    netMultiRouteAgent *pRouteAgent,
+                                    pmdEDUCB *cb,
+                                    const netIOVec &iov,
+                                    REQUESTID_MAP &sendNodes )
+   {
+      INT32 rc = SDB_OK;
+      UINT64 reqID = 0;
+      PD_TRACE_ENTRY ( SDB_RTNCOSENDREQUESTTONODE2 ) ;
+      rc = pRouteAgent->syncSend( routeID, ( MsgHeader *)pBuffer, iov, reqID, cb );
+      PD_RC_CHECK ( rc, PDERROR,
+                  "failed to send the request to node"
+                  "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
+                  routeID.columns.groupID,
+                  routeID.columns.nodeID,
+                  routeID.columns.serviceID,
+                  rc );
+      sendNodes[ reqID ] = routeID;
+   done:
+      PD_TRACE_EXITRC ( SDB_RTNCOSENDREQUESTTONODE2, rc ) ;
+      return rc;
+   error:
+      goto done;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTONODEGROUPS, "rtnCoordSendRequestToNodeGroups" )
    INT32 rtnCoordSendRequestToNodeGroups( CHAR *pBuffer,
                                           CoordGroupList &groupLst,
@@ -1474,46 +1501,9 @@ namespace engine
       CoordGroupList::iterator iter = groupLst.begin();
       while ( iter != groupLst.end() )
       {
-         BOOLEAN isNeedRefresh = FALSE;
-         do
-         {
-            MsgRouteID routeID;
-            cb->getTransNodeRouteID( iter->first, routeID );
-            if ( routeID.value != 0 )
-            {
-               UINT64 reqID  = 0;
-               rc = pRouteAgent->syncSend( routeID, (void *)pBuffer,
-                                           reqID, cb );
-               if ( SDB_OK == rc )
-               {
-                  sendNodes[ reqID ] = routeID ;
-               }
-               break;
-            }
-            CoordGroupInfoPtr groupInfo;
-            rc = rtnCoordGetGroupInfo( cb, iter->first, isNeedRefresh,
-                                       groupInfo );
-            if ( rc != SDB_OK )
-            {
-               break ;
-            }
-            if ( isSendPrimary )
-            {
-               rc = rtnCoordSendRequestToPrimary( pBuffer, groupInfo,
-                                                  sendNodes, pRouteAgent,
-                                                  type, cb );
-            }
-            else
-            {
-               rc = rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
-                                              pRouteAgent, type, cb ) ;
-            }
-            if ( SDB_OK == rc || isNeedRefresh )
-            {
-               break;
-            }
-            isNeedRefresh = TRUE ;
-         }while( TRUE ) ;
+         rc = rtnCoordSendRequestToNodeGroup( pBuffer, iter->first,
+                                              isSendPrimary, pRouteAgent,
+                                              cb, sendNodes, type ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Failed to send the request to the group(%u), "
@@ -1526,69 +1516,157 @@ namespace engine
       return rc;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTONODEGROUPS2, "rtnCoordSendRequestToNodeGroups" )
-   INT32 rtnCoordSendRequestToNodeGroups( MsgHeader *pBuffer,
-                                          CoordGroupList &groupLst,
-                                          BOOLEAN isSendPrimary,
-                                          netMultiRouteAgent *pRouteAgent,
-                                          pmdEDUCB *cb,
-                                          const netIOVec &iov,
-                                          REQUESTID_MAP &sendNodes,
-                                          MSG_ROUTE_SERVICE_TYPE type )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTONODEGROUP, "rtnCoordSendRequestToNodeGroup" )
+   INT32 rtnCoordSendRequestToNodeGroup( CHAR *pBuffer,
+                                         UINT32 groupID,
+                                         BOOLEAN isSendPrimary,
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb,
+                                         REQUESTID_MAP &sendNodes,
+                                         MSG_ROUTE_SERVICE_TYPE type )
    {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOSENDREQUESTTONODEGROUPS2 ) ;
-      CoordGroupList::iterator iter = groupLst.begin();
-      while ( iter != groupLst.end() )
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOSENDREQUESTTONODEGROUP ) ;
+      BOOLEAN isNeedRefresh = FALSE;
+      do
       {
-         BOOLEAN isNeedRefresh = FALSE;
-         do
+         MsgRouteID routeID;
+         cb->getTransNodeRouteID( groupID, routeID );
+         if ( routeID.value != 0 )
          {
-            MsgRouteID routeID;
-            cb->getTransNodeRouteID( iter->first, routeID );
-            if ( routeID.value != 0 )
+            UINT64 reqID = 0;
+            rc = pRouteAgent->syncSend( routeID, ( void * )pBuffer, reqID, cb );
+            if ( SDB_OK == rc )
             {
-               UINT64 reqID = 0;
-               rc = pRouteAgent->syncSend( routeID, pBuffer, iov, reqID, cb );
-               if ( SDB_OK == rc )
-               {
-                  sendNodes[ reqID ] = routeID ;
-               }
-               break;
+               sendNodes[ reqID ] = routeID ;
             }
-            CoordGroupInfoPtr groupInfo;
-            rc = rtnCoordGetGroupInfo( cb, iter->first, isNeedRefresh,
-                                       groupInfo );
-            if ( rc != SDB_OK )
-            {
-               break;
-            }
-            if ( isSendPrimary )
-            {
-               rc = rtnCoordSendRequestToPrimary( pBuffer, groupInfo, sendNodes,
-                                                  pRouteAgent, iov, type, cb );
-            }
-            else
-            {
-               rc = rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
-                                              pRouteAgent, iov, type, cb );
-            }
-            if ( SDB_OK == rc || isNeedRefresh )
-            {
-               break;
-            }
-            isNeedRefresh = TRUE ;
+            break;
+         }
+
+         CoordGroupInfoPtr groupInfo;
+         rc = rtnCoordGetGroupInfo( cb, groupID, isNeedRefresh, groupInfo );
+         if ( rc != SDB_OK )
+         {
+            break;
+         }
+         if ( isSendPrimary )
+         {
+            rc = rtnCoordSendRequestToPrimary( pBuffer, groupInfo, sendNodes,
+                                               pRouteAgent, type, cb );
+         }
+         else
+         {
+            rc = rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
+                                           pRouteAgent, type, cb );
+         }
+         if ( SDB_OK == rc || isNeedRefresh )
+         {
+            break;
+         }
+         isNeedRefresh = TRUE ;
          }while( TRUE );
+
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR,
                      "Failed to send the request to the group(%u), rc=%d",
-                     iter->first, rc );
+                     groupID, rc );
+         }
+      PD_TRACE_EXITRC( SDB_RTNCOSENDREQUESTTONODEGROUP, rc ) ;
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTONODEGROUPS2, "rtnCoordSendRequestToNodeGroups" )
+   INT32 rtnCoordSendRequestToNodeGroups( MsgHeader *pBuffer,
+                                  CoordGroupList &groupLst,
+                                  BOOLEAN isSendPrimary,
+                                  netMultiRouteAgent *pRouteAgent,
+                                  pmdEDUCB *cb,
+                                  const netIOVec &iov,
+                                  REQUESTID_MAP &sendNodes,
+                                  MSG_ROUTE_SERVICE_TYPE type )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOSENDREQUESTTONODEGROUPS2 ) ;
+      CoordGroupList::iterator iter = groupLst.begin() ;
+      while ( iter != groupLst.end() )
+      {
+         rc = rtnCoordSendRequestToNodeGroup( pBuffer, iter->first,
+                                              isSendPrimary, pRouteAgent,
+                                              cb, iov, sendNodes,
+                                              type ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to send msg to group:%d, rc:%d",
+                    iter->first, rc ) ;
+            goto error ;
+         }
+         ++iter ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOSENDREQUESTTONODEGROUPS2, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTONODEGROUP2, "rtnCoordSendRequestToNodeGroup" )
+   INT32 rtnCoordSendRequestToNodeGroup( MsgHeader *pBuffer,
+                                         UINT32 groupID,
+                                         BOOLEAN isSendPrimary,
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb,
+                                         const netIOVec &iov,
+                                          REQUESTID_MAP &sendNodes,
+                                          MSG_ROUTE_SERVICE_TYPE type )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB_RTNCOSENDREQUESTTONODEGROUP2 ) ;
+      BOOLEAN isNeedRefresh = FALSE;
+      do
+      {
+         MsgRouteID routeID;
+         cb->getTransNodeRouteID( groupID, routeID );
+         if ( routeID.value != 0 )
+         {
+            UINT64 reqID = 0;
+            rc = pRouteAgent->syncSend( routeID, pBuffer, iov, reqID, cb );
+            if ( SDB_OK == rc )
+            {
+               sendNodes[ reqID ] = routeID ;
+            }
             break;
          }
-         ++iter;
+         CoordGroupInfoPtr groupInfo;
+         rc = rtnCoordGetGroupInfo( cb, groupID, isNeedRefresh,
+                                    groupInfo );
+         if ( rc != SDB_OK )
+         {
+            break;
+         }
+         if ( isSendPrimary )
+         {
+            rc = rtnCoordSendRequestToPrimary( pBuffer, groupInfo, sendNodes,
+                                               pRouteAgent, iov, type, cb );
+         }
+         else
+         {
+            rc = rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
+                                           pRouteAgent, iov, type, cb );
+         }
+         if ( SDB_OK == rc || isNeedRefresh )
+         {
+            break;
+         }
+         isNeedRefresh = TRUE ;
+      }while( TRUE );
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR,
+                  "Failed to send the request to the group(%u), rc=%d",
+                  groupID, rc );
       }
-      PD_TRACE_EXITRC ( SDB_RTNCOSENDREQUESTTONODEGROUPS2, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNCOSENDREQUESTTONODEGROUP2, rc ) ;
       return rc;
    }
    

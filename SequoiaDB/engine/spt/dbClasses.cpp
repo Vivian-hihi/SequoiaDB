@@ -1388,6 +1388,41 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DELETE_LOB, "collection_delete_lob" )
+static JSBool collection_delete_lob( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_COLL_DELETE_LOB ) ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *collection = NULL ;
+   JSString *jsOid = NULL ;
+   CHAR *oidStr = NULL ;
+   bson_oid_t oid ;
+
+   collection = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( collection , "SdbCollection.deleteLob(): no collection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "S" , &jsOid ) ;
+   REPORT ( ret , "SdbCollection.deleteLob(): wrong arguments" ) ;
+
+   oidStr = (CHAR *) JS_EncodeString ( cx , jsOid ) ;
+   VERIFY( oidStr ) ;
+   bson_oid_from_string( &oid, oidStr ) ;
+
+   rc = sdbRemoveLob( *collection, &oid ) ;
+   REPORT_RC( SDB_OK == rc, "SdbCollection.deleteLob(): failed to delete lob", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done:
+   SAFE_JS_FREE( cx, oidStr ) ; 
+   PD_TRACE_EXIT( SDB_COLL_DELETE_LOB ) ;
+   return ret ;
+error:
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_GET_LOB, "collection_get_lob" )
 static JSBool collection_get_lob( JSContext *cx , uintN argc , jsval *vp )
 {
@@ -1403,8 +1438,8 @@ static JSBool collection_get_lob( JSContext *cx , uintN argc , jsval *vp )
    OSSFILE file ;
    bson_oid_t oid ;
    sdbLobHandle lob = SDB_INVALID_HANDLE ;
-   const UINT32 bufLen = 512 * 1024 ;
-   CHAR buf[bufLen] = { 0 } ;
+   const UINT32 bufLen = 2 * 1024 * 1024 ;
+   CHAR *buf = NULL ;
    INT32 mode = OSS_READWRITE|OSS_EXCLUSIVE ;
    SINT64 lobSize = 0 ;
    SINT64 readSize = 0 ;
@@ -1412,6 +1447,9 @@ static JSBool collection_get_lob( JSContext *cx , uintN argc , jsval *vp )
    bson *meta = NULL ;
    UINT64 createTime = 0 ;
    bson_timestamp_t t ;
+
+   buf = ( CHAR * )SDB_OSS_MALLOC( bufLen ) ;
+   REPORT_RC( NULL != buf, "SdbCollection.getLob(): failed to allocate mem", SDB_OOM ) ;
 
    collection = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
@@ -1499,6 +1537,7 @@ done:
       ossClose( file ) ;
    }
 
+   SAFE_OSS_FREE( buf ) ;
    PD_TRACE_EXIT( SDB_COLL_GET_LOB ) ;
    return ret ;
 error:
@@ -1526,9 +1565,11 @@ static JSBool collection_put_lob( JSContext *cx , uintN argc , jsval *vp )
    OSSFILE file ;
    bson_oid_t oid ;
    sdbLobHandle lob = SDB_INVALID_HANDLE ;
-   const UINT32 bufLen = 512 * 1024 ;
-   CHAR buf[bufLen] = { 0 } ;
    SINT64 read = 0 ;
+   const UINT32 bufLen = 2 * 1024 * 1024 ;
+   CHAR *buf = ( CHAR * )SDB_OSS_MALLOC( bufLen ) ;
+   REPORT_RC( NULL != buf, "SdbCollection.putLob(): failed to allocate mem", SDB_OOM ) ;
+   ossMemset( buf, 0, bufLen ) ;
 
    collection = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
@@ -1598,6 +1639,7 @@ done:
    {
       ossClose( file ) ;
    }
+   SAFE_OSS_FREE( buf ) ;
    PD_TRACE_EXIT( SDB_COLL_PUT_LOB ) ;
    return ret ;
 error:
@@ -2446,6 +2488,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "explain", collection_explain, 1, 0 ) ,
     JS_FS ( "putLob", collection_put_lob, 1, 0 ) ,
     JS_FS ( "getLob", collection_get_lob, 1, 0 ) ,
+    JS_FS ( "deleteLob", collection_delete_lob, 1, 0 ) ,
     JS_FS_END
 } ;
 

@@ -256,14 +256,14 @@ INT32 msgExtractLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
                             bson::BSONObj &meta, const MsgLobTuple **tuples,
                             UINT32 *tuplesSize ) ;
 
-INT32 msgExtractReadTuples( const MsgLobTuple **begin,
-                            UINT32 *tuplesSize,
-                            const MsgLobTuple **tuple,
-                            BOOLEAN *got ) ;
+INT32 msgExtractTuples( const MsgLobTuple **begin,
+                        UINT32 *tuplesSize,
+                        const MsgLobTuple **tuple,
+                        BOOLEAN *got ) ;
 
-INT32 msgExtractWriteTuples( const MsgLobTuple **begin, UINT32 *tuplesSize,
-                             const MsgLobTuple **tuple, const CHAR **data,
-                             BOOLEAN *got ) ;
+INT32 msgExtractTuplesAndData( const MsgLobTuple **begin, UINT32 *tuplesSize,
+                               const MsgLobTuple **tuple, const CHAR **data,
+                               BOOLEAN *got ) ;
 
 INT32 msgExtractOpenLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
                                 bson::BSONObj &meta ) ;
@@ -281,5 +281,10 @@ INT32 msgExtractRemoveLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
 
 INT32 msgBuildGetLobMetaRequest( CHAR **ppBuffer, INT32 *pBufferSize ) ;
 
+INT32 msgExtraceReadResult( const MsgOpReply *header,
+                            const MsgLobTuple **begin,
+                            UINT32 *tupleSz ) ;
+
 
 #endif // MSGMESSAGE_HPP_
+

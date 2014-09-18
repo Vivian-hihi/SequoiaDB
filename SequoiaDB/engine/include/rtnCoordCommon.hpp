@@ -1,3 +1,34 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = rtnCoordCommon.hpp
+
+   Descriptive Name =
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+
+   Last Changed =
+
+*******************************************************************************/
 
 #ifndef RTNCOORDCOMMON_HPP__
 #define RTNCOORDCOMMON_HPP__
@@ -83,9 +114,16 @@ namespace engine
                                     ROUTE_RC_MAP &failedNodes );
 
    INT32 rtnCoordSendRequestToNode( void *pBuffer,
-                                    MsgRouteID &routeID,
+                                    MsgRouteID routeID,
                                     netMultiRouteAgent *pRouteAgent,
                                     pmdEDUCB *cb,
+                                    REQUESTID_MAP &sendNodes );
+
+   INT32 rtnCoordSendRequestToNode( void *pBuffer,
+                                    MsgRouteID routeID,
+                                    netMultiRouteAgent *pRouteAgent,
+                                    pmdEDUCB *cb,
+                                    const netIOVec &iov,
                                     REQUESTID_MAP &sendNodes );
 
    INT32 rtnCoordSendRequestToNodeWithoutReply( void *pBuffer,
@@ -98,11 +136,29 @@ namespace engine
                                                 pmdEDUCB *cb,
                                                 REQUESTID_MAP &sendNodes );
 
+   INT32 rtnCoordSendRequestToNodeGroup( CHAR *pBuffer,
+                                         UINT32 groupID,
+                                         BOOLEAN isSendPrimary,
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb,
+                                         REQUESTID_MAP &sendNodes,
+                                         MSG_ROUTE_SERVICE_TYPE type ) ;
+
    INT32 rtnCoordSendRequestToNodeGroups( CHAR *pBuffer,
                                   CoordGroupList &groupLst,
                                   BOOLEAN isSendPrimary,
                                   netMultiRouteAgent *pRouteAgent,
                                   pmdEDUCB *cb,
+                                  REQUESTID_MAP &sendNodes,
+                                  MSG_ROUTE_SERVICE_TYPE type =
+                                  MSG_ROUTE_SHARD_SERVCIE );
+
+   INT32 rtnCoordSendRequestToNodeGroup( MsgHeader *pBuffer,
+                                  UINT32 groupID,
+                                  BOOLEAN isSendPrimary,
+                                  netMultiRouteAgent *pRouteAgent,
+                                  pmdEDUCB *cb,
+                                  const netIOVec &iov,
                                   REQUESTID_MAP &sendNodes,
                                   MSG_ROUTE_SERVICE_TYPE type =
                                   MSG_ROUTE_SHARD_SERVCIE );
