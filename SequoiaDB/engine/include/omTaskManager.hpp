@@ -82,7 +82,8 @@ namespace engine
          INT32             _getProgressFromAgent( BSONObj &response ) ;
          INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
                                               SINT32 &flag, BSONObj &result ) ;
-         INT32             _sendMsgToAgent( string host, string port,
+         INT32             _sendMsgToAgent( const string &host,
+                                            const string &port,
                                             pmdRemoteSession *remoteSession, 
                                             MsgHeader *pMsg ) ;
          void              _clearSession( _pmdEDUCB *cb, 
@@ -140,13 +141,13 @@ namespace engine
          
       private:
          INT32             _storeBusinessInfo() ;
-         INT32             _isHostConfExist( string hostName, 
-                                             string businessName ) ;
-         INT32             _appendConfigure( string hostName, 
-                                             string businessName,
+         BOOLEAN           _isHostConfExist( const string &hostName, 
+                                             const string &businessName ) ;
+         INT32             _appendConfigure( const string &hostName, 
+                                             const string &businessName,
                                              BSONObj &oneNode ) ;
-         INT32             _insertConfigure( string hostName, 
-                                             string businessName ,
+         INT32             _insertConfigure( const string &hostName, 
+                                             const string &businessName ,
                                              BSONObj &oneNode ) ;
          INT32             _storeConfigInfo() ;
 

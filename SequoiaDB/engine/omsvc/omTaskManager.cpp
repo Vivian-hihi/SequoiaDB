@@ -156,14 +156,14 @@ namespace engine
       goto done ;
    }
 
-   INT32 omTaskBase::_sendMsgToAgent( string host, string port,
+   INT32 omTaskBase::_sendMsgToAgent( const string &host, const string &port,
                                       pmdRemoteSession *remoteSession, 
                                       MsgHeader *pMsg )
    {
       MsgRouteID localAgentID ;
       INT32 rc = SDB_OK ;
 
-      localAgentID = _om->updateAgentInfo( host.c_str(), port.c_str() ) ;
+      localAgentID = _om->updateAgentInfo( host, port ) ;
       if ( NULL == remoteSession->addSubSession( localAgentID.value ) )
       {
          rc = SDB_OOM ;
@@ -500,8 +500,8 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN omInstallTask::_isHostConfExist( string hostName, 
-                                            string businessName )
+   BOOLEAN omInstallTask::_isHostConfExist( const string &hostName, 
+                                            const string &businessName )
    {
       INT32 rc         = SDB_OK ;
       pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
@@ -556,7 +556,8 @@ namespace engine
       return flag ;
    }
 
-   INT32 omInstallTask::_appendConfigure( string hostName, string businessName,
+   INT32 omInstallTask::_appendConfigure( const string &hostName,
+                                          const string &businessName,
                                           BSONObj &oneNode )
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
@@ -589,7 +590,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omInstallTask::_insertConfigure( string hostName, string businessName ,
+   INT32 omInstallTask::_insertConfigure( const string &hostName,
+                                          const string &businessName ,
                                           BSONObj &oneNode )
    {
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
