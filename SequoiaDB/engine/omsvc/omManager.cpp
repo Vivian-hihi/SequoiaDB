@@ -363,6 +363,10 @@ namespace engine
          bsonBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
          obj = bsonBuilder.obj() ;
          rc = pAuthCB->createUsr( obj, cb ) ;
+         if ( SDB_IXM_DUP_KEY == rc )
+         {
+            rc = SDB_OK ;
+         }
          PD_RC_CHECK ( rc, PDERROR, "Failed to create default user:rc = %d",
                        rc ) ;
       }

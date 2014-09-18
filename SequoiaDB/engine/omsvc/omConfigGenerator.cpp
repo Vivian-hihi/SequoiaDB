@@ -359,6 +359,11 @@ namespace engine
       return _name ;
    }
 
+   string omConfigItem::getType()
+   {
+      return _type ;
+   }
+
    BOOLEAN omConfigItem::isValid( const string &value )
    {
       VALIDATORLIST_ITER iter = _validatorList.begin() ;
@@ -1084,6 +1089,60 @@ namespace engine
       _clear() ;
    }
 
+   // change the config to the right type
+   void omConfigGenerator::_resolveConfValue( BSONObj &bsonConfValue )
+   {
+      BSONObjBuilder newConfValueBuilder ;
+      
+      BSONArrayBuilder arrayBuilder ;
+
+      BSONObj filter = BSON( OM_BSON_FIELD_CONFIG << "" ) ;
+      BSONObj others = bsonConfValue.filterFieldsUndotted( filter, false ) ;
+      BSONObj config = bsonConfValue.filterFieldsUndotted( filter, true ) ;
+      newConfValueBuilder.appendElements( others ) ;
+      
+      BSONObj configObj = config.getObjectField( OM_BSON_FIELD_CONFIG ) ;
+      BSONObjIterator NodeIter( configObj ) ;
+      while ( NodeIter.more() )
+      {
+         BSONObjBuilder newNodeBuilder ;
+         BSONElement ele = NodeIter.next() ;
+         BSONObj oneNode = ele.embeddedObject() ;
+
+         BSONObjIterator itemIter( oneNode ) ;
+         while ( itemIter.more() )
+         {
+            BSONElement itemEle = itemIter.next() ;
+            string fieldName    = itemEle.fieldName() ;
+            string value        = itemEle.String() ;
+            omConfigItem *pItem = NULL ;
+            CONFIGITEMMAP_ITER iter = _confDetailMap.find( fieldName ) ;
+            if ( iter != _confDetailMap.end() )
+            {
+               pItem = iter->second ;
+               if ( pItem->getType() == OM_CONF_VALUE_INT_TYPE )
+               {
+                  newNodeBuilder.append( fieldName, ossAtoi( value.c_str() ) ) ;
+               }
+               else
+               {
+                  newNodeBuilder.append( fieldName, value ) ;
+               }
+            }
+            else
+            {
+               newNodeBuilder.append( fieldName, value ) ;
+            }
+         }
+
+         BSONObj newNode = newNodeBuilder.obj() ;
+         arrayBuilder.append( newNode ) ;
+      }
+
+      newConfValueBuilder.append( OM_BSON_FIELD_CONFIG, arrayBuilder.arr() ) ;
+      bsonConfValue = newConfValueBuilder.obj() ;
+   }
+
    /*
    bsonConfValue:
    {
@@ -1117,7 +1176,7 @@ namespace engine
                 ]
    }
    */
-   INT32 omConfigGenerator::checkSDBConfig( const BSONObj &bsonConfValue,
+   INT32 omConfigGenerator::checkSDBConfig( BSONObj &bsonConfValue,
                                             const BSONObj &bsonAllConf, 
                                             const BSONObj &bsonHostInfo )
    {
@@ -1156,6 +1215,8 @@ namespace engine
          PD_LOG( PDERROR, "get _checkConfValue failed:rc=%d", rc ) ;
          goto error ;
       }
+
+      _resolveConfValue( bsonConfValue ) ;
 
    done:
       return rc ;
@@ -1260,6 +1321,14 @@ namespace engine
          {
             BSONElement itemEle = itemIter.next() ;
             string fieldName    = itemEle.fieldName() ;
+            if ( String != itemEle.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "item type error:field=%s,type=%d", 
+                           fieldName.c_str(), itemEle.type() ) ;
+               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               goto error ;
+            }
             string value        = itemEle.String() ;
             if ( fieldName.compare( OM_BSON_FIELD_HOST_NAME ) != 0
                  && fieldName.compare( OM_CONF_DETAIL_DATAGROUPNAME ) != 0 )

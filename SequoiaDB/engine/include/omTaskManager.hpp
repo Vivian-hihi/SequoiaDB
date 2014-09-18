@@ -265,10 +265,10 @@ namespace engine
       private:
          omManager                *_om ;
          ossSpinSLatch            _lock ;
-         map< UINT64, shared_ptr<omTaskBase> > _mapTasks ;
-         typedef map< UINT64, shared_ptr<omTaskBase> >::iterator 
+         map< UINT64, boost::shared_ptr<omTaskBase> > _mapTasks ;
+         typedef map< UINT64, boost::shared_ptr<omTaskBase> >::iterator 
                                                             MAP_TASK_INTER ;
-         typedef map< UINT64, shared_ptr<omTaskBase> >::value_type 
+         typedef map< UINT64, boost::shared_ptr<omTaskBase> >::value_type 
                                                             MAP_TASK_VALUETYPE ;
          UINT64                   _maxTaskID ;
    } ;

@@ -124,6 +124,7 @@ namespace engine
          INT32       init( const BSONObj &bsonItem ) ;
          string      getDefaultValue() ;
          string      getItemName() ;
+         string      getType() ;
          BOOLEAN     isValid( const string &value ) ;
          string      getMinValidValue() ;
          string      getValidString() ;
@@ -263,7 +264,7 @@ namespace engine
                                         const BSONObj &bsonHostInfo, 
                                         BSONObj &bsonConfig ) ;
 
-         INT32       checkSDBConfig( const BSONObj &bsonConfValue,
+         INT32       checkSDBConfig( BSONObj &bsonConfValue,
                                      const BSONObj &bsonAllconf, 
                                      const BSONObj &bsonHostInfo ) ;
 
@@ -292,6 +293,7 @@ namespace engine
          BOOLEAN     _isAllConfDetailSet() ;
 
          omHostInfo *_getHost( string hostName ) ;
+         void        _resolveConfValue( BSONObj &bsonConfValue ) ;
          INT32       _checkConfValue( const BSONObj &bsonConfValue ) ;
          INT32       _checkDistributionCount() ;
          INT32       _parseAllConf( const BSONObj &bsonAllConf ) ;

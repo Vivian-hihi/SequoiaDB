@@ -1250,7 +1250,7 @@ namespace engine
       MAP_TASK_INTER iter = _mapTasks.begin() ;
       while ( iter != _mapTasks.end() )
       {
-         shared_ptr< omTaskBase > sharedTask = iter->second ;
+         boost::shared_ptr< omTaskBase > sharedTask = iter->second ;
          if ( sharedTask->getType() == taskType )
          {
             isTaskTypeExist = TRUE ;
@@ -1267,7 +1267,7 @@ namespace engine
    void omTaskManager::_addTaskToMap( omTaskBase *task )
    {
       _mapTasks[task->getTaskID()] =
-                                 shared_ptr< omTaskBase >( task, taskDeleter ) ;
+                          boost::shared_ptr< omTaskBase >( task, taskDeleter ) ;
    }
 
    INT32 omTaskManager::createInstallTask( const string &agentHost, 
@@ -1343,7 +1343,7 @@ namespace engine
    INT32 omTaskManager::cancelTask( UINT64 taskID )
    {
       INT32 rc          = SDB_OK ;
-      shared_ptr< omTaskBase > shareTask ;
+      boost::shared_ptr< omTaskBase > shareTask ;
       _lock.get() ;
       MAP_TASK_INTER iter = _mapTasks.find( taskID ) ;
       if ( iter == _mapTasks.end() )
@@ -1378,7 +1378,7 @@ namespace engine
    INT32 omTaskManager::enableTask( UINT64 taskID )
    {
       INT32 rc          = SDB_OK ;
-      shared_ptr< omTaskBase > shareTask ;
+      boost::shared_ptr< omTaskBase > shareTask ;
       _lock.get() ;
       MAP_TASK_INTER iter = _mapTasks.find( taskID ) ;
       if ( iter == _mapTasks.end() )
@@ -1410,7 +1410,7 @@ namespace engine
                                      BSONObj &progress )
    {
       INT32 rc = SDB_OK ;
-      shared_ptr< omTaskBase > shareTask ;
+      boost::shared_ptr< omTaskBase > shareTask ;
       _lock.get() ;
       MAP_TASK_INTER iter = _mapTasks.find( taskID ) ;
       if ( iter == _mapTasks.end() )
@@ -1455,13 +1455,13 @@ namespace engine
    INT32 omTaskManager::run()
    {
       INT32 rc = SDB_OK ;
-      list< shared_ptr< omTaskBase > > shareTaskList ;
+      list< boost::shared_ptr< omTaskBase > > shareTaskList ;
 
       _lock.get() ;
       MAP_TASK_INTER iter = _mapTasks.begin() ;
       while ( iter != _mapTasks.end() )
       {
-         shared_ptr< omTaskBase > shareTask = iter->second ;
+         boost::shared_ptr< omTaskBase > shareTask = iter->second ;
          if ( shareTask->isFinish() )
          {
             _mapTasks.erase( iter++ ) ;
@@ -1477,7 +1477,7 @@ namespace engine
       }
       _lock.release() ;
 
-      list< shared_ptr< omTaskBase > >::iterator iterList ;
+      list< boost::shared_ptr< omTaskBase > >::iterator iterList ;
       iterList = shareTaskList.begin() ;
       while ( iterList != shareTaskList.end() )
       {
