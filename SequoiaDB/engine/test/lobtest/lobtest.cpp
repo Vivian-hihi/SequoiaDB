@@ -26,10 +26,10 @@ void insert_1()
    bson_oid_t oid ;
 
    rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK , rc ) ;
 
    const UINT32 putNum = 1000 ;
    bson_oid_t oids[putNum] ;
@@ -40,13 +40,13 @@ void insert_1()
    {
       bson_oid_gen( &oid ) ;
       rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       oids[i] = oid ;
       memset( buf, 'a' + i, bufSize ) ;
       rc = sdbWriteLob( lob, buf, bufSize ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       rc = sdbCloseLob( &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
    }
 
    cout << "write done" << endl ;
@@ -66,7 +66,7 @@ void insert_1()
       }
       SINT64 lobSize = 0 ;
       rc = sdbGetLobSize( lob, &lobSize ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       if ( bufSize != lobSize )
       {
          cout << tmp << " " << lobSize << endl ;
@@ -74,8 +74,8 @@ void insert_1()
       }
       UINT32 readSize = 0 ;
       rc = sdbReadLob( lob, bufSize, buf, &readSize ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
-      ASSERT_TRUE( readSize = bufSize ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      ASSERT_EQ( readSize, bufSize ) ;
       memset( buf2, 'a' + i, bufSize ) ;
       if ( 0 != memcmp(buf, buf2, bufSize ) )
       {
@@ -83,11 +83,11 @@ void insert_1()
          ASSERT_TRUE( FALSE ) ;
       }
       rc = sdbReadLob( lob, bufSize, buf, &readSize ) ;
-      ASSERT_TRUE( SDB_EOF == rc ) ;
+      ASSERT_EQ( SDB_EOF, rc ) ;
       rc = sdbCloseLob( &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       rc = sdbRemoveLob( cl, &( oids[i] ) ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK ,rc ) ;
    }
 }
 
@@ -105,10 +105,10 @@ void insert_2()
    bson_oid_t oid ;
 
    rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    const UINT32 putNum = 1000 ;
    const UINT32 bufSize = 1024 * 1024 * 10 + 1231 ;
@@ -125,7 +125,7 @@ void insert_2()
 
       bson_oid_gen( &oid ) ;
       rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       oids[i] = oid ;
       memset( buf, 'a' + i, bufSize ) ;
       SINT64 totalWriteLen = 0 ;
@@ -133,19 +133,19 @@ void insert_2()
       {
          UINT32 writeLen = bufSize - totalWriteLen < 1452 ? bufSize - totalWriteLen : 1452 ;
          rc = sdbWriteLob( lob, buf + totalWriteLen, writeLen ) ;
-         ASSERT_TRUE( SDB_OK == rc ) ;
+         ASSERT_EQ( SDB_OK, rc ) ;
          totalWriteLen += writeLen ;
       }
-      ASSERT_TRUE( totalWriteLen == bufSize ) ;
+      ASSERT_EQ( totalWriteLen, bufSize ) ;
       rc = sdbCloseLob( &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
 
       rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       SINT64 lobSize = 0 ;
       rc = sdbGetLobSize( lob, &lobSize ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
-      ASSERT_TRUE( bufSize == lobSize ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      ASSERT_EQ( bufSize, lobSize ) ;
       SINT64 totalReadLen = 0 ;
       UINT32 readLen = 0 ;
       const UINT32 readSize = 456 ;
@@ -153,14 +153,14 @@ void insert_2()
       { 
          readLen = 0 ;
          rc = sdbReadLob( lob, readSize, buf2 + totalReadLen, &readLen ) ;
-         ASSERT_TRUE( SDB_OK == rc ) ;
+         ASSERT_EQ( SDB_OK, rc ) ;
          totalReadLen += readLen ;
       }
-      ASSERT_TRUE( 0 == memcmp(buf, buf2, bufSize )) ;
+      ASSERT_EQ( 0, memcmp(buf, buf2, bufSize )) ;
       rc = sdbReadLob( lob, readSize, buf2, &readLen ) ;
-      ASSERT_TRUE( SDB_EOF == rc ) ;
+      ASSERT_EQ( SDB_EOF, rc ) ;
       rc = sdbCloseLob( &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       CHAR oidstr[25] ;
       bson_oid_to_string( &oid, oidstr ) ;
       cout << "oid done:" << oidstr << endl ;
@@ -169,7 +169,7 @@ void insert_2()
    for ( UINT32 i = 0 ; i < putNum ; ++i )
    {
       rc = sdbRemoveLob( cl, &(oids[i])) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
    }
 
    delete []buf ;
@@ -190,10 +190,10 @@ TEST(lobTest, seek_1)
    bson_oid_t oid ;
 
    rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    const UINT32 bufSize = 1024 * 1024 * 10 + 1924 ;
    CHAR *buf = new CHAR[bufSize] ;
@@ -204,25 +204,25 @@ TEST(lobTest, seek_1)
    
    bson_oid_gen( &oid ) ;
    rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    SINT64 totalWriteLen = 0 ;
    while ( totalWriteLen < bufSize )
    {
       UINT32 writeLen = bufSize - totalWriteLen < 1844 ? bufSize - totalWriteLen : 1844 ;
       rc = sdbWriteLob( lob, buf + totalWriteLen, writeLen ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       totalWriteLen += writeLen ;
    }
-   ASSERT_TRUE( totalWriteLen == bufSize ) ;
+   ASSERT_EQ( totalWriteLen, bufSize ) ;
    rc = sdbCloseLob( &lob ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    SINT64 lobSize = 0 ;
    rc = sdbGetLobSize( lob, &lobSize ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
-   ASSERT_TRUE( bufSize == lobSize ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( bufSize, lobSize ) ;
 
    const UINT32 seekReadSize = 2000 ;
 
@@ -232,13 +232,13 @@ TEST(lobTest, seek_1)
       memset( buf2, 0, seekReadSize ) ;
       SINT64 seekSize = rand() % bufSize ;
       rc = sdbSeekLob( lob, seekSize, SDB_LOB_SEEK_SET ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       UINT32 readSize = bufSize - seekSize < seekReadSize ? bufSize - seekSize : seekReadSize ;
       readSize = rand() % readSize ;
       UINT32 read = 0 ;
       rc = sdbReadLob( lob, readSize, buf2, &read ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
-      ASSERT_TRUE( readSize == read ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      ASSERT_EQ( readSize, read ) ;
       if ( 0 != memcmp( buf + seekSize, buf2, readSize ) )
       {
          CHAR dump[seekReadSize * 2 + 1];
@@ -253,15 +253,15 @@ TEST(lobTest, seek_1)
 
    UINT32 read = 0 ;
    rc = sdbSeekLob( lob, bufSize, SDB_LOB_SEEK_SET ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK,rc ) ;
    rc = sdbReadLob( lob, 1, buf2, &read ) ;
-   ASSERT_TRUE( SDB_EOF == rc ) ;
+   ASSERT_EQ( SDB_EOF, rc ) ;
    rc = sdbSeekLob( lob, bufSize, SDB_LOB_SEEK_END ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    const UINT32 lastReadSize = 1855 ;
    rc = sdbReadLob( lob, lastReadSize, buf2, &read ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
-   ASSERT_TRUE( lastReadSize == read ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   ASSERT_EQ( lastReadSize, read ) ;
    if ( 0 != memcmp( buf, buf2, lastReadSize ) )
    {
       CHAR dump[lastReadSize * 2 + 1];
@@ -273,9 +273,9 @@ TEST(lobTest, seek_1)
    }
 
    rc = sdbCloseLob( &lob ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
    rc = sdbRemoveLob( cl, &oid ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 }
 
 void remove_1()
@@ -287,10 +287,10 @@ void remove_1()
    bson_oid_t oid ;
 
    rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
-   ASSERT_TRUE( SDB_OK == rc ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
 
    const UINT32 putNum = 1000 ;
    bson_oid_t oids[putNum] ;
@@ -301,13 +301,13 @@ void remove_1()
    {
       bson_oid_gen( &oid ) ;
       rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       oids[i] = oid ;
       memset( buf, 'a' + i, bufSize ) ;
       rc = sdbWriteLob( lob, buf, bufSize ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       rc = sdbCloseLob( &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK ,rc ) ;
    }
 
    cout << "write done" << endl ; 
@@ -329,7 +329,7 @@ void remove_1()
       }
       SINT64 lobSize = 0 ;
       rc = sdbGetLobSize( lob, &lobSize ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK,  rc ) ;
       if ( bufSize != lobSize )
       {
          cout << i << "," << j << "," << tmp << endl  ;
@@ -341,9 +341,9 @@ void remove_1()
       if ( SDB_OK != rc )
       {
          cout << i << "," << j << "," << tmp << endl  ;
-         ASSERT_TRUE( SDB_OK == rc ) ;
+         ASSERT_EQ( SDB_OK, rc ) ;
       }
-      ASSERT_TRUE( readSize = bufSize ) ;
+      ASSERT_EQ( readSize, bufSize ) ;
       memset( buf2, 'a' + j, bufSize ) ;
       if ( 0 != memcmp(buf, buf2, bufSize ) )
       {
@@ -351,13 +351,13 @@ void remove_1()
          ASSERT_TRUE( FALSE ) ;
       }
       rc = sdbReadLob( lob, bufSize, buf, &readSize ) ;
-      ASSERT_TRUE( SDB_EOF == rc ) ;
+      ASSERT_EQ( SDB_EOF, rc ) ;
       rc = sdbCloseLob( &lob ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       }
 
       rc = sdbRemoveLob( cl, &( oids[i] ) ) ;
-      ASSERT_TRUE( SDB_OK == rc ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
       CHAR tmp[25] ;
       bson_oid_to_string( &( oids[i]), tmp ) ;
       cout << "remove:" << tmp << endl ;
