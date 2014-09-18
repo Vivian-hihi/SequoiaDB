@@ -5,7 +5,8 @@ Welcome to SequoiaDB!
 SequoiaDB is a distributed document-oriented NoSQL Database.
 
 In order to reduce the complexity of full compile, SequoiaDB source code package is shipped with pre-compiled third-party libraries.
-If users want to recompile individual package ( or use newer version ), the following steps can be used.
+If users want to recompile individual package ( or use newer version ), users have to download the source code and perform manual compile. The following steps and compiling options can be used.
+The compiled libraries have to be copied into the target directory before performing full link.
 Note: users may have to deal with compatibility issues by using different version of libraries, and the compiled image should be fully tested before using in production environment.
 
 Windows32:

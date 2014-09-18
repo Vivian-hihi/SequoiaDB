@@ -510,51 +510,20 @@ elif "win32" == guess_os:
 
     env.Append( EXTRACPPPATH=[ winSDKHome + "/Include" ] )
 
-    # consider adding /MP build with multiple processes option.
+    env.Append( CPPFLAGS=" /EHsc /W3 " )
 
-    # /EHsc exception handling style for visual studio
-    # /W3 warning level
-    # /WX abort build on compiler warnings
-    env.Append( CPPFLAGS=" /EHsc /W3 " ) #  /WX " )
-
-    # some warnings we don't like:
-    # c4355
-    # 'this' : used in base member initializer list
-    #    The this pointer is valid only within nonstatic member functions. It cannot be used in the initializer list for a base class.
-    # c4800
-    # 'type' : forcing value to bool 'true' or 'false' (performance warning)
-    #    This warning is generated when a value that is not bool is assigned or coerced into type bool. 
-    # c4267
-    # 'var' : conversion from 'size_t' to 'type', possible loss of data
-    # When compiling with /Wp64, or when compiling on a 64-bit operating system, type is 32 bits but size_t is 64 bits when compiling for 64-bit targets. To fix this warning, use size_t instead of a type.
-    # c4244
-    # 'conversion' conversion from 'type1' to 'type2', possible loss of data
-    #  An integer type is converted to a smaller integer type.
     env.Append( CPPFLAGS=" /wd4355 /wd4800 /wd4267 /wd4244 /wd4200 " )
 
-    # PSAPI_VERSION relates to process api dll Psapi.dll.
     env.Append( CPPDEFINES=["_CONSOLE","_CRT_SECURE_NO_WARNINGS","PSAPI_VERSION=1","_CRT_RAND_S" ] )
 
-    # docs say don't use /FD from command line (minimal rebuild)
-    # /Gy function level linking
-    # /Gm is minimal rebuild, but may not work in parallel mode.
     if release:
         env.Append( CPPDEFINES=[ "NDEBUG" ] )
         env.Append( CPPFLAGS= " /O2 /Gy " )
         env.Append( CPPFLAGS= " /MT /Zi /errorReport:none " )
-        # /GL whole program optimization
-        # /LTCG link time code generation
         env.Append( CPPFLAGS= " /GL " )
         env.Append( LINKFLAGS=" /LTCG " )
-        # /DEBUG will tell the linker to create a .pdb file
-        # which WinDbg and Visual Studio will use to resolve
-        # symbols if you want to debug a release-mode image
         env.Append( LINKFLAGS=" /DEBUG " )
     else:
-        # /Od disable optimization
-        # /Z7 debug info goes into each individual .obj file -- no .pdb created 
-        # /TP it's a c++ file
-        # /RTC1: - Enable Stack Frame Run-Time Error Checking; Reports when a variable is used without having been initialized
         env.Append( CPPFLAGS=" /RTC1 /MDd /Z7 /errorReport:none " )
 
         if debugBuild:
@@ -583,25 +552,22 @@ else:
 
 env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = 1
 if nix:
-    # -Winvalid-pch Warn if a precompiled header (see Precompiled Headers) is found in the search path but can't be used.
     env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
     if linux:
         env.Append( CPPFLAGS=" -pipe " )
-        env.Append( CPPFLAGS=" -fno-builtin-memcmp " ) # glibc's memcmp is faster than gcc's
+        env.Append( CPPFLAGS=" -fno-builtin-memcmp " )
 
-    # make size_t as 64 bit
     env.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )
     env.Append( CXXFLAGS=" -Wnon-virtual-dtor " )
     env.Append( LINKFLAGS=" -fPIC -pthread -rdynamic" )
     env.Append( LIBS=[] )
 
-    #make scons colorgcc friendly
     env['ENV']['HOME'] = os.environ['HOME']
     env['ENV']['TERM'] = os.environ['TERM']
 
     if debugBuild:
         env.Append( CPPFLAGS=" -O0 -fstack-protector " );
-        env['ENV']['GLIBCXX_FORCE_NEW'] = 1; # play nice with valgrind
+        env['ENV']['GLIBCXX_FORCE_NEW'] = 1;
         env.Append( CPPFLAGS=" -D_DEBUG" );
     else:
         env.Append( CPPFLAGS=" -O3 " )
