@@ -59,6 +59,7 @@ JS_MAPPING_END()
       if ( NULL != sdbGetErrMsg() )
       {
          rval.setStringVal( "", sdbGetErrMsg() ) ;
+         sdbSetErrMsg( NULL ) ;
       }
       return SDB_OK ;
    }
@@ -82,6 +83,7 @@ JS_MAPPING_END()
       sdbSetNeedClearErrorInfo( FALSE ) ;
       INT32 error = sdbGetErrno() ;
       rval.setNativeVal( "",  NumberInt, (const void*)&error ) ;
+      sdbSetErrno( SDB_OK ) ;
       return SDB_OK ;
    }
 
