@@ -78,7 +78,7 @@
 				</exec>
 			</then>
 			<else>
-				<mkdir dir="${db.path}/conf/local/${coord.service.port}" />
+				<mkdir dir="${db.path}/conf/local/50000" />
 				<copy file="${db.path}/conf/samples/sdb.conf.coord" tofile="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="diaglevel=.*" replace="diaglevel=5" flags="g" />
 
