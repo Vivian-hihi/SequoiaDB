@@ -121,7 +121,7 @@ namespace engine
       if ( SDB_OK == sdbGetErrno() )
       {
          const CHAR *p = NULL ;
-         if ( JSPEPORT_EXCEPTION == report->flags && msg &&
+         if ( JSREPORT_EXCEPTION == report->flags && msg &&
               NULL != ( p = ossStrstr( msg, ":" ) ) )
          {
             sdbSetErrno( ossAtoi( p + 1 ) ) ;
