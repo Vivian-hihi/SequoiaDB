@@ -15,10 +15,10 @@
           <stentry>是否必填</stentry>
         </sthead>
         <strow>
-          <stentry>-</stentry>
-          <stentry>-</stentry>
-          <stentry>-</stentry>
-          <stentry>-</stentry>
+          <stentry>option</stentry>
+          <stentry>json 对象</stentry>
+          <stentry>访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行</stentry>
+          <stentry>否，默认为 false</stentry>
         </strow>
       </simpletable>      
     </section>
