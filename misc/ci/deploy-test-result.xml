@@ -14,10 +14,10 @@ import.file.name -->
 	</taskdef>
 
 	<target name="Import-Data-To-Sequoiadb" depends="">
-		<hostinfo prefix="host" />
+		<!-- <hostinfo prefix="host" /> -->
 		<property name="import.bin" value="${install.path}/sequoiadb/bin/sdbimprt" />
 
-		<sdbcreateconn hostname="${save.testLog.hostname}" port="${coord.service.port}" sdbhandleproperty="sdb.mgr.handle" />
+		<sdbcreateconn hostname="bl465-4" port="11810" sdbhandleproperty="sdb.mgr.handle" />
       	<sdbdropcs csname="${cs.name}" sdbhandle="${sdb.mgr.handle}" failonerror="false" />
       	<sdbcreatecs csname="${cs.name}" sdbhandle="${sdb.mgr.handle}" failonerror="false" />
       	<sdbcreatecl csname="${cs.name}" clname="${cl.name}" sdbhandle="${sdb.mgr.handle}" />
