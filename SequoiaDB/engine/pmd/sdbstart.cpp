@@ -65,7 +65,7 @@ namespace engine
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
        ( PMD_COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configure file path" ) \
-       ( PMD_OPTION_CURUSER, "user current user" )
+       ( PMD_OPTION_CURUSER, "use current user" )
 
    // initialize options
    void init ( po::options_description &desc )

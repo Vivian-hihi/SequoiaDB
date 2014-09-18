@@ -72,13 +72,13 @@ namespace engine
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_OPTION_CURUSER, "user current user" ) \
+       ( PMD_OPTION_CURUSER, "use current user" ) \
        ( PMD_OPTION_AS_PROC, "as process, not service" )
 #else
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_OPTION_CURUSER, "user current user" )
+       ( PMD_OPTION_CURUSER, "use current user" )
 #endif // _WINDOWS
 
    /*
