@@ -120,7 +120,16 @@ namespace engine
 
       if ( SDB_OK == sdbGetErrno() )
       {
-         sdbSetErrno( SDB_SPT_EVAL_FAIL ) ;
+         const CHAR *p = NULL ;
+         if ( JSPEPORT_EXCEPTION == report->flags && msg &&
+              NULL != ( p = ossStrstr( msg, ":" ) ) )
+         {
+            sdbSetErrno( ossAtoi( p + 1 ) ) ;
+         }
+         else
+         {
+            sdbSetErrno( SDB_SPT_EVAL_FAIL ) ;
+         }
       }
 
       if ( ( sdbIsErrMsgEmpty() || !__hasSetErr__ ) && msg )
