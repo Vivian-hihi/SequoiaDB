@@ -69,6 +69,7 @@
 			<!-- <property name="install.path" value="${install.path}" /> -->
 			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
 			<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+			<!-- <property name="WORKSPACE" value="${WORKSPACE}" /> -->
 			<!-- <property name="deploy.path" value="${WORKSPACE}/deploy" /> -->
 		</ant>
 		<sleep seconds="5"/>
