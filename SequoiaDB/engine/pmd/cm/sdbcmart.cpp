@@ -65,12 +65,13 @@ namespace engine
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_OPTION_AS_PROC, "as process, not service" )
+       ( PMD_OPTION_AS_PROC, "as process, not service" ) \
 #else
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
-       ( PMD_OPTION_VERSION, "version" )
+       ( PMD_OPTION_VERSION, "version" ) \
 #endif // _WINDOWS
+       ( PMD_OPTION_CURUSER, "user current user" )
 
    // initialize options
    void init ( po::options_description &desc )
@@ -153,7 +154,10 @@ namespace engine
 #endif //_WINDOWS
 
       // check user info before create dir or files
-      UTIL_CHECK_AND_CHG_USER() ;
+      if ( !vm.count( PMD_OPTION_CURUSER ) )
+      {
+         UTIL_CHECK_AND_CHG_USER() ;
+      }
 
       rc = ossGetEWD ( progName, OSS_MAX_PATHSIZE ) ;
       if ( rc )

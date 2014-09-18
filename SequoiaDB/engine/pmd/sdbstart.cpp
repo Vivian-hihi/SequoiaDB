@@ -64,7 +64,8 @@ namespace engine
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configure file path" )
+       ( PMD_COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configure file path" ) \
+       ( PMD_OPTION_CURUSER, "user current user" )
 
    // initialize options
    void init ( po::options_description &desc )
@@ -94,13 +95,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_RESVARG, "resolveArgument" )
-   INT32 resolveArgument ( po::options_description &desc, INT32 argc,
-                           CHAR **argv, vector< string > &configs,
+   INT32 resolveArgument ( po::options_description &desc,
+                           po::variables_map &vm,
+                           INT32 argc, CHAR **argv,
+                           vector< string > &configs,
                            vector< utilNodeInfo > &nodesinfo )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTART_RESVARG );
-      po::variables_map vm ;
       string confPath ;
       utilNodeInfo info ;
 
@@ -176,11 +178,12 @@ namespace engine
       INT32 succeedNum = 0 ;
       INT32 failedNum = 0 ;
       po::options_description desc ( "Command options" ) ;
+      po::variables_map vm ;
       string svcname ;
       init ( desc ) ;
 
       // validate arguments
-      rc = resolveArgument ( desc, argc, argv, configs, nodesInfo ) ;
+      rc = resolveArgument ( desc, vm, argc, argv, configs, nodesInfo ) ;
       if ( rc )
       {
          if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
@@ -191,7 +194,10 @@ namespace engine
          goto done ;
       }
 
-      UTIL_CHECK_AND_CHG_USER() ;
+      if ( !vm.count( PMD_OPTION_CURUSER ) )
+      {
+         UTIL_CHECK_AND_CHG_USER() ;
+      }
 
       // make path
       rc = ossGetEWD( rootPath, OSS_MAX_PATHSIZE ) ;
