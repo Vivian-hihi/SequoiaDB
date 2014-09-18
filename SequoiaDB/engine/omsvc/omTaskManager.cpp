@@ -309,6 +309,8 @@ namespace engine
          goto error ;
       }
 
+      PD_LOG( PDEVENT, "restore install:%s", record.toString().c_str() ) ;
+
       SDB_ASSERT( _taskType == OM_INSTALL_BUSINESS_REQ, "" ) ;
    done:
       return rc ;
@@ -1034,10 +1036,10 @@ namespace engine
       omInstallTask *task = NULL ;
       UINT64 taskID ;
 
-      if ( _isTaskExist( OM_INSTALL_BUSINESS_REQ, taskID) )
+      if ( _isTaskTypeExist( OM_INSTALL_BUSINESS_REQ, taskID) )
       {
          rc = SDB_IXM_DUP_KEY ;
-         PD_LOG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
+         PD_LOG_MSG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
                  OM_INSTALL_BUSINESS_REQ, taskID ) ;
          goto error ;
       }
@@ -1046,7 +1048,7 @@ namespace engine
       rc = task->restore( record ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "restore omInstallTask failed:rc=%d", rc ) ;
+         PD_LOG_MSG( PDERROR, "restore omInstallTask failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -1063,7 +1065,7 @@ namespace engine
       omUninstallTask *task = NULL ;
       UINT64 taskID ;
 
-      if ( _isTaskExist( OM_REMOVE_BUSINESS_REQ, taskID) )
+      if ( _isTaskTypeExist( OM_REMOVE_BUSINESS_REQ, taskID) )
       {
          rc = SDB_IXM_DUP_KEY ;
          PD_LOG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
@@ -1098,7 +1100,6 @@ namespace engine
       BSONObj matcher ;
       BSONObj orderBy ;
       BSONObj hint ;
-      _maxTaskID = 0;
 
       matcher = BSON( OM_TASKINFO_FIELD_TASKID << (long long)taskID ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, orderBy, hint, 
@@ -1145,7 +1146,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 omTaskManager::restoreTask()
    {
       INT32 rc           = SDB_OK ;
@@ -1241,32 +1242,31 @@ namespace engine
       return ++_maxTaskID ;
    }
 
-   BOOLEAN omTaskManager::_isTaskExist( string taskType, UINT64 &taskID )
+   BOOLEAN omTaskManager::_isTaskTypeExist( string taskType, UINT64 &taskID )
    {
-      BOOLEAN isTaskExist = FALSE ;
+      BOOLEAN isTaskTypeExist = FALSE ;
 
-      _lock.get() ;
-
-      MAP_TASK_INTER iter = _mapTasks.find( taskID ) ;
+      MAP_TASK_INTER iter = _mapTasks.begin() ;
       while ( iter != _mapTasks.end() )
       {
          shared_ptr< omTaskBase > sharedTask = iter->second ;
-         isTaskExist = TRUE ;
-         taskID      = sharedTask->getTaskID() ;
-         break ;
+         if ( sharedTask->getType() == taskType )
+         {
+            isTaskTypeExist = TRUE ;
+            taskID          = sharedTask->getTaskID() ;
+            break ;
+         }
+
+         iter++ ;
       }
 
-      _lock.release() ;
-
-      return isTaskExist ;
+      return isTaskTypeExist ;
    }
 
    void omTaskManager::_addTaskToMap( omTaskBase *task )
    {
-      _lock.get() ;
       _mapTasks[task->getTaskID()] =
                                  shared_ptr< omTaskBase >( task, taskDeleter ) ;
-      _lock.release() ;
    }
 
    INT32 omTaskManager::createInstallTask( const string &agentHost, 
@@ -1275,23 +1275,23 @@ namespace engine
    {
       INT32 rc            = SDB_OK ;
       omInstallTask *task = NULL ;
-      if ( _isTaskExist( OM_INSTALL_BUSINESS_REQ, taskID ) )
+
+      _lock.get() ;
+      if ( _isTaskTypeExist( OM_INSTALL_BUSINESS_REQ, taskID ) )
       {
          rc = SDB_IXM_DUP_KEY ;
-         PD_LOG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
+         PD_LOG_MSG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
                  OM_INSTALL_BUSINESS_REQ, taskID ) ;
          goto error ;
       }
 
-      _lock.get() ;
       taskID = _generateTaskID() ;
-      _lock.release() ;
 
       task = SDB_OSS_NEW omInstallTask( _om ) ;
       rc = task->init( agentHost, agentService, confValue, taskID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "init omInstallTask failed:rc=%d", rc ) ;
+         PD_LOG_MSG( PDERROR, "init omInstallTask failed:rc=%d", rc ) ;
          goto error ;
       }
 
@@ -1299,6 +1299,7 @@ namespace engine
       PD_LOG( PDEVENT, "create task success:type=%s,taskID="OSS_LL_PRINT_FORMAT,
               task->getType().c_str(), task->getTaskID() ) ;
    done:
+      _lock.release() ;
       return rc ;
    error:
       goto done ;
@@ -1311,28 +1312,28 @@ namespace engine
    {
       INT32 rc            = SDB_OK ;
       omInstallTask *task = NULL ;
-      if ( _isTaskExist( OM_REMOVE_BUSINESS_REQ, taskID ) )
+
+      _lock.get() ;
+      if ( _isTaskTypeExist( OM_REMOVE_BUSINESS_REQ, taskID ) )
       {
          rc = SDB_IXM_DUP_KEY ;
-         PD_LOG( PDERROR, "task exist:taskType=%s,taskID="OSS_LL_PRINT_FORMAT,
-                 OM_REMOVE_BUSINESS_REQ, taskID ) ;
+         PD_LOG_MSG( PDERROR, "task exist:taskType=%s,taskID="
+                     OSS_LL_PRINT_FORMAT, OM_REMOVE_BUSINESS_REQ, taskID ) ;
          goto error ;
       }
 
-      _lock.get() ;
       taskID = _generateTaskID() ;
-      _lock.release() ;
-
       task = SDB_OSS_NEW omUninstallTask( _om ) ;
       rc   = task->init( agentHost, agentService, confValue, taskID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "init omUninstallTask failed:rc=%d", rc ) ;
+         PD_LOG_MSG( PDERROR, "init omUninstallTask failed:rc=%d", rc ) ;
          goto error ;
       }
 
       _addTaskToMap( task ) ;
    done:
+      _lock.release() ;
       return rc ;
    error:
       goto done ;
@@ -1403,8 +1404,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 omTaskManager::getProgress( UINT64 taskID, bool &isFinish, 
-                                     string &status, BSONObj &progress )
+   INT32 omTaskManager::getProgress( UINT64 taskID, string &taskType,
+                                     bool &isFinish, string &status, 
+                                     BSONObj &progress )
    {
       INT32 rc = SDB_OK ;
       shared_ptr< omTaskBase > shareTask ;
@@ -1423,6 +1425,7 @@ namespace engine
             goto error ;
          }
 
+         taskType = result.getStringField( OM_TASKINFO_FIELD_TYPE ) ;
          isFinish = result.getBoolField( OM_TASKINFO_FIELD_ISFINISH ) ;
          status   = result.getStringField( OM_TASKINFO_FIELD_STATUS ) ;
          progress = result.getObjectField( OM_TASKINFO_FIELD_PROGRESS ) ;
@@ -1432,6 +1435,7 @@ namespace engine
          shareTask = iter->second ;
          _lock.release() ;
 
+         taskType = shareTask->getType() ;
          rc = shareTask->getProgress( isFinish, status, progress ) ;
          if ( SDB_OK != rc )
          {
@@ -1440,7 +1444,7 @@ namespace engine
             goto error ;
          }
       }
-      
+
    done:
       return rc ;
    error:

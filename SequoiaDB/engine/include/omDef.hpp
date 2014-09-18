@@ -389,11 +389,10 @@ namespace engine
    // om rest install_business_req
    #define  OM_INSTALL_BUSINESS_REQ          "add business"
 
-   #define  OM_ROLLBACK_INSTALL_REQ          OM_ROLLBACK_TRANSACTION_REQ
-
    #define  OM_REST_CONFIG_INFO              "ConfigInfo"
 
    #define  OM_BSON_TASKID                   "TaskID"
+   #define  OM_BSON_TASKTYPE                 "TaskType"
    // *****************************************************************
 
    // om query install progress

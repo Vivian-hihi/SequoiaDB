@@ -2512,7 +2512,8 @@ namespace engine
       BSONObj hint ;
       SINT64 contextID = -1 ;
 
-      selector = BSON( OM_HOST_FIELD_NAME << "" ) ;
+      selector = BSON( OM_HOST_FIELD_NAME << "" 
+                       << OM_HOST_FIELD_IP << "" ) ;
       matcher  = BSON( OM_HOST_FIELD_CLUSTERNAME << cluster ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 0, 
                      _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
@@ -2567,7 +2568,8 @@ namespace engine
       BSONObj hint ;
       SINT64 contextID = -1 ;
 
-      selector = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "" ) ;
+      selector = BSON( OM_CONFIGURE_FIELD_HOSTNAME << "" 
+                       << OM_HOST_FIELD_IP << "" ) ;
       matcher  = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << businessName ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
@@ -2731,7 +2733,9 @@ namespace engine
          }
 
          BSONObj record( buffObj.data() ) ;
-         hosts.push_back( record.copy() ) ;
+         BSONObj filter = BSON( OM_HOST_FIELD_PASSWORD << "" ) ;
+         BSONObj result = record.filterFieldsUndotted( filter, false ) ;
+         hosts.push_back( result.copy() ) ;
       }
    done:
       if ( -1 != contextID )
@@ -4478,7 +4482,7 @@ namespace engine
                                            bsonConfValue, taskID ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "create install task failed" ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR );
           PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -4531,6 +4535,7 @@ namespace engine
       omTaskManager *tm = NULL ;
       string taskID ;
       UINT64 uTaskID ;
+      string taskType ;
       bool isFinished ;
       string status ;
       BSONObj progress ;
@@ -4563,7 +4568,7 @@ namespace engine
       uTaskID = ossAtoll( taskID.c_str() ) ;
 
       tm = sdbGetOMManager()->getTaskManager() ;
-      rc = tm->getProgress( uTaskID, isFinished, status, progress ) ;
+      rc = tm->getProgress( uTaskID, taskType, isFinished, status, progress ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
@@ -4576,6 +4581,7 @@ namespace engine
          BSONObj op ;
          opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
          opBuilder.append( OM_BSON_TASKID, taskID ) ;
+         opBuilder.append( OM_BSON_TASKTYPE, taskType ) ;
          opBuilder.append( OM_BSON_TASK_ISFINISHED, isFinished ) ;
          opBuilder.append( OM_BSON_TASK_STATUS, status ) ;
          opBuilder.appendArray( OM_BSON_TASK_PROGRESS, progress ) ;

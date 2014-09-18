@@ -248,13 +248,14 @@ namespace engine
 
          INT32             enableTask( UINT64 taskID ) ;
 
-         INT32             getProgress( UINT64 taskID, bool &isFinish, 
-                                        string &status, BSONObj &progress ) ;
+         INT32             getProgress( UINT64 taskID, string &taskType,
+                                        bool &isFinish, string &status, 
+                                        BSONObj &progress ) ;
 
          INT32             run() ;
 
       private:
-         BOOLEAN           _isTaskExist( string taskType, UINT64 &taskID ) ;
+         BOOLEAN           _isTaskTypeExist( string taskType, UINT64 &taskID ) ;
          UINT64            _generateTaskID() ;
          INT32             _restoreInstallTask( BSONObj &record ) ;
          INT32             _restoreUninstallTask( BSONObj &record ) ;
