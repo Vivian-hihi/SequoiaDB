@@ -100,7 +100,7 @@
 
 	<target name="Test" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="basic,ant" />
+		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
 
 		<!-- <property name="test-type-list" value="driver-java" /> -->
@@ -154,7 +154,7 @@
 						<echo message="Tar ${test.log.path}.tar.gz..." />
 						<tar basedir="${WORKSPACE}/reports" destfile="${WORKSPACE}/reports/${test.log.path}.tar.gz" compression="gzip" includes="${test.log.path}/**/*" />
 	
-						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}" workDir="${WORKSPACE}/reports" saveDir="${save.testLog.dir}" />
+						<stafTools workType="copy" workHost="${host.NAME}" fileName="${WORKSPACE}/reports/${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" />
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 
 						<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
@@ -174,21 +174,21 @@
 				
 				<property name="import.cmd" value="ant -l deploy-test-result.log -f deploy-test-result.xml -Dant.sdb.tasks.path=${WORKSPACE}/deploy/ant-sdbtasks -Dproperties.dir=${properties.dir} -Dcoord.service.port=11810 -Dcs.name=${current.time.log} -Dcl.name=${host.NAME} -Dimport.file.name=${import.file.name}" />
 
-				<stafTools workType="copy" workHost="${test.machine.no1.basic}" fileName="${import.file.name}"  toHost="bl465-4" workDir="${install.path}" saveDir="${install.path}" />
+				<stafTools workType="copy" workHost="${test.machine.no1.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
 				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
 				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
 				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
 				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="delete" workHost="${test.machine.no1.basic}" fileName="${install.path}/${import.file.name}" />
 
-				<stafTools workType="copy" workHost="${test.machine.no2.basic}" fileName="${import.file.name}"  toHost="bl465-4" workDir="${install.path}" saveDir="${install.path}" />
+				<stafTools workType="copy" workHost="${test.machine.no2.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
 				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
 				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
 				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
 				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="delete" workHost="${test.machine.no2.basic}" fileName="${install.path}/${import.file.name}" />
 
-				<stafTools workType="copy" workHost="${test.machine.no3.basic}" fileName="${import.file.name}"  toHost="bl465-4" workDir="${install.path}" saveDir="${install.path}" />
+				<stafTools workType="copy" workHost="${test.machine.no3.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
 				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
 				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
 				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
