@@ -153,10 +153,10 @@ namespace engine
       protected:
 
       private:
-         INT32           _getClusterInfo( string &clusterName, string &desc,
-                                          string &sdbUsr, string &sdbPasswd,
-                                          string &sdbUsrGroup,
-                                          string &installPath ) ;
+         INT32           _getRestParameter( string &clusterName, string &desc,
+                                            string &sdbUsr, string &sdbPasswd,
+                                            string &sdbUsrGroup,
+                                            string &installPath ) ;
    };
 
    class omQueryClusterCommand : public omCreateClusterCommand 
@@ -197,8 +197,8 @@ namespace engine
                                                MsgHeader *pMsg ) ;
          INT32           _receiveFromAgent( pmdRemoteSession *remoteSession,
                                             SINT32 &flag, BSONObj &result ) ;
-         INT32           _getHostList( string &clusterName, 
-                                       list<BSONObj> &hostInfo ) ;
+         INT32           _getRestHostList( string &clusterName, 
+                                           list<BSONObj> &hostInfo ) ;
          void            _clearSession( omManager *om, 
                                         pmdRemoteSession *remoteSession) ;
 
@@ -269,8 +269,8 @@ namespace engine
 
       protected:
                          // overwrite
-         INT32           _getHostList( string &clusterName, 
-                                       list<BSONObj> &hostInfo ) ;
+         INT32           _getRestHostList( string &clusterName, 
+                                           list<BSONObj> &hostInfo ) ;
 
       private:
          void            _transactionRollBack( string host, string service, 
@@ -527,8 +527,6 @@ namespace engine
 
       private:
          void           _sendBusinessInfo2Web( BSONObj &businessInfo ) ;
-         INT32          _getBusinessInfo( string business, 
-                                          BSONObj &businessInfo ) ;
    } ;
 
    class omListBusinessCommand : public omAuthCommand
@@ -623,7 +621,6 @@ namespace engine
          INT32          _removeHost( const simpleHostInfo &hostInfo, 
                                      BOOLEAN isForced ) ;
          INT32          _removeHostByAgent( const simpleHostInfo &hostInfo ) ;
-         INT32          _deleteHostRecord( const string &hostName ) ;
          INT32          _getHostName( string &hostName, BOOLEAN &isForced ) ;
    } ;
 
@@ -652,7 +649,8 @@ namespace engine
                                          BOOLEAN isForced ) ;
          INT32          _deleteConfigureRecord( const string &businessName ) ;
          INT32          _deleteBusinessRecord( const string &businessName ) ;
-         INT32          _generateRequest( BSONObj &nodeInfos, 
+         INT32          _generateRequest( string businessName,
+                                          BSONObj &nodeInfos, 
                                           BSONObj &request ) ;
    } ;
 

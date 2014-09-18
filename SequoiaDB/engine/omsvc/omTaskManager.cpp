@@ -288,14 +288,15 @@ namespace engine
       element       = record.getField( OM_TASKINFO_FIELD_TASKID ) ;
       _taskID       = element.Long() ;
 
-      // must copy the bson
       _agentHost    = record.getStringField( OM_TASKINFO_FIELD_AGENTHOST ) ;
       _agentService = record.getStringField( OM_TASKINFO_FIELD_AGENTSERVICE ) ;
+      // must copy the bson
       _taskInfo     = record.getObjectField( OM_TASKINFO_FIELD_INFO ).copy() ;
       _isFinished   = record.getBoolField( OM_TASKINFO_FIELD_ISFINISH ) ;
       _isEnable     = record.getBoolField( OM_TASKINFO_FIELD_ISENABLE ) ;
       _taskStatus   = record.getStringField( OM_TASKINFO_FIELD_STATUS ) ;
       _taskType     = record.getStringField( OM_TASKINFO_FIELD_TYPE ) ;
+      // must copy the bson
       _progress = record.getObjectField( OM_TASKINFO_FIELD_PROGRESS ).copy() ;
 
       if ( !_taskInfo.hasField( OM_BSON_BUSINESS_NAME )

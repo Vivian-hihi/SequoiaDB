@@ -39,6 +39,8 @@
 #include <map>
 #include <string>
 
+using namespace bson ;
+
 namespace engine
 {
    class omCommandInterface : public SDBObject
@@ -55,12 +57,20 @@ namespace engine
          virtual INT32     doAgentResponse ( MsgHeader* pAgentResponse ) ;
 
       protected:
+         INT32             _getBusinessInfo( string business, 
+                                             BSONObj &businessInfo ) ;
+         INT32             _deleteHost( const string &hostName ) ;
+         INT32             _getClusterInfo( const string &clusterName, 
+                                            BSONObj &clusterInfo ) ;
+      protected:
          SDB_RTNCB         *_pRTNCB ;
          SDB_DMSCB         *_pDMDCB ;
          pmdKRCB           *_pKRCB ;
          SDB_DMSCB         *_pDMSCB ;
          
          pmdEDUCB          *_cb ;
+
+         string            _errorDetail ;
    };
 }
 
