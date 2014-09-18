@@ -3,11 +3,11 @@
 <!--@param ${install.path} , the sequoiadb install path -->
 <!--@param ${antFileName} , the ant file name is -->
 <!--@param ${test.reports.path} , where the report put in-->
-<!--@param ${test-type} , what the test type-->
-<project name="test-type" default="test-type">
-	<target name="test-type" depends="">
+<!--@param ${Test-Type} , what the test type-->
+<project name="Test-Type" default="Test-Type">
+	<target name="Test-Type" depends="">
 		<property file="${basedir}/ci.test.properties" />
-		<switch value="${test-type}">
+		<switch value="${Test-Type}">
 			<case value="basic">
 				<if>
 					<equals arg1="${parallel.flag}" arg2="unparallel" />
@@ -20,8 +20,6 @@
 							<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 							<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 							<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-
-							<param name="coord.service.port" value="50000" />
 						</sdbtest>
 					</then>
 					<else>
@@ -29,36 +27,27 @@
 						<parallel>
 							<sdbtest host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
-
 								<param name="excludes.dir.patterns" value="vote" />
 								<param name="includes.dir.patterns" value="${basic_list1}" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-
-								<param name="coord.service.port" value="50000" />
 							</sdbtest>
 							<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
-
 								<param name="excludes.dir.patterns" value="vote" />
 								<param name="includes.dir.patterns" value="${basic_list2}" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-
-								<param name="coord.service.port" value="50000" />
 							</sdbtest>
 							<sdbtest host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
-
 								<param name="excludes.dir.patterns" value="vote" />
 								<param name="includes.dir.patterns" value="${basic_list3}" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
-
-								<param name="coord.service.port" value="50000" />
 							</sdbtest>
 						</parallel>
 					</else>
@@ -76,9 +65,9 @@
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
 					
-					<param name="coord.service.port" value="50000" />
-					<param name="cata.service.port" value="60000" />
-					<param name="data.service.port" value="51000" />
+					<!-- <param name="coord.service.port" value="50000" /> -->
+					<!-- <param name="cata.service.port" value="60000" /> -->
+					<!-- <param name="data.service.port" value="51000" /> -->
 				</sdbtest>
 				<echo message="... Test ant testcases is over ..." />
 			</case>
@@ -93,8 +82,8 @@
 					<param name="excludes.dir.patterns" value="reports*" />
 					<param name="includes.dir.patterns" value="*" />
 					
-					<param name="coord.service.port" value="50000" />
-					<param name="data.service.port" value="21100" />				
+					<!-- <param name="coord.service.port" value="50000" />
+					<param name="data.service.port" value="21100" /> -->				
 				</sdbtest>
 				<echo message="... Test python driver is over ..." />
 			</case>

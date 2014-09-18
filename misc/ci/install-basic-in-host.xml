@@ -1,52 +1,59 @@
 <!--@param ${test.basedir}: the path where deploy software and test script-->
 <!--@param ${install.package.filename}: The deploy tar file name -->
-<!--@param ${coord.service.port}: The coord port -->
 <!--@param ${is.standalone.mode}: The flag whether start with standalone mode-->
 <!--@param ${is.coord.master}: flag this node is coord master or no-->
 <!--@param ${catalog.addrs}: The string include catalog addr and port-->
 
-<project name="install-software" default="install-software">
+<!-- hostname:jenkins.master.ip -->
+<!-- depends:deploy-software-in-host.xml -->
+<!-- call:null -->
+
+<project name="Install-Software" default="Install-Software">
+	<property file="${test.basedir}/ci.test.properties" />
 	<!-- <property environment="env" /> -->
-	<property name="host.name" value="${NAME}" />
-	<property name="host.ip" value="${ADDR4}" />
-	<property name="install.package.path" value="${test.basedir}" />
-	<property name="is.standalone.mode" value="false" />
-	<property file="${install.package.path}/ci.test.properties" />
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<property name="db.path" value="${install.path}/sequoiadb" />
+
+	<!-- <property name="host.name" value="${NAME}" /> -->
+	<!-- <property name="host.ip" value="${ADDR4}" /> -->
+	<!-- <property name="install.package.path" value="${test.basedir}" /> -->
+	<!-- <property name="is.standalone.mode" value="false" /> -->
+	
+	<!-- <taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef> -->
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
+		</classpath>
+	</taskdef> 
 
-	<target name="clean-install" depends="">
-		<property name="db.path" value="${install.path}/sequoiadb" />
-
+	<target name="Clean-Install" depends="">
 		<echo message="Begin to clean install env..." />
-		<available property="sdb.installed" file="${db.path}/bin/sdbstop" />
-		<if>
-			<equals arg1="${sdb.installed}" arg2="true" />
-			<then>
-				<exec executable="service" dir="" failonerror="true">
-					<arg value="sdbcm" />
-					<arg value="stop" />			
-				</exec>
-				<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
-					<arg line="--mode unattended" />
-				</exec>
-				<delete dir="${db.path}" />
-				<echo message="Clean install env compeleted." />
-			</then>
-		</if>
-		<sleep seconds="10"/>
+
+		<exec executable="service" dir="" failonerror="true">
+			<arg value="sdbcm" />
+			<arg value="stop" />			
+		</exec>
+		<sleep seconds="60"/>
+
+		<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
+			<arg line="--mode unattended" />
+		</exec>
+		<sleep seconds="60"/>
+
+		<delete dir="${db.path}" />
+		<sleep seconds="20"/>
+
+		<echo message="Clean install env compeleted." />
 	</target>
 
 
-	<target name="install-software" depends="clean-install">
-		<property name="db.path" value="${install.path}/sequoiadb" />
-
+	<target name="Install-Software" depends="">
 		<echo message="Begin to install..." />
-		<chmod file="${install.package.path}/${install.package.filename}" perm="u+x" />
-		<exec executable="${install.package.path}/${install.package.filename}">
+		<chmod file="${test.basedir}/${install.package.filename}" perm="u+x" />
+		<exec executable="${test.basedir}/${install.package.filename}">
 			<arg line="--mode unattended --prefix ${db.path} --username ${install.user} --userpasswd ${install.password}" />
 		</exec>
 
@@ -65,7 +72,7 @@
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
-				<echo message="start standalone process: su - sdbadmin -c '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
+				<echo message="Start standalone process: su - sdbadmin -c '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" failonerror="true" failifexecutionfails="true" >
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				</exec>
@@ -89,7 +96,7 @@
 					</then>
 				</if>
 
-				<echo message="start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
+				<echo message="Start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" spawn="false">
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				</exec>
@@ -98,7 +105,7 @@
 
 		<waitfor maxwait="30" maxwaitunit="second" checkevery="500">
 			<and>
-				<socket server="${host.ip}" port="${coord.service.port}" />
+				<socket server="${ADDR4}" port="${coord.service.port}" />
 			</and>
 		</waitfor>
 		<echo message="Install compeleted." />

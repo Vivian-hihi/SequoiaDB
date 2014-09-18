@@ -8,6 +8,13 @@
 <!--@param ${ci.properties.path}: where is the ci.properties file -->
 <!--@param ${report.suffix}:this is for long time test, default is NULL-->
 
+<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
+								<param name="excludes.dir.patterns" value="vote" />
+								<param name="includes.dir.patterns" value="${basic_list3}" />
+								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
+								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
+
 <project name="test-basic-testcases" default="Test-Basic-Testcases">
 	<property file="${ci.properties.path}" />
 	<property name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
@@ -172,7 +179,7 @@
 
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.failure.end.time}&quot; time=&quot;${testcase.failure.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;fail&quot;&gt;&#10;&lt;failure&gt;&#10;&lt;![CDATA[&#10;COMMAND= ${command}&#10;RETURNCODE=${ret.code}&#10;ERRORMESSAGE=&#10;${screen.output}&#10;TESTBEGINSTR=${testBeginStr}&#10;TESTENDSTR=${testEndStr}&#10;DB.LISTREPLICAGROUP:&#10;${db.RG.info}]]&gt;&#10;&lt;/failure&gt;&#10;&lt;/testcase&gt;&#10;" />
 
-				<echo file="/opt/basic-testcases-time.json" append="true" message="{testcase_name:&quot;${test.suite.name}-${test.case.name}&quot;,deploy:&quot;${deploy.name}&quot;,hostname:&quot;${host.NAME}&quot;,time:&quot;${testcase.timeOutput}&quot;,status:&quot;succ&quot;,begin_time:&quot;${testcase.begin.time}&quot;,end_time:&quot;${testcase.end.time}&quot;}&#10;&#10;&#10;" />
+				<echo file="${install.path}/${import.file.name}" append="true" message="{testcase_name:&quot;${test.suite.name}-${test.case.name}&quot;,deploy:&quot;${deploy.name}&quot;,hostname:&quot;${host.NAME}&quot;,time:&quot;${testcase.timeOutput}&quot;,status:&quot;succ&quot;,begin_time:&quot;${testcase.begin.time}&quot;,end_time:&quot;${testcase.end.time}&quot;}&#10;&#10;&#10;" />
 			</then>
 			<else>
 				<tstamp>
@@ -184,7 +191,7 @@
 
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; begin_time=&quot;${testcase.begin.time}&quot; end_time=&quot;${testcase.end.time}&quot; time=&quot;${testcase.timeOutput}&quot; path=&quot;${testcases.path}&quot; status=&quot;succ&quot;&gt;&#10;&lt;/testcase&gt;&#10;" />
 
-				<echo file="/opt/basic-testcases-time.json" append="true" message="{testcase_name:&quot;${test.suite.name}-${test.case.name}&quot;,deploy:&quot;${deploy.name}&quot;,hostname:&quot;${host.NAME}&quot;,time:&quot;${testcase.timeOutput}&quot;,status:&quot;succ&quot;,begin_time:&quot;${testcase.begin.time}&quot;,end_time:&quot;${testcase.end.time}&quot;}&#10;&#10;&#10;" />
+				<echo file="${install.path}/${import.file.name}" append="true" message="{testcase_name:&quot;${test.suite.name}-${test.case.name}&quot;,deploy:&quot;${deploy.name}&quot;,hostname:&quot;${host.NAME}&quot;,time:&quot;${testcase.timeOutput}&quot;,status:&quot;succ&quot;,begin_time:&quot;${testcase.begin.time}&quot;,end_time:&quot;${testcase.end.time}&quot;}&#10;&#10;&#10;" />
 			</else>
 		</if>
 

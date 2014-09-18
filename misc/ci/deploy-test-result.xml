@@ -5,7 +5,7 @@ cs.name
 cl.name
 import.file.name -->
 
-<project name="deploy-test-result" default="">
+<project name="deploy-test-result" default="Import-Data-To-Sequoiadb">
 	<property file="${properties.dir}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
@@ -13,7 +13,7 @@ import.file.name -->
 		</classpath>
 	</taskdef>
 
-	<target name="Copy-Data-To-Sequoiadb" depends="">
+	<target name="Import-Data-To-Sequoiadb" depends="">
 		<hostinfo prefix="host" />
 		<property name="import.bin" value="${install.path}/sequoiadb/bin/sdbimprt" />
 

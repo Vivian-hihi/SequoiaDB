@@ -6,6 +6,7 @@
 <!--@param ${excludes.dir.patterns}.-->
 <!--@param ${includes.dir.patterns}.-->
 <!--@param ${coord.service.port}:50000.-->
+
 <!--@param ${cata.service.port}:60000.-->
 <!--@param ${data.service.port}:51000.-->
 
@@ -76,15 +77,15 @@
 
 		<trycatch property="e">
 			<try>
-				<property name="command" value="ant -f ${test.case.fullname} -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -Ddata.service.port=${data.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path}" />
+				<property name="command" value="ant -f ${test.case.fullname} -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
 
 				<antfetch antfile="${test.case.fullname}" target="test" inheritAll="false" return="ret.code,error.msg">
 					<property name="host.NAME" value="${host.NAME}" />
 					<property name="coord.service.port" value="${coord.service.port}" />
-					<property name="data.service.port" value="${data.service.port}" />
-					<property name="cata.service.port" value="${cata.service.port}" />
+					<!-- <property name="data.service.port" value="${data.service.port}" /> -->
+					<!-- <property name="cata.service.port" value="${cata.service.port}" /> -->
 					<property name="CS_PRIX" value="${CS_PRIX}" />
 					<property name="install.path" value="${install.path}" />
 				</antfetch>

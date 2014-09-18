@@ -4,7 +4,6 @@ install.path=/opt
 install.user=sdbadmin
 install.password=sdbadmin
 
-deploy.tar.file.name=deploy.tar.gz
 test.machine.deploy.path=/tmp/sequoiadb_test
 test.machine.software.path=/tmp/sequoiadb
 
@@ -15,6 +14,10 @@ target.deploy_tar_gz.ip=bl465-4
 copy.log.path=/test_log
 
 coord.service.port=50000
+cata.service.port=30000
+data.service.port=21100
+sharingbreak=20000
+
 jenkins.master.ip=suse-test1.control
 test.machine.no1.basic=suse-test2.control
 test.machine.no2.basic=suse-test3.control
@@ -29,3 +32,5 @@ basic_list2=dropCL,dropCS,dropIndex,insert,listCL,listCS,operators,procedures,ag
 basic_list3=query,split,transaction
 
 testcase.path=/tmp/sequoiadb_test/deploy/hlt
+
+import.file.name=basic-testcases-time.json
