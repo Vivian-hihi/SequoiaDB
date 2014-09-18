@@ -355,6 +355,7 @@ namespace engine
 
       // set error report
       sdbSetPrintError( ( flag & SPT_EVAL_FLAG_PRINT ) ? TRUE : FALSE ) ;
+      sdbSetNeedClearErrorInfo( TRUE ) ;
 
       if ( !JS_EvaluateScript( _context, _global, code,
                                len, filename, lineno, &jsrval ) )
@@ -385,7 +386,8 @@ namespace engine
       }
 
       // clear return error
-      if ( ! JS_IsExceptionPending( _context ) )
+      if ( sdbIsNeedClearErrorInfo() &&
+           !JS_IsExceptionPending( _context ) )
       {
          sdbClearErrorInfo() ;
       }

@@ -178,6 +178,7 @@ namespace engine {
 
       // set error report
       sdbSetPrintError( ( printFlag & SPT_EVAL_FLAG_PRINT ) ? TRUE : FALSE ) ;
+      sdbSetNeedClearErrorInfo( TRUE ) ;
 
       if ( ! JS_EvaluateScript ( _context , _global ,
                                  code , len > 0 ? len : ossStrlen ( code ) ,
@@ -189,7 +190,8 @@ namespace engine {
       }
 
       // clear return error
-      if ( JS_IsExceptionPending( _context ) )
+      if ( sdbIsNeedClearErrorInfo() &&
+           !JS_IsExceptionPending( _context ) )
       {
          sdbClearErrorInfo() ;
       }
@@ -266,12 +268,20 @@ namespace engine {
 
       // set error report
       sdbSetPrintError( ( printFlag & SPT_EVAL_FLAG_PRINT ) ? TRUE : FALSE ) ;
+      sdbSetNeedClearErrorInfo( TRUE ) ;
 
       if ( ! JS_EvaluateScript ( _context, _global, code, len, NULL,
                                  lineno, rval ) )
       {
          rc = sdbGetErrno() ? sdbGetErrno() : SDB_SPT_EVAL_FAIL ;
          goto error ;
+      }
+
+      // clear return error
+      if ( sdbIsNeedClearErrorInfo() &&
+           !JS_IsExceptionPending( _context ) )
+      {
+         sdbClearErrorInfo() ;
       }
 
    done:

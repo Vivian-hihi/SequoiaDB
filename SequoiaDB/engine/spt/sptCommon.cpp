@@ -36,6 +36,7 @@ namespace engine
    static OSS_THREAD_LOCAL BOOLEAN __hasReadData__ = FALSE ;
 
    static OSS_THREAD_LOCAL BOOLEAN __hasSetErr__ = FALSE ;
+   static OSS_THREAD_LOCAL BOOLEAN __needClearErrorInfo__ = FALSE ;
 
    const CHAR *sdbGetErrMsg()
    {
@@ -100,6 +101,16 @@ namespace engine
    BOOLEAN sdbHasReadData()
    {
       return __hasReadData__ ;
+   }
+
+   void sdbSetNeedClearErrorInfo( BOOLEAN need )
+   {
+      __needClearErrorInfo__ = need ;
+   }
+
+   BOOLEAN sdbIsNeedClearErrorInfo()
+   {
+      return __needClearErrorInfo__ ;
    }
 
    void sdbReportError( JSContext *cx, const char *msg,

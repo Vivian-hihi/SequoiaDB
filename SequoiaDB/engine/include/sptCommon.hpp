@@ -33,6 +33,9 @@ namespace engine
    void     sdbSetReadData( BOOLEAN hasRead ) ;
    BOOLEAN  sdbHasReadData() ;
 
+   void     sdbSetNeedClearErrorInfo( BOOLEAN need ) ;
+   BOOLEAN  sdbIsNeedClearErrorInfo() ;
+
    void     sdbReportError( JSContext *cx, const char *msg,
                             JSErrorReport *report ) ;
 

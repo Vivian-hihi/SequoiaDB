@@ -55,6 +55,7 @@ JS_MAPPING_END()
                                           _sptReturnVal &rval,
                                           bson::BSONObj &detail )
    {
+      sdbSetNeedClearErrorInfo( FALSE ) ;
       if ( NULL != sdbGetErrMsg() )
       {
          rval.setStringVal( "", sdbGetErrMsg() ) ;
@@ -78,6 +79,7 @@ JS_MAPPING_END()
                                        _sptReturnVal & rval,
                                        BSONObj & detail )
    {
+      sdbSetNeedClearErrorInfo( FALSE ) ;
       INT32 error = sdbGetErrno() ;
       rval.setNativeVal( "",  NumberInt, (const void*)&error ) ;
       return SDB_OK ;
