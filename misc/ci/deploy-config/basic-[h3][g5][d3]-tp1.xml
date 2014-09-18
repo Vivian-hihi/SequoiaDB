@@ -159,7 +159,7 @@
 
 	<target name="Test" depends="">
 		<hostinfo prefix="host" />
-		<property name="test-type-list" value="ant" />
+		<property name="test-type-list" value="basic" />
 		<property name="copy.test.log" value="true"/>
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
