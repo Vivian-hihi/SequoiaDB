@@ -239,6 +239,7 @@ namespace engine
    #define PMD_OPTION_AS_PROC          "asproc"
    #endif // _LINUX
    #define PMD_OPTION_TYPE             "type"
+   #define PMD_OPTION_CURUSER          "I"
 
    #define ENGINE_NPIPE_MSG_PID        "$pid"
    #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"
