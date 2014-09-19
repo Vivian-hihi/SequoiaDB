@@ -140,7 +140,7 @@
 						<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
-						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="*" />
+						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
 
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" />
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
