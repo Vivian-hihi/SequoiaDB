@@ -62,6 +62,8 @@ namespace engine
       // defaut service name
       ossSnprintf( _cmServiceName, OSS_MAX_SERVICENAME, "%u",
                    SDBCM_DFT_PORT ) ;
+
+      _forMock = FALSE ;
    }
 
    _omAgentOptions::~_omAgentOptions()
@@ -429,19 +431,23 @@ namespace engine
          PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
          goto error ;
       }
-      rc = _netAgent.addTimer( 2 * OSS_ONE_SEC, &_timerHandler,
-                               _nodeMonitorTimer ) ;
-      if ( rc )
+
+      if ( !_options.isForMock() )
       {
-         PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
-         goto error ;
-      }
-      rc = _netAgent.addTimer( 120 * OSS_ONE_SEC, &_timerHandler,
-                               _watchAndCleanTimer ) ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
-         goto error ;
+         rc = _netAgent.addTimer( 2 * OSS_ONE_SEC, &_timerHandler,
+                                  _nodeMonitorTimer ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
+            goto error ;
+         }
+         rc = _netAgent.addTimer( 120 * OSS_ONE_SEC, &_timerHandler,
+                                  _watchAndCleanTimer ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to set timer, rc: %d", rc ) ;
+            goto error ;
+         }
       }
 
    done:

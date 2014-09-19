@@ -227,11 +227,23 @@ namespace engine
       dbProcessInfo dbProcess ;
       BOOLEAN isRunning = FALSE ;
 
-      rc = cCMService::init() ;
+      if ( option->isForMock() )
+      {
+         rc = cCMService::init( PMDDMN_MOCK_SHMKEY, TRUE ) ;
+      }
+      else
+      {
+         rc = cCMService::init() ;
+      }
       if ( rc )
       {
          PD_LOG( PDERROR, "Init cm service failed, rc: %d", rc ) ;
          goto error ;
+      }
+
+      if ( option->isForMock() )
+      {
+         goto done ;
       }
 
       rc = omGetSvcListFromConfig( option->getLocalCfgPath(), vecSvc ) ;
@@ -287,6 +299,7 @@ namespace engine
 
    INT32 _omAgentNodeMgr::fini()
    {
+      cCMService::fini() ;
       return SDB_OK ;
    }
 

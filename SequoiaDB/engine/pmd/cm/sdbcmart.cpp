@@ -66,21 +66,18 @@ namespace engine
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
        ( PMD_OPTION_CURUSER, "use current user" ) \
-       ( PMD_OPTION_AS_PROC, "as process, not service" )
+       ( PMD_OPTION_AS_PROC, "as process, not service" ) \
+
 #else
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_OPTION_CURUSER, "use current user" )
+       ( PMD_OPTION_CURUSER, "use current user" ) \
+
 #endif // _WINDOWS
 
-   // initialize options
-   void init ( po::options_description &desc )
-   {
-      PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
-         COMMANDS_OPTIONS
-      PMD_ADD_PARAM_OPTIONS_END
-   }
+   #define COMMANDS_OPTIONS_HIDDEN \
+       ( PMD_OPTION_FORMOCK, "only for tmp oma" ) \
 
    void displayArg ( po::options_description &desc )
    {
@@ -119,15 +116,24 @@ namespace engine
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       CHAR progName[OSS_MAX_PATHSIZE+1] = {0};
       po::options_description desc ( "Command options" ) ;
+      po::options_description all  ( "Command options" ) ;
       po::variables_map vm ;
       OSSPID pid = OSS_INVALID_PID ;
       utilNodeInfo cmInfo ;
       vector < ossProcInfo > procs ;
       BOOLEAN asProc = FALSE ;
 
-      init ( desc ) ;
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
+         COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
+         COMMANDS_OPTIONS
+         COMMANDS_OPTIONS_HIDDEN
+      PMD_ADD_PARAM_OPTIONS_END
+
       // validate arguments
-      rc = utilReadCommandLine( argc, argv, desc, vm, FALSE ) ;
+      rc = utilReadCommandLine( argc, argv, all, vm, FALSE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;

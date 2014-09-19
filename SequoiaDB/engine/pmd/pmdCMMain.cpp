@@ -48,7 +48,10 @@ namespace engine
 
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
-       ( PMD_OPTION_VERSION, "version" )
+       ( PMD_OPTION_VERSION, "version" ) \
+
+   #define COMMANDS_OPTIONS_HIDDEN \
+       ( PMD_OPTION_FORMOCK, "only for tmp oma" ) \
 
    void displayArg ( po::options_description &desc )
    {
@@ -57,18 +60,23 @@ namespace engine
    }
 
    // initialize options
-   INT32 initArgs ( INT32 argc, CHAR **argv )
+   INT32 initArgs ( INT32 argc, CHAR **argv, po::variables_map &vm )
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ( "Command options" ) ;
-      po::variables_map vm ;
+      po::options_description all  ( "Command options" ) ;
 
       PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
          COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
+         COMMANDS_OPTIONS
+         COMMANDS_OPTIONS_HIDDEN
+      PMD_ADD_PARAM_OPTIONS_END
+
       // validate arguments
-      rc = utilReadCommandLine( argc, argv, desc, vm ) ;
+      rc = utilReadCommandLine( argc, argv, all, vm ) ;
       if ( rc )
       {
          std::cout << "Invalid arguments: " << rc << std::endl ;
@@ -108,8 +116,9 @@ namespace engine
       CHAR dialogPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       INT32 delSig[] = { 17, 0 } ; // del SIGCHLD
+      po::variables_map vm ;
 
-      rc = initArgs( argc, argv ) ;
+      rc = initArgs( argc, argv, vm ) ;
       if ( rc )
       {
          goto done ;
@@ -160,6 +169,10 @@ namespace engine
          goto error ;
       }
       setPDLevel( sdbGetOMAgentOptions()->getDiagLevel() ) ;
+      if ( vm.count( PMD_OPTION_FORMOCK ) )
+      {
+         sdbGetOMAgentOptions()->setForMock( TRUE ) ;
+      }
 
       // 4. print all config
       {

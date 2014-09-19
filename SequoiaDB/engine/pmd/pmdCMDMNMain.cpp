@@ -53,12 +53,17 @@ namespace engine
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_OPTION_AS_PROC, "as process, not service" )
+       ( PMD_OPTION_AS_PROC, "as process, not service" ) \
+
 #else
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
-       ( PMD_OPTION_VERSION, "version" )
+       ( PMD_OPTION_VERSION, "version" ) \
+
 #endif // _WINDOWS
+
+   #define COMMANDS_OPTIONS_HIDDEN \
+       ( PMD_OPTION_FORMOCK, "only for tmp oma" ) \
 
    void displayArg ( po::options_description &desc )
    {
@@ -67,18 +72,24 @@ namespace engine
    }
 
    // initialize options
-   INT32 initArgs ( INT32 argc, CHAR **argv, BOOLEAN &asProc )
+   INT32 initArgs ( INT32 argc, CHAR **argv, po::variables_map &vm,
+                    BOOLEAN &asProc )
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ( "Command options" ) ;
-      po::variables_map vm ;
+      po::options_description all  ( "Command options" ) ;
 
       PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
          COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
+         COMMANDS_OPTIONS
+         COMMANDS_OPTIONS_HIDDEN
+      PMD_ADD_PARAM_OPTIONS_END
+
       // validate arguments
-      rc = utilReadCommandLine( argc, argv, desc, vm ) ;
+      rc = utilReadCommandLine( argc, argv, all, vm ) ;
       if ( rc )
       {
          std::cout << "Invalid arguments: " << rc << std::endl ;
@@ -95,7 +106,7 @@ namespace engine
       }
       if ( vm.count( PMD_OPTION_VERSION ) )
       {
-         ossPrintVersion( "Sdb CM version" ) ;
+         ossPrintVersion( "Sdb CMD version" ) ;
          rc = SDB_PMD_VERSION_ONLY ;
          goto done ;
       }
@@ -117,6 +128,7 @@ namespace engine
       cCMService svc;
       cPmdDaemon daemon( PMDDMN_SVCNAME_DEFAULT ) ;
       BOOLEAN asProc = FALSE ;
+      po::variables_map vm ;
 
       rc = ossGetEWD( dialogFile, OSS_MAX_PATHSIZE ) ;
       if ( rc )
@@ -146,7 +158,7 @@ namespace engine
          goto error ;
       }
 
-      rc = initArgs( argc, argv, asProc ) ;
+      rc = initArgs( argc, argv, vm, asProc ) ;
       if ( rc )
       {
          goto error ;
@@ -160,7 +172,14 @@ namespace engine
               SDB_ENGINE_VERISON_CURRENT, SDB_ENGINE_SUBVERSION_CURRENT,
               SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
 
-      rc = svc.init();
+      if ( vm.count( PMD_OPTION_FORMOCK ) )
+      {
+         rc = svc.init( PMDDMN_MOCK_SHMKEY, TRUE );
+      }
+      else
+      {
+         rc = svc.init() ;
+      }
       PD_RC_CHECK( rc, PDERROR, "Failed to init cm(rc=%d)", rc ) ;
       rc = daemon.addChildrenProcess( &svc ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add childrenProcess(rc=%d)", rc ) ;

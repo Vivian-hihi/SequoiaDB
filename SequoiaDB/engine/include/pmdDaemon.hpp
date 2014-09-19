@@ -58,9 +58,11 @@ namespace engine
 
 #if defined (_LINUX)
    #define PMDDMN_SHMKEY_DEFAULT             50010
+   #define PMDDMN_MOCK_SHMKEY                123456
    #define PMDDMN_EXE_NAME                   PMDDMN_SVCNAME_DEFAULT
 #elif defined (_WINDOWS)
    #define PMDDMN_SHMKEY_DEFAULT             "50010"
+   #define PMDDMN_MOCK_SHMKEY                "123456"
    #define PMDDMN_EXE_NAME                   PMDDMN_SVCNAME_DEFAULT".exe"
 #endif
 
@@ -129,7 +131,12 @@ namespace engine
    public:
       iPmdDMNChildProc() ;
       virtual ~iPmdDMNChildProc() ;
-      virtual INT32 init( ossSHMKey shmKey = PMDDMN_SHMKEY_DEFAULT ) ;
+      virtual INT32 init( ossSHMKey shmKey = PMDDMN_SHMKEY_DEFAULT,
+                          BOOLEAN forMock = FALSE ) ;
+      virtual INT32 fini() ;
+
+      BOOLEAN  isForMock() const { return _isForMock ; }
+      virtual  const CHAR *getExecuteFile() ;
 
       void     syncProcesserInfo() ;
       void     waitSync() ;
@@ -161,7 +168,6 @@ namespace engine
       INT32    attachSHM() ;
       void     detachSHM() ;
       void     freeSHM() ;
-      virtual const CHAR *getExecuteFile() ;
 
    private:
       pmdDMNProcInfo       *_procInfo ;
@@ -176,6 +182,7 @@ namespace engine
 #endif // _WINDOWS
 
       ossEvent             _syncEvent ;
+      BOOLEAN              _isForMock ;
 
    } ;
 
@@ -211,13 +218,19 @@ namespace engine
    class cCMService : public iPmdDMNChildProc
    {
    public:
-      cCMService() {}
-      virtual ~cCMService()  {}
+      cCMService() ;
+      virtual ~cCMService() ;
+
+      virtual INT32 init( ossSHMKey shmKey = PMDDMN_SHMKEY_DEFAULT,
+                          BOOLEAN forMock = FALSE ) ;
+      virtual INT32 fini() ;
 
       virtual const CHAR *getProgramName() ;
 
    private:
       const CHAR *getArguments() ;
+      CHAR        *_pArgs ;
+      INT32       _argLen ;
 
    } ;
 

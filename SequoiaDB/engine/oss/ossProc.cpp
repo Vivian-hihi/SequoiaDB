@@ -1843,7 +1843,7 @@ INT32 ossBuildArguments( CHAR **pArgumentBuffer, INT32 &buffSize,
    {
       needBuffSize += ( ossStrlen ( *it ) + 1 ) ;
    }
-  
+
    if ( needBuffSize <= 0 )
    {
       PD_LOG ( PDERROR, "Arguments is empty" ) ;
@@ -1851,7 +1851,8 @@ INT32 ossBuildArguments( CHAR **pArgumentBuffer, INT32 &buffSize,
       goto error ;
    }
 
-   if ( buffSize < needBuffSize )
+   // end with \0\0
+   if ( buffSize - 1 < needBuffSize )
    {
       CHAR *pNewBuff = (CHAR*)SDB_OSS_MALLOC( needBuffSize + 1 ) ;
       if ( !pNewBuff )
@@ -1882,6 +1883,7 @@ INT32 ossBuildArguments( CHAR **pArgumentBuffer, INT32 &buffSize,
       (*pArgumentBuffer)[pos] = '\0' ;
       ++pos ;
    }
+   (*pArgumentBuffer)[buffSize-1] = '\0' ;
 
 done:
    PD_TRACE_EXITRC ( SDB_OSSCMSTART_BLDARGS, rc ) ;

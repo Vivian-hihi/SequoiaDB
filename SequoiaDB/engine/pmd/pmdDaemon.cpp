@@ -163,6 +163,7 @@ namespace engine
       _shmKey = NULL;
 #endif
       _syncEvent.signalAll() ;
+      _isForMock = FALSE ;
    }
 
    iPmdDMNChildProc::~iPmdDMNChildProc()
@@ -172,10 +173,12 @@ namespace engine
 #endif
    }
 
-   INT32 iPmdDMNChildProc::init( ossSHMKey shmKey )
+   INT32 iPmdDMNChildProc::init( ossSHMKey shmKey,
+                                 BOOLEAN forMock )
    {
       INT32 rc = SDB_OK;
       UINT32 len = 0;
+      _isForMock = forMock ;
 #if defined (_WINDOWS)
       UINT32 keyLen = 0;
 #endif
@@ -210,6 +213,11 @@ namespace engine
       return rc;
    error:
       goto done;
+   }
+
+   INT32 iPmdDMNChildProc::fini()
+   {
+      return SDB_OK ;
    }
 
    INT32 iPmdDMNChildProc::allocSHM()
@@ -544,7 +552,8 @@ namespace engine
             ossSleep( OSS_ONE_SEC ) ;
          }
       }
-      return SDB_OK;
+
+      return fini() ;
    }
 
    void iPmdDMNChildProc::syncProcesserInfo()
@@ -738,6 +747,58 @@ namespace engine
    /*
       cCMService implement
    */
+   cCMService::cCMService()
+   {
+      _pArgs = NULL ;
+      _argLen = 0 ;
+   }
+
+   cCMService::~cCMService()
+   {
+   }
+
+   INT32 cCMService::init( ossSHMKey shmKey, BOOLEAN forMock )
+   {
+      INT32 rc = SDB_OK ;
+      std::list< const CHAR* > argv ;
+
+      rc =  iPmdDMNChildProc::init( shmKey, forMock ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "iPmdDMNChildProc init failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      argv.push_back( getExecuteFile() ) ;
+      if ( forMock )
+      {
+         argv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_FORMOCK ) ;
+      }
+
+      rc = ossBuildArguments( &_pArgs, _argLen, argv ) ;
+      if( rc )
+      {
+         PD_LOG( PDERROR, "Build arguments failed, rc: %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 cCMService::fini()
+   {
+      if ( _pArgs )
+      {
+         SDB_OSS_FREE( _pArgs ) ;
+         _pArgs = NULL ;
+         _argLen = 0 ;
+      }
+      return SDB_OK ;
+   }
+
    const CHAR *cCMService::getProgramName()
    {
       return SDBCM_EXE_FILE_NAME ;
@@ -745,7 +806,7 @@ namespace engine
 
    const CHAR *cCMService::getArguments()
    {
-      return SDBCM_EXE_FILE_NAME ;
+      return _pArgs ;
    }
 
 }

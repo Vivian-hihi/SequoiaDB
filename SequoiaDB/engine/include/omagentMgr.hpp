@@ -75,6 +75,9 @@ namespace engine
          BOOLEAN     isAutoStart() const { return _autoStart ; }
          PDLEVEL     getDiagLevel() const ;
 
+         void        setForMock( BOOLEAN forMock  ) { _forMock = forMock ; }
+         BOOLEAN     isForMock() const { return _forMock ; }
+
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
          virtual INT32 postLoaded() ;
@@ -96,6 +99,8 @@ namespace engine
          CHAR                       _scriptPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _startProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _stopProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
+
+         BOOLEAN                    _forMock ;
 
    } ;
    typedef _omAgentOptions omAgentOptions ;
