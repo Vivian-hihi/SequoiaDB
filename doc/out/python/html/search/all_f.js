@@ -2,6 +2,7 @@ var searchData=
 [
   ['scope',['scope',['../classbson_1_1code_1_1Code.html#a469e80e1b36d72a12fe207a350aae8ba',1,'bson::code::Code']]],
   ['sdbbaseerror',['SDBBaseError',['../classpysequoiadb_1_1error_1_1SDBBaseError.html',1,'pysequoiadb::error']]],
+  ['sdbendofcursor',['SDBEndOfCursor',['../classpysequoiadb_1_1error_1_1SDBEndOfCursor.html',1,'pysequoiadb::error']]],
   ['sdberror',['SDBError',['../classpysequoiadb_1_1error_1_1SDBError.html',1,'pysequoiadb::error']]],
   ['sdbioerror',['SDBIOError',['../classpysequoiadb_1_1error_1_1SDBIOError.html',1,'pysequoiadb::error']]],
   ['sdbnetworkerror',['SDBNetworkError',['../classpysequoiadb_1_1error_1_1SDBNetworkError.html',1,'pysequoiadb::error']]],
