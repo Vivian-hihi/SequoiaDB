@@ -25,9 +25,9 @@ import.file.name -->
    	<sdbcreatecl csname="${cs.name}" clname="${cl.name}" sdbhandle="${sdb.mgr.handle}" />
    	<sleep seconds="5" /> -->
 
-   	<echo message="${import.bin} -s bl465-4 -p ${coord.service.port} --type json --file ${import.file.name} -c ${cs.name} -l ${cl.name}" />
+   	<echo message="${import.bin} -s bl465-4 -p ${coord.service.port} --type json --file ${install.path}/${import.file.name} -c ${cs.name} -l ${cl.name}" />
    	<exec executable="${import.bin}" failonerror="true" >
-      	<arg line=" -s bl465-4 -p ${coord.service.port} --type json --file ${import.file.name} -c ${cs.name} -l ${cl.name} "/>
+      	<arg line=" -s bl465-4 -p ${coord.service.port} --type json --file ${install.path}/${import.file.name} -c ${cs.name} -l ${cl.name} "/>
    	</exec>
    	<sleep seconds="5" />
 
