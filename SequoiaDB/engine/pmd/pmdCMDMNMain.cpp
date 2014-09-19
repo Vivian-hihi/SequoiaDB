@@ -62,9 +62,6 @@ namespace engine
 
 #endif // _WINDOWS
 
-   #define COMMANDS_OPTIONS_HIDDEN \
-       ( PMD_OPTION_FORMOCK, "only for tmp oma" ) \
-
    void displayArg ( po::options_description &desc )
    {
       std::cout << "Usage:  sdbcmd [OPTION]" <<std::endl;
@@ -77,19 +74,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ( "Command options" ) ;
-      po::options_description all  ( "Command options" ) ;
 
       PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
          COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
-      PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
-         COMMANDS_OPTIONS
-         COMMANDS_OPTIONS_HIDDEN
-      PMD_ADD_PARAM_OPTIONS_END
-
       // validate arguments
-      rc = utilReadCommandLine( argc, argv, all, vm ) ;
+      rc = utilReadCommandLine( argc, argv, desc, vm ) ;
       if ( rc )
       {
          std::cout << "Invalid arguments: " << rc << std::endl ;
@@ -172,14 +163,7 @@ namespace engine
               SDB_ENGINE_VERISON_CURRENT, SDB_ENGINE_SUBVERSION_CURRENT,
               SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
 
-      if ( vm.count( PMD_OPTION_FORMOCK ) )
-      {
-         rc = svc.init( PMDDMN_MOCK_SHMKEY, TRUE );
-      }
-      else
-      {
-         rc = svc.init() ;
-      }
+      rc = svc.init() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init cm(rc=%d)", rc ) ;
       rc = daemon.addChildrenProcess( &svc ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to add childrenProcess(rc=%d)", rc ) ;

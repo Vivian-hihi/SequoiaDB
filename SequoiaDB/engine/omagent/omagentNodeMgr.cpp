@@ -227,23 +227,11 @@ namespace engine
       dbProcessInfo dbProcess ;
       BOOLEAN isRunning = FALSE ;
 
-      if ( option->isForMock() )
-      {
-         rc = cCMService::init( PMDDMN_MOCK_SHMKEY, TRUE ) ;
-      }
-      else
-      {
-         rc = cCMService::init() ;
-      }
+      rc = cCMService::init() ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Init cm service failed, rc: %d", rc ) ;
          goto error ;
-      }
-
-      if ( option->isForMock() )
-      {
-         goto done ;
       }
 
       rc = omGetSvcListFromConfig( option->getLocalCfgPath(), vecSvc ) ;

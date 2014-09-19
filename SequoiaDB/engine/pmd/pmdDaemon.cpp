@@ -163,7 +163,6 @@ namespace engine
       _shmKey = NULL;
 #endif
       _syncEvent.signalAll() ;
-      _isForMock = FALSE ;
    }
 
    iPmdDMNChildProc::~iPmdDMNChildProc()
@@ -173,12 +172,10 @@ namespace engine
 #endif
    }
 
-   INT32 iPmdDMNChildProc::init( ossSHMKey shmKey,
-                                 BOOLEAN forMock )
+   INT32 iPmdDMNChildProc::init( ossSHMKey shmKey )
    {
       INT32 rc = SDB_OK;
       UINT32 len = 0;
-      _isForMock = forMock ;
 #if defined (_WINDOWS)
       UINT32 keyLen = 0;
 #endif
@@ -757,12 +754,12 @@ namespace engine
    {
    }
 
-   INT32 cCMService::init( ossSHMKey shmKey, BOOLEAN forMock )
+   INT32 cCMService::init( ossSHMKey shmKey )
    {
       INT32 rc = SDB_OK ;
       std::list< const CHAR* > argv ;
 
-      rc =  iPmdDMNChildProc::init( shmKey, forMock ) ;
+      rc =  iPmdDMNChildProc::init( shmKey ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "iPmdDMNChildProc init failed, rc: %d", rc ) ;
@@ -770,10 +767,6 @@ namespace engine
       }
 
       argv.push_back( getExecuteFile() ) ;
-      if ( forMock )
-      {
-         argv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_FORMOCK ) ;
-      }
 
       rc = ossBuildArguments( &_pArgs, _argLen, argv ) ;
       if( rc )
