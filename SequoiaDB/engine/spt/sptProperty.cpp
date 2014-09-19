@@ -163,7 +163,7 @@ namespace engine
       _value = (UINT64)p ;
       _name.assign( name ) ;
       _type = String ;
-      
+
    done:
       return rc ;
    error:
