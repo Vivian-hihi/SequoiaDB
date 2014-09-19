@@ -17,13 +17,13 @@ import.file.name -->
 		<!-- <hostinfo prefix="host" /> -->
 		<property name="import.bin" value="${install.path}/sequoiadb/bin/sdbimprt" />
 
-      <echo message="properties.dir=${properties.dir}####ant.sdb.tasks.path=${ant.sdb.tasks.path}####import.bin=${import.bin}####cs.name=${ca.name}####sdb.mgr.handle=${sdb.mgr.handle}####cl.name=${cl.name}####coord.service.port=${coord.service.port}####import.file.name=${import.file.name}" />
+      <echo message="properties.dir=${properties.dir}####ant.sdb.tasks.path=${ant.sdb.tasks.path}####import.bin=${import.bin}####cs.name=${cs.name}####sdb.mgr.handle=${sdb.mgr.handle}####cl.name=${cl.name}####coord.service.port=${coord.service.port}####import.file.name=${import.file.name}" />
 
-		<sdbcreateconn hostname="bl465-4" port="11810" sdbhandleproperty="sdb.mgr.handle" />
-   	<sdbdropcs csname="${cs.name}" sdbhandle="${sdb.mgr.handle}" failonerror="false" />
+		<sdbcreateconn hostname="bl465-4" port="${coord.service.port}" sdbhandleproperty="sdb.mgr.handle" />
+   	<!-- <sdbdropcs csname="${cs.name}" sdbhandle="${sdb.mgr.handle}" failonerror="false" />
    	<sdbcreatecs csname="${cs.name}" sdbhandle="${sdb.mgr.handle}" failonerror="false" />
    	<sdbcreatecl csname="${cs.name}" clname="${cl.name}" sdbhandle="${sdb.mgr.handle}" />
-   	<sleep seconds="5" />
+   	<sleep seconds="5" /> -->
 
    	<echo message="${import.bin} -s bl465-4 -p ${coord.service.port} --type json --file ${import.file.name} -c ${cs.name} -l ${cl.name}" />
    	<exec executable="${import.bin}" failonerror="true" >

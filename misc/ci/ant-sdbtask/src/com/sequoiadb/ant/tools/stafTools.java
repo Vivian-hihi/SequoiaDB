@@ -16,7 +16,7 @@ public class stafTools extends Task{
 	String fileName=null;
 	String saveDir=null;
 	String waitTime="30m";
-	boolean failonerror = true;
+	boolean failonerror = false;
 	public void setWorkHost( String value ){
 		workHost = value;
 	}
