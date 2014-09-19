@@ -131,26 +131,12 @@
 				</tstamp>
 				<property name="import.cmd" value="ant -l deploy-test-result.log -f deploy-test-result.xml -Dant.sdb.tasks.path=${WORKSPACE}/deploy/ant-sdbtasks -Dproperties.dir=${WORKSPACE}/deploy/ci.test.properties -Dcoord.service.port=11810 -Dcs.name=${current.time} -Dcl.name=${host.NAME} -Dimport.file.name=${import.file.name}" />
 
-				<stafTools workType="copy" workHost="${test.machine.no1.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
-				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
-				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
-				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
-				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
-				<stafTools worktype="delete" workHost="${test.machine.no1.basic}" fileName="${install.path}/${import.file.name}" />
-
 				<stafTools workType="copy" workHost="${test.machine.no2.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
 				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
 				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
 				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
 				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="delete" workHost="${test.machine.no2.basic}" fileName="${install.path}/${import.file.name}" />
-
-				<stafTools workType="copy" workHost="${test.machine.no3.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
-				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
-				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
-				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
-				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
-				<stafTools worktype="delete" workHost="${test.machine.no3.basic}" fileName="${install.path}/${import.file.name}" />
 			</finally>
 		</trycatch>	
 	</target>
