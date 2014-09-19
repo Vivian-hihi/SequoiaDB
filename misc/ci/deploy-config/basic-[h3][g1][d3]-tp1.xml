@@ -130,7 +130,7 @@
 							<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss" />
 						</tstamp>
 
-						<property name="test.log.path" value="${WORKSPACE}/reports/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}" />
+						<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}" />
 						<echo message="Mkdir ${test.log.path}" />
 						<mkdir dir="${test.log.path}" />
 
@@ -140,8 +140,8 @@
 						<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
-						<tar basedir="${WORKSPACE}/reports" destfile="${test.log.path}.tar.gz" compression="gzip" includes="${test.log.path}/**/*" />
-	
+						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="*" />
+
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" />
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 
