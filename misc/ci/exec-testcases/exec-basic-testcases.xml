@@ -123,6 +123,11 @@
 			<param name="${parallel.num}" value="${parallel.num}" />
 		</sdbprefix>
 
+		<sdbprefix prefixName="import.file.name">
+			<param name="${host.NAME}" value="${host.NAME}" />
+			<param name="${import.file.name}" value="${import.file.name}" />
+		</sdbprefix>
+
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="300000">

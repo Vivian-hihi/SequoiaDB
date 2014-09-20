@@ -163,12 +163,11 @@
 					<format property="current.time" pattern="yyyy-MM-dd-hh.mm.ss" />
 				</tstamp>
 				<property name="import.cmd" value="ant -l deploy-test-result.log -f deploy-test-result.xml -Dant.sdb.tasks.path=${WORKSPACE}/deploy/ant-sdbtasks -Dproperties.dir=${WORKSPACE}/deploy/ci.test.properties -Dcoord.service.port=11810 -Dcs.name=basic_testcases -Dcl.name=year_2014 -Dimport.file.name=${import.file.name}" />
-				<property name="delete.uninstall.config" value="find /tmp -name 'bitrock_installer#.log' -delete" />
+				<property name="delete.uninstall.config" value="find /tmp -name 'bitrock_installer*.log' -delete" />
 
 				<stafTools workType="copy" workHost="${test.machine.no1.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
 				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
 				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
-				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
 				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="delete" workHost="${test.machine.no1.basic}" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="shell" workHost="${test.machine.no1.basic}" workDir="/tmp" common="${delete.uninstall.config}" failonerror="false" />
@@ -176,7 +175,6 @@
 				<stafTools workType="copy" workHost="${test.machine.no2.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
 				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
 				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
-				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
 				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="delete" workHost="${test.machine.no2.basic}" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="shell" workHost="${test.machine.no2.basic}" workDir="/tmp" common="${delete.uninstall.config}" failonerror="false" />
@@ -184,7 +182,6 @@
 				<stafTools workType="copy" workHost="${test.machine.no3.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
 				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
 				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
-				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
 				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="delete" workHost="${test.machine.no3.basic}" fileName="${install.path}/${import.file.name}" />
 				<stafTools worktype="shell" workHost="${test.machine.no3.basic}" workDir="/tmp" common="${delete.uninstall.config}" failonerror="false" />
