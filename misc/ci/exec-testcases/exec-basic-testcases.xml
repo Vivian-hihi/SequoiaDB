@@ -9,6 +9,7 @@
 <!--@param ${report.suffix}:this is for long time test, default is NULL-->
 
 <project name="test-basic-testcases" default="Test-Basic-Testcases">
+	<hostinfo prefix="host" />
 	<property file="${ci.properties.path}" />
 	<property name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
 	<!-- <property name="to.copy.test.log" value="true"/> -->
@@ -17,6 +18,13 @@
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
 		</classpath>
 	</taskdef>
+	<sdbprefix prefixName="import.file">
+		<param name="${host.NAME}" value="${host.NAME}" />
+		<param name="${import.file.name}" value="${import.file.name}" />
+	</sdbprefix>
+	<echo message="####################################################" />
+	<echo message="test=${import.file}" />
+	<echo message="####################################################" />
 
 	<target name="Clean-Basic-Reports" depends="">
 		<echo message="Reports' path is ${reports.path}" />
@@ -55,7 +63,6 @@
 	</target>
 
 	<target name="test-one-suite" depends="">
-		<hostinfo prefix="host" />
 		<basename property="test.suite.name" file="${test.suite.fullname}" />
 		<basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
 		<property name="test.suite.class.name" value="testcases-${test-type}.${deploy.name}-${host.NAME}-${parallel.num}-${test.suite.name}" />
@@ -122,14 +129,6 @@
 			<param name="${test.case.name}" value="${test.case.name}" />
 			<param name="${parallel.num}" value="${parallel.num}" />
 		</sdbprefix>
-
-		<sdbprefix prefixName="import.file">
-			<param name="${host.NAME}" value="${host.NAME}" />
-			<param name="${import.file.name}" value="${import.file.name}" />
-		</sdbprefix>
-		<echo message="####################################################" />
-		<echo message="test=${import.file}" />
-		<echo message="####################################################" />
 
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}" />
