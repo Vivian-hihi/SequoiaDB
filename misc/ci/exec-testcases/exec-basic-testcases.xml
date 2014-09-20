@@ -123,10 +123,13 @@
 			<param name="${parallel.num}" value="${parallel.num}" />
 		</sdbprefix>
 
-		<sdbprefix prefixName="import.file.name">
+		<sdbprefix prefixName="test">
 			<param name="${host.NAME}" value="${host.NAME}" />
 			<param name="${import.file.name}" value="${import.file.name}" />
 		</sdbprefix>
+		<echo message="####################################################" />
+		<echo message="test=${test}" />
+		<echo message="####################################################" />
 
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}" />
