@@ -33,13 +33,54 @@
 		<mkdir dir="${WORKSPACE}/reports" />
 	</target>
 
-	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
+	<!-- <target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
 		<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
 			<path>
 				<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
 			</path>
 			<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
 		</foreach>
+	</target> -->
+
+	<target name="Deploy-Test-All" depends="Clean-Last-Build-Reports">
+		<if>
+			<equals arg1="${deploy.conffile.wildcard}" arg2="*" />
+			<then>
+				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
+					<path>
+						<fileset dir="${deploy.config.path}">
+							<includes="${test.environment}-${deploy.conffile.wildcard}.xml" /> 
+							<excludes="${test.environment}-[h1][g1][d1]-tp1.xml" />
+							<excludes="${test.environment}-standalone-tp1.xml" />
+						</fileset>
+					</path>
+					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+				</foreach>
+
+				<parallel>
+					<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
+						<path>
+							<fileset file="${test.environment}-[h1][g1][d1]-tp1.xml" />
+						</path>
+						<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+					</foreach>
+					<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
+						<path>
+							<fileset file="${test.environment}-standalone-tp1.xml" />
+						</path>
+						<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+					</foreach>
+				</parallel>
+			</then>
+			<else>
+				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
+					<path>
+						<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
+					</path>
+					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+				</foreach>
+			</else>
+		</if>
 	</target>
 
 	<target name="Clean-Env-Before-Test" depends="">
