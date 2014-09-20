@@ -108,7 +108,7 @@
 		
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
-				<antCallback antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false" return="import.file">
+				<antcallback antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false" return="import.file">
 					<!-- <property name="test.machine.deploy.path" value="${test.machine.deploy.path}" /> -->
 					<!-- <property name="install.path" value="${install.path}" /> -->
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -116,7 +116,7 @@
 					<property name="Test-Type" value="@{Test-Type}" />
 					<property name="import.file.name" value="${import.file.name}" />
 					<property name="parallel.flag" value="parallel" />
-				</antCallback>
+				</antcallback>
 			</sequential>
 		</for>
 
