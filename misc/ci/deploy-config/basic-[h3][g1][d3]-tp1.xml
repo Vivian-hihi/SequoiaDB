@@ -90,6 +90,10 @@
 		<property name="copy.test.log" value="true"/>
 		<property name="import.file.name" value="basic-testcases-time.json" />
 
+		<echo message="####################################################" />
+		<echo message="test=${import.file}" />
+		<echo message="####################################################" />
+
 		<!-- <property name="test-type-list" value="driver-java" /> -->
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
