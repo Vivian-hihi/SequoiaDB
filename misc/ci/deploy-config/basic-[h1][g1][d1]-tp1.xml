@@ -24,24 +24,24 @@
 	<target name="Deploy" depends="">
 		<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 			<property name="install.package.fullname" value="${install.package.fullname}" />
-			<property name="deploy.host.name" value="${test.machine.no2.basic}" />
+			<property name="deploy.host.name" value="${test.machine.no3.basic}" />
 			<!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
 			<property name="is.standalone.mode" value="false" />
 			<property name="is.coord.master" value="true" />
-			<property name="catalog.addrs" value="${test.machine.no2.data}:30003" />
+			<property name="catalog.addrs" value="${test.machine.no3.data}:30003" />
 		</ant>
 
-		<sdbdeploy host="${test.machine.no2.basic}" coordport="${coord.service.port}">
+		<sdbdeploy host="${test.machine.no3.basic}" coordport="${coord.service.port}">
 			<catagroup name="cata1">
-				<node host="${test.machine.no2.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
+				<node host="${test.machine.no3.data}" baseport="${cata.service.port}" dbpath="${install.path}/sequoiadb/database/cata/${cata.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</catagroup>
 		</sdbdeploy>
-		<sdbdeploy host="${test.machine.no2.basic}" coordport="${coord.service.port}">
+		<sdbdeploy host="${test.machine.no3.basic}" coordport="${coord.service.port}">
 			<datagroup name="group1">
-				<node host="${test.machine.no2.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
+				<node host="${test.machine.no3.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
 					<confitem name="sharingbreak" value="20000" />
@@ -54,17 +54,9 @@
 		<hostinfo prefix="host" />
 		<property name="test-type-list" value="basic,driver-php" />
 		<property name="copy.test.log" value="true"/>
-		<property name="import.file.name" value="basic-testcases-time.json" />
+		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
 		<parallel>
-			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
-			</ant>
-			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
-				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
-			</ant>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
 				<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
 				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
