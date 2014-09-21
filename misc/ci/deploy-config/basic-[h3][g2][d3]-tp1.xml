@@ -111,7 +111,7 @@
 		<hostinfo prefix="host" />
 		<property name="test-type-list" value="basic,driver-python" />
 		<property name="copy.test.log" value="true"/>
-		<property name="import.file.name" value="basic-testcases-time.json" />
+		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
 		<parallel>
 			<ant antfile="deploy-test-in-host.xml" dir="." inheritAll="false">
@@ -131,16 +131,18 @@
 		<!-- <basename property="antFileName" file="${ant.file}" suffix=".xml" /> -->
 		<for list="${test-type-list}" param="Test-Type">
 			<sequential>
-				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
+				<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
 					<!-- <property name="test.machine.deploy.path" value="${test.machine.deploy.path}" />
 					<property name="install.path" value="${install.path}" /> -->
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
 					<property name="Test-Type" value="@{Test-Type}" />
 					<!-- <property name="antFileName" value="${antFileName}" /> -->
-					<property name="import.file.name" value="${import.file.name}" />
+					<!-- <property name="import.file.name" value="${import.file.name}" /> -->
 					<property name="parallel.flag" value="parallel" />
-				</ant>
+					<property name="WORKSPACE" value="${WORKSPACE}" />
+					<property name="ci.script.file.path" value="${ci.script.file.path}" />
+				</antfetch>
 			</sequential>
 		</for>
 
@@ -154,7 +156,7 @@
 							<format property="current.time.log" pattern="yyyy-MM-dd-hh.mm.ss" />
 						</tstamp>
 
-						<property name="test.log.path" value="${WORKSPACE}/reports/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}" />
+						<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}" />
 						<echo message="Mkdir ${test.log.path}" />
 						<mkdir dir="${test.log.path}" />
 
@@ -164,8 +166,8 @@
 						<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
 						<echo message="Tar ${test.log.path}.tar.gz..." />
-						<tar basedir="${WORKSPACE}/reports" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
-	
+						<tar basedir="${test.reports.path}" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
+
 						<stafTools workType="copy" workHost="${host.NAME}" fileName="${test.log.path}.tar.gz"  toHost="${save.testLog.hostname}"  saveDir="${save.testLog.dir}" />
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 
@@ -183,32 +185,7 @@
 				<echo message="copy log for download code fail" />
 			</catch>
 			<finally>
-				<tstamp>
-					<format property="current.time" pattern="yyyy-MM-dd-hh.mm.ss" />
-				</tstamp>
-				<property name="import.cmd" value="ant -l deploy-test-result.log -f deploy-test-result.xml -Dant.sdb.tasks.path=${WORKSPACE}/deploy/ant-sdbtasks -Dproperties.dir=${WORKSPACE}/deploy/ci.test.properties -Dcoord.service.port=11810 -Dcs.name=${current.time} -Dcl.name=${host.NAME} -Dimport.file.name=${import.file.name}" />
-
-				<stafTools workType="copy" workHost="${test.machine.no1.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
-				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
-				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
-				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
-				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
-				<stafTools worktype="delete" workHost="${test.machine.no1.basic}" fileName="${install.path}/${import.file.name}" />
-
-				<stafTools workType="copy" workHost="${test.machine.no2.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
-				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
-				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
-				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
-				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
-				<stafTools worktype="delete" workHost="${test.machine.no2.basic}" fileName="${install.path}/${import.file.name}" />
-
-				<stafTools workType="copy" workHost="${test.machine.no3.basic}" fileName="${install.path}/${import.file.name}"  toHost="bl465-4" saveDir="${install.path}" />
-				<stafTools workType="shell" workHost="${host.NAME}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
-				<stafTools worktype="get" workHost="${host.NAME}" fileName="${ci.script.file.path}/deploy-test-result.log" />
-				<!-- <stafTools worktype="delete" workHost="${host.NAME}"  fileName="${ci.script.file.path}/deploy-test-result.log" /> -->
-				<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file.name}" />
-				<stafTools worktype="delete" workHost="${test.machine.no3.basic}" fileName="${install.path}/${import.file.name}" />
 			</finally>
-		</trycatch>	
+		</trycatch>		
 	</target>
 </project>

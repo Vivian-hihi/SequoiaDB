@@ -6,6 +6,7 @@
 <!--@param ${Test-Type} , what the test type-->
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
+<!--@${test.host.NAME}:which machine test testcases under unparallel env -->
 
 <project name="Test-Type" default="Test-Type">
 	<target name="Test-Type" depends="">
@@ -16,7 +17,7 @@
 					<equals arg1="${parallel.flag}" arg2="unparallel" />
 					<then>
 						<echo message="Begin to test basic tests under unparallel env..." />
-						<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
+						<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 							<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
 							<param name="includes.dir.patterns" value="*" />
 							<param name="excludes.dir.patterns" value="vote" />
