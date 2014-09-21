@@ -116,6 +116,7 @@
 					<!-- <property name="import.file.name" value="${import.file.name}" /> -->
 					<property name="parallel.flag" value="parallel" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
+					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 				</antfetch>
 			</sequential>
 		</for>

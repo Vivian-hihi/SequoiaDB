@@ -4,6 +4,7 @@ ant.sdb.tasks.path
 cs.name
 cl.name
 import.file -->
+<!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
 
 <project name="deploy-test-result" default="Import-Data-To-Sequoiadb">
 	<property file="${properties.dir}" />

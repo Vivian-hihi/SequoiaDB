@@ -7,7 +7,9 @@
 <!--@param ${excludes.dir.patterns}: A comma- or space-sparated list of patterns of directories that must be excluded.-->
 <!--@param ${ci.properties.path}: where is the ci.properties file -->
 <!--@param ${report.suffix}:this is for long time test, default is NULL-->
+
 <!--@param ${WORKSPACE}: where the working space is it-->
+<!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
 
 <project name="test-basic-testcases" default="Test-Basic-Testcases">
 	<hostinfo prefix="host" />

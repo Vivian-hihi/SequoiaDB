@@ -5,6 +5,7 @@
 <!--@param ${test.reports.path} , where the report put in-->
 <!--@param ${Test-Type} , what the test type-->
 <!--@param ${WORKSPACE}: where the working space is it-->
+<!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
 
 <project name="Test-Type" default="Test-Type">
 	<target name="Test-Type" depends="">
@@ -24,6 +25,7 @@
 							<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 							<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 							<param name="WORKSPACE" value="${WORKSPACE}" />
+							<param name="ci.script.file.path" value="${ci.script.file.path}" />
 						</sdbtest>
 					</then>
 					<else>
@@ -38,6 +40,7 @@
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
+								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 							</sdbtest>
 							<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -48,6 +51,7 @@
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
+								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 							</sdbtest>
 							<sdbtest host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -58,6 +62,7 @@
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
+								<param name="ci.script.file.path" value="${ci.script.file.path}" />
 							</sdbtest>
 						</parallel>
 					</else>
