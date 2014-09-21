@@ -7,29 +7,34 @@
 <!--@param ${excludes.dir.patterns}: A comma- or space-sparated list of patterns of directories that must be excluded.-->
 <!--@param ${ci.properties.path}: where is the ci.properties file -->
 <!--@param ${report.suffix}:this is for long time test, default is NULL-->
+<!--@param ${WORKSPACE}: where the working space is it-->
 
 <project name="test-basic-testcases" default="Test-Basic-Testcases">
 	<hostinfo prefix="host" />
 	<property file="${ci.properties.path}" />
 	<property name="sdb.fullname" value="${install.path}/sequoiadb/bin/sdb" />
+	<property name="import.file" value="${host.NAME}-testcases-time.json" />
+	<property name="import.cmd" value="ant -l deploy-test-result.log -f deploy-test-result.xml -Dant.sdb.tasks.path=${WORKSPACE}/deploy/ant-sdbtasks -Dproperties.dir=${WORKSPACE}/deploy/ci.test.properties -Dcoord.service.port=11810 -Dcs.name=basic_testcases -Dcl.name=year_2014 -Dimport.file=${import.file}" />
+	<property name="delete.uninstall.config" value="find /tmp -name 'bitrock_installer*.log' -delete" />
+
+	<echo message="####################################################" />
+	<echo message="test=${import.file}" />
+	<echo message="####################################################" />
+
 	<!-- <property name="to.copy.test.log" value="true"/> -->
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
 		</classpath>
 	</taskdef>
-	<sdbprefix prefixName="import.file">
-		<param name="${host.NAME}" value="${host.NAME}" />
-		<param name="${import.file.name}" value="${import.file.name}" />
-	</sdbprefix>
-	<echo message="####################################################" />
-	<echo message="test=${import.file}" />
-	<echo message="####################################################" />
 
 	<target name="Clean-Basic-Reports" depends="">
 		<echo message="Reports' path is ${reports.path}" />
 		<delete dir="${reports.path}" failonerror="false" />
 		<mkdir dir="${reports.path}" />
+		<stafTools worktype="delete" workHost="bl465-4" fileName="${install.path}/${import.file}" failonerror="false" />
+		<stafTools worktype="delete" workHost="${host.NAME}" fileName="${install.path}/${import.file}" failonerror="false" />
+		<stafTools worktype="shell" workHost="${host.NAME}" workDir="/tmp" common="${delete.uninstall.config}" failonerror="false" />
 		<echo message="Clean deploy result reports compeleted." />
 	</target>
 
@@ -60,6 +65,10 @@
 			<arg line="${sdb.cmd.allClean}" />
 		</exec>
 		<echo message="${allClean.screen.output}" />
+
+		<stafTools workType="copy" workHost="${host.NAME}" fileName="${install.path}/${import.file}"  toHost="bl465-4" saveDir="${install.path}" />
+		<stafTools workType="shell" workHost="${jenkins.master.ip}" workDir="${ci.script.file.path}" common="${import.cmd}" failonerror="false" />
+		<stafTools worktype="get" workHost="${jenkins.master.ip}" fileName="${ci.script.file.path}/deploy-test-result.log" />
 	</target>
 
 	<target name="test-one-suite" depends="">
