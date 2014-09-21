@@ -39,6 +39,7 @@
 				</node>
 			</catagroup>
 		</sdbdeploy>
+		
 		<sdbdeploy host="${test.machine.no3.basic}" coordport="${coord.service.port}">
 			<datagroup name="group1">
 				<node host="${test.machine.no3.data}" baseport="${data.service.port}" dbpath="${install.path}/sequoiadb/database/data/${data.service.port}">
