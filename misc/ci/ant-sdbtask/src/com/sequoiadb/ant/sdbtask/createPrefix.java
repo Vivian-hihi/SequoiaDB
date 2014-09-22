@@ -35,7 +35,7 @@ public class createPrefix extends Task{
    public void execute(){
       
       	
-      String request = "" ;
+      String request = ""+Integer.toString( (int)(Math.random()*1000) ) ;
       	 
       String lineNum = Integer.toString( (int)(Math.random()*1000) );
       	 

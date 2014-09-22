@@ -53,8 +53,7 @@
 			</path>
 			<param name="testcases.path" value="${basic.testcase.path}" />
 			<param name="test-type" value="basic" />
-			<!-- <param name="includes.case.patterns" value="*.js" /> -->
-			<param name="includes.case.patterns" value="special.js" />
+			<param name="includes.case.patterns" value="*.js" />
 			<param name="excludes.case.patterns" value="commlib.js" />
 		</foreach>
 
