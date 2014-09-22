@@ -46,6 +46,9 @@
 		<delete dir="${db.path}" />
 		<sleep seconds="20"/>
 
+		<exec executable="/bin/ps" dir="" failonerror="false">
+			<arg line=" -ef|grep sequoiadb | grep -v grep | awk '{print $2}' | xargs kill" />
+		</exec>
 		<echo message="Clean install env compeleted." />
 	</target>
 
