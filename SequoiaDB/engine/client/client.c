@@ -7043,6 +7043,17 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
          rc = SDB_SYS ;
          goto error ;
       }
+
+      bType = bson_find( &bsonItr, &obj, FIELD_NAME_LOB_PAGE_SIZE ) ;
+      if ( BSON_INT == bType )
+      {
+         lobStruct->_pageSize =  bson_iterator_int( &bsonItr ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
    }
    *lobHandle = (sdbLobHandle)lobStruct ;
 done:
@@ -7155,6 +7166,21 @@ static void sdbReadInCache( sdbLobStruct *lob,
    return ;                        
 }
 
+static UINT32 sdbReviceReadLen( sdbLobStruct *lob,
+                                UINT32 needLen )
+{
+   UINT32 pageSize = lob->_pageSize ;
+   UINT32 mod = lob->_currentOffset & ( pageSize - 1 ) ;
+   UINT32 alignedLen = ossRoundUpToMultipleX( needLen,
+                                              LOB_ALIGNED_LEN ) ;
+   alignedLen -= mod ;
+   if ( alignedLen < LOB_ALIGNED_LEN )
+   {
+      alignedLen += LOB_ALIGNED_LEN ;
+   }
+   return alignedLen ;
+}
+
 static INT32 sdbOnceRead( sdbLobStruct *lob,
                           CHAR *buf,
                           UINT32 len,
@@ -7194,7 +7220,7 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
    lob->_cachedSize = 0 ;
    lob->_dataCache = NULL ;
 
-   alignedLen = ossRoundUpToMultipleX( needRead, LOB_ALIGNED_LEN ) ;
+   alignedLen = sdbReviceReadLen( lob, needRead ) ;
 
    rc = clientBuildReadLobMsg( &(lob->_pSendBuffer), &lob->_sendBufferSize,
                                alignedLen, lob->_currentOffset,
@@ -7244,6 +7270,13 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
       rc = SDB_SYS ;
       goto error ;
    }
+   else if ( ( UINT32 )( reply->header.messageLength ) < 
+             ( sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) +
+             tuple->columns.len ) )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
 
    body = lob->_pReceiveBuffer + sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ;
 
@@ -7261,6 +7294,9 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
       ossMemcpy( localBuf, body, tuple->columns.len ) ;
       totalRead += tuple->columns.len ;
       lob->_currentOffset += tuple->columns.len ;
+      lob->_cachedOffset = -1 ;
+      lob->_cachedSize = 0 ;
+      lob->_dataCache = NULL ;
    }
 
    *read = totalRead ;

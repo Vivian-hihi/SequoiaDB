@@ -188,7 +188,16 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCONTEXTLOB_READ ) ;
       _readLen = len ;
       _offset = offset ;
-
+      if ( -1 != _offset && _offset != _stream->curOffset() )
+      {
+         _empty() ;  /// clear data in context.
+         rc = _stream->seek( _offset, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to seek lob:%d", rc ) ;
+            goto error ;
+         }
+      }
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTLOB_READ, rc ) ;
       return rc ;
@@ -224,7 +233,7 @@ namespace engine
       {
          goto done ;
       }
-
+/*
       if ( -1 != _offset && _offset != _stream->curOffset() )
       {
          _empty() ;  /// clear data in context.
@@ -235,7 +244,7 @@ namespace engine
             goto error ;
          }
       }
-
+*/
       rc = _stream->read( _readLen, this, cb, read ) ;
       if ( SDB_OK != rc )
       {

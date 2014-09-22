@@ -177,6 +177,16 @@ namespace engine
                          const DPS_LSN_OFFSET &relatedLSN,
                          dpsLogRecord &record ) ;
 
+   INT32 dpsRecord2LobW( const CHAR *raw,
+                         const CHAR **fullName,
+                         const bson::OID **oid,
+                         UINT32 &sequence,
+                         UINT32 &offset,
+                         UINT32 &len,
+                         UINT32 &hash,
+                         const CHAR **data,
+                         DMS_LOB_PAGEID &pageID ) ;          
+
    INT32 dpsLobU2Record(  const CHAR *fullName,
                           const bson::OID *oid,
                           const UINT32 &sequence,
@@ -192,6 +202,18 @@ namespace engine
                           const DPS_LSN_OFFSET &relatedLSN,
                           dpsLogRecord &record ) ;
 
+   INT32 dpsRecord2LobU( const CHAR *raw,
+                         const CHAR **fullName,
+                         const bson::OID **oid,
+                         UINT32 &sequence,
+                         UINT32 &offset,
+                         UINT32 &len,
+                         UINT32 &hash,
+                         const CHAR **data,
+                         UINT32 &oldLen,
+                         const CHAR **oldData,
+                         DMS_LOB_PAGEID &pageID ) ;
+
    INT32 dpsLobRm2Record( const CHAR *fullName,
                           const bson::OID *oid,
                           const UINT32 &sequence,
@@ -205,6 +227,15 @@ namespace engine
                           const DPS_LSN_OFFSET &relatedLSN,
                           dpsLogRecord &record ) ;
 
+   INT32 dpsRecord2LobRm( const CHAR *raw,
+                          const CHAR **fullName,
+                          const bson::OID **oid,
+                          UINT32 &sequence,
+                          UINT32 &offset,
+                          UINT32 &len,
+                          UINT32 &hash,
+                          const CHAR **data,
+                          DMS_LOB_PAGEID &page ) ;
 }
 
 #endif

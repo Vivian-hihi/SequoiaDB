@@ -76,6 +76,9 @@ namespace engine
        }\
      } while ( FALSE )
 
+   #define RTN_LOB_GET_OFFSET_OF_LOB( pageSz, sequence, offsetInSeq )\
+      ( ( ( sequence ) - 1 ) * ( pageSz ) + ( offsetInSeq ) )
+
    /*
       _dmsLobRecord define
    */

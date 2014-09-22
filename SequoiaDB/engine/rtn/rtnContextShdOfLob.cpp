@@ -182,11 +182,7 @@ namespace engine
 
    INT32 _rtnContextShdOfLob::_prepareData( _pmdEDUCB *cb )
    {
-      INT32 rc = SDB_OK ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB__OPEN, "_rtnContextShdOfLob::_open" )
@@ -256,7 +252,7 @@ namespace engine
       for ( UINT32 i = 0; i < cnt; ++i )
       {
          UINT32 onceRead = 0 ;
-         CHAR *data = NULL ;
+         CHAR *dataOfTuple = NULL ;
          MsgLobTuple *rt = NULL ;
          const MsgLobTuple &t = tuples[i] ;
          rc = _extendBuf( sizeof( MsgLobTuple ) + t.columns.len + totalRead ) ;
@@ -266,14 +262,14 @@ namespace engine
             goto error ;
          }
 
-         data = _buf + totalRead ;
-         rt = ( MsgLobTuple * )data ;
-         data += sizeof( MsgLobTuple ) ;
+         dataOfTuple = _buf + totalRead ;
+         rt = ( MsgLobTuple * )dataOfTuple ;
+         dataOfTuple += sizeof( MsgLobTuple ) ;
 
          rc = rtnReadLob( _fullName.c_str(),
                           _oid, t.columns.sequence,
                           t.columns.offset, t.columns.len,
-                          cb, data, onceRead ) ;
+                          cb, dataOfTuple, onceRead ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
@@ -284,7 +280,7 @@ namespace engine
          rt->columns.offset = t.columns.offset ;
          rt->columns.len = onceRead ;
          onceRead += sizeof( MsgLobTuple ) ; /// | tuple | data | tuple | data |
-         totalRead += onceRead ;  
+         totalRead += onceRead ;
       }
 
       *data = _buf ;

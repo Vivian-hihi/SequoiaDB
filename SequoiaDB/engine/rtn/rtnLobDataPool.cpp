@@ -33,7 +33,10 @@
 
 #include "rtnLobDataPool.hpp"
 #include "pd.hpp"
+#include "ossUtil.hpp"
 #include <algorithm>
+
+using namespace std ;
 
 namespace engine
 {
@@ -148,7 +151,22 @@ namespace engine
       {
          std::sort( _pool.begin(), _pool.end(), compare() ) ;
       }
-
+#if defined (_DEBUG)
+      SINT64 offset = -1 ;
+      vector<tuple>::const_iterator itr = _pool.begin() ;
+      for ( ; itr != _pool.end(); ++itr )
+      {
+         if ( -1 == offset )
+         {
+            offset = itr->offset + itr->len ;
+         }
+         else
+         {
+            SDB_ASSERT( offset == itr->offset, "impossible" ) ;
+            offset += itr->len ;
+         }
+      }
+#endif
       _current = 0 ;
       return ;
    }

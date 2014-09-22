@@ -258,7 +258,10 @@ namespace engine
          _mthMatcher*      getMatcher () { return _matcher ; }
 
          INT32    append( const BSONObj &result ) ;
-         INT32    appendObjs( const CHAR *pObjBuff, INT32 len, INT32 num ) ;
+         INT32    appendObjs( const CHAR *pObjBuff,
+                              INT32 len,
+                              INT32 num,
+                              BOOLEAN needAligned = TRUE ) ;
 
          virtual INT32    getMore( INT32 maxNumToReturn,
                                    rtnContextBuf &buffObj,

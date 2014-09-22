@@ -199,7 +199,8 @@ TEST(lobTest, seek_1)
    CHAR *buf = new CHAR[bufSize] ;
    for ( UINT32 j = 0 ; j < bufSize; ++j )
    {
-         buf[j] = ( CHAR )rand() ;
+      buf[j] = ( CHAR )rand() ;
+//      buf[j] = 'a' + j % 26 ;
    }
    
    bson_oid_gen( &oid ) ;
@@ -239,16 +240,24 @@ TEST(lobTest, seek_1)
       rc = sdbReadLob( lob, readSize, buf2, &read ) ;
       ASSERT_EQ( SDB_OK, rc ) ;
       ASSERT_EQ( readSize, read ) ;
+      
       if ( 0 != memcmp( buf + seekSize, buf2, readSize ) )
       {
+
          CHAR dump[seekReadSize * 2 + 1];
          hexDump( buf2, readSize, dump) ;
          cout << "buf2:" << dump << endl ;
          hexDump( buf+ seekSize, readSize, dump );
          cout << "buf:" << dump << endl ;
+         //cout << "buf2:" << endl << buf2 << endl ;
+         //string tmp;
+         //tmp.assign( buf + seekSize, readSize ) ;
+         //cout << "buf:" << endl << tmp << endl ;
+         cout << "seek size:" << seekSize << endl ;
+
          ASSERT_TRUE( FALSE ) ;
       }
-      cout << "seek times:" << i << endl ;
+      cout << "seek times:" << i << ", seek size:" << seekSize << endl ;
    }
 
    UINT32 read = 0 ;

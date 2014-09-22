@@ -1301,6 +1301,123 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2LOBW, "dpsRecord2LobW" )
+   INT32 dpsRecord2LobW( const CHAR *raw,
+                         const CHAR **fullName,
+                         const bson::OID **oid,
+                         UINT32 &sequence,
+                         UINT32 &offset,
+                         UINT32 &len,
+                         UINT32 &hash,
+                         const CHAR **data,
+                         DMS_LOB_PAGEID &pageID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2LOBW ) ;
+      SDB_ASSERT( NULL != raw, "can not be null" ) ;
+      dpsLogRecord record ;
+
+      rc = record.load( raw ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load lobw record:%d", rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *fullName = itr.value() ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OID ) ; 
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag oid in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *oid = ( bson::OID * )( itr.value() ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_SEQUENCE ) ; 
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag sequence in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OFFSET ) ; 
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag offset in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      offset = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_HASH ) ; 
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag hash in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      hash = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_LEN ) ; 
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag len in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_DATA ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag data in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *data = itr.value() ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE ) ; 
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag page in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      pageID = *( ( DMS_LOB_PAGEID * )( itr.value() ) ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2LOBW, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_LOBU2RECORD, "dpsLobU2Record" )
    INT32 dpsLobU2Record(  const CHAR *fullName,
                           const bson::OID *oid,
@@ -1426,6 +1543,145 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2LOBU, "dpsRecord2LobU" )
+   INT32 dpsRecord2LobU( const CHAR *raw,
+                         const CHAR **fullName,
+                         const bson::OID **oid,
+                         UINT32 &sequence,
+                         UINT32 &offset,
+                         UINT32 &len,
+                         UINT32 &hash,
+                         const CHAR **data,
+                         UINT32 &oldLen,
+                         const CHAR **oldData,
+                         DMS_LOB_PAGEID &pageID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2LOBU ) ;
+      dpsLogRecord record ;
+      rc = record.load( raw ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to load lobu record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *fullName = itr.value() ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OID ) ; 
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag oid in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *oid = ( bson::OID * )( itr.value() ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_SEQUENCE ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag sequence in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+      
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OFFSET ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag offset in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      offset = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_HASH ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag hash in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      hash = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_LEN ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag len in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_DATA ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag data in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *data = itr.value() ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OLD_DATA ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag old data in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *oldData = itr.value() ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OLD_LEN ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag old len in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      oldLen = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+      
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag page in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      pageID = *( ( DMS_LOB_PAGEID * )( itr.value() ) ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2LOBU, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_LOBRM2RECORD, "dpsLobRm2Record" )
    INT32 dpsLobRm2Record( const CHAR *fullName,
                           const bson::OID *oid,
@@ -1519,13 +1775,128 @@ namespace engine
       rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
+         PD_LOG( PDERROR, "failed to push trans to record, rc: %d", rc ) ;
          goto error ;
       }
 
       header._length = record.alignedLen() ;   
    done:
       PD_TRACE_EXITRC( SDB__DPS_LOBRM2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2LOBRM, "dpsRecord2LobRm" )
+   INT32 dpsRecord2LobRm( const CHAR *raw,
+                          const CHAR **fullName,
+                          const bson::OID **oid,
+                          UINT32 &sequence,
+                          UINT32 &offset,
+                          UINT32 &len,
+                          UINT32 &hash,
+                          const CHAR **data,
+                          DMS_LOB_PAGEID &pageID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2LOBRM ) ;
+      dpsLogRecord record ;
+      rc = record.load( raw ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load lobrm record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *fullName = itr.value() ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OID ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag oid in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *oid = ( bson::OID * )( itr.value() ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_SEQUENCE ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag sequence in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+      
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_OFFSET ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag offset in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      offset = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_HASH ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag hash in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      hash = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_LEN ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag len in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_DATA ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag data in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *data = itr.value() ;
+      }
+      
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_LOB_PAGE ) ; 
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag page in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      pageID = *( ( DMS_LOB_PAGEID * )( itr.value() ) ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2LOBRM, rc ) ;
       return rc ;
    error:
       goto done ;

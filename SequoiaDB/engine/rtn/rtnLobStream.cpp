@@ -401,31 +401,28 @@ namespace engine
       }
 
       /// data may be cached.
-      if ( !_pool.empty() )
+      if ( !_pool.empty() && _pool.match( _offset ) )
       {
-         if ( _pool.match( _offset ) )
+         rc = _readFromPool( len, context, cb, readLen ) ;
+         if ( SDB_OK != rc )
          {
-            rc = _readFromPool( len, context, cb, readLen ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to read data from pool:%d", rc ) ;
-               goto error ;
-            }
-
-            _offset += readLen ;
-            if ( _pool.empty() )
-            {
-               _pool.clear() ;
-            }
-
-            goto done ;
+            PD_LOG( PDERROR, "failed to read data from pool:%d", rc ) ;
+            goto error ;
          }
-         /// TODO: keep useful data in cache rather than clear all.
-         else
+
+         _offset += readLen ;
+         if ( _pool.empty() )
          {
             _pool.clear() ;
          }
+
+         goto done ;
       }
+
+      /// TODO: keep useful data in cache rather than clear all.
+      /// eg: offset is 10, data offset in cache is 8. we'd better
+      /// read data in cache.
+      _pool.clear() ; 
 
       /// TODO: when changing page size is accepted, we should
       /// create read piece by read size rather than piece num.
@@ -476,7 +473,7 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_LOB_MODE_CREATEONLY & _mode  )
+      if ( SDB_LOB_MODE_R != _mode  )
       {
          PD_LOG( PDERROR, "open mode[%d] does not support this operation",
                  _mode ) ;
@@ -571,7 +568,10 @@ namespace engine
       tuple.columns.len = len <= _pool.getDataSize() ?
                           len : _pool.getDataSize() ;
       tuple.columns.offset = _offset ;
+      tuple.columns.sequence = 0 ; /// it is useless column now.
       UINT32 needLen = tuple.columns.len ;
+
+      SDB_ASSERT( _pool.match( _offset ), "impossible" ) ;
 
       rc = context->appendObjs( tuple.data, sizeof( tuple.data ), 0 ) ;
       if ( SDB_OK != rc )
@@ -587,7 +587,7 @@ namespace engine
          {
             needLen -= dataLen ;
             readLen += dataLen ;
-            rc = context->appendObjs( data, dataLen, 0 ) ;
+            rc = context->appendObjs( data, dataLen, 0, FALSE ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to append data to context%d", rc ) ;
@@ -612,7 +612,6 @@ namespace engine
       {
          _pool.clear() ;
       }
-
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__READFROMPOOL, rc ) ;
       return rc ;

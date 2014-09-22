@@ -205,6 +205,7 @@ struct _sdbLobStruct
    SINT64 _currentOffset ;
    SINT64 _cachedOffset ;
    UINT32 _cachedSize ;
+   UINT32 _pageSize ;
    const CHAR *_dataCache ;
 } ;
 typedef struct _sdbLobStruct sdbLobStruct ;

@@ -61,9 +61,9 @@ namespace engine
 
    void _rtnCoordLobDispatcher::clear( BOOLEAN releaseReply )
    {
-      vector<MsgOpReply *>::iterator itr = _replyBuf.begin() ;
       if ( releaseReply )
       {
+         vector<MsgOpReply *>::iterator itr = _replyBuf.begin() ;
          for ( ; itr != _replyBuf.end(); ++itr )
          {
             SAFE_OSS_FREE( *itr ) ;

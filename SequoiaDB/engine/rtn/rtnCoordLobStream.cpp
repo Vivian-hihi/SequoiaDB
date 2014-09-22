@@ -565,6 +565,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__READV ) ;
+      SDB_ASSERT( cnt <= RTN_LOB_READ_PIECE_NUM, "impossible" ) ;
       MSG_OPTIONS options( FALSE, FALSE ) ;
       _MsgLobTuple tuples[RTN_LOB_READ_PIECE_NUM] ;
 
@@ -600,8 +601,7 @@ namespace engine
 
          RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
 
-         _dispatcher.add( sub->id, tuple.data, sizeof( tuple ) )
-                 .add( sub->id, piece._data, piece._dataLen) ;
+         _dispatcher.add( sub->id, tuple.data, sizeof( tuple ) ) ;
          _dispatcher.setContextID( sub->id, sub->contextID ) ;
       }
       _dispatcher.addDone() ;
@@ -687,8 +687,10 @@ namespace engine
                }
 
                rc = _getPool().push( data, curTuple->columns.len,
-                                     curTuple->columns.sequence * pageSz +
-                                     curTuple->columns.offset ) ;
+                                     RTN_LOB_GET_OFFSET_OF_LOB(
+                                            pageSz,
+                                            curTuple->columns.sequence,
+                                            curTuple->columns.offset ) ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
@@ -700,12 +702,19 @@ namespace engine
                break ;
             }
          }
-
-         _getPool().entrust( ( CHAR * )( *itr ) ) ;
       }
       }
 
       _getPool().pushDone() ;
+
+      {
+      const std::vector<MsgOpReply *> &replyMsgs = _dispatcher.getReplyMsgs() ;
+      std::vector<MsgOpReply *>::const_iterator itr = replyMsgs.begin() ;
+      for ( ; itr != replyMsgs.end(); ++itr )
+      {
+         _getPool().entrust( ( CHAR * )( *itr ) ) ;
+      }
+      }
 
       /// MsgOpReply will be freed by pool. 
       _dispatcher.clear( FALSE ) ;

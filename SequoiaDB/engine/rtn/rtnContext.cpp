@@ -416,7 +416,7 @@ namespace engine
    }
 
    INT32 _rtnContextBase::appendObjs( const CHAR * pObjBuff, INT32 len,
-                                      INT32 num )
+                                      INT32 num, BOOLEAN needAliened )
    {
       INT32 rc = SDB_OK ;
 
@@ -427,7 +427,11 @@ namespace engine
 
       if ( 0 < len )
       {
-      _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
+      if ( needAliened )
+      {
+         _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
+      }
+
       if ( _bufferEndOffset + len > _resultBufferSize )
       {
          rc = _reallocBuffer ( _bufferEndOffset + len ) ;

@@ -348,6 +348,7 @@ namespace engine
       SDB_ASSERT( 0 < cnt, "can not be zero" ) ;
       CHAR *buf = NULL ;
       SINT64 readSize = 0 ;
+      INT32 pageSize =  _su->getLobPageSize() ;
       _getPool().clear() ;
       rc = _getPool().allocate( needLen, &buf ) ;
       if ( SDB_OK != rc )
@@ -367,7 +368,11 @@ namespace engine
       }
 
       SDB_ASSERT( readSize == needLen, "impossible" ) ;
-      rc = _getPool().push( buf, readSize, pieces[0]._offset ) ;
+      rc = _getPool().push( buf, readSize,
+                            RTN_LOB_GET_OFFSET_OF_LOB(
+                                pageSize,
+                                pieces[0]._sequence,
+                                pieces[0]._offset ) ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
