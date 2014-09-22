@@ -53,7 +53,8 @@
 			</path>
 			<param name="testcases.path" value="${basic.testcase.path}" />
 			<param name="test-type" value="basic" />
-			<param name="includes.case.patterns" value="*.js" />
+			<!-- <param name="includes.case.patterns" value="*.js" /> -->
+			<param name="includes.case.patterns" value="special.js" />
 			<param name="excludes.case.patterns" value="commlib.js" />
 		</foreach>
 
@@ -136,6 +137,10 @@
 			<param name="${test.case.name}" value="${test.case.name}" />
 			<param name="${parallel.num}" value="${parallel.num}" />
 		</sdbprefix>
+
+		<echo message="################################################" />
+		<echo message="parallel.num=${parallel.num}" />
+		<echo message="################################################" />
 
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}" />

@@ -35,35 +35,47 @@
 							<sdbtest host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list1}" />
+								<!-- <param name="includes.dir.patterns" value="${basic_list1}" /> -->
+								<param name="includes.dir.patterns" value="" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
+
+								<param name="${parallel.num}" value="${parallel.num}" />
+
 							</sdbtest>
 							<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list2}" />
+								<!-- <param name="includes.dir.patterns" value="${basic_list2}" /> -->
+								<param name="includes.dir.patterns" value="update" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
+
+								<param name="${parallel.num}" value="${parallel.num}" />
+
 							</sdbtest>
 							<sdbtest host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
 								<param name="excludes.dir.patterns" value="vote" />
-								<param name="includes.dir.patterns" value="${basic_list3}" />
+								<!-- <param name="includes.dir.patterns" value="${basic_list3}" /> -->
+								<param name="includes.dir.patterns" value="" />
 								<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 								<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 								<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
+
+								<param name="${parallel.num}" value="${parallel.num}" />
+
 							</sdbtest>
 						</parallel>
 					</else>
