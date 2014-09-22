@@ -305,8 +305,8 @@ namespace engine
    INT32 _pmdRestSession::_processRestMsg( HTTP_PARSE_COMMON command, 
                                            const CHAR *pFilePath )
    {
-      restAdaptor *pAdptor           = NULL ;
-      omCommandInterface *pOmCommand = NULL ;
+      restAdaptor *pAdptor          = NULL ;
+      omRestCommandBase *pOmCommand = NULL ;
       pAdptor = sdbGetOMManager()->getRestAdptor() ;
       pOmCommand = _createCommand( command, pFilePath ) ;
       if ( NULL == pOmCommand )
@@ -328,12 +328,12 @@ namespace engine
       goto done ;
    }
 
-   omCommandInterface *_pmdRestSession::_createCommand( 
-                                HTTP_PARSE_COMMON command, 
-                                const CHAR *pFilePath )
+   omRestCommandBase *_pmdRestSession::_createCommand( 
+                                             HTTP_PARSE_COMMON command, 
+                                             const CHAR *pFilePath )
    {
-      omCommandInterface *commandIf = NULL ;
-      restAdaptor *pAdptor          = NULL ;
+      omRestCommandBase *commandIf = NULL ;
+      restAdaptor *pAdptor         = NULL ;
       pAdptor = sdbGetOMManager()->getRestAdptor() ;
       string localAgentPort = sdbGetOMManager()->getLocalAgentPort() ;
 

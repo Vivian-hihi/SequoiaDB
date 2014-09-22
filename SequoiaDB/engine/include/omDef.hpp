@@ -58,6 +58,7 @@ namespace engine
    #define OM_REST_SESSION_TIMEOUT           ( 10 * 60 * 1000 )
 
    #define OM_INT32_LENGTH                   (20)
+   #define OM_INT64_LENGTH                   (20)
 
    // OM user's table
    #define  OM_DEFAULT_LOGIN_USER            "admin"
@@ -467,10 +468,15 @@ namespace engine
 
    //******************************************************************
 
-   // 
+   // om update hostname req
    #define OM_UPDATE_HOSTNAME_REQ            "update hostname"
-   // milliseconds
-   #define  OM_WAIT_EVENT_INTERVAL           (500)
+   //******************************************************************
+
+
+
+
+   // agent query task req
+   #define AGENT_QUERY_TASK_REQ              "query task"
 
 
 

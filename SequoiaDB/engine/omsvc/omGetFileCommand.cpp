@@ -73,13 +73,14 @@ namespace engine
       _sendErrorRes2Web( rc, detail.c_str() ) ;
    }
 
-   void omAuthCommand::_decryptPasswd( const string encryptPasswd, string time,
+   void omAuthCommand::_decryptPasswd( const string &encryptPasswd, 
+                                       const string &time,
                                        string &decryptPasswd )
    {
       decryptPasswd = encryptPasswd ;
    }
 
-   INT32 omAuthCommand::_getSdbUsrInfo( string clusterName, string &sdbUser, 
+   INT32 omAuthCommand::_getSdbUsrInfo( const string &clusterName, string &sdbUser, 
                                         string &sdbPasswd, 
                                         string &sdbUserGroup )
    {
@@ -661,8 +662,8 @@ namespace engine
    // ***************** omScanHostCommand *****************************
    omScanHostCommand::omScanHostCommand( restAdaptor *pRestAdaptor, 
                                          pmdRestSession *pRestSession, 
-                                         string localAgentHost, 
-                                         string localAgentService )
+                                         const string &localAgentHost, 
+                                         const string &localAgentService )
                      : omCreateClusterCommand( pRestAdaptor, pRestSession ),
                        _localAgentHost( localAgentHost ), 
                        _localAgentService( localAgentService )
@@ -673,20 +674,56 @@ namespace engine
    {
    }
 
+   void omScanHostCommand::_generateHostList( 
+                                             list<omScanHostInfo> &hostInfoList, 
+                                             BSONObj &bsonRequest )
+   {
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBuilder ;
+
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
+      {
+         omScanHostInfo *pInfo = &(*iter) ;
+         BSONObjBuilder builder ;
+         if ( pInfo->ip != "" )
+         {
+            builder.append( OM_BSON_FIELD_HOST_IP, pInfo->ip ) ;
+         }
+
+         if ( pInfo->hostName != "" )
+         {
+            builder.append( OM_BSON_FIELD_HOST_NAME, pInfo->hostName ) ;
+         }
+
+         builder.append( OM_BSON_FIELD_HOST_USER, pInfo->user ) ;
+         builder.append( OM_BSON_FIELD_HOST_PASSWD, pInfo->passwd ) ;
+         builder.append( OM_BSON_FIELD_HOST_SSHPORT, pInfo->sshPort ) ;
+         BSONObj oneHost = builder.obj() ;
+         arrayBuilder.append( oneHost.copy() ) ;
+         iter++ ;
+      }
+
+      builder.appendArray( OM_REST_FIELD_HOST_INFO, arrayBuilder.arr() );
+      bsonRequest = builder.obj() ;
+
+      return ;
+   }
+
    // generate the bson array(result) for the list of hosts(hostInfoList), 
    // with array's keyname is (arrayKeyName)
    void omScanHostCommand::_generateArray( list<BSONObj> &hostInfoList, 
-                                           string arrayKeyName, 
+                                           const string &arrayKeyName, 
                                            BSONObj &result )
    {
       BSONObjBuilder builder ;
       BSONArrayBuilder arrayBuilder ;
 
-      list<BSONObj>::iterator ite = hostInfoList.begin() ;
-      while ( ite != hostInfoList.end() )
+      list<BSONObj>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
       {
-         arrayBuilder.append( *ite ) ;
-         ite++ ;
+         arrayBuilder.append( *iter ) ;
+         iter++ ;
       }
 
       builder.appendArray( arrayKeyName.c_str(), arrayBuilder.arr() );
@@ -700,11 +737,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObjBuilder bsonBuilder ;
 
-      list<BSONObj>::iterator ite = hostResult.begin() ;
-      while ( ite != hostResult.end() )
+      list<BSONObj>::iterator iter = hostResult.begin() ;
+      while ( iter != hostResult.end() )
       {
-         rc = _restAdaptor->appendHttpBody( _restSession, ite->objdata(), 
-                                       ite->objsize(), 1 ) ;
+         rc = _restAdaptor->appendHttpBody( _restSession, iter->objdata(), 
+                                       iter->objsize(), 1 ) ;
          if ( rc )
          {
             PD_LOG(PDERROR, "Failed to appendHttpBody:rc=%d", rc ) ;
@@ -712,7 +749,7 @@ namespace engine
             goto error ;
          }
 
-         ite++ ;
+         iter++ ;
       }
 
       bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
@@ -726,31 +763,30 @@ namespace engine
    }
 
    // move the exist host to the hostResult
-   void omScanHostCommand::_filterExistHost( list<BSONObj> &hostInfoList, 
+   void omScanHostCommand::_filterExistHost( list<omScanHostInfo> &hostInfoList, 
                                              list<BSONObj> &hostResult )
    {
-      list<BSONObj>::iterator ite = hostInfoList.begin() ;
-      while ( ite != hostInfoList.end() )
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
       {
-         if ( _isHostExist( *ite ) )
+         if ( _isHostExist( *iter ) )
          {
             BSONObj tmp = BSON( OM_BSON_FIELD_HOST_IP
-                               << ite->getStringField( OM_BSON_FIELD_HOST_IP )
+                               << iter->ip
                                << OM_BSON_FIELD_HOST_NAME
-                               << ite->getStringField( OM_BSON_FIELD_HOST_NAME )
+                               << iter->hostName
                                << OM_REST_RES_RETCODE << SDB_IXM_DUP_KEY
                                << OM_REST_RES_DETAIL << "host is exist" ) ;
             hostResult.push_back( tmp ) ;
-
-            hostInfoList.erase( ite++ ) ;
+            hostInfoList.erase( iter++ ) ;
             continue ;
          }
 
-         ite++ ;
+         iter++ ;
       }
    }
 
-   bool omScanHostCommand::_isHostExist( BSONObj &host )
+   bool omScanHostCommand::_isHostIPExist( const string &ip )
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;
@@ -762,19 +798,7 @@ namespace engine
       rtnContextBuf buffObj ;
       SINT64 startingPos = 0 ;
 
-      if ( host.hasField( OM_BSON_FIELD_HOST_NAME ) )
-      {
-         bsonBuilder.append( OM_HOST_FIELD_NAME, 
-                             host.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
-      }
-
-      if ( host.hasField( OM_BSON_FIELD_HOST_IP ) )
-      {
-         bsonBuilder.append( OM_HOST_FIELD_IP, 
-                             host.getStringField( OM_BSON_FIELD_HOST_IP ) ) ;
-      }
-
-      matcher = bsonBuilder.obj() ;
+      matcher = BSON( OM_HOST_FIELD_IP << ip ) ; ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 0, 
                      _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
@@ -801,8 +825,62 @@ namespace engine
       return true ;
    }
 
-   INT32 omScanHostCommand::_getRestHostList( string &clusterName, 
-                                              list<BSONObj> &hostInfo )
+   bool omScanHostCommand::_isHostNameExist( const string &hostName )
+   {
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID   = -1 ;
+      INT32 rc           = SDB_OK ;
+      rtnContextBuf buffObj ;
+      SINT64 startingPos = 0 ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName ) ; ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 0, 
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to query host:rc=%d,host=%s", rc, 
+                 matcher.toString().c_str() ) ;
+         return false ;
+      }
+
+      rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
+         }
+
+         // notice: if rc != SDB_OK, contextID is deleted in rtnGetMore
+         return false ;
+      }
+
+      _pRTNCB->contextDelete( contextID, _cb ) ;
+
+      return true ;
+   }
+
+   bool omScanHostCommand::_isHostExist( const omScanHostInfo &host )
+   {
+      if ( host.hostName != "" )
+      {
+         return _isHostNameExist( host.hostName ) ;
+      }
+
+      if ( host.ip != "" )
+      {
+         return _isHostNameExist( host.ip );
+      }
+
+      return false ;
+   }
+
+   INT32 omScanHostCommand::_getScanHostList( string &clusterName, 
+                                              list<omScanHostInfo> &hostInfo )
    {
       INT32 rc                     = SDB_OK ;
       const CHAR* pGlobalUser      = NULL ;
@@ -868,40 +946,50 @@ namespace engine
          BSONObjIterator i( element.embeddedObject() ) ;
          while ( i.more() )
          {
+            omScanHostInfo host;
             BSONObjBuilder builder ;
             BSONObj tmp ;
             BSONElement ele = i.next() ;
             BSONObj oneHost = ele.embeddedObject() ;
-            if ( !oneHost.hasField( OM_BSON_FIELD_HOST_IP ) 
-                    && !oneHost.hasField( OM_BSON_FIELD_HOST_NAME ) )
+
+            host.ip        = oneHost.getStringField( OM_BSON_FIELD_HOST_IP ) ;
+            host.hostName  = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+            host.user      = pGlobalUser ;
+            host.passwd    = pGlobalPasswd ;
+            host.sshPort   = pGlobalSshPort ;
+            host.agentPort = pGlobalAgentPort ;
+
+            if ( oneHost.hasField( OM_BSON_FIELD_HOST_USER ) )
             {
+               host.user = oneHost.getStringField( OM_BSON_FIELD_HOST_USER ) ;
+            }
+            if ( oneHost.hasField( OM_BSON_FIELD_HOST_PASSWD ) )
+            {
+               host.passwd = oneHost.getStringField( 
+                                                  OM_BSON_FIELD_HOST_PASSWD ) ;
+            }
+            if ( oneHost.hasField( OM_BSON_FIELD_HOST_SSHPORT ) )
+            {
+               host.sshPort = oneHost.getStringField( 
+                                                  OM_BSON_FIELD_HOST_SSHPORT ) ;
+            }
+            if ( oneHost.hasField( OM_BSON_FIELD_AGENT_PORT ) )
+            {
+               host.agentPort = oneHost.getStringField( 
+                                                  OM_BSON_FIELD_AGENT_PORT ) ;
+            }
+
+            if ( host.ip=="" && host.hostName=="" )
+            {
+               _errorDetail = string( "rest field miss:" ) 
+                              + OM_BSON_FIELD_HOST_IP + " or " 
+                              + OM_BSON_FIELD_HOST_NAME ;
                rc = SDB_INVALIDARG ;
-               _errorDetail = string(OM_BSON_FIELD_HOST_IP) + " or " 
-                              + OM_BSON_FIELD_HOST_NAME + " is not exist" ;
                PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
                goto error ;
             }
 
-            builder.appendElements( oneHost ) ;
-            if ( !oneHost.hasField( OM_BSON_FIELD_HOST_USER ) )
-            {
-               builder.append( OM_BSON_FIELD_HOST_USER, pGlobalUser ) ;
-            }
-            if ( !oneHost.hasField( OM_BSON_FIELD_HOST_PASSWD ) )
-            {
-               builder.append( OM_BSON_FIELD_HOST_PASSWD, pGlobalPasswd) ;
-            }
-            if ( !oneHost.hasField( OM_BSON_FIELD_HOST_SSHPORT ) )
-            {
-               builder.append( OM_BSON_FIELD_HOST_SSHPORT, pGlobalSshPort) ;
-            }
-            if ( !oneHost.hasField( OM_BSON_FIELD_AGENT_PORT ) )
-            {
-               builder.append( OM_BSON_FIELD_AGENT_PORT, pGlobalAgentPort) ;
-            }
-
-            tmp = builder.obj() ;
-            hostInfo.push_back( tmp ) ;
+            hostInfo.push_back( host ) ;
          }
       }
 
@@ -1060,7 +1148,7 @@ namespace engine
    INT32 omScanHostCommand::doCommand()
    {
       string clusterName ;
-      list<BSONObj> hostInfoList ;
+      list<omScanHostInfo> hostInfoList ;
       INT32 rc                        = SDB_OK ;
       CHAR* pContent                  = NULL ;
       INT32 contentSize               = 0 ;
@@ -1074,7 +1162,7 @@ namespace engine
       omManager *om                   = NULL ;
       VEC_SUB_SESSIONPTR subSessionVec ;
 
-      rc = _getRestHostList( clusterName, hostInfoList ) ;
+      rc = _getScanHostList( clusterName, hostInfoList ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get host list failed:rc=%d", rc ) ;
@@ -1090,7 +1178,7 @@ namespace engine
       }
 
       // build request to agent
-      _generateArray( hostInfoList, OM_REST_FIELD_HOST_INFO, bsonRequest ) ;
+      _generateHostList( hostInfoList, bsonRequest ) ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_SCAN_HOST_REQ, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
@@ -1169,8 +1257,8 @@ namespace engine
    // *****************omCheckHostCommand *****************************
    omCheckHostCommand::omCheckHostCommand( restAdaptor *pRestAdaptor, 
                                            pmdRestSession *pRestSession,
-                                           string localAgentHost, 
-                                           string localAgentService )
+                                           const string &localAgentHost, 
+                                           const string &localAgentService )
                       : omScanHostCommand( pRestAdaptor, pRestSession, 
                                            localAgentHost, localAgentService )
    {
@@ -1180,48 +1268,47 @@ namespace engine
    {
    }
 
-   void omCheckHostCommand::_eraseFromListByIP( list<BSONObj> &hostInfoList, 
-                                                const string &ip )
+   void omCheckHostCommand::_eraseFromListByIP( 
+                                            list<omScanHostInfo> &hostInfoList, 
+                                            const string &ip )
    {
-      list<BSONObj>::iterator ite = hostInfoList.begin() ;
-      while ( ite != hostInfoList.end() )
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
       {
-         string tmpIP = ite->getStringField( OM_BSON_FIELD_HOST_IP ) ;
-         if ( tmpIP.compare( ip ) == 0 )
+         if ( iter->ip == ip )
          {
-            hostInfoList.erase( ite ) ;
+            hostInfoList.erase( iter ) ;
             return ;
          }
-         ite++ ;
+         iter++ ;
       }
    }
 
-   void omCheckHostCommand::_eraseFromListByHost( list<BSONObj> &hostInfoList, 
-                                                  const string &hostName )
+   void omCheckHostCommand::_eraseFromListByHost( 
+                                             list<omScanHostInfo> &hostInfoList, 
+                                             const string &hostName )
    {
-      list<BSONObj>::iterator ite = hostInfoList.begin() ;
-      while ( ite != hostInfoList.end() )
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
       {
-         string tmpHost = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         if ( tmpHost.compare( hostName ) == 0 )
+         if ( iter->hostName == hostName )
          {
-            hostInfoList.erase( ite ) ;
+            hostInfoList.erase( iter ) ;
             return ;
          }
-         ite++ ;
+         iter++ ;
       }
    }
 
-   void omCheckHostCommand::_eraseFromList( list<BSONObj> &hostInfoList, 
+   void omCheckHostCommand::_eraseFromList( list<omScanHostInfo> &hostInfoList, 
                                             BSONObj &oneHost )
    {
-      list<BSONObj>::iterator ite = hostInfoList.begin() ;
       string hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
       _eraseFromListByHost( hostInfoList, hostName ) ;
    }
 
    // check ping and ssh
-   INT32 omCheckHostCommand::_doBasicCheck( list<BSONObj> &hostInfoList, 
+   INT32 omCheckHostCommand::_doBasicCheck( list<omScanHostInfo> &hostInfoList, 
                                             list<BSONObj> &hostResult )
    {
       INT32 rc          = SDB_OK ;
@@ -1236,7 +1323,7 @@ namespace engine
       BSONElement rcElement ;
       BSONElement hostElement ;
 
-      _generateArray(hostInfoList, OM_BSON_FIELD_HOST_INFO, bsonRequest ) ;
+      _generateHostList( hostInfoList, bsonRequest ) ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_BASIC_CHECK_REQ, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
@@ -1335,8 +1422,25 @@ namespace engine
       goto done ;
    }
 
-   INT32 omCheckHostCommand::_installAgent( list<BSONObj> &hostInfoList, 
-                                            list<BSONObj> &needUninstallHost )
+   void omCheckHostCommand::_updateUninstallFlag( 
+                                            list<omScanHostInfo> &hostInfoList, 
+                                            const string &ip, 
+                                            bool isNeedUninstall )
+   {
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
+      {
+         if ( iter->ip == ip )
+         {
+            iter->isNeedUninstall = isNeedUninstall ;
+            return ;
+         }
+         iter++ ;
+      }
+   }
+
+   INT32 omCheckHostCommand::_installAgent( list<omScanHostInfo> &hostInfoList, 
+                                       list<omScanHostInfo> &needUninstallHost )
    {
       INT32 rc          = SDB_OK ;
       SINT32 flag       = SDB_OK ;
@@ -1350,7 +1454,7 @@ namespace engine
       BSONObj hostResults ;
       BSONElement rcElement ;
 
-      _generateArray( hostInfoList, OM_BSON_FIELD_HOST_INFO, bsonRequest ) ;
+      _generateHostList( hostInfoList, bsonRequest ) ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_INSTALL_REMOTE_AGENT, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
@@ -1406,24 +1510,28 @@ namespace engine
          goto error ;
       }
 
-      needUninstallHost.assign( hostInfoList.begin(), hostInfoList.end() ) ;
+      needUninstallHost.assign( hostInfoList.begin(), hostInfoList.end() );
       hostResults = result.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       {
          BSONObjIterator iter( hostResults ) ;
          while ( iter.more() )
          {
-            BSONElement ele ;
-            BSONObj oneResult ;
-            string ip ;
+            BSONElement ele   = iter.next() ;
+            BSONObj oneResult = ele.embeddedObject() ;
+            INT32 rc = oneResult.getIntField( OM_REST_RES_RETCODE ) ;
+
             bool isNeedUninstall ;
-            ele       = iter.next() ;
-            oneResult = ele.embeddedObject() ;
-            ip        = oneResult.getStringField( OM_BSON_FIELD_HOST_IP ) ;
             isNeedUninstall = oneResult.getBoolField( 
                                                  OM_BSON_FIELD_NEEDUNINSTALL ) ;
-            if ( !isNeedUninstall )
+            string ip = oneResult.getStringField( OM_BSON_FIELD_HOST_IP ) ;
+            if ( SDB_OK != rc )
             {
+
                _eraseFromListByIP( needUninstallHost, ip ) ;
+            }
+            else
+            {
+               _updateUninstallFlag( needUninstallHost, ip, isNeedUninstall ) ;
             }
          }
       }
@@ -1437,26 +1545,20 @@ namespace engine
 
    // create the requet for all the hosts in hostInfoList
    INT32 omCheckHostCommand::_addCheckHostReq( omManager *om,
-                                               pmdRemoteSession *remoteSession,
-                                               list<BSONObj> &hostInfoList ) 
+                                           pmdRemoteSession *remoteSession,
+                                           list<omScanHostInfo> &hostInfoList ) 
    {
       INT32 rc = SDB_OK ;
-      list<BSONObj>::iterator ite = hostInfoList.begin() ;
-      while ( ite != hostInfoList.end() )
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
       {
          MsgRouteID routeID ;
-         string agentHost ;
-         string agentIP ;
-         string agentPort ;
-         BSONObjBuilder reqBuilder ;
          BSONObj bsonRequest ;
          pmdSubSession *subSession = NULL ;
          CHAR *pContent            = NULL ;
          INT32 contentSize         = 0 ;
-         agentIP   = ite->getStringField( OM_BSON_FIELD_HOST_IP ) ;
-         agentHost = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         agentPort = ite->getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
-         routeID   = om->updateAgentInfo( agentIP, agentPort ) ;
+
+         routeID   = om->updateAgentInfo( iter->ip, iter->agentPort ) ;
          subSession = remoteSession->addSubSession( routeID.value ) ;
          if ( NULL == subSession )
          {
@@ -1465,13 +1567,10 @@ namespace engine
             goto error ;
          }
 
-         reqBuilder.append( OM_BSON_FIELD_HOST_IP, agentIP ) ;
-         reqBuilder.append( OM_BSON_FIELD_HOST_NAME, agentHost ) ;
-         reqBuilder.append( OM_BSON_FIELD_HOST_USER,
-                            ite->getStringField( OM_BSON_FIELD_HOST_USER ) ) ;
-         reqBuilder.append( OM_BSON_FIELD_HOST_PASSWD,
-                            ite->getStringField( OM_BSON_FIELD_HOST_PASSWD ) ) ;
-         bsonRequest = reqBuilder.obj() ;
+         bsonRequest = BSON( OM_BSON_FIELD_HOST_IP << iter->ip 
+                             << OM_BSON_FIELD_HOST_NAME << iter->hostName 
+                             << OM_BSON_FIELD_HOST_USER << iter->user
+                             << OM_BSON_FIELD_HOST_PASSWD << iter->passwd ) ;
          rc = msgBuildQueryMsg( &pContent, &contentSize, 
                                 CMD_ADMIN_PREFIX OM_CHECK_HOST_REQ,
                                 0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
@@ -1482,7 +1581,7 @@ namespace engine
          }
 
          subSession->setReqMsg( (MsgHeader *)pContent ) ;
-         ite++;
+         iter++;
       }
 
    done:
@@ -1515,7 +1614,7 @@ namespace engine
 
          BSONElement sizeEle ;
          sizeEle = oneDisk.getField( OM_BSON_FIELD_DISK_FREE_SIZE ) ;
-         INT64 freeSize = sizeEle.Long() ;
+         INT64 freeSize = sizeEle.numberLong();
          if ( freeSize < OM_MIN_DISK_FREE_SIZE )
          {
             builder.append( OM_BSON_FIELD_DISK_CANUSE, false ) ;
@@ -1537,14 +1636,13 @@ namespace engine
       onehost = builder.obj() ;
    }
 
-   INT32 omCheckHostCommand::_checkHostEnv( list<BSONObj> &hostInfoList, 
+   INT32 omCheckHostCommand::_checkHostEnv( list<omScanHostInfo> &hostInfoList, 
                                             list<BSONObj> &hostResult )
    {
       INT32 rc          = SDB_OK ;
       omManager *om     = NULL ;
       pmdRemoteSession *remoteSession = NULL ;
       VEC_SUB_SESSIONPTR subSessionVec ;
-      list<BSONObj>::iterator ite ;
       INT32 sucNum   = 0 ; 
       INT32 totalNum = 0 ;
 
@@ -1638,21 +1736,17 @@ namespace engine
          _eraseFromList( hostInfoList, result ) ;
       }
 
-      ite = hostInfoList.begin() ;
-      while ( ite != hostInfoList.end() )
       {
-         BSONObjBuilder builder ;
-         BSONObj tmp ;
-         builder.append( OM_BSON_FIELD_HOST_IP, 
-                         ite->getStringField( OM_BSON_FIELD_HOST_IP ) ) ;
-         builder.append( OM_BSON_FIELD_HOST_NAME,
-                         ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
-         builder.append( OM_REST_RES_RETCODE, SDB_NETWORK ) ;
-         builder.append( OM_REST_RES_DETAIL, "network error" ) ;
-
-         tmp = builder.obj() ;
-         hostResult.push_back( tmp ) ;
-         hostInfoList.erase( ite++ ) ;
+         list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+         while ( iter != hostInfoList.end() )
+         {
+            BSONObj tmp = BSON( OM_BSON_FIELD_HOST_IP << iter->ip 
+                                << OM_BSON_FIELD_HOST_NAME << iter->hostName 
+                                << OM_REST_RES_RETCODE << SDB_NETWORK 
+                                << OM_REST_RES_DETAIL << "network error" ) ;
+            hostResult.push_back( tmp ) ;
+            hostInfoList.erase( iter++ ) ;
+         }
       }
 
    done:
@@ -1663,43 +1757,41 @@ namespace engine
    }
 
    INT32 omCheckHostCommand::_addAgentExitReq( omManager *om,
-                                               pmdRemoteSession *remoteSession,
-                                               list<BSONObj> &hostInfoList ) 
+                                            pmdRemoteSession *remoteSession,
+                                            list<omScanHostInfo> &hostInfoList ) 
    {
       INT32 rc = SDB_OK ;
-      list<BSONObj>::iterator ite = hostInfoList.begin() ;
-      while ( ite != hostInfoList.end() )
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
       {
-         MsgRouteID routeID ;
-         string agentHost ;
-         string agentIP ;
-         string agentPort ;
-         pmdSubSession *subSession = NULL ;
-         CHAR *pContent            = NULL ;
-         INT32 contentSize         = 0 ;
-         agentIP   = ite->getStringField( OM_BSON_FIELD_HOST_IP ) ;
-         agentHost = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-         agentPort = ite->getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
-         routeID   = om->updateAgentInfo( agentIP, agentPort ) ;
-         subSession = remoteSession->addSubSession( routeID.value ) ;
-         if ( NULL == subSession )
+         if ( iter->isNeedUninstall )
          {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "addSubSessin failed" ) ;
-            goto error ;
+            MsgRouteID routeID ;
+            pmdSubSession *subSession = NULL ;
+            CHAR *pContent            = NULL ;
+            INT32 contentSize         = 0 ;
+            routeID   = om->updateAgentInfo( iter->ip, iter->agentPort ) ;
+            subSession = remoteSession->addSubSession( routeID.value ) ;
+            if ( NULL == subSession )
+            {
+               rc = SDB_OOM ;
+               PD_LOG( PDERROR, "addSubSessin failed" ) ;
+               goto error ;
+            }
+
+            rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                                   CMD_ADMIN_PREFIX CMD_NAME_SHUTDOWN,
+                                   0, 0, 0, -1, NULL, NULL, NULL, NULL ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "msgBuildQueryMsg failed:rc=%d", rc ) ;
+               goto error ;
+            }
+
+            subSession->setReqMsg( (MsgHeader *)pContent ) ;
          }
 
-         rc = msgBuildQueryMsg( &pContent, &contentSize, 
-                                CMD_ADMIN_PREFIX CMD_NAME_SHUTDOWN,
-                                0, 0, 0, -1, NULL, NULL, NULL, NULL ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "msgBuildQueryMsg failed:rc=%d", rc ) ;
-            goto error ;
-         }
-
-         subSession->setReqMsg( (MsgHeader *)pContent ) ;
-         ite++;
+         iter++;
       }
 
    done:
@@ -1708,7 +1800,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omCheckHostCommand::_notifyAgentExit( list<BSONObj> &hostInfoList )
+   INT32 omCheckHostCommand::_notifyAgentExit( 
+                                            list<omScanHostInfo> &hostInfoList )
    {
       INT32 rc                        = SDB_OK ;
       omManager *om                   = NULL ;
@@ -1716,7 +1809,6 @@ namespace engine
       INT32 sucNum                    = 0 ; 
       INT32 totalNum                  = 0 ;
       VEC_SUB_SESSIONPTR subSessionVec ;
-      list<BSONObj>::iterator ite ;
 
       // create remote session
       om            = sdbGetOMManager() ;
@@ -1745,7 +1837,66 @@ namespace engine
       goto done ;
    }
 
-   INT32 omCheckHostCommand::_uninstallAgent( list<BSONObj> &hostInfoList )
+   void omCheckHostCommand::_generateUninstallReq( 
+                                             list<omScanHostInfo> &hostInfoList, 
+                                             BSONObj &bsonRequest )
+   {
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBuilder ;
+
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
+      {
+         omScanHostInfo *pInfo = &(*iter) ;
+         if ( pInfo->isNeedUninstall )
+         {
+            BSONObjBuilder builder ;
+            if ( pInfo->ip != "" )
+            {
+               builder.append( OM_BSON_FIELD_HOST_IP, pInfo->ip ) ;
+            }
+
+            if ( pInfo->hostName != "" )
+            {
+               builder.append( OM_BSON_FIELD_HOST_NAME, pInfo->hostName ) ;
+            }
+
+            builder.append( OM_BSON_FIELD_HOST_USER, pInfo->user ) ;
+            builder.append( OM_BSON_FIELD_HOST_PASSWD, pInfo->passwd ) ;
+            builder.append( OM_BSON_FIELD_HOST_SSHPORT, pInfo->sshPort ) ;
+            BSONObj oneHost = builder.obj() ;
+            arrayBuilder.append( oneHost.copy() ) ;
+         }
+
+         iter++ ;
+      }
+
+      builder.appendArray( OM_REST_FIELD_HOST_INFO, arrayBuilder.arr() );
+      bsonRequest = builder.obj() ;
+
+      return ;
+   }
+
+   bool omCheckHostCommand::_isNeedUnistall( 
+                                            list<omScanHostInfo> &hostInfoList )
+   {
+      bool isNeedUninsall = false ;
+      list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
+      {
+         if ( iter->isNeedUninstall )
+         {
+            isNeedUninsall = true ;
+            break ;
+         }
+         iter++ ;
+      }
+
+      return isNeedUninsall ;
+   }
+
+   INT32 omCheckHostCommand::_uninstallAgent( 
+                                            list<omScanHostInfo> &hostInfoList )
    {
       INT32 rc          = SDB_OK ;
       CHAR *pContent    = NULL ;
@@ -1756,14 +1907,14 @@ namespace engine
       BSONObj bsonRequest ;
       VEC_SUB_SESSIONPTR subSessionVec ;
 
-      if ( hostInfoList.size() == 0 )
+      if ( !_isNeedUnistall( hostInfoList ) )
       {
          goto done ;
       }
 
       _notifyAgentExit( hostInfoList ) ;
 
-      _generateArray( hostInfoList, OM_REST_FIELD_HOST_INFO, bsonRequest ) ;
+      _generateUninstallReq( hostInfoList, bsonRequest ) ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_UNINSTALL_REMOTE_AGENT, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
@@ -1808,11 +1959,11 @@ namespace engine
    }
 
    // check os/cpu/network etc (and get those infomations )
-   INT32 omCheckHostCommand::_doCheck( list<BSONObj> &hostInfoList, 
+   INT32 omCheckHostCommand::_doCheck( list<omScanHostInfo> &hostInfoList, 
                                        list<BSONObj> &hostResult )
    {
       INT32 rc = SDB_OK ;
-      list<BSONObj> needUninstallHost ;
+      list<omScanHostInfo> needUninstallHost ;
 
       PD_LOG( PDEVENT, "start to _installAgent" ) ;
       rc = _installAgent( hostInfoList, needUninstallHost ) ;
@@ -1838,15 +1989,135 @@ namespace engine
       goto done ;
    }
 
+   INT32 omCheckHostCommand::_getCheckHostList( string &clusterName, 
+                                                list<omScanHostInfo> &hostInfo )
+   {
+      INT32 rc                     = SDB_OK ;
+      const CHAR* pGlobalUser      = NULL ;
+      const CHAR* pGlobalPasswd    = NULL ;
+      const CHAR* pGlobalSshPort   = NULL ;
+      const CHAR* pGlobalAgentPort = NULL ;
+      const CHAR* pHostInfo        = NULL ;
+      BSONObj bsonHostInfo ;
+      BSONElement element ;
+
+
+      _restAdaptor->getQuery( _restSession, OM_REST_FIELD_HOST_INFO, 
+                              &pHostInfo ) ;
+      if ( NULL == pHostInfo )
+      {
+         _errorDetail = string( OM_REST_FIELD_HOST_INFO ) + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pHostInfo, bsonHostInfo ) ;
+      if ( rc )
+      {
+         _errorDetail = string( "change rest field " ) + OM_REST_FIELD_HOST_INFO
+                        + " to BSONObj failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      pGlobalUser    = bsonHostInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
+      pGlobalPasswd  = bsonHostInfo.getStringField( 
+                                                OM_BSON_FIELD_HOST_PASSWD ) ;
+      pGlobalSshPort = bsonHostInfo.getStringField( 
+                                                OM_BSON_FIELD_HOST_SSHPORT ) ;
+      pGlobalAgentPort = _localAgentService.c_str() ;
+      clusterName      = bsonHostInfo.getStringField( 
+                                                OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( 0 == ossStrlen( pGlobalUser ) || 0 == ossStrlen( pGlobalPasswd )
+           || 0 == ossStrlen( pGlobalSshPort ) || 0 == clusterName.length()
+           || 0 == ossStrlen( pGlobalAgentPort ) )
+      {
+         _errorDetail = string( OM_BSON_FIELD_HOST_USER ) + " is null"
+                        + " or " + OM_BSON_FIELD_HOST_PASSWD + " is null"
+                        + " or " + OM_BSON_FIELD_HOST_SSHPORT + " is null"
+                        + " or " + OM_BSON_FIELD_CLUSTER_NAME + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         goto error ;
+      }
+
+      element = bsonHostInfo.getField( OM_BSON_FIELD_HOST_INFO ) ;
+      if ( element.isNull() || Array != element.type() )
+      {
+         _errorDetail = string( OM_BSON_FIELD_HOST_INFO ) 
+                        + " is not array type" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s:type=%d", _errorDetail.c_str(), element.type() ) ;
+         goto error ;
+      }
+
+      {
+         BSONObjIterator i( element.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            omScanHostInfo host;
+            BSONObjBuilder builder ;
+            BSONObj tmp ;
+            BSONElement ele = i.next() ;
+            BSONObj oneHost = ele.embeddedObject() ;
+
+            host.ip        = oneHost.getStringField( OM_BSON_FIELD_HOST_IP ) ;
+            host.hostName  = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+            host.user      = pGlobalUser ;
+            host.passwd    = pGlobalPasswd ;
+            host.sshPort   = pGlobalSshPort ;
+            host.agentPort = pGlobalAgentPort ;
+
+            if ( oneHost.hasField( OM_BSON_FIELD_HOST_USER ) )
+            {
+               host.user = oneHost.getStringField( OM_BSON_FIELD_HOST_USER ) ;
+            }
+            if ( oneHost.hasField( OM_BSON_FIELD_HOST_PASSWD ) )
+            {
+               host.passwd = oneHost.getStringField( 
+                                                  OM_BSON_FIELD_HOST_PASSWD ) ;
+            }
+            if ( oneHost.hasField( OM_BSON_FIELD_HOST_SSHPORT ) )
+            {
+               host.sshPort = oneHost.getStringField( 
+                                                  OM_BSON_FIELD_HOST_SSHPORT ) ;
+            }
+            if ( oneHost.hasField( OM_BSON_FIELD_AGENT_PORT ) )
+            {
+               host.agentPort = oneHost.getStringField( 
+                                                  OM_BSON_FIELD_AGENT_PORT ) ;
+            }
+
+            if ( host.ip=="" || host.hostName=="" )
+            {
+               _errorDetail = string( "rest field miss:" ) 
+                              + OM_BSON_FIELD_HOST_IP + " or " 
+                              + OM_BSON_FIELD_HOST_NAME ;
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+               goto error ;
+            }
+
+            hostInfo.push_back( host ) ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omCheckHostCommand::doCommand()
    {
-      list<BSONObj> hostInfoList ;
+      list<omScanHostInfo> hostInfoList ;
       list<BSONObj> hostResult ;
       BSONObj bsonRequest ;
       string clusterName = "" ;
       INT32 rc           = SDB_OK ;
 
-      rc = _getRestHostList( clusterName, hostInfoList ) ;
+      rc = _getCheckHostList( clusterName, hostInfoList ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "fail to get host list:rc=%d", rc ) ;
@@ -1886,8 +2157,8 @@ namespace engine
    // *****************omAddHostCommand *****************************
    omAddHostCommand::omAddHostCommand( restAdaptor *pRestAdaptor, 
                                        pmdRestSession *pRestSession,
-                                       string localAgentHost, 
-                                       string localAgentService )
+                                       const string &localAgentHost, 
+                                       const string &localAgentService )
                     : omScanHostCommand( pRestAdaptor, pRestSession, 
                                          localAgentHost, localAgentService )
    {
@@ -2016,7 +2287,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omAddHostCommand::_generateAddHostReq( string clusterName,
+   INT32 omAddHostCommand::_generateAddHostReq( const string &clusterName,
                                                 list<BSONObj> &hostInfoList, 
                                                 BSONObj &bsonRequest )
    {
@@ -2080,7 +2351,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omAddHostCommand::_getClusterInstallPath( string clusterName, 
+   INT32 omAddHostCommand::_getClusterInstallPath( const string &clusterName, 
                                                    string &installPath )
    {
       INT32 rc = SDB_OK ;
@@ -2175,7 +2446,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omAddHostCommand::_addHost( string clusterName, 
+   INT32 omAddHostCommand::_addHost( const string &clusterName, 
                                      list<BSONObj> &hostInfoList, 
                                      INT32 &transationID )
    {
@@ -2271,9 +2542,9 @@ namespace engine
    }
 
    void omAddHostCommand::_generateTableField( BSONObjBuilder &builder, 
-                                               string newFieldName,
+                                               const string &newFieldName,
                                                BSONObj &bsonOld,
-                                               string oldFiledName ) 
+                                               const string &oldFiledName ) 
    {  
       BSONElement element = bsonOld.getField( oldFiledName ) ;
       if ( !element.eoo() )
@@ -2282,7 +2553,7 @@ namespace engine
       }
    }
 
-   INT32 omAddHostCommand::_storeHostInfo( string clusterName, 
+   INT32 omAddHostCommand::_storeHostInfo( const string &clusterName, 
                                            list<BSONObj> &hostInfoList )
    {
       INT32 rc = SDB_OK ;
@@ -2358,8 +2629,7 @@ namespace engine
       goto done ;
    }
 
-   void omAddHostCommand::_transactionRollBack( string host, string service, 
-                                                INT32 transactionID )
+   void omAddHostCommand::_transactionRollBack( INT32 transactionID )
    {
       INT32 rc          = SDB_OK ;
       CHAR *pContent    = NULL ;
@@ -2417,19 +2687,19 @@ namespace engine
    INT32 omAddHostCommand::_checkHostExistence( list<BSONObj> &hostInfoList )
    {
       INT32 rc = SDB_OK ;
-      list<BSONObj>::iterator ite = hostInfoList.begin() ;
-      while ( ite != hostInfoList.end() )
+      list<BSONObj>::iterator iter = hostInfoList.begin() ;
+      while ( iter != hostInfoList.end() )
       {
-         if ( _isHostExist( *ite ) )
+         string host  = iter->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+         if ( _isHostNameExist( host ) )
          {
             rc = SDB_INVALIDARG ;
-            string host  = ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ;
             _errorDetail = string("host is exist:host=") + host ;
             PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
             goto error ;
          }
 
-         ite++ ;
+         iter++ ;
       }
 
    done:
@@ -2474,8 +2744,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "fail to store host:rc=%d", rc ) ;
-         _transactionRollBack( _localAgentHost, _localAgentService, 
-                               transactionID ) ;
+         _transactionRollBack( transactionID ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2502,7 +2771,7 @@ namespace engine
    {
    }
 
-   INT32 omListHostCommand::_listHostByCluster( string cluster, 
+   INT32 omListHostCommand::_listHostByCluster( const string &cluster, 
                                                 list<BSONObj> &hosts )
    {
       INT32 rc = SDB_OK ;
@@ -2558,7 +2827,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omListHostCommand::_listHostByBusiness( string businessName, 
+   INT32 omListHostCommand::_listHostByBusiness( const string &businessName, 
                                                  list<BSONObj> &hosts )
    {
       INT32 rc = SDB_OK ;
@@ -2691,66 +2960,11 @@ namespace engine
    {  
    }
 
-   INT32 omQueryHostCommand::_queryHostInfoByHost( string hostName, 
-                                                   list<BSONObj> &hosts )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj selector ;
-      BSONObj matcher ;
-      BSONObj order ;
-      BSONObj hint ;
-      SINT64 contextID = -1 ;
-
-      matcher = BSON( OM_HOST_FIELD_NAME << hostName ) ;
-      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 0, 
-                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
-      if ( rc )
-      {
-         _errorDetail = string( "fail to query table:" ) 
-                        + OM_CS_DEPLOY_CL_HOST ;
-         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-         goto error ;
-      }
-
-      while ( TRUE )
-      {
-         rtnContextBuf buffObj ;
-         SINT64 startingPos = 0 ;
-         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
-         if ( rc )
-         {
-            if ( SDB_DMS_EOC == rc )
-            {
-               rc = SDB_OK ;
-               break ;
-            }
-
-            contextID = -1 ;
-            _errorDetail = string( "failed to get record from table:" )
-                           + OM_CS_DEPLOY_CL_HOST ;
-            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
-            goto error ;
-         }
-
-         BSONObj record( buffObj.data() ) ;
-         BSONObj filter = BSON( OM_HOST_FIELD_PASSWORD << "" ) ;
-         BSONObj result = record.filterFieldsUndotted( filter, false ) ;
-         hosts.push_back( result.copy() ) ;
-      }
-   done:
-      if ( -1 != contextID )
-      {
-         _pRTNCB->contextDelete ( contextID, _cb ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omQueryHostCommand::doCommand()
    {
       INT32 rc                  = SDB_OK ;
       const CHAR *pHostName     = NULL ;
+      BSONObj hostInfo ;
       list<BSONObj> hosts ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_HOST_NAME, &pHostName ) ;
@@ -2763,12 +2977,21 @@ namespace engine
          goto error ;
       }
 
-      rc = _queryHostInfoByHost( pHostName, hosts ) ;
+      rc = _getHostInfo( pHostName, hostInfo ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "_queryHostInfoByHost failed:rc=%d", rc ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "_getHostInfo failed:rc=%d", rc ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto error ;
+         }
+         rc = SDB_OK ;
+      }
+
+      if ( !hostInfo.isEmpty() )
+      {
+         hosts.push_back( hostInfo ) ;
       }
 
       _sendHostInfo2Web( hosts ) ;
@@ -2910,7 +3133,8 @@ namespace engine
       out = builder.obj() ;
    }
 
-   INT32 omQueryBusinessTypeCommand::_readConfigFile( string file, BSONObj &obj )
+   INT32 omQueryBusinessTypeCommand::_readConfigFile( const string &file, 
+                                                      BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       try
@@ -2979,8 +3203,8 @@ namespace engine
    }
 
    INT32 omQueryBusinessTemplateCommand::_readConfTemplate( 
-                                                string businessType, 
-                                                string file, 
+                                                const string &businessType, 
+                                                const string &file, 
                                                 list<BSONObj> &deployModList ) 
    {
       INT32 rc = SDB_OK ;
@@ -3010,7 +3234,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryBusinessTemplateCommand::_readConfDetail( string file, 
+   INT32 omQueryBusinessTemplateCommand::_readConfDetail( const string &file, 
                                                        BSONObj &bsonConfDetail )
    {
       INT32 rc = SDB_OK ;
@@ -4507,11 +4731,14 @@ namespace engine
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
-
-      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      opBuilder.append( OM_BSON_TASKID, (long long)taskID ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      {
+         CHAR arrayID[ OM_INT64_LENGTH + 1 ] ;
+         ossLltoa( taskID, arrayID, OM_INT64_LENGTH ) ;
+         opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+         opBuilder.append( OM_BSON_TASKID, arrayID ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      }
 
    done:
       return rc ;
@@ -5120,9 +5347,13 @@ namespace engine
       rc = _getBusinessInfo( businessName, businessInfo ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto error ;
+         }
+         rc = SDB_OK ;
       }
 
       _sendBusinessInfo2Web( businessInfo ) ;
@@ -5892,8 +6123,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omRemoveBusinessCommand::_removeBusinessByAgent( 
-                                             const BSONObj &request )
+   INT32 omRemoveBusinessCommand::_removeBusinessByAgent( BSONObj &request,
+                                                          UINT64 taskID )
    {
       INT32 rc          = SDB_OK ;
       SINT32 flag       = SDB_OK ;
@@ -5901,12 +6132,17 @@ namespace engine
       INT32 contentSize = 0 ;
       omManager *om     = NULL ;
       MsgHeader *pMsg   = NULL ;
+      BSONObj innerReq ;
+      BSONObjBuilder builder ;
+      builder.append( OM_BSON_TASKID, (long long)taskID ) ;
+      builder.appendElements( request ) ;
+      innerReq = builder.obj() ;
 
       pmdRemoteSession *remoteSession = NULL ;
       BSONObj bsonResponse ;
       rc = msgBuildQueryMsg( &pContent, &contentSize, 
                              CMD_ADMIN_PREFIX OM_REMOVE_BUSINESS_REQ, 
-                             0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
+                             0, 0, 0, -1, &innerReq, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = string( "build message failed:cmd=" ) 
@@ -5951,7 +6187,8 @@ namespace engine
       if ( SDB_OK != flag )
       {
          rc = flag ;
-         _errorDetail = bsonResponse.getStringField( OP_ERR_DETAIL ) ;
+         _errorDetail = string( "agent process failed:" ) 
+                        + bsonResponse.getStringField( OP_ERR_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          goto error ;
@@ -6014,39 +6251,56 @@ namespace engine
    }
 
    INT32 omRemoveBusinessCommand::_removeBusiness( const string &businessName,
-                                                   const BSONObj &request, 
+                                                   BSONObj &request, 
                                                    BOOLEAN isExistNode,
-                                                   BOOLEAN isForced )
+                                                   UINT64 &taskID )
    {
       INT32 rc = SDB_OK ;
+      omTaskManager *taskManager  = sdbGetOMManager()->getTaskManager() ;
+      rc = taskManager->createUninstallTask( _localAgentHost, 
+                                             _localAgentService, 
+                                             request, taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "createUninstallTask failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
       if ( isExistNode )
       {
-         rc = _removeBusinessByAgent( request ) ;
+         rc = _removeBusinessByAgent( request, taskID ) ;
          if ( SDB_OK != rc )
          {
-            if ( !isForced )
-            {
-               PD_LOG( PDERROR, "agent remove business failed:business=%s,rc=%d",
-                       businessName.c_str(), rc ) ;
-               goto error ;
-            }
+            taskManager->cancelTask( taskID ) ;
+            PD_LOG( PDERROR, "agent remove business failed:business=%s,"
+                    "rc=%d", businessName.c_str(), rc ) ;
+            goto error ;
          }
       }
 
-      rc = _deleteConfigureRecord( businessName ) ;
+      rc = taskManager->enableTask( taskID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "delete configure's record failed:business=%s,rc=%d", 
-                 businessName.c_str(), rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         taskManager->cancelTask( taskID ) ;
+         PD_LOG_MSG( PDERROR, "enable task failed:taskID="OSS_LL_PRINT_FORMAT
+                     "rc=%d", taskID, rc ) ;
          goto error ;
       }
 
-      rc = _deleteBusinessRecord( businessName ) ;
-      if ( SDB_OK != rc )
+      if ( !isExistNode )
       {
-         PD_LOG( PDERROR, "delete business's record failed:business=%s,rc=%d", 
-                 businessName.c_str(), rc ) ;
-         goto error ;
+         // node is not exist. just finish the task now
+         rc = taskManager->finishTask( taskID ) ;
+         if ( SDB_OK != rc )
+         {
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            taskManager->cancelTask( taskID ) ;
+            PD_LOG_MSG( PDERROR, "finish task failed:taskID="OSS_LL_PRINT_FORMAT
+                        "rc=%d", taskID, rc ) ;
+            goto error ;
+         }
       }
 
    done:
@@ -6099,12 +6353,11 @@ namespace engine
       BSONObj nodeInfos ;
       BSONObj result ;
       BSONObj request ;
-      BOOLEAN isForced            = FALSE ;
+      UINT64 taskID ;
       BOOLEAN isBusinessExist     = FALSE ;
       BOOLEAN isBusinessExistNode = FALSE ;
       INT32 rc                    = SDB_OK ;
       const CHAR *pBusinessName   = NULL ;
-      const CHAR *pForce          = NULL ;
       _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
                               &pBusinessName ) ;
       if ( NULL == pBusinessName )
@@ -6115,12 +6368,6 @@ namespace engine
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
-      }
-
-      _restAdaptor->getQuery( _restSession, OM_REST_ISFORCE, &pForce ) ;
-      if ( ( NULL != pForce ) && ( ossStrcasecmp( pForce, "1" ) == 0 ) )
-      {
-         isForced = TRUE ;
       }
 
       rc = _getBusinessExistFlag( pBusinessName, isBusinessExist ) ;
@@ -6158,8 +6405,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _removeBusiness( pBusinessName, request, isBusinessExistNode, 
-                            isForced ) ;
+      rc = _removeBusiness( pBusinessName, request, isBusinessExistNode,
+                            taskID ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "remove business failed:business=%s,rc=%d", 
@@ -6168,9 +6415,14 @@ namespace engine
          goto error ;
       }
 
-      result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
-      _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      {
+         CHAR arrayID[ OM_INT64_LENGTH + 1 ] ;
+         ossLltoa( taskID, arrayID, OM_INT64_LENGTH ) ;
+         result = BSON( OM_REST_RES_RETCODE << SDB_OK
+                        << OM_BSON_TASKID << arrayID ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      }
 
    done:
       return rc ;
@@ -6711,16 +6963,16 @@ namespace engine
    }
 
    INT32 restFileController::getTransferedPath( const char *src, 
-                                                   string &transfered )
+                                                string &transfered )
    {
       INT32 rc = SDB_OK ;
-      mapIteratorType ite = _transfer.find( src ) ;
-      if ( ite == _transfer.end() )
+      mapIteratorType iter = _transfer.find( src ) ;
+      if ( iter == _transfer.end() )
       {
          goto error ;
       }
 
-      transfered = ite->second ;
+      transfered = iter->second ;
 
    done:
       return rc ; 
@@ -6731,8 +6983,8 @@ namespace engine
 
    bool restFileController::isFileAuthorPublic( const char *file ) 
    {
-      mapIteratorType ite = _publicAccessFiles.find( file ) ;
-      if ( ite == _publicAccessFiles.end() )
+      mapIteratorType iter = _publicAccessFiles.find( file ) ;
+      if ( iter == _publicAccessFiles.end() )
       {
          return false ;
       }

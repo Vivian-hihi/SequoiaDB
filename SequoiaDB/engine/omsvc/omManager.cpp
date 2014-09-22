@@ -1067,6 +1067,14 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      if ( _isCommand( pCollectionName ) )
+      {
+         if ( ossStrcmp( pCollectionName + 1 , AGENT_QUERY_TASK_REQ ) == 0 )
+         {
+            
+         }
+      }
       
       PD_LOG( PDEVENT, "receive command: %s", pCollectionName ) ;
    done:

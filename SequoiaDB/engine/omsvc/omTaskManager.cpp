@@ -320,7 +320,7 @@ namespace engine
    }
 
    INT32 omInstallTask::init( const string &agentHost, 
-                              const string &agentService, BSONObj &conf, 
+                              const string &agentService, const BSONObj &conf, 
                               UINT64 taskID )
    {
       BSONObj tmp ;
@@ -436,6 +436,12 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 omInstallTask::finish()
+   {
+      SDB_ASSERT( false, "install task should not finish from outside" ) ;
+      return SDB_OK ;
    }
 
    INT32 omInstallTask::getProgress( bool &isFinish, string &status, 
@@ -857,6 +863,11 @@ namespace engine
       goto done ;
    }
 
+   INT32 omUninstallTask::finish()
+   {
+      return _finishUninstallTask() ;
+   }
+
    INT32 omUninstallTask::updateProgress()
    {
       INT32 rc = SDB_OK ;
@@ -1274,7 +1285,8 @@ namespace engine
 
    INT32 omTaskManager::createInstallTask( const string &agentHost, 
                                            const string &agentService, 
-                                           BSONObj &confValue, UINT64 &taskID )
+                                           const BSONObj &confValue, 
+                                           UINT64 &taskID )
    {
       INT32 rc            = SDB_OK ;
       omInstallTask *task = NULL ;
@@ -1310,7 +1322,7 @@ namespace engine
 
    INT32 omTaskManager::createUninstallTask( const string &agentHost, 
                                              const string &agentService, 
-                                             BSONObj &confValue,
+                                             const BSONObj &confValue,
                                              UINT64 &taskID )
    {
       INT32 rc            = SDB_OK ;
@@ -1363,6 +1375,41 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "cancel task failed:taskID="OSS_LL_PRINT_FORMAT
+                 ",rc=%d", taskID, rc ) ;
+         goto error ;
+      }
+
+      _lock.get() ;
+      _mapTasks.erase( taskID ) ;
+      _lock.release() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omTaskManager::finishTask( UINT64 taskID )
+   {
+      INT32 rc          = SDB_OK ;
+      boost::shared_ptr< omTaskBase > shareTask ;
+      _lock.get() ;
+      MAP_TASK_INTER iter = _mapTasks.find( taskID ) ;
+      if ( iter == _mapTasks.end() )
+      {
+         _lock.release() ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT, 
+                 taskID ) ;
+         goto error ;
+      }
+      shareTask = iter->second ;
+      _lock.release() ;
+
+      rc    = shareTask->finish() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "finish task failed:taskID="OSS_LL_PRINT_FORMAT
                  ",rc=%d", taskID, rc ) ;
          goto error ;
       }

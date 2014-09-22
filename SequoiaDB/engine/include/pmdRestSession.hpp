@@ -186,8 +186,8 @@ namespace engine
                                             const CHAR *pFilePath ) ;
 
       private:
-         omCommandInterface *_createCommand( HTTP_PARSE_COMMON command,
-                                             const CHAR *pFilePath ) ;
+         omRestCommandBase *_createCommand( HTTP_PARSE_COMMON command,
+                                            const CHAR *pFilePath ) ;
       protected:
          httpConnection    _restConn ;
          CHAR*             _pFixBuff ;

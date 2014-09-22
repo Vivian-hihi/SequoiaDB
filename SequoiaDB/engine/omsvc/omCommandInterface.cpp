@@ -39,7 +39,15 @@ using namespace bson;
 
 namespace engine
 {
-   omCommandInterface::omCommandInterface()
+   omCommandInterafce::omCommandInterafce()
+   {
+   }
+
+   omCommandInterafce::~omCommandInterafce()
+   {
+   }
+
+   omRestCommandBase::omRestCommandBase()
    {
       _pKRCB  = pmdGetKRCB() ;
       _pDMDCB = _pKRCB->getDMSCB() ;
@@ -48,34 +56,29 @@ namespace engine
       _cb     = NULL ;
    }
 
-   omCommandInterface::~omCommandInterface()
+   omRestCommandBase::~omRestCommandBase()
    {
    }
 
-   INT32 omCommandInterface::init( pmdEDUCB * cb )
+   INT32 omRestCommandBase::init( pmdEDUCB * cb )
    {
       _cb = cb ;
 
       return SDB_OK ;
    }
 
-   INT32 omCommandInterface::undoCommand()
-   {
-      return SDB_OK ;
-   }
-
-   bool omCommandInterface::isFetchAgentResponse( UINT64 requestID )
+   bool omRestCommandBase::isFetchAgentResponse( UINT64 requestID )
    {
       return false ;
    }
 
-   INT32 omCommandInterface::doAgentResponse ( MsgHeader* pAgentResponse )
+   INT32 omRestCommandBase::doAgentResponse ( MsgHeader* pAgentResponse )
    {
       return SDB_OK ;
    }
 
-   INT32 omCommandInterface::_getBusinessInfo( string business, 
-                                               BSONObj &businessInfo )
+   INT32 omRestCommandBase::_getBusinessInfo( string business, 
+                                              BSONObj &businessInfo )
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;
@@ -127,7 +130,58 @@ namespace engine
       goto done ;
    }
 
-   INT32 omCommandInterface::_deleteHost( const string &hostName )
+   INT32 omRestCommandBase::_getHostInfo( string hostName, 
+                                           BSONObj &hostInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID = -1 ;
+
+      matcher = BSON( OM_HOST_FIELD_NAME << hostName ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 0, 
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "fail to query table:%s,rc=%d",
+                     OM_CS_DEPLOY_CL_HOST, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            contextID = -1 ;
+            PD_LOG_MSG( PDERROR, "failed to get record from table:%s,rc=%d", 
+                        OM_CS_DEPLOY_CL_HOST, rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         BSONObj filter = BSON( OM_HOST_FIELD_PASSWORD << "" ) ;
+         BSONObj result = record.filterFieldsUndotted( filter, false ) ;
+         hostInfo = result.copy() ;
+         break ;
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRestCommandBase::_deleteHost( const string &hostName )
    {
       INT32 rc          = SDB_OK ;
       BSONObj condition = BSON( OM_HOST_FIELD_NAME << hostName ) ;
@@ -149,8 +203,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 omCommandInterface::_getClusterInfo( const string &clusterName, 
-                                              BSONObj &clusterInfo )
+   INT32 omRestCommandBase::_getClusterInfo( const string &clusterName, 
+                                             BSONObj &clusterInfo )
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;

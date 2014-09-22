@@ -71,7 +71,7 @@ namespace engine
       string role ;
    } ;
 
-   class omAuthCommand : public omCommandInterface
+   class omAuthCommand : public omRestCommandBase
    {
       public:
          omAuthCommand( restAdaptor *pRestAdaptor, 
@@ -85,10 +85,11 @@ namespace engine
       protected:
          void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
          void            _sendErrorRes2Web( INT32 rc, const string &detail ) ;
-         void            _decryptPasswd( const string encryptPasswd, 
-                                         string time,
+         void            _decryptPasswd( const string &encryptPasswd, 
+                                         const string &time,
                                          string &decryptPasswd) ;
-         INT32           _getSdbUsrInfo( string clusterName, string &sdbUser, 
+         INT32           _getSdbUsrInfo( const string &clusterName, 
+                                         string &sdbUser, 
                                          string &sdbPasswd, 
                                          string &sdbUserGroup ) ;
 
@@ -172,12 +173,23 @@ namespace engine
 
    };
 
+   struct omScanHostInfo
+   {
+      string hostName ;
+      string ip ;
+      string user ;
+      string passwd ;
+      string sshPort ;
+      string agentPort ;
+      bool isNeedUninstall ;
+   } ;
    class omScanHostCommand : public omCreateClusterCommand
    {
       public:
          omScanHostCommand( restAdaptor *pRestAdaptor, 
                             pmdRestSession *pRestSession, 
-                            string localAgentHost, string localAgentService ) ;
+                            const string &localAgentHost, 
+                            const string &localAgentService ) ;
 
          ~omScanHostCommand() ;
 
@@ -185,11 +197,13 @@ namespace engine
          virtual INT32   doCommand() ;
 
       protected:
-         bool            _isHostExist( BSONObj &host ) ;
-         void            _filterExistHost( list<BSONObj> &hostInfoList, 
+         bool            _isHostNameExist( const string &hostName ) ;
+         bool            _isHostIPExist( const string &hostName ) ;
+         bool            _isHostExist( const omScanHostInfo &host ) ;
+         void            _filterExistHost( list<omScanHostInfo> &hostInfoList, 
                                            list<BSONObj> &hostResult ) ;
          void            _generateArray( list<BSONObj> &hostInfoList, 
-                                         string arrayKeyName, 
+                                         const string &arrayKeyName, 
                                          BSONObj &result ) ;
          void            _sendOkRes2Web( list<BSONObj> &hostResult ) ;
          INT32           _sendMsgToLocalAgent( omManager *om,
@@ -197,10 +211,12 @@ namespace engine
                                                MsgHeader *pMsg ) ;
          INT32           _receiveFromAgent( pmdRemoteSession *remoteSession,
                                             SINT32 &flag, BSONObj &result ) ;
-         INT32           _getRestHostList( string &clusterName, 
-                                           list<BSONObj> &hostInfo ) ;
+         INT32           _getScanHostList( string &clusterName, 
+                                           list<omScanHostInfo> &hostInfo ) ;
          void            _clearSession( omManager *om, 
                                         pmdRemoteSession *remoteSession) ;
+         void            _generateHostList( list<omScanHostInfo> &hostInfoList, 
+                                            BSONObj &bsonRequest ) ;
 
       private:
          INT32           _parseResonpse( VEC_SUB_SESSIONPTR &subSessionVec, 
@@ -221,7 +237,8 @@ namespace engine
       public:
          omCheckHostCommand( restAdaptor *pRestAdaptor, 
                              pmdRestSession *pRestSession,
-                             string localAgentHost, string localAgentService ) ;
+                             const string &localAgentHost, 
+                             const string &localAgentService ) ;
 
          ~omCheckHostCommand() ;
 
@@ -229,30 +246,45 @@ namespace engine
          virtual INT32   doCommand() ;
 
       private:
-         INT32           _doBasicCheck( list<BSONObj> &hostInfoList, 
+         INT32           _getCheckHostList( string &clusterName, 
+                                          list<omScanHostInfo> &hostInfoList ) ;
+         INT32           _doBasicCheck( list<omScanHostInfo> &hostInfoList, 
                                         list<BSONObj> &hostResult ) ;
-         INT32           _doCheck( list<BSONObj> &hostInfoList, 
+         INT32           _doCheck( list<omScanHostInfo> &hostInfoList, 
                                         list<BSONObj> &hostResult ) ;
-         INT32           _installAgent( list<BSONObj> &hostInfoList,
-                                        list<BSONObj> &needUninstallHost ) ;
-         INT32           _addCheckHostReq( omManager *om,
-                                           pmdRemoteSession *remoteSession,
-                                           list<BSONObj> &hostInfoList ) ;
-         void            _updateDiskInfo( BSONObj &onehost ) ;
-         INT32           _checkHostEnv( list<BSONObj> &hostInfoList, 
-                                        list<BSONObj> &hostResult ) ;
-         INT32           _uninstallAgent( list<BSONObj> &hostInfoList ) ;
-         void            _eraseFromList( list<BSONObj> &hostInfoList, 
-                                         BSONObj &oneHost ) ;
-         void            _eraseFromListByIP( list<BSONObj> &hostInfoList, 
-                                             const string &ip ) ;
-         void            _eraseFromListByHost( list<BSONObj> &hostInfoList, 
-                                               const string &hostName ) ;
 
-         INT32           _notifyAgentExit( list<BSONObj> &hostInfoList ) ;
+         void            _updateUninstallFlag( 
+                                            list<omScanHostInfo> &hostInfoList, 
+                                            const string &ip, 
+                                            bool isNeedUninstall ) ;
+         INT32           _installAgent( list<omScanHostInfo> &hostInfoList,
+                                     list<omScanHostInfo> &needUninstallHost ) ;
+         INT32           _addCheckHostReq( omManager *om,
+                                          pmdRemoteSession *remoteSession,
+                                          list<omScanHostInfo> &hostInfoList ) ;
+         void            _updateDiskInfo( BSONObj &onehost ) ;
+         INT32           _checkHostEnv( list<omScanHostInfo> &hostInfoList, 
+                                        list<BSONObj> &hostResult ) ;
+
+         bool            _isNeedUnistall( list<omScanHostInfo> &hostInfoList ) ;
+         void            _generateUninstallReq( 
+                                             list<omScanHostInfo> &hostInfoList, 
+                                             BSONObj &bsonRequest ) ;
+         INT32           _uninstallAgent( list<omScanHostInfo> &hostInfoList ) ;
+         
+         void            _eraseFromList( list<omScanHostInfo> &hostInfoList, 
+                                         BSONObj &oneHost ) ;
+         void            _eraseFromListByIP( list<omScanHostInfo> &hostInfoList, 
+                                             const string &ip ) ;
+         void            _eraseFromListByHost( 
+                                             list<omScanHostInfo> &hostInfoList, 
+                                             const string &hostName ) ;
+
+         INT32           _notifyAgentExit( 
+                                          list<omScanHostInfo> &hostInfoList ) ;
          INT32           _addAgentExitReq( omManager *om,
-                                           pmdRemoteSession *remoteSession,
-                                           list<BSONObj> &hostInfoList ) ;
+                                          pmdRemoteSession *remoteSession,
+                                          list<omScanHostInfo> &hostInfoList ) ;
    };
 
    class omAddHostCommand : public omScanHostCommand
@@ -260,7 +292,8 @@ namespace engine
       public:
          omAddHostCommand( restAdaptor *pRestAdaptor, 
                            pmdRestSession *pRestSession,
-                           string localAgentHost, string localAgentService ) ;
+                           const string &localAgentHost, 
+                           const string &localAgentService ) ;
 
          ~omAddHostCommand() ;
 
@@ -273,21 +306,20 @@ namespace engine
                                            list<BSONObj> &hostInfo ) ;
 
       private:
-         void            _transactionRollBack( string host, string service, 
-                                               INT32 transactionID ) ;
-         INT32           _storeHostInfo( string clusterName, 
+         void            _transactionRollBack( INT32 transactionID ) ;
+         INT32           _storeHostInfo( const string &clusterName, 
                                          list<BSONObj> &hostInfoList ) ;
          void            _generateTableField( BSONObjBuilder &builder, 
-                                              string newFieldName,
+                                              const string &newFieldName,
                                               BSONObj &bsonOld,
-                                              string oldFiledName ) ;
-         INT32           _addHost( string clusterName, 
+                                              const string &oldFiledName ) ;
+         INT32           _addHost( const string &clusterName, 
                                    list<BSONObj> &hostInfoList, 
                                    INT32 &transationID ) ;
-         INT32           _generateAddHostReq( string clusterName,
+         INT32           _generateAddHostReq( const string &clusterName,
                                               list<BSONObj> &hostInfoList, 
                                               BSONObj &bsonRequest ) ;
-         INT32           _getClusterInstallPath( string clusterName, 
+         INT32           _getClusterInstallPath( const string &clusterName, 
                                                  string &installPath ) ;
          INT32           _getPacketFullPath( char *path ) ;
          INT32           _checkHostExistence( list<BSONObj> &hostInfoList ) ;
@@ -307,9 +339,9 @@ namespace engine
          void            _sendHostInfo2Web( list<BSONObj> &hosts ) ;
 
       private:
-         INT32           _listHostByCluster( string cluster, 
-                                                 list<BSONObj> &hosts ) ;
-         INT32           _listHostByBusiness( string business, 
+         INT32           _listHostByCluster( const string &cluster, 
+                                             list<BSONObj> &hosts ) ;
+         INT32           _listHostByBusiness( const string &business, 
                                               list<BSONObj> &hosts ) ;
    } ;
 
@@ -325,24 +357,22 @@ namespace engine
          virtual INT32   doCommand() ;
 
       private:
-         INT32           _queryHostInfoByHost( string hostName, 
-                                               list<BSONObj> &hosts ) ;
    } ;
 
    class omQueryBusinessTypeCommand : public omCreateClusterCommand
    {
       public:
          omQueryBusinessTypeCommand( restAdaptor *pRestAdaptor, 
-                                 pmdRestSession *pRestSession, 
-                                 const CHAR *pRootPath, 
-                                 const CHAR *pSubPath ) ;
+                                     pmdRestSession *pRestSession, 
+                                     const CHAR *pRootPath, 
+                                     const CHAR *pSubPath ) ;
          virtual ~omQueryBusinessTypeCommand() ;
 
       public:
          virtual INT32  doCommand() ;
 
       protected:
-         INT32          _readConfigFile( string file, BSONObj &obj ) ;
+         INT32          _readConfigFile( const string &file, BSONObj &obj ) ;
          void           _recurseParseObj( ptree &pt, BSONObj &out ) ;
          void           _parseArray( ptree &pt, 
                                      BSONArrayBuilder &arrayBuilder ) ;
@@ -368,9 +398,10 @@ namespace engine
          virtual INT32  doCommand() ;
 
       protected:
-         INT32          _readConfTemplate( string businessType, string file, 
-                                          list<BSONObj> &clusterTypeList ) ;
-         INT32          _readConfDetail( string file, 
+         INT32          _readConfTemplate( const string &businessType, 
+                                           const string &file, 
+                                           list<BSONObj> &clusterTypeList ) ;
+         INT32          _readConfDetail( const string &file, 
                                          BSONObj &bsonConfDetail ) ;
 
       protected:
@@ -642,11 +673,12 @@ namespace engine
 
          INT32          _getHostNameInfo( const string &businessName,
                                        map<string, simpleHostInfo> &mapHosts) ;
-         INT32          _removeBusinessByAgent( const BSONObj &request ) ;
+         INT32          _removeBusinessByAgent( BSONObj &request,
+                                                UINT64 taskID  ) ;
          INT32          _removeBusiness( const string &businessName,
-                                         const BSONObj &request, 
+                                         BSONObj &request, 
                                          BOOLEAN isExistNode,
-                                         BOOLEAN isForced ) ;
+                                         UINT64 &taskID ) ;
          INT32          _deleteConfigureRecord( const string &businessName ) ;
          INT32          _deleteBusinessRecord( const string &businessName ) ;
          INT32          _generateRequest( string businessName,
@@ -693,7 +725,7 @@ namespace engine
                                          BSONObj &bsonStatus ) ;
    } ;
 
-   class omGetFileCommand : public omCommandInterface
+   class omGetFileCommand : public omRestCommandBase
    {
       public:
          omGetFileCommand( restAdaptor *pRestAdaptor, 

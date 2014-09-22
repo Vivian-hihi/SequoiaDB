@@ -43,16 +43,24 @@ using namespace bson ;
 
 namespace engine
 {
-   class omCommandInterface : public SDBObject
+   class omCommandInterafce : public SDBObject
    {
       public:
-         omCommandInterface() ;
-         virtual ~omCommandInterface() ;
+         omCommandInterafce() ;
+         virtual ~omCommandInterafce() ;
+
+      public:
+         virtual INT32     doCommand() = 0 ;
+   } ;
+
+   class omRestCommandBase : public omCommandInterafce
+   {
+      public:
+         omRestCommandBase() ;
+         virtual ~omRestCommandBase() ;
 
       public:
          virtual INT32     init( pmdEDUCB * cb ) ;
-         virtual INT32     doCommand() = 0 ;
-         virtual INT32     undoCommand() ;
          virtual bool      isFetchAgentResponse( UINT64 requestID ) ;
          virtual INT32     doAgentResponse ( MsgHeader* pAgentResponse ) ;
 
@@ -62,6 +70,8 @@ namespace engine
          INT32             _deleteHost( const string &hostName ) ;
          INT32             _getClusterInfo( const string &clusterName, 
                                             BSONObj &clusterInfo ) ;
+         INT32             _getHostInfo( string hostName, 
+                                         BSONObj &hostInfo ) ;
       protected:
          SDB_RTNCB         *_pRTNCB ;
          SDB_DMSCB         *_pDMDCB ;
@@ -71,7 +81,14 @@ namespace engine
          pmdEDUCB          *_cb ;
 
          string            _errorDetail ;
-   };
+   } ;
+
+   class omAgentCommandBase : public omCommandInterafce
+   {
+      public:
+         omAgentCommandBase() ;
+         virtual ~omAgentCommandBase() ;
+   } ;
 }
 
 #endif /* OM_COMMANDINTERFACE_HPP_ */

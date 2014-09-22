@@ -62,6 +62,8 @@ namespace engine
 
          virtual INT32     enable() = 0 ;
 
+         virtual INT32     finish() = 0 ;
+
          virtual INT32     getProgress( bool &isFinish, string &status, 
                                         BSONObj &progress ) = 0 ;
 
@@ -113,7 +115,7 @@ namespace engine
          // create a new task, insert into table OM_CS_DEPLOY_CL_TASKINFO
          INT32             init( const string &agentHost, 
                                  const string &agentService,
-                                 BSONObj &conf, UINT64 taskID ) ;
+                                 const BSONObj &conf, UINT64 taskID ) ;
 
          INT32             restore( BSONObj &record ) ;
 
@@ -121,6 +123,8 @@ namespace engine
          virtual INT32     cancel() ;
 
          virtual INT32     enable() ;
+
+         virtual INT32     finish() ;
 
          virtual INT32     getProgress( bool &isFinish, string &status, 
                                         BSONObj &progress ) ;
@@ -180,6 +184,8 @@ namespace engine
       public:
          virtual INT32     updateProgress() ;
 
+         virtual INT32     finish() ;
+
       private:
          INT32             _finishUninstallTask() ;
          INT32             _removeBusinessInfo() ;
@@ -237,17 +243,19 @@ namespace engine
       public:
          INT32             createInstallTask( const string &agentHost, 
                                               const string &agentService, 
-                                              BSONObj &confValue, 
+                                              const BSONObj &confValue, 
                                               UINT64 &taskID ) ;
          INT32             createUninstallTask( const string &agentHost, 
                                                 const string &agentService, 
-                                                BSONObj &confValue,
+                                                const BSONObj &confValue,
                                                 UINT64 &taskID ) ;
          INT32             restoreTask() ;
 
          INT32             cancelTask( UINT64 taskID ) ;
 
          INT32             enableTask( UINT64 taskID ) ;
+
+         INT32             finishTask( UINT64 taskID ) ;
 
          INT32             getProgress( UINT64 taskID, string &taskType,
                                         bool &isFinish, string &status, 
