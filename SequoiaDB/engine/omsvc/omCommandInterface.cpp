@@ -253,5 +253,20 @@ namespace engine
    error:
       goto done ;
    }
+
+   omAgentReqBase::omAgentReqBase( BSONObj &request )
+                  :_request( request.copy() ), _response( BSONObj() )
+   {
+   }
+
+   omAgentReqBase::~omAgentReqBase()
+   {
+   }
+
+   void omAgentReqBase::getResponse( BSONObj &response )
+   {
+      _response = response ;
+   }
+
 }
 

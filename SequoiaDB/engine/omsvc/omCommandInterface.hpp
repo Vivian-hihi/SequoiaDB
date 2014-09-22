@@ -36,6 +36,7 @@
 #include "rtnCB.hpp"
 #include "pmd.hpp"
 #include "dmsCB.hpp"
+#include "netDef.hpp"
 #include <map>
 #include <string>
 
@@ -83,11 +84,18 @@ namespace engine
          string            _errorDetail ;
    } ;
 
-   class omAgentCommandBase : public omCommandInterafce
+   class omAgentReqBase : public omCommandInterafce
    {
       public:
-         omAgentCommandBase() ;
-         virtual ~omAgentCommandBase() ;
+         omAgentReqBase( BSONObj &request ) ;
+         virtual ~omAgentReqBase() ;
+
+      public:
+         void             getResponse( BSONObj &response ) ;
+
+      protected:
+         BSONObj          _request ;
+         BSONObj          _response ;
    } ;
 }
 

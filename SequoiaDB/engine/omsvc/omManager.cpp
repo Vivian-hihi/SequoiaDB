@@ -42,7 +42,7 @@
 #include "ossProc.hpp"
 #include "rtn.hpp"
 #include "omManagerJob.hpp"
-
+#include "../omsvc/omGetFileCommand.hpp"
 
 using namespace bson ;
 
@@ -1019,7 +1019,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
    INT32 _omManager::_restoreTask()
    {
       INT32 rc         = SDB_OK ;
@@ -1046,38 +1046,116 @@ namespace engine
       return FALSE ;
    }
 
+   void _omManager::_sendRes2Agent( NET_HANDLE handle, MsgHeader *pSrcMsg, 
+                                    INT32 flag, BSONObj response )
+   {
+
+      MsgOpReply reply ;
+      INT32 rc                   = SDB_OK ;
+      const CHAR *pBody          = response.objdata() ;
+      INT32 bodyLen              = response.objsize() ;
+      reply.header.messageLength = sizeof( MsgOpReply ) + bodyLen ;
+      reply.header.opCode        = MAKE_REPLY_TYPE( pSrcMsg->opCode ) ;
+      reply.header.TID           = pSrcMsg->TID ;
+      reply.header.routeID.value = 0 ;
+      reply.header.requestID     = pSrcMsg->requestID ;
+      reply.contextID            = -1 ;
+      reply.flags                = flag ;
+      reply.startFrom            = 0 ;
+      reply.numReturned          = 1 ;
+
+      if ( bodyLen > 0 )
+      {
+         rc = _netAgent.syncSend ( handle, (MsgHeader *)( &reply ),
+                                   (void*)pBody, bodyLen ) ;
+      }
+      else
+      {
+         rc = _netAgent.syncSend ( handle, (void *)( &reply ) ) ;
+      }
+
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "send response to agent failed:rc=%d", rc ) ;
+      }
+   }
+
    INT32 _omManager::_onAgentQueryTaskReq( NET_HANDLE handle, MsgHeader *pMsg )
    {
       INT32 rc = SDB_OK ;
-      INT32 flags             = 0 ;
-      CHAR *pCollectionName   = NULL ;
-      CHAR *pQuery            = NULL ;
-      CHAR *pFieldSelector    = NULL ;
-      CHAR *pOrderByBuffer    = NULL ;
-      CHAR *pHintBuffer       = NULL ;
-      SINT64 numToSkip        = -1 ;
-      SINT64 numToReturn      = -1 ;
+      INT32 flags               = 0 ;
+      CHAR *pCollectionName     = NULL ;
+      CHAR *pQuery              = NULL ;
+      CHAR *pFieldSelector      = NULL ;
+      CHAR *pOrderByBuffer      = NULL ;
+      CHAR *pHintBuffer         = NULL ;
+      SINT64 numToSkip          = -1 ;
+      SINT64 numToReturn        = -1 ;
+      omAgentReqBase *pAgentReq = NULL ;
       // extract command
       rc = msgExtractQuery ( (CHAR *)pMsg, &flags, &pCollectionName,
                              &numToSkip, &numToReturn, &pQuery,
                              &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "extract omAgent's command msg failed:rc=%d", rc ) ;
+         PD_LOG_MSG( PDERROR, "extract omAgent's command msg failed:rc=%d", 
+                     rc ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
+      PD_LOG( PDEVENT, "receive agent's command:%s", pCollectionName ) ;
       if ( _isCommand( pCollectionName ) )
       {
+         BSONObj request( pQuery ) ;
          if ( ossStrcmp( pCollectionName + 1 , AGENT_QUERY_TASK_REQ ) == 0 )
          {
-            
+            pAgentReq = SDB_OSS_NEW agentQueryTaskReq( request, _taskManager) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "unreconigzed agent request:command=%s", 
+                        pCollectionName ) ;
+            goto error ;
+         }
+
+         rc = pAgentReq->doCommand() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG_MSG( PDERROR, "process command failed:command=%s,rc=%d", 
+                        pCollectionName, rc ) ;
+            goto error ;
          }
       }
-      
-      PD_LOG( PDEVENT, "receive command: %s", pCollectionName ) ;
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "unreconigzed agent request:command=%s", 
+                     pCollectionName ) ;
+         goto error ;
+      }
+
    done:
+      
+      if ( NULL != pAgentReq && SDB_OK == rc )
+      {
+         BSONObj response ;
+         pAgentReq->getResponse( response ) ;
+         _sendRes2Agent( handle, pMsg, rc, response ) ;
+      }
+      else
+      {
+         BSONObj response ;
+         string errorInfo = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         response = BSON( OP_ERR_DETAIL << errorInfo ) ;
+         _sendRes2Agent( handle, pMsg, rc, response ) ;
+      }
+
+      if ( NULL != pAgentReq )
+      {
+         SDB_OSS_DEL pAgentReq ;
+      }
       return rc ;
    error:
       goto done ;

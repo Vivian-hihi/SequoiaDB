@@ -41,6 +41,7 @@
 #include "pmd.hpp"
 #include "dmsCB.hpp"
 #include "omManager.hpp"
+#include "omTaskManager.hpp"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -769,6 +770,29 @@ namespace engine
 
          map < string, string > _publicAccessFiles ;
    };
+
+
+
+   class agentQueryTaskReq : public omAgentReqBase
+   {
+      public:
+         agentQueryTaskReq( BSONObj &request, omTaskManager *taskManager ) ;
+         virtual ~agentQueryTaskReq() ;
+
+      public:
+         virtual INT32         doCommand() ;
+
+      private:
+         void                  _generateResponse( list<omTaskInfo> &taskList ) ;
+
+      private:
+         omTaskManager         *_taskManager ;
+   } ;
+
+
+
+
+   
 }
 
 #endif /* OM_GETFILECOMMAND_HPP__ */

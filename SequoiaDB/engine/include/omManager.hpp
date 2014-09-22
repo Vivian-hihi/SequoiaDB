@@ -64,34 +64,6 @@ namespace engine
    #define OM_TASK_STATUS_ERROR_FINISH    3
    #define OM_TASK_STATUS_FINISH          4
 
-   /*
-      omTaskInfo define
-   */
-   struct omTaskInfo
-   {
-      string  _agentHostName ;
-      string  _agentSvcName ;
-
-      string  _taskID ;
-      bool    _isAllFinished ;
-      string  _detail ;
-      BSONObj _progress ;
-      INT32   _status ;
-
-      BSONObj _confValue ;
-
-      omTaskInfo()
-      {
-         _agentHostName = "" ;
-         _agentSvcName  = "" ;
-         _taskID        = "" ;
-         _isAllFinished = false ;
-         _progress      = BSONObj() ;
-         _status        = OM_TASK_STATUS_IDLE ;
-         _detail        = "" ;
-         _confValue     = BSONObj() ;
-      };
-   };
 
    /*
       omAgentInfo define
@@ -205,6 +177,9 @@ namespace engine
          INT32             _onAgentQueryTaskReq( NET_HANDLE handle, 
                                                  MsgHeader *pMsg ) ;
          BOOLEAN           _isCommand( const CHAR *pCheckName ) ;
+         void              _sendRes2Agent( NET_HANDLE handle, 
+                                           MsgHeader *pSrcMsg, 
+                                           INT32 flag, BSONObj response ) ;
 
 
       // Msg functions

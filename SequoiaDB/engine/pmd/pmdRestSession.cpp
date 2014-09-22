@@ -334,7 +334,10 @@ namespace engine
    {
       omRestCommandBase *commandIf = NULL ;
       restAdaptor *pAdptor         = NULL ;
+      CHAR hostName[ OSS_MAX_HOSTNAME + 1 ] ;
       pAdptor = sdbGetOMManager()->getRestAdptor() ;
+      ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
+      string localAgentHost = hostName ;
       string localAgentPort = sdbGetOMManager()->getLocalAgentPort() ;
 
       if ( COM_GETFILE == command )
@@ -404,17 +407,17 @@ namespace engine
          else if ( ossStrcasecmp( pSubCommand, OM_SCAN_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omScanHostCommand( pAdptor, this, 
-                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
+                                       localAgentHost, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_CHECK_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omCheckHostCommand( pAdptor, this, 
-                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
+                                       localAgentHost, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_ADD_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omAddHostCommand( pAdptor, this, 
-                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
+                                       localAgentHost, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_LIST_HOST_REQ ) == 0 )
          {
@@ -445,7 +448,7 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omInstallBusinessReq( pAdptor, this, 
                                        _wwwRootPath.c_str(), pFilePath, 
-                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
+                                       localAgentHost, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_PROGRESS ) == 0 )
          {
@@ -474,17 +477,17 @@ namespace engine
          else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_HOST_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omRemoveHostCommand( pAdptor, this,
-                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
+                                       localAgentHost, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_REMOVE_BUSINESS_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omRemoveBusinessCommand( pAdptor, this,
-                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
+                                       localAgentHost, localAgentPort ) ;
          }
          else if ( ossStrcasecmp( pSubCommand, OM_QUERY_HOST_STATUS_REQ ) == 0 )
          {
             commandIf = SDB_OSS_NEW omQueryHostStatusCommand( pAdptor, this,
-                                       OM_DEFAULT_LOCAL_HOST, localAgentPort ) ;
+                                       localAgentHost, localAgentPort ) ;
          }
          else
          {

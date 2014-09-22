@@ -6991,5 +6991,47 @@ namespace engine
 
       return true ;
    }
+
+
+   agentQueryTaskReq::agentQueryTaskReq( BSONObj &request,
+                                         omTaskManager *taskManager )
+                     :omAgentReqBase( request ), _taskManager( taskManager )
+   {
+   }
+
+   agentQueryTaskReq::~agentQueryTaskReq()
+   {
+   }
+
+   void agentQueryTaskReq::_generateResponse( list<omTaskInfo> &taskList )
+   {
+      BSONArrayBuilder arrayBuilder ;
+      list<omTaskInfo>::iterator iter = taskList.begin() ;
+      while ( iter != taskList.end() )
+      {
+         BSONObj oneTask = BSON( OM_BSON_TASKID << (long long)iter->taskID 
+                                 << OM_BSON_TASKTYPE << iter->taskType 
+                                 << OM_BSON_TASK_STATUS << iter->taskStatus
+                                 << OM_BSON_TASK_INFO << iter->taskInfo ) ;
+         arrayBuilder.append( oneTask ) ;
+         iter++ ;
+      }
+
+      _response = BSON( OM_BSON_TASK_TASKLIST << arrayBuilder.arr() ) ;
+   }
+
+   INT32 agentQueryTaskReq::doCommand()
+   {
+      string agentHostName ;
+      string agentPort ;
+      agentHostName = _request.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
+      agentPort     = _request.getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
+
+      list<omTaskInfo> taskList ;
+      _taskManager->getTaskInfo( agentHostName, agentPort, taskList ) ;
+      _generateResponse( taskList ) ;
+
+      return SDB_OK ;
+   }
 }
 

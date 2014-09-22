@@ -403,7 +403,9 @@ namespace engine
 
    #define  OM_BSON_TASK_ISFINISHED          OM_TASKINFO_FIELD_ISFINISH
    #define  OM_BSON_TASK_STATUS              OM_TASKINFO_FIELD_STATUS
+   #define  OM_BSON_TASK_INFO                OM_TASKINFO_FIELD_INFO
    #define  OM_BSON_TASK_PROGRESS            OM_TASKINFO_FIELD_PROGRESS
+   #define  OM_BSON_TASK_TASKLIST            "Tasks"
    #define  OM_BSON_ITEM_NAME                "Name"
    #define  OM_BSON_TOTAL_COUNT              "TotalCount"
    #define  OM_BSON_INSTALLED_COUNT          "InstalledCount"
@@ -477,6 +479,7 @@ namespace engine
 
    // agent query task req
    #define AGENT_QUERY_TASK_REQ              "query task"
+   //******************************************************************
 
 
 

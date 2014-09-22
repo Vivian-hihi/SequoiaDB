@@ -51,6 +51,19 @@ namespace engine
 {
    //class omTaskManager ;
 
+   struct omTaskInfo
+   {
+      bool               isEnable ;
+      bool               isFinished ;
+      UINT64             taskID ;
+      string             taskType ;
+      string             taskStatus ;
+      string             agentHost ;
+      string             agentService ;
+      BSONObj            taskInfo ;
+      BSONObj            progress ;
+   } ;
+
    class omTaskBase : public SDBObject
    {
       public:
@@ -79,6 +92,8 @@ namespace engine
 
          virtual BOOLEAN   isFinish() = 0 ;
 
+         virtual void      getAllTaskInfo( omTaskInfo &taskInfo ) = 0 ;
+
       protected:
          INT32             _saveFinishTask() ;
          INT32             _getProgressFromAgent( BSONObj &response ) ;
@@ -93,16 +108,7 @@ namespace engine
 
       protected:
          omManager         *_om ;
-         bool              _isEnable ;
-         bool              _isFinished ;
-         UINT64            _taskID ;
-         string            _taskType ;
-         string            _taskStatus ;
-         BSONObj           _taskInfo ;
-         string            _agentHost ;
-         string            _agentService ;
-
-         BSONObj           _progress ;
+         omTaskInfo        _omTaskInfo ;
    };
 
    class omInstallTask : public omTaskBase
@@ -141,6 +147,8 @@ namespace engine
 
          virtual BOOLEAN   isFinish() ;
 
+         virtual void      getAllTaskInfo( omTaskInfo &taskInfo ) ;
+
       protected:
          INT32             _insertTask() ;
          
@@ -162,7 +170,7 @@ namespace engine
          //TODO: to protect the progress ;
          ossSpinSLatch     _lock ;
       /*
-         _taskInfo:
+         _omTaskInfo.taskInfo:
          {
             "BusinessType":"sequoiadb", "BusinessName":"b1", "deployMod":"xxx", 
             "ClusterName":"c1", 
@@ -199,7 +207,7 @@ namespace engine
          INT32             _removeConfigInfo() ;
 
       /*
-         _taskInfo:
+         _omTaskInfo.taskInfo:
          {
             "BusinessType":"sequoiadb", "BusinessName":"b1", "deployMod":"xxx", 
             "ClusterName":"c1", 
@@ -227,7 +235,7 @@ namespace engine
          INT32             _storeHostInfo() ;
 
       /*
-         _taskInfo:
+         _omTaskInfo.taskInfo:
          {
             "HostInfo":
             [
@@ -267,6 +275,10 @@ namespace engine
          INT32             getProgress( UINT64 taskID, string &taskType,
                                         bool &isFinish, string &status, 
                                         BSONObj &progress ) ;
+
+         void              getTaskInfo( const string &agentHost, 
+                                        const string &agentService, 
+                                        list<omTaskInfo> &taskList ) ;
 
          INT32             run() ;
 
