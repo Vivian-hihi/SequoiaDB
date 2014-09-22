@@ -1397,7 +1397,7 @@ namespace engine
             BSONElement ele = i.next() ;
             BSONObj oneHost = ele.embeddedObject() ;
             rcElement       = oneHost.getField( OM_REST_RES_RETCODE ) ;
-            if ( rcElement.eoo() || NumberInt != rcElement.type())
+            if ( rcElement.eoo() || NumberInt != rcElement.type() )
             {
                _errorDetail = string( "agent's response is unrecognized:host=" )
                               + oneHost.toString() ;

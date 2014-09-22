@@ -142,6 +142,7 @@ namespace engine
          virtual BOOLEAN   isFinish() ;
 
       protected:
+         INT32             _insertTask() ;
          
       private:
          INT32             _storeBusinessInfo() ;
@@ -182,9 +183,15 @@ namespace engine
          virtual ~omUninstallTask() ;
 
       public:
+         INT32             init( const string &agentHost, 
+                                 const string &agentService, 
+                                 const BSONObj &conf, UINT64 taskID ) ;
+      public:
          virtual INT32     updateProgress() ;
 
          virtual INT32     finish() ;
+
+      
 
       private:
          INT32             _finishUninstallTask() ;

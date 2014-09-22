@@ -312,42 +312,18 @@ namespace engine
 
       PD_LOG( PDEVENT, "restore install:%s", record.toString().c_str() ) ;
 
-      SDB_ASSERT( _taskType == OM_INSTALL_BUSINESS_REQ, "" ) ;
+      //SDB_ASSERT( _taskType == OM_INSTALL_BUSINESS_REQ, "" ) ;
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 omInstallTask::init( const string &agentHost, 
-                              const string &agentService, const BSONObj &conf, 
-                              UINT64 taskID )
+   INT32 omInstallTask::_insertTask()
    {
       BSONObj tmp ;
       INT32 rc      = SDB_OK ;
       pmdEDUCB *cb  = pmdGetThreadEDUCB() ;
-      _taskID       = taskID ;
-      _agentHost    = agentHost ;
-      _agentService = agentService ;
-      _taskInfo     = conf ;
-      _isEnable     = false ;
-      _isFinished   = false ;
-      _taskType     = OM_INSTALL_BUSINESS_REQ ;
-      _taskStatus   = OM_TASK_STATUS_INSTALL ;
-      _progress     = BSONObj() ;
-      PD_LOG( PDDEBUG, "_taskInfo:%s", _taskInfo.toString().c_str() ) ;
-
-      if ( !_taskInfo.hasField( OM_BSON_BUSINESS_NAME )
-            || !_taskInfo.hasField( OM_BSON_DEPLOY_MOD )
-            || !_taskInfo.hasField( OM_BSON_BUSINESS_TYPE )
-            || !_taskInfo.hasField( OM_BSON_FIELD_CLUSTER_NAME ) )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "install task configure error:conf=%s", 
-                     conf.toString().c_str() ) ;
-         goto error ;
-      }
-
       tmp = BSON( OM_TASKINFO_FIELD_TASKID << ( long long )_taskID 
                   << OM_TASKINFO_FIELD_TYPE << _taskType
                   << OM_TASKINFO_FIELD_AGENTHOST << _agentHost 
@@ -363,6 +339,44 @@ namespace engine
       {
          PD_LOG_MSG( PDERROR, "failed to store taskinfo into table:%s,rc=%d", 
                  OM_CS_DEPLOY_CL_TASKINFO, rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omInstallTask::init( const string &agentHost, 
+                              const string &agentService, const BSONObj &conf, 
+                              UINT64 taskID )
+   {
+      INT32 rc      = SDB_OK ;
+      _taskID       = taskID ;
+      _agentHost    = agentHost ;
+      _agentService = agentService ;
+      _taskInfo     = conf ;
+      _isEnable     = false ;
+      _isFinished   = false ;
+      _taskType     = OM_INSTALL_BUSINESS_REQ ;
+      _taskStatus   = OM_TASK_STATUS_INSTALL ;
+      PD_LOG( PDDEBUG, "_taskInfo:%s", _taskInfo.toString().c_str() ) ;
+
+      if ( !_taskInfo.hasField( OM_BSON_BUSINESS_NAME )
+            || !_taskInfo.hasField( OM_BSON_DEPLOY_MOD )
+            || !_taskInfo.hasField( OM_BSON_BUSINESS_TYPE )
+            || !_taskInfo.hasField( OM_BSON_FIELD_CLUSTER_NAME ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "install task configure error:conf=%s", 
+                     conf.toString().c_str() ) ;
+         goto error ;
+      }
+
+      rc = _insertTask() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to insert taskinfo rc=%d", rc ) ;
          goto error ;
       }
    done:
@@ -776,6 +790,46 @@ namespace engine
 
    omUninstallTask::~omUninstallTask()
    {
+   }
+
+   INT32 omUninstallTask::init( const string &agentHost, 
+                                const string &agentService, const BSONObj &conf, 
+                                UINT64 taskID )
+   {
+      BSONObj tmp ;
+      INT32 rc      = SDB_OK ;
+      _taskID       = taskID ;
+      _agentHost    = agentHost ;
+      _agentService = agentService ;
+      _taskInfo     = conf ;
+      _isEnable     = false ;
+      _isFinished   = false ;
+      _taskType     = OM_REMOVE_BUSINESS_REQ ;
+      _taskStatus   = OM_TASK_STATUS_UNINSTALL ;
+      _progress     = BSONObj() ;
+      PD_LOG( PDDEBUG, "_taskInfo:%s", _taskInfo.toString().c_str() ) ;
+
+      if ( !_taskInfo.hasField( OM_BSON_BUSINESS_NAME )
+            || !_taskInfo.hasField( OM_BSON_DEPLOY_MOD )
+            || !_taskInfo.hasField( OM_BSON_BUSINESS_TYPE )
+            || !_taskInfo.hasField( OM_BSON_FIELD_CLUSTER_NAME ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "install task configure error:conf=%s", 
+                     conf.toString().c_str() ) ;
+         goto error ;
+      }
+
+      rc = _insertTask() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to insert taskinfo:rc=%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 omUninstallTask::_removeConfigInfo()
@@ -1325,8 +1379,8 @@ namespace engine
                                              const BSONObj &confValue,
                                              UINT64 &taskID )
    {
-      INT32 rc            = SDB_OK ;
-      omInstallTask *task = NULL ;
+      INT32 rc              = SDB_OK ;
+      omUninstallTask *task = NULL ;
 
       _lock.get() ;
       if ( _isTaskTypeExist( OM_REMOVE_BUSINESS_REQ, taskID ) )
