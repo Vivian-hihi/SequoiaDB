@@ -36,6 +36,7 @@
 #include "oss.hpp"
 #include "ossNPipe.hpp"
 #include "ossProc.hpp"
+#include "ossEvent.hpp"
 
 #include <vector>
 #include <map>
@@ -45,7 +46,7 @@ using namespace std ;
 
 namespace engine
 {
-   class _sptCmdRunner : public SDBObject
+   class _sptCmdRunner : public SDBObject, public ossIExecHandle
    {
    public:
       _sptCmdRunner() ;
@@ -61,9 +62,23 @@ namespace engine
 
       OSSPID getPID() const { return _id ; }
 
+   protected:
+      virtual void  handleInOutPipe( OSSPID pid,
+                                     OSSNPIPE * const npHandleStdin,
+                                     OSSNPIPE * const npHandleStdout ) ;
+
+      void  asyncRead() ;
+
+      INT32 _readOut( string &out, BOOLEAN readEOF = TRUE ) ;
+
    private:
-      OSSNPIPE _out ;
-      OSSPID _id ;
+      OSSNPIPE       _out ;
+      OSSPID         _id ;
+      ossEvent       _event ;
+      BOOLEAN        _hasRead ;
+      string         _outStr ;
+      INT32          _readResult ;
+
    } ;
    typedef class _sptCmdRunner sptCmdRunner ;
 }

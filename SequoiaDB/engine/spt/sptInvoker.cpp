@@ -49,9 +49,10 @@ namespace engine
       if ( String == pro.getType() )
       {
          JSString *jsstr = JS_NewStringCopyN( cx, pro.getString(),
-                                         ossStrlen( pro.getString() ) ) ;
+                                              ossStrlen( pro.getString() ) ) ;
          if ( NULL == jsstr )
          {
+            ossPrintf( "%s\n", pro.getString() ) ;
             PD_LOG( PDERROR, "failed to create a js string" ) ;
             rc = SDB_SYS ;
             goto error ;

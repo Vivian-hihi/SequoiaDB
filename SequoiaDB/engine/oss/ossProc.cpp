@@ -518,7 +518,8 @@ INT32 ossExec ( const CHAR * program,
                 OSSPID &pid,
                 ossResultCode &result,
                 OSSNPIPE * const npHandleStdin,
-                OSSNPIPE * const npHandleStdout )
+                OSSNPIPE * const npHandleStdout,
+                ossIExecHandle *pHandle )
 {
    INT32 rc                                   = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSEXEC );
@@ -579,6 +580,11 @@ INT32 ossExec ( const CHAR * program,
                            flag, npHandleStdin, npHandleStdout ) ;
       if ( SDB_OK == retcode )
       {
+         if ( pHandle )
+         {
+            pHandle->handleInOutPipe( pid, npHandleStdin, npHandleStdout ) ;
+         }
+
          // wait for program to terminate
          retcode = ossWaitChild ( pid, result ) ;
          if ( retcode )
@@ -639,6 +645,10 @@ INT32 ossExec ( const CHAR * program,
       msgQueue = OSS_INVALID_MSG_QUEUE_ID ;
       retcode = ossExec2 ( program, arguments, environment, msgQueue, pid,
                            flag, npHandleStdin, npHandleStdout ) ;
+      if ( retcode )
+      {
+         rc = retcode ;
+      }
    }
 done :
    if ( restoreSIGCHLDHandling )
@@ -1314,13 +1324,14 @@ INT32 ossExec ( const CHAR * program,
                 OSSPID &pid,
                 ossResultCode &result,
                 OSSNPIPE * const npHandleStdin,
-                OSSNPIPE * const npHandleStdout )
+                OSSNPIPE * const npHandleStdout,
+                ossIExecHandle *pHandle )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_WIN_OSSEXEC );
    PROCESS_INFORMATION procInfo  = {0} ;
    STARTUPINFO        startInfo  = {0} ;
-   DWORD              ntFlag     = NORMAL_PRIORITY_CLASS | DETACHED_PROCESS ;
+   DWORD              ntFlag     = NORMAL_PRIORITY_CLASS ;
    BOOLEAN            inheritH   = FALSE ;
    CHAR               progName [ OSS_MAX_PATHSIZE + 1 + 2 ] = {0} ; // +2 for ""
    CHAR               workProgName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
@@ -1336,6 +1347,12 @@ INT32 ossExec ( const CHAR * program,
    HANDLE stdoutReadPipeChild = INVALID_HANDLE_VALUE ;
    HANDLE stdoutWritePipe = INVALID_HANDLE_VALUE ;
    HANDLE pipeTemp = INVALID_HANDLE_VALUE ;
+
+   if ( !(flag & OSS_EXEC_NODETACHED) )
+   {
+      ntFlag |= DETACHED_PROCESS ;
+   }
+
    // setup attribute so that child processes are able to inherite our handles
    if ( ( npHandleStdin != NULL ) || ( npHandleStdout != NULL ) )
    {
@@ -1561,8 +1578,15 @@ INT32 ossExec ( const CHAR * program,
    else
    {
       rc = SDB_OK ;
+
       if ( flag & OSS_EXEC_SSAVE )
       {
+         if ( pHandle )
+         {
+            pHandle->handleInOutPipe( procInfo.dwProcessId, npHandleStdin,
+                                      npHandleStdout ) ;
+         }
+
          // if we need to wait for result
          rc = ossWaitInterrupt ( procInfo.hProcess, INFINITE ) ;
          if ( rc == SDB_OK )

@@ -138,7 +138,9 @@ namespace engine
       rc = runner.exec( cmd.c_str(), _retCode, FALSE ) ;
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << BSON( "errno" << rc ) ) ;
+         stringstream ss ;
+         ss << "run[" << cmd << "] failed" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
       else
@@ -196,7 +198,9 @@ namespace engine
       rc = runner.exec( cmd.c_str(), _retCode, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         detail = BSON( SPT_ERR << BSON( "errno" << rc ) ) ;
+         stringstream ss ;
+         ss << "run[" << cmd << "] failed" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
       else

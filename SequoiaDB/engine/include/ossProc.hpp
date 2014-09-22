@@ -53,7 +53,8 @@
 // define ossExec execute flags
 #define OSS_EXEC_INHERIT_HANDLES       1 // inherit fd/handles in new process
 #define OSS_EXEC_SSAVE                 2 // sync process, return result
-#define OSS_EXEC_NORESIZEARGV       4 // not resize buffer for argv for rename
+#define OSS_EXEC_NORESIZEARGV          4 // not resize buffer for argv for rename
+#define OSS_EXEC_NODETACHED            8 // not detached
 
 // define term code
 #define OSS_EXIT_NORMAL 0
@@ -71,6 +72,15 @@ public :
    UINT32 exitcode ;
 } ;
 typedef class _ossResultCode ossResultCode ;
+
+class _ossIExecHandle
+{
+   public:
+      virtual void  handleInOutPipe( OSSPID pid,
+                                     OSSNPIPE * const npHandleStdin,
+                                     OSSNPIPE * const npHandleStdout ) = 0 ;
+} ;
+typedef _ossIExecHandle ossIExecHandle ;
 
 /**
    \brief Exec a new program.
@@ -121,7 +131,8 @@ INT32 ossExec ( const CHAR * program,
                 OSSPID &pid,
                 ossResultCode &result,
                 OSSNPIPE * const npHandleStdin,
-                OSSNPIPE * const npHandleStdout ) ;
+                OSSNPIPE * const npHandleStdout,
+                ossIExecHandle *pHandle = NULL ) ;
 
 BOOLEAN  ossIsProcessRunning ( OSSPID pid ) ;
 

@@ -381,7 +381,7 @@ namespace engine
 
          if ( NULL != print && print[0] != '\0' )
          {
-            ossPrintf ( "%s"OSS_NEWLINE, print ) ;
+            ossPrintf( "%s"OSS_NEWLINE, print ) ;
          }
       }
 

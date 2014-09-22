@@ -55,7 +55,8 @@ ossFiles = [
       "oss/ossVer.cpp",
       "oss/ossMem.cpp",
       "oss/ossIO.cpp",
-      "oss/ossSocket.cpp"
+      "oss/ossSocket.cpp",
+      "oss/ossEvent.cpp"
       ]
 
 shellMain = [
