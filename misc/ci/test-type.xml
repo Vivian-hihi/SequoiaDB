@@ -73,7 +73,7 @@
 
 			<case value="ant">
 				<echo message="... Test ant testcases ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${testcase.path}/ant_testcases/reports" masterreports="${test.reports.path}">
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-ant-testcases.xml" remotereports="${testcase.path}/ant_testcases/reports" masterreports="${test.reports.path}">
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="ant.testcase.path" value="${testcase.path}/ant_testcases" />
@@ -90,7 +90,7 @@
 
 			<case value="driver-python">
 				<echo message="...Test python driver..."/>
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${testcase.path}/drivers_testcases/python/reports" masterreports="${test.reports.path}">
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-python-test.xml" remotereports="${testcase.path}/drivers_testcases/python/reports" masterreports="${test.reports.path}">
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="python.testcase.path" value="${testcase.path}/drivers_testcases/python" />
@@ -106,7 +106,7 @@
 
 			<case value="driver-php" >
 				<echo message="... Test php driver ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-php-test.xml" remotereports="${testcase.path}/drivers_testcases/php/reports" masterreports="${test.reports.path}" >
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-php-test.xml" remotereports="${testcase.path}/drivers_testcases/php/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="php.testcase.path" value="${testcase.path}/php_testcases" />
@@ -122,7 +122,7 @@
 
 			<case value="driver-java">
 				<echo message="... test the java driver ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-java-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/java/reports" masterreports="${test.reports.path}" >
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-java-test.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/drivers_testcases/java/reports" masterreports="${test.reports.path}" >
 					<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/drivers_testcases" />
 					<param name="install.path" value="${install.path}" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
@@ -132,7 +132,7 @@
 
 			<case value="driver-C">
 				<echo message="...Test c driver..." />     
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-C-test.xml" remotereports="${testcase.path}/drivers_testcases/C/reports" masterreports="${test.reports.path}" >
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-C-test.xml" remotereports="${testcase.path}/drivers_testcases/C/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="C.testcase.path" value="${testcase.path}/drivers_testcases/C/build" />
@@ -145,7 +145,7 @@
 
 			<case value="driver-CPP">
 				<echo message="...Test c++ driver..." />  
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-driver-CPP-test.xml" remotereports="${testcase.path}/drivers_testcases/CPP/reports" masterreports="${test.reports.path}" >
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-driver-CPP-test.xml" remotereports="${testcase.path}/drivers_testcases/CPP/reports" masterreports="${test.reports.path}" >
 					<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
 					<param name="CPP.testcase.path" value="${testcase.path}/drivers_testcases/CPP/build" />
@@ -158,7 +158,7 @@
 
 			<case value="samples">
 				<echo message="... test the client sample test ..." />
-				<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/samples_testcases/CPP/reports" masterreports="${test.reports.path}" >
+				<sdbtest host="${test.host.NAME}" testscript="${test.machine.deploy.path}/deploy/exec-samples-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/samples_testcases/CPP/reports" masterreports="${test.reports.path}" >
 					<param name="samples.testcase.path" value="${testcase.path}/samples_testcases" />
 					<param name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />

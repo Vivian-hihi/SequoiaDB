@@ -124,10 +124,11 @@
 						<property name="parallel.flag" value="parallel" />
 						<property name="WORKSPACE" value="${WORKSPACE}" />
 						<property name="ci.script.file.path" value="${ci.script.file.path}" />
+						<property name="test.host.NAME" value="${test.machine.no2.basic}" />
 					</antfetch>
 				</sequential>
 			</for>
-			
+
 			<for list="${test-type-list}" param="test-type">
 				<sequential>
 					<antfetch antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
@@ -138,6 +139,7 @@
 						<property name="parallel.flag" value="parallel" />
 						<property name="WORKSPACE" value="${WORKSPACE}" />
 						<property name="ci.script.file.path" value="${ci.script.file.path}" />
+						<property name="test.host.NAME" value="${test.machine.no2.basic}" />
 					</antfetch>
 				</sequential>
 			</for>
