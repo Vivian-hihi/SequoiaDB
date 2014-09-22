@@ -19,10 +19,6 @@
 	<property name="import.cmd" value="ant -l deploy-test-result.log -f deploy-test-result.xml -Dant.sdb.tasks.path=${WORKSPACE}/deploy/ant-sdbtasks -Dproperties.dir=${WORKSPACE}/deploy/ci.test.properties -Dcoord.service.port=11810 -Dcs.name=basic_testcases -Dcl.name=year_2014 -Dimport.file=${import.file}" />
 	<property name="delete.uninstall.config" value="find /tmp -name 'bitrock_installer*.log' -delete" />
 
-	<echo message="####################################################" />
-	<echo message="test=${import.file}" />
-	<echo message="####################################################" />
-
 	<!-- <property name="to.copy.test.log" value="true"/> -->
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>

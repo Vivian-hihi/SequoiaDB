@@ -49,9 +49,9 @@
 				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
 					<path>
 						<fileset dir="${deploy.config.path}">
-							<includes name="${test.environment}-${deploy.conffile.wildcard}.xml" /> 
-							<excludes name="${test.environment}-[h1][g1][d1]-tp1.xml" />
-							<excludes name="${test.environment}-standalone-tp1.xml" />
+							<include name="${test.environment}-${deploy.conffile.wildcard}.xml" /> 
+							<exclude name="${test.environment}-[h1][g1][d1]-tp1.xml" />
+							<exclude name="${test.environment}-standalone-tp1.xml" />
 						</fileset>
 					</path>
 					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
