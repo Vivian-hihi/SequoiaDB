@@ -122,8 +122,8 @@
 						<property name="test.reports.path" value="${test.reports.path}" />
 						<property name="Test-Type" value="@{Test-Type}" />
 						<property name="parallel.flag" value="parallel" />
-						<param name="WORKSPACE" value="${WORKSPACE}" />
-						<param name="ci.script.file.path" value="${ci.script.file.path}" />
+						<property name="WORKSPACE" value="${WORKSPACE}" />
+						<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					</antfetch>
 				</sequential>
 			</for>
@@ -136,8 +136,8 @@
 						<property name="test.reports.path" value="${test.reports.path}" />
 						<property name="Test-Type" value="@{Test-Type}" />
 						<property name="parallel.flag" value="parallel" />
-						<param name="WORKSPACE" value="${WORKSPACE}" />
-						<param name="ci.script.file.path" value="${ci.script.file.path}" />
+						<property name="WORKSPACE" value="${WORKSPACE}" />
+						<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					</antfetch>
 				</sequential>
 			</for>
