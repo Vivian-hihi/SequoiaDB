@@ -190,7 +190,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to do user auth: %d", rc ) ;
-         rc = SDB_SYS ;
+         rc = SDB_INVALIDARG ;
          _getLastError( _errmsg ) ;
          goto error ;
       }

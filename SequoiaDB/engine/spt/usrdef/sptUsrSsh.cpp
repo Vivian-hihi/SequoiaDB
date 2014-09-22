@@ -320,8 +320,7 @@ JS_MAPPING_END()
       rc = _session->exec( cmd.c_str(), _lastRet, _lastOutStr ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to read data from session:%d", rc ) ;
-         rc = SDB_SPT_EVAL_FAIL ;
+         PD_LOG( PDERROR, "failed to exec cmd[%s], rc: %d", cmd.c_str(), rc ) ;
          if ( _lastOutStr.empty() )
          {
             _session->getLastError( errMsg ) ;
@@ -330,6 +329,12 @@ JS_MAPPING_END()
          {
             errMsg = _lastOutStr ;
          }
+         goto error ;
+      }
+      else if ( SDB_OK != _lastRet )
+      {
+         errMsg = _lastOutStr ;
+         rc = _lastRet ;
          goto error ;
       }
 

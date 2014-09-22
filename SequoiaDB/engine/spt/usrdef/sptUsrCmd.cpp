@@ -153,6 +153,12 @@ namespace engine
             detail = BSON( SPT_ERR << ss.str() ) ;
             goto error ;
          }
+         else if ( SDB_OK != _retCode )
+         {
+            detail = BSON( SPT_ERR << _strOut ) ;
+            rc = _retCode ;
+            goto error ;
+         }
 
          rval.setStringVal( "", _strOut.c_str() ) ;
       }
