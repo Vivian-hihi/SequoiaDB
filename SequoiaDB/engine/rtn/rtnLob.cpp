@@ -312,15 +312,10 @@ namespace engine
       rc = stream.open( fullName.valuestr(),
                         oid, SDB_LOB_MODE_REMOVE,
                         cb ) ;
-      if ( SDB_OK != rc && SDB_FNE != rc )
+      if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to remove lob:%s, rc:%d",
                  oid.str().c_str(), rc ) ;
-         goto error ;
-      }
-      else if ( SDB_FNE == rc )
-      {
-         rc = SDB_OK ;
          goto error ;
       }
       else
