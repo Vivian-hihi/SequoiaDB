@@ -1064,6 +1064,8 @@ namespace engine
       reply.startFrom            = 0 ;
       reply.numReturned          = 1 ;
 
+      PD_LOG( PDERROR, "send response to agent:res=%s", 
+              response.toString().c_str() ) ;
       if ( bodyLen > 0 )
       {
          rc = _netAgent.syncSend ( handle, (MsgHeader *)( &reply ),

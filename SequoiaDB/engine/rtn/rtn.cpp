@@ -97,6 +97,28 @@ namespace engine
       goto done ;
    }
 
+   INT32 rtnGetSTDStringElement ( const BSONObj &obj, const CHAR *fieldName,
+                                  string &value )
+   {
+      SINT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNGETSTRELE ) ;
+      SDB_ASSERT ( fieldName, "field name can't be NULL" ) ;
+      BSONElement ele = obj.getField ( fieldName ) ;
+      PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
+                 "Can't locate field '%s': %s",
+                 fieldName,
+                 obj.toString().c_str() ) ;
+      PD_CHECK ( String == ele.type(), SDB_INVALIDARG, error, PDDEBUG,
+                 "Unexpected field type : %s, supposed to be String",
+                 obj.toString().c_str()) ;
+      value = ele.valuestr() ;
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNGETSTRELE, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNGETOBJELE, "rtnGetObjElement" )
    INT32 rtnGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
                             BSONObj &value )

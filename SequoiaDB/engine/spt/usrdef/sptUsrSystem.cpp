@@ -57,8 +57,11 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, addAHostMap )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, delAHostMap )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getCpuInfo )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, snapshotCpuInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getMemInfo )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, snapshotMemInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getDiskInfo )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, snapshotDiskInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getNetcardInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getIpTablesInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHostName )
@@ -74,8 +77,11 @@ namespace engine
       JS_ADD_STATIC_FUNC( "addAHostMap", addAHostMap )
       JS_ADD_STATIC_FUNC( "delAHostMap", delAHostMap )
       JS_ADD_STATIC_FUNC( "getCpuInfo", getCpuInfo )
+      JS_ADD_STATIC_FUNC( "snapshotCpuInfo", snapshotCpuInfo )
       JS_ADD_STATIC_FUNC( "getMemInfo", getMemInfo )
+      JS_ADD_STATIC_FUNC( "snapshotMemInfo", snapshotMemInfo )
       JS_ADD_STATIC_FUNC( "getDiskInfo", getDiskInfo )
+      JS_ADD_STATIC_FUNC( "snapshotDiskInfo", snapshotDiskInfo )
       JS_ADD_STATIC_FUNC( "getNetcardInfo", getNetcardInfo )
       JS_ADD_STATIC_FUNC( "getIpTablesInfo", getIpTablesInfo )
       JS_ADD_STATIC_FUNC( "getHostName", getHostName )
@@ -557,6 +563,41 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrSystem::snapshotCpuInfo( const _sptArguments &arg,
+                                         _sptReturnVal &rval,
+                                         bson::BSONObj &detail )
+   {
+      INT32 rc     = SDB_OK ;
+      SINT64 user  = 0 ;
+      SINT64 sys   = 0 ;
+      SINT64 idle  = 0 ;
+      SINT64 other = 0 ;
+      rc = ossGetCPUInfo( user, sys, idle, other ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get cpuinfo:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to get cpuinfo:rc="
+            << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      {
+         BSONObjBuilder builder ;
+         builder.appendNumber( SPT_USR_SYSTEM_USER, user ) ;
+         builder.appendNumber( SPT_USR_SYSTEM_SYS, sys ) ;
+         builder.appendNumber( SPT_USR_SYSTEM_IDLE, idle ) ;
+         builder.appendNumber( SPT_USR_SYSTEM_OTHER, other ) ;
+
+         rval.setBSONObj( "", builder.obj() ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrSystem::_extractCpuInfo( const CHAR *buf,
                                          bson::BSONObjBuilder &builder )
    {
@@ -692,6 +733,13 @@ namespace engine
       goto done ;
    }
 
+   INT32 _sptUsrSystem::snapshotMemInfo( const _sptArguments &arg,
+                                         _sptReturnVal &rval,
+                                         bson::BSONObj &detail )
+   {
+      return getMemInfo( arg, rval, detail ) ;
+   }
+
    INT32 _sptUsrSystem::_extractMemInfo( const CHAR *buf,
                                          bson::BSONObjBuilder &builder )
    {
@@ -802,6 +850,13 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrSystem::snapshotDiskInfo( const _sptArguments &arg,
+                                          _sptReturnVal &rval,
+                                          bson::BSONObj &detail )
+   {
+      return getDiskInfo( arg, rval, detail ) ;
    }
 
    INT32 _sptUsrSystem::_extractDiskInfo( const CHAR *buf,
@@ -936,6 +991,13 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _sptUsrSystem::snapshotNetFlow( const _sptArguments &arg,
+                                         _sptReturnVal &rval,
+                                         bson::BSONObj &detail )
+   {
+      
    }
 
    INT32 _sptUsrSystem::_extractNetcards( bson::BSONObjBuilder &builder )
@@ -1110,8 +1172,11 @@ namespace engine
          << " System.addAHostMap( hostname, ip, [isReplace] )" << endl
          << " System.delAHostMap( hostname )" << endl
          << " System.getCpuInfo()" << endl
+         << " System.snapshotCpuInfo()" << endl
          << " System.getMemInfo()" << endl
+         << " System.snapshotMemInfo()" << endl
          << " System.getDiskInfo()" << endl
+         << " System.snapshotDiskInfo()" << endl
          << " System.getNetcardInfo()" << endl
          << " System.getIpTablesInfo()" << endl
          << " System.getHostName()" << endl

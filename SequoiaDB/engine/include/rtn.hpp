@@ -291,6 +291,9 @@ namespace engine
    INT32 rtnGetStringElement ( const BSONObj &obj, const CHAR *fieldName,
                                const CHAR **value ) ;
 
+   INT32 rtnGetSTDStringElement ( const BSONObj &obj, const CHAR *fieldName,
+                                  string &value ) ;
+
    INT32 rtnGetObjElement ( const BSONObj &obj, const CHAR *fieldName,
                             BSONObj &value ) ;
 

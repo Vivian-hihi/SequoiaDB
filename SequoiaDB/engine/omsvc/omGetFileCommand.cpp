@@ -873,7 +873,7 @@ namespace engine
 
       if ( host.ip != "" )
       {
-         return _isHostNameExist( host.ip );
+         return _isHostIPExist( host.ip );
       }
 
       return false ;
@@ -6992,7 +6992,6 @@ namespace engine
       return true ;
    }
 
-
    agentQueryTaskReq::agentQueryTaskReq( BSONObj &request,
                                          omTaskManager *taskManager )
                      :omAgentReqBase( request ), _taskManager( taskManager )
@@ -7022,16 +7021,37 @@ namespace engine
 
    INT32 agentQueryTaskReq::doCommand()
    {
+      INT32 rc = SDB_OK ;
       string agentHostName ;
       string agentPort ;
-      agentHostName = _request.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
-      agentPort     = _request.getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
+      rc = rtnGetSTDStringElement( _request, OM_BSON_FIELD_HOST_NAME, 
+                                   agentHostName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get string failed:field=%s", 
+                 OM_BSON_FIELD_HOST_NAME ) ;
+         goto error ;
+      }
 
-      list<omTaskInfo> taskList ;
-      _taskManager->getTaskInfo( agentHostName, agentPort, taskList ) ;
-      _generateResponse( taskList ) ;
+      rc = rtnGetSTDStringElement( _request, OM_BSON_FIELD_AGENT_PORT, 
+                                   agentPort ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get string failed:field=%s", 
+                 OM_BSON_FIELD_AGENT_PORT ) ;
+         goto error ;
+      }
 
-      return SDB_OK ;
+      {
+         list<omTaskInfo> taskList ;
+         _taskManager->getTaskInfo( agentHostName, agentPort, taskList ) ;
+         _generateResponse( taskList ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

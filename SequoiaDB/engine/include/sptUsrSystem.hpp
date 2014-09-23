@@ -110,17 +110,33 @@ namespace engine
                                _sptReturnVal &rval,
                                bson::BSONObj &detail ) ;
 
+      static INT32 snapshotCpuInfo( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail ) ;
+
       static INT32 getMemInfo( const _sptArguments &arg,
                                _sptReturnVal &rval,
                                bson::BSONObj &detail ) ;
+
+      static INT32 snapshotMemInfo( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail ) ;
 
       static INT32 getDiskInfo( const _sptArguments &arg,
                                 _sptReturnVal &rval,
                                 bson::BSONObj &detail ) ;
 
+      static INT32 snapshotDiskInfo( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     bson::BSONObj &detail ) ;
+
       static INT32 getNetcardInfo( const _sptArguments &arg,
                                    _sptReturnVal &rval,
                                    bson::BSONObj &detail ) ;
+
+      static INT32 snapshotNetFlow( const _sptArguments &arg,
+                                    _sptReturnVal &rval,
+                                    bson::BSONObj &detail ) ;
 
       static INT32 getIpTablesInfo( const _sptArguments &arg,
                                     _sptReturnVal &rval,
