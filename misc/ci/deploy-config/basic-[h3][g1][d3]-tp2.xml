@@ -145,7 +145,7 @@
 				</sequential>
 			</for>
 		</parallel> -->
-		
+
 		<parallel>
 			<echo message="Begin to test basic tests under parallel env on a machine..." />
 			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
@@ -157,7 +157,7 @@
 				<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 				<param name="WORKSPACE" value="${WORKSPACE}" />
 				<param name="ci.script.file.path" value="${ci.script.file.path}" />
-				<property name="parallel.count" value="2" />
+				<param name="parallel.count" value="2" />
 			</sdbtest>
 			<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 				<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -168,7 +168,7 @@
 				<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 				<param name="WORKSPACE" value="${WORKSPACE}" />
 				<param name="ci.script.file.path" value="${ci.script.file.path}" />
-				<property name="parallel.count" value="2" />
+				<param name="parallel.count" value="2" />
 			</sdbtest>
 		</parallel>
 
