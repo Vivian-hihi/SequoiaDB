@@ -483,8 +483,6 @@ namespace engine
       return rc ;
    }
 
-   #define CPU_CMD "cat /proc/cpuinfo |grep name | cut -f2 -d: |uniq -c"
-
    INT32 _sptUsrSystem::getCpuInfo( const _sptArguments &arg,
                                     _sptReturnVal &rval,
                                     bson::BSONObj &detail )
@@ -496,10 +494,12 @@ namespace engine
       BSONObjBuilder builder ;
 
 #if defined (_LINUX)
-      rc = runner.exec( CPU_CMD, exitCode ) ;
-#elif defined (_WINDOWS)
-      rc = SDB_SYS ;
+   #define CPU_CMD "cat /proc/cpuinfo |grep name | cut -f2 -d: |uniq -c"
+#else
+   #define CPU_CMD "wmic CPU GET CurrentClockSpeed,Name,NumberOfCores"
 #endif
+
+      rc = runner.exec( CPU_CMD, exitCode ) ;
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
@@ -509,7 +509,7 @@ namespace engine
             rc = SDB_SYS ;
          }
          stringstream ss ;
-         ss << "failed to exec cmd \"CPU_CMD\",rc:"
+         ss << "failed to exec cmd \" " << CPU_CMD << "\",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -522,7 +522,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
          stringstream ss ;
-         ss << "failed to read msg from cmd \"CPU_CMD\", rc:"
+         ss << "failed to read msg from cmd \"" << CPU_CMD << "\", rc:"
             << rc ;
          detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
@@ -598,6 +598,7 @@ namespace engine
       goto done ;
    }
 
+#if defined (_LINUX)
    INT32 _sptUsrSystem::_extractCpuInfo( const CHAR *buf,
                                          bson::BSONObjBuilder &builder )
    {
@@ -671,6 +672,69 @@ namespace engine
    error:
       goto done ;
    }
+#else
+   INT32 _sptUsrSystem::_extractCpuInfo( const CHAR *buf,
+                                         bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONArrayBuilder arrBuilder ;
+      vector<string> splited ;
+      INT32 lineCount = 0 ;
+      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();
+            itr++ )
+      {
+         ++lineCount ;
+         if ( 1 == lineCount || itr->empty() )
+         {
+            continue ;
+         }
+         boost::algorithm::trim( *itr ) ;
+         vector<string> columns ;
+         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+         /// eg: 3200 AMD Athlon(tm) II X2 B26 Processor 2
+         if ( columns.size() < 3 )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+         UINT32 coreNum = 0 ;
+         stringstream info ;
+
+         try
+         {
+            coreNum = boost::lexical_cast<UINT32>(
+               columns.at( columns.size() - 1 ) ) ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         for ( UINT32 i = 1; i < columns.size() - 1 ; i++ )
+         {
+            if ( columns.at( i ).empty() )
+            {
+               continue ;
+            }
+            info << columns.at( i ) << " " ;
+         }
+
+         arrBuilder << BSON( SPT_USR_SYSTEM_CORE << coreNum
+                             << SPT_USR_SYSTEM_INFO << info.str()
+                             << SPT_USR_SYSTEM_FREQ << columns[0] ) ;
+      }
+
+      builder.append( SPT_USR_SYSTEM_CPUS, arrBuilder.arr() ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+#endif //_LINUX
 
    INT32 _sptUsrSystem::getMemInfo( const _sptArguments &arg,
                                     _sptReturnVal &rval,
@@ -997,7 +1061,7 @@ namespace engine
                                          _sptReturnVal &rval,
                                          bson::BSONObj &detail )
    {
-      
+      return SDB_OK ;
    }
 
    INT32 _sptUsrSystem::_extractNetcards( bson::BSONObjBuilder &builder )
