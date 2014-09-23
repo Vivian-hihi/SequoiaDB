@@ -47,6 +47,8 @@
 
 using namespace bson ;
 
+#define SPT_MB_SIZE     ( 1024*1024 )
+
 namespace engine
 {
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, ping )
@@ -753,19 +755,31 @@ namespace engine
 #endif
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
-                 rc, exitCode ) ;
-         if ( SDB_OK == rc )
+         INT32 loadPercent = 0 ;
+         INT64 totalPhys = 0 ;
+         INT64 availPhys = 0 ;
+         INT64 totalPF = 0 ;
+         INT64 availPF = 0 ;
+         INT64 totalVirtual = 0 ;
+         INT64 availVirtual = 0 ;
+         rc = ossGetMemoryInfo( loadPercent, totalPhys, availPhys,
+                                totalPF, availPF, totalVirtual,
+                                availVirtual ) ;
+         if ( rc )
          {
-            rc = SDB_SYS ;
+            stringstream ss ;
+            ss << "ossGetMemoryInfo failed, rc:" << rc ;
+            detail = BSON( SPT_ERR << ss.str() ) ;
+            goto error ;
          }
-         stringstream ss ;
-         ss << "failed to exec cmd \"free\",rc:"
-            << rc
-            << ",exit:"
-            << exitCode ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
+
+         builder.append( SPT_USR_SYSTEM_SIZE, (INT32)(totalPhys/SPT_MB_SIZE) ) ;
+         builder.append( SPT_USR_SYSTEM_USED,
+                         (INT32)((totalPhys-availPhys)/SPT_MB_SIZE) ) ;
+         builder.append( SPT_USR_SYSTEM_FREE,(INT32)(availPhys/SPT_MB_SIZE) ) ;
+         builder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
+         rval.setBSONObj( "", builder.obj() ) ;
+         goto done ;
       }
 
       rc = runner.read( outStr ) ;
