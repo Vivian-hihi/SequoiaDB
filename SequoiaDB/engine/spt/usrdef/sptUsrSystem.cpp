@@ -880,10 +880,13 @@ namespace engine
       BSONObjBuilder builder ;
 
 #if defined (_LINUX)
-      rc = runner.exec( "df -m |grep -v \"Use%\"", exitCode ) ;
-#elif defined (_WINDOWS)
-      rc = SDB_SYS ;
-#endif
+   #define DISK_CMD  "df -m |grep -v \"Use%\""
+#else
+   #define DISK_CMD  "wmic VOLUME get Capacity,DriveLetter,Caption,"\
+                     "DriveType,FreeSpace,SystemVolume"
+#endif // _LINUX
+
+      rc = runner.exec( DISK_CMD, exitCode ) ;
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
          PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
@@ -893,7 +896,7 @@ namespace engine
             rc = SDB_SYS ;
          }
          stringstream ss ;
-         ss << "failed to exec cmd \"df\",rc:"
+         ss << "failed to exec cmd \"" << DISK_CMD << "\",rc:"
             << rc
             << ",exit:"
             << exitCode ;
@@ -937,6 +940,7 @@ namespace engine
       return getDiskInfo( arg, rval, detail ) ;
    }
 
+#if defined( _LINUX )
    INT32 _sptUsrSystem::_extractDiskInfo( const CHAR *buf,
                                           bson::BSONObjBuilder &builder )
    {
@@ -959,7 +963,7 @@ namespace engine
 
          vector<string> columns ;
          boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
-         
+
          for ( vector<string>::iterator itr2 = columns.begin();
                itr2 != columns.end();
                /// do not ++      
@@ -1042,6 +1046,99 @@ namespace engine
    error:
       goto done ;
    }
+#else
+   INT32 _sptUsrSystem::_extractDiskInfo( const CHAR *buf,
+                                          bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      BSONArrayBuilder arrBuilder ;
+      string fileSystem ;
+      string freeSpace ;
+      string total ;
+      string mount ;
+      vector<string> splited ;
+      INT32 lineCount = 0 ;
+      boost::algorithm::split( splited, buf, boost::is_any_of("\n") ) ;
+      for ( vector<string>::iterator itr = splited.begin();
+            itr != splited.end();
+            itr++ )
+      {
+         ++lineCount ;
+         if ( 1 == lineCount || itr->empty() )
+         {
+            continue ;
+         }
+
+         vector<string> columns ;
+         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+
+         for ( vector<string>::iterator itr2 = columns.begin();
+               itr2 != columns.end();
+               /// do not ++      
+               )
+         {
+            if ( itr2->empty() )
+            {
+               itr2 = columns.erase( itr2 ) ;
+            }
+            else
+            {
+               ++itr2 ;
+            }
+         }
+
+         if ( columns.size() < 6 || columns.at( 5 ) == "TRUE" ||
+              columns.at( 3 ) != "3" )
+         {
+            continue ;
+         }
+
+         total = columns[ 0 ] ;
+         fileSystem = columns[ 1 ] ;
+         freeSpace = columns[ 4 ] ;
+         mount = columns[ 2 ] ;
+
+         // build
+         SINT64 total = 0 ;
+         SINT64 usedNumber = 0 ;
+         SINT64 avaNumber = 0 ;
+         BSONObjBuilder lineBuilder ;
+         try
+         {
+            avaNumber = boost::lexical_cast<SINT64>( freeSpace ) ;
+            total = boost::lexical_cast<SINT64>( total ) ;
+            usedNumber = total - avaNumber ;
+            lineBuilder.append( SPT_USR_SYSTEM_FILESYSTEM,
+                                fileSystem.c_str() ) ;
+            lineBuilder.appendNumber( SPT_USR_SYSTEM_SIZE,
+                                      (INT32)( total / SPT_MB_SIZE ) ) ;
+            lineBuilder.appendNumber( SPT_USR_SYSTEM_USED,
+                                      (INT32)( usedNumber / SPT_MB_SIZE ) ) ;
+            lineBuilder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
+            lineBuilder.append( SPT_USR_SYSTEM_MOUNT, mount ) ;
+            lineBuilder.appendBool( SPT_USR_SYSTEM_ISLOCAL, TRUE ) ;
+            arrBuilder << lineBuilder.obj() ;
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         freeSpace.clear();
+         total.clear() ;
+         mount.clear() ;
+         fileSystem.clear() ;
+      } // end for
+
+      builder.append( SPT_USR_SYSTEM_DISKS, arrBuilder.arr() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+#endif // _LINUX
 
    INT32 _sptUsrSystem::getNetcardInfo( const _sptArguments &arg,
                                         _sptReturnVal &rval,
