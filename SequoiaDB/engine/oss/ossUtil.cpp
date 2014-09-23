@@ -43,6 +43,7 @@
 #include "ossTrace.hpp"
 #if defined (_LINUX)
 #include <sys/statvfs.h>
+#include <sys/utsname.h>
 #elif defined (_WINDOWS)
 #include "Psapi.h"
 #endif
