@@ -1099,19 +1099,19 @@ namespace engine
          mount = columns[ 2 ] ;
 
          // build
-         SINT64 total = 0 ;
+         SINT64 totalNum = 0 ;
          SINT64 usedNumber = 0 ;
          SINT64 avaNumber = 0 ;
          BSONObjBuilder lineBuilder ;
          try
          {
             avaNumber = boost::lexical_cast<SINT64>( freeSpace ) ;
-            total = boost::lexical_cast<SINT64>( total ) ;
-            usedNumber = total - avaNumber ;
+            totalNum = boost::lexical_cast<SINT64>( total ) ;
+            usedNumber = totalNum - avaNumber ;
             lineBuilder.append( SPT_USR_SYSTEM_FILESYSTEM,
                                 fileSystem.c_str() ) ;
             lineBuilder.appendNumber( SPT_USR_SYSTEM_SIZE,
-                                      (INT32)( total / SPT_MB_SIZE ) ) ;
+                                      (INT32)( totalNum / SPT_MB_SIZE ) ) ;
             lineBuilder.appendNumber( SPT_USR_SYSTEM_USED,
                                       (INT32)( usedNumber / SPT_MB_SIZE ) ) ;
             lineBuilder.append( SPT_USR_SYSTEM_UNIT, "M" ) ;
