@@ -95,6 +95,16 @@ INT32 rtnWriteLob( const CHAR *fullName,
                    SINT16 w,
                    SDB_DPSCB *dpsCB ) ;
 
+INT32 rtnUpdateLob( const CHAR *fullName,
+                    const bson::OID &oid,
+                    UINT32 sequence,
+                    UINT32 offset,
+                    UINT32 len,
+                    const CHAR *data,
+                    pmdEDUCB *cb,
+                    SINT16 w,
+                    SDB_DPSCB *dpsCB ) ;
+
 INT32 rtnReadLob( const CHAR *fullName,
                   const bson::OID &oid,
                   UINT32 sequence,

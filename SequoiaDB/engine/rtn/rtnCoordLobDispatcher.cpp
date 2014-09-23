@@ -299,6 +299,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__RTNCOORDLOBDISPATCHER__GETREPLY ) ;
       BOOLEAN updateCata = FALSE ;
       REPLY_QUE replyQueue ;
+      INT32 lastErrRc = SDB_OK ;
       INT32 replyType = MAKE_REPLY_TYPE( _header.header.opCode ) ;
       rc = rtnCoordGetReply( cb, _sendMap, replyQueue, replyType,
                              TRUE, TRUE ) ;
@@ -316,6 +317,10 @@ namespace engine
          MsgOpReply *replyHeader = ( MsgOpReply * )( replyQueue.front() ) ;
          replyQueue.pop() ;
          INT32 flag = replyHeader->flags ;
+         if ( SDB_OK != flag )
+         {
+            lastErrRc = flag ;
+         }
          MsgRouteID id ;
          id.value = MSG_INVALID_ROUTEID ;
          id.columns.groupID = replyHeader->header.routeID.columns.groupID ;
@@ -352,7 +357,7 @@ namespace engine
                }
             }
          }
-         else if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
+         else if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == flag )
          {
             /// we only update catalog info once in a loop.
             if ( !updateCata )
@@ -379,12 +384,14 @@ namespace engine
          SDB_OSS_FREE( replyHeader ) ;
       }
 
-      if ( _sendMap.empty() )
+      if ( _tuples.empty() )
       {
          goto done ;
       }
       else if ( _retryTimes++ < RTN_COORD_LOB_RETRY_TIMES )
       {
+         PD_LOG( PDEVENT, "the %dth times we retry to send msg", _retryTimes ) ;
+
          rc = wait4Reply( cb ) ;
          if ( SDB_OK != rc )
          {
@@ -394,6 +401,7 @@ namespace engine
       }
       else
       {
+         rc = lastErrRc ;
          PD_LOG( PDERROR, "sth wrong happened, failed to get reply:%d", rc ) ;
          goto error ;
       }

@@ -101,7 +101,10 @@ namespace engine
          goto done ;
       }
 
-      _needDelayOpen = FALSE ;
+      if ( isOpened() )
+      {
+         goto done ;
+      }
 
       rc = _openLob( _path, TRUE, TRUE ) ;
       if ( rc )
@@ -110,6 +113,8 @@ namespace engine
                  getSuName(), rc ) ;
          goto error ;
       }
+
+      _needDelayOpen = FALSE ;
 
       // set data header
       _dmsData->updateCreateLobs( 1 ) ;
@@ -276,7 +281,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != mbContext && NULL != cb, "can not be null" ) ;
-      SDB_ASSERT( _data.isOpened(), "storage is not opened yet" ) ;
       SDB_ASSERT( 0 == record._offset, "must be zero" ) ;
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
       dpsMergeInfo info ;
@@ -285,6 +289,7 @@ namespace engine
       DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
+      CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
 
       if ( _needDelayOpen )
       {
@@ -301,7 +306,15 @@ namespace engine
 
       if ( NULL != dpscb )
       {
-         rc = dpsLobW2Record( mbContext->mb()->_collectionName,
+         UINT32 csNameLen = ossStrlen( getSuName() ) ;
+         UINT32 clNameLen = ossStrlen( mbContext->mb()->_collectionName ) ;
+         ossMemcpy( fullName, getSuName(), csNameLen ) ;
+         fullName[csNameLen] = '.' ;
+         ossMemcpy( fullName + csNameLen + 1,
+                    mbContext->mb()->_collectionName,
+                    clNameLen + 1 ) ;  /// +1 for '\0'
+         
+         rc = dpsLobW2Record( fullName,
                               record._oid,
                               record._sequence,
                               record._offset,
@@ -424,7 +437,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != mbContext && NULL != cb, "can not be null" ) ;
-      SDB_ASSERT( _data.isOpened(), "storage is not opened yet" ) ;
       SDB_ASSERT( 0 == record._offset, "must be zero" ) ;
       SDB_ASSERT( _dmsHeader->_lobdPageSize <= DMS_PAGE_SIZE512K,
                   "can not over 512 KB" ) ;
@@ -440,6 +452,7 @@ namespace engine
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
       CHAR oldData[DMS_PAGE_SIZE512K] ;
       UINT32 oldLen = 0 ;
+      CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
 
       if ( _needDelayOpen )
       {
@@ -486,6 +499,14 @@ namespace engine
 
       if ( NULL != dpscb )
       {
+         UINT32 csNameLen = ossStrlen( getSuName() ) ;
+         UINT32 clNameLen = ossStrlen( mbContext->mb()->_collectionName ) ;
+         ossMemcpy( fullName, getSuName(), csNameLen ) ;
+         fullName[csNameLen] = '.' ;
+         ossMemcpy( fullName + csNameLen + 1,
+                    mbContext->mb()->_collectionName,
+                    clNameLen + 1 ) ; /// +1 for '\0'
+
          rc = _data.read( page, blk->_dataLen, 0, oldData, oldLen ) ;
          if ( SDB_OK != rc )
          {
@@ -495,7 +516,7 @@ namespace engine
 
          SDB_ASSERT( oldLen == blk->_dataLen, "impossible" ) ;
 
-         rc = dpsLobU2Record( mbContext->mb()->_collectionName,
+         rc = dpsLobU2Record( fullName,
                               record._oid,
                               record._sequence,
                               record._offset,
@@ -719,6 +740,7 @@ namespace engine
       dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
       CHAR oldData[DMS_PAGE_SIZE512K] ;
       UINT32 oldLen = 0 ;
+      CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
 
       if ( _needDelayOpen )
       {
@@ -763,6 +785,14 @@ namespace engine
 
       if ( NULL != dpscb )
       {
+         UINT32 csNameLen = ossStrlen( getSuName() ) ;
+         UINT32 clNameLen = ossStrlen( mbContext->mb()->_collectionName ) ;
+         ossMemcpy( fullName, getSuName(), csNameLen ) ;
+         fullName[csNameLen] = '.' ;
+         ossMemcpy( fullName + csNameLen + 1,
+                    mbContext->mb()->_collectionName,
+                    clNameLen + 1 ) ;
+
          rc = _data.read( page, blk->_dataLen, 0, oldData, oldLen ) ;
          if ( SDB_OK != rc )
          {
@@ -772,7 +802,7 @@ namespace engine
 
          SDB_ASSERT( oldLen == blk->_dataLen, "impossible" ) ;
 
-         rc = dpsLobRm2Record( mbContext->mb()->_collectionName,
+         rc = dpsLobRm2Record( fullName,
                                record._oid,
                                record._sequence,
                                0,

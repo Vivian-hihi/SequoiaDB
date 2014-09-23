@@ -71,6 +71,12 @@ namespace engine
       INT32 remove( UINT32 sequence,
                     _pmdEDUCB *cb ) ;
 
+      INT32 update( UINT32 sequence,
+                    UINT32 offset,
+                    UINT32 len,
+                    const CHAR *data,
+                    _pmdEDUCB *cb ) ;
+
       INT32 close( _pmdEDUCB *cb ) ;
 
    public:

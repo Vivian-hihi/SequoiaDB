@@ -100,7 +100,8 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to prepare to open lob[%s]"
-                 " in cl[%s]", oid.str().c_str(), fullName ) ;
+                 " in cl[%s], rc:%d",
+                 oid.str().c_str(), fullName, rc ) ;
          goto error ;
       }
 

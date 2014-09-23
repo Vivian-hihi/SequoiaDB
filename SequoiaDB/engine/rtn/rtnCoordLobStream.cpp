@@ -251,7 +251,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__OPENMAINSTREAM ) ;
       BSONObjBuilder builder ;
       BSONObj obj ;
-      MSG_OPTIONS options( SDB_LOB_MODE_CREATEONLY == mode, TRUE ) ;
+      MSG_OPTIONS options( SDB_LOB_MODE_R != mode, TRUE ) ;
       const MsgOpReply *reply = NULL ;
 
       builder.append( FIELD_NAME_COLLECTION, fullName )
@@ -742,7 +742,7 @@ namespace engine
       RTN_COORD_LOB_GET_SUBSTREAM( _metaGroup, sub ) ;
 
       _dispatcher.clear() ;
-      rc = _dispatcher.createMsg( MSG_BS_LOB_WRITE_REQ,
+      rc = _dispatcher.createMsg( MSG_BS_LOB_UPDATE_REQ,
                                   options,
                                   BSONObj() ) ;
       if ( SDB_OK != rc )

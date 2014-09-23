@@ -1387,7 +1387,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      len = *( ( UINT32 * )( itr.value() ) ) ;
       }
 
       {
@@ -1629,7 +1629,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      len = *( ( UINT32 * )( itr.value() ) ) ;
       }
 
       {
@@ -1871,7 +1871,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      sequence = *( ( UINT32 * )( itr.value() ) ) ;
+      len = *( ( UINT32 * )( itr.value() ) ) ;
       }
 
       {

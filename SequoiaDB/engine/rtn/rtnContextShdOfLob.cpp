@@ -180,6 +180,31 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB_UPDATE, "_rtnContextShdOfLob::update" )
+   INT32 _rtnContextShdOfLob::update( UINT32 sequence,
+                                      UINT32 offset,
+                                      UINT32 len,
+                                      const CHAR *data,
+                                      _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_UPDATE ) ;
+      rc = rtnUpdateLob( _fullName.c_str(),
+                         _oid, sequence,
+                         offset, len,
+                         data, cb, _w, _dpsCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB_UPDATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _rtnContextShdOfLob::_prepareData( _pmdEDUCB *cb )
    {
       return SDB_OK ;

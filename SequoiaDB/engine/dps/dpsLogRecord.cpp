@@ -823,6 +823,259 @@ namespace engine
              break ;
 
          }
+         case LOG_TYPE_LOB_WRITE :
+         {
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Type   : %s(%d)"OSS_NEWLINE,
+                                 "LOB_W", LOG_TYPE_LOB_WRITE ) ;
+
+            dpsLogRecord::iterator itr =
+                                  this->find( DPS_LOG_PUBLIC_TRANSID ) ;
+            if ( itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    OSS_NEWLINE
+                                    " TransID    : 0x%08lx"OSS_NEWLINE,
+                                    *(( DPS_TRANS_ID *)itr.value())) ;
+            }
+
+            itr = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find fullname in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " FullName   : %s"OSS_NEWLINE,
+                                 itr.value() ) ;
+
+            itr = this->find( DPS_LOG_LOB_OID ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find oid in record" ) ;
+               goto done ;
+            }
+
+            {
+            bson::OID *oid = ( bson::OID * )( itr.value() ) ;
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " Oid   : %s"OSS_NEWLINE,
+                                 oid->str().c_str() ) ;
+            }
+
+            itr = this->find( DPS_LOG_LOB_SEQUENCE ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find sequence in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Sequence   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_OFFSET ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find offset in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Offset   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_LEN ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find len in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Len   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_PAGE ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find page in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Page   : %d"OSS_NEWLINE,
+                                *( ( SINT32 * )( itr.value() ) ) ) ;
+            break ;
+         }
+         case LOG_TYPE_LOB_REMOVE :
+         {
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Type   : %s(%d)"OSS_NEWLINE,
+                                 "LOB_REMOVE", LOG_TYPE_LOB_WRITE ) ;
+
+            dpsLogRecord::iterator itr =
+                                  this->find( DPS_LOG_PUBLIC_TRANSID ) ;
+            if ( itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    OSS_NEWLINE
+                                    " TransID    : 0x%08lx"OSS_NEWLINE,
+                                    *(( DPS_TRANS_ID *)itr.value())) ;
+            }
+
+            itr = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find fullname in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " FullName   : %s"OSS_NEWLINE,
+                                 itr.value() ) ;
+
+            itr = this->find( DPS_LOG_LOB_OID ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find oid in record" ) ;
+               goto done ;
+            }
+
+            {
+            bson::OID *oid = ( bson::OID * )( itr.value() ) ;
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " Oid   : %s"OSS_NEWLINE,
+                                 oid->str().c_str() ) ;
+            }
+
+            itr = this->find( DPS_LOG_LOB_SEQUENCE ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find sequence in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Sequence   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_OFFSET ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find offset in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Offset   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_LEN ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find len in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Len   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_PAGE ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find page in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Page   : %d"OSS_NEWLINE,
+                                *( ( SINT32 * )( itr.value() ) ) ) ;
+            break ;
+         }
+         case LOG_TYPE_LOB_UPDATE :
+         {
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Type   : %s(%d)"OSS_NEWLINE,
+                                 "LOB_U", LOG_TYPE_LOB_WRITE ) ;
+
+            dpsLogRecord::iterator itr =
+                                  this->find( DPS_LOG_PUBLIC_TRANSID ) ;
+            if ( itr.valid() )
+            {
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    OSS_NEWLINE
+                                    " TransID    : 0x%08lx"OSS_NEWLINE,
+                                    *(( DPS_TRANS_ID *)itr.value())) ;
+            }
+
+            itr = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find fullname in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " FullName   : %s"OSS_NEWLINE,
+                                 itr.value() ) ;
+
+            itr = this->find( DPS_LOG_LOB_OID ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find oid in record" ) ;
+               goto done ;
+            }
+
+            {
+            bson::OID *oid = ( bson::OID * )( itr.value() ) ;
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 " Oid   : %s"OSS_NEWLINE,
+                                 oid->str().c_str() ) ;
+            }
+
+            itr = this->find( DPS_LOG_LOB_SEQUENCE ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find sequence in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Sequence   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_OFFSET ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find offset in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Offset   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_LEN ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find len in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Len   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_OLD_LEN ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find old len in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Old Len   : %d"OSS_NEWLINE,
+                                *( ( UINT32 * )( itr.value() ) ) ) ;
+
+            itr = this->find( DPS_LOG_LOB_PAGE ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "failed to find page in record" ) ;
+               goto done ;
+            }
+            len += ossSnprintf( outBuf + len, outSize - len,
+                                " Page   : %d"OSS_NEWLINE,
+                                *( ( SINT32 * )( itr.value() ) ) ) ;
+            break ;
+         }
          default:
          {
             // something goes wrong here, but let's just continue

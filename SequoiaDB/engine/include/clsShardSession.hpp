@@ -118,6 +118,8 @@ namespace engine
                               const CHAR **pReponseBuff,
                               INT32 &buffLen ) ;
 
+         INT32 _onUpdateLobReq( MsgHeader *msg ) ;
+
          INT32 _onCloseLobReq( MsgHeader *msg ) ;
 
          INT32 _onRemoveLobReq( MsgHeader *msg ) ;

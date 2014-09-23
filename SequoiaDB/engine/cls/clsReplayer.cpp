@@ -44,6 +44,7 @@
 #include "clsReplBucket.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "rtnLob.hpp"
 
 using namespace bson ;
 
@@ -87,6 +88,7 @@ namespace engine
       const CHAR *fullname = NULL ;
       BSONObj obj ;
       BSONElement idEle ;
+      const bson::OID *oidPtr = NULL ;
       BOOLEAN paralla = FALSE ;
       UINT32 bucketID = ~0 ;
 
@@ -118,6 +120,63 @@ namespace engine
             }
             break ;
          }
+         case LOG_TYPE_LOB_WRITE :
+         {
+            paralla = TRUE ;
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobW( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data, page ) ;
+            oidPtr = oid ;
+            break ;
+         }
+         case LOG_TYPE_LOB_UPDATE :
+         {
+            paralla = TRUE ;
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            UINT32 oldLen = 0 ;
+            const CHAR *oldData = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobU( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data,
+                                  oldLen, &oldData, page ) ;
+            oidPtr = oid ;
+            break ;
+         }
+         case LOG_TYPE_LOB_REMOVE :
+         {
+            paralla = TRUE ;
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobRm( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data, page ) ;
+            oidPtr = oid ;
+            break ;
+         }
          case LOG_TYPE_DUMMY :
             bucketID = 0 ;
             break ;
@@ -136,6 +195,11 @@ namespace engine
          {
             bucketID = pBucket->calcIndex( idEle.value(),
                                            idEle.valuesize() ) ;
+         }
+         else if ( NULL != oidPtr )
+         {
+            bucketID = pBucket->calcIndex( ( const CHAR * )( oidPtr->getData()),
+                                           sizeof( *oidPtr ) ) ;
          }
       }
 
@@ -458,6 +522,97 @@ namespace engine
             rc = SDB_OK ;
             break ;
          }
+         case LOG_TYPE_LOB_WRITE :
+         {
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobW( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data, page ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            rc = rtnWriteLob( fullName, *oid, sequence,
+                              offset, len, data, eduCB,
+                              1, NULL ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+               goto error ;
+            }
+            break ;
+         }
+         case LOG_TYPE_LOB_REMOVE :
+         {
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobRm( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data, page ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            rc = rtnRemoveLobPiece( fullName, *oid,
+                                    sequence, eduCB,
+                                    1, NULL ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+               goto error ;
+            }
+            break ;
+         }
+         case LOG_TYPE_LOB_UPDATE :
+         {
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            UINT32 oldLen = 0 ;
+            const CHAR *oldData = NULL ;
+            rc = dpsRecord2LobU( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data,
+                                  oldLen, &oldData, page ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            rc = rtnUpdateLob( fullName, *oid, sequence,
+                               offset, len, data, eduCB,
+                               1, NULL ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
+               goto error ;
+            }
+
+            break ;
+         }
          case LOG_TYPE_DUMMY :
          {
             rc = SDB_OK ;
@@ -697,6 +852,95 @@ namespace engine
          case LOG_TYPE_INVALIDATE_CATA :
          {
             rc = SDB_OK ;
+            break ;
+         }
+         case LOG_TYPE_LOB_WRITE :
+         {
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobW( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data, page ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            rc = rtnRemoveLobPiece( fullName, *oid, sequence,
+                                    eduCB, 1, NULL ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
+               goto error ;
+            }
+            break ; 
+         }
+         case LOG_TYPE_LOB_UPDATE :
+         {
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            UINT32 oldLen = 0 ;
+            const CHAR *oldData = NULL ;
+            rc = dpsRecord2LobU( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data,
+                                  oldLen, &oldData, page ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            rc = rtnUpdateLob( fullName, *oid, sequence,
+                               offset, oldLen, oldData, eduCB,
+                               1, NULL ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
+               goto error ;
+            } 
+            break ; 
+         }
+         case LOG_TYPE_LOB_REMOVE :
+         {
+            const CHAR *fullName = NULL ;
+            const bson::OID *oid = NULL ;
+            UINT32 sequence = 0 ;
+            UINT32 offset = 0 ;
+            UINT32 len = 0 ;
+            UINT32 hash = 0 ;
+            const CHAR *data = NULL ;
+            DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
+            rc = dpsRecord2LobRm( (CHAR *)recordHeader,
+                                  &fullName, &oid,
+                                  sequence, offset,
+                                  len, hash, &data, page ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            rc = rtnWriteLob( fullName, *oid, sequence,
+                              offset, len, data, eduCB,
+                              1, NULL ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+               goto error ;
+            }
             break ;
          }
          default :

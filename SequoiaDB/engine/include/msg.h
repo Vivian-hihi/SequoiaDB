@@ -277,7 +277,9 @@ enum MSG_TYPE
    MSG_BS_LOB_READ_RES                    = MAKE_REPLY_TYPE( MSG_BS_LOB_READ_REQ ),
    MSG_BS_LOB_REMOVE_REQ                  = 8004,
    MSG_BS_LOB_REMOVE_RES                  = MAKE_REPLY_TYPE( MSG_BS_LOB_REMOVE_REQ ),
-   MSG_BS_LOB_CLOSE_REQ                   = 8005,
+   MSG_BS_LOB_UPDATE_REQ                  = 8005,
+   MSG_BS_LOB_UPDATE_RES                  = MAKE_REPLY_TYPE( MSG_BS_LOB_UPDATE_REQ ),
+   MSG_BS_LOB_CLOSE_REQ                   = 8006,
    MSG_BS_LOB_CLOSE_RES                   = MAKE_REPLY_TYPE( MSG_BS_LOB_CLOSE_REQ ),
    MSG_LOB_END                            = 8999,
 

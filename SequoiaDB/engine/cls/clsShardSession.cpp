@@ -472,7 +472,10 @@ namespace engine
             case MSG_BS_LOB_REMOVE_REQ:
                rc = _onRemoveLobReq( msg ) ;
                break ;
-            default :
+            case MSG_BS_LOB_UPDATE_REQ:
+               rc = _onUpdateLobReq( msg ) ;
+               break ;
+            default:
                rc = SDB_CLS_UNKNOW_MSG ;
                break ;
          }
@@ -2487,6 +2490,7 @@ namespace engine
       BSONObj lob ;
       BSONObj meta ;
       BSONElement fullName ;
+      BSONElement mode ;
       INT16 w = 0 ;
       _rtnContextShdOfLob *context = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
@@ -2498,7 +2502,6 @@ namespace engine
          PD_LOG( PDERROR, "failed to extract open msg:%d", rc ) ;
          goto error ;
       }
-
       fullName = lob.getField( FIELD_NAME_COLLECTION ) ;
       if ( String != fullName.type() )
       {
@@ -2507,8 +2510,28 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+      _pCollectionName = fullName.valuestr() ;
+
+      mode = lob.getField( FIELD_NAME_LOB_OPEN_MODE ) ;
+      if ( NumberInt != mode.type() )
+      {
+         PD_LOG( PDERROR, "invalid lob obj:%s",
+                 lob.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
       w = header->w ;
+
+      if ( SDB_LOB_MODE_R != mode.Int() )
+      {
+         rc = _check( w ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
       rc = _checkCata( header->version, fullName.valuestr(),
                        w, isMainCL ) ;
       if ( SDB_OK != rc )
@@ -2592,7 +2615,14 @@ namespace engine
       }
 
       lobContext = ( rtnContextShdOfLob * )context ;
+      _pCollectionName = lobContext->getFullName() ;
       w = lobContext->getW() ;
+      rc = _check( w ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
       if ( SDB_OK != rc )
@@ -2677,6 +2707,7 @@ namespace engine
       }
 
       lobContext = ( rtnContextShdOfLob * )context ;
+      _pCollectionName = lobContext->getFullName() ;
       w = lobContext->getW() ;
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
@@ -2745,6 +2776,7 @@ namespace engine
       }
 
       lobContext = ( rtnContextShdOfLob * )context ;
+      _pCollectionName = lobContext->getFullName() ;
       w = lobContext->getW() ;
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
@@ -2812,7 +2844,14 @@ namespace engine
       }
 
       lobContext = ( rtnContextShdOfLob * )context ;
+      _pCollectionName = lobContext->getFullName() ;
       w = lobContext->getW() ;
+      rc = _check( w ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
       if ( SDB_OK != rc )
@@ -2853,6 +2892,99 @@ namespace engine
       if ( NULL != context )
       {
          rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
+      }
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_onUpdateLobReq( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK ;
+      const MsgOpLob *header = NULL ;
+      BSONObj obj ;
+      const MsgLobTuple *tuple = NULL ;
+      UINT32 tSize = 0 ;
+      const MsgLobTuple *curTuple = NULL ;
+      UINT32 tupleNum = 0 ;
+      const CHAR *data = NULL ;
+      rtnContext *context = NULL ;
+      rtnContextShdOfLob *lobContext = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      INT16 w = 0 ;
+      BOOLEAN isMainCl = FALSE ;
+
+      rc = msgExtractLobRequest( ( const CHAR * )msg,
+                                 &header, obj,
+                                 &tuple, &tSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract write msg:%d", rc ) ;
+         goto error ;
+      }
+
+      context = (rtnCB->contextFind ( header->contextID )) ;
+      if ( NULL == context )
+      {
+         PD_LOG ( PDERROR, "context %lld does not exist", header->contextID ) ;
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+
+      if ( RTN_CONTEXT_SHARD_OF_LOB != context->getType() )
+      {
+         PD_LOG( PDERROR, "invalid type of context:%d", context->getType() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      lobContext = ( rtnContextShdOfLob * )context ;
+      w = lobContext->getW() ;
+      rc = _checkCata( header->version, lobContext->getFullName(),
+                       w, isMainCl, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         BOOLEAN got = FALSE ;
+         rc = msgExtractTuplesAndData( &tuple, &tSize,
+                                       &curTuple, &data,
+                                       &got ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extract next tuple:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( !got )
+         {
+            break ;
+         }
+
+         rc = lobContext->update( curTuple->columns.sequence,
+                                  curTuple->columns.offset,
+                                  curTuple->columns.len,
+                                  data, _pEDUCB ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            goto error ;
+         }
+
+         ++tupleNum ;
+      }
+
+      PD_LOG( PDDEBUG, "%d pieces of lob[%s] update done",
+              tupleNum, lobContext->getOID().str().c_str() ) ;      
+   done:
+      
+      return rc ;
+   error:
+      if ( NULL != context )
+      {
+         rtnCB->contextDelete( context->contextID(), _pEDUCB ) ;
       }
       goto done ;
    }

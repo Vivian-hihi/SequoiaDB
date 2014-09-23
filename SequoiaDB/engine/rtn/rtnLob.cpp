@@ -612,17 +612,8 @@ namespace engine
 
       record.set( &oid, sequence, offset,
                   len, data ) ;
-      if ( DMS_LOB_META_SEQUENCE != sequence )
-      {
-         rc = su->lob()->write( record, mbContext, cb,
-                                FALSE, dpsCB ) ;
-      }
-      else
-      {
-         /// update meta data.
-         rc = su->lob()->update( record, mbContext, cb,
-                                FALSE, dpsCB ) ;
-      }
+      rc = su->lob()->write( record, mbContext, cb,
+                             FALSE, dpsCB ) ;
 
       if ( SDB_OK != rc )
       {
@@ -979,6 +970,62 @@ namespace engine
          rtnWriteLobDone( cb, su, mbContext ) ;
       }
       PD_TRACE_EXITRC( SDB_RTNQUERYANDINVALIDAGELOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATELOB, "rtnUpdateLob" ) 
+   INT32 rtnUpdateLob( const CHAR *fullName,
+                       const bson::OID &oid,
+                       UINT32 sequence,
+                       UINT32 offset,
+                       UINT32 len,
+                       const CHAR *data,
+                       pmdEDUCB *cb,
+                       SINT16 w,
+                       SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNUPDATELOB ) ;
+      SDB_ASSERT( NULL != fullName && NULL != cb, "can not be null" ) ;
+      _dmsStorageUnit *su = NULL ;
+      _dmsMBContext *mbContext = NULL ;
+      _dmsLobRecord record ;
+      BOOLEAN prepared = FALSE ;
+
+      rc = rtnPrepage4WriteLob( fullName, cb, FALSE,
+                                su, mbContext ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare to write lob:%d", rc ) ;
+         goto error ;
+      }
+      prepared = TRUE ;
+
+      record.set( &oid, sequence, offset,
+                  len, data ) ;
+
+      rc = su->lob()->update( record, mbContext, cb,
+                                FALSE, dpsCB ) ;
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+         goto error ;
+      }
+
+      if ( NULL != dpsCB && 1 < w )
+      {
+         dpsCB->completeOpr( cb, w ) ;
+         cb->resetLsn () ;
+      }
+   done:
+      if ( prepared )
+      {
+         rtnWriteLobDone( cb, su, mbContext ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNUPDATELOB, rc ) ;
       return rc ;
    error:
       goto done ;
