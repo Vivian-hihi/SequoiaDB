@@ -12,7 +12,7 @@
 <!-- depends:deploy-test-all.xml -->
 <!-- call:deploy-software-in-host.xml,deploy-test-in-host.xml,test-type.xml -->
 
-<project name="Standalone" default="Test"> 
+<project name="Standalone" default="Standalone"> 
 	<property name="properties.dir" value="${basedir}/../ci.test.properties" />
 	<property file="${properties.dir}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
@@ -31,7 +31,7 @@
 		</ant>
 	</target>
 
-	<target name="Test" depends="">
+	<target name="Standalone" depends="">
 		<hostinfo prefix="host" />
 		<property name="test-type-list" value="basic,driver-C,driver-CPP" />
 		<property name="copy.test.log" value="true"/>
