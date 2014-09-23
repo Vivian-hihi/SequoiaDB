@@ -185,19 +185,17 @@ namespace engine
 #endif
       if ( SDB_OK != rc || SDB_OK != exitCode )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
-                 rc, exitCode ) ;
-         if ( SDB_OK == rc )
-         {
-            rc = SDB_SYS ;
-         }
-         stringstream ss ;
-         ss << "failed to exec cmd \"lsb_release -a\",rc:"
-            << rc
-            << ",exit:"
-            << exitCode ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
+         rc = SDB_OK ;
+         ossOSInfo info ;
+         ossGetOSInfo( info ) ;
+
+         builder.append( SPT_USR_SYSTEM_DISTRIBUTOR, info._distributor ) ;
+         builder.append( SPT_USR_SYSTEM_RELASE, info._release ) ;
+         builder.append( SPT_USR_SYSTEM_DESP, info._desp ) ;
+         builder.append( SPT_USR_SYSTEM_BIT, info._bit ) ;
+
+         rval.setBSONObj( "", builder.obj() ) ;
+         goto done ;
       }
 
       rc = runner.read( outStr ) ;
@@ -282,6 +280,7 @@ namespace engine
       vector<string>::iterator itr = splited.begin() ;
       const string *distributor = NULL ;
       const string *release = NULL ;
+      const string *desp = NULL ;
       for ( ; itr != splited.end(); itr++ )
       {
          if ( itr->empty() )
@@ -299,6 +298,11 @@ namespace engine
          {
             release = &( *( itr + 1 ) ) ;
          }
+         else if ( "Description" == *itr &&
+                   itr < splited.end() - 1 )
+         {
+            desp = &( *( itr + 1 ) ) ;
+         }
       }
 
       if ( NULL == distributor ||
@@ -312,6 +316,8 @@ namespace engine
 
       builder.append( SPT_USR_SYSTEM_DISTRIBUTOR, *distributor ) ;
       builder.append( SPT_USR_SYSTEM_RELASE, *release ) ;
+      builder.append( SPT_USR_SYSTEM_DESP, *desp ) ;
+
    done:
       return rc ;
    error:

@@ -40,6 +40,7 @@
 
 #define SPT_USR_SYSTEM_DISTRIBUTOR        "Distributor"
 #define SPT_USR_SYSTEM_RELASE             "Release"
+#define SPT_USR_SYSTEM_DESP               "Description"
 #define SPT_USR_SYSTEM_BIT                "Bit"
 #define SPT_USR_SYSTEM_IP                 "Ip"
 #define SPT_USR_SYSTEM_HOSTS              "Hosts"

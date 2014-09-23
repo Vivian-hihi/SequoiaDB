@@ -409,6 +409,115 @@ SINT32 ossGetCPUUsage
    return rc ;
 }
 
+INT32 ossGetOSInfo( ossOSInfo &info )
+{
+   info._desp[ 0 ] = 0 ;
+   info._distributor[ 0 ] = 0 ;
+   info._release[ 0 ] = 0 ;
+   CHAR arch[ 31 ] = { 0 } ;
+
+#if defined( _WINDOWS )
+   SYSTEM_INFO sysInfo = { 0 } ;
+   OSVERSIONINFOEX OSVerInfo={ 0 } ;
+
+   OSVerInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+   GetVersionEx ( (OSVERSIONINFO*) &OSVerInfo ) ;
+   if ( OSVerInfo.dwMajorVersion == 6 )
+   {
+      if ( OSVerInfo.dwMinorVersion == 0 )
+      {
+         if ( OSVerInfo.wProductType == VER_NT_WORKSTATION )
+         {
+            ossStrcpy( info._distributor, "Windows Vista" ) ;
+         }
+         else
+         {
+            ossStrcpy( info._distributor, "Windows Server 2008" ) ;
+         }
+      }
+      if ( OSVerInfo.dwMinorVersion == 1 )
+      {
+         if ( OSVerInfo.wProductType == VER_NT_WORKSTATION )
+         {
+            ossStrcpy( info._distributor, "Windows 7" ) ;
+         }
+         else
+         {
+            ossStrcpy( info._distributor, "Windows Server 2008" ) ;
+         }
+      }
+   }
+   if ( OSVerInfo.dwMajorVersion == 5 && OSVerInfo.dwMinorVersion == 2 )
+   {
+      if ( OSVerInfo.wProductType == VER_NT_WORKSTATION )
+      {
+         ossStrcpy( info._distributor, "Windows XP" ) ;
+      }
+      else
+      {
+         ossStrcpy( info._distributor, "Windows Server 2003" ) ;
+      }
+   }
+   if ( OSVerInfo.dwMajorVersion == 5 && OSVerInfo.dwMinorVersion == 1 )
+   {
+      ossStrcpy( info._distributor, "Windows XP" ) ;
+   }
+   if ( OSVerInfo.dwMajorVersion == 5 && OSVerInfo.dwMinorVersion == 0 )
+   {
+      ossStrcpy( info._distributor, "Windows 2000" ) ;
+   }
+
+   ossSnprintf( info._release, sizeof( info._release ) - 1,
+                "%s ( %d.%d) Build:%d",
+                OSVerInfo.szCSDVersion, OSVerInfo.dwMajorVersion,
+                OSVerInfo.dwMinorVersion, OSVerInfo.dwBuildNumber ) ;
+
+   GetSystemInfo( &sysInfo ) ;
+   switch( sysInfo.wProcessorArchitecture )
+   {
+      case PROCESSOR_ARCHITECTURE_INTEL:
+           ossStrncpy( arch, "Intel x86", sizeof( arch ) - 1 ) ;
+           info._bit = 32 ;
+           break ;
+      case PROCESSOR_ARCHITECTURE_IA64:
+           ossStrncpy( arch, "Intel IA64", sizeof( arch ) - 1 ) ;
+           info._bit = 64 ;
+           break ;
+      case PROCESSOR_ARCHITECTURE_AMD64:
+           ossStrncpy( arch, "AMD 64", sizeof( arch ) - 1 ) ;
+           info._bit = 64 ;
+           break ;
+      default:
+           ossStrncpy( arch, "Unknown", sizeof( arch ) - 1 ) ;
+           break ;
+   }
+#else
+   struct utsname name ;
+
+   if ( -1 == uname( &name ) )
+   {
+      memset( &name, 0, sizeof( name ) ) ;
+   }
+
+   ossSnprintf( info._distributor, sizeof( info._distributor ) - 1,
+                "%s", name.sysname ) ;
+   ossSnprintf( info._release, sizeof( info._release ) - 1,
+                "%s", name.release ) ;
+   ossSnprintf( arch, sizeof( arch ) - 1, "%s", name.machine ) ;
+   if ( 0 == ossStrcmp( arch, "x86_64" ) )
+   {
+      info._bit = 64 ;
+   }
+   else
+   {
+      info._bit = 32 ;
+   }
+#endif // _WINDOWS
+   ossSnprintf( info._desp, sizeof( info._desp ) - 1, "%s %s(%s)",
+                info._distributor, info._release, arch ) ;
+   return SDB_OK ;
+}
+
 static SINT32 g_tickConversionFactorInitialized = 0 ;
 static ossSpinXLatch g_tickConversionFactorLatch ;
 static ossTickConversionFactor g_tickConversionFactor ;

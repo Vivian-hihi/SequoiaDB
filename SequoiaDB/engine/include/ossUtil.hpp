@@ -192,6 +192,20 @@ SINT32 ossGetCPUUsage
    ossTime &sysTime
 ) ;
 
+/*
+   Get Operator System Infomation
+*/
+struct _ossOSInfo
+{
+   CHAR _distributor[ OSS_MAX_PATHSIZE + 1 ] ;
+   CHAR _release[ OSS_MAX_PATHSIZE + 1 ] ;
+   CHAR _desp[ OSS_MAX_PATHSIZE + 1 ] ;
+   INT32 _bit ;
+} ;
+typedef _ossOSInfo ossOSInfo ;
+
+INT32 ossGetOSInfo( ossOSInfo &info ) ;
+
 OSS_INLINE UINT64 ossPack32To64( UINT32 hi, UINT32 lo )
 {
    return ((UINT64)hi << 32) | (UINT64)lo ;
