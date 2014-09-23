@@ -7,6 +7,7 @@
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
 <!--@${test.host.NAME}:which machine test testcases under unparallel env -->
+<!--@param {parallel.count}:the same machine used to distinguish between the prefix symbol in complicated cases -->
 
 <project name="Test-Type" default="Test-Type">
 	<target name="Test-Type" depends="">
@@ -27,6 +28,7 @@
 							<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 							<param name="WORKSPACE" value="${WORKSPACE}" />
 							<param name="ci.script.file.path" value="${ci.script.file.path}" />
+							<param name="${parallel.count}" value="${parallel.count}" />
 						</sdbtest>
 					</then>
 					<else>
@@ -42,6 +44,7 @@
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
+								<param name="${parallel.count}" value="${parallel.count}" />
 							</sdbtest>
 							<sdbtest host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -53,6 +56,7 @@
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
+								<param name="${parallel.count}" value="${parallel.count}" />
 							</sdbtest>
 							<sdbtest host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${testcase.path}/js_testcases/reports" masterreports="${test.reports.path}" >
 								<param name="basic.testcase.path" value="${testcase.path}/js_testcases" />
@@ -64,6 +68,7 @@
 								<!-- <param name="import.file.name" value="${import.file.name}" /> -->
 								<param name="WORKSPACE" value="${WORKSPACE}" />
 								<param name="ci.script.file.path" value="${ci.script.file.path}" />
+								<param name="${parallel.count}" value="${parallel.count}" />
 							</sdbtest>
 						</parallel>
 					</else>

@@ -10,6 +10,7 @@
 
 <!--@param ${WORKSPACE}: where the working space is it-->
 <!--@param ${ci.script.file.path} : where the ci.test.properties file is it -->
+<!--@param {parallel.count}:the same machine used to distinguish between the prefix symbol in complicated cases -->
 
 <project name="test-basic-testcases" default="Test-Basic-Testcases">
 	<hostinfo prefix="host" />
@@ -135,10 +136,11 @@
 			<param name="${host.NAME}" value="${host.NAME}" />
 			<param name="${test.case.name}" value="${test.case.name}" />
 			<param name="${parallel.num}" value="${parallel.num}" />
+			<param name="${parallel.count}" value="${parallel.count}" />
 		</sdbprefix>
 
 		<echo message="################################################" />
-		<echo message="parallel.num=${parallel.num}" />
+		<echo message="CS_PRIX=${CS_PRIX}" />
 		<echo message="################################################" />
 
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
