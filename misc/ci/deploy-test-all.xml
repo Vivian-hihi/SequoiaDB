@@ -46,6 +46,16 @@
 		<if>
 			<equals arg1="${deploy.conffile.wildcard}" arg2="*" />
 			<then>
+				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname" parallel="true">
+					<path>
+						<fileset dir="${deploy.config.path}" >
+							<include name="${test.environment}-[h1][g1][d1]-tp1.xml" />
+							<include name="${test.environment}-standalone-tp1.xml" />
+						</fileset>
+					</path>
+					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+				</foreach>
+				
 				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
 					<path>
 						<fileset dir="${deploy.config.path}">
@@ -57,7 +67,7 @@
 					<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
 				</foreach>
 
-				<parallel>
+				<!-- <parallel>
 					<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
 						<path>
 							<fileset file="${test.environment}-[h1][g1][d1]-tp1.xml" />
@@ -70,7 +80,7 @@
 						</path>
 						<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
 					</foreach>
-				</parallel>
+				</parallel> -->
 			</then>
 			<else>
 				<foreach target="Deploy-And-Test-Case" param="deploy.case.fullname">
@@ -88,15 +98,12 @@
 		<parallel>
 			<ant antfile="deploy-software-in-host.xml" dir="." target="Uninstall-Software" inheritAll="false">
 				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
-				<!-- <property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" /> -->
 			</ant>
 			<ant antfile="deploy-software-in-host.xml" dir="." target="Uninstall-Software" inheritAll="false">
 				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
-				<!-- <property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" /> -->
 			</ant>
 			<ant antfile="deploy-software-in-host.xml" dir="." target="Uninstall-Software" inheritAll="false">
 				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
-				<!-- <property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" /> -->
 			</ant>
 		</parallel>
 		<sleep seconds="5"/>
@@ -106,12 +113,8 @@
 		<echo message="Begin to deploy one case and test.... " />
 	    <echo message="Command:antfile  -f ${deploy.case.fullname} --target=Deploy -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname} -Ddeploy.path=${WORKSPACE}/deploy " />	
 		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="Deploy" inheritAll="true">
-			<!-- <property name="ant.sdb.tasks.path" value="${ci.script.file.path}/ant-tasks" /> -->
-			<!-- <property name="install.path" value="${install.path}" /> -->
 			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
 			<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
-			<!-- <property name="WORKSPACE" value="${WORKSPACE}" /> -->
-			<!-- <property name="deploy.path" value="${WORKSPACE}/deploy" /> -->
 		</ant>
 		<sleep seconds="5"/>
 
@@ -119,13 +122,9 @@
 			<equals arg1="${is.test}" arg2="true" />
 			<then>
 				<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="Test" inheritAll="true">
-					<!-- <property name="ant.sdb.tasks.path" value="${ci.script.file.path}/ant-tasks" /> -->
-					<!-- <property name="install.path" value="${install.path}" /> -->
-					<!-- <property name="deploy.path" value="${WORKSPACE}/deploy" /> -->
 					<property name="test.reports.path" value="${WORKSPACE}/reports" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="WORKSPACE" value="${WORKSPACE}" />
-
 					<property name="test.environment" value="${test.environment}" />
 					<property name="deploy.conffile.wildcard" value="${deploy.conffile.wildcard}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
