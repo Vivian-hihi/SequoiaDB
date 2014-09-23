@@ -75,10 +75,12 @@ typedef class _ossResultCode ossResultCode ;
 
 class _ossIExecHandle
 {
-   public:
-      virtual void  handleInOutPipe( OSSPID pid,
-                                     OSSNPIPE * const npHandleStdin,
-                                     OSSNPIPE * const npHandleStdout ) = 0 ;
+public:
+   virtual ~_ossIExecHandle() {}
+public:
+   virtual void  handleInOutPipe( OSSPID pid,
+                                  OSSNPIPE * const npHandleStdin,
+                                  OSSNPIPE * const npHandleStdout ) = 0 ;
 } ;
 typedef _ossIExecHandle ossIExecHandle ;
 
