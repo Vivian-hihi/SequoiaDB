@@ -698,7 +698,7 @@ namespace engine
 
       // 2. Create the file
       rc = ossOpen ( HOSTS_FILE, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
-                     OSS_RWXU, file ) ;
+                     OSS_RU|OSS_WU|OSS_RG|OSS_RO, file ) ;
       if ( rc )
       {
          ss << "open file[" <<  HOSTS_FILE << "] failed: " << rc ;
