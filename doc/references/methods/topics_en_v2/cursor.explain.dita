@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>cousor.explain</apiname>(<parmname>[options]</parmname>)
+      <p></p><apiname>cousor.explain</apiname>(<parmname>[option]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -20,7 +20,7 @@
       <p>Return the access plan of the current cursor.</p>
       <parml>
         <plentry>
-          <pt>options (Json Object)</pt>
+          <pt>option (Json Object)</pt>
           <pd>访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行
             <parml>
         <plentry>

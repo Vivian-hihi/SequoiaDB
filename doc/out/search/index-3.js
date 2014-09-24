@@ -1,4 +1,5 @@
 //Auto generated index for searching.
+w["vmsvr2-suse-x64-1"]="98*3";
 w["vmsvr2-suse-x64-1:11800"]="98*1";
 w["vmsvr2-suse-x64-1:11820"]="98*2";
 w["vmsvr2-suse-x64:11800"]="2037*1,2051*1";

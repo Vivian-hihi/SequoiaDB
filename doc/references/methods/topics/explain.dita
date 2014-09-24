@@ -3,7 +3,7 @@
 <topic id="topic_j1m_lt3_44">
   <title>cursor.explain()</title>
   <body>
-    <section><title>cursor.explain()</title>
+    <section><title>cursor.explain([opation])</title>
       <p>返回查询的访问计划。</p>
     </section>
     <section><title>参数描述</title>
