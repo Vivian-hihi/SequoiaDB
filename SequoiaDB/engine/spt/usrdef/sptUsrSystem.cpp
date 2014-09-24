@@ -716,6 +716,8 @@ namespace engine
             string text = item.toString() ;
             text += OSS_NEWLINE ;
 
+            printf( "%s: %d\n", text.c_str(), text.length() ) ;
+
             rc = ossWriteN( &file, text.c_str(), text.length() ) ;
             if ( rc )
             {
