@@ -69,6 +69,45 @@
 
 namespace engine
 {
+   enum SPT_HOST_LINE_TYPE
+   {
+      LINE_HOST         = 1,
+      LINE_UNKNONW,
+   } ;
+
+   struct _sptHostItem
+   {
+      INT32    _lineType ;
+      string   _ip ;
+      string   _com ;
+      string   _host ;
+
+      _sptHostItem()
+      {
+         _lineType = LINE_UNKNONW ;
+      }
+
+      string toString() const
+      {
+         if ( LINE_UNKNONW == _lineType )
+         {
+            return _ip ;
+         }
+         string space = "    " ;
+         if ( _com.empty() )
+         {
+            return _ip + space + _host ;
+         }
+         return _ip + space + _com + space + _host ;
+      }
+   } ;
+   typedef _sptHostItem sptHostItem ;
+
+   typedef vector< sptHostItem >    VEC_HOST_ITEM ;
+
+   /*
+      _sptUsrSystem define
+   */
    class _sptUsrSystem : public SDBObject
    {
    JS_DECLARE_CLASS( _sptUsrSystem )
@@ -157,6 +196,14 @@ namespace engine
    private:
       static INT32 _extractReleaseInfo( const CHAR *buf,
                                         bson::BSONObjBuilder &builder ) ;
+
+      static INT32 _parseHostsFile( VEC_HOST_ITEM &vecItems, string &err ) ;
+
+      static INT32 _extractHosts( const CHAR *buf,
+                                  VEC_HOST_ITEM &vecItems ) ;
+
+      static void  _buildHostsResult( VEC_HOST_ITEM &vecItems,
+                                      bson::BSONObjBuilder &builder ) ;
 
       static INT32 _extractHosts( const CHAR *buf,
                                   bson::BSONObjBuilder &builder ) ;

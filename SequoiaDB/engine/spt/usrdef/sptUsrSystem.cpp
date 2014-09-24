@@ -36,6 +36,7 @@
 #include "ossUtil.hpp"
 #include "utilStr.hpp"
 #include "ossSocket.hpp"
+#include "ossIO.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #if defined (_LINUX)
@@ -339,66 +340,30 @@ namespace engine
                                      bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      UINT32 exitCode = 0 ;
-      _sptCmdRunner runner ;
-      string outStr ;
       BSONObjBuilder builder ;
+      string err ;
+      VEC_HOST_ITEM vecItems ;
 
       if ( 0 < arg.argc() )
       {
-         PD_LOG( PDERROR, "getHostsMap() should have non arguments" ) ;
+         err = "getHostsMap() should have non arguments" ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
 
-#if defined (_LINUX)
-      rc = runner.exec( "cat /etc/hosts", exitCode ) ;
-#elif defined (_WINDOWS)
-      rc = SDB_SYS ;
-#endif
-      if ( SDB_OK != rc || SDB_OK != exitCode )
+      rc = _parseHostsFile( vecItems, err ) ;
+      if ( rc )
       {
-         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
-                 rc, exitCode ) ;
-         if ( SDB_OK == rc )
-         {
-            rc = SDB_SYS ;
-         }
-         stringstream ss ;
-         ss << "failed to exec cmd \"cat /etc/hosts\",rc:"
-            << rc
-            << ",exit:"
-            << exitCode ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
          goto error ;
       }
 
-      rc = runner.read( outStr ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
-         stringstream ss ;
-         ss << "failed to read msg from cmd \"cat /etc/hosts\", rc:"
-            << rc ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
-
-      rc = _extractHosts( outStr.c_str(), builder ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract host from file:%d", rc ) ;
-         stringstream ss ;
-         ss << "failed to read msg from buf:"
-            << outStr ;
-         detail = BSON( SPT_ERR << ss.str() ) ;
-         goto error ;
-      }
+      _buildHostsResult( vecItems, builder ) ;
       rval.setBSONObj( "", builder.obj() ) ;
 
    done:
       return rc ;
    error:
+      detail = BSON( SPT_ERR << err ) ;
       goto done ;
    }
 
@@ -424,6 +389,171 @@ namespace engine
    {
       // TODO:XUJIANHUI
       return SDB_OK ;
+   }
+
+   INT32 _sptUsrSystem::_parseHostsFile( VEC_HOST_ITEM & vecItems,
+                                         string &err )
+   {
+      INT32 rc = SDB_OK ;
+      OSSFILE file ;
+      stringstream ss ;
+#if defined( _LINUX )
+      const CHAR *pFileName = "/etc/hosts" ;
+#else
+      const CHAR *pFileName = "C:\\Windows\\System32\\drivers\\etc\\hosts" ;
+#endif // _LINUX
+      BOOLEAN isOpen = FALSE ;
+      INT64 fileSize = 0 ;
+      CHAR *pBuff = NULL ;
+      INT64 hasRead = 0 ;
+
+      rc = ossGetFileSizeByName( pFileName, &fileSize ) ;
+      if ( rc )
+      {
+         ss << "get file[" << pFileName << "] size failed: " << rc ;
+         goto error ;
+      }
+      pBuff = ( CHAR* )SDB_OSS_MALLOC( fileSize + 1 ) ;
+      if ( !pBuff )
+      {
+         ss << "alloc memory[" << fileSize << "] failed" ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      rc = ossOpen( pFileName, OSS_READONLY|OSS_SHAREREAD, 0,
+                    file ) ;
+      if ( rc )
+      {
+         ss << "open file[" << pFileName << "] failed: " << rc ;
+         goto error ;
+      }
+      isOpen = TRUE ;
+
+      // read file
+      rc = ossReadN( &file, fileSize, pBuff, hasRead ) ;
+      if ( rc )
+      {
+         ss << "read file[" << pFileName << "] failed: " << rc ;
+         goto error ;
+      }
+      ossClose( file ) ;
+      isOpen = FALSE ;
+
+      rc = _extractHosts( pBuff, vecItems ) ;
+      if ( rc )
+      {
+         ss << "extract hosts failed: " << rc ;
+         goto error ;
+      }
+
+   done:
+      if ( isOpen )
+      {
+         ossClose( file ) ;
+      }
+      if ( pBuff )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+      }
+      return rc ;
+   error:
+      err = ss.str() ;
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::_extractHosts( const CHAR *buf,
+                                       VEC_HOST_ITEM &vecItems )
+   {
+      vector<string> splited ;
+      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
+      if ( splited.empty() )
+      {
+         goto done ;
+      }
+
+      for ( vector<string>::iterator itr = splited.begin() ;
+            itr != splited.end() ;
+            itr++ )
+      {
+         sptHostItem item ;
+
+         if ( itr->empty() )
+         {
+            vecItems.push_back( item ) ;
+            continue ;
+         }
+         boost::algorithm::trim( *itr ) ;
+         vector<string> columns ;
+         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+
+         for ( vector<string>::iterator itr2 = columns.begin();
+               itr2 != columns.end();
+                /// do not ++
+               )
+         {
+            if ( itr2->empty() )
+            {
+               itr2 = columns.erase( itr2 ) ;
+            }
+            else
+            {
+               ++itr2 ;
+            }
+         }
+
+         /// xxx.xxx.xxx.xxx xxxx
+         /// xxx.xxx.xxx.xxx xxxx.xxxx xxxx
+         if ( 2 != columns.size() && 3 != columns.size() )
+         {
+            item._ip = *itr ;
+            vecItems.push_back( item ) ;
+            continue ;
+         }
+
+         if ( !isValidIPV4( columns.at( 0 ).c_str() ) )
+         {
+            item._ip = *itr ;
+            vecItems.push_back( item ) ;
+            continue ;
+         }
+
+         item._ip = columns[ 0 ] ;
+         if ( columns.size() == 3 )
+         {
+            item._com = columns[ 1 ] ;
+            item._host = columns[ 2 ] ;
+         }
+         else
+         {
+            item._host = columns[ 1 ] ;
+         }
+         item._lineType = LINE_HOST ;
+         vecItems.push_back( item ) ;
+      }
+
+   done:
+      return SDB_OK ;
+   }
+
+   void _sptUsrSystem::_buildHostsResult( VEC_HOST_ITEM & vecItems,
+                                          BSONObjBuilder &builder )
+   {
+      BSONArrayBuilder arrBuilder ;
+      VEC_HOST_ITEM::iterator it = vecItems.begin() ;
+      while ( it != vecItems.end() )
+      {
+         sptHostItem &item = *it ;
+         ++it ;
+
+         if ( LINE_HOST != item._lineType )
+         {
+            continue ;
+         }
+         arrBuilder << BSON( SPT_USR_SYSTEM_IP << item._ip <<
+                             SPT_USR_SYSTEM_HOSTNAME << item._host ) ;
+      }
+      builder.append( SPT_USR_SYSTEM_HOSTS, arrBuilder.arr() ) ;
    }
 
    INT32 _sptUsrSystem::_extractHosts( const CHAR *buf,
@@ -609,7 +739,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONArrayBuilder arrBuilder ;
       vector<string> splited ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\n") ) ;
+      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
             itr++ )
@@ -621,6 +751,22 @@ namespace engine
          boost::algorithm::trim( *itr ) ;
          vector<string> columns ;
          boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+
+         for ( vector<string>::iterator itr2 = columns.begin();
+               itr2 != columns.end();
+               /// do not ++      
+               )
+         {
+            if ( itr2->empty() )
+            {
+               itr2 = columns.erase( itr2 ) ;
+            }
+            else
+            {
+               ++itr2 ;
+            }
+         }
+
          /// eg: 4  Intel(R) Xeon(R) CPU E5-2620 0 @ 2.00GHz
          if ( columns.size() < 4 )
          {
@@ -697,6 +843,22 @@ namespace engine
          boost::algorithm::trim( *itr ) ;
          vector<string> columns ;
          boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
+
+         for ( vector<string>::iterator itr2 = columns.begin();
+               itr2 != columns.end();
+               /// do not ++      
+               )
+         {
+            if ( itr2->empty() )
+            {
+               itr2 = columns.erase( itr2 ) ;
+            }
+            else
+            {
+               ++itr2 ;
+            }
+         }
+
          /// eg: 3200 AMD Athlon(tm) II X2 B26 Processor 2
          if ( columns.size() < 3 )
          {
@@ -720,10 +882,6 @@ namespace engine
 
          for ( UINT32 i = 1; i < columns.size() - 1 ; i++ )
          {
-            if ( columns.at( i ).empty() )
-            {
-               continue ;
-            }
             info << columns.at( i ) << " " ;
          }
 
@@ -953,7 +1111,7 @@ namespace engine
       string available ;
       string mount ;
       vector<string> splited ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\n") ) ;
+      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
             itr++ )
@@ -1060,7 +1218,7 @@ namespace engine
       string mount ;
       vector<string> splited ;
       INT32 lineCount = 0 ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\n") ) ;
+      boost::algorithm::split( splited, buf, boost::is_any_of("\r\n") ) ;
       for ( vector<string>::iterator itr = splited.begin();
             itr != splited.end();
             itr++ )
