@@ -629,6 +629,7 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
+      ossMemset( pBuff, 0, fileSize + 1 ) ;
 
       rc = ossOpen( HOSTS_FILE, OSS_READONLY|OSS_SHAREREAD, 0,
                     file ) ;
@@ -716,7 +717,7 @@ namespace engine
             string text = item.toString() ;
             text += OSS_NEWLINE ;
 
-            printf( "%s: %d\n", text.c_str(), text.length() ) ;
+            printf( "%s: %d\n", item.toString().c_str(), text.length() ) ;
 
             rc = ossWriteN( &file, text.c_str(), text.length() ) ;
             if ( rc )
