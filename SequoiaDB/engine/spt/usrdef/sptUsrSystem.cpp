@@ -657,6 +657,17 @@ namespace engine
          goto error ;
       }
 
+      // remove last empty
+      if ( vecItems.size() > 0 )
+      {
+         VEC_HOST_ITEM::iterator itr = vecItems.end() - 1 ;
+         sptHostItem &info = *itr ;
+         if ( info.toString().empty() )
+         {
+            vecItems.erase( itr ) ;
+         }
+      }
+
    done:
       if ( isOpen )
       {
