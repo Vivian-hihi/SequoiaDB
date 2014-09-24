@@ -469,7 +469,7 @@ INT32 ossGetOSInfo( ossOSInfo &info )
    }
 
    ossSnprintf( info._release, sizeof( info._release ) - 1,
-                "%s ( %d.%d) Build:%d",
+                "%s%d.%d Build:%d",
                 OSVerInfo.szCSDVersion, OSVerInfo.dwMajorVersion,
                 OSVerInfo.dwMinorVersion, OSVerInfo.dwBuildNumber ) ;
 
