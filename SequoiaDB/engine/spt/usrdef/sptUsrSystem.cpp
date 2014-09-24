@@ -1459,6 +1459,7 @@ namespace engine
    INT32 _sptUsrSystem::_extractNetCardSnapInfo( const CHAR *buf,
                                                  bson::BSONObjBuilder &builder )
    {
+      time_t myTime = time( NULL ) ;
       BSONArrayBuilder arrayBuilder ;
       INT32 rc = SDB_OK ;
       vector<string> vLines ;
@@ -1538,6 +1539,7 @@ namespace engine
 
       try
       {
+         builder.append( SPT_USR_SYSTEM_CALENDAR_TIME, (long long)myTime ) ;
          builder.append( SPT_USR_SYSTEM_NETCARDS, arrayBuilder.arr() ) ;
       }
       catch ( std::exception &e )
@@ -1619,6 +1621,7 @@ namespace engine
       UINT32 exitCode       = 0 ;
       PMIB_IFTABLE pTable   = NULL ;
       stringstream ss ;
+      time_t myTime ;
 
       DWORD size = sizeof( MIB_IFTABLE ) ;
       pTable     = (PMIB_IFTABLE) new BYTE[ size ] ; 
@@ -1655,6 +1658,8 @@ namespace engine
          }
       }
 
+      // get the seconds since 1970.1.1:0:0:0(Calendar Time)
+      myTime = time( NULL ) ;
       uRetCode = GetIfTable( pTable, &size, TRUE ) ;
       if ( NO_ERROR != uRetCode )
       {
@@ -1695,6 +1700,7 @@ namespace engine
             arrayBuilder.append( obj ) ;
          }
 
+         builder.append( SPT_USR_SYSTEM_CALENDAR_TIME, (long long)myTime ) ;
          builder.append( SPT_USR_SYSTEM_NETCARDS, arrayBuilder.arr() ) ;
       }
       catch ( std::exception &e )

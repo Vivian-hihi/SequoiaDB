@@ -77,6 +77,8 @@
 #define SPT_USR_SYSTEM_TX_ERRORS          "TXErrors"
 #define SPT_USR_SYSTEM_TX_DROPS           "TXDrops"
 
+#define SPT_USR_SYSTEM_CALENDAR_TIME      "CalendarTime"
+
 namespace engine
 {
    enum SPT_HOST_LINE_TYPE
