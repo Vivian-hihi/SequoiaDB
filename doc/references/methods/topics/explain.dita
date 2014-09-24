@@ -31,7 +31,7 @@
           <stentry>描述</stentry>
         </sthead>        
         <strow>
-          <stentry>FullName</stentry>
+          <stentry>Name</stentry>
           <stentry>string</stentry>
           <stentry>集合名</stentry>
         </strow>
@@ -39,12 +39,12 @@
           <stentry>ScanType</stentry>
           <stentry>string</stentry>
           <stentry>扫描方式——
-            表扫描：“TBSCAN”；
-            索引扫描：“IXSCAN”
+            表扫描：“tbscan”；
+            索引扫描：“ixscan”
           </stentry>
         </strow>
         <strow>
-          <stentry>IdxName</stentry>
+          <stentry>IndexName</stentry>
           <stentry>string</stentry>
           <stentry>使用索引的名称</stentry>
         </strow>
@@ -54,7 +54,7 @@
           <stentry>是否使用非索引排序</stentry>
         </strow>
         <strow>
-          <stentry>Node</stentry>
+          <stentry>NodeName</stentry>
           <stentry>string</stentry>
           <stentry>节点名</stentry>
         </strow>
@@ -69,7 +69,7 @@
           <stentry>查询耗时（秒）</stentry>
         </strow>
         <strow>
-          <stentry>IdxRead</stentry>
+          <stentry>IndexRead</stentry>
           <stentry>int64</stentry>
           <stentry>索引记录扫描条数</stentry>
         </strow>
@@ -79,12 +79,12 @@
           <stentry>数据记录扫描条数</stentry>
         </strow>
         <strow>
-          <stentry>UsrCpu</stentry>
+          <stentry>UserCPU</stentry>
           <stentry>float64</stentry>
           <stentry>用户态 CPU 使用时间（秒）</stentry>
         </strow>
         <strow>
-          <stentry>SysCpu</stentry>
+          <stentry>SysCPU</stentry>
           <stentry>float64</stentry>
           <stentry>内核态 CPU 使用时间（秒）</stentry>
         </strow>
@@ -106,43 +106,43 @@
           <p><codeblock>db.foo.bar.find().sort({b:1}).explain()</codeblock></p>
           返回：
           <codeblock>{
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40020",
+  "NodeName": "vmsvr2-cent-x64:40020",
   "ReturnNum": 38,
   "ElapsedTime": 0.000477,
-  "IdxRead": 0,
+  "IndexRead": 0,
   "DataRead": 38,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }
 {
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40000",
+  "NodeName": "vmsvr2-cent-x64:40000",
   "ReturnNum": 34,
-  " ElapsedTime ": 0.000415,
-  "IdxRead": 0,
+  "ElapsedTime": 0.000415,
+  "IndexRead": 0,
   "DataRead": 34,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }
 {
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40010",
+  "NodeName": "vmsvr2-cent-x64:40010",
   "ReturnNum": 28,
-  " ElapsedTime ": 0.000517,
-  "IdxRead": 0,
+  "ElapsedTime": 0.000517,
+  "IndexRead": 0,
   "DataRead": 28,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }</codeblock>
         </li>
       </ul>      
