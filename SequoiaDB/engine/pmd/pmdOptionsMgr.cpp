@@ -1422,7 +1422,7 @@ namespace engine
       rc = utilReadConfigureFile( pConfigFile, desc, vm ) ;
       if ( rc )
       {
-         if ( SDB_IO != rc || allowFileNotExist )
+         if ( SDB_IO != rc || !allowFileNotExist )
          {
             PD_LOG( PDERROR, "Failed to read config from file[%s], rc: %d",
                     pConfigFile, rc ) ;
