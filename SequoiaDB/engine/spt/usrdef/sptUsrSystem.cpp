@@ -1677,7 +1677,9 @@ namespace engine
          {
             MIB_IFROW Row = pTable->table[i];
             BSONObjBuilder innerBuilder ;
-            innerBuilder.append( SPT_USR_SYSTEM_NAME, (CHAR *)Row.bDescr ) ;
+            stringstream ss ;
+            ss << "eth" << Row.dwIndex ;
+            innerBuilder.append( SPT_USR_SYSTEM_NAME, ss.str() ) ;
             innerBuilder.append( SPT_USR_SYSTEM_RX_BYTES,
                                  ( long long )Row.dwInOctets ) ;
             innerBuilder.append( SPT_USR_SYSTEM_RX_PACKETS,
