@@ -710,20 +710,15 @@ namespace engine
       // 3. write data
       {
          VEC_HOST_ITEM::iterator it = vecItems.begin() ;
-         INT32 count = 0 ;
          while ( it != vecItems.end() )
          {
-            ++count ;
             sptHostItem &item = *it ;
             ++it ;
             string text = item.toString() ;
-            if ( count < vecItems.size() )
+            if ( !text.empty() )
             {
                text += OSS_NEWLINE ;
             }
-
-            printf( "%s: %d\n", item.toString().c_str(), text.length() ) ;
-
             rc = ossWriteN( &file, text.c_str(), text.length() ) ;
             if ( rc )
             {
