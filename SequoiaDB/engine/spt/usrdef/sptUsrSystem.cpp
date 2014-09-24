@@ -373,8 +373,53 @@ namespace engine
                                      _sptReturnVal & rval,
                                      BSONObj & detail )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string hostname ;
+      string err ;
+      VEC_HOST_ITEM vecItems ;
+      BSONObjBuilder builder ;
+
+      rc = arg.getString( 0, hostname ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         err = "hostname must config" ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         err = "hostname must be string" ;
+         goto error ;
+      }
+
+      rc = _parseHostsFile( vecItems, err ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      else
+      {
+         VEC_HOST_ITEM::iterator it = vecItems.begin() ;
+         while ( it != vecItems.end() )
+         {
+            sptHostItem &item = *it ;
+            ++it ;
+            if( item._lineType = LINE_HOST && hostname == item._host )
+            {
+               rval.setStringVal( "", item._ip.c_str() ) ;
+               goto done ;
+            }
+         }
+      }
+
+      err = "hostname not exist" ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+
+   done:
+      return rc ;
+   error:
+      detail = BSON( SPT_ERR << err ) ;
+      goto done ;
    }
 
    INT32 _sptUsrSystem::addAHostMap( const _sptArguments & arg,
@@ -556,67 +601,6 @@ namespace engine
                              SPT_USR_SYSTEM_HOSTNAME << item._host ) ;
       }
       builder.append( SPT_USR_SYSTEM_HOSTS, arrBuilder.arr() ) ;
-   }
-
-   INT32 _sptUsrSystem::_extractHosts( const CHAR *buf,
-                                       bson::BSONObjBuilder &builder )
-   {
-      INT32 rc = SDB_OK ;
-      BSONArrayBuilder arrBuilder ;
-      vector<string> splited ;
-      boost::algorithm::split( splited, buf, boost::is_any_of("\n") ) ;
-      if ( splited.empty() )
-      {
-         goto done ;
-      }
-
-      for ( vector<string>::iterator itr = splited.begin() ;
-            itr != splited.end() ;
-            itr++ )
-      {
-         if ( itr->empty() )
-         {
-            continue ;
-         }
-         boost::algorithm::trim( *itr ) ;
-         vector<string> columns ;
-         boost::algorithm::split( columns, *itr, boost::is_any_of("\t ") ) ;
-
-         for ( vector<string>::iterator itr2 = columns.begin();
-               itr2 != columns.end();
-                /// do not ++
-               )
-         {
-            if ( itr2->empty() )
-            {
-               itr2 = columns.erase( itr2 ) ;
-            }
-            else
-            {
-               ++itr2 ;
-            }
-         }
-
-         /// xxx.xxx.xxx.xxx xxxx
-         /// xxx.xxx.xxx.xxx xxxx.xxxx xxxx
-         if ( 2 != columns.size() && 3 != columns.size() )
-         {
-            continue ;
-         }
-
-         if ( !isValidIPV4( columns.at( 0 ).c_str() ) )
-         {
-            continue ;
-         }
-
-         arrBuilder << BSON( SPT_USR_SYSTEM_IP << columns.at( 0 )
-                             << SPT_USR_SYSTEM_HOSTNAME
-                             << columns.at( columns.size() - 1 ) ) ;
-      }
-
-      builder.append( SPT_USR_SYSTEM_HOSTS, arrBuilder.arr() ) ;
-   done:
-      return rc ;
    }
 
    INT32 _sptUsrSystem::getCpuInfo( const _sptArguments &arg,

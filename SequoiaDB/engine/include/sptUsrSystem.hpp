@@ -217,9 +217,6 @@ namespace engine
       static void  _buildHostsResult( VEC_HOST_ITEM &vecItems,
                                       bson::BSONObjBuilder &builder ) ;
 
-      static INT32 _extractHosts( const CHAR *buf,
-                                  bson::BSONObjBuilder &builder ) ;
-
       static INT32 _extractCpuInfo( const CHAR *buf,
                                     bson::BSONObjBuilder &builder ) ;
 
