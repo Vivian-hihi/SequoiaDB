@@ -710,12 +710,16 @@ namespace engine
       // 3. write data
       {
          VEC_HOST_ITEM::iterator it = vecItems.begin() ;
+         INT32 count = 0 ;
          while ( it != vecItems.end() )
          {
             sptHostItem &item = *it ;
             ++it ;
             string text = item.toString() ;
-            text += OSS_NEWLINE ;
+            if ( count < vecItems.size() - 1 )
+            {
+               text += OSS_NEWLINE ;
+            }
 
             printf( "%s: %d\n", item.toString().c_str(), text.length() ) ;
 
