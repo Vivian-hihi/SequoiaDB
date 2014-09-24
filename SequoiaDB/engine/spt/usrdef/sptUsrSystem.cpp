@@ -42,8 +42,10 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#else
+#include <iphlpapi.h>
+#pragma comment( lib, "IPHLPAPI.lib" )
 #endif
-
 
 using namespace bson ;
 
@@ -1178,17 +1180,68 @@ namespace engine
    INT32 _sptUsrSystem::_extractNetcards( bson::BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
-#if defined (_WINDOWS)
-      rc = SDB_SYS ;
-      goto error ;
-#elif defined (_LINUX)
+      CHAR *pBuff = NULL ;
       BSONArrayBuilder arrBuilder ;
-      BYTE buf[512] = { 0 } ;
+
+#if defined (_WINDOWS)
+      PIP_ADAPTER_INFO pAdapterInfo = NULL ;
+      DWORD dwRetVal = 0 ;
+      ULONG ulOutbufLen = sizeof( PIP_ADAPTER_INFO ) ;
+
+      pBuff = (CHAR*)SDB_OSS_MALLOC( ulOutbufLen ) ;
+      if ( !pBuff )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      pAdapterInfo = (PIP_ADAPTER_INFO)pBuff ;
+
+      // first call GetAdapterInfo to get ulOutBufLen size
+      dwRetVal = GetAdaptersInfo( pAdapterInfo, &ulOutbufLen ) ;
+      if ( dwRetVal == ERROR_BUFFER_OVERFLOW )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+         pBuff = ( CHAR* )SDB_OSS_MALLOC( ulOutbufLen ) ;
+         if ( !pBuff )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         pAdapterInfo = (PIP_ADAPTER_INFO)pBuff ;
+         dwRetVal = GetAdaptersInfo( pAdapterInfo, &ulOutbufLen ) ;
+      }
+
+      if ( dwRetVal != NO_ERROR )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else
+      {
+         PIP_ADAPTER_INFO pAdapter = pAdapterInfo ;
+         while ( pAdapter )
+         {
+            stringstream ss ;
+            ss << "eth" << pAdapter->Index ;
+            arrBuilder << BSON( SPT_USR_SYSTEM_NAME << ss.str()
+                                << SPT_USR_SYSTEM_IP <<
+                                pAdapter->IpAddressList.IpAddress.String ) ;
+            pAdapter = pAdapter->Next ;
+         }
+      }
+#elif defined (_LINUX)
       struct ifconf ifc ;
-      ifc.ifc_len = 512 ;
-      ifc.ifc_buf = ( CHAR * )buf;
       struct ifreq *ifreq = NULL ;
-      INT32 sock ;
+      INT32 sock = -1 ;
+
+      pBuff = ( CHAR* )SDB_OSS_MALLOC( 1024 ) ;
+      if ( !pBuff )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ifc.ifc_len = 1024 ;
+      ifc.ifc_buf = pBuff;
 
       if ( (sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0 )
       {
@@ -1204,7 +1257,7 @@ namespace engine
          goto error ;
       }
 
-      ifreq = ( struct ifreq * )buf ;
+      ifreq = ( struct ifreq * )pBuff ;
       for ( INT32 i = ifc.ifc_len / sizeof(struct ifreq);
             i > 0;
             --i )
@@ -1215,10 +1268,13 @@ namespace engine
                                          (ifreq->ifr_addr))->sin_addr) ) ;
          ++ifreq ;
       }
-
-      builder.append( SPT_USR_SYSTEM_NETCARDS, arrBuilder.arr() ) ;
 #endif
+      builder.append( SPT_USR_SYSTEM_NETCARDS, arrBuilder.arr() ) ;
    done:
+      if ( pBuff )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+      }
       return rc ;
    error:
       goto done ;
