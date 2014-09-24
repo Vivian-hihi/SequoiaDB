@@ -82,6 +82,8 @@
 						<echo message="It's the standalone mod..." />
 						<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
+						<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
+
 						<echo message="Tar ${test.log.path}.tar.gz..." />
 						<tar basedir="${WORKSPACE}/reports" destfile="${test.log.path}.tar.gz" compression="gzip" includes="**/*" />
 	
