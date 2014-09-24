@@ -474,6 +474,12 @@ namespace engine
          err = "ip can't be empty" ;
          goto error ;
       }
+      else if ( !isValidIPV4( ip.c_str() ) )
+      {
+         rc = SDB_INVALIDARG ;
+         err = "ip is not ipv4" ;
+         goto error ;
+      }
 
       // isReplace
       if ( arg.argc() > 2 )
