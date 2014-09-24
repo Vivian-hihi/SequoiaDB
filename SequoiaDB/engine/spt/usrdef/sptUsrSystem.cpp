@@ -713,10 +713,11 @@ namespace engine
          INT32 count = 0 ;
          while ( it != vecItems.end() )
          {
+            ++count ;
             sptHostItem &item = *it ;
             ++it ;
             string text = item.toString() ;
-            if ( count < vecItems.size() - 1 )
+            if ( count < vecItems.size() )
             {
                text += OSS_NEWLINE ;
             }
