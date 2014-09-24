@@ -219,8 +219,8 @@ namespace engine
             ossClose( file ) ;
             isOpen = FALSE ;
             ossDelete( pFile ) ;
-            ossRenamePath( tmpFile.c_str(), pFile ) ;
          }
+         ossRenamePath( tmpFile.c_str(), pFile ) ;
       }
       goto done ;
    }

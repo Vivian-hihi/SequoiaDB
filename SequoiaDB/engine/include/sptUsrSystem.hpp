@@ -211,6 +211,8 @@ namespace engine
 
       static INT32 _parseHostsFile( VEC_HOST_ITEM &vecItems, string &err ) ;
 
+      static INT32 _writeHostsFile( VEC_HOST_ITEM &vecItems, string &err ) ;
+
       static INT32 _extractHosts( const CHAR *buf,
                                   VEC_HOST_ITEM &vecItems ) ;
 

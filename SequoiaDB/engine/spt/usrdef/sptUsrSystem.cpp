@@ -377,7 +377,6 @@ namespace engine
       string hostname ;
       string err ;
       VEC_HOST_ITEM vecItems ;
-      BSONObjBuilder builder ;
 
       rc = arg.getString( 0, hostname ) ;
       if ( SDB_OUT_OF_BOUND == rc )
@@ -388,6 +387,12 @@ namespace engine
       else if ( rc )
       {
          err = "hostname must be string" ;
+         goto error ;
+      }
+      else if ( hostname.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         err = "hostname can't be empty" ;
          goto error ;
       }
 
@@ -409,11 +414,10 @@ namespace engine
                goto done ;
             }
          }
+         err = "hostname not exist" ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
-
-      err = "hostname not exist" ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
 
    done:
       return rc ;
@@ -426,17 +430,180 @@ namespace engine
                                      _sptReturnVal & rval,
                                      BSONObj & detail )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string hostname ;
+      string ip ;
+      INT32  isReplace = 1 ;
+      string err ;
+      VEC_HOST_ITEM vecItems ;
+
+      // hostname
+      rc = arg.getString( 0, hostname ) ;
+      if ( rc == SDB_OUT_OF_BOUND )
+      {
+         err = "hostname must be config" ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         err = "hostname must be string" ;
+         goto error ;
+      }
+      else if ( hostname.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         err = "hostname can't be empty" ;
+         goto error ;
+      }
+
+      // ip
+      rc = arg.getString( 1, ip ) ;
+      if ( rc == SDB_OUT_OF_BOUND )
+      {
+         err = "ip must be config" ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         err = "ip must be string" ;
+         goto error ;
+      }
+      else if ( ip.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         err = "ip can't be empty" ;
+         goto error ;
+      }
+
+      // isReplace
+      if ( arg.argc() > 2 )
+      {
+         rc = arg.getNative( 2, (void*)&isReplace, SPT_NATIVE_INT32 ) ;
+         if ( rc )
+         {
+            err = "isReplace must be BOOLEAN" ;
+            goto error ;
+        }
+      }
+
+      rc = _parseHostsFile( vecItems, err ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      else
+      {
+         VEC_HOST_ITEM::iterator it = vecItems.begin() ;
+         while ( it != vecItems.end() )
+         {
+            sptHostItem &item = *it ;
+            ++it ;
+            if( item._lineType = LINE_HOST && hostname == item._host )
+            {
+               if ( item._ip == ip )
+               {
+                  goto done ;
+               }
+               else if ( !isReplace )
+               {
+                  err = "hostname already exist" ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+            }
+         }
+         sptHostItem info ;
+         info._lineType = LINE_HOST ;
+         info._host = hostname ;
+         info._ip = ip ;
+         vecItems.push_back( info ) ;
+         // write
+         rc = _writeHostsFile( vecItems, err ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      detail = BSON( SPT_ERR << err ) ;
+      goto done ;
    }
 
    INT32 _sptUsrSystem::delAHostMap( const _sptArguments & arg,
                                      _sptReturnVal & rval,
                                      BSONObj & detail )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      string hostname ;
+      string err ;
+      VEC_HOST_ITEM vecItems ;
+
+      // hostname
+      rc = arg.getString( 0, hostname ) ;
+      if ( rc == SDB_OUT_OF_BOUND )
+      {
+         err = "hostname must be config" ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         err = "hostname must be string" ;
+         goto error ;
+      }
+      else if ( hostname.empty() )
+      {
+         rc = SDB_INVALIDARG ;
+         err = "hostname can't be empty" ;
+         goto error ;
+      }
+
+      rc = _parseHostsFile( vecItems, err ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      else
+      {
+         VEC_HOST_ITEM::iterator it = vecItems.begin() ;
+         BOOLEAN hasDel = FALSE ;
+         while ( it != vecItems.end() )
+         {
+            sptHostItem &item = *it ;
+            if( item._lineType = LINE_HOST && hostname == item._host )
+            {
+               // del
+               it = vecItems.erase( it ) ;
+               hasDel = TRUE ;
+               continue ;
+            }
+            ++it ;
+         }
+         // write
+         if ( hasDel )
+         {
+            rc = _writeHostsFile( vecItems, err ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      detail = BSON( SPT_ERR << err ) ;
+      goto done ;
    }
+
+#if defined( _LINUX )
+   #define HOSTS_FILE      "/etc/hosts"
+#else
+   #define HOSTS_FILE      "C:\\Windows\\System32\\drivers\\etc\\hosts"
+#endif // _LINUX
 
    INT32 _sptUsrSystem::_parseHostsFile( VEC_HOST_ITEM & vecItems,
                                          string &err )
@@ -444,20 +611,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       OSSFILE file ;
       stringstream ss ;
-#if defined( _LINUX )
-      const CHAR *pFileName = "/etc/hosts" ;
-#else
-      const CHAR *pFileName = "C:\\Windows\\System32\\drivers\\etc\\hosts" ;
-#endif // _LINUX
       BOOLEAN isOpen = FALSE ;
       INT64 fileSize = 0 ;
       CHAR *pBuff = NULL ;
       INT64 hasRead = 0 ;
 
-      rc = ossGetFileSizeByName( pFileName, &fileSize ) ;
+      rc = ossGetFileSizeByName( HOSTS_FILE, &fileSize ) ;
       if ( rc )
       {
-         ss << "get file[" << pFileName << "] size failed: " << rc ;
+         ss << "get file[" << HOSTS_FILE << "] size failed: " << rc ;
          goto error ;
       }
       pBuff = ( CHAR* )SDB_OSS_MALLOC( fileSize + 1 ) ;
@@ -468,11 +630,11 @@ namespace engine
          goto error ;
       }
 
-      rc = ossOpen( pFileName, OSS_READONLY|OSS_SHAREREAD, 0,
+      rc = ossOpen( HOSTS_FILE, OSS_READONLY|OSS_SHAREREAD, 0,
                     file ) ;
       if ( rc )
       {
-         ss << "open file[" << pFileName << "] failed: " << rc ;
+         ss << "open file[" << HOSTS_FILE << "] failed: " << rc ;
          goto error ;
       }
       isOpen = TRUE ;
@@ -481,7 +643,7 @@ namespace engine
       rc = ossReadN( &file, fileSize, pBuff, hasRead ) ;
       if ( rc )
       {
-         ss << "read file[" << pFileName << "] failed: " << rc ;
+         ss << "read file[" << HOSTS_FILE << "] failed: " << rc ;
          goto error ;
       }
       ossClose( file ) ;
@@ -505,6 +667,88 @@ namespace engine
       }
       return rc ;
    error:
+      err = ss.str() ;
+      goto done ;
+   }
+
+   INT32 _sptUsrSystem::_writeHostsFile( VEC_HOST_ITEM & vecItems,
+                                         string & err )
+   {
+      INT32 rc = SDB_OK ;
+      std::string tmpFile = HOSTS_FILE ;
+      tmpFile += ".tmp" ;
+      OSSFILE file ;
+      BOOLEAN isOpen = FALSE ;
+      BOOLEAN isBak = FALSE ;
+      stringstream ss ;
+
+      if ( SDB_OK == ossAccess( tmpFile.c_str() ) )
+      {
+         ossDelete( tmpFile.c_str() ) ;
+      }
+
+      // 1. first back up the file
+      if ( SDB_OK == ossAccess( HOSTS_FILE ) )
+      {
+         if ( SDB_OK == ossRenamePath( HOSTS_FILE, tmpFile.c_str() ) )
+         {
+            isBak = TRUE ;
+         }
+      }
+
+      // 2. Create the file
+      rc = ossOpen ( HOSTS_FILE, OSS_READWRITE|OSS_SHAREWRITE|OSS_REPLACE,
+                     OSS_RWXU, file ) ;
+      if ( rc )
+      {
+         ss << "open file[" <<  HOSTS_FILE << "] failed: " << rc ;
+         goto error ;
+      }
+      isOpen = TRUE ;
+
+      // 3. write data
+      {
+         VEC_HOST_ITEM::iterator it = vecItems.begin() ;
+         while ( it != vecItems.end() )
+         {
+            sptHostItem &item = *it ;
+            ++it ;
+            string text = item.toString() ;
+            text += OSS_NEWLINE ;
+
+            rc = ossWriteN( &file, text.c_str(), text.length() ) ;
+            if ( rc )
+            {
+               ss << "write context[" << text << "] to file[" << HOSTS_FILE
+                  << "] failed: " << rc ;
+               goto error ;
+            }
+         }
+      }
+
+      // 4. remove tmp
+      if ( SDB_OK == ossAccess( tmpFile.c_str() ) )
+      {
+         ossDelete( tmpFile.c_str() ) ;
+      }
+
+   done:
+      if ( isOpen )
+      {
+         ossClose( file ) ;
+      }
+      return rc ;
+   error:
+      if ( isBak )
+      {
+         if ( isOpen )
+         {
+            ossClose( file ) ;
+            isOpen = FALSE ;
+            ossDelete( HOSTS_FILE ) ;
+         }
+         ossRenamePath( tmpFile.c_str(), HOSTS_FILE ) ;
+      }
       err = ss.str() ;
       goto done ;
    }
