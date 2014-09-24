@@ -498,7 +498,7 @@ namespace engine
          {
             sptHostItem &item = *it ;
             ++it ;
-            if( item._lineType = LINE_HOST && hostname == item._host )
+            if( item._lineType == LINE_HOST && hostname == item._host )
             {
                if ( item._ip == ip )
                {
@@ -572,7 +572,7 @@ namespace engine
          while ( it != vecItems.end() )
          {
             sptHostItem &item = *it ;
-            if( item._lineType = LINE_HOST && hostname == item._host )
+            if( item._lineType == LINE_HOST && hostname == item._host )
             {
                // del
                it = vecItems.erase( it ) ;
