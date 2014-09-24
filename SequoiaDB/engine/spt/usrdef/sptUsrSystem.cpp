@@ -1624,7 +1624,7 @@ namespace engine
       time_t myTime ;
 
       DWORD size = sizeof( MIB_IFTABLE ) ;
-      pTable     = (PMIB_IFTABLE) new BYTE[ size ] ; 
+      pTable     = (PMIB_IFTABLE) SDB_OSS_MALLOC( size ) ; 
       if ( NULL == pTable )
       {
          rc = SDB_OOM ;
@@ -1646,8 +1646,8 @@ namespace engine
 
       if ( uRetCode == ERROR_INSUFFICIENT_BUFFER )
       {
-         delete pTable ;
-         pTable = (PMIB_IFTABLE) new BYTE[size] ;
+         SDB_OSS_FREE( pTable ) ;
+         pTable = (PMIB_IFTABLE) SDB_OSS_MALLOC( size ) ;
          if ( NULL == pTable )
          {
             rc = SDB_OOM ;
@@ -1715,7 +1715,7 @@ namespace engine
    done:
       if ( NULL != pTable )
       {
-         delete pTable ;
+         SDB_OSS_FREE( pTable ) ;
       }
       return rc ;
    error:
