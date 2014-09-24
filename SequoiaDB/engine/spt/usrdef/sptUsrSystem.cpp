@@ -494,6 +494,7 @@ namespace engine
       else
       {
          VEC_HOST_ITEM::iterator it = vecItems.begin() ;
+         BOOLEAN hasMod = FALSE ;
          while ( it != vecItems.end() )
          {
             sptHostItem &item = *it ;
@@ -510,13 +511,18 @@ namespace engine
                   rc = SDB_INVALIDARG ;
                   goto error ;
                }
+               item._ip = ip ;
+               hasMod = TRUE ;
             }
          }
-         sptHostItem info ;
-         info._lineType = LINE_HOST ;
-         info._host = hostname ;
-         info._ip = ip ;
-         vecItems.push_back( info ) ;
+         if ( !hasMod )
+         {
+            sptHostItem info ;
+            info._lineType = LINE_HOST ;
+            info._host = hostname ;
+            info._ip = ip ;
+            vecItems.push_back( info ) ;
+         }
          // write
          rc = _writeHostsFile( vecItems, err ) ;
          if ( rc )
