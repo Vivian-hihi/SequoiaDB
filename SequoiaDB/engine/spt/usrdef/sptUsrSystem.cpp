@@ -710,12 +710,14 @@ namespace engine
       // 3. write data
       {
          VEC_HOST_ITEM::iterator it = vecItems.begin() ;
+         UINT32 count = 0 ;
          while ( it != vecItems.end() )
          {
+            ++count ;
             sptHostItem &item = *it ;
             ++it ;
             string text = item.toString() ;
-            if ( !text.empty() )
+            if ( !text.empty() || count < vecItems.size() )
             {
                text += OSS_NEWLINE ;
             }
