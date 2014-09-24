@@ -67,6 +67,16 @@
 #define SPT_USR_SYSTEM_USABLE             "Usable"
 #define SPT_USR_SYSTEM_UNIT               "Unit"
 
+#define SPT_USR_SYSTEM_RX_PACKETS         "RXPackets"
+#define SPT_USR_SYSTEM_RX_BYTES           "RXBytes"
+#define SPT_USR_SYSTEM_RX_ERRORS          "RXErrors"
+#define SPT_USR_SYSTEM_RX_DROPS           "RXDrops"
+
+#define SPT_USR_SYSTEM_TX_PACKETS         "TXPackets"
+#define SPT_USR_SYSTEM_TX_BYTES           "TXBytes"
+#define SPT_USR_SYSTEM_TX_ERRORS          "TXErrors"
+#define SPT_USR_SYSTEM_TX_DROPS           "TXDrops"
+
 namespace engine
 {
    enum SPT_HOST_LINE_TYPE
@@ -173,9 +183,9 @@ namespace engine
                                    _sptReturnVal &rval,
                                    bson::BSONObj &detail ) ;
 
-      static INT32 snapshotNetFlow( const _sptArguments &arg,
-                                    _sptReturnVal &rval,
-                                    bson::BSONObj &detail ) ;
+      static INT32 snapshotNetcardInfo( const _sptArguments &arg,
+                                        _sptReturnVal &rval,
+                                        bson::BSONObj &detail ) ;
 
       static INT32 getIpTablesInfo( const _sptArguments &arg,
                                     _sptReturnVal &rval,
@@ -218,6 +228,11 @@ namespace engine
                                      bson::BSONObjBuilder &builder ) ;
 
       static INT32 _extractNetcards( bson::BSONObjBuilder &builder ) ;
+
+      static INT32 _snapshotNetcardInfo( bson::BSONObjBuilder &builder, 
+                                         bson::BSONObj &detail ) ;
+      static INT32 _extractNetCardSnapInfo( const CHAR *buf,
+                                            bson::BSONObjBuilder &builder ) ;
    } ;
    typedef class _sptUsrSystem sptUsrSystem ;
 }

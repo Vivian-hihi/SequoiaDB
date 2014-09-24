@@ -68,6 +68,7 @@ namespace engine
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getDiskInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, snapshotDiskInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getNetcardInfo )
+   JS_STATIC_FUNC_DEFINE( _sptUsrSystem, snapshotNetcardInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getIpTablesInfo )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, getHostName )
    JS_STATIC_FUNC_DEFINE( _sptUsrSystem, sniffPort )
@@ -88,6 +89,7 @@ namespace engine
       JS_ADD_STATIC_FUNC( "getDiskInfo", getDiskInfo )
       JS_ADD_STATIC_FUNC( "snapshotDiskInfo", snapshotDiskInfo )
       JS_ADD_STATIC_FUNC( "getNetcardInfo", getNetcardInfo )
+      JS_ADD_STATIC_FUNC( "snapshotNetcardInfo", snapshotNetcardInfo )
       JS_ADD_STATIC_FUNC( "getIpTablesInfo", getIpTablesInfo )
       JS_ADD_STATIC_FUNC( "getHostName", getHostName )
       JS_ADD_STATIC_FUNC( "sniffPort", sniffPort )
@@ -1328,13 +1330,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptUsrSystem::snapshotNetFlow( const _sptArguments &arg,
-                                         _sptReturnVal &rval,
-                                         bson::BSONObj &detail )
-   {
-      return SDB_OK ;
-   }
-
    INT32 _sptUsrSystem::_extractNetcards( bson::BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
@@ -1460,6 +1455,299 @@ namespace engine
       goto done ;
    }
 
+   #if defined (_LINUX)
+   INT32 _sptUsrSystem::_extractNetCardSnapInfo( const CHAR *buf,
+                                                 bson::BSONObjBuilder &builder )
+   {
+      BSONArrayBuilder arrayBuilder ;
+      INT32 rc = SDB_OK ;
+      vector<string> vLines ;
+      boost::algorithm::split( vLines, buf, boost::is_any_of("\n") ) ;
+      vector<string>::iterator iterLine = vLines.begin() ;
+      while ( iterLine != vLines.end() )
+      {
+         if ( !iterLine->empty() )
+         {
+            const CHAR *oneLine = iterLine->c_str() ;
+            vector<string> vColumns ;
+            boost::algorithm::split( vColumns, oneLine, 
+                                     boost::is_any_of("\t ") ) ;
+            vector<string>::iterator iterColumn = vColumns.begin() ;
+            while ( iterColumn != vColumns.end() )
+            {
+               if ( iterColumn->empty() )
+               {
+                  vColumns.erase( iterColumn++ ) ;
+               }
+               else
+               {
+                  iterColumn++ ;
+               }
+            }
+
+            if ( vColumns.size() < 9 )
+            {
+               rc = SDB_SYS ;
+               goto error ;
+            }
+      //card rx_byte   rx_packet rx_err rx_drop tx_byte tx_packet tx_err tx_drop
+      //lo   14755559460 44957591  0      0       14755559460 44957591 0 0
+      //eth1 4334054313  11529654  0      0       9691246348  3513633  0 0
+            try
+            {
+               BSONObjBuilder innerBuilder ;
+               innerBuilder.append( SPT_USR_SYSTEM_NAME,
+                             boost::lexical_cast<string>( vColumns.at( 0 ) ) ) ;
+               innerBuilder.append( SPT_USR_SYSTEM_RX_BYTES,
+                            ( long long )boost::lexical_cast<UINT64>( 
+                                                         vColumns.at( 1 ) ) ) ;
+               innerBuilder.append( SPT_USR_SYSTEM_RX_PACKETS,
+                            ( long long )boost::lexical_cast<UINT64>( 
+                                                         vColumns.at( 2 ) ) ) ;
+               innerBuilder.append( SPT_USR_SYSTEM_RX_ERRORS,
+                            ( long long )boost::lexical_cast<UINT64>( 
+                                                         vColumns.at( 3 ) ) ) ;
+               innerBuilder.append( SPT_USR_SYSTEM_RX_DROPS,
+                            ( long long )boost::lexical_cast<UINT64>( 
+                                                         vColumns.at( 4 ) ) ) ;
+               innerBuilder.append( SPT_USR_SYSTEM_TX_BYTES,
+                            ( long long )boost::lexical_cast<UINT64>( 
+                                                         vColumns.at( 5 ) ) ) ;
+               innerBuilder.append( SPT_USR_SYSTEM_TX_PACKETS,
+                            ( long long )boost::lexical_cast<UINT64>(
+                                                         vColumns.at( 6 ) ) ) ;
+               innerBuilder.append( SPT_USR_SYSTEM_TX_ERRORS,
+                            ( long long )boost::lexical_cast<UINT64>( 
+                                                         vColumns.at( 7 ) ) ) ;
+               innerBuilder.append( SPT_USR_SYSTEM_TX_DROPS,
+                            ( long long )boost::lexical_cast<UINT64>( 
+                                                         vColumns.at( 8 ) ) ) ;
+               BSONObj obj = innerBuilder.obj() ;
+               arrayBuilder.append( obj ) ;
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+         }
+
+         iterLine++ ;
+      }
+
+      try
+      {
+         builder.append( SPT_USR_SYSTEM_NETCARDS, arrayBuilder.arr() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+#else
+   INT32 _sptUsrSystem::_extractNetCardSnapInfo( const CHAR *buf,
+                                                 bson::BSONObjBuilder &builder )
+   {
+      return SDB_INVALIDARG ;
+   }
+#endif
+
+#if defined (_LINUX)
+   INT32 _sptUsrSystem::_snapshotNetcardInfo( bson::BSONObjBuilder &builder, 
+                                              bson::BSONObj &detail )
+   {
+      INT32 rc        = SDB_OK ;
+      UINT32 exitCode = 0 ;
+      _sptCmdRunner runner ;
+      string outStr ;
+      stringstream ss ;
+      const CHAR *netFlowCMD = "cat /proc/net/dev | grep -v Receive |"
+                               " grep -v bytes | sed 's/:/ /' |"
+                               " awk '{print $1,$2,$3,$4,$5,$10,$11,$12,$13}'" ;
+
+      rc = runner.exec( netFlowCMD, exitCode ) ;
+      if ( SDB_OK != rc || SDB_OK != exitCode )
+      {
+         PD_LOG( PDERROR, "failed to exec cmd, rc:%d, exit:%d",
+                 rc, exitCode ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = SDB_SYS ;
+         }
+         ss << "failed to exec cmd \"" << netFlowCMD << "\",rc:"
+            << rc << ",exit:" << exitCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      rc = runner.read( outStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read msg from cmd runner:%d", rc ) ;
+         stringstream ss ;
+         ss << "failed to read msg from cmd \"df\", rc:" << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      rc = _extractNetCardSnapInfo( outStr.c_str(), builder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract netcard snapshotinfo:%d", rc ) ;
+         ss << "failed to extract netcard snapshotinfo from buf:" << outStr ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+#else
+   INT32 _sptUsrSystem::_snapshotNetcardInfo( bson::BSONObjBuilder &builder, 
+                                              bson::BSONObj &detail )
+   {
+      INT32 rc              = SDB_OK ;
+      UINT32 exitCode       = 0 ;
+      PMIB_IFTABLE pTable   = NULL ;
+      stringstream ss ;
+
+      DWORD size = sizeof( MIB_IFTABLE ) ;
+      pTable     = (PMIB_IFTABLE) new BYTE[ size ] ; 
+      if ( NULL == pTable )
+      {
+         rc = SDB_OOM ;
+         PD_LOG ( PDERROR, "new MIB_IFTABLE failed:rc=%d", rc ) ;
+         ss << "new MIB_IFTABLE failed:rc=" << rc ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      ULONG uRetCode = GetIfTable( pTable, &size, TRUE ) ;
+      if ( uRetCode == ERROR_NOT_SUPPORTED )
+      {
+         PD_LOG ( PDERROR, "GetIfTable failed:rc=%u", uRetCode ) ;
+         rc = SDB_INVALIDARG ;
+         ss << "GetIfTable failed:rc=" << uRetCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      if ( uRetCode == ERROR_INSUFFICIENT_BUFFER )
+      {
+         delete pTable ;
+         pTable = (PMIB_IFTABLE) new BYTE[size] ;
+         if ( NULL == pTable )
+         {
+            rc = SDB_OOM ;
+            PD_LOG ( PDERROR, "new MIB_IFTABLE failed:rc=%d", rc ) ;
+            ss << "new MIB_IFTABLE failed:rc=" << rc ;
+            detail = BSON( SPT_ERR << ss.str() ) ;
+            goto error ;
+         }
+      }
+
+      uRetCode = GetIfTable( pTable, &size, TRUE ) ;
+      if ( NO_ERROR != uRetCode )
+      {
+         PD_LOG ( PDERROR, "GetIfTable failed:rc=%u", uRetCode ) ;
+         rc = SDB_INVALIDARG ;
+         ss << "GetIfTable failed:rc=" << uRetCode ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONArrayBuilder arrayBuilder ;
+         for ( UINT i = 0 ; i < pTable->dwNumEntries ; i++ )
+         {
+            MIB_IFROW Row = pTable->table[i];
+            BSONObjBuilder innerBuilder ;
+            innerBuilder.append( SPT_USR_SYSTEM_NAME, (CHAR *)Row.bDescr ) ;
+            innerBuilder.append( SPT_USR_SYSTEM_RX_BYTES,
+                                 ( long long )Row.dwInOctets ) ;
+            innerBuilder.append( SPT_USR_SYSTEM_RX_PACKETS,
+                          ( long long )
+                                 ( Row.dwInUcastPkts + Row.dwInNUcastPkts ) ) ;
+            innerBuilder.append( SPT_USR_SYSTEM_RX_ERRORS,
+                                 ( long long )Row.dwInErrors ) ;
+            innerBuilder.append( SPT_USR_SYSTEM_RX_DROPS,
+                                 ( long long )Row.dwInDiscards ) ;
+            innerBuilder.append( SPT_USR_SYSTEM_TX_BYTES,
+                                 ( long long )Row.dwOutOctets ) ;
+            innerBuilder.append( SPT_USR_SYSTEM_TX_PACKETS,
+                          ( long long ) 
+                                ( Row.dwOutUcastPkts + Row.dwOutNUcastPkts ) ) ;
+            innerBuilder.append( SPT_USR_SYSTEM_TX_ERRORS,
+                                 ( long long )Row.dwOutErrors ) ;
+            innerBuilder.append( SPT_USR_SYSTEM_TX_DROPS,
+                                 ( long long )Row.dwOutDiscards ) ;
+            BSONObj obj = innerBuilder.obj() ;
+            arrayBuilder.append( obj ) ;
+         }
+
+         builder.append( SPT_USR_SYSTEM_NETCARDS, arrayBuilder.arr() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      
+   done:
+      if ( NULL != pTable )
+      {
+         delete pTable ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+#endif
+
+   INT32 _sptUsrSystem::snapshotNetcardInfo( const _sptArguments &arg,
+                                             _sptReturnVal &rval,
+                                             bson::BSONObj &detail )
+   {
+      bson::BSONObjBuilder builder ;
+      INT32 rc = SDB_OK ;
+      stringstream ss ;
+
+      if ( 0 < arg.argc() )
+      {
+         PD_LOG ( PDERROR, "paramenter can't be greater then 0" ) ;
+         rc = SDB_INVALIDARG ;
+         ss << "paramenter can't be greater then 0" ;
+         detail = BSON( SPT_ERR << ss.str() ) ;
+         goto error ;
+      }
+
+      rc = _snapshotNetcardInfo( builder, detail ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_snapshotNetcardInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rval.setBSONObj( "", builder.obj() ) ;
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrSystem::getHostName( const _sptArguments &arg,
                                      _sptReturnVal &rval,
                                      bson::BSONObj &detail )
@@ -1567,6 +1855,7 @@ namespace engine
          << " System.getDiskInfo()" << endl
          << " System.snapshotDiskInfo()" << endl
          << " System.getNetcardInfo()" << endl
+         << " System.snapshotNetcardInfo()" << endl
          << " System.getIpTablesInfo()" << endl
          << " System.getHostName()" << endl
          << " System.sniffPort( port )" << endl ;

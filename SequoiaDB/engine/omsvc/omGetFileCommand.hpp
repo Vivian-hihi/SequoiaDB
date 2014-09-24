@@ -257,9 +257,10 @@ namespace engine
          void            _updateUninstallFlag( 
                                             list<omScanHostInfo> &hostInfoList, 
                                             const string &ip, 
+                                            const string &agentPort,
                                             bool isNeedUninstall ) ;
-         INT32           _installAgent( list<omScanHostInfo> &hostInfoList,
-                                     list<omScanHostInfo> &needUninstallHost ) ;
+         INT32           _installAgent( list<omScanHostInfo> &hostInfoList, 
+                                        list<BSONObj> &hostResult ) ;
          INT32           _addCheckHostReq( omManager *om,
                                           pmdRemoteSession *remoteSession,
                                           list<omScanHostInfo> &hostInfoList ) ;

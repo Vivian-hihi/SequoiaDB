@@ -1230,7 +1230,7 @@ namespace engine
       if ( SDB_OK != flag )
       {
          rc = flag ;
-         _errorDetail = bsonResponse.getStringField( OP_ERR_DETAIL ) ;
+         _errorDetail = bsonResponse.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
@@ -1373,7 +1373,7 @@ namespace engine
       if ( SDB_OK != flag )
       {
          rc = flag ;
-         _errorDetail = result.getStringField( OP_ERR_DETAIL ) ;
+         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          goto error ;
@@ -1425,6 +1425,7 @@ namespace engine
    void omCheckHostCommand::_updateUninstallFlag( 
                                             list<omScanHostInfo> &hostInfoList, 
                                             const string &ip, 
+                                            const string &agentPort,
                                             bool isNeedUninstall )
    {
       list<omScanHostInfo>::iterator iter = hostInfoList.begin() ;
@@ -1432,6 +1433,11 @@ namespace engine
       {
          if ( iter->ip == ip )
          {
+            if ( agentPort != "" )
+            {
+               iter->agentPort       = agentPort ;
+            }
+
             iter->isNeedUninstall = isNeedUninstall ;
             return ;
          }
@@ -1440,7 +1446,7 @@ namespace engine
    }
 
    INT32 omCheckHostCommand::_installAgent( list<omScanHostInfo> &hostInfoList, 
-                                       list<omScanHostInfo> &needUninstallHost )
+                                            list<BSONObj> &hostResult )
    {
       INT32 rc          = SDB_OK ;
       SINT32 flag       = SDB_OK ;
@@ -1504,13 +1510,12 @@ namespace engine
       if ( SDB_OK != flag )
       {
          rc = flag ;
-         _errorDetail = result.getStringField( OP_ERR_DETAIL ) ;
+         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
-      needUninstallHost.assign( hostInfoList.begin(), hostInfoList.end() );
       hostResults = result.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       {
          BSONObjIterator iter( hostResults ) ;
@@ -1524,14 +1529,15 @@ namespace engine
             isNeedUninstall = oneResult.getBoolField( 
                                                  OM_BSON_FIELD_NEEDUNINSTALL ) ;
             string ip = oneResult.getStringField( OM_BSON_FIELD_HOST_IP ) ;
+            string port = oneResult.getStringField( OM_BSON_FIELD_AGENT_PORT ) ;
             if ( SDB_OK != rc )
             {
-
-               _eraseFromListByIP( needUninstallHost, ip ) ;
+               hostResult.push_back( oneResult ) ;
+               _eraseFromListByIP( hostInfoList, ip ) ;
             }
             else
             {
-               _updateUninstallFlag( needUninstallHost, ip, isNeedUninstall ) ;
+               _updateUninstallFlag( hostInfoList, ip, port, isNeedUninstall ) ;
             }
          }
       }
@@ -1714,7 +1720,7 @@ namespace engine
             rc = flag ;
             if ( objVec.size() > 0 )
             {
-               _errorDetail = objVec[0].getStringField( OP_ERR_DETAIL ) ;
+               _errorDetail = objVec[0].getStringField( OM_REST_RES_DETAIL ) ;
             }
             PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                     _errorDetail.c_str(), rc ) ;
@@ -1963,16 +1969,16 @@ namespace engine
                                        list<BSONObj> &hostResult )
    {
       INT32 rc = SDB_OK ;
-      list<omScanHostInfo> needUninstallHost ;
-
+      list<omScanHostInfo> agentInstalledInfo ;
       PD_LOG( PDEVENT, "start to _installAgent" ) ;
-      rc = _installAgent( hostInfoList, needUninstallHost ) ;
+      rc = _installAgent( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG(PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
          goto error ;
       }
 
+      agentInstalledInfo.assign( hostInfoList.begin(), hostInfoList.end() ) ;
       PD_LOG( PDEVENT, "start to _checkHostEnv" ) ;
       rc = _checkHostEnv( hostInfoList, hostResult ) ;
       if ( SDB_OK != rc )
@@ -1983,7 +1989,7 @@ namespace engine
 
    done:
       PD_LOG( PDEVENT, "start to _uninstallAgent" ) ;
-      _uninstallAgent( needUninstallHost ) ;
+      _uninstallAgent( agentInstalledInfo ) ;
       return rc ;
    error:
       goto done ;
@@ -2517,7 +2523,7 @@ namespace engine
       if ( SDB_OK != flag )
       {
          rc = flag ;
-         _errorDetail = result.getStringField( OP_ERR_DETAIL ) ;
+         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          goto error ;
@@ -2531,7 +2537,7 @@ namespace engine
          PD_LOG( PDERROR, "%s:type=%d", _errorDetail.c_str(), element.type() ) ;
          goto error ;
       }
-
+      //TODO: transation is not available anymore
       transationID = result.getIntField( OM_REST_RES_RETCODE ) ;
 
    done:
@@ -4466,7 +4472,7 @@ namespace engine
       if ( SDB_OK != flag )
       {
          rc = flag ;
-         _errorDetail = result.getStringField( OP_ERR_DETAIL ) ;
+         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          goto error ;
@@ -5965,7 +5971,7 @@ namespace engine
       if ( SDB_OK != flag )
       {
          rc = flag ;
-         _errorDetail = bsonResponse.getStringField( OP_ERR_DETAIL ) ;
+         _errorDetail = bsonResponse.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          goto error ;
@@ -6188,7 +6194,7 @@ namespace engine
       {
          rc = flag ;
          _errorDetail = string( "agent process failed:" ) 
-                        + bsonResponse.getStringField( OP_ERR_DETAIL ) ;
+                        + bsonResponse.getStringField( OM_REST_RES_DETAIL ) ;
          PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                  _errorDetail.c_str(), rc ) ;
          goto error ;
@@ -6740,7 +6746,7 @@ namespace engine
             rc = flag ;
             if ( objVec.size() > 0 )
             {
-               _errorDetail = objVec[0].getStringField( OP_ERR_DETAIL ) ;
+               _errorDetail = objVec[0].getStringField( OM_REST_RES_DETAIL ) ;
             }
             PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                     _errorDetail.c_str(), rc ) ;

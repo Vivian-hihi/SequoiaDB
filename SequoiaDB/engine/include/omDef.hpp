@@ -181,8 +181,9 @@ namespace engine
                                              "<meta http-equiv=\"refresh\" content=\"0;url="\
                                              OM_REST_INDEX_HTML"\"></head></html>"
 
+   //#define  OM_REST_RES_RETCODE              OP_ERRNOFIELD
    #define  OM_REST_RES_RETCODE              "Rc"
-   #define  OM_REST_RES_DETAIL               "Detail"
+   #define  OM_REST_RES_DETAIL               OP_ERR_DETAIL
    #define  OM_REST_RES_LOCAL                "local"
 
    // *********************om command list****************************
