@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>cousor.explain</apiname>()
+      <p></p><apiname>cousor.explain</apiname>(<parmname>[options]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -20,16 +20,20 @@
       <p>Return the access plan of the current cursor.</p>
       <parml>
         <plentry>
-          <pt>FullName (string)</pt>
+          <pt>options (Json Object)</pt>
+          <pd>访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行
+            <parml>
+        <plentry>
+          <pt>Name (string)</pt>
           <pd>Collection Name.</pd>
         </plentry>
         <plentry>
           <pt>ScanType (string)</pt>
-          <pd>Scanning Type: TableScan: "TBSCAN"; IndexScan:"IXSCAN"
+          <pd>Scanning Type: TableScan: "tbscan"; IndexScan:"ixscan"
           </pd>
         </plentry>
         <plentry>
-          <pt>IdxName (string)</pt>
+          <pt>IndexName (string)</pt>
           <pd>Index name.</pd>
         </plentry>
         <plentry>
@@ -37,7 +41,7 @@
           <pd>Whether use external sort or not.</pd>
         </plentry>
         <plentry>
-          <pt>Node (string)</pt>
+          <pt>NodeName (string)</pt>
           <pd>Node Name.</pd>
         </plentry>
         <plentry>
@@ -49,7 +53,7 @@
           <pd>Elapsed Time(seconds).</pd>
         </plentry>
         <plentry>
-          <pt>IdxRead (int64)</pt>
+          <pt>IndexRead (int64)</pt>
           <pd>Number of Index read.</pd>
         </plentry>
         <plentry>
@@ -57,16 +61,19 @@
           <pd>Number of data read.</pd>
         </plentry>
         <plentry>
-          <pt>UsrCpu (float64)</pt>
+          <pt>UserCPU (float64)</pt>
           <pd>Time used by cpu in user mode(seconds).</pd>
         </plentry>
         <plentry>
-          <pt>SysCpu (float64)</pt>
+          <pt>SysCPU (float64)</pt>
           <pd>Time used by cpu in kernel mode(seconds).</pd>
         </plentry>
         <plentry>
           <pt>SubCollections (Json Array)</pt>
           <pd>The access plan of each sub-collections of the vertical-partitioning collection.</pd>
+        </plentry>
+      </parml>
+          </pd>
         </plentry>
       </parml>
       <note>
@@ -79,43 +86,43 @@
       <codeblock>db.foo.bar.find().sort({b:1}).explain()</codeblock>
       <p>Return:</p>
       <codeblock>{
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40020",
+  "NodeName": "vmsvr2-cent-x64:40020",
   "ReturnNum": 38,
   "ElapsedTime": 0.000477,
-  "IdxRead": 0,
+  "IndexRead": 0,
   "DataRead": 38,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }
 {
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40000",
+  "NodeName": "vmsvr2-cent-x64:40000",
   "ReturnNum": 34,
-  " ElapsedTime ": 0.000415,
-  "IdxRead": 0,
+  "ElapsedTime": 0.000415,
+  "IndexRead": 0,
   "DataRead": 34,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }
 {
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40010",
+  "NodeName": "vmsvr2-cent-x64:40010",
   "ReturnNum": 28,
-  " ElapsedTime ": 0.000517,
-  "IdxRead": 0,
+  "ElapsedTime": 0.000517,
+  "IndexRead": 0,
   "DataRead": 28,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }</codeblock>
     </section>
   </body>

@@ -15,7 +15,7 @@ explain - Return the access plan of the current cursor.
 .sp 2
 
 .sp 2
-cousor.explain()
+cousor.explain(\fB[options]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -27,54 +27,62 @@ Cursor
 .sp 2
 Return the access plan of the current cursor.
 .sp 2
-\fBFullName (string)\fR
+\fBoptions (Json Object)\fR
 .br
-       Collection Name.
+       访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true
+       表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行
 .sp 2
-\fBScanType (string)\fR
+       \fBName (string)\fR
 .br
-       Scanning Type: TableScan: "TBSCAN"; IndexScan:"IXSCAN"
+              Collection Name.
 .sp 2
-\fBIdxName (string)\fR
+       \fBScanType (string)\fR
 .br
-       Index name.
+              Scanning Type: TableScan: "tbscan";
+              IndexScan:"ixscan"
 .sp 2
-\fBUseExtSort (bool)\fR
+       \fBIndexName (string)\fR
 .br
-       Whether use external sort or not.
+              Index name.
 .sp 2
-\fBNode (string)\fR
+       \fBUseExtSort (bool)\fR
 .br
-       Node Name.
+              Whether use external sort or not.
 .sp 2
-\fBReturnNum (int64)\fR
+       \fBNodeName (string)\fR
 .br
-       Number of returned records.
+              Node Name.
 .sp 2
-\fBElapsedTime (float64)\fR
+       \fBReturnNum (int64)\fR
 .br
-       Elapsed Time(seconds).
+              Number of returned records.
 .sp 2
-\fBIdxRead (int64)\fR
+       \fBElapsedTime (float64)\fR
 .br
-       Number of Index read.
+              Elapsed Time(seconds).
 .sp 2
-\fBDataRead (int64)\fR
+       \fBIndexRead (int64)\fR
 .br
-       Number of data read.
+              Number of Index read.
 .sp 2
-\fBUsrCpu (float64)\fR
+       \fBDataRead (int64)\fR
 .br
-       Time used by cpu in user mode(seconds).
+              Number of data read.
 .sp 2
-\fBSysCpu (float64)\fR
+       \fBUserCPU (float64)\fR
 .br
-       Time used by cpu in kernel mode(seconds).
+              Time used by cpu in user mode(seconds).
 .sp 2
-\fBSubCollections (Json Array)\fR
+       \fBSysCPU (float64)\fR
 .br
-       The access plan of each sub-collections of the
-       vertical-partitioning collection.
+              Time used by cpu in kernel mode(seconds).
+.sp 2
+       \fBSubCollections (Json Array)\fR
+.br
+              The access plan of each sub-collections of the
+              vertical-partitioning collection.
+.sp 2
+
 .sp 2
 \fBNote: \fR
 .sp 2
@@ -93,78 +101,78 @@ Return:
 .sp 2
 {
 .br
-  "FullName": "foo.bar",
+  "Name": "foo.bar",
 .br
-  "ScanType": "TBSCAN",
+  "ScanType": "tbscan",
 .br
-  "IdxName": "",
+  "IndexName": "",
 .br
   "UseExtSort": true,
 .br
-  "Node": "vmsvr2-cent-x64:40020",
+  "NodeName": "vmsvr2-cent-x64:40020",
 .br
   "ReturnNum": 38,
 .br
   "ElapsedTime": 0.000477,
 .br
-  "IdxRead": 0,
+  "IndexRead": 0,
 .br
   "DataRead": 38,
 .br
-  "UsrCpu": 0,
+  "UserCPU": 0,
 .br
-  "SysCpu": 0
+  "SysCPU": 0
 .br
 }
 .br
 {
 .br
-  "FullName": "foo.bar",
+  "Name": "foo.bar",
 .br
-  "ScanType": "TBSCAN",
+  "ScanType": "tbscan",
 .br
-  "IdxName": "",
+  "IndexName": "",
 .br
   "UseExtSort": true,
 .br
-  "Node": "vmsvr2-cent-x64:40000",
+  "NodeName": "vmsvr2-cent-x64:40000",
 .br
   "ReturnNum": 34,
 .br
-  " ElapsedTime ": 0.000415,
+  "ElapsedTime": 0.000415,
 .br
-  "IdxRead": 0,
+  "IndexRead": 0,
 .br
   "DataRead": 34,
 .br
-  "UsrCpu": 0,
+  "UserCPU": 0,
 .br
-  "SysCpu": 0
+  "SysCPU": 0
 .br
 }
 .br
 {
 .br
-  "FullName": "foo.bar",
+  "Name": "foo.bar",
 .br
-  "ScanType": "TBSCAN",
+  "ScanType": "tbscan",
 .br
-  "IdxName": "",
+  "IndexName": "",
 .br
   "UseExtSort": true,
 .br
-  "Node": "vmsvr2-cent-x64:40010",
+  "NodeName": "vmsvr2-cent-x64:40010",
 .br
   "ReturnNum": 28,
 .br
-  " ElapsedTime ": 0.000517,
+  "ElapsedTime": 0.000517,
 .br
-  "IdxRead": 0,
+  "IndexRead": 0,
 .br
   "DataRead": 28,
 .br
-  "UsrCpu": 0,
+  "UserCPU": 0,
 .br
-  "SysCpu": 0
+  "SysCPU": 0
 .br
 }
