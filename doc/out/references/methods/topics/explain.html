@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="cursor.explain()"/>
-<meta name="description" content="cursor.explain() 返回查询的访问计划。 参数描述 参数名 参数类型 描述 是否必填 option json 对象 访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行 否，默认为 false 访问计划描述 字段名 类型 描述 FullName string 集合名 ..."/>
+<meta name="description" content="cursor.explain() 返回查询的访问计划。 参数描述 参数名 参数类型 描述 是否必填 option json 对象 访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行 否，默认为 false 访问计划描述 字段名 类型 描述 Name string 集合名 ScanType ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_j1m_lt3_44"/>
@@ -77,7 +77,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d112228e65" class="stentry">FullName</td>
+          <td valign="top" headers="d112228e65" class="stentry">Name</td>
 
           <td valign="top" headers="d112228e68" class="stentry">string</td>
 
@@ -90,13 +90,13 @@
           <td valign="top" headers="d112228e68" class="stentry">string</td>
 
           <td valign="top" headers="d112228e71" class="stentry">扫描方式——
-            表扫描：“TBSCAN”；
-            索引扫描：“IXSCAN”
+            表扫描：“tbscan”；
+            索引扫描：“ixscan”
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d112228e65" class="stentry">IdxName</td>
+          <td valign="top" headers="d112228e65" class="stentry">IndexName</td>
 
           <td valign="top" headers="d112228e68" class="stentry">string</td>
 
@@ -112,7 +112,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d112228e65" class="stentry">Node</td>
+          <td valign="top" headers="d112228e65" class="stentry">NodeName</td>
 
           <td valign="top" headers="d112228e68" class="stentry">string</td>
 
@@ -136,7 +136,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d112228e65" class="stentry">IdxRead</td>
+          <td valign="top" headers="d112228e65" class="stentry">IndexRead</td>
 
           <td valign="top" headers="d112228e68" class="stentry">int64</td>
 
@@ -152,7 +152,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d112228e65" class="stentry">UsrCpu</td>
+          <td valign="top" headers="d112228e65" class="stentry">UserCPU</td>
 
           <td valign="top" headers="d112228e68" class="stentry">float64</td>
 
@@ -160,7 +160,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d112228e65" class="stentry">SysCpu</td>
+          <td valign="top" headers="d112228e65" class="stentry">SysCPU</td>
 
           <td valign="top" headers="d112228e68" class="stentry">float64</td>
 
@@ -195,43 +195,43 @@
 
           返回：
           <pre class="pre codeblock">{
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40020",
+  "NodeName": "vmsvr2-cent-x64:40020",
   "ReturnNum": 38,
   "ElapsedTime": 0.000477,
-  "IdxRead": 0,
+  "IndexRead": 0,
   "DataRead": 38,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }
 {
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40000",
+  "NodeName": "vmsvr2-cent-x64:40000",
   "ReturnNum": 34,
-  " ElapsedTime ": 0.000415,
-  "IdxRead": 0,
+  "ElapsedTime": 0.000415,
+  "IndexRead": 0,
   "DataRead": 34,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }
 {
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40010",
+  "NodeName": "vmsvr2-cent-x64:40010",
   "ReturnNum": 28,
-  " ElapsedTime ": 0.000517,
-  "IdxRead": 0,
+  "ElapsedTime": 0.000517,
+  "IndexRead": 0,
   "DataRead": 28,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }</pre>
 
         </li>
