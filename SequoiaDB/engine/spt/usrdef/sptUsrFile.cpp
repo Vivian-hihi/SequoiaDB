@@ -48,6 +48,8 @@ JS_CONSTRUCT_FUNC_DEFINE( _sptUsrFile, construct )
 JS_DESTRUCT_FUNC_DEFINE( _sptUsrFile, destruct )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, remove )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, exist )
+JS_STATIC_FUNC_DEFINE( _sptUsrFile, copy )
+JS_STATIC_FUNC_DEFINE( _sptUsrFile, move )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, help )
 
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
@@ -56,6 +58,8 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC( "close", close )
    JS_ADD_STATIC_FUNC( "remove", remove )
    JS_ADD_STATIC_FUNC( "exist", exist )
+   JS_ADD_STATIC_FUNC( "copy", copy )
+   JS_ADD_STATIC_FUNC( "move", move )
    JS_ADD_STATIC_FUNC( "help", help )
    JS_ADD_MEMBER_FUNC( "seek", seek )
    JS_ADD_MEMBER_FUNC( "toString", toString )
@@ -358,6 +362,157 @@ JS_MAPPING_END()
       goto done ;
    }
 
+   INT32 _sptUsrFile::copy( const _sptArguments & arg,
+                            _sptReturnVal & rval,
+                            BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string src ;
+      string dst ;
+      INT32 isReplace = TRUE ;
+      UINT32 permission = OSS_DEFAULTFILE ;
+
+      rc = arg.getString( 0, src ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "src is required" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "src must be string" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 1, dst ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "dst is required" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "dst must be string" ) ;
+         goto error ;
+      }
+
+      if ( arg.argc() > 2 )
+      {
+         rc = arg.getNative( 2, (void*)isReplace, SPT_NATIVE_INT32 ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "replace must be BOOLEAN" ) ;
+            goto error ;
+         }
+      }
+
+      if ( arg.argc() > 3 )
+      {
+         INT32 mode = 0 ;
+         rc = arg.getNative( 3, (void*)mode, SPT_NATIVE_INT32 ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "mode must be INT32" ) ;
+            goto error ;
+         }
+         permission = 0 ;
+
+         if ( mode & 0x0001 )
+         {
+            permission |= OSS_XO ;
+         }
+         if ( mode & 0x0002 )
+         {
+            permission |= OSS_WO ;
+         }
+         if ( mode & 0x0004 )
+         {
+            permission |= OSS_RO ;
+         }
+         if ( mode & 0x0008 )
+         {
+            permission |= OSS_XG ;
+         }
+         if ( mode & 0x0010 )
+         {
+            permission |= OSS_WG ;
+         }
+         if ( mode & 0x0020 )
+         {
+            permission |= OSS_RG ;
+         }
+         if ( mode & 0x0040 )
+         {
+            permission |= OSS_XU ;
+         }
+         if ( mode & 0x0080 )
+         {
+            permission |= OSS_WU ;
+         }
+         if ( mode & 0x0100 )
+         {
+            permission |= OSS_RU ;
+         }
+      }
+
+      rc = ossFileCopy( src.c_str(), dst.c_str(), permission, isReplace ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "copy file failed" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::move( const _sptArguments & arg,
+                            _sptReturnVal & rval,
+                            BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string src ;
+      string dst ;
+
+      rc = arg.getString( 0, src ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "src is required" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "src must be string" ) ;
+         goto error ;
+      }
+
+      rc = arg.getString( 1, dst ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "dst is required" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "dst must be string" ) ;
+         goto error ;
+      }
+
+      rc = ossRenamePath( src.c_str(), dst.c_str() ) ;
+      if ( rc )
+      {
+         detail = BSON( SPT_ERR << "rename path failed" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrFile::close( const _sptArguments &arg,
                              _sptReturnVal &rval,
                              bson::BSONObj &detail )
@@ -390,7 +545,9 @@ JS_MAPPING_END()
          << "   seek( offset, [where] ) " << endl
          << "   close()" << endl
          << " File.remove( filepath )" << endl
-         << " File.exist( filepath )" << endl ;
+         << " File.exist( filepath )" << endl
+         << " File.copy( src, dst, [replace], [mode] )" << endl
+         << " File.move( src, dst )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }

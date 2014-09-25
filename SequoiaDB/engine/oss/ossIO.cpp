@@ -567,6 +567,99 @@ error :
    goto done ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSFILECOPY, "ossFileCopy" )
+INT32 ossFileCopy( const CHAR * pSrcFile,
+                   const CHAR * pDstFile,
+                   UINT32 iPermission,
+                   BOOLEAN isReplace )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_OSSFILECOPY );
+
+   OSSFILE srcFile ;
+   OSSFILE dstFile ;
+   BOOLEAN srcFileOpen = FALSE ;
+   BOOLEAN dstFileOpen = FALSE ;
+   UINT32 dstMode = OSS_CREATEONLY | OSS_READWRITE ;
+   CHAR *pBuff = NULL ;
+   UINT32 buffLen = 0 ;
+   INT64 hasRead = 0 ;
+
+   if ( !pSrcFile || !pDstFile )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   pBuff = (CHAR*)SDB_OSS_MALLOC( 4096 ) ;
+   if ( !pBuff )
+   {
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   buffLen = 4096 ;
+   ossMemset( pBuff, 0, buffLen ) ;
+
+   rc = ossOpen( pSrcFile, OSS_READONLY, OSS_DEFAULTFILE, srcFile ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Open source file[%s] failed, rc: %d", pSrcFile, rc ) ;
+      goto error ;
+   }
+   srcFileOpen = TRUE ;
+
+   if ( isReplace )
+   {
+      dstMode = OSS_REPLACE | OSS_READWRITE ;
+   }
+   rc = ossOpen( pDstFile, dstMode, iPermission, dstFile ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Open dest file[%s] failed, rc: %d", pDstFile, rc ) ;
+      goto error ;
+   }
+   dstFileOpen = TRUE ;
+
+   while ( TRUE )
+   {
+      rc = ossReadN( &srcFile, buffLen, pBuff, hasRead ) ;
+      if ( SDB_EOF == rc || 0 == hasRead )
+      {
+         rc = SDB_OK ;
+         break ;
+      }
+      else if ( rc )
+      {
+         PD_LOG( PDERROR, "Read file[%s] failed, rc: %d", pSrcFile, rc ) ;
+         goto error ;
+      }
+      rc = ossWriteN( &dstFile, pBuff, hasRead ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Write file[%s] failed, rc: %d", pDstFile, rc ) ;
+         goto error ;
+      }
+   }
+
+done:
+   if ( pBuff )
+   {
+      SDB_OSS_FREE( pBuff ) ;
+   }
+   if ( srcFileOpen )
+   {
+      ossClose( srcFile ) ;
+   }
+   if ( dstFileOpen )
+   {
+      ossClose( dstFile ) ;
+   }
+   PD_TRACE_EXITRC ( SDB_OSSFILECOPY, rc );
+   return rc ;
+error:
+   goto done ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSACCESS, "ossAccess" )
 INT32 ossAccess ( const CHAR * pPathName, int flags )
 {

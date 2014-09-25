@@ -75,6 +75,14 @@ namespace engine
                           _sptReturnVal &rval,
                           bson::BSONObj &detail ) ;
 
+      static INT32 copy( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
+
+      static INT32 move( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
+
       INT32 toString( const _sptArguments &arg,
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;

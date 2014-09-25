@@ -241,6 +241,27 @@ INT32 ossMkdir(const CHAR   *pPathName,
  */
 INT32 ossDelete( const CHAR  *pPathName ) ;
 
+/*
+ * Copy pSrcFile to pDstFile
+ * Input
+ * pSrcFile (string)
+ * pDstFile (string)
+ * iPermission ( UINT32 )
+ * isReplace ( BOOLEAN )
+ * Output
+ * N/A
+ * Return
+ * SDB_OK (success)
+ * SDB_PERM (permission denied)
+ * SDB_FNE (file not exist)
+ * SDB_FE ( file already exist)
+ * SDB_IO ( io error )
+ */
+INT32 ossFileCopy( const CHAR *pSrcFile,
+                   const CHAR *pDstFile,
+                   UINT32      iPermission = OSS_DEFAULTFILE,
+                   BOOLEAN     isReplace = TRUE ) ;
+
 INT32 ossAccess ( const CHAR  *pPathName, int flags = 0 ) ;
 
 /*
