@@ -83,6 +83,10 @@ namespace engine
                           _sptReturnVal &rval,
                           bson::BSONObj &detail ) ;
 
+      static INT32 mkdir( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
+
       INT32 toString( const _sptArguments &arg,
                       _sptReturnVal &rval,
                       bson::BSONObj &detail ) ;

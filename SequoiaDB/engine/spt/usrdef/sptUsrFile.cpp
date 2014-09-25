@@ -50,6 +50,7 @@ JS_STATIC_FUNC_DEFINE( _sptUsrFile, remove )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, exist )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, copy )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, move )
+JS_STATIC_FUNC_DEFINE( _sptUsrFile, mkdir )
 JS_STATIC_FUNC_DEFINE( _sptUsrFile, help )
 
 JS_BEGIN_MAPPING( _sptUsrFile, "File" )
@@ -60,6 +61,7 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_STATIC_FUNC( "exist", exist )
    JS_ADD_STATIC_FUNC( "copy", copy )
    JS_ADD_STATIC_FUNC( "move", move )
+   JS_ADD_STATIC_FUNC( "mkdir", mkdir )
    JS_ADD_STATIC_FUNC( "help", help )
    JS_ADD_MEMBER_FUNC( "seek", seek )
    JS_ADD_MEMBER_FUNC( "toString", toString )
@@ -513,6 +515,92 @@ JS_MAPPING_END()
       goto done ;
    }
 
+   INT32 _sptUsrFile::mkdir( const _sptArguments & arg,
+                             _sptReturnVal & rval,
+                             BSONObj & detail )
+   {
+      INT32 rc = SDB_OK ;
+      string name ;
+      UINT32 permission = OSS_DEFAULTDIR ;
+
+      rc = arg.getString( 0, name ) ;
+      if ( SDB_OUT_OF_BOUND == rc )
+      {
+         detail = BSON( SPT_ERR << "name is required" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "name must be string" ) ;
+         goto error ;
+      }
+
+      if ( arg.argc() > 1 )
+      {
+         INT32 mode = 0 ;
+         rc = arg.getNative( 1, (void*)&mode, SPT_NATIVE_INT32 ) ;
+         if ( rc )
+         {
+            detail = BSON( SPT_ERR << "mode must be INT32" ) ;
+            goto error ;
+         }
+         permission = 0 ;
+
+         if ( mode & 0x0001 )
+         {
+            permission |= OSS_XO ;
+         }
+         if ( mode & 0x0002 )
+         {
+            permission |= OSS_WO ;
+         }
+         if ( mode & 0x0004 )
+         {
+            permission |= OSS_RO ;
+         }
+         if ( mode & 0x0008 )
+         {
+            permission |= OSS_XG ;
+         }
+         if ( mode & 0x0010 )
+         {
+            permission |= OSS_WG ;
+         }
+         if ( mode & 0x0020 )
+         {
+            permission |= OSS_RG ;
+         }
+         if ( mode & 0x0040 )
+         {
+            permission |= OSS_XU ;
+         }
+         if ( mode & 0x0080 )
+         {
+            permission |= OSS_WU ;
+         }
+         if ( mode & 0x0100 )
+         {
+            permission |= OSS_RU ;
+         }
+      }
+
+      rc = ossMkdir( name.c_str(), permission ) ;
+      if ( SDB_FE == rc )
+      {
+         rc = SDB_OK ;
+      }
+      else if ( rc )
+      {
+         detail = BSON( SPT_ERR << "create dir failed" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _sptUsrFile::close( const _sptArguments &arg,
                              _sptReturnVal &rval,
                              bson::BSONObj &detail )
@@ -547,7 +635,8 @@ JS_MAPPING_END()
          << " File.remove( filepath )" << endl
          << " File.exist( filepath )" << endl
          << " File.copy( src, dst, [replace], [mode] )" << endl
-         << " File.move( src, dst )" << endl ;
+         << " File.move( src, dst )" << endl
+         << " File.mkdir( name, [mode] )" << endl ;
       rval.setStringVal( "", ss.str().c_str() ) ;
       return SDB_OK ;
    }
