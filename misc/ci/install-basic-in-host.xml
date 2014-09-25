@@ -47,7 +47,7 @@
 		<sleep seconds="20"/>
 
 		<exec executable="/bin/ps" dir="" failonerror="false">
-			<arg line=" -ef|grep sequoiadb | grep -v grep | awk '{print $2}' | xargs kill -9" />
+			<arg line=" -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" />
 		</exec>
 		<echo message="Clean install env compeleted." />
 	</target>
