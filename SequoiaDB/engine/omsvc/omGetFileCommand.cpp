@@ -879,6 +879,51 @@ namespace engine
       return false ;
    }
 
+   INT32 omScanHostCommand::_checkRestHostInfo( BSONObj &hostInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele = hostInfo.getField( OM_BSON_FIELD_HOST_USER ) ;
+      if ( ele.type() != String )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "hostinfo field is not string:field=%s,type=%d",
+                     OM_BSON_FIELD_HOST_USER, String ) ;
+         goto error ;
+      }
+
+      ele = hostInfo.getField( OM_BSON_FIELD_HOST_PASSWD ) ;
+      if ( ele.type() != String )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "hostinfo field is not string:field=%s,type=%d",
+                     OM_BSON_FIELD_HOST_PASSWD, String ) ;
+         goto error ;
+      }
+
+      ele = hostInfo.getField( OM_BSON_FIELD_HOST_SSHPORT ) ;
+      if ( ele.type() != String )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "hostinfo field is not string:field=%s,type=%d",
+                     OM_BSON_FIELD_HOST_SSHPORT, String ) ;
+         goto error ;
+      }
+
+      ele = hostInfo.getField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+      if ( ele.type() != String )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "hostinfo field is not string:field=%s,type=%d",
+                     OM_BSON_FIELD_CLUSTER_NAME, String ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omScanHostCommand::_getScanHostList( string &clusterName, 
                                               list<omScanHostInfo> &hostInfo )
    {
@@ -908,6 +953,14 @@ namespace engine
          _errorDetail = string( "change rest field " ) + OM_REST_FIELD_HOST_INFO
                         + " to BSONObj failed" ;
          PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      rc = _checkRestHostInfo( bsonHostInfo ) ;
+      if ( rc )
+      {
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "check rest hostinfo failed:rc=%d", rc ) ;
          goto error ;
       }
 

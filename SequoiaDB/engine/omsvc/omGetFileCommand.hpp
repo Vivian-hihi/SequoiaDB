@@ -223,6 +223,7 @@ namespace engine
          INT32           _parseResonpse( VEC_SUB_SESSIONPTR &subSessionVec, 
                                          BSONObj &response, 
                                          list<BSONObj> &bsonResult ) ;
+         INT32           _checkRestHostInfo( BSONObj &hostInfo ) ;
 
       protected:
          string          _localAgentHost ;
