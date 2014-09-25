@@ -2452,6 +2452,193 @@ namespace engine
       goto done ;
    }
 
+// ***************************“Ï≤ΩÃÌº”host*************************************
+   INT32 omAddHostCommand::_generateAddHostConf( const string &clusterName,
+                                                 list<BSONObj> &hostInfoList, 
+                                                 BSONObj &conf )
+   {
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBuilder ;
+      list<BSONObj>::iterator ite ;
+
+      INT32 rc = SDB_OK ;
+      string sdbUser ;
+      string sdbPasswd ;
+      string sdbUserGroup ;
+      CHAR packetPath[ OSS_MAX_PATHSIZE ] = "" ;
+      rc = _getPacketFullPath( packetPath ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get packet path failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _getSdbUsrInfo( clusterName, sdbUser, sdbPasswd, sdbUserGroup ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getSdbUsrInfo failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      ite = hostInfoList.begin() ;
+      while ( ite != hostInfoList.end() )
+      {
+         BSONObjBuilder innerBuilder ;
+         BSONObj temp ;
+         innerBuilder.append( OM_BSON_FIELD_HOST_IP, 
+                         ite->getStringField( OM_BSON_FIELD_HOST_IP ) ) ;
+         innerBuilder.append( OM_BSON_FIELD_HOST_NAME, 
+                         ite->getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
+         innerBuilder.append( OM_BSON_FIELD_HOST_USER, 
+                         ite->getStringField( OM_BSON_FIELD_HOST_USER ) ) ;
+         innerBuilder.append( OM_BSON_FIELD_HOST_PASSWD, 
+                         ite->getStringField( OM_BSON_FIELD_HOST_PASSWD ) ) ;
+         innerBuilder.append( OM_BSON_FIELD_HOST_SSHPORT, 
+                         ite->getStringField( OM_BSON_FIELD_HOST_SSHPORT ) ) ;
+         innerBuilder.append( OM_BSON_FIELD_AGENT_PORT, 
+                         ite->getStringField( OM_BSON_FIELD_AGENT_PORT ) ) ;
+         innerBuilder.append( OM_BSON_FIELD_INSTALL_PATH, 
+                         ite->getStringField( OM_BSON_FIELD_INSTALL_PATH ) ) ;
+         temp = innerBuilder.obj() ;
+         arrayBuilder.append( temp ) ;
+         ite++ ;
+      }
+
+      builder.append( OM_BSON_FIELD_CLUSTER_NAME , clusterName ) ;
+      builder.append( OM_BSON_FIELD_SDB_USER, sdbUser ) ;
+      builder.append( OM_BSON_FIELD_SDB_PASSWD, sdbPasswd ) ;
+      builder.append( OM_BSON_FIELD_SDB_USERGROUP, sdbUserGroup ) ;
+      builder.append( OM_BSON_FIELD_PATCKET_PATH, packetPath ) ;
+      builder.appendArray( OM_REST_FIELD_HOST_INFO, arrayBuilder.arr() );
+      conf = builder.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omAddHostCommand::_addHostByAgent( BSONObj &conf, UINT64 taskID )
+   {
+      INT32 rc = SDB_OK ;
+      SINT32 flag       = SDB_OK ;
+      CHAR *pContent    = NULL ;
+      INT32 contentSize = 0 ;
+      MsgHeader *pMsg   = NULL ;
+      omManager *om     = sdbGetOMManager() ;
+      pmdRemoteSession *remoteSession = NULL ;
+      BSONObj result ;
+      
+      BSONObjBuilder builder ;
+      builder.append( OM_BSON_TASKID, (long long)taskID ) ;
+      builder.appendElements( conf ) ;
+      BSONObj request = builder.obj() ;
+      rc = msgBuildQueryMsg( &pContent, &contentSize, 
+                             CMD_ADMIN_PREFIX OM_ADD_HOST_REQ, 
+                             0, 0, 0, -1, &request, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = string( "build msg failed:cmd=" ) + OM_ADD_HOST_REQ ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      // create remote session
+      remoteSession = om->getRSManager()->addSession( _cb, 
+                                                      OM_WAIT_SCAN_RES_INTERVAL,
+                                                      NULL ) ;
+      if ( NULL == remoteSession )
+      {
+         rc = SDB_OOM ;
+         _errorDetail = "create remote session failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         SDB_OSS_FREE( pContent ) ;
+         goto error ;
+      }
+
+      // send message to agent
+      pMsg = (MsgHeader *)pContent ;
+      rc   = _sendMsgToLocalAgent( om, remoteSession, pMsg ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = "send message to agent failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         SDB_OSS_FREE( pContent ) ;
+         remoteSession->clearSubSession() ;
+         goto error ;
+      }
+
+      // receiving for agent's response
+      rc = _receiveFromAgent( remoteSession, flag, result ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = "receive from agent failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != flag )
+      {
+         rc = flag ;
+         _errorDetail = result.getStringField( OM_REST_RES_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
+                 _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+   done:
+      _clearSession( om, remoteSession ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omAddHostCommand::_addHost2( const string &clusterName, 
+                                      list<BSONObj> &hostInfoList, 
+                                      UINT64 &taskID )
+   {
+      INT32 rc          = SDB_OK ;
+      BSONObj conf ;
+      BSONObj result ;
+      BSONElement element ;
+      BSONElement hostElement ;
+      omTaskManager *pTaskManager = sdbGetOMManager()->getTaskManager() ;
+
+      rc = _generateAddHostConf( clusterName, hostInfoList, conf ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = "failed to generate add host configure" ;
+         PD_LOG( PDERROR, "_generateAddHostReq failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = pTaskManager->createAddHostTask( _localAgentHost, _localAgentService,
+                                            conf, taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         PD_LOG( PDERROR, "create addhost task failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _addHostByAgent( conf, taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         pTaskManager->cancelTask( taskID ) ;
+         PD_LOG( PDERROR, "add host by agent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      pTaskManager->enableTask( taskID ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+// *************************************************************************
+
+
    INT32 omAddHostCommand::_addHost( const string &clusterName, 
                                      list<BSONObj> &hostInfoList, 
                                      INT32 &transationID )
@@ -2530,7 +2717,7 @@ namespace engine
       }
 
       element = result.getField( OM_BSON_FIELD_TRANSACTION_ID ) ;
-      if ( element.eoo() || NumberInt != element.type())
+      if ( element.eoo() || NumberInt != element.type() )
       {
          rc = SDB_UNEXPECTED_RESULT ;
          _errorDetail = "agent's response is unrecognized" ;
@@ -2721,6 +2908,7 @@ namespace engine
       INT32 transactionID = -1 ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bsonBuilder ;
+      UINT64 taskID ;
 
       rc = _getRestHostList( clusterName, hostInfoList ) ;
       if ( SDB_OK != rc )
@@ -2738,10 +2926,11 @@ namespace engine
          goto error ;
       }
 
+      //TODO: change to async mod
       rc = _addHost( clusterName, hostInfoList, transactionID ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "fail to get host list:rc=%d", rc ) ;
+         PD_LOG( PDERROR, "fail to add host:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -2754,6 +2943,16 @@ namespace engine
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
+
+//      rc = _addHost2( clusterName, hostInfoList, taskID ) ;
+//      if ( SDB_OK != rc )
+//      {
+//         PD_LOG( PDERROR, "fail to add host:rc=%d", rc ) ;
+//         _sendErrorRes2Web( rc, _errorDetail ) ;
+//         goto error ;
+//      }
+
+//      bsonBuilder.append( OM_BSON_TASKID, (long long)taskID ) ;
 
       sdbGetOMManager()->updateClusterVersion( clusterName ) ;
       bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;

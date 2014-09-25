@@ -96,7 +96,8 @@ namespace engine
 
       protected:
          INT32             _saveFinishTask() ;
-         INT32             _getProgressFromAgent( BSONObj &response ) ;
+         INT32             _getProgressFromAgent( INT32 &flag, 
+                                                  BSONObj &response ) ;
          INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
                                               SINT32 &flag, BSONObj &result ) ;
          INT32             _sendMsgToAgent( const string &host,
@@ -228,11 +229,18 @@ namespace engine
          virtual ~omAddHostTask() ;
 
       public:
+         INT32             init( const string &agentHost, 
+                                 const string &agentService, 
+                                 const BSONObj &conf, UINT64 taskID ) ;
+      public:
          virtual INT32     updateProgress() ;
 
       private:
          INT32             _finishAddHostTask() ;
          INT32             _storeHostInfo() ;
+
+      private:
+         string            _clusterName ;
 
       /*
          _omTaskInfo.taskInfo:
@@ -264,6 +272,10 @@ namespace engine
                                                 const string &agentService, 
                                                 const BSONObj &confValue,
                                                 UINT64 &taskID ) ;
+         INT32             createAddHostTask( const string &agentHost, 
+                                              const string &agentService, 
+                                              const BSONObj &confValue, 
+                                              UINT64 &taskID ) ;
          INT32             restoreTask() ;
 
          INT32             cancelTask( UINT64 taskID ) ;

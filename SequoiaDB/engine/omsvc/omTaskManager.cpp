@@ -86,11 +86,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 omTaskBase::_getProgressFromAgent( BSONObj &response )
+   INT32 omTaskBase::_getProgressFromAgent( INT32 &flag, BSONObj &response )
    {
       BSONObj result ;
       INT32 rc          = SDB_OK ;
-      SINT32 flag       = SDB_OK ;
       _pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
       MsgHeader *pMsg   = NULL ;
       CHAR* pContent    = NULL ;
@@ -140,15 +139,6 @@ namespace engine
       }
 
       PD_LOG( PDEVENT, "receive from agent:%s", result.toString().c_str() ) ;
-
-      if ( SDB_OK != flag )
-      {
-         rc = flag ;
-         string errorInfo = result.getStringField( OP_ERR_DETAIL ) ;
-         PD_LOG( PDERROR, "agent process error:detail=%s,rc=%d", 
-                 errorInfo.c_str(), rc ) ;
-         goto error ;
-      }
 
       response = result.copy() ;
    done:
@@ -741,7 +731,8 @@ namespace engine
 
    INT32 omInstallTask::updateProgress()
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc   = SDB_OK ;
+      INT32 flag = SDB_OK ;
       BSONObj response ;
       bool tmpFinished = false ;
 
@@ -753,10 +744,22 @@ namespace engine
 
       //TODO: get the agent's retcode, if task is error( like rollback failed )
       // we should clean this task
-      rc = _getProgressFromAgent( response ) ;
+      rc = _getProgressFromAgent( flag, response ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_getProgressFromAgent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != flag )
+      {
+         // agent process install failed, we should cancel this task
+         rc = flag ;
+         string errorDetail = response.getStringField( OM_REST_RES_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process %s failed, cancel task:taskID="
+                 OSS_LL_PRINT_FORMAT",detail=%s,rc=%d", OM_INSTALL_BUSINESS_REQ, 
+                 _omTaskInfo.taskID, errorDetail.c_str(), rc ) ;
+         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID ) ;
          goto error ;
       }
 
@@ -842,7 +845,7 @@ namespace engine
             || !_omTaskInfo.taskInfo.hasField( OM_BSON_FIELD_CLUSTER_NAME ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "install task configure error:conf=%s", 
+         PD_LOG_MSG( PDERROR, "uninstall task configure error:conf=%s", 
                      conf.toString().c_str() ) ;
          goto error ;
       }
@@ -953,7 +956,8 @@ namespace engine
 
    INT32 omUninstallTask::updateProgress()
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc   = SDB_OK ;
+      INT32 flag = SDB_OK ;
       BSONObj response ;
       bool tmpFinished = false ;
 
@@ -963,10 +967,22 @@ namespace engine
          goto done ;
       }
 
-      rc = _getProgressFromAgent( response ) ;
+      rc = _getProgressFromAgent( flag, response ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_getProgressFromAgent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != flag )
+      {
+         // agent process uninstall failed, we should cancel this task
+         rc = flag ;
+         string errorDetail = response.getStringField( OM_REST_RES_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process %s failed, cancel task:taskID="
+                 OSS_LL_PRINT_FORMAT",detail=%s,rc=%d", OM_REMOVE_BUSINESS_REQ, 
+                 _omTaskInfo.taskID, errorDetail.c_str(), rc ) ;
+         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID ) ;
          goto error ;
       }
 
@@ -1013,14 +1029,55 @@ namespace engine
    {
    }
 
+   INT32 omAddHostTask::init( const string &agentHost, 
+                              const string &agentService, const BSONObj &conf, 
+                              UINT64 taskID )
+   {
+      BSONObj tmp ;
+      INT32 rc      = SDB_OK ;
+      _omTaskInfo.taskID       = taskID ;
+      _omTaskInfo.agentHost    = agentHost ;
+      _omTaskInfo.agentService = agentService ;
+      _omTaskInfo.taskInfo     = conf ;
+      _omTaskInfo.isEnable     = false ;
+      _omTaskInfo.isFinished   = false ;
+      _omTaskInfo.taskType     = OM_ADD_HOST_REQ ;
+      _omTaskInfo.taskStatus   = OM_TASK_STATUS_ADDHOST ;
+      _omTaskInfo.progress     = BSONObj() ;
+      PD_LOG( PDDEBUG, "_omTaskInfo.taskInfo:%s", 
+              _omTaskInfo.taskInfo.toString().c_str() ) ;
+
+      if ( !_omTaskInfo.taskInfo.hasField( OM_BSON_FIELD_CLUSTER_NAME )
+            || !_omTaskInfo.taskInfo.hasField( OM_BSON_FIELD_HOST_INFO ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "add host task configure error:conf=%s", 
+                     conf.toString().c_str() ) ;
+         goto error ;
+      }
+
+      _clusterName = _omTaskInfo.taskInfo.getStringField( 
+                                                  OM_BSON_FIELD_CLUSTER_NAME ) ;
+
+      rc = _insertTask() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "failed to insert taskinfo:rc=%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omAddHostTask::_storeHostInfo()
    {
       INT32 rc     = SDB_OK ;
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
 
       BSONObj hosts ;
-      hosts    = _omTaskInfo.taskInfo.getObjectField( 
-                                                   OM_BSON_FIELD_HOST_INFO ) ;
+      hosts = _omTaskInfo.taskInfo.getObjectField( OM_BSON_FIELD_HOST_INFO ) ;
       {
          BSONObjIterator iter( hosts ) ;
          while ( iter.more() )
@@ -1071,7 +1128,8 @@ namespace engine
 
    INT32 omAddHostTask::updateProgress()
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc   = SDB_OK ;
+      INT32 flag = SDB_OK ;
       BSONObj response ;
       bool tmpFinished = false ;
 
@@ -1081,10 +1139,22 @@ namespace engine
          goto done ;
       }
 
-      rc = _getProgressFromAgent( response ) ;
+      rc = _getProgressFromAgent( flag, response ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "_getProgressFromAgent failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != flag )
+      {
+         // agent process add host failed, we should cancel this task
+         rc = flag ;
+         string errorDetail = response.getStringField( OM_REST_RES_DETAIL ) ;
+         PD_LOG( PDERROR, "agent process %s failed, cancel task:taskID="
+                 OSS_LL_PRINT_FORMAT",detail=%s,rc=%d", OM_ADD_HOST_REQ, 
+                 _omTaskInfo.taskID, errorDetail.c_str(), rc ) ;
+         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID ) ;
          goto error ;
       }
 
@@ -1112,6 +1182,7 @@ namespace engine
          }
 
          _omTaskInfo.isFinished = tmpFinished ;
+         sdbGetOMManager()->updateClusterVersion( _clusterName ) ;
       }
 
    done:
@@ -1392,6 +1463,7 @@ namespace engine
       rc = task->init( agentHost, agentService, confValue, taskID ) ;
       if ( SDB_OK != rc )
       {
+         SDB_OSS_DEL task ;
          PD_LOG_MSG( PDERROR, "init omInstallTask failed:rc=%d", rc ) ;
          goto error ;
       }
@@ -1428,7 +1500,43 @@ namespace engine
       rc   = task->init( agentHost, agentService, confValue, taskID ) ;
       if ( SDB_OK != rc )
       {
+         SDB_OSS_DEL task ;
          PD_LOG_MSG( PDERROR, "init omUninstallTask failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      _addTaskToMap( task ) ;
+   done:
+      _lock.release() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omTaskManager::createAddHostTask( const string &agentHost, 
+                                           const string &agentService, 
+                                           const BSONObj &confValue, 
+                                           UINT64 &taskID )
+   {
+      INT32 rc            = SDB_OK ;
+      omAddHostTask *task = NULL ;
+
+      _lock.get() ;
+      if ( _isTaskTypeExist( OM_ADD_HOST_REQ, taskID ) )
+      {
+         rc = SDB_IXM_DUP_KEY ;
+         PD_LOG_MSG( PDERROR, "task exist:taskType=%s,taskID="
+                     OSS_LL_PRINT_FORMAT, OM_ADD_HOST_REQ, taskID ) ;
+         goto error ;
+      }
+
+      taskID = _generateTaskID() ;
+      task = SDB_OSS_NEW omAddHostTask( _om ) ;
+      rc   = task->init( agentHost, agentService, confValue, taskID ) ;
+      if ( SDB_OK != rc )
+      {
+         SDB_OSS_DEL task ;
+         PD_LOG_MSG( PDERROR, "init omAddHostTask failed:rc=%d", rc ) ;
          goto error ;
       }
 
