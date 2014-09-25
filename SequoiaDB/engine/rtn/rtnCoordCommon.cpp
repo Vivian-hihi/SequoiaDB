@@ -2270,12 +2270,14 @@ namespace engine
    }
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, CoordGroupList &groupList,
-                                  const BSONObj *query, BOOLEAN exceptCata )
+                                  const BSONObj *query, BOOLEAN exceptCata,
+                                  BOOLEAN exceptCoord )
    {
       INT32 rc = SDB_OK ;
       GROUP_VEC vecGrpPtr ;
 
-      rc = rtnCoordGetAllGroupList( cb, vecGrpPtr, query, exceptCata ) ;
+      rc = rtnCoordGetAllGroupList( cb, vecGrpPtr, query, exceptCata,
+                                    exceptCoord ) ;
       if ( rc )
       {
          goto error ;
@@ -2298,7 +2300,8 @@ namespace engine
    }
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, GROUP_VEC &groupLst,
-                                  const BSONObj *query, BOOLEAN exceptCata )
+                                  const BSONObj *query, BOOLEAN exceptCata,
+                                  BOOLEAN exceptCoord )
    {
       INT32 rc = SDB_OK;
       pmdKRCB *pKrcb = pmdGetKRCB();
@@ -2362,9 +2365,23 @@ namespace engine
             groupInfoTmp = CoordGroupInfoPtr( pGroupInfo );
             rc = groupInfoTmp->fromBSONObj( boGroupInfo );
             PD_RC_CHECK( rc, PDERROR, "failed to parse the group info(rc=%d)",
-                         rc );
-            if ( !exceptCata || ( exceptCata &&
-                 groupInfoTmp->getGroupID() != CATALOG_GROUPID ) )
+                         rc ) ;
+
+            if ( groupInfoTmp->getGroupID() == CATALOG_GROUPID )
+            {
+               if ( !exceptCata )
+               {
+                  groupLst.push_back( groupInfoTmp ) ;
+               }
+            }
+            else if ( groupInfoTmp->getGroupID() == COORD_GROUPID )
+            {
+               if ( !exceptCoord )
+               {
+                  groupLst.push_back( groupInfoTmp ) ;
+               }
+            }
+            else
             {
                groupLst.push_back( groupInfoTmp );
             }

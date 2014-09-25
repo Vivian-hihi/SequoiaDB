@@ -252,7 +252,8 @@ namespace engine
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, GROUP_VEC &groupLst,
                                   const BSONObj *query = NULL,
-                                  BOOLEAN exceptCata = FALSE ) ;
+                                  BOOLEAN exceptCata = FALSE,
+                                  BOOLEAN exceptCoord = TRUE ) ;
 
    INT32 rtnCoordReadALine( const CHAR *&pInput, CHAR *pOutput );
 
@@ -279,7 +280,8 @@ namespace engine
 
    INT32 rtnCoordGetAllGroupList( pmdEDUCB * cb, CoordGroupList &groupList,
                                   const BSONObj *query = NULL,
-                                  BOOLEAN exceptCata = FALSE ) ;
+                                  BOOLEAN exceptCata = FALSE,
+                                  BOOLEAN exceptCoord = TRUE ) ;
 
    INT32 rtnGroupList2GroupPtr( pmdEDUCB *cb, CoordGroupList &groupList,
                                 GROUP_VEC &groupPtrs ) ;
