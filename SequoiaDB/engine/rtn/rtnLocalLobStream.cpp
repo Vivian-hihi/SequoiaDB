@@ -115,7 +115,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__QUERYLOBMETA ) ;
       rc = _su->lob()->getLobMeta( getOID(), _mbContext,
-                                   cb, FALSE, meta ) ;
+                                   cb, meta ) ;
       if ( SDB_OK == rc )
       {
          if ( !meta.isDone() )
@@ -158,7 +158,7 @@ namespace engine
       lockMbBlock = TRUE ;
 
       rc = _su->lob()->getLobMeta( getOID(), _mbContext,
-                                   cb, TRUE, meta ) ;
+                                   cb, meta ) ;
       if ( SDB_OK == rc )
       {
          if ( !meta.isDone() )
@@ -196,7 +196,7 @@ namespace engine
 
          meta.clear() ;
          rc = _su->lob()->writeLobMeta( getOID(), _mbContext,
-                                        cb, TRUE, meta, TRUE, _getDPSCB() ) ;
+                                        cb, meta, TRUE, _getDPSCB() ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to ensure meta:%d", rc ) ;
@@ -243,7 +243,7 @@ namespace engine
       record.set( &getOID(), DMS_LOB_META_SEQUENCE, 0,
                   sizeof( dmsLobMeta ), ( const CHAR * )( &meta ) ) ;
 
-      rc = _su->lob()->update( record, _mbContext, cb, TRUE, _getDPSCB() ) ;
+      rc = _su->lob()->update( record, _mbContext, cb, _getDPSCB() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write to lob:%d", rc ) ;
@@ -318,7 +318,7 @@ namespace engine
       lockDms = TRUE ;
 
       rc = _su->lob()->write( record, _mbContext, cb,
-                              FALSE, _getDPSCB() ) ;
+                              _getDPSCB() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write lob[%s],"
@@ -394,7 +394,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 len = 0 ;
       rc = _su->lob()->read( record, _mbContext, cb,
-                             FALSE, buf, len ) ;
+                             buf, len ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob[%s], sequence[%d], rc:%d",
@@ -435,7 +435,7 @@ namespace engine
          piece.set( &getOID(), num,
                   0, 0, NULL ) ;
          rc = _su->lob()->remove( piece, _mbContext, cb,
-                                  FALSE, _getDPSCB() ) ;
+                                  _getDPSCB() ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove lob[%s],"
@@ -500,7 +500,7 @@ namespace engine
       for ( UINT32 i = 0 ; i < cnt; ++i )
       {
          rc = _su->lob()->remove( pieces[i], _mbContext, cb,
-                                  FALSE, _getDPSCB() ) ;
+                                  _getDPSCB() ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove lob[%s],"

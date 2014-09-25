@@ -210,6 +210,13 @@ namespace engine
 
    #pragma pack()
 
+   struct _dmsLobInfoOnPage
+   {
+      UINT32 _sequence ;
+      UINT32 _len ;
+      bson::OID _oid ;
+   } ;
+   typedef struct _dmsLobInfoOnPage dmsLobInfoOnPage ;
 }
 
 #endif // DMS_LOBDEF_HPP_

@@ -46,6 +46,9 @@ namespace engine
 
    #define DMS_LOB_EXTEND_THRESHOLD_SIZE     ( 65536 )   // 64K
 
+   #define DMS_LOB_PAGE_IN_USED( page )\
+           ( DMS_SME_ALLOCATED == getSME()->getBitMask( page ) )
+
    /*
       _dmsStorageLob implement
    */
@@ -199,7 +202,6 @@ namespace engine
    INT32 _dmsStorageLob::getLobMeta( const bson::OID &oid,
                                      dmsMBContext *mbContext,
                                      pmdEDUCB *cb,
-                                     BOOLEAN locked,
                                      _dmsLobMeta &meta )
    {
       INT32 rc = SDB_OK ;
@@ -207,7 +209,7 @@ namespace engine
       dmsLobRecord piece ;
       piece.set( &oid, DMS_LOB_META_SEQUENCE, 0,
                  sizeof( meta ), NULL ) ;
-      rc = read( piece, mbContext, cb, locked,
+      rc = read( piece, mbContext, cb, 
                  ( CHAR * )( &meta ), readSz ) ;
       if ( SDB_OK == rc )
       {
@@ -240,7 +242,6 @@ namespace engine
    INT32 _dmsStorageLob::writeLobMeta( const bson::OID &oid,
                                        dmsMBContext *mbContext,
                                        pmdEDUCB *cb,
-                                       BOOLEAN locked,
                                        const _dmsLobMeta &meta,
                                        BOOLEAN isNew,
                                        SDB_DPSCB *dpsCB )
@@ -251,7 +252,7 @@ namespace engine
                  sizeof( meta ), ( const CHAR * )( &meta ) ) ;
       if ( isNew )
       {
-         rc = write( piece, mbContext, cb, FALSE, dpsCB ) ;
+         rc = write( piece, mbContext, cb, dpsCB ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
@@ -260,7 +261,7 @@ namespace engine
       }
       else
       {
-         rc = update( piece, mbContext, cb, FALSE, dpsCB ) ;
+         rc = update( piece, mbContext, cb, dpsCB ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
@@ -276,7 +277,6 @@ namespace engine
    INT32 _dmsStorageLob::write( const dmsLobRecord &record,
                                 dmsMBContext *mbContext,
                                 pmdEDUCB *cb,
-                                BOOLEAN locked,
                                 SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -290,6 +290,7 @@ namespace engine
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
       CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
+      BOOLEAN locked = mbContext->isMBLock() ;
 
       if ( _needDelayOpen )
       {
@@ -432,7 +433,6 @@ namespace engine
    INT32 _dmsStorageLob::update( const dmsLobRecord &record,
                                  dmsMBContext *mbContext,
                                  pmdEDUCB *cb,
-                                 BOOLEAN locked,
                                  SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -453,6 +453,7 @@ namespace engine
       CHAR oldData[DMS_PAGE_SIZE512K] ;
       UINT32 oldLen = 0 ;
       CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
+      BOOLEAN locked = mbContext->isMBLock() ;
 
       if ( _needDelayOpen )
       {
@@ -482,7 +483,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _find( record, page, blk ) ;
+      rc = _find( record, mbContext->clLID(), page, blk ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to find piece:%d", rc ) ;
@@ -605,13 +606,13 @@ namespace engine
    INT32 _dmsStorageLob::read( const dmsLobRecord &record,
                                dmsMBContext *mbContext,
                                pmdEDUCB *cb,
-                               BOOLEAN locked,
                                CHAR *buf,
                                UINT32 &readLen )
    {
       INT32 rc = SDB_OK ;
       DMS_LOB_PAGEID page = DMS_LOB_INVALID_PAGEID ;
       _dmsLobDataMapBlk *blk = NULL ;
+      BOOLEAN locked = mbContext->isMBLock() ;
 
       if ( _needDelayOpen )
       {
@@ -632,7 +633,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
       }
 
-      rc = _find( record, page, blk ) ;
+      rc = _find( record, mbContext->clLID(), page, blk ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to find page of oid:%s, sequence:%d, rc:%d",
@@ -725,7 +726,6 @@ namespace engine
    INT32 _dmsStorageLob::remove( const dmsLobRecord &record,
                                  dmsMBContext *mbContext,
                                  pmdEDUCB *cb,
-                                 BOOLEAN locked,
                                  SDB_DPSCB *dpscb )
    {
       INT32 rc = SDB_OK ;
@@ -741,6 +741,7 @@ namespace engine
       CHAR oldData[DMS_PAGE_SIZE512K] ;
       UINT32 oldLen = 0 ;
       CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
+      BOOLEAN locked = mbContext->isMBLock() ;
 
       if ( _needDelayOpen )
       {
@@ -770,7 +771,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _find( record, page, blk, &bucketNumber ) ;
+      rc = _find( record, mbContext->clLID(), page, blk, &bucketNumber ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to find oid[%s] sequence[%d], rc:%d",
@@ -932,6 +933,7 @@ namespace engine
    }
 
    INT32 _dmsStorageLob::_find( const _dmsLobRecord &record,
+                                UINT32 clID,
                                 DMS_LOB_PAGEID &page,
                                 _dmsLobDataMapBlk *&lobBlk,
                                 UINT32 *bucket )
@@ -952,7 +954,8 @@ namespace engine
          }
 
          blk = DMS_LOB_META( extent ) ;
-         if ( blk->equals( record._oid->getData(), record._sequence ) )
+         if ( clID == blk->_clLogicalID &&
+              blk->equals( record._oid->getData(), record._sequence ) )
          {
             page = pageInBucket ;
             lobBlk = blk ;
@@ -1191,5 +1194,82 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageLob::readPage( DMS_LOB_PAGEID &pos,
+                                   BOOLEAN onlyMetaPage,
+                                   _pmdEDUCB *cb,
+                                   dmsMBContext *mbContext,
+                                   dmsLobInfoOnPage &page )
+   {
+      INT32 rc = SDB_OK ;
+      DMS_LOB_PAGEID current = pos ;
+      BOOLEAN locked = mbContext->isMBLock() ;
+
+      if ( DMS_LOB_INVALID_PAGEID == current )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( !locked )
+      {
+         rc = mbContext->mbLock( SHARED ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get lock:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      do
+      {
+         if ( pageNum() <= ( UINT32 )current )
+         {
+            rc = SDB_DMS_EOC ;
+            goto error ;
+         }
+         else if ( DMS_LOB_PAGE_IN_USED( current ) )
+         {
+            _dmsLobDataMapBlk *blk = NULL ;
+            ossValuePtr extent = extentAddr( current ) ;
+            if ( !extent )
+            {
+               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
+                       current ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            blk = DMS_LOB_META( extent ) ;
+            if ( mbContext->clLID() != blk->_clLogicalID ||
+                 ( onlyMetaPage && DMS_LOB_META_SEQUENCE != blk->_sequence ) )
+            {
+               ++current ;
+               continue ;
+            }
+
+            ossMemcpy( &( page._oid ), blk->_oid, sizeof( page._oid ) ) ;
+            page._sequence = blk->_sequence ;
+            page._len = blk->_dataLen ;
+            ++current ;
+            break ;
+         }
+         else
+         {
+            /// not allocated.
+            ++current ;
+         }
+      } while ( TRUE ) ;
+
+      /// point to the next.
+      pos = current ;
+   done:
+      if ( mbContext->isMBLock() )
+      {
+         mbContext->mbUnlock() ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

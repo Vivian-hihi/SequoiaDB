@@ -43,6 +43,7 @@
 #include "dms.hpp"
 #include "dpsLogDef.hpp"
 #include "dpsMessageBlock.hpp"
+#include "rtnLobFetcher.hpp"
 #include "../bson/bsonobj.h"
 #include <map>
 
@@ -92,6 +93,12 @@ namespace engine
          virtual INT32     _scanType () const = 0 ;
 
          virtual void      _reset () ;
+         virtual INT32     _onLobFilter( const _dmsLobInfoOnPage &info,
+                                         BOOLEAN &need2Send )
+         {
+            need2Send = FALSE ;
+            return SDB_OK ;
+         }
 
       protected:
          virtual void   _onAttach () ;
@@ -129,6 +136,10 @@ namespace engine
                                         const MsgRouteID &routeID,
                                         UINT32 TID, UINT64 requestID ) ;
 
+         INT32             _syncLob( const NET_HANDLE &handle,
+                                     SINT64 packet,
+                                     const MsgRouteID &routeID,
+                                     UINT32 TID, UINT64 requestID ) ;
       protected:
          BSONObj                          _rangeKeyObj ;
          BSONObj                          _rangeEndKeyObj ;
@@ -160,7 +171,8 @@ namespace engine
          BSONObj                          _curScanKeyObj ;
          deque<DPS_LSN_OFFSET>            _deqLSN ;
          ossSpinXLatch                    _LSNlatch ;
-
+         _rtnLobFetcher                   _lobFetcher ;
+         BOOLEAN                          _docIsDone ;
    };
 
    class _clsFSSrcSession : public _clsDataSrcBaseSession
@@ -219,6 +231,8 @@ namespace engine
                                             INT32 &outSize ) ;
          virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
          virtual INT32   _scanType () const ;
+         virtual INT32   _onLobFilter( const _dmsLobInfoOnPage &info,
+                                       BOOLEAN &need2Send ) ;
 
       protected:
          INT32   _genKeyObj ( const BSONObj &obj, BSONObj &keyObj ) ;

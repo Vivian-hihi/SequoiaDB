@@ -96,7 +96,7 @@ namespace engine
 
       INT32 _getFileHeader( _dmsStorageUnitHeader &header ) ;
 
-      OSS_INLINE UINT64 getSeek( DMS_LOB_PAGEID page,
+      OSS_INLINE SINT64 getSeek( DMS_LOB_PAGEID page,
                                  UINT32 offset ) const
       {
          INT64 seek = page ;

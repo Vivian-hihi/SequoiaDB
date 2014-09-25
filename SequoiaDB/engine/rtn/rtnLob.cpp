@@ -527,7 +527,7 @@ namespace engine
       prepared = TRUE ;
 
       rc = su->lob()->getLobMeta( oid, mbContext,
-                                  cb, TRUE, meta ) ;
+                                  cb, meta ) ;
       if ( SDB_FNE == rc )
       {
          /// do nothing.
@@ -553,7 +553,7 @@ namespace engine
       }
 
       rc = su->lob()->writeLobMeta( oid, mbContext,
-                                    cb, TRUE, meta, TRUE,
+                                    cb, meta, TRUE,
                                     dpsCB ) ;
       if ( SDB_OK != rc )
       {
@@ -608,7 +608,7 @@ namespace engine
       record.set( &oid, sequence, offset,
                   len, data ) ;
       rc = su->lob()->write( record, mbContext, cb,
-                             FALSE, dpsCB ) ;
+                             dpsCB ) ;
 
       if ( SDB_OK != rc )
       {
@@ -657,8 +657,7 @@ namespace engine
       prepared = TRUE ;
 
       rc = su->lob()->writeLobMeta( oid, mbContext, cb,
-                                    FALSE, meta, FALSE,
-                                    dpsCB ) ;
+                                    meta, FALSE, dpsCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write meta data of lob:%d", rc ) ;
@@ -783,7 +782,7 @@ namespace engine
       prepared = TRUE ;
 
       rc = su->lob()->getLobMeta( oid, mbContext,
-                                  cb, FALSE, meta ) ;
+                                  cb, meta ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob[%s] in collection[%s], rc:%d",
@@ -839,7 +838,7 @@ namespace engine
 
       record.set( &oid, sequence, offset, len, np ) ;
       rc = su->lob()->read( record, mbContext, cb,
-                            FALSE, data, read ) ;
+                            data, read ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
@@ -882,7 +881,7 @@ namespace engine
 
       record.set( &oid, sequence, 0, 0, NULL ) ;
       rc = su->lob()->remove( record, mbContext, cb,
-                              FALSE, dpsCB ) ;
+                              dpsCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to remove lob[%s],"
@@ -932,7 +931,7 @@ namespace engine
       prepared = TRUE ;
 
       rc = su->lob()->getLobMeta( oid, mbContext, cb,
-                                  TRUE, lobMeta ) ;
+                                  lobMeta ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get lob meta[%s], rc:%d",
@@ -950,8 +949,7 @@ namespace engine
       lobMeta._status = DMS_LOB_UNCOMPLETE ;
 
       rc = su->lob()->writeLobMeta( oid, mbContext, cb,
-                                    TRUE, lobMeta, FALSE,
-                                    dpsCB ) ;
+                                    lobMeta, FALSE, dpsCB ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to invalidate lob[%s], rc:%d",
@@ -1002,7 +1000,7 @@ namespace engine
                   len, data ) ;
 
       rc = su->lob()->update( record, mbContext, cb,
-                                FALSE, dpsCB ) ;
+                              dpsCB ) ;
 
       if ( SDB_OK != rc )
       {

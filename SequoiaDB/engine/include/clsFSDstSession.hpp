@@ -93,8 +93,15 @@ namespace engine
          void           _meta () ;
          void           _index() ;
          void           _notify( CLS_FS_NOTIFY_TYPE type ) ;
-         BOOLEAN        _more( MsgClsFSNotifyRes *msg, CHAR *&itr,
+         BOOLEAN        _more( const MsgClsFSNotifyRes *msg,
+                               const CHAR *&itr,
                                BOOLEAN isData = TRUE ) ;
+
+         BOOLEAN        _more( const MsgClsFSNotifyRes *msg,
+                               const CHAR *&itr,
+                               const bson::OID *&oid,
+                               const MsgLobTuple *&tuple,
+                               const CHAR *&data ) ;
 
          INT32          _extractFullNames( const CHAR *names ) ;
          INT32          _extractMeta( const CHAR *objdata, string &cs,
@@ -106,6 +113,11 @@ namespace engine
          UINT32         _addCollection ( const CHAR *pCollectionName ) ;
          UINT32         _removeCollection ( const CHAR *pCollectionName ) ;
          UINT32         _removeCS ( const CHAR *pCSName ) ;
+
+      private:
+         INT32 _replayDoc( const MsgClsFSNotifyRes *msg ) ;
+         INT32 _replayLog( const MsgClsFSNotifyRes *msg ) ;
+         INT32 _replayLob( const MsgClsFSNotifyRes *msg ) ;
 
       protected:
          vector<string>       _fullNames ;
@@ -120,6 +132,7 @@ namespace engine
          BOOLEAN              _quit ;
          UINT64               _requestID ;
          DPS_LSN              _expectLSN ;
+         BOOLEAN              _needMoreDoc ;  /// when we begin to get lob, we do not want to sync doc any more.
          std::map<string, INT32> _mapEmptyCS ;
 
    };

@@ -409,6 +409,7 @@ const UINT32 MSG_SERVICE_MAX = 64 ;
       CLS_FS_NOTIFY_TYPE_DOC = 0,
       CLS_FS_NOTIFY_TYPE_LOG,
       CLS_FS_NOTIFY_TYPE_OVER,
+      CLS_FS_NOTIFY_TYPE_LOB,
    } ;
 
    class _MsgClsFSNotify : public SDBObject

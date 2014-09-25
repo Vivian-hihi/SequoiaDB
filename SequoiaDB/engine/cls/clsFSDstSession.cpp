@@ -47,6 +47,7 @@
 #include "dpsLogRecordDef.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "rtnLob.hpp"
 
 using namespace bson ;
 
@@ -87,6 +88,7 @@ namespace engine
       _recvTimeout = 0 ;
       _quit = FALSE ;
       _requestID = 0 ;
+      _needMoreDoc = TRUE ;
    }
 
    _clsDataDstBaseSession::~_clsDataDstBaseSession ()
@@ -228,6 +230,7 @@ namespace engine
                            obj.objsize() ) ;
          fullName.replace( pos, 1, 1, '.' ) ;
          _timeout = 0 ;
+         _needMoreDoc = TRUE ;
       }
       catch ( std::exception &e )
       {
@@ -275,15 +278,15 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__MORE, "_clsDataDstBaseSession::_more" )
-   BOOLEAN _clsDataDstBaseSession::_more( MsgClsFSNotifyRes * msg,
-                                          CHAR * & itr,
+   BOOLEAN _clsDataDstBaseSession::_more( const MsgClsFSNotifyRes * msg,
+                                          const CHAR *& itr,
                                           BOOLEAN isData )
    {
       PD_TRACE_ENTRY ( SDB__CLSDATADBS__MORE );
       BOOLEAN res = FALSE ;
       if ( NULL == itr )
       {
-         itr = ( CHAR *)( &( msg->header ) ) + sizeof( MsgClsFSNotifyRes ) ;
+         itr = ( const CHAR *)( &( msg->header ) ) + sizeof( MsgClsFSNotifyRes ) ;
       }
       else if ( isData )
       {
@@ -803,6 +806,7 @@ namespace engine
 
       if ( CLS_FS_STATUS_NOTIFY_LOG != _status &&
            CLS_FS_STATUS_NOTIFY_DOC != _status &&
+           CLS_FS_STATUS_NOTIFY_LOB != _status &&
            CLS_FS_STATUS_END != _status )
       {
          PD_LOG( PDWARNING, "Session[%s]: ignore msg. local status:%d",
@@ -828,25 +832,62 @@ namespace engine
             _status = CLS_FS_STATUS_NOTIFY_LOG ;
             _notify( CLS_FS_NOTIFY_TYPE_LOG ) ;
 
-            CHAR *itr = NULL ;
-            while ( _more( msg, itr, TRUE ) )
+            rc = _replayDoc( msg ) ;
+            if ( SDB_OK != rc )
             {
-               try
-               {
-                  BSONObj obj( itr ) ;
-                  rc = _replayer.replayInsert( _fullNames.at( _current ).c_str(),
-                                               obj, eduCB() ) ;
-                  if ( rc )
-                  {
-                     goto error ;
-                  }
-               }
-               catch ( std::exception &e )
-               {
-                  PD_LOG( PDERROR, "Session[%s]: unexpected exception: %s",
-                          sessionName(), e.what() ) ;
-                  goto error ;
-               }
+               PD_LOG( PDERROR, "failed to replay doc from remote:%d", rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            /// status moving:
+            /// | current status |  eof     | not eof |
+            /// |    doc         |  lob     | log     |
+            /// |    log         |  doc/lob | log     |
+            /// |    lob         |  -       | log     |
+            _status = CLS_FS_STATUS_NOTIFY_LOB ;
+            _notify( CLS_FS_NOTIFY_TYPE_LOB ) ;
+            _needMoreDoc = FALSE ;
+         }
+      }
+      else if ( CLS_FS_NOTIFY_TYPE_LOG == msg->type )
+      {
+         ++_packet ;
+         if ( CLS_FS_EOF != msg->eof )
+         {
+            _notify( CLS_FS_NOTIFY_TYPE_LOG ) ;
+            rc = _replayLog( msg ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to replay log from remote:%d", rc ) ;
+               goto error ;
+            }
+         }
+         else if ( _needMoreDoc )
+         {
+            _status = CLS_FS_STATUS_NOTIFY_DOC ;
+            _notify( CLS_FS_NOTIFY_TYPE_DOC ) ;
+         }
+         else
+         {
+            _status = CLS_FS_STATUS_NOTIFY_LOB ;
+            _notify( CLS_FS_NOTIFY_TYPE_LOB ) ;
+         }
+      }
+      else if ( CLS_FS_NOTIFY_TYPE_LOB == msg->type )
+      {
+         ++_packet ;
+         if ( CLS_FS_EOF != msg->eof )
+         {
+            _status = CLS_FS_STATUS_NOTIFY_LOG ;
+            _notify( CLS_FS_NOTIFY_TYPE_LOG ) ;
+
+            rc = _replayLob( msg ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to replay lob from remote:%d", rc ) ;
+               goto error ;
             }
          }
          else
@@ -857,186 +898,7 @@ namespace engine
             _notify( CLS_FS_NOTIFY_TYPE_OVER ) ;
 
             //get next collection
-            _meta () ;
-         }
-      }
-      else if ( CLS_FS_NOTIFY_TYPE_LOG == msg->type )
-      {
-         ++_packet ;
-         INT32 rc = SDB_OK ;
-         SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-         if ( CLS_FS_EOF != msg->eof )
-         {
-            _notify( CLS_FS_NOTIFY_TYPE_LOG ) ;
-
-            CHAR *itr = NULL ;
-            while ( _more( msg, itr, FALSE ) )
-            {
-               dpsLogRecordHeader *header = (dpsLogRecordHeader *)itr;
-               SDB_ASSERT( 0 == header->_reserved1, "impossible" ) ;
-
-               if ( !_replayer.isDPSEnabled() )
-               {
-                  if ( dpsCB->expectLsn().compareOffset( header->_lsn ) > 0 )
-                  {
-                     SDB_ASSERT( FALSE , "header lsn is less than expect" ) ;
-                     PD_LOG( PDWARNING, "Session[%s]: expect lsn[%lld] more "
-                             "than header lsn[%lld]", sessionName(),
-                             dpsCB->expectLsn().offset, header->_lsn ) ;
-                     goto error ;
-                  }
-
-                  if ( 0 != dpsCB->expectLsn().compareOffset( header->_lsn )
-                       && SDB_OK != dpsCB->move ( header->_lsn,
-                                                  header->_version ) )
-                  {
-                     PD_LOG ( PDERROR, "Session[%s]: failed to move lsn[%d,%lld]",
-                              sessionName(), header->_version,
-                              header->_lsn ) ;
-                     goto error ;
-                  }
-               }
-
-               rc = _replayer.replay( header, eduCB() ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG ( PDWARNING, "Session[%s] replay dps log record failed"
-                           "[rc:%d]", sessionName(), rc ) ;
-                  goto error ;
-               }
-
-               /* In the end, will pull repl-log, so, the code not needed
-               if ( !_replayer.isDPSEnabled() )
-               {
-                  rc = dpsCB->recordRow( itr, header->_length );
-                  if ( rc )
-                  {
-                     PD_LOG ( PDERROR, "Session[%s]: row record failed[rc:%d]",
-                              sessionName(), rc ) ;
-                     goto error ;
-                  }
-               } */
-
-               /// add new collection into sync list.
-               /// truncate is cl logical id is change, so can't find in the
-               /// notify map, need to add to sync list
-               if ( LOG_TYPE_CL_CRT == header->_type ||
-                    LOG_TYPE_CL_TRUNC == header->_type )
-               {
-                  dpsLogRecord record ;
-                  dpsLogRecord::iterator itrName ;
-                  rc = record.load( itr ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     goto error ;
-                  }
-
-                  itrName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
-                  if ( !itrName.valid() )
-                  {
-                     PD_LOG( PDERROR, "Session[%s]: Failed to find tag "
-                             "fullname", sessionName() ) ;
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
-                  _addCollection ( itrName.value() ) ;
-               }
-               else if ( LOG_TYPE_CL_DELETE == header->_type )
-               {
-                  dpsLogRecord record ;
-                  dpsLogRecord::iterator itrName ;
-                  rc = record.load( itr ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     goto error ;
-                  }
-
-                  itrName = record.find( DPS_LOG_PULIBC_FULLNAME) ;
-                  if ( !itrName.valid() )
-                  {
-                     PD_LOG( PDERROR, "Session[%s]: Failed to find tag "
-                             "fullname", sessionName() ) ;
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
-                  _removeCollection ( itrName.value() ) ;
-               }
-               else if ( LOG_TYPE_CS_DELETE == header->_type )
-               {
-                  dpsLogRecord record ;
-                  dpsLogRecord::iterator itrName ;
-                  rc = record.load( itr ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     goto error ;
-                  }
-
-                  itrName = record.find( DPS_LOG_CSDEL_CSNAME ) ;
-                  if ( !itrName.valid() )
-                  {
-                     PD_LOG( PDERROR, "Session[%s]: Failed to find tag "
-                             "fullname", sessionName() ) ;
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
-                  _removeCS ( itrName.value() ) ;
-               }
-               else if ( LOG_TYPE_CL_RENAME == header->_type )
-               {
-                  dpsLogRecord record ;
-                  dpsLogRecord::iterator cs, oldname, newname ;
-                  std::string fullname ;
-                  std::string oldFullName ;
-                  rc = record.load( itr ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     goto error ;
-                  }
-
-                  cs = record.find( DPS_LOG_CLRENAME_CSNAME ) ;
-                  if ( !cs.valid() )
-                  {
-                     PD_LOG( PDERROR, "Session[%s]: Failed to find tag cs",
-                             sessionName() ) ;
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
-
-                  oldname = record.find( DPS_LOG_CLRENAME_CLOLDNAME ) ;
-                  if ( !oldname.valid() )
-                  {
-                     PD_LOG( PDERROR, "Session[%s]: Failed to find tag oldname",
-                             sessionName() ) ;
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
-
-                  newname = record.find( DPS_LOG_CLRENAME_CLNEWNAME ) ;
-                  if ( !newname.valid() )
-                  {
-                     PD_LOG( PDERROR, "Session[%s]: Failed to find tag newname",
-                             sessionName() ) ;
-                     rc = SDB_SYS ;
-                     goto error ;
-                  }
-
-                  oldFullName = cs.value() ;
-                  oldFullName += "." ;
-                  oldFullName += oldname.value() ;
-                  if ( _removeCollection ( oldFullName.c_str() ) > 0 )
-                  {
-                     std::string newFullName = cs.value() ;
-                     newFullName += "." ;
-                     newFullName += newname.value() ;
-                     _addCollection ( newFullName.c_str() ) ;
-                  }
-               }
-            }
-         }
-         else
-         {
-            _status = CLS_FS_STATUS_NOTIFY_DOC ;
-            _notify( CLS_FS_NOTIFY_TYPE_DOC ) ;
+            _meta() ;
          }
       }
       else
@@ -1048,6 +910,278 @@ namespace engine
       return SDB_OK ;
    error:
       _disconnect () ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__REPLAYDOC, "_clsDataDstBaseSession::_replayDoc" )
+   INT32 _clsDataDstBaseSession::_replayDoc( const MsgClsFSNotifyRes *msg )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSDATADBS__REPLAYDOC ) ;
+      const CHAR *itr = NULL ;
+      while ( _more( msg, itr, TRUE ) )
+      {
+         try
+         {
+            BSONObj obj( itr ) ;
+            rc = _replayer.replayInsert( _fullNames.at( _current ).c_str(),
+                                         obj, eduCB() ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Session[%s]: unexpected exception: %s",
+                    sessionName(), e.what() ) ;
+            goto error ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSDATADBS__REPLAYDOC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__REPLAYLOB, "_clsDataDstBaseSession::_repalyLob" )
+   INT32 _clsDataDstBaseSession::_replayLob( const MsgClsFSNotifyRes *msg )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSDATADBS__REPLAYLOB ) ;
+      const CHAR *itr = ( const CHAR * )msg ;
+      const MsgLobTuple *tuple = NULL ;
+      const bson::OID *oid = NULL ;
+      const CHAR *data = NULL ;
+ 
+      while ( _more( msg, itr, oid,
+                     tuple, data ) )
+      {
+         rc = rtnWriteLob( _fullNames.at( _current ).c_str(),
+                           *oid, tuple->columns.sequence,
+                           0, tuple->columns.len, data,
+                           eduCB(), 1, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSDATADBS__REPLAYLOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _clsDataDstBaseSession::_more( const MsgClsFSNotifyRes *msg,
+                                          const CHAR *&itr,
+                                          const bson::OID *&oid,
+                                          const MsgLobTuple *&tuple,
+                                          const CHAR *&data )
+   {
+      BOOLEAN rc = FALSE ;
+      UINT32 lastSize = 0 ;
+
+      if ( NULL == itr )
+      {
+         goto done ;
+      }
+
+      lastSize = msg->header.header.messageLength -
+                ( itr - ( const CHAR * )msg ) ;
+      if ( lastSize < ( sizeof( MsgLobTuple ) + sizeof( bson::OID ) ) )
+      {
+         goto done ;
+      }
+      else
+      {
+         oid = ( const bson::OID * )itr ;
+         tuple = ( const MsgLobTuple * )( itr + sizeof( bson::OID ) ) ;
+         UINT32 alignedLen = ossRoundUpToMultipleX(
+                                 sizeof( bson::OID ) +
+                                 sizeof( MsgLobTuple ) +
+                                 tuple->columns.len,
+                                 4 ) ;
+         if ( lastSize < alignedLen )
+         {
+            goto done ;
+         }
+
+         data = itr + sizeof( MsgLobTuple ) + sizeof( bson::OID ) ;
+         rc = TRUE ;
+         if ( alignedLen == lastSize )
+         {
+            itr = NULL ;
+         }
+         else
+         {
+            itr += alignedLen ;
+         }
+      }
+   done:
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDATADBS__REPLAYLOG, "_clsDataDstBaseSession::_replayLog" )
+   INT32 _clsDataDstBaseSession::_replayLog( const MsgClsFSNotifyRes *msg )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSDATADBS__REPLAYLOG ) ;
+      SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+      const CHAR *itr = NULL ;
+      while ( _more( msg, itr, FALSE ) )
+      {
+         dpsLogRecordHeader *header = (dpsLogRecordHeader *)itr;
+         SDB_ASSERT( 0 == header->_reserved1, "impossible" ) ;
+
+         if ( !_replayer.isDPSEnabled() )
+         {
+            if ( dpsCB->expectLsn().compareOffset( header->_lsn ) > 0 )
+            {
+               SDB_ASSERT( FALSE , "header lsn is less than expect" ) ;
+               PD_LOG( PDWARNING, "Session[%s]: expect lsn[%lld] more "
+                       "than header lsn[%lld]", sessionName(),
+                       dpsCB->expectLsn().offset, header->_lsn ) ;
+               goto error ;
+            }
+
+            if ( 0 != dpsCB->expectLsn().compareOffset( header->_lsn )
+                 && SDB_OK != dpsCB->move ( header->_lsn,
+                                            header->_version ) )
+            {
+               PD_LOG ( PDERROR, "Session[%s]: failed to move lsn[%d,%lld]",
+                        sessionName(), header->_version,
+                        header->_lsn ) ;
+               goto error ;
+            }
+         }
+
+         rc = _replayer.replay( header, eduCB() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDWARNING, "Session[%s] replay dps log record failed"
+                    "[rc:%d]", sessionName(), rc ) ;
+            goto error ;
+         }
+
+         if ( LOG_TYPE_CL_CRT == header->_type ||
+              LOG_TYPE_CL_TRUNC == header->_type )
+         {
+            dpsLogRecord record ;
+            dpsLogRecord::iterator itrName ;
+            rc = record.load( itr ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            itrName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+            if ( !itrName.valid() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Failed to find tag "
+                       "fullname", sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            _addCollection ( itrName.value() ) ;
+         }
+         else if ( LOG_TYPE_CL_DELETE == header->_type )
+         {
+            dpsLogRecord record ;
+            dpsLogRecord::iterator itrName ;
+            rc = record.load( itr ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            itrName = record.find( DPS_LOG_PULIBC_FULLNAME) ;
+            if ( !itrName.valid() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Failed to find tag "
+                       "fullname", sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            _removeCollection ( itrName.value() ) ;
+         }
+         else if ( LOG_TYPE_CS_DELETE == header->_type )
+         {
+            dpsLogRecord record ;
+            dpsLogRecord::iterator itrName ;
+            rc = record.load( itr ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            itrName = record.find( DPS_LOG_CSDEL_CSNAME ) ;
+            if ( !itrName.valid() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Failed to find tag "
+                       "fullname", sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            _removeCS ( itrName.value() ) ;
+         }
+         else if ( LOG_TYPE_CL_RENAME == header->_type )
+         {
+            dpsLogRecord record ;
+            dpsLogRecord::iterator cs, oldname, newname ;
+            std::string fullname ;
+            std::string oldFullName ;
+            rc = record.load( itr ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            cs = record.find( DPS_LOG_CLRENAME_CSNAME ) ;
+            if ( !cs.valid() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Failed to find tag cs",
+                       sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            oldname = record.find( DPS_LOG_CLRENAME_CLOLDNAME ) ;
+            if ( !oldname.valid() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Failed to find tag oldname",
+                       sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            newname = record.find( DPS_LOG_CLRENAME_CLNEWNAME ) ;
+            if ( !newname.valid() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: Failed to find tag newname",
+                       sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            oldFullName = cs.value() ;
+            oldFullName += "." ;
+            oldFullName += oldname.value() ;
+            if ( _removeCollection ( oldFullName.c_str() ) > 0 )
+            {
+               std::string newFullName = cs.value() ;
+               newFullName += "." ;
+               newFullName += newname.value() ;
+               _addCollection ( newFullName.c_str() ) ;
+            }
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSDATADBS__REPLAYLOG, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 

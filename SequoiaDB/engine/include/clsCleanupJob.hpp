@@ -36,6 +36,7 @@
 #define CLS_CLEANUP_JOB_HPP_
 
 #include "rtnBackgroundJob.hpp"
+#include "dmsLobDef.hpp"
 
 using namespace bson ;
 
@@ -68,6 +69,7 @@ namespace engine
       protected:
          INT32   _cleanByTBSCan ( INT32 w, CLS_CLEANUP_TYPE cleanType ) ;
          INT32   _cleanBySplitKeyObj ( INT32 w ) ;
+         INT32   _cleanLobData( INT32 w ) ;
 
          INT32   _filterDel ( const CHAR* buff, INT32 buffSize,
                               CLS_CLEANUP_TYPE cleanType,
@@ -76,6 +78,10 @@ namespace engine
          CLS_CLEANUP_TYPE _cleanupType () const ;
 
          void  _makeName () ;
+
+      private:
+         INT32 _filterDel( const _dmsLobInfoOnPage &page,
+                           BOOLEAN &need2Remove ) ;
 
       protected:
          std::string          _clFullName ;

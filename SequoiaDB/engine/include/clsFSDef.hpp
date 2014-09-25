@@ -67,6 +67,7 @@ namespace engine
       CLS_FS_STATUS_NOTIFY_LOG,
       CLS_FS_STATUS_END,
       CLS_FS_STATUS_NONE,
+      CLS_FS_STATUS_NOTIFY_LOB,
    } ;
 }
 

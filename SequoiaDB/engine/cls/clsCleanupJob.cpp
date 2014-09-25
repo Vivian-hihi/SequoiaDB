@@ -38,6 +38,8 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "rtn.hpp"
+#include "rtnLobFetcher.hpp"
+#include "rtnLob.hpp"
 
 using namespace bson ;
 
@@ -221,9 +223,159 @@ namespace engine
          rc = _cleanByTBSCan( w, _cleanupType() ) ;
       }
 
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to clean data after split done:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _cleanLobData( w ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to clean lob data:%d", rc ) ;
+      }
+
    done:
       eduCB()->writingDB( FALSE ) ;
       PD_TRACE_EXITRC ( SDB__CLSCLNJOB_DOIT, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCLNJOB__FILTERDEL, "_clsCleanupJob::_filterDel" )
+   INT32 _clsCleanupJob::_filterDel( const dmsLobInfoOnPage &page,
+                                     BOOLEAN &need2Remove )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSCLNJOB__FILTERDEL ) ;
+      catAgent *catAgent = sdbGetShardCB()->getCataAgent() ;
+      _clsCatalogSet *catSet = NULL ;
+      UINT32 groupID = sdbGetShardCB()->nodeID().columns.groupID ;
+      UINT32 belongTo = 0 ;
+
+      if ( CLS_CLEANUP_BY_CATAINFO == _cleanupType() )
+      {
+   retry:
+         catAgent->lock_r() ;
+         catSet = catAgent->collectionSet( _clFullName.c_str() ) ;
+         if ( NULL == catSet )
+         {
+            catAgent->release_r() ;
+            rc = sdbGetShardCB()->syncUpdateCatalog( _clFullName.c_str(),
+                                                     OSS_ONE_SEC ) ;
+            if ( SDB_OK == rc )
+            {
+               goto retry ;
+            }
+            else
+            {
+               PD_LOG( PDERROR, "failed to update catalog info of %s",
+                       _clFullName.c_str() ) ;
+               goto error ;
+            }
+         }
+
+         rc = catSet->findGroupID( page._oid, page._sequence, belongTo ) ;
+         if ( SDB_OK != rc )
+         {
+            catAgent->release_r() ;
+            PD_LOG( PDERROR, "failed to get group id from cata set:%d", rc ) ;
+            goto error ;
+         }
+
+         catAgent->release_r() ;
+         need2Remove = groupID != belongTo ;
+         goto done ;
+      }
+      else if ( !_splitKeyObj.isEmpty() )
+      {
+         UINT32 hash = ossHash( ( const BYTE * )(page._oid.getData()),
+                             sizeof( bson::OID ),
+                             ( const BYTE * )( &page._sequence ),
+                             sizeof( page._sequence ) ) ;
+         need2Remove = _splitKeyObj.firstElement().Int() <= ( INT32 )hash &&
+                       ( _splitEndKeyObj.isEmpty() ||
+                         ( INT32 )hash < _splitEndKeyObj.firstElement().Int() ) ;
+      }
+      else
+      {
+         need2Remove = FALSE ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSCLNJOB__FILTERDEL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCLNJOB__CLEANLOBDATA, "_clsCleanupJob::_cleanLobData" )
+   INT32 _clsCleanupJob::_cleanLobData( INT32 w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSCLNJOB__CLEANLOBDATA ) ;
+      dmsLobInfoOnPage page ;
+      rtnLobFetcher fetcher ;
+      BOOLEAN need2Remove = FALSE ;
+
+      if ( !_isHashSharding )
+      {
+         /// do not support non-hash sharding.
+         goto done ;
+      }
+      else if ( CLS_CLEANUP_BY_SHARDINGINDEX == _cleanupType() )
+      {
+         PD_LOG( PDERROR, "we can not clean lob data when type is SHARDINGINDEX " ) ;
+         goto done ;
+      }
+      
+
+      rc = fetcher.init( _clFullName.c_str(), FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to init fetcher:%d", rc ) ;
+         goto error ;
+      }
+
+      do
+      {
+         need2Remove = FALSE ;
+         rc = fetcher.fetch( eduCB(), page ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = _filterDel( page, need2Remove ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to filter lob:%d", rc ) ;
+               goto error ;
+            }
+            if ( need2Remove)
+            {
+               rc = rtnRemoveLobPiece( _clFullName.c_str(),
+                                       page._oid, page._sequence,
+                                       eduCB(), w, _dpsCB ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to remove lob[%s][%d]",
+                          ", rc:%d", page._oid.str().c_str(),
+                          page._sequence, rc ) ;
+                  goto error ;
+               }
+            }
+         }
+         else if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "failed to fetch lob:%d", rc ) ;
+            goto done ;
+         }
+      } while( TRUE ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__CLSCLNJOB__CLEANLOBDATA, rc ) ;
       return rc ;
    error:
       goto done ;

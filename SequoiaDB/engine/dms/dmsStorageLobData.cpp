@@ -210,7 +210,7 @@ namespace engine
                   0 == offset &&
                   len <= _pageSz, "invalid operation" ) ;
 
-      UINT64 writeOffset = getSeek( page, offset ) ;
+      INT64 writeOffset = getSeek( page, offset ) ;
       if ( writeOffset + len > _fileSz )
       {
          PD_LOG( PDERROR, "Offset[%lld] grater than file size[%lld] in "
@@ -264,7 +264,7 @@ namespace engine
                   NULL != buf &&
                   len + offset <= _pageSz, "invalid operation" ) ;
       SINT64 readFromFile = 0 ;
-      UINT64 readOffset = getSeek( page, offset ) ;
+      INT64 readOffset = getSeek( page, offset ) ;
 
       if ( readOffset + len > _fileSz )
       {

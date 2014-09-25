@@ -91,13 +91,11 @@ namespace engine
       INT32 getLobMeta( const bson::OID &oid,
                         dmsMBContext *mbContext,
                         _pmdEDUCB *cb,
-                        BOOLEAN locked,
                         _dmsLobMeta &meta ) ;
 
       INT32 writeLobMeta( const bson::OID &oid,
                           dmsMBContext *mbContext,
                           _pmdEDUCB *cb,
-                          BOOLEAN locked,
                           const _dmsLobMeta &meta,
                           BOOLEAN isNew,
                           SDB_DPSCB *dpsCB ) ;
@@ -105,19 +103,16 @@ namespace engine
       INT32 write( const dmsLobRecord &record,
                    dmsMBContext *mbContext,
                    _pmdEDUCB *cb,
-                   BOOLEAN locked,
                    SDB_DPSCB *dpscb ) ;
 
       INT32 update( const dmsLobRecord &record,
                     dmsMBContext *mbContext,
                     _pmdEDUCB *cb,
-                    BOOLEAN locked,
                     SDB_DPSCB *dpscb ) ;
 
       INT32 remove( const dmsLobRecord &record,
                     dmsMBContext *mbContext,
                     _pmdEDUCB *cb,
-                    BOOLEAN locked,
                     SDB_DPSCB *dpscb ) ;
 
       /// user should make sure that the length of
@@ -125,9 +120,14 @@ namespace engine
       INT32 read( const dmsLobRecord &record,
                   dmsMBContext *mbContext,
                   _pmdEDUCB *cb,
-                  BOOLEAN locked,
                   CHAR *buf,
                   UINT32 &len ) ;
+
+      INT32 readPage( DMS_LOB_PAGEID &pos,
+                      BOOLEAN onlyMetaPage,
+                      _pmdEDUCB *cb,
+                      dmsMBContext *mbContext,
+                      dmsLobInfoOnPage &page ) ;
 
    protected:
       INT32  _openLob( const CHAR *path,
@@ -160,6 +160,7 @@ namespace engine
                           _dmsLobDataMapBlk &blk) ;
 
       INT32 _find( const _dmsLobRecord &record,
+                   UINT32 clID,
                    DMS_LOB_PAGEID &page,
                    _dmsLobDataMapBlk *&blk,
                    UINT32 *bucket = NULL ) ;

@@ -47,6 +47,7 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "dpsLogRecordDef.hpp"
+#include "rtnLob.hpp"
 #include <set>
 
 using namespace bson ;
@@ -205,6 +206,23 @@ namespace engine
          }
       }
       else if ( CLS_FS_NOTIFY_TYPE_LOG == _dataType )
+      {
+         if ( 0 == _mb.length() )
+         {
+            PD_LOG( PDDEBUG, "Session[%s]: last log sync has hit the end.",
+                    sessionName() ) ;
+            msg.eof = CLS_FS_EOF ;
+            _agent->syncSend( handle, &msg ) ;
+         }
+         else
+         {
+            msg.header.header.messageLength = sizeof( MsgClsFSNotifyRes ) +
+                                              _mb.length() ;
+            _agent->syncSend( handle, &( msg.header.header ),
+                              _mb.offset( 0 ), _mb.length() ) ;
+         }
+      }
+      else if ( CLS_FS_NOTIFY_TYPE_LOB == _dataType )
       {
          if ( 0 == _mb.length() )
          {
@@ -574,6 +592,154 @@ namespace engine
       return ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__STATIC__APPENDLOB2MB, "_appendLob2Mb" )
+   static INT32 _appendLob2Mb( const _dmsLobInfoOnPage &page,
+                               const CHAR *fullName,
+                               _pmdEDUCB *cb,
+                               _dpsMessageBlock &mb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSDSBS__STATIC__APPENDLOB2MB ) ;
+      UINT32 *tmp = NULL ;
+      UINT32 read = 0 ;
+      UINT32 oldSize = mb.length() ;
+      UINT32 len = sizeof( bson::OID ) +
+                   sizeof( MsgLobTuple ) +
+                   page._len ;
+      UINT32 alignedLen = ossRoundUpToMultipleX( len, 4 ) ;
+      if ( mb.idleSize() < alignedLen )
+      {
+         rc = mb.extend( alignedLen - mb.idleSize() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to extend mb block:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      ossMemcpy( mb.writePtr(), &( page._oid ), sizeof( bson::OID ) ) ;
+      mb.writePtr( oldSize + sizeof( bson::OID ) ) ;
+      tmp = ( UINT32 * )( mb.writePtr() ) ;
+      *tmp = page._len ;
+      mb.writePtr( mb.length() + 4 ) ; 
+      tmp = ( UINT32 * )( mb.writePtr() ) ;
+      *tmp = page._sequence ;
+      mb.writePtr( mb.length() + 4 ) ;
+      tmp = ( UINT32 * )( mb.writePtr() ) ;
+      *tmp = 0 ;
+      mb.writePtr( mb.length() + 4 ) ;
+
+      rc = rtnReadLob( fullName,
+                       page._oid, page._sequence,
+                       0, page._len, cb,
+                       mb.writePtr(), read ) ;
+      if ( SDB_OK == rc )
+      {
+         if ( read != page._len )
+         {
+            PD_LOG( PDERROR, "lob may be modified, old len:%d"
+                    ", read len:%d", page._len, read ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         mb.writePtr( oldSize + alignedLen ) ;
+      }
+      else if ( SDB_LOB_SEQUENCE_NOT_EXIST == rc )
+      {
+         /// lob may be removed, ignore this error.
+         rc = SDB_OK ;
+         mb.writePtr( oldSize ) ; 
+      }
+      else
+      {
+         PD_LOG( PDERROR, "failed to read lob piece:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSDSBS__STATIC__APPENDLOB2MB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__SYNCLOB, "_clsDataSrcBaseSession::_syncLob" )
+   INT32 _clsDataSrcBaseSession::_syncLob( const NET_HANDLE &handle,
+                                           SINT64 packet,
+                                           const MsgRouteID &routeID,
+                                           UINT32 TID, UINT64 requestID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSDSBS__SYNCLOB ) ;
+      _dataType = CLS_FS_NOTIFY_TYPE_LOB ;
+      MsgClsFSNotifyRes msg ;
+      msg.header.header.TID = TID ;
+      msg.header.header.routeID = routeID ;
+      msg.header.res = SDB_OK ;
+      msg.header.header.requestID = requestID ;
+      msg.packet = packet ;
+      msg.type = (CLS_FS_NOTIFY_TYPE)_dataType ;
+      _mb.clear () ;
+      dmsLobInfoOnPage page ;
+      BOOLEAN need2Send = FALSE ;
+      time_t bTime = time( NULL ) ;
+
+      do
+      {
+         need2Send = FALSE ;
+         rc = _lobFetcher.fetch( eduCB(), page ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            break ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to fetch lob:%d", rc ) ;
+            goto error ;
+         }
+         else
+         {
+            /// do nothing.
+         }
+
+         rc = _onLobFilter( page, need2Send ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to filter lob data:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = _appendLob2Mb( page, _curCollecitonName.c_str(),
+                             eduCB(), _mb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to append lob data to mb:%d", rc ) ;
+            goto error ;
+         }
+      } while ( CLS_SYNC_MAX_LEN <=_mb.length() ||
+                ( time( NULL ) - bTime >= CLS_SYNC_MAX_TIME &&
+                   _mb.length() > 0 ) ) ;
+
+      if ( 0 != _mb.length() )
+      {
+         msg.header.header.messageLength = sizeof( MsgClsFSNotifyRes ) +
+                                           _mb.length() ;
+         _agent->syncSend( handle, &(msg.header.header),
+                           _mb.offset( 0 ), _mb.length() ) ;
+      }
+      else
+      {
+         msg.eof = CLS_FS_EOF ;
+         _agent->syncSend( handle, &msg ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__CLSDSBS__SYNCLOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__SYNCLOG, "_clsDataSrcBaseSession::_syncLog" )
    INT32 _clsDataSrcBaseSession::_syncLog( const NET_HANDLE &handle,
                                            SINT64 packet,
@@ -658,9 +824,14 @@ namespace engine
       }
       else
       {
-         //msg.eof = CLS_FS_EOF ;
-         //_agent->syncSend( handle, &msg ) ;
-         _syncRecord( handle, packet, routeID, TID, requestID ) ;
+         if ( !_docIsDone )
+         { 
+            _syncRecord( handle, packet, routeID, TID, requestID ) ;
+         }
+         else
+         {
+            _syncLob( handle, packet, routeID, TID, requestID ) ;
+         }
       }
    done:
       PD_TRACE_EXITRC ( SDB__CLSDSBS__SYNCLOG, rc );
@@ -803,6 +974,7 @@ namespace engine
          {
             msg.eof = CLS_FS_EOF ;
             msg.lsn = pmdGetKRCB()->getDPSCB()->expectLsn () ;
+            _docIsDone = TRUE ;
 
             _LSNlatch.get () ;
             if ( _deqLSN.size() > 0 )
@@ -973,6 +1145,15 @@ namespace engine
          }
          _curCollection = curCollection ;
 
+         _docIsDone = FALSE ;
+         rc = _lobFetcher.init( _curCollecitonName.c_str(),
+                                FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to init lob fetcher:%d", rc ) ;
+            goto error ;
+         }
+
          _constructMeta( meta, cs, collection, su ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta [%s]", sessionName(),
                  meta.toString().c_str() ) ;
@@ -1134,13 +1315,25 @@ namespace engine
             goto done ;
          }
       }
-      else
+      else if ( CLS_FS_NOTIFY_TYPE_LOG == msg->type )
       {
          rc = _syncLog( handle, msg->packet,
                         header->routeID, header->TID, header->requestID ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Session[%s]: failed to sync log, rc: %d",
+                    sessionName(), rc ) ;
+            _disconnect() ;
+            goto done ;
+         }
+      }
+      else
+      {
+         rc = _syncLob( handle, msg->packet,
+                        header->routeID, header->TID, header->requestID ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Session[%s]: failed to sync lob, rc: %d",
                     sessionName(), rc ) ;
             _disconnect() ;
             goto done ;
@@ -1585,6 +1778,48 @@ namespace engine
             PD_LOG ( PDERROR, "Split Session[%s]: parse dps log failed[rc:%d]",
                      sessionName(), rc ) ;
             goto error ;
+         }
+
+         /// we will sync lob after doc is done.
+         /// ignore lob's log here.
+         if ( !_docIsDone &&
+              ( LOG_TYPE_LOB_WRITE == record.head()._type ||
+                LOG_TYPE_LOB_REMOVE == record.head()._type ||
+                LOG_TYPE_LOB_UPDATE == record.head()._type ||
+                LOG_TYPE_LOB_TRUNCATE_LOB == record.head()._type ))
+         {
+            goto done ;
+         }
+/*         /// log of doc should be pushed after doc is done.
+         else if ( _docIsDone &&
+                   LOG_TYPE_LOB_WRITE != record.head()._type &&
+                   LOG_TYPE_LOB_REMOVE != record.head()._type &&
+                   LOG_TYPE_LOB_UPDATE != record.head()._type &&
+                   LOG_TYPE_LOB_TRUNCATE_LOB != record.head()._type )
+         {
+            _deqLSN.push_back( offset ) ;
+            goto done ;
+         }*/
+         else if ( _docIsDone &&
+                   (LOG_TYPE_LOB_WRITE == record.head()._type ||
+                   LOG_TYPE_LOB_REMOVE == record.head()._type ||
+                   LOG_TYPE_LOB_UPDATE == record.head()._type ||
+                   LOG_TYPE_LOB_TRUNCATE_LOB == record.head()._type ) )
+         {
+            if ( DMS_LOB_INVALID_PAGEID == _lobFetcher.toBeFetched() )
+            {
+               _deqLSN.push_back( offset ) ;
+               goto done ;
+            }
+            else if ( _lobFetcher.toBeFetched() <= extLID )
+            {
+               _deqLSN.push_back( offset ) ;
+               goto done ;
+            }
+            else
+            {
+               goto done ;
+            }
          }
 
          if ( LOG_TYPE_DATA_INSERT == record.head()._type )
@@ -2189,6 +2424,26 @@ namespace engine
       _cleanupJobID = PMD_INVALID_EDUID ;
 
       PD_TRACE_EXIT ( SDB__CLSSPLSS__ONDTH );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLSS__ONLOBFILTER, "_clsSplitSrcSession::_onLobFilter" )
+   INT32 _clsSplitSrcSession::_onLobFilter( const _dmsLobInfoOnPage &info,
+                                            BOOLEAN &need2Send )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__CLSSPLSS__ONLOBFILTER ) ;
+      UINT32 hash = ossHash( ( const BYTE * )(info._oid.getData()),
+                             sizeof( bson::OID ),
+                             ( const BYTE * )( &info._sequence ),
+                             sizeof( info._sequence ) ) ;
+
+      return _rangeKeyObj.firstElement().Int() <= ( INT32 )hash &&
+           ( !_hasEndRange || ( INT32 )hash < _rangeEndKeyObj.firstElement().Int() ) ;
+   done:
+      PD_TRACE_EXITRC( SDB__CLSSPLSS__ONLOBFILTER, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
 }

@@ -190,7 +190,8 @@ rtnFiles = [
       "rtn/rtnCoordLobDispatcher.cpp",
       "rtn/rtnCoordLobStream.cpp",
       "rtn/rtnCoordLob.cpp",
-      "rtn/rtnContextShdOfLob.cpp"
+      "rtn/rtnContextShdOfLob.cpp",
+      "rtn/rtnLobFetcher.cpp"
       ]
 
 msgFiles = [
