@@ -2908,7 +2908,6 @@ namespace engine
       INT32 transactionID = -1 ;
       INT32 rc = SDB_OK ;
       BSONObjBuilder bsonBuilder ;
-      UINT64 taskID ;
 
       rc = _getRestHostList( clusterName, hostInfoList ) ;
       if ( SDB_OK != rc )
@@ -4996,8 +4995,20 @@ namespace engine
          goto error ;
       }
 
-      taskID  = restTask.getStringField( OM_BSON_TASKID ) ;
-      uTaskID = ossAtoll( taskID.c_str() ) ;
+      {
+         BSONElement ele = restTask.getField( OM_BSON_TASKID ) ;
+         if ( !ele.isNumber() )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "bson field is not number:field=%s,type=%d", 
+                        OM_BSON_TASKID, ele.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto error ;
+         }
+
+         uTaskID = ele.numberLong() ;
+      }
 
       tm = sdbGetOMManager()->getTaskManager() ;
       rc = tm->getProgress( uTaskID, taskType, isFinished, status, progress ) ;
