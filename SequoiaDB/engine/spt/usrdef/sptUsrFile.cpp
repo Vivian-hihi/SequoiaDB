@@ -398,7 +398,7 @@ JS_MAPPING_END()
 
       if ( arg.argc() > 2 )
       {
-         rc = arg.getNative( 2, (void*)isReplace, SPT_NATIVE_INT32 ) ;
+         rc = arg.getNative( 2, (void*)&isReplace, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
             detail = BSON( SPT_ERR << "replace must be BOOLEAN" ) ;
@@ -409,7 +409,7 @@ JS_MAPPING_END()
       if ( arg.argc() > 3 )
       {
          INT32 mode = 0 ;
-         rc = arg.getNative( 3, (void*)mode, SPT_NATIVE_INT32 ) ;
+         rc = arg.getNative( 3, (void*)&mode, SPT_NATIVE_INT32 ) ;
          if ( rc )
          {
             detail = BSON( SPT_ERR << "mode must be INT32" ) ;
