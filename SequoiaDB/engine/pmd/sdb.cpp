@@ -53,10 +53,10 @@ enum RunMode
 struct ArgInfo
 {
    RunMode mode ;
-   const CHAR * program ; // the program name
-   const CHAR * filename ; // available in batch mode
-   const CHAR * cmd ; // available in front-end mode
-   const CHAR * variable ; // variable
+   string       program ; // the program name
+   string       filename ; // available in batch mode
+   string       cmd ; // available in front-end mode
+   string       variable ; // variable
 } ;
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_READFILE, "readFile" )
@@ -131,11 +131,10 @@ INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
    INT32 rc          = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_PARSEARGUMENTS );
    argInfo.mode      = INTERACTIVE_MODE ;
-   argInfo.filename  = NULL ;
-   argInfo.variable  = NULL ;
-   argInfo.cmd       = NULL ;
-   argInfo.program   = NULL ;
-   string str        = "" ;
+   argInfo.filename  = "" ;
+   argInfo.variable  = "" ;
+   argInfo.cmd       = "" ;
+   argInfo.program   = "" ;
 
    SDB_POSITIONAL_OPTIONS_DESCRIPTION
 
@@ -190,43 +189,30 @@ INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
    }
    if ( vm.count( "eval" ) )
    {
-      str =  vm["eval"].as<string>() ;
-      argInfo.variable = str.c_str() ;
+      argInfo.variable = vm["eval"].as<string>() ;
    }
 
    SDB_ASSERT ( argv , "invalid argument" ) ;
    SDB_ASSERT ( argc >= 1 , "argc must be >= 1" ) ;
 
-   argInfo.program = (const CHAR *) argv[0] ;
+   argInfo.program = (string)( argv[0] ) ;
 
    if ( 1 == argc )
    {
       // Empty. Normal interactive mode
    }
-/*
-   else if ( vm.count( "file" ) )
-   {
-      // Batch mode
-      argInfo.mode = BATCH_MODE ;
-      str =  vm["file"].as<string>() ;
-      argInfo.filename = str.c_str() ;
-   }
-*/
    else if ( vm.count( "shell" ) )
    {
       // Front-end mode
       argInfo.mode = FRONTEND_MODE ;
-      str =  vm["shell"].as<string>() ;
-      argInfo.cmd = str.c_str() ;
+      argInfo.cmd = vm["shell"].as<string>() ;
    }
    else if ( vm.count( "file" ) )
    {
       // Batch mode
       argInfo.mode = BATCH_MODE ;
-      str =  vm["file"].as<string>() ;
-      argInfo.filename = str.c_str() ;
+      argInfo.filename = vm["file"].as<string>() ;
    }
-
    else
    {
       rc = SDB_INVALIDARG ;
@@ -243,7 +229,7 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERBATCHMODE, "enterBatchMode" )
 INT32 enterBatchMode( sptScope * scope , const CHAR * filename ,
-                                      const CHAR * variable )
+                      const CHAR * variable )
 {
    INT32    rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_ENTERBATCHMODE );
@@ -508,7 +494,8 @@ INT32 createDaemonProcess ( const CHAR * program , const OSSPID & ppid ,
    rc = formatArgs ( program , ppid , &args ) ;
    SH_VERIFY_RC
 
-   rc = ossExec ( program , args , NULL , 0 , pid , result , NULL , NULL ) ;
+   rc = ossExec ( program , args , NULL , OSS_EXEC_NODETACHED , pid ,
+                  result , NULL , NULL ) ;
    SH_VERIFY_RC
 
    rc = getPipeNames2 ( ppid , pid , f2dName , sizeof ( f2dName ) ,
@@ -619,16 +606,16 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
    }
    else if ( rc == SDB_FNE )
    {
-         // named pipe does not exist, so we need to create the daemon process
-         // which will create those named pipes
-         rc = ossLocateExecutable ( program , "sdbbp" , bpName , sizeof(bpName) ) ;
-         SH_VERIFY_RC
+      // named pipe does not exist, so we need to create the daemon process
+      // which will create those named pipes
+      rc = ossLocateExecutable ( program , "sdbbp" , bpName , sizeof(bpName) ) ;
+      SH_VERIFY_RC
 
-         rc = createDaemonProcess ( bpName , ppid , bpf2dName , bpd2fName ) ;
-         SH_VERIFY_RC
+      rc = createDaemonProcess ( bpName , ppid , bpf2dName , bpd2fName ) ;
+      SH_VERIFY_RC
 
-         rc = ossOpenNamedPipe ( bpf2dName , OSS_NPIPE_OUTBOUND , 0 , f2dPipe ) ;
-         SH_VERIFY_RC
+      rc = ossOpenNamedPipe ( bpf2dName , OSS_NPIPE_OUTBOUND , 0 , f2dPipe ) ;
+      SH_VERIFY_RC
    }
    else
    {
@@ -830,11 +817,13 @@ int main ( int argc , CHAR **argv )
       break ;
 
    case BATCH_MODE :
-      rc = enterBatchMode( scope , argInfo.filename , argInfo.variable ) ;
+      rc = enterBatchMode( scope , argInfo.filename.c_str() ,
+                           argInfo.variable.c_str() ) ;
       break ;
 
    case FRONTEND_MODE :
-      rc = enterFrontEndMode ( argInfo.program , argInfo.cmd ) ;
+      rc = enterFrontEndMode ( argInfo.program.c_str(),
+                               argInfo.cmd.c_str() ) ;
       break ;
 
    default :

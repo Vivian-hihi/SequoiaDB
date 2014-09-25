@@ -23,9 +23,11 @@ INT32 getPipeNames( const OSSPID & ppid , CHAR * f2bName , UINT32 f2bSize ,
 INT32 getPipeNames2( const OSSPID & ppid , const OSSPID & pid ,
                      CHAR * f2bName , UINT32 f2bSize ,
                      CHAR * b2fName , UINT32 b2fSize ) ;
+
 INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
                      CHAR * bpb2fName , UINT32 bpb2fSize ,
                      CHAR * f2bName , CHAR * b2fName ) ;
+
 
 #endif //UTILPIPE_HPP__
 

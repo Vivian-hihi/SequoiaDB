@@ -23,6 +23,9 @@
 #include "boost/filesystem.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
+#include "ossNPipe.hpp"
+#include <vector>
+#include <string>
 
 namespace fs = boost::filesystem ;
 
@@ -110,6 +113,71 @@ error :
    goto done ;
 }
 
+#if defined (_WINDOWS)
+INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
+                     CHAR * bpb2fName , UINT32 bpb2fSize ,
+                     CHAR * f2bName , CHAR * b2fName )
+{
+   INT32 rc = SDB_OK ;
+   std::vector < std::string > names ;
+   std::vector < std::string >::iterator it ;
+
+   ossMemset( bpf2bName, 0, bpf2bSize ) ;
+   ossMemset( bpb2fName, 0, bpb2fSize ) ;
+
+   rc = ossEnumNamedPipes( names, NULL ) ;
+   if ( rc )
+   {
+      std::cerr << "enum pipes failed: " << rc ;
+      goto error ;
+   }
+   it = names.begin() ;
+   while ( it != names.end() )
+   {
+      if ( 0 != ossStrncmp( (*it).c_str(), f2bName, ossStrlen( f2bName ) ) )
+      {
+         it = names.erase( it ) ;
+         continue ;
+      }
+      ++it ;
+   }
+   if ( names.size() == 0 )
+   {
+      rc = SDB_FNE ;
+      goto error ;
+   }
+   ossStrncpy( bpf2bName, (*names.begin()).c_str(), bpf2bSize - 1 ) ;
+
+   names.clear() ;
+   rc = ossEnumNamedPipes( names, NULL ) ;
+   if ( rc )
+   {
+      std::cerr << "enum pipes failed: " << rc ;
+      goto error ;
+   }
+   it = names.begin() ;
+   while ( it != names.end() )
+   {
+      if ( 0 != ossStrncmp( (*it).c_str(), b2fName, ossStrlen( b2fName ) ) )
+      {
+         it = names.erase( it ) ;
+         continue ;
+      }
+      ++it ;
+   }
+   if ( names.size() == 0 )
+   {
+      rc = SDB_FNE ;
+      goto error ;
+   }
+   ossStrncpy( bpb2fName, (*names.begin()).c_str(), bpb2fSize - 1 ) ;
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+#else
 INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
                      CHAR * bpb2fName , UINT32 bpb2fSize ,
                      CHAR * f2bName , CHAR * b2fName )
@@ -121,15 +189,12 @@ INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
 
    f2bp = bpf2bName ;
    b2fp = bpb2fName ;
-#if defined (_WINDOWS)
-   const CHAR *    path        = "\\\\.\\pipe\\" ;
-#else
+
    const CHAR *    path        = "/tmp/" ;
    ossStrncpy ( bpf2bName , path , 5 ) ;
    f2bp += 5 ;
    ossStrncpy ( bpb2fName , path , 5 ) ;
    b2fp += 5 ;
-#endif
 
    try
    {
@@ -156,7 +221,9 @@ INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
                cnt++ ;
             }
             if ( cnt >= 2 )
+            {
                goto done ;
+            }
          }
          rc = SDB_FNE ;
          goto error ;
@@ -180,4 +247,5 @@ done :
 error :
    goto done ;
 }
+#endif
 
