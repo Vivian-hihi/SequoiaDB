@@ -23,11 +23,11 @@
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
 	</taskdef> -->
-	<!-- <taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
 		</classpath>
-	</taskdef> --> 
+	</taskdef> 
 
 	<target name="clean-install" depends="">
 		<echo message="Begin to clean install env..." />
@@ -46,9 +46,9 @@
 		<delete dir="${db.path}" />
 		<sleep seconds="20"/>
 
-		<!-- <exec executable="/bin/ps" dir="" failonerror="false">
-			<arg line=" -ef|grep sequoiadb | grep -v grep | awk '{print $2}' | xargs kill" />
-		</exec> -->
+		<exec executable="/bin/ps" dir="" failonerror="false">
+			<arg line=" -ef|grep sequoiadb | grep -v grep | awk '{print $2}' | xargs kill -9" />
+		</exec>
 		<echo message="Clean install env compeleted." />
 	</target>
 
