@@ -523,6 +523,35 @@ namespace engine
          virtual INT32  doCommand() ;
    } ;
 
+   class omListTaskCommand : public omAuthCommand
+   {
+      public:
+         omListTaskCommand( restAdaptor *pRestAdaptor, 
+                            pmdRestSession *pRestSession ) ;
+         virtual ~omListTaskCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      private:
+         INT32          _getTaskList( list<BSONObj> &taskList ) ;
+         void           _sendTaskList2Web( list<BSONObj> &taskList ) ;
+   } ;
+
+   class omQueryTaskCommand : public omAuthCommand
+   {
+      public:
+         omQueryTaskCommand( restAdaptor *pRestAdaptor, 
+                            pmdRestSession *pRestSession ) ;
+         virtual ~omQueryTaskCommand() ;
+
+      public:
+         virtual INT32  doCommand() ;
+
+      private:
+         INT32          _getTaskInfo( UINT64 taskID, BSONObj &task ) ;
+   } ;
+
    class omListNodeCommand : public omAuthCommand
    {
       public:

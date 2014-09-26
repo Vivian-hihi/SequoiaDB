@@ -2186,6 +2186,11 @@ namespace engine
 
       // move the exist host to hostResult
       _filterExistHost( hostInfoList, hostResult ) ;
+      if ( hostInfoList.size() == 0 )
+      {
+         _sendOkRes2Web( hostResult ) ;
+         goto done ;
+      }
 
       // move the check failed host to the hostResult
       PD_LOG( PDEVENT, "start to do BasicCheck" ) ;
@@ -5017,7 +5022,6 @@ namespace engine
    INT32 omQueryInstallProgress::doCommand()
    {
       omTaskManager *tm = NULL ;
-      string taskID ;
       UINT64 uTaskID ;
       string taskType ;
       bool isFinished ;
@@ -5027,10 +5031,10 @@ namespace engine
       BSONObj restTask ;
       INT32 rc          = SDB_OK ;
       const CHAR *pTask = NULL ;
-      _restAdaptor->getQuery( _restSession, OM_REST_TASK_INFO, &pTask ) ;
+      _restAdaptor->getQuery( _restSession, OM_REST_TASKID, &pTask ) ;
       if ( NULL == pTask )
       {
-         _errorDetail = "rest field:" + string( OM_REST_TASK_INFO )
+         _errorDetail = "rest field:" + string( OM_REST_TASKID )
                         + " is null" ;
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
@@ -5038,30 +5042,7 @@ namespace engine
          goto error ;
       }
 
-      rc = fromjson( pTask, restTask ) ;
-      if ( SDB_OK != rc )
-      {
-         _errorDetail = string( "change rest field " ) + OM_REST_TASK_INFO
-                        + " to BSONObj failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d,src=%s", _errorDetail.c_str(), rc, pTask ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
-
-      {
-         BSONElement ele = restTask.getField( OM_BSON_TASKID ) ;
-         if ( !ele.isNumber() )
-         {
-            rc = SDB_INVALIDARG ;
-            PD_LOG_MSG( PDERROR, "bson field is not number:field=%s,type=%d", 
-                        OM_BSON_TASKID, ele.type() ) ;
-            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _sendErrorRes2Web( rc, _errorDetail ) ;
-            goto error ;
-         }
-
-         uTaskID = ele.numberLong() ;
-      }
+      uTaskID = ossAtoll( pTask ) ;
 
       tm = sdbGetOMManager()->getTaskManager() ;
       rc = tm->getProgress( uTaskID, taskType, isFinished, status, progress ) ;
@@ -5075,14 +5056,227 @@ namespace engine
       {
          BSONObjBuilder opBuilder ;
          BSONObj op ;
-         opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-         opBuilder.append( OM_BSON_TASKID, taskID ) ;
+         opBuilder.append( OM_BSON_TASKID, (long long)uTaskID ) ;
          opBuilder.append( OM_BSON_TASKTYPE, taskType ) ;
          opBuilder.append( OM_BSON_TASK_ISFINISHED, isFinished ) ;
          opBuilder.append( OM_BSON_TASK_STATUS, status ) ;
          opBuilder.appendArray( OM_BSON_TASK_PROGRESS, progress ) ;
          op = opBuilder.obj() ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, op ) ;
+         _restAdaptor->appendHttpBody( _restSession, op.objdata(), 
+                                       op.objsize(), 1 ) ;
+         BSONObj result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omListTaskCommand *****************************
+   omListTaskCommand::omListTaskCommand( restAdaptor *pRestAdaptor, 
+                                         pmdRestSession *pRestSession )
+                     :omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omListTaskCommand::~omListTaskCommand()
+   {
+   }
+
+   INT32 omListTaskCommand::_getTaskList( list<BSONObj> &taskList )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID = -1 ;
+
+      selector = BSON( OM_TASKINFO_FIELD_TASKID << "" 
+                       << OM_TASKINFO_FIELD_TYPE <<"" ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_TASKINFO ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_TASKINFO ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         taskList.push_back( record.copy() ) ;
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void omListTaskCommand::_sendTaskList2Web( list<BSONObj> &taskList )
+   {
+      BSONObjBuilder opBuilder ;
+      list<BSONObj>::iterator iter = taskList.begin() ;
+      while ( iter != taskList.end() )
+      {
+         _restAdaptor->appendHttpBody( _restSession, iter->objdata(), 
+                                       iter->objsize(), 1 ) ;
+         iter++ ;
+      }
+
+      opBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, opBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+      return ;
+   }
+
+   INT32 omListTaskCommand::doCommand() 
+   {
+      INT32 rc = SDB_OK ;
+      list<BSONObj> taskList ;
+      rc = _getTaskList( taskList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get task list failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      _sendTaskList2Web( taskList ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omQueryTaskCommand *****************************
+   omQueryTaskCommand::omQueryTaskCommand( restAdaptor *pRestAdaptor, 
+                                           pmdRestSession *pRestSession )
+                      :omAuthCommand( pRestAdaptor, pRestSession ) 
+   {
+   }
+
+   omQueryTaskCommand::~omQueryTaskCommand()
+   {
+   }
+
+   INT32 omQueryTaskCommand::_getTaskInfo( UINT64 taskID, BSONObj &task )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID = -1 ;
+
+      matcher = BSON( OM_TASKINFO_FIELD_TASKID << (long long)taskID ) ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_TASKINFO, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_TASKINFO ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_TASKINFO ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj record( buffObj.data() ) ;
+         task = record.copy() ;
+         break ;
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omQueryTaskCommand::doCommand()
+   {
+      UINT64 uTaskID ;
+      INT32 rc          = SDB_OK ;
+      const CHAR *pTask = NULL ;
+      BSONObj task ;
+      _restAdaptor->getQuery( _restSession, OM_REST_TASKID, &pTask ) ;
+      if ( NULL == pTask )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_TASKID ) + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      uTaskID = ossAtoll( pTask ) ;
+      rc = _getTaskInfo( uTaskID, task ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "get task info failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      {
+         if ( !task.isEmpty() )
+         {
+            _restAdaptor->appendHttpBody( _restSession, task.objdata(), 
+                                          task.objsize(), 1 ) ;
+         }
+
+         BSONObj result = BSON( OM_REST_RES_RETCODE << rc ) ;
+         _restAdaptor->setOPResult( _restSession, rc, result ) ;
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       }
 
@@ -5101,38 +5295,6 @@ namespace engine
 
    omListNodeCommand::~omListNodeCommand()
    {
-   }
-
-   INT32 omListNodeCommand::doCommand()
-   {
-      INT32 rc                  = SDB_OK ;
-      const CHAR *businessName  = NULL ;
-      list<simpleNodeInfo> nodeList ;
-
-      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
-                              &businessName ) ;
-      if ( NULL == businessName )
-      {
-         _errorDetail = "rest field miss:" + string( OM_REST_BUSINESS_NAME ) ;
-         rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
-
-      rc = _getNodeList( businessName, nodeList ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "_getNodeList failed:rc=%d", rc ) ;
-         _sendErrorRes2Web( rc, _errorDetail ) ;
-         goto error ;
-      }
-
-      _sendNodeList2Web( nodeList ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
    }
 
    INT32 omListNodeCommand::_getNodeList( string businessName,
@@ -5226,6 +5388,38 @@ namespace engine
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
       return ;
+   }
+
+   INT32 omListNodeCommand::doCommand()
+   {
+      INT32 rc                  = SDB_OK ;
+      const CHAR *businessName  = NULL ;
+      list<simpleNodeInfo> nodeList ;
+
+      _restAdaptor->getQuery( _restSession, OM_REST_BUSINESS_NAME, 
+                              &businessName ) ;
+      if ( NULL == businessName )
+      {
+         _errorDetail = "rest field miss:" + string( OM_REST_BUSINESS_NAME ) ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _getNodeList( businessName, nodeList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getNodeList failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      _sendNodeList2Web( nodeList ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    // *****************omQueryNodeConfCommand *****************************

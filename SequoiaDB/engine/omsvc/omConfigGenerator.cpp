@@ -803,7 +803,6 @@ namespace engine
       nodeInfo.svcName       = confDetail.svcName ;
       _nodeInfoList.push_back( nodeInfo ) ;
 
-
       return SDB_OK ;
    }
 

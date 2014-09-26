@@ -408,7 +408,7 @@ namespace engine
    // om query install progress
    #define  OM_QUERY_PROGRESS                "query progress"
 
-   #define  OM_REST_TASK_INFO                "Task"
+   #define  OM_REST_TASKID                   OM_BSON_TASKID
 
    #define  OM_BSON_TASK_ISFINISHED          OM_TASKINFO_FIELD_ISFINISH
    #define  OM_BSON_TASK_STATUS              OM_TASKINFO_FIELD_STATUS
@@ -489,6 +489,14 @@ namespace engine
    #define  OM_BSON_FIELD_VALID_SIZE          "ValidSize"
    #define  OM_BSON_FIELD_TOTAL_SIZE          "TotalSize"
    #define  OM_BSON_FIELD_REDUNDANCY_RATE     "RedundancyRate"
+   //******************************************************************
+
+   // om list task req
+   #define  OM_LIST_TASK_REQ                 "list task"
+   //******************************************************************
+
+   // om query task req
+   #define  OM_QUERY_TASK_REQ                "query task"
    //******************************************************************
 
 

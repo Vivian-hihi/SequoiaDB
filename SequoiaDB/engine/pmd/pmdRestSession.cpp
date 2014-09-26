@@ -493,6 +493,14 @@ namespace engine
          {
             commandIf = SDB_OSS_NEW omPredictCapacity( pAdptor, this ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_LIST_TASK_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omListTaskCommand( pAdptor, this ) ;
+         }
+         else if ( ossStrcasecmp( pSubCommand, OM_QUERY_TASK_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omQueryTaskCommand( pAdptor, this ) ;
+         }
          else
          {
             BSONObjBuilder builder ;
