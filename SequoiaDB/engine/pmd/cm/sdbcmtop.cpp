@@ -270,13 +270,13 @@ namespace engine
       if ( vm.count( PMD_OPTION_HELP ) )
       {
          displayArg( desc ) ;
-         rc = SDB_PMD_HELP_ONLY ;
+         //rc = SDB_PMD_HELP_ONLY ;
          goto done ;
       }
       if ( vm.count( PMD_OPTION_VERSION ) )
       {
          ossPrintVersion( "Sdb CM Stop version" ) ;
-         rc = SDB_PMD_VERSION_ONLY ;
+         //rc = SDB_PMD_VERSION_ONLY ;
          goto done ;
       }
 #if defined( _WINDOWS )

@@ -152,6 +152,10 @@ namespace engine
       rc = initArgs( argc, argv, vm, asProc ) ;
       if ( rc )
       {
+         if ( SDB_PMD_VERSION_ONLY == rc || SDB_PMD_HELP_ONLY == rc )
+         {
+            rc = SDB_OK ;
+         }
          goto error ;
       }
 
@@ -180,7 +184,7 @@ namespace engine
    done:
       daemon.stop() ;
       PD_LOG( PDEVENT, "Stop programme." ) ;
-      return rc;
+      return SDB_OK == rc ? 0 : 1 ;
    error:
       goto done ;
    }

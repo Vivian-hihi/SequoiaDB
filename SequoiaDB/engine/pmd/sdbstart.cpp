@@ -191,6 +191,10 @@ namespace engine
             ossPrintf( "Error: Invalid argument: %d"OSS_NEWLINE, rc ) ;
             displayArg ( desc ) ;
          }
+         else
+         {
+            rc = SDB_OK ;
+         }
          goto done ;
       }
 

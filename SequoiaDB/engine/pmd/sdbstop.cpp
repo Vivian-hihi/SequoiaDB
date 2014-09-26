@@ -167,6 +167,10 @@ namespace engine
             std::cout << "Invalid argument" << endl ;
             displayArg ( desc ) ;
          }
+         else
+         {
+            rc = SDB_OK ;
+         }
          goto done ;
       }
 
@@ -230,15 +234,22 @@ namespace engine
       ossPrintf ( "Total: %d; Success: %d; Failed: %d"OSS_NEWLINE,
                   total, success, total - success ) ;
 
-   done :
       if ( total == success )
+      {
          rc = SDB_OK ;
+      }
       else if ( success == 0 )
+      {
          rc = STOPFAIL ;
+      }
       else
+      {
          rc = STOPPART ;
-      PD_TRACE_EXITRC ( SDB_SDBSTOP_MAIN, rc );
-      return rc ;
+      }
+
+   done :
+      PD_TRACE_EXITRC( SDB_SDBSTOP_MAIN, rc ) ;
+      return  ( rc == 0 ) ? 0 : 1 ;
    }
 
 }

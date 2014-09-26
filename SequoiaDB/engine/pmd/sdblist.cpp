@@ -117,7 +117,6 @@ namespace engine
       desc.add_options()
          ( PMD_OPTION_ROLE, po::value<string>(), "" );
 
-
       ossSnprintf( sdbConfTemp,OSS_MAX_PATHSIZE,SDB_CONF_FILE_PATH_FORMAT,
                   svcname ) ;
       utilBuildFullPath( confpath, sdbConfTemp,
@@ -140,8 +139,6 @@ namespace engine
       return rc ;
    error :
       goto done ;
-
-
    }
 
    // get sdbcm's port
@@ -173,7 +170,6 @@ namespace engine
       return rc ;
    error :
       goto done ;
-
    }
 
    //print node's detail configuration by sdb conf file and svcname
@@ -213,9 +209,7 @@ namespace engine
                                         it->second.as<string>().c_str()) ;
          ++it ;
       }
-
    }
-
 
    //print node's expand configuration by sdb conf file and svcname
    void _printfExpand( const CHAR *confpath, const CHAR *svcname, INT32 type )
@@ -254,35 +248,39 @@ namespace engine
             else if( e.type() == NumberLong )
             {
                #if defined(_WINDOWS)
-                  ossPrintf("   %-18.18s: %I64d\n", e.fieldName(), e.numberLong() ) ;
+                  ossPrintf( "   %-18.18s: %I64d\n", e.fieldName(),
+                             e.numberLong() ) ;
                #else
-                  ossPrintf("   %-18.18s: %lld\n", e.fieldName(), e.numberLong() ) ;
+                  ossPrintf( "   %-18.18s: %lld\n", e.fieldName(),
+                             e.numberLong() ) ;
                #endif
             }
             else if( e.type() == NumberDouble )
             {
-               ossPrintf("   %-18.18s: %f\n", e.fieldName(), e.numberDouble() ) ;
+               ossPrintf( "   %-18.18s: %f\n", e.fieldName(),
+                          e.numberDouble() ) ;
             }
             else if( e.type() == Bool )
             {
-               ossPrintf("   %-18.18s: %s\n", e.fieldName(),(e.boolean()?"TRUE":"FALSE" ));
+               ossPrintf( "   %-18.18s: %s\n", e.fieldName(),
+                          (e.boolean()?"TRUE":"FALSE" ));
             }
             else
             {
-               ossPrintf("   %-18.18s: %s\n", e.fieldName(),"-" ) ;
+               ossPrintf( "   %-18.18s: %s\n", e.fieldName(),"-" ) ;
             }
          }
       }
       else
       {
          _printfDetail( confpath, NULL, SDB_TYPE_OMA );
-
       }
    }
 
    //printf detail or expand
    void _printfAll( const CHAR *confpath, string &svcname,INT32 type,
-                    BOOLEAN detail, BOOLEAN expand, INT32 pid, BOOLEAN online )
+                    BOOLEAN detail, BOOLEAN expand, INT32 pid,
+                    BOOLEAN online )
    {
       if( online )
       {
@@ -375,15 +373,18 @@ namespace engine
          {
             typeFilter = SDB_TYPE_DB ;
          }
-         else if ( 0 == ossStrcasecmp( listType.c_str(), SDBLIST_TYPE_OM_STR ) )
+         else if ( 0 == ossStrcasecmp( listType.c_str(),
+                   SDBLIST_TYPE_OM_STR ) )
          {
             typeFilter = SDB_TYPE_OM ;
          }
-         else if ( 0 == ossStrcasecmp( listType.c_str(), SDBLIST_TYPE_OMA_STR ) )
+         else if ( 0 == ossStrcasecmp( listType.c_str(),
+                   SDBLIST_TYPE_OMA_STR ) )
          {
             typeFilter = SDB_TYPE_OMA ;
          }
-         else if ( 0 == ossStrcasecmp( listType.c_str(), SDBLIST_TYPE_ALL_STR ) )
+         else if ( 0 == ossStrcasecmp( listType.c_str(),
+                   SDBLIST_TYPE_ALL_STR ) )
          {
             typeFilter = -1 ;
          }
@@ -397,11 +398,13 @@ namespace engine
       if ( vm.count( PMD_OPTION_MODE ))
       {
          string modeTemp = vm[PMD_OPTION_MODE].as<string>() ;
-         if( 0 == ossStrcasecmp( modeTemp.c_str(), SDB_RUN_MODE_TYPE_LOCAL_STR  ))
+         if( 0 == ossStrcasecmp( modeTemp.c_str(),
+                                 SDB_RUN_MODE_TYPE_LOCAL_STR ) )
          {
             mode = LOCAL ;
          }
-         else if( 0 == ossStrcasecmp( modeTemp.c_str(), SDB_RUN_MODE_TYPE_RUN_STR  ))
+         else if( 0 == ossStrcasecmp( modeTemp.c_str(),
+                                      SDB_RUN_MODE_TYPE_RUN_STR ) )
          {
             mode = RUN ;
          }
@@ -416,15 +419,15 @@ namespace engine
       if ( vm.count( PMD_OPTION_ROLE ))
       {
          string roleTemp = vm[PMD_OPTION_ROLE].as<string>() ;
-         if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_COORD_STR ))
+         if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_COORD_STR ) )
          {
             role = SDB_ROLE_COORD ;
          }
-         else if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_CATALOG_STR ))
+         else if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_CATALOG_STR ) )
          {
             role = SDB_ROLE_CATALOG ;
          }
-         else if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_DATA_STR ))
+         else if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_DATA_STR ) )
          {
             role = SDB_ROLE_DATA ;
          }
@@ -436,12 +439,12 @@ namespace engine
          }
       }
 
-      if( vm.count(PMD_OPTION_DETAIL ))
+      if( vm.count(PMD_OPTION_DETAIL ) )
       {
          detail = TRUE ;
       }
 
-      if ( vm.count(PMD_OPTION_EXPAND ))
+      if ( vm.count(PMD_OPTION_EXPAND ) )
       {
          expand = TRUE ;
          detail = FALSE ;
@@ -472,7 +475,6 @@ namespace engine
       INT32 mode = RUN ;
       CHAR rootPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
       CHAR localPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
-
 
       po::options_description desc ( "Command options" ) ;
       init ( desc ) ;
@@ -514,7 +516,7 @@ namespace engine
                for( UINT32 j = 0 ; j < listServices.size() ; ++j )
                {
                   if( 0 == ossStrcmp( info._svcname.c_str(),
-                                    listServices[ j ].c_str() ) )
+                                      listServices[ j ].c_str() ) )
                   {
                      bFind = TRUE ;
                      break ;
@@ -530,7 +532,7 @@ namespace engine
             {
                ++total ;
                _printfAll( rootPath, info._svcname, info._type, detail,
-                          expand, info._pid, TRUE ) ;
+                           expand, info._pid, TRUE ) ;
             }
          }
       }
@@ -555,7 +557,6 @@ namespace engine
          }
 
          utilListNodes( listNodes,typeFilter ) ;
-
 
          for( UINT32 i = 0; i < listNodes.size(); i++ )
          {
@@ -598,7 +599,8 @@ namespace engine
                bFind = FALSE ;
                for( UINT32 j = 0; j < listNodes.size(); j++ )
                {
-                  if( 0 == ossStrcmp(info.c_str(),listNodes[j]._svcname.c_str()) )
+                  if( 0 == ossStrcmp( info.c_str(),
+                                      listNodes[j]._svcname.c_str()) )
                   {
                      bFind = TRUE ;
                      break ;
@@ -629,7 +631,7 @@ namespace engine
                   {
                      ++total ;
                      _printfAll( rootPath, info,SDB_TYPE_DB,
-                                detail, expand, 0, FALSE ) ;
+                                 detail, expand, 0, FALSE ) ;
                   }
                }
             }
@@ -651,9 +653,13 @@ namespace engine
          }
       }
       ossPrintf ( "Total: %d"OSS_NEWLINE, total ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB_SDBLIST_MAIN, rc );
-      // return SDB_OK == rc ? 0 : 1 ;
+      if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
+      {
+         return 0 ;
+      }
       return total > 0 ? 0 : ( rc ? 127 : 1 ) ;
    error :
       goto done ;
