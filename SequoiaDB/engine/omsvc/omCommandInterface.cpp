@@ -181,6 +181,116 @@ namespace engine
       goto done ;
    }
 
+   /**
+   * get the host's disk info. the host is specific by the hostNameList
+   * if hostNameList's size is 0, get all the cluster(clusterName )'s hosts 
+     instead
+   * @param clusterName the cluster's name
+   * @param hostNameList the specific hosts
+   * @param hostInfoList the result of  disk infos
+   * @return SDB_OK if success; otherwise failure
+   */
+   INT32 omRestCommandBase::_fetchHostDiskInfo( const string &clusterName, 
+                                            list<string> &hostNameList, 
+                                            list<simpleHostDisk> &hostInfoList )
+   {
+      BSONObj matcher ;
+
+      if ( hostNameList.size() > 0 )
+      {
+         BSONArrayBuilder arrayBuilder ;
+         list<string>::iterator iterList = hostNameList.begin() ;
+         while ( iterList != hostNameList.end() )
+         {
+            BSONObj tmp = BSON( OM_HOST_FIELD_NAME << *iterList ) ;
+            arrayBuilder.append( tmp ) ;
+            iterList++ ;
+         }
+         matcher = BSON( OM_HOST_FIELD_CLUSTERNAME << clusterName 
+                         << "$or" << arrayBuilder.arr() ) ;
+      }
+      else
+      {
+         matcher = BSON( OM_HOST_FIELD_CLUSTERNAME << clusterName  ) ;
+      }
+
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      BSONObj result ;
+      SINT64 contextID = -1 ;
+      INT32 rc         = SDB_OK ;
+      rc = rtnQuery( OM_CS_DEPLOY_CL_HOST, selector, matcher, order, hint, 
+                     0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+         _errorDetail = string( "fail to query table:" ) 
+                        + OM_CS_DEPLOY_CL_HOST ;
+         PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+
+            contextID = -1 ;
+            _errorDetail = string( "failed to get record from table:" )
+                           + OM_CS_DEPLOY_CL_HOST ;
+            PD_LOG( PDERROR, "%s,rc=%d", _errorDetail.c_str(), rc ) ;
+            goto error ;
+         }
+
+         BSONObj result( buffObj.data() ) ;
+         BSONObj diskArray ;
+         simpleHostDisk hostDisk ;
+         hostDisk.hostName  = result.getStringField( OM_HOST_FIELD_NAME ) ;
+         hostDisk.user      = result.getStringField( OM_HOST_FIELD_USER ) ;
+         hostDisk.passwd    = result.getStringField( OM_HOST_FIELD_PASSWORD ) ;
+         hostDisk.agentPort = result.getStringField( OM_HOST_FIELD_AGENT_PORT ) ;
+         diskArray = result.getObjectField( OM_HOST_FIELD_DISK ) ;
+         {
+            BSONObjIterator iter( diskArray ) ;
+            while ( iter.more() )
+            {
+               BSONElement ele = iter.next() ;
+               BSONObj oneDisk = ele.embeddedObject() ;
+               simpleDiskInfo diskInfo ;
+               diskInfo.diskName  = oneDisk.getStringField( 
+                                                    OM_HOST_FIELD_DISK_NAME ) ;
+               diskInfo.mountPath = oneDisk.getStringField( 
+                                                    OM_HOST_FIELD_DISK_MOUNT ) ;
+               BSONElement eleNum ;
+               eleNum = oneDisk.getField( OM_HOST_FIELD_DISK_SIZE ) ;
+               diskInfo.totalSize = eleNum.numberLong() ;
+               eleNum = oneDisk.getField( OM_HOST_FIELD_DISK_FREE_SIZE ) ;
+               diskInfo.freeSize  = eleNum.numberLong() ;
+               hostDisk.diskInfo.push_back( diskInfo ) ;
+            }
+         }
+
+         hostInfoList.push_back( hostDisk ) ;
+      }
+   done:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omRestCommandBase::_deleteHost( const string &hostName )
    {
       INT32 rc          = SDB_OK ;

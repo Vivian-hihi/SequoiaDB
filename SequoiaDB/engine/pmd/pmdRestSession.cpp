@@ -489,6 +489,10 @@ namespace engine
             commandIf = SDB_OSS_NEW omQueryHostStatusCommand( pAdptor, this,
                                        localAgentHost, localAgentPort ) ;
          }
+         else if ( ossStrcasecmp( pSubCommand, OM_PREDICT_CAPACITY_REQ ) == 0 )
+         {
+            commandIf = SDB_OSS_NEW omPredictCapacity( pAdptor, this ) ;
+         }
          else
          {
             BSONObjBuilder builder ;

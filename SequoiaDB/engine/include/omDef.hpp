@@ -39,6 +39,14 @@
 
 namespace engine
 {
+   #define OM_TEMPLATE_REPLICA_NUM     "replicanum"
+   #define OM_TEMPLATE_DATAGROUP_NUM   "datagroupnum"
+   #define OM_TEMPLATE_CATALOG_NUM     "catalognum"
+   #define OM_TEMPLATE_COORD_NUM       "coordnum"
+   #define OM_TEMPLATE_TRANSACTION     PMD_OPTION_TRANSACTIONON
+
+   // extend configure
+   #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
 
    /*
       param define
@@ -182,7 +190,7 @@ namespace engine
                                              OM_REST_INDEX_HTML"\"></head></html>"
 
    //#define  OM_REST_RES_RETCODE              OP_ERRNOFIELD
-   #define  OM_REST_RES_RETCODE              "Rc"
+   #define  OM_REST_RES_RETCODE              OP_ERRNOFIELD
    #define  OM_REST_RES_DETAIL               OP_ERR_DETAIL
    #define  OM_REST_RES_LOCAL                "local"
 
@@ -472,7 +480,15 @@ namespace engine
    //******************************************************************
 
    // om update hostname req
-   #define OM_UPDATE_HOSTNAME_REQ            "update hostname"
+   #define  OM_UPDATE_HOSTNAME_REQ            "update hostname"
+   //******************************************************************
+
+   // om predict capacity req
+   #define  OM_PREDICT_CAPACITY_REQ           "predict capacity"
+
+   #define  OM_BSON_FIELD_VALID_SIZE          "ValidSize"
+   #define  OM_BSON_FIELD_TOTAL_SIZE          "TotalSize"
+   #define  OM_BSON_FIELD_REDUNDANCY_RATE     "RedundancyRate"
    //******************************************************************
 
 

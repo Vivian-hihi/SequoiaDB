@@ -274,7 +274,7 @@ namespace engine
                                              list<omScanHostInfo> &hostInfoList, 
                                              BSONObj &bsonRequest ) ;
          INT32           _uninstallAgent( list<omScanHostInfo> &hostInfoList ) ;
-         
+
          void            _eraseFromList( list<omScanHostInfo> &hostInfoList, 
                                          BSONObj &oneHost ) ;
          void            _eraseFromListByIP( list<omScanHostInfo> &hostInfoList, 
@@ -699,21 +699,6 @@ namespace engine
                                           BSONObj &request ) ;
    } ;
 
-   struct simpleDiskInfo: public SDBObject
-   {
-      string diskName ;
-      string mountPath ;
-   } ;
-   
-   struct simpleHostDisk : public SDBObject 
-   {
-      string hostName ;
-      string user ;
-      string passwd ;
-      string agentPort ;
-      list<simpleDiskInfo> diskInfo ;
-   } ;
-
    class omQueryHostStatusCommand : public omStartBusinessCommand
    {
       public:
@@ -736,6 +721,35 @@ namespace engine
                                           list<simpleHostDisk> &hostInfoList ) ;
          INT32           _getHostStatus( list<simpleHostDisk> &hostInfoList, 
                                          BSONObj &bsonStatus ) ;
+   } ;
+
+   class omPredictCapacity : public omAuthCommand
+   {
+      public:
+         omPredictCapacity( restAdaptor *pRestAdaptor, 
+                            pmdRestSession *pRestSession ) ;
+
+         ~omPredictCapacity() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      private:
+         INT32           _getHostList( BSONObj &hostInfos, 
+                                       list<string> &hostNameList ) ;
+
+         INT32           _getTemplateValue( BSONObj &properties,  
+                                            INT32 &replicaNum, 
+                                            INT32 &groupNum ) ;
+
+         INT32           _getRestInfo( list<string> &hostNameList, 
+                                       string &clusterName, 
+                                       INT32 &replicaNum, INT32 &groupNum ) ;
+
+         INT32           _predictCapacity( list<simpleHostDisk> &hostInfoList, 
+                                           INT32 replicaNum, INT32 groupNum, 
+                                           UINT64 &totalSize, UINT64 &validSize, 
+                                           UINT32 &redundancyRate ) ;
    } ;
 
    class omGetFileCommand : public omRestCommandBase
@@ -804,7 +818,7 @@ namespace engine
 
 
 
-   
+
 }
 
 #endif /* OM_GETFILECOMMAND_HPP__ */

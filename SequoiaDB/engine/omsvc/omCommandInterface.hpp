@@ -54,6 +54,23 @@ namespace engine
          virtual INT32     doCommand() = 0 ;
    } ;
 
+   struct simpleDiskInfo: public SDBObject
+   {
+      string diskName ;
+      string mountPath ;
+      UINT64 totalSize ;
+      UINT64 freeSize ;
+   } ;
+
+   struct simpleHostDisk : public SDBObject 
+   {
+      string hostName ;
+      string user ;
+      string passwd ;
+      string agentPort ;
+      list<simpleDiskInfo> diskInfo ;
+   } ;
+
    class omRestCommandBase : public omCommandInterafce
    {
       public:
@@ -73,12 +90,15 @@ namespace engine
                                             BSONObj &clusterInfo ) ;
          INT32             _getHostInfo( string hostName, 
                                          BSONObj &hostInfo ) ;
+         INT32             _fetchHostDiskInfo( const string &clusterName, 
+                                          list<string> &hostNameList, 
+                                          list<simpleHostDisk> &hostInfoList ) ;
       protected:
          SDB_RTNCB         *_pRTNCB ;
          SDB_DMSCB         *_pDMDCB ;
          pmdKRCB           *_pKRCB ;
          SDB_DMSCB         *_pDMSCB ;
-         
+
          pmdEDUCB          *_cb ;
 
          string            _errorDetail ;

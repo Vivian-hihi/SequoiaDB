@@ -2581,7 +2581,7 @@ namespace engine
       omManager *om     = sdbGetOMManager() ;
       pmdRemoteSession *remoteSession = NULL ;
       BSONObj result ;
-      
+
       BSONObjBuilder builder ;
       builder.append( OM_BSON_TASKID, (long long)taskID ) ;
       builder.appendElements( conf ) ;
@@ -6021,11 +6021,10 @@ namespace engine
 
       if ( !isClusterExist )
       {
-         result = BSON( OM_REST_RES_RETCODE << SDB_DMS_RECORD_NOTEXIST 
-                        << OM_REST_RES_DETAIL 
-                        << ( string( clusterName ) + " is not exist" ) ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         _errorDetail = string( clusterName ) + " is not exist" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
          goto done ;
       }
 
@@ -6304,11 +6303,10 @@ namespace engine
 
       if ( !isHostExist )
       {
-         result = BSON( OM_REST_RES_RETCODE << SDB_DMS_RECORD_NOTEXIST 
-                        << OM_REST_RES_DETAIL 
-                        << ( hostName + " is not exist" ) ) ;
-         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
-         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+         rc = SDB_DMS_RECORD_NOTEXIST ;
+         _errorDetail = hostName + " is not exist" ;
+         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
          goto done ;
       }
 
@@ -7066,11 +7064,340 @@ namespace engine
          goto error ;
       }
 
-      _restAdaptor->appendHttpBody( _restSession, bsonStatus .objdata(), 
-                                    bsonStatus .objsize(), 1 ) ;
+      _restAdaptor->appendHttpBody( _restSession, bsonStatus.objdata(), 
+                                    bsonStatus.objsize(), 1 ) ;
       result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // *****************omGetFileCommand *****************************
+   omPredictCapacity::omPredictCapacity( restAdaptor *pRestAdaptor, 
+                                         pmdRestSession *pRestSession )
+                     : omAuthCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omPredictCapacity::~omPredictCapacity()
+   {
+   }
+
+   INT32 omPredictCapacity::_getHostList( BSONObj &hostInfos, 
+                                          list<string> &hostNameList )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjIterator iter( hostInfos ) ;
+      while ( iter.more() )
+      {
+         string hostName ;
+         BSONElement oneEle  = iter.next() ;
+         BSONObj oneHostName = oneEle.embeddedObject() ;
+         BSONElement nameEle = oneHostName.getField( 
+                                                OM_BSON_FIELD_HOST_NAME ) ;
+         if ( nameEle.type() != String )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "bson field is not String:field=%s,type=%d",
+                        OM_BSON_FIELD_HOST_NAME, nameEle.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+         hostNameList.push_back( nameEle.String() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omPredictCapacity::_getTemplateValue( BSONObj &properties,  
+                                               INT32 &replicaNum, 
+                                               INT32 &groupNum )
+   {
+      INT32 rc              = SDB_OK ;
+      BOOLEAN isRepSet      = FALSE ;
+      BOOLEAN isGroupNumSet = FALSE ;
+      BSONObjIterator iter( properties ) ;
+      while ( iter.more() )
+      {
+         string name ;
+         string value ;
+         BSONElement oneEle  = iter.next() ;
+         BSONObj oneProperty = oneEle.embeddedObject() ;
+         BSONElement nameEle = oneProperty.getField( 
+                                                OM_BSON_PROPERTY_NAME ) ;
+         if ( nameEle.type() != String )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "bson field is not String:field=%s,type=%d",
+                        OM_BSON_PROPERTY_NAME, nameEle.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+         name = nameEle.String() ;
+         BSONElement valueEle = oneProperty.getField( 
+                                                OM_BSON_PROPERTY_VALUE ) ;
+         if ( valueEle.type() != String )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "bson field is not String:field=%s,type=%d",
+                        OM_BSON_PROPERTY_VALUE, valueEle.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+         value = valueEle.String() ;
+
+         if ( name == OM_TEMPLATE_REPLICA_NUM )
+         {
+            replicaNum = ossAtoi( value.c_str() ) ;
+            isRepSet   = TRUE ;
+         }
+         else if ( name == OM_TEMPLATE_DATAGROUP_NUM )
+         {
+            groupNum      = ossAtoi( value.c_str() ) ;
+            isGroupNumSet = TRUE ;
+         }
+      }
+
+      if ( !isRepSet )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "bson miss template field:field=%s",
+                     OM_TEMPLATE_REPLICA_NUM ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      if ( !isRepSet )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "bson miss template field:field=%s",
+                     OM_TEMPLATE_DATAGROUP_NUM ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      if ( replicaNum <= 0 || groupNum <= 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "replicaNum or groupNum is invalid:replicaNum=%d,"
+                     "groupNum=%d", replicaNum, groupNum ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omPredictCapacity::_getRestInfo( list<string> &hostNameList, 
+                                          string &clusterName, 
+                                          INT32 &replicaNum, INT32 &groupNum )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pTemplate = NULL ;
+      BSONObj bsonTemplate ;
+      _restAdaptor->getQuery( _restSession, OM_REST_TEMPLATE_INFO, 
+                              &pTemplate ) ;
+      if ( NULL == pTemplate )
+      {
+         _errorDetail = "rest field:" + string( OM_REST_TEMPLATE_INFO )
+                        + " is null" ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "%s", _errorDetail.c_str() ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pTemplate, bsonTemplate ) ;
+      if ( SDB_OK != rc )
+      {
+         _errorDetail = string( "change rest field " ) + OM_REST_TEMPLATE_INFO
+                        + " to BSONObj failed" ;
+         PD_LOG( PDERROR, "%s:rc=%d,src=%s", _errorDetail.c_str(), rc, 
+                 pTemplate ) ;
+         goto error ;
+      }
+
+      {
+         BSONObj properties ;
+         BSONElement ele = bsonTemplate.getField( OM_BSON_PROPERTY_ARRAY ) ;
+         if ( ele.type() != Array )
+         {  
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "bson field is not array:field=%s,type=%d",
+                        OM_BSON_PROPERTY_ARRAY, ele.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+
+         properties = ele.embeddedObject() ;
+         rc = _getTemplateValue( properties, replicaNum, groupNum ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "_getTemplateValue failed:rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( bsonTemplate.hasField( OM_BSON_FIELD_HOST_INFO ) )
+      {
+         BSONObj hostInfos ;
+         BSONElement ele = bsonTemplate.getField( OM_BSON_FIELD_HOST_INFO ) ;
+         if ( ele.type() != Array )
+         {  
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "bson field is not array:field=%s,type=%d",
+                        OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+         hostInfos = ele.embeddedObject() ;
+         rc = _getHostList( hostInfos, hostNameList ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "_getHostList failed:rc=%d", rc ) ;
+            goto error ;
+         }
+
+         ele = bsonTemplate.getField( OM_BSON_FIELD_CLUSTER_NAME ) ;
+         if ( ele.type() != String )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "bson field is not String:field=%s,type=%d",
+                        OM_BSON_FIELD_CLUSTER_NAME, ele.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+
+         clusterName = ele.String() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omPredictCapacity::_predictCapacity( 
+                                           list<simpleHostDisk> &hostInfoList, 
+                                           INT32 replicaNum, INT32 groupNum, 
+                                           UINT64 &totalSize, UINT64 &validSize, 
+                                           UINT32 &redundancyRate )
+   {
+      INT32 rc = SDB_OK ;
+      redundancyRate = replicaNum - 1 ;
+
+      UINT32 nodeCount         = replicaNum * groupNum ;
+      UINT32 diskCount         = 0 ;
+      UINT64 totalDiskFreeSize = 0 ;
+      list<simpleHostDisk>::iterator iterHost = hostInfoList.begin() ;
+      while ( iterHost != hostInfoList.end() )
+      {
+         simpleHostDisk *pHost = &( *iterHost ) ;
+         list<simpleDiskInfo>::iterator iterDisk = pHost->diskInfo.begin() ;
+         while ( iterDisk != pHost->diskInfo.end() )
+         {
+            simpleDiskInfo *pDisk = &( *iterDisk ) ;
+            totalDiskFreeSize += pDisk->freeSize ;
+            diskCount++ ;
+            iterDisk++ ;
+         }
+         iterHost++ ;
+      }
+
+      if ( 0 == diskCount || 0 == totalDiskFreeSize )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "disk info error:diskCountrc=%u,diskFreeSize="
+                     OSS_LL_PRINT_FORMAT, diskCount, totalDiskFreeSize ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      if ( nodeCount < diskCount )
+      {
+         totalSize = totalDiskFreeSize / diskCount * nodeCount ;
+      }
+      else
+      {
+         totalSize = totalDiskFreeSize ;
+      }
+
+      validSize = totalSize / replicaNum ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omPredictCapacity::doCommand()
+   {
+      INT32 rc = SDB_OK ;
+      list<string> hostNameList ;
+      string clusterName ;
+      INT32 replicaNum ;
+      INT32 groupNum ;
+      list<simpleHostDisk> hostInfoList ;
+
+      rc = _getRestInfo( hostNameList, clusterName, replicaNum, groupNum ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getRestInfo failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      rc = _fetchHostDiskInfo( clusterName, hostNameList, hostInfoList ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "_getSpecificHostInfo failed:rc=%d", rc ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      if ( hostInfoList.size() == 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG( PDERROR, "there is not host in the cluster:clusterName=%s",
+                     clusterName.c_str() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         _sendErrorRes2Web( rc, _errorDetail ) ;
+         goto error ;
+      }
+
+      {
+         BSONObj predict ;
+         BSONObj result ;
+         UINT64 totalSize      = 0 ;
+         UINT64 validSize      = 0 ;
+         UINT32 redundancyRate = 0 ;
+         rc = _predictCapacity( hostInfoList, replicaNum, groupNum, totalSize,
+                                validSize, redundancyRate ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "_predictCapacity failed:rc=%d", rc ) ;
+            _sendErrorRes2Web( rc, _errorDetail ) ;
+            goto error ;
+         }
+
+         predict = BSON( OM_BSON_FIELD_TOTAL_SIZE << (long long)totalSize
+                         << OM_BSON_FIELD_VALID_SIZE << (long long)validSize
+                         << OM_BSON_FIELD_REDUNDANCY_RATE << redundancyRate ) ;
+         _restAdaptor->appendHttpBody( _restSession, predict.objdata(), 
+                                       predict.objsize(), 1) ;
+         result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      }
 
    done:
       return rc ;

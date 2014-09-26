@@ -49,7 +49,7 @@ namespace engine
 
    #define OM_CONF_DETAIL_DATAGROUPNAME   "datagroupname"
 
-   #define OM_DG_NAME_PATTERN             "DATAGROUP"
+   #define OM_DG_NAME_PATTERN             "group"
 
    #define OM_DEPLOY_MOD_STANDALONE       "standalone"
    #define OM_DEPLOY_MOD_DISTRIBUTION     "distribution"
