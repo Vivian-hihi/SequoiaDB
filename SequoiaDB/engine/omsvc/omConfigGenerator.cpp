@@ -773,8 +773,6 @@ namespace engine
    INT32 omHostInfo::assign( string role, string dataGroupID, 
                              sdbConfDetail &confDetail )
    {
-      CHAR dbPath[OM_PATH_LENGTH] = "" ;
-      omNodeInfo nodeInfo;
       omDiskInfo disk ;
       _getBestDisk( role, disk ) ;
 
@@ -784,12 +782,21 @@ namespace engine
       confDetail.svcName     = _availableSvcName ;
       _availableSvcName      += OM_SVCNAME_STEP ;
       confDetail.role        = role ;
-      ossSnprintf( dbPath, OM_PATH_LENGTH, "%s%s%s%s%d", 
-                   disk.mountPath.c_str(), OSS_FILE_SEP, 
-                   confDetail.role.c_str(), OSS_FILE_SEP, confDetail.svcName ) ;
-      confDetail.dbPath  = string( dbPath ) ;
+
+      CHAR dbRolePath[OM_PATH_LENGTH + 1] = "" ;
+      utilBuildFullPath( disk.mountPath.c_str(), confDetail.role.c_str(), 
+                         OM_PATH_LENGTH, dbRolePath ) ;
+
+      CHAR subSvcName[OM_PATH_LENGTH+1] = "" ;
+      ossSnprintf( subSvcName, OM_PATH_LENGTH, "%d", confDetail.svcName ) ;
+
+      CHAR dbSvcPath[OM_PATH_LENGTH + 1] = "" ;
+      utilBuildFullPath( dbRolePath, subSvcName, OM_PATH_LENGTH, dbSvcPath ) ;
+
+      confDetail.dbPath  = string( dbSvcPath ) ;
       _increaseNodeCount( confDetail.dbPath, role ) ;
 
+      omNodeInfo nodeInfo;
       nodeInfo.dataGroupName = confDetail.dataGroupID ;
       nodeInfo.role          = confDetail.role ;
       nodeInfo.dbPath        = confDetail.dbPath ;
