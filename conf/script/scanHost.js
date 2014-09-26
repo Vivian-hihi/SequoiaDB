@@ -24,8 +24,11 @@
    SYS_JSON:
    ENV_JSON:
 @return
-   RET_JSON the scan result, the format is as: { "HostInfo": [ { "Rc": 0, "detail": "", "Ping": true, "Ssh": false, "HostName": "rhel64-test8", "IP": "" }, { "Rc": 0, "detail": "", "Ping": true, "Ssh": true, "HostName": "rhel64-test9", "IP": "192.168.20.166" } ] }
+   RET_JSON the scan result, the format is as: { "HostInfo": [ { "errno": 0, "detail": "", "Ping": true, "Ssh": false, "HostName": "rhel64-test8", "IP": "" }, { "errno": 0, "detail": "", "Ping": true, "Ssh": true, "HostName": "rhel64-test9", "IP": "192.168.20.166" } ] }
 */
+
+var RET_JSON       = new Object() ;
+RET_JSON[HostInfo] = [] ;
 
 /* *****************************************************************************
 @discretion: scan a remote host, to check wether it can been "ping" and "ssh"
@@ -43,13 +46,13 @@
 ***************************************************************************** */
 function scanHost( user, passwd, hostname, ip )
 {
-   var retObj       = new Object() ;
-   retObj[Rc]       = SDB_OK ;
-   retObj[Detail]   = "" ;
-   retObj[CanPing]  = false ;
-   retObj[CanSsh]   = false ;
-   retObj[HostName] = "" ;
-   retObj[IP]       = "" ;
+   var retObj          = new Object() ;
+   retObj[Errno]       = SDB_OK ;
+   retObj[Detail]      = "" ;
+   retObj[CanPing]     = false ;
+   retObj[CanSsh]      = false ;
+   retObj[HostName]    = "" ;
+   retObj[IP]          = "" ;
 
    // in case hostname is specified
    if ( null != hostname && undefined != hostname )
@@ -72,7 +75,7 @@ function scanHost( user, passwd, hostname, ip )
       }
       catch ( e )
       {
-         retObj[Rc] = getLastError() ;
+         retObj[Errno] = getLastError() ;
          retObj[Detail] = getLastErrMsg() ;
          retObj[CanSsh] = false ;
       }
@@ -84,7 +87,7 @@ function scanHost( user, passwd, hostname, ip )
       }
       catch ( e )
       {
-         retObj[Rc] = getLastError() ;
+         retObj[Errno] = getLastError() ;
          retObj[Detail] = getLastErrMsg() ;
          return retObj ;
       }
@@ -113,7 +116,7 @@ function scanHost( user, passwd, hostname, ip )
       catch ( e )
       {
          retObj[CanSsh] = false ;
-         retObj[Rc] = getLastError() ;
+         retObj[Errno] = getLastError() ;
          retObj[Detail] = getLastErrMsg() ;
       }
       // hostName
@@ -123,7 +126,7 @@ function scanHost( user, passwd, hostname, ip )
       }
       catch ( e )
       {
-         retObj[Rc] = getLastError() ;
+         retObj[Errno] = getLastError() ;
          retObj[Detail] = getLastErrMsg() ;
          return retObj ;
       }
@@ -133,7 +136,7 @@ function scanHost( user, passwd, hostname, ip )
       }
       catch( e )
       {
-         retObj[Rc] = e ;
+         retObj[Errno] = e ;
          retObj[Detail] = getLastErrMsg() ;
          return retObj ;
       }
@@ -175,7 +178,7 @@ function main()
          setLastErrMsg( "Not specified hostname or ip" ) ;
          throw SDB_INVALIDARG ;
       }
-      RET_JSON[Result].push( ret ) ;
+      RET_JSON[HostInfo].push( ret ) ;
    }
 
    return RET_JSON ;

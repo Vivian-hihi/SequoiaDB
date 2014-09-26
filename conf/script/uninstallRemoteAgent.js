@@ -25,10 +25,13 @@
    ENV_JSON:
    OTHER_JSON:
 @return
-   RET_JSON: the uninstall result:  { "HostInfo": [ { "IP": "192.168.20.165", "Rc": 0, "detail": "", "HasUninstall": true }, { "IP": "192.168.20.166", "Rc": 0, "detail": "", "HasUninstall": true } ] }
+   RET_JSON: the uninstall result:  { "HostInfo": [ { "IP": "192.168.20.165", "errno": 0, "detail": "", "HasUninstall": true }, { "IP": "192.168.20.166", "errno": 0, "detail": "", "HasUninstall": true } ] }
 */
 
 // var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
+
+var RET_JSON = new Object() ;
+RET_JSON[HostInfo] = [] ;
 
 /* *****************************************************************************
 @discretion: remove the temp directory and files in remote host
@@ -145,7 +148,7 @@ function main()
          if ( flag )
          {
             retObj[IsOMStop] = false ;
-            RET_JSON[Result].push( retObj ) ;
+            RET_JSON[HostInfo].push( retObj ) ;
             continue ;
          }
          // stop remote sdbcm program
@@ -156,10 +159,10 @@ function main()
       }
       catch ( e )
       {
-         retObj[Rc] = GETLASTERROR( e, true ) ;
+         retObj[Errno]  = GETLASTERROR( e, true ) ;
          retObj[Detail] = GETLASTERRMSG() ;
       }
-      RET_JSON[Result].push( retObj ) ;
+      RET_JSON[HostInfo].push( retObj ) ;
    }
 //print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    // return the result

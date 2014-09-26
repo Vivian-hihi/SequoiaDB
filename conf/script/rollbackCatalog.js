@@ -27,7 +27,7 @@ if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
 
 var objRet = new Object() ;
 
-objRet.Rc = 0 ;
+objRet.Errno = 0 ;
 objRet.detail = "" ;
 
 function main()
@@ -39,7 +39,7 @@ function main()
       if ( typeof(COORD_HOSTNAME) == "undefined" ||
            typeof(COORD_SERVICE) == "undefined" )
       {
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "virtual coord hostname and svcname are need"
          return objRet ;
       }
@@ -54,13 +54,13 @@ function main()
    {
       if ( typeof(e) != "number" )
       {
-         objRet.Rc = -10 ;
+         objRet.Errno = -10 ;
          objRet.detail = "system error" ;
       }
       else
       {
          var errMsg = "" ;
-         objRet.Rc = e ;
+         objRet.Errno = e ;
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {

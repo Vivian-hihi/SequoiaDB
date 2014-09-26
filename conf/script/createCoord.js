@@ -31,7 +31,7 @@ if ( typeof(CONFIG) == "undefined" ) { CONFIG = eval( '(' + '{}' + ')' ) ; }
 
 var objRet = new Object() ;
 
-objRet.Rc = 0 ;
+objRet.Errno = 0 ;
 objRet.detail = "" ;
 
 function createCoordNode( db )
@@ -71,7 +71,7 @@ function main()
            typeof(DB_USERNAME) == "undefined"    ||
            typeof(DB_PASSWORD) == "undefined" )
       {
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "not specified hostname, svcname"
                          + " username or password to connect to database" ;
       }
@@ -80,7 +80,7 @@ function main()
            typeof(INSTALL_PATH) == "undefined"     ||
            typeof(CONFIG) == "undefined" )
       {
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "hostname, svcname, install path and config info" +
                          " are need for create coord" ;
          return objRet ;
@@ -96,13 +96,13 @@ function main()
    {
       if ( typeof(e) != "number" )
       {
-         objRet.Rc = -10 ;
+         objRet.Errno = -10 ;
          objRet.detail = "system error" ;
       }
       else
       {
          var errMsg = "" ;
-         objRet.Rc = e ;
+         objRet.Errno = e ;
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {

@@ -24,12 +24,15 @@
    SYS_JSON:
    ENV_JSON:
 @return
-   RET_JSON: the basic check result, the format is as: { "HostInfo": [ { "IP": "192.168.20.165", "Ping": true, "Ssh": true, "Rc": 0, "detail": "" }, { "IP": "192.168.20.166", "Ping": true, "Ssh": true, "Rc": 0, "detail": "" } ] }
+   RET_JSON: the basic check result, the format is as: { "HostInfo": [ { "IP": "192.168.20.165", "Ping": true, "Ssh": true, "errno": 0, "detail": "" }, { "IP": "192.168.20.166", "Ping": true, "Ssh": true, "errno": 0, "detail": "" } ] }
 
 */
 
 //var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
 
+
+var RET_JSON = new Object() ;
+RET_JSON[HostInfo] = [] ;
 
 /* *****************************************************************************
 @discretion: check wether host can been "ping" and "ssh" or not
@@ -45,12 +48,12 @@
 ***************************************************************************** */
 function basicCheckHost( user, passwd, ip )
 {
-   var retObj       = new Object() ;
-   retObj[Rc]       = SDB_OK ;
-   retObj[Detail]   = "" ;
-   retObj[CanPing]  = false ;
-   retObj[CanSsh]   = false ;
-   retObj[IP]       = "" ;
+   var retObj          = new Object() ;
+   retObj[Errno]       = SDB_OK ;
+   retObj[Detail]      = "" ;
+   retObj[CanPing]     = false ;
+   retObj[CanSsh]      = false ;
+   retObj[IP]          = "" ;
 
    // ip
    retObj[IP] = ip ;
@@ -71,7 +74,7 @@ function basicCheckHost( user, passwd, ip )
    catch ( e )
    {
       retObj[CanSsh] = false ;
-      retObj[Rc] = getLastError() ;
+      retObj[Errno] = getLastError() ;
       retObj[Detail] = getLastErrMsg() ;
    }
 
@@ -96,7 +99,7 @@ function main()
       var ip       = obj[IP] ;
       var ret      = null ;
       ret = basicCheckHost( user, passwd, ip ) ;
-      RET_JSON[Result].push( ret ) ;
+      RET_JSON[HostInfo].push( ret ) ;
    }
 //print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;

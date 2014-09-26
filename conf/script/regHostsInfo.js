@@ -38,7 +38,7 @@ var objRet = new Object() ;
 
 objRet.HostName    = null ;
 objRet.hasLeftCopy = false ;
-objRet.Rc          = 0 ;
+objRet.Errno          = 0 ;
 objRet.detail      = null ;
 
 function backupRemoteHostsFile( ssh, osInfo )
@@ -105,13 +105,13 @@ function main()
    {
       if ( typeof(e) != "number" )
       {
-         objRet.Rc = -10 ;
+         objRet.Errno = -10 ;
          objRet.detail = "system error" ;
       }
       else
       {
          var errMsg = "" ;
-         objRet.Rc = e ;
+         objRet.Errno = e ;
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {

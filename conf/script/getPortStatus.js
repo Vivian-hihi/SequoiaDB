@@ -23,7 +23,7 @@
 if ( typeof(PORT) == "undefined" ) {}
 var objRet = new Object() ;
 
-objRet.Rc = 0 ;
+objRet.Errno = 0 ;
 objRet.detail = "" ;
 objRet.result = null ;
 
@@ -34,7 +34,7 @@ function main()
       // check arguments
       if ( typeof(PORT) == "undefined" )
       {
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "Invalid argument" ;
          return objRet ;
       }
@@ -48,13 +48,13 @@ function main()
    {
       if ( typeof(e) != "number" )
       {
-         objRet.Rc = -10 ;
+         objRet.Errno = -10 ;
          objRet.detail = "system error" ;
       }
       else
       {
          var errMsg = "" ;
-         objRet.Rc = e ;
+         objRet.Errno = e ;
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {

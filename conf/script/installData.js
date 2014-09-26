@@ -34,7 +34,7 @@ if ( typeof(CONFIG) == "undefined" ) { CONFIG = "{}" ; }
 
 var objRet = new Object() ;
 
-objRet.Rc = 0 ;
+objRet.Errno = 0 ;
 objRet.detail = "" ;
 objRet.HasInstall = false ;
 objRet.NodeName = INSTALL_HOSTNAME + ":" + INSTALL_SERVICE ;
@@ -55,13 +55,13 @@ function main()
    {
       if ( typeof(e) != "number" )
       {
-         objRet.Rc = -10 ;
+         objRet.Errno = -10 ;
          objRet.detail = "system error" ;
       }
       else
       {
          var errMsg = "" ;
-         objRet.Rc = e ;
+         objRet.Errno = e ;
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {

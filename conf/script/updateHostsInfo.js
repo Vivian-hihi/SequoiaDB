@@ -37,7 +37,7 @@ var localHosts = { "Hosts": [ { "Ip": "127.0.0.1", "HostName": "localhost" }, { 
 
 var objRet = new Object() ;
 
-objRet.Rc          = 0 ;
+objRet.Errno          = 0 ;
 objRet.detail      = "" ;
 
 // globbal ver
@@ -435,7 +435,7 @@ print("111111222222222223333333333\n") ;
       // check arguments
       if ( typeof ( HOSTS_INFO ) == "undefined"  )
       {
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "not specified hosts info for update" ;
          return objRet ;
       }
@@ -445,7 +445,7 @@ print("44444444444455555555555555666666666666\n") ;
 print("######### sdbcmCfgFile is: " + sdbcmCfgFile + "\n") ;
       if ( typeof ( sdbcmCfgFile ) == "undefined"  )
       {
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "can't get sdbcm config file" ;
          return objRet ;
       }
@@ -463,7 +463,7 @@ print("passwd is: " + passwd + "\n") ;
            typeof( passwd ) == null || typeof( passwd ) == "undefined" )
       {
 print("7777777788888888888888888889999999999999\n") ;
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "not specifed username and password " ;
          return objRet ;
       }
@@ -494,7 +494,7 @@ print("11111111111111\n") ;
       conflictArr = conflictCheck( hostsArray, localHostsArray ) ;
       if ( conflictArr.length )
       {
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "hosts info conflict:" ;
          for ( var i = 0; i < conflictArr.length; i++ )
          {
@@ -537,13 +537,13 @@ print("0000000000000000000000000000000000000\n") ;
 print("err is : " + e + "\n") ; 
       if ( typeof(e) != "number" )
       {
-         objRet.Rc = -10 ;
+         objRet.Errno = -10 ;
          objRet.detail = "system error" ;
       }
       else
       {
          var errMsg = "" ;
-         objRet.Rc = e ;
+         objRet.Errno = e ;
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )
          {

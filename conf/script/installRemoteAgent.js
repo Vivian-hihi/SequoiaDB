@@ -24,7 +24,7 @@
    SYS_JSON: the system info: { "ProgPath": "/home/users/tanzhaobo/sequoiadb/bin/" }
    ENV_JSON:
 @return
-   RET_JSON: the install result: { "HostInfo": [ { "Rc": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.165" }, { "Rc": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.166" } ] }
+   RET_JSON: the install result: { "HostInfo": [ { "errno": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.165" }, { "errno": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.166" } ] }
 */
 
 // TODO: remove this debug info
@@ -34,6 +34,9 @@
 //var BUS_JSON = { "HostInfo": [  { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] };
 
 //var SYS_JSON = { "ProgPath": "/home/users/tanzhaobo/sequoiadb/bin/" } ;
+
+var RET_JSON = new Object() ;
+RET_JSON[HostInfo] = [] ;
 
 var LOCAL_PROG_PATH = SYS_JSON[ProgPath] ;
 var LOCAL_CONF_PATH = Oma.getOmaConfigFile() ;
@@ -329,12 +332,12 @@ function cleanup( ssh, osInfo )
 ***************************************************************************** */
 function installRemoteAgent( ssh, osInfo, ip )
 {
-   var retObj              = new Object() ;
-   retObj[Rc]              = SDB_OK ;
-   retObj[Detail]          = "" ;
-   retObj[IsNeedUninstall] = false ;
-   retObj[AgentPort]       = OMA_PORT_INVALID + "";
-   retObj[IP]              = ip ;
+   var retObj                 = new Object() ;
+   retObj[Errno]              = SDB_OK ;
+   retObj[Detail]             = "" ;
+   retObj[IsNeedUninstall]    = false ;
+   retObj[AgentPort]          = OMA_PORT_INVALID + "";
+   retObj[IP]                 = ip ;
 
    // test whether sdbcm has been installed in local
    var flag = isInLocalHost( ssh ) ;
@@ -408,11 +411,11 @@ function main()
       }
       catch ( e )
       {
-         ret[Rc]     = GETLASTERROR( e, false ) ;
-         ret[Detail] = GETLASTERRMSG() ;
+         ret[Errno]     = GETLASTERROR( e, false ) ;
+         ret[Detail]    = GETLASTERRMSG() ;
       }
       // set return result
-      RET_JSON[Result].push( ret ) ;
+      RET_JSON[HostInfo].push( ret ) ;
       // clean up something
       cleanup( ssh, osInfo ) ;
    }

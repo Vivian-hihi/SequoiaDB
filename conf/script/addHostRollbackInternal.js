@@ -25,7 +25,7 @@
    ENV_JSON: {}
    OTHER_JSON: {}
 @return
-   RET_JSON: the format is: {"HostInfo":[{"Rc":0,"detail":"","IP":"192.168.20.42","HasUninstall":true},{"Rc":0,"detail":"","IP":"192.168.20.165","HasUninstall":true}]}
+   RET_JSON: the format is: {"HostInfo":[{"errno":0,"detail":"","IP":"192.168.20.42","HasUninstall":true},{"errno":0,"detail":"","IP":"192.168.20.165","HasUninstall":true}]}
 */
 
 
@@ -97,10 +97,10 @@ function main()
       }
       catch ( e )
       {
-         retObj[Rc] = GETLASTERROR( e, false ) ;
+         retObj[Errno]  = GETLASTERROR( e, false ) ;
          retObj[Detail] = GETLASTERRMSG() ;
       }
-      RET_JSON[Result].push( retObj ) ;
+      RET_JSON[HostInfo].push( retObj ) ;
    }
 //print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    // return the result

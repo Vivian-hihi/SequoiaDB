@@ -31,9 +31,9 @@
 
 //var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } ;
 
-var RET_JSON     = new Object() ;
-RET_JSON[Rc]     = SDB_OK ;
-RET_JSON[Detail] = "" ;
+var RET_JSON        = new Object() ;
+RET_JSON[Errno]     = SDB_OK ;
+RET_JSON[Detail]    = "" ;
 
 /* *****************************************************************************
 @discretion: wait catalog to be ok

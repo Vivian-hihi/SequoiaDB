@@ -33,7 +33,7 @@ if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
 
 var objRet = new Object() ;
 
-objRet.Rc = 0 ;
+objRet.Errno = 0 ;
 objRet.detail = "" ;
 
 function main()
@@ -46,7 +46,7 @@ function main()
            typeof(INSTALL_PATH) == "undefined" ||
            typeof(GROUPNAME) == "undefined" )
       {
-         objRet.Rc = -6 ;
+         objRet.Errno = -6 ;
          objRet.detail = "install hostname, svcname, path and the groupname are"
                          + " need for creating data node" ;
          return objRet ;
@@ -100,13 +100,13 @@ println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
 print("error is e = " + e + "\n") ;
       if ( typeof(e) != "number" )
       {
-         objRet.Rc = -10 ;
+         objRet.Errno = -10 ;
          objRet.detail = "system error" ;
       }
       else
       {
          var errMsg = "" ;
-         objRet.Rc = e ;
+         objRet.Errno = e ;
          // TODO: getLastErrMsg may return nothing
          errMsg = getLastErrMsg() ;
          if ( "" != errMsg && null != errMsg && undefined != errMsg )

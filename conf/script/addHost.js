@@ -25,7 +25,7 @@
    ENV_JSON: {}
    OTHER_JSON: {}
 @return
-   RET_JSON: the format is: {"Rc":0,"detail":"","HostInfo":[{"Rc":0,"detail":"","IP":"192.168.20.42","HasInstall":true},{"Rc":0,"detail":"","IP":"192.168.20.165","HasInstall":true}]}
+   RET_JSON: the format is: {"errno":0,"detail":"","HostInfo":[{"errno":0,"detail":"","IP":"192.168.20.42","HasInstall":true},{"errno":0,"detail":"","IP":"192.168.20.165","HasInstall":true}]}
 */
 
 /*
@@ -39,10 +39,10 @@
 //var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
 
 
-var RET_JSON = new Object() ;
-RET_JSON[Rc] = SDB_OK ;
-RET_JSON[Detail] = "" ;
-RET_JSON[Result] = [] ;
+var RET_JSON       = new Object() ;
+RET_JSON[Errno]    = SDB_OK ;
+RET_JSON[Detail]   = "" ;
+RET_JSON[HostInfo] = [] ;
 
 function getInstallPacketName( osInfo, packet )
 {
@@ -194,7 +194,7 @@ function main()
          if ( isLocal )
          {
             retObj[HasInstall] = true ;
-            RET_JSON[Result].push( retObj ) ;
+            RET_JSON[HostInfo].push( retObj ) ;
             continue ;
          }
          // push packet to remote machine
@@ -204,13 +204,13 @@ function main()
       }
       catch ( e )
       {
-         retObj[Rc]       = GETLASTERROR( e, false ) ;
-         retObj[Detail]   = GETLASTERRMSG() ;
-         RET_JSON[Rc]     = retObj[Rc] ;
-         RET_JSON[Detail] = retObj[IP] + ": " + retObj[Detail] ;
+         retObj[Errno]       = GETLASTERROR( e, false ) ;
+         retObj[Detail]      = GETLASTERRMSG() ;
+         RET_JSON[Errno]     = retObj[Errno] ;
+         RET_JSON[Detail]    = retObj[IP] + ": " + retObj[Detail] ;
          break ;
       }
-      RET_JSON[Result].push( retObj ) ;
+      RET_JSON[HostInfo].push( retObj ) ;
    }
 print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    // return the result

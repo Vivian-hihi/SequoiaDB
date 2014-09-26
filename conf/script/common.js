@@ -22,13 +22,10 @@
 */
 
 // return json object for every business js file
-var RET_JSON = new Object() ;
-RET_JSON[Result] = [] ;
-
 
 function installTmpCMResult()
 {
-   this.Rc                        = SDB_OK ;
+   this.Errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.AgentPort                 = OMA_PORT_INVALID + "" ;
@@ -38,7 +35,7 @@ function installTmpCMResult()
 
 function uninstallTmpCMResult()
 {
-   this.Rc                        = SDB_OK ;
+   this.Errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.IsOMStop                  = false ;
@@ -46,7 +43,7 @@ function uninstallTmpCMResult()
 
 function addHostResult()
 {
-   this.Rc                        = SDB_OK ;
+   this.Errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.HasInstall                = false ;
@@ -54,7 +51,7 @@ function addHostResult()
 
 function addHostRollbackResult()
 {
-   this.Rc                        = SDB_OK ;
+   this.Errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.HasUninstall              = false ;
