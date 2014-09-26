@@ -112,6 +112,10 @@ namespace engine
       rc = initArgs( argc, argv, vm ) ;
       if ( rc )
       {
+         if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
+         {
+            rc = SDB_OK ;
+         }
          goto done ;
       }
 
