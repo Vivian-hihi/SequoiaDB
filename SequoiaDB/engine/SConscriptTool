@@ -365,7 +365,9 @@ sdbStopMain = [
       ]
 
 sdbListMain = [
-      "pmd/sdblist.cpp"
+      "pmd/sdblist.cpp",
+      "pmd/pmdOptionsMgr.cpp",
+      "cls/clsUtil.cpp"
       ]
 
 sdbcmMain = [
