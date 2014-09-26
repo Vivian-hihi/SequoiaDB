@@ -98,7 +98,7 @@ enum SDB_RUN_MODE_TYPE
        ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t" ), boost::program_options::value<string>(), "node type: db/om/cm/all, default: db" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p" ), boost::program_options::value<string>(), "service name, use ',' as seperator" )  \
        ( PMD_COMMANDS_STRING( PMD_OPTION_MODE, ",m" ), boost::program_options::value<string>(),"mode type: run/local,default: run" ) \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), boost::program_options::value<string>(), "role type: coord/data/cata" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), boost::program_options::value<string>(), "role type: coord/data/catalog" ) \
        ( PMD_OPTION_VERSION, "show version" ) \
        ( PMD_OPTION_DETAIL,"show detail configuration" ) \
        ( PMD_OPTION_EXPAND,"show expand configuration" )
