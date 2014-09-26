@@ -19,89 +19,37 @@
 @description: install agent process in remote mechine
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the format is: {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]}
+   SYS_JSON: {}
+   ENV_JSON: {}
+   OTHER_JSON: {}
+@return
+   RET_JSON: the format is: {"Rc":0,"detail":"","HostInfo":[{"Rc":0,"detail":"","IP":"192.168.20.42","HasInstall":true},{"Rc":0,"detail":"","IP":"192.168.20.165","HasInstall":true}]}
 */
-if ( typeof(SDBUSER) == "undefined" ) {}
-if ( typeof(SDBPASSWD) == "undefined" ) {}
-if ( typeof(SDBUSERGROUP) == "undefined" ) {}
-if ( typeof(IP) == "undefined" ) {}
-if ( typeof(HOSTNAME) == "undefined" ) {}
-if ( typeof(USERNAME) == "undefined" ) {}
-if ( typeof(PASSWORD) == "undefined" ) {}
-if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-if ( typeof(PACKET_PATH) == "undefined" ) {}
-if ( typeof(INSTALL_PATH) == "undefined" ) {}
 
-// linux
-var OMA_TMP_DIR              = "/tmp/omatmp" ;
-var OMA_INSTALL_PACKET_DIR_L = "/tmp/omatmp/packet/" ;
-var OMA_VCOORD_INSTALL_DIR_L = "/tmp/omatmp/data/vCoord/" ;
-// windows
-var INSTALL_PACKET_PATH_W = "" ;
+/*
 
-var objRet = new Object() ;
-objRet.Rc         = 0 ;
-objRet.detail     = "" ;
-objRet.HasPush    = false ;
-objRet.HasInstall = false ;
+@modify list:
+   2014-7-26 Zhaobo Tan  Init
+*/
+
+//var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
+
+//var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
 
 
-function isLocalHost( osInfo )
-{
-   var isLocal = false ;
-   var hostname = null ;
-   var hosts = null ;
-   var name = null ;
-   var ip = null ;
-   var len = 0 ;
-   var i = 0 ;
+var RET_JSON = new Object() ;
+RET_JSON[Rc] = SDB_OK ;
+RET_JSON[Detail] = "" ;
+RET_JSON[Result] = [] ;
 
-   // get localhost name
-   hostname = Cmd.run("hostname") ;
-   if ( null != hostname )
-   {
-      if ( "LINUX" == osInfo )
-      {
-         i = hostname.indexOf( "\n" ) ;
-      }
-      else
-      {
-         i = hostname.indexOf( "\n\r" ) ;
-      }
-      if ( -1 != i )
-      {
-         hostname = hostname.substring(0, i);
-      }
-   }
-
-   // check whether it's in local host env
-   hosts = eval( '(' + System.getHostsMap() + ')' ) ;
-   if ( null != hosts )
-   {
-      len = hosts["Hosts"].length ;
-      for ( i = 0; i < len; i++ )
-      {
-         ip = hosts["Hosts"][i]["Ip"] ;
-         if ( IP == ip )
-         {
-            name = hosts["Hosts"][i]["HostName"] ;
-            if ( hostname == name )
-            {
-               isLocal = true ;
-               break ;
-            }
-         }
-      }
-   }
-   return isLocal ;
-}
-
-function getInstallPacketName( osInfo )
+function getInstallPacketName( osInfo, packet )
 {
    var s = "" ;
    var i = 1 ;
-   var packet = PACKET_PATH ;
    var subStr = "" ;
-   if ( "LINUX" == osInfo )
+   if ( OMA_LINUX == osInfo )
       s = "/" ;
    else
       s = "\\" ;
@@ -120,136 +68,153 @@ function getInstallPacketName( osInfo )
 function createTmpDir( ssh, osInfo )
 {
    var cmd = "" ;
-   if ( "LINUX" == osInfo )
+   if ( OMA_LINUX == osInfo )
    {
-      // mkdir /tmp/omatmp
-      cmd = "mkdir -p " + OMA_TMP_DIR ;
-      ssh.exec( cmd ) ;
-      // mkdir  /tmp/omatmp/packet
-      cmd = "mkdir -p " + OMA_INSTALL_PACKET_DIR_L ; 
-      ssh.exec( cmd ) ;
-      // mkdir  /tmp/omatmp/data/vCoord
-      cmd = "mkdir -p " + OMA_VCOORD_INSTALL_DIR_L ;
-      ssh.exec( cmd ) ;
-      // chmod
-      cmd = "chmod -R 777 " + OMA_TMP_DIR ;
-      ssh.exec( cmd ) ;
+      try
+      {
+         // mkdir /tmp/omatmp
+         cmd = "mkdir -p " + OMA_PATH_TEMP_OMA_DIR_L ;
+         ssh.exec( cmd ) ;
+         // mkdir  /tmp/omatmp/packet
+         cmd = "mkdir -p " + OMA_PATH_TEMP_PACKET_DIR_L ; 
+         ssh.exec( cmd ) ;
+         // mkdir  /tmp/omatmp/data/vCoord
+         cmd = "mkdir -p " + OMA_PATH_VCOORD_PATH_L ;
+         ssh.exec( cmd ) ;
+         // chmod
+         cmd = "chmod -R 777 " + OMA_PATH_TEMP_OMA_DIR_L ;
+         ssh.exec( cmd ) ;
+      }
+      catch( e )
+      {
+         setLastErrMsg( "Failed to create tmp director" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
    }
    else
    {
       // DOTO: tanzhaobo
       // windows
    }
-
 }
 
-function pushInstallationPacket( ssh, osInfo )
+function pushInstallationPacket( ssh, osInfo, packet )
 {
    var src = "" ;
    var dest = "" ;
-   var packetName = getInstallPacketName( osInfo ) ;
+   var packetName = getInstallPacketName( osInfo, packet ) ;
    createTmpDir( ssh, osInfo ) ;
-   if ( "LINUX" == osInfo )
+   if ( OMA_LINUX == osInfo )
    {
-      // installer.run
-      src = PACKET_PATH;
-      dest = OMA_INSTALL_PACKET_DIR_L + packetName ;
-      ssh.push( src, dest ) ;
-      var cmd = "chmod a+x " + OMA_INSTALL_PACKET_DIR_L + packetName ;
-      ssh.exec( cmd ) ;
+      try
+      {
+         // installer.run
+         src = packet;
+         dest = OMA_PATH_TEMP_PACKET_DIR_L + packetName ;
+         ssh.push( src, dest ) ;
+         var cmd = "chmod a+x " + OMA_PATH_TEMP_PACKET_DIR_L + packetName ;
+         ssh.exec( cmd ) ;
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to push db packet to remote" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
    }
    else
    {
       // TODO: tanzhaobo
       // push packet in windows
    }
-   objRet.HasPush = true ;
 }
 
-function installPacket( ssh, osInfo )
+function installDBPacket( ssh, osInfo, sdbuser, sdbpasswd, packet, path )
 {
    var cmd = "" ;
-   var option = " --mode unattended " + " --prefix " + INSTALL_PATH +
-                " --username " + SDBUSER + " --userpasswd " + SDBPASSWD ;
-   var packetName = getInstallPacketName( osInfo ) ; 
-   if ( "LINUX" == osInfo )
+   var option = "" ;
+   option += " --mode unattended " + " --prefix " + path ;
+   option += " --username " + sdbuser + " --userpasswd " + sdbpasswd ;
+   var packetName = getInstallPacketName( osInfo, packet ) ; 
+   if ( OMA_LINUX == osInfo )
    {
-      cmd = OMA_INSTALL_PACKET_DIR_L + packetName + option ;
-      ssh.exec( cmd ) ;
+      cmd = OMA_PATH_TEMP_PACKET_DIR_L + packetName + option ;
+      try
+      {
+         ssh.exec( cmd ) ; 
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to insall db packet" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
    }
    else
    {
       // TODO: tanzhaobo
       // execute in windows
    }
-   objRet.HasInstall = true ;
 }
 
 function main()
 {
-   try
+   var sdbUser         = BUS_JSON[SdbUser] ;
+   var sdbPasswd       = BUS_JSON[SdbPasswd] ;
+   var sdbUserGroup    = BUS_JSON[SdbUserGroup] ;
+   var installPacket   = BUS_JSON[InstallPacket] ;
+   var infoArr         = BUS_JSON[HostInfo] ;
+   var arrLen          = infoArr.length ;
+   if ( arrLen == 0 )
    {
-      // check argument
-      if ( typeof(SDBUSER) == "undefined"       ||
-           typeof(SDBPASSWD) == "undefined"     ||
-           typeof(SDBUSERGROUP) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "not specified user name, password or user group" ;
-         return objRet ;
-      }
-      if ( typeof(USERNAME) == "undefined"      ||
-           typeof(PASSWORD) == "undefined"      ||
-           typeof(IP) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "not specified username, password or ip" ;
-         return objRet ;
-      }
-      if ( typeof(PACKET_PATH) == "undefined" ||
-           typeof(INSTALL_PATH) == "undefined" )
-      {
-         objRet.Rc = -10 ;
-         objRet.detail = "not specified install packet or install path" ;
-         return objRet ;
-      }
-      // get os info
-      var osInfo = System.type() ;
-      // ssh
-      var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-      // judge whether it's in local mathine, if so, no need to install
-      var isLocal = isLocalHost( osInfo ) ;
-      if ( isLocal )
-      {
-         objRet.HasPush    = false ;
-         objRet.HasInstall = true ;
-         return objRet ;
-      }
-      // push packet to remote machine
-      pushInstallationPacket( ssh, osInfo ) ;
-      installPacket( ssh, osInfo ) ;
-      // return the result
-      return objRet ;
+      setLastErrMsg( "Not specified any hosts to add" ) ;
+      throw SDB_INVALIDARG ;
    }
-   catch ( e )
+   // get os infomation
+   var osInfo = System.type() ;
+   for ( var i = 0; i < arrLen; i++ )
    {
-      if ( typeof(e) != "number" )
+      var ssh         = null ;
+      var obj         = infoArr[i] ;
+      var ip          = obj[IP] ;
+      var user        = obj[User] ;
+      var passwd      = obj[Passwd] ;
+      var sshPort     = obj[SshPort] ;
+      var agentPort   = obj[AgentPort] ;
+      var installPath = obj[InstallPath] ;
+      var retObj      = new addHostResult() ;
+      retObj[IP]      = ip ;
+      try
       {
-         objRet.Rc = -10 ;
-         objRet.detail = "system error" ;
-      }
-      else
-      {
-         var errMsg = "" ;
-         objRet.Rc = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
+         // ssh
+         var ssh = new Ssh( ip, user, passwd ) ;
+         // judge whether it's in local mathine, if so, no need to install
+         var isLocal = isInLocalHost( ssh ) ;
+         if ( isLocal )
          {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
+            retObj[HasInstall] = true ;
+            RET_JSON[Result].push( retObj ) ;
+            continue ;
          }
+         // push packet to remote machine
+         pushInstallationPacket( ssh, osInfo, installPacket ) ;
+         installDBPacket( ssh, osInfo, sdbUser, sdbPasswd, installPacket, installPath ) ;
+         retObj[HasInstall] = true ;
       }
-      return objRet ;
+      catch ( e )
+      {
+         retObj[Rc]       = GETLASTERROR( e, false ) ;
+         retObj[Detail]   = GETLASTERRMSG() ;
+         RET_JSON[Rc]     = retObj[Rc] ;
+         RET_JSON[Detail] = retObj[IP] + ": " + retObj[Detail] ;
+         break ;
+      }
+      RET_JSON[Result].push( retObj ) ;
    }
+print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   // return the result
+   return RET_JSON ;
 }
 
 // execute

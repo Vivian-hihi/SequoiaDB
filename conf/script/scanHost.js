@@ -19,85 +19,166 @@
 @description: scan host
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the info for scan host, it's format is as: { "HostInfo": [ { "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
+   SYS_JSON:
+   ENV_JSON:
+@return
+   RET_JSON the scan result, the format is as: { "HostInfo": [ { "Rc": 0, "detail": "", "Ping": true, "Ssh": false, "HostName": "rhel64-test8", "IP": "" }, { "Rc": 0, "detail": "", "Ping": true, "Ssh": true, "HostName": "rhel64-test9", "IP": "192.168.20.166" } ] }
 */
 
-if ( typeof(USERNAME) == "undefined" ) {}
-if ( typeof(PASSWORD) == "undefined" ) {}
-if ( typeof(IP) == "undefined" ) {}
-if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
+/* *****************************************************************************
+@discretion: scan a remote host, to check wether it can been "ping" and "ssh"
+             or not, and try to get it's hostname if hostname is not specified
+@author: Tanzhaobo
+@parameter
+   user[string]: the user name
+   passwd[string]: the password
+   hostname[string] the hostname
+   ip[string]: the ip address
+@note
+   either ip or hostname must be specified
+@return
+   retStr[string]: the hostname after adapting
+***************************************************************************** */
+function scanHost( user, passwd, hostname, ip )
+{
+   var retObj       = new Object() ;
+   retObj[Rc]       = SDB_OK ;
+   retObj[Detail]   = "" ;
+   retObj[CanPing]  = false ;
+   retObj[CanSsh]   = false ;
+   retObj[HostName] = "" ;
+   retObj[IP]       = "" ;
 
-var objRet = new Object() ;
-objRet.Ping = false ;
-objRet.Ssh = false ;
-objRet.HostName = null ;
-objRet.Rc = 0 ;
-objRet.detail = "" ;
+   // in case hostname is specified
+   if ( null != hostname && undefined != hostname )
+   {
+      // hostname
+      retObj.HostName = hostname ;
+      // ping
+      var ret = System.ping( hostname, 3 ) ;
+      var ping = eval( "(" + ret + ")" ) ;
+      if ( true != ping[Reachable] )
+      {
+         return retObj ;
+      }
+      retObj[CanPing] = true ;
+      // ssh
+      try
+      {
+         var ssh = new Ssh( hostname, user, passwd ) ;
+         retObj[CanSsh] = true ;
+      }
+      catch ( e )
+      {
+         retObj[Rc] = getLastError() ;
+         retObj[Detail] = getLastErrMsg() ;
+         retObj[CanSsh] = false ;
+      }
+      // ip
+      var ipTmp = null ;
+      try
+      {
+         ipTmp = ssh.getPeerIP() ;
+      }
+      catch ( e )
+      {
+         retObj[Rc] = getLastError() ;
+         retObj[Detail] = getLastErrMsg() ;
+         return retObj ;
+      }
+      // if no error, extract the ip
+      if ( "string" == typeof(ipTmp) )
+      {
+         retObj[IP] = removeLineBreak( ipTmp ) ;
+      }
+   }
+   else if ( null != ip && undefined != ip )
+   {
+      // ip
+      retObj[IP] = ip ;
+      // ping
+      var ret = System.ping( ip, 3 ) ;
+      var ping = eval( "(" + ret + ")" ) ;
+      if ( true != ping[Reachable] )
+         return retObj ;
+      retObj.CanPing = true ;
+      // ssh
+      try
+      {
+         var ssh = new Ssh( ip, user, passwd ) ;
+         retObj[CanSsh] = true ;
+      }
+      catch ( e )
+      {
+         retObj[CanSsh] = false ;
+         retObj[Rc] = getLastError() ;
+         retObj[Detail] = getLastErrMsg() ;
+      }
+      // hostName
+      try
+      {
+         var name = ssh.exec("hostname") ;
+      }
+      catch ( e )
+      {
+         retObj[Rc] = getLastError() ;
+         retObj[Detail] = getLastErrMsg() ;
+         return retObj ;
+      }
+      try
+      {
+         SSH_CHECK ( ssh, SDB_SYS ) ;
+      }
+      catch( e )
+      {
+         retObj[Rc] = e ;
+         retObj[Detail] = getLastErrMsg() ;
+         return retObj ;
+      }
+      if ( "string" == typeof(name) )
+      {
+         retObj[HostName] = removeLineBreak( name ) ;
+      }
+   }
+   return retObj ;
+}
 
 function main()
 {
-   try
+   var infoArr = BUS_JSON[HostInfo] ;
+   var arrLen = infoArr.length ;
+   if ( arrLen == 0 )
    {
-
-      // check argument
-      if ( typeof(USERNAME) == "undefined" ||
-           typeof(PASSWORD) == "undefined" ||
-           typeof(IP) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "user name, password or ip is not defined" ;
-         return objRet ;
-      }
-      // ping
-      var ret = System.ping( IP, TIMES ) ;
-      var ping = eval( "(" + ret + ")" ) ;
-      if ( true != ping.Reachable )
-         return objRet ;
-      objRet.Ping = true ;
-
-      // ssh
-      var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-      if ( null != typeof(ssh) && "undefined" != typeof(ssh) )
-         objRet.Ssh = true ;
-
-      // hostName
-      var name = ssh.exec("hostname") ; // if no host name, what can I do ?
-
-      if ( null != typeof(name) && "undefined" != typeof(name) )
-      {
-         // TODO: tanzhaobo
-         // windows "\n\r"
-         var i = name.indexOf( "\n" ) ;
-         if ( -1 != i )
-         {
-            var substr = name.substring(0, i);
-            objRet.HostName = substr ;
-         }
-         else
-         {
-            objRet.HostName = name ;
-         }
-      }
-      return objRet ;
+      setLastErrMsg( "Not specified any host to scan" ) ;
+      throw SDB_INVALIDARG ;
    }
-   catch ( e )
+   for( var i = 0; i < arrLen; i++ )
    {
-      if ( typeof(e) != "number" )
+      var obj      = infoArr[i] ;
+      var user     = obj[User] ;
+      var passwd   = obj[Passwd] ;
+      var hostname = obj[HostName] ;
+      var ip       = obj[IP] ;
+      var ret      = null ;
+      if ( undefined != hostname )
+      { 
+         ret = scanHost( user, passwd, hostname, null ) ;
+      }
+      else if ( undefined != ip )
       {
-         objRet.Rc = -10 ;
-         objRet.detail = "system error" ;
+         ret = scanHost( user, passwd, null, ip ) ;
       }
       else
       {
-         var errMsg = "" ;
-         objRet.Rc = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
+         setLastErrMsg( "Not specified hostname or ip" ) ;
+         throw SDB_INVALIDARG ;
       }
-      return objRet ;
+      RET_JSON[Result].push( ret ) ;
    }
+
+   return RET_JSON ;
 }
 
 // execute

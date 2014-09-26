@@ -19,138 +19,226 @@
 @description: get host info
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the info for check host: { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb" } ;
+   SYS_JSON:
+   ENV_JSON:
+@return
+   RET_JSON: the check host result: { "IP": "192.168.20.165", "CPU": [ { "ID": "", "Model": "", "Core": 2, "Freq": "2.00GHz" } ], "Net": [ { "Name": "lo", "Model": "", "Bandwidth": "", "IP": "127.0.0.1" }, { "Name": "eth0", "Model": "", "Bandwidth": "", "IP": "192.168.20.165" } ], "Disk": [ { "Name": "/dev/mapper/vg_rhel64test8-lv_root", "Mount": "/", "Size": 43659, "Free": 39358, "IsLocal": false }, { "Name": "/dev/sda1", "Mount": "/boot", "Size": 460, "Free": 423, "IsLocal": true }, { "Name": "//192.168.20.10/files", "Mount": "/mnt", "Size": 47837, "Free": 34580, "IsLocal": false } ], "Memory": { "Model": "", "Size": 2887, "Free": 800 }, "Port": [ { "Port": "50000", "Status": false } ], "Service": [ { "Name": "", "Status": false, "Version": "" } ], "OM": { "Status": false, "Version": "" }, "Safety": { "Name": "", "Context": "", "Status": false }, "HostName": "rhel64-test8", "OS": { "Distributor": "RedHatEnterpriseServer", "Release": "6.4", "Bit": 64 } }
 */
-if ( typeof(USERNAME) == "undefined" ) {}
-if ( typeof(PASSWORD) == "undefined" ) {}
-if ( typeof(HOSTNAME) == "undefined" ) {}
-if ( typeof(IP) == "undefined" ) {}
-if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
 
-var objRet = new Object() ;
-objRet.HostName   = null ;
- 
-objRet.OS         = null ;
-objRet.CPU        = null ;
-objRet.Memory     = null ;
-objRet.Disk       = null ;
-objRet.Net        = null ;
-objRet.Port       = null ;
-objRet.Service    = null ;
-objRet.OM         = null ;
-objRet.Safety     = null ;
+var RET_JSON = new Object() ;
 
-objRet.HostName   = null ;
-objRet.Rc         = 0 ;
-objRet.detail     = "" ;
-
+RET_JSON[IP]         = "" ;
+RET_JSON[HostName]   = "" ; 
+RET_JSON[OS]         = "" ;
+RET_JSON[OM]         = "" ;
+RET_JSON[CPU]        = "" ;
+RET_JSON[Memory]     = "" ;
+RET_JSON[Disk]       = "" ;
+RET_JSON[Net]        = "" ;
+RET_JSON[Port]       = "" ;
+RET_JSON[Service]    = "" ;
+RET_JSON[Safety]     = "" ;
 
 // os info
 function getOSInfo()
 {
-   var osInfo = eval( '(' + System.getReleaseInfo() + ')' ) ;
-   objRet.OS = osInfo ;
+   var obj             =  eval( '(' + System.getReleaseInfo() + ')' ) ;
+   var osInfo          = new OSInfo() ;
+   osInfo[Distributor] = obj[Distributor] ;
+   osInfo[Release]     = obj[Release] ;
+   osInfo[Bit]         = obj[Bit] ;
+   RET_JSON[OS]        = osInfo ;
 }
 
-// cpu
-function getCPUInfo()
+// om status and version
+function getOMInfo()
 {
-   var cpuInfo = eval( '(' + System.getCpuInfo() + ')' ) ;
-   objRet.CPU = cpuInfo ;
+   var omInfo = new OMInfo() ;
+   try
+   {
+      var obj = Oma.getOmaInstallInfo() ;
+      // when has installed
+//      omInfo[HasInstalled] = true ;
+
+      var info2 =  extractOMInfo( eval( '(' + obj + ')' ) ) ;
+      omInfo[Version] = info2[Version] ;
+      RET_JSON[OM] = omInfo ;
+   }
+   catch ( e )
+   {
+      // when has not installed
+      if ( SDB_FNE == e )
+      {
+//         omInfo[HasInstalled] = false ;
+         omInfo[Version] = "" ;
+         RET_JSON[OM] = omInfo ;
+      }
+      else
+      {
+         setLastErrMsg( "Failed to get OM info" ) ;
+         throw e ;
+      }
+   }
 }
 
 // memory
 function getMemInfo()
 {
-   var memInfo = eval( '(' + System.getMemInfo() + ')' ) ;
-   objRet.Memory = memInfo ;
+   var obj          = eval( '(' + System.getMemInfo() + ')' ) ;
+   var memInfo      = new MemoryInfo() ;
+   // TODO: model is not offer
+   memInfo[Model]   = "" ;
+   memInfo[Size]    = obj[Size] ;
+   memInfo[Free]    = obj[Free] ;
+   RET_JSON[Memory] = memInfo ;
 }
 
 // disk
 function getDiskInfo()
 {
-   var diskInfo = eval( '(' + System.getDiskInfo() + ')' ) ;
-   objRet.Disk = diskInfo ;
+   var objs      = eval( '(' + System.getDiskInfo() + ')' ) ;
+   var arr       = objs[Disks] ;
+   var diskInfos = [] ;
+   for ( var i = 0; i < arr.length; i++ )
+   {
+      var obj           = arr[i] ;
+      var diskInfo      = new DiskInfo() ;
+      diskInfo[Name]    = obj[Filesystem] ;
+      diskInfo[Mount]   = obj[Mount] ;
+      diskInfo[Size]    = obj[Size] ;
+      diskInfo[Free]    = obj[Size] - obj[Used] ;
+      diskInfo[IsLocal] = obj[IsLocal] ;
+      diskInfos.push( diskInfo ) ;
+   }
+   RET_JSON[Disk] = diskInfos ;
+}
+
+// cpu
+function getCPUInfo()
+{
+   var objs     = eval( '(' + System.getCpuInfo() + ')' ) ;
+   var arr      = objs[Cpus] ;
+   var cpuInfos = [] ;
+   for ( var i = 0; i < arr.length; i++ )
+   {
+      var obj        = arr[i] ;
+      var cpuInfo    = new CPUInfo() ;
+      // TODO: not offer ID and Model
+      cpuInfo[ID]    = "" ;
+      cpuInfo[Model] = "" ;
+      cpuInfo[Core]  = obj[Core] ;
+      cpuInfo[Freq]  = obj[Freq] ;
+      cpuInfos.push( cpuInfo ) ;
+   }
+   RET_JSON[CPU] = cpuInfos ;
 }
 
 // net card
 function getNetCardInfo()
 {
-   var netcardInfo = eval( '(' + System.getNetcardInfo() + ')' ) ;
-   objRet.Net = netcardInfo ;
+   var objs         = eval( '(' + System.getNetcardInfo() + ')' ) ;
+   var arr          = objs[Netcards] ;
+   var netcardInfos = [] ;
+   for ( var i = 0; i < arr.length; i++ )
+   {
+      var obj                = arr[i] ;
+      var netcardInfo        = new NetInfo() ;
+      netcardInfo[Name]      = obj[Name] ;
+      // TODO: not offer Model and bandwidth 
+      netcardInfo[Model]     = "" ;
+      netcardInfo[Bandwidth] = "" ;
+      netcardInfo[IP]        = obj[Ip] ;
+      netcardInfos.push( netcardInfo ) ;
+   }
+   RET_JSON[Net] = netcardInfos ;
 }
 
 // port status 
 function getPortInfo()
 {
-   objRet.Port       = eval( '(' + '{}' + ')' ) ;
+   // TODO: no any plan yet
+   var portInfos = [] ;
+   portInfos.push( new PortInfo() ) ;
+   RET_JSON[Port] = portInfos ;
 }
 
 // service
 function getServiceInfo()
 {
-   objRet.Service    = eval( '(' + '{}' + ')' ) ;
-}
-// om status and version
-function getOMInfo()
-{
-   objRet.OM         = eval( '(' + '{}' + ')' ) ;
+   // TODO: no any plan yet
+   var svcInfos = [] ;
+   svcInfos.push( new ServiceInfo() ) ;
+   RET_JSON[Service] = svcInfos ;
 }
 
 // safety
 function getSafetyInfo()
 {
-   var safetyInfo = eval( '(' + System.getIpTablesInfo() + ')' ) ;
-   objRet.Safety = safetyInfo ;
+   var obj =  eval( '(' + System.getIpTablesInfo() + ')' ) ;
+   var safetyInfo = new SafetyInfo() ;
+   // TODO: System.getIpTablesInfo does not offer any useful info
+   RET_JSON[Safety] = safetyInfo ;
+}
+
+// extract OM version, release, and build time, when it has been installed
+function extractOMInfo ( obj )
+{
+   var retObj = new OMInfo2() ;
+   var osInfo = System.type() ;
+   if ( OMA_LINUX == osInfo )
+   {
+      // get version
+      var path = obj[INSTALL_DIR] ;
+      var pos = path.lastIndexOf( '/' ) ;
+      if ( pos != path.length - 1 )
+      {
+         path += '/' + OMA_PROG_BIN_SDBCM_L ;
+      }
+      else
+      {
+         path += OMA_PROG_BIN_SDBCM_L ;
+      }
+      // TODO: add try&catch
+      var cmd = new Cmd() ;
+      var str = cmd.run( path + " --version " ) ;
+      var beg = str.indexOf( OMA_MISC_OM_VERSION ) ;
+      var end = str.indexOf( '\n' ) ;
+      var len = OMA_MISC_OM_VERSION.length ;
+      retObj[Version] = str.substring( beg + len, end ) ;
+      // get release
+      beg = str.indexOf( OMA_MISC_OM_RELEASE ) ;
+      len = OMA_MISC_OM_RELEASE.length ;
+      var subStr = str.substring( beg + len, str.length ) ;
+      retObj[Release] = parseInt( subStr ) ;
+      // get Time
+      beg = subStr.indexOf( '\n' ) + 1 ;
+      end = subStr.indexOf( '(' ) ;
+      retObj[Time] = subStr.substring( beg, end ) ;
+   }
+   else
+   {
+   }
+   return retObj ;
 }
 
 function main()
 {
-   try
-   {
-      // check argument
-      if ( typeof(USERNAME) == "undefined" ||
-           typeof(PASSWORD) == "undefined" ||
-           typeof(IP) == "undefined" ||
-           typeof(HOSTNAME) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "not specified username, password or ip" ;
-         return objRet ;
-      }
-      objRet.HostName   = HOSTNAME ;
+   RET_JSON[IP] = BUS_JSON[IP] ;
+   RET_JSON[HostName] = BUS_JSON[HostName] ; 
+   // get local host info
+   getOSInfo() ;
+   getOMInfo() ;
+   getCPUInfo() ;
+   getMemInfo() ;
+   getDiskInfo() ;
+   getNetCardInfo() ;
+   getPortInfo() ;
+   getServiceInfo() ;
+   getSafetyInfo() ;
 
-      // get local host info
-      getOSInfo() ;
-      getCPUInfo() ;
-      getMemInfo() ;
-      getDiskInfo() ;
-      getNetCardInfo() ;
-      getSafetyInfo() ;
-      getPortInfo() ;
-      getServiceInfo() ;
-      getOMInfo() ;
-
-      return objRet ;
-   }
-   catch ( e )
-   {
-      if ( typeof(e) != "number" )
-      {
-         objRet.Rc = -10 ;
-         objRet.detail = "system error" ;
-      }
-      else
-      {
-         var errMsg = "" ;
-         objRet.Rc = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
-      }
-   }
-   return objRet ;
+   return RET_JSON ;
 }
 
 // execute

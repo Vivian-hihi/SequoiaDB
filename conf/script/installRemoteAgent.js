@@ -16,73 +16,68 @@
 
 *******************************************************************************/
 /*
-@description: install agent process in remote mechine
+@description: install SequoiaDB Cluster Manager(sdbcm) in remote mechine
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the info for installing remote sdbcm: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
+   SYS_JSON: the system info: { "ProgPath": "/home/users/tanzhaobo/sequoiadb/bin/" }
+   ENV_JSON:
+@return
+   RET_JSON: the install result: { "HostInfo": [ { "Rc": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.165" }, { "Rc": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.166" } ] }
 */
 
-if ( typeof(USERNAME) == "undefined" ) {}
-if ( typeof(PASSWORD) == "undefined" ) {}
-if ( typeof(IP) == "undefined" ) {}
-if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
-if ( typeof(LOCAL_PROG_PATH) == "undefined" ) {}
-if ( typeof(LOCAL_SPT_PATH) == "undefined" ) {}
-if ( typeof(LOCAL_CM_CONF) == "undefined" ) {}
+// TODO: remove this debug info
 
-// linux
-var TOPDIR_L               = "/tmp/omatmp/" ;
-var PROGDIR_L              = "/tmp/omatmp/bin/" ;
-var CONFDIR_L              = "/tmp/omatmp/conf/" ;
-var LOGDIR_L               = "/tmp/omatmp/conf/log/" ;
-var SPTDIR_L               = "/tmp/omatmp/conf/script/" ;
+//var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] };
 
-var SDBCM_L                = "sdbcm" ;
-var SDBCMD_L               = "sdbcmd" ;
-var SDBCMART_L             = "sdbcmart" ;
-var SDBCMTOP_L             = "sdbcmtop" ;
+//var BUS_JSON = { "HostInfo": [  { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] };
 
-// windows
-var TOPDIR_W               = "" ;
-var PROGDIR_W              = "" ;
-var CONFDIR_W              = "" ;
-var LOGDIR_W               = "" ;
-var SPTDIR_W               = "" ;
+//var SYS_JSON = { "ProgPath": "/home/users/tanzhaobo/sequoiadb/bin/" } ;
 
-var SDBCM_W                = "sdbcm.exe" ;
-var SDBCMD_W               = "sdbcmd.exe" ;
-var SDBCMART_W             = "sdbcmart.exe" ;
-var SDBCMTOP_W             = "sdbcmtop.exe" ;
+var LOCAL_PROG_PATH = SYS_JSON[ProgPath] ;
+var LOCAL_CONF_PATH = Oma.getOmaConfigFile() ;
+var LOCAL_SPT_PATH  = getScriptPath( LOCAL_CONF_PATH ) ;
 
-var SDBCMCONF              = "sdbcm.conf" ;
-var FILE_CHECK_HOST        = "checkHost.js" ;
-
-var objRet = new Object() ;
-objRet.Rc              = 0 ;
-objRet.detail          = "" ;
-objRet.IsNeedUninstall = true ;
-
+/* *****************************************************************************
+@discretion: create temp directory in remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
 function createTmpDir( ssh, osInfo )
 {
    var cmd = "" ;
    if ( "LINUX" == osInfo )
    {
      // rm /tmp/omatmp
-     cmd = "rm " + TOPDIR_L + " -rf " ;
+     cmd = "rm " + OMA_PATH_TEMP_OMA_DIR_L + " -rf " ;
      ssh.exec( cmd ) ;
      // mkdir /tmp/omatmp
-     cmd = "mkdir " + TOPDIR_L ;
+     cmd = "mkdir " + OMA_PATH_TEMP_OMA_DIR_L ;
      ssh.exec( cmd ) ;
      // mkdir /tmp/omatmp/bin
-     cmd = "mkdir " + PROGDIR_L ;
+     cmd = "mkdir " + OMA_PATH_TEMP_BIN_DIR_L ;
      ssh.exec( cmd ) ;
      // mkdir /tmp/omatmp/conf
-     cmd = "mkdir " + CONFDIR_L ;
+     cmd = "mkdir " + OMA_PATH_TEMP_CONF_DIR_L ;
      ssh.exec( cmd ) ;
      // mkdir /tmp/omatmp/conf/log
-     cmd = "mkdir " + LOGDIR_L ;
+     cmd = "mkdir " + OMA_PATH_TEMP_LOG_DIR_L ;
      ssh.exec( cmd ) ;
      // mkdir /tmp/omatmp/conf/script
-     cmd = "mkdir " + SPTDIR_L ;
+     cmd = "mkdir " + OMA_PATH_TEMP_SPT_DIR_L ;
+     ssh.exec( cmd ) ;
+     // mkdir /tmp/omatmp/temp
+     cmd = "mkdir " + OMA_PATH_TEMP_TEMP_DIR_L ;
+     ssh.exec( cmd ) ;
+     //  mkdir /tmp/omatmp/data/vCoord
+     cmd = "mkdir -p " + OMA_PATH_VCOORD_PATH_L ;
+     ssh.exec( cmd ) ;
+     // change mode
+     cmd = "chmod -R 777 " + OMA_PATH_TEMP_OMA_DIR_L ;
      ssh.exec( cmd ) ;
    }
    else
@@ -92,35 +87,84 @@ function createTmpDir( ssh, osInfo )
    }
 }
 
-function pushPacket( ssh, osInfo )
+/* *****************************************************************************
+@discretion: push sdblist pachet and some js script to remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
+function pushPacket1( ssh, osInfo )
+{
+   var src = "" ;
+   var dest = "" ;
+   if ( "LINUX" == osInfo )
+   {
+      // sdblist
+      src = LOCAL_PROG_PATH + OMA_PROG_SDBLIST_L ;
+      dest = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBLIST_L ;
+      ssh.push( src, dest ) ;
+      // sdbcmtop
+      src = LOCAL_PROG_PATH + OMA_PROG_SDBCMTOP_L ;
+      dest = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBCMTOP_L ;
+      ssh.push( src, dest ) ;
+      // script error.js
+      src = LOCAL_SPT_PATH + OMA_FILE_ERROR ;
+      dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_ERROR ;
+      ssh.push( src, dest ) ;
+      // script common.js
+      src = LOCAL_SPT_PATH + OMA_FILE_COMMON ;
+      dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_COMMON ;
+      ssh.push( src, dest ) ;
+      // script define.js
+      src = LOCAL_SPT_PATH + OMA_FILE_DEFINE ;
+      dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_DEFINE ;
+      ssh.push( src, dest ) ;
+      // script func.js
+      src = LOCAL_SPT_PATH + OMA_FILE_FUNC ;
+      dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_FUNC ;
+      ssh.push( src, dest ) ;
+      // script checkHostItem.js
+      src = LOCAL_SPT_PATH + OMA_FILE_CHECK_HOST_ITEM ;
+      dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_CHECK_HOST_ITEM ;
+      ssh.push( src, dest ) ;
+      // script checkHost.js
+      src = LOCAL_SPT_PATH + OMA_FILE_CHECK_HOST ;
+      dest = OMA_PATH_TEMP_SPT_DIR_L + OMA_FILE_CHECK_HOST ;
+      ssh.push( src, dest ) ;
+   }
+   else
+   {
+      // TODO:
+   }
+}
+
+/* *****************************************************************************
+@discretion: push other pachet to remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
+function pushPacket2( ssh, osInfo )
 {
    var src = "" ;
    var dest = "" ;
    if ( "LINUX" == osInfo )
    {
       // sdbcm
-      src = LOCAL_PROG_PATH + SDBCM_L;
-      dest = PROGDIR_L + SDBCM_L ;
+      src = LOCAL_PROG_PATH + OMA_PROG_SDBCM_L;
+      dest = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBCM_L ;
       ssh.push( src, dest ) ;
       // sdbcmd
-      src = LOCAL_PROG_PATH + SDBCMD_L;
-      dest = PROGDIR_L + SDBCMD_L ;
+      src = LOCAL_PROG_PATH + OMA_PROG_SDBCMD_L;
+      dest = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBCMD_L ;
       ssh.push( src, dest ) ;
       // sdbcmart
-      src = LOCAL_PROG_PATH + SDBCMART_L ;
-      dest = PROGDIR_L + SDBCMART_L ;
-      ssh.push( src, dest ) ;
-      // sdbcmtop
-      src = LOCAL_PROG_PATH + SDBCMTOP_L ;
-      dest = PROGDIR_L + SDBCMTOP_L ;
-      ssh.push( src, dest ) ;
-      // conf file
-      src = LOCAL_CM_CONF ;
-      dest = CONFDIR_L + SDBCMCONF ;
-      ssh.push( src, dest ) ;
-      // script checkHost.js
-      src = LOCAL_SPT_PATH + FILE_CHECK_HOST ;
-      dest = SPTDIR_L + FILE_CHECK_HOST ;
+      src = LOCAL_PROG_PATH + OMA_PROG_SDBCMART_L ;
+      dest = OMA_PATH_TEMP_BIN_DIR_L + OMA_PROG_SDBCMART_L ;
       ssh.push( src, dest ) ;
    }
    else
@@ -130,183 +174,252 @@ function pushPacket( ssh, osInfo )
    }
 }
 
-function hasCMInstalledInLocal( osInfo )
+/* *****************************************************************************
+@discretion: modify a sdbcm config file then send it to remote host for
+             installing a temp sdbcm
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+   port[number]: a port for remote sdbcm program
+@return void
+***************************************************************************** */
+function modifyAndSendConfigFile( ssh, osInfo, port )
 {
-   var isLocalHost = false ;
-   var hostname = null ;
-   var hosts = null ;
-   var name = null ;
-   var ip = null ; 
-   var len = 0 ;
-   var i = 0 ;
-
-   // get localhost name
-   hostname = Cmd.run("hostname") ;
-   if ( null != hostname )
+   if ( OMA_LINUX == osInfo )
    {
-      if ( "LINUX" == osInfo )
+      // cp sdbcm config file to /tmp and then modify it
+      var src = Oma.getOmaConfigFile() ;
+      var dst = OMA_PATH_TEMP_TEMP_DIR_L + OMA_FILE_SDBCM_CONF ;
+      var cmd = new Cmd() ;
+      var ret = SDB_OK ;
+      try
       {
-         i = hostname.indexOf( "\n" ) ;
+         // copy a config file to local tmp directory then modify it
+         cmd.run( "mkdir -p " + OMA_PATH_TEMP_TEMP_DIR_L ) ;
+      }
+      catch ( e )
+      {
+         ret = cmd.getLastRet() ;
+         if (  ret > 0 )
+         {
+            setLastErrMsg( "Failed to create: " + OMA_PATH_TEMP_TEMP_DIR_L ) ;
+            setLastError( SDB_SYS ) ;
+            throw SDB_SYS ;
+         }
+      }
+      try
+      {
+         cmd.run( "cp " + src + " " + dst ) ;
+      }
+      catch ( e )
+      {
+         ret = cmd.getLastRet() ;
+         if ( ret > 0 )
+         {
+            setLastErrMsg( "Failed to copy " + src + " to " + dst ) ;
+            setLastError( SDB_SYS ) ;
+            throw SDB_SYS ;
+         }
+      }
+      // modify config file
+      var obj = eval( '(' + Oma.getOmaConfigs( dst ) + ')' ) ;
+      obj[DefaultPort] = port + "" ;
+      Oma.setOmaConfigs( obj, dst ) ;
+      // send the config file to remote host
+      src = dst
+      dst = OMA_PATH_TEMP_CONF_DIR_L + OMA_FILE_SDBCM_CONF ;
+      ssh.push( src, dst ) ;
+   }
+   else
+   {
+      // TODO:
+   }
+}
+
+/* *****************************************************************************
+@discretion: start sdbcm program in remote or local host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
+function startRemoteSdbcm( ssh, osInfo )
+{
+   var cmd = "" ;
+   if ( "LINUX" == osInfo )
+   {
+      cmd += OMA_PATH_TEMP_BIN_DIR_L ;
+      cmd += OMA_PROG_SDBCMART_L ;
+      cmd += " " + OMA_OPTION_SDBCMART_1 ;
+      try
+      {
+         ssh.exec( cmd ) ;
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to start remote sdbcm" ) ;
+         throw SDB_SYS ;
+      }
+      // wait util sdbcm start in remote
+      var times = 0 ;
+      for ( ; times < OMA_TRY_TIMES; times++ )
+      {
+         var isRunning = isSdbcmRunningInRemote ( ssh, osInfo ) ;
+         if ( isRunning )
+         {
+            break ;
+         }
+         else
+         {
+            sleep( OMA_SLEEP_TIME ) ;
+         }
+      }
+      if ( OMA_TRY_TIMES <= times )
+      {
+         setLastErrMsg( "Time out, remote sdbcm does not start sucessful" ) ;
+         throw SDB_SYS ;
+      }
+   }
+   else
+   {
+      // TODO:
+   }
+}
+
+/* *****************************************************************************
+@discretion: clean up something
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
+function cleanup( ssh, osInfo )
+{
+   var cmd = new Cmd() ;
+   try
+   {
+      if ( OMA_LINUX == osInfo )
+      {
+         cmd.run( " rm -rf " + OMA_PATH_TEMP_OMA_DIR_L ) ;
       }
       else
       {
-         i = hostname.indexOf( "\n\r" ) ;
-      }
-      if ( -1 != i )
-      {
-         hostname = hostname.substring(0, i);
+         // TODO:
       }
    }
-
-   // check whether it's in local host env 
-   hosts = eval( '(' + System.getHostsMap() + ')' ) ;
-   if ( null != hosts )
+   catch ( e )
    {
-      len = hosts["Hosts"].length ;
-      for ( i = 0; i < len; i++ )
-      {
-         ip = hosts["Hosts"][i]["Ip"] ;
-         if ( IP == ip )
-         {
-            name = hosts["Hosts"][i]["HostName"] ;
-            if ( hostname == name )
-            {
-               isLocalHost = true ;
-               break ;
-            }
-         }
-      }
    }
-   return isLocalHost ;
 }
 
-// check whether sdbcm is running, if so, not need to install
-function cmProgHasInstalled( ssh, osInfo )
+/* *****************************************************************************
+@discretion: intall sdbcm program in remote(local) host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: the ssh object
+   osInfo[string]: the system type
+   ip[string]: the ip address
+@note
+   either ip or hostname must be specified
+@return
+   retObj[string]: the result of install
+***************************************************************************** */
+function installRemoteAgent( ssh, osInfo, ip )
 {
-   var hasInstalled = false ;
-   // case 1: check whether sdbcm has been installed
-   // in local machine
-   var flag = hasCMInstalledInLocal( osInfo ) ;
+   var retObj              = new Object() ;
+   retObj[Rc]              = SDB_OK ;
+   retObj[Detail]          = "" ;
+   retObj[IsNeedUninstall] = false ;
+   retObj[AgentPort]       = OMA_PORT_INVALID + "";
+   retObj[IP]              = ip ;
+
+   // test whether sdbcm has been installed in local
+   var flag = isInLocalHost( ssh ) ;
    if ( flag )
    {
-      hasInstalled = true ;
-      return hasInstalled ;
+      retObj[AgentPort] = Oma.getAOmaSvcName("localhost") ;
+      return retObj ;
    }
-   // TODO: tanzhaobo
-   // case 2: check whether sdbcm has been installed
-   // in remote machine
-
-   return hasInstalled ;
-}
-
-function startCMProg( ssh, osInfo )
-{
-   var cmd = "" ;
-   if ( "LINUX" == osInfo )
+   // build directory in remote mechine
+   createTmpDir( ssh, osInfo ) ;
+   // push sdblist packet to remote
+   pushPacket1( ssh, osInfo ) ;
+   // push other packet to remote
+   pushPacket2( ssh, osInfo ) ; 
+   // check wether sdbcm is running in remote
+   flag = isSdbcmRunningInRemote( ssh, osInfo ) ;
+   if ( flag )
    {
-      cmd = PROGDIR_L + SDBCMART_L ;
-      ssh.exec( cmd ) ;
+      retObj[AgentPort] = "" + getRemoteSdbcmPort( ssh, osInfo ) ;
+      return retObj ;
    }
-   else
+/*
+   // push other packet to remote
+   pushPacket2( ssh, osInfo ) ; 
+*/
+   // get a port in remote machine for installing sdbcm in remote machine
+   var port = getAUsablePortFromRemote( ssh, osInfo ) ;
+   if ( OMA_PORT_INVALID == port )
    {
-      cmd = PROGDIR_W + SDBCMART_W ;
-      ssh.exec( cmd ) ;
+      setLastErrMsg( "Failed to get a usable port in remote host" ) ;
+      setLastError( SDB_SYS ) ;
+      throw SDB_SYS ;
    }
-}
+   // modify sdbcm config file and push in to remote mechine
+   modifyAndSendConfigFile( ssh, osInfo, port ) ;
+   // start the sdbcm program in remote
+   startRemoteSdbcm( ssh, osInfo ) ;
+   // wait until sdbcm start in remote and clean up
+   cleanup( ssh, osInfo ) ;
 
-function stopCMProg( ssh, osInfo )
-{
-   var cmd = "" ;
-   if ( "LINUX" == osInfo )
-   {
-      cmd = PROGDIR_L + SDBCMTOP_L ;
-      ssh.exec( cmd ) ;
-   }
-   else
-   {
-      cmd = PROGDIR_W + SDBCMTOP_W ;
-      ssh.exec( cmd ) ;
-   }
-
+   retObj[AgentPort] = port + "" ;
+   retObj[IsNeedUninstall] = true ;
+   return retObj ;
 }
 
 function main()
 {
-   var ssh    = null ;
-   var osInfo = null ;
-   try
+   var infoArr = BUS_JSON[HostInfo] ;
+   var arrLen = infoArr.length ;
+   if ( arrLen == 0 )
    {
-      // check argument
-      if ( typeof(USERNAME) == "undefined"      ||
-           typeof(PASSWORD) == "undefined"      ||
-           typeof(IP) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "not specified username, password or ip" ;
-         return objRet ;
-      }
-      if ( typeof(LOCAL_PROG_PATH) == "undefined" ||
-           typeof(LOCAL_SPT_PATH) == "undefined"  ||
-           typeof(LOCAL_CM_CONF) == "undefined" )
-      {
-         objRet.Rc = -10 ;
-         objRet.detail = "not specified sdbcm, js script or sdbcm config file" ;
-         return objRet ;
-      }
-
-      // get os info
-      osInfo = System.type() ;
-
-      // ssh
-      ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-
-      // test whether sdbcm has been installed or not      
-      var flag = cmProgHasInstalled( ssh, osInfo ) ;
-      if ( flag )
-      {
-         objRet.IsNeedUninstall = false ;
-         return objRet ;
-      }
-
-      // build directory in remote mechine
-      createTmpDir( ssh, osInfo ) ;
-
-      // push packet
-      pushPacket( ssh, osInfo ) ;
-
-      // TODO: tanzhaobo
-      // it's better for us to check it than to stop it
-      // stop the existing sdbcm program anyway
-      stopCMProg( ssh, osInfo ) ;
-
-      // start the omagent program
-      startCMProg( ssh, osInfo ) ;
-
-      sleep( 3000 ) ;
-      // return the result
-      return objRet ;
+      setLastErrMsg( "Not specified any host to install" ) ;
+      throw SDB_INVALIDARG ;
    }
-   catch ( e )
+   // get os infomation
+   var osInfo = System.type() ;
+   for( var i = 0; i < arrLen; i++ )
    {
-      if ( typeof(e) != "number" )
+      var ssh      = null ;
+      var obj      = infoArr[i] ;
+      var user     = obj[User] ;
+      var passwd   = obj[Passwd] ;
+      var ip       = obj[IP] ;
+      var ret      = new installTmpCMResult() ;
+      ret[IP]      = ip ;
+      try
       {
-         objRet.Rc = -10 ;
-         objRet.detail = "system error" ;
+         ssh = new Ssh( ip, user, passwd ) ;
+         // install
+         ret = installRemoteAgent( ssh, osInfo, ip ) ;
       }
-      else
+      catch ( e )
       {
-         var errMsg = "" ;
-         objRet.Rc = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
+         ret[Rc]     = GETLASTERROR( e, false ) ;
+         ret[Detail] = GETLASTERRMSG() ;
       }
-      return objRet ;
+      // set return result
+      RET_JSON[Result].push( ret ) ;
+      // clean up something
+      cleanup( ssh, osInfo ) ;
    }
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   return RET_JSON ;
 }
 
 // execute
-   main() ;
+main() ;
 

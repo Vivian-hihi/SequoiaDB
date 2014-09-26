@@ -19,100 +19,151 @@
 @description: uninstall remote sdbcm packet
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the info for unindtall remote host: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] }
+   SYS_JSON:
+   ENV_JSON:
+   OTHER_JSON:
+@return
+   RET_JSON: the uninstall result:  { "HostInfo": [ { "IP": "192.168.20.165", "Rc": 0, "detail": "", "HasUninstall": true }, { "IP": "192.168.20.166", "Rc": 0, "detail": "", "HasUninstall": true } ] }
 */
 
-if ( typeof(USERNAME) == "undefined" ) {}
-if ( typeof(PASSWORD) == "undefined" ) {}
-if ( typeof(IP) == "undefined" ) {}
-if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
+// var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
 
-// linux
-var TOPDIR_L               = "/tmp/omatmp/"
-var PROGDIR_L              = "/tmp/omatmp/bin/" ;
-var SDBCMTOP_L             = "sdbcmtop" ;
-//windows
-var PROGDIR_W              = "" ;
-var TOPDIR_W               = ""
-var SDBCMTOP_W             = "sdbcmtop.exe" ;
-
-var objRet = new Object() ;
-objRet.Rc = 0 ;
-objRet.detail = "" ;
-objRet.HasUninstall = false ;
-
-function uninstallRemoteSdbcmPacket( ssh, osInfo )
+/* *****************************************************************************
+@discretion: remove the temp directory and files in remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
+function uninstallRemoteTmpPacket( ssh, osInfo )
 {
    var cmd = "" ;
-   if ( osInfo == "LINUX" )
+   if ( OMA_LINUX == osInfo )
    {
-      cmd = "rm -rf " + TOPDIR_L ;
-      ssh.exec( cmd ) ;
+      cmd = "rm -rf " + OMA_PATH_TEMP_OMA_DIR_L ;
+      try
+      {
+         ssh.exec( cmd ) ;
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to remove the temperary directores" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
    }
    else
    {
-      cmd = "DEL /Q " + TOPDIR_W
-      ssh.exec( cmd ) ;
+      // TODO:
    }
-   objRet.HasUninstall = true ;
 }
 
+/* *****************************************************************************
+@discretion: stop the temporary sdbcm installed in remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
 function stopRemoteSdbcmProgram( ssh, osInfo )
 {
    var cmd = "" ;
-   if ( osInfo == "LINUX" )
+
+   if ( OMA_LINUX == osInfo )
    {
-      cmd = PROGDIR_L + SDBCMTOP_L ;
-      ssh.exec( cmd ) ;
+      cmd += OMA_PATH_TEMP_BIN_DIR_L ;
+      cmd += OMA_PROG_SDBCMTOP_L ;
+      cmd += " " + OMA_OPTION_SDBCMART_1 ;
+      // TODO: add try&catch
+      try
+      {
+         ssh.exec( cmd ) ;
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to stop sdbcm in remote" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
+      // check wether sdb is stop in remote
+      var times = 0 ;
+      for ( ; times < OMA_TRY_TIMES; times++ )
+      {
+         var isRunning = isSdbcmRunningInRemote ( ssh, osInfo ) ;
+         if ( isRunning )
+         {
+            sleep( OMA_SLEEP_TIME ) ;
+         }
+         else
+         {
+            break ;
+         }
+      }
+      if ( OMA_TRY_TIMES <= times )
+      {
+         setLastErrMsg( "Failed to stop sdbcm in remote" ) ;
+         throw e ;
+      }
    }
    else
    {
       // TODO: tanzhaobo
-   } 
+   }
 }
 
 function main()
 {
-   try
+   var infoArr = BUS_JSON[HostInfo] ;
+   var arrLen = infoArr.length ;
+   if ( arrLen == 0 )
    {
-      // check argument
-      if ( typeof(USERNAME) == "undefined" ||
-           typeof(PASSWORD) == "undefined" ||
-           typeof(IP) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "not specified username, password or ip" ;
-         return objRet ;
-      }
-      // ssh
-      var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-      // get os infomation
-      var osInfo = System.type() ;
-      // stop remote sdbcm program
-      stopRemoteSdbcmProgram( ssh, osInfo ) ;
-      // remove the packet in remote machine
-      uninstallRemoteSdbcmPacket( ssh, osInfo ) ;
-      // return the result
-      return objRet ;
+      setLastErrMsg( "Not specified any hosts to uninstall" ) ;
+      throw SDB_INVALIDARG ;
    }
-   catch ( e )
+   // get os infomation
+   var osInfo = System.type() ;
+   for ( var i = 0; i < arrLen; i++ )
    {
-      if ( typeof(e) != "number" )
+      var ssh        = null ;
+      var obj        = infoArr[i]
+      var ip         = obj[IP] ;
+      var user       = obj[User] ;
+      var passwd     = obj[Passwd] ;
+      var retObj     = new uninstallTmpCMResult() ;
+      retObj[IP]     = ip ;
+      try
       {
-         objRet.Rc = -10 ;
-         objRet.detail = "system error" ;
-      }
-      else
-      {
-         var errMsg = "" ;
-         objRet.Rc = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
+         // ssh
+         var ssh = new Ssh( ip, user, passwd ) ;
+         // check wether it is in localhost,
+         // we would not stop local sdbcm
+         var flag = isInLocalHost( ssh ) ;
+         if ( flag )
          {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
+            retObj[IsOMStop] = false ;
+            RET_JSON[Result].push( retObj ) ;
+            continue ;
          }
+         // stop remote sdbcm program
+         stopRemoteSdbcmProgram( ssh, osInfo ) ;
+         retObj[IsOMStop] = true ;
+         // remove the packet in remote machine
+         uninstallRemoteTmpPacket( ssh, osInfo ) ;
       }
-      return objRet ;
+      catch ( e )
+      {
+         retObj[Rc] = GETLASTERROR( e, true ) ;
+         retObj[Detail] = GETLASTERRMSG() ;
+      }
+      RET_JSON[Result].push( retObj ) ;
    }
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   // return the result
+   return RET_JSON ;
 }
 
 // execute

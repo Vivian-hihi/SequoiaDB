@@ -19,48 +19,45 @@
 @description: remove the installation packet from the host to add
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the format is: {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]}
+   SYS_JSON: {}
+   ENV_JSON: {}
+   OTHER_JSON: {}
+@return
+   RET_JSON: the format is: {"HostInfo":[{"Rc":0,"detail":"","IP":"192.168.20.42","HasUninstall":true},{"Rc":0,"detail":"","IP":"192.168.20.165","HasUninstall":true}]}
 */
-if ( typeof(IP) == "undefined" ) {}
-if ( typeof(USERNAME) == "undefined" ) {}
-if ( typeof(PASSWORD) == "undefined" ) {}
-if ( typeof(INSTALL_PATH) == "undefined" ) {}
 
-// linux
-var UNISTALL_L = "uninstall" ;
-// windows
-var UNISTALL_W = "uninstall.exe" ;
 
-var objRet = new Object() ;
-objRet.Rc         = 0 ;
-objRet.detail     = "" ;
+//var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.42", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" }, { "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" } ] } ;
 
-function checkAndModifyThePath( osInfo, path )
-{
-   var s = "" ;
-   var i = -1 ;
-   if ( "LINUX" == osInfo )
-   {
-      s = "/" ; 
-   }
-   else
-   {
-      s = "\\" ;
-   }
-   i = path.indexOf( s ) ;
-   if ( (i != -1) && (i != path.length) )
-      path += s ; 
-   return path ;
-}
-
-function uninstallPacket ( ssh, osInfo )
+/* *****************************************************************************
+@discretion: uninstall db packet in remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: ssh object
+   osInfo[string]: os type
+   path[string]: the path db installed in
+@return void
+***************************************************************************** */
+function uninstallDBPacket ( ssh, osInfo, path )
 {
    var cmd = "" ;
-   var path = checkAndModifyThePath( osInfo, INSTALL_PATH ) ;
-   if ( "LINUX" == osInfo )
+   var path = adaptPath( osInfo, path ) ;
+   if ( OMA_LINUX == osInfo )
    {
-      cmd = path + UNISTALL_L ;
-      ssh.exec( "chmod a+x " + cmd ) ;
-      ssh.exec( cmd + " --mode unattended " ) ;
+      cmd = path + OMA_PROG_UNINSTALL_L ;
+      try
+      {
+         ssh.exec( "chmod a+x " + cmd ) ;
+         ssh.exec( cmd + " --mode unattended " ) ;
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to uninstall db packet in remote" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
    }
    else
    {
@@ -71,51 +68,43 @@ function uninstallPacket ( ssh, osInfo )
 
 function main()
 {
-   try
+   var infoArr = BUS_JSON[HostInfo] ;
+   var arrLen = infoArr.length ;
+   if ( arrLen == 0 )
    {
-      // check argument
-      if ( typeof(USERNAME) == "undefined" ||
-           typeof(PASSWORD) == "undefined" ||
-           typeof(IP) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "not specified username, password or ip" ;
-         return objRet ;
-      }
-      if ( typeof(INSTALL_PATH) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "not specified installation path in remote host" ;
-         return objRet ;
-      }
-      // get os info
-      var osInfo = System.type() ;
-      // ssh
-      var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-      // uninstall business packet from remote host
-      uninstallPacket( ssh, osInfo ) ;
-      // return the result
-      return objRet ;
+      setLastErrMsg( "Not specified any hosts to uninstall" ) ;
+      throw SDB_INVALIDARG ;
    }
-   catch ( e )
+   // get os infomation
+   var osInfo = System.type() ;
+   for ( var i = 0; i < arrLen; i++ )
    {
-      if ( typeof(e) != "number" )
+      var ssh          = null ;
+      var obj          = infoArr[i]
+      var ip           = obj[IP] ;
+      var user         = obj[User] ;
+      var passwd       = obj[Passwd] ;
+      var installPath  = obj[InstallPath] ; 
+      var retObj       = new addHostRollbackResult() ;
+      retObj[IP]       = ip ;
+      try
       {
-         objRet.Rc = -10 ;
-         objRet.detail = "system error" ;
+         // ssh
+         var ssh = new Ssh( ip, user, passwd ) ;
+         // uninstall business packet from remote host
+         uninstallDBPacket( ssh, osInfo, installPath ) ;
+         retObj[HasUninstall] = true ;
       }
-      else
+      catch ( e )
       {
-         var errMsg = "" ;
-         objRet.Rc = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
+         retObj[Rc] = GETLASTERROR( e, false ) ;
+         retObj[Detail] = GETLASTERRMSG() ;
       }
-      return objRet ;
+      RET_JSON[Result].push( retObj ) ;
    }
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   // return the result
+   return RET_JSON ;
 }
 
 // execute

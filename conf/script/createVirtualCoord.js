@@ -19,100 +19,56 @@
 @description: create virtual coord
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter void
+@return
+   RET_JSON: the format is: { "Port", "10001" }
 */
-if ( typeof(OMA_HOST_NAME) == "undefined" ) {}
-if ( typeof(OMA_SVC_NAME) == "undefined" ) {}
-if ( typeof(V_COORD_SVC_NAME) == "undefined" )
-{
-   V_COORD_SVC_NAME = "10000" ;
-}
-if ( typeof(V_COORD_INSTALL_PATH) == "undefined" )
-{
-   V_COORD_INSTALL_PATH = "/tmp/omatmp/data/vCoord" ;
-}
-if ( typeof(V_COORD_CFG_OPTION) == "undefined" )
-{
-   V_COORD_CFG_OPTION = {} ;
-}
 
-var objRet = new Object() ;
-
-objRet.Rc = 0 ;
-objRet.detail = "" ;
-
-function createVirtualCoord( oma )
-{
-   oma.createCoord( V_COORD_SVC_NAME,
-                    V_COORD_INSTALL_PATH,
-                    V_COORD_CFG_OPTION ) ;
-}
-
-function startVirtualCoord( oma )
-{
-   oma.startNode( V_COORD_SVC_NAME ) ;
-}
+var RET_JSON             = new Object() ;
+//RET_JSON[OmaHostName]    = "" ;
+//RET_JSON[OmaSvcName]     = "" ;
+//RET_JSON[VCoordHostName] = "" ;
+RET_JSON[VCoordSvcName]  = "" ;
 
 function main()
 {
    var oma = null ;
-
    try
    {
-      // check argument
-      if ( typeof(OMA_HOST_NAME) == "undefined" ||
-           typeof(OMA_SVC_NAME) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "not specified host name or service name of omagent" ;
-         return objRet ;
-      }
-
-      // new oma object
-      oma = new Oma( OMA_HOST_NAME, OMA_SVC_NAME ) ;
-print("111111111111\n") ;
+      var osInfo        = System.type() ;
+      var omaHostName   = System.getHostName() ;
+      var omaSvcName    = Oma.getAOmaSvcName( "localhost" ) ;
+      var vCoordSvcName = getAUsablePortFromLocal( osInfo ) + "" ;
+      oma               = new Oma( omaHostName, omaSvcName ) ;
       // create virtual coord
-      createVirtualCoord( oma ) ;
- print("22222222222\n") ;
+      oma.createCoord( vCoordSvcName, OMA_PATH_VCOORD_PATH_L, {} ) ;
       // start virtual coord
-      startVirtualCoord( oma ) ;
-print("3333333333333333\n");
+      oma.startNode( vCoordSvcName ) ;
       // close connection
       oma.close() ;
       oma = null ;
-
-      return objRet ;
+ //     RET_JSON[OmaHostName]    = omaHostName ;
+ //     RET_JSON[OmaSvcName]     = omaSvcName ;
+ //     RET_JSON[VCoordHostName] = omaHostName ;
+      RET_JSON[VCoordSvcName]  = vCoordSvcName ;
    }
    catch ( e )
    {
-print("44444444 e = " + e + "\n") ;
-      if ( null != oma )
+      if ( null != oma && "undefined" != typeof(oma) )
       {
          try
          {
-            oma.removeCoord( OMA_SVC_NAME ) ;
             oma.close() ;
+            oma = null ;
          }
          catch ( e )
          {
          }
       }
-      if ( typeof(e) != "number" )
-      {
-         objRet.Rc = -10 ;
-         objRet.detail = "system error" ;
-      }
-      else
-      {
-         var errMsg = "" ;
-         objRet.Rc = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
-      }
-      return objRet ;
+      throw e ; 
    }
+print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   return RET_JSON ;
 }
 
 // execute

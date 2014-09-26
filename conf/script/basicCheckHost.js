@@ -19,66 +19,87 @@
 @description: check wether localhost can ping and ssh to remote host
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the info for basic check host, it's format is as: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] }
+   SYS_JSON:
+   ENV_JSON:
+@return
+   RET_JSON: the basic check result, the format is as: { "HostInfo": [ { "IP": "192.168.20.165", "Ping": true, "Ssh": true, "Rc": 0, "detail": "" }, { "IP": "192.168.20.166", "Ping": true, "Ssh": true, "Rc": 0, "detail": "" } ] }
+
 */
 
-if ( typeof(USERNAME) == "undefined" ) {}
-if ( typeof(PASSWORD) == "undefined" ) {}
-if ( typeof(IP) == "undefined" ) {}
-if ( typeof(TIMES) == "undefined" ) { TIMES = 3 ; }
+//var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
 
-var objRet = new Object() ;
-objRet.Ping = false ;
-objRet.Ssh = false ;
-objRet.Rc = 0 ;
-objRet.detail = "" ;
 
-function main()
+/* *****************************************************************************
+@discretion: check wether host can been "ping" and "ssh" or not
+@author: Tanzhaobo
+@parameter
+   user[string]: the user name
+   passwd[string]: the password
+   ip[string]: the ip address
+@note
+   either ip or hostname must be specified
+@return
+   retStr[string]: the hostname after adapting
+***************************************************************************** */
+function basicCheckHost( user, passwd, ip )
 {
+   var retObj       = new Object() ;
+   retObj[Rc]       = SDB_OK ;
+   retObj[Detail]   = "" ;
+   retObj[CanPing]  = false ;
+   retObj[CanSsh]   = false ;
+   retObj[IP]       = "" ;
+
+   // ip
+   retObj[IP] = ip ;
+   // ping
+   var ret = System.ping( ip, 3 ) ;
+   var ping = eval( "(" + ret + ")" ) ;
+   if ( true != ping[Reachable] )
+   {
+      return retObj ;
+   }
+   retObj[CanPing] = true ;
+   // ssh
    try
    {
-      // check argument
-      if ( typeof(USERNAME) == "undefined" ||
-           typeof(PASSWORD) == "undefined" ||
-           typeof(IP) == "undefined" )
-      {
-         objRet.Rc = -6 ;
-         objRet.detail = "user name, password or ip is not defined" ;
-         return objRet ;
-      }
-
-      // ping
-      var ret = System.ping( IP, TIMES ) ;
-      var ping = eval( "(" + ret + ")" ) ;
-      if ( true != ping.Reachable )
-         return objRet ;
-      objRet.Ping = true ;
-
-      // ssh
-      var ssh = new Ssh( IP, USERNAME, PASSWORD ) ;
-      if ( null != typeof(ssh) && "undefined" != typeof(ssh) )
-         objRet.Ssh = true ;
-
-      return objRet ;
+      var ssh = new Ssh( ip, user, passwd ) ;
+      retObj[CanSsh] = true ;
    }
    catch ( e )
    {
-      if ( typeof(e) != "number" )
-      {
-         objRet.Rc = -10 ;
-         objRet.detail = "system error" ;
-      }
-      else
-      {
-         var errMsg = "" ;
-         objRet.Rc = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
-      }
-      return objRet ;
+      retObj[CanSsh] = false ;
+      retObj[Rc] = getLastError() ;
+      retObj[Detail] = getLastErrMsg() ;
    }
+
+   return retObj ;
+}
+
+function main()
+{
+   // check input argument
+   var infoArr = BUS_JSON[HostInfo] ;
+   var arrLen = infoArr.length ;
+   if ( arrLen == 0 )
+   {
+      setLastErrMsg( "Not specified any host to check" ) ;
+      throw SDB_INVALIDARG ;
+   }
+   for( var i = 0; i < arrLen; i++ )
+   {
+      var obj      = infoArr[i] ;
+      var user     = obj[User] ;
+      var passwd   = obj[Passwd] ;
+      var ip       = obj[IP] ;
+      var ret      = null ;
+      ret = basicCheckHost( user, passwd, ip ) ;
+      RET_JSON[Result].push( ret ) ;
+   }
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   return RET_JSON ;
 }
 
 // execute
