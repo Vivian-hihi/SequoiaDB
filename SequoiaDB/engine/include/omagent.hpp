@@ -41,14 +41,17 @@
 
 using namespace std ;
 using namespace bson ;
-
+/*
+#define OMA_BUFF_SIZE                    (1024)
 #define JS_FILE_NAME_LEN                 (512)
-#define JS_ARG_LEN                       (1024)
+#define JS_ARG_LEN                       (4096)
+#define WAITING_TIME                     (3000)
 
 #define ROLE_COORD                       "coord"
 #define ROLE_CATA                        "catalog"
 #define ROLE_DATA                        "data"
 #define ROLE_STANDALONE                  "standalone"
+*/
 
 #define STAGE_INSTALL                    OMA_FIELD_STAGE_INSTALL
 #define STAGE_ROLLBACK                   OMA_FIELD_STAGE_ROLLBACK
@@ -65,6 +68,11 @@ namespace engine
       string _dbPath ;
       string _confPath ;
       string _dataGroupName ;
+      string _sdbUser ;
+      string _sdbPasswd ;
+      string _sdbUserGroup ;
+      string _user ;
+      string _passwd ;
       BSONObj _conf ;
    } ;
    typedef struct _InstallInfo InstallInfo ;

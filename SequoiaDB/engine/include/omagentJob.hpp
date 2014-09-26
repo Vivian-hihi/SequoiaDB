@@ -77,15 +77,16 @@ namespace engine
       private:
 
          INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
+/*
          INT32 _checkInstallResult( const CHAR *pHostName,
                                     const CHAR *pSvcName,
                                     BSONObj &obj ) ;
+*/
          INT32 _updateInstallStatus( BOOLEAN isFinish,
                                      INT32 retRc,
                                      const CHAR *pErrMsg,
                                      const CHAR *pDesc,
                                      InstalledNode *pNode ) ;
-
       private:
          OMA_JOB_STATUS                      _status ;
          string                              _name ;
@@ -119,9 +120,11 @@ namespace engine
       private:
 
          INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
+/*
          INT32 _checkInstallResult( const CHAR *pHostName,
                                     const CHAR *pSvcName,
                                     BSONObj &obj ) ;
+*/
          INT32 _updateInstallStatus( BOOLEAN isFinish,
                                      INT32 retRc,
                                      const CHAR *pErrMsg,
@@ -163,9 +166,11 @@ namespace engine
       private:
 
          INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
+/*
          INT32 _checkInstallResult( const CHAR *pHostName,
                                     const CHAR *pSvcName,
                                     BSONObj &obj ) ;
+*/
          INT32 _updateInstallStatus( BOOLEAN isFinish,
                                      INT32 retRc,
                                      const CHAR *pErrMsg,
@@ -179,13 +184,60 @@ namespace engine
    } ;
 
    /*
+      start install db business task job
+   */
+   class _omaStartInstallDBBusinessTaskJob : public _rtnBaseJob
+   {
+      public:
+         _omaStartInstallDBBusinessTaskJob ( BSONObj &installInfo ) ;
+         virtual ~_omaStartInstallDBBusinessTaskJob () ;
+
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR*  name () const ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32        doit () ;
+         INT32                init() ;
+/*
+      public:
+
+         OMA_JOB_STATUS getJobStatus ()
+         {
+            return _status ;
+         }
+         void setJobStatus ( OMA_JOB_STATUS status )
+         {
+            _status = status ;
+         }
+*/
+      private:
+         INT32 _saveVCoordInfo( BSONObj &info ) ;
+/*
+         // virtual coord info
+         CHAR _omaHostName[OSS_MAX_HOSTNAME + 1] ;
+         CHAR _omaSvcName[OSS_MAX_SERVICENAME + 1] ;
+*/
+         CHAR _vCoordSvcName[OSS_MAX_SERVICENAME + 1] ;
+         // raw install info
+         BSONObj                     _installInfoObj ;
+         // install info after category
+         vector<BSONObj>             _coord ;
+         vector<BSONObj>             _catalog ;
+         vector<BSONObj>             _data ;
+         vector<BSONObj>             _standalone ;
+         // task info
+         INT64                       _taskID ;
+//         _omaTaskMgr*                _taskMgr ;
+         string                      _name ;
+   } ;
+
+   /*
       install db business task rollback internal job
    */
    class _omaInstallDBBusinessTaskRollbackJob : public _rtnBaseJob
    {
       public:
-         _omaInstallDBBusinessTaskRollbackJob ( string &vCoordHostName,
-                                                string &vCoordSvcName,
+         _omaInstallDBBusinessTaskRollbackJob ( string &vCoordSvcName,
                                                 _omaInstallDBBusinessTask *pTask ) ;
          virtual ~_omaInstallDBBusinessTaskRollbackJob () ;
 
@@ -207,18 +259,14 @@ namespace engine
          }
          
       private:
-         void _getRollbackInfo ( RollbackInfo &info ) ;
-         INT32 _rollbackCoord( string &vCoordHostName,
-                               string &vCoordSvcName,
+         INT32 _getRollbackInfo ( RollbackInfo &info ) ;
+         INT32 _rollbackCoord( string &vCoordSvcName,
                                map< string, vector<InstalledNode> > &info ) ;
-         INT32 _rollbackCatalog( string &vCoordHostName,
-                                 string &vCoordSvcName,
+         INT32 _rollbackCatalog( string &vCoordSvcName,
                                  map< string, vector<InstalledNode> > &info ) ;
-         INT32 _rollbackDataNode(string &vCoordHostName,
-                                 string &vCoordSvcName, 
-                                 map< string, vector<InstalledNode> > &info ) ;
+         INT32 _rollbackDataNode( string &vCoordSvcName, 
+                                  map< string,vector<InstalledNode> > &info ) ;
          
-         string                              _vCoordHostName ;
          string                              _vCoordSvcName ;
          OMA_JOB_STATUS                      _status ;
          string                              _name ;
@@ -231,9 +279,7 @@ namespace engine
    class _omaRemoveVirtualCoordJob : public _rtnBaseJob
    {
       public:
-         _omaRemoveVirtualCoordJob ( const CHAR *omaSvcName,
-                                     const CHAR *vCoordHostName,
-                                     const CHAR *vCoordSvcName ) ;
+         _omaRemoveVirtualCoordJob ( const CHAR *vCoordSvcName ) ;
          virtual ~_omaRemoveVirtualCoordJob () ;
 
       public:
@@ -269,17 +315,16 @@ namespace engine
    INT32 startCreateDataJob ( const CHAR *pGroupName,
                               _omaInstallDBBusinessTask *pTask,
                               EDUID *pEDUID ) ;
+   // start install db business task job
+   INT32 startStartInstallDBBusinessTaskJob ( const CHAR *pInstallInfo,
+                                              EDUID *pEDUID ) ;
    // start install db business task rollback job
    INT32 startInstallDBBusinessTaskRollbackJob (
-                                              string &vCoordHostName,
                                               string &vCoordSvcName,
                                               _omaInstallDBBusinessTask *pTask,
                                               EDUID *pEDUID ) ;
-
    // start create remove virtual coord job
-   INT32 startRemoveVirtualCoordJob ( const CHAR *hostName,
-                                      const CHAR *svcName,
-                                      const CHAR *vCoordSvcName,
+   INT32 startRemoveVirtualCoordJob ( const CHAR *vCoordSvcName,
                                       EDUID *pEDUID ) ;
 
 

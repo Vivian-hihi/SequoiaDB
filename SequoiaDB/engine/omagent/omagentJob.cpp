@@ -30,11 +30,10 @@
 
 *******************************************************************************/
 
+//#include "omagentMsgDef.hpp"
 #include "omagentUtil.hpp"
 #include "omagentJob.hpp"
 #include "omagentCommand.hpp"
-
-#define OMA_BUFF_SIZE        (1024)
 
 namespace engine
 {
@@ -44,7 +43,7 @@ namespace engine
    _omaCreateCatalogJob::_omaCreateCatalogJob (
                                              _omaInstallDBBusinessTask *pTask )
    {
-      _name = "create catalog job" ;
+      _name = OMA_JOB_CREATE_CATALOG ;
       _status = OMA_JOB_STATUS_INIT ;
       _pTask = pTask ;
    }
@@ -71,6 +70,7 @@ namespace engine
    INT32 _omaCreateCatalogJob::doit()
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
       vector<BSONObj> &catalogInstallInfo = _pTask->getInstallCatalogInfo() ;
       vector<BSONObj>::iterator itr ;
 
@@ -89,7 +89,8 @@ namespace engine
          BSONObj retObj ;
          InstallInfo installInfo ;
          CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
-         // get installl catalog information
+         const CHAR *pErrMsg = "" ;
+         // get install catalog information
          rc = _getInstallInfo( *itr, installInfo ) ;
          if ( rc )
          {
@@ -109,8 +110,7 @@ namespace engine
             goto error ;
          }
          // install catalog
-         _omaRunInstallCatalogJob runCmd( _pTask->getVCoordHostName(),
-                                          _pTask->getVCoordSvcName(),
+         _omaRunInstallCatalogJob runCmd( _pTask->getVCoordSvcName(),
                                           installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
@@ -122,19 +122,39 @@ namespace engine
          rc = runCmd.doit( retObj ) ;
          if ( rc )
          {
+            tmpRc = SDB_OK ; ;
             PD_LOG( PDERROR, "Job failed to create catalog, rc = %d", rc ) ;
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( tmpRc )
+            {
+               PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
+                        OMA_FIELD_DETAIL, tmpRc ) ;
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Failed to install catalog[%s:%s]",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to install catalog[%s:%s]: %s",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str(), pErrMsg ) ;
+            _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
-         // check the install result
-         rc = _checkInstallResult ( installInfo._hostName.c_str(),
-                                    installInfo._svcName.c_str(),
-                                    retObj ) ;
-         if ( rc ) 
+         else
          {
-            PD_LOG ( PDERROR, "Failed to check install catalog[%s:%s] "
-                     "result, rc = %d", installInfo._hostName.c_str(),
-                     installInfo._svcName.c_str(), rc ) ;
-            goto error ;
+            InstalledNode node ;
+            node._role = ROLE_CATA ;
+            node._dataGroupName = "" ;
+            node._hostName = installInfo._hostName.c_str() ;
+            node._svcName = installInfo._svcName.c_str() ;
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Finish installing catalog[%s:%s]",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str() ) ;
+            PD_LOG ( PDDEBUG, "Sucessed to install catalog[%s:%s]",
+                     installInfo._hostName.c_str(),
+                     installInfo._svcName.c_str() ) ;
+            _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
          }
          // get next
          itr++ ;
@@ -142,6 +162,7 @@ namespace engine
       // set job status to be successful
       setJobStatus( OMA_JOB_STATUS_FINISH ) ;
    done:
+      _pTask->setIsTaskFinish( _pTask->isInstallFinish() ) ;
       _pTask->tryToRemoveVirtualCoord() ;
       return rc ;
    error:
@@ -189,70 +210,44 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
       info._dbPath = pStr ;
+      // _sdbUser
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBUSER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSER, rc ) ;
+      info._sdbUser = pStr ;
+      // _sdbPasswd
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBPASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBPASSWD, rc ) ;
+      info._sdbPasswd = pStr ;
+      // _sdbUserGroup
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBUSERGROUP, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSERGROUP, rc ) ;
+      info._sdbUserGroup = pStr ;
+      // _user
+      rc = omaGetStringElement( obj, OMA_FIELD_USER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
+      info._user = pStr ;
+      // _passwd
+      rc = omaGetStringElement( obj, OMA_FIELD_PASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
+      info._passwd = pStr ;
       // _conf
-      pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
+      pattern = BSON( OMA_FIELD_HOSTNAME       << 1 <<
                       OMA_OPTION_DATAGROUPNAME << 1 <<
-                      OMA_OPTION_SVCNAME << 1 <<
-                      OMA_OPTION_DBPATH << 1 ) ;
+                      OMA_OPTION_SVCNAME       << 1 <<
+                      OMA_OPTION_DBPATH        << 1 <<
+                      OMA_FIELD_VCOORDSVCNAME  << 1 <<
+                      OMA_FIELD_SDBUSER        << 1 <<
+                      OMA_FIELD_SDBPASSWD      << 1 << 
+                      OMA_FIELD_SDBUSERGROUP   << 1 <<
+                      OMA_FIELD_USER           << 1 <<
+                      OMA_FIELD_PASSWD         << 1 ) ;
       conf = obj.filterFieldsUndotted( pattern, false ) ;
       info._conf = conf.getOwned() ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaCreateCatalogJob::_checkInstallResult( const CHAR *pHostName,
-                                                    const CHAR *pSvcName,
-                                                    BSONObj &obj )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 retRc = SDB_OK ;
-      CHAR desc[OMA_BUFF_SIZE + 1] = { 0 } ;
-      const CHAR *pErrMsg = "" ;
-
-      // TODO:
-      // extract return rc
-      rc = omaGetIntElement ( obj, OMA_FIELD_RC, retRc ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                  OMA_FIELD_RC, rc ) ;
-//         goto error ;
-      }
-      if ( retRc )
-      {
-         rc = omaGetStringElement ( obj, OMA_FIELD_DETAIL, &pErrMsg ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_DETAIL, rc ) ;
-//          goto error ;
-         }
-         ossSnprintf( desc, OMA_BUFF_SIZE,
-                      "Failed to install catalog[%s:%s]",
-                      pHostName, pSvcName ) ;
-         PD_LOG_MSG ( PDERROR, "Failed to install catalog[%s:%s]: %s",
-                      pHostName, pSvcName, pErrMsg ) ;
-         _updateInstallStatus( FALSE, retRc, pErrMsg, desc, NULL ) ;
-         rc = retRc ;
-         goto error ;
-      }
-      else
-      {
-         InstalledNode node ;
-         node._role = ROLE_CATA ;
-         node._dataGroupName = "" ;
-         node._hostName = pHostName ;
-         node._svcName = pSvcName ;
-         ossSnprintf( desc, OMA_BUFF_SIZE,
-                      "Finish installing catalog[%s:%s]",
-                      pHostName, pSvcName ) ;
-         PD_LOG ( PDDEBUG, "Sucessed to install catalog[%s:%s]",
-                  pHostName, pSvcName ) ;
-         _updateInstallStatus( TRUE, retRc, pErrMsg, desc, &node ) ;
-      }
 
    done:
       return rc ;
@@ -283,34 +278,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 startCreateCatalogJob ( _omaInstallDBBusinessTask *pTask,
-                                 EDUID *pEDUID )
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN returnResult = FALSE ;
-      _omaCreateCatalogJob *pJob = NULL ;
-      pJob = SDB_OSS_NEW _omaCreateCatalogJob( pTask ) ;
-      if ( !pJob )
-      {
-         PD_LOG ( PDERROR, "Failed to alloc memory for creating catalog job" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
-                                     returnResult ) ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    /*
       omagent create coord job
    */
    _omaCreateCoordJob::_omaCreateCoordJob ( _omaInstallDBBusinessTask *pTask )
    {
-      _name = "create coord job" ;
+      _name =  OMA_JOB_CREATE_COORD;
       _status = OMA_JOB_STATUS_INIT ;
       _pTask = pTask ;
    }
@@ -337,13 +310,14 @@ namespace engine
    INT32 _omaCreateCoordJob::doit()
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
       OMA_TASK_STATUS taskStatus = OMA_TASK_STATUS_END ;
       vector<BSONObj> &coordInstallInfo = _pTask->getInstallCoordInfo() ;
       vector<BSONObj>::iterator itr ;
 
       // change job status
       setJobStatus( OMA_JOB_STATUS_RUNNING ) ;
-      // 
+      // check 
       if ( 0 == coordInstallInfo.size() )
       {
          rc = SDB_INVALIDARG ;
@@ -356,13 +330,14 @@ namespace engine
          BSONObj retObj ;
          InstallInfo installInfo ;
          CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+         const CHAR *pErrMsg = "" ;
 
-         // check task's status and decide to do or stop
+         // check task's status and decide to go on or stop
          taskStatus = _pTask->status() ;
          if ( OMA_TASK_STATUS_FAIL == taskStatus )
          {
             rc = SDB_OMA_TASK_FAIL ;
-            PD_LOG ( PDWARNING, "Stop installing coord, task has failed" ) ;
+            PD_LOG ( PDWARNING, "Stop installing coord, task had failed" ) ;
             goto error ;
          }
          // get installl coord information
@@ -385,8 +360,7 @@ namespace engine
             goto error ;
          }
          // install coord
-         _omaRunInstallCoordJob runCmd( _pTask->getVCoordHostName(),
-                                        _pTask->getVCoordSvcName(),
+         _omaRunInstallCoordJob runCmd( _pTask->getVCoordSvcName(),
                                         installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
@@ -398,19 +372,39 @@ namespace engine
          rc = runCmd.doit( retObj ) ;
          if ( rc )
          {
+            tmpRc = SDB_OK ; ;
             PD_LOG( PDERROR, "Job failed to create coord, rc = %d", rc ) ;
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( tmpRc )
+            {
+               PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
+                        OMA_FIELD_DETAIL, tmpRc ) ;
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Failed to install coord[%s:%s]",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to install coord[%s:%s]: %s",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str(), pErrMsg ) ;
+            _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
-         // check the install result
-         rc = _checkInstallResult ( installInfo._hostName.c_str(),
-                                    installInfo._svcName.c_str(),
-                                    retObj ) ;
-         if ( rc ) 
+         else
          {
-            PD_LOG ( PDERROR, "Failed to check install coord[%s:%s] "
-                     "result, rc = %d", installInfo._hostName.c_str(),
-                     installInfo._svcName.c_str(), rc ) ;
-            goto error ;
+            InstalledNode node ;
+            node._role = ROLE_CATA ;
+            node._dataGroupName = "" ;
+            node._hostName = installInfo._hostName.c_str() ;
+            node._svcName = installInfo._svcName.c_str() ;
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Finish installing coord[%s:%s]",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str() ) ;
+            PD_LOG ( PDDEBUG, "Sucessed to install coord[%s:%s]",
+                     installInfo._hostName.c_str(),
+                     installInfo._svcName.c_str() ) ;
+            _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
          }
          // get next
          itr++ ;
@@ -425,11 +419,12 @@ namespace engine
       if ( OMA_TASK_STATUS_FAIL == taskStatus )
       {
          rc = SDB_OMA_TASK_FAIL ;
-         PD_LOG ( PDWARNING, "Task[%s] has failed", _pTask->taskName() ) ;
+         PD_LOG ( PDWARNING, "Task[%s] had failed", _pTask->taskName() ) ;
          goto rollback ;
       }
 
    done:
+      _pTask->setIsTaskFinish( _pTask->isInstallFinish() ) ;
       _pTask->tryToRemoveVirtualCoord() ;
       return rc ;
    error:
@@ -438,7 +433,7 @@ namespace engine
       // set task status to be false
       _pTask->setStatus( OMA_TASK_STATUS_FAIL ) ;
    rollback:
-      INT32 tmpRc = rc ;
+      tmpRc = rc ;
       // try to rollback
       rc = _pTask->tryToRollbackInternal() ;
       if ( rc )
@@ -473,68 +468,44 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
       info._dbPath = pStr ;
+      // _sdbUser
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBUSER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSER, rc ) ;
+      info._sdbUser = pStr ;
+      // _sdbPasswd
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBPASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBPASSWD, rc ) ;
+      info._sdbPasswd = pStr ;
+      // _sdbUserGroup
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBUSERGROUP, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSERGROUP, rc ) ;
+      info._sdbUserGroup = pStr ;
+      // _user
+      rc = omaGetStringElement( obj, OMA_FIELD_USER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
+      info._user = pStr ;
+      // _passwd
+      rc = omaGetStringElement( obj, OMA_FIELD_PASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
+      info._passwd = pStr ;
       // _conf
-      pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
+      pattern = BSON( OMA_FIELD_HOSTNAME       << 1 <<
                       OMA_OPTION_DATAGROUPNAME << 1 <<
-                      OMA_OPTION_SVCNAME << 1 <<
-                      OMA_OPTION_DBPATH << 1 ) ;
+                      OMA_OPTION_SVCNAME       << 1 <<
+                      OMA_OPTION_DBPATH        << 1 <<
+                      OMA_FIELD_VCOORDSVCNAME  << 1 <<
+                      OMA_FIELD_SDBUSER        << 1 <<
+                      OMA_FIELD_SDBPASSWD      << 1 <<
+                      OMA_FIELD_SDBUSERGROUP   << 1 <<
+                      OMA_FIELD_USER           << 1 <<
+                      OMA_FIELD_PASSWD         << 1 ) ;
       conf = obj.filterFieldsUndotted( pattern, false ) ;
       info._conf = conf.getOwned() ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaCreateCoordJob::_checkInstallResult( const CHAR *pHostName,
-                                                  const CHAR *pSvcName,
-                                                  BSONObj &obj )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 retRc = SDB_OK ;
-      const CHAR *pErrMsg = "" ;
-      CHAR desc[OMA_BUFF_SIZE + 1] = { 0 } ;
-
-      // extract return rc
-      rc = omaGetIntElement ( obj, OMA_FIELD_RC, retRc ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                  OMA_FIELD_RC, rc ) ;
-//         goto error ;
-      }
-      if ( retRc )
-      {
-         rc = omaGetStringElement ( obj, OMA_FIELD_DETAIL, &pErrMsg ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_DETAIL, rc ) ;
-//          goto error ;
-         }
-         ossSnprintf( desc, OMA_BUFF_SIZE,
-                      "Failed to install coord[%s:%s]",
-                      pHostName, pSvcName ) ;
-         PD_LOG_MSG ( PDERROR, "Failed to install data node[%s:%s]: %s",
-                      pHostName, pSvcName, pErrMsg ) ;
-         _updateInstallStatus( FALSE, retRc, pErrMsg, desc, NULL ) ;
-         rc = retRc ;
-         goto error ;
-      }
-      else
-      {
-         InstalledNode node ;
-         node._role = ROLE_CATA ;
-         node._dataGroupName = "" ;
-         node._hostName = pHostName ;
-         node._svcName = pSvcName ;
-         ossSnprintf( desc, OMA_BUFF_SIZE, "Finish installing coord[%s:%s]",
-                      pHostName, pSvcName ) ;
-         PD_LOG ( PDDEBUG, "Sucessed to install coord[%s:%s]",
-                  pHostName, pSvcName ) ;
-         _updateInstallStatus( TRUE, retRc, pErrMsg, desc, &node ) ;
-      }
 
    done:
       return rc ;
@@ -559,27 +530,6 @@ namespace engine
          goto error ;
       }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 startCreateCoordJob ( _omaInstallDBBusinessTask *pTask,
-                               EDUID *pEDUID )
-   {
-      INT32 rc = SDB_OK ;
-      BOOLEAN returnResult = FALSE ;
-      _omaCreateCoordJob *pJob = NULL ;
-      pJob = SDB_OSS_NEW _omaCreateCoordJob( pTask ) ;
-      if ( !pJob )
-      {
-         PD_LOG ( PDERROR, "Failed to alloc memory for creating coord job" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
-                                     returnResult ) ;
    done:
       return rc ;
    error:
@@ -620,6 +570,7 @@ namespace engine
    INT32 _omaCreateDataJob::doit()
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
       vector<BSONObj>::iterator itr ;
       vector<BSONObj> dataNodeInstallInfo ;
       OMA_TASK_STATUS taskStatus = OMA_TASK_STATUS_END ;
@@ -649,14 +600,15 @@ namespace engine
          BSONObj retObj ;
          InstallInfo installInfo ;
          CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+         const CHAR *pErrMsg = "" ;
 
          // check task's status and decide to do or stop
          taskStatus = _pTask->status() ;
          if ( OMA_TASK_STATUS_FAIL == taskStatus )
          {
             rc = SDB_OMA_TASK_FAIL ;
-            PD_LOG ( PDWARNING, "Stop installing data node in group %s, "
-                     "task has failed", _groupname.c_str() ) ;
+            PD_LOG ( PDWARNING, "Stop installing data node in group [%s], "
+                     "task had failed", _groupname.c_str() ) ;
             goto error ;
          }
          // get installl data node information
@@ -679,8 +631,7 @@ namespace engine
             goto error ;
          }
          // install data node
-         _omaRunInstallDataNodeJob runCmd( _pTask->getVCoordHostName(),
-                                           _pTask->getVCoordSvcName(),
+         _omaRunInstallDataNodeJob runCmd( _pTask->getVCoordSvcName(),
                                            installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
@@ -692,19 +643,39 @@ namespace engine
          rc = runCmd.doit( retObj ) ;
          if ( rc )
          {
+            tmpRc = SDB_OK ; ;
             PD_LOG( PDERROR, "Job failed to create data node, rc = %d", rc ) ;
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( tmpRc )
+            {
+               PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
+                        OMA_FIELD_DETAIL, tmpRc ) ;
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Failed to install data node[%s:%s]",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to install data node[%s:%s]: %s",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str(), pErrMsg ) ;
+            _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
-         // check the install result
-         rc = _checkInstallResult ( installInfo._hostName.c_str(),
-                                    installInfo._svcName.c_str(),
-                                    retObj ) ;
-         if ( rc )
+         else
          {
-            PD_LOG ( PDERROR, "Failed to check install data node[%s:%s] "
-                     "result, rc = %d", installInfo._hostName.c_str(),
-                     installInfo._svcName.c_str(), rc ) ;
-            goto error ;
+            InstalledNode node ;
+            node._role = ROLE_CATA ;
+            node._dataGroupName = _groupname ;
+            node._hostName = installInfo._hostName.c_str() ;
+            node._svcName = installInfo._svcName.c_str() ;
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Finish installing data node[%s:%s]",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str() ) ;
+            PD_LOG ( PDDEBUG, "Sucessed to install data node[%s:%s]",
+                     installInfo._hostName.c_str(),
+                     installInfo._svcName.c_str() ) ;
+            _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
          }
          // get next
          itr++ ;
@@ -719,11 +690,12 @@ namespace engine
       if ( OMA_TASK_STATUS_FAIL == taskStatus )
       {
          rc = SDB_OMA_TASK_FAIL ;
-         PD_LOG ( PDWARNING, "Task[%s] has failed", _pTask->taskName() ) ;
+         PD_LOG ( PDWARNING, "Task[%s] had failed", _pTask->taskName() ) ;
          goto rollback ;
       }
 
    done:
+      _pTask->setIsTaskFinish( _pTask->isInstallFinish() ) ;
       _pTask->tryToRemoveVirtualCoord() ;
       return rc ;
    error:
@@ -732,7 +704,7 @@ namespace engine
       // set task status to be false
       _pTask->setStatus( OMA_TASK_STATUS_FAIL ) ;
    rollback:
-      INT32 tmpRc = rc ;
+      tmpRc = rc ;
       // try to rollback
       rc = _pTask->tryToRollbackInternal() ;
       if ( rc )
@@ -773,72 +745,47 @@ namespace engine
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
                 "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
       installInfo._dbPath = pStr ;
+      // _sdbUser
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBUSER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSER, rc ) ;
+      installInfo._sdbUser = pStr ;
+      // _sdbPasswd
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBPASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBPASSWD, rc ) ;
+      installInfo._sdbPasswd = pStr ;
+      // _sdbUserGroup
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBUSERGROUP, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSERGROUP, rc ) ;
+      installInfo._sdbUserGroup = pStr ;
+      // _user
+      rc = omaGetStringElement( obj, OMA_FIELD_USER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
+      installInfo._user = pStr ;
+      // _passwd
+      rc = omaGetStringElement( obj, OMA_FIELD_PASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
+      installInfo._passwd = pStr ;
       // _conf
-      pattern = BSON( OMA_FIELD_HOSTNAME << 1 <<
+      pattern = BSON( OMA_FIELD_HOSTNAME       << 1 <<
                       OMA_OPTION_DATAGROUPNAME << 1 <<
-                      OMA_OPTION_SVCNAME << 1 <<
-                      OMA_OPTION_DBPATH << 1 ) ;
+                      OMA_OPTION_SVCNAME       << 1 <<
+                      OMA_OPTION_DBPATH        << 1 <<
+                      OMA_FIELD_VCOORDSVCNAME  << 1 <<
+                      OMA_FIELD_SDBUSER        << 1 <<
+                      OMA_FIELD_SDBPASSWD      << 1 <<
+                      OMA_FIELD_SDBUSERGROUP   << 1 <<
+                      OMA_FIELD_USER           << 1 <<
+                      OMA_FIELD_PASSWD         << 1 ) ;
       conf = obj.filterFieldsUndotted( pattern, false ) ;
       installInfo._conf = conf.getOwned() ; 
 
    done:
      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaCreateDataJob::_checkInstallResult( const CHAR *pHostName,
-                                                 const CHAR *pSvcName,
-                                                 BSONObj &obj )
-   {
-      INT32 rc = SDB_OK ;
-      INT32 retRc = SDB_OK ;
-      const CHAR *pErrMsg = "" ;
-      CHAR desc[OMA_BUFF_SIZE + 1] = { 0 } ;
-
-      // extract return rc
-      rc = omaGetIntElement ( obj, OMA_FIELD_RC, retRc ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                  OMA_FIELD_RC, rc ) ;
-//         goto error ;
-      }
-      if ( retRc )
-      {
-         rc = omaGetStringElement ( obj, OMA_FIELD_DETAIL, &pErrMsg ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_DETAIL, rc ) ;
-//          goto error ;
-         }
-         ossSnprintf( desc, OMA_BUFF_SIZE,
-                      "Failed to install data node[%s:%s]",
-                      pHostName, pSvcName ) ;
-         PD_LOG_MSG ( PDERROR, "Failed to install data node[%s:%s]: %s",
-                      pHostName, pSvcName, pErrMsg ) ;
-         _updateInstallStatus( FALSE, retRc, pErrMsg, desc, NULL ) ;
-         rc = retRc ;
-         goto error ;
-      }
-      else
-      {
-         InstalledNode node ;
-         node._role = ROLE_CATA ;
-         node._dataGroupName = _groupname ;
-         node._hostName = pHostName ;
-         node._svcName = pSvcName ;
-         ossSnprintf( desc, OMA_BUFF_SIZE,
-                      "Finish installing data node[%s:%s]",
-                      pHostName, pSvcName ) ;
-         PD_LOG ( PDDEBUG, "Sucessed to install data node[%s:%s]",
-                  pHostName, pSvcName ) ;
-         _updateInstallStatus( TRUE, retRc, pErrMsg, desc, &node ) ;
-      }
-
-   done:
-      return rc ;
    error:
       goto done ;
    }
@@ -867,18 +814,273 @@ namespace engine
       goto done ;
    }
 
+  /*
+      install db business task rollback job
+   */
+   _omaStartInstallDBBusinessTaskJob::_omaStartInstallDBBusinessTaskJob ( 
+                                                         BSONObj &installInfo )
+   {
+//      ossMemset( _omaHostName, 0, OSS_MAX_HOSTNAME + 1 ) ;
+//      ossMemset( _omaSvcName, 0, OSS_MAX_SERVICENAME + 1 ) ;
+      ossMemset( _vCoordSvcName, 0, OSS_MAX_SERVICENAME + 1 ) ;
+      _installInfoObj = installInfo.getOwned() ;
+      _name = OMA_JOB_START_INSTALL_DB_BUSINESS ;
+   }
+
+   _omaStartInstallDBBusinessTaskJob::~_omaStartInstallDBBusinessTaskJob()
+   {
+   }
+
+   RTN_JOB_TYPE _omaStartInstallDBBusinessTaskJob::type () const
+   {
+      return RTN_JOB_STARTINSDBBUSTASK ;
+   }
+
+   const CHAR* _omaStartInstallDBBusinessTaskJob::name () const
+   {
+      return _name.c_str() ;
+   }
+
+   BOOLEAN _omaStartInstallDBBusinessTaskJob::muteXOn (
+                                                    const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omaStartInstallDBBusinessTaskJob::init()
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      BSONObj filter ;
+      BSONObj commonFileds ;
+      BSONObjBuilder builder ;
+      BSONObj vCoordRet ;
+      _omaCreateVirtualCoord createVCoord ;
+      const CHAR *pStr = NULL ;
+
+      // create virtual coord and save it's info for future
+      rc = createVCoord.createVirtualCoord( vCoordRet ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = _saveVCoordInfo( vCoordRet ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to save virtual coord install result, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // parse arguments
+      PD_LOG ( PDDEBUG, "Add db business passes argument: %s",
+               _installInfoObj.toString( FALSE, TRUE ).c_str() ) ;
+      // get taskID from omsvc
+      ele = _installInfoObj.getField( OMA_FIELD_TASKID ) ;
+      if ( NumberInt != ele.type() && NumberLong != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid task id from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _taskID = ele.numberLong() ;
+      // get common fields
+      rc = omaGetStringElement ( _installInfoObj, OMA_FIELD_SDBUSER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_SDBUSER, rc ) ;
+      builder.append( OMA_FIELD_SDBUSER, pStr ) ;
+      rc = omaGetStringElement ( _installInfoObj, OMA_FIELD_SDBPASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_SDBPASSWD, rc ) ;
+      builder.append( OMA_FIELD_SDBPASSWD, pStr ) ;
+      rc = omaGetStringElement ( _installInfoObj, OMA_FIELD_SDBUSERGROUP, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_SDBUSERGROUP, rc ) ;
+      builder.append( OMA_FIELD_SDBUSERGROUP, pStr ) ;
+      commonFileds = builder.obj() ;
+      // parse bson and get arguments info for js file
+      ele = _installInfoObj.getField ( OMA_FIELD_CONFIG ) ;
+      if ( Array != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive wrong format install "
+                      "info from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         while ( itr.more() )
+         {
+            BSONObjBuilder bob ;
+            BSONObj info ;
+            BSONObj temp ;
+            const CHAR *value = NULL ;
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
+               goto error ;
+            }
+            temp = ele.embeddedObject() ;
+            bob.appendElements( temp ) ;
+            bob.appendElements( commonFileds ) ;
+            bob.appendElements( vCoordRet ) ;
+            info = bob.obj() ;
+            // category
+            rc = omaGetStringElement ( temp, OMA_OPTION_ROLE, &value ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                            OMA_OPTION_ROLE, rc ) ;
+               goto error ;
+            }
+            if ( 0 == ossStrncmp( value, ROLE_DATA,
+                                  ossStrlen( ROLE_DATA ) ) )
+            {
+               _data.push_back( info ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_COORD,
+                                       ossStrlen( ROLE_COORD ) ) )
+            {
+               _coord.push_back( info ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_CATA,
+                                       ossStrlen( ROLE_CATA ) ) )
+            {
+               _catalog.push_back( info ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_STANDALONE,
+                                       ossStrlen( ROLE_STANDALONE ) ) )
+            {
+               _standalone.push_back( info ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "Unknown role for install db business[%s]",
+                           temp.toString( FALSE, TRUE ).c_str() ) ;
+               goto error ;
+            }
+         }
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaStartInstallDBBusinessTaskJob::doit()
+   {
+      INT32 rc                         = SDB_OK ;
+      _omaInstallDBBusinessTask *pTask = NULL ;
+      _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
+      BSONObj otherInfo ;
+
+      // init
+      rc = init() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to start install db "
+                  "business task job, rc = %d", rc ) ;
+         goto error ;
+      }
+      // remove last task with the same name
+      rc = pTaskMgr->removeTask ( OMA_TASK_NAME_INSTALL_DB_BUSINESS ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to remove task[%s], "
+                     "rc = %d", OMA_TASK_NAME_INSTALL_DB_BUSINESS, rc ) ;
+         goto error ;
+      }
+      // create install db business task
+      pTask = SDB_OSS_NEW _omaInstallDBBusinessTask( _taskID ) ;
+      if ( !pTask )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG( PDERROR,
+                     "Failed to create install db business task, rc = %d",
+                     rc ) ;
+         goto error ;
+      }
+      // register install db business task
+      pTaskMgr->addTask( pTask, _taskID ) ;
+      // start install db task
+      otherInfo = BSON( OMA_FIELD_VCOORDSVCNAME << _vCoordSvcName ) ;
+      rc = pTask->init( _coord, _catalog, _data, otherInfo ) ;
+      if ( rc  )
+      {
+         PD_LOG_MSG( PDERROR,
+                     "Failed to init install db busniness task, rc = %d",
+                     rc ) ;
+         goto error ;
+      }
+      rc = pTask->doit() ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR,
+                     "Failed to do db busniness task, rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaStartInstallDBBusinessTaskJob::_saveVCoordInfo( BSONObj &info )
+   {
+      INT32 rc                    = SDB_OK ;
+//      const CHAR *pOmaHostName    = NULL ;
+//      const CHAR *pOmaSvcName     = NULL ;
+      const CHAR *pVCoordSvcName  = NULL ;
+
+//      // get virtual info
+//      PD_LOG ( PDDEBUG, "Create virtual coord return: %s",
+//               info.toString(FALSE, TRUE).c_str() ) ;
+//      rc = omaGetStringElement( info, OMA_FIELD_OMAHOSTNAME, &pOmaHostName ) ;
+//      if ( rc )
+//      {
+//         PD_LOG ( PDERROR, "Failed to get filed[%s], rc = %s",
+//                  OMA_FIELD_OMAHOSTNAME, rc ) ;
+//         goto error ;
+//      }
+//      rc = omaGetStringElement( info, OMA_FIELD_OMASVCNAME, &pOmaSvcName ) ;
+//      if ( rc )
+//      {
+//         PD_LOG ( PDERROR, "Failed to get filed[%s], rc = %s",
+//                  OMA_FIELD_OMASVCNAME, rc ) ;
+//         goto error ;
+//      }
+      rc = omaGetStringElement( info, OMA_FIELD_VCOORDSVCNAME, &pVCoordSvcName ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get filed[%s], rc = %s",
+                  OMA_FIELD_VCOORDSVCNAME, rc ) ;
+         goto error ;
+      }
+//      ossStrncpy( _omaHostName, pOmaHostName, OSS_MAX_HOSTNAME ) ;
+//      ossStrncpy( _omaSvcName, pOmaSvcName, OSS_MAX_SERVICENAME ) ;
+      ossStrncpy( _vCoordSvcName, pVCoordSvcName, OSS_MAX_SERVICENAME ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
 
   /*
       install db business task rollback job
    */
    _omaInstallDBBusinessTaskRollbackJob::_omaInstallDBBusinessTaskRollbackJob (
-                                              string &vCoordHostName,
                                               string &vCoordSvcName,
                                               _omaInstallDBBusinessTask *pTask )
    {
       _status = OMA_JOB_STATUS_INIT ;
-      _name = "install db business task rollback job" ;
-      _vCoordHostName = vCoordHostName ;
+      _name = OMA_JOB_ROLLBACK_INSTALL_DB_BUSINESS ;
       _vCoordSvcName = vCoordSvcName ;
       _pTask = pTask ;
    }
@@ -889,7 +1091,7 @@ namespace engine
 
    RTN_JOB_TYPE _omaInstallDBBusinessTaskRollbackJob::type () const
    {
-      return RTN_JOB_REMOVEVIRTUALCOORD ;
+      return RTN_JOB_INSDBBUSTASKRB ;
    }
 
    const CHAR* _omaInstallDBBusinessTaskRollbackJob::name () const
@@ -909,11 +1111,14 @@ namespace engine
       RollbackInfo info ;
       BSONObj retObj ;
 
-      _getRollbackInfo ( info ) ;
-      PD_LOG ( PDDEBUG, "install db business rollback info: " ) ;
+      rc = _getRollbackInfo ( info ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get rollback info, rc = %d", rc ) ;
+         goto error ;
+      }
       // rollback data nodes
-      rc = _rollbackDataNode ( _vCoordHostName,
-                               _vCoordSvcName,
+      rc = _rollbackDataNode ( _vCoordSvcName,
                                info._dataGroupRollbackInfo ) ;
       if ( rc )
       {
@@ -921,8 +1126,7 @@ namespace engine
          goto error ;
       }
       // rollback coord nodes
-      rc = _rollbackCoord ( _vCoordHostName,
-                            _vCoordSvcName,
+      rc = _rollbackCoord ( _vCoordSvcName,
                             info._coordRollbackInfo ) ;
       if ( rc )
       {
@@ -930,8 +1134,7 @@ namespace engine
          goto error ;
       }
       // rollback catalog nodes
-      rc = _rollbackCatalog ( _vCoordHostName,
-                              _vCoordSvcName,
+      rc = _rollbackCatalog ( _vCoordSvcName,
                               info._catalogRollbackInfo ) ;
       if ( rc )
       {
@@ -949,24 +1152,47 @@ namespace engine
       goto done ;
    }
 
-   void _omaInstallDBBusinessTaskRollbackJob::_getRollbackInfo(
+   INT32 _omaInstallDBBusinessTaskRollbackJob::_getRollbackInfo(
                                                            RollbackInfo &info )
    {
-      _pTask->getInstalledNodeResult ( ROLE_COORD, info._coordRollbackInfo ) ;
-      _pTask->getInstalledNodeResult ( ROLE_CATA, info._catalogRollbackInfo ) ;
-      _pTask->getInstalledNodeResult ( ROLE_DATA, info._dataGroupRollbackInfo ) ;
+      INT32 rc = SDB_OK ;
+      rc = _pTask->getInstalledNodeResult ( ROLE_COORD,
+                                            info._coordRollbackInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get coord rollback info, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = _pTask->getInstalledNodeResult ( ROLE_CATA,
+                                            info._catalogRollbackInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get catalog rollback info, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = _pTask->getInstalledNodeResult ( ROLE_DATA,
+                                            info._dataGroupRollbackInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get datagroup rollback info, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
       
+   done:
+      return rc ;
+   error:
+     goto done ;
    }
 
    INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackCoord (
-                                  string &vCoordHostName,
                                   string &vCoordSvcName,
                                   map< string, vector< InstalledNode> > &info )
    {
       INT32 rc = SDB_OK ;
       BSONObj retObj ;
-      _omaRunRollbackCoordJob rollbackCoord ( vCoordHostName,
-                                              vCoordSvcName, info ) ;
+      _omaRunRollbackCoordJob rollbackCoord ( vCoordSvcName, info ) ;
       map< string, vector< InstalledNode> >::iterator it = info.begin() ;
       
       if ( ( 1 != info.size() ) && ( string( ROLE_COORD ) != it->first ) )
@@ -1000,14 +1226,12 @@ namespace engine
    }
 
    INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackCatalog (
-                                  string &vCoordHostName,
                                   string &vCoordSvcName,
                                   map< string, vector< InstalledNode> > &info )
    {
       INT32 rc = SDB_OK ;
       BSONObj retObj ;
-      _omaRunRollbackCatalogJob rollbackCatalog ( vCoordHostName,
-                                                  vCoordSvcName, info ) ;
+      _omaRunRollbackCatalogJob rollbackCatalog ( vCoordSvcName, info ) ;
       map< string, vector< InstalledNode> >::iterator it = info.begin() ;
 
       if ( ( 1 != info.size() ) && ( string( ROLE_CATA ) != it->first ) )
@@ -1041,14 +1265,12 @@ namespace engine
    }
 
    INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackDataNode (
-                                  string &vCoordHostName,
                                   string &vCoordSvcName,
                                   map< string, vector< InstalledNode> > &info )
    {
       INT32 rc = SDB_OK ;
       BSONObj retObj ;
-      _omaRunRollbackDataNodeJob rollbackDataNode ( vCoordHostName,
-                                                    vCoordSvcName, info ) ;
+      _omaRunRollbackDataNodeJob rollbackDataNode ( vCoordSvcName, info ) ;
       map< string, vector<InstalledNode> >::iterator it = info.begin() ;
 
       // rollback data group
@@ -1079,12 +1301,8 @@ namespace engine
       omagent remove virtual coord job
    */
    _omaRemoveVirtualCoordJob::_omaRemoveVirtualCoordJob (
-                                                    const CHAR *omaHostName,
-                                                    const CHAR *omaSvcName,
                                                     const CHAR *vCoordSvcName )
    {
-      _omaHostName    = omaHostName ;
-      _omaSvcName     = omaSvcName ; 
       _vCoordSvcName  = vCoordSvcName ;
    }
 
@@ -1099,7 +1317,7 @@ namespace engine
 
    const CHAR* _omaRemoveVirtualCoordJob::name () const
    {
-      return "remove virtual coord job" ;
+      return OMA_JOB_REMOVE_VIRTUAL_COORD ;
    }
 
    BOOLEAN _omaRemoveVirtualCoordJob::muteXOn ( const _rtnBaseJob *pOther )
@@ -1110,17 +1328,57 @@ namespace engine
    INT32 _omaRemoveVirtualCoordJob::doit()
    {
       INT32 rc = SDB_OK ;
-      BOOLEAN hasVCoordRemove = FALSE ;
-      _omaRemoveVirtualCoord removeVCoord( _omaHostName.c_str(),
-                                           _omaSvcName.c_str(),
-                                           _vCoordSvcName.c_str() ) ;
-      rc = removeVCoord.removeVirtualCoord ( hasVCoordRemove ) ;
+      BSONObj removeRet ;
+      _omaRemoveVirtualCoord removeVCoord( _vCoordSvcName.c_str() ) ;
+      // TODO: how to deal with the result
+      rc = removeVCoord.removeVirtualCoord ( removeRet ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
          goto error ;
+      }    
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 startCreateCatalogJob ( _omaInstallDBBusinessTask *pTask,
+                                 EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaCreateCatalogJob *pJob = NULL ;
+      pJob = SDB_OSS_NEW _omaCreateCatalogJob( pTask ) ;
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for creating catalog job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
       }
-      
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 startCreateCoordJob ( _omaInstallDBBusinessTask *pTask,
+                               EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaCreateCoordJob *pJob = NULL ;
+      pJob = SDB_OSS_NEW _omaCreateCoordJob( pTask ) ;
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for creating coord job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
    done:
       return rc ;
    error:
@@ -1137,12 +1395,47 @@ namespace engine
       pJob = SDB_OSS_NEW _omaCreateDataJob( pGroupName, pTask ) ;
       if ( !pJob )
       {
-         PD_LOG ( PDERROR, "Failed to alloc memory for creating data node job" ) ;
+         PD_LOG ( PDERROR, "Failed to alloc memory for "
+                  "creating data node job" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 startStartInstallDBBusinessTaskJob ( const CHAR *pInstallInfo,
+                                              EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaStartInstallDBBusinessTaskJob *pJob = NULL ;
+      try
+      {
+         BSONObj info( pInstallInfo ) ;
+         pJob = SDB_OSS_NEW _omaStartInstallDBBusinessTaskJob( info ) ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Occur error, exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for starting "
+                  "install db business job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+
+
    done:
       return rc ;
    error:
@@ -1150,7 +1443,6 @@ namespace engine
    }
 
    INT32 startInstallDBBusinessTaskRollbackJob (
-                                              string &vCoordHostName,
                                               string &vCoordSvcName,
                                               _omaInstallDBBusinessTask *pTask,
                                               EDUID *pEDUID )
@@ -1158,12 +1450,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN returnResult = FALSE ;
       _omaInstallDBBusinessTaskRollbackJob *pJob = NULL ;
-      pJob = SDB_OSS_NEW _omaInstallDBBusinessTaskRollbackJob( vCoordHostName,
-                                                               vCoordSvcName,
+      pJob = SDB_OSS_NEW _omaInstallDBBusinessTaskRollbackJob( vCoordSvcName,
                                                                pTask ) ;
       if ( !pJob )
       {
-         PD_LOG ( PDERROR, "Failed to alloc memory for install db business rollback job" ) ;
+         PD_LOG ( PDERROR, "Failed to alloc memory for "
+                  "installing db business rollback job" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -1176,19 +1468,17 @@ namespace engine
       goto done ;
    }
 
-   INT32 startRemoveVirtualCoordJob ( const CHAR *omaHostName,
-                                      const CHAR *omaSvcName,
-                                      const CHAR *vCoordSvcName,
+   INT32 startRemoveVirtualCoordJob ( const CHAR *vCoordSvcName,
                                       EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN returnResult = FALSE ;
       _omaRemoveVirtualCoordJob *pJob = NULL ;
-      pJob = SDB_OSS_NEW _omaRemoveVirtualCoordJob( omaHostName, omaSvcName,
-                                                    vCoordSvcName ) ;
+      pJob = SDB_OSS_NEW _omaRemoveVirtualCoordJob( vCoordSvcName ) ;
       if ( !pJob )
       {
-         PD_LOG ( PDERROR, "Failed to alloc memory for remove virtual coord job" ) ;
+         PD_LOG ( PDERROR, "Failed to alloc memory for "
+                  "removing virtual coord job" ) ;
          rc = SDB_OOM ;
          goto error ;
       }

@@ -48,6 +48,9 @@ using namespace bson ;
 
 #define OMA_INVALID_TASKID     (0)
 
+#define OMA_TASK_NAME_INSTALL_DB_BUSINESS     "install db business task"
+
+
 namespace engine
 {
    enum OMA_TASK_TYPE
@@ -120,6 +123,7 @@ namespace engine
                               UINT64 taskID = OMA_INVALID_TASKID ) ;
          INT32      removeTask ( _omaTask *pTask ) ;
          INT32      removeTask ( UINT64 taskID ) ;
+         INT32      removeTask ( const CHAR *pTaskName ) ;
          _omaTask*  findTask ( UINT64 taskID ) ;
 
       private:
@@ -157,10 +161,7 @@ namespace engine
          INT32 init( vector<BSONObj> coord,
                      vector<BSONObj> catalog,
                      vector<BSONObj> data,
-                     const CHAR *omaHostName,
-                     const CHAR *omaSvcName,
-                     const CHAR *vCoordHostName,
-                     const CHAR *vCoordSvcName ) ;
+                     BSONObj &otherInfo ) ;
          // start job
          INT32 doit() ;
          // respond query of install status
@@ -168,14 +169,19 @@ namespace engine
 
       public:
          void setTaskStage( OMA_INSTALL_DB_STAGE stage ) ;
-         void setIsTaskFinish( BOOLEAN isTaskFinish ) ;
-         string& getVCoordHostName() { return _vCoordHostName ; }
+         void setIsTaskFinish( BOOLEAN isFinish ) ;
+         void setIsInstallFinish( BOOLEAN isFinish ) ;
+         void setIsRollbackFinish( BOOLEAN isFinish ) ;
+         void setIsRemoveVCoordFinish( BOOLEAN isFinish ) ;
+         void setIsRollbackFail( BOOLEAN isFail ) ;
+         void setIsRemoveVCoordFail( BOOLEAN isFail ) ;
+//         string& getVCoordHostName() { return _vCoordHostName ; }
          string& getVCoordSvcName() { return _vCoordSvcName ; }
          vector<BSONObj>& getInstallCatalogInfo() ;
          vector<BSONObj>& getInstallCoordInfo() ;
          INT32 getInstallDataGroupInfo( string &name,
                                         vector<BSONObj> &dataGroupInstallInfo ) ;
-         void getInstalledNodeResult( string role,
+         INT32 getInstalledNodeResult( const CHAR *pRole,
                                       map< string, vector<InstalledNode> >& info ) ;
          INT32 updateInstallStatus( BOOLEAN isFinish,
                                     INT32 retRc,
@@ -186,38 +192,47 @@ namespace engine
                                     InstalledNode *pNode ) ;
          INT32 tryToRollbackInternal() ;         
          INT32 tryToRemoveVirtualCoord() ;
+         BOOLEAN isInstallFinish() ;
           
       private:
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
          INT32 _installData() ;
-         BOOLEAN _isInstallFinish() ;
 
          // install info
-         vector<BSONObj>                                _catalog ;
-         vector<BSONObj>                                _coord ;
-         map< string, vector<BSONObj> >                 _mapGroups ;
-         
+         vector<BSONObj>                      _catalog ;
+         vector<BSONObj>                      _coord ;
+         map< string, vector<BSONObj> >       _mapGroups ;
          // install result
-         InstallResult                                  _catalogResult ;
-         InstallResult                                  _coordResult ;
-         map< string, InstallResult >                   _mapGroupsResult ;
+         InstallResult                        _catalogResult ;
+         InstallResult                        _coordResult ;
+         map< string, InstallResult >         _mapGroupsResult ;
+         // virtual coord info
+//         string                               _omaHostName ;
+//         string                               _omaSvcName ;
+//         string                               _vCoordHostName ;
+         string                               _vCoordSvcName ;
+         // 
+         string                               _sdbUser ;
+         string                               _sdbPasswd ;
+         string                               _sdbUserGroup ;
 
-         string                                         _omaHostName ;
-         string                                         _omaSvcName ;
-         string                                         _vCoordHostName ;
-         string                                         _vCoordSvcName ;
-
-
-         ossSpinSLatch                                  _jobLatch ;
-         OMA_TASK_TYPE                                  _taskType ;
-         string                                         _taskName ;
-         OMA_INSTALL_DB_STAGE                           _stage ;
-         BOOLEAN                                        _isTaskFinish ;
-         BOOLEAN                                        _isRollingBack ;
-
+         ossSpinSLatch                        _taskLatch ;
+         ossSpinSLatch                        _jobLatch ;
+         OMA_TASK_TYPE                        _taskType ;
+         string                               _taskName ;
+         OMA_INSTALL_DB_STAGE                 _stage ;
+         BOOLEAN                              _isInstallFinish ;
+         BOOLEAN                              _isRollbackFinish ;
+         BOOLEAN                              _isRemoveVCoordFinish ;
+         BOOLEAN                              _isTaskFinish ;
+         BOOLEAN                              _isRollbackFail ;
+         BOOLEAN                              _isRemoveVCoordFail ;
+         CHAR                                 _detail[OMA_BUFF_SIZE + 1] ; 
    } ;
    typedef _omaInstallDBBusinessTask omaInstallDBBusinessTask ;
+
+   
 
 }
 

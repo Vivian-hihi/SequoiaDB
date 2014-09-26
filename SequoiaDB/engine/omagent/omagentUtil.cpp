@@ -297,7 +297,6 @@ namespace engine
       INT32 rc                = SDB_OK ;
       CHAR *pArgumentBuffer   = NULL ;
       INT32 argBuffLen        = 0 ;
-      CHAR pNPipeBuf[ CM_NPIPE_SIZE + 1 ] = { 0 } ;
 
       list< const CHAR* > argv ;
       ossResultCode result ;

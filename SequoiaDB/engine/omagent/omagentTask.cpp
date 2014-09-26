@@ -36,8 +36,6 @@
 #include "omagentJob.hpp"
 #include "pmdDef.hpp"
 
-#define WAITING_TIME (3000)
-
 namespace engine
 {
 
@@ -99,7 +97,6 @@ namespace engine
       goto done ;
    }
 
-
    /*
       omagent manager
    */
@@ -121,9 +118,21 @@ namespace engine
 
    UINT64 _omaTaskMgr::getTaskID ()
    {
+      UINT64 id = OMA_INVALID_TASKID ;
+      std::map<UINT64, _omaTask*>::iterator it ;
+
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
-      ++_taskID ;
-      return _taskID ;
+      while ( TRUE )
+      {
+         id = ++_taskID ;
+         it = _taskMap.find( id ) ;
+         if ( it == _taskMap.end() )
+         {
+            break ;
+         }
+      }
+      
+      return id ;
    }
 
    INT32 _omaTaskMgr::addTask ( _omaTask * pTask, UINT64 taskID )
@@ -144,11 +153,10 @@ namespace engine
       {
            indexTask = it->second ;
            PD_LOG ( PDWARNING, "Exist task[%lld,%s] mutex with new task[%lld,%s]",
-                     indexTask->taskID(), indexTask->taskName(),
-                     pTask->taskID(), pTask->taskName() ) ;
-            rc = SDB_CLS_MUTEX_TASK_EXIST ;
-            goto error ;
-
+                    indexTask->taskID(), indexTask->taskName(),
+                    pTask->taskID(), pTask->taskName() ) ;
+           rc = SDB_CLS_MUTEX_TASK_EXIST ;
+           goto error ;
       }
       // add to map
       _taskMap[ taskID ] = pTask ;
@@ -178,6 +186,22 @@ namespace engine
       return rc ;
    }
 
+   INT32 _omaTaskMgr::removeTask ( const CHAR *pTaskName )
+   {
+      INT32 rc = SDB_OK ;
+      std::map<UINT64, _omaTask*>::iterator it = _taskMap.begin() ;
+      for ( ; it != _taskMap.end(); it++ )
+      {
+         _omaTask *pTask = it->second ;
+         const CHAR *name = pTask->taskName() ;
+         if ( 0 == ossStrncmp( name, pTaskName, ossStrlen(pTaskName) ) )
+         {
+            rc = removeTask( pTask ) ;
+         }
+      }
+      return rc ;
+   }
+
    _omaTask* _omaTaskMgr::findTask ( UINT64 taskID )
    {
       ossScopedLock lock ( &_taskLatch, SHARED ) ;
@@ -203,11 +227,16 @@ namespace engine
    _omaInstallDBBusinessTask::_omaInstallDBBusinessTask( UINT64 taskID )
    : _omaTask( taskID )
    {
-      _taskType         = OMA_TASK_INSTALL_DB ;
-      _taskName         = "install db business task" ;
-      _stage            = OMA_INSTALL_INSTALL ;
-      _isTaskFinish     = FALSE ;
-      _isRollingBack    = FALSE ;
+      _taskType             = OMA_TASK_INSTALL_DB ;
+      _taskName             = OMA_TASK_NAME_INSTALL_DB_BUSINESS ;
+      _stage                = OMA_INSTALL_INSTALL ;
+      _isInstallFinish      = FALSE ;
+      _isRollbackFinish     = FALSE ;
+      _isRemoveVCoordFinish = FALSE ;
+      _isTaskFinish         = FALSE ;
+      _isRollbackFail       = FALSE ;
+      _isRemoveVCoordFail   = FALSE ;
+      ossMemset( _detail, 0, OMA_BUFF_SIZE + 1 ) ;
    }
 
    _omaInstallDBBusinessTask::~_omaInstallDBBusinessTask()
@@ -217,17 +246,43 @@ namespace engine
    INT32 _omaInstallDBBusinessTask::init( vector<BSONObj> coord,
                                           vector<BSONObj> catalog,
                                           vector<BSONObj> data,
-                                          const CHAR *omaHostName,
-                                          const CHAR *omaSvcName,
-                                          const CHAR *vCoordHostName,
-                                          const CHAR *vCoordSvcName )
+                                          BSONObj &other )
    {
       INT32 rc = SDB_OK ;
-      // init arguments for remove virtual coord
-      _omaHostName    = omaHostName ;
-      _omaSvcName     = omaSvcName ;
-      _vCoordHostName = vCoordHostName ;
-      _vCoordSvcName  = vCoordSvcName ;
+      const CHAR *pStr = NULL ;
+      vector<BSONObj>::iterator it ;
+
+      // get virtual coord info
+/*
+      rc = omaGetStringElement ( other, OMA_FIELD_OMAHOSTNAME, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_OMAHOSTNAME, rc ) ;
+      _omaHostName = pStr ;
+      _vCoordHostName = pStr ;
+      rc = omaGetStringElement ( other, OMA_FIELD_OMASVCNAME, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_OMASVCNAME, rc ) ;
+      _omaSvcName = pStr ;
+*/
+      rc = omaGetStringElement ( other, OMA_FIELD_VCOORDSVCNAME, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_VCOORDSVCNAME, rc ) ;
+      _vCoordSvcName = pStr ;
+/*
+      // init arguments for install node
+      rc = omaGetStringElement ( other, OMA_FIELD_SDBUSER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_SDBUSER, rc ) ;
+      _sdbUser = pStr ;
+      rc = omaGetStringElement ( other, OMA_FIELD_SDBPASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_SDBPASSWD, rc ) ;
+      _sdbPasswd = pStr ;
+      rc = omaGetStringElement ( other, OMA_FIELD_SDBUSERGROUP, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_SDBUSERGROUP, rc ) ;
+      _sdbUserGroup = pStr ;
+*/
       // init _coord and _coordResult
       _coord = coord ;
       _coordResult._rc = SDB_OK ;
@@ -239,7 +294,7 @@ namespace engine
       _catalogResult._totalNum = _catalog.size() ;
       _catalogResult._finishNum = 0 ;
       // init _mapGroups and _mapGroupsResult
-      vector<BSONObj>::iterator it = data.begin() ;
+      it = data.begin() ;
       // let data node sort by group name
       while( it != data.end() )
       {
@@ -311,9 +366,40 @@ namespace engine
       _stage = stage ;
    }
 
-   void _omaInstallDBBusinessTask::setIsTaskFinish( BOOLEAN isTaskFinish )
+   void _omaInstallDBBusinessTask::setIsInstallFinish( BOOLEAN isFinish )
    {
-      _isTaskFinish = isTaskFinish ;
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _isInstallFinish = isFinish ;
+   }   
+
+   void _omaInstallDBBusinessTask::setIsRollbackFinish( BOOLEAN isFinish )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _isRollbackFinish = isFinish ;
+   } 
+
+   void _omaInstallDBBusinessTask::setIsRemoveVCoordFinish( BOOLEAN isFinish )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _isRemoveVCoordFinish = isFinish ;
+   }
+
+   void _omaInstallDBBusinessTask::setIsTaskFinish( BOOLEAN isFinish )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _isTaskFinish = isFinish ;
+   }
+
+   void _omaInstallDBBusinessTask::setIsRollbackFail( BOOLEAN isFail )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _isRollbackFail = isFail ;
+   }   
+
+   void _omaInstallDBBusinessTask::setIsRemoveVCoordFail( BOOLEAN isFail )
+   {
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+      _isRemoveVCoordFail = isFail ;
    }   
 
    vector<BSONObj>& _omaInstallDBBusinessTask::getInstallCatalogInfo()
@@ -450,20 +536,19 @@ namespace engine
          goto error ;
       }
       // update whether install is finish or not
-      _isTaskFinish = _isInstallFinish() ;
-
+      setIsInstallFinish( isInstallFinish() ) ;
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   void _omaInstallDBBusinessTask::getInstalledNodeResult ( string role,
+   INT32 _omaInstallDBBusinessTask::getInstalledNodeResult ( const CHAR *pRole,
                                    map< string, vector<InstalledNode> >& info )
    {
-      InstalledNode result ;
+      INT32 rc = SDB_OK ;
       
-      if ( string(ROLE_DATA) == role )
+      if ( 0 == ossStrncmp( ROLE_DATA, pRole, ossStrlen(ROLE_DATA) ) )
       {
          map< string, InstallResult >::iterator it = _mapGroupsResult.begin() ;
          for( ; it != _mapGroupsResult.end(); it++ )
@@ -474,24 +559,33 @@ namespace engine
             ) ;
          }
       }
-      else if ( string(ROLE_CATA) == role )
+      else if ( 0 == ossStrncmp( ROLE_CATA, pRole, ossStrlen(ROLE_CATA) ) )
       {
          vector< InstalledNode > &nodes = _catalogResult._installedNodes ;
          info.insert (
             pair< string, vector<InstalledNode> >( string(ROLE_CATA), nodes )
          ) ;
       }
-      else if ( string(ROLE_COORD) == role )
+      else if ( 0 == ossStrncmp( ROLE_COORD, pRole, ossStrlen(ROLE_COORD) ) )
       {
          vector< InstalledNode > &nodes = _coordResult._installedNodes ;
          info.insert (
             pair< string, vector<InstalledNode> >( string(ROLE_COORD), nodes )
          ) ;
       }
-
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Invalid role for get installed node result" ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::_isInstallFinish ()
+   BOOLEAN _omaInstallDBBusinessTask::isInstallFinish ()
    {
       map<string, InstallResult>::iterator it ;
 
@@ -607,19 +701,21 @@ namespace engine
 
    INT32 _omaInstallDBBusinessTask::tryToRollbackInternal()
    {
-      ossScopedLock lock ( &_jobLatch, EXCLUSIVE ) ;
       INT32 rc = SDB_OK ;
-      BOOLEAN rollback = TRUE ;
       map< string, OMA_JOB_STATUS >::iterator it ;
+      EDUID taskRollbackJobID = PMD_INVALID_EDUID ;
+      ossScopedLock lock ( &_jobLatch, EXCLUSIVE ) ;
 
-      if ( _isRollingBack )
+      // when rollback had done or failed, return directly
+      if ( _isRollbackFinish || _isRollbackFail )
       {
          goto done ;
       }
       else
       {
-         PD_LOG ( PDDEBUG, "%d jobs are registered in task[%s]",
-                  _jobStatus.size(), _taskName.c_str() ) ;
+         PD_LOG ( PDDEBUG, "There are [%d] jobs registered in task[%s], "
+                  "going to check their status, and try to rollback",
+                   _jobStatus.size(), _taskName.c_str() ) ;
          // rollback if no job is in the status of running
          for( it = _jobStatus.begin(); it != _jobStatus.end(); it++ )
          {
@@ -627,18 +723,15 @@ namespace engine
                      it->first.c_str(), it->second ) ;
             if( OMA_JOB_STATUS_RUNNING == it->second )
             {
-               rollback = FALSE ;
+               // some job is still running, can't rollback
+               goto done ;
             }
          }
-      }
-      if ( rollback )
-      {
-         PD_LOG ( PDDEBUG, "Begin to rollback task[%s]", _taskName.c_str() ) ;
+         // begin to rollback
+         PD_LOG ( PDDEBUG, "Start to rollback task[%s]", _taskName.c_str() ) ;
          // set task stage
          setTaskStage ( OMA_INSTALL_ROLLBACK ) ;
-         EDUID taskRollbackJobID = PMD_INVALID_EDUID ;
-         rc = startInstallDBBusinessTaskRollbackJob ( _vCoordHostName,
-                                                      _vCoordSvcName,
+         rc = startInstallDBBusinessTaskRollbackJob ( _vCoordSvcName,
                                                       this,
                                                       &taskRollbackJobID ) ;
          if ( rc )
@@ -647,13 +740,20 @@ namespace engine
                     "rollback job, rc = %d", rc ) ;
             goto error ;
          }
-         // set task stage's status
-         setIsTaskFinish( FALSE ) ;
-      }
-      
+         // wait until rollback is finish
+         while ( rtnGetJobMgr()->findJob( taskRollbackJobID ) )
+         {
+            ossSleep ( OSS_ONE_SEC ) ;
+         }
+         // set rollback is finish now
+         setIsRollbackFinish( TRUE ) ;
+      } 
    done:
       return rc ;
    error:
+      setIsRollbackFail( TRUE ) ;
+      ossSnprintf( _detail, OMA_BUFF_SIZE, "Failed to rollback add "
+                   "db business, please do it manually" ) ;
       goto done ;
    }
 
@@ -672,8 +772,6 @@ namespace engine
       {
          ossSleep ( OSS_ONE_SEC ) ;
       }
-      // waiting for coord to start
-      ossSleep( WAITING_TIME ) ;
    done:
       return rc ;
    error:
@@ -684,12 +782,25 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       EDUID installCoordJobID = PMD_INVALID_EDUID ;
+      // test task status, and decide go on or stop task
+      if ( OMA_TASK_STATUS_FAIL == status() ||
+           OMA_TASK_STATUS_FINISH == status() )
+      {
+         PD_LOG ( PDWARNING, "Task[%s] has in status[%d], not going to start "
+                  "install coord job", _taskName.c_str(), status() ) ;
+         goto done ;
+      }
       // start coord job
       rc = startCreateCoordJob( this, &installCoordJobID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to start create coord job, rc = %d", rc ) ;
          goto error ;
+      }
+      // wait until this job finish
+      while ( rtnGetJobMgr()->findJob ( installCoordJobID ) )
+      {
+         ossSleep ( OSS_ONE_SEC ) ;
       }
    done:
       return rc ;
@@ -706,6 +817,14 @@ namespace engine
       {
          string groupname = it->first ;
          EDUID installDataJobID = PMD_INVALID_EDUID ;
+         // test task status, and decide go on or stop task
+         if ( OMA_TASK_STATUS_FAIL == status() ||
+              OMA_TASK_STATUS_FINISH == status() )
+         {
+            PD_LOG ( PDWARNING, "Task[%s] has in status[%d], not going to start "
+                     "install data group job", _taskName.c_str(), status() ) ;
+            goto done ;
+         }
          // start data job
          rc = startCreateDataJob( groupname.c_str(), this,
                                   &installDataJobID ) ;
@@ -726,31 +845,42 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       EDUID removeVirtualCoordJobID = PMD_INVALID_EDUID ;
-      
-      // if task finish, go on
-      if ( !_isTaskFinish )
+      ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
+
+      // if virtual coord had been remove or rollback is failing,
+      // return directly
+      if ( _isRemoveVCoordFinish || _isRollbackFail )
       {
          goto done ;
       }
-      // start remove virtual coord job
-      rc = startRemoveVirtualCoordJob( _omaHostName.c_str(),
-                                       _omaSvcName.c_str(),
-                                       _vCoordSvcName.c_str(),
-                                       &removeVirtualCoordJobID ) ;
-      if ( rc )
+      if ( _isInstallFinish || _isRollbackFinish )
       {
-         PD_LOG( PDERROR, "Failed to start remove virtual coord job, "
-                 "rc = %d", rc ) ;
-         goto error ;
-      }
-      while ( rtnGetJobMgr()->findJob ( removeVirtualCoordJobID ) )
-      {
-         ossSleep ( OSS_ONE_SEC ) ;
-      }
-
+         // start remove virtual coord job
+         rc = startRemoveVirtualCoordJob( _vCoordSvcName.c_str(),
+                                          &removeVirtualCoordJobID ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to start remove virtual coord job, "
+                    "rc = %d", rc ) ;
+            goto error ;
+         }
+         // wait until job is finish
+         while ( rtnGetJobMgr()->findJob ( removeVirtualCoordJobID ) )
+         {
+            ossSleep ( OSS_ONE_SEC ) ;
+         }
+         // set remove virtual coord has finish
+         setIsRemoveVCoordFinish( TRUE ) ;
+         // set task in finish
+         setIsTaskFinish( TRUE ) ;
+       }
    done:
       return rc ;
    error:
+      // set remove virtual coord fail detail
+      setIsRemoveVCoordFail( TRUE ) ;
+      ossSnprintf( _detail, OMA_BUFF_SIZE, "Failed to remove "
+                   "virtual coord, please do it manually" ) ;
       goto done ;
    }
 

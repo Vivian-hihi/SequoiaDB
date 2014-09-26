@@ -36,7 +36,9 @@
 #include "pmdOptions.hpp"
 #include "msgDef.hpp"
 #include "omDef.hpp"
+#include "omagentDef.hpp"
 
+/*
 // command
 #define OMA_CMD_SCAN_HOST                          OM_SCAN_HOST_REQ
 #define OMA_CMD_BASIE_CHECK_HOST                   OM_BASIC_CHECK_REQ
@@ -46,7 +48,9 @@
 #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
 #define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ
 #define OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS OM_QUERY_PROGRESS
-#define OMA_CMD_ROLLBACK_INSTALL_DB_BUSINESS       OM_ROLLBACK_TRANSACTION_REQ
+//#define OMA_CMD_ROLLBACK_INSTALL_DB_BUSINESS       OM_ROLLBACK_TRANSACTION_REQ
+#define OMA_CMD_UPDATE_HOSTS                       OM_UPDATE_HOSTNAME_REQ
+*/
 
 // field
 #define OMA_FIELD_HOSTINFO                         OM_REST_FIELD_HOST_INFO
@@ -79,6 +83,7 @@
 #define OMA_FIELD_INSTALL_PATH                     "InstallPath"
 
 #define OMA_FIELD_RC                               "Rc"
+#define OMA_FIELD_ERRNO                            "errno"
 #define OMA_FIELD_DETAIL                           "detail"
 #define OMA_FIELD_HASRUNNING                       "HasRunning"
 #define OMA_FIELD_HASPUSH                          "HasPush"
@@ -97,6 +102,18 @@
 #define OMA_FIELD_FINISHNUM                        "FinishNum"
 #define OMA_FIELD_SVCNAME                          "svcname"
 #define OMA_FIELD_GROUPNAME                        "GroupName"
+#define OMA_FIELD_PROG_PATH                        "ProgPath"
+#define OMA_FIELD_HASINSTALL                       "HasInstall" 
+#define OMA_FIELD_HASUNINSTALL                     "HasUninstall" 
+#define OMA_FIELD_OMAHOSTNAME                      "OmaHostName"
+#define OMA_FIELD_OMASVCNAME                       "OmaSvcName"
+#define OMA_FIELD_VCOORDHOSTNAME                   "VCoordHostName"
+#define OMA_FIELD_VCOORDSVCNAME                    "VCoordSvcName"
+#define OMA_FIELD_INSTALLGROUPNAME                 "InstallGroupName"
+#define OMA_FIELD_INSTALLHOSTNAME                  "InstallHostName"
+#define OMA_FIELD_INSTALLSVCNAME                   "InstallSvcName"
+#define OMA_FIELD_INSTALLPATH2                     "InstallPath"
+#define OMA_FIELD_INSTALLCONFIG                    "InstallConfig"
 
 // host info
 #define OMA_FIELD_HOST                             "Host"
