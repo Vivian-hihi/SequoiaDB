@@ -69,7 +69,7 @@ CHAR FMP_COORD_SERVICE[OSS_MAX_SERVICENAME + 1] = {0};
 CHAR *FMP_COORD_HOST = "localhost" ;
 CHAR g_UserName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 CHAR g_Password[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-static const CHAR magicNumber[] = FMP_MSG_MAGIC ;
+static const BYTE magicNumber[] = FMP_MSG_MAGIC ;
 
 BSONObj OK_RES = BSON( FMP_RES_CODE << SDB_OK ) ;
 
@@ -485,7 +485,7 @@ INT32 _fmpController::_writeMsg( const BSONObj &msg )
 
    /// to distinguish our own msg or printf.
    SINT64 objsize = sizeof( magicNumber ) ;
-   const CHAR *buf = magicNumber ;
+   const CHAR *buf = (const CHAR*)magicNumber ;
 
 send:
    while ( 0 < objsize )
