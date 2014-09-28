@@ -155,8 +155,8 @@ namespace engine
       BSONObjBuilder resBuilder ;
       BSONObj bsonRes ;
       BSONObj bsonAuth ;
-      md5::md5digest digest ;
-      string realPasswd ;
+//      md5::md5digest digest ;
+//      string realPasswd ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_FIELD_LOGIN_NAME, 
                               &pUserName ) ;
@@ -175,11 +175,13 @@ namespace engine
       }
 
       //TODO: encrypt the passwd when through rest
-      _decryptPasswd( pPasswd, pTime, realPasswd ) ;
-      md5::md5( ( const void * )realPasswd.c_str(), realPasswd.length(), 
-                digest) ;
+//      _decryptPasswd( pPasswd, pTime, realPasswd ) ;
+//      md5::md5( ( const void * )realPasswd.c_str(), realPasswd.length(), 
+//                digest) ;
       authBuilder.append( SDB_AUTH_USER, pUserName ) ;
-      authBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
+      authBuilder.append( SDB_AUTH_PASSWD, pPasswd ) ;
+      //21232f297a57a5a743894a0e4a801fc3
+//      authBuilder.append( SDB_AUTH_PASSWD, md5::digestToString( digest ) ) ;
       bsonAuth = authBuilder.obj() ;
       rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
@@ -324,11 +326,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       string user ;
       string oldPasswd ;
-      string oldDecryptPasswd ;
-      md5::md5digest oldDigest ;
+//      string oldDecryptPasswd ;
+//      md5::md5digest oldDigest ;
       string newPasswd ;
-      string newDecryptPasswd ;
-      md5::md5digest newDigest ;
+//      string newDecryptPasswd ;
+//      md5::md5digest newDigest ;
       string time ;
 
       BSONObj bsonAuth ;
@@ -352,11 +354,11 @@ namespace engine
          goto error ;
       }
 
-      _decryptPasswd( oldPasswd, time, oldDecryptPasswd ) ;
-      md5::md5( ( const void * )oldDecryptPasswd.c_str(), 
-                oldDecryptPasswd.length(), oldDigest) ;
+//      _decryptPasswd( oldPasswd, time, oldDecryptPasswd ) ;
+//      md5::md5( ( const void * )oldDecryptPasswd.c_str(), 
+//                oldDecryptPasswd.length(), oldDigest) ;
       bsonAuth = BSON( SDB_AUTH_USER << user 
-                      << SDB_AUTH_PASSWD << md5::digestToString( oldDigest ) ) ;
+                      << SDB_AUTH_PASSWD << oldPasswd ) ;
       rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
       {
@@ -374,13 +376,11 @@ namespace engine
          goto error ;
       }
 
-      _decryptPasswd( newPasswd, time, newDecryptPasswd ) ;
-      md5::md5( ( const void * )newDecryptPasswd.c_str(), 
-                newDecryptPasswd.length(), newDigest) ;
-      rc = sdbGetOMManager()->authUpdatePasswd( user,
-                                               md5::digestToString( oldDigest ), 
-                                               md5::digestToString( newDigest ),
-                                               _cb ) ;
+//      _decryptPasswd( newPasswd, time, newDecryptPasswd ) ;
+//      md5::md5( ( const void * )newDecryptPasswd.c_str(), 
+//                newDecryptPasswd.length(), newDigest) ;
+      rc = sdbGetOMManager()->authUpdatePasswd( user, oldPasswd, newPasswd,
+                                                _cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "change passwd failed:rc=%d", rc ) ;
