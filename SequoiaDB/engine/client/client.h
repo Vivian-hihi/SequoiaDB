@@ -1936,6 +1936,16 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
 SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
                               sdbCursorHandle *cursor ) ;
 
+/** \fn INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
+ *  *                           sdbCursorHandle *cursor )
+ *  \param [in] cHandle The collection handle
+ *  \param [out] cursor The cursor handle of current query
+ *  \retval SDB_OK Operation Success
+ *  \retval Others Operation Fail
+ */
+SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
+                                   sdbCursorHandle *cursor ) ;
+
 SDB_EXTERN_C_END
 #endif
 

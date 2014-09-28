@@ -1447,7 +1447,7 @@ static JSBool collection_list_lobs( JSContext *cx , uintN argc , jsval *vp )
    collection = (sdbCollectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
 
-   REPORT ( 0 == argc , "SdbCollection.listLob(): wrong arguments" ) ;
+   REPORT ( 0 == argc , "SdbCollection.listLobs(): wrong arguments" ) ;
 
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
@@ -1459,7 +1459,7 @@ static JSBool collection_list_lobs( JSContext *cx , uintN argc , jsval *vp )
 
    rc = sdbListLobs( *collection, cursor ) ;
    REPORT_RC ( SDB_OK == rc,
-               "SdbCollection.listLob()" , rc ) ;
+               "SdbCollection.listLobs()" , rc ) ;
 
    VERIFY ( JS_SetPrivate ( cx , objCursor , cursor ) ) ;
 done:
@@ -1468,7 +1468,45 @@ done:
 error:
    SAFE_RELEASE_CURSOR ( cursor ) ;
    SAFE_JS_FREE ( cx , cursor ) ;
-   TRY_REPORT ( cx , "SdbCollection.listLob(): false" ) ;
+   TRY_REPORT ( cx , "SdbCollection.listLobs(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_LIST_LOBPIECES, "collection_list_lob_pieces" )
+static JSBool collection_list_lob_pieces( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_COLL_LIST_LOBPIECES ) ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *collection = NULL ;
+   sdbCursorHandle *cursor = NULL ;
+   JSObject *objCursor = NULL ;
+
+   collection = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+
+   REPORT ( 0 == argc , "SdbCollection.listLobPieces(): wrong arguments" ) ;
+
+   cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
+   VERIFY ( cursor ) ;
+   *cursor = SDB_INVALID_HANDLE ;
+
+   objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
+   VERIFY ( objCursor ) ;
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
+
+   rc = sdbListLobPieces( *collection, cursor ) ;
+   REPORT_RC ( SDB_OK == rc,
+               "SdbCollection.listLobPieces()" , rc ) ;
+
+   VERIFY ( JS_SetPrivate ( cx , objCursor , cursor ) ) ;
+done:
+   PD_TRACE_EXIT( SDB_COLL_LIST_LOBPIECES ) ;
+   return ret ;
+error:
+   SAFE_RELEASE_CURSOR ( cursor ) ;
+   SAFE_JS_FREE ( cx , cursor ) ;
+   TRY_REPORT ( cx , "SdbCollection.listLobPieces(): false" ) ;
    goto done ;
 }
 
@@ -2539,6 +2577,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "getLob", collection_get_lob, 1, 0 ) ,
     JS_FS ( "deleteLob", collection_delete_lob, 1, 0 ) ,
     JS_FS ( "listLobs", collection_list_lobs, 1, 0 ) ,
+    JS_FS ( "listLobPieces", collection_list_lob_pieces, 1, 0 ) ,
     JS_FS_END
 } ;
 

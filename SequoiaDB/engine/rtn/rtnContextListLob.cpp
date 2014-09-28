@@ -78,7 +78,7 @@ namespace engine
          goto error ;
       }
 
-      _fetchLobHead = condition.getField( "HiddenMode" ).eoo() ;
+      _fetchLobHead = condition.getField( FIELD_NAME_LOB_LIST_PIECES_MODE ).eoo() ;
 
       rc = _fetcher.init( fullName.valuestr(),
                           _fetchLobHead ) ;

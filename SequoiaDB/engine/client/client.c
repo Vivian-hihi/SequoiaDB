@@ -7602,8 +7602,9 @@ error:
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
-                              sdbCursorHandle *cursorHandle )
+static INT32 _sdbListLobs( sdbCollectionHandle cHandle,
+                           BOOLEAN listPieces,
+                           sdbCursorHandle *cursorHandle )
 {
    INT32 rc = SDB_OK ;
    bson obj ;
@@ -7619,6 +7620,16 @@ SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
    {
       rc = SDB_SYS ;
       goto error ;
+   }
+
+   if ( listPieces )
+   {
+      rc = bson_append_bool( &obj, FIELD_NAME_LOB_LIST_PIECES_MODE, TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
    }
    bson_finish( &obj ) ;
 
@@ -7666,5 +7677,17 @@ error:
    }
    SET_INVALID_HANDLE( cursorHandle ) ;
    goto done ;
+}
+
+SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
+                              sdbCursorHandle *cursor )
+{
+   return _sdbListLobs( cHandle, FALSE, cursor ) ;
+}
+
+SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
+                                   sdbCursorHandle *cursor )
+{
+   return _sdbListLobs( cHandle, TRUE, cursor ) ;
 }
 
