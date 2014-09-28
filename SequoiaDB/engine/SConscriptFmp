@@ -53,6 +53,7 @@ utilFiles = [
       "util/utilLinenoiseWrapper.cpp",
       "util/utilStr.cpp",
       "util/utilParam.cpp",
+      "util/utilCommon.cpp",
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",
