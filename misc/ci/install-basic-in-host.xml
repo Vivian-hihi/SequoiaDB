@@ -98,6 +98,7 @@
 						<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="# catalogaddr=" replace="catalogaddr=${catalog.addrs}" flags="g" />
 					</then>
 				</if>
+				<sleep seconds="60"/>
 
 				<exec executable="cat" dir="${db.path}/conf/local/${coord.service.port}" failonerror="false" timeout="30000">
 					<arg line="${db.path}/conf/local/${coord.service.port}/sdb.conf" />

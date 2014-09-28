@@ -118,7 +118,7 @@
 					<property name="WORKSPACE" value="${WORKSPACE}" />
 					<property name="ci.script.file.path" value="${ci.script.file.path}" />
 					<property name="test.host.NAME" value="${test.machine.no2.basic}" />
-					<property name="parallel.count" value="1" />
+					<!-- <property name="parallel.count" value="1" /> -->
 				</antfetch>
 			</sequential>
 		</for>
@@ -140,13 +140,14 @@
 						<property name="test.log.path" value="${test.reports.path}/${test.environment}-${deploy.conffile.wildcard}-${host.NAME}-${current.time.log}" />
 						<echo message="Mkdir ${test.log.path}" />
 						<mkdir dir="${test.log.path}" />
-						<property name="test.config.file" value="${host.NAME}-local" />
-
 						<echo message="It's the cluster mod..." />
 						<sdbCopyAndTar fileHostName="${test.machine.no1.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 						<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 						<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.log.path}" />
 
+						<property name="test.config.file" value="${host.NAME}-local" />
+						<echo message="Mkdir ${test.log.path}/${test.config.file}" />
+						<mkdir dir="${test.log.path}/${test.config.file}" />
 						<sdbCopyAndTar fileHostName="${test.machine.no1.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
 						<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
 						<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/conf/local" savePath="${test.log.path}/${test.config.file}" />
