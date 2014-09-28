@@ -685,3 +685,27 @@ function changeDirOwner( ssh, osInfo, path, user, userGroup )
       // TODO: windows
    }
 }
+
+/* *****************************************************************************
+@discretion: check wether catalog is running or not
+@author: Tanzhaobo
+@parameter
+   db[object]: Sdb object
+@return 
+   [bool]
+***************************************************************************** */
+function isCatalogRunning( db )
+{
+   var rg = null ;
+   try
+   {
+      rg = db.getCatalogRG() ;
+   }
+   catch ( e )
+   {
+      return false ;
+   }
+   return true ;
+}
+
+

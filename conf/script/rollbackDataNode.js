@@ -110,6 +110,13 @@ function main()
 
    // connect to virtual coord
    var db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   // test whether catalog is running or not
+   // if catalog is not running, no need to rollback data group
+   var flag = isCatalogRunning( db ) ;
+   if ( !flag )
+   {
+      return RET_JSON ;
+   }
    // remove data group
    removeDataGroup( db, groups ) ;
 print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;

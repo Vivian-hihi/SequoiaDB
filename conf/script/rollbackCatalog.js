@@ -85,6 +85,13 @@ function main()
    var vCoordSvcName    = SYS_JSON[VCoordSvcName] ;
    // connect to virtual coord
    db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   // test whether catalog is running or not
+   // if catalog is not running, no need to rollback
+   var flag = isCatalogRunning( db ) ;
+   if ( !flag )
+   {
+      return RET_JSON ;
+   }
    // remove coord nodes
    removeCatalogGroup( db ) ;
 
