@@ -59,6 +59,7 @@ namespace engine
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" )\
        ( PMD_OPTION_VERSION, "version" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t"), po::value<string>(), "node type: db/om/all, default: db" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog/om" ) \
        ( PMD_COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), po::value<string>(), "service name, use ',' as seperator" )
 
    // initialize options
@@ -77,7 +78,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_RESVARG, "resolveArgument" )
    INT32 resolveArgument ( po::options_description &desc, INT32 argc,
                            CHAR **argv, vector<string> &listServices,
-                           INT32 &typeFilter )
+                           INT32 &typeFilter, INT32 &roleFilter )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTOP_RESVARG );
@@ -136,6 +137,18 @@ namespace engine
             goto error ;
          }
       }
+      if ( vm.count( PMD_OPTION_ROLE ))
+      {
+         string roleTemp = vm[PMD_OPTION_ROLE].as<string>() ;
+         roleFilter = utilGetRoleEnum( roleTemp.c_str() ) ;
+         if ( SDB_ROLE_MAX == roleFilter ||
+              SDB_ROLE_OMA == roleFilter )
+         {
+            std::cout << "role invalid" << endl ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
 
    done :
       PD_TRACE_EXITRC ( SDB_SDBSTOP_RESVARG, rc );
@@ -155,11 +168,13 @@ namespace engine
       UTIL_VEC_NODES listNodes ;
       BOOLEAN bFind = TRUE ;
       INT32 typeFilter = SDB_TYPE_DB ;
+      INT32 roleFilter =  -1 ;
       po::options_description desc ( "Command options" ) ;
       init ( desc ) ;
 
       // validate arguments
-      rc = resolveArgument ( desc, argc, argv, listServices, typeFilter ) ;
+      rc = resolveArgument ( desc, argc, argv, listServices, typeFilter,
+                             roleFilter ) ;
       if ( rc )
       {
          if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
@@ -178,10 +193,12 @@ namespace engine
       {
          // if used -p, list all nodes
          typeFilter = -1 ;
+         roleFilter = -1 ;
       }
 
       // list all nodes
-      utilListNodes( listNodes, typeFilter ) ;
+      utilListNodes( listNodes, typeFilter, NULL, OSS_INVALID_PID,
+                     roleFilter ) ;
 
       for ( UINT32 i = 0 ; i < listNodes.size() ; ++i )
       {

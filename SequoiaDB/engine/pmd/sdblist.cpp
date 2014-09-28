@@ -100,7 +100,7 @@ namespace engine
        ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t" ), po::value<string>(), "node type: db/om/cm/all, default: db" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p" ), po::value<string>(), "service name, use ',' as seperator" )  \
        ( PMD_COMMANDS_STRING( PMD_OPTION_MODE, ",m" ), po::value<string>(),"mode type: run/local, default: run" ) \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog/om/cm" ) \
        ( PMD_OPTION_VERSION, "show version" ) \
        ( PMD_OPTION_DETAIL, "show detail configuration" ) \
        ( PMD_OPTION_EXPAND, "show expand configuration" )
