@@ -34,8 +34,7 @@
 		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/install-basic-in-host.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
 		<basename property="install.package.filename" file="${install.package.fullname}"/>
 		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="30m" common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs} " />
-		<stafTools workType="shell" workHost="${deploy.host.name}" workDir="${test.machine.software.path}" waitTime="10m" common="cat ${test.machine.software.path}/install-basic-in-host.log" />
-		<!-- <stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/install-basic-in-host.log" /> -->
+		<stafTools workType="get" workHost="${deploy.host.name}" fileName="${test.machine.software.path}/install-basic-in-host.log" />
 
 		<stafTools workType="copy" workHost="LOCAL" fileName="${basedir}/deploy-test-result.xml" saveDir="${test.machine.software.path}" toHost="${deploy.host.name}" />
 	</target>

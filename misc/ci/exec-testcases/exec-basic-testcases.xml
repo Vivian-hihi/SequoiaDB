@@ -66,8 +66,7 @@
 
 		<stafTools workType="copy" workHost="${host.NAME}" fileName="${install.path}/${import.file}"  toHost="bl465-4" saveDir="${install.path}" />
 		<stafTools workType="shell" workHost="${host.NAME}" workDir="${test.machine.software.path}" common="${import.cmd}" failonerror="false" />
-		<stafTools workType="shell" workHost="${host.NAME}" workDir="${test.machine.software.path}" waitTime="10m" common="cat ${test.machine.software.path}/deploy-test-result.log" />
-		<!-- <stafTools worktype="get" workHost="${host.NAME}" fileName="${test.machine.software.path}/deploy-test-result.log" /> -->
+		<stafTools workType="get" workHost="${host.NAME}" fileName="${test.machine.software.path}/deploy-test-result.log" />
 	</target>
 
 	<target name="test-one-suite" depends="">
