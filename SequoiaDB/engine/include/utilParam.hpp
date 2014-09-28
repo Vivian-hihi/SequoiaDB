@@ -62,7 +62,17 @@ namespace engine
                               BOOLEAN createOnly = FALSE ) ;
 
    INT32 utilGetServiceByConfigPath( const string& confPath,
-                                     string &svcname ) ;
+                                     string &svcname,
+                                     BOOLEAN allowFileNotExist = TRUE ) ;
+
+   INT32 utilGetRoleByConfigPath( const string& confPath,
+                                  INT32 &role,
+                                  BOOLEAN allowFileNotExist = TRUE ) ;
+
+   INT32 utilGetCMService( const string &rootPath,
+                           const string &hostname,
+                           string &svcname,
+                           BOOLEAN allowFileNotExist = TRUE ) ;
 
 
 #if defined( _LINUX )

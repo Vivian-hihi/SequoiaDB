@@ -54,6 +54,7 @@ namespace engine
       string   _orgname ;
       string   _svcname ;
       INT32    _type ;
+      INT32    _role ;
       OSSPID   _pid ;
 
       _utilNodeInfo()
@@ -71,9 +72,19 @@ namespace engine
    INT32    utilListNodes( UTIL_VEC_NODES &nodes,
                            INT32 typeFilter = -1,
                            const CHAR *svcnameFilter = NULL,
-                           OSSPID pidFilter = OSS_INVALID_PID ) ;
+                           OSSPID pidFilter = OSS_INVALID_PID,
+                           INT32 roleFilter = -1 ) ;
 
    #define UTIL_WAIT_NODE_TIMEOUT         ( 15 * 60 ) // second
+
+   /*
+      enum nodes
+   */
+   INT32    utilEnumNodes( const string &localPath,
+                           UTIL_VEC_NODES &nodes,
+                           INT32 typeFilter = -1,
+                           const CHAR *svcnameFilter = NULL,
+                           INT32 roleFilter = -1 ) ;
 
    /*
       wait node bussiness ok

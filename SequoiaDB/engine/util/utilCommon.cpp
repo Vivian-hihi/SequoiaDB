@@ -89,6 +89,36 @@ namespace engine
       return "" ;
    }
 
+   const CHAR* utilDBRoleShortStr( SDB_ROLE dbrole )
+   {
+      switch ( dbrole )
+      {
+         case SDB_ROLE_DATA :
+            return "D" ;
+         case SDB_ROLE_COORD :
+            return "S" ;
+         case SDB_ROLE_CATALOG :
+            return "C" ;
+         default :
+            break ;
+      }
+      return "" ;
+   }
+
+   SDB_ROLE utilShortStr2DBRole( const CHAR * role )
+   {
+      if ( NULL == role )
+         return SDB_ROLE_MAX;
+      if ( 0 == ossStrcmp( role, "D" ) )
+         return SDB_ROLE_DATA;
+      else if ( 0 == ossStrcmp( role, "C" ) )
+         return SDB_ROLE_CATALOG;
+      else if ( 0 == ossStrcmp( role, "S" ) )
+         return SDB_ROLE_COORD;
+      else
+         return SDB_ROLE_MAX;
+   }
+
    SDB_TYPE utilGetTypeEnum( const CHAR * type )
    {
       if ( NULL == type )

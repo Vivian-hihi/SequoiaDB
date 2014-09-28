@@ -56,6 +56,9 @@ namespace engine
    SDB_ROLE utilGetRoleEnum( const CHAR *role ) ;
    const CHAR* utilDBRoleStr( SDB_ROLE dbrole ) ;
 
+   const CHAR* utilDBRoleShortStr( SDB_ROLE dbrole ) ;
+   SDB_ROLE utilShortStr2DBRole( const CHAR *role ) ;
+
    /*
       ROLE_TYPE ENUM AND STRING TRANSFER
    */

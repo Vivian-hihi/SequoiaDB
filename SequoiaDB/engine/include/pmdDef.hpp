@@ -244,6 +244,7 @@ namespace engine
    #define ENGINE_NPIPE_MSG_PID        "$pid"
    #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"
    #define ENGINE_NPIPE_MSG_TYPE       "$type"
+   #define ENGINE_NPIPE_MSG_ROLE       "$role"
    #define LIST_TIMEOUT                0
 
    /*

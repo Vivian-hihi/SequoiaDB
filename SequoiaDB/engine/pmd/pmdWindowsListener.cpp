@@ -139,6 +139,7 @@ namespace engine
 
          if ( readSize > 0 )
          {
+            INT64 writeSize = 0 ;
             PD_LOG ( PDINFO, "Received message from windows listener: %s",
                      tempBuffer ) ;
             if ( ossStrncmp ( tempBuffer, ENGINE_NPIPE_MSG_SHUTDOWN,
@@ -150,7 +151,6 @@ namespace engine
             else if ( ossStrncmp ( tempBuffer, ENGINE_NPIPE_MSG_PID,
                                    sizeof(ENGINE_NPIPE_MSG_PID) ) == 0 )
             {
-               INT64 writeSize = 0 ;
                OSSPID currentProcessPID = ossGetCurrentProcessID () ;
                rc = ossWriteNamedPipe ( pipeHandle, (CHAR*)&currentProcessPID,
                                         sizeof(currentProcessPID),
@@ -164,13 +164,24 @@ namespace engine
             else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_TYPE,
                                        sizeof( ENGINE_NPIPE_MSG_TYPE ) ) )
             {
-               INT64 writeSize = 0 ;
                INT32 type = pmdGetDBType() ;
                rc = ossWriteNamedPipe ( pipeHandle, (CHAR*)&type,
                                         sizeof(type), &writeSize ) ;
                if ( rc )
                {
                   PD_LOG ( PDWARNING, "Failed to write type to named pipe, "
+                           "rc = %d", rc ) ;
+               }
+            }
+            else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_ROLE,
+                                       sizeof( ENGINE_NPIPE_MSG_ROLE ) ) )
+            {
+               INT32 role = pmdGetDBRole() ;
+               rc = ossWriteNamedPipe( pipeHandle, (CHAR*)&role,
+                                       sizeof(role), &writeSize ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDWARNING, "Failed to write role to named pipe, "
                            "rc = %d", rc ) ;
                }
             }

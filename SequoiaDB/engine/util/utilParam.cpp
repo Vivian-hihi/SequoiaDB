@@ -43,6 +43,9 @@
 #include "pmdDef.hpp"
 #include "oss.h"
 #include "pmdOptions.hpp"
+#include "msgDef.h"
+#include "omagentDef.hpp"
+#include "utilCommon.hpp"
 #include <iostream>
 
 #include <boost/algorithm/string.hpp>
@@ -226,7 +229,8 @@ namespace engine
    }
 
    INT32 utilGetServiceByConfigPath( const string & confPath,
-                                     string & svcname )
+                                     string & svcname,
+                                     BOOLEAN allowFileNotExist )
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ;
@@ -244,11 +248,14 @@ namespace engine
          goto error ;
       }
 
-      rc = utilReadConfigureFile( conf, desc, vm ) ;
-      if ( SDB_IO == rc )
+      if ( allowFileNotExist && SDB_OK != ossAccess( conf ) )
       {
-         // if the file does not exist, let's just continue so that sequoiadb
-         // is able to create the file
+         goto done ;
+      }
+
+      rc = utilReadConfigureFile( conf, desc, vm ) ;
+      if ( allowFileNotExist && SDB_IO == rc )
+      {
          rc = SDB_OK ;
          goto done ;
       }
@@ -265,6 +272,107 @@ namespace engine
    done :
       return rc ;
    error :
+      goto done ;
+   }
+
+   INT32 utilGetRoleByConfigPath( const string &confPath, INT32 &role,
+                                  BOOLEAN allowFileNotExist )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ;
+      po::variables_map vm ;
+      desc.add_options()
+         ( PMD_OPTION_ROLE, po::value<string>(), "" ) ;
+      CHAR conf[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+      role = SDB_ROLE_STANDALONE ;
+
+      rc = utilBuildFullPath ( confPath.c_str(), PMD_DFT_CONF,
+                               OSS_MAX_PATHSIZE, conf ) ;
+      if ( rc )
+      {
+         std::cerr << "Failed to build full path, rc: " << rc << std::endl ;
+         goto error ;
+      }
+
+      if ( allowFileNotExist && SDB_OK != ossAccess( conf ) )
+      {
+         goto done ;
+      }
+
+      rc = utilReadConfigureFile( conf, desc, vm ) ;
+      if ( allowFileNotExist && SDB_IO == rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( vm.count ( PMD_OPTION_ROLE ) )
+      {
+         string roleStr = vm [ PMD_OPTION_ROLE ].as<string>() ;
+         role = utilGetRoleEnum( roleStr.c_str() ) ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 utilGetCMService( const string & rootPath,
+                           const string & hostname,
+                           string & svcname,
+                           BOOLEAN allowFileNotExist )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ;
+      po ::variables_map vm ;
+      CHAR confFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      desc.add_options()
+         ( "*", po::value<string>(), "" )
+         ;
+      string hostnameKey = hostname + string( SDBCM_CONF_PORT ) ;
+      svcname = boost::lexical_cast<string>( SDBCM_DFT_PORT ) ;
+
+      rc = utilBuildFullPath( rootPath.c_str(), SDBCM_CONF_PATH_FILE,
+                              OSS_MAX_PATHSIZE, confFile ) ;
+      if ( rc )
+      {
+         std::cerr << "Failed to build full path, rc: " << rc << std::endl ;
+         goto error ;
+      }
+
+      if ( allowFileNotExist && SDB_OK != ossAccess( confFile ) )
+      {
+         goto done ;
+      }
+
+      rc = utilReadConfigureFile( confFile, desc, vm ) ;
+      if ( allowFileNotExist && SDB_IO == rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( vm.count ( hostnameKey ) )
+      {
+         svcname = vm [ hostnameKey ].as<string>() ;
+      }
+      else if ( vm.count( SDBCM_CONF_DFTPORT ) )
+      {
+         svcname = vm [ SDBCM_CONF_DFTPORT ].as<string>() ;
+      }
+
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

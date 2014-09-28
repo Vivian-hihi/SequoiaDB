@@ -39,6 +39,8 @@
 #include "utilCommon.hpp"
 #include "ossProc.hpp"
 #include "ossUtil.hpp"
+#include "ossPath.hpp"
+#include "utilParam.hpp"
 #include "pd.hpp"
 
 #if defined( _LINUX )
@@ -52,7 +54,8 @@ namespace engine
    INT32 utilListNodes( UTIL_VEC_NODES & nodes,
                         INT32 typeFilter,
                         const CHAR * svcnameFilter,
-                        OSSPID pidFilter )
+                        OSSPID pidFilter,
+                        INT32 roleFilter )
    {
       INT32 rc                   = SDB_OK ;
       DIR *pDir                  = NULL ;
@@ -156,6 +159,36 @@ namespace engine
             continue ;
          }
 
+         // 4. role
+         findNode._role = SDB_ROLE_MAX ;
+         if ( ' ' == *( pSvcEnd + 1 ) )
+         {
+            findNode._role = utilShortStr2DBRole( pSvcEnd + 2 ) ;
+         }
+
+         if ( SDB_ROLE_MAX == findNode._role )
+         {
+            switch( findNode._type )
+            {
+               case SDB_TYPE_OM :
+                  findNode._role = SDB_ROLE_OM ;
+                  break ;
+               case SDB_TYPE_OMA :
+                  findNode._role = SDB_ROLE_OMA ;
+                  break ;
+               case SDB_TYPE_DB :
+                  findNode._role = SDB_ROLE_STANDALONE ;
+                  break ;
+               default :
+                  break ;
+            }
+         }
+
+         if ( roleFilter != -1 && roleFilter != findNode._role )
+         {
+            continue ;
+         }
+
          findNode._svcname = string( pSvcBegin + 1 ) ;
          *pSvcEnd = ')' ;
          findNode._orgname = commandLine ;
@@ -243,7 +276,8 @@ namespace engine
    }
 
    INT32 utilListNodes( UTIL_VEC_NODES & nodes, INT32 typeFilter,
-                        const CHAR * svcnameFilter, OSSPID pidFilter )
+                        const CHAR * svcnameFilter, OSSPID pidFilter,
+                        INT32 roleFilter )
    {
       INT32 rc = SDB_OK ;
       vector< string > names ;
@@ -301,6 +335,21 @@ namespace engine
             continue ;
          }
 
+         // 4. role
+         rc = utilWriteReadPipe( names[ i ].c_str(), ENGINE_NPIPE_MSG_ROLE,
+                                 sizeof( ENGINE_NPIPE_MSG_ROLE ),
+                                 (CHAR *)&findNode._role,
+                                 sizeof( findNode._role ),
+                                 &readSize ) ;
+         if ( rc )
+         {
+            continue ;
+         }
+         if ( roleFilter != -1 && roleFilter != findNode._role )
+         {
+            continue ;
+         }
+
          // find it
          findNode._orgname = names[ i ] ;
          findNode._svcname = names[ i ].substr( prefixLen ) ;
@@ -322,6 +371,66 @@ namespace engine
    }
 
 #endif // _LINUX
+
+   INT32 utilEnumNodes( const string &localPath,
+                        UTIL_VEC_NODES &nodes,
+                        INT32 typeFilter,
+                        const CHAR *svcnameFilter,
+                        INT32 roleFilter )
+   {
+      INT32 rc = SDB_OK ;
+      vector< string > allsvcnames ;
+      utilNodeInfo node ;
+      CHAR confPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      node._orgname = "" ;
+      node._pid = OSS_INVALID_PID ;
+
+      if ( SDB_TYPE_OMA != typeFilter )
+      {
+         rc = ossEnumSubDirs( localPath, allsvcnames, 1 ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Enum %s failed, rc: %d", localPath.c_str(),
+                    rc ) ;
+            goto error ;
+        }
+      }
+
+      for ( UINT32 i = 0 ; i < allsvcnames.size() ; ++i )
+      {
+         if ( svcnameFilter && *svcnameFilter &&
+              0 != ossStrcmp( svcnameFilter, allsvcnames[ i ].c_str() ) )
+         {
+            continue ;
+         }
+         node._svcname = allsvcnames[ i ] ;
+
+         utilBuildFullPath( localPath.c_str(), node._svcname.c_str(),
+                            OSS_MAX_PATHSIZE, confPath ) ;
+
+         rc = utilGetRoleByConfigPath( confPath, node._role ) ;
+         if ( -1 != roleFilter && ( SDB_OK != rc ||
+              roleFilter != node._role ) )
+         {
+            continue ;
+         }
+
+         node._type = utilRoleToType( (SDB_ROLE)node._role ) ;
+         if ( -1 != typeFilter && typeFilter != node._type )
+         {
+            continue ;
+         }
+
+         // find it
+         nodes.push_back( node ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
    INT32 utilWaitNodeOK( utilNodeInfo & node, const CHAR * svcname,
                          OSSPID pid, INT32 typeFilter,

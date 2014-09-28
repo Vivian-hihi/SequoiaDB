@@ -58,142 +58,75 @@
 #include <iostream>
 #include <vector>
 
-using namespace std;
-
-/*
-   SDB_RUN_MODE_TYPE_STR DEFINE
-*/
-#define SDB_RUN_MODE_TYPE_LOCAL_STR  "local"
-#define SDB_RUN_MODE_TYPE_RUN_STR    "run"
-
-/*
-  SDBLIST_TYPE_STR
-*/
-#define SDBLIST_TYPE_OMA_STR    "cm"
-#define SDBLIST_TYPE_OM_STR     "om"
-#define SDBLIST_TYPE_DB_STR     "db"
-#define SDBLIST_TYPE_ALL_STR    "all"
-
-/*
-   SDB_RUN_MODE_TYPE define
-*/
-enum SDB_RUN_MODE_TYPE
-{
-   LOCAL = 1,
-   RUN,
-   SDB_RUN_MODE_TYPE_MAX
-} ;
-
-/*
-   OPTION DEFINE
-*/
-#define PMD_OPTION_TYPE             "type"
-#define PMD_OPTION_MODE             "mode"
-#define PMD_OPTION_DETAIL           "detail"
-#define PMD_OPTION_EXPAND           "expand"
-#define SDB_CONF_FILE_PATH_FORMAT   SDBCM_LOCAL_PATH OSS_FILE_SEP "%s" OSS_FILE_SEP PMD_DFT_CONF
-
-#define COMMANDS_OPTIONS \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h" ), "help" ) \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t" ), boost::program_options::value<string>(), "node type: db/om/cm/all, default: db" ) \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p" ), boost::program_options::value<string>(), "service name, use ',' as seperator" )  \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_MODE, ",m" ), boost::program_options::value<string>(),"mode type: run/local,default: run" ) \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), boost::program_options::value<string>(), "role type: coord/data/catalog" ) \
-       ( PMD_OPTION_VERSION, "show version" ) \
-       ( PMD_OPTION_DETAIL,"show detail configuration" ) \
-       ( PMD_OPTION_EXPAND,"show expand configuration" )
-
+using namespace std ;
+using namespace bson ;
 
 namespace engine
 {
-   // get node's role
-   INT32 _getNodeRole( const CHAR *confpath, const CHAR *svcname, string &role )
+
+   /*
+      SDB_RUN_MODE_TYPE_STR DEFINE
+   */
+   #define SDB_RUN_MODE_TYPE_LOCAL_STR  "local"
+   #define SDB_RUN_MODE_TYPE_RUN_STR    "run"
+
+   /*
+     SDBLIST_TYPE_STR
+   */
+   #define SDBLIST_TYPE_OMA_STR    "cm"
+   #define SDBLIST_TYPE_OM_STR     "om"
+   #define SDBLIST_TYPE_DB_STR     "db"
+   #define SDBLIST_TYPE_ALL_STR    "all"
+
+   /*
+      SDB_RUN_MODE_TYPE define
+   */
+   enum SDB_RUN_MODE_TYPE
    {
-      CHAR sdbConfTemp[OSS_MAX_PATHSIZE + 1] = { 0 } ;
-      CHAR sdbConfPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
-      INT32 rc = SDB_OK ;
-      po::options_description desc ;
-      po::variables_map vm ;
-      desc.add_options()
-         ( PMD_OPTION_ROLE, po::value<string>(), "" );
+      LOCAL = 1,
+      RUN
+   } ;
 
-      ossSnprintf( sdbConfTemp,OSS_MAX_PATHSIZE,SDB_CONF_FILE_PATH_FORMAT,
-                  svcname ) ;
-      utilBuildFullPath( confpath, sdbConfTemp,
-                         OSS_MAX_PATHSIZE, sdbConfPath ) ;
+   /*
+      OPTION DEFINE
+   */
+   #define PMD_OPTION_MODE             "mode"
+   #define PMD_OPTION_DETAIL           "detail"
+   #define PMD_OPTION_EXPAND           "expand"
+   #define SDB_CONF_FILE_PATH_FORMAT   SDBCM_LOCAL_PATH OSS_FILE_SEP "%s" OSS_FILE_SEP PMD_DFT_CONF
 
-      rc = ossAccess( sdbConfPath, 0 ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
-      utilReadConfigureFile( sdbConfPath, desc, vm ) ;
-
-      if( vm.count ( PMD_OPTION_ROLE ) )
-      {
-         role = vm [ PMD_OPTION_ROLE ].as<string>() ;
-      }
-
-   done :
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // get sdbcm's port
-   INT32 _getCMPort( const CHAR *confpath, string &port )
-   {
-      CHAR sdbConfPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
-      INT32 rc = SDB_OK ;
-      po::options_description desc ;
-      po::variables_map vm ;
-      desc.add_options()
-         ( SDBCM_CONF_DFTPORT, po::value<string>(), "" );
-
-      utilBuildFullPath( confpath, SDBCM_CONF_PATH_FILE,
-                         OSS_MAX_PATHSIZE, sdbConfPath ) ;
-
-      rc = ossAccess( sdbConfPath, 0 ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      utilReadConfigureFile( sdbConfPath, desc, vm ) ;
-
-      if( vm.count ( SDBCM_CONF_DFTPORT ) )
-      {
-         port = vm [ SDBCM_CONF_DFTPORT ].as<string>() ;
-      }
-
-   done :
-      return rc ;
-   error :
-      goto done ;
-   }
+   #define COMMANDS_OPTIONS \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h" ), "help" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t" ), po::value<string>(), "node type: db/om/cm/all, default: db" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p" ), po::value<string>(), "service name, use ',' as seperator" )  \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_MODE, ",m" ), po::value<string>(),"mode type: run/local, default: run" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog" ) \
+       ( PMD_OPTION_VERSION, "show version" ) \
+       ( PMD_OPTION_DETAIL, "show detail configuration" ) \
+       ( PMD_OPTION_EXPAND, "show expand configuration" )
 
    //print node's detail configuration by sdb conf file and svcname
-   void _printfDetail( const CHAR *confpath, const CHAR *svcname, INT32 type )
+   void _printfDetail( const CHAR *rootPath, const CHAR *svcname, INT32 type )
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ;
       po::variables_map vm ;
       desc.add_options()
-         ("*",po::value<string>(),"") ;
-
-      CHAR sdbConfTemp[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+         ( "*", po::value<string>(), "" ) ;
       CHAR sdbConfPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
-      ossSnprintf( sdbConfTemp,OSS_MAX_PATHSIZE,SDB_CONF_FILE_PATH_FORMAT,
-                  svcname ) ;
-      if( (SDB_TYPE)type == SDB_TYPE_DB )
+
+      if( (SDB_TYPE)type != SDB_TYPE_OMA )
       {
-         utilBuildFullPath( confpath, sdbConfTemp,
+         CHAR sdbConfTemp[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+         ossSnprintf( sdbConfTemp, OSS_MAX_PATHSIZE,
+                      SDB_CONF_FILE_PATH_FORMAT, svcname ) ;
+         utilBuildFullPath( rootPath, sdbConfTemp,
                             OSS_MAX_PATHSIZE, sdbConfPath ) ;
       }
       else
       {
-         utilBuildFullPath( confpath,SDBCM_CONF_PATH_FILE,
-                           OSS_MAX_PATHSIZE, sdbConfPath ) ;
+         utilBuildFullPath( rootPath, SDBCM_CONF_PATH_FILE,
+                            OSS_MAX_PATHSIZE, sdbConfPath ) ;
       }
       rc = ossAccess( sdbConfPath, 0 ) ;
       if ( rc )
@@ -205,27 +138,28 @@ namespace engine
       po::variables_map::iterator it = vm.begin() ;
       while( it != vm.end() )
       {
-         ossPrintf("   %-18.18s: %s\n", it->first.data(),
-                                        it->second.as<string>().c_str()) ;
+         ossPrintf( "   %-18.18s: %s"OSS_NEWLINE, it->first.data(),
+                    it->second.as<string>().c_str() ) ;
          ++it ;
       }
    }
 
    //print node's expand configuration by sdb conf file and svcname
-   void _printfExpand( const CHAR *confpath, const CHAR *svcname, INT32 type )
+   void _printfExpand( const CHAR *rooPath, const CHAR *svcname, INT32 type )
    {
       INT32 rc = SDB_OK ;
       BSONObj objData ;
-      CHAR sdbConfTemp[OSS_MAX_PATHSIZE + 1] = { 0 } ;
       CHAR sdbConfPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
-      ossSnprintf( sdbConfTemp,OSS_MAX_PATHSIZE,SDB_CONF_FILE_PATH_FORMAT,
-                  svcname ) ;
-      if( (SDB_TYPE)type == SDB_TYPE_DB )
-      {
-         utilBuildFullPath( confpath, sdbConfTemp,
-                            OSS_MAX_PATHSIZE, sdbConfPath ) ;
-         engine::pmdOptionsCB option ;
 
+      if( (SDB_TYPE)type != SDB_TYPE_OMA )
+      {
+         CHAR sdbConfTemp[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+         ossSnprintf( sdbConfTemp, OSS_MAX_PATHSIZE,
+                      SDB_CONF_FILE_PATH_FORMAT, svcname ) ;
+         utilBuildFullPath( rooPath, sdbConfTemp,
+                            OSS_MAX_PATHSIZE, sdbConfPath ) ;
+
+         engine::pmdOptionsCB option ;
          rc = ossAccess( sdbConfPath, 0 ) ;
          if ( rc )
          {
@@ -239,74 +173,67 @@ namespace engine
             BSONElement e = it.next() ;
             if( e.type() == String )
             {
-               ossPrintf("   %-18.18s: %s\n", e.fieldName(), e.valuestr() ) ;
+               ossPrintf( "   %-18.18s: %s"OSS_NEWLINE, e.fieldName(),
+                          e.valuestr() ) ;
             }
             else if( e.type() == NumberInt )
             {
-               ossPrintf("   %-18.18s: %d\n", e.fieldName(), e.numberInt() ) ;
+               ossPrintf( "   %-18.18s: %d"OSS_NEWLINE, e.fieldName(),
+                          e.numberInt() ) ;
             }
             else if( e.type() == NumberLong )
             {
-               #if defined(_WINDOWS)
-                  ossPrintf( "   %-18.18s: %I64d\n", e.fieldName(),
-                             e.numberLong() ) ;
-               #else
-                  ossPrintf( "   %-18.18s: %lld\n", e.fieldName(),
-                             e.numberLong() ) ;
-               #endif
+               ossPrintf( "   %-18.18s: %lld"OSS_NEWLINE, e.fieldName(),
+                          e.numberLong() ) ;
             }
             else if( e.type() == NumberDouble )
             {
-               ossPrintf( "   %-18.18s: %f\n", e.fieldName(),
+               ossPrintf( "   %-18.18s: %f"OSS_NEWLINE, e.fieldName(),
                           e.numberDouble() ) ;
             }
             else if( e.type() == Bool )
             {
-               ossPrintf( "   %-18.18s: %s\n", e.fieldName(),
-                          (e.boolean()?"TRUE":"FALSE" ));
+               ossPrintf( "   %-18.18s: %s"OSS_NEWLINE, e.fieldName(),
+                          (e.boolean() ? "TRUE" : "FALSE" ) ) ;
             }
             else
             {
-               ossPrintf( "   %-18.18s: %s\n", e.fieldName(),"-" ) ;
+               ossPrintf( "   %-18.18s: %s"OSS_NEWLINE, e.fieldName(), "-" ) ;
             }
          }
       }
       else
       {
-         _printfDetail( confpath, NULL, SDB_TYPE_OMA );
+         _printfDetail( rooPath, NULL, type ) ;
       }
    }
 
    //printf detail or expand
-   void _printfAll( const CHAR *confpath, string &svcname,INT32 type,
-                    BOOLEAN detail, BOOLEAN expand, INT32 pid,
-                    BOOLEAN online )
+   void _printfAll( const CHAR *rooPath, utilNodeInfo &node,
+                    BOOLEAN detail, BOOLEAN expand )
    {
-      if( online )
+      if( node._pid != OSS_INVALID_PID )
       {
-         ossPrintf( "%s(%s) (%d)"OSS_NEWLINE, utilDBTypeStr( (SDB_TYPE)type ),
-                   svcname.c_str(), pid ) ;
-         if( detail )
-         {
-            _printfDetail( confpath, svcname.c_str(), (SDB_TYPE)type ) ;
-         }
-         if( expand )
-         {
-            _printfExpand( confpath, svcname.c_str(), (SDB_TYPE)type ) ;
-         }
+         ossPrintf( "%s%s(%s) (%d)"OSS_NEWLINE,
+                    utilDBTypeStr( (SDB_TYPE)node._type ),
+                    utilDBRoleShortStr( (SDB_ROLE)node._role ),
+                    node._svcname.c_str(), node._pid ) ;
       }
       else
       {
-         ossPrintf( "%s(%s) (-)"OSS_NEWLINE, utilDBTypeStr( (SDB_TYPE)type),
-                    svcname.c_str()) ;
-         if( detail )
-         {
-            _printfDetail( confpath, svcname.c_str(), SDB_TYPE_DB ) ;
-         }
-         if( expand )
-         {
-            _printfExpand( confpath, svcname.c_str(), SDB_TYPE_DB ) ;
-         }
+         ossPrintf( "%s%s(%s) (-)"OSS_NEWLINE,
+                    utilDBTypeStr( (SDB_TYPE)node._type),
+                    utilDBRoleShortStr( (SDB_ROLE)node._role ),
+                    node._svcname.c_str() ) ;
+      }
+
+      if( detail )
+      {
+         _printfDetail( rooPath, node._svcname.c_str(), node._type ) ;
+      }
+      else if( expand )
+      {
+         _printfExpand( rooPath, node._svcname.c_str(), node._type ) ;
       }
    }
 
@@ -327,8 +254,8 @@ namespace engine
    INT32 resolveArgument ( po::options_description &desc,
                            INT32 argc, CHAR **argv,
                            vector<string> &listServices,
-                           INT32 &typeFilter, INT32 &mode,
-                           INT32 &role, BOOLEAN &detail,
+                           INT32 &typeFilter, INT32 &modeFilter,
+                           INT32 &roleFilter, BOOLEAN &detail,
                            BOOLEAN &expand )
    {
       INT32 rc = SDB_OK ;
@@ -401,12 +328,12 @@ namespace engine
          if( 0 == ossStrcasecmp( modeTemp.c_str(),
                                  SDB_RUN_MODE_TYPE_LOCAL_STR ) )
          {
-            mode = LOCAL ;
+            modeFilter = LOCAL ;
          }
          else if( 0 == ossStrcasecmp( modeTemp.c_str(),
                                       SDB_RUN_MODE_TYPE_RUN_STR ) )
          {
-            mode = RUN ;
+            modeFilter = RUN ;
          }
          else
          {
@@ -419,19 +346,8 @@ namespace engine
       if ( vm.count( PMD_OPTION_ROLE ))
       {
          string roleTemp = vm[PMD_OPTION_ROLE].as<string>() ;
-         if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_COORD_STR ) )
-         {
-            role = SDB_ROLE_COORD ;
-         }
-         else if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_CATALOG_STR ) )
-         {
-            role = SDB_ROLE_CATALOG ;
-         }
-         else if( 0 == ossStrcasecmp( roleTemp.c_str(), SDB_ROLE_DATA_STR ) )
-         {
-            role = SDB_ROLE_DATA ;
-         }
-         else
+         roleFilter = utilGetRoleEnum( roleTemp.c_str() ) ;
+         if ( SDB_ROLE_MAX == roleFilter )
          {
             std::cout << "role invalid" << endl ;
             rc = SDB_INVALIDARG ;
@@ -463,16 +379,13 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_SDBLIST_MAIN );
       INT32 total = 0 ;
       vector<string> listServices ;
-      vector<string> listAllNodes ;
       UTIL_VEC_NODES listNodes ;
-      BOOLEAN bFind = TRUE ;
-      INT32 typeFilter = SDB_TYPE_DB ;
-      BOOLEAN detail = FALSE ;
-      BOOLEAN expand = FALSE ;
-      INT32 role =  -1 ;
-      string roleTemp = "Unknown" ;
-      string portTemp = "Unknown" ;
-      INT32 mode = RUN ;
+      BOOLEAN bFind        = TRUE ;
+      INT32 typeFilter     = SDB_TYPE_DB ;
+      BOOLEAN detail       = FALSE ;
+      BOOLEAN expand       = FALSE ;
+      INT32 roleFilter     =  -1 ;
+      INT32 modeFilter     = RUN ;
       CHAR rootPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
       CHAR localPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
 
@@ -481,7 +394,7 @@ namespace engine
 
       // validate arguments
       rc = resolveArgument ( desc, argc, argv, listServices, typeFilter,
-                             mode, role, detail, expand ) ;
+                             modeFilter, roleFilter, detail, expand ) ;
       if( rc )
       {
          if( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
@@ -496,151 +409,116 @@ namespace engine
       rc = ossGetEWD( rootPath, OSS_MAX_PATHSIZE ) ;
       if( rc )
       {
-        ossPrintf("Error:Get module self path failed: %d"OSS_NEWLINE, rc ) ;
+        ossPrintf( "Error:Get module self path failed: %d"OSS_NEWLINE, rc ) ;
         goto error ;
       }
-
-      if( listServices.size() > 0 )
+      rc = utilBuildFullPath( rootPath, SDBCM_LOCAL_PATH, OSS_MAX_PATHSIZE,
+                              localPath ) ;
+      if ( rc )
       {
-         // if used -p, so list all nodes and cm,except cmd
+         ossPrintf( "Error: Build local config path failed: %d"OSS_NEWLINE,
+                    rc ) ;
+         goto error ;
+      }
+
+      if ( listServices.size() > 0 )
+      {
+         // if used -p, so list all nodes
          typeFilter = -1 ;
-         utilListNodes( listNodes, typeFilter ) ;
+         roleFilter = -1 ;
+      }
 
-         for( UINT32 i = 0 ; i < listNodes.size() ; ++i )
+      utilListNodes( listNodes, typeFilter, NULL, OSS_INVALID_PID,
+                     roleFilter ) ;
+
+      if ( RUN == modeFilter )
+      {
+         UTIL_VEC_NODES::iterator it = listNodes.begin() ;
+         while( it != listNodes.end() && listServices.size() > 0 )
          {
-            utilNodeInfo &info = listNodes[ i ] ;
-
-            if( listServices.size() > 0 )
+            bFind = FALSE ;
+            utilNodeInfo &info = *it ;
+            for ( UINT32 j = 0 ; j < listServices.size() ; ++j )
             {
-               bFind = FALSE ;
-               for( UINT32 j = 0 ; j < listServices.size() ; ++j )
+               if ( info._svcname == listServices[ j ] )
                {
-                  if( 0 == ossStrcmp( info._svcname.c_str(),
-                                      listServices[ j ].c_str() ) )
-                  {
-                     bFind = TRUE ;
-                     break ;
-                  }
+                  bFind = TRUE ;
+                  break ;
                }
             }
-            else
+            if ( !bFind )
             {
-               bFind = TRUE ;
+               it = listNodes.erase( it ) ;
+               continue ;
             }
+            ++it ;
+         }
+      }
+      else
+      {
+         UTIL_VEC_NODES tmpNodes = listNodes ;
+         listNodes.clear() ;
+         utilEnumNodes( localPath, listNodes, typeFilter, NULL,
+                        roleFilter ) ;
+         if ( ( -1 == typeFilter || SDB_TYPE_OMA == typeFilter ) &&
+              ( -1 == roleFilter || SDB_ROLE_OMA == roleFilter ) )
+         {
+            CHAR hostName[ OSS_MAX_HOSTNAME + 1 ] = { 0 } ;
+            utilNodeInfo node ;
+            node._orgname = "" ;
+            node._pid = OSS_INVALID_PID ;
+            node._role = SDB_ROLE_OMA ;
+            node._type = SDB_TYPE_OMA ;
+            ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
+            utilGetCMService( rootPath, hostName, node._svcname, TRUE ) ;
+            listNodes.push_back( node ) ;
+         }
 
-            if( bFind )
+         UTIL_VEC_NODES::iterator it = listNodes.begin() ;
+         while ( it != listNodes.end() && listServices.size() > 0 )
+         {
+            utilNodeInfo &info = *it ;
+            bFind = FALSE ;
+            for ( UINT32 j = 0 ; j < listServices.size() ; ++j )
             {
-               ++total ;
-               _printfAll( rootPath, info._svcname, info._type, detail,
-                           expand, info._pid, TRUE ) ;
+               if ( info._svcname == listServices[ j ] )
+               {
+                  bFind = TRUE ;
+                  break ;
+               }
+            }
+            if ( !bFind )
+            {
+               it = listNodes.erase( it ) ;
+               continue ;
+            }
+            ++it ;
+         }
+
+         for ( UINT32 i = 0 ; i < listNodes.size() ; ++i )
+         {
+            for ( UINT32 k = 0 ; k < tmpNodes.size() ; ++k )
+            {
+               if ( listNodes[ i ]._svcname == tmpNodes[ k ]._svcname )
+               {
+                  listNodes[ i ] = tmpNodes[ k ] ;
+                  break ;
+               }
             }
          }
       }
 
-      // not use -p
-      else
+      // print
+      for ( UINT32 i = 0 ; i < listNodes.size() ; ++i )
       {
-         if( typeFilter == -1 || (SDB_TYPE)typeFilter == SDB_TYPE_DB )
-         {
-            utilBuildFullPath( rootPath, SDBCM_LOCAL_PATH,
-                               OSS_MAX_PATHSIZE, localPath ) ;
-
-            ossEnumSubDirs( localPath, listAllNodes ) ;
-         }
-         if( typeFilter == -1 || (SDB_TYPE)typeFilter == SDB_TYPE_OMA )
-         {
-            rc = _getCMPort( rootPath, portTemp ) ;
-            if( !rc )
-            {
-               listAllNodes.push_back( portTemp ) ;
-            }
-         }
-
-         utilListNodes( listNodes,typeFilter ) ;
-
-         for( UINT32 i = 0; i < listNodes.size(); i++ )
-         {
-            utilNodeInfo &info = listNodes[i] ;
-            // not use role
-            if( role == -1 )
-            {
-               ++total ;
-               _printfAll( rootPath,info._svcname,info._type,
-                           detail, expand, info._pid, TRUE ) ;
-            }
-            else
-            {
-               // type = db
-               if( (SDB_TYPE)info._type == SDB_TYPE_DB )
-               {
-                  rc = _getNodeRole( rootPath, info._svcname.c_str(),
-                                     roleTemp ) ;
-                  if( rc )
-                  {
-                     roleTemp = string( utilDBRoleStr((SDB_ROLE)role) ) ;
-                  }
-                  if( 0 == ossStrcmp( roleTemp.c_str(),
-                                      utilDBRoleStr( (SDB_ROLE)role )) )
-                  {
-                     ++total ;
-                     _printfAll( rootPath, info._svcname,info._type,
-                                detail, expand, info._pid, TRUE ) ;
-                  }
-               }
-            }
-         }
-
-         //mode = LOCAL
-         if( mode == LOCAL )
-         {
-            for( UINT32 i = 0; i < listAllNodes.size(); i++ )
-            {
-               string &info = listAllNodes[i] ;
-               bFind = FALSE ;
-               for( UINT32 j = 0; j < listNodes.size(); j++ )
-               {
-                  if( 0 == ossStrcmp( info.c_str(),
-                                      listNodes[j]._svcname.c_str()) )
-                  {
-                     bFind = TRUE ;
-                     break ;
-                  }
-               }
-               if( bFind )
-               {
-                  continue ;
-               }
-               // node is offline and not use role
-               if( role == -1 )
-               {
-                  ++total ;
-                  _printfAll( rootPath,info, SDB_TYPE_DB,
-                              detail, expand, 0, FALSE ) ;
-               }
-               else
-               {
-                  rc = _getNodeRole( rootPath, info.c_str(),
-                                     roleTemp ) ;
-                  if ( rc )
-                  {
-                     roleTemp = string( utilDBRoleStr((SDB_ROLE)role) ) ;
-                  }
-
-                  if( 0 == ossStrcmp( roleTemp.c_str(),
-                                      utilDBRoleStr( (SDB_ROLE)role )) )
-                  {
-                     ++total ;
-                     _printfAll( rootPath, info,SDB_TYPE_DB,
-                                 detail, expand, 0, FALSE ) ;
-                  }
-               }
-            }
-         }
+         ++total ;
+         _printfAll( rootPath, listNodes[ i ], detail, expand ) ;
       }
 
       // if no -p, and list all/list cm, need to show sdbcmd
-      if ( listServices.size() == 0 && ( SDB_TYPE_OMA == typeFilter ||
-           -1 == typeFilter ) && role == -1 )
+      if ( listServices.size() == 0 &&
+           ( SDB_TYPE_OMA == typeFilter || -1 == typeFilter ) &&
+           ( roleFilter == -1 || SDB_ROLE_OMA == roleFilter ) )
       {
          vector < ossProcInfo > procs ;
          ossEnumProcesses( procs, PMDDMN_EXE_NAME, TRUE, FALSE ) ;
