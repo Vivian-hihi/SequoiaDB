@@ -105,7 +105,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninstallRemoteAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
-//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
 //   IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
 
 
@@ -1146,88 +1146,83 @@ namespace engine
       return SDB_OK ;
    }
 
-//   /******************************* query install status *********************/
-//   /*
-//      _omaInstallDBStatus
-//   */
-//   _omaInstallDBStatus::_omaInstallDBStatus ()
-//   {
-//      _scope = NULL ;
-//      _fileBuff = NULL ;
-//      _buffSize = 0 ;
-//      _readSize = 0 ;
-//      _taskID = OMA_INVALID_TASKID ;
+   /******************************* query install status *********************/
+   /*
+      _omaInstallDBStatus
+   */
+   _omaInstallDBStatus::_omaInstallDBStatus ()
+   {
+      _taskID = OMA_INVALID_TASKID ;
 //      _taskMgr = NULL ;
-//   }
-//
-//   _omaInstallDBStatus::~_omaInstallDBStatus ()
-//   {
-//   }
-//
-//   INT32 _omaInstallDBStatus::init ( const CHAR *pInstallInfo )
-//   {
-//      INT32 rc = SDB_OK ;
-//      // parse bson to get task id
-//      BSONElement ele ;
-//      BSONObj arg( pInstallInfo ) ;
-//      try
-//      {
-//         ele = arg.getField ( OMA_FIELD_TASKID ) ;
-//         if ( NumberLong != ele.type() )
-//         {
-//            rc = SDB_UNEXPECTED_RESULT ;
-//            PD_LOG_MSG ( PDERROR, "Failed to get taskID, rc = %d", rc ) ;
-//            goto error ;
-//         }
-//         _taskID = ele.numberLong () ;
-//      }
-//      catch ( std::exception &e )
-//      {
-//         rc = SDB_SYS ;
-//         PD_LOG_MSG ( PDERROR,
-//                      "Failed to get taskID, received unexpected error: %s",
-//                      e.what() ) ;
-//         goto error ;
-//      }
-//      // get task manager
-//      _taskMgr = getTaskMgr() ;
-//
-//   done:
-//      return rc ;
-//   error:
-//      goto done ;
-//   }
-//
-//   INT32 _omaInstallDBStatus::doit ( BSONObj &objRet )
-//   {
-//      INT32 rc = SDB_OK ;
-//      _omaTask *pTask  = NULL ;
-//      _omaInstallDBBusinessTask *pChildTask = NULL ;
-//      pTask = _taskMgr->findTask( _taskID ) ;
-//
-//      if ( ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) ) )
-//      {
-//         rc = pChildTask->getInstallStatus( objRet ) ;
-//         if ( rc )
-//         {
-//            PD_LOG ( PDERROR, "Failed to get install db business status, "
-//                     "rc = %d", rc ) ;
-//            goto error ;
-//         }
-//      }
-//      else
-//      {
-//         rc = SDB_CAT_TASK_NOTFOUND ;
-//         PD_LOG_MSG ( PDERROR, "No such task with id[%ld], "
-//                      "failed to get install status", (INT64)_taskID ) ;
-//         goto error ;
-//      }
-//
-//   done:
-//      return rc ;
-//   error:
-//      goto done ;
-//   }
+   }
+
+   _omaInstallDBStatus::~_omaInstallDBStatus ()
+   {
+   }
+
+   INT32 _omaInstallDBStatus::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      // parse bson to get task id
+      BSONElement ele ;
+      BSONObj arg( pInstallInfo ) ;
+      try
+      {
+         ele = arg.getField ( OMA_FIELD_TASKID ) ;
+         if ( NumberInt != ele.type() && NumberLong != ele.type() )
+         {
+            rc = SDB_UNEXPECTED_RESULT ;
+            PD_LOG_MSG ( PDERROR, "Failed to get taskID, rc = %d", rc ) ;
+            goto error ;
+         }
+         _taskID = ele.numberLong () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG_MSG ( PDERROR,  "Failed to get taskID, "
+                      "received exception: %s", e.what() ) ;
+         goto error ;
+      }
+      // get task manager
+      _taskMgr = getTaskMgr() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBStatus::doit ( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      _omaTask *pTask  = NULL ;
+      _omaInstallDBBusinessTask *pChildTask = NULL ;
+      pTask = _taskMgr->findTask( _taskID ) ;
+
+      if ( ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) ) )
+      {
+         rc = pChildTask->getInstallStatus( retObj ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get install db business status, "
+                     "rc = %d", rc ) ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = SDB_CAT_TASK_NOTFOUND ;
+         PD_LOG_MSG ( PDERROR, "No such task with id[%ld], "
+                      "failed to get install status", (INT64)_taskID ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
 
 //   /*************************** update hosts table info **********************/
 //   /*

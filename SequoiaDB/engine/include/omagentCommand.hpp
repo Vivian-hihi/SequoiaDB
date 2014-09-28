@@ -283,32 +283,28 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
    } ;
 
-//   /******************************* query install db business status *********/
-//   /*
-//      _omaInstallDBStatus
-//   */
-//   class _omaInstallDBStatus : public _omaCommand
-//   {
-//      DECLARE_OACMD_AUTO_REGISTER ()
-//      public:
-//         _omaInstallDBStatus () ;
-//         ~_omaInstallDBStatus () ;
-//
-//         virtual const CHAR* name ()
-//         { 
-//            return OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS ;
-//         }
-//
-//         virtual INT32 init ( const CHAR *pInstallInfo ) ;
-//
-//         virtual INT32 doit ( BSONObj &retObj ) ;
-//
-//      private:
-//         UINT64       _taskID ;
-//         _omaTaskMgr* _taskMgr ;
-//
-//   } ;
-//
+   /******************************* query install db business status *********/
+   /*
+      _omaInstallDBStatus
+   */
+   class _omaInstallDBStatus : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaInstallDBStatus () ;
+         ~_omaInstallDBStatus () ;
+         virtual const CHAR* name ()
+         { 
+            return OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS ;
+         }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+      private:
+         UINT64                             _taskID ;
+         _omaTaskMgr*                       _taskMgr ;
+
+   } ;
+
 //   /***************************** update hosts table info ********************/
 //   /*
 //      _omaUpdateHostsInfo
