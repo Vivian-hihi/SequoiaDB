@@ -474,9 +474,9 @@ namespace engine
       rc = fromjson( pClusterInfo, clusterInfo ) ;
       if ( rc )
       {
-         _errorDetail = string("change rest field ") + OM_REST_CLUSTER_INFO
-                        + " to BSONObj failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pClusterInfo, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -950,9 +950,9 @@ namespace engine
       rc = fromjson( pHostInfo, bsonHostInfo ) ;
       if ( rc )
       {
-         _errorDetail = string( "change rest field " ) + OM_REST_FIELD_HOST_INFO
-                        + " to BSONObj failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pHostInfo, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -1003,6 +1003,15 @@ namespace engine
             BSONObjBuilder builder ;
             BSONObj tmp ;
             BSONElement ele = i.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "host info is invalid, element of %s "
+                           "is not Object type:type=%d", 
+                           OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
+               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               goto error ;
+            }
             BSONObj oneHost = ele.embeddedObject() ;
 
             host.ip        = oneHost.getStringField( OM_BSON_FIELD_HOST_IP ) ;
@@ -1187,6 +1196,16 @@ namespace engine
             BSONObjBuilder builder ;
             BSONObj tmp ;
             BSONElement ele = i.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "rest info is invalid, element of %s "
+                           "is not Object type:type=%d", 
+                           OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
+               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               goto error ;
+            }
+
             BSONObj oneHost = ele.embeddedObject() ;
             bsonResult.push_back( oneHost ) ;
          }
@@ -1695,6 +1714,119 @@ namespace engine
       onehost = builder.obj() ;
    }
 
+   INT32 omCheckHostCommand::_checkResFormat( BSONObj &result )
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      BSONElement ele ;
+
+      ele = result.getField( OM_REST_RES_RETCODE ) ;
+      if ( ele.isNumber() )
+      {
+         INT32 innerRC = ele.Int() ;
+         if ( innerRC != SDB_OK )
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
+      }
+
+      ele = result.getField( OM_BSON_FIELD_HOST_IP ) ;
+      if ( ele.type() != String )
+      {
+         PD_LOG_MSG( PDERROR, "field is not String type:field=%s,type=%d", 
+                     OM_BSON_FIELD_HOST_IP, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_HOST_NAME ) ;
+      if ( ele.type() != String )
+      {
+         PD_LOG_MSG( PDERROR, "field is not String type:field=%s,type=%d", 
+                     OM_BSON_FIELD_HOST_NAME, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_OS ) ;
+      if ( ele.type() != Object )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Object type:field=%s,type=%d", 
+                     OM_BSON_FIELD_OS, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_OM ) ;
+      if ( ele.type() != Object )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Object type:field=%s,type=%d", 
+                     OM_BSON_FIELD_OM, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_CPU ) ;
+      if ( ele.type() != Array )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Array type:field=%s,type=%d", 
+                     OM_BSON_FIELD_CPU, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_MEMORY ) ;
+      if ( ele.type() != Object )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Object type:field=%s,type=%d", 
+                     OM_BSON_FIELD_MEMORY, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_NET ) ;
+      if ( ele.type() != Array )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Array type:field=%s,type=%d", 
+                     OM_BSON_FIELD_NET, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_PORT ) ;
+      if ( ele.type() != Array )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Array type:field=%s,type=%d", 
+                     OM_BSON_FIELD_PORT, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_SAFETY ) ;
+      if ( ele.type() != Object )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Object type:field=%s,type=%d", 
+                     OM_BSON_FIELD_SAFETY, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = result.getField( OM_BSON_FIELD_DISK ) ;
+      if ( ele.type() != Array )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Array type:field=%s,type=%d", 
+                     OM_BSON_FIELD_DISK, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      rc = SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omCheckHostCommand::_checkHostEnv( list<omScanHostInfo> &hostInfoList, 
                                             list<BSONObj> &hostResult )
    {
@@ -1789,6 +1921,12 @@ namespace engine
          }
 
          BSONObj result = objVec[0] ;
+         rc = _checkResFormat( result ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "agent's response format error:rc=%d", rc ) ;
+            goto error ;
+         }
          _updateDiskInfo( result ) ;
          hostResult.push_back( result ) ;
          //TODO: get /etc/hosts, and check 
@@ -2074,9 +2212,9 @@ namespace engine
       rc = fromjson( pHostInfo, bsonHostInfo ) ;
       if ( rc )
       {
-         _errorDetail = string( "change rest field " ) + OM_REST_FIELD_HOST_INFO
-                        + " to BSONObj failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pHostInfo, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -2119,6 +2257,16 @@ namespace engine
             BSONObjBuilder builder ;
             BSONObj tmp ;
             BSONElement ele = i.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "rest info is invalid, element of %s "
+                           "is not Object type:type=%d", 
+                           OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
+               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               goto error ;
+            }
+
             BSONObj oneHost = ele.embeddedObject() ;
 
             host.ip        = oneHost.getStringField( OM_BSON_FIELD_HOST_IP ) ;
@@ -2259,9 +2407,9 @@ namespace engine
       rc = fromjson( pHostInfo, bsonHostInfo ) ;
       if ( rc )
       {
-         _errorDetail = string( "change rest field " ) + OM_REST_FIELD_HOST_INFO
-                        + " to BSONObj failed";
-         PD_LOG( PDERROR, "%s:rc=%d", _errorDetail.c_str(), rc ) ;
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pHostInfo, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -4112,9 +4260,9 @@ namespace engine
       rc = fromjson( pInfo, bsonInfo ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = "change rest field " + string( OM_REST_TEMPLATE_INFO )
-                        + " to BSONObj failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d,src=%s", _errorDetail.c_str(), rc, pInfo ) ;
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pInfo, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -4525,6 +4673,15 @@ namespace engine
          while ( iter1.more() )
          {
             BSONElement ele  = iter1.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "config info is invalid, element of %s "
+                           "is not Object type:type=%d", 
+                           OM_BSON_PROPERTY_ARRAY, ele.type() ) ;
+               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               goto error ;
+            }
             BSONObj tmp      = ele.embeddedObject() ;
             arrayBuilder.append( tmp ) ;
          }
@@ -4534,6 +4691,15 @@ namespace engine
          while ( iter2.more() )
          {
             BSONElement ele  = iter2.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "config info is invalid, element of %s "
+                           "is not Object type:type=%d", 
+                           OM_BSON_PROPERTY_ARRAY, ele.type() ) ;
+               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               goto error ;
+            }
             BSONObj tmp      = ele.embeddedObject() ;
             arrayBuilder.append( tmp ) ;
          }
@@ -4860,9 +5026,9 @@ namespace engine
       rc = fromjson( pInfo, bsonConfValue ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "change rest field " ) + OM_REST_TEMPLATE_INFO
-                        + " to BSONObj failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d,src=%s", _errorDetail.c_str(), rc, pInfo ) ;
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pInfo, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -5952,6 +6118,15 @@ namespace engine
          while ( iter.more() )
          {
             BSONElement ele = iter.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "config info is invalid, element of %s "
+                           "is not Object type:type=%d", 
+                           OM_CONFIGURE_FIELD_CONFIG, ele.type() ) ;
+               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               goto error ;
+            }
             BSONObj tmp = ele.embeddedObject() ;
             BSONObjBuilder builder ;
             builder.appendElements( tmp ) ;
@@ -6928,10 +7103,9 @@ namespace engine
       rc = fromjson( pHostInfo, hostInfo ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "change rest field " ) + OM_REST_FIELD_HOST_INFO
-                        + " to BSONObj failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d,src=%s", _errorDetail.c_str(), rc, 
-                 pHostInfo ) ;
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pHostInfo, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -6941,6 +7115,15 @@ namespace engine
          while ( iter.more() )
          {
             BSONElement ele = iter.next() ;
+            if ( ele.type() != Object )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "host info is invalid, element of %s "
+                           "is not Object type:type=%d", 
+                           OM_BSON_FIELD_HOST_INFO, ele.type() ) ;
+               _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               goto error ;
+            }
             BSONObj oneHost = ele.embeddedObject() ;
             hostNameList.push_back( 
                            oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ) ;
@@ -7026,6 +7209,15 @@ namespace engine
             while ( iter.more() )
             {
                BSONElement ele = iter.next() ;
+               if ( ele.type() != Object )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "disk info is invalid, element of %s "
+                              "is not Object type:type=%d", 
+                              OM_HOST_FIELD_DISK, ele.type() ) ;
+                  _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+                  goto error ;
+               }
                BSONObj oneDisk = ele.embeddedObject() ;
                simpleDiskInfo diskInfo ;
                diskInfo.diskName  = oneDisk.getStringField( 
@@ -7290,6 +7482,14 @@ namespace engine
       {
          string hostName ;
          BSONElement oneEle  = iter.next() ;
+         if ( oneEle.type() != Object )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "host info is invalid, element of host "
+                        "is not Object type:type=%d", oneEle.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
          BSONObj oneHostName = oneEle.embeddedObject() ;
          BSONElement nameEle = oneHostName.getField( 
                                                 OM_BSON_FIELD_HOST_NAME ) ;
@@ -7323,6 +7523,15 @@ namespace engine
          string name ;
          string value ;
          BSONElement oneEle  = iter.next() ;
+         if ( oneEle.type() != Object )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG_MSG( PDERROR, "property info is invalid, element of property "
+                        "is not Object type:type=%d", oneEle.type() ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            goto error ;
+         }
+         
          BSONObj oneProperty = oneEle.embeddedObject() ;
          BSONElement nameEle = oneProperty.getField( 
                                                 OM_BSON_PROPERTY_NAME ) ;
@@ -7413,10 +7622,9 @@ namespace engine
       rc = fromjson( pTemplate, bsonTemplate ) ;
       if ( SDB_OK != rc )
       {
-         _errorDetail = string( "change rest field " ) + OM_REST_TEMPLATE_INFO
-                        + " to BSONObj failed" ;
-         PD_LOG( PDERROR, "%s:rc=%d,src=%s", _errorDetail.c_str(), rc, 
-                 pTemplate ) ;
+         PD_LOG_MSG( PDERROR, "change rest field to BSONObj failed:src=%s,"
+                     "rc=%d", pTemplate, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -7510,7 +7718,7 @@ namespace engine
       if ( 0 == diskCount || 0 == totalDiskFreeSize )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG_MSG( PDERROR, "disk info error:diskCountrc=%u,diskFreeSize="
+         PD_LOG_MSG( PDERROR, "disk info error:diskCount=%u,diskFreeSize="
                      OSS_LL_PRINT_FORMAT, diskCount, totalDiskFreeSize ) ;
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;

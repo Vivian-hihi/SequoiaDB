@@ -266,6 +266,8 @@ namespace engine
                                           pmdRemoteSession *remoteSession,
                                           list<omScanHostInfo> &hostInfoList ) ;
          void            _updateDiskInfo( BSONObj &onehost ) ;
+
+         INT32           _checkResFormat( BSONObj &result ) ;
          INT32           _checkHostEnv( list<omScanHostInfo> &hostInfoList, 
                                         list<BSONObj> &hostResult ) ;
 
