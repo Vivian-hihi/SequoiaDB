@@ -1436,6 +1436,18 @@ namespace engine
          PD_LOG( PDERROR, "Init config record failed, rc: %d", rc ) ;
          goto error ;
       }
+      ossStrncpy( _krcbConfFile, pConfigFile, OSS_MAX_PATHSIZE ) ;
+      if ( ossStrrchr( pConfigFile, OSS_FILE_SEP_CHAR ) )
+      {
+         const CHAR *pLastSep = ossStrrchr( pConfigFile, OSS_FILE_SEP_CHAR ) ;
+         ossStrncpy( _krcbConfPath, pConfigFile,
+                     OSS_MAX_PATHSIZE <= pLastSep - pConfigFile ?
+                     OSS_MAX_PATHSIZE : pLastSep - pConfigFile ) ;
+      }
+      else
+      {
+         ossStrcpy( _krcbConfPath, PMD_CURRENT_PATH ) ;
+      }
 
    done:
       return rc ;

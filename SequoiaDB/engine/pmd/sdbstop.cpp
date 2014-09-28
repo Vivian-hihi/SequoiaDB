@@ -58,8 +58,8 @@ namespace engine
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" )\
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t"), boost::program_options::value<string>(), "node type: db/om/all, default: db" ) \
-       ( PMD_COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "service name, use ',' as seperator" )
+       ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t"), po::value<string>(), "node type: db/om/all, default: db" ) \
+       ( PMD_COMMANDS_STRING(PMD_OPTION_SVCNAME, ",p"), po::value<string>(), "service name, use ',' as seperator" )
 
    // initialize options
    void init ( po::options_description &desc )

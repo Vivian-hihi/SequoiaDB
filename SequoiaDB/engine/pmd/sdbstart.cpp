@@ -61,17 +61,30 @@ using namespace std;
 namespace engine
 {
 
+   #define PMD_OPTION_CREATE        "create"
+
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configure file path" ) \
-       ( PMD_OPTION_CURUSER, "use current user" )
+       ( PMD_COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), po::value<string>(), "configure file path" ) \
+       ( PMD_OPTION_CREATE, "create when not exist" ) \
 
-   // initialize options
-   void init ( po::options_description &desc )
+
+   #define COMMANDS_HIDE_OPTIONS \
+      ( PMD_OPTION_CURUSER, "use current user" ) \
+
+
+   void init ( po::options_description &desc,
+               po::options_description &all )
    {
       PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
          COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
+         COMMANDS_OPTIONS
+         COMMANDS_HIDE_OPTIONS
+         ( "*", po::value<string>(), "" )
       PMD_ADD_PARAM_OPTIONS_END
    }
 
@@ -96,6 +109,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_RESVARG, "resolveArgument" )
    INT32 resolveArgument ( po::options_description &desc,
+                           po::options_description &all,
                            po::variables_map &vm,
                            INT32 argc, CHAR **argv,
                            vector< string > &configs,
@@ -106,7 +120,7 @@ namespace engine
       string confPath ;
       utilNodeInfo info ;
 
-      rc = utilReadCommandLine( argc, argv, desc, vm, TRUE ) ;
+      rc = utilReadCommandLine( argc, argv, all, vm, TRUE ) ;
       if ( rc )
       {
          goto error ;
@@ -178,12 +192,14 @@ namespace engine
       INT32 succeedNum = 0 ;
       INT32 failedNum = 0 ;
       po::options_description desc ( "Command options" ) ;
+      po::options_description all ( "Command options" ) ;
       po::variables_map vm ;
       string svcname ;
-      init ( desc ) ;
+
+      init( desc, all ) ;
 
       // validate arguments
-      rc = resolveArgument ( desc, vm, argc, argv, configs, nodesInfo ) ;
+      rc = resolveArgument ( desc, all, vm, argc, argv, configs, nodesInfo ) ;
       if ( rc )
       {
          if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )

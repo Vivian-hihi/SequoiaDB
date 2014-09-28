@@ -72,22 +72,31 @@ namespace engine
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_OPTION_CURUSER, "use current user" ) \
-       ( PMD_OPTION_AS_PROC, "as process, not service" )
+       ( PMD_OPTION_AS_PROC, "as process, not service" ) \
+
 #else
    #define COMMANDS_OPTIONS \
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_OPTION_CURUSER, "use current user" )
+
 #endif // _WINDOWS
+
+   #define COMMANDS_HIDE_OPTIONS \
+      ( PMD_OPTION_CURUSER, "use current user" ) \
 
    /*
       Function implement
    */
-   void init ( po::options_description &desc )
+   void init ( po::options_description &desc,
+               po::options_description &all )
    {
       PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
          COMMANDS_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
+         COMMANDS_OPTIONS
+         COMMANDS_HIDE_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
    }
 
@@ -252,14 +261,15 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CMSTOP_MAIN ) ;
       po::options_description desc ( "Command options" ) ;
+      po::options_description all ( "Command options" ) ;
       po::variables_map vm ;
       ossResultCode result ;
       CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       BOOLEAN asProc = FALSE ;
 
-      init ( desc ) ;
+      init ( desc, all ) ;
       // validate arguments
-      rc = utilReadCommandLine ( argc, argv, desc, vm, FALSE ) ;
+      rc = utilReadCommandLine ( argc, argv, all, vm, FALSE ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;
