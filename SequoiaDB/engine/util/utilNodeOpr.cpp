@@ -112,7 +112,8 @@ namespace engine
          }
          pSvcEnd = ossStrchr( pSvcBegin + 1, ')' ) ;
          if ( !pSvcEnd || pSvcEnd - pSvcBegin <= 1 ||
-              ossStrlen( pSvcEnd ) != 1 )
+              ( ossStrlen( pSvcEnd ) != 1 &&
+                ossStrlen( pSvcEnd ) != 3 ) )
          {
             continue ;
          }
