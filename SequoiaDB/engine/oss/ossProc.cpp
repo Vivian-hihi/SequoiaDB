@@ -412,6 +412,10 @@ static INT32 ossExec2 ( const CHAR *program,
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create list, rc = %d", rc ) ;
+         if ( ppArgv[0] != arguments )
+         {
+            SDB_OSS_FREE( ppArgv[0] ) ;
+         }
          SDB_OSS_FREE ( ppArgv ) ;
          ppArgv = NULL ;
          _exit ( rc ) ;
@@ -430,7 +434,7 @@ static INT32 ossExec2 ( const CHAR *program,
       // if this code is reached, something goes wrong with exec
       if ( ppArgv )
       {
-         if ( ppArgv[0] )
+         if ( ppArgv[0] != arguments )
             SDB_OSS_FREE ( (CHAR*)ppArgv[0] ) ;
          SDB_OSS_FREE ( ppArgv ) ;
       }
