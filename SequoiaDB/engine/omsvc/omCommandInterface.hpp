@@ -93,6 +93,7 @@ namespace engine
          INT32             _fetchHostDiskInfo( const string &clusterName, 
                                           list<string> &hostNameList, 
                                           list<simpleHostDisk> &hostInfoList ) ;
+         INT32             _checkHostBasicContent( BSONObj &oneHost ) ;
       protected:
          SDB_RTNCB         *_pRTNCB ;
          SDB_DMSCB         *_pDMDCB ;

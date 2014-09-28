@@ -364,6 +364,109 @@ namespace engine
       goto done ;
    }
 
+   INT32 omRestCommandBase::_checkHostBasicContent( BSONObj &oneHost )
+   {
+      INT32 rc = SDB_INVALIDARG ;
+      BSONElement ele ;
+
+      ele = oneHost.getField( OM_BSON_FIELD_HOST_IP ) ;
+      if ( ele.type() != String )
+      {
+         PD_LOG_MSG( PDERROR, "field is not String type:field=%s,type=%d", 
+                     OM_BSON_FIELD_HOST_IP, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_HOST_NAME ) ;
+      if ( ele.type() != String )
+      {
+         PD_LOG_MSG( PDERROR, "field is not String type:field=%s,type=%d", 
+                     OM_BSON_FIELD_HOST_NAME, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_OS ) ;
+      if ( ele.type() != Object )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Object type:field=%s,type=%d", 
+                     OM_BSON_FIELD_OS, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_OM ) ;
+      if ( ele.type() != Object )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Object type:field=%s,type=%d", 
+                     OM_BSON_FIELD_OM, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_CPU ) ;
+      if ( ele.type() != Array )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Array type:field=%s,type=%d", 
+                     OM_BSON_FIELD_CPU, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_MEMORY ) ;
+      if ( ele.type() != Object )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Object type:field=%s,type=%d", 
+                     OM_BSON_FIELD_MEMORY, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_NET ) ;
+      if ( ele.type() != Array )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Array type:field=%s,type=%d", 
+                     OM_BSON_FIELD_NET, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_PORT ) ;
+      if ( ele.type() != Array )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Array type:field=%s,type=%d", 
+                     OM_BSON_FIELD_PORT, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_SAFETY ) ;
+      if ( ele.type() != Object )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Object type:field=%s,type=%d", 
+                     OM_BSON_FIELD_SAFETY, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      ele = oneHost.getField( OM_BSON_FIELD_DISK ) ;
+      if ( ele.type() != Array )
+      {
+         PD_LOG_MSG( PDERROR, "field is not Array type:field=%s,type=%d", 
+                     OM_BSON_FIELD_DISK, ele.type() ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
+      }
+
+      rc = SDB_OK ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+
    omAgentReqBase::omAgentReqBase( BSONObj &request )
                   :_request( request.copy() ), _response( BSONObj() )
    {

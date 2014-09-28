@@ -97,8 +97,6 @@ namespace engine
       protected:
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
-         string          _errorDetail ;
-         string          _errorPosition ;
    };
 
    class omLogoutCommand : public omAuthCommand
