@@ -169,13 +169,23 @@ namespace engine
 
       public:
          void setTaskStage( OMA_INSTALL_DB_STAGE stage ) ;
-         void setIsTaskFinish( BOOLEAN isFinish ) ;
          void setIsInstallFinish( BOOLEAN isFinish ) ;
          void setIsRollbackFinish( BOOLEAN isFinish ) ;
          void setIsRemoveVCoordFinish( BOOLEAN isFinish ) ;
+         void setIsTaskFinish( BOOLEAN isFinish ) ;
          void setIsRollbackFail( BOOLEAN isFail ) ;
+         void setIsInstallFail( BOOLEAN isFail ) ;
          void setIsRemoveVCoordFail( BOOLEAN isFail ) ;
-//         string& getVCoordHostName() { return _vCoordHostName ; }
+         void setIsTaskFail( BOOLEAN isFail ) ;
+         BOOLEAN getIsInstallFinish() ;
+         BOOLEAN getIsRollbackFinish() ;
+         BOOLEAN getIsRemoveVCoordFinish() ;
+         BOOLEAN getIsTaskFinish() ;
+         BOOLEAN getIsInstallFail() ;
+         BOOLEAN getIsRollbackFail() ;
+         BOOLEAN getIsRemoveVCoordFail() ;
+         BOOLEAN getIsTaskFail() ;
+         void setErrDetail( const CHAR *pErrDetail ) ;
          string& getVCoordSvcName() { return _vCoordSvcName ; }
          vector<BSONObj>& getInstallCatalogInfo() ;
          vector<BSONObj>& getInstallCoordInfo() ;
@@ -190,7 +200,10 @@ namespace engine
                                     const CHAR *pDesc,
                                     const CHAR *pGroupName,
                                     InstalledNode *pNode ) ;
+         INT32 updateInstallJobStatus( string &name, OMA_JOB_STATUS status ) ;
+         INT32 rollbackInternal() ;         
          INT32 tryToRollbackInternal() ;         
+         INT32 removeVirtualCoord() ;
          INT32 tryToRemoveVirtualCoord() ;
          BOOLEAN isInstallFinish() ;
           
@@ -208,9 +221,6 @@ namespace engine
          InstallResult                        _coordResult ;
          map< string, InstallResult >         _mapGroupsResult ;
          // virtual coord info
-//         string                               _omaHostName ;
-//         string                               _omaSvcName ;
-//         string                               _vCoordHostName ;
          string                               _vCoordSvcName ;
          // 
          string                               _sdbUser ;
@@ -218,6 +228,7 @@ namespace engine
          string                               _sdbUserGroup ;
 
          ossSpinSLatch                        _taskLatch ;
+         ossSpinSLatch                        _taskLatch2 ;
          ossSpinSLatch                        _jobLatch ;
          OMA_TASK_TYPE                        _taskType ;
          string                               _taskName ;
@@ -226,13 +237,13 @@ namespace engine
          BOOLEAN                              _isRollbackFinish ;
          BOOLEAN                              _isRemoveVCoordFinish ;
          BOOLEAN                              _isTaskFinish ;
+         BOOLEAN                              _isInstallFail ;
          BOOLEAN                              _isRollbackFail ;
          BOOLEAN                              _isRemoveVCoordFail ;
+         BOOLEAN                              _isTaskFail ;
          CHAR                                 _detail[OMA_BUFF_SIZE + 1] ; 
    } ;
    typedef _omaInstallDBBusinessTask omaInstallDBBusinessTask ;
-
-   
 
 }
 

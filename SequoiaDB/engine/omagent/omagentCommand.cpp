@@ -258,7 +258,7 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get js file's content to "
-                  "excute, rc = ", rc ) ;
+                  "excute, rc = %d", rc ) ;
          goto error ;
       }
       // get scope
@@ -1228,7 +1228,7 @@ namespace engine
 //   error:
 //      goto done ;
 //   }
-//
+
 //   /*************************** update hosts table info **********************/
 //   /*
 //      _omaUpdateHostsInfo
@@ -1440,9 +1440,7 @@ namespace engine
    _omaRemoveVirtualCoord::_omaRemoveVirtualCoord (
                                               const CHAR *pVCoordSvcName )
    {
-//      ossStrncpy( _omaHostName, pOmaHostName, OSS_MAX_HOSTNAME ) ;
-//      ossStrncpy( _omaSvcName, pOmaSvcName, OSS_MAX_SERVICENAME ) ;
-      ossStrncpy( _vCoordSvcName, pVCoordSvcName, OSS_MAX_HOSTNAME ) ;
+      ossStrncpy( _vCoordSvcName, pVCoordSvcName, OSS_MAX_SERVICENAME ) ;
    }
 
    _omaRemoveVirtualCoord::~_omaRemoveVirtualCoord ()

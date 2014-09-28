@@ -363,15 +363,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       try
       {
+         BSONObjBuilder builder ;
          BSONObj dataGroupInfo ;
+         BSONObj sys ;
          // get installed data nodes info
          _getInstalledDataGroupInfo( dataGroupInfo ) ;
-
-         BSONObj sys = BSON (
-             OMA_FIELD_VCOORDSVCNAME << _vCoordSvcName.c_str() <<
-             OMA_FIELD_INSTALLGROUPNAME <<
-             dataGroupInfo.toString(FALSE, TRUE).c_str() ) ;
-
+         builder.append( OMA_FIELD_VCOORDSVCNAME, _vCoordSvcName.c_str() ) ;
+         builder.appendElements( dataGroupInfo ) ;
+         sys = builder.obj() ;
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
                       JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
@@ -409,7 +408,7 @@ namespace engine
          string groupname = it->first ;
          bab.append( groupname.c_str() ) ;
       }
-      bob.appendArray( OMA_FIELD_GROUPNAME, bab.arr() ) ;
+      bob.appendArray( OMA_FIELD_INSTALLGROUPNAMES, bab.arr() ) ;
       obj = bob.obj() ;
    }
 

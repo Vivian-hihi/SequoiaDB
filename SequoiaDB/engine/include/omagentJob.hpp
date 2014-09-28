@@ -72,16 +72,11 @@ namespace engine
          void setJobStatus ( OMA_JOB_STATUS status )
          {
             _status = status ;
-            _pTask->setJobStatus( _name, status ) ;
+            _pTask->updateInstallJobStatus( _name, status ) ;
          }
       private:
 
          INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
-/*
-         INT32 _checkInstallResult( const CHAR *pHostName,
-                                    const CHAR *pSvcName,
-                                    BSONObj &obj ) ;
-*/
          INT32 _updateInstallStatus( BOOLEAN isFinish,
                                      INT32 retRc,
                                      const CHAR *pErrMsg,
@@ -115,16 +110,11 @@ namespace engine
          void setJobStatus ( OMA_JOB_STATUS status )
          {
             _status = status ;
-            _pTask->setJobStatus( _name, status ) ;
+            _pTask->updateInstallJobStatus( _name, status ) ;
          }
       private:
 
          INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
-/*
-         INT32 _checkInstallResult( const CHAR *pHostName,
-                                    const CHAR *pSvcName,
-                                    BSONObj &obj ) ;
-*/
          INT32 _updateInstallStatus( BOOLEAN isFinish,
                                      INT32 retRc,
                                      const CHAR *pErrMsg,
@@ -161,16 +151,11 @@ namespace engine
          void setJobStatus ( OMA_JOB_STATUS status )
          {
             _status = status ;
-            _pTask->setJobStatus( _name, status ) ;
+            _pTask->updateInstallJobStatus( _name, status ) ;
          }
       private:
 
          INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
-/*
-         INT32 _checkInstallResult( const CHAR *pHostName,
-                                    const CHAR *pSvcName,
-                                    BSONObj &obj ) ;
-*/
          INT32 _updateInstallStatus( BOOLEAN isFinish,
                                      INT32 retRc,
                                      const CHAR *pErrMsg,
@@ -198,25 +183,10 @@ namespace engine
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
          INT32                init() ;
-/*
-      public:
 
-         OMA_JOB_STATUS getJobStatus ()
-         {
-            return _status ;
-         }
-         void setJobStatus ( OMA_JOB_STATUS status )
-         {
-            _status = status ;
-         }
-*/
       private:
          INT32 _saveVCoordInfo( BSONObj &info ) ;
-/*
-         // virtual coord info
-         CHAR _omaHostName[OSS_MAX_HOSTNAME + 1] ;
-         CHAR _omaSvcName[OSS_MAX_SERVICENAME + 1] ;
-*/
+
          CHAR _vCoordSvcName[OSS_MAX_SERVICENAME + 1] ;
          // raw install info
          BSONObj                     _installInfoObj ;
@@ -227,7 +197,6 @@ namespace engine
          vector<BSONObj>             _standalone ;
          // task info
          INT64                       _taskID ;
-//         _omaTaskMgr*                _taskMgr ;
          string                      _name ;
    } ;
 
@@ -248,7 +217,7 @@ namespace engine
          virtual INT32        doit () ;
 
       public:
-
+/*
          OMA_JOB_STATUS getJobStatus ()
          {
             return _status ;
@@ -257,7 +226,7 @@ namespace engine
          {
             _status = status ;
          }
-         
+*/       
       private:
          INT32 _getRollbackInfo ( RollbackInfo &info ) ;
          INT32 _rollbackCoord( string &vCoordSvcName,
@@ -268,7 +237,7 @@ namespace engine
                                   map< string,vector<InstalledNode> > &info ) ;
          
          string                              _vCoordSvcName ;
-         OMA_JOB_STATUS                      _status ;
+//         OMA_JOB_STATUS                      _status ;
          string                              _name ;
          _omaInstallDBBusinessTask*          _pTask ;
    } ;
@@ -279,7 +248,8 @@ namespace engine
    class _omaRemoveVirtualCoordJob : public _rtnBaseJob
    {
       public:
-         _omaRemoveVirtualCoordJob ( const CHAR *vCoordSvcName ) ;
+         _omaRemoveVirtualCoordJob ( const CHAR *vCoordSvcName,
+                                     _omaInstallDBBusinessTask *pTask ) ;
          virtual ~_omaRemoveVirtualCoordJob () ;
 
       public:
@@ -287,7 +257,7 @@ namespace engine
          virtual const CHAR*  name () const ;
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
-
+/*
          OMA_JOB_STATUS getJobStatus ()
          {
             return _status ;
@@ -295,13 +265,17 @@ namespace engine
          void setJobStatus ( OMA_JOB_STATUS status )
          {
             _status = status ;
+// TODO: i am going to let install job's status register in task, and let job's status
+// change in job, besides, i need to let task's status change by remove virtual coord,// and let rollback's status change by itself
+            _pTask->updateInstallJobStatus( name(), status ) ;
          }
-
+*/
       private:
-         OMA_JOB_STATUS            _status ;
-         string                    _omaHostName ;
-         string                    _omaSvcName ;
-         string                    _vCoordSvcName ;
+//         OMA_JOB_STATUS              _status ;
+//         string                    _omaHostName ;
+//         string                    _omaSvcName ;
+         string                      _vCoordSvcName ;
+         _omaInstallDBBusinessTask   *_pTask ;
    } ;
 
 
@@ -325,6 +299,7 @@ namespace engine
                                               EDUID *pEDUID ) ;
    // start create remove virtual coord job
    INT32 startRemoveVirtualCoordJob ( const CHAR *vCoordSvcName,
+                                      _omaInstallDBBusinessTask *pTask,
                                       EDUID *pEDUID ) ;
 
 
