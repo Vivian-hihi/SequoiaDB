@@ -19,104 +19,102 @@
 @description: remove the newly created data group
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the format is:  
+   SYS_JSON: the format is: { "VCoordSvcName": "11792", "InstallGroupNames": [ "group1", "group2" ] }
+   ENV_JSON:
+@return
+   RET_JSON: the format is: {"errno":0,"detail":""}
 */
-if ( typeof(COORD_HOSTNAME) == "undefined" ) {}
-if ( typeof(COORD_SERVICE) == "undefined" ) {}
-// TODO: username and password are need
-if ( typeof(DB_USERNAME) == "undefined" ) { DB_USERNAME = "" ; }
-if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
-if ( typeof(CREATED_DATA_GROUP) == "undefined" ) {}
 
-var objRet = new Object() ;
+//var SYS_JSON = { "VCoordSvcName": "11792", "InstallGroupNames": [ "group3" ] } ;
 
-objRet.Errno = 0 ;
-objRet.detail = "" ;
+var RET_JSON     = new Object() ;
+RET_JSON[Errno]  = SDB_OK ;
+RET_JSON[Detail] = "" ;
 
+/* *****************************************************************************
+@discretion: remove data group
+@parameter
+   db[object]: Sdb object
+   name[string]: data group name
+@return void
+***************************************************************************** */
 function removeGroup( db, name )
 {
    var rg = null ;
-   
+   // get rg
    try
    {
       rg = db.getRG( name ) ;
    }
    catch ( e )
    {
-      if ( -154 == e )
+      if ( SDB_CLS_GRP_NOT_EXIST == e )
       {
          return ;
       }
       else
       {
+         if ( "number" == typeof(e) )
+         {
+            setLastErrMsg( "Failed to get group[" + name + "]: " + getErr( e ) ) ;
+            setLastError( e ) ;
+         }
          throw e ;
       }
    }
    // stop all the data node in this group
-   rg.stop() ;
+   try
+   {
+      rg.stop() ;
+   }
+   catch ( e )
+   {
+      if ( "number" == typeof(e) )
+      {
+         setLastErrMsg( "Failed to stop group[" + name + "]: " + getErr( e ) ) ;
+         setLastError( e ) ;
+      }
+      throw e ;
+   } 
    // remove data group
-   db.removeRG( name ) ;
+   try
+   {
+      db.removeRG( name ) ;
+   }
+   catch ( e )
+   {
+      if ( "number" == typeof(e) )
+      {
+         setLastErrMsg( "Failed to remove group[" + name + "]: " + getErr( e ) ) ;
+         setLastError( e ) ;
+      }
+      throw e ;
+   }
 }
 
 function removeDataGroup( db, groups )
 {
-   var arr = null ;
-
-   arr = groups["GroupName"] ;
-   for ( var i = 0; i < arr.length; i++ )
+   for ( var i = 0; i < groups.length; i++ )
    {
-      removeGroup( db, arr[i] ) ;
+      removeGroup( db, groups[i] ) ;
    }
 }
 
 function main()
 {
-   var db = null ;
-   var groups = null ;
-   try
-   {
-      // check arguments
-      if ( typeof(COORD_HOSTNAME) == "undefined" ||
-           typeof(COORD_SERVICE) == "undefined" )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "virtual coord hostname and svcname are need"
-         return objRet ;
-      }
-      if ( typeof(CREATED_DATA_GROUP) == "undefined" )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "not specified data group to remove"
-         return objRet ;
-      }
+   var vCoordHostName   = System.getHostName() ;
+   var vCoordSvcName    = SYS_JSON[VCoordSvcName] ;
+   var groups           = SYS_JSON[InstallGroupNames] ;
 
-      // connect to virtual coord
-      var db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
-      // get groups info
-      groups = eval( '(' + CREATED_DATA_GROUP + ')' ) ;
-      // remove data group
-      removeDataGroup( db, groups ) ;
+   // connect to virtual coord
+   var db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   // remove data group
+   removeDataGroup( db, groups ) ;
+print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   return RET_JSON ;
 
-      return objRet ;
-   }
-   catch ( e )
-   {
-      if ( typeof(e) != "number" )
-      {
-         objRet.Errno = -10 ;
-         objRet.detail = "system error" ;
-      }
-      else
-      {
-         var errMsg = "" ;
-         objRet.Errno = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
-      }
-      return objRet ;
-   }
 }
 
 // execute

@@ -24,9 +24,11 @@
    SYS_JSON: the format is: { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } 
    ENV_JSON:
 @return
-   RET_JSON: the format is:
+   RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
+//var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "11800", "InstallPath": "/opt/sequoiadb/database/catalog", "InstallConfig": { "diaglevel": 3, "role": "catalog", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } };
+//var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" };
 //var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "12000", "InstallPath": "/tmp/sequoiadb/database/catalog/12000", "InstallConfig": { "diaglevel": 3, "role": "catalog", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none", "VCoordSvcName": "11792" } } ;
 
 //var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } ;
@@ -86,7 +88,17 @@ print("11111111111111111111111111111111111111111\n")
    }
 }
 
-function createCatalogNode( db, hostname, svcname, installpath, config )
+/* *****************************************************************************
+@discretion: create catalog
+@parameter
+   db[object]: Sdb object
+   hostName[string]: install host name
+   svcName[string]: install svc name
+   installPath[string]: install path
+   config[json]: config info 
+@return void
+***************************************************************************** */
+function createCatalogNode( db, hostName, svcName, installPath, config )
 {
    // try to get system catalog group
    var rg = null ;
@@ -98,18 +110,16 @@ function createCatalogNode( db, hostname, svcname, installpath, config )
    // catalog has not been created
    catch ( e )
    {
-print("999999999999999999 e is : " + e + "\n")
       if ( SDB_CAT_NO_ADDR_LIST == e )
       {
          try
          {
-            rg = db.createCataRG( hostname, svcname,
-                                  installpath, config ) ;
+            rg = db.createCataRG( hostName, svcName,
+                                  installPath, config ) ;
             return ;
          }
          catch ( e )
          {
-print("88888888888888 e is: " + e + "\n")
             if ( "number" == typeof( e ) )
             {
                setLastErrMsg( "Failed to create catalog group: " + getErr( e ) ) ;
@@ -124,7 +134,6 @@ print("88888888888888 e is: " + e + "\n")
       }
       else
       {
-print("77777777777777 e is: " + e + "\n")
          if ( "number" == typeof( e ) )
          {
             setLastErrMsg( "Failed to get catalog group: " + getErr( e ) ) ;
@@ -137,12 +146,10 @@ print("77777777777777 e is: " + e + "\n")
          }
       }
    }
-print("66666666666666666666666666666\n")
    // catalog has been created
    try
    {
-      node = rg.createNode( hostname, svcname, installpath, config ) ;
-print("5555555555555555555555555\n")
+      node = rg.createNode( hostName, svcName, installPath, config ) ;
    }
    catch ( e )
    {
@@ -159,9 +166,7 @@ print("5555555555555555555555555\n")
    }
    try
    {
-print("4444444444444444444444444\n")
       node.start() ;
-print("333333333333333333333\n")
    }
    catch ( e )
    {
@@ -217,6 +222,8 @@ print("444444444444444444444444444444\n")
     // wait catalog to be available
     waitCatalogRGReady( db ) ; 
 print("5555555555555555555555555555555\n")
+print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n")
+    return RET_JSON ;
 }
 
 // execute

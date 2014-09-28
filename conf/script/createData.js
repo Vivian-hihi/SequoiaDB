@@ -16,106 +16,148 @@
 
 *******************************************************************************/
 /*
-@description: create data node
+@description: create coord
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the format is: { "InstallGroupName": "group1", "InstallHostName": "rhel64-test8", "InstallSvcName": "51000", "InstallPath": "/opt/sequoiadb/database/data/51000", "InstallConfig": { "diaglevel": 3, "role": "data", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } } 
+   SYS_JSON: the format is: { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" }
+   ENV_JSON:
+@return
+   RET_JSON: the format is: {"errno":0,"detail":""}
 */
-if ( typeof(INSTALL_HOSTNAME) == "undefined" ) {}
-if ( typeof(INSTALL_SERVICE) == "undefined" ) {}
-if ( typeof(INSTALL_PATH) == "undefined" ) {}
-if ( typeof(CONFIG) == "undefined" ) { CONFIG = eval( '(' + '{}' + ')') ; }
-if ( typeof(GROUPNAME) == "undefined" ) {}
 
-if ( typeof(COORD_HOSTNAME) == "undefined" ) { COORD_HOSTNAME = "127.0.0.1" ; }
-if ( typeof(COORD_SERVICE) == "undefined" ) { COORD_SERVICE = "10000" ; }
-if ( typeof(DB_USERNAME) == "undefined" ) { DB_USERNAME = "" ; }
-if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
+//var BUS_JSON = { "InstallGroupName": "group1", "InstallHostName": "rhel64-test8", "InstallSvcName": "51000", "InstallPath": "/opt/sequoiadb/database/data/51000", "InstallConfig": { "diaglevel": 3, "role": "data", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } }; 
+//var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" }
 
-var objRet = new Object() ;
+var RET_JSON     = new Object() ;
+RET_JSON[Errno]  = 0 ;
+RET_JSON[Detail] = "" ;
 
-objRet.Errno = 0 ;
-objRet.detail = "" ;
 
-function main()
+/* *****************************************************************************
+@discretion: create data node
+@parameter
+   db[object]: Sdb object
+   hostName[string]: install host name
+   svcName[string]: install svc name
+   installGroup[string]: install group name
+   installPath[string]: install path
+   config[json]: config info
+@return void
+***************************************************************************** */
+function createDataNode( db, hostName, svcName,
+                         installGroup, installPath, config )
 {
+   var rg = null ;
+   var node = null ;
    try
    {
-      // check arguments
-      if ( typeof(INSTALL_HOSTNAME) == "undefined" ||
-           typeof(INSTALL_SERVICE) == "undefined" ||
-           typeof(INSTALL_PATH) == "undefined" ||
-           typeof(GROUPNAME) == "undefined" )
+      rg = db.getRG( installGroup ) ;
+   }
+   catch ( e )
+   {
+      if ( SDB_CLS_GRP_NOT_EXIST == e )
       {
-         objRet.Errno = -6 ;
-         objRet.detail = "install hostname, svcname, path and the groupname are"
-                         + " need for creating data node" ;
-         return objRet ;
-      }
-// todo: remove this debug info
-print("INSTALL_HOSTNAME is: " + INSTALL_HOSTNAME + '\n') ;
-print("INSTALL_SERVICE is: " + INSTALL_SERVICE + '\n') ;
-print("INSTALL_PATH is: " + INSTALL_PATH + '\n') ;
-print("CONFIG is: " + CONFIG + '\n') ;
-print("GROUPNAME is: " + GROUPNAME + '\n') ;
-      // connect to virtual coord
-      var db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
-print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
-      // get rg
-      var rg = null ;
-      try
-      {
-         rg = db.getRG( GROUPNAME ) ;
-print("***********************************************8\n") ;
-      }
-      catch ( e )
-      {
-         if ( -154 == e )
+         try
          {
-            // when rg not exit, create it
-            try
+            // create coord replica group
+            rg = db.createRG( installGroup ) ;
+         }
+         catch ( e )
+         {
+            if ( "number" == typeof( e ) )
             {
-println("((((((((((((((())))))))))))))))))))))))))))))))))))))))))))))))\n") ;
-               rg = db.createRG( GROUPNAME ) ;
+               setLastErrMsg( "Failed to create data group: " + getErr( e ) ) ;
+               setLastError( e ) ;
+               throw e ;
             }
-            catch ( e )
+            else
             {
-              throw e ;
+               throw e ;
             }
+         }
+      }
+      else
+      {
+         if ( "number" == typeof( e ) ) 
+         {
+            setLastErrMsg( "Failed to get data group: " + getErr( e ) ) ;
+            setlastError( e ) ;
+            throw e ;
          }
          else
          {
             throw e ;
          }
       }
-      // create data node
-      var node  = rg.createNode( INSTALL_HOSTNAME, INSTALL_SERVICE,
-                                 INSTALL_PATH, CONFIG ) ;
-      // start node
-      node.start() ;
-// todo: maybe need to check whether the node has been start or not
-      return objRet ;
+   }
+   // create and start coord node
+   try
+   {
+      node = rg.createNode( hostName, svcName, installPath, config ) ;
    }
    catch ( e )
    {
-print("error is e = " + e + "\n") ;
-      if ( typeof(e) != "number" )
+      if ( "number" == typeof( e ) )
       {
-         objRet.Errno = -10 ;
-         objRet.detail = "system error" ;
+         setLastErrMsg( "Failed to create data node: " + getErr( e ) ) ;
+         setLastError( e ) ;
+         throw e ;
       }
       else
       {
-         var errMsg = "" ;
-         objRet.Errno = e ;
-         // TODO: getLastErrMsg may return nothing
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
+         throw e ;
       }
-      return objRet ;
    }
+   try
+   {
+      node.start() ;
+   }
+   catch ( e )
+   {
+      if ( "number" == typeof( e ) )
+      {
+         setLastErrMsg( "Failed to start data node: " + getErr( e ) ) ;
+         setLastError( e ) ;
+         throw e ;
+      }
+      else
+      {
+         throw e ;
+      }
+   }
+}
+
+function main()
+{
+    var vCoordHostName   = System.getHostName() ;
+    var vCoordSvcName    = SYS_JSON[VCoordSvcName] ;
+    var sdbUser          = SYS_JSON[SdbUser] ;
+    var sdbUserGroup     = SYS_JSON[SdbUserGroup] ;
+    var user             = SYS_JSON[User] ;
+    var passwd           = SYS_JSON[Passwd] ;
+    var installHostName  = BUS_JSON[InstallHostName] ;
+    var installSvcName   = BUS_JSON[InstallSvcName] ;
+    var installGroupName = BUS_JSON[InstallGroupName] ;
+    var installPath      = BUS_JSON[InstallPath] ;
+    var installConfig    = BUS_JSON[InstallConfig] ;
+
+    var ssh              = new Ssh( installHostName, user, passwd ) ;
+    var osInfo           = System.type() ;
+print("1111111111111111\n")
+    // change install path owner
+    changeDirOwner( ssh, osInfo, installPath, sdbUser, sdbUserGroup ) ;
+print("222222222222222222222\n")
+    // connect to virtual coord
+    var db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+    // create data node
+print("3333333333333333333333333333\n") ;
+    createDataNode( db, installHostName, installSvcName,
+                    installGroupName, installPath, installConfig ) ;
+print("444444444444444444444444444444\n")
+print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   return RET_JSON ;
 }
 
 // execute

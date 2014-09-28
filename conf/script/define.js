@@ -62,6 +62,8 @@ var IsRunning                    = "IsRunning" ;
 var IsOMStop                     = "IsOMStop" ;
 var INSTALL_DIR                  = "INSTALL_DIR" ;
 var InstallConfig                = "InstallConfig" ;
+var InstallGroupName             = "InstallGroupName" ;
+var InstallGroupNames            = "InstallGroupNames" ;
 var InstallHostName              = "InstallHostName" ;
 var InstallPacket                = "InstallPacket" ;
 var InstallPath                  = "InstallPath" ;
@@ -144,6 +146,7 @@ var OMA_OPTION_SDBCMART_1             = "--I" ;
 // other
 var OMA_NEW_LINE_L                    = "\n" ;
 var OMA_SYS_CATALOG_RG                = "SYSCatalogGroup" ;
+var OMA_SYS_COORD_RG                  = "SYSCoord" ;
 var OMA_LINUX                         = "LINUX" ;
 var OMA_WINDOWS                       = "WINDOWS" ;
 var OMA_SLEEP_TIME                    = 500 ;

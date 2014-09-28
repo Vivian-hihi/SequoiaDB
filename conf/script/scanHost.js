@@ -106,7 +106,7 @@ function scanHost( user, passwd, hostname, ip )
       var ping = eval( "(" + ret + ")" ) ;
       if ( true != ping[Reachable] )
          return retObj ;
-      retObj.CanPing = true ;
+      retObj[CanPing] = true ;
       // ssh
       try
       {

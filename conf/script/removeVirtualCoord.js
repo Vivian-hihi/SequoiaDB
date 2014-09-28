@@ -19,81 +19,60 @@
 @description: remove virtual coord
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   SYS_JSON: the format is: { "VCoordSvcName": "11792" }
+   ENV_JSON:
+@return
+   RET_JSON: the format is: {"errno":0,"detail":""}
 */
-if ( typeof(OMA_HOST_NAME) == "undefined" )
-{
-   OMA_HOST_NAME = "127.0.0.1" ;
-}
-if ( typeof(OMA_SVC_NAME)  == "undefined" )
-{
-   OMA_SVC_NAME = "11790" ;
-}
-if ( typeof(V_COORD_SVC_NAME)  == "undefined" )
-{
-}
 
-var objRet = new Object() ;
+//var SYS_JSON = { "VCoordSvcName": "11792" } ;
 
-objRet.Errno = 0 ;
-objRet.detail = "" ;
+var RET_JSON     = new Object() ;
+RET_JSON[Errno]  = SDB_OK ;
+RET_JSON[Detail] = "" ;
 
 function main()
 {
+   var omaHostName   = System.getHostName() ;
+   var omaSvcName    = Oma.getAOmaSvcName( "localhost" ) ;
+   var vCoordSvcName = SYS_JSON[VCoordSvcName] ;
    var oma = null ;
    try
    {
-      // check argument
-      if ( typeof(OMA_HOST_NAME) == "undefined" ||
-           typeof(OMA_SVC_NAME) == "undefined" )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "not specified sdbom's hostname or svcname" ;
-         return objRet ;
-      }
-      if ( typeof(V_COORD_SVC_NAME) == "undefined" )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "not specified virtual coord's svcname" ;
-         return objRet ;
-      }
       // new oma object
-      oma = new Oma( OMA_HOST_NAME, OMA_SVC_NAME ) ;
+      var oma = new Oma( omaHostName, omaSvcName ) ;
       
       // stop virtual coord
-      oma.stopNode( V_COORD_SVC_NAME ) ;
-
+      oma.stopNode( vCoordSvcName ) ;
+   
       // remomve virtual coord
-      oma.removeCoord( V_COORD_SVC_NAME ) ;
- 
+      oma.removeCoord( vCoordSvcName ) ;
+   
       // close connection
       oma.close() ;
       oma = null ;
-
-      return objRet ;
    }
    catch ( e )
    {
-      if ( null != oma )
+      if ( null != oma && "undefined" != typeof(oma) )
       {
-         oma.close() ;
-      }
-      if ( typeof(e) != "number" )
-      {
-         objRet.Errno = -10 ;
-         objRet.detail = "system error" ;
+         try
+         {
+            oma.close() ;
+            oma = null ;
+         }
+         catch ( e )
+         {
+         }
       }
       else
       {
-         var errMsg = "" ;
-         objRet.Errno = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
+         throw e ;
       }
-      return objRet ;
    }
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   return RET_JSON ;
 }
 
 // execute

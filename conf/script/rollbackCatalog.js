@@ -19,56 +19,77 @@
 @description: remove the newly created catalog group
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON:
+   SYS_JSON: the format is: { "VCoordSvcName": "11792" }
+   ENV_JSON:
+@return
+   RET_JSON: the format is: {"errno":0,"detail":""}
 */
-if ( typeof(COORD_HOSTNAME) == "undefined" ) {}
-if ( typeof(COORD_SERVICE) == "undefined" ) {}
-if ( typeof(DB_USERNAME) == "undefined" ) { DB_USERNAME = "" ; }
-if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
 
-var objRet = new Object() ;
+//var SYS_JSON = { "VCoordSvcName": "11792" } ;
 
-objRet.Errno = 0 ;
-objRet.detail = "" ;
+var RET_JSON     = new Object() ;
+RET_JSON[Errno]  = SDB_OK ;
+RET_JSON[Detail] = "" ;
 
-function main()
+/* *****************************************************************************
+@discretion: remove catalog group
+@parameter
+   db[object]: Sdb object
+@return void
+***************************************************************************** */
+function removeCatalogGroup( db )
 {
-   var db =  null ;
+   var rg = null ;
+
    try
    {
-      // check arguments
-      if ( typeof(COORD_HOSTNAME) == "undefined" ||
-           typeof(COORD_SERVICE) == "undefined" )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "virtual coord hostname and svcname are need"
-         return objRet ;
-      }
-
-      // connect to virtual coord
-      db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
-      // remove catalog
-      db.removeCatalogRG() ;
-      return objRet ;
+      rg = db.getCatalogRG() ;
    }
    catch ( e )
    {
-      if ( typeof(e) != "number" )
+      if ( SDB_CLS_GRP_NOT_EXIST == e )
       {
-         objRet.Errno = -10 ;
-         objRet.detail = "system error" ;
+         return ;
       }
       else
       {
-         var errMsg = "" ;
-         objRet.Errno = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
+         if ( "number" == typeof(e) )
          {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
+            setLastErrMsg( "Failed to get catalog group: " + getErr( e ) ) ;
+            setLastError( e ) ;
          }
+         throw e ;
       }
-      return objRet ;
    }
+   // remove
+   try
+   {
+      db.removeCatalogRG() ;
+   }
+   catch ( e )
+   {
+      if ( "number" == typeof(e) )
+      {
+         setLastErrMsg( "Failed to remove catalog group: " + getErr( e ) ) ;
+         setLastError( e ) ;
+      }
+      throw e ;
+   }
+}
+
+function main()
+{
+   var vCoordHostName   = System.getHostName() ;
+   var vCoordSvcName    = SYS_JSON[VCoordSvcName] ;
+   // connect to virtual coord
+   db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   // remove coord nodes
+   removeCatalogGroup( db ) ;
+
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   return RET_JSON ;
 }
 
 // execute

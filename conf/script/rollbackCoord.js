@@ -16,84 +16,80 @@
 
 *******************************************************************************/
 /*
-@description: remove the newly created catalog group
+@description: remove the newly created coord group
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON:
+   SYS_JSON: the format is: { "VCoordSvcName": "11792" } 
+   ENV_JSON:
+@return
+   RET_JSON: the format is: {"errno":0,"detail":""}
 */
-if ( typeof(COORD_HOSTNAME) == "undefined" ) {}
-if ( typeof(COORD_SERVICE) == "undefined" ) {}
-if ( typeof(DB_USERNAME) == "undefined" ) { DB_USERNAME = "" ; }
-if ( typeof(DB_PASSWORD) == "undefined" ) { DB_PASSWORD = "" ; }
 
-var objRet = new Object() ;
+//var SYS_JSON = { "VCoordSvcName": "11792" } ;
 
-objRet.Errno = 0 ;
-objRet.detail = "" ;
+var RET_JSON     = new Object() ;
+RET_JSON[Errno]  = SDB_OK ;
+RET_JSON[Detail] = "" ;
 
-function removeCoordNodes( db )
+/* *****************************************************************************
+@discretion: remove coord group
+@parameter
+   db[object]: Sdb object
+@return void
+***************************************************************************** */
+function removeCoordGroup( db )
 {
    var rg = null ;
 
    try
    {
-      rg = db.getCoordRG ;
+      rg = db.getCoordRG() ;
    }
    catch ( e )
    {
-      if ( -154 == e )
+      if ( SDB_CLS_GRP_NOT_EXIST == e )
       {
          return ;
       }
       else
       {
+         if ( "number" == typeof(e) )
+         {
+            setLastErrMsg( "Failed to get coord group: " + getErr( e ) ) ;
+            setLastError( e ) ;
+         }
          throw e ;
       }
    }
-   db.removeCoordRG() ;
+   // remove
+   try
+   {
+      db.removeCoordRG() ;
+   }
+   catch ( e )
+   {
+      if ( "number" == typeof(e) )
+      {
+         setLastErrMsg( "Failed to remove coord group: " + getErr( e ) ) ;
+         setLastError( e ) ;
+      }
+      throw e ;
+   }
 }
 
 function main()
 {
-   var db =  null ;
-   try
-   {
-      // check arguments
-      if ( typeof(COORD_HOSTNAME) == "undefined" ||
-           typeof(COORD_SERVICE) == "undefined" )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "virtual coord hostname and svcname are need"
-         return objRet ;
-      }
+   var vCoordHostName   = System.getHostName() ;
+   var vCoordSvcName    = SYS_JSON[VCoordSvcName] ;
+   // connect to virtual coord
+   db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   // remove coord nodes
+   removeCoordGroup( db ) ;
 
-      // connect to virtual coord
-      db = new Sdb( COORD_HOSTNAME, COORD_SERVICE, DB_USERNAME, DB_PASSWORD ) ;
-      // remove coord nodes
-      removeCoordNodes( db ) ;
-
-      return objRet ;
-   }
-   catch ( e )
-   {
-// TODO:
-//print("error is e = " + e + "\n") ;
-      if ( typeof(e) != "number" )
-      {
-         objRet.Errno = -10 ;
-         objRet.detail = "system error" ;
-      }
-      else
-      {
-         var errMsg = "" ;
-         objRet.Errno = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
-         {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
-         }
-      }
-      return objRet ;
-   }
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   return RET_JSON ;
 }
 
 // execute
