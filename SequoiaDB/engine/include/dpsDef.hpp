@@ -86,7 +86,7 @@ enum DPS_LOG_TYPE
    LOG_TYPE_LOB_WRITE    = 0x0F,
    LOG_TYPE_LOB_REMOVE   = 0x10,
    LOG_TYPE_LOB_UPDATE   = 0x11,
-   LOG_TYPE_LOB_TRUNCATE_LOB = 0x12,
+   LOG_TYPE_LOB_TRUNCATE = 0x12,
 } ;
 
 namespace engine

@@ -49,6 +49,15 @@ namespace engine
    #define DMS_LOB_PAGE_IN_USED( page )\
            ( DMS_SME_ALLOCATED == getSME()->getBitMask( page ) )
 
+   #define DMS_LOB_GET_HASH_FROM_BLK( blk, hash )\
+           do\
+           {\
+              const BYTE *d1 = (blk)->_oid ;\
+              const BYTE *d2 = ( const BYTE * )( &( (blk)->_sequence ) ) ;\
+              (hash) = ossHash( d1, sizeof( (blk)->_oid ),\
+                              d2, sizeof( (blk)->_sequence ) ) ;\
+           } while( FALSE )
+
    /*
       _dmsStorageLob implement
    */
@@ -663,6 +672,7 @@ namespace engine
       goto done ;
    }
 
+
    INT32 _dmsStorageLob::_allocatePage( const dmsLobRecord &record,
                                         dmsMBContext *context,
                                         DMS_LOB_PAGEID &page )
@@ -838,60 +848,12 @@ namespace engine
          }
       }
 
-      /// first page in bucket
-      if ( DMS_LOB_INVALID_PAGEID == blk->_lastPageInBucket )
+      rc = _removePage( page, blk, &bucketNumber ) ;
+      if ( SDB_OK != rc )
       {
-         SDB_ASSERT( _dmsBME->_buckets[bucketNumber] == page, "must be this page" ) ;
-         _dmsBME->_buckets[bucketNumber] = blk->_nextPageInBucket ;
-         if ( DMS_LOB_INVALID_PAGEID != blk->_nextPageInBucket )
-         {
-            _dmsLobDataMapBlk *nextBlk = NULL ;
-            ossValuePtr nextExtent = extentAddr( blk->_nextPageInBucket ) ;
-            if ( !nextExtent )
-            {
-               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
-                       blk->_nextPageInBucket ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-
-            nextBlk = DMS_LOB_META( nextExtent ) ;
-            nextBlk->_lastPageInBucket = DMS_LOB_INVALID_PAGEID ;
-         }
+         PD_LOG( PDERROR, "failed to remove page:%d, rc:%d", page, rc ) ;
+         goto error ;
       }
-      else
-      {
-         _dmsLobDataMapBlk *lastBlk = NULL ;
-         ossValuePtr lastExtent = extentAddr( blk->_lastPageInBucket ) ;
-         if ( !lastExtent )
-         {
-            PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
-                    blk->_lastPageInBucket ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         lastBlk = DMS_LOB_META( lastExtent ) ;
-         lastBlk->_nextPageInBucket = blk->_nextPageInBucket ;
-
-         if ( DMS_LOB_INVALID_PAGEID != blk->_nextPageInBucket )
-         {
-            _dmsLobDataMapBlk *nextBlk = NULL ;
-            ossValuePtr nextExtent = extentAddr( blk->_nextPageInBucket ) ;
-            if ( !nextExtent )
-            {
-               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
-                       blk->_nextPageInBucket ) ;
-               rc = SDB_SYS ;
-               goto error ;
-            }
-
-            nextBlk = DMS_LOB_META( nextExtent ) ;
-            nextBlk->_lastPageInBucket = blk->_lastPageInBucket ;
-         }
-      }
-
-      _releaseSpace( page, 1 ) ;
 
       if ( NULL != dpscb )
       {
@@ -1269,6 +1231,231 @@ namespace engine
       }
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 _dmsStorageLob::_removePage( DMS_LOB_PAGEID page,
+                                      const _dmsLobDataMapBlk *blk,
+                                      const UINT32 *bucket )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 bucketNumber = 0 ;     
+
+      if ( NULL != bucket )
+      {
+         bucketNumber = *bucket ;
+      }
+      else
+      {
+         UINT32 hash = 0 ;
+         DMS_LOB_GET_HASH_FROM_BLK( blk, hash ) ;
+         bucketNumber = _getBucket( hash ) ;
+      }
+
+      if ( DMS_LOB_INVALID_PAGEID == blk->_lastPageInBucket )
+      {
+         SDB_ASSERT( _dmsBME->_buckets[bucketNumber] == page, "must be this page" ) ;
+         _dmsBME->_buckets[bucketNumber] = blk->_nextPageInBucket ;
+         if ( DMS_LOB_INVALID_PAGEID != blk->_nextPageInBucket )
+         {
+            _dmsLobDataMapBlk *nextBlk = NULL ;
+            ossValuePtr nextExtent = extentAddr( blk->_nextPageInBucket ) ;
+            if ( !nextExtent )
+            {
+               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
+                       blk->_nextPageInBucket ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            nextBlk = DMS_LOB_META( nextExtent ) ;
+            nextBlk->_lastPageInBucket = DMS_LOB_INVALID_PAGEID ;
+         }
+      }
+      else
+      {
+         _dmsLobDataMapBlk *lastBlk = NULL ;
+         ossValuePtr lastExtent = extentAddr( blk->_lastPageInBucket ) ;
+         if ( !lastExtent )
+         {
+            PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
+                    blk->_lastPageInBucket ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         lastBlk = DMS_LOB_META( lastExtent ) ;
+         lastBlk->_nextPageInBucket = blk->_nextPageInBucket ;
+
+         if ( DMS_LOB_INVALID_PAGEID != blk->_nextPageInBucket )
+         {
+            _dmsLobDataMapBlk *nextBlk = NULL ;
+            ossValuePtr nextExtent = extentAddr( blk->_nextPageInBucket ) ;
+            if ( !nextExtent )
+            {
+               PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
+                       blk->_nextPageInBucket ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            nextBlk = DMS_LOB_META( nextExtent ) ;
+            nextBlk->_lastPageInBucket = blk->_lastPageInBucket ;
+         }
+      }
+
+      _releasePage( page ) ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _dmsStorageLob::truncate( dmsMBContext *mbContext,
+                                   _pmdEDUCB *cb,
+                                   SDB_DPSCB *dpscb )
+   {
+      INT32 rc = SDB_OK ;
+      DMS_LOB_PAGEID current = -1 ;
+      BOOLEAN locked = FALSE ;
+      BOOLEAN needPanic = FALSE ;
+      CHAR fullName[DMS_SU_FILENAME_SZ + DMS_COLLECTION_NAME_SZ + 2] ;
+      dpsMergeInfo info ;
+      dpsLogRecord &logRecord = info.getMergeBlock().record() ;
+      dpsTransCB *transCB = pmdGetKRCB()->getTransCB() ;
+
+      /// we do not want to add this operation to log now -- yunwu
+      dpscb = NULL ;
+
+      if ( !isOpened() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "File[%s] is not open in remove", getSuName() ) ;
+         goto error ;
+      }
+
+      locked = mbContext->isMBLock() ;
+      if ( !locked )
+      {
+         rc = mbContext->mbLock( EXCLUSIVE ) ;
+         PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+      }
+
+      if ( !dmsAccessAndFlagCompatiblity ( mbContext->mb()->_flag,
+                                           DMS_ACCESS_TYPE_DELETE ) )
+      {
+         PD_LOG ( PDERROR, "Incompatible collection mode: %d",
+                  mbContext->mb()->_flag ) ;
+         rc = SDB_DMS_INCOMPATIBLE_MODE ;
+         goto error ;
+      }
+
+      if ( NULL != dpscb )
+      {
+         UINT32 csNameLen = ossStrlen( getSuName() ) ;
+         UINT32 clNameLen = ossStrlen( mbContext->mb()->_collectionName ) ;
+         ossMemcpy( fullName, getSuName(), csNameLen ) ;
+         fullName[csNameLen] = '.' ;
+         ossMemcpy( fullName + csNameLen + 1,
+                    mbContext->mb()->_collectionName,
+                    clNameLen + 1 ) ;
+
+         rc = dpsLobTruncate2Record( fullName,
+                                     logRecord ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build dps log:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = dpscb->checkSyncControl( logRecord.head()._length, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "check sync control failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         rc = transCB->reservedLogSpace( logRecord.head()._length ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "failed to reserved log space(length=%u)",
+                    logRecord.head()._length ) ;
+            info.clear() ;
+            goto error ;
+         }
+      }
+
+      needPanic = TRUE ;
+      while ( ( UINT32 )++current < pageNum() )
+      {
+         if ( !DMS_LOB_PAGE_IN_USED( current ) )
+         {
+            continue ;
+         }
+
+         _dmsLobDataMapBlk *blk = NULL ;
+         ossValuePtr extent = extentAddr( current ) ;
+         if ( !extent )
+         {
+            PD_LOG( PDERROR, "we got a NULL extent from extendAddr(), pageid:%d",
+                    current ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         blk = DMS_LOB_META( extent ) ;
+         if ( mbContext->clLID() != blk->_clLogicalID )
+         {
+            continue ; 
+         }
+
+         rc = _removePage( current, blk, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to remove page:%d, rc:%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      if ( NULL != dpscb )
+      {
+         SDB_ASSERT( NULL != _dmsData, "can not be null" ) ;
+         info.setInfoEx( _dmsData->logicalID(),
+                         mbContext->clLID(),
+                         DMS_INVALID_EXTENT, cb ) ;
+
+         rc = dpscb->prepare( info ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to prepare dps log:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( !locked )
+         {
+            mbContext->mbUnlock() ;
+            locked = TRUE ;
+         }
+
+         dpscb->writeData( info ) ;
+      }
+   done:
+      if ( !locked )
+      {
+         mbContext->mbUnlock() ;
+      }
+
+      if ( 0 != logRecord.head()._length )
+      {
+         transCB->releaseLogSpace( logRecord.head()._length ) ;
+      }
+      return rc ;
+   error:
+      if ( needPanic )
+      {
+         PD_LOG( PDSEVERE, "we must panic db now, we got a lrreparable error" ) ;
+         ossPanic() ;
+      }
       goto done ;
    }
 }

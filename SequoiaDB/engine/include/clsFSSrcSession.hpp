@@ -204,9 +204,8 @@ namespace engine
       virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
       virtual INT32   _scanType () const ;
 
-   protected:
-
-
+   private:
+      _dpsMessageBlock _mb ;
    } ;
    typedef class _clsFSSrcSession clsFSSrcSession ;
 

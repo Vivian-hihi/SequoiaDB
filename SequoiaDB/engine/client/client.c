@@ -7602,40 +7602,21 @@ error:
    goto done ;
 }
 
-static INT32 _sdbListLobs( sdbCollectionHandle cHandle,
-                           BOOLEAN listPieces,
-                           sdbCursorHandle *cursorHandle )
+static INT32 _sdbRunCmdOfLob( sdbCollectionHandle cHandle,
+                              const CHAR *cmd,
+                              const bson *obj,
+                              sdbCursorHandle *cursorHandle )
 {
    INT32 rc = SDB_OK ;
-   bson obj ;
    BOOLEAN result = TRUE ;
    SINT64 contextID = -1 ;
    sdbCursorStruct *cursor = NULL ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
-   bson_init( &obj ) ;
-   rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
-   if ( SDB_OK != rc )
-   {
-      rc = SDB_SYS ;
-      goto error ;
-   }
-
-   if ( listPieces )
-   {
-      rc = bson_append_bool( &obj, FIELD_NAME_LOB_LIST_PIECES_MODE, TRUE ) ;
-      if ( SDB_OK != rc )
-      {
-         rc = SDB_SYS ;
-         goto error ;
-      }
-   }
-   bson_finish( &obj ) ;
-
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                              CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS,
-                              0, 0, -1, -1, &obj,
+                              cmd,
+                              0, 0, -1, -1, obj,
                               NULL, NULL, NULL, cs->_endianConvert ) ;
    if ( SDB_OK != rc )
    {
@@ -7656,19 +7637,21 @@ static INT32 _sdbListLobs( sdbCollectionHandle cHandle,
       goto error ;
    }
 
-   ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
-   INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
-   ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
-               sizeof(cursor->_collectionFullName) ) ;
-   rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
-   if ( SDB_OK != rc )
+   if ( -1 != contextID && NULL != cursorHandle )
    {
-      goto error ;
+      ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
+      INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
+      ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
+                  sizeof(cursor->_collectionFullName) ) ;
+      rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      *cursorHandle = (sdbCursorHandle)cursor ;
    }
-
-   *cursorHandle = (sdbCursorHandle)cursor ;
+ 
 done:
-   bson_destroy( &obj ) ;
    return rc ;
 error:
    if ( cursor )
@@ -7682,12 +7665,86 @@ error:
 SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
                               sdbCursorHandle *cursor )
 {
-   return _sdbListLobs( cHandle, FALSE, cursor ) ;
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+
+   if ( NULL == cursor )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   bson_init( &obj ) ;
+   rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   bson_finish( &obj ) ;
+
+   rc = _sdbRunCmdOfLob( cHandle, CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS,
+                         &obj, cursor ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   SET_INVALID_HANDLE( cursor ) ;
+   goto done ;
 }
 
 SDB_EXPORT INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
                                    sdbCursorHandle *cursor )
 {
-   return _sdbListLobs( cHandle, TRUE, cursor ) ;
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+
+   if ( NULL == cursor )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }   
+
+   bson_init( &obj ) ;
+   rc = bson_append_string( &obj, FIELD_NAME_COLLECTION, cs->_collectionFullName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = bson_append_bool( &obj, FIELD_NAME_LOB_LIST_PIECES_MODE, TRUE ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   bson_finish( &obj ) ;
+
+   rc = _sdbRunCmdOfLob( cHandle, CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS,
+                         &obj, cursor ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   } 
+done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   SET_INVALID_HANDLE( cursor ) ;
+   goto done ;
 }
+
 

@@ -1901,5 +1901,61 @@ namespace engine
    error:
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_LOBTRUNCATE2RECORD, "dpsLobTruncate2Record" )
+   INT32 dpsLobTruncate2Record( const CHAR *fullName,
+                                dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_LOBTRUNCATE2RECORD ) ;
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_LOB_TRUNCATE ;
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen( fullName ) + 1,
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record, rc:%d", rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_LOBTRUNCATE2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2LOBTRUNCATE, "dpsRecord2LobTruncate" )
+   INT32 dpsRecord2LobTruncate( const CHAR *raw,
+                                const CHAR **fullName )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2LOBTRUNCATE ) ;
+      dpsLogRecord record ;
+      rc = record.load( raw ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to load lobu record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itr.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      *fullName = itr.value() ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2LOBTRUNCATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

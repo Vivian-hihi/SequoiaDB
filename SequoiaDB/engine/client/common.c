@@ -645,8 +645,8 @@ INT32 clientBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
                              const CHAR *CollectionName, SINT32 flag,
                              UINT64 reqID,
                              SINT64 numToSkip, SINT64 numToReturn,
-                             bson *query, bson *fieldSelector,
-                             bson *orderBy, bson *hint,
+                             const bson *query, const bson *fieldSelector,
+                             const bson *orderBy, const bson *hint,
                              BOOLEAN endianConvert )
 {
    bson emptyObj ;

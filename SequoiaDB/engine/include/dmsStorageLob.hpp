@@ -129,6 +129,9 @@ namespace engine
                       dmsMBContext *mbContext,
                       dmsLobInfoOnPage &page ) ;
 
+      INT32 truncate( dmsMBContext *mbContext,
+                      _pmdEDUCB *cb,
+                      SDB_DPSCB *dpscb ) ;
    protected:
       INT32  _openLob( const CHAR *path,
                        BOOLEAN createNew,
@@ -179,6 +182,11 @@ namespace engine
 
       /// only release space of page. will not change other meta data.
       INT32 _releasePage( DMS_LOB_PAGEID page ) ;
+
+      /// release space of page and change other meta data.
+      INT32 _removePage( DMS_LOB_PAGEID page,
+                         const _dmsLobDataMapBlk *blk,
+                         const UINT32 *bucket ) ;
 
    private:
       dmsBucketsManagementExtent    *_dmsBME ;

@@ -236,6 +236,12 @@ namespace engine
                           UINT32 &hash,
                           const CHAR **data,
                           DMS_LOB_PAGEID &page ) ;
+
+   INT32 dpsLobTruncate2Record( const CHAR *fullName,
+                                dpsLogRecord &record ) ;
+
+   INT32 dpsRecord2LobTruncate( const CHAR *raw,
+                                const CHAR **fullName ) ;
 }
 
 #endif

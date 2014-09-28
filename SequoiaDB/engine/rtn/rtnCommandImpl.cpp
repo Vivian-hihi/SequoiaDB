@@ -1523,6 +1523,7 @@ namespace engine
       rtnAccessPlanManager *apm           = NULL ;
       const CHAR *pCollectionShortName    = NULL ;
       BOOLEAN writable                    = FALSE ;
+      _dmsMBContext *mbContext            = NULL ;
 
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
@@ -1547,10 +1548,33 @@ namespace engine
       apm = su->getAPM() ;
       apm->invalidatePlans ( pCollectionShortName ) ;
 
+      if ( su->lob()->isOpened() )
+      {
+         rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to resolve collection name:%s, rc:%d",
+                    pCollection, rc ) ;
+            goto error ;
+         }
+
+         rc = su->lob()->truncate( mbContext, cb, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to remove all lobs in cl:%s, rc:%d",
+                    pCollection, rc ) ;
+            goto error ;
+         }
+      }
+
    done :
       if ( writable )
       {
          dmsCB->writeDown() ;
+      }
+      if ( NULL != su && NULL != mbContext )
+      {
+         su->data()->releaseMBContext( mbContext ) ;
       }
       if ( DMS_INVALID_CS != suID )
       {

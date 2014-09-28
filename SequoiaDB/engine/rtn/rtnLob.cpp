@@ -426,8 +426,8 @@ namespace engine
       rc = tmpSu->data()->getMBContext( &tmpMb, clName, -1 ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to resolve collection name:%s",
-                 clName ) ;
+         PD_LOG( PDERROR, "failed to resolve collection name:%s, rc:%d",
+                 clName, rc ) ;
          goto error ;
       }
 

@@ -1357,7 +1357,8 @@ namespace engine
 
    _clsFSSrcSession::_clsFSSrcSession( UINT64 sessionID,
                                        _netRouteAgent *agent )
-   :_clsDataSrcBaseSession( sessionID, agent )
+   :_clsDataSrcBaseSession( sessionID, agent ),
+    _mb( 1024 )
    {
    }
 
@@ -1621,9 +1622,62 @@ namespace engine
       }
       else if ( fullCLLID == _curCollection )
       {
-         if ( extLID <= _curExtID || _findEnd )
+         dpsLogRecord record ;
+         DPS_LSN lsn ;
+         lsn.offset = offset ;
+         SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
+         _mb.clear() ;
+         INT32 rc = dpsCB->search( lsn, &_mb ) ;
+         if ( SDB_OK != rc )
          {
-            _deqLSN.push_back ( offset ) ;
+            PD_LOG ( PDERROR, "Split Session[%s]: Failed to load dps "
+                     "log[offset:%lld, rc:%d]", sessionName(), offset, rc ) ;
+            goto error ;
+         }
+
+         rc = record.load( _mb.startPtr() ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Split Session[%s]: parse dps log failed[rc:%d]",
+                     sessionName(), rc ) ;
+            goto error ;
+         }
+
+         if ( !_docIsDone )
+         {
+            if ( LOG_TYPE_LOB_WRITE == record.head()._type ||
+                 LOG_TYPE_LOB_REMOVE == record.head()._type ||
+                 LOG_TYPE_LOB_UPDATE == record.head()._type )
+            {
+               goto done ;
+            }
+            else if ( extLID <= _curExtID || _findEnd )
+            {
+               _deqLSN.push_back ( offset ) ;
+            }
+         }
+         else
+         {
+            if ( !( LOG_TYPE_LOB_WRITE == record.head()._type ||
+                 LOG_TYPE_LOB_REMOVE == record.head()._type ||
+                 LOG_TYPE_LOB_UPDATE == record.head()._type ))
+            {
+               _deqLSN.push_back ( offset ) ;
+            }
+            else if ( DMS_LOB_INVALID_PAGEID == _lobFetcher.toBeFetched() )
+            {
+               _deqLSN.push_back( offset ) ;
+               goto done ;
+            }
+            else if ( extLID < _lobFetcher.toBeFetched() )
+            {
+               _deqLSN.push_back( offset ) ;
+               goto done ;
+            }
+            else
+            {
+               goto done ;
+            }
          }
       }
 
@@ -1632,6 +1686,8 @@ namespace engine
    done:
       PD_TRACE_EXIT ( SDB__CLSFSSS_NTFLSN );
       return SDB_OK ;
+   error:
+      goto done ;
    }
 
    INT32 _clsFSSrcSession::_onFSMeta( const CHAR * clFullName )
@@ -1785,33 +1841,21 @@ namespace engine
          if ( !_docIsDone &&
               ( LOG_TYPE_LOB_WRITE == record.head()._type ||
                 LOG_TYPE_LOB_REMOVE == record.head()._type ||
-                LOG_TYPE_LOB_UPDATE == record.head()._type ||
-                LOG_TYPE_LOB_TRUNCATE_LOB == record.head()._type ))
+                LOG_TYPE_LOB_UPDATE == record.head()._type ))
          {
             goto done ;
          }
-/*         /// log of doc should be pushed after doc is done.
-         else if ( _docIsDone &&
-                   LOG_TYPE_LOB_WRITE != record.head()._type &&
-                   LOG_TYPE_LOB_REMOVE != record.head()._type &&
-                   LOG_TYPE_LOB_UPDATE != record.head()._type &&
-                   LOG_TYPE_LOB_TRUNCATE_LOB != record.head()._type )
-         {
-            _deqLSN.push_back( offset ) ;
-            goto done ;
-         }*/
          else if ( _docIsDone &&
                    (LOG_TYPE_LOB_WRITE == record.head()._type ||
                    LOG_TYPE_LOB_REMOVE == record.head()._type ||
-                   LOG_TYPE_LOB_UPDATE == record.head()._type ||
-                   LOG_TYPE_LOB_TRUNCATE_LOB == record.head()._type ) )
+                   LOG_TYPE_LOB_UPDATE == record.head()._type) )
          {
             if ( DMS_LOB_INVALID_PAGEID == _lobFetcher.toBeFetched() )
             {
                _deqLSN.push_back( offset ) ;
                goto done ;
             }
-            else if ( _lobFetcher.toBeFetched() <= extLID )
+            else if ( extLID < _lobFetcher.toBeFetched() )
             {
                _deqLSN.push_back( offset ) ;
                goto done ;

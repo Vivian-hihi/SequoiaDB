@@ -1928,6 +1928,7 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
 
 /** \fn INT32 sdbListLobs( sdbCollectionHandle cHandle,
  *                         sdbCursorHandle *cursor )
+ *  \brief list every lob's meta data
  *  \param [in] cHandle The collection handle
  *  \param [out] cursor The cursor handle of current query
  *  \retval SDB_OK Operation Success
@@ -1937,7 +1938,8 @@ SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
                               sdbCursorHandle *cursor ) ;
 
 /** \fn INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
- *  *                           sdbCursorHandle *cursor )
+ *                              sdbCursorHandle *cursor )
+ *  \brief list all lobs in sequences
  *  \param [in] cHandle The collection handle
  *  \param [out] cursor The cursor handle of current query
  *  \retval SDB_OK Operation Success
