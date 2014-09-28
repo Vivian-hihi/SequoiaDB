@@ -23,7 +23,7 @@
 
 	<target name="Deploy" depends="">
 		<parallel>
-			<ant antfile=" xml" dir="." inheritAll="false">
+			<ant antfile="deploy-software-in-host.xml" dir="." inheritAll="false">
 				<property name="install.package.fullname" value="${install.package.fullname}" />
 				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
 				<!-- <property name="coord.service.port" value="${coord.service.port}" /> -->
