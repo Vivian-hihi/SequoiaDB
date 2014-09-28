@@ -167,6 +167,8 @@ namespace engine
 
          INT32             _finishTask() ;
 
+         INT32             _checkTaskResponse( BSONObj &response ) ;
+
       protected:
          //TODO: to protect the progress ;
          ossSpinSLatch     _lock ;

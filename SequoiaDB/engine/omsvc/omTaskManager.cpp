@@ -729,6 +729,41 @@ namespace engine
       goto done ;
    }
 
+   INT32 omInstallTask::_checkTaskResponse( BSONObj &response )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele = response.getField( OM_BSON_TASK_STATUS ) ;
+      if ( ele.type() != String )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "agent's response field format error:field=%s,"
+                 "type=%d", OM_BSON_TASK_STATUS, ele.type() ) ;
+         goto error ;
+      }
+      
+      ele = response.getField( OM_BSON_TASK_PROGRESS ) ;
+      if ( ele.type() != Object )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "agent's response field format error:field=%s,"
+                 "type=%d", OM_BSON_TASK_PROGRESS, ele.type() ) ;
+         goto error ;
+      }
+      
+      ele = response.getField( OM_BSON_TASK_ISFINISHED ) ;
+      if ( ele.type() != Bool )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "agent's response field format error:field=%s,"
+                 "type=%d", OM_BSON_TASK_ISFINISHED, ele.type() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omInstallTask::updateProgress()
    {
       INT32 rc   = SDB_OK ;
@@ -763,11 +798,9 @@ namespace engine
          goto error ;
       }
 
-      if ( !response.hasField( OM_BSON_TASK_ISFINISHED ) 
-           || !response.hasField( OM_BSON_TASK_STATUS ) 
-           || !response.hasField( OM_BSON_TASK_PROGRESS ) )
+      rc = _checkTaskResponse( response ) ;
+      if ( SDB_OK != rc )
       {
-         rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "agent's response format error:res=%s,rc=%d",
                  response.toString().c_str(), rc ) ;
          goto error ;
