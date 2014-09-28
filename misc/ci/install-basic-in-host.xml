@@ -99,6 +99,11 @@
 					</then>
 				</if>
 
+				<exec executable="cat" dir="${db.path}/conf/local/${coord.service.port}" failonerror="false" timeout="30000">
+					<arg line="${db.path}/conf/local/${coord.service.port}/sdb.conf" />
+				</exec>
+				<echo message="############################################" />
+
 				<echo message="Start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" spawn="false">
 					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
