@@ -2077,7 +2077,6 @@ namespace engine
          goto error ;
       }
 
-      pHostInfo = iter->second ;
       iter++ ;
       while ( iter != _hostInfoMap.end() )
       {
@@ -2091,6 +2090,17 @@ namespace engine
          INT32 bestUnUsedDiskCount ;
 
          pTmp          = iter->second ;
+         if ( pTmp->getDiskCount() == 0 )
+         {
+            iter++ ;
+            continue ;
+         }
+
+         if ( NULL == pHostInfo )
+         {
+            pHostInfo = iter->second ;
+         }
+
          roleCount     = pTmp->getNodeCount( role ) ;
          bestRoleCount = pHostInfo->getNodeCount( role );
          if ( roleCount != bestRoleCount )
@@ -2150,7 +2160,10 @@ namespace engine
       if ( NULL == host )
       {
          rc = SDB_DMS_RECORD_NOTEXIST ;
-         PD_LOG( PDERROR, "_getBestHost failed:rc=%d", rc ) ;
+         PD_LOG_MSG( PDERROR, "can't find host to install node, maybe disk is"
+                     " 0 or host is 0:nodeType=%s,rc=%d", 
+                     OM_NODE_ROLE_STANDALONE, rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
 
@@ -2222,7 +2235,10 @@ namespace engine
          if ( NULL == host )
          {
             rc = SDB_DMS_RECORD_NOTEXIST ;
-            PD_LOG( PDERROR, "_getBestHost failed:rc=%d", rc ) ;
+            PD_LOG_MSG( PDERROR, "can't find host to install node, "
+                        "maybe disk is 0 or host is 0:nodeType=%s,rc=%d", 
+                        OM_NODE_ROLE_COORD, rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             goto error ;
          }
 
@@ -2239,7 +2255,10 @@ namespace engine
          if ( NULL == host )
          {
             rc = SDB_DMS_RECORD_NOTEXIST ;
-            PD_LOG( PDERROR, "_getBestHost failed:rc=%d", rc ) ;
+            PD_LOG_MSG( PDERROR, "can't find host to install node, "
+                        "maybe disk is 0 or host is 0:nodeType=%s,rc=%d", 
+                        OM_NODE_ROLE_CATALOG, rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             goto error ;
          }
 
@@ -2258,7 +2277,11 @@ namespace engine
          if ( NULL == host )
          {
             rc = SDB_DMS_RECORD_NOTEXIST ;
-            PD_LOG( PDERROR, "_getBestHost failed:rc=%d", rc ) ;
+            rc = SDB_DMS_RECORD_NOTEXIST ;
+            PD_LOG_MSG( PDERROR, "can't find host to install node, "
+                        "maybe disk is 0 or host is 0:nodeType=%s,rc=%d", 
+                        OM_NODE_ROLE_DATA, rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             goto error ;
          }
 
