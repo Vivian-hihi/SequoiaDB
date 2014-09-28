@@ -87,6 +87,7 @@ namespace engine
 
       _hitEnd = FALSE ;
       _pos = 0 ;
+      _onlyMetaPage = onlyMetaPage ;
    done:
       PD_TRACE_EXITRC( SDB__RTNLOBFETCHER_INIT, rc ) ;
       return rc ;
@@ -125,7 +126,8 @@ namespace engine
       if ( !_su->lob()->isOpened() )
       {
          _hitEnd = TRUE ;
-         goto done ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
       }
 
       rc = _su->lob()->readPage( _pos, _onlyMetaPage,

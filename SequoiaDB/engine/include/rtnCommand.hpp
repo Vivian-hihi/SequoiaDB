@@ -1287,6 +1287,30 @@ namespace engine
       EDUID _sessionID ;
    } ;
    typedef class _rtnForceSession rtnForceSession ;
+
+   class _rtnListLob : public _rtnCommand
+   {
+   DECLARE_CMD_AUTO_REGISTER()
+   public:
+      _rtnListLob() ;
+      virtual ~_rtnListLob() ;
+
+   public:
+      virtual const CHAR * name () { return NAME_LIST_LOBS ; }
+      virtual RTN_COMMAND_TYPE type () { return CMD_LIST_LOB ; }
+      virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
+                           const CHAR *pMatcherBuff,
+                           const CHAR *pSelectBuff,
+                           const CHAR *pOrderByBuff,
+                           const CHAR *pHintBuff ) ;
+      virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                           _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                           INT16 w = 1, INT64 *pContextID = NULL  ) ;
+
+   private:
+      INT64 _contextID ;
+      bson::BSONObj _query ;
+   } ;
 }
 
 const UINT32 pdGetTraceFunctionListNum();

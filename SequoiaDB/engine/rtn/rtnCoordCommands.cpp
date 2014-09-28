@@ -141,6 +141,7 @@ namespace engine
    RTN_COORD_CMD_ADD( COORD_CMD_LIST_CS_IN_DOMAIN, rtnCoordCMDListCSInDomain )
    RTN_COORD_CMD_ADD( COORD_CMD_LIST_CL_IN_DOMAIN, rtnCoordCMDListCLInDomain )
    RTN_COORD_CMD_ADD( COORD_CMD_INVALIDATE_CACHE, rtnCoordCMDInvalidateCache )
+   RTN_COORD_CMD_ADD( COORD_CMD_LIST_LOBS, rtnCoordCMDListLobs )
    RTN_COORD_CMD_END
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_PROCCATREPLY, "rtnCoordCommand::processCatReply" )
@@ -208,7 +209,8 @@ namespace engine
                                                netMultiRouteAgent *pRouteAgent,
                                                pmdEDUCB *cb,
                                                BOOLEAN onPrimary,
-                                               std::set<INT32> *ignoreRCList )
+                                               std::set<INT32> *ignoreRCList,
+                                               std::map<UINT64, SINT64> *contexts )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCOM_EXEONDATAGR ) ;
@@ -253,6 +255,12 @@ namespace engine
                sendGroupLst[groupID] = groupID;
                groupLst.erase ( groupID );
                rcTmp = SDB_OK;
+               if ( NULL != contexts && -1 != pReply->contextID )
+               {
+                  contexts->insert( std::make_pair(
+                                       pReply->header.routeID.value,
+                                       pReply->contextID ) ) ;
+               }
             }
             if ( SDB_OK == rc || SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
             {
@@ -10009,5 +10017,149 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTLOBS_EXEC, "rtnCoordListLobs::execute" )   
+   INT32 rtnCoordCMDListLobs::execute( CHAR *pReceiveBuffer,
+                                       SINT32 packSize,
+                                       CHAR **ppResultBuffer,
+                                       pmdEDUCB *cb,
+                                       MsgOpReply &replyHeader,
+                                       BSONObj **ppErrorObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( CMD_RTNCOCMDLISTLOBS_EXEC ) ;
+      INT32 flag = 0;
+      CHAR *pCollectionName = NULL;
+      SINT64 numToSkip = 0;
+      SINT64 numToReturn = 0;
+      CHAR *pQuery = NULL;
+      CHAR *pFieldSelector = NULL;
+      CHAR *pOrderBy = NULL;
+      CHAR *pHint = NULL;
+      BSONObj query ;
+      const CHAR *fullName = NULL ;
+      CoordCataInfoPtr cataInfo ;
+      CoordGroupList sendGroupLst ;
+      CoordGroupList groupLst ;
+      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
+      CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
+      netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent() ;
+      ROUTE_SET sendNodes;
+      map<UINT64, SINT64> contexts ;
+      rtnContextCoord *context = NULL ;
+      SINT64 contextID = -1 ;
+
+      MsgHeader *pHeader = (MsgHeader *)pReceiveBuffer;
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode = MSG_BS_QUERY_RES;
+      replyHeader.header.requestID = pHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID = pHeader->TID;
+      replyHeader.contextID = -1;
+      replyHeader.flags = SDB_OK;
+      replyHeader.numReturned = 0;
+      replyHeader.startFrom = 0;
+
+      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName,
+                            &numToSkip, &numToReturn, &pQuery,
+                            &pFieldSelector, &pOrderBy, &pHint );
+
+      PD_RC_CHECK( rc, PDERROR, "Snapshot failed, failed to parse query "
+                   "request(rc=%d)", rc ) ;
+
+      try
+      {
+         query = BSONObj( pQuery ) ;
+         BSONElement ele = query.getField( FIELD_NAME_COLLECTION ) ;
+         if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "invalid obj of list lob:%s",
+                    query.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         fullName = ele.valuestr() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = rtnCoordGetCataInfo( cb, fullName, FALSE, cataInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get catainfo of:%s, rc:%d",
+                 fullName, rc ) ;
+         goto error ;
+      }
+
+      rc = rtnCoordGetGroupsByCataInfo( cataInfo,
+                                        sendGroupLst,
+                                        groupLst ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get group list of:%s, rc:%d",
+                 fullName, rc ) ;
+         goto error ;
+      }
+
+      rc = pRtncb->contextNew( RTN_CONTEXT_COORD,
+                               (rtnContext**)&context,
+                                contextID, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create new context:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = context->open( BSONObj() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open context:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst,
+                               pRouteAgent, cb, FALSE, NULL, &contexts ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to execute command on data groups:%d", rc ) ;
+         /// do not goto error, try to add all context returned to coord context.
+         /// so that they can be released at the end of this function if we
+         /// get error.
+      }
+
+      for ( map<UINT64, SINT64>::const_iterator itr = contexts.begin();
+            itr != contexts.end();
+            ++itr )
+      {
+         MsgRouteID id ;
+         id.value = itr->first ;
+         INT32 rcTmp = context->addSubContext( id, itr->second ) ;
+         if ( SDB_OK != rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to add su context:%d", rc ) ;
+            /// do not goto error.
+         }
+      }
+
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      replyHeader.contextID = contextID ;
+   done:
+      PD_TRACE_EXITRC( CMD_RTNCOCMDLISTLOBS_EXEC, rc ) ;
+      return rc ;
+   error:
+      replyHeader.flags = rc;
+      if ( -1 != contextID )
+      {
+         pRtncb->contextDelete( contextID, cb ) ;
+      }
+      goto done ;
+   }
 }
 

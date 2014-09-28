@@ -43,6 +43,7 @@
 #include "rtnTrace.hpp"
 #include "monDump.hpp"
 #include "ossMem.h"
+#include "rtnContextListLob.hpp"
 
 #if defined (_DEBUG)
 // for qgmDebugQuery function
@@ -2747,6 +2748,86 @@ namespace engine
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnListLob)
+   _rtnListLob::_rtnListLob()
+   :_contextID( -1 )
+   {
+
+   }
+
+   _rtnListLob::~_rtnListLob()
+   {
+
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLISTLOB_INIT, "_rtnListLob::init" )
+   INT32 _rtnListLob::init( INT32 flags, INT64 numToSkip,
+                            INT64 numToReturn,
+                            const CHAR *pMatcherBuff,
+                            const CHAR *pSelectBuff,
+                            const CHAR *pOrderByBuff,
+                            const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNLISTLOB_INIT ) ;
+      try
+      {
+         _query = BSONObj( pMatcherBuff ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__RTNLISTLOB_INIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLISTLOB_DOIT, "_rtnListLob::doit" ) 
+   INT32 _rtnListLob::doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                             _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                             INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNLISTLOB_DOIT ) ;
+      rtnContextListLob *context = NULL ;
+
+      rc = rtnCB->contextNew( RTN_CONTEXT_LIST_LOB,
+                              (rtnContext**)(&context),
+                              _contextID, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open lob context:%d", rc ) ;
+         goto error ;
+      }
+
+      SDB_ASSERT( NULL != context, "can not be null" ) ;
+      rc = context->open( _query, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open list lob context:%d", rc ) ;
+         goto error ;
+      }
+
+      *pContextID = _contextID ;
+   done:
+      PD_TRACE_EXITRC( SDB__RTNLISTLOB_DOIT, rc ) ;
+      return rc ;
+   error:
+      if ( -1 != _contextID )
+      {
+         rtnCB->contextDelete ( _contextID, cb ) ;
+         _contextID = -1 ;
+      }
       goto done ;
    }
 }

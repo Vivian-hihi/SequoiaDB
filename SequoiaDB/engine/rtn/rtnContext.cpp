@@ -96,6 +96,8 @@ namespace engine
             return "LOB" ;
          case RTN_CONTEXT_SHARD_OF_LOB :
             return "SHARD_OF_LOB" ;
+         case RTN_CONTEXT_LIST_LOB :
+            return "LIST_LOB" ;
          default :
             break ;
       }
@@ -2665,7 +2667,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnContextCoord::addSubContext( MsgRouteID & routeID,
+   INT32 _rtnContextCoord::addSubContext( MsgRouteID routeID,
                                           SINT64 contextID )
    {
       INT32 rc = SDB_OK ;

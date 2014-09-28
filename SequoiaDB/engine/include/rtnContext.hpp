@@ -231,6 +231,7 @@ namespace engine
       RTN_CONTEXT_EXPLAIN,
       RTN_CONTEXT_LOB,
       RTN_CONTEXT_SHARD_OF_LOB,
+      RTN_CONTEXT_LIST_LOB,
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
@@ -652,7 +653,7 @@ namespace engine
                            BOOLEAN preRead = TRUE ) ;
          virtual ~_rtnContextCoord () ;
 
-         INT32    addSubContext ( MsgRouteID &routeID, SINT64 contextID ) ;
+         INT32    addSubContext ( MsgRouteID routeID, SINT64 contextID ) ;
 
          void     addSubDone( _pmdEDUCB *cb ) ;
 

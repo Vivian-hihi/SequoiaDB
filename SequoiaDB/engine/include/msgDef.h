@@ -381,6 +381,7 @@
 #define CMD_NAME_SETSESS_ATTR                "set session attribute"
 #define CMD_NAME_INVALIDATE_CACHE            "invalidate cache"
 #define CMD_NAME_FORCE_SESSION               "force session"
+#define CMD_NAME_LIST_LOBS                   "list lobs"
 
 #define CMD_NAME_JSON_LOAD                   "json load"
 

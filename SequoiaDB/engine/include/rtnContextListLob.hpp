@@ -14,9 +14,9 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = rtnLobFetcher.hpp
+   Source File Name = rtnContextListLob.hpp
 
-   Descriptive Name =
+   Descriptive Name = N/A
 
    Dependencies: N/A
 
@@ -25,54 +25,49 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          07/31/2014  YW  Initial Draft
+          04/19/2014  YW  Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
 
-#ifndef RTN_LOBFETCHER_HPP_
-#define RTN_LOBFETCHER_HPP_
+#ifndef RTN_CONTEXTLISTLOB_HPP_
+#define RTN_CONTEXTLISTLOB_HPP_
 
-#include "dmsLobDef.hpp"
-#include "rtn.hpp"
+#include "rtnContext.hpp"
+#include "rtnLobFetcher.hpp"
 
 namespace engine
 {
-   class _rtnLobFetcher : public SDBObject
+   class _rtnContextListLob : public _rtnContextBase
    {
    public:
-      _rtnLobFetcher() ;
-      ~_rtnLobFetcher() ;
+      _rtnContextListLob( INT64 contextID, UINT64 eduID ) ;
+      virtual ~_rtnContextListLob() ;
 
    public:
-      INT32 init( const CHAR *fullName,
-                  BOOLEAN onlyMetaPage ) ;
+      virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_LIST_LOB ; }
+      virtual _dmsStorageUnit*  getSU () ;
 
-      INT32 fetch( _pmdEDUCB *cb,
-                   _dmsLobInfoOnPage &piece ) ;
+   public:
+      INT32 open( const BSONObj &condition,
+                  _pmdEDUCB *cb ) ;
 
-      OSS_INLINE DMS_LOB_PAGEID toBeFetched() const
-      {
-         return _pos ;
-      }
-
-      _dmsStorageUnit *getSu()
-      {
-         return _su ;
-      }
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
 
    private:
-      void _fini() ;
+      INT32 _getMetaInfo( _pmdEDUCB *cb, BSONObj &obj ) ;
+      INT32 _getSequenceInfo( _pmdEDUCB *cb, BSONObj &obj ) ;
+      INT32 _reallocate( UINT32 len ) ;
    private:
-      dmsStorageUnitID _suID ;
-      _dmsStorageUnit *_su ;
-      _dmsMBContext *_mbContext ;
-      DMS_LOB_PAGEID _pos ;
-      BOOLEAN _onlyMetaPage ;
-      BOOLEAN _hitEnd ;
+      _rtnLobFetcher _fetcher ;
+      CHAR *_buf ;
+      UINT32 _bufLen ;
+      std::string _fullName ;
+      BOOLEAN _fetchLobHead ;
    } ;
-   typedef class _rtnLobFetcher rtnLobFetcher ;
+   typedef class _rtnContextListLob rtnContextListLob ;
 }
 
 #endif

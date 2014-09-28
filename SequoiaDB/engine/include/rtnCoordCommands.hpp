@@ -117,6 +117,7 @@ namespace engine
    #define COORD_CMD_LIST_CS_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN
    #define COORD_CMD_LIST_CL_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN
    #define COORD_CMD_INVALIDATE_CACHE         CMD_ADMIN_PREFIX CMD_NAME_INVALIDATE_CACHE
+   #define COORD_CMD_LIST_LOBS                CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS
 
    class rtnCoordCommand : virtual public rtnCoordOperator
    {
@@ -137,7 +138,8 @@ namespace engine
                                          netMultiRouteAgent *pRouteAgent,
                                          pmdEDUCB *cb,
                                          BOOLEAN onPrimary,
-                                         std::set<INT32> *ignoreRCList = NULL );
+                                         std::set<INT32> *ignoreRCList = NULL,
+                                         std::map<UINT64, SINT64> *contexts = NULL );
       virtual INT32 executeOnCataGroup ( CHAR *pBuffer,
                                        netMultiRouteAgent *pRouteAgent,
                                        pmdEDUCB *cb,
@@ -1223,6 +1225,15 @@ namespace engine
                      CHAR **ppResultBuffer,
                      pmdEDUCB *cb, MsgOpReply &replyHeader,
                      BSONObj **ppErrorObj ) ;
+   } ;
+
+   class rtnCoordCMDListLobs : public rtnCoordCommand
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj );
    } ;
 
 }
