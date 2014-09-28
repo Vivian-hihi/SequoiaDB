@@ -83,6 +83,12 @@ Multiple grouping key: {_id:{field1:"$field1",field2:"$field2",...}}</codeblock>
           </stentry>
           <stentry> Take the sum of packet field values. </stentry>
         </strow>
+        <strow>
+          <stentry>
+            <xref href="jcount.dita">$count</xref>
+          </stentry>
+          <stentry> 对记录分组后，返回表所有的记录条数</stentry>
+        </strow>
       </simpletable></p>
       
     </section>

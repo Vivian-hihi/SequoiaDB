@@ -49,6 +49,7 @@
              <topicref href="topics/javg_en.dita"/>
              <topicref href="topics/jsum_en.dita"/>
              <topicref href="topics/j$push_en.dita"/>
+             <topicref href="topics/jcount_en.dita"/>
          </topicref>
          <topicref href="topics/jlimit_en.dita"/>
          <topicref href="topics/jsort_en.dita"/>

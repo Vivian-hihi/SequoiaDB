@@ -79,6 +79,12 @@
           </stentry>
           <stentry> 取分组中字段值的总和</stentry>
         </strow>
+        <strow>
+          <stentry>
+            <xref href="jcount.dita">$count</xref>
+          </stentry>
+          <stentry> 对记录分组后，返回表所有的记录条数</stentry>
+        </strow>
       </simpletable></p>      
     </section>   
   </body>
