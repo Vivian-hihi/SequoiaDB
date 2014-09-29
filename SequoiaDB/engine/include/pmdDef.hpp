@@ -160,9 +160,8 @@ namespace engine
       EDU_TYPE_OMMGR,
       EDU_TYPE_OMNET,
       EDU_TYPE_SYNCCLOCK,
-#if defined (_WINDOWS)
-      EDU_TYPE_WINDOWSLISTENER,
-#endif
+      EDU_TYPE_PIPESLISTENER,
+
       // Agent EDU Type Begin
       EDU_TYPE_AGENT_BEGIN,
 
@@ -229,13 +228,13 @@ namespace engine
    #define PMD_OPTION_TMPBLK_PATH      "tmp"
    #define PMD_CURRENT_PATH            "./"
 
+   #define ENGINE_NPIPE_PREFIX         "sequoiadb_engine_"
    #if defined (_LINUX)
    #define PROC_PATH                   "/proc"
    #define PROC_CMDLINE_PATH_FORMAT    PROC_PATH"/%s/cmdline"
    #define ENGINE_NAME                 "sequoiadb"
    #elif defined (_WINDOWS)
    #define ENGINE_NAME                 "sequoiadb.exe"
-   #define ENGINE_NPIPE_PREFIX         "sequoiadb_engine_"
    #define PMD_OPTION_AS_PROC          "asproc"
    #endif // _LINUX
    #define PMD_OPTION_TYPE             "type"

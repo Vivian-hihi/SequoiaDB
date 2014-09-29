@@ -43,13 +43,78 @@
 #include "utilParam.hpp"
 #include "pd.hpp"
 
+/*
 #if defined( _LINUX )
 #include <dirent.h>
 #endif //_LINUX
+*/
 
 namespace engine
 {
 
+   static INT32 _utilCheckOrCleanNamedPipe( const CHAR *fullPipeName,
+                                            OSSPID &pid )
+   {
+#if defined( _LINUX )
+      INT32 rc = SDB_OK ;
+      const CHAR *pPidPtr = NULL ;
+
+      pPidPtr = ossStrrchr( fullPipeName, '_' ) ;
+      if ( !pPidPtr || 0 == *( pPidPtr + 1 ) ||
+           0 == ( pid = ossAtoi( pPidPtr + 1 ) ) )
+      {
+         goto done ;
+      }
+      if ( ossIsProcessRunning( pid ) )
+      {
+         rc = SDB_FE ;
+         goto error ;
+      }
+      else
+      {
+         rc = ossCleanNamedPipeByName( fullPipeName ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+#else
+      return SDB_FE ;
+#endif // _LINUX
+   }
+
+   INT32 utilPrepareForNamedPipe( const CHAR * pPattern )
+   {
+      INT32 rc = SDB_OK ;
+      OSSPID pid = OSS_INVALID_PID ;
+      vector< string > names ;
+      ossEnumNamedPipes( names, pPattern, OSS_MATCH_LEFT ) ;
+
+      for ( UINT32 i = 0 ; i < names.size() ; ++i )
+      {
+         rc = _utilCheckOrCleanNamedPipe( names[ i ].c_str(), pid ) ;
+         if ( SDB_FE == rc )
+         {
+            PD_LOG( PDERROR, "Named pipe[%s] process[%s] is running, "
+                    "conflict", names[ i ].c_str(), pid ) ;
+            goto error ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Clean named pipe[%s] failed, rc: %d",
+                    names[ i ].c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+/*
 #if defined (_LINUX)
    INT32 utilListNodes( UTIL_VEC_NODES & nodes,
                         INT32 typeFilter,
@@ -214,7 +279,7 @@ namespace engine
    }
 
 #else
-
+*/
    static INT32 utilWriteReadPipe( const CHAR *pPipeName,
                                    const CHAR *pWriteBuf, INT64 writeLen,
                                    CHAR *pReadBuf, INT64 readLen,
@@ -284,21 +349,31 @@ namespace engine
       utilNodeInfo findNode ;
       INT64 readSize = 0 ;
       UINT32 prefixLen = ossStrlen( ENGINE_NPIPE_PREFIX ) ;
+      OSSPID pid = OSS_INVALID_PID ;
 
-      rc = ossEnumNamedPipes ( names, NULL ) ;
+      rc = ossEnumNamedPipes ( names, ENGINE_NPIPE_PREFIX, OSS_MATCH_LEFT ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to enum pipes, rc: %d", rc ) ;
 
       for ( UINT32 i = 0 ; i < names.size() ; ++i )
       {
-         if ( 0 != ossStrncmp( names[ i ].c_str(), ENGINE_NPIPE_PREFIX,
-                               prefixLen ) )
+         rc = _utilCheckOrCleanNamedPipe( names[ i ].c_str() ) ;
+         if ( SDB_FE != rc )
          {
             continue ;
          }
 
+         // linux:   sequoiadb_engine_11790(svcname)_2500(pid)
+         // windows: sequoiadb_engine_11790(svcname)
+         // get svcname
+         findNode._svcname = names[ i ].substr( prefixLen ) ;
+#if defined( _LINUX )
+         findNode._svcname = findNode._svcname.substr( 0,
+                             findNode._svcname.find( "_" ) ) ;
+#endif // _LINUX
+
          // 1. svcname
          if ( svcnameFilter && 0 != *svcnameFilter &&
-              0 != ossStrcmp( names[ i ].c_str() + prefixLen, svcnameFilter ) )
+              0 != ossStrcmp( findNode._svcname.c_str(), svcnameFilter ) )
          {
             continue ;
          }
@@ -352,8 +427,6 @@ namespace engine
 
          // find it
          findNode._orgname = names[ i ] ;
-         findNode._svcname = names[ i ].substr( prefixLen ) ;
-
          nodes.push_back( findNode ) ;
 
          if ( pidFilter != OSS_INVALID_PID ||
@@ -370,7 +443,7 @@ namespace engine
       goto done ;
    }
 
-#endif // _LINUX
+//#endif // _LINUX
 
    INT32 utilEnumNodes( const string &localPath,
                         UTIL_VEC_NODES &nodes,

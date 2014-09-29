@@ -88,11 +88,9 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SHARDR, TRUE,
                                 pmdAsyncNetEntryPoint,
                                 "ShardReader" ),
-#if defined (_WINDOWS)
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_WINDOWSLISTENER, TRUE,
-                                pmdWindowsListenerEntryPoint,
-                                "WindowsListener" ),
-#endif
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_PIPESLISTENER, TRUE,
+                                pmdPipeListenerEntryPoint,
+                                "PipeListener" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_BACKGROUND_JOB, FALSE,
                                 pmdBackgroundJobEntryPoint,
                                 "Task" ),

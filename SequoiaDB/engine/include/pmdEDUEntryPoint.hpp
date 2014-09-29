@@ -78,9 +78,7 @@ namespace engine
    INT32 pmdPreLoaderEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdDpsTransRollbackEntryPoint( pmdEDUCB *cb, void *pData ) ;
-#if defined (_WINDOWS)
-   INT32 pmdWindowsListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
-#endif
+   INT32 pmdPipeListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdLoadWorkerEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdSyncClockEntryPoint( pmdEDUCB *cb, void *arg ) ;
 

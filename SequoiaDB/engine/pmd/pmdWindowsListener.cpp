@@ -36,7 +36,6 @@
 
 *******************************************************************************/
 #include "core.hpp"
-#if defined (_WINDOWS)
 #include <stdio.h>
 #include "pd.hpp"
 #include "pmd.hpp"
@@ -52,11 +51,11 @@ namespace engine
    #define PMD_WL_NPIPE_TIMEOUT        1
    #define PMD_WL_NPIPE_BUFSZ          1024
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDWINLSTNNPNTPNT, "pmdWindowsListenerEntryPoint" )
-   INT32 pmdWindowsListenerEntryPoint ( pmdEDUCB *cb, void *pData )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPIPELSTNNPNTPNT, "pmdPipeListenerEntryPoint" )
+   INT32 pmdPipeListenerEntryPoint ( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDWINLSTNNPNTPNT );
+      PD_TRACE_ENTRY ( SDB_PMDPIPELSTNNPNTPNT );
       EDUID myEDUID = cb->getID () ;
       CHAR namedPipe [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
       OSSNPIPE pipeHandle ;
@@ -78,6 +77,17 @@ namespace engine
                     ENGINE_NPIPE_PREFIX"%s", pSvcName ) ;
       PD_LOG ( PDINFO, "Attempt to create named pipe: %s",
                namedPipe ) ;
+
+      // in linux, the named pipe will not delte when the process crash,
+      // so we need to enum first
+#if defined ( _LINUX )
+      rc = utilPrepareForNamedPipe( namedPipe ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to prepare for named pipe[%s], rc: %d",
+                   namedPipe, rc ) ;
+      ossSnprintf ( namedPipe, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX"%s_%u", pSvcName,
+                    ossGetCurrentProcessID() ) ;
+#endif // _LINUX
 
       // create a named pipe
       rc = ossCreateNamedPipe ( namedPipe, PMD_WL_NPIPE_BUFSZ,
@@ -194,7 +204,7 @@ namespace engine
       {
          ossDeleteNamedPipe ( pipeHandle ) ;
       }
-      PD_TRACE_EXITRC ( SDB_PMDWINLSTNNPNTPNT, rc );
+      PD_TRACE_EXITRC ( SDB_PMDPIPELSTNNPNTPNT, rc );
       return rc;
    error :
       switch ( rc )
@@ -211,5 +221,4 @@ namespace engine
    }
 }
 
-#endif // _WINDOWS
 

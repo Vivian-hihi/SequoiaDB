@@ -209,17 +209,16 @@ namespace engine
          ossEnableNameChanges ( argc, argv ) ;
          ossRenameProcess ( pmdProcessName ) ;
       }
-#else
+#endif // _LINUX
       {
          EDUID agentEDU = PMD_INVALID_EDUID ;
          pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
          // Then start windows listener thread for "backdoor" listening
-         eduMgr->startEDU ( EDU_TYPE_WINDOWSLISTENER,
+         eduMgr->startEDU ( EDU_TYPE_PIPESLISTENER,
                             (void*)sdbGetOMAgentOptions()->getCMServiceName(),
                             &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_WINDOWSLISTENER, agentEDU ) ;
+         eduMgr->regSystemEDU ( EDU_TYPE_PIPESLISTENER, agentEDU ) ;
       }
-#endif // _LINUX
 
       // Now master thread get into big loop and check shutdown flag
       while ( PMD_IS_DB_UP )

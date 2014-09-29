@@ -67,6 +67,12 @@ namespace engine
    typedef vector< utilNodeInfo >   UTIL_VEC_NODES ;
 
    /*
+      check named pipe wether exist, if exist, but process is stop, will
+      clean dirty named pipe
+   */
+   INT32    utilPrepareForNamedPipe( const CHAR *pPattern ) ;
+
+   /*
       list nodes
    */
    INT32    utilListNodes( UTIL_VEC_NODES &nodes,
