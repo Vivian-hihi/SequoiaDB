@@ -42,6 +42,7 @@
 #include "pmdEDUMgr.hpp"
 #include "ossUtil.hpp"
 #include "ossNPipe.hpp"
+#include "utilNodeOpr.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
