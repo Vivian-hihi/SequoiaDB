@@ -86,8 +86,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to prepare for named pipe[%s], rc: %d",
                    namedPipe, rc ) ;
       ossSnprintf ( namedPipe, OSS_NPIPE_MAX_NAME_LEN,
-                    ENGINE_NPIPE_PREFIX"%s_%u", pSvcName,
-                    ossGetCurrentProcessID() ) ;
+                    OSS_NPIPE_LOCAL_PREFIX ENGINE_NPIPE_PREFIX"%s_%u",
+                    pSvcName, ossGetCurrentProcessID() ) ;
 #endif // _LINUX
 
       // create a named pipe
