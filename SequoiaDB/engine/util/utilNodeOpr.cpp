@@ -290,8 +290,8 @@ namespace engine
       BOOLEAN isOpen = FALSE ;
 
       rc = ossOpenNamedPipe( pPipeName,
-                             OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK |
-                             OSS_NPIPE_BLOCK_WITH_TIMEOUT, 1, handle ) ;
+                             OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
+                             OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle ) ;
       if ( rc && SDB_FE != rc )
       {
          PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc: %d",
