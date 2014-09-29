@@ -65,6 +65,16 @@
 #define OSS_DFT_SVCPORT    (11810)
 #define OSS_PROCESS_NAME_LEN          255
 #define OSS_RENAME_PROCESS_BUFFER_LEN OSS_PROCESS_NAME_LEN
+
+enum OSS_MATCH_TYPE
+{
+   OSS_MATCH_LEFT,
+   OSS_MATCH_MID,
+   OSS_MATCH_RIGHT,
+   OSS_MATCH_ALL,
+   OSS_MATCH_NULL
+} ;
+
 SDB_EXTERN_C_START
 #if defined (_WINDOWS)
    #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
@@ -90,3 +100,4 @@ void ossSleep(UINT32 milliseconds);
 void ossPanic () ;
 SDB_EXTERN_C_END
 #endif // OSS_H_
+
