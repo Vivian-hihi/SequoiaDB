@@ -16,6 +16,11 @@
 #include <fcntl.h>
 #endif
 
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
+
+namespace fs = boost::filesystem ;
+
 using namespace std ;
 
 #if defined (_WINDOWS)
