@@ -1326,8 +1326,7 @@ INT32 ossEnumNamedPipes( vector<string > &names,
                          const CHAR * rootPath )
 {
    INT32 rc = SDB_OK ;
-   vector<string > enumNames,
-   vector<string >::iterator it ;
+   vector<string > enumNames ;
 
    rc = _ossEnumNamedPipes( rootPath, enumNames, pattern,
                             ossStrlen( pattern ), type ) ;
@@ -1336,25 +1335,24 @@ INT32 ossEnumNamedPipes( vector<string > &names,
       goto error ;
    }
 
-   it = enumNames.begin() ;
-   while ( it != enumNames.end() )
+   for ( UINT32 i = 0 ; i < enumNames.size() ; ++i )
    {
       if ( rootPath && *rootPath )
       {
          if ( rootPath[ ossStrlen( rootPath ) - 1 ] == '/' )
          {
-            names.push_back( string( rootPath ) + it->first ) ;
+            names.push_back( string( rootPath ) + enumNames[ i ] ) ;
          }
          else
          {
-            names.push_back( string( rootPath ) + string("/") + it->first ) ;
+            names.push_back( string( rootPath ) + string("/") +
+                             enumNames[ i ] ) ;
          }
       }
       else
       {
-         names.push_back( it->first ) ;
+         names.push_back( enumNames[ i ] ) ;
       }
-      ++it ;
    }
 
 done:
