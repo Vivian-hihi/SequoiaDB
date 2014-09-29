@@ -5,7 +5,6 @@
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "ossProc.hpp"
-#include "ossPath.hpp"
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 #if defined (_LINUX)
@@ -1261,23 +1260,79 @@ INT32 ossCleanNamedPipeByName ( const CHAR * pipeName )
    return rc ;
 }
 
+static INT32 _ossEnumNamedPipes( const string &dirPath,
+                                 vector<string > &names,
+                                 const CHAR *filter, UINT32 filterLen,
+                                 OSS_MATCH_TYPE type )
+{
+   INT32 rc = SDB_OK ;
+   const CHAR *pFind = NULL ;
+
+   fs::path dbDir ( dirPath ) ;
+   fs::directory_iterator end_iter ;
+
+   if ( fs::exists ( dbDir ) && fs::is_directory ( dbDir ) )
+   {
+      for ( fs::directory_iterator dir_iter ( dbDir );
+            dir_iter != end_iter; ++dir_iter )
+      {
+         if ( fs::is_regular_file ( dir_iter->status() ) ||
+              fs::is_directory( dir_iter->path() ) )
+         {
+            continue ;
+         }
+         else
+         {
+            const std::string fileName =
+               dir_iter->path().filename().string() ;
+
+            if ( ( OSS_MATCH_NULL == type ) ||
+                 ( OSS_MATCH_LEFT == type &&
+                   0 == ossStrncmp( fileName.c_str(), filter, filterLen ) ) ||
+                 ( OSS_MATCH_MID == type &&
+                   ossStrstr( fileName.c_str(), filter ) ) ||
+                 ( OSS_MATCH_RIGHT == type &&
+                   ( pFind = ossStrstr( fileName.c_str(), filter ) ) &&
+                   pFind[filterLen] == 0 ) ||
+                 ( OSS_MATCH_ALL == type &&
+                   0 == ossStrcmp( fileName.c_str(), filter ) )
+               )
+            {
+               names.push_back( fileName ) ;
+            }
+         }
+      }
+   }
+   else
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 ossEnumNamedPipes( vector<string > &names,
                          const CHAR *pattern,
                          OSS_MATCH_TYPE type,
                          const CHAR * rootPath )
 {
    INT32 rc = SDB_OK ;
-   map< string, string > mapFiles ;
-   map< string, string >::iterator it ;
+   vector<string > enumNames,
+   vector<string >::iterator it ;
 
-   rc = ossEnumFiles2( rootPath, mapFiles, pattern, type, 1 ) ;
+   rc = _ossEnumNamedPipes( rootPath, enumNames, pattern,
+                            ossStrlen( pattern ), type ) ;
    if ( rc )
    {
       goto error ;
    }
 
-   it = mapFiles.begin() ;
-   while ( it != mapFiles.end() )
+   it = enumNames.begin() ;
+   while ( it != enumNames.end() )
    {
       if ( rootPath && *rootPath )
       {
