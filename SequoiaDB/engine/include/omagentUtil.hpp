@@ -80,7 +80,8 @@ namespace engine
    INT32          omStartDBNode( const CHAR *pExecName,
                                  const CHAR *pCfgPath,
                                  const CHAR *pSvcName,
-                                 OSSPID &pid ) ;
+                                 OSSPID &pid,
+                                 BOOLEAN useCurUser = FALSE ) ;
 
    INT32          omStopDBNode( const CHAR *pExecName,
                                 const CHAR *pServiceName ) ;

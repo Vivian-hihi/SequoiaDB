@@ -167,6 +167,7 @@ namespace engine
               SDB_ENGINE_VERISON_CURRENT, SDB_ENGINE_SUBVERSION_CURRENT,
               SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
 
+      svc.setArgInfo( argc, argv ) ;
       rc = svc.init() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init cm(rc=%d)", rc ) ;
       rc = daemon.addChildrenProcess( &svc ) ;

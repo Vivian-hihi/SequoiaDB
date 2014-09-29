@@ -50,6 +50,9 @@ namespace engine
        ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
 
+   #define COMMANDS_HIDE_OPTIONS \
+      ( PMD_OPTION_CURUSER, "use current user" ) \
+
    void displayArg ( po::options_description &desc )
    {
       std::cout << "Usage:  sdbcm [OPTION]" <<std::endl;
@@ -61,13 +64,19 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       po::options_description desc ( "Command options" ) ;
+      po::options_description all ( "Command options" ) ;
+
+      PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
+         COMMANDS_OPTIONS
+         COMMANDS_HIDE_OPTIONS
+      PMD_ADD_PARAM_OPTIONS_END
 
       PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
          COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
       // validate arguments
-      rc = utilReadCommandLine( argc, argv, desc, vm ) ;
+      rc = utilReadCommandLine( argc, argv, all, vm ) ;
       if ( rc )
       {
          std::cout << "Invalid arguments: " << rc << std::endl ;
@@ -162,6 +171,10 @@ namespace engine
       {
          PD_LOG( PDERROR, "Failed to init config, rc: %d", rc ) ;
          goto error ;
+      }
+      if ( vm.count( PMD_OPTION_CURUSER ) )
+      {
+         sdbGetOMAgentOptions()->setCurUser() ;
       }
       setPDLevel( sdbGetOMAgentOptions()->getDiagLevel() ) ;
 

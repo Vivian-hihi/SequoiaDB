@@ -292,7 +292,8 @@ namespace engine
    INT32 omStartDBNode( const CHAR *pExecName,
                         const CHAR *pCfgPath,
                         const CHAR *pSvcName,
-                        OSSPID &pid )
+                        OSSPID &pid,
+                        BOOLEAN useCurUser )
    {
       INT32 rc                = SDB_OK ;
       CHAR *pArgumentBuffer   = NULL ;
@@ -313,6 +314,10 @@ namespace engine
       argv.push_back ( pExecName ) ;
       argv.push_back ( SDBCM_OPTION_PREFIX PMD_OPTION_CONFPATH ) ;
       argv.push_back ( pCfgPath ) ;
+      if ( useCurUser )
+      {
+         argv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_CURUSER ) ;
+      }
       rc = ossBuildArguments( &pArgumentBuffer, argBuffLen, argv ) ;
       if ( rc )
       {

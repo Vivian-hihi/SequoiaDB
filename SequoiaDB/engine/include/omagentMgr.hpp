@@ -75,6 +75,9 @@ namespace engine
          BOOLEAN     isAutoStart() const { return _autoStart ; }
          PDLEVEL     getDiagLevel() const ;
 
+         void        setCurUser() { _useCurUser = TRUE ; }
+         BOOLEAN     isUseCurUser() const { return _useCurUser ; }
+
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) ;
          virtual INT32 postLoaded() ;
@@ -96,6 +99,8 @@ namespace engine
          CHAR                       _scriptPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _startProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR                       _stopProcFile[ OSS_MAX_PATHSIZE + 1 ] ;
+
+         BOOLEAN                    _useCurUser ;
 
    } ;
    typedef _omAgentOptions omAgentOptions ;

@@ -62,6 +62,8 @@ namespace engine
       // defaut service name
       ossSnprintf( _cmServiceName, OSS_MAX_SERVICENAME, "%u",
                    SDBCM_DFT_PORT ) ;
+
+      _useCurUser = FALSE ;
    }
 
    _omAgentOptions::~_omAgentOptions()

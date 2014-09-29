@@ -748,10 +748,19 @@ namespace engine
    {
       _pArgs = NULL ;
       _argLen = 0 ;
+
+      _argc = 0 ;
+      _argv = NULL ;
    }
 
    cCMService::~cCMService()
    {
+   }
+
+   void cCMService::setArgInfo( INT32 argc, const CHAR * *argv )
+   {
+      _argc = argc ;
+      _argv = argv ;
    }
 
    INT32 cCMService::init( ossSHMKey shmKey )
@@ -767,6 +776,11 @@ namespace engine
       }
 
       argv.push_back( getExecuteFile() ) ;
+
+      for ( UINT32 i = 1 ; i < _argc ; ++i )
+      {
+         argv.push_back( _argv[ i ] ) ;
+      }
 
       rc = ossBuildArguments( &_pArgs, _argLen, argv ) ;
       if( rc )
