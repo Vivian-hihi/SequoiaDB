@@ -43,11 +43,9 @@
 #include "utilParam.hpp"
 #include "pd.hpp"
 
-/*
 #if defined( _LINUX )
 #include <dirent.h>
 #endif //_LINUX
-*/
 
 namespace engine
 {
@@ -114,7 +112,7 @@ namespace engine
       goto done ;
    }
 
-/*
+
 #if defined (_LINUX)
    INT32 utilListNodes( UTIL_VEC_NODES & nodes,
                         INT32 typeFilter,
@@ -279,7 +277,7 @@ namespace engine
    }
 
 #else
-*/
+
    static INT32 utilWriteReadPipe( const CHAR *pPipeName,
                                    const CHAR *pWriteBuf, INT64 writeLen,
                                    CHAR *pReadBuf, INT64 readLen,
@@ -446,7 +444,7 @@ namespace engine
       goto done ;
    }
 
-//#endif // _LINUX
+#endif // _LINUX
 
    INT32 utilEnumNodes( const string &localPath,
                         UTIL_VEC_NODES &nodes,
