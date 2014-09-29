@@ -79,20 +79,19 @@
 			<sequential> -->
 		<trycatch property="e">
 			<try>
-				<property name="command" value="ant -f ${test.case.fullname} -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path}" />
-				<echo message="Command:${command}" />
+				<property name="command" value=" -f ${test.case.fullname} -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path}" />
+				<echo message="Command:ant${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-
-				<!-- <parallel timeout="6000000">
-					<sequential> -->
-				<antfetch antfile="${test.case.fullname}" target="test" inheritAll="false" return="ret.code,error.msg">
+				<!-- <antfetch antfile="${test.case.fullname}" target="test" inheritAll="false" return="ret.code,error.msg">
 					<property name="host.NAME" value="${host.NAME}" />
 					<property name="coord.service.port" value="${coord.service.port}" />
 					<property name="CS_PRIX" value="${CS_PRIX}" />
 					<property name="install.path" value="${install.path}" />
 				</antfetch>
-					<!-- </sequential>
-				</parallel> -->
+ -->
+				<exec executable="ant" dir="." timeout="300000" outputproperty="error.msg"  resultproperty="ret.code">
+					<arg line="${command}" />
+				</exec>
 			</try>
 			<catch>
 				<property name="ret.code" value="-1" />
