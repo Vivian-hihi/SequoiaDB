@@ -96,7 +96,7 @@ typedef LONG ( WINAPI *PROCNTQDF ) ( HANDLE, HANDLE, PVOID, PVOID,
                                      PIO_STATUS_BLOCK, PVOID, ULONG,
                                      UINT, BOOL, PUNICODE_STRING, BOOL ) ;
 #define OSS_NPIPE_NTQUERYDIRECTORYFILE "NtQueryDirectoryFile"
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSENUMNMPS, "_ossEnumNamedPipes" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSENUMNMPS, "_ossEnumNamedPipes" )
 static INT32 _ossEnumNamedPipes ( vector<string> &names )
 {
    INT32 rc = SDB_OK ;
@@ -231,7 +231,7 @@ error :
 // will not match it.
 // Users can check the size of "names" to verify whether the given pipe
 // name exists in the system
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSENUMNMPS2, "ossEnumNamedPipes" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSENUMNMPS2, "ossEnumNamedPipes" )
 INT32 ossEnumNamedPipes ( std::vector<std::string> &names,
                           const CHAR *pattern )
 {
@@ -263,7 +263,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTNMP, "ossCreateNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTNMP, "ossCreateNamedPipe" )
 INT32 ossCreateNamedPipe ( const CHAR *name,
                            UINT32 inboundBufferSize,
                            UINT32 outboundBufferSize,
@@ -380,7 +380,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSOPENNMP, "ossOpenNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSOPENNMP, "ossOpenNamedPipe" )
 INT32 ossOpenNamedPipe ( const CHAR *name,
                          UINT32 action,
                          SINT32 openTimeout,
@@ -521,7 +521,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCONNNMP, "ossConnectNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCONNNMP, "ossConnectNamedPipe" )
 INT32 ossConnectNamedPipe ( OSSNPIPE &handle,
                             UINT32 action,
                             SINT32 timeout )
@@ -596,7 +596,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRENMP, "ossReadNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRENMP, "ossReadNamedPipe" )
 INT32 ossReadNamedPipe ( OSSNPIPE &handle,
                          CHAR *pBuffer,
                          INT64 bufSize,
@@ -701,7 +701,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWTNMP, "ossWriteNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWTNMP, "ossWriteNamedPipe" )
 INT32 ossWriteNamedPipe ( OSSNPIPE &handle,
                           const CHAR *pBuffer,
                           INT64 bufSize,
@@ -750,7 +750,7 @@ INT32 ossWriteNamedPipe ( OSSNPIPE &handle,
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDISCONNNMP, "ossDisconnectNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDISCONNNMP, "ossDisconnectNamedPipe" )
 INT32 ossDisconnectNamedPipe ( OSSNPIPE &handle )
 {
    INT32 rc = SDB_OK ;
@@ -779,7 +779,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCLSNMP, "ossCloseNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCLSNMP, "ossCloseNamedPipe" )
 INT32 ossCloseNamedPipe ( OSSNPIPE &handle )
 {
    INT32 rc = SDB_OK ;
@@ -826,7 +826,7 @@ INT32 ossDeleteNamedPipe ( OSSNPIPE &handle )
    return ossCloseNamedPipe ( handle ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSNMP2FD, "ossNamedPipeToFd" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSNMP2FD, "ossNamedPipeToFd" )
 INT32 ossNamedPipeToFd ( OSSNPIPE & handle , int * output )
 {
    INT32 rc    = SDB_OK ;
@@ -879,7 +879,7 @@ INT32 ossCleanNamedPipeByName ( const CHAR * pipeName )
 }
 
 #elif defined (_LINUX)
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTNP, "ossCreateNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTNP, "ossCreateNamedPipe" )
 INT32 ossCreateNamedPipe ( const CHAR *name,
                            UINT32 inboundBufferSize,
                            UINT32 outboundBufferSize,
@@ -934,7 +934,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSOPENNP, "ossOpenNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSOPENNP, "ossOpenNamedPipe" )
 INT32 ossOpenNamedPipe ( const CHAR *name,
                          UINT32 action,
                          SINT32 openTimeout,
@@ -1041,7 +1041,7 @@ INT32 ossConnectNamedPipe ( OSSNPIPE &handle,
    return ossOpenNamedPipe ( handle._name, handle._state, timeout, handle ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRDNP, "ossReadNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRDNP, "ossReadNamedPipe" )
 INT32 ossReadNamedPipe ( OSSNPIPE &handle,
                          CHAR *pBuffer,
                          INT64 bufSize,
@@ -1116,7 +1116,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSWTNP, "ossWriteNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSWTNP, "ossWriteNamedPipe" )
 INT32 ossWriteNamedPipe ( OSSNPIPE &handle,
                           const CHAR *pBuffer,
                           INT64 bufSize,
@@ -1179,7 +1179,7 @@ INT32 ossCloseNamedPipe ( OSSNPIPE &handle )
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDELNP, "ossDeleteNamedPipe" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDELNP, "ossDeleteNamedPipe" )
 INT32 ossDeleteNamedPipe ( OSSNPIPE &handle )
 {
    INT32 rc = SDB_OK ;
@@ -1216,7 +1216,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSNP2FD, "ossNamedPipeToFd" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSNP2FD, "ossNamedPipeToFd" )
 INT32 ossNamedPipeToFd ( OSSNPIPE & handle , int * output )
 {
    INT32 rc = SDB_OK ;
@@ -1237,7 +1237,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCLNPBYNM, "ossCleanNamedPipeByName" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCLNPBYNM, "ossCleanNamedPipeByName" )
 INT32 ossCleanNamedPipeByName ( const CHAR * pipeName )
 {
    PD_TRACE_ENTRY ( SDB_OSSCLNPBYNM );
