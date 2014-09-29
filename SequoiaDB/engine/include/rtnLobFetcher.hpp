@@ -50,7 +50,8 @@ namespace engine
                   BOOLEAN onlyMetaPage ) ;
 
       INT32 fetch( _pmdEDUCB *cb,
-                   _dmsLobInfoOnPage &piece ) ;
+                   _dmsLobInfoOnPage &piece,
+                   _dpsMessageBlock *mb = NULL ) ;
 
       OSS_INLINE DMS_LOB_PAGEID toBeFetched() const
       {

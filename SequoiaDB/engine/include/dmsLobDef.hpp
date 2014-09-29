@@ -146,7 +146,7 @@ namespace engine
       SINT64      _lobLen ;
       UINT64      _createTime ;
       UINT8       _status ;
-      CHAR        _pad[35] ;
+      CHAR        _pad[495] ;
 
       _dmsLobMeta()
       :_lobLen( 0 ),

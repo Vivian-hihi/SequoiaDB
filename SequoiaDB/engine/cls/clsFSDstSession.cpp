@@ -137,6 +137,10 @@ namespace engine
       {
          _notify( CLS_FS_NOTIFY_TYPE_LOG ) ;
       }
+      else if ( CLS_FS_STATUS_NOTIFY_LOB == _status )
+      {
+         _notify( CLS_FS_NOTIFY_TYPE_LOB ) ;
+      }
       else if ( CLS_FS_STATUS_END == _status )
       {
          _end() ;
@@ -954,7 +958,16 @@ namespace engine
       const MsgLobTuple *tuple = NULL ;
       const bson::OID *oid = NULL ;
       const CHAR *data = NULL ;
+
+      if ( ( UINT32 )msg->header.header.messageLength <= sizeof( MsgClsFSNotifyRes ) )
+      {
+         PD_LOG( PDERROR, "invalid msg length:%d",
+                 msg->header.header.messageLength ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
  
+      itr += sizeof( MsgClsFSNotifyRes ) ;
       while ( _more( msg, itr, oid,
                      tuple, data ) )
       {

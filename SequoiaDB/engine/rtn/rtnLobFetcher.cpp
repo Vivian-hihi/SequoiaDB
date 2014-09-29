@@ -98,21 +98,22 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOBFETCHER_FETCH, "_rtnLobFetcher::fetch" )
    INT32 _rtnLobFetcher::fetch( _pmdEDUCB *cb,
-                                dmsLobInfoOnPage &page )
+                                dmsLobInfoOnPage &page,
+                                _dpsMessageBlock *mb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNLOBFETCHER_FETCH ) ;
+
+      if ( _hitEnd )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
 
       if ( NULL == _mbContext || NULL == _su )
       {
          PD_LOG( PDERROR, "fetcher has not been initialized yet" ) ;
          rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-      if ( _hitEnd )
-      {
-         rc = SDB_DMS_EOC ;
          goto error ;
       }
 
@@ -143,6 +144,42 @@ namespace engine
             PD_LOG( PDERROR, "failed to read lob pages:%d", rc ) ;
          }
          goto error ;
+      }
+
+      if ( NULL != mb )
+      {
+         _dmsLobRecord record ;
+         UINT32 read = 0 ;
+
+         if ( mb->idleSize() < page._len )
+         {
+            rc = mb->extend( page._len - mb->idleSize() ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to extend mb block:%d", rc ) ;
+               goto error ;
+            }
+         }
+
+         record.set( &( page._oid ), page._sequence, 0,
+                     page._len, NULL ) ;
+         rc = _su->lob()->read( record, _mbContext,
+                                cb, mb->writePtr(), read ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( page._len != read )
+         {
+            PD_LOG( PDERROR, "length in page is:%d, but we read:%d",
+                    page._len, read ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         mb->writePtr( mb->length() + read ) ;
       }
    done:
       if ( NULL != _mbContext && _mbContext->isMBLock() )

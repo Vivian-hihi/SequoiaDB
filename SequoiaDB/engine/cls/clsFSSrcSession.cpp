@@ -592,16 +592,17 @@ namespace engine
       return ;
    }
 
+/*
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__STATIC__APPENDLOB2MB, "_appendLob2Mb" )
    static INT32 _appendLob2Mb( const _dmsLobInfoOnPage &page,
-                               const CHAR *fullName,
+                               const CHAR *data,
                                _pmdEDUCB *cb,
                                _dpsMessageBlock &mb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSDSBS__STATIC__APPENDLOB2MB ) ;
       UINT32 *tmp = NULL ;
-      UINT32 read = 0 ;
+      SINT64 *offset = NULL ;
       UINT32 oldSize = mb.length() ;
       UINT32 len = sizeof( bson::OID ) +
                    sizeof( MsgLobTuple ) +
@@ -625,43 +626,20 @@ namespace engine
       tmp = ( UINT32 * )( mb.writePtr() ) ;
       *tmp = page._sequence ;
       mb.writePtr( mb.length() + 4 ) ;
-      tmp = ( UINT32 * )( mb.writePtr() ) ;
-      *tmp = 0 ;
+      offset = ( SINT64 * )( mb.writePtr() ) ;
+      *offset = 0 ;
       mb.writePtr( mb.length() + 4 ) ;
+      ossMemcpy( mb.writePtr(), data, page._len ) ;
 
-      rc = rtnReadLob( fullName,
-                       page._oid, page._sequence,
-                       0, page._len, cb,
-                       mb.writePtr(), read ) ;
-      if ( SDB_OK == rc )
-      {
-         if ( read != page._len )
-         {
-            PD_LOG( PDERROR, "lob may be modified, old len:%d"
-                    ", read len:%d", page._len, read ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
+      mb.writePtr( oldSize + alignedLen ) ;
 
-         mb.writePtr( oldSize + alignedLen ) ;
-      }
-      else if ( SDB_LOB_SEQUENCE_NOT_EXIST == rc )
-      {
-         /// lob may be removed, ignore this error.
-         rc = SDB_OK ;
-         mb.writePtr( oldSize ) ; 
-      }
-      else
-      {
-         PD_LOG( PDERROR, "failed to read lob piece:%d", rc ) ;
-         goto error ;
-      }
    done:
       PD_TRACE_EXITRC( SDB__CLSDSBS__STATIC__APPENDLOB2MB, rc ) ;
       return rc ;
    error:
       goto done ;
    }
+*/
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__SYNCLOB, "_clsDataSrcBaseSession::_syncLob" )
    INT32 _clsDataSrcBaseSession::_syncLob( const NET_HANDLE &handle,
@@ -682,14 +660,33 @@ namespace engine
       _mb.clear () ;
       dmsLobInfoOnPage page ;
       BOOLEAN need2Send = FALSE ;
+      const UINT32 bmSize = sizeof( MsgLobTuple ) + sizeof( bson::OID ) ; 
       time_t bTime = time( NULL ) ;
 
+      /// | oid | MsgLobTuple | data | ... | oid | MsgLobTuple | data |
       do
       {
          need2Send = FALSE ;
-         rc = _lobFetcher.fetch( eduCB(), page ) ;
+         UINT32 finalSize = 0 ;
+         UINT32 oldSize = _mb.length() ;
+         UINT32 alignedLen = ossRoundUpToMultipleX( oldSize, 4 ) ;
+         INT32 extendSize = bmSize + alignedLen - oldSize - _mb.idleSize() ;
+         if ( 0 < extendSize )
+         {
+            rc = _mb.extend( (UINT32)extendSize ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to extend mb block:%d", rc ) ;
+               goto error ;
+            }
+         }
+
+         _mb.writePtr( alignedLen ) ;
+         _mb.writePtr( bmSize + _mb.length() ) ;
+         rc = _lobFetcher.fetch( eduCB(), page, &_mb ) ;
          if ( SDB_DMS_EOC == rc )
          {
+            _mb.writePtr( oldSize ) ;
             rc = SDB_OK ;
             break ;
          }
@@ -703,6 +700,7 @@ namespace engine
             /// do nothing.
          }
 
+         finalSize = _mb.length() ;
          rc = _onLobFilter( page, need2Send ) ;
          if ( SDB_OK != rc )
          {
@@ -710,13 +708,29 @@ namespace engine
             goto error ;
          }
 
-         rc = _appendLob2Mb( page, _curCollecitonName.c_str(),
-                             eduCB(), _mb ) ;
-         if ( SDB_OK != rc )
+         if ( !need2Send )
          {
-            PD_LOG( PDERROR, "failed to append lob data to mb:%d", rc ) ;
-            goto error ;
+            _mb.writePtr( oldSize ) ;
+            continue ;
          }
+         else
+         {
+            UINT32 *tmp = NULL ;
+            SINT64 *offset = NULL ;
+            _mb.writePtr( alignedLen ) ;
+            ossMemcpy( _mb.writePtr(), &( page._oid ), sizeof( page._oid ) ) ;
+            _mb.writePtr( alignedLen + sizeof( page._oid ) ) ;
+            tmp = (UINT32 *)_mb.writePtr() ;
+            *tmp = page._len ;
+            _mb.writePtr( _mb.length() + sizeof( UINT32 ) ) ;
+            tmp = (UINT32 *)_mb.writePtr() ;
+            *tmp = page._sequence ;
+            _mb.writePtr( _mb.length() + sizeof( UINT32 ) ) ;
+            offset = ( SINT64 * )_mb.writePtr() ;
+            *offset = 0 ;
+            _mb.writePtr( finalSize ) ;
+         }
+
       } while ( CLS_SYNC_MAX_LEN <=_mb.length() ||
                 ( time( NULL ) - bTime >= CLS_SYNC_MAX_TIME &&
                    _mb.length() > 0 ) ) ;
@@ -732,6 +746,7 @@ namespace engine
       {
          msg.eof = CLS_FS_EOF ;
          _agent->syncSend( handle, &msg ) ;
+         
       }
    done:
       PD_TRACE_EXITRC( SDB__CLSDSBS__SYNCLOB, rc ) ;
@@ -1715,6 +1730,13 @@ namespace engine
       return inBuff ;
    }
 
+   INT32 _clsFSSrcSession::_onLobFilter( const _dmsLobInfoOnPage &info,
+                                       BOOLEAN &need2Send )
+   {
+      need2Send = TRUE ;
+      return SDB_OK ;
+   }
+
    /*
    _clsSplitSrcSession : implement
    */
@@ -2476,18 +2498,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSPLSS__ONLOBFILTER ) ;
-      UINT32 hash = ossHash( ( const BYTE * )(info._oid.getData()),
-                             sizeof( bson::OID ),
-                             ( const BYTE * )( &info._sequence ),
-                             sizeof( info._sequence ) ) ;
+      INT32 range = clsPartition( info._oid, info._sequence, _partitionBit ) ;
 
-      return _rangeKeyObj.firstElement().Int() <= ( INT32 )hash &&
-           ( !_hasEndRange || ( INT32 )hash < _rangeEndKeyObj.firstElement().Int() ) ;
-   done:
+      need2Send = _rangeKeyObj.firstElement().Int() <= range &&
+           ( !_hasEndRange || range < _rangeEndKeyObj.firstElement().Int() ) ;
       PD_TRACE_EXITRC( SDB__CLSSPLSS__ONLOBFILTER, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
 }

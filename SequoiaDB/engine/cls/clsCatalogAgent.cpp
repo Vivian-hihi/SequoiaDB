@@ -41,6 +41,7 @@
 #include "clsCataHashMatcher.hpp"
 
 #include "../bson/lib/md5.hpp"
+#include "../bson/lib/md5.h"
 
 using namespace bson ;
 
@@ -823,9 +824,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__CLSCTSET_FINDGPID2 ) ;
       SDB_ASSERT( !isRangeSharding(), "can not be range sharded" ) ;
       clsCatalogItem *item = NULL ;
-      UINT32 hash = ossHash( oid.getData(), 12,
-                             ( const BYTE * )( &sequence ), sizeof( UINT32 ) ) ;
-      rc = _findItem( ( INT32 )hash, item ) ;
+      INT32 range = clsPartition( oid, sequence, getPartitionBit() ) ;
+      rc = _findItem( range, item ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to find item:%d", rc ) ;
@@ -3082,4 +3082,20 @@ namespace engine
       return (INT32)( hashValue >> ( 32 - partitionBit ) ) ;
    }
 
+   INT32 clsPartition( const bson::OID &oid, UINT32 sequence, UINT32 partitionBit )
+   {
+      md5_state_t st ;
+      md5::md5digest digest ;
+      md5_init(&st);
+      md5_append(&st, (const md5_byte_t *)(oid.getData()), sizeof( oid ) );
+      md5_append(&st, (const md5_byte_t *)( &sequence ), sizeof( sequence ) ) ;
+      md5_finish( &st, digest ) ;
+      UINT32 hashValue = 0 ;
+      UINT32 i = 0 ;
+      while ( i++ < 4 )
+      {
+         hashValue |= ( (UINT32)digest[i] << ( 32 - 8 * i ) ) ;
+      }
+      return (INT32)( hashValue >> ( 32 - partitionBit ) ) ;
+   }
 }

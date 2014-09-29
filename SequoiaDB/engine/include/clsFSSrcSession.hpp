@@ -94,11 +94,7 @@ namespace engine
 
          virtual void      _reset () ;
          virtual INT32     _onLobFilter( const _dmsLobInfoOnPage &info,
-                                         BOOLEAN &need2Send )
-         {
-            need2Send = FALSE ;
-            return SDB_OK ;
-         }
+                                         BOOLEAN &need2Send ) = 0 ;
 
       protected:
          virtual void   _onAttach () ;
@@ -201,6 +197,8 @@ namespace engine
       virtual BOOLEAN _isReady() ;
       virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                          INT32 &outSize ) ;
+      virtual INT32 _onLobFilter( const _dmsLobInfoOnPage &info,
+                                  BOOLEAN &need2Send ) ;
       virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
       virtual INT32   _scanType () const ;
 
