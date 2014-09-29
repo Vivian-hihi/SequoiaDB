@@ -38,10 +38,8 @@
 #define OSSNPIPE_HPP__
 #include "core.hpp"
 #include "oss.hpp"
-#if defined (_WINDOWS)
 #include <vector>
 #include <string>
-#endif // _WINDOWS
 
 #if defined (_WINDOWS)
    #define  ossPopen(cmd,mode)         _popen(cmd,mode)
