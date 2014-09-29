@@ -135,12 +135,7 @@ INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
       goto error ;
    }
 
-#if defined (_WINDOWS)
    ossStrncpy( bpf2bName, (*names.begin()).c_str(), bpf2bSize - 1 ) ;
-#else
-   ossSnprintf( bpf2bName, bpf2bSize - 1, "%s%s", OSS_NPIPE_LOCAL_PREFIX,
-                (*names.begin()).c_str() ) ;
-#endif // _WINDOWS
 
    names.clear() ;
    rc = ossEnumNamedPipes( names, b2fName, OSS_MATCH_LEFT ) ;
@@ -154,12 +149,7 @@ INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
       rc = SDB_FNE ;
       goto error ;
    }
-#if defined (_WINDOWS)
    ossStrncpy( bpb2fName, (*names.begin()).c_str(), bpb2fSize - 1 ) ;
-#else
-   ossSnprintf( bpb2fName, bpb2fSize - 1, "%s%s", OSS_NPIPE_LOCAL_PREFIX,
-                (*names.begin()).c_str() ) ;
-#endif // _WINDOWS
 
 done:
    return rc ;

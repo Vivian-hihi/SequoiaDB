@@ -1279,7 +1279,21 @@ INT32 ossEnumNamedPipes( vector<string > &names,
    it = mapFiles.begin() ;
    while ( it != mapFiles.end() )
    {
-      names.push_back( it->first ) ;
+      if ( rootPath && *rootPath )
+      {
+         if ( rootPath[ ossStrlen( rootPath ) - 1 ] == '/' )
+         {
+            names.push_back( string( rootPath ) + it->first ) ;
+         }
+         else
+         {
+            names.push_back( string( rootPath ) + string("/") + it->first ) ;
+         }
+      }
+      else
+      {
+         names.push_back( it->first ) ;
+      }
       ++it ;
    }
 
