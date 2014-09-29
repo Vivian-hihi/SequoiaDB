@@ -227,11 +227,11 @@ INT32 ossEnumFiles( const string &dirPath,
                          newFilter.length(), type, deep ) ;
 }
 
-INT32 ossEnumFiles( const string &dirPath,
-                    map<string, string> &mapFiles,
-                    const CHAR *filter,
-                    OSS_MATCH_TYPE type,
-                    UINT32 deep )
+INT32 ossEnumFiles2( const string &dirPath,
+                     map<string, string> &mapFiles,
+                     const CHAR *filter,
+                     OSS_MATCH_TYPE type,
+                     UINT32 deep )
 {
    return _ossEnumFiles( dirPath, mapFiles, filter,
                          filter ? ossStrlen( filter ) : 0,

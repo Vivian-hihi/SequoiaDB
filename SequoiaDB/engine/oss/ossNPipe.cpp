@@ -1270,7 +1270,7 @@ INT32 ossEnumNamedPipes( vector<string > &names,
    map< string, string > mapFiles ;
    map< string, string >::iterator it ;
 
-   rc = ossEnumFiles( rootPath, mapFiles, pattern, type, 1 ) ;
+   rc = ossEnumFiles2( rootPath, mapFiles, pattern, type, 1 ) ;
    if ( rc )
    {
       goto error ;
