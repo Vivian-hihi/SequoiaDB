@@ -356,7 +356,7 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < names.size() ; ++i )
       {
-         rc = _utilCheckOrCleanNamedPipe( names[ i ].c_str() ) ;
+         rc = _utilCheckOrCleanNamedPipe( names[ i ].c_str(), pid ) ;
          if ( SDB_FE != rc )
          {
             continue ;
