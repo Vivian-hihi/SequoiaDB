@@ -111,6 +111,7 @@ utilFiles = [
       "util/utilAccessDataLocalIO.cpp",
       "util/utilAccessDataHdfs.cpp",
       "util/utilParam.cpp",
+      "util/utilNodeOpr.cpp",
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",
