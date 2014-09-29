@@ -151,8 +151,8 @@ namespace engine
          if ( readSize > 0 )
          {
             INT64 writeSize = 0 ;
-            PD_LOG ( PDINFO, "Received message from windows listener: %s",
-                     tempBuffer ) ;
+            PD_LOG ( PDINFO, "Received message from windows listener: %s, "
+                     "size: %d", tempBuffer, readSize ) ;
             if ( ossStrncmp ( tempBuffer, ENGINE_NPIPE_MSG_SHUTDOWN,
                               sizeof(ENGINE_NPIPE_MSG_SHUTDOWN) ) == 0 )
             {
