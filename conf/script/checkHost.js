@@ -24,8 +24,10 @@
    SYS_JSON:
    ENV_JSON:
 @return
-   RET_JSON: the check host result: { "IP": "192.168.20.165", "CPU": [ { "ID": "", "Model": "", "Core": 2, "Freq": "2.00GHz" } ], "Net": [ { "Name": "lo", "Model": "", "Bandwidth": "", "IP": "127.0.0.1" }, { "Name": "eth0", "Model": "", "Bandwidth": "", "IP": "192.168.20.165" } ], "Disk": [ { "Name": "/dev/mapper/vg_rhel64test8-lv_root", "Mount": "/", "Size": 43659, "Free": 39358, "IsLocal": false }, { "Name": "/dev/sda1", "Mount": "/boot", "Size": 460, "Free": 423, "IsLocal": true }, { "Name": "//192.168.20.10/files", "Mount": "/mnt", "Size": 47837, "Free": 34580, "IsLocal": false } ], "Memory": { "Model": "", "Size": 2887, "Free": 800 }, "Port": [ { "Port": "50000", "Status": false } ], "Service": [ { "Name": "", "Status": false, "Version": "" } ], "OM": { "Status": false, "Version": "" }, "Safety": { "Name": "", "Context": "", "Status": false }, "HostName": "rhel64-test8", "OS": { "Distributor": "RedHatEnterpriseServer", "Release": "6.4", "Bit": 64 } }
+   RET_JSON: the check host result: {"IP":"192.168.20.165","HostName":"rhel64-test8","OS":{"Distributor":"RedHatEnterpriseServer","Release":"6.4","Bit":64},"OM":{"HasInstalled":true,"Version":"1.8","Path":"/opt/sequoiadb/bin/","Port":"11790","Release":15348},"CPU":[{"ID":"","Model":"","Core":2,"Freq":"2.00GHz"}],"Memory":{"Model":"","Size":2887,"Free":174},"Disk":[{"Name":"/dev/mapper/vg_rhel64test8-lv_root","Mount":"/","Size":43659,"Free":35065,"IsLocal":false},{"Name":"/dev/sda1","Mount":"/boot","Size":460,"Free":423,"IsLocal":true},{"Name":"//192.168.20.10/files","Mount":"/mnt","Size":47836,"Free":29332,"IsLocal":false}],"Net":[{"Name":"lo","Model":"","Bandwidth":"","IP":"127.0.0.1"},{"Name":"eth0","Model":"","Bandwidth":"","IP":"192.168.20.165"}],"Port":[{"Port":"","CanUse":false}],"Service":[{"Name":"","IsRunning":false,"Version":""}],"Safety":{"Name":"","Context":"","IsRunning":false}} 
 */
+
+//var BUS_JSON = { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb" } ;
 
 var RET_JSON = new Object() ;
 
@@ -60,24 +62,30 @@ function getOMInfo()
    {
       var obj = Oma.getOmaInstallInfo() ;
       // when has installed
-//      omInfo[HasInstalled] = true ;
-
-      var info2 =  extractOMInfo( eval( '(' + obj + ')' ) ) ;
-      omInfo[Version] = info2[Version] ;
-      RET_JSON[OM] = omInfo ;
+      omInfo[HasInstalled] = true ;
+      // get other info
+      var info = extractOMInfo( eval( '(' + obj + ')' ) ) ;
+      omInfo[Version] = info[Version] ;
+      omInfo[Path]    = info[Path] ;
+      omInfo[Port]    = info[Port] ;
+      omInfo[Release] = info[Release] ;
+      RET_JSON[OM]    = omInfo ;
    }
    catch ( e )
    {
       // when has not installed
       if ( SDB_FNE == e )
       {
-//         omInfo[HasInstalled] = false ;
-         omInfo[Version] = "" ;
+         omInfo[HasInstalled] = false ;
          RET_JSON[OM] = omInfo ;
       }
       else
       {
-         setLastErrMsg( "Failed to get OM info" ) ;
+         if ( "number" == typeof( e ) )
+         {
+            setLastErrMsg( "Failed to get OM info" ) ;
+            setLastError( e ) ;
+         }
          throw e ;
       }
    }
@@ -182,27 +190,33 @@ function getSafetyInfo()
    RET_JSON[Safety] = safetyInfo ;
 }
 
-// extract OM version, release, and build time, when it has been installed
+// extract OM version, release, path and port, when it has been installed
 function extractOMInfo ( obj )
 {
-   var retObj = new OMInfo2() ;
+   var retObj = new OMInfo() ;
    var osInfo = System.type() ;
    if ( OMA_LINUX == osInfo )
    {
+      // get install path
+      var installpath = obj[INSTALL_DIR] ;
+      retObj[Path] = adaptPath( osInfo, installpath ) + OMA_PATH_BIN_L ;
+      // get sdbcm port
+      var configfile = adaptPath( osInfo, installpath ) + OMA_FILE_SDBCM_CONF2 ;
+      retObj[Port] = "" + Oma.getAOmaSvcName("localhost", configfile ) ;
       // get version
-      var path = obj[INSTALL_DIR] ;
-      var pos = path.lastIndexOf( '/' ) ;
-      if ( pos != path.length - 1 )
-      {
-         path += '/' + OMA_PROG_BIN_SDBCM_L ;
-      }
-      else
-      {
-         path += OMA_PROG_BIN_SDBCM_L ;
-      }
-      // TODO: add try&catch
+      var sdbcmprog = adaptPath( osInfo, installpath ) + OMA_PROG_BIN_SDBCM_L ;
       var cmd = new Cmd() ;
-      var str = cmd.run( path + " --version " ) ;
+      var str = null ;
+      try
+      {
+         str = cmd.run( sdbcmprog + " --version " ) ;
+      }
+      catch ( e )
+      {
+         setLastErrMsg( "Failed to get OM version info" ) ;
+         setLastError( SDB_SYS ) ;
+         throw SDB_SYS ;
+      }
       var beg = str.indexOf( OMA_MISC_OM_VERSION ) ;
       var end = str.indexOf( '\n' ) ;
       var len = OMA_MISC_OM_VERSION.length ;
@@ -212,10 +226,6 @@ function extractOMInfo ( obj )
       len = OMA_MISC_OM_RELEASE.length ;
       var subStr = str.substring( beg + len, str.length ) ;
       retObj[Release] = parseInt( subStr ) ;
-      // get Time
-      beg = subStr.indexOf( '\n' ) + 1 ;
-      end = subStr.indexOf( '(' ) ;
-      retObj[Time] = subStr.substring( beg, end ) ;
    }
    else
    {
@@ -238,6 +248,7 @@ function main()
    getServiceInfo() ;
    getSafetyInfo() ;
 
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;
 }
 

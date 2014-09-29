@@ -106,17 +106,20 @@ var OMA_PATH_TEMP_SPT_DIR_L           = "/tmp/omatmp/conf/script/" ;
 var OMA_PATH_TEMP_TEMP_DIR_L          = "/tmp/omatmp/temp/" ;
 var OMA_PATH_VCOORD_PATH_L            = "/tmp/omatmp/data/vCoord" ;
 var OMA_PATH_SCRIPT_L                 = "script/" ;
+var OMA_PATH_BIN_L                    = "bin/"
 
 // file in linux
 var OMA_FILE_TEMP_HOSTS_TABLE_L      = OMA_PATH_TEMP_TEMP_DIR_L + "hosts" ;
 var OMA_FILE_HOSTS_TABLE_L           = "/etc/hosts" ;
 var OMA_FILE_SDBCM_CONF              = "sdbcm.conf" ;
+var OMA_FILE_SDBCM_CONF2             = "conf/sdbcm.conf" ;
 var OMA_FILE_ERROR                   = "error.js" ;
 var OMA_FILE_COMMON                  = "common.js" ;
 var OMA_FILE_DEFINE                  = "define.js" ;
 var OMA_FILE_FUNC                    = "func.js" ;
 var OMA_FILE_CHECK_HOST_ITEM         = "checkHostItem.js" ;
 var OMA_FILE_CHECK_HOST              = "checkHost.js" ;
+
 
 
 // program in linux
