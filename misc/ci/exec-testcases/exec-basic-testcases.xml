@@ -1,5 +1,5 @@
 <!--@param ${basic.testcase.path}: The path where test case direcotry.-->
-<!--@param ${install.path}: The path where sequoiadb installed.-->
+
 <!--@param ${antTask.jar.path}: The antTask.jar's path.-->
 <!--@param ${reports.path}: The path where test case direcotry.-->
 <!--@param ${test.package.name}: The name of test package name,.-->

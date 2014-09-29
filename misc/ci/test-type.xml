@@ -1,6 +1,6 @@
 <!--@param ${test.machine.deploy.path} , where test cases in the test machine-->
 <!--@param ${test.machine.deploy.path} , where deploy file in the test machine-->
-<!--@param ${install.path} , the sequoiadb install path -->
+
 <!--@param ${antFileName} , the ant file name is -->
 <!--@param ${test.reports.path} , where the report put in-->
 <!--@param ${Test-Type} , what the test type-->
