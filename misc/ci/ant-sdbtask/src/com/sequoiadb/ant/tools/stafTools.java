@@ -74,6 +74,8 @@ public class stafTools extends Task{
 				if( failonerror ){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
 				
@@ -88,6 +90,8 @@ public class stafTools extends Task{
 				if( failonerror){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
 			}
@@ -100,6 +104,8 @@ public class stafTools extends Task{
 				if( failonerror ){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
 			}
@@ -112,6 +118,8 @@ public class stafTools extends Task{
 				if( failonerror ){
 					if (result.rc != STAFResult.Ok) {
 						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
 			}
@@ -124,6 +132,8 @@ public class stafTools extends Task{
 				if(failonerror){
 					if(result.rc!=STAFResult.Ok){
 						throw new BuildException(STAFResultToString(result));
+					}else{
+						System.out.println("The operation has been successful...");
 					}
 				}
 			}
