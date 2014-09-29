@@ -216,7 +216,7 @@ namespace engine
       cCMService() ;
       virtual ~cCMService() ;
 
-      void  setArgInfo( INT32 argc, const CHAR **argv ) ;
+      void  setArgInfo( INT32 argc, CHAR **argv ) ;
 
       virtual INT32 init( ossSHMKey shmKey = PMDDMN_SHMKEY_DEFAULT ) ;
       virtual INT32 fini() ;
@@ -229,7 +229,7 @@ namespace engine
       INT32       _argLen ;
 
       INT32       _argc ;
-      const CHAR  **_argv ;
+      CHAR        **_argv ;
 
    } ;
 

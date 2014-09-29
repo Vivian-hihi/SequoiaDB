@@ -757,7 +757,7 @@ namespace engine
    {
    }
 
-   void cCMService::setArgInfo( INT32 argc, const CHAR * *argv )
+   void cCMService::setArgInfo( INT32 argc, CHAR * *argv )
    {
       _argc = argc ;
       _argv = argv ;
