@@ -5705,7 +5705,7 @@ namespace engine
       INT32 rc                  = SDB_OK ;
       const CHAR *pClusterName  = NULL ;
       const CHAR *pHostName     = NULL ;
-      list<string> businessList ;
+      list<BSONObj> businessList ;
 
       _restAdaptor->getQuery( _restSession, OM_REST_CLUSTER_NAME, 
                               &pClusterName ) ;
@@ -5748,7 +5748,7 @@ namespace engine
    }
 
    INT32 omListBusinessCommand::_getBusinessList( string clusterName,
-                                                  list<string> &businessList )
+                                                  list<BSONObj> &businessList )
    {
       INT32 rc = SDB_OK ;
       BSONObj selector ;
@@ -5757,7 +5757,8 @@ namespace engine
       BSONObj hint ;
       SINT64 contextID = -1 ;
 
-      selector = BSON( OM_BUSINESS_FIELD_NAME << "" ) ;
+      selector = BSON( OM_BUSINESS_FIELD_NAME << "" 
+                       << OM_BUSINESS_FIELD_TYPE << "" ) ;
       matcher  = BSON( OM_BUSINESS_FIELD_CLUSTERNAME << clusterName ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_BUSINESS, selector, matcher, order, hint, 0, 
                      _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
@@ -5790,8 +5791,7 @@ namespace engine
          }
 
          BSONObj record( buffObj.data() ) ;
-         businessList.push_back( 
-                              record.getStringField( OM_BUSINESS_FIELD_NAME )) ;
+         businessList.push_back( record.copy() ) ;
       }
    done:
       if ( -1 != contextID )
@@ -5804,7 +5804,7 @@ namespace engine
    }
 
    INT32 omListBusinessCommand::_getBusinessListByHost( string hostName,
-                                                    list<string> &businessList )
+                                                    list<BSONObj> &businessList )
    {
       INT32 rc = SDB_OK ;
       BSONObj selector ;
@@ -5813,7 +5813,8 @@ namespace engine
       BSONObj hint ;
       SINT64 contextID = -1 ;
 
-      selector = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << "" ) ;
+      selector = BSON( OM_CONFIGURE_FIELD_BUSINESSNAME << "" 
+                       << OM_BUSINESS_FIELD_TYPE << "" ) ;
       matcher  = BSON( OM_CONFIGURE_FIELD_HOSTNAME << hostName ) ;
       rc = rtnQuery( OM_CS_DEPLOY_CL_CONFIGURE, selector, matcher, order, hint, 
                      0, _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
@@ -5846,8 +5847,7 @@ namespace engine
          }
 
          BSONObj record( buffObj.data() ) ;
-         businessList.push_back( 
-                     record.getStringField( OM_CONFIGURE_FIELD_BUSINESSNAME )) ;
+         businessList.push_back( record.copy() ) ;
       }
    done:
       if ( -1 != contextID )
@@ -5860,15 +5860,14 @@ namespace engine
    }
 
    void omListBusinessCommand::_sendBusinessList2Web( 
-                                                    list<string> &businessList )
+                                                   list<BSONObj> &businessList )
    {
       BSONObjBuilder opBuilder ;
-      list<string>::iterator iter = businessList.begin() ;
+      list<BSONObj>::iterator iter = businessList.begin() ;
       while ( iter != businessList.end() )
       {
-         BSONObj business = BSON( OM_BSON_BUSINESS_NAME << *iter ) ;
-         _restAdaptor->appendHttpBody( _restSession, business.objdata(), 
-                                       business.objsize(), 1 ) ;
+         _restAdaptor->appendHttpBody( _restSession, iter->objdata(), 
+                                       iter->objsize(), 1 ) ;
          iter++ ;
       }
 

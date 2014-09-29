@@ -614,10 +614,10 @@ namespace engine
 
       private:
          INT32          _getBusinessList( string clusterName,
-                                          list<string> &businessList ) ;
+                                          list<BSONObj> &businessList ) ;
          INT32          _getBusinessListByHost( string hostName,
-                                                list<string> &businessList ) ;
-         void           _sendBusinessList2Web( list<string> &businessList ) ;
+                                                list<BSONObj> &businessList ) ;
+         void           _sendBusinessList2Web( list<BSONObj> &businessList ) ;
    };
 
    class omStartBusinessCommand : public omScanHostCommand
