@@ -83,7 +83,7 @@
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
 
-				<parallel threadCount="1" timeout="6000000">
+				<parallel timeout="6000000">
 					<sequential>
 						<antfetch antfile="${test.case.fullname}" target="test" inheritAll="false" return="ret.code,error.msg">
 							<property name="host.NAME" value="${host.NAME}" />
