@@ -362,13 +362,16 @@ namespace engine
             continue ;
          }
 
-         // linux:   sequoiadb_engine_11790(svcname)_2500(pid)
+         // linux:   /tmp/sequoiadb_engine_11790(svcname)_2500(pid)
          // windows: sequoiadb_engine_11790(svcname)
          // get svcname
-         findNode._svcname = names[ i ].substr( prefixLen ) ;
 #if defined( _LINUX )
+         findNode._svcname = names[ i ].substr(
+                     prefixLen + ossStrlen( OSS_NPIPE_LOCAL_PREFIX ) ) ;
          findNode._svcname = findNode._svcname.substr( 0,
                              findNode._svcname.find( "_" ) ) ;
+#else
+         findNode._svcname = names[ i ].substr( prefixLen ) ;
 #endif // _LINUX
 
          // 1. svcname
