@@ -157,7 +157,7 @@ INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
 #if defined (_WINDOWS)
    ossStrncpy( bpb2fName, (*names.begin()).c_str(), bpb2fSize - 1 ) ;
 #else
-   ossSnprintf( bpb2fName, bpb2fName - 1, "%s%s", OSS_NPIPE_LOCAL_PREFIX,
+   ossSnprintf( bpb2fName, bpb2fSize - 1, "%s%s", OSS_NPIPE_LOCAL_PREFIX,
                 (*names.begin()).c_str() ) ;
 #endif // _WINDOWS
 
