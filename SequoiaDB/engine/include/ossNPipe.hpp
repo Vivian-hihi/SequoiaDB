@@ -107,6 +107,8 @@ typedef class _OSSNPIPE OSSNPIPE ;
 #if defined (_WINDOWS)
 #define OSS_NPIPE_PREFIX              "\\\\"
 #define OSS_NPIPE_LOCAL_PREFIX        OSS_NPIPE_PREFIX".\\pipe\\"
+#else
+#define OSS_NPIPE_LOCAL_PREFIX        "/tmp/"
 #endif
 
 #define OSS_NPIPE_INBOUND            0x00000001
@@ -180,7 +182,6 @@ INT32 ossCleanNamedPipeByName ( const CHAR * pipeName ) ;
 // convert named pipe to C file descriptor
 INT32 ossNamedPipeToFd ( OSSNPIPE &handle , int * fd ) ;
 
-#if defined (_WINDOWS)
 // enumate all named pipes that EXACT matches pattern
 // if pattern is NULL, the call will enumerate all pipes in the system
 // For example if we are looking for name "sequoiadb_engine_50000",
@@ -189,6 +190,9 @@ INT32 ossNamedPipeToFd ( OSSNPIPE &handle , int * fd ) ;
 // Users can check the size of "names" to verify whether the given pipe
 // name exists in the system
 INT32 ossEnumNamedPipes ( std::vector<std::string> &names,
-                          const CHAR *pattern = NULL ) ;
+                          const CHAR *pattern = NULL,
+                          OSS_MATCH_TYPE type = OSS_MATCH_ALL,
+                          const CHAR *rootPath = OSS_NPIPE_LOCAL_PREFIX ) ;
+
 #endif
-#endif
+

@@ -5,6 +5,7 @@
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "ossProc.hpp"
+#include "ossPath.hpp"
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 #if defined (_LINUX)
@@ -16,8 +17,9 @@
 #include <fcntl.h>
 #endif
 
-#if defined (_WINDOWS)
 using namespace std ;
+
+#if defined (_WINDOWS)
 #define FileDirectoryInformation 1
 #define STATUS_NO_MORE_FILES 0x80000006L
 #define STATUS_NO_SUCH_FILE  0xC000000FL
@@ -233,10 +235,13 @@ error :
 // name exists in the system
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSENUMNMPS2, "ossEnumNamedPipes" )
 INT32 ossEnumNamedPipes ( std::vector<std::string> &names,
-                          const CHAR *pattern )
+                          const CHAR *pattern,
+                          OSS_MATCH_TYPE type,
+                          const CHAR *rootPath )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__OSSENUMNMPS2 );
+   const CHAR *pFind = NULL ;
    std::vector<std::string> tempNames ;
    if ( !pattern )
    {
@@ -250,14 +255,22 @@ INT32 ossEnumNamedPipes ( std::vector<std::string> &names,
    for ( INT32 i = 0; i < tempNames.size(); ++i )
    {
       const CHAR *pName = tempNames[i].c_str() ;
-      if ( ossStrncmp ( pattern, pName, ossStrlen ( pattern ) ) == 0 &&
-           ossStrlen ( pattern ) == ossStrlen ( pName ) )
+      if ( OSS_MATCH_NULL == type ||
+           ( OSS_MATCH_LEFT == type &&
+             0 == ossStrncmp( pName, pattern, ossStrlen( pattern ) ) ) ||
+           ( OSS_MATCH_MID == type && ossStrstr( pName, pattern ) ) ||
+           ( OSS_MATCH_RIGHT == type &&
+             ( pFind = ossStrstr( pName, pattern ) ) &&
+             pFind[ossStrlen(pattern)] == 0 ) ||
+           ( OSS_MATCH_ALL == type &&
+             0 == ossStrcmp( pName, pattern ) )
+          )
       {
          names.push_back ( tempNames[i] ) ;
       }
    }
 done :
-   PD_TRACE_EXITRC ( SDB__OSSENUMNMPS2, rc );
+   PD_TRACE_EXITRC ( SDB__OSSENUMNMPS2, rc ) ;
    return rc ;
 error :
    goto done ;
@@ -1248,4 +1261,33 @@ INT32 ossCleanNamedPipeByName ( const CHAR * pipeName )
    return rc ;
 }
 
+INT32 ossEnumNamedPipes( vector<string > &names,
+                         const CHAR *pattern,
+                         OSS_MATCH_TYPE type,
+                         const CHAR * rootPath )
+{
+   INT32 rc = SDB_OK ;
+   map< string, string > mapFiles ;
+   map< string, string >::iterator it ;
+
+   rc = ossEnumFiles( rootPath, mapFiles, pattern, type, 1 ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+
+   it = mapFiles.begin() ;
+   while ( it != mapFiles.end() )
+   {
+      names.push_back( it->first ) ;
+      ++it ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 #endif
+

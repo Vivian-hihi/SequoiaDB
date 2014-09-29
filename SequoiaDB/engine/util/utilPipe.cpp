@@ -113,139 +113,57 @@ error :
    goto done ;
 }
 
-#if defined (_WINDOWS)
 INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
                      CHAR * bpb2fName , UINT32 bpb2fSize ,
                      CHAR * f2bName , CHAR * b2fName )
 {
    INT32 rc = SDB_OK ;
    std::vector < std::string > names ;
-   std::vector < std::string >::iterator it ;
 
    ossMemset( bpf2bName, 0, bpf2bSize ) ;
    ossMemset( bpb2fName, 0, bpb2fSize ) ;
 
-   rc = ossEnumNamedPipes( names, NULL ) ;
+   rc = ossEnumNamedPipes( names, f2bName, OSS_MATCH_LEFT ) ;
    if ( rc )
    {
       std::cerr << "enum pipes failed: " << rc ;
       goto error ;
-   }
-   it = names.begin() ;
-   while ( it != names.end() )
-   {
-      if ( 0 != ossStrncmp( (*it).c_str(), f2bName, ossStrlen( f2bName ) ) )
-      {
-         it = names.erase( it ) ;
-         continue ;
-      }
-      ++it ;
    }
    if ( names.size() == 0 )
    {
       rc = SDB_FNE ;
       goto error ;
    }
+
+#if defined (_WINDOWS)
    ossStrncpy( bpf2bName, (*names.begin()).c_str(), bpf2bSize - 1 ) ;
+#else
+   ossSnprintf( bpf2bName, bpf2bSize - 1, "%s%s", OSS_NPIPE_LOCAL_PREFIX,
+                (*names.begin()).c_str() ) ;
+#endif // _WINDOWS
 
    names.clear() ;
-   rc = ossEnumNamedPipes( names, NULL ) ;
+   rc = ossEnumNamedPipes( names, b2fName, OSS_MATCH_LEFT ) ;
    if ( rc )
    {
       std::cerr << "enum pipes failed: " << rc ;
       goto error ;
-   }
-   it = names.begin() ;
-   while ( it != names.end() )
-   {
-      if ( 0 != ossStrncmp( (*it).c_str(), b2fName, ossStrlen( b2fName ) ) )
-      {
-         it = names.erase( it ) ;
-         continue ;
-      }
-      ++it ;
    }
    if ( names.size() == 0 )
    {
       rc = SDB_FNE ;
       goto error ;
    }
+#if defined (_WINDOWS)
    ossStrncpy( bpb2fName, (*names.begin()).c_str(), bpb2fSize - 1 ) ;
+#else
+   ossSnprintf( bpb2fName, bpb2fName - 1, "%s%s", OSS_NPIPE_LOCAL_PREFIX,
+                (*names.begin()).c_str() ) ;
+#endif // _WINDOWS
 
 done:
    return rc ;
 error:
    goto done ;
 }
-#else
-INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
-                     CHAR * bpb2fName , UINT32 bpb2fSize ,
-                     CHAR * f2bName , CHAR * b2fName )
-{
-   INT32           rc          = SDB_OK ;
-   CHAR *          f2bp        = NULL ;
-   CHAR *          b2fp        = NULL ;
-   INT32           cnt         = 0 ;
-
-   f2bp = bpf2bName ;
-   b2fp = bpb2fName ;
-
-   const CHAR *    path        = "/tmp/" ;
-   ossStrncpy ( bpf2bName , path , 5 ) ;
-   f2bp += 5 ;
-   ossStrncpy ( bpb2fName , path , 5 ) ;
-   b2fp += 5 ;
-
-   try
-   {
-      fs::path pipeDir( path ) ;
-      fs::directory_iterator end_iter ;
-      if ( fs::exists( pipeDir ) && fs::is_directory( pipeDir ) )
-      {
-         for ( fs::directory_iterator dir_iter( pipeDir );
-               dir_iter != end_iter; ++dir_iter )
-         {
-            const std::string fileName =
-                              dir_iter->path().filename().string() ;
-            const CHAR *pFileName = fileName.c_str() ;
-            if ( ossStrncmp ( pFileName , b2fName ,
-                              ossStrlen ( b2fName ) ) == 0 )
-            {
-               ossStrncpy ( b2fp , pFileName , bpb2fSize-5 ) ;
-               cnt++ ;
-            }
-            else if ( ossStrncmp ( pFileName , f2bName ,
-                      ossStrlen ( f2bName ) ) == 0 )
-            {
-               ossStrncpy ( f2bp , pFileName , bpf2bSize-5 ) ;
-               cnt++ ;
-            }
-            if ( cnt >= 2 )
-            {
-               goto done ;
-            }
-         }
-         rc = SDB_FNE ;
-         goto error ;
-      }
-      else
-      {
-         PD_RC_CHECK ( SDB_INVALIDARG, PDERROR,
-                       "Given path %s is not a directory or not exist",
-                       path ) ;
-      }
-   }
-   catch ( std::exception &e )
-   {
-      PD_RC_CHECK ( SDB_SYS, PDERROR,
-                    "Failed to iterate pipefile path %s: %s",
-                    path, e.what() ) ;
-   }
-
-done :
-   return rc ;
-error :
-   goto done ;
-}
-#endif
 

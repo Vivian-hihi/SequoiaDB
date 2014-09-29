@@ -130,15 +130,6 @@ error :
    goto done ;
 }
 
-enum OSS_MATCH_TYPE
-{
-   OSS_MATCH_LEFT,
-   OSS_MATCH_MID,
-   OSS_MATCH_RIGHT,
-   OSS_MATCH_ALL,
-   OSS_MATCH_NULL
-} ;
-
 static INT32 _ossEnumFiles( const string &dirPath,
                             map<string, string> &mapFiles,
                             const CHAR *filter, UINT32 filterLen,
@@ -236,6 +227,16 @@ INT32 ossEnumFiles( const string &dirPath,
                          newFilter.length(), type, deep ) ;
 }
 
+INT32 ossEnumFiles( const string &dirPath,
+                    map<string, string> &mapFiles,
+                    const CHAR *filter,
+                    OSS_MATCH_TYPE type,
+                    UINT32 deep )
+{
+   return _ossEnumFiles( dirPath, mapFiles, filter,
+                         filter ? ossStrlen( filter ) : 0,
+                         type, deep ) ;
+}
 
 static INT32 _ossEnumSubDirs( const string &dirPath,
                               const string &parentSubDir,
