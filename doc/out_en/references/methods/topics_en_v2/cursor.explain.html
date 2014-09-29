@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="cursor.explain()"/>
-<meta name="description" content="NAME explain - Return the access plan of the current cursor. SYNOPSIS cousor.explain () CATEGORY Cursor DESCRIPTION Return the access plan of the current cursor. FullName (string) Collection Name. ..."/>
+<meta name="description" content="NAME explain - Return the access plan of the current cursor. SYNOPSIS cousor.explain ( [option] ) CATEGORY Cursor DESCRIPTION Return the access plan of the current cursor. option (Json Object) ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics_en_v2/methodlist_en_v2.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_vcr_ty4_44"/>
@@ -45,7 +45,7 @@
     <div class="section"><h2 class="title sectiontitle">SYNOPSIS</h2>
       
       <p class="p"/>
-<span class="keyword apiname">cousor.explain</span>()
+<span class="keyword apiname">cousor.explain</span>(<span class="keyword parmname">[option]</span>)
     </div>
 
     <div class="section"><h2 class="title sectiontitle">CATEGORY</h2>
@@ -60,7 +60,12 @@ Cursor
 
       <dl class="dl parml">
         
-          <dt class="dt pt dlterm">FullName (string)</dt>
+          <dt class="dt pt dlterm">option (Json Object)</dt>
+
+          <dd class="dd pd">访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行
+            <dl class="dl parml">
+        
+          <dt class="dt pt dlterm">Name (string)</dt>
 
           <dd class="dd pd">Collection Name.</dd>
 
@@ -68,12 +73,12 @@ Cursor
         
           <dt class="dt pt dlterm">ScanType (string)</dt>
 
-          <dd class="dd pd">Scanning Type: TableScan: "TBSCAN"; IndexScan:"IXSCAN"
+          <dd class="dd pd">Scanning Type: TableScan: "tbscan"; IndexScan:"ixscan"
           </dd>
 
         
         
-          <dt class="dt pt dlterm">IdxName (string)</dt>
+          <dt class="dt pt dlterm">IndexName (string)</dt>
 
           <dd class="dd pd">Index name.</dd>
 
@@ -85,7 +90,7 @@ Cursor
 
         
         
-          <dt class="dt pt dlterm">Node (string)</dt>
+          <dt class="dt pt dlterm">NodeName (string)</dt>
 
           <dd class="dd pd">Node Name.</dd>
 
@@ -103,7 +108,7 @@ Cursor
 
         
         
-          <dt class="dt pt dlterm">IdxRead (int64)</dt>
+          <dt class="dt pt dlterm">IndexRead (int64)</dt>
 
           <dd class="dd pd">Number of Index read.</dd>
 
@@ -115,13 +120,13 @@ Cursor
 
         
         
-          <dt class="dt pt dlterm">UsrCpu (float64)</dt>
+          <dt class="dt pt dlterm">UserCPU (float64)</dt>
 
           <dd class="dd pd">Time used by cpu in user mode(seconds).</dd>
 
         
         
-          <dt class="dt pt dlterm">SysCpu (float64)</dt>
+          <dt class="dt pt dlterm">SysCPU (float64)</dt>
 
           <dd class="dd pd">Time used by cpu in kernel mode(seconds).</dd>
 
@@ -130,6 +135,11 @@ Cursor
           <dt class="dt pt dlterm">SubCollections (Json Array)</dt>
 
           <dd class="dd pd">The access plan of each sub-collections of the vertical-partitioning collection.</dd>
+
+        
+      </dl>
+
+          </dd>
 
         
       </dl>
@@ -151,43 +161,43 @@ Cursor
       <p class="p">Return:</p>
 
       <pre class="pre codeblock">{
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40020",
+  "NodeName": "vmsvr2-cent-x64:40020",
   "ReturnNum": 38,
   "ElapsedTime": 0.000477,
-  "IdxRead": 0,
+  "IndexRead": 0,
   "DataRead": 38,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }
 {
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40000",
+  "NodeName": "vmsvr2-cent-x64:40000",
   "ReturnNum": 34,
-  " ElapsedTime ": 0.000415,
-  "IdxRead": 0,
+  "ElapsedTime": 0.000415,
+  "IndexRead": 0,
   "DataRead": 34,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }
 {
-  "FullName": "foo.bar",
-  "ScanType": "TBSCAN",
-  "IdxName": "",
+  "Name": "foo.bar",
+  "ScanType": "tbscan",
+  "IndexName": "",
   "UseExtSort": true,
-  "Node": "vmsvr2-cent-x64:40010",
+  "NodeName": "vmsvr2-cent-x64:40010",
   "ReturnNum": 28,
-  " ElapsedTime ": 0.000517,
-  "IdxRead": 0,
+  "ElapsedTime": 0.000517,
+  "IndexRead": 0,
   "DataRead": 28,
-  "UsrCpu": 0,
-  "SysCpu": 0
+  "UserCPU": 0,
+  "SysCPU": 0
 }</pre>
 
     </div>
