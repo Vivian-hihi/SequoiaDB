@@ -75,7 +75,7 @@
 		</sdbprefix>
 		<echo message="Now testcase ${test.case.name}.xml begin with ${testcase.begin.time}"/>
 
-		<parallel threadCount="1" timeout="300000">
+		<parallel threadCount="1" timeout="900000">
 			<sequential>
 				<trycatch property="e">
 					<try>
