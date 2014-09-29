@@ -54,6 +54,16 @@ namespace engine
    {
    }
 
+   void omTaskBase::setDetail( string detail )
+   {
+      _omTaskInfo.detail = detail ;
+   }
+
+   string omTaskBase::getDetail()
+   {
+      return _omTaskInfo.detail ;
+   }
+
    INT32 omTaskBase::_saveFinishTask()
    {
       INT32 rc         = SDB_OK ;
@@ -66,6 +76,7 @@ namespace engine
       BSONObj updator ;
       tmp     = BSON( OM_TASKINFO_FIELD_PROGRESS << _omTaskInfo.progress
                       << OM_TASKINFO_FIELD_STATUS << _omTaskInfo.taskStatus
+                      << OM_TASKINFO_FIELD_DETAIL << _omTaskInfo.detail
                       << OM_TASKINFO_FIELD_ISFINISH << true ) ;
       updator = BSON( "$set" << tmp ) ;
 
@@ -295,6 +306,8 @@ namespace engine
                                              OM_TASKINFO_FIELD_STATUS ) ;
       _omTaskInfo.taskType     = record.getStringField( 
                                              OM_TASKINFO_FIELD_TYPE ) ;
+      _omTaskInfo.detail       = record.getStringField( 
+                                             OM_TASKINFO_FIELD_DETAIL ) ;
       // must copy the bson
       _omTaskInfo.progress = record.getObjectField(
                                           OM_TASKINFO_FIELD_PROGRESS ).copy() ;
@@ -332,7 +345,8 @@ namespace engine
                   << OM_TASKINFO_FIELD_PROGRESS << _omTaskInfo.progress
                   << OM_TASKINFO_FIELD_STATUS << _omTaskInfo.taskStatus
                   << OM_TASKINFO_FIELD_ISFINISH << _omTaskInfo.isFinished
-                  << OM_TASKINFO_FIELD_ISENABLE << _omTaskInfo.isEnable ) ;
+                  << OM_TASKINFO_FIELD_ISENABLE << _omTaskInfo.isEnable
+                  << OM_TASKINFO_FIELD_DETAIL << _omTaskInfo.detail ) ;
 
       rc = rtnInsert( OM_CS_DEPLOY_CL_TASKINFO, tmp, 1, 0, cb );
       if ( rc )
@@ -397,7 +411,8 @@ namespace engine
 
       BSONObj tmp ;
       BSONObj updator ;
-      tmp     = BSON( OM_TASKINFO_FIELD_ISENABLE << false ) ;
+      tmp     = BSON( OM_TASKINFO_FIELD_ISENABLE << false
+                      << OM_TASKINFO_FIELD_DETAIL << _omTaskInfo.detail ) ;
       updator = BSON( "$set" << tmp ) ;
 
       BSONObj hint ;
@@ -461,12 +476,15 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 omInstallTask::getProgress( bool &isFinish, string &status, 
-                                     BSONObj &progress )
+   INT32 omInstallTask::getProgress( bool &isEnable, bool &isFinish, 
+                                     string &status, BSONObj &progress,
+                                     string &detail )
    {
+      isEnable = _omTaskInfo.isEnable ;
       isFinish = _omTaskInfo.isFinished ;
       status   = _omTaskInfo.taskStatus ;
       progress = _omTaskInfo.progress ;
+      detail   = _omTaskInfo.detail ;
       return SDB_OK ;
    }
 
@@ -742,7 +760,7 @@ namespace engine
       }
       
       ele = response.getField( OM_BSON_TASK_PROGRESS ) ;
-      if ( ele.type() != Object )
+      if ( ele.type() != Array )
       {
          rc = SDB_INVALIDARG ;
          PD_LOG( PDERROR, "agent's response field format error:field=%s,"
@@ -777,8 +795,7 @@ namespace engine
          goto done ;
       }
 
-      //TODO: get the agent's retcode, if task is error( like rollback failed )
-      // we should clean this task
+      // if task is error( like rollback failed ) we should clean this task
       rc = _getProgressFromAgent( flag, response ) ;
       if ( SDB_OK != rc )
       {
@@ -794,7 +811,7 @@ namespace engine
          PD_LOG( PDERROR, "agent process %s failed, cancel task:taskID="
                  OSS_LL_PRINT_FORMAT",detail=%s,rc=%d", OM_INSTALL_BUSINESS_REQ, 
                  _omTaskInfo.taskID, errorDetail.c_str(), rc ) ;
-         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID ) ;
+         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID, errorDetail ) ;
          goto error ;
       }
 
@@ -809,6 +826,7 @@ namespace engine
       _omTaskInfo.taskStatus = response.getStringField( OM_BSON_TASK_STATUS ) ;
       _omTaskInfo.progress   = response.getObjectField( 
                                                       OM_BSON_TASK_PROGRESS ) ;
+      _omTaskInfo.detail     = response.getStringField( OM_BSON_TASK_DETAIL ) ;
       tmpFinished = response.getBoolField( OM_BSON_TASK_ISFINISHED ) ;
       if ( tmpFinished )
       {
@@ -1015,7 +1033,7 @@ namespace engine
          PD_LOG( PDERROR, "agent process %s failed, cancel task:taskID="
                  OSS_LL_PRINT_FORMAT",detail=%s,rc=%d", OM_REMOVE_BUSINESS_REQ, 
                  _omTaskInfo.taskID, errorDetail.c_str(), rc ) ;
-         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID ) ;
+         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID, errorDetail ) ;
          goto error ;
       }
 
@@ -1187,7 +1205,7 @@ namespace engine
          PD_LOG( PDERROR, "agent process %s failed, cancel task:taskID="
                  OSS_LL_PRINT_FORMAT",detail=%s,rc=%d", OM_ADD_HOST_REQ, 
                  _omTaskInfo.taskID, errorDetail.c_str(), rc ) ;
-         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID ) ;
+         _om->getTaskManager()->cancelTask( _omTaskInfo.taskID, errorDetail ) ;
          goto error ;
       }
 
@@ -1581,7 +1599,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 omTaskManager::cancelTask( UINT64 taskID )
+   INT32 omTaskManager::cancelTask( UINT64 taskID, const string &detail )
    {
       INT32 rc          = SDB_OK ;
       boost::shared_ptr< omTaskBase > shareTask ;
@@ -1606,6 +1624,8 @@ namespace engine
          goto error ;
       }
 
+      shareTask->setDetail( detail ) ;
+
       _lock.get() ;
       _mapTasks.erase( taskID ) ;
       _lock.release() ;
@@ -1626,8 +1646,8 @@ namespace engine
       {
          _lock.release() ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT, 
-                 taskID ) ;
+         PD_LOG_MSG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT, 
+                     taskID ) ;
          goto error ;
       }
       shareTask = iter->second ;
@@ -1636,8 +1656,8 @@ namespace engine
       rc    = shareTask->finish() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "finish task failed:taskID="OSS_LL_PRINT_FORMAT
-                 ",rc=%d", taskID, rc ) ;
+         PD_LOG_MSG( PDERROR, "finish task failed:taskID="OSS_LL_PRINT_FORMAT
+                     ",rc=%d", taskID, rc ) ;
          goto error ;
       }
 
@@ -1661,8 +1681,8 @@ namespace engine
       {
          _lock.release() ;
          rc = SDB_INVALIDARG ;
-         PD_LOG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT, 
-                 taskID ) ;
+         PD_LOG_MSG( PDERROR, "task is not exist:taskID="OSS_LL_PRINT_FORMAT, 
+                     taskID ) ;
          goto error ;
       }
       shareTask = iter->second ;
@@ -1671,8 +1691,8 @@ namespace engine
       rc    = shareTask->enable() ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "enable task failed:taskID="OSS_LL_PRINT_FORMAT
-                 ",rc=%d", taskID, rc ) ;
+         PD_LOG_MSG( PDERROR, "enable task failed:taskID="OSS_LL_PRINT_FORMAT
+                     ",rc=%d", taskID, rc ) ;
          goto error ;
       }
    done:
@@ -1681,9 +1701,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 omTaskManager::getProgress( UINT64 taskID, string &taskType,
-                                     bool &isFinish, string &status, 
-                                     BSONObj &progress )
+   INT32 omTaskManager::getProgress( UINT64 taskID, string &taskType, 
+                                     bool &isEnable, bool &isFinish, 
+                                     string &status, BSONObj &progress,
+                                     string &detail )
    {
       INT32 rc = SDB_OK ;
       boost::shared_ptr< omTaskBase > shareTask ;
@@ -1703,9 +1724,11 @@ namespace engine
          }
 
          taskType = result.getStringField( OM_TASKINFO_FIELD_TYPE ) ;
+         isEnable = result.getBoolField( OM_TASKINFO_FIELD_ISENABLE ) ;
          isFinish = result.getBoolField( OM_TASKINFO_FIELD_ISFINISH ) ;
          status   = result.getStringField( OM_TASKINFO_FIELD_STATUS ) ;
          progress = result.getObjectField( OM_TASKINFO_FIELD_PROGRESS ) ;
+         detail   = result.getStringField( OM_TASKINFO_FIELD_DETAIL ) ;
       }
       else
       {
@@ -1713,7 +1736,8 @@ namespace engine
          _lock.release() ;
 
          taskType = shareTask->getType() ;
-         rc = shareTask->getProgress( isFinish, status, progress ) ;
+         rc = shareTask->getProgress( isEnable, isFinish, status, progress, 
+                                      detail ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG_MSG( PDERROR, "get task's progress failed:taskID="

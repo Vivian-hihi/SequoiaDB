@@ -2751,7 +2751,7 @@ namespace engine
       rc = _addHostByAgent( conf, taskID ) ;
       if ( SDB_OK != rc )
       {
-         pTaskManager->cancelTask( taskID ) ;
+         pTaskManager->cancelTask( taskID, _errorDetail ) ;
          PD_LOG( PDERROR, "add host by agent failed:rc=%d", rc ) ;
          goto error ;
       }
@@ -5088,7 +5088,7 @@ namespace engine
       rc = _applyInstallRequest( bsonConfValue, taskID ) ;
       if ( SDB_OK != rc )
       {
-         taskManager->cancelTask( taskID ) ;
+         taskManager->cancelTask( taskID, _errorDetail ) ;
          PD_LOG( PDERROR, "_applyInstallRequest failed:rc=%d", rc ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
@@ -5097,10 +5097,10 @@ namespace engine
       rc = taskManager->enableTask( taskID ) ;
       if ( SDB_OK != rc )
       {
-         taskManager->cancelTask( taskID ) ;
          PD_LOG_MSG( PDERROR, "enable task failed:taskID="OSS_LL_PRINT_FORMAT
                  "rc=%d", taskID, rc ) ;
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         taskManager->cancelTask( taskID, _errorDetail ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
          goto error ;
       }
@@ -5135,9 +5135,11 @@ namespace engine
       omTaskManager *tm = NULL ;
       UINT64 uTaskID ;
       string taskType ;
+      bool isEnable ;
       bool isFinished ;
       string status ;
       BSONObj progress ;
+      string detail ;
 
       BSONObj restTask ;
       INT32 rc          = SDB_OK ;
@@ -5156,7 +5158,8 @@ namespace engine
       uTaskID = ossAtoll( pTask ) ;
 
       tm = sdbGetOMManager()->getTaskManager() ;
-      rc = tm->getProgress( uTaskID, taskType, isFinished, status, progress ) ;
+      rc = tm->getProgress( uTaskID, taskType, isEnable, isFinished, status, 
+                            progress, detail ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
@@ -5169,9 +5172,11 @@ namespace engine
          BSONObj op ;
          opBuilder.append( OM_BSON_TASKID, (long long)uTaskID ) ;
          opBuilder.append( OM_BSON_TASKTYPE, taskType ) ;
+         opBuilder.append( OM_BSON_TASK_ISENABLE, isEnable ) ;
          opBuilder.append( OM_BSON_TASK_ISFINISHED, isFinished ) ;
          opBuilder.append( OM_BSON_TASK_STATUS, status ) ;
          opBuilder.appendArray( OM_BSON_TASK_PROGRESS, progress ) ;
+         opBuilder.append( OM_BSON_TASK_DETAIL, detail ) ;
          op = opBuilder.obj() ;
          _restAdaptor->appendHttpBody( _restSession, op.objdata(), 
                                        op.objsize(), 1 ) ;
@@ -6853,7 +6858,7 @@ namespace engine
          rc = _removeBusinessByAgent( request, taskID ) ;
          if ( SDB_OK != rc )
          {
-            taskManager->cancelTask( taskID ) ;
+            taskManager->cancelTask( taskID, _errorDetail ) ;
             PD_LOG( PDERROR, "agent remove business failed:business=%s,"
                     "rc=%d", businessName.c_str(), rc ) ;
             goto error ;
@@ -6864,7 +6869,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-         taskManager->cancelTask( taskID ) ;
+         taskManager->cancelTask( taskID, _errorDetail ) ;
          PD_LOG_MSG( PDERROR, "enable task failed:taskID="OSS_LL_PRINT_FORMAT
                      "rc=%d", taskID, rc ) ;
          goto error ;
@@ -6877,7 +6882,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            taskManager->cancelTask( taskID ) ;
+            taskManager->cancelTask( taskID, _errorDetail ) ;
             PD_LOG_MSG( PDERROR, "finish task failed:taskID="OSS_LL_PRINT_FORMAT
                         "rc=%d", taskID, rc ) ;
             goto error ;

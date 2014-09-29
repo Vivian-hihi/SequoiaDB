@@ -62,6 +62,7 @@ namespace engine
       string             agentService ;
       BSONObj            taskInfo ;
       BSONObj            progress ;
+      string             detail ;
    } ;
 
    class omTaskBase : public SDBObject
@@ -77,8 +78,9 @@ namespace engine
 
          virtual INT32     finish() = 0 ;
 
-         virtual INT32     getProgress( bool &isFinish, string &status, 
-                                        BSONObj &progress ) = 0 ;
+         virtual INT32     getProgress( bool &isEnable, bool &isFinish, 
+                                       string &status, BSONObj &progress,
+                                       string &detail ) = 0 ;
 
          virtual string    getType() = 0 ;
 
@@ -93,6 +95,9 @@ namespace engine
          virtual BOOLEAN   isFinish() = 0 ;
 
          virtual void      getAllTaskInfo( omTaskInfo &taskInfo ) = 0 ;
+
+         void              setDetail( string detail ) ;
+         string            getDetail() ;
 
       protected:
          INT32             _saveFinishTask() ;
@@ -133,8 +138,9 @@ namespace engine
 
          virtual INT32     finish() ;
 
-         virtual INT32     getProgress( bool &isFinish, string &status, 
-                                        BSONObj &progress ) ;
+         virtual INT32     getProgress( bool &isEnable, bool &isFinish, 
+                                        string &status, BSONObj &progress,
+                                        string &detail ) ;
 
          virtual string    getType() ;
 
@@ -280,15 +286,16 @@ namespace engine
                                               UINT64 &taskID ) ;
          INT32             restoreTask() ;
 
-         INT32             cancelTask( UINT64 taskID ) ;
+         INT32             cancelTask( UINT64 taskID, const string &detail ) ;
 
          INT32             enableTask( UINT64 taskID ) ;
 
          INT32             finishTask( UINT64 taskID ) ;
 
          INT32             getProgress( UINT64 taskID, string &taskType,
-                                        bool &isFinish, string &status, 
-                                        BSONObj &progress ) ;
+                                        bool &isEnable, bool &isFinish, 
+                                        string &status, BSONObj &progress,
+                                        string &detail ) ;
 
          void              getTaskInfo( const string &agentHost, 
                                         const string &agentService, 

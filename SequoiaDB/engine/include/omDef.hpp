@@ -167,6 +167,7 @@ namespace engine
    #define OM_TASKINFO_FIELD_AGENTSERVICE    "AgentService"
    #define OM_TASKINFO_FIELD_INFO            "Info"
    #define OM_TASKINFO_FIELD_PROGRESS        "Progress"
+   #define OM_TASKINFO_FIELD_DETAIL          "ErrMsg"
    #define OM_TASKINFO_FIELD_STATUS          "Status"
    #define OM_TASKINFO_FIELD_ISFINISH        "IsFinish"
    #define OM_TASKINFO_FIELD_ISENABLE        "IsEnable"
@@ -410,10 +411,12 @@ namespace engine
 
    #define  OM_REST_TASKID                   OM_BSON_TASKID
 
+   #define  OM_BSON_TASK_ISENABLE            OM_TASKINFO_FIELD_ISENABLE
    #define  OM_BSON_TASK_ISFINISHED          OM_TASKINFO_FIELD_ISFINISH
    #define  OM_BSON_TASK_STATUS              OM_TASKINFO_FIELD_STATUS
    #define  OM_BSON_TASK_INFO                OM_TASKINFO_FIELD_INFO
    #define  OM_BSON_TASK_PROGRESS            OM_TASKINFO_FIELD_PROGRESS
+   #define  OM_BSON_TASK_DETAIL              OM_TASKINFO_FIELD_DETAIL
    #define  OM_BSON_TASK_TASKLIST            "Tasks"
    #define  OM_BSON_ITEM_NAME                "Name"
    #define  OM_BSON_TOTAL_COUNT              "TotalCount"
