@@ -27,9 +27,7 @@
    RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
-
-var BUS_JSON = {"HostName":"rhel64-test8","IP":"192.168.20.165","User":"root","Passwd":"sequoiadb","HostInfo":[{"HostName":"rhel64-test77","IP":"192.168.20.167","AgentPort":"12345"},{"HostName":"rhel64-test99","IP":"192.168.20.168","AgentPort":"12345"}]} ;
-
+// var BUS_JSON = { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentPort":"11790" } ] } ;
 
 var RET_JSON          = new Object() ;
 RET_JSON[Errno]       = 0 ;
@@ -56,7 +54,7 @@ function getLocalDBInstallPath( osInfo )
    {
       if ( "number" == typeof( e ) )
       {
-         setLastErrMsg( "Failed to get oma install info: " + getErr( e ) ) ;
+         setLastErrMsg( "Failed to get oma install info: " + getLastErrMsg() ) ;
          setLastError( e ) ;
       }
       throw e ;
@@ -98,9 +96,19 @@ print("str is: " + str + "\n")
          catch ( e )
          {
 print("e is: " + e + "\n") ;
-            setLastErrMsg( "Failed to set info [" + ip + "   " + hostname + "] to hosts table in " + ssh.getLocalIP() ) ;
-            setLastError( SDB_SYS ) ;
-            throw SDB_SYS ;
+            if ( "number" == typeof(e) )
+            {
+               if ( e < 0 )
+               {
+                  setLastErrMsg( "Failed to set info [" + ip + "   " + hostname + "] to hosts table in " + ssh.getLocalIP() + ": " + getErr(e) ) ;
+               }
+               else
+               {
+                  setLastErrMsg( "Failed to set info [" + ip + "   " + hostname + "] to hosts table in " + ssh.getLocalIP() ) ;
+               }
+               setLastError( e ) ;
+            }
+            throw e ;   
          }
       }
 print("33333333333333\n")
@@ -169,7 +177,7 @@ print("66666666666666666666666\n")
       {
          if ( e < 0 )
          {
-            setLastErrMsg( "Failed to set oma config info: " + getErr( e ) )
+            setLastErrMsg( "Failed to set oma config info: " + getLastErrMsg() )
             setLastError( e ) ;
          }
          else
@@ -187,15 +195,12 @@ print("7777777777777777777\n")
 
 function main()
 {
-// {"HostName":"rhel64-test8","IP":"192.168.20.165","User":"root","Passwd":"sequoiadb","HostInfo":[{"HostName":"rhel64-test77","IP":"192.168.20.167","AgentPort":"12345"},{"HostName":"rhel64-test99","IP":"192.168.20.168","AgentPort":"12345"}]}
-
     var ip               = BUS_JSON[IP] ;
     var user             = BUS_JSON[User] ;
     var passwd           = BUS_JSON[Passwd] ;
     var updateInfoArr    = BUS_JSON[HostInfo] ;
     var osInfo           = null ;
     var ssh              = null ;
-
 
    // new ssh
    ssh = new Ssh( ip, user, passwd ) ;
@@ -208,6 +213,7 @@ print("11111111111111111111111\n")
    // update sdbcm comfig file
    updateSdbcmCfgFile( ssh, osInfo, updateInfoArr ) ;
 print("222222222222222\n")
+print("RET_JOSN is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;
 }
 
