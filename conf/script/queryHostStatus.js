@@ -67,7 +67,7 @@ function snapshotNetInfo()
       for ( var j = 0; j < expectArr.length; j++ )
       {
          var oneExpect = expectArr[j] ;
-         print("expect is: " + JSON.stringify(oneExpect) + "\n") ;
+         //print("expect is: " + JSON.stringify(oneExpect) + "\n") ;
          if ( oneNet[Name] == oneExpect[Name] )
          {
            netResult.push( oneNet ) ; 
