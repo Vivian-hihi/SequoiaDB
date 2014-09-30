@@ -91,7 +91,8 @@ namespace sdbclient
       {
          rc = pSock->send ( &pBuffer[totalSentSize],
                             sendSize - totalSentSize,
-                            sentSize ) ;
+                            sentSize,
+                            SDB_CLIENT_SOCKET_TIMEOUT_DFT ) ;
          totalSentSize += sentSize ;
          if ( SDB_TIMEOUT == rc )
             continue ;
@@ -113,7 +114,8 @@ namespace sdbclient
       {
          rc = pSock->recv ( &pBuffer[totalReceivedSize],
                             receiveSize - totalReceivedSize,
-                            receivedSize ) ;
+                            receivedSize,
+                            SDB_CLIENT_SOCKET_TIMEOUT_DFT ) ;
          totalReceivedSize += receivedSize ;
          if ( SDB_TIMEOUT == rc )
             continue ;
@@ -123,8 +125,7 @@ namespace sdbclient
    done :
       return rc ;
    }
-#define CLIENT_DFT_TIMEOUT 10000000 // 10 seconds
-#define SDB_CLIENT_DFT_NETWORK_TIMEOUT -1
+
    /*
     * sdbCursorImpl
     * Cursor Implementation
@@ -3627,7 +3628,7 @@ namespace sdbclient
       {
          goto error ;
       }
-      rc = _sock->connect () ;
+      rc = _sock->connect ( SDB_CLIENT_SOCKET_TIMEOUT_DFT ) ;
       if ( rc )
       {
          goto error ;
@@ -3672,20 +3673,6 @@ namespace sdbclient
       {
          goto error ;
       }
-/*
-      while ( TRUE )
-      {
-         rc = clientRecv ( *_sock, (CHAR*)&reply, sizeof(MsgSysInfoReply),
-                          SDB_CLIENT_DFT_NETWORK_TIMEOUT ) ;
-         if ( SDB_TIMEOUT == rc )
-            continue ;
-         if ( rc )
-         {
-            goto error ;
-         }
-         break ;
-      }
-*/
       rc = clientExtractSysInfoReply ( (CHAR*)pReply, &_endianConvert, NULL ) ;
       if ( rc )
       {

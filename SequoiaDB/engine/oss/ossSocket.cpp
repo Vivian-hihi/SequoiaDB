@@ -516,7 +516,7 @@ error :
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_CONNECT, "ossSocket::connect" )
-INT32 _ossSocket::connect ()
+INT32 _ossSocket::connect ( INT32 timeout )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_CONNECT );
@@ -539,7 +539,7 @@ INT32 _ossSocket::connect ()
    {
       if ( SOCKET_GETLASTERROR == EINPROGRESS )
       {
-         rc = _complete() ;
+         rc = _complete( timeout ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Failed to complete connect, rc = %d", rc ) ;
@@ -876,7 +876,7 @@ INT32 _ossSocket::getPort ( const CHAR *pServiceName, UINT16 &port )
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__COMPLETE, "_ossSocket::_complete" )
-INT32 _ossSocket::_complete()
+INT32 _ossSocket::_complete( INT32 timeout )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY( SDB__OSSSK__COMPLETE ) ;
@@ -884,8 +884,8 @@ INT32 _ossSocket::_complete()
    INT32 err = 0 ;
    socklen_t errlen = sizeof(err) ;
    timeval tv ;
-   tv.tv_sec = 0 ;
-   tv.tv_usec = 100000 ; // 100 ms
+   tv.tv_sec = timeout / 1000 ; ;
+   tv.tv_usec = ( timeout % 1000 ) * 1000 ;
    fd_set wfd ;
    FD_ZERO( &wfd ) ;
    FD_SET( _fd, &wfd ) ;

@@ -86,6 +86,13 @@
 
 #define FLG_INSERT_CONTONDUP  0x00000001
 
+// client socket timeout value
+// since client and server may not sit in the same network, we need
+// to set this value bigger than engine socket timeout
+// this value is in millisec
+// set to 10 seconds timeout
+#define SDB_CLIENT_SOCKET_TIMEOUT_DFT 10000
+
 /** class name 'sdbReplicaNode' will be deprecated in version 2.x, use 'sdbNode' instead of it. */
 #define sdbReplicaNode         sdbNode
 

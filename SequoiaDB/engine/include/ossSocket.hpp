@@ -68,7 +68,11 @@
 #endif
 #include "pd.hpp"
 
-// by default 10ms timeout
+// by default 500ms timeout
+// note this is default for engine communication
+// this value shouldn't be set too big since it may break
+// the heartbeat detection
+// for client, we should set client socket timeout value instead of this one
 #define OSS_SOCKET_DFT_TIMEOUT      500
 
 #define OSS_MAX_HOSTNAME            NI_MAXHOST
@@ -97,7 +101,7 @@ class _ossSocket : public SDBObject
       UINT32   _getIP( sockaddr_in *addr ) ;
       INT32    _getAddress ( sockaddr_in *addr, CHAR *pAddress,
                              UINT32 length ) ;
-      INT32    _complete() ;
+      INT32    _complete( INT32 timeout ) ;
 
    public :
       INT32 setSocketLi ( INT32 lOnOff, INT32 linger ) ;
@@ -139,7 +143,7 @@ class _ossSocket : public SDBObject
                    INT32 flags = 0,
                    BOOLEAN block = TRUE ) ;
 
-      INT32 connect () ;
+      INT32 connect ( INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
       void  close () ;
       INT32 accept ( SOCKET *sock, struct sockaddr *addr, socklen_t *addrlen,
                      INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
