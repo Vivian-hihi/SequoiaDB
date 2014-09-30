@@ -97,6 +97,9 @@ namespace engine
       JS_ADD_STATIC_FUNC("delAOmaSvcName", delAOmaSvcName)
    JS_MAPPING_END()
 
+   #define SPT_OMA_REL_PATH            SDBCM_CONF_DIR_NAME OSS_FILE_SEP
+   #define SPT_OMA_REL_PATH_FILE       SPT_OMA_REL_PATH SDBCM_CFG_FILE_NAME
+
    /*
       define config
    */
@@ -509,7 +512,7 @@ namespace engine
       if ( SDB_OK == utilGetInstallInfo( info ) )
       {
          if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
-                                           SDBCM_CONF_PATH_FILE,
+                                           SPT_OMA_REL_PATH,
                                            OSS_MAX_PATHSIZE,
                                            confFile ) &&
               SDB_OK == ossAccess( confFile ) )
