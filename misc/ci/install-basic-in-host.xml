@@ -38,7 +38,7 @@
 		</exec>
 		<sleep seconds="60"/>
 
-		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" />
+		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" >
 			<arg line="--mode unattended" />
 		</exec>
 		<sleep second="60" />
