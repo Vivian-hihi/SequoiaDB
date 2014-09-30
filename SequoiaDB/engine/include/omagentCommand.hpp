@@ -248,7 +248,6 @@ namespace engine
          ~_omaAddHost () ;
          virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
-//         virtual INT32 doit ( BSONObj &retObj ) ;
          virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
 
       private:
@@ -305,28 +304,25 @@ namespace engine
 
    } ;
 
-//   /***************************** update hosts table info ********************/
-//   /*
-//      _omaUpdateHostsInfo
-//   */
-//   class _omaUpdateHostsInfo : public _omaCommand
-//   {
-//      DECLARE_OACMD_AUTO_REGISTER ()
-//      public:
-//         _omaUpdateHostsInfo () ;
-//         ~_omaUpdateHostsInfo () ;
-//      
-//         virtual const CHAR * name ()
-//         {
-//            return OMA_CMD_UPDATE_HOSTS ;
-//         }
-//         virtual INT32 init ( const CHAR *pInstallInfo ) ;
-//
-////         virtual INT32 doit ( BSONObj &retObj ) ;
-//
-////         virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
-//
-//   } ; 
+   /***************************** update hosts table info ********************/
+   /*
+      _omaUpdateHostsInfo
+   */
+   class _omaUpdateHostsInfo : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaUpdateHostsInfo () ;
+         ~_omaUpdateHostsInfo () ;
+      
+         virtual const CHAR * name ()
+         {
+            return OMA_CMD_UPDATE_HOSTS ;
+         }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+//         virtual INT32 doit ( BSONObj &retObj ) ;
+//         virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
+   } ; 
 
    // _omaCreateVirtualCoord
    class _omaCreateVirtualCoord : public _omaCommand
@@ -352,8 +348,6 @@ namespace engine
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
       private:
-//         CHAR _omaHostName[OSS_MAX_HOSTNAME + 1] ;
-//         CHAR _omaSvcName[OSS_MAX_SERVICENAME + 1] ;
          CHAR _vCoordSvcName[OSS_MAX_SERVICENAME + 1] ;
    } ;
 

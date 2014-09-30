@@ -93,9 +93,11 @@ namespace engine
 #if defined (_LINUX)
       #define SDBSTARTPROG             "sdbstart"
       #define SDBSTOPPROG              "sdbstop"
+      #define SDBSDBCMPROG             "sdbcm"
 #elif defined (_WINDOWS)
       #define SDBSTARTPROG             "sdbstart.exe"
       #define SDBSTOPPROG              "sdbstop.exe"
+      #define SDBSDBCMPROG             "sdbcm.exe"
 #endif
 
    #define SDB_OMA_USER                "OMA_ADMIN"

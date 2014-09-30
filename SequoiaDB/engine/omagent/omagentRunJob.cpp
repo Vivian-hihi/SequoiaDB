@@ -32,7 +32,6 @@
 
 #include "omagentUtil.hpp"
 #include "omagentCommand.hpp"
-//#include "omagentJobRunCmd.hpp"
 #include "utilStr.hpp"
 #include "omagentMgr.hpp"
 
@@ -80,8 +79,6 @@ namespace engine
                  OMA_FIELD_SDBUSERGROUP  << _info._sdbUserGroup.c_str() <<
                  OMA_FIELD_USER          << _info._user.c_str() <<
                  OMA_FIELD_PASSWD        << _info._passwd.c_str() ) ;
-
-
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
@@ -148,7 +145,6 @@ namespace engine
                  OMA_FIELD_SDBUSERGROUP  << _info._sdbUserGroup.c_str() <<
                  OMA_FIELD_USER          << _info._user.c_str() <<
                  OMA_FIELD_PASSWD        << _info._passwd.c_str() ) ;
-
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
@@ -216,7 +212,6 @@ namespace engine
                  OMA_FIELD_SDBUSERGROUP  << _info._sdbUserGroup.c_str() <<
                  OMA_FIELD_USER          << _info._user.c_str() <<
                  OMA_FIELD_PASSWD        << _info._passwd.c_str() ) ;
-
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),

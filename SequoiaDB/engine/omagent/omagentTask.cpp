@@ -190,13 +190,18 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       std::map<UINT64, _omaTask*>::iterator it = _taskMap.begin() ;
+      PD_LOG( PDDEBUG, "There are [%d] task kept in task manager, "
+              "the removing task is[%s]", _taskMap.size(), pTaskName ) ;
       for ( ; it != _taskMap.end(); it++ )
       {
          _omaTask *pTask = it->second ;
          const CHAR *name = pTask->taskName() ;
+         PD_LOG ( PDDEBUG, "The task is [%s]", name ) ;
          if ( 0 == ossStrncmp( name, pTaskName, ossStrlen(pTaskName) ) )
          {
             rc = removeTask( pTask ) ;
+            // when remove old task, must stop iterate
+            break ;
          }
       }
       return rc ;
@@ -251,14 +256,7 @@ namespace engine
                                           BSONObj &other )
    {
       INT32 rc = SDB_OK ;
-      const CHAR *pStr = NULL ;
       vector<BSONObj>::iterator it ;
-
-      // get virtual coord info
-      rc = omaGetStringElement ( other, OMA_FIELD_VCOORDSVCNAME, &pStr ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
-                "rc: %d", OMA_FIELD_VCOORDSVCNAME, rc ) ;
-      _vCoordSvcName = pStr ;
       // init _coord and _coordResult
       _coord = coord ;
       _coordResult._rc = SDB_OK ;
@@ -310,6 +308,13 @@ namespace engine
    INT32 _omaInstallDBBusinessTask::doit()
    {
       INT32 rc = SDB_OK ;
+      // create virtual catalog
+      rc = _installVirtualCatalog() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create virtual catalog, rc = %d", rc ) ;
+         goto error ;
+      }
       // create catalog job
       rc = _installCatalog() ;
       if ( rc )
@@ -679,7 +684,7 @@ namespace engine
          rc = SDB_OMA_TASK_FAIL ;
          goto done ;
       }
-      // while task has failed yet
+      // test which stage task is in
       if ( OMA_INSTALL_INSTALL == _stage )
       {
          pStage = STAGE_INSTALL ;
@@ -702,6 +707,9 @@ namespace engine
          bob.appendBool( OMA_FIELD_ISFINISH, _isTaskFinish ) ;
          // status
          bob.append( OMA_FIELD_STATUS, pStage ) ;
+         // ErrMsg( fatal err, like failed to rollback or
+         // failed to remove virtual coord)
+         bob.append( OMA_FIELD_ERRMSG, _detail ) ;
          // get coord status
          coordResult = BSON ( OMA_FIELD_NAME
                               << OMA_FIELD_COORD
@@ -761,7 +769,7 @@ namespace engine
    }
 
    INT32 _omaInstallDBBusinessTask::updateInstallJobStatus( string &name,
-                                                            OMA_JOB_STATUS status )
+                                                         OMA_JOB_STATUS status )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN needRollback = FALSE ;
@@ -847,62 +855,47 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::tryToRollbackInternal()
+   INT32 _omaInstallDBBusinessTask::_saveVCoordInfo( BSONObj &info )
    {
-      INT32 rc = SDB_OK ;
-      map< string, OMA_JOB_STATUS >::iterator it ;
-      EDUID taskRollbackJobID = PMD_INVALID_EDUID ;
-      ossScopedLock lock ( &_taskLatch2, EXCLUSIVE ) ;
-
-      // when rollback had done or failed, return directly
-      if ( _isRollbackFinish || _isRollbackFail )
+      INT32 rc                    = SDB_OK ;
+      const CHAR *pVCoordSvcName  = NULL ;
+      rc = omaGetStringElement( info, OMA_FIELD_VCOORDSVCNAME, &pVCoordSvcName ) ;
+      if ( rc )
       {
-         goto done ;
+         PD_LOG ( PDERROR, "Failed to get filed[%s], rc = %s",
+                  OMA_FIELD_VCOORDSVCNAME, rc ) ;
+         goto error ;
       }
-      else
-      {
-         PD_LOG ( PDDEBUG, "There are [%d] jobs registered in task[%s], "
-                  "going to check their status, and try to rollback",
-                   _jobStatus.size(), _taskName.c_str() ) ;
-         // rollback if no job is in the status of running
-         for( it = _jobStatus.begin(); it != _jobStatus.end(); it++ )
-         {
-            PD_LOG ( PDDEBUG, "Job[%s]'s status is : %d",
-                     it->first.c_str(), it->second ) ;
-            if( OMA_JOB_STATUS_RUNNING == it->second )
-            {
-               // some job is still running, can't rollback
-               PD_LOG ( PDDEBUG, "Some job is still running, not "
-                        "the time to rollback task[%s]", _taskName.c_str() ) ;
-               goto done ;
-            }
-         }
-         // begin to rollback
-         PD_LOG ( PDDEBUG, " All jobs have been stop, start to "
-                  "rollback task[%s]", _taskName.c_str() ) ;
-         // set task stage
-         setTaskStage ( OMA_INSTALL_ROLLBACK ) ;
-         rc = startInstallDBBusinessTaskRollbackJob ( _vCoordSvcName,
-                                                      this,
-                                                      &taskRollbackJobID ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to start install db business task "
-                    "rollback job, rc = %d", rc ) ;
-            goto error ;
-         }
-         // wait until rollback is finish
-         while ( rtnGetJobMgr()->findJob( taskRollbackJobID ) )
-         {
-            ossSleep ( OSS_ONE_SEC ) ;
-         }
-      } 
+      _vCoordSvcName = pVCoordSvcName ;
    done:
       return rc ;
    error:
-      setIsRollbackFail( TRUE ) ;
-      setErrDetail( "Failed to rollback in add "
-                    "db business task, please do it manually" ) ;
+      goto done ;
+   }
+
+   INT32 _omaInstallDBBusinessTask::_installVirtualCatalog()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj vCoordRet ;
+      _omaCreateVirtualCoord createVCoord ;
+      
+      // create virtual coord and save it's info for future
+      rc = createVCoord.createVirtualCoord( vCoordRet ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = _saveVCoordInfo( vCoordRet ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to save virtual coord install result, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -1031,60 +1024,6 @@ namespace engine
          rc = SDB_OMA_TASK_FAIL ;
          goto error ;
       }
-   done:
-      return rc ;
-   error:
-      // set remove virtual coord fail detail
-      setIsRemoveVCoordFail( TRUE ) ;
-      setIsTaskFail( TRUE ) ;
-      setErrDetail( "Failed to remove virtual coord, please do it manually" ) ;
-      goto done ;
-   }
-
-   INT32 _omaInstallDBBusinessTask::tryToRemoveVirtualCoord() 
-   {
-      INT32 rc = SDB_OK ;
-      EDUID removeVirtualCoordJobID = PMD_INVALID_EDUID ;
-      ossScopedLock lock ( &_taskLatch2, EXCLUSIVE ) ;
-
-      // if virtual coord had been remove or rollback is failing,
-      // return directly
-      if ( _isRemoveVCoordFinish || _isRollbackFail )
-      {
-         goto done ;
-      }
-      if ( _isInstallFinish || _isRollbackFinish )
-      {
-         // start remove virtual coord job
-         rc = startRemoveVirtualCoordJob( _vCoordSvcName.c_str(),
-                                          this,
-                                          &removeVirtualCoordJobID ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Failed to start remove virtual coord job, "
-                    "rc = %d", rc ) ;
-            goto error ;
-         }
-         // wait until job is finish
-         while ( rtnGetJobMgr()->findJob ( removeVirtualCoordJobID ) )
-         {
-            ossSleep ( OSS_ONE_SEC ) ;
-         }
-         // set task finish or fail
-         if ( _isRemoveVCoordFinish )
-         {
-            setIsTaskFinish( TRUE ) ;
-         }
-         else if ( _isRemoveVCoordFail )
-         {
-            setIsTaskFail( TRUE ) ;
-         }
-         else
-         {
-            PD_LOG ( PDERROR, "Task[%s] in a unknown status", taskName() ) ;
-            ossPanic() ;
-         }   
-       }
    done:
       return rc ;
    error:

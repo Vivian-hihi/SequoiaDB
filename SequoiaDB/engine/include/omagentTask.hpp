@@ -201,13 +201,13 @@ namespace engine
                                     const CHAR *pGroupName,
                                     InstalledNode *pNode ) ;
          INT32 updateInstallJobStatus( string &name, OMA_JOB_STATUS status ) ;
-         INT32 rollbackInternal() ;         
-         INT32 tryToRollbackInternal() ;         
+         INT32 rollbackInternal() ;      
          INT32 removeVirtualCoord() ;
-         INT32 tryToRemoveVirtualCoord() ;
          BOOLEAN isInstallFinish() ;
           
       private:
+         INT32 _saveVCoordInfo( BSONObj &info ) ;
+         INT32 _installVirtualCatalog() ;
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
          INT32 _installData() ;

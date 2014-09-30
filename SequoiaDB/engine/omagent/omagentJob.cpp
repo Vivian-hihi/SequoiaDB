@@ -29,8 +29,6 @@
    Last Changed =
 
 *******************************************************************************/
-
-//#include "omagentMsgDef.hpp"
 #include "omagentUtil.hpp"
 #include "omagentJob.hpp"
 #include "omagentCommand.hpp"
@@ -71,7 +69,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 tmpRc = SDB_OK ;
-      INT32 count = 0 ;
       INT32 num = 0 ;
       vector<BSONObj> &catalogInstallInfo = _pTask->getInstallCatalogInfo() ;
       vector<BSONObj>::iterator itr ;
@@ -87,7 +84,7 @@ namespace engine
          goto error ;
       }
       itr = catalogInstallInfo.begin() ;
-      for ( count = 0; itr != catalogInstallInfo.end(); count++, itr++ )
+      for ( ; itr != catalogInstallInfo.end(); itr++ )
       {
          BSONObj retObj ;
          InstallInfo installInfo ;
@@ -140,7 +137,6 @@ namespace engine
             PD_LOG_MSG ( PDERROR, "Failed to install catalog[%s:%s]: %s",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str(), pErrMsg ) ;
-//            setJobStatus( OMA_JOB_STATUS_FAIL ) ;
             _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
@@ -158,11 +154,6 @@ namespace engine
             PD_LOG ( PDDEBUG, "Sucessed to install catalog[%s:%s]",
                      installInfo._hostName.c_str(),
                      installInfo._svcName.c_str() ) ;
-            if ( count == num -1 )
-            {
-               // set job status to be successful
-//               setJobStatus( OMA_JOB_STATUS_FINISH ) ;
-            }
             _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
          }
       }
@@ -173,8 +164,6 @@ namespace engine
    error:
       // set job status to be failing
       setJobStatus( OMA_JOB_STATUS_FAIL ) ;
-      // set install status to be failing
-//      _pTask->setIsInstallFail( TRUE ) ;
       goto done ;
    }
 
@@ -238,7 +227,6 @@ namespace engine
                       OMA_OPTION_DATAGROUPNAME << 1 <<
                       OMA_OPTION_SVCNAME       << 1 <<
                       OMA_OPTION_DBPATH        << 1 <<
-                      OMA_FIELD_VCOORDSVCNAME  << 1 <<
                       OMA_FIELD_SDBUSER        << 1 <<
                       OMA_FIELD_SDBPASSWD      << 1 << 
                       OMA_FIELD_SDBUSERGROUP   << 1 <<
@@ -309,7 +297,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 tmpRc = SDB_OK ;
-      INT32 count = 0 ;
       INT32 num = 0 ;
       vector<BSONObj> &coordInstallInfo = _pTask->getInstallCoordInfo() ;
       vector<BSONObj>::iterator itr ;
@@ -325,7 +312,7 @@ namespace engine
          goto error ;
       }
       itr = coordInstallInfo.begin() ;
-      for ( count = 0; itr != coordInstallInfo.end(); itr++, count++ )
+      for ( ; itr != coordInstallInfo.end(); itr++ )
       {
          BSONObj retObj ;
          InstallInfo installInfo ;
@@ -386,7 +373,6 @@ namespace engine
             PD_LOG_MSG ( PDERROR, "Failed to install coord[%s:%s]: %s",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str(), pErrMsg ) ;
-//            setJobStatus( OMA_JOB_STATUS_FAIL ) ;
             _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
@@ -404,18 +390,6 @@ namespace engine
             PD_LOG ( PDDEBUG, "Sucessed to install coord[%s:%s]",
                      installInfo._hostName.c_str(),
                      installInfo._svcName.c_str() ) ;
-/*
-            // set job status to be successful, we must set job status to
-            // be successful before update insall status, becase it will check
-            // all the install job's status, and decide to rollback
-            // or to remove virtual in _updateInstallStatus,
-            // besides, set job status to be finish need to wait all the nodes
-            // finish installing in current job
-*/
-            if ( count == num -1 )
-            {
-//               setJobStatus( OMA_JOB_STATUS_FINISH ) ;
-            }
             _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
          }
       }
@@ -426,8 +400,6 @@ namespace engine
    error:
       // set job status to be failing
       setJobStatus( OMA_JOB_STATUS_FAIL ) ;
-      // set install status to be failing
-//      _pTask->setIsInstallFail( TRUE ) ;
       goto done ;
    }
 
@@ -484,7 +456,6 @@ namespace engine
                       OMA_OPTION_DATAGROUPNAME << 1 <<
                       OMA_OPTION_SVCNAME       << 1 <<
                       OMA_OPTION_DBPATH        << 1 <<
-                      OMA_FIELD_VCOORDSVCNAME  << 1 <<
                       OMA_FIELD_SDBUSER        << 1 <<
                       OMA_FIELD_SDBPASSWD      << 1 <<
                       OMA_FIELD_SDBUSERGROUP   << 1 <<
@@ -555,7 +526,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 tmpRc = SDB_OK ;
-      INT32 count = 0 ;
       INT32 num = 0 ;
       vector<BSONObj>::iterator itr ;
       vector<BSONObj> dataNodeInstallInfo ;
@@ -581,7 +551,7 @@ namespace engine
          goto error ;
       }
       itr = dataNodeInstallInfo.begin() ;
-      for ( count = 0; itr != dataNodeInstallInfo.end(); count++, itr++ )
+      for ( ; itr != dataNodeInstallInfo.end(); itr++ )
       {
          BSONObj retObj ;
          InstallInfo installInfo ;
@@ -643,7 +613,6 @@ namespace engine
             PD_LOG_MSG ( PDERROR, "Failed to install data node[%s:%s]: %s",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str(), pErrMsg ) ;
-//            setJobStatus( OMA_JOB_STATUS_FAIL ) ;
             _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
@@ -661,10 +630,6 @@ namespace engine
             PD_LOG ( PDDEBUG, "Sucessed to install data node[%s:%s]",
                      installInfo._hostName.c_str(),
                      installInfo._svcName.c_str() ) ;
-            if ( count == num - 1 )
-            {
-//               setJobStatus( OMA_JOB_STATUS_FINISH ) ;
-            }
             _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
          }
       }
@@ -675,10 +640,6 @@ namespace engine
    error:
       // set job status to be failing
       setJobStatus( OMA_JOB_STATUS_FAIL ) ;
-/*
-      // set install status to be failing
-      _pTask->setIsInstallFail( TRUE ) ;
-*/
       goto done ;
    }
 
@@ -741,7 +702,6 @@ namespace engine
                       OMA_OPTION_DATAGROUPNAME << 1 <<
                       OMA_OPTION_SVCNAME       << 1 <<
                       OMA_OPTION_DBPATH        << 1 <<
-                      OMA_FIELD_VCOORDSVCNAME  << 1 <<
                       OMA_FIELD_SDBUSER        << 1 <<
                       OMA_FIELD_SDBPASSWD      << 1 <<
                       OMA_FIELD_SDBUSERGROUP   << 1 <<
@@ -780,15 +740,15 @@ namespace engine
       goto done ;
    }
 
-  /*
+   /*
       install db business task rollback job
    */
    _omaStartInstallDBBusinessTaskJob::_omaStartInstallDBBusinessTaskJob ( 
                                                          BSONObj &installInfo )
    {
-      ossMemset( _vCoordSvcName, 0, OSS_MAX_SERVICENAME + 1 ) ;
       _installInfoObj = installInfo.getOwned() ;
       _name = OMA_JOB_START_INSTALL_DB_BUSINESS ;
+      _pTask = NULL ;
    }
 
    _omaStartInstallDBBusinessTaskJob::~_omaStartInstallDBBusinessTaskJob()
@@ -818,24 +778,9 @@ namespace engine
       BSONObj filter ;
       BSONObj commonFileds ;
       BSONObjBuilder builder ;
-      BSONObj vCoordRet ;
-      _omaCreateVirtualCoord createVCoord ;
+//      BSONObj vCoordRet ;
       const CHAR *pStr = NULL ;
 
-      // create virtual coord and save it's info for future
-      rc = createVCoord.createVirtualCoord( vCoordRet ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
-         goto error ;
-      }
-      rc = _saveVCoordInfo( vCoordRet ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to save virtual coord install result, "
-                  "rc = %d", rc ) ;
-         goto error ;
-      }
       // parse arguments
       PD_LOG ( PDDEBUG, "Add db business passes argument: %s",
                _installInfoObj.toString( FALSE, TRUE ).c_str() ) ;
@@ -890,7 +835,7 @@ namespace engine
             temp = ele.embeddedObject() ;
             bob.appendElements( temp ) ;
             bob.appendElements( commonFileds ) ;
-            bob.appendElements( vCoordRet ) ;
+//            bob.appendElements( vCoordRet ) ;
             info = bob.obj() ;
             // category
             rc = omaGetStringElement ( temp, OMA_OPTION_ROLE, &value ) ;
@@ -936,21 +881,12 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaStartInstallDBBusinessTaskJob::doit()
+   INT32 _omaStartInstallDBBusinessTaskJob::init2()
    {
       INT32 rc                         = SDB_OK ;
-      _omaInstallDBBusinessTask *pTask = NULL ;
       _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
       BSONObj otherInfo ;
-
-      // init
-      rc = init() ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to init to start install db "
-                  "business task job, rc = %d", rc ) ;
-         goto error ;
-      }
+      
       // remove last task with the same name
       rc = pTaskMgr->removeTask ( OMA_TASK_NAME_INSTALL_DB_BUSINESS ) ;
       if ( rc )
@@ -960,8 +896,8 @@ namespace engine
          goto error ;
       }
       // create install db business task
-      pTask = SDB_OSS_NEW _omaInstallDBBusinessTask( _taskID ) ;
-      if ( !pTask )
+      _pTask = SDB_OSS_NEW _omaInstallDBBusinessTask( _taskID ) ;
+      if ( !_pTask )
       {
          rc = SDB_OOM ;
          PD_LOG_MSG( PDERROR,
@@ -970,10 +906,8 @@ namespace engine
          goto error ;
       }
       // register install db business task
-      pTaskMgr->addTask( pTask, _taskID ) ;
-      // start install db task
-      otherInfo = BSON( OMA_FIELD_VCOORDSVCNAME << _vCoordSvcName ) ;
-      rc = pTask->init( _coord, _catalog, _data, otherInfo ) ;
+      pTaskMgr->addTask( _pTask, _taskID ) ;
+      rc = _pTask->init( _coord, _catalog, _data, otherInfo ) ;
       if ( rc  )
       {
          PD_LOG_MSG( PDERROR,
@@ -981,31 +915,23 @@ namespace engine
                      rc ) ;
          goto error ;
       }
-      rc = pTask->doit() ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR,
-                     "Failed to do db busniness task, rc = %d", rc ) ;
-         goto error ;
-      }
+
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   INT32 _omaStartInstallDBBusinessTaskJob::_saveVCoordInfo( BSONObj &info )
+   INT32 _omaStartInstallDBBusinessTaskJob::doit()
    {
-      INT32 rc                    = SDB_OK ;
-      const CHAR *pVCoordSvcName  = NULL ;
-      rc = omaGetStringElement( info, OMA_FIELD_VCOORDSVCNAME, &pVCoordSvcName ) ;
+      INT32 rc = SDB_OK ;
+      rc = _pTask->doit() ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to get filed[%s], rc = %s",
-                  OMA_FIELD_VCOORDSVCNAME, rc ) ;
+         PD_LOG_MSG( PDERROR, "Failed to do db busniness task, "
+                     "rc = %d", rc ) ;
          goto error ;
       }
-      ossStrncpy( _vCoordSvcName, pVCoordSvcName, OSS_MAX_SERVICENAME ) ;
    done:
       return rc ;
    error:
@@ -1246,7 +1172,7 @@ namespace engine
       goto done ;
    }
 
-  /*
+   /*
       omagent remove virtual coord job
    */
    _omaRemoveVirtualCoordJob::_omaRemoveVirtualCoordJob (
@@ -1326,6 +1252,11 @@ namespace engine
       }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         goto done ;
+      }
    done:
       return rc ;
    error:
@@ -1347,6 +1278,11 @@ namespace engine
       }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         goto done ;
+      }
    done:
       return rc ;
    error:
@@ -1370,6 +1306,11 @@ namespace engine
       }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         goto done ;
+      }
    done:
       return rc ;
    error:
@@ -1382,10 +1323,32 @@ namespace engine
       INT32 rc = SDB_OK ;
       BOOLEAN returnResult = FALSE ;
       _omaStartInstallDBBusinessTaskJob *pJob = NULL ;
+
       try
       {
          BSONObj info( pInstallInfo ) ;
          pJob = SDB_OSS_NEW _omaStartInstallDBBusinessTaskJob( info ) ;
+         if ( !pJob )
+         {
+            PD_LOG ( PDERROR, "Failed to alloc memory for starting "
+                     "install db business job" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         rc = pJob->init() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failded to init install db business task, "
+                     "rc = %d", rc) ;
+            goto error ;
+         }
+         rc = pJob->init2() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failded to init install db business task, "
+                     "rc = %d", rc) ;
+            goto error ;
+         }
       }
       catch ( std::exception &e )
       {
@@ -1393,15 +1356,13 @@ namespace engine
          PD_LOG ( PDERROR, "Occur error, exception is: %s", e.what() ) ;
          goto error ;
       }
-      if ( !pJob )
-      {
-         PD_LOG ( PDERROR, "Failed to alloc memory for starting "
-                  "install db business job" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         goto done ;
+      }
 
    done:
       return rc ;
@@ -1428,7 +1389,11 @@ namespace engine
       }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
-
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         goto done ;
+      }
    done:
       return rc ;
    error:
@@ -1453,7 +1418,11 @@ namespace engine
       }
       rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
                                      returnResult ) ;
-
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         goto done ;
+      }
    done:
       return rc ;
    error:

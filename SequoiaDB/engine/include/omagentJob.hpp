@@ -182,11 +182,9 @@ namespace engine
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
          INT32                init() ;
+         INT32                init2() ;
 
       private:
-         INT32 _saveVCoordInfo( BSONObj &info ) ;
-
-         CHAR _vCoordSvcName[OSS_MAX_SERVICENAME + 1] ;
          // raw install info
          BSONObj                     _installInfoObj ;
          // install info after category
@@ -197,6 +195,7 @@ namespace engine
          // task info
          INT64                       _taskID ;
          string                      _name ;
+         _omaInstallDBBusinessTask*  _pTask ;
    } ;
 
    /*
@@ -206,7 +205,7 @@ namespace engine
    {
       public:
          _omaInstallDBBusinessTaskRollbackJob ( string &vCoordSvcName,
-                                                _omaInstallDBBusinessTask *pTask ) ;
+                                            _omaInstallDBBusinessTask *pTask ) ;
          virtual ~_omaInstallDBBusinessTaskRollbackJob () ;
 
       public:
@@ -214,18 +213,7 @@ namespace engine
          virtual const CHAR*  name () const ;
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
-
-      public:
-/*
-         OMA_JOB_STATUS getJobStatus ()
-         {
-            return _status ;
-         }
-         void setJobStatus ( OMA_JOB_STATUS status )
-         {
-            _status = status ;
-         }
-*/       
+ 
       private:
          INT32 _getRollbackInfo ( RollbackInfo &info ) ;
          INT32 _rollbackCoord( string &vCoordSvcName,
@@ -236,7 +224,6 @@ namespace engine
                                   map< string,vector<InstalledNode> > &info ) ;
          
          string                              _vCoordSvcName ;
-//         OMA_JOB_STATUS                      _status ;
          string                              _name ;
          _omaInstallDBBusinessTask*          _pTask ;
    } ;
@@ -256,23 +243,8 @@ namespace engine
          virtual const CHAR*  name () const ;
          virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
          virtual INT32        doit () ;
-/*
-         OMA_JOB_STATUS getJobStatus ()
-         {
-            return _status ;
-         }
-         void setJobStatus ( OMA_JOB_STATUS status )
-         {
-            _status = status ;
-// TODO: i am going to let install job's status register in task, and let job's status
-// change in job, besides, i need to let task's status change by remove virtual coord,// and let rollback's status change by itself
-            _pTask->updateInstallJobStatus( name(), status ) ;
-         }
-*/
+
       private:
-//         OMA_JOB_STATUS              _status ;
-//         string                    _omaHostName ;
-//         string                    _omaSvcName ;
          string                      _vCoordSvcName ;
          _omaInstallDBBusinessTask   *_pTask ;
    } ;
@@ -300,7 +272,6 @@ namespace engine
    INT32 startRemoveVirtualCoordJob ( const CHAR *vCoordSvcName,
                                       _omaInstallDBBusinessTask *pTask,
                                       EDUID *pEDUID ) ;
-
 
 }
 

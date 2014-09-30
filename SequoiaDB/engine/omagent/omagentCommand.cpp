@@ -40,61 +40,7 @@
 #include "omagentMgr.hpp"
 
 using namespace bson ;
-/*
-#define HOSTS_FILE_PROMPT "##############add by omagent##############"
-#define DEF_VIRTUAL_COORD_SERVICE        (10000)
-#define MAX_PORT_SERVICE                 (65535)
-#define RESERVED_PORT UINT32 reserved_port[] = { 11790, \
-        11791, 11792, 11793, 11800, 11801, 11802, 11803 } ;
 
-#define FILE_DEFINE                      "define.js"
-#define FILE_ERROR                       "error.js"
-#define FILE_COMMON                      "common.js"
-#define FILE_FUNC                        "func.js"
-
-#define FILE_SCAN_HOST                   "scanHost.js"
-#define FILE_BASIC_CHECK_HOST            "basicCheckHost.js"
-#define FILE_INSTALL_REMOTE_AGENT        "installRemoteAgent.js"
-#define FILE_CHECK_HOST                  "checkHost.js"
-#define FILE_CHECK_HOST_ITEM             "checkHostItem.js"
-#define FILE_UNINSTALL_REMOTE_AGENT      "uninstallRemoteAgent.js"
-#define FILE_ADD_HOST                    "addHost.js"
-
-#define FILE_GET_REMOTE_AGENT_STATUS     "getRemoteAgentStatus.js"
-#define FILE_CREATE_VIRTUAL_COORD        "createVirtualCoord.js"
-#define FILE_REMOVE_VIRTUAL_COORD        "removeVirtualCoord.js"
-#define FILE_GET_PORT_STATUS             "getPortStatus.js"
-#define FILE_REG_HOSTS_INFO              "regHostsInfo.js"
-#define FILE_GET_HOST_NAME               "getHostName.js"
-#define FILE_ADDHOST_ROLLBACK_INTERNAL   "addHostRollbackInternal.js"
-#define FILE_UPDATE_HOSTS_INFO           "updateHostsInfo.js"
-*/
-
-// TODO:tanzhaobo
-// what is the path in windows
-#if defined (_WINDOWS)
-
-#define REMOTE_OMAGENT_PROG ""
-#define START_DB_PROG "sdbstart.exe"
-#define SDB_CM_PROG   "sdbcm.exe"
-#define SDB_CM_START  "sdbcmart.exe"
-#define SDB_CM_STOP   "sdbcmtop.exe"
-
-#else
-
-#define REMOTE_OMAGENT_PROG "/tmp/sdbcm"
-#define START_DB_PROG "sdbstart"
-#define SDB_CM_PROG   "sdbcm"
-#define SDB_CM_START  "sdbcmart"
-#define SDB_CM_STOP   "sdbcmtop"
-
-#endif
-/*
-#define JS_ARG_BUS                       "BUS_JSON"
-#define JS_ARG_SYS                       "SYS_JSON"
-#define JS_ARG_ENV                       "ENV_JSON"
-#define JS_ARG_OTHER                     "OTHER_JSON"
-*/
 namespace engine
 {
    // command list:
@@ -106,7 +52,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
-//   IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
 
 
    /*
@@ -583,7 +529,7 @@ namespace engine
                       "Failed to get program's work directory, rc = %d", rc ) ;
          goto error ;
       }
-      rc = utilCatPath ( tmp, OSS_MAX_PATHSIZE, SDB_CM_PROG ) ;
+      rc = utilCatPath ( tmp, OSS_MAX_PATHSIZE, SDBSDBCMPROG ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR,
@@ -592,7 +538,7 @@ namespace engine
          goto error ;
       }
       str = tmp ;
-      key = SDB_CM_PROG ;
+      key = SDBSDBCMPROG ;
       found = str.rfind( key ) ;
       if ( found != std::string::npos )
       {
@@ -759,64 +705,7 @@ namespace engine
    error :
       goto done ;
    }
-/*
-   INT32 _omaAddHost::doit( BSONObj &retObj )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj detail ;
-      BSONObj rval ;
 
-      rc = getExcuteJsContent( _content ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get js file's content to "
-                  "excute, rc = ", rc ) ;
-         goto error ;
-      }
-      // get scope
-      _scope = sdbGetOMAgentMgr()->getScope() ;
-      if ( !_scope )
-      {
-         rc = SDB_OOM ;
-         PD_LOG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
-      // execute js
-      rc = _scope->eval( _content.c_str(), _content.size(),
-                         "", 1, 1, rval, detail ) ;
-
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to eval js file for command[%s]: "
-                  "%s, rc = %d", name(),
-                  _scope->getLastErrMsg(), rc ) ;
-         rc = _scope->getLastError() ;
-         BSONObjBuilder bob ;
-         bob.append ( OMA_FIELD_DETAIL, _scope->getLastErrMsg() ) ;
-         retObj = bob.obj() ;
-         goto error ;
-      }
-      // adapt the result
-      rc = final ( rval, retObj ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to extract result for command[%s], "
-                  "rc = %d", name(), rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      if ( _needRollback )
-      {
-         PD_LOG ( PDERROR, "Something wrong for add host, "
-                  "going to rollback internally, rc = %d", rc ) ; 
-         rollback_internal() ;
-      }
-      goto done ;
-   }
-*/
    INT32 _omaAddHost::final ( BSONObj &rval, BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
@@ -1153,7 +1042,6 @@ namespace engine
    _omaInstallDBStatus::_omaInstallDBStatus ()
    {
       _taskID = OMA_INVALID_TASKID ;
-//      _taskMgr = NULL ;
    }
 
    _omaInstallDBStatus::~_omaInstallDBStatus ()
@@ -1224,151 +1112,143 @@ namespace engine
       goto done ;
    }
 
-//   /*************************** update hosts table info **********************/
-//   /*
-//      _omaUpdateHostsInfo
-//   */
-//   _omaUpdateHostsInfo::_omaUpdateHostsInfo ()
-//   {
-//
-//   }
-//
-//   _omaUpdateHostsInfo::~_omaUpdateHostsInfo ()
-//   {
-//
-//   }
-//   INT32 _omaUpdateHostsInfo::init ( const CHAR *pInstallInfo )
-//   {
-//      INT32 rc = SDB_OK ;
-////      CHAR conf_path[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-//      BSONObj arg( pInstallInfo ) ;
-///*
-//      // cm fong file path
-//      ossStrncpy ( conf_path, sdbGetOMAgentOptions()->getCfgFileName(),
-//                   OSS_MAX_PATHSIZE ) ;
-//*/
-//      // build js file argument
-//      ossSnprintf( _jsFileArgs, JS_ARG_LEN,
-//                   "var HOSTS_INFO = \'%s\'; ", arg.toString().c_str() ) ;
-//      PD_LOG ( PDDEBUG, "Update hosts info passes argument: %s",
-//               _jsFileArgs ) ;
-//      
-//      rc = addJsFile ( FILE_UPDATE_HOSTS_INFO, _jsFileArgs ) ;
-//      if ( rc )
-//      {
-//         PD_LOG ( PDERROR, "Failed to add js file[%s]", FILE_UPDATE_HOSTS_INFO ) ;
-//         goto error ;
-//      }
-//
-//   done:
-//      return rc ;
-//   error:
-//      goto done ;
-//   }
-///*
-//   INT32 _omaUpdateHostsInfo::init ( const CHAR *pInstallInfo )
-//   {
-//      INT32 rc = SDB_OK ;
-//      BSONObj arg( pInstallInfo ) ;
-//      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-//
-//      // set js file
-//      rc = setJsFile ( FILE_UPDATE_HOSTS_INFO ) ;
-//      if ( rc )
-//      {
-//         PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d",
-//                      FILE_UPDATE_HOSTS_INFO, rc ) ;
-//         goto error ;
-//      }
-//      // read js from file
-//      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
-//      if ( rc )
-//      {
-//         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
-//                  _jsFileName, rc ) ;
-//         goto error ;
-//      }
-//      // build js arguments
-//      ossSnprintf( tempBuff, JS_ARG_LEN,
-//                   "var HOSTS_INFO = \'%s\';", arg.toString().c_str() ) ;
-//      // TODO: username/password may leak in the log file
-//      PD_LOG ( PDDEBUG, "Update hosts info passes arguments: "
-//               "var HOSTS_INFO = \'%s\'; ", arg.toString().c_str() ) ;
-//      _content.clear() ;
-//      _content += tempBuff ;
-//      _content += OSS_NEWLINE ;
-//      _content += _fileBuff ;
-//
-//      // get scope
-//      _scope = sdbGetOMAgentMgr()->getScope() ;
-//      if ( !_scope )
-//      {
-//         rc = SDB_OOM ;
-//         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-//         goto error ;
-//      }
-//
-//   done:
-//      return rc ;
-//   error:
-//      goto done ;
-//   }
-// 
-//   INT32 _omaUpdateHostsInfo::doit ( BSONObj &retObj )
-//   {
-//      INT32 rc = SDB_OK ;
-//      BSONObj rval ;
-//      BSONObj detail ;
-//      BSONObj subObj ;
-//
-//      // execute js
-//      rc = _scope->eval( _content.c_str(), _content.size(),
-//                         _jsFileName, 1, 1, rval, detail ) ;
-//      if ( rc )
-//      {
-//         PD_LOG ( PDERROR,
-//                  "Failed to eval js file: %s, rc = %d, errmsg = %s",
-//                  _jsFileName, rc, detail.toString().c_str() ) ;
-//         BSONObjBuilder bob ;
-//         bob.append ( OMA_FIELD_RC, rc ) ;
-//         bob.append ( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
-//         retObj = bob.obj() ;
-//         goto error ;
-//      }
-//      // extract subObj
-//      rc = omaGetObjElement( rval, "", subObj ) ;
-//      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-//                "Get field[%s] failed, rc: %d", "", rc ) ;
-//      retObj = subObj.getOwned() ;
-//
-//   done:
-//      return rc ;
-//   error:
-//      goto done ;
-//   }
-//
-//   INT32 _omaUpdateHostsInfo::final ( BSONObj &rval, BSONObj &retObj )
-//   {
-//      INT32 rc = SDB_OK ;
-//      BSONObjectBuilder bob ;
-//      BSONObj subObj ;
-//
-//      rc = omaGetObjElement( rval, "", subObj ) ;
-//      if ( rc )
-//      {
-//         PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
-//         goto error ;
-//      }
-//      bob.appendElements( subObj ) ;
-//      retObj = bob.obj() ;
-//
-//   done:
-//      return rc ;
-//   error:
-//      goto done ;
-//   }
-//*/
+   /*************************** update hosts table info **********************/
+   /*
+      _omaUpdateHostsInfo
+   */
+   _omaUpdateHostsInfo::_omaUpdateHostsInfo ()
+   {
+   }
 
+   _omaUpdateHostsInfo::~_omaUpdateHostsInfo ()
+   {
+   }
+
+   INT32 _omaUpdateHostsInfo::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj bus( pInstallInfo ) ;
+      // build js file argument
+      ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                   JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+      PD_LOG ( PDDEBUG, "Update hosts info passes argument: %s",
+               _jsFileArgs ) ;
+      // set js file
+      rc = addJsFile ( FILE_UPDATE_HOSTS_INFO, _jsFileArgs ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to add js file[%s]", FILE_UPDATE_HOSTS_INFO ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+/*
+   INT32 _omaUpdateHostsInfo::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj arg( pInstallInfo ) ;
+      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
+
+      // set js file
+      rc = setJsFile ( FILE_UPDATE_HOSTS_INFO ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d",
+                      FILE_UPDATE_HOSTS_INFO, rc ) ;
+         goto error ;
+      }
+      // read js from file
+      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
+                  _jsFileName, rc ) ;
+         goto error ;
+      }
+      // build js arguments
+      ossSnprintf( tempBuff, JS_ARG_LEN,
+                   "var HOSTS_INFO = \'%s\';", arg.toString().c_str() ) ;
+      // TODO: username/password may leak in the log file
+      PD_LOG ( PDDEBUG, "Update hosts info passes arguments: "
+               "var HOSTS_INFO = \'%s\'; ", arg.toString().c_str() ) ;
+      _content.clear() ;
+      _content += tempBuff ;
+      _content += OSS_NEWLINE ;
+      _content += _fileBuff ;
+
+      // get scope
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+ 
+   INT32 _omaUpdateHostsInfo::doit ( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj rval ;
+      BSONObj detail ;
+      BSONObj subObj ;
+
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         _jsFileName, 1, 1, rval, detail ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR,
+                  "Failed to eval js file: %s, rc = %d, errmsg = %s",
+                  _jsFileName, rc, detail.toString().c_str() ) ;
+         BSONObjBuilder bob ;
+         bob.append ( OMA_FIELD_RC, rc ) ;
+         bob.append ( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
+         retObj = bob.obj() ;
+         goto error ;
+      }
+      // extract subObj
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", "", rc ) ;
+      retObj = subObj.getOwned() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaUpdateHostsInfo::final ( BSONObj &rval, BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjectBuilder bob ;
+      BSONObj subObj ;
+
+      rc = omaGetObjElement( rval, "", subObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
+         goto error ;
+      }
+      bob.appendElements( subObj ) ;
+      retObj = bob.obj() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+*/
 
    // _omaCreateVirtualCoord
    _omaCreateVirtualCoord::_omaCreateVirtualCoord ()
@@ -1399,9 +1279,6 @@ namespace engine
    INT32 _omaCreateVirtualCoord::createVirtualCoord( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-//      const CHAR *pPort = NULL ;
-//      BSONObj result ;
-
       rc = init( NULL ) ;
       if ( rc )
       {
@@ -1414,17 +1291,7 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
          goto error ;
-      }
-/*
-      rc = omaGetStringElement( result, OMA_FIELD_PORT, &pPort ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get field[%s], rc = ",
-                  OMA_FIELD_PORT, rc ) ;
-         goto error ;
-      }
-      ossStrncpy( pBuf, pPort, bufSize ) ;
-*/      
+      }     
    done:
       return rc ;
    error:
@@ -1448,8 +1315,6 @@ namespace engine
       try
       {
          BSONObj sys = BSON (
-//                 OMA_FIELD_INSTALLHOSTNAME << _omaHostName <<
-//                 OMA_FIELD_INSTALLSVCNAME << _omaSvcName <<
                  OMA_FIELD_VCOORDSVCNAME << _vCoordSvcName ) ;
 
          // build js file arguments
@@ -1481,9 +1346,6 @@ namespace engine
    INT32 _omaRemoveVirtualCoord::removeVirtualCoord( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
-//      INT32 retRc = SDB_OK ;
-//      BSONObj retObj ;
-
       rc = init( NULL ) ;
       if ( rc )
       {
@@ -1497,25 +1359,6 @@ namespace engine
          PD_LOG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
          goto error ;
       }
-/*
-      // extract return rc
-      rc = omaGetIntElement ( retObj, OMA_FIELD_RC, retRc ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc= %d",
-                      OMA_FIELD_RC, rc ) ;
-         goto error ;
-      }
-      if ( retRc )
-      {
-         PD_LOG_MSG( PDERROR, "Omagent failed to remove virtual coord, "
-                     "rc = %d", retRc ) ;
-         result = FALSE ;
-         rc = retRc ;
-         goto error;
-      }
-      result = TRUE ;
-*/
    done:
       return rc ;
    error:
@@ -1558,7 +1401,6 @@ namespace engine
                   e.what() ) ;
          goto error ;
       }
-
    done:
       return rc ;
    error :
