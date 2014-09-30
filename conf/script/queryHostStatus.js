@@ -19,6 +19,10 @@
 @description: query host status
 @modify list:
    2014-9-30 Youbin Lin  Init
+
+@command:
+   ./sdb -f "../conf/script/define.js; ../conf/script/queryHostStatusItem.js ;../conf/script/queryHostStatus.js " -e "var BUS_JSON={HostName:'rhelt10', Disk:[{Name:'/dev/sda1'}], Net:[{Name:'eth1'}]} "
+   
 @parameter
    BUS_JSON: {HostName:'rhelt10', Disk:[{Name:'/dev/sda1'], Net:[{Name:'eth1'}]}
    SYS_JSON:
