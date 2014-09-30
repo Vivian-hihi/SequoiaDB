@@ -4,11 +4,11 @@
   <title>$count</title>
   <body>
     <section>
-      <title>描述</title>
+      <title>Description</title>
       <p>记录分组后，用 $count 取出分组所包含的总记录条数。</p>
     </section>
     <section>
-      <title>示例</title>
+      <title>Example</title>
       <ul>
         <li>对记录分组后，返回表所有的记录条数
           <codeblock>db.foo.bar.count({$group:{$count:"$dep"}})

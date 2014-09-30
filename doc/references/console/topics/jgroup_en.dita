@@ -85,7 +85,7 @@ Multiple grouping key: {_id:{field1:"$field1",field2:"$field2",...}}</codeblock>
         </strow>
         <strow>
           <stentry>
-            <xref href="jcount.dita">$count</xref>
+            <xref href="jcount_en.dita">$count</xref>
           </stentry>
           <stentry> 对记录分组后，返回表所有的记录条数</stentry>
         </strow>
