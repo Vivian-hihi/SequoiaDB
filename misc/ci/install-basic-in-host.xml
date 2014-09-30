@@ -38,10 +38,8 @@
 		</exec>
 		<sleep seconds="60"/>
 
-		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" >
-			<arg line="--mode unattended" />
-		</exec>
-		<sleep second="60" />
+		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" />
+		<sleep seconds="60" />
 
 		<!-- <exec executable="ps" dir="" failonerror="false" outputproperty="msg" resultproperty="code">
 			<arg line=" -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" />
