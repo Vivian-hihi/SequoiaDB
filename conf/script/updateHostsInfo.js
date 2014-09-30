@@ -20,14 +20,14 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is:
+   BUS_JSON: the format is: { "HostName": "localhost", "IP": "127.0.0.1", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentPort":"11790" } ] }
    SYS_JSON: the format is:
    ENV_JSON:
 @return
    RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
-// var BUS_JSON = { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentPort":"11790" } ] } ;
+//var BUS_JSON = { "HostName": "localhost", "IP": "127.0.0.1", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentPort":"11790" } ] } ;
 
 var RET_JSON          = new Object() ;
 RET_JSON[Errno]       = 0 ;
@@ -79,8 +79,6 @@ function updateHostInfo( ssh, osInfo, arr )
    {
       var sdbpath = installpath + OMA_PROG_BIN_SDB_L ;
       var sptpath = installpath + OMA_FILE_UPDATE_HOSTS_L ;
-print("sdbpath is: " + sdbpath + "\n")
-print("sptpath is: " + sptpath + "\n")
       for ( var i = 0; i < arr.length; i++ )
       {
          var str      = null ;
@@ -88,30 +86,20 @@ print("sptpath is: " + sptpath + "\n")
          var hostname = obj[HostName] ;
          var ip       = obj[IP] ;
          str = sdbpath + ' -e ' +  ' \"var HOSTNAME = \\\"' + hostname + '\\\"; var IP = \\\"' + ip + '\\\" ;\" '  + ' -f ' + sptpath ;
-print("str is: " + str + "\n")
          try
          {
             ssh.exec( str ) ;
          }
          catch ( e )
          {
-print("e is: " + e + "\n") ;
             if ( "number" == typeof(e) )
             {
-               if ( e < 0 )
-               {
-                  setLastErrMsg( "Failed to set info [" + ip + "   " + hostname + "] to hosts table in " + ssh.getLocalIP() + ": " + getErr(e) ) ;
-               }
-               else
-               {
-                  setLastErrMsg( "Failed to set info [" + ip + "   " + hostname + "] to hosts table in " + ssh.getLocalIP() ) ;
-               }
+               setLastErrMsg( "Failed to set info [" + ip + "   " + hostname + "] to hosts table in " + ssh.getLocalIP() + ": " + getLastErrMsg() ) ;
                setLastError( e ) ;
             }
             throw e ;   
          }
       }
-print("33333333333333\n")
    }
    else
    {
@@ -132,8 +120,6 @@ function updateSdbcmCfgFile( ssh, osInfo, arr )
 {
    var agentport = null ;
    var hostname  = null ;
-//   var installpath = getLocalDBInstallPath( osInfo ) ;
-//   var configfile = installpath + OMA_FILE_SDBCM_CONF2_L ;
    var configobj = null ;
    try
    {
@@ -148,7 +134,6 @@ function updateSdbcmCfgFile( ssh, osInfo, arr )
       }
       throw e ;
    }
-print("444444444444444444444444\n")
    for ( var i = 0; i < arr.length; i++ )
    {
       try
@@ -160,13 +145,9 @@ print("444444444444444444444444\n")
       {
          continue ;
       }
-//      var obj = arr[i] ;
       var str = hostname + OMA_MISC_CONFIG_PORT ;
-print("config str is: " + str + "\n")
       configobj[str] = agentport ; 
-print("obj is: " + JSON.stringify(configobj) + "\n")
    }
-print("66666666666666666666666\n")
    try
    {
       Oma.setOmaConfigs( configobj ) ;
@@ -189,9 +170,7 @@ print("66666666666666666666666\n")
       }
       throw e ;
    }
-print("7777777777777777777\n")
 }
-
 
 function main()
 {
@@ -206,14 +185,11 @@ function main()
    ssh = new Ssh( ip, user, passwd ) ;
    // get os info
    osInfo = System.type() ;
-
    // update host table
    updateHostInfo( ssh, osInfo, updateInfoArr ) ;     
-print("11111111111111111111111\n")
    // update sdbcm comfig file
    updateSdbcmCfgFile( ssh, osInfo, updateInfoArr ) ;
-print("222222222222222\n")
-print("RET_JOSN is: " + JSON.stringify(RET_JSON) + "\n") ;
+//print("RET_JOSN is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;
 }
 
