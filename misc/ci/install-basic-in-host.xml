@@ -31,30 +31,20 @@
 
 	<target name="clean-install" depends="">
 		<echo message="Begin to clean install env..." />
-
 		<exec executable="service" dir="" failonerror="false">
 			<arg value="sdbcm" />
 			<arg value="stop" />			
 		</exec>
-		<sleep seconds="60"/>
-
 		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" />
-		<sleep seconds="60" />
-
-		<!-- <exec executable="ps" dir="" failonerror="false" outputproperty="msg" resultproperty="code">
-			<arg line=" -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" />
-		</exec>
-		<echo message="error=${msg}####code=${code}" /> -->
-
 		<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
 			<arg line="--mode unattended" />
 		</exec>
-		<sleep seconds="60"/>
-
 		<delete dir="${db.path}" />
-		<sleep seconds="20"/>
-
 		<echo message="Clean install env compeleted." />
+		<!-- <exec executable="ps" dir="" failonerror="false" outputproperty="msg" resultproperty="code">
+			<arg line=" -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" />
+		</exec>
+		<echo message="error=${msg}####code=${code}" /> -->	
 	</target>
 
 
