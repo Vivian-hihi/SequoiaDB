@@ -777,7 +777,7 @@ namespace engine
 
       argv.push_back( getExecuteFile() ) ;
 
-      for ( UINT32 i = 1 ; i < _argc ; ++i )
+      for ( INT32 i = 1 ; i < _argc ; ++i )
       {
          argv.push_back( _argv[ i ] ) ;
       }
