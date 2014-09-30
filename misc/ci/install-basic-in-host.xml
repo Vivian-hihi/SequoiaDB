@@ -43,10 +43,6 @@
 		</exec>
 		<delete dir="${db.path}" />
 		<echo message="Clean install env compeleted." />
-		<!-- <exec executable="ps" dir="" failonerror="false" outputproperty="msg" resultproperty="code">
-			<arg line=" -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" />
-		</exec>
-		<echo message="error=${msg}####code=${code}" /> -->	
 	</target>
 
 
