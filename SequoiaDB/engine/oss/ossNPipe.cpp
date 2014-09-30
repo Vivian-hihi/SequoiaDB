@@ -405,12 +405,13 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSOPENNMP );
-   SINT32 openMode ;
-   DWORD waitTimeout ;
-   BOOLEAN doWait = TRUE ;
+   SINT32 openMode   = 0 ;
+   DWORD flagAttr    = FILE_ATTRIBUTE_NORMAL ;
+   DWORD waitTimeout = 0 ;
+   BOOLEAN doWait    = TRUE ;
    LPWSTR lpwstrName = NULL ;
    CHAR fullName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
-   INT32 extraSize = ossStrlen(OSS_NPIPE_LOCAL_PREFIX) ;
+   INT32 extraSize   = ossStrlen(OSS_NPIPE_LOCAL_PREFIX) ;
    SDB_ASSERT ( name && name[0] != '\0',
                 "name can't be empty or null" ) ;
    ossMemset ( fullName, 0, sizeof(fullName) ) ;
@@ -482,7 +483,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
    if ( action & OSS_NPIPE_BLOCK_WITH_TIMEOUT )
    {
       handle._overlappedFlag = OSS_NPIPE_OVERLAP_ENABLED ;
-      openMode |= FILE_FLAG_OVERLAPPED ;
+      flagAttr |= FILE_FLAG_OVERLAPPED ;
    }
    else
    {
@@ -491,7 +492,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
 
    handle._handle = CreateFile ( lpwstrName, openMode,
                                  FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+                                 NULL, OPEN_EXISTING, flagAttr,
                                  NULL ) ;
    if ( INVALID_HANDLE_VALUE == handle._handle )
    {
