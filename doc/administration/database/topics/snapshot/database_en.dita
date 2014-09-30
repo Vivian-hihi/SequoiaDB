@@ -55,13 +55,13 @@
         </strow>
         <strow>
           <stentry>BeginLSN.Offset</stentry>
-          <stentry>长整型</stentry>
-          <stentry>起始 LSN 的偏移</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Offset of the starting of LSN</stentry>
         </strow>
         <strow>
           <stentry>BeginLSN.Version</stentry>
-          <stentry>整型</stentry>
-          <stentry>起始 LSN 的版本号</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Version number of a starting LSN</stentry>
         </strow>
         <strow>
           <stentry>CurrentLSN.Offset</stentry>
@@ -75,13 +75,13 @@
         </strow>
         <strow>
           <stentry>TransInfo.BeginLSN</stentry>
-          <stentry>长整型</stentry>
-          <stentry>事务起始 LSN 的偏移</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Transaction's offset of the starting LSN</stentry>
         </strow>
         <strow>
           <stentry>NodeID</stentry>
-          <stentry>数组</stentry>
-          <stentry>[ 分区组 ID，节点 ID ]，在 standalone 模式下，该字段为 [ 0，0 ]</stentry>
+          <stentry>Array</stentry>
+          <stentry>[ ReplicaGroup ID, Node ID ], while in standalone mode this field is [ 0, 0 ]</stentry>
         </strow>
         <strow>
           <stentry>Version.Major</stentry>
@@ -100,8 +100,8 @@
         </strow>
         <strow>
           <stentry>Version.Build</stentry>
-          <stentry>字符串</stentry>
-          <stentry>数据库编译时间</stentry>
+          <stentry>String</stentry>
+          <stentry>Time of the database compiled</stentry>
         </strow>
         <strow>
           <stentry>CurrentActiveSessions</stentry>
@@ -248,38 +248,38 @@
         </strow>
         <strow>
           <stentry>freeLogSpace</stentry>
-          <stentry>长整型</stentry>
-          <stentry>空闲日志空间</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Space of the free log</stentry>
         </strow>
         <strow>
           <stentry>vsize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>虚拟内存使用量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Usage of the virtual memory</stentry>
         </strow>
         <strow>
           <stentry>rss</stentry>
-          <stentry>长整型</stentry>
-          <stentry>物理内存使用量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Usage of the physical memory</stentry>
         </strow>
         <strow>
           <stentry>fault</stentry>
-          <stentry>长整型</stentry>
-          <stentry>每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Fail access per second (only for Linux), and data is swapped to physical memory, in 'swap'</stentry>
         </strow>
         <strow>
           <stentry>TotalMapped</stentry>
-          <stentry>长整型</stentry>
-          <stentry>mmap 的总数据量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total data amount of mmcap</stentry>
         </strow>
         <strow>
           <stentry>svcNetIn</stentry>
-          <stentry>长整型</stentry>
-          <stentry>本地服务端口收到的网络流量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Internet traffic that local service interface received</stentry>
         </strow>
         <strow>
           <stentry>svcNetOut</stentry>
-          <stentry>长整型</stentry>
-          <stentry>本地服务端口发送的网络流量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Internet traffic that local service interface sent out</stentry>
         </strow>        
       </simpletable>
     </section>
@@ -368,58 +368,58 @@
         </strow>            
         <strow>
           <stentry>freeLogSpace</stentry>
-          <stentry>长整型</stentry>
-          <stentry>空闲日志空间</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Space of the free log</stentry>
         </strow>
         <strow>
           <stentry>vsize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>虚拟内存使用量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Usage of the virtual memory</stentry>
         </strow>
         <strow>
           <stentry>rss</stentry>
-          <stentry>长整型</stentry>
-          <stentry>物理内存使用量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Usage of the physical memory</stentry>
         </strow>
         <strow>
           <stentry>fault</stentry>
-          <stentry>长整型</stentry>
-          <stentry>每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Fail access per second (only for Linux), and data is swapped to physical memory, in 'swap'</stentry>
         </strow>
         <strow>
           <stentry>TotalMapped</stentry>
-          <stentry>长整型</stentry>
-          <stentry>mmap 的总数据量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total data amount of mmcap</stentry>
         </strow>
         <strow>
           <stentry>svcNetIn</stentry>
-          <stentry>长整型</stentry>
-          <stentry>本地服务端口收到的网络流量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Internet traffic that local service interface received</stentry>
         </strow>
         <strow>
           <stentry>svcNetOut</stentry>
-          <stentry>长整型</stentry>
-          <stentry>本地服务端口发送的网络流量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Internet traffic that local service interface sent out</stentry>
         </strow>
         <strow>
           <stentry>shardNetIn</stentry>
-          <stentry>长整型</stentry>
-          <stentry>shard 平面端口收到的网络流量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Internet traffic that shard flat interface received</stentry>
         </strow>
         <strow>
           <stentry>shardNetOut</stentry>
-          <stentry>长整型</stentry>
-          <stentry>shard 平面端口发送的网络流量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Internet traffic that shard flat interface sent out</stentry>
         </strow>
         <strow>
           <stentry>replNetIn</stentry>
-          <stentry>长整型</stentry>
-          <stentry>数据同步平面端口收到的网络流量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Internet traffic that data replica flat interface received</stentry>
         </strow>
         <strow>
           <stentry>replNetOut</stentry>
-          <stentry>长整型</stentry>
-          <stentry>数据同步平面端口发送的网络流量</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Internet traffic that data replica flat interface sent</stentry>
         </strow>
         <strow>
           <stentry>ErrNodes.NodeName</stentry>

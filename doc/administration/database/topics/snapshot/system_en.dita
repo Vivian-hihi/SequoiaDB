@@ -56,13 +56,13 @@
         </strow>
         <strow>
           <stentry>BeginLSN.Offset</stentry>
-          <stentry>长整型</stentry>
-          <stentry>起始 LSN 的偏移</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Offset of the starting of LSN</stentry>
         </strow>
         <strow>
           <stentry>BeginLSN.Version</stentry>
-          <stentry>整型</stentry>
-          <stentry>起始 LSN 的版本号</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Version number of a starting LSN</stentry>
         </strow>
         <strow>
           <stentry>CurrentLSN.Offset</stentry>
@@ -71,13 +71,13 @@
         </strow>        
         <strow>
           <stentry>TransInfo.BeginLSN</stentry>
-          <stentry>长整型</stentry>
-          <stentry>事务起始 LSN 的偏移</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Transaction's offset of the starting LSN</stentry>
         </strow>
         <strow>
           <stentry>NodeID</stentry>
-          <stentry>数组</stentry>
-          <stentry>[ 分区组ID，节点ID ]，standalone 模式下，该字段为 [ 0，0 ]</stentry>
+          <stentry>Array</stentry>
+          <stentry>[ ReplicaGroup ID, Node ID ], while in standalone mode this field is [ 0, 0 ]</stentry>
         </strow>                
         <strow>
           <stentry>CurrentLSN.Version</stentry>

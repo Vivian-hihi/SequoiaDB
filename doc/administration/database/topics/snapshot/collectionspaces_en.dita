@@ -39,28 +39,28 @@
         </strow>
         <strow>
           <stentry>MaxCapacitySize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间的最大容量上限</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Max capacity of a collection space</stentry>
         </strow>
         <strow>
           <stentry>NumCollections</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合数量</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Number of collections in a collection space</stentry>
         </strow>
         <strow>
           <stentry>TotalRecords</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合空间的记录总数</stentry>
+          <stentry>integer</stentry>
+          <stentry>Total number of records in a collection space</stentry>
         </strow>
         <strow>
           <stentry>TotalSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间的总大小</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total size of a collection space</stentry>
         </strow>
         <strow>
           <stentry>FreeSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间的空闲大小</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total free space size of a collection space</stentry>
         </strow>
       </simpletable>
     </section>    
@@ -88,13 +88,13 @@
         </strow>
         <strow>
           <stentry>TotalSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间的总大小</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total size of a collection space</stentry>
         </strow>
         <strow>
           <stentry>FreeSize</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合空间的空闲大小</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total free space size of a collection space</stentry>
         </strow>
         <strow>
           <stentry>Group.GroupName</stentry>

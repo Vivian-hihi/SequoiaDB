@@ -65,28 +65,28 @@
         </strow>
         <strow>
           <stentry>TotalRecords</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合的记录总数</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total number of a collection</stentry>
         </strow>
         <strow>
           <stentry>TotalDataPages</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合的数据页总数</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Total number of data pages in a collection</stentry>
         </strow>
         <strow>
           <stentry>TotalIndexPages</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合的索引页总数</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Total number of index pages in a collection</stentry>
         </strow>
         <strow>
           <stentry>TotalDataFreeSpace</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合的数据空闲空间</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Free space of data in a collection</stentry>
         </strow>
         <strow>
           <stentry>TotalIndexFreeSpace</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合的索引空闲空间</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Free space of index in a collection</stentry>
         </strow>
       </simpletable>
     </section>    
@@ -144,28 +144,28 @@
         </strow>
         <strow>
           <stentry>Details.Group.TotalRecords</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合的记录总数</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Total number of a collection</stentry>
         </strow>
         <strow>
           <stentry>Details.Group.TotalDataPages</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合的数据页总数</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Total number of data pages in a collection</stentry>
         </strow>
         <strow>
           <stentry>Details.Group.TotalIndexPages</stentry>
-          <stentry>整型</stentry>
-          <stentry>集合的索引页总数</stentry>
+          <stentry>Integer</stentry>
+          <stentry>Total number of index pages in a collection</stentry>
         </strow>
         <strow>
           <stentry>Details.Group.TotalDataFreeSpace</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合的数据空闲空间</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Free space of data in a collection</stentry>
         </strow>
         <strow>
           <stentry>Details.Group.TotalIndexFreeSpace</stentry>
-          <stentry>长整型</stentry>
-          <stentry>集合的索引空闲空间</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Free space of index in a collection</stentry>
         </strow>
         <strow>
           <stentry>Details.Group.NodeName</stentry>

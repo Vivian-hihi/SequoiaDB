@@ -113,17 +113,17 @@
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">BeginLSN.Offset</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">起始 LSN 的偏移</td>
+          <td valign="top" headers="d46367e40" class="stentry">Offset of the starting of LSN</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">BeginLSN.Version</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">起始 LSN 的版本号</td>
+          <td valign="top" headers="d46367e40" class="stentry">Version number of a starting LSN</td>
 
         </tr>
 <tr class="strow">
@@ -145,17 +145,17 @@
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">TransInfo.BeginLSN</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">事务起始 LSN 的偏移</td>
+          <td valign="top" headers="d46367e40" class="stentry">Transaction's offset of the starting LSN</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">NodeID</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">数组</td>
+          <td valign="top" headers="d46367e37" class="stentry">Array</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">[ 分区组 ID，节点 ID ]，在 standalone 模式下，该字段为 [ 0，0 ]</td>
+          <td valign="top" headers="d46367e40" class="stentry">[ ReplicaGroup ID, Node ID ], while in standalone mode this field is [ 0, 0 ]</td>
 
         </tr>
 <tr class="strow">
@@ -185,9 +185,9 @@
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">Version.Build</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">字符串</td>
+          <td valign="top" headers="d46367e37" class="stentry">String</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">数据库编译时间</td>
+          <td valign="top" headers="d46367e40" class="stentry">Time of the database compiled</td>
 
         </tr>
 <tr class="strow">
@@ -420,57 +420,57 @@
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">freeLogSpace</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">空闲日志空间</td>
+          <td valign="top" headers="d46367e40" class="stentry">Space of the free log</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">vsize</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">虚拟内存使用量</td>
+          <td valign="top" headers="d46367e40" class="stentry">Usage of the virtual memory</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">rss</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">物理内存使用量</td>
+          <td valign="top" headers="d46367e40" class="stentry">Usage of the physical memory</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">fault</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap</td>
+          <td valign="top" headers="d46367e40" class="stentry">Fail access per second (only for Linux), and data is swapped to physical memory, in 'swap'</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">TotalMapped</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">mmap 的总数据量</td>
+          <td valign="top" headers="d46367e40" class="stentry">Total data amount of mmcap</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">svcNetIn</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">本地服务端口收到的网络流量</td>
+          <td valign="top" headers="d46367e40" class="stentry">Internet traffic that local service interface received</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e34" class="stentry">svcNetOut</td>
 
-          <td valign="top" headers="d46367e37" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e37" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e40" class="stentry">本地服务端口发送的网络流量</td>
+          <td valign="top" headers="d46367e40" class="stentry">Internet traffic that local service interface sent out</td>
 
         </tr>
 </table>
@@ -610,89 +610,89 @@
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">freeLogSpace</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">空闲日志空间</td>
+          <td valign="top" headers="d46367e690" class="stentry">Space of the free log</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">vsize</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">虚拟内存使用量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Usage of the virtual memory</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">rss</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">物理内存使用量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Usage of the physical memory</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">fault</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">每秒访问失败数（仅支持 Linux），数据被交换出物理内存，放到 swap</td>
+          <td valign="top" headers="d46367e690" class="stentry">Fail access per second (only for Linux), and data is swapped to physical memory, in 'swap'</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">TotalMapped</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">mmap 的总数据量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Total data amount of mmcap</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">svcNetIn</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">本地服务端口收到的网络流量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Internet traffic that local service interface received</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">svcNetOut</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">本地服务端口发送的网络流量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Internet traffic that local service interface sent out</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">shardNetIn</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">shard 平面端口收到的网络流量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Internet traffic that shard flat interface received</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">shardNetOut</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">shard 平面端口发送的网络流量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Internet traffic that shard flat interface sent out</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">replNetIn</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">数据同步平面端口收到的网络流量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Internet traffic that data replica flat interface received</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d46367e684" class="stentry">replNetOut</td>
 
-          <td valign="top" headers="d46367e687" class="stentry">长整型</td>
+          <td valign="top" headers="d46367e687" class="stentry">Long integer</td>
 
-          <td valign="top" headers="d46367e690" class="stentry">数据同步平面端口发送的网络流量</td>
+          <td valign="top" headers="d46367e690" class="stentry">Internet traffic that data replica flat interface sent</td>
 
         </tr>
 <tr class="strow">

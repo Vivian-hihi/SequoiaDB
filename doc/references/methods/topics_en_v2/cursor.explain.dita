@@ -21,7 +21,7 @@
       <parml>
         <plentry>
           <pt>option (Json Object)</pt>
-          <pd>访问计划执行参数，目前有 Run 字段项，表示是否执行访问计划，true 表示执行访问计划，获取数据和时间信息，false 表示只获取访问计划的信息，并不执行
+          <pd>Access plan execution plan, now we have: Run field: whether execute the Access Plan. True is to execute, get data and time information; False represents only get the Access Plan's info, but not executing it.            
             <parml>
         <plentry>
           <pt>Name (string)</pt>

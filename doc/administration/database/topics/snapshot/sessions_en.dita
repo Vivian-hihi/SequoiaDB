@@ -125,13 +125,13 @@
         </strow>
         <strow>
           <stentry>ReadTimeSpent</stentry>
-          <stentry>长整型</stentry>
-          <stentry>读取记录的时间（毫秒）</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Time spent of reading a record (ms)</stentry>
         </strow>
         <strow>
           <stentry>WriteTimeSpent</stentry>
-          <stentry>长整型</stentry>
-          <stentry>写入记录的时间（毫秒）</stentry>
+          <stentry>Long integer</stentry>
+          <stentry>Time spent of writing a record (ms)</stentry>
         </strow>
         <strow>
           <stentry>ConnectTimestamp</stentry>
@@ -140,23 +140,23 @@
         </strow>
         <strow>
           <stentry>LastOpType</stentry>
-          <stentry>字符串</stentry>
-          <stentry>最后一次操作的类型，如：insert，update</stentry>
+          <stentry>String</stentry>
+          <stentry>Type of the last operation, like: insert, update</stentry>
         </strow>
         <strow>
           <stentry>LastOpBegin</stentry>
-          <stentry>字符串</stentry>
-          <stentry>最后一次操作的起始时间</stentry>
+          <stentry>String</stentry>
+          <stentry>Starting time of the last operation</stentry>
         </strow>
         <strow>
           <stentry>LastOpEnd</stentry>
-          <stentry>字符串</stentry>
-          <stentry>最后一次操作的结束时间</stentry>
+          <stentry>String</stentry>
+          <stentry>Ending time of the last operation</stentry>
         </strow>
         <strow>
           <stentry>LastOpInfo</stentry>
-          <stentry>字符串</stentry>
-          <stentry>最后一次操作的详细信息</stentry>
+          <stentry>String</stentry>
+          <stentry>Detail of the last operation</stentry>
         </strow>
         <strow>
           <stentry>UserCPU</stentry>

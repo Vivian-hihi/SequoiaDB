@@ -32,13 +32,13 @@
         </strow>
         <strow>
           <stentry>Contexts.Type</stentry>
-          <stentry>字符串</stentry>
-          <stentry>上下文类型，如：DUMP</stentry>
+          <stentry>String</stentry>
+          <stentry>Context type, like: DUMP</stentry>
         </strow>
         <strow>
           <stentry>Contexts.Description</stentry>
-          <stentry>字符串</stentry>
-          <stentry>上下文的描述信息，如：包含当前的查询条件</stentry>
+          <stentry>String</stentry>
+          <stentry>Description of the context, like: Including current query conditions</stentry>
         </strow>
         <strow>
           <stentry>Contexts.DataRead</stentry>

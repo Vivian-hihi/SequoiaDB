@@ -165,11 +165,11 @@
       and linepriority is true, the tool will give priority in accordance with the "record separator" resolution, which led to the import fails. For example: 
       If the record is {"name":"Mike\n"}, the false linepriority mode should be selected.</note>
     <section>
-      <title>返回值</title>
-      <p>0：成功</p>
-      <p>1：成功但有警告</p>
-      <p>2：失败</p>
-      <p>127：参数错误</p>
+      <title>Return value</title>
+      <p>0: Succeed</p>
+      <p>1: Succeed but include warnings</p>
+      <p>2: Fail</p>
+      <p>127: Parameters error</p>
     </section>
     <section>
       <title>Usage</title>
