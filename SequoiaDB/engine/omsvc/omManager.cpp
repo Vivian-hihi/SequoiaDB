@@ -865,7 +865,6 @@ namespace engine
       {
          omAgentInfo &info = it->second ;
          nodeID.value = info._id ;
-         _mapID2Host.erase( info._id ) ;
          _netAgent.updateRoute( nodeID, host.c_str(), service.c_str() ) ;
          info._host = host ;
          info._service = service ;

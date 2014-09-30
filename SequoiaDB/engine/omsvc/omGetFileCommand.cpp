@@ -7345,6 +7345,12 @@ namespace engine
          PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
          goto error ;
       }
+//      pmdSubSessionItr itr = remoteSession->getSubSessionItr( PMD_SSITR_ALL ) ;
+//      while ( itr.more() )
+//      {
+//         !pmdSubSession::getRspMsg()
+//      }
+
 
       for ( UINT32 i = 0 ; i < subSessionVec.size() ; i++ )
       {
@@ -7358,7 +7364,6 @@ namespace engine
 
          string tmpHost = "" ;
          string tmpService ;
-         //TODO: 返回的host为空,应该有值才对
          om->getHostInfoByID( subSession->getNodeID(), tmpHost, tmpService ) ;
          if ( subSession->isDisconnect() )
          {
