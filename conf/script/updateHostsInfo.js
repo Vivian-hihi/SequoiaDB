@@ -16,338 +16,94 @@
 
 *******************************************************************************/
 /*
-@description: register host info to each other
-@parameter
-   HOSTS_INFO[sting]: hosts info, like {HostInfo:[{"HostName":"h1",
-                      "IP":"192.168.20.30", AgentPort:""}, ...], User:"",
-                      Passwd:""}
+@description: update host info in local host table
 @modify list:
    2014-7-26 Zhaobo Tan  Init
+@parameter
+   BUS_JSON: the format is:
+   SYS_JSON: the format is:
+   ENV_JSON:
+@return
+   RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
-if ( typeof(HOSTS_INFO) == "undefined" ) {}
-//if ( typeof(sdbcmCfgFile) == "undefined" ) {}
 
-/*
-HOSTS_INFO = "{ \"HostName\": \"rhel64-test8\", \"IP\": \"192.168.20.165\", \"User\": \"root\", \"Passwd\": \"sequoiadb\", \"HostInfo\": [ { \"HostName\": \"rhel64-test77\", \"IP\": \"192.168.20.167\",\"AgentPort\":\"12345\" }, { \"HostName\": \"rhel64-test99\", \"IP\": \"192.168.20.168\" ,\"AgentPort\":\"12345\" } ] }" ;
+var BUS_JSON = {"HostName":"rhel64-test8","IP":"192.168.20.165","User":"root","Passwd":"sequoiadb","HostInfo":[{"HostName":"rhel64-test77","IP":"192.168.20.167","AgentPort":"12345"},{"HostName":"rhel64-test99","IP":"192.168.20.168","AgentPort":"12345"}]} ;
 
-var localHosts = { "Hosts": [ { "Ip": "127.0.0.1", "HostName": "localhost" }, { "Ip": "192.168.20.42", "HostName": "susetzb" }, { "Ip": "192.168.20.40", "HostName": "ubuntu-dev1" }, { "Ip": "192.168.20.165", "HostName": "rhel64-test8" }, { "Ip": "192.168.20.166", "HostName": "rhel64-test9" } ] } ;
 
-*/
+var RET_JSON          = new Object() ;
+RET_JSON[Errno]       = 0 ;
+RET_JSON[Detail]      = "" ;
 
-var objRet = new Object() ;
-
-objRet.Errno          = 0 ;
-objRet.detail      = "" ;
-
-// globbal ver
-var sdbcmCfgFile   = "" ;
-var separator      = "   " ;
 
 /* *****************************************************************************
-@discretion: get the updated info from a json object to an array
+@discretion: get local db business install path
 @author: Tanzhaobo
 @parameter
-   obj[object]: the json object contained the info to update
+   osInfo[string]: os information, "LINUX" or "WINDOWS"
 @return
-   retArr[Array]: the array of updated info extract from the json object,
-                  [ "192.168.10.10 unbuntu-dev", ...]
+   installpath[string]: the db business install director
 ***************************************************************************** */
-function getUpdateHostsInfo( obj )
+function getLocalDBInstallPath( osInfo )
 {
-   var retArr = new Array() ;
-   var arr = obj[HostInfo] ;
-   var ip = "" ;
-   var hostName = "" ;
-
-   for( var i = 0; i < arr.length; i++ )
+   var omaInstallInfo = null ;
+   var installpath = null ;
+   try
    {
-      ip = arr[i][IP] ;
-      hostName = arr[i][HostName] ;
-      retArr.push( ip + "   " + hostName ) ;
+      omaInstallInfo = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
    }
-   return retArr ;   
+   catch( e )
+   {
+      if ( "number" == typeof( e ) )
+      {
+         setLastErrMsg( "Failed to get oma install info: " + getErr( e ) ) ;
+         setLastError( e ) ;
+      }
+      throw e ;
+   }
+   installpath = adaptPath ( osInfo, omaInstallInfo[INSTALL_DIR] ) ;
+   return installpath ;
 }
 
 /* *****************************************************************************
-@discretion: get the hosts info from local hosts table to an array
-@author: Tanzhaobo
-@parameter
-   obj[object]: the json object contained the local hosts table info
-@return
-   retArr[Array]: the array of local hosts info,
-                  [ "192.168.10.10 unbuntu-dev", ...]
-***************************************************************************** */
-function getLocalHostsInfo( obj )
-{
-   var retArr = new Array() ;
-   var arr = obj[Hosts] ;
-   var ip = "" ;
-   var hostName = "" ;
-
-   for( var i = 0; i < arr.length; i++ )
-   {
-      ip = arr[i][Ip] ;
-      hostName = arr[i][HostName] ;
-      retArr.push( ip + separator + hostName ) ;
-   }
-   return retArr ;
-}
-
-/* *****************************************************************************
-@discretion: remove duplicate "ip hostname" in updated hosts info arr
-@author: Tanzhaobo
-@parameter
-   arr1[Array]: update hosts info array
-   arr2[Array]: local hosts info array
-@return 
-   retArr[Array]: the array after de-weight "ip hostname"
-***************************************************************************** */
-function deWeight( arr1, arr2 )
-{
-   var retArr = new Array() ;
-   var tmpArr = new Array() ;
-   
-   tmpArr = singleSideDeWeight( arr1 ) ;
-   retArr = bothSidesDeWeight( tmpArr, arr2 ) ;
-   return retArr ;
-}
-
-// de-weight single side
-function singleSideDeWeight( arr )
-{
-   var retArr = new Array() ;
-   var flag = 0 ;
-   
-   for ( var i = 0; i < arr.length; i++ )
-   {
-      flag = 0 ;
-      for ( var j = i+1; j < arr.length; j++ )
-      {
-         if ( arr[i] == arr[j] )
-         {
-            flag = 1 ;
-         }
-      }
-      if ( flag == 0 )
-      {
-         retArr.push( arr[i] ) ;
-      }
-   }
-   return retArr ;
-}
-
-// de-weight both sides
-function bothSidesDeWeight( arr1, arr2 )
-{
-   var retArr = new Array() ;
-   var flag = 0 ;
-
-   for ( var i = 0; i < arr1.length; i++ )
-   {
-      flag = 0 ;
-      for ( var j = 0; j < arr2.length; j++ )
-      {
-         if ( arr1[i] == arr2[j] )
-         {
-            flag = 1 ;
-         }
-      }
-      if ( flag == 0 )
-      {
-         retArr.push( arr1[i] ) ;
-      }
-   }
-   return retArr ;
-}
-
-/* *****************************************************************************
-@discretion: check whether there is "ip hostname" conflicting,
-             like "192.168.20.40 ubuntu-dev" and "192.168.20.41 ubuntu-dev"
-             are conflicting
-@author: Tanzhaobo
-@parameter
-   arr1[Array]: update hosts info array
-   arr2[Array]: local hosts info array
-@return
-   retArr[Array]: the array contained the conflicting content,
-                  like "[{hostname:ip1, hostname:ip2},...]"
-***************************************************************************** */
-function conflictCheck( arr1, arr2 )
-{
-   var retArr = new Array() ;
-
-   if ( arr1.length == 0 && arr2.length == 0 )
-   {
-      return retArr ;
-   }
-   // check conflict in update hosts info array
-   retArr = singleSideConflictCheck( arr1 ) ; 
-   if ( retArr.length )
-   {
-print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2\n") ;
-      return retArr ;
-   }
-   // check conflict in local hosts info array
-   retArr = singleSideConflictCheck( arr2 ) ;
-   if ( retArr.length )
-   {
-      return retArr ;
-   }
-   // check conflict in both sides
-   retArr = bothSidesConfictCheck( arr1, arr2 ) ;
-   if ( retArr.length )
-   {
-      return retArr ;
-   }
-
-   return retArr ;
-}
-// check in single side 
-function singleSideConflictCheck( arr )
-{
-print("singleSideCheck>>>>>>>>>>>>>>>>>>>>>\n") ;
-   var retArr = new Array() ;
-
-   if ( arr.length == 0 )
-   {
-      return retArr ;
-   }
-   for ( var i = 0; i < arr.length; i++ )
-   {
-      var strs1 = arr[i].split( separator ) ;
-      var ip1 = strs1[0] ;
-      var hostname1 = strs1[1] ;
-      for ( var j = i + 1; j < arr.length; j++ )
-      {
-         var strs2 = arr[j].split( separator ) ;
-         var ip2 = strs2[0] ;
-         var hostname2 = strs2[1] ;
-
-         if ( hostname2 == hostname1 && ip2 != ip1 )
-         {
-print("ip1 is: " + ip1 + "\n") ;
-print("ip2 is: " + ip2 + "\n") ;
-print("hostName1 is: " + hostname1 + "\n") ;
-print("hostName2 is: " + hostname2 + "\n") ;
-            retArr.push( hostname1 + ":" + ip1 + ", " + hostname2 + ":" + ip2 ) ;
-         }
-      }
-   }
-print("############### retArr size is: " + retArr.length + "\n") ;
-   return retArr ;
-}
-// check in both sides
-function bothSidesConfictCheck( arr1, arr2 )
-{
-print("both sides check>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n") ;
-   var retArr = new Array() ;
-
-   if ( arr1.length == 0 || arr2.lenght == 0 )
-   {
-      return retArr ;
-   }
-   for ( var i = 0; i < arr1.length; i++ )
-   {
-      var strs1 = arr1[i].split( separator ) ;
-      var ip1 = strs1[0] ;
-      var hostname1 = strs1[1] ;
-      for ( var j = 0; j < arr2.length; j++ )
-      {
-         var strs2 = arr2[j].split( separator ) ;
-         var ip2 = strs2[0] ;
-         var hostname2 = strs2[1] ;
-
-         if ( hostname2 == hostname1 && ip2 != ip1 )
-         {
-print("ip1 is: " + ip1 + "\n") ;
-print("ip2 is: " + ip2 + "\n") ;
-print("hostName1 is: " + hostname1 + "\n") ;
-print("hostName2 is: " + hostname2 + "\n") ;
-            retArr.push( hostname1 + ":" + ip1 + ", " + hostname2 + ":" + ip2 ) ;
-         }
-      }
-   }
-print("$$$$$$$$$$$$$$$$$$$$$$$$ retArr size is: " + retArr.length + "\n") ;
-   return retArr ;
-}
-
-/* *****************************************************************************
-@discretion: backup the hosts table before modify it
+@discretion: update host table
 @author: Tanzhaobo
 @parameter
    ssh[object]: ssh Object
    osInfo[string]: os information, "LINUX" or "WINDOWS"
-   time[string]: backup time
+   arr[Array]: update info
 @return void
 ***************************************************************************** */
-function backupHostsTable( ssh, osInfo, time )
+function updateHostInfo( ssh, osInfo, arr )
 {
-   var file = null ;
-/*
-   var date = new Date() ;
-   var dateStr = date.toLocaleDateString() ;
-   var timeStr = date.toLocaleTimeString() ;
-   var strs = dateStr.split( '/' ) ;
-   var str = strs[2] + "-" + strs[1] + "-" + strs[0] + ":" + timeStr ;
-*/ 
-print("6666666666666666666666\n") ;
-   if ( "LINUX" == osInfo )
+   var installpath = getLocalDBInstallPath( osInfo ) ; 
+   if ( OMA_LINUX == osInfo )
    {
-      var backupFile = OMA_HOSTS_L + ".BackupBySdbcm." + time ;
-print( "backupFile is: " + backupFile + "\n") ;
-      ssh.push( OMA_HOSTS_L, backupFile ) ;
-print("77777777777777777777777777\n") ;
-   }
-   else
-   {
-      // TODO: windows
-   } 
-}
-
-/* *****************************************************************************
-@discretion: add the hosts info to hosts table
-@author: Tanzhaobo
-@parameter
-   ssh[object]: ssh Object
-   osInfo[string]: os information, "LINUX" or "WINDOWS"
-   arr[Array]: update hosts info array
-@return void
-***************************************************************************** */
-function updateHostsInfo( ssh, osInfo, arr )
-{
-   var file = null ;
-   var time = genTimeStamp() ;
-   var promptStr = OMA_HOSTS_TABLE_PROMPT1 + OMA_HOSTS_TABLE_PROMPT2 +
-                   time + OMA_HOSTS_TABLE_PROMPT1 ;
-print("@@@@@@@@@@@@@@@ffffffffffff osInfo is: " + osInfo + "\n") ; 
-   if ( arr.length == 0 )
-   {
-      return ;
-   }
-   // backup hosts table first
-   backupHostsTable( ssh, osInfo, time ) ;
-
-print("88888888888888888888888888888\n") ;
-   // copy hosts table to OMA_TEMP_HOSTS_TABLE_L then modify it
-   if ( "LINUX" == osInfo )
-   {
-//      ssh.exec( "mkdir -p " + OMA_TEMP_HOSTS_TABLE_PATH_L ) ;
-      Cmd.run( "mkdir -p " + OMA_TEMP_HOSTS_TABLE_PATH_L ) ;
-print("OMA_HOSTS_L is: " + OMA_HOSTS_L + "\n") ;
-print("OMA_TEMP_HOSTS_TABLE_L is: " + OMA_TEMP_HOSTS_TABLE_L + "\n") ;
-      ssh.pull( OMA_HOSTS_L, OMA_TEMP_HOSTS_TABLE_L ) ;
-      file = new File( OMA_TEMP_HOSTS_TABLE_L ) ;
-      file.seek( 0, 'e' ) ;
-      file.write( OMA_NEW_LINE_L ) ;
-      file.write( promptStr ) ;
-      for( var i = 0; i < arr.length; i++ )
+      var sdbpath = installpath + OMA_PROG_BIN_SDB_L ;
+      var sptpath = installpath + OMA_FILE_UPDATE_HOSTS_L ;
+print("sdbpath is: " + sdbpath + "\n")
+print("sptpath is: " + sptpath + "\n")
+      for ( var i = 0; i < arr.length; i++ )
       {
-         file.write( "\n" ) ;
-         file.write( arr[i] ) ; 
+         var str      = null ;
+         var obj      = arr[i] ;
+         var hostname = obj[HostName] ;
+         var ip       = obj[IP] ;
+         str = sdbpath + ' -e ' +  ' \"var HOSTNAME = \\\"' + hostname + '\\\"; var IP = \\\"' + ip + '\\\" ;\" '  + ' -f ' + sptpath ;
+print("str is: " + str + "\n")
+         try
+         {
+            ssh.exec( str ) ;
+         }
+         catch ( e )
+         {
+print("e is: " + e + "\n") ;
+            setLastErrMsg( "Failed to set info [" + ip + "   " + hostname + "] to hosts table in " + ssh.getLocalIP() ) ;
+            setLastError( SDB_SYS ) ;
+            throw SDB_SYS ;
+         }
       }
-      file.close() ;
-      ssh.push( OMA_TEMP_HOSTS_TABLE_L, OMA_HOSTS_L ) ;
+print("33333333333333\n")
    }
    else
    {
@@ -356,37 +112,7 @@ print("OMA_TEMP_HOSTS_TABLE_L is: " + OMA_TEMP_HOSTS_TABLE_L + "\n") ;
 }
 
 /* *****************************************************************************
-@discretion: get the info to update sdbcm config file
-@author: Tanzhaobo
-@parameter
-   obj[object]: the object of hosts info
-@return
-   retArr[Array]: the array of update info, ["ubuntu-dev1_Port=12000", ...]
-***************************************************************************** */
-function getSdbcmCfgUpdateInfo( obj )
-{
-   var retArr = new Array() ;
-   var arr = obj[HostInfo] ;
-   var hostName = "" ;
-   var agentPort = undefined ;
-
-   for ( var i = 0; i < arr.length; i++ )
-   {
-      agentPort = undefined ;
-      hostName = arr[i][HostName] ;
-      agentPort = arr[i][AgentPort] ;
-      if ( typeof(agentPort) == "undefined" )
-      {
-         continue ;
-      }
-      retArr.push( hostName + "_Port=" + agentPort ) ;
-   }
-print("retArr's size is: " + retArr.length + "\n") ;
-   return retArr ;
-}
-
-/* *****************************************************************************
-@discretion: add the sdbcm config info to local sdbcm config file
+@discretion: update sdbcm config file
 @author: Tanzhaobo
 @parameter
    ssh[object]: ssh Object
@@ -396,163 +122,93 @@ print("retArr's size is: " + retArr.length + "\n") ;
 ***************************************************************************** */
 function updateSdbcmCfgFile( ssh, osInfo, arr )
 {
-   var file = null ;
-print("8888888888888888888arr size is:" + arr.length + "\n") ;
-   // copy hosts table to OMA_TEMP_HOSTS_TABLE_L then modify it
-   if ( "LINUX" == osInfo )
-   {
-      file = new File( sdbcmCfgFile ) ;
-      file.seek( 0, 'e' ) ;
-      for( var i = 0; i < arr.length; i++ )
-      {
-         file.write( "\n" ) ;
-         file.write( arr[i] ) ;
-      }
-      file.close() ;
-print("99999999999999999999999\n") ;
-   }
-   else
-   {
-      // TODO: windows
-   }
-}
-
-function main()
-{
-   var user                     = null ;
-   var passwd                   = null ;
-   var ssh                      = null ;
-   var osInfo                   = null ;
-   var updateInfoObj            = null ;
-   var hostsArray               = null ;
-   var cfgArray                 = null ; 
-   var localHostsInfoObj        = null ;
-   var localHostsArray          = null ;
-
+   var agentport = null ;
+   var hostname  = null ;
+//   var installpath = getLocalDBInstallPath( osInfo ) ;
+//   var configfile = installpath + OMA_FILE_SDBCM_CONF2_L ;
+   var configobj = null ;
    try
    {
-print("111111222222222223333333333\n") ;
-      // check arguments
-      if ( typeof ( HOSTS_INFO ) == "undefined"  )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "not specified hosts info for update" ;
-         return objRet ;
-      }
-print("44444444444455555555555555666666666666\n") ;
-      // get sdbcm config file
-      sdbcmCfgFile = Oma.getOmaConfigFile() ;
-print("######### sdbcmCfgFile is: " + sdbcmCfgFile + "\n") ;
-      if ( typeof ( sdbcmCfgFile ) == "undefined"  )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "can't get sdbcm config file" ;
-         return objRet ;
-      }
-
-      // get update hosts info
-      updateInfoObj = eval( '(' + HOSTS_INFO + ')' ) ;
-      // get user/passwd(root)
-print("User: " + User + '\n') ;
-print("Passwd: " + Passwd + '\n') ;
-      user = updateInfoObj[User] ;
-      passwd = updateInfoObj[Passwd] ;
-print("user is: " + user + "\n") ;
-print("passwd is: " + passwd + "\n") ;
-      if ( typeof( user ) == null || typeof( user) == "undefined" ||
-           typeof( passwd ) == null || typeof( passwd ) == "undefined" )
-      {
-print("7777777788888888888888888889999999999999\n") ;
-         objRet.Errno = -6 ;
-         objRet.detail = "not specifed username and password " ;
-         return objRet ;
-      }
-
-      // new ssh
-      ssh = new Ssh( LocalHost, user, passwd ) ;
-      // get os info
-      osInfo = System.type() ;
-print("000000000000 osInfo is: " + osInfo + "\n") ;
-
-
-      // get hosts updated info
-      hostsArray = getUpdateHostsInfo ( updateInfoObj ) ;
-
-
-/// debug
-/*
-      localHostsInfoObj = localHosts ;
-      localHostsArray = getLocalHostsInfo( localHostsInfoObj ) ;
-*/
-      // get local hosts info and convert it into array
-      localHostsInfoObj = System.getHostsMap() ;
-      localHostsArray = getLocalHostsInfo(
-                        eval( '(' + localHostsInfoObj + ')' ) ) ;
-print("11111111111111\n") ;
-       // conflict check
-      var conflictArr = new Array() ;
-      conflictArr = conflictCheck( hostsArray, localHostsArray ) ;
-      if ( conflictArr.length )
-      {
-         objRet.Errno = -6 ;
-         objRet.detail = "hosts info conflict:" ;
-         for ( var i = 0; i < conflictArr.length; i++ )
-         {
-            objRet.detail = objRet.detail + " " + conflictArr[i] + "; " ;
-         }
-print("objRet.detail is: " + objRet.detail + "\n") ;
-         return objRet ;
-      }
-print("33333333333333333\n") ;
-print("updateHostsInfoArray size is:" + hostsArray.length + "\n") ;
-for ( var i = 0; i < hostsArray.length; i++ )
-{
-   print( "result is: " + hostsArray[i].toString() + " 3\n") ;
-}
-
-      // de-weight
-      hostsArray = deWeight( hostsArray, localHostsArray ) ;
-print("updateHostsInfoArray size is:" + hostsArray.length + "\n") ;
-for ( var i = 0; i < hostsArray.length; i++ )
-{
-   print( "result is: " + hostsArray[i].toString() + " 1\n") ;
-}
-print("4444444444444444\n") ;
-      // update to local hosts table
-      updateHostsInfo( ssh, osInfo, hostsArray ) ;
-print("555555555555555\n") ;
-
-
-
-      // get sdbcm config file updated info
-      cfgArray = getSdbcmCfgUpdateInfo ( updateInfoObj ) ;
-print("666666666666666655555555555555555555555555555555\n") ;
-      // update to local sdbcm config file
-      updateSdbcmCfgFile( ssh, osInfo, cfgArray ) ;
-print("0000000000000000000000000000000000000\n") ;
-      return objRet ;
+      configobj = eval ( '(' + Oma.getOmaConfigs() + ')' ) ;
    }
    catch ( e )
    {
-print("err is : " + e + "\n") ; 
-      if ( typeof(e) != "number" )
+      if ( "number" == typeof( e ) )
       {
-         objRet.Errno = -10 ;
-         objRet.detail = "system error" ;
+         setLastErrMsg( "Failed to get oma config info: " + getErr( e ) ) ;
+         setLastErr( e ) ;
       }
-      else
+      throw e ;
+   }
+print("444444444444444444444444\n")
+   for ( var i = 0; i < arr.length; i++ )
+   {
+      try
       {
-         var errMsg = "" ;
-         objRet.Errno = e ;
-         errMsg = getLastErrMsg() ;
-         if ( "" != errMsg && null != errMsg && undefined != errMsg )
+         agentport = arr[i][AgentPort] ;
+         hostname  = arr[i][HostName] ;
+      }
+      catch ( e )
+      {
+         continue ;
+      }
+//      var obj = arr[i] ;
+      var str = hostname + OMA_MISC_CONFIG_PORT ;
+print("config str is: " + str + "\n")
+      configobj[str] = agentport ; 
+print("obj is: " + JSON.stringify(configobj) + "\n")
+   }
+print("66666666666666666666666\n")
+   try
+   {
+      Oma.setOmaConfigs( configobj ) ;
+   }
+   catch ( e )
+   {
+      if ( "number" == typeof(e) )
+      {
+         if ( e < 0 )
          {
-            objRet.detail = eval( '(' + errMsg + ')' ) ;
+            setLastErrMsg( "Failed to set oma config info: " + getErr( e ) )
+            setLastError( e ) ;
+         }
+         else
+         {
+            setLastErrMsg( "Failed to set oma config info" )
+            setLastError( SDB_SYS ) ;
+            e = SDB_SYS ;
          }
       }
-      return objRet ;
+      throw e ;
    }
-   return objRet ;
+print("7777777777777777777\n")
+}
+
+
+function main()
+{
+// {"HostName":"rhel64-test8","IP":"192.168.20.165","User":"root","Passwd":"sequoiadb","HostInfo":[{"HostName":"rhel64-test77","IP":"192.168.20.167","AgentPort":"12345"},{"HostName":"rhel64-test99","IP":"192.168.20.168","AgentPort":"12345"}]}
+
+    var ip               = BUS_JSON[IP] ;
+    var user             = BUS_JSON[User] ;
+    var passwd           = BUS_JSON[Passwd] ;
+    var updateInfoArr    = BUS_JSON[HostInfo] ;
+    var osInfo           = null ;
+    var ssh              = null ;
+
+
+   // new ssh
+   ssh = new Ssh( ip, user, passwd ) ;
+   // get os info
+   osInfo = System.type() ;
+
+   // update host table
+   updateHostInfo( ssh, osInfo, updateInfoArr ) ;     
+print("11111111111111111111111\n")
+   // update sdbcm comfig file
+   updateSdbcmCfgFile( ssh, osInfo, updateInfoArr ) ;
+print("222222222222222\n")
+   return RET_JSON ;
 }
 
 // execute

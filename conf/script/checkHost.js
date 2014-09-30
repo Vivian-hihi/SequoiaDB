@@ -201,7 +201,7 @@ function extractOMInfo ( obj )
       var installpath = obj[INSTALL_DIR] ;
       retObj[Path] = adaptPath( osInfo, installpath ) + OMA_PATH_BIN_L ;
       // get sdbcm port
-      var configfile = adaptPath( osInfo, installpath ) + OMA_FILE_SDBCM_CONF2 ;
+      var configfile = adaptPath( osInfo, installpath ) + OMA_FILE_SDBCM_CONF2_L ;
       retObj[Port] = "" + Oma.getAOmaSvcName("localhost", configfile ) ;
       // get version
       var sdbcmprog = adaptPath( osInfo, installpath ) + OMA_PROG_BIN_SDBCM_L ;

@@ -111,8 +111,9 @@ var OMA_PATH_BIN_L                    = "bin/"
 // file in linux
 var OMA_FILE_TEMP_HOSTS_TABLE_L      = OMA_PATH_TEMP_TEMP_DIR_L + "hosts" ;
 var OMA_FILE_HOSTS_TABLE_L           = "/etc/hosts" ;
+var OMA_FILE_UPDATE_HOSTS_L          = "conf/script/updateHosts.js" ;
+var OMA_FILE_SDBCM_CONF2_L           = "conf/sdbcm.conf" ;
 var OMA_FILE_SDBCM_CONF              = "sdbcm.conf" ;
-var OMA_FILE_SDBCM_CONF2             = "conf/sdbcm.conf" ;
 var OMA_FILE_ERROR                   = "error.js" ;
 var OMA_FILE_COMMON                  = "common.js" ;
 var OMA_FILE_DEFINE                  = "define.js" ;
@@ -122,8 +123,10 @@ var OMA_FILE_CHECK_HOST              = "checkHost.js" ;
 
 
 
+
 // program in linux
 var OMA_PROG_SDBCM_L                  = "sdbcm" ;
+var OMA_PROG_BIN_SDB_L                = "bin/sdb" ;  
 var OMA_PROG_BIN_SDBCM_L              = "bin/sdbcm" ;
 var OMA_PROG_SDBCMD_L                 = "sdbcmd" ;
 var OMA_PROG_SDBCMART_L               = "sdbcmart" ;
@@ -134,6 +137,7 @@ var OMA_PROG_UNINSTALL_L              = "uninstall" ;
 // misc
 var OMA_MISC_HOSTS_TABLE_PROMPT1      = "#############" ;
 var OMA_MISC_HOSTS_TABLE_PROMPT2      = " add by sdbcm " ;
+var OMA_MISC_CONFIG_PORT              = "_Port" ;
 var OMA_MISC_OM_VERSION               = "version: " ;
 var OMA_MISC_OM_RELEASE               = "Release: " ;
 
