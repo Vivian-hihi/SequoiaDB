@@ -7617,7 +7617,10 @@ namespace engine
             PD_LOG( PDERROR, "_getHostList failed:rc=%d", rc ) ;
             goto error ;
          }
+      }
 
+      {
+         BSONElement ele ;
          ele = bsonTemplate.getField( OM_BSON_FIELD_CLUSTER_NAME ) ;
          if ( ele.type() != String )
          {
