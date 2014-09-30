@@ -95,7 +95,11 @@ var User                         = "User" ;
 var VCoordHostName               = "VCoordHostName" ;
 var VCoordSvcName                = "VCoordSvcName" ;
 var Version                      = "Version" ;
-
+var Sys                          = "Sys" ;
+var Idle                         = "Idle" ;
+var Other                        = "Other" ;
+var CalendarTime                 = "CalendarTime" ;
+var NetCards                     = "NetCards" ;
 
 var OMA_PATH_TEMP_OMA_DIR_L           = "/tmp/omatmp/" ;
 var OMA_PATH_TEMP_BIN_DIR_L           = "/tmp/omatmp/bin/" ;
