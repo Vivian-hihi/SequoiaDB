@@ -32,7 +32,7 @@
 	<target name="clean-install" depends="">
 		<echo message="Begin to clean install env..." />
 
-		<exec executable="service" dir="" failonerror="true">
+		<exec executable="service" dir="" failonerror="false">
 			<arg value="sdbcm" />
 			<arg value="stop" />			
 		</exec>
