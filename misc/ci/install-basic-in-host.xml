@@ -30,12 +30,14 @@
 	</taskdef> 
 
 	<target name="clean-install" depends="">
+		<hostinfo prefix="host" />
 		<echo message="Begin to clean install env..." />
 		<exec executable="service" dir="" failonerror="false">
 			<arg value="sdbcm" />
 			<arg value="stop" />			
 		</exec>
 		<exec executable="${db.path}/bin/sdbstop" dir="" failonerror="true" />
+		<stafTools workHost="${host.NAME}" workType="shell" workDir="${db.path}" common="ps -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" failonerror="true" />
 		<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
 			<arg line="--mode unattended" />
 		</exec>
