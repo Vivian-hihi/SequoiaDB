@@ -7095,7 +7095,7 @@ namespace engine
 
    INT32 omQueryHostStatusCommand::_verifyHostInfo( 
                                            list<string> &hostNameList, 
-                                           list<simpleHostDisk> &hostInfoList )
+                                           list<fullHostInfo> &hostInfoList )
    {
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;
@@ -7147,11 +7147,11 @@ namespace engine
 
          BSONObj result( buffObj.data() ) ;
          BSONObj diskArray ;
-         simpleHostDisk hostDisk ;
-         hostDisk.hostName  = result.getStringField( OM_HOST_FIELD_NAME ) ;
-         hostDisk.user      = result.getStringField( OM_HOST_FIELD_USER ) ;
-         hostDisk.passwd    = result.getStringField( OM_HOST_FIELD_PASSWORD ) ;
-         hostDisk.agentPort = result.getStringField( OM_HOST_FIELD_AGENT_PORT ) ;
+         fullHostInfo hostInfo ;
+         hostInfo.hostName  = result.getStringField( OM_HOST_FIELD_NAME ) ;
+         hostInfo.user      = result.getStringField( OM_HOST_FIELD_USER ) ;
+         hostInfo.passwd    = result.getStringField( OM_HOST_FIELD_PASSWORD ) ;
+         hostInfo.agentPort = result.getStringField( OM_HOST_FIELD_AGENT_PORT ) ;
          diskArray = result.getObjectField( OM_HOST_FIELD_DISK ) ;
          {
             BSONObjIterator iter( diskArray ) ;
@@ -7173,11 +7173,37 @@ namespace engine
                                                     OM_HOST_FIELD_DISK_NAME ) ;
                diskInfo.mountPath = oneDisk.getStringField( 
                                                     OM_HOST_FIELD_DISK_MOUNT ) ;
-               hostDisk.diskInfo.push_back( diskInfo ) ;
+               hostInfo.diskInfo.push_back( diskInfo ) ;
             }
          }
 
-         hostInfoList.push_back( hostDisk ) ;
+         BSONObj netArray ;
+         netArray = result.getObjectField( OM_HOST_FIELD_NET ) ;
+         {
+            BSONObjIterator iter( netArray ) ;
+            while ( iter.more() )
+            {
+               BSONElement ele = iter.next() ;
+               if ( ele.type() != Object )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG_MSG( PDERROR, "net info is invalid, element of %s "
+                              "is not Object type:type=%d", 
+                              OM_HOST_FIELD_NET, ele.type() ) ;
+                  _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+                  goto error ;
+               }
+               BSONObj oneNet = ele.embeddedObject() ;
+               simpleNetInfo netInfo ;
+               netInfo.netName = oneNet.getStringField( 
+                                                    OM_HOST_FIELD_NET_NAME ) ;
+               netInfo.ip = oneNet.getStringField( 
+                                                    OM_HOST_FIELD_NET_IP ) ;
+               hostInfo.netInfo.push_back( netInfo ) ;
+            }
+         }
+
+         hostInfoList.push_back( hostInfo ) ;
       }
 
       if ( hostInfoList.size() == 0 )
@@ -7197,23 +7223,24 @@ namespace engine
       goto done ;
    }
 
-   INT32 omQueryHostStatusCommand::_addQuerHostStatusReq( omManager *om,
+   INT32 omQueryHostStatusCommand::_addQueryHostStatusReq( omManager *om,
                                             pmdRemoteSession *remoteSession,
-                                            list<simpleHostDisk> &hostInfoList ) 
+                                            list<fullHostInfo> &hostInfoList ) 
    {
       INT32 rc = SDB_OK ;
-      list<simpleHostDisk>::iterator iter = hostInfoList.begin() ;
+      list<fullHostInfo>::iterator iter = hostInfoList.begin() ;
       while ( iter != hostInfoList.end() )
       {
          MsgRouteID routeID ;
          BSONArrayBuilder arrayBuilder ;
+         BSONArrayBuilder arrayNetBuilder ;
          BSONObj bsonRequest ;
          pmdSubSession *subSession   = NULL ;
          CHAR *pContent              = NULL ;
          INT32 contentSize           = 0 ;
-         simpleHostDisk *pHostDisk   = &(*iter) ;
-         routeID   = om->updateAgentInfo( pHostDisk->hostName, 
-                                          pHostDisk->agentPort ) ;
+         fullHostInfo *pHostInfo     = &(*iter) ;
+         routeID   = om->updateAgentInfo( pHostInfo->hostName, 
+                                          pHostInfo->agentPort ) ;
          subSession = remoteSession->addSubSession( routeID.value ) ;
          if ( NULL == subSession )
          {
@@ -7222,8 +7249,8 @@ namespace engine
             goto error ;
          }
 
-         list<simpleDiskInfo>::iterator diskIter = pHostDisk->diskInfo.begin() ;
-         while ( diskIter != pHostDisk->diskInfo.end() ) 
+         list<simpleDiskInfo>::iterator diskIter = pHostInfo->diskInfo.begin() ;
+         while ( diskIter != pHostInfo->diskInfo.end() ) 
          {
             BSONObj tmp = BSON( OM_BSON_FIELD_DISK_NAME << diskIter->diskName
                                 << OM_BSON_FIELD_DISK_MOUNT 
@@ -7232,11 +7259,22 @@ namespace engine
             diskIter++ ;
          }
 
-         bsonRequest = BSON( OM_BSON_FIELD_HOST_NAME << pHostDisk->hostName 
-                             << OM_BSON_FIELD_HOST_USER << pHostDisk->user 
+         list<simpleNetInfo>::iterator netIter = pHostInfo->netInfo.begin() ;
+         while ( netIter != pHostInfo->netInfo.end() ) 
+         {
+            BSONObj tmp = BSON( OM_HOST_FIELD_NET_NAME << netIter->netName
+                                << OM_HOST_FIELD_NET_IP 
+                                << netIter->ip ) ;
+            arrayNetBuilder.append( tmp ) ;
+            netIter++ ;
+         }
+
+         bsonRequest = BSON( OM_BSON_FIELD_HOST_NAME << pHostInfo->hostName 
+                             << OM_BSON_FIELD_HOST_USER << pHostInfo->user 
                              << OM_BSON_FIELD_HOST_PASSWD 
-                             << pHostDisk->passwd 
-                             << OM_BSON_FIELD_DISK << arrayBuilder.arr() ) ;
+                             << pHostInfo->passwd 
+                             << OM_BSON_FIELD_DISK << arrayBuilder.arr()
+                             << OM_BSON_FIELD_NET << arrayNetBuilder.arr() ) ;
          rc = msgBuildQueryMsg( &pContent, &contentSize, 
                                 CMD_ADMIN_PREFIX OM_QUERY_HOST_STATUS_REQ,
                                 0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
@@ -7256,8 +7294,19 @@ namespace engine
       goto done ;
    }
 
+   void omQueryHostStatusCommand::_appendErrorResult( 
+                                                BSONArrayBuilder &arrayBuilder, 
+                                                const string &host, INT32 err,
+                                                const string &detail )
+   {
+      BSONObj obj = BSON( OM_BSON_FIELD_HOST_NAME << host 
+                          << OM_REST_RES_RETCODE << err 
+                          << OM_REST_RES_DETAIL << detail ) ;
+      arrayBuilder.append( obj ) ;
+   }
+
    INT32 omQueryHostStatusCommand::_getHostStatus( 
-                                             list<simpleHostDisk> &hostInfoList, 
+                                             list<fullHostInfo> &hostInfoList, 
                                              BSONObj &bsonStatus )
    {
       INT32 rc      = SDB_OK ;
@@ -7276,17 +7325,19 @@ namespace engine
       if ( NULL == remoteSession )
       {
          rc = SDB_OOM ;
-         _errorDetail = "" ;
-         PD_LOG( PDERROR, "addSession failed" ) ;
+         PD_LOG_MSG( PDERROR, "addSession failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
       }
-      rc = _addQuerHostStatusReq( om, remoteSession, hostInfoList ) ;
+      rc = _addQueryHostStatusReq( om, remoteSession, hostInfoList ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "_addQuerHostStatusReq failed:rc=%d", rc ) ;
-         goto done ;
+         PD_LOG_MSG( PDERROR, "_addQueryHostStatusReq failed:rc=%d", rc ) ;
+         _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         goto error ;
       }
 
+      //TODO: 此处返回的subSessionVec是只有成功的,而不是全部.应该返回全部才对
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
       rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
       if ( SDB_OK != rc )
@@ -7304,20 +7355,18 @@ namespace engine
          SINT32 numReturned        = 0 ;
          MsgHeader* pRspMsg        = NULL ;
          pmdSubSession *subSession = subSessionVec[i] ;
+
+         string tmpHost = "" ;
+         string tmpService ;
+         //TODO: 返回的host为空,应该有值才对
+         om->getHostInfoByID( subSession->getNodeID(), tmpHost, tmpService ) ;
          if ( subSession->isDisconnect() )
          {
-            string tmpHost = "" ;
-            string tmpService ;
-            om->getHostInfoByID( subSession->getNodeID(), tmpHost, 
-                                 tmpService ) ;
-            if ( tmpHost != "" )
-            {
-               BSONObj obj = BSON( OM_BSON_FIELD_HOST_NAME << tmpHost 
-                                   << OM_REST_RES_RETCODE << SDB_NETWORK ) ;
-               arrayBuilder.append( obj ) ;
-            }
-            PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
-                   routeID2String(subSession->getNodeID()).c_str(), rc ) ;
+            PD_LOG_MSG( PDERROR, "session disconnected:id=%s,rc=%d", 
+                        routeID2String(subSession->getNodeID()).c_str(), rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, SDB_NETWORK, 
+                                _errorDetail ) ;
             continue ;
          }
 
@@ -7325,16 +7374,20 @@ namespace engine
          if ( NULL == pRspMsg )
          {
             rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG(PDERROR, "unexpected result:rc=%d", rc ) ;
-            goto error ;
+            PD_LOG_MSG( PDERROR, "unexpected result:rc=%d", rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
+            continue ;
          }
 
          rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
                                &numReturned, objVec ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "extract reply failed:rc=%d", rc ) ;
-            goto error ;
+            PD_LOG_MSG( PDERROR, "extract reply failed:rc=%d", rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
+            continue ;
          }
 
          if ( SDB_OK != flag )
@@ -7344,22 +7397,26 @@ namespace engine
             {
                _errorDetail = objVec[0].getStringField( OM_REST_RES_DETAIL ) ;
             }
+            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
             PD_LOG( PDERROR, "agent process failed:detail=%s,rc=%d", 
                     _errorDetail.c_str(), rc ) ;
-            goto error ;
+            continue ;
          }
 
          if ( 1 != objVec.size() )
          {
             rc = SDB_UNEXPECTED_RESULT ;
-            PD_LOG( PDERROR, "unexpected response size:rc=%d", rc ) ;
-            goto error ;
+            PD_LOG_MSG( PDERROR, "unexpected response size:rc=%d", rc ) ;
+            _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
+            continue ;
          }
 
          BSONObj result = objVec[0] ;
          arrayBuilder.append( result ) ;
       }
 
+      rc = SDB_OK ;
       bsonStatus = BSON( OM_BSON_FIELD_HOST_INFO << arrayBuilder.arr() ) ;
    done:
       _clearSession( om, remoteSession ) ;
@@ -7372,7 +7429,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       list<string> hostNameList ;
-      list<simpleHostDisk> hostInfoList ;
+      list<fullHostInfo> hostInfoList ;
       BSONObj bsonStatus ;
       BSONObj result ;
       rc = _getRestHostList( hostNameList ) ;

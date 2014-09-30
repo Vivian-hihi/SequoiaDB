@@ -116,7 +116,6 @@ namespace engine
    #define OM_HOST_FIELD_MEMORY              "Memory"
    
    #define OM_HOST_FIELD_DISK                "Disk"
-   
    #define OM_HOST_FIELD_DISK_NAME           "Name"
    #define OM_HOST_FIELD_DISK_SIZE           "Size"
    #define OM_HOST_FIELD_DISK_MOUNT          "Mount"
@@ -124,7 +123,11 @@ namespace engine
    #define OM_HOST_FIELD_DISK_USED           "Used"
    
    #define OM_HOST_FIELD_CPU                 "CPU"
+
    #define OM_HOST_FIELD_NET                 "Net"
+   #define OM_HOST_FIELD_NET_NAME            "Name"
+   #define OM_HOST_FIELD_NET_IP              OM_HOST_FIELD_IP
+   
    #define OM_HOST_FIELD_PORT                "Port"
    #define OM_HOST_FIELD_SERVICE             "Service"
    #define OM_HOST_FIELD_SAFETY              "Safety"

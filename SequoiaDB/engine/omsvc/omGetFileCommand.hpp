@@ -744,12 +744,15 @@ namespace engine
       private:
          INT32           _getRestHostList( list<string> &hostNameList ) ;
          INT32           _verifyHostInfo( list<string> &hostNameList, 
-                                          list<simpleHostDisk> &hostInfoList ) ;
-         INT32           _addQuerHostStatusReq( omManager *om,
+                                          list<fullHostInfo> &hostInfoList ) ;
+         INT32           _addQueryHostStatusReq( omManager *om,
                                           pmdRemoteSession *remoteSession,
-                                          list<simpleHostDisk> &hostInfoList ) ;
-         INT32           _getHostStatus( list<simpleHostDisk> &hostInfoList, 
+                                          list<fullHostInfo> &hostInfoList ) ;
+         INT32           _getHostStatus( list<fullHostInfo> &hostInfoList, 
                                          BSONObj &bsonStatus ) ;
+         void            _appendErrorResult( BSONArrayBuilder &arrayBuilder, 
+                                             const string &host, INT32 err,
+                                             const string &detail ) ;
    } ;
 
    class omPredictCapacity : public omAuthCommand

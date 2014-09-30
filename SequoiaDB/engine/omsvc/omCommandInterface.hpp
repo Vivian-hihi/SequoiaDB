@@ -71,6 +71,22 @@ namespace engine
       list<simpleDiskInfo> diskInfo ;
    } ;
 
+   struct simpleNetInfo : public SDBObject
+   {
+      string netName ;
+      string ip ;
+   } ;
+
+   struct fullHostInfo : public SDBObject 
+   {
+      string hostName ;
+      string user ;
+      string passwd ;
+      string agentPort ;
+      list<simpleDiskInfo> diskInfo ;
+      list<simpleNetInfo> netInfo ;
+   } ;
+
    class omRestCommandBase : public omCommandInterafce
    {
       public:
