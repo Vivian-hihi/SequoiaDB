@@ -92,7 +92,7 @@ namespace engine
    // deploy.cluster
    #define OM_CS_DEPLOY_CL_CLUSTER           OM_CS_DEPLOY".SYSCLUSTER"
 
-   #define OM_CLUSTER_FIELD_NAME             "Name"
+   #define OM_CLUSTER_FIELD_NAME             "ClusterName"
    #define OM_CLUSTER_FIELD_DESC             "Desc"
    #define OM_CLUSTER_FIELD_SDBUSER          "SdbUser"
    #define OM_CLUSTER_FIELD_SDBPASSWD        "SdbPasswd"
@@ -106,10 +106,10 @@ namespace engine
    #define OM_CS_DEPLOY_CL_HOST              OM_CS_DEPLOY".SYSHOST"
 
    #define OM_HOST_FIELD_NAME                "HostName"
-   #define OM_HOST_FIELD_CLUSTERNAME         "ClusterName"
+   #define OM_HOST_FIELD_CLUSTERNAME         OM_CLUSTER_FIELD_NAME
    #define OM_HOST_FIELD_IP                  "IP"
    #define OM_HOST_FIELD_USER                "User"
-   #define OM_HOST_FIELD_PASSWORD            "Password"
+   #define OM_HOST_FIELD_PASSWORD            "Passwd"
    #define OM_HOST_FIELD_TIME                "Time"
    #define OM_HOST_FIELD_OS                  "OS"
    #define OM_HOST_FIELD_OM                  "OM"
@@ -128,7 +128,7 @@ namespace engine
    #define OM_HOST_FIELD_PORT                "Port"
    #define OM_HOST_FIELD_SERVICE             "Service"
    #define OM_HOST_FIELD_SAFETY              "Safety"
-   #define OM_HOST_FIELD_INSTALLPATH         "InstallPath"
+   #define OM_HOST_FIELD_INSTALLPATH         OM_CLUSTER_FIELD_INSTALLPATH
    #define OM_HOST_FIELD_AGENT_PORT          "AgentPort"
 
    #define OM_CS_DEPLOY_CL_HOSTIDX1          "{name:\"SYSDEPLOY_HOST_IDX1\",key: {"\
@@ -141,8 +141,8 @@ namespace engine
    // deploy.business
    #define OM_CS_DEPLOY_CL_BUSINESS          OM_CS_DEPLOY".SYSBUSINESS"
 
-   #define OM_BUSINESS_FIELD_NAME            "Name"
-   #define OM_BUSINESS_FIELD_TYPE            "Type"
+   #define OM_BUSINESS_FIELD_NAME            "BusinessName"
+   #define OM_BUSINESS_FIELD_TYPE            "BusinessType"
    #define OM_BUSINESS_FIELD_DEPLOYMOD       "DeployMod"
    #define OM_BUSINESS_FIELD_CLUSTERNAME     OM_HOST_FIELD_CLUSTERNAME
    #define OM_BUSINESS_FIELD_TIME            "Time"
@@ -154,8 +154,8 @@ namespace engine
    // deploy.configure
    #define OM_CS_DEPLOY_CL_CONFIGURE         OM_CS_DEPLOY".SYSCONFIGURE"
 
-   #define OM_CONFIGURE_FIELD_HOSTNAME       "HostName"
-   #define OM_CONFIGURE_FIELD_BUSINESSNAME   "BusinessName"
+   #define OM_CONFIGURE_FIELD_HOSTNAME       OM_HOST_FIELD_NAME
+   #define OM_CONFIGURE_FIELD_BUSINESSNAME   OM_BUSINESS_FIELD_NAME
    #define OM_CONFIGURE_FIELD_CONFIG         "Config"
 
    // deploy.taskinfo
@@ -164,7 +164,7 @@ namespace engine
    #define OM_TASKINFO_FIELD_TASKID          "TaskID"
    #define OM_TASKINFO_FIELD_TYPE            "Type"
    #define OM_TASKINFO_FIELD_AGENTHOST       "AgentHost"
-   #define OM_TASKINFO_FIELD_AGENTSERVICE    "AgentService"
+   #define OM_TASKINFO_FIELD_AGENTPORT       OM_HOST_FIELD_AGENT_PORT
    #define OM_TASKINFO_FIELD_INFO            "Info"
    #define OM_TASKINFO_FIELD_PROGRESS        "Progress"
    #define OM_TASKINFO_FIELD_DETAIL          "ErrMsg"
@@ -174,8 +174,6 @@ namespace engine
 
    #define OM_CS_DEPLOY_CL_TASKINFOIDX1      "{name:\"SYSDEPLOY_TASKINFO_IDX1\",key: {"\
                                              OM_TASKINFO_FIELD_TASKID":1}, unique: true, enforced: true } "
-
-   #define OM_TASKINFO_FAKE_TASKID           "fakeID"
 
    // OM_REST_DEFINE
    #define  OM_REST_LOGIN_HTML               "login.html"
@@ -204,10 +202,10 @@ namespace engine
    #define  OM_REST_CLUSTER_INFO             "ClusterInfo"
 
    #define  OM_BSON_FIELD_CLUSTER_NAME       OM_HOST_FIELD_CLUSTERNAME
-   #define  OM_BSON_FIELD_CLUSTER_DESC       "Desc"
-   #define  OM_BSON_FIELD_SDB_USER           "SdbUser"
-   #define  OM_BSON_FIELD_SDB_PASSWD         "SdbPasswd"
-   #define  OM_BSON_FIELD_SDB_USERGROUP      "SdbUserGroup"
+   #define  OM_BSON_FIELD_CLUSTER_DESC       OM_CLUSTER_FIELD_DESC
+   #define  OM_BSON_FIELD_SDB_USER           OM_CLUSTER_FIELD_SDBUSER
+   #define  OM_BSON_FIELD_SDB_PASSWD         OM_CLUSTER_FIELD_SDBPASSWD
+   #define  OM_BSON_FIELD_SDB_USERGROUP      OM_CLUSTER_FIELD_SDBUSERGROUP
 
    #define  OM_DEFAULT_SDB_USER              "sdbadmin"
    #define  OM_DEFAULT_SDB_PASSWD            "sdbadmin"
@@ -256,14 +254,14 @@ namespace engine
 
    #define  OM_REST_FIELD_HOST_INFO          "HostInfo"
 
-   #define  OM_BSON_FIELD_HOST_INFO          "HostInfo"
-   #define  OM_BSON_FIELD_HOST_IP            "IP"
-   #define  OM_BSON_FIELD_HOST_NAME          "HostName"
-   #define  OM_BSON_FIELD_HOST_USER          "User"
-   #define  OM_BSON_FIELD_HOST_PASSWD        "Passwd"
+   #define  OM_BSON_FIELD_HOST_INFO          OM_REST_FIELD_HOST_INFO
+   #define  OM_BSON_FIELD_HOST_IP            OM_HOST_FIELD_IP
+   #define  OM_BSON_FIELD_HOST_NAME          OM_HOST_FIELD_NAME
+   #define  OM_BSON_FIELD_HOST_USER          OM_HOST_FIELD_USER
+   #define  OM_BSON_FIELD_HOST_PASSWD        OM_HOST_FIELD_PASSWORD
    #define  OM_BSON_FIELD_HOST_SSHPORT       "SshPort"
 
-   #define  OM_BSON_FIELD_AGENT_PORT         "AgentPort"
+   #define  OM_BSON_FIELD_AGENT_PORT         OM_HOST_FIELD_AGENT_PORT
 
    // milliseconds
    //one hours
@@ -305,12 +303,12 @@ namespace engine
    #define  OM_MIN_DISK_FREE_SIZE            (600)
    
    // array
-   #define  OM_BSON_FIELD_CPU                "CPU"
+   #define  OM_BSON_FIELD_CPU                OM_HOST_FIELD_CPU
    // array
-   #define  OM_BSON_FIELD_NET                "Net"
-   #define  OM_BSON_FIELD_PORT               "Port"
-   #define  OM_BSON_FIELD_SERVICE            "Service"
-   #define  OM_BSON_FIELD_SAFETY             "Safety"
+   #define  OM_BSON_FIELD_NET                OM_HOST_FIELD_NET
+   #define  OM_BSON_FIELD_PORT               OM_HOST_FIELD_PORT
+   #define  OM_BSON_FIELD_SERVICE            OM_HOST_FIELD_SERVICE
+   #define  OM_BSON_FIELD_SAFETY             OM_HOST_FIELD_SAFETY
    //
    #define  OM_BSON_FIELD_CONFIG             OM_CONFIGURE_FIELD_CONFIG
 
@@ -323,7 +321,7 @@ namespace engine
 
    #define  OM_ROLLBACK_TRANSACTION_REQ      "rollback transaction"
 
-   #define  OM_BSON_FIELD_INSTALL_PATH       "InstallPath"
+   #define  OM_BSON_FIELD_INSTALL_PATH       OM_HOST_FIELD_INSTALLPATH
    #define  OM_BSON_FIELD_TRANSACTION_ID     "TransactionID"
 
    // with filename
@@ -357,8 +355,8 @@ namespace engine
    #define  OM_XMLATTR_TYPE_ARRAY            "array"
 
    #define  OM_BSON_BUSINESS_LIST            "BusinessList"
-   #define  OM_BSON_BUSINESS_TYPE            "BusinessType"
-   #define  OM_BSON_BUSINESS_NAME            "BusinessName"
+   #define  OM_BSON_BUSINESS_TYPE            OM_BUSINESS_FIELD_TYPE
+   #define  OM_BSON_BUSINESS_NAME            OM_BUSINESS_FIELD_NAME
    #define  OM_BSON_BUSINESS_DESC            "BusinessDesc"
    // *****************************************************************
 

@@ -294,7 +294,7 @@ namespace engine
       _omTaskInfo.agentHost    = record.getStringField( 
                                              OM_TASKINFO_FIELD_AGENTHOST ) ;
       _omTaskInfo.agentService = record.getStringField( 
-                                             OM_TASKINFO_FIELD_AGENTSERVICE ) ;
+                                             OM_TASKINFO_FIELD_AGENTPORT ) ;
       // must copy the bson
       _omTaskInfo.taskInfo     = record.getObjectField( 
                                              OM_TASKINFO_FIELD_INFO ).copy() ;
@@ -340,7 +340,7 @@ namespace engine
       tmp = BSON( OM_TASKINFO_FIELD_TASKID << ( long long )_omTaskInfo.taskID 
                   << OM_TASKINFO_FIELD_TYPE << _omTaskInfo.taskType
                   << OM_TASKINFO_FIELD_AGENTHOST << _omTaskInfo.agentHost 
-                  << OM_TASKINFO_FIELD_AGENTSERVICE << _omTaskInfo.agentService
+                  << OM_TASKINFO_FIELD_AGENTPORT << _omTaskInfo.agentService
                   << OM_TASKINFO_FIELD_INFO << _omTaskInfo.taskInfo 
                   << OM_TASKINFO_FIELD_PROGRESS << _omTaskInfo.progress
                   << OM_TASKINFO_FIELD_STATUS << _omTaskInfo.taskStatus

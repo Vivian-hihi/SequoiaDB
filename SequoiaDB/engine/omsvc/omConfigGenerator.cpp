@@ -2077,7 +2077,6 @@ namespace engine
          goto error ;
       }
 
-      iter++ ;
       while ( iter != _hostInfoMap.end() )
       {
          omHostInfo *pTmp = NULL ;  
@@ -2089,7 +2088,7 @@ namespace engine
          INT32 bestNodeCount ;
          INT32 bestUnUsedDiskCount ;
 
-         pTmp          = iter->second ;
+         pTmp = iter->second ;
          if ( pTmp->getDiskCount() == 0 )
          {
             iter++ ;
