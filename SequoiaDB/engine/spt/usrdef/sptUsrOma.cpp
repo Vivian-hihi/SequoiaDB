@@ -512,7 +512,7 @@ namespace engine
       if ( SDB_OK == utilGetInstallInfo( info ) )
       {
          if ( SDB_OK == utilBuildFullPath( info._path.c_str(),
-                                           SPT_OMA_REL_PATH,
+                                           SPT_OMA_REL_PATH_FILE,
                                            OSS_MAX_PATHSIZE,
                                            confFile ) &&
               SDB_OK == ossAccess( confFile ) )
