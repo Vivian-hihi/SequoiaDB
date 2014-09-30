@@ -38,10 +38,10 @@
 		</exec>
 		<sleep seconds="60"/>
 
-		<!-- <exec executable="ps" dir="" failonerror="false" outputproperty="msg" resultproperty="code">
+		<exec executable="ps" dir="" failonerror="false" outputproperty="msg" resultproperty="code">
 			<arg line=" -ef|grep sdb | grep -v grep | awk '{print $2}' | xargs kill -9" />
 		</exec>
-		<echo message="error=${msg}####code=${code}" /> -->
+		<echo message="error=${msg}####code=${code}" />
 
 		<exec executable="${db.path}/uninstall" dir="${db.path}" failonerror="true">
 			<arg line="--mode unattended" />
