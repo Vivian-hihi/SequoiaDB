@@ -50,6 +50,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaCheckHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninstallRemoteAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
@@ -225,9 +226,7 @@ namespace engine
                   "%s, rc = %d", name(),
                   _scope->getLastErrMsg(), rc ) ;
          rc = _scope->getLastError() ;
-         BSONObjBuilder bob ;
-         bob.append ( OMA_FIELD_DETAIL, _scope->getLastErrMsg() ) ;
-         retObj = bob.obj() ;
+         PD_LOG_MSG(PDERROR, "%s", _scope->getLastErrMsg() ) ;
          goto error ;
       }
       // adapt the result
@@ -1002,6 +1001,53 @@ namespace engine
    error:
       goto done ;
    }
+
+   /******************************* remove host ********************************/
+   /*
+      _omaRemoveHost
+   */
+   _omaRemoveHost::_omaRemoveHost ()
+   {
+   }
+
+   _omaRemoveHost::~_omaRemoveHost ()
+   {
+   }
+
+   INT32 _omaRemoveHost::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus( pInstallInfo ) ;
+
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Add hosts passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_HOST, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_REMOVE_HOST, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+   
    /******************************* add db business **************************/
    // _omaInstallDBBusiness
    _omaInstallDBBusiness::_omaInstallDBBusiness ()

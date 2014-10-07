@@ -374,7 +374,6 @@ namespace engine
       }
 
       // consturct reply
-//      builder.append( OMA_FIELD_RC, rc ) ;
       builder.appendElements( retObj ) ;
 
    done :

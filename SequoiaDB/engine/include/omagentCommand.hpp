@@ -265,6 +265,21 @@ namespace engine
          INT32                            _transactionID ;
    } ;
 
+   /******************************* remove host ********************************/
+   /*
+      _omaRemoveHost
+   */
+   class _omaRemoveHost : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER()
+      public:
+         _omaRemoveHost () ;
+         ~_omaRemoveHost () ;
+         virtual const CHAR * name () { return OMA_CMD_REMOVE_HOST ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         //virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
+   } ;
+
    /******************************* install db business ***********************/
    /*
       _omaInstallDBBusiness

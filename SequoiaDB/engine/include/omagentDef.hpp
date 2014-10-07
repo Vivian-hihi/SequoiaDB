@@ -112,17 +112,21 @@ namespace engine
    #define OMA_CMD_CHECK_HOST                         OM_CHECK_HOST_REQ
    #define OMA_CMD_UNINSTALL_REMOTE_AGENT             OM_UNINSTALL_REMOTE_AGENT
    #define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
+   #define OMA_CMD_REMOVE_HOST                        OM_REMOVE_HOST_REQ
    #define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ
+   #define OMA_CMD_UNINSTALL_DB_BUSINESS              OM_REMOVE_BUSINESS_REQ
+   #define OMA_CMD_START_DB_NUSINESS                  ""
+   #define OMA_CMD_STOP_DB_BUSINESS                   ""
    #define OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS OM_QUERY_PROGRESS
-   //#define OMA_CMD_ROLLBACK_INSTALL_DB_BUSINESS       OM_ROLLBACK_TRANSACTION_REQ
    #define OMA_CMD_UPDATE_HOSTS                       OM_UPDATE_HOSTNAME_REQ
+
 
    /*
       oma internal command
    */
-   #define OMA_CMD_CRRATE_VIRTUAL_COORD                   "create virtual coord"
-   #define OMA_CMD_REMOVE_VIRTUAL_COORD                   "remove virtual coord"
-   #define OMA_CMD_ROLLBACK_ADD_HOSTS                     "rollback add hosts"
+   #define OMA_CMD_CRRATE_VIRTUAL_COORD               "create virtual coord"
+   #define OMA_CMD_REMOVE_VIRTUAL_COORD               "remove virtual coord"
+   #define OMA_CMD_ROLLBACK_ADD_HOSTS                 "rollback add hosts"
    #define OMA_CMD_RUN_CREATE_COORD                   "run create coord job"
    #define OMA_CMD_RUN_CREATE_CATALOG                 "run create catalog job"
    #define OMA_CMD_RUN_CREATE_DATANODE                "run create data node job"
@@ -153,7 +157,7 @@ namespace engine
    #define FILE_CHECK_HOST_ITEM             "checkHostItem.js"
    #define FILE_UNINSTALL_REMOTE_AGENT      "uninstallRemoteAgent.js"
    #define FILE_ADD_HOST                    "addHost.js"
-   
+   #define FILE_REMOVE_HOST                 "removeHost.js"
    #define FILE_GET_REMOTE_AGENT_STATUS     "getRemoteAgentStatus.js"
    #define FILE_CREATE_VIRTUAL_COORD        "createVirtualCoord.js"
    #define FILE_REMOVE_VIRTUAL_COORD        "removeVirtualCoord.js"
@@ -162,6 +166,7 @@ namespace engine
    #define FILE_GET_HOST_NAME               "getHostName.js"
    #define FILE_ADDHOST_ROLLBACK_INTERNAL   "addHostRollbackInternal.js"
    #define FILE_UPDATE_HOSTS_INFO           "updateHostsInfo.js"
+   #define FILE_UPDATE_HOSTS                "updateHosts.js"
 
 
    #define FILE_CREATE_CATALOG              "createCatalog.js"
