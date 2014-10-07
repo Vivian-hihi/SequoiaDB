@@ -16,7 +16,7 @@
 
 *******************************************************************************/
 /*
-@description: install agent process in remote mechine
+@description: add host to cluster( install db patcket and start sdbcm )
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
@@ -26,12 +26,6 @@
    OTHER_JSON: {}
 @return
    RET_JSON: the format is: {"errno":0,"detail":"","HostInfo":[{"errno":0,"detail":"","IP":"192.168.20.42","HasInstall":true},{"errno":0,"detail":"","IP":"192.168.20.165","HasInstall":true}]}
-*/
-
-/*
-
-@modify list:
-   2014-7-26 Zhaobo Tan  Init
 */
 
 //var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
@@ -44,11 +38,21 @@ RET_JSON[Errno]    = SDB_OK ;
 RET_JSON[Detail]   = "" ;
 RET_JSON[HostInfo] = [] ;
 
+/* *****************************************************************************
+@discretion: get the name of install packet
+@author: Tanzhaobo
+@parameter
+   osInfo[string]: os type
+   packet[string]: the full name of the packet,
+                   e.g. /tmp/packet/sequoiadb-1.8-linux_x86_64-installer.run
+@return
+   packetname[string]: the name of the install packet
+***************************************************************************** */
 function getInstallPacketName( osInfo, packet )
 {
    var s = "" ;
    var i = 1 ;
-   var subStr = "" ;
+   var packetname = "" ;
    if ( OMA_LINUX == osInfo )
       s = "/" ;
    else
@@ -56,15 +60,23 @@ function getInstallPacketName( osInfo, packet )
    i = packet.lastIndexOf( s ) ;
    if ( -1 != i )
    {
-      subStr = packet.substring( i+1 ) ;
+      packetname = packet.substring( i+1 ) ;
    }
    else
    {
-      subStr = packet ;
+      packetname = packet ;
    }
-   return subStr ;
+   return packetname ;
 }
 
+/* *****************************************************************************
+@discretion: create tmp diretory in /tmp
+@author: Tanzhaobo
+@parameter
+   ssh[object]: Ssh object
+   osInfo[string]: os type
+@return void
+***************************************************************************** */
 function createTmpDir( ssh, osInfo )
 {
    var cmd = "" ;
@@ -99,6 +111,16 @@ function createTmpDir( ssh, osInfo )
    }
 }
 
+/* *****************************************************************************
+@discretion: push install packet to remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: Ssh object
+   osInfo[string]: os type
+   packet[string]: the full name of the packet,
+                   e.g. /tmp/packet/sequoiadb-1.8-linux_x86_64-installer.run
+@return void
+***************************************************************************** */
 function pushInstallationPacket( ssh, osInfo, packet )
 {
    var src = "" ;
@@ -130,6 +152,20 @@ function pushInstallationPacket( ssh, osInfo, packet )
    }
 }
 
+/* *****************************************************************************
+@discretion: push install packet to remote host
+@author: Tanzhaobo
+@parameter
+   ssh[object]: Ssh object
+   osInfo[string]: os type
+   sdbuser[string]: the user to be add for running sequoiadb program
+   sdbpasswd[string]: the password of sdbuser
+   packet[string]: the full name of the packet,
+                   e.g. /tmp/packet/sequoiadb-1.8-linux_x86_64-installer.run
+   path[string]: the path where the install packet is in local host, we need 
+                 to push this packet to remote host
+@return void
+***************************************************************************** */
 function installDBPacket( ssh, osInfo, sdbuser, sdbpasswd, packet, path )
 {
    var cmd = "" ;

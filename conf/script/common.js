@@ -57,3 +57,10 @@ function addHostRollbackResult()
    this.HasUninstall              = false ;
 }
 
+function removeHostResult()
+{
+   this.Errno                     = SDB_OK ;
+   this.detail                    = "" ;
+   this.IP                        = "" ;
+   this.HasUninstall              = false ;
+}
