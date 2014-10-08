@@ -10047,8 +10047,10 @@ namespace engine
       map<UINT64, SINT64> contexts ;
       rtnContextCoord *context = NULL ;
       SINT64 contextID = -1 ;
+      BOOLEAN refresh = FALSE ;
 
       MsgHeader *pHeader = (MsgHeader *)pReceiveBuffer;
+      MsgOpQuery *queryHeader = ( MsgOpQuery * )pReceiveBuffer ;
       replyHeader.header.messageLength = sizeof( MsgOpReply );
       replyHeader.header.opCode = MSG_BS_QUERY_RES;
       replyHeader.header.requestID = pHeader->requestID;
@@ -10086,13 +10088,16 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnCoordGetCataInfo( cb, fullName, FALSE, cataInfo ) ;
+retry:
+      rc = rtnCoordGetCataInfo( cb, fullName, refresh, cataInfo ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get catainfo of:%s, rc:%d",
                  fullName, rc ) ;
          goto error ;
       }
+
+      queryHeader->version = cataInfo->getVersion() ;
 
       rc = rtnCoordGetGroupsByCataInfo( cataInfo,
                                         sendGroupLst,
@@ -10146,6 +10151,14 @@ namespace engine
 
       if ( SDB_OK != rc )
       {
+         if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
+         {
+            pRtncb->contextDelete( contextID, cb ) ;
+            contextID = -1 ;
+            context = NULL ;
+            refresh = TRUE ;
+            goto retry ;
+         }
          goto error ;
       }
 

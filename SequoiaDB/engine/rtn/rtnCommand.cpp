@@ -2753,7 +2753,8 @@ namespace engine
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListLob)
    _rtnListLob::_rtnListLob()
-   :_contextID( -1 )
+   :_contextID( -1 ),
+    _fullName( NULL )
    {
 
    }
@@ -2776,6 +2777,15 @@ namespace engine
       try
       {
          _query = BSONObj( pMatcherBuff ) ;
+         BSONElement ele = _query.getField( FIELD_NAME_COLLECTION ) ;
+         if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "invalid collection name in condition:%s",
+                    _query.toString( FALSE, TRUE ).c_str() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _fullName = ele.valuestr() ;
       }
       catch ( std::exception &e )
       {
@@ -2790,6 +2800,11 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   const CHAR *_rtnListLob::collectionFullName()
+   {
+      return _fullName ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLISTLOB_DOIT, "_rtnListLob::doit" ) 

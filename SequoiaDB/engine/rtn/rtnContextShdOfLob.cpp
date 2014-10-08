@@ -35,6 +35,7 @@
 #include "pmdEDU.hpp"
 #include "rtnTrace.hpp"
 #include "rtnLob.hpp"
+#include "clsMgr.hpp"
 
 namespace engine
 {
@@ -340,6 +341,12 @@ namespace engine
       std::set<UINT32>::reverse_iterator itr = _written.rbegin() ;
       for ( ; itr != _written.rend(); ++itr )
       {
+         if ( !sdbGetReplCB()->primaryIsMe() )
+         {
+            PD_LOG( PDERROR, "we are not primary any more, stop to rollback" ) ;
+            break ;
+         }
+
          rc = rtnRemoveLobPiece( _fullName.c_str(),
                                  _oid, *itr, cb,
                                  _w, _dpsCB ) ;

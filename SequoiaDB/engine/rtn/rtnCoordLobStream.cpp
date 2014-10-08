@@ -978,7 +978,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__REMOVEV ) ;
       SDB_ASSERT( cnt <= RTN_LOB_REMOVE_PIECE_NUM, "can not over it" ) ;
-      MSG_OPTIONS options( FALSE, FALSE ) ;
+      MSG_OPTIONS options( TRUE, FALSE ) ;
       _dispatcher.clear() ;
       _MsgLobTuple tuples[RTN_LOB_REMOVE_PIECE_NUM] ;
 

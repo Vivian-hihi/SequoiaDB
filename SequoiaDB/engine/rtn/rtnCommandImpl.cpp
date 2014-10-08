@@ -1538,16 +1538,6 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
       writable = TRUE ;
 
-      rc = su->data()->dropCollection ( pCollectionShortName, cb, dpsCB ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
-                  pCollection, rc ) ;
-         goto error ;
-      }
-      apm = su->getAPM() ;
-      apm->invalidatePlans ( pCollectionShortName ) ;
-
       if ( su->lob()->isOpened() )
       {
          rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
@@ -1567,6 +1557,15 @@ namespace engine
          }
       }
 
+      rc = su->data()->dropCollection ( pCollectionShortName, cb, dpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
+                  pCollection, rc ) ;
+         goto error ;
+      }
+      apm = su->getAPM() ;
+      apm->invalidatePlans ( pCollectionShortName ) ;
    done :
       if ( writable )
       {

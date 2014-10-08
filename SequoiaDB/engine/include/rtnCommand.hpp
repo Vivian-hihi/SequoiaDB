@@ -1306,10 +1306,12 @@ namespace engine
       virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                            _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                            INT16 w = 1, INT64 *pContextID = NULL  ) ;
+      virtual const CHAR *collectionFullName() ;
 
    private:
       INT64 _contextID ;
       bson::BSONObj _query ;
+      const CHAR *_fullName ;
    } ;
 }
 

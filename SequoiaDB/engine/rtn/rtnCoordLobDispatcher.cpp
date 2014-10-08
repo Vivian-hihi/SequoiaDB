@@ -390,7 +390,17 @@ namespace engine
       }
       else if ( _retryTimes++ < RTN_COORD_LOB_RETRY_TIMES )
       {
-         PD_LOG( PDEVENT, "the %dth times we retry to send msg", _retryTimes ) ;
+         std::stringstream ss ;
+         for ( MSG_TUPLES::const_iterator itr = _tuples.begin();
+               itr != _tuples.end();
+               ++itr )
+         {
+            MsgRouteID dst ;
+            dst = itr->first ;
+            ss << dst.columns.groupID << ":" << dst.columns.nodeID << " " ;
+         }
+         PD_LOG( PDEVENT, "the %dth times we retry to send msg:%s",
+                 _retryTimes, ss.str().c_str() ) ;
 
          rc = wait4Reply( cb ) ;
          if ( SDB_OK != rc )
