@@ -592,55 +592,6 @@ namespace engine
       return ;
    }
 
-/*
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__STATIC__APPENDLOB2MB, "_appendLob2Mb" )
-   static INT32 _appendLob2Mb( const _dmsLobInfoOnPage &page,
-                               const CHAR *data,
-                               _pmdEDUCB *cb,
-                               _dpsMessageBlock &mb )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__CLSDSBS__STATIC__APPENDLOB2MB ) ;
-      UINT32 *tmp = NULL ;
-      SINT64 *offset = NULL ;
-      UINT32 oldSize = mb.length() ;
-      UINT32 len = sizeof( bson::OID ) +
-                   sizeof( MsgLobTuple ) +
-                   page._len ;
-      UINT32 alignedLen = ossRoundUpToMultipleX( len, 4 ) ;
-      if ( mb.idleSize() < alignedLen )
-      {
-         rc = mb.extend( alignedLen - mb.idleSize() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to extend mb block:%d", rc ) ;
-            goto error ;
-         }
-      }
-
-      ossMemcpy( mb.writePtr(), &( page._oid ), sizeof( bson::OID ) ) ;
-      mb.writePtr( oldSize + sizeof( bson::OID ) ) ;
-      tmp = ( UINT32 * )( mb.writePtr() ) ;
-      *tmp = page._len ;
-      mb.writePtr( mb.length() + 4 ) ; 
-      tmp = ( UINT32 * )( mb.writePtr() ) ;
-      *tmp = page._sequence ;
-      mb.writePtr( mb.length() + 4 ) ;
-      offset = ( SINT64 * )( mb.writePtr() ) ;
-      *offset = 0 ;
-      mb.writePtr( mb.length() + 4 ) ;
-      ossMemcpy( mb.writePtr(), data, page._len ) ;
-
-      mb.writePtr( oldSize + alignedLen ) ;
-
-   done:
-      PD_TRACE_EXITRC( SDB__CLSDSBS__STATIC__APPENDLOB2MB, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
-*/
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSDSBS__SYNCLOB, "_clsDataSrcBaseSession::_syncLob" )
    INT32 _clsDataSrcBaseSession::_syncLob( const NET_HANDLE &handle,
                                            SINT64 packet,
@@ -732,7 +683,7 @@ namespace engine
             _mb.writePtr( finalSize ) ;
          }
 
-      } while ( CLS_SYNC_MAX_LEN <=_mb.length() ||
+      } while (  _mb.length() < CLS_SYNC_MAX_LEN ||
                 ( time( NULL ) - bTime >= CLS_SYNC_MAX_TIME &&
                    _mb.length() > 0 ) ) ;
 
@@ -757,7 +708,7 @@ namespace engine
             msg.lsn.offset = _beginLSNOffset ;
          }
          _LSNlatch.release() ;
-         _agent->syncSend( handle, &msg ) ;         
+         _agent->syncSend( handle, &msg ) ;
       }
    done:
       PD_TRACE_EXITRC( SDB__CLSDSBS__SYNCLOB, rc ) ;

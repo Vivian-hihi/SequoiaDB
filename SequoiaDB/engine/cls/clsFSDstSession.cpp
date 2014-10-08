@@ -900,7 +900,6 @@ namespace engine
             _status = CLS_FS_STATUS_META ;
             ++_current ;
             _notify( CLS_FS_NOTIFY_TYPE_OVER ) ;
-
             //get next collection
             _meta() ;
          }
