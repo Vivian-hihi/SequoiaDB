@@ -657,6 +657,7 @@ namespace engine
       msg.header.header.requestID = requestID ;
       msg.packet = packet ;
       msg.type = (CLS_FS_NOTIFY_TYPE)_dataType ;
+      msg.eof = CLS_FS_NOT_EOF ;
       _mb.clear () ;
       dmsLobInfoOnPage page ;
       BOOLEAN need2Send = FALSE ;
@@ -745,8 +746,18 @@ namespace engine
       else
       {
          msg.eof = CLS_FS_EOF ;
-         _agent->syncSend( handle, &msg ) ;
-         
+         msg.lsn = pmdGetKRCB()->getDPSCB()->expectLsn () ;
+         _LSNlatch.get () ;
+         if ( _deqLSN.size() > 0 )
+         {
+            msg.lsn.offset = _deqLSN.front() ;
+         }
+         else
+         {
+            msg.lsn.offset = _beginLSNOffset ;
+         }
+         _LSNlatch.release() ;
+         _agent->syncSend( handle, &msg ) ;         
       }
    done:
       PD_TRACE_EXITRC( SDB__CLSDSBS__SYNCLOB, rc ) ;

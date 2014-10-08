@@ -253,56 +253,59 @@ namespace engine
       _clsCatalogSet *catSet = NULL ;
       UINT32 groupID = sdbGetShardCB()->nodeID().columns.groupID ;
       UINT32 belongTo = 0 ;
+      BOOLEAN need2ReleaseR = FALSE ;
+
+retry:
+      catAgent->lock_r() ;
+      need2ReleaseR = TRUE ;
+      catSet = catAgent->collectionSet( _clFullName.c_str() ) ;
+      if ( NULL == catSet )
+      {
+         catAgent->release_r() ;
+         need2ReleaseR = FALSE ;
+         rc = sdbGetShardCB()->syncUpdateCatalog( _clFullName.c_str(),
+                                                  OSS_ONE_SEC ) ;
+         if ( SDB_OK == rc )
+         {
+            goto retry ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "failed to update catalog info of %s",
+                    _clFullName.c_str() ) ;
+            goto error ;
+         }
+      }
 
       if ( CLS_CLEANUP_BY_CATAINFO == _cleanupType() )
       {
-   retry:
-         catAgent->lock_r() ;
-         catSet = catAgent->collectionSet( _clFullName.c_str() ) ;
-         if ( NULL == catSet )
-         {
-            catAgent->release_r() ;
-            rc = sdbGetShardCB()->syncUpdateCatalog( _clFullName.c_str(),
-                                                     OSS_ONE_SEC ) ;
-            if ( SDB_OK == rc )
-            {
-               goto retry ;
-            }
-            else
-            {
-               PD_LOG( PDERROR, "failed to update catalog info of %s",
-                       _clFullName.c_str() ) ;
-               goto error ;
-            }
-         }
-
          rc = catSet->findGroupID( page._oid, page._sequence, belongTo ) ;
          if ( SDB_OK != rc )
          {
-            catAgent->release_r() ;
             PD_LOG( PDERROR, "failed to get group id from cata set:%d", rc ) ;
             goto error ;
          }
 
-         catAgent->release_r() ;
          need2Remove = groupID != belongTo ;
          goto done ;
       }
       else if ( !_splitKeyObj.isEmpty() )
       {
-         UINT32 hash = ossHash( ( const BYTE * )(page._oid.getData()),
-                             sizeof( bson::OID ),
-                             ( const BYTE * )( &page._sequence ),
-                             sizeof( page._sequence ) ) ;
-         need2Remove = _splitKeyObj.firstElement().Int() <= ( INT32 )hash &&
-                       ( _splitEndKeyObj.isEmpty() ||
-                         ( INT32 )hash < _splitEndKeyObj.firstElement().Int() ) ;
+         INT32 range = clsPartition( page._oid, page._sequence,
+                                     catSet->getPartitionBit() ) ;
+         need2Remove = _splitKeyObj.firstElement().Int() <= range && 
+           ( _splitEndKeyObj.isEmpty() ||
+             range < _splitEndKeyObj.firstElement().Int() ) ;
       }
       else
       {
          need2Remove = FALSE ;
       }
    done:
+      if ( need2ReleaseR )
+      {
+         catAgent->release_r() ;
+      }
       PD_TRACE_EXITRC( SDB__CLSCLNJOB__FILTERDEL, rc ) ;
       return rc ;
    error:

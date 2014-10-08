@@ -958,6 +958,7 @@ namespace engine
       const MsgLobTuple *tuple = NULL ;
       const bson::OID *oid = NULL ;
       const CHAR *data = NULL ;
+      const CHAR *fullName = NULL ;
 
       if ( ( UINT32 )msg->header.header.messageLength <= sizeof( MsgClsFSNotifyRes ) )
       {
@@ -966,12 +967,14 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
- 
+
+      SDB_ASSERT( _current < _fullNames.size(), "impossible" ) ; 
+      fullName = _fullNames.at( _current ).c_str() ;
       itr += sizeof( MsgClsFSNotifyRes ) ;
       while ( _more( msg, itr, oid,
                      tuple, data ) )
       {
-         rc = rtnWriteLob( _fullNames.at( _current ).c_str(),
+         rc = rtnWriteLob( fullName,
                            *oid, tuple->columns.sequence,
                            0, tuple->columns.len, data,
                            eduCB(), 1, NULL ) ;
