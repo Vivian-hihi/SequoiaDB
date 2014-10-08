@@ -101,9 +101,9 @@ namespace engine
        ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p" ), po::value<string>(), "service name, use ',' as seperator" )  \
        ( PMD_COMMANDS_STRING( PMD_OPTION_MODE, ",m" ), po::value<string>(),"mode type: run/local, default: run" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog/om/cm" ) \
-       ( PMD_OPTION_VERSION, "show version" ) \
-       ( PMD_OPTION_DETAIL, "show detail configuration" ) \
-       ( PMD_OPTION_EXPAND, "show expand configuration" )
+       ( PMD_OPTION_VERSION, "version" ) \
+       ( PMD_OPTION_DETAIL, "show details" ) \
+       ( PMD_OPTION_EXPAND, "show expanded details" )
 
    //print node's detail configuration by sdb conf file and svcname
    void _printfDetail( const CHAR *rootPath, const CHAR *svcname, INT32 type )

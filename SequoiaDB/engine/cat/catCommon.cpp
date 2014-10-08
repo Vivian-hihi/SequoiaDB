@@ -1772,8 +1772,8 @@ namespace engine
             hasUpdateSubCL = TRUE;*/
             PD_CHECK( strMainCLName.empty(),
                      SDB_RELINK_SUB_CL, error, PDERROR,
-                     "duplicate link sub-collection(%s), "
-                     "its main-collection is %s",
+                     "duplicate attach collection partition(%s), "
+                     "its partitioned-collection is %s",
                      subCLName, strMainCLName.c_str() );
          }
          }
@@ -1812,16 +1812,16 @@ namespace engine
          // check main-collection
          rc = catCheckCollectionExist( mainCLName, isMainExist, mainCLObj, cb );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to get main-collection info(rc=%d)",
+                     "failed to get partitioned-collection info(rc=%d)",
                      rc );
          PD_CHECK( isMainExist, SDB_DMS_NOTEXIST, error, PDERROR,
-                  "main-collection is not exist!" );
+                   "partitioned-collection does not exist!" );
          rc = cataInfo.updateCatSet( mainCLObj );
          PD_RC_CHECK( rc, PDERROR,
                      "failed to parse catalog-info of main-collection(%s)",
                      mainCLName );
          PD_CHECK( cataInfo.isMainCL(), SDB_INVALID_MAIN_CL, error, PDERROR,
-                  "source collection must be main-collection!" );
+                  "source collection must be partitioned-collection!" );
          SDB_ASSERT( cataInfo.isRangeSharding(),
                      "main-collection must be range-sharding!" ) ;
 

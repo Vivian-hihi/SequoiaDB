@@ -164,12 +164,6 @@
 					<stentry>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</stentry>
 				</strow>
 				<strow>
-					<stentry>--maxsubquery</stentry>
-					<stentry>--</stentry>
-					<stentry>num</stentry>
-					<stentry>查询任务的最大分解子查询数量,默认值:10,最小值为0,最大值不能超过参数maxprefpool的值</stentry>
-				</strow>
-				<strow>
 					<stentry>--maxreplsync</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>

@@ -458,13 +458,13 @@ namespace engine
                goto done ;
             }
          }
-         rc = SDB_REST_COMMON_UNKNOW ;
+         rc = SDB_REST_COMMON_UNKNOWN ;
          PD_LOG ( PDERROR, "There is no common, rc=%d", rc ) ;
          goto error ;
       }
       else
       {
-         rc = SDB_REST_COMMON_UNKNOW ;
+         rc = SDB_REST_COMMON_UNKNOWN ;
          PD_LOG ( PDERROR, "There is no common, rc=%d", rc ) ;
          goto error ;
       }
@@ -527,7 +527,7 @@ namespace engine
       case COM_LOGIN:
       case COM_GETFILE:
       default:
-         rc = SDB_REST_COMMON_UNKNOW ;
+         rc = SDB_REST_COMMON_UNKNOWN ;
          PD_LOG ( PDERROR, "Unknow common, rc=%d", rc ) ;
          goto error ;
       }

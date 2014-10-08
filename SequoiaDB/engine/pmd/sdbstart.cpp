@@ -71,7 +71,7 @@ namespace engine
 
 
    #define COMMANDS_HIDE_OPTIONS \
-      ( PMD_OPTION_CURUSER, "use current user" ) \
+      ( PMD_OPTION_CURUSER, "inherite the current user" ) \
 
 
    void init ( po::options_description &desc,

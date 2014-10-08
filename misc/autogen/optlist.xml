@@ -34,7 +34,7 @@
       <long>version</long>
       <type>none</type>
       <description>
-         <en>database version</en>
+         <en>Database version</en>
          <cn>数据库版本</cn>
       </description>
    </opt>
@@ -44,7 +44,7 @@
       <long>dbpath</long>
       <short>d</short>
       <description>
-         <en>database path</en>
+         <en>Database path</en>
          <cn>数据库路径</cn>
       </description>
       <catalogdft>/opt/sequoiadb/database/cata</catalogdft>
@@ -64,7 +64,7 @@
       <long>indexpath</long>
       <short>i</short>
       <description>
-         <en>index path</en>
+         <en>Index path</en>
          <cn>索引路径</cn>
       </description>
       <detail>
@@ -80,7 +80,7 @@
       <long>confpath</long>
       <short>c</short>
       <description>
-         <en>configure file path</en>
+         <en>Configure file path</en>
          <cn>配置文件路径</cn>
       </description>
       <detail>
@@ -101,11 +101,11 @@
       <long>logpath</long>
       <short>l</short>
       <description>
-         <en>log file path</en>
+         <en>Log file path</en>
          <cn>日志文件路径</cn>
       </description>
       <detail>
-         <en>1. Synchronous log file willbe generated when replication node does full sync. This parameter is used to specified the path of  synchronous log file.<fig></fig>
+         <en>1. Synchronous log files will be created when replication node does full sync. This parameter is used to specified the path of  synchronous log file.<fig></fig>
              2. If it is not specified, the default path is "Data file path/replicalog".</en>
          <cn>1.副本节点在进行数据同步时会生成同步日志。此参数用来指定同步日志的路径。<fig></fig>
              2.如果不指定，则默认路径为：数据文件路径/replicalog</cn>
@@ -117,7 +117,7 @@
       <name>PMD_OPTION_DIAGLOGPATH</name>
       <long>diagpath</long>
       <description>
-         <en>diagnostic log file path</en>
+         <en>Diagnostic log file path</en>
          <cn>诊断日志文件路径</cn>
       </description>
       <detail>
@@ -134,7 +134,7 @@
       <long>diagnum</long>
       <type>int</type>
       <description>
-         <en>diagnostic log file max number, default:20, -1:unlimited</en>
+         <en>The max number of diagnostic log files, default:20, -1:unlimited</en>
          <cn>诊断日志文件最大数量,默认值:20, -1表示不限制</cn>
       </description>
       <detail>
@@ -150,7 +150,7 @@
       <name>PMD_OPTION_BKUPPATH</name>
       <long>bkuppath</long>
       <description>
-         <en>backup path</en>
+         <en>Backup path</en>
          <cn>备份路径</cn>
       </description>
       <detail>
@@ -166,7 +166,7 @@
       <name>PMD_OPTION_WWWPATH</name>
       <long>wwwpath</long>
       <description>
-         <en>web service root path</en>
+         <en>Web service root path</en>
          <cn>WEB服务根路径</cn>
       </description>
       <detail>
@@ -178,7 +178,7 @@
 			  3.仅对OM生效。</cn>
       </detail>
       <typeofweb>str</typeofweb>
-	  <hidden>true</hidden>
+      <hidden>true</hidden>
    </opt>
 
    <opt>
@@ -186,7 +186,7 @@
       <long>maxpool</long>
       <typeofweb>str</typeofweb>
       <description>
-         <en>max pooled agent,defalut:0</en>
+         <en>The maximum number of pooled agent,defalut:0</en>
          <cn>最大代理线程池,默认值为0</cn>
       </description>
       <type>int</type>
@@ -204,7 +204,7 @@
       <long>svcname</long>
       <short>p</short>
       <description>
-         <en>local service name or port</en>
+         <en>Local service name or port</en>
          <cn>本地服务名或端口</cn>
       </description>
       <catalogdft>11800</catalogdft>
@@ -225,7 +225,7 @@
       <long>replname</long>
       <short>r</short>
       <description>
-         <en>replication service name or port, default: 'svcname'+1</en>
+         <en>Replication service name or port, default: 'svcname'+1</en>
          <cn>复制通讯服务名或端口,默认:'svcname'+1</cn>
       </description>
       <catalogdft>11801</catalogdft>
@@ -246,7 +246,7 @@
       <long>shardname</long>
       <short>a</short>
       <description>
-         <en>sharding service name or port, default: 'svcname'+2</en>
+         <en>Sharding service name or port, default: 'svcname'+2</en>
          <cn>分片通讯服务名或端口,默认:'svcname'+2</cn>
       </description>
       <catalogdft>11802</catalogdft>
@@ -267,7 +267,7 @@
       <long>catalogname</long>
       <short>x</short>
       <description>
-         <en>catalog service name or port, default: 'svcname'+3</en>
+         <en>Catalog service name or port, default: 'svcname'+3</en>
          <cn>编目通讯服务名或端口, 默认:'svcname'+3</cn>
       </description>
       <catalogdft>11803</catalogdft>
@@ -326,7 +326,7 @@
       <long>diaglevel</long>
       <short>v</short>
       <description>
-         <en>diag level,default:3,value range:[0-5]</en>
+         <en>Diagnostic level,default:3,value range:[0-5]</en>
          <cn>诊断级别,默认值:3,取值范围:[0,5]</cn>
       </description>
       <type>int</type>
@@ -345,7 +345,7 @@
       <long>role</long>
       <short>o</short>
       <description>
-         <en>role of the node (data/coord/catalog/standalone)</en>
+         <en>Role of the node (data/coord/catalog/standalone)</en>
          <cn>节点角色(data/coord/catalog/standalone)</cn>
       </description>
       <default>standalone</default>
@@ -367,7 +367,7 @@
       <long>catalogaddr</long>
       <short>t</short>
       <description>
-         <en>catalog addr (hostname1:servicename1,hostname2:servicename2,...)</en>
+         <en>Catalog addr (hostname1:servicename1,hostname2:servicename2,...)</en>
          <cn>编目节点地址(hostname1:servicename1,hostname2:servicename2,...)</cn>
       </description>
       <catalogdft>localhost:11803</catalogdft>
@@ -387,7 +387,7 @@
       <long>logfilesz</long>
       <short>f</short>
       <description>
-         <en>log file size(MB),default:64,value range:[64,2048]</en>
+         <en>Log file size ( in MB ),default:64,value range:[64,2048]</en>
          <cn>日志文件尺寸(MB),默认值:64,取值范围:[64,2048]</cn>
       </description>
       <type>int</type>
@@ -406,7 +406,7 @@
       <long>logfilenum</long>
       <short>n</short>
       <description>
-         <en>number of log files,default:20, value range:[1,11800]</en>
+         <en>Number of log files,default:20, value range:[1,11800]</en>
          <cn>日志文件数量,默认值:1,取值范围:[1,11800]</cn>
       </description>
       <type>int</type>
@@ -425,7 +425,7 @@
       <long>transactionon</long>
       <short>e</short>
       <description>
-         <en>turn on transaction, default:FALSE</en>
+         <en>Turn on transaction, default:FALSE</en>
          <cn>是否打开事务功能,默认为:FALSE</cn>
       </description>
       <default>false</default>
@@ -441,12 +441,12 @@
       <name>PMD_OPTION_NUMPRELOAD</name>
       <long>numpreload</long>
       <description>
-         <en>number of pre-loaders,default:0,value range:[0,100]</en>
+         <en>The number of pre-loaders, default:0,value range:[0,100]</en>
          <cn>页面预加载代理数量,默认值:0,取值范围:[0,100]</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>number of page pre-loaders, default:0, value range:[0,100]</en>
+         <en>The number of pre-loaders, default:0, value range:[0,100]</en>
          <cn>页面预加载代理数据，默认值为0，取值范围：[0,100]</cn>
       </detail>
       <typeofweb>num</typeofweb>
@@ -456,12 +456,12 @@
       <name>PMD_OPTION_MAX_PREF_POOL</name>
       <long>maxprefpool</long>
       <description>
-         <en>maximum number of prefetchers, default:200, value range:[0,1000]</en>
+         <en>The maximum number of prefetchers, default:200, value range:[0,1000]</en>
          <cn>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>maximum number of prefetchers, default:200, value range:[0,1000]</en>
+         <en>The maximum number of prefetchers, default:200, value range:[0,1000]</en>
          <cn>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</cn>
       </detail>
       <typeofweb>num</typeofweb>
@@ -471,27 +471,28 @@
       <name>PMD_OPTION_MAX_SUB_QUERY</name>
       <long>maxsubquery</long>
       <description>
-         <en>maximum number of query's sub-query, default:10, min value is 0, max value can't more than param 'maxprefpool'</en>
+         <en>The maximum number of sub-query for each SQL request, default:10, min value is 0, max value can't more than param 'maxprefpool'</en>
          <cn>查询任务的最大分解子查询数量,默认值:10,最小值为0,最大值不能超过参数maxprefpool的值</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>maximum number of query's sub-query, default:10, min value is 0, max value can't more than param 'maxprefpool'</en>
+         <en>The maximum number of sub-query for each SQL request, default:10, min value is 0, max value can't more than param 'maxprefpool'</en>
          <cn>查询任务的最大分解子查询数量,默认值:10,最小值为0,最大值不能超过参数maxprefpool的值</cn>
       </detail>
       <typeofweb>num</typeofweb>
+      <hidden>true</hidden>
    </opt>
 
    <opt>
       <name>PMD_OPTION_MAX_REPL_SYNC</name>
       <long>maxreplsync</long>
       <description>
-         <en>maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync</en>
+         <en>The maximum number of repl-sync threads, default:10, value range:[0, 200], 0:disable concurrent repl-sync</en>
          <cn>日志同步最大并发数量，默认值:10,取值范围:[0,200], 0表示不启用日志并发同步</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync</en>
+         <en>The maximum number of repl-sync threads, default:10, value range:[0, 200], 0:disable concurrent repl-sync</en>
          <cn>日志同步最大并发数量，默认值:10,取值范围:[0,200], 0表示不启用日志并发同步</cn>
       </detail>
       <typeofweb>num</typeofweb>
@@ -501,12 +502,12 @@
       <name>PMD_OPTION_LOGBUFFSIZE</name>
       <long>logbuffsize</long>
       <description>
-         <en>the replica-log's memory page number,default is 1024, value range:[512,1024000], but total log memory size can't more than all log file size; a page size is 64KB</en>
+         <en>The number of pages ( in 64KB ) for replica log memory ( default:1024, value range:[512,1024000] ), the size should be smaller than log space</en>
          <cn>复制日志内存页面数,默认值:1024,取值范围:[512,1024000],但日志总内存大小不能超过日志总文件大小;每个页面大小为64KB</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>the replica-log's memory page number,default is 1024, value range:[512,1024000], but total log memory size can't more than all log file size; a page size is 64KB</en>
+         <en>The number of pages ( in 64KB ) for replica log memory ( default:1024, value range:[512,1024000] ), the size should be smaller than log space</en>
          <cn>复制日志内存页面数,默认值:1024,取值范围:[512,1024000],但日志总内存大小不能超过日志总文件大小;每个页面大小为64KB</cn>
       </detail>
       <typeofweb>num</typeofweb>
@@ -516,11 +517,11 @@
       <name>PMD_OPTION_DMS_TMPBLKPATH</name>
       <long>tmppath</long>
       <description>
-         <en>path of the tmp file</en>
+         <en>The path of the temp files</en>
          <cn>临时文件路径</cn>
       </description>
       <detail>
-         <en>The temp path of db, default is 'dbpath'+'/tmp'</en>
+         <en>The path of temp files, default is 'dbpath'+'/tmp'</en>
          <cn>数据库临时文件目录，默认为'数据库路径'+'/tmp'</cn>
       </detail>
       <typeofweb>num</typeofweb>
@@ -530,12 +531,12 @@
       <name>PMD_OPTION_SORTBUF_SIZE</name>
       <long>sortbuf</long>
       <description>
-         <en>size of the sorting buf(MB), default:256, min value:128</en>
+         <en>Size of the sorting buf(MB), default:256, min value:128</en>
          <cn>排序缓存大小(MB),默认值256,最小值128</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>size of the sorting buf(MB), default:256, min value:128</en>
+         <en>Size of the sorting buf(MB), default:256, min value:128</en>
          <cn>排序缓存大小(MB),默认值256,最小值128</cn>
       </detail>
       <typeofweb>num</typeofweb>
@@ -545,12 +546,12 @@
       <name>PMD_OPTION_HJ_BUFSZ</name>
       <long>hjbuf</long>
       <description>
-         <en>size of the hash join buf(MB), default:128, min value:64</en>
+         <en>Size of the hash join buf(MB), default:128, min value:64</en>
          <cn>哈希连接缓存大小(MB),默认值128,最小值64</cn>
       </description>
       <type>int</type>
       <detail>
-         <en>size of the hash join buf(MB), default:128, min value:64</en>
+         <en>Size of the hash join buf(MB), default:128, min value:64</en>
          <cn>哈希连接缓存大小(MB),默认值128,最小值64</cn>
       </detail>
       <typeofweb>num</typeofweb>
@@ -574,7 +575,7 @@
       <name>PMD_OPTION_REPL_BUCKET_SIZE</name>
       <long>replbucketsize</long>
       <description>
-         <en>repl bucket size, must be the power of 2, default is 32, value range:[1,4096]</en>
+         <en>Repl bucket size ( must be the power of 2 ), default is 32, value range:[1,4096]</en>
          <cn>日志并发同步桶大小,必须为2的幂,默认值为32,取值范围:[1,4096]</cn>
       </description>
       <type>int</type>
@@ -585,7 +586,7 @@
       <name>PMD_OPTION_MEMDEBUG</name>
       <long>memdebug</long>
       <description>
-         <en>enable memory debug, default:FALSE</en>
+         <en>Enable memory debug, default:FALSE</en>
          <cn>打开内存调试,默认为FALSE</cn>
       </description>
       <hidden>true</hidden>
@@ -595,7 +596,7 @@
       <name>PMD_OPTION_MEMDEBUGSIZE</name>
       <long>memdebugsize</long>
       <description>
-         <en>memory debug segment size,default:0, if not zero, the value range:[256,4194304]</en>
+         <en>Memory debug segment size,default:0, if not zero, the value range:[256,4194304]</en>
          <cn>内存调试段大小,默认为0,当为不0时,取值范围:[256,4194304]</cn>
       </description>
       <type>int</type>
@@ -606,7 +607,7 @@
       <name>PMD_OPTION_CATALIST</name>
       <long>cataloglist</long>
       <description>
-         <en>catalog node list(json)</en>
+         <en>Catalog node list(json)</en>
          <cn>编目节点列表(json)</cn>
       </description>
       <hidden>true</hidden>
@@ -616,7 +617,7 @@
       <name>PMD_OPTION_DPSLOCAL</name>
       <long>dpslocal</long>
       <description>
-         <en>log the operation from lcoal port, default:FALSE</en>
+         <en>Log the operation from local port, default:FALSE</en>
          <cn>是否记录来自本地端口的操作,默认为FALSE</cn>
       </description>
       <hidden>true</hidden>
@@ -626,7 +627,7 @@
       <name>PMD_OPTION_TRACEON</name>
       <long>traceon</long>
       <description>
-         <en>turn on trace when starting, default:FALSE</en>
+         <en>Turn on trace when starting, default:FALSE</en>
          <cn>是否启动时开启跟踪,默认为FALSE</cn>
       </description>
       <hidden>true</hidden>
@@ -636,7 +637,7 @@
       <name>PMD_OPTION_TRACEBUFSZ</name>
       <long>tracebufsz</long>
       <description>
-         <en>trace buffer for starting, default:268435456, value range:[524288,1073741824]</en>
+         <en>Trace buffer size, default:268435456, value range:[524288,1073741824]</en>
          <cn>启动时开启跟踪的缓冲区大小,默认值:268435456,取值范围:[524288,1073741824]</cn>
       </description>
       <type>int</type>
@@ -647,7 +648,7 @@
       <name>PMD_OPTION_SHARINGBRK</name>
       <long>sharingbreak</long>
       <description>
-         <en>when the time of heartbeat breaking become be this value, we think they lost contact(ms), default:5000, value range:[5000,300000] </en>
+         <en>The timeout period for heartbeat in each replica group ( in ms ), default:5000, value range:[5000,300000] </en>
          <cn>判定心跳中断的时间(ms),默认值:5000,取值范围:[5000,300000]</cn>
       </description>
       <type>int</type>
@@ -680,16 +681,16 @@
       <name>PMD_OPTION_PREFINST</name>
       <long>preferedinstance</long>
       <description>
-         <en>Prefered instance when read request, default:A, value enum:M,S,A,1-7</en>
+         <en>Prefered instance for read request, default:A, value enum:M,S,A,1-7</en>
          <cn>读请求优先选择的实例,默认值:A,取值列表:M,S,A,1-7</cn>
       </description>
       <detail>
          <en>1. It specifies the instance on which to query.<fig></fig>
-             2. If it is not specifed, the default value is anyone.<fig></fig>
+             2. If it is not specifed, the default value is A.<fig></fig>
              3. value enum:<fig></fig>
                     M--read and write instance,<fig></fig>
                     S--read only instance,<fig></fig>
-                    A--anyone instance,<fig></fig>
+                    A--any instance,<fig></fig>
                     1-7--the nth instance</en>
          <cn>1.指定执行读请求时优先选择的实例<fig></fig>
              2.如果不指定，则默认为随机选择任意实例。<fig></fig>
@@ -707,11 +708,11 @@
       <name>PMD_OPTION_NUMPAGECLEANERS</name>
       <long>numpagecleaners</long>
       <description>
-         <en>Number of page cleaners to start, default 1, value range:[0, 50]</en>
+         <en>Number of page cleaners, default 1, value range:[0, 50]</en>
          <cn>启动脏页清除器的数量，默认为1，取值范围：[0, 50]</cn>
       </description>
       <detail>
-         <en>The number of page cleaners to start during database startup.<fig></fig>
+         <en>The number of page cleaner threads to start during database startup.<fig></fig>
              0 means do not start any page cleaners, default 1, value range:[0, 50].<fig></fig></en>
          <cn>数据库启动时需要开启的脏页清除器数量<fig></fig>
              0意味着不启动任何脏页清除器，默认为1，取值范围：[0, 50]。<fig></fig></cn>
@@ -725,11 +726,11 @@
       <name>PMD_OPTION_PAGECLEANINTERVAL</name>
       <long>pagecleaninterval</long>
       <description>
-         <en>The min interval between two cleans for each collection space, unit ms, default 10000, min 1000</en>
+         <en>The minimal interval between two cleanup actions for each collection space (in ms, default 10000, min 1000 )</en>
          <cn>对每个集合空间的进行脏页清除的最小间隔，单位毫秒，默认10000，最小1000</cn>
       </description>
       <detail>
-         <en>The minimum interval between two cleans for each CS<fig></fig>
+         <en>The minimum interval between two cleanup actions for each CS<fig></fig>
              Unit: ms, Default: 10000, Min: 1000<fig></fig></en>
          <cn>对每个集合空间的进行脏页清除的最小时间间隔<fig></fig>
              单位：毫秒，默认：10000，最小：1000<fig></fig></cn>

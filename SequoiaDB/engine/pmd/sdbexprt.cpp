@@ -140,20 +140,20 @@ INT32 on_end( void *pData )
    return SDB_OK ;
 }
 
-#define EXPLAIN_HOSTNAME         "database host name ( default: localhost )"
-#define EXPLAIN_SVCNAME          "database service name ( default: 11810 )"
-#define EXPLAIN_USER             "databse user"
-#define EXPLAIN_PASSWORD         "databse password"
+#define EXPLAIN_HOSTNAME         "host name ( default: localhost )"
+#define EXPLAIN_SVCNAME          "service name ( default: 11810 )"
+#define EXPLAIN_USER             "username"
+#define EXPLAIN_PASSWORD         "password"
 #define EXPLAIN_DELCHAR          "string delimiter ( default: \" )( csv only )"
 #define EXPLAIN_DELFIELD         "field delimiter ( default: , )( csv only )"
 #define EXPLAIN_DELRECORD        "record delimiter ( default: '\\n' )( csv only )"
 #define EXPLAIN_COLLECTSPACE     "collection space name"
 #define EXPLAIN_COLLECTION       "collection name"
-#define EXPLAIN_FIELDS           "comma separated list of field names e.g. \"--fields name,age\""
-#define EXPLAIN_INCLUDE          "include field names of the file ( default: true )( csv only )"
-#define EXPLAIN_FILENAME         "export data storage file name"
+#define EXPLAIN_FIELDS           "field names, separated by command (',')"
+#define EXPLAIN_INCLUDE          "whether to include field names of the file ( default: true )( csv only )"
+#define EXPLAIN_FILENAME         "output file name"
 #define EXPLAIN_TYPE             "type of file to load, default: csv (json,csv)"
-#define EXPLAIN_ERRORSTOP        "if an error is stopped, default false"
+#define EXPLAIN_ERRORSTOP        "whether stop by hitting error, default false"
 
 INT32 main ( INT32 argc, CHAR **argv )
 {

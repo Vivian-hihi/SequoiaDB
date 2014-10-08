@@ -157,25 +157,26 @@ INT32 on_end( void *pData )
    return SDB_OK ;
 }
 
-#define EXPLAIN_HOSTNAME         "database host name ( default: localhost )"
-#define EXPLAIN_SVCNAME          "database service name ( default: 11810 )"
-#define EXPLAIN_USER             "databse user"
-#define EXPLAIN_PASSWORD         "databse password"
+#define EXPLAIN_HOSTNAME         "host name ( default: localhost )"
+#define EXPLAIN_SVCNAME          "service name ( default: 11810 )"
+#define EXPLAIN_USER             "username"
+#define EXPLAIN_PASSWORD         "password"
 #define EXPLAIN_DELCHAR          "string delimiter ( default: \" )( csv only )"
 #define EXPLAIN_DELFIELD         "field delimiter ( default: , )( csv only )"
 #define EXPLAIN_DELRECORD        "record delimiter ( default: '\\n' )( csv only )"
 #define EXPLAIN_COLLECTSPACE     "collection space name"
 #define EXPLAIN_COLLECTION       "collection name"
 #define EXPLAIN_INSERTNUM        "batch insert records number, minimun 1, maximum 100000, default: 100"
-#define EXPLAIN_FILENAME         "load file name"
+#define EXPLAIN_FILENAME         "input file name"
 #define EXPLAIN_TYPE             "type of file to load, default: csv (json,csv)"
-#define EXPLAIN_FIELDS           "comma separated list of field names e.g. \"--fields name,age\" or e.g. \"--fields name string,age int default 18\" ( csv only )"
-#define EXPLAIN_HEADERLINE       "first line in input file is a header, if fill in the --fields, it will skip the first line of the file, default: false ( csv only )"
-#define EXPLAIN_SPARSE           "auto add fields, default: true ( csv only )"
-#define EXPLAIN_EXTRA            "auto add value, default: false ( csv only )"
+#define EXPLAIN_FIELDS           "field name, separated by comma (',')(e.g. \"--fields name,age\"). "\
+                                 "field type and default value can be specified for csv input (e.g. \"--fields name string,age int default 18\")"
+#define EXPLAIN_HEADERLINE       "for csv input, whether the first line defines field name. if --fields is defined, the first line will be ignored if this options is true"
+#define EXPLAIN_SPARSE           "for csv input, whether to add missing field, default: true"
+#define EXPLAIN_EXTRA            "for csv input, whether to add missing value, default: false"
 #define EXPLAIN_LINEPRIORITY     "reverse the priority for record and character delimiter, default: true"
-#define EXPLAIN_ERRORSTOP        "if an error is stopped, default false"
-#define EXPLAIN_FORCE            "data is not utf8, forced to insert data, default: false"
+#define EXPLAIN_ERRORSTOP        "whether stop by hitting error, default false"
+#define EXPLAIN_FORCE            "force to insert the records that are not in utf-8 format, default: false"
 
 INT32 main ( INT32 argc, CHAR **argv )
 {

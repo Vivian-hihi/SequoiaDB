@@ -419,9 +419,9 @@ string password = NULLSTRING ;
 #define COMMANDS_OPTIONS \
        ( COMMANDS_STRING(OPTION_HELP, ",h"), "help" )\
        ( COMMANDS_STRING(OPTION_CONFPATH, ",c"),boost::program_options::value<string>(), "configuration file path" ) \
-       ( COMMANDS_STRING(OPTION_HOSTNAME, ",i"), boost::program_options::value<string>(), "hostname" ) \
-       ( COMMANDS_STRING(OPTION_SERVICENAME, ",s"), boost::program_options::value<string>(), "servicename" ) \
-       ( COMMANDS_STRING(OPTION_USRNAME, ",u"), boost::program_options::value<string>(), "usrname" ) \
+       ( COMMANDS_STRING(OPTION_HOSTNAME, ",i"), boost::program_options::value<string>(), "host name" ) \
+       ( COMMANDS_STRING(OPTION_SERVICENAME, ",s"), boost::program_options::value<string>(), "service name" ) \
+       ( COMMANDS_STRING(OPTION_USRNAME, ",u"), boost::program_options::value<string>(), "username" ) \
        ( COMMANDS_STRING(OPTION_PASSWORD, ",p"), boost::program_options::value<string>(), "password" ) 
 
 struct Colours

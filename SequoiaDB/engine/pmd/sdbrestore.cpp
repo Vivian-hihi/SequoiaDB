@@ -89,18 +89,18 @@ namespace engine
       ( PMD_COMMANDS_STRING (RS_BK_NAME, ",n"), boost::program_options::value<string>(), "backup name" ) \
       ( PMD_COMMANDS_STRING (RS_BK_ACTION, ",a"), boost::program_options::value<string>(), "action(restore/list), defalut is restore" ) \
       ( PMD_COMMANDS_STRING (PMD_OPTION_DIAGLEVEL, ",v"), boost::program_options::value<int>(), "diag level,default:3,value range:[0-5]" ) \
-      ( RS_BK_IS_SELF, boost::program_options::value<string>(), "wether restore self node(true/false),default is true" ) \
-      ( PMD_OPTION_DBPATH, boost::program_options::value<string>(), "database path" ) \
-      ( PMD_OPTION_IDXPATH, boost::program_options::value<string>(), "index path" ) \
-      ( PMD_OPTION_LOGPATH, boost::program_options::value<string>(), "log file path" ) \
-      ( PMD_OPTION_CONFPATH, boost::program_options::value<string>(), "configure file path" ) \
-      ( PMD_OPTION_DIAGLOGPATH, boost::program_options::value<string>(), "diagnostic log file path" ) \
-      ( PMD_OPTION_BKUPPATH, boost::program_options::value<string>(), "backup path" ) \
-      ( PMD_OPTION_SVCNAME, boost::program_options::value<string>(), "local service name or port" ) \
-      ( PMD_OPTION_REPLNAME, boost::program_options::value<string>(), "replication service name or port" ) \
-      ( PMD_OPTION_SHARDNAME, boost::program_options::value<string>(), "sharding service name or port" ) \
-      ( PMD_OPTION_CATANAME, boost::program_options::value<string>(), "catalog service name or port" ) \
-      ( PMD_OPTION_RESTNAME, boost::program_options::value<string>(), "REST service name or port" ) \
+      ( RS_BK_IS_SELF, boost::program_options::value<string>(),          "whether restore self node(true/false),default is true" ) \
+      ( PMD_OPTION_DBPATH, boost::program_options::value<string>(),      "override database path" )                    \
+      ( PMD_OPTION_IDXPATH, boost::program_options::value<string>(),     "override index path" )                       \
+      ( PMD_OPTION_LOGPATH, boost::program_options::value<string>(),     "override log file path" )                    \
+      ( PMD_OPTION_CONFPATH, boost::program_options::value<string>(),    "override configure file path" )              \
+      ( PMD_OPTION_DIAGLOGPATH, boost::program_options::value<string>(), "override diagnostic log file path" )         \
+      ( PMD_OPTION_BKUPPATH, boost::program_options::value<string>(),    "override backup path" )                      \
+      ( PMD_OPTION_SVCNAME, boost::program_options::value<string>(),     "override local service name or port" )       \
+      ( PMD_OPTION_REPLNAME, boost::program_options::value<string>(),    "override replication service name or port" ) \
+      ( PMD_OPTION_SHARDNAME, boost::program_options::value<string>(),   "override sharding service name or port" )    \
+      ( PMD_OPTION_CATANAME, boost::program_options::value<string>(),    "override catalog service name or port" )     \
+      ( PMD_OPTION_RESTNAME, boost::program_options::value<string>(),    "override REST service name or port" )        \
 
    #define RS_BK_ACTION_NAME_LEN          (20)
 

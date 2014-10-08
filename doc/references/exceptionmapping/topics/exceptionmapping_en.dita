@@ -41,15 +41,15 @@
             <stentry>-8</stentry>
          </strow>
          <strow>
-            <stentry>hit end of file</stentry>
+            <stentry>Hit end of file</stentry>
             <stentry>-9</stentry>
          </strow>
          <strow>
-            <stentry>system error</stentry>
+            <stentry>System error</stentry>
             <stentry>-10</stentry>
          </strow>
          <strow>
-            <stentry>has no space</stentry>
+            <stentry>No space is left on disk</stentry>
             <stentry>-11</stentry>
          </strow>
          <strow>
@@ -93,139 +93,139 @@
             <stentry>-21</stentry>
          </strow>
          <strow>
-            <stentry>collection already exist</stentry>
+            <stentry>Collection already exists</stentry>
             <stentry>-22</stentry>
          </strow>
          <strow>
-            <stentry>collection does not exist</stentry>
+            <stentry>Collection does not exist</stentry>
             <stentry>-23</stentry>
          </strow>
          <strow>
-            <stentry>user record is too big</stentry>
+            <stentry>User record is too large</stentry>
             <stentry>-24</stentry>
          </strow>
          <strow>
-            <stentry>record does not exist</stentry>
+            <stentry>Record does not exist</stentry>
             <stentry>-25</stentry>
          </strow>
          <strow>
-            <stentry>remote overflow record exist</stentry>
+            <stentry>Remote overflow record exists</stentry>
             <stentry>-26</stentry>
          </strow>
          <strow>
-            <stentry>invalid record</stentry>
+            <stentry>Invalid record</stentry>
             <stentry>-27</stentry>
          </strow>
          <strow>
-            <stentry>storage unit need reorg</stentry>
+            <stentry>Storage unit need reorg</stentry>
             <stentry>-28</stentry>
          </strow>
          <strow>
-            <stentry>end of collection</stentry>
+            <stentry>End of collection</stentry>
             <stentry>-29</stentry>
          </strow>
          <strow>
-            <stentry>context is already opened</stentry>
+            <stentry>Context is already opened</stentry>
             <stentry>-30</stentry>
          </strow>
          <strow>
-            <stentry>context is closed</stentry>
+            <stentry>Context is closed</stentry>
             <stentry>-31</stentry>
          </strow>
          <strow>
-            <stentry>option is not supported yet</stentry>
+            <stentry>Option is not supported yet</stentry>
             <stentry>-32</stentry>
          </strow>
          <strow>
-            <stentry>collection space already exist</stentry>
+            <stentry>Collection space already exists</stentry>
             <stentry>-33</stentry>
          </strow>
          <strow>
-            <stentry>collection space not exist</stentry>
+            <stentry>Collection space does not exist</stentry>
             <stentry>-34</stentry>
          </strow>
          <strow>
-            <stentry>storage unit file is invalid</stentry>
+            <stentry>Storage unit file is invalid</stentry>
             <stentry>-35</stentry>
          </strow>
          <strow>
-            <stentry>context not exist</stentry>
+            <stentry>Context does not exist</stentry>
             <stentry>-36</stentry>
          </strow>
          <strow>
-            <stentry>more than one field has array</stentry>
+            <stentry>More than one fields are array type</stentry>
             <stentry>-37</stentry>
          </strow>
          <strow>
-            <stentry>duplicate key exist</stentry>
+            <stentry>Duplicate key exist</stentry>
             <stentry>-38</stentry>
          </strow>
          <strow>
-            <stentry>key is too large</stentry>
+            <stentry>Index key is too large</stentry>
             <stentry>-39</stentry>
          </strow>
          <strow>
-            <stentry>index extent has no space</stentry>
+            <stentry>No space can be found for index extent</stentry>
             <stentry>-40</stentry>
          </strow>
          <strow>
-            <stentry>index key not exist</stentry>
+            <stentry>Index key does not exist</stentry>
             <stentry>-41</stentry>
          </strow>
          <strow>
-            <stentry>hit max number of index</stentry>
+            <stentry>Hit max number of index</stentry>
             <stentry>-42</stentry>
          </strow>
          <strow>
-            <stentry>failed to initialize index</stentry>
+            <stentry>Failed to initialize index</stentry>
             <stentry>-43</stentry>
          </strow>
          <strow>
-            <stentry>collection is dropped</stentry>
+            <stentry>Collection is dropped</stentry>
             <stentry>-44</stentry>
          </strow>
          <strow>
-            <stentry>two records get same key and rid</stentry>
+            <stentry>Two records get same key and rid</stentry>
             <stentry>-45</stentry>
          </strow>
          <strow>
-            <stentry>duplicate index name</stentry>
+            <stentry>Duplicate index name</stentry>
             <stentry>-46</stentry>
          </strow>
          <strow>
-            <stentry>index name doesn't exist</stentry>
+            <stentry>Index name does not exist</stentry>
             <stentry>-47</stentry>
          </strow>
          <strow>
-            <stentry>index flag is unexpected</stentry>
+            <stentry>Unexpected index flag</stentry>
             <stentry>-48</stentry>
          </strow>
          <strow>
-            <stentry>hit end of index</stentry>
+            <stentry>Hit end of index</stentry>
             <stentry>-49</stentry>
          </strow>
          <strow>
-            <stentry>hit max of dedup buffer</stentry>
+            <stentry>Hit the max of dedup buffer</stentry>
             <stentry>-50</stentry>
          </strow>
          <strow>
-            <stentry>invalid predicates</stentry>
+            <stentry>Invalid predicates</stentry>
             <stentry>-51</stentry>
          </strow>
          <strow>
-            <stentry>index is no longer exist</stentry>
+            <stentry>Index does not exist</stentry>
             <stentry>-52</stentry>
          </strow>
          <strow>
-            <stentry>index hint is not valid</stentry>
+            <stentry>Invalid hint</stentry>
             <stentry>-53</stentry>
          </strow>
          <strow>
-            <stentry>no more temp tables avaliable</stentry>
+            <stentry>No more temp collections are avaliable</stentry>
             <stentry>-54</stentry>
          </strow>
          <strow>
-            <stentry>exceed max number of SU</stentry>
+            <stentry>Exceed max number of storage unit</stentry>
             <stentry>-55</stentry>
          </strow>
          <strow>
@@ -233,235 +233,235 @@
             <stentry>-56</stentry>
          </strow>
          <strow>
-            <stentry>log was not found in log buf</stentry>
+            <stentry>Log was not found in log buf</stentry>
             <stentry>-57</stentry>
          </strow>
          <strow>
-            <stentry>log was not found in log file</stentry>
+            <stentry>Log was not found in log file</stentry>
             <stentry>-58</stentry>
          </strow>
          <strow>
-            <stentry>replication group not exist</stentry>
+            <stentry>Replication group does not exist</stentry>
             <stentry>-59</stentry>
          </strow>
          <strow>
-            <stentry>replication group exist</stentry>
+            <stentry>Replication group exists</stentry>
             <stentry>-60</stentry>
          </strow>
          <strow>
-            <stentry>invalid request id is received</stentry>
+            <stentry>Invalid request id is received</stentry>
             <stentry>-61</stentry>
          </strow>
          <strow>
-            <stentry>session ID does not exist</stentry>
+            <stentry>Session ID does not exist</stentry>
             <stentry>-62</stentry>
          </strow>
          <strow>
-            <stentry>system edu can't be forced</stentry>
+            <stentry>System EDU cannot be forced</stentry>
             <stentry>-63</stentry>
          </strow>
          <strow>
-            <stentry>database is not connected</stentry>
+            <stentry>Database is not connected</stentry>
             <stentry>-64</stentry>
          </strow>
          <strow>
-            <stentry>unexpected result received</stentry>
+            <stentry>Unexpected result received</stentry>
             <stentry>-65</stentry>
          </strow>
          <strow>
-            <stentry>corrupted record</stentry>
+            <stentry>Corrupted record</stentry>
             <stentry>-66</stentry>
          </strow>
          <strow>
-            <stentry>backup has already started</stentry>
+            <stentry>Backup has already been started</stentry>
             <stentry>-67</stentry>
          </strow>
          <strow>
-            <stentry>backup not completed</stentry>
+            <stentry>Backup is not completed</stentry>
             <stentry>-68</stentry>
          </strow>
          <strow>
-            <stentry>backup in progress mode</stentry>
+            <stentry>Backup is in progress</stentry>
             <stentry>-69</stentry>
          </strow>
          <strow>
-            <stentry>backup file is damaged</stentry>
+            <stentry>Backup is corrupted</stentry>
             <stentry>-70</stentry>
          </strow>
          <strow>
-            <stentry>there's no primary found</stentry>
+            <stentry>No primary node was found</stentry>
             <stentry>-71</stentry>
          </strow>
          <strow>
-            <stentry>the requested node not exist</stentry>
+            <stentry>Requested node does not exist</stentry>
             <stentry>-72</stentry>
          </strow>
          <strow>
-            <stentry>engine help argument is specified</stentry>
+            <stentry>Engine help argument is specified</stentry>
             <stentry>-73</stentry>
          </strow>
          <strow>
-            <stentry>connection state is not valid</stentry>
+            <stentry>Invalid connection state</stentry>
             <stentry>-74</stentry>
          </strow>
          <strow>
-            <stentry>invalid handle</stentry>
+            <stentry>Invalid handle</stentry>
             <stentry>-75</stentry>
          </strow>
          <strow>
-            <stentry>client object is freed</stentry>
+            <stentry>Object does not exist</stentry>
             <stentry>-76</stentry>
          </strow>
          <strow>
-            <stentry>transfer has already listened</stentry>
+            <stentry>Listening port is already occupied</stentry>
             <stentry>-77</stentry>
          </strow>
          <strow>
-            <stentry>can not listen specified addr</stentry>
+            <stentry>Unable to listen the specified address</stentry>
             <stentry>-78</stentry>
          </strow>
          <strow>
-            <stentry>cannot connect to specified addr</stentry>
+            <stentry>Unable to connect to the specified address</stentry>
             <stentry>-79</stentry>
          </strow>
          <strow>
-            <stentry>connection does not exist</stentry>
+            <stentry>Connection does not exist</stentry>
             <stentry>-80</stentry>
          </strow>
          <strow>
-            <stentry>failed to send</stentry>
+            <stentry>Failed to send</stentry>
             <stentry>-81</stentry>
          </strow>
          <strow>
-            <stentry>timer id not found</stentry>
+            <stentry>Timer does not exist</stentry>
             <stentry>-82</stentry>
          </strow>
          <strow>
-            <stentry>route info not found</stentry>
+            <stentry>Route info does not exist</stentry>
             <stentry>-83</stentry>
          </strow>
          <strow>
-            <stentry>broken msg</stentry>
+            <stentry>Broken msg</stentry>
             <stentry>-84</stentry>
          </strow>
          <strow>
-            <stentry>invalid net handle</stentry>
+            <stentry>Invalid net handle</stentry>
             <stentry>-85</stentry>
          </strow>
          <strow>
-            <stentry>reorg file is not valid</stentry>
+            <stentry>Invalid reorg file</stentry>
             <stentry>-86</stentry>
          </strow>
          <strow>
-            <stentry>reorg file is in read only mode</stentry>
+            <stentry>Reorg file is in read only mode</stentry>
             <stentry>-87</stentry>
          </strow>
          <strow>
-            <stentry>collection status is not valid</stentry>
+            <stentry>Collection status is not valid</stentry>
             <stentry>-88</stentry>
          </strow>
          <strow>
-            <stentry>collection is not in reorg state</stentry>
+            <stentry>Collection is not in reorg state</stentry>
             <stentry>-89</stentry>
          </strow>
          <strow>
-            <stentry>replication group is not activated</stentry>
+            <stentry>Replication group is not activated</stentry>
             <stentry>-90</stentry>
          </strow>
          <strow>
-            <stentry>the member is not in this group</stentry>
+            <stentry>Node does not belong to the group</stentry>
             <stentry>-91</stentry>
          </strow>
          <strow>
-            <stentry>collection flag not compatible</stentry>
+            <stentry>Collection status is not compatible</stentry>
             <stentry>-92</stentry>
          </strow>
          <strow>
-            <stentry>stroage unit version not compatible</stentry>
+            <stentry>Incompatible version for storage unit</stentry>
             <stentry>-93</stentry>
          </strow>
          <strow>
-            <stentry>local group version is expired</stentry>
+            <stentry>Version is expired for local group</stentry>
             <stentry>-94</stentry>
          </strow>
          <strow>
-            <stentry>page size is not valid</stentry>
+            <stentry>Invalid page size</stentry>
             <stentry>-95</stentry>
          </strow>
          <strow>
-            <stentry>remote group version is expired</stentry>
+            <stentry>Version is expired for remote group</stentry>
             <stentry>-96</stentry>
          </strow>
          <strow>
-            <stentry>failed to create a poll</stentry>
+            <stentry>Failed to vote for primary</stentry>
             <stentry>-97</stentry>
          </strow>
          <strow>
-            <stentry>log record is corrupted</stentry>
+            <stentry>Log record is corrupted</stentry>
             <stentry>-98</stentry>
          </strow>
          <strow>
-            <stentry>given lsn greater than latest</stentry>
+            <stentry>LSN is out of boundary</stentry>
             <stentry>-99</stentry>
          </strow>
          <strow>
-            <stentry>received unknown mesage</stentry>
+            <stentry>Unknown mesage is received</stentry>
             <stentry>-100</stentry>
          </strow>
          <strow>
-            <stentry>updated information is same as old one</stentry>
+            <stentry>Updated information is same as old one</stentry>
             <stentry>-101</stentry>
          </strow>
          <strow>
-            <stentry>unknow message</stentry>
+            <stentry>Unknown message</stentry>
             <stentry>-102</stentry>
          </strow>
          <strow>
-            <stentry>empty heap</stentry>
+            <stentry>Empty heap</stentry>
             <stentry>-103</stentry>
          </strow>
          <strow>
-            <stentry>not primary</stentry>
+            <stentry>Node is not primary</stentry>
             <stentry>-104</stentry>
          </strow>
          <strow>
-            <stentry>data node not enough</stentry>
+            <stentry>Not enough number of data nodes</stentry>
             <stentry>-105</stentry>
          </strow>
          <strow>
-            <stentry>data node have no catalog info</stentry>
+            <stentry>Catalog information does not exist on data node</stentry>
             <stentry>-106</stentry>
          </strow>
          <strow>
-            <stentry>data node catlog version old</stentry>
+            <stentry>Catalog version is expired on data node</stentry>
             <stentry>-107</stentry>
          </strow>
          <strow>
-            <stentry>coord node catalog version old</stentry>
+            <stentry>Catalog version is expired on coordinator node</stentry>
             <stentry>-108</stentry>
          </strow>
          <strow>
-            <stentry>exceds the max group size</stentry>
+            <stentry>Exceeds the max group size</stentry>
             <stentry>-109</stentry>
          </strow>
          <strow>
-            <stentry>failed to sync log</stentry>
+            <stentry>Failed to sync log</stentry>
             <stentry>-110</stentry>
          </strow>
          <strow>
-            <stentry>failed to replay log</stentry>
+            <stentry>Failed to replay log</stentry>
             <stentry>-111</stentry>
          </strow>
          <strow>
-            <stentry>error http struct</stentry>
+            <stentry>Invalid HTTP header</stentry>
             <stentry>-112</stentry>
          </strow>
          <strow>
-            <stentry>failed to negotiate</stentry>
+            <stentry>Failed to negotiate</stentry>
             <stentry>-113</stentry>
          </strow>
          <strow>
-            <stentry>failed to change dps metadata</stentry>
+            <stentry>Failed to change DPS metadata</stentry>
             <stentry>-114</stentry>
          </strow>
          <strow>
@@ -469,175 +469,175 @@
             <stentry>-115</stentry>
          </strow>
          <strow>
-            <stentry>application is interrupted</stentry>
+            <stentry>Application is interrupted</stentry>
             <stentry>-116</stentry>
          </strow>
          <strow>
-            <stentry>application is disconnected</stentry>
+            <stentry>Application is disconnected</stentry>
             <stentry>-117</stentry>
          </strow>
          <strow>
-            <stentry>character encoding errors</stentry>
+            <stentry>Character encoding errors</stentry>
             <stentry>-118</stentry>
          </strow>
          <strow>
-            <stentry>get failed msg from the node</stentry>
+            <stentry>Failed to query on coord node</stentry>
             <stentry>-119</stentry>
          </strow>
          <strow>
-            <stentry>buffer array is full</stentry>
+            <stentry>Buffer array is full</stentry>
             <stentry>-120</stentry>
          </strow>
          <strow>
-            <stentry>sub context is conflict</stentry>
+            <stentry>Sub context is conflict</stentry>
             <stentry>-121</stentry>
          </strow>
          <strow>
-            <stentry>coord received EOC message</stentry>
+            <stentry>EOC message is received by coordinator node</stentry>
             <stentry>-122</stentry>
          </strow>
          <strow>
-            <stentry>DPS file size are not the same</stentry>
+            <stentry>Size of DPS files are not the same</stentry>
             <stentry>-123</stentry>
          </strow>
          <strow>
-            <stentry>dps file not recognise</stentry>
+            <stentry>Invalid DPS log file</stentry>
             <stentry>-124</stentry>
          </strow>
          <strow>
-            <stentry>no resource</stentry>
+            <stentry>No resource is avaliable</stentry>
             <stentry>-125</stentry>
          </strow>
          <strow>
-            <stentry>invalid lsn</stentry>
+            <stentry>Invalid LSN</stentry>
             <stentry>-126</stentry>
          </strow>
          <strow>
-            <stentry>data to pipe is too big</stentry>
+            <stentry>Pipe buffer size is too small</stentry>
             <stentry>-127</stentry>
          </strow>
          <strow>
-            <stentry>catalog auth failed</stentry>
+            <stentry>Catalog authentication failed</stentry>
             <stentry>-128</stentry>
          </strow>
          <strow>
-            <stentry>node is full sync</stentry>
+            <stentry>Full sync is in progress</stentry>
             <stentry>-129</stentry>
          </strow>
          <strow>
-            <stentry>catnode failed assign data-node</stentry>
+            <stentry>Failed to assign data node from coordinator node</stentry>
             <stentry>-130</stentry>
          </strow>
          <strow>
-            <stentry>php driver internal error</stentry>
+            <stentry>PHP driver internal error</stentry>
             <stentry>-131</stentry>
          </strow>
          <strow>
-            <stentry>failed to send the message</stentry>
+            <stentry>Failed to send the message</stentry>
             <stentry>-132</stentry>
          </strow>
          <strow>
-            <stentry>there is no node-group register in catalogue-node</stentry>
+            <stentry>Unable to find the group information on catalog</stentry>
             <stentry>-133</stentry>
          </strow>
          <strow>
-            <stentry>remote-node disconnected</stentry>
+            <stentry>Remote-node is disconnected</stentry>
             <stentry>-134</stentry>
          </strow>
          <strow>
-            <stentry>couldn't find the match catalogue-info</stentry>
+            <stentry>Unable to find the catalog information</stentry>
             <stentry>-135</stentry>
          </strow>
          <strow>
-            <stentry>update catalog failed</stentry>
+            <stentry>Failed to update catalog</stentry>
             <stentry>-136</stentry>
          </strow>
          <strow>
-            <stentry>received invalid request which opcode is unknowned</stentry>
+            <stentry>Unknown request operation code</stentry>
             <stentry>-137</stentry>
          </strow>
          <strow>
-            <stentry>coord couldn't find the group-info in local</stentry>
+            <stentry>Group information cannot be found on coordinator node</stentry>
             <stentry>-138</stentry>
          </strow>
          <strow>
-            <stentry>dms extent is corrupted</stentry>
+            <stentry>DMS extent is corrupted</stentry>
             <stentry>-139</stentry>
          </strow>
          <strow>
-            <stentry>remote cluster manage failed</stentry>
+            <stentry>Remote cluster manager failed</stentry>
             <stentry>-140</stentry>
          </strow>
          <strow>
-            <stentry>remote engines have been stopped partially</stentry>
+            <stentry>Remote database services have been stopped</stentry>
             <stentry>-141</stentry>
          </strow>
          <strow>
-            <stentry>sdb service is starting</stentry>
+            <stentry>Service is starting</stentry>
             <stentry>-142</stentry>
          </strow>
          <strow>
-            <stentry>sdb service has already been started</stentry>
+            <stentry>Service has been started</stentry>
             <stentry>-143</stentry>
          </strow>
          <strow>
-            <stentry>sdb service is restarting</stentry>
+            <stentry>Service is restarting</stentry>
             <stentry>-144</stentry>
          </strow>
          <strow>
-            <stentry>sdb node is already existed</stentry>
+            <stentry>Node already exists</stentry>
             <stentry>-145</stentry>
          </strow>
          <strow>
-            <stentry>sdb node is not existed</stentry>
+            <stentry>Node does not exist</stentry>
             <stentry>-146</stentry>
          </strow>
          <strow>
-            <stentry>unable to lock</stentry>
+            <stentry>Unable to lock</stentry>
             <stentry>-147</stentry>
          </strow>
          <strow>
-            <stentry>dms state is not compatible with current command</stentry>
+            <stentry>DMS state is not compatible with current command</stentry>
             <stentry>-148</stentry>
          </strow>
          <strow>
-            <stentry>rebuild has already started</stentry>
+            <stentry>Database rebuild is already started</stentry>
             <stentry>-149</stentry>
          </strow>
          <strow>
-            <stentry>rebuild in progress mode</stentry>
+            <stentry>Database rebuild is in progress</stentry>
             <stentry>-150</stentry>
          </strow>
          <strow>
-            <stentry>there is no data in the coord-node's cache </stentry>
+            <stentry>Cache is empty on coordinator node</stentry>
             <stentry>-151</stentry>
          </strow>
          <strow>
-            <stentry>errors occur during the process of evalution</stentry>
+            <stentry>Evalution failed with error</stentry>
             <stentry>-152</stentry>
          </strow>
          <strow>
-            <stentry>group already exist</stentry>
+            <stentry>Group already exist</stentry>
             <stentry>-153</stentry>
          </strow>
          <strow>
-            <stentry>group does not exist</stentry>
+            <stentry>Group does not exist</stentry>
             <stentry>-154</stentry>
          </strow>
          <strow>
-            <stentry>node does not exist</stentry>
+            <stentry>Node does not exist</stentry>
             <stentry>-155</stentry>
          </strow>
          <strow>
-            <stentry>failed to start the node</stentry>
+            <stentry>Failed to start the node</stentry>
             <stentry>-156</stentry>
          </strow>
          <strow>
-            <stentry>node'configure conflicts</stentry>
+            <stentry>Invalid node configuration</stentry>
             <stentry>-157</stentry>
          </strow>
          <strow>
-            <stentry>group is empty</stentry>
+            <stentry>Group is empty</stentry>
             <stentry>-158</stentry>
          </strow>
          <strow>
@@ -645,7 +645,7 @@
             <stentry>-159</stentry>
          </strow>
          <strow>
-            <stentry>failed to operate on node only</stentry>
+            <stentry>Failed to operate on node only</stentry>
             <stentry>-160</stentry>
          </strow>
          <strow>
@@ -721,7 +721,7 @@
             <stentry>-178</stentry>
          </strow>
          <strow>
-            <stentry>authority is forbidden</stentry>
+            <stentry>Authority is forbidden</stentry>
             <stentry>-179</stentry>
          </strow>
          <strow>
@@ -729,19 +729,19 @@
             <stentry>-180</stentry>
          </strow>
          <strow>
-            <stentry>current record has been deleted</stentry>
+            <stentry>Current record has been removed</stentry>
             <stentry>-181</stentry>
          </strow>
          <strow>
-            <stentry>search condition cannot match any records</stentry>
+            <stentry>No records can be matched for the search condition</stentry>
             <stentry>-182</stentry>
          </strow>
          <strow>
-            <stentry>index page is reorged and the pos got different lchild</stentry>
+            <stentry>Index page is reorged and the pos got different lchild</stentry>
             <stentry>-183</stentry>
          </strow>
          <strow>
-            <stentry>There are duplicate field name exists in the record</stentry>
+            <stentry>Duplicate field name exists in the record</stentry>
             <stentry>-184</stentry>
          </strow>
          <strow>
@@ -765,143 +765,143 @@
             <stentry>-189</stentry>
          </strow>
          <strow>
-            <stentry>transaction-lock is incompatible</stentry>
+            <stentry>Incompatible lock</stentry>
             <stentry>-190</stentry>
          </strow>
          <strow>
-            <stentry>system is doing rollback</stentry>
+            <stentry>Rollback operation is in progress</stentry>
             <stentry>-191</stentry>
          </strow>
          <strow>
-            <stentry>Bad record when doing sdb import </stentry>
+            <stentry>Invalid record is found during import</stentry>
             <stentry>-192</stentry>
          </strow>
          <strow>
-            <stentry>repeat var name was found</stentry>
+            <stentry>Repeated variable name</stentry>
             <stentry>-193</stentry>
          </strow>
          <strow>
-            <stentry>column field is ambiguous</stentry>
+            <stentry>Column name is ambiguous</stentry>
             <stentry>-194</stentry>
          </strow>
          <strow>
-            <stentry>have an error in sql syntax</stentry>
+            <stentry>SQL syntax error</stentry>
             <stentry>-195</stentry>
          </strow>
          <strow>
-            <stentry>invalid transactional operation</stentry>
+            <stentry>Invalid transactional operation</stentry>
             <stentry>-196</stentry>
          </strow>
          <strow>
-            <stentry>append to lock-wait-queue</stentry>
+            <stentry>Append to lock-wait-queue</stentry>
             <stentry>-197</stentry>
          </strow>
          <strow>
-            <stentry>record is deleting</stentry>
+            <stentry>Record is deleted</stentry>
             <stentry>-198</stentry>
          </strow>
          <strow>
-            <stentry>index is dropped or invalid</stentry>
+            <stentry>Index is dropped or invalid</stentry>
             <stentry>-199</stentry>
          </strow>
          <strow>
-            <stentry>repeat to create catalog-group</stentry>
+            <stentry>Unable to create new catalog when there's already one exists</stentry>
             <stentry>-200</stentry>
          </strow>
          <strow>
-            <stentry>parse json error</stentry>
+            <stentry>Failed to parse JSON file</stentry>
             <stentry>-201</stentry>
          </strow>
          <strow>
-            <stentry>parse CSV error</stentry>
+            <stentry>Failed to parse CSV file</stentry>
             <stentry>-202</stentry>
          </strow>
          <strow>
-            <stentry>log file is out of size</stentry>
+            <stentry>Log file size is too large</stentry>
             <stentry>-203</stentry>
          </strow>
          <strow>
-            <stentry>can not remove the only node in the group</stentry>
+            <stentry>Unable to remove the last node in a group</stentry>
             <stentry>-204</stentry>
          </strow>
          <strow>
-            <stentry>need to manually complete the cleanup</stentry>
+            <stentry>Unable to clean up catalog, manual cleanup may be required</stentry>
             <stentry>-205</stentry>
          </strow>
          <strow>
-            <stentry>can not remove node or group of catalog when other group exist</stentry>
+            <stentry>Unable to remove catalog for non-empty database</stentry>
             <stentry>-206</stentry>
          </strow>
          <strow>
-            <stentry>group is not exist</stentry>
+            <stentry>Group does not exist</stentry>
             <stentry>-207</stentry>
          </strow>
          <strow>
-            <stentry>can not remove the group with data in it</stentry>
+            <stentry>Unable to remove non-empty group</stentry>
             <stentry>-208</stentry>
          </strow>
          <strow>
-            <stentry>end of queue</stentry>
+            <stentry>End of queue</stentry>
             <stentry>-209</stentry>
          </strow>
          <strow>
-            <stentry>collection has not sharding index, can not split by percent</stentry>
+            <stentry>Unable to split because of no sharding index exists</stentry>
             <stentry>-210</stentry>
          </strow>
          <strow>
-            <stentry>the param field not exist</stentry>
+            <stentry>The parameter field does not exist</stentry>
             <stentry>-211</stentry>
          </strow>
          <strow>
-            <stentry>too many trace break points are specified</stentry>
+            <stentry>Too many break points are specified</stentry>
             <stentry>-212</stentry>
          </strow>
          <strow>
-            <stentry>prefetchers are all busy</stentry>
+            <stentry>All prefetchers are busy</stentry>
             <stentry>-213</stentry>
          </strow>
          <strow>
-            <stentry>domain not exist</stentry>
+            <stentry>Domain does not exist</stentry>
             <stentry>-214</stentry>
          </strow>
          <strow>
-            <stentry>domain already exist</stentry>
+            <stentry>Domain already exists</stentry>
             <stentry>-215</stentry>
          </strow>
          <strow>
-            <stentry>group is not in domain</stentry>
+            <stentry>Group is not in domain</stentry>
             <stentry>-216</stentry>
          </strow>
          <strow>
-            <stentry>sharding type is not hash</stentry>
+            <stentry>Sharding type is not hash</stentry>
             <stentry>-217</stentry>
          </strow>
          <strow>
-            <stentry>split percent is lower</stentry>
+            <stentry>split percentage is lower then expected</stentry>
             <stentry>-218</stentry>
          </strow>
          <strow>
-            <stentry>task already finished, can not be caceled</stentry>
+            <stentry>Task is already finished</stentry>
             <stentry>-219</stentry>
          </strow>
          <strow>
-            <stentry>collection is loading</stentry>
+            <stentry>Collection is in loading status</stentry>
             <stentry>-220</stentry>
          </strow>
          <strow>
-            <stentry>load is error, and rollback</stentry>
+            <stentry>Rolling back load operation</stentry>
             <stentry>-221</stentry>
          </strow>
          <strow>
-            <stentry>routeID is different from the local</stentry>
+            <stentry>RouteID is different from the local</stentry>
             <stentry>-222</stentry>
          </strow>
          <strow>
-            <stentry>service already exists</stentry>
+            <stentry>Service already exists</stentry>
             <stentry>-223</stentry>
          </strow>
          <strow>
-            <stentry>not find field</stentry>
+            <stentry>Field is not found</stentry>
             <stentry>-224</stentry>
          </strow>
          <strow>
@@ -909,123 +909,123 @@
             <stentry>-225</stentry>
          </strow>
          <strow>
-            <stentry>unknow file type</stentry>
+            <stentry>Unknown file type</stentry>
             <stentry>-226</stentry>
          </strow>
          <strow>
-            <stentry>not all nodes are successful to export configuration</stentry>
+            <stentry>Exporting configuration does not complete in all nodes</stentry>
             <stentry>-227</stentry>
          </strow>
          <strow>
-            <stentry>this node is not primary and has no data</stentry>
+            <stentry>Empty non-primary node</stentry>
             <stentry>-228</stentry>
          </strow>
          <strow>
-            <stentry>secret value not same with data unit</stentry>
+            <stentry>Secret value for index file does not match with data file</stentry>
             <stentry>-229</stentry>
          </strow>
          <strow>
-            <stentry>engine version argument is specified</stentry>
+            <stentry>Engine version argument is specified</stentry>
             <stentry>-230</stentry>
          </strow>
          <strow>
-            <stentry>sdb help argument is specified</stentry>
+            <stentry>Help argument is specified</stentry>
             <stentry>-231</stentry>
          </strow>
          <strow>
-            <stentry>sdb version argument is specified</stentry>
+            <stentry>Version argument is specified</stentry>
             <stentry>-232</stentry>
          </strow>
          <strow>
-            <stentry>store procedure is not exist</stentry>
+            <stentry>Stored procedure does not exist</stentry>
             <stentry>-233</stentry>
          </strow>
          <strow>
-            <stentry>illegal remove sub-collection</stentry>
+            <stentry>Unable to remove collection partition</stentry>
             <stentry>-234</stentry>
          </strow>
          <strow>
-            <stentry>duplicate link sub-collection</stentry>
+            <stentry>Duplicated attach collection partition</stentry>
             <stentry>-235</stentry>
          </strow>
          <strow>
-            <stentry>invalid main-collection</stentry>
+            <stentry>Invalid partitioned-collection</stentry>
             <stentry>-236</stentry>
          </strow>
          <strow>
-            <stentry>new boundary is conflict with the existing boundary</stentry>
+            <stentry>New boundary is conflict with the existing boundary</stentry>
             <stentry>-237</stentry>
          </strow>
          <strow>
-            <stentry>new boundary is invalid</stentry>
+            <stentry>Invalid boundary for the shard</stentry>
             <stentry>-238</stentry>
          </strow>
          <strow>
-            <stentry>hit the high water mark</stentry>
+            <stentry>Hit the high water mark</stentry>
             <stentry>-239</stentry>
          </strow>
          <strow>
-            <stentry>backup already exist</stentry>
+            <stentry>Backup already exists</stentry>
             <stentry>-240</stentry>
          </strow>
          <strow>
-            <stentry>backup not exist</stentry>
+            <stentry>Backup does not exist</stentry>
             <stentry>-241</stentry>
          </strow>
          <strow>
-            <stentry>invalid sub-collection</stentry>
+            <stentry>Invalid collection partition</stentry>
             <stentry>-242</stentry>
          </strow>
          <strow>
-            <stentry>task has canceled</stentry>
+            <stentry>Task is canceled</stentry>
             <stentry>-243</stentry>
          </strow>
          <strow>
-            <stentry>the sharding-type of main-collection must be range</stentry>
+            <stentry>Sharding type must be ranged partition for partitioned-collection</stentry>
             <stentry>-244</stentry>
          </strow>
          <strow>
-            <stentry>there is no valid sharding-key field</stentry>
+            <stentry>There is no valid sharding-key defined</stentry>
             <stentry>-245</stentry>
          </strow>
          <strow>
-            <stentry>the operation not support on main-collection</stentry>
+            <stentry>Operation is not supported on partitioned-collection</stentry>
             <stentry>-246</stentry>
          </strow>
          <strow>
-            <stentry>redefine index</stentry>
+            <stentry>Redefine index</stentry>
             <stentry>-247</stentry>
          </strow>
          <strow>
-            <stentry>Deleting the CS</stentry>
+            <stentry>Dropping the collection space is in progress</stentry>
             <stentry>-248</stentry>
          </strow>
          <strow>
-            <stentry>Reached the maximum number of nodes</stentry>
+            <stentry>Hit the limit of maximum number of nodes in the cluster</stentry>
             <stentry>-249</stentry>
          </strow>
          <strow>
-            <stentry>the node is business-failures</stentry>
+            <stentry>The node is not in normal status</stentry>
             <stentry>-250</stentry>
          </strow>
          <strow>
-            <stentry>the node info is expired</stentry>
+            <stentry>Node information is expired</stentry>
             <stentry>-251</stentry>
          </strow>
          <strow>
-            <stentry>wait secondary nodes sync the operation failed</stentry>
+            <stentry>Failed to wait for the sync operation from secondary nodes</stentry>
             <stentry>-252</stentry>
          </strow>
          <strow>
-            <stentry>transaction is disabled</stentry>
+            <stentry>Transaction is disabled</stentry>
             <stentry>-253</stentry>
          </strow>
          <strow>
-            <stentry>datasource had run out</stentry>
+            <stentry>Data source is running out of connection pool</stentry>
             <stentry>-254</stentry>
          </strow>
          <strow>
-            <stentry>too many open file description</stentry>
+            <stentry>Too many opened file description</stentry>
             <stentry>-255</stentry>
          </strow>
          <strow>
@@ -1033,47 +1033,47 @@
             <stentry>-256</stentry>
          </strow>
          <strow>
-            <stentry>Rest recv size greater than max size</stentry>
+            <stentry>The data received by REST is larger than the max size</stentry>
             <stentry>-257</stentry>
          </strow>
          <strow>
-            <stentry>Wrong data for building bson</stentry>
+            <stentry>Failed to build bson object</stentry>
             <stentry>-258</stentry>
          </strow>
          <strow>
-            <stentry>out of bound</stentry>
+            <stentry>Stored procedure arguments are out of bound</stentry>
             <stentry>-259</stentry>
          </strow>
          <strow>
-            <stentry>rest common unknow</stentry>
+            <stentry>Unknown REST command</stentry>
             <stentry>-260</stentry>
          </strow>
          <strow>
-            <stentry>successfully done on catalog, but sth wrong happened when did it on data group.</stentry>
+            <stentry>Failed to execute command on data node</stentry>
             <stentry>-261</stentry>
          </strow>
          <strow>
-            <stentry>domain does not have any groups at all</stentry>
+            <stentry>The domain is empty</stentry>
             <stentry>-262</stentry>
          </strow>
          <strow>
-            <stentry>suggest sdb om's user to change the passwd</stentry>
+            <stentry>Changing password is required</stentry>
             <stentry>-263</stentry>
          </strow>
          <strow>
-            <stentry>not all nodes returned ok</stentry>
+            <stentry>One or more nodes did not complete successfully</stentry>
             <stentry>-264</stentry>
          </strow>
          <strow>
-            <stentry>different version agent has been running</stentry>
+            <stentry>There is another OM Agent running with different version</stentry>
             <stentry>-265</stentry>
          </strow>
          <strow>
-            <stentry>task is not exist</stentry>
+            <stentry>Task does not exist</stentry>
             <stentry>-266</stentry>
          </strow>
          <strow>
-            <stentry>task is rolling back</stentry>
+            <stentry>Task is rolling back</stentry>
             <stentry>-267</stentry>
          </strow>
          <strow>
@@ -1081,15 +1081,15 @@
             <stentry>-268</stentry>
          </strow>
          <strow>
-            <stentry>LOB creation is not completed</stentry>
+            <stentry>LOB is not useable</stentry>
             <stentry>-269</stentry>
          </strow>
          <strow>
-            <stentry>the data is not utf8</stentry>
+            <stentry>Data is not in UTF-8 format</stentry>
             <stentry>-270</stentry>
          </strow>
          <strow>
-            <stentry>task is failing</stentry>
+            <stentry>Task failed</stentry>
             <stentry>-271</stentry>
          </strow>
       </simpletable>

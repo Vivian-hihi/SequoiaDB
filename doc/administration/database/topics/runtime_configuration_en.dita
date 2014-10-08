@@ -46,7 +46,7 @@
 					<stentry>--logpath</stentry>
 					<stentry>-l</stentry>
 					<stentry>str</stentry>
-					<stentry>1. Synchronous log file willbe generated when replication node does full sync. This parameter is used to specified the path of  synchronous log file.
+					<stentry>1. Synchronous log files will be created when replication node does full sync. This parameter is used to specified the path of  synchronous log file.
              2. If it is not specified, the default path is &quot;Data file path/replicalog&quot;.</stentry>
 				</strow>
 				<strow>
@@ -158,49 +158,43 @@
 					<stentry>--numpreload</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>number of page pre-loaders, default:0, value range:[0,100]</stentry>
+					<stentry>The number of pre-loaders, default:0, value range:[0,100]</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxprefpool</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>maximum number of prefetchers, default:200, value range:[0,1000]</stentry>
-				</strow>
-				<strow>
-					<stentry>--maxsubquery</stentry>
-					<stentry>--</stentry>
-					<stentry>num</stentry>
-					<stentry>maximum number of query&apos;s sub-query, default:10, min value is 0, max value can&apos;t more than param &apos;maxprefpool&apos;</stentry>
+					<stentry>The maximum number of prefetchers, default:200, value range:[0,1000]</stentry>
 				</strow>
 				<strow>
 					<stentry>--maxreplsync</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync</stentry>
+					<stentry>The maximum number of repl-sync threads, default:10, value range:[0, 200], 0:disable concurrent repl-sync</stentry>
 				</strow>
 				<strow>
 					<stentry>--logbuffsize</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>the replica-log&apos;s memory page number,default is 1024, value range:[512,1024000], but total log memory size can&apos;t more than all log file size; a page size is 64KB</stentry>
+					<stentry>The number of pages ( in 64KB ) for replica log memory ( default:1024, value range:[512,1024000] ), the size should be smaller than log space</stentry>
 				</strow>
 				<strow>
 					<stentry>--tmppath</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>The temp path of db, default is &apos;dbpath&apos;+&apos;/tmp&apos;</stentry>
+					<stentry>The path of temp files, default is &apos;dbpath&apos;+&apos;/tmp&apos;</stentry>
 				</strow>
 				<strow>
 					<stentry>--sortbuf</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>size of the sorting buf(MB), default:256, min value:128</stentry>
+					<stentry>Size of the sorting buf(MB), default:256, min value:128</stentry>
 				</strow>
 				<strow>
 					<stentry>--hjbuf</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>size of the hash join buf(MB), default:128, min value:64</stentry>
+					<stentry>Size of the hash join buf(MB), default:128, min value:64</stentry>
 				</strow>
 				<strow>
 					<stentry>--syncstrategy</stentry>
@@ -213,25 +207,25 @@
 					<stentry>--</stentry>
 					<stentry>str</stentry>
 					<stentry>1. It specifies the instance on which to query.
-             2. If it is not specifed, the default value is anyone.
+             2. If it is not specifed, the default value is A.
              3. value enum:
                     M--read and write instance,
                     S--read only instance,
-                    A--anyone instance,
+                    A--any instance,
                     1-7--the nth instance</stentry>
 				</strow>
 				<strow>
 					<stentry>--numpagecleaners</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>The number of page cleaners to start during database startup.
+					<stentry>The number of page cleaner threads to start during database startup.
              0 means do not start any page cleaners, default 1, value range:[0, 50].</stentry>
 				</strow>
 				<strow>
 					<stentry>--pagecleaninterval</stentry>
 					<stentry>--</stentry>
 					<stentry>num</stentry>
-					<stentry>The minimum interval between two cleans for each CS
+					<stentry>The minimum interval between two cleanup actions for each CS
              Unit: ms, Default: 10000, Min: 1000</stentry>
 				</strow>
 			</simpletable>
