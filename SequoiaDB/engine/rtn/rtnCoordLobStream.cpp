@@ -465,7 +465,9 @@ namespace engine
       if ( SDB_OK != reply->flags )
       {
          rc = reply->flags ;
-         PD_LOG( PDERROR, "failed to write lob on data node:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to write lob on data node:[%d:%d], rc%d",
+                 reply->header.routeID.columns.groupID,
+                 reply->header.routeID.columns.nodeID, rc ) ;
          goto error ;
       }
        
