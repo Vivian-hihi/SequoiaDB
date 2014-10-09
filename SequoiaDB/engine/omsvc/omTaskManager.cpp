@@ -825,7 +825,7 @@ namespace engine
 
       _omTaskInfo.taskStatus = response.getStringField( OM_BSON_TASK_STATUS ) ;
       _omTaskInfo.progress   = response.getObjectField( 
-                                                      OM_BSON_TASK_PROGRESS ) ;
+                                             OM_BSON_TASK_PROGRESS ).copy() ;
       _omTaskInfo.detail     = response.getStringField( OM_BSON_TASK_DETAIL ) ;
       tmpFinished = response.getBoolField( OM_BSON_TASK_ISFINISHED ) ;
       if ( tmpFinished )
@@ -1049,7 +1049,7 @@ namespace engine
 
       _omTaskInfo.taskStatus = response.getStringField( OM_BSON_TASK_STATUS ) ;
       _omTaskInfo.progress   = response.getObjectField( 
-                                                   OM_BSON_TASK_PROGRESS ) ;
+                                              OM_BSON_TASK_PROGRESS ).copy() ;
       tmpFinished = response.getBoolField( OM_BSON_TASK_ISFINISHED ) ;
       if ( tmpFinished )
       {
@@ -1221,7 +1221,7 @@ namespace engine
 
       _omTaskInfo.taskStatus = response.getStringField( OM_BSON_TASK_STATUS ) ;
       _omTaskInfo.progress   = response.getObjectField( 
-                                                      OM_BSON_TASK_PROGRESS ) ;
+                                               OM_BSON_TASK_PROGRESS ).copy() ;
       tmpFinished = response.getBoolField( OM_BSON_TASK_ISFINISHED ) ;
       if ( tmpFinished )
       {
