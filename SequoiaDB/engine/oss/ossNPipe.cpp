@@ -576,6 +576,9 @@ INT32 ossConnectNamedPipe ( OSSNPIPE &handle,
    }
    if ( OSS_BIT_TEST(handle._overlappedFlag, OSS_NPIPE_OVERLAP_IOPENDING) )
    {
+      OSS_BIT_CLEAR ( handle._overlappedFlag,
+                      OSS_NPIPE_OVERLAP_IOPENDING ) ;
+
       // if we are waiting for IO, let's wait for event
       if ( OSS_NPIPE_INFINITE_TIMEOUT == timeout )
       {
@@ -603,8 +606,6 @@ INT32 ossConnectNamedPipe ( OSSNPIPE &handle,
                      rc ) ;
             rc = SDB_SYS ;
          }
-         OSS_BIT_CLEAR ( handle._overlappedFlag,
-                         OSS_NPIPE_OVERLAP_IOPENDING ) ;
       }
    }
 done :
@@ -659,7 +660,8 @@ INT32 ossReadNamedPipe ( OSSNPIPE &handle,
          }
          else
          {
-            // if something wrong with overlapped IO, we need to cancel the read request
+            // if something wrong with overlapped IO, we need to cancel the
+            // read request
             if ( !CancelIo ( handle._handle ) )
             {
                rc = ossGetLastError () ;
@@ -692,7 +694,8 @@ INT32 ossReadNamedPipe ( OSSNPIPE &handle,
       }
       else if ( ERROR_NO_DATA == rc )
       {
-         if ( tempRead == 0 && OSS_BIT_TEST ( handle._state, OSS_NPIPE_NONBLOCK ) )
+         if ( tempRead == 0 && OSS_BIT_TEST ( handle._state,
+                                              OSS_NPIPE_NONBLOCK ) )
          {
             rc = SDB_OK ;
          }
@@ -730,13 +733,15 @@ INT32 ossWriteNamedPipe ( OSSNPIPE &handle,
    DWORD tempWrite = 0 ;
    if ( !WriteFile ( handle._handle, (void*)(pBuffer),
                      bufSize,
-                     &tempWrite, handle._overlappedFlag ? &handle._overlapped:NULL ) )
+                     &tempWrite,
+                     handle._overlappedFlag ? &handle._overlapped : NULL ) )
    {
       rc = ossGetLastError () ;
       if ( handle._overlappedFlag && ( ERROR_IO_PENDING == rc ) )
       {
          // wait for interrupt forever
-         rc = ossWaitInterrupt ( handle._overlapped.hEvent, OSS_NPIPE_INFINITE_TIMEOUT ) ;
+         rc = ossWaitInterrupt ( handle._overlapped.hEvent,
+                                 OSS_NPIPE_INFINITE_TIMEOUT ) ;
          if ( SDB_OK == rc )
          {
             if ( !GetOverlappedResult ( handle._handle, &handle._overlapped,
