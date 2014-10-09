@@ -146,7 +146,7 @@ var OMA_MISC_OM_VERSION               = "version: " ;
 var OMA_MISC_OM_RELEASE               = "Release: " ;
 
 // port
-var OMA_PORT_DEFAULT_SDBCM_PORT       = 1179 ;
+var OMA_PORT_DEFAULT_SDBCM_PORT       = 11790 ;
 var OMA_PORT_MAX                      = 65535 ;
 var OMA_PORT_INVALID                  = -1 ;
 var OMA_PORT_TEMP_AGENT_PORT          = 11790 ;

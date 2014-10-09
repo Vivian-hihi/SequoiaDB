@@ -708,4 +708,29 @@ function isCatalogRunning( db )
    return true ;
 }
 
+/* *****************************************************************************
+@discretion: get remote or local sdbcm port from local sdbcm config file
+@parameter
+   hostName[string]: install host name
+@return
+   retPort[string]: the sdbcm port in remote or in local
+***************************************************************************** */
+function getAgentPort( hostname )
+{
+   var retPort = null ;
+   var localhostname = System.getHostName() ;
+   if ( hostname == localhostname )
+   {
+      retPort = Oma.getAOmaSvcName( hostname ) ;
+   }
+   else
+   {
+      var key = hostname + OMA_MISC_CONFIG_PORT ;
+      var obj =  eval ( '(' + Oma.getOmaConfigs() + ')' ) ;
+      var retPort = obj[key]
+      if ( "undefined" == typeof(retPort) )
+         retPort = OMA_PORT_DEFAULT_SDBCM_PORT + "" ;
+   }
+   return retPort + "" ;
+}
 

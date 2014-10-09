@@ -25,9 +25,6 @@
 */
 
 var RET_JSON             = new Object() ;
-//RET_JSON[OmaHostName]    = "" ;
-//RET_JSON[OmaSvcName]     = "" ;
-//RET_JSON[VCoordHostName] = "" ;
 RET_JSON[VCoordSvcName]  = "" ;
 
 function main()
@@ -47,9 +44,6 @@ function main()
       // close connection
       oma.close() ;
       oma = null ;
- //     RET_JSON[OmaHostName]    = omaHostName ;
- //     RET_JSON[OmaSvcName]     = omaSvcName ;
- //     RET_JSON[VCoordHostName] = omaHostName ;
       RET_JSON[VCoordSvcName]  = vCoordSvcName ;
    }
    catch ( e )
@@ -61,13 +55,13 @@ function main()
             oma.close() ;
             oma = null ;
          }
-         catch ( e )
+         catch ( e2 )
          {
          }
       }
       throw e ; 
    }
-print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;
 }
 
