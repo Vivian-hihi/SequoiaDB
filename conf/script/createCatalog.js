@@ -27,57 +27,46 @@
    RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
-//var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "11800", "InstallPath": "/opt/sequoiadb/database/catalog", "InstallConfig": { "diaglevel": 3, "role": "catalog", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } };
+//var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "11800", "InstallPath": "/opt/sequoiadb/database/catalog/11800", "InstallConfig": { "diaglevel": 3, "role": "catalog", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } };
 //var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" };
-//var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "12000", "InstallPath": "/tmp/sequoiadb/database/catalog/12000", "InstallConfig": { "diaglevel": 3, "role": "catalog", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none", "VCoordSvcName": "11792" } } ;
-
-//var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } ;
 
 var RET_JSON        = new Object() ;
-RET_JSON[Errno]     = SDB_OK ;
-RET_JSON[Detail]    = "" ;
 
 /* *****************************************************************************
 @discretion: wait catalog to be ok
 @author: Tanzhaobo
 @parameter
-   db[object]: Sdb object
+   hostName[string]: the newly build catalog host name
+   svcName[string]: the newly build catalog svc name
 @return void
 ***************************************************************************** */
-function waitCatalogRGReady( db )
+function waitCatalogRGReady( hostName, svcName )
 {
-   var i = 0 ;
+   var db  = null ;
+   var cur = null ;
+   var num = 0 ;
+   var i   = 0 ;
    for ( ; i < OMA_WAIT_CATA_RG_TRY_TIMES; i++ )
    {
-print("i is: " + i + "\n")
       try
       {
-         db.list( SDB_LIST_GROUPS ) ;
-         break ;
-      }
-      catch ( e )
-      {
-print("wait e is: " + e + "\n")
-         if ( SDB_RTN_NO_PRIMARY_FOUND == e )
+         db = new Sdb( hostName, svcName ) ;
+         cur = db.SYSCAT.SYSNODES.find() ;
+         num = cur.size() ;
+         if ( num )
          {
-print("22222222222222222222222\n")
-            sleep( OMA_SLEEP_TIME ) ;
-            continue ;
+            break ;
          }
          else
          {
-print("11111111111111111111111111111111111111111\n")
-            if ( "number" == typeof( e ) )
-            {
-               setLastErrMsg( "Failed to wait catalog to be ready: " + getErr( e ) ) ;
-               setLastError( e ) ;
-               throw e ;
-            }
-            else
-            {
-               throw e ;
-            }
+            sleep( OMA_SLEEP_TIME ) ;
+            continue ; 
          }
+      }
+      catch ( e )
+      {
+         sleep( OMA_SLEEP_TIME ) ;
+         continue ;
       }
    }
    if ( OMA_WAIT_CATA_RG_TRY_TIMES <= i )
@@ -183,12 +172,6 @@ function createCatalogNode( db, hostName, svcName, installPath, config )
    }
 }
 
-/*
-var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "11800", "InstallPath": "/opt/sequoiadb/database/catalog", "InstallConfig": { "diaglevel": 3, "role": "catalog", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none", "VCoordSvcName": "11792" } } ;
-
-var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } ;
-*/
-
 function main()
 {
     var vCoordHostName  = System.getHostName() ;
@@ -202,27 +185,17 @@ function main()
     var installPath     = BUS_JSON[InstallPath] ;
     var installConfig   = BUS_JSON[InstallConfig] ;
 
-
-print("00000000000000000000000000000\n")
-print("user is: " + user + "\n")
-print("passwd is: " + passwd + "\n")
     var ssh             = new Ssh( installHostName, user, passwd ) ;
     var osInfo          = System.type() ; 
-print("1111111111111111\n")
     // change install path owner
     changeDirOwner( ssh, osInfo, installPath, sdbUser, sdbUserGroup ) ;
-print("222222222222222222222\n")
     // connect to virtual coord
     var db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
     // create catalog node
-print("3333333333333333333333333333\n") ;
     createCatalogNode( db, installHostName, installSvcName,
                        installPath, installConfig ) ;
-print("444444444444444444444444444444\n")
     // wait catalog to be available
-    waitCatalogRGReady( db ) ; 
-print("5555555555555555555555555555555\n")
-print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n")
+    waitCatalogRGReady( installHostName, installSvcName ) ; 
     return RET_JSON ;
 }
 
