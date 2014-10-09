@@ -261,7 +261,7 @@ namespace engine
       {
          if ( SDB_EOF != rc )
          {
-            PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to close lob:%d", rc ) ;
          }
 
          goto error ;
