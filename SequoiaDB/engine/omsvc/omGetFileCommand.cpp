@@ -174,7 +174,6 @@ namespace engine
          goto error ;
       }
 
-      //TODO: encrypt the passwd when through rest
 //      _decryptPasswd( pPasswd, pTime, realPasswd ) ;
 //      md5::md5( ( const void * )realPasswd.c_str(), realPasswd.length(), 
 //                digest) ;
@@ -1112,67 +1111,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 omScanHostCommand::_receiveFromAgent( pmdRemoteSession *remoteSession,
-                                               SINT32 &flag, BSONObj &result )
-   {
-      VEC_SUB_SESSIONPTR subSessionVec ;
-      INT32 rc           = SDB_OK ;
-      MsgHeader *pRspMsg = NULL ;
-      SINT64 contextID   = -1 ;
-      SINT32 startFrom   = 0 ;
-      SINT32 numReturned = 0 ;
-      vector<BSONObj> objVec ;
-
-      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "wait reply failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      if ( 1 != subSessionVec.size() )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "unexpected session size:size=%d", 
-                 subSessionVec.size() ) ;
-         goto error ;
-      }
-
-      if ( subSessionVec[0]->isDisconnect() )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG(PDERROR, "session disconected:id=%s,rc=%d", 
-                routeID2String(subSessionVec[0]->getNodeID()).c_str(), rc ) ;
-         goto error ;
-      }
-
-      pRspMsg = subSessionVec[0]->getRspMsg() ;
-      if ( NULL == pRspMsg )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "receive null response:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
-                            &numReturned, objVec ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "extract reply failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      if ( objVec.size() > 0 )
-      {
-         result = objVec[0] ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omScanHostCommand::_parseResonpse( VEC_SUB_SESSIONPTR &subSessionVec, 
                                             BSONObj &response,
                                             list<BSONObj> &bsonResult )
@@ -1775,7 +1713,7 @@ namespace engine
       }
 
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
-      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      rc = _getAllReplay( remoteSession, &subSessionVec ) ;
       if ( SDB_OK != rc )
       {
          _errorDetail = "wait agent's replay failed" ;
@@ -1943,7 +1881,7 @@ namespace engine
       }
 
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
-      remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      _getAllReplay( remoteSession, &subSessionVec ) ;
    done:
       _clearSession( om, remoteSession ) ;
       return rc ;
@@ -4659,69 +4597,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 omInstallBusinessReq::_receiveFromAgent( 
-                                                pmdRemoteSession *remoteSession,
-                                                SINT32 &flag,
-                                                BSONObj &result )
-   {
-      VEC_SUB_SESSIONPTR subSessionVec ;
-      INT32 rc           = SDB_OK ;
-      MsgHeader *pRspMsg = NULL ;
-      SINT64 contextID   = -1 ;
-      SINT32 startFrom   = 0 ;
-      SINT32 numReturned = 0 ;
-      vector<BSONObj> objVec ;
-
-      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "wait reply failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      if ( 1 != subSessionVec.size() )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "unexpected session size:size=%d", 
-                 subSessionVec.size() ) ;
-         goto error ;
-      }
-
-      if ( subSessionVec[0]->isDisconnect() )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
-                routeID2String(subSessionVec[0]->getNodeID()).c_str(), rc ) ;
-         goto error ;
-      }
-
-      pRspMsg = subSessionVec[0]->getRspMsg() ;
-      if ( NULL == pRspMsg )
-      {
-         rc = SDB_UNEXPECTED_RESULT ;
-         PD_LOG( PDERROR, "receive null response:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
-                            &numReturned, objVec ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "extract reply failed:rc=%d", rc ) ;
-         goto error ;
-      }
-
-      if ( objVec.size() > 0 )
-      {
-         result = objVec[0] ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 omInstallBusinessReq::_sendMsgToLocalAgent( omManager *om,
                                                 pmdRemoteSession *remoteSession, 
                                                 MsgHeader *pMsg )
@@ -7339,7 +7214,7 @@ namespace engine
 
       //TODO: 此处返回的subSessionVec是只有成功的,而不是全部.应该返回全部才对
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
-      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      rc = _getAllReplay( remoteSession, &subSessionVec ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
@@ -7367,11 +7242,11 @@ namespace engine
          om->getHostInfoByID( subSession->getNodeID(), tmpHost, tmpService ) ;
          if ( subSession->isDisconnect() )
          {
+            rc = SDB_NETWORK ;
             PD_LOG_MSG( PDERROR, "session disconnected:id=%s,rc=%d", 
                         routeID2String(subSession->getNodeID()).c_str(), rc ) ;
             _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
-            _appendErrorResult( arrayBuilder, tmpHost, SDB_NETWORK, 
-                                _errorDetail ) ;
+            _appendErrorResult( arrayBuilder, tmpHost, rc, _errorDetail ) ;
             continue ;
          }
 

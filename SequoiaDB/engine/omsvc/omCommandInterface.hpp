@@ -37,6 +37,7 @@
 #include "pmd.hpp"
 #include "dmsCB.hpp"
 #include "netDef.hpp"
+#include "pmdRemoteSession.hpp"
 #include <map>
 #include <string>
 
@@ -110,6 +111,10 @@ namespace engine
                                           list<string> &hostNameList, 
                                           list<simpleHostDisk> &hostInfoList ) ;
          INT32             _checkHostBasicContent( BSONObj &oneHost ) ;
+         INT32             _getAllReplay( pmdRemoteSession *remoteSession, 
+                                          VEC_SUB_SESSIONPTR *subSessionVec ) ;
+         INT32             _receiveFromAgent( pmdRemoteSession *remoteSession,
+                                              SINT32 &flag, BSONObj &result ) ;
       protected:
          SDB_RTNCB         *_pRTNCB ;
          SDB_DMSCB         *_pDMDCB ;

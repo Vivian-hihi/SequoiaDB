@@ -33,6 +33,7 @@
 #include "omCommandInterface.hpp"
 #include "omDef.hpp"
 #include "rtn.hpp"
+#include "msgMessage.hpp"
 
 
 using namespace bson;
@@ -305,6 +306,95 @@ namespace engine
                      OM_HOST_FIELD_NAME, hostName.c_str(), rc ) ;
          _errorDetail = _cb->getInfo( EDU_INFO_ERROR ) ;
          goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRestCommandBase::_receiveFromAgent( pmdRemoteSession *remoteSession,
+                                               SINT32 &flag,
+                                               BSONObj &result )
+   {
+      VEC_SUB_SESSIONPTR subSessionVec ;
+      INT32 rc           = SDB_OK ;
+      MsgHeader *pRspMsg = NULL ;
+      SINT64 contextID   = -1 ;
+      SINT32 startFrom   = 0 ;
+      SINT32 numReturned = 0 ;
+      vector<BSONObj> objVec ;
+
+      rc = remoteSession->waitReply( TRUE, &subSessionVec ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "wait reply failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( 1 != subSessionVec.size() )
+      {
+         rc = SDB_UNEXPECTED_RESULT ;
+         PD_LOG( PDERROR, "unexpected session size:size=%d", 
+                 subSessionVec.size() ) ;
+         goto error ;
+      }
+
+      if ( subSessionVec[0]->isDisconnect() )
+      {
+         rc = SDB_UNEXPECTED_RESULT ;
+         PD_LOG(PDERROR, "session disconnected:id=%s,rc=%d", 
+                routeID2String(subSessionVec[0]->getNodeID()).c_str(), rc ) ;
+         goto error ;
+      }
+
+      pRspMsg = subSessionVec[0]->getRspMsg() ;
+      if ( NULL == pRspMsg )
+      {
+         rc = SDB_UNEXPECTED_RESULT ;
+         PD_LOG( PDERROR, "receive null response:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = msgExtractReply( (CHAR *)pRspMsg, &flag, &contextID, &startFrom, 
+                            &numReturned, objVec ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "extract reply failed:rc=%d", rc ) ;
+         goto error ;
+      }
+
+      if ( objVec.size() > 0 )
+      {
+         result = objVec[0] ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omRestCommandBase::_getAllReplay( pmdRemoteSession *remoteSession, 
+                                           VEC_SUB_SESSIONPTR *subSessionVec )
+   {
+      SDB_ASSERT( NULL != remoteSession, "remoteSession can't be null" ) ;
+
+      pmdSubSessionItr itr( NULL ) ;
+      INT32 rc = SDB_OK ;
+      VEC_SUB_SESSIONPTR tmpSessionVec ;
+      rc = remoteSession->waitReply( TRUE, &tmpSessionVec ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
+         goto error ;
+      }
+      
+      itr = remoteSession->getSubSessionItr( PMD_SSITR_ALL ) ;
+      while ( itr.more() )
+      {
+         subSessionVec->push_back( itr.next() ) ;
       }
 
    done:

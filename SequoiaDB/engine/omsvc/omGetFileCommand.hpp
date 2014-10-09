@@ -208,8 +208,6 @@ namespace engine
          INT32           _sendMsgToLocalAgent( omManager *om,
                                                pmdRemoteSession *remoteSession, 
                                                MsgHeader *pMsg ) ;
-         INT32           _receiveFromAgent( pmdRemoteSession *remoteSession,
-                                            SINT32 &flag, BSONObj &result ) ;
          INT32           _getScanHostList( string &clusterName, 
                                            list<omScanHostInfo> &hostInfo ) ;
          void            _clearSession( omManager *om, 
@@ -500,8 +498,6 @@ namespace engine
          INT32          _sendMsgToLocalAgent( omManager *om,
                                               pmdRemoteSession *remoteSession, 
                                               MsgHeader *pMsg ) ;
-         INT32          _receiveFromAgent( pmdRemoteSession *remoteSession,
-                                           SINT32 &flag, BSONObj &result ) ;
          void           _compeleteConfValue( const BSONObj &bsonHostInfo, 
                                              BSONObj &bsonConfValue ) ;
          void           _clearSession( omManager *om, 
