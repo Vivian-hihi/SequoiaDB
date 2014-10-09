@@ -639,7 +639,7 @@ namespace engine
       pSettings->on_message_complete = restAdaptor::on_message_complete ;
 
       _maxHttpHeaderSize = maxHttpHeaderSize ;
-      _maxHttpBodySize = maxHttpHeaderSize ;
+      _maxHttpBodySize = maxHttpBodySize ;
       _timeout = timeout ;
       _pSettings = pSettings ;
 
@@ -836,7 +836,7 @@ namespace engine
             if ( bodySize > _maxHttpBodySize )
             {
                rc = SDB_REST_RECV_SIZE ;
-               PD_LOG ( PDERROR, "http header size %d greater than %d",
+               PD_LOG ( PDERROR, "http body size %d greater than %d",
                         bodySize,
                         _maxHttpBodySize ) ;
                goto error ;
@@ -920,7 +920,7 @@ namespace engine
          INT32 bufferSize = 0 ;
          INT32 tempSize = 0 ;
          httpResponse httpRe ;
-         std::string str = info.toString( FALSE, FALSE ) ;
+         std::string str = info.toString( FALSE, TRUE ) ;
          bufferSize = ossStrlen( str.c_str() ) ;
          rc = pSession->allocBuff( bufferSize + 1, &pBuffer, tempSize ) ;
          if ( rc )
@@ -1246,7 +1246,7 @@ namespace engine
 
          while( SDB_DMS_EOC != rtnObj.nextObj( record ) )
          {
-            str = record.toString( FALSE, FALSE ) ;
+            str = record.toString( FALSE, TRUE ) ;
             jsonSize = ossStrlen( str.c_str() ) ;
             rc = pSession->allocBuff( jsonSize + 1, &pJson, tempSize ) ;
             if ( rc )
