@@ -314,6 +314,9 @@ namespace engine
 
       _add2Subs( reply->header.routeID.columns.groupID,
                  reply->contextID, reply->header.routeID ) ;
+
+      /// catalog info may be refreshed, here we assign it again.
+      _metaGroup = reply->header.routeID.columns.groupID ;
    done:
       _dispatcher.clear() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__OPENMAINSTREAM, rc ) ;
