@@ -162,7 +162,7 @@ namespace engine
       BSONObjBuilder builder ;
       BSONObj obj ;
       CoordGroupList gpLst ;
-      MSG_OPTIONS options( SDB_LOB_MODE_CREATEONLY == mode, TRUE ) ;
+      MSG_OPTIONS options( SDB_LOB_MODE_R != mode, TRUE ) ;
 
       _dispatcher.getCataInfo()->getGroupLst( gpLst ) ;
       SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
