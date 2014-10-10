@@ -528,7 +528,7 @@ namespace engine
 
       info._groupID     = 0 ;
       info._nodeID      = 0 ;
-      info._primary     = 0 ;
+      info._primary     = -1 ;
       info._dbPath      = "" ;
       info._groupName   = "" ;
 

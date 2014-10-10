@@ -115,7 +115,7 @@ namespace engine
          _pid        = OSS_INVALID_PID ;
          _groupID    = 0 ;
          _nodeID     = 0 ;
-         _primary    = 0 ;
+         _primary    = -1 ;
       }
    } ;
    typedef _utilNodeInfo utilNodeInfo ;

@@ -253,9 +253,10 @@ namespace engine
          {
             ossSnprintf( tmpNID, sizeof( tmpNID ) - 1, "%d", node._nodeID ) ;
          }
-         if ( 0 != node._primary )
+
+         if ( -1 != node._primary )
          {
-            ossStrcpy( tmpPRY, "Y" ) ;
+            ossStrcpy( tmpPRY, ( 1 == node._primary ) ? "Y" : "N" ) ;
          }
 
          ossPrintf( PMD_LIST_LONG_FORMAT OSS_NEWLINE,
