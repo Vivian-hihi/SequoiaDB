@@ -1030,7 +1030,7 @@ namespace engine
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Add hosts passes argument: %s",
+         PD_LOG ( PDDEBUG, "Remove hosts passes argument: %s",
                   _jsFileArgs ) ;
          rc = addJsFile( FILE_REMOVE_HOST, _jsFileArgs ) ;
          if ( rc )
@@ -1328,6 +1328,61 @@ namespace engine
    }
 */
 
+
+   /*************************** query host status **************************/
+   /*
+      _omaQueryHostStatus
+   */
+   _omaQueryHostStatus::_omaQueryHostStatus()
+   {
+   }
+
+   _omaQueryHostStatus::~_omaQueryHostStatus()
+   {
+   }
+
+   INT32 _omaQueryHostStatus::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus( pInstallInfo ) ;
+
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "_omaQueryHostStatus passes argument: %s",
+                  _jsFileArgs ) ;
+
+         rc = addJsFile( FILE_QUERY_HOSTSTATUS_ITEM ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_QUERY_HOSTSTATUS_ITEM, rc ) ;
+            goto error ;
+         }
+
+         rc = addJsFile( FILE_QUERY_HOSTSTATUS, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_QUERY_HOSTSTATUS, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // _omaCreateVirtualCoord
    _omaCreateVirtualCoord::_omaCreateVirtualCoord ()
    {
@@ -1485,59 +1540,6 @@ namespace engine
       goto done ;
    }
 
-
-   /*
-      install db business task run rollback data node job
-   */
-   _omaQueryHostStatus::_omaQueryHostStatus()
-   {
-   }
-
-   _omaQueryHostStatus::~_omaQueryHostStatus()
-   {
-   }
-
-   INT32 _omaQueryHostStatus::init ( const CHAR *pInstallInfo )
-   {
-      INT32 rc = SDB_OK ;
-      try
-      {
-         BSONObj bus( pInstallInfo ) ;
-
-         // build js file arguments
-         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
-                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "_omaQueryHostStatus passes argument: %s",
-                  _jsFileArgs ) ;
-
-         rc = addJsFile( FILE_QUERY_HOSTSTATUS_ITEM ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                         FILE_QUERY_HOSTSTATUS_ITEM, rc ) ;
-            goto error ;
-         }
-
-         rc = addJsFile( FILE_QUERY_HOSTSTATUS, _jsFileArgs ) ;
-         if ( rc )
-         {
-            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                         FILE_QUERY_HOSTSTATUS, rc ) ;
-            goto error ;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
-                      e.what() ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error :
-      goto done ;
-   }
 
 } // namespace engine
 

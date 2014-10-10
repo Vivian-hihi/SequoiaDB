@@ -355,6 +355,24 @@ namespace engine
 //         virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
    } ; 
 
+   /***************************** query host status ********************/
+   /*
+      _omaQueryHostStatus
+   */
+   class _omaQueryHostStatus : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaQueryHostStatus() ;
+         ~_omaQueryHostStatus() ;
+
+      public:
+         virtual const CHAR* name () { return OMA_CMD_QUERY_HOST_STATUS ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+
+      private:
+   } ;
+
    // _omaCreateVirtualCoord
    class _omaCreateVirtualCoord : public _omaCommand
    {
@@ -539,22 +557,6 @@ namespace engine
          map< string, vector< InstalledNode > >         &_info ;
          string                                         _vCoordSvcName ;
    } ;
-
-   // query host status
-   class _omaQueryHostStatus : public _omaCommand
-   {
-      DECLARE_OACMD_AUTO_REGISTER ()
-      public:
-         _omaQueryHostStatus() ;
-         ~_omaQueryHostStatus() ;
-
-      public:
-         virtual const CHAR* name () { return OMA_CMD_QUERY_HOST_STATUS ; }
-         virtual INT32 init ( const CHAR *pInstallInfo ) ;
-
-      private:
-   } ;
-
 
 
 } // namespace engine
