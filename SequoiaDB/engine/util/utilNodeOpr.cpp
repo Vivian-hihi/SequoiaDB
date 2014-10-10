@@ -131,7 +131,7 @@ namespace engine
 
       // create
       rc = ossCreateNamedPipe( _pipeRName, UTIL_NODE_PIPE_BUFFSZ, 0,
-                               OSS_NPIPE_INBOUND |
+                               OSS_NPIPE_DUPLEX |
                                OSS_NPIPE_BLOCK_WITH_TIMEOUT |
                                OSS_NPIPE_NONBLOCK,
                                OSS_NPIPE_UNLIMITED_INSTANCES,
@@ -144,7 +144,7 @@ namespace engine
       }
 
       rc = ossCreateNamedPipe( _pipeWName, 0, UTIL_NODE_PIPE_BUFFSZ,
-                               OSS_NPIPE_OUTBOUND |
+                               OSS_NPIPE_DUPLEX |
                                OSS_NPIPE_BLOCK_WITH_TIMEOUT |
                                OSS_NPIPE_NONBLOCK,
                                OSS_NPIPE_UNLIMITED_INSTANCES,
