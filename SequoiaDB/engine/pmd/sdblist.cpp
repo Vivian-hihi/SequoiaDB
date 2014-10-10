@@ -214,17 +214,17 @@ namespace engine
    {
       if( node._pid != OSS_INVALID_PID )
       {
-         ossPrintf( "%s%s(%s) (%d)"OSS_NEWLINE,
+         ossPrintf( "%s(%s) (%d) %s"OSS_NEWLINE,
                     utilDBTypeStr( (SDB_TYPE)node._type ),
-                    utilDBRoleShortStr( (SDB_ROLE)node._role ),
-                    node._svcname.c_str(), node._pid ) ;
+                    node._svcname.c_str(), node._pid,
+                    utilDBRoleShortStr( (SDB_ROLE)node._role ) ) ;
       }
       else
       {
-         ossPrintf( "%s%s(%s) (-)"OSS_NEWLINE,
+         ossPrintf( "%s(%s) (-) %s"OSS_NEWLINE,
                     utilDBTypeStr( (SDB_TYPE)node._type),
-                    utilDBRoleShortStr( (SDB_ROLE)node._role ),
-                    node._svcname.c_str() ) ;
+                    node._svcname.c_str(),
+                    utilDBRoleShortStr( (SDB_ROLE)node._role ) ) ;
       }
 
       if( detail )
