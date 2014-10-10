@@ -35,6 +35,236 @@
 
 namespace engine
 {
+
+   /*
+       omagent create standalone job
+   */
+   _omaCreateStandaloneJob::_omaCreateStandaloneJob (
+                                             _omaInstallDBBusinessTask *pTask )
+   {
+      _name = OMA_JOB_CREATE_STANDALONE;
+      _status = OMA_JOB_STATUS_INIT ;
+      _pTask = pTask ;
+   }
+
+   _omaCreateStandaloneJob::~_omaCreateStandaloneJob()
+   {
+   }
+
+   RTN_JOB_TYPE _omaCreateStandaloneJob::type () const
+   {
+      return RTN_JOB_CREATESTANDALONE ;
+   }
+
+   const CHAR* _omaCreateStandaloneJob::name () const
+   {
+      return _name.c_str() ;
+   }
+
+   BOOLEAN _omaCreateStandaloneJob::muteXOn ( const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omaCreateStandaloneJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      INT32 num = 0 ;
+      vector<BSONObj> &standaloneInsInfo = _pTask->getInstallStandaloneInfo() ;
+      vector<BSONObj>::iterator itr ;
+
+      // change job status
+      setJobStatus( OMA_JOB_STATUS_RUNNING ) ;
+      // begin to run  
+      num = standaloneInsInfo.size() ;
+      if ( 0 == num )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "No install standalone info, rc = %d", rc ) ;
+         goto error ;
+      }
+      itr = standaloneInsInfo.begin() ;
+      for ( ; itr != standaloneInsInfo.end(); itr++ )
+      {
+         BSONObj retObj ;
+         InstallInfo installInfo ;
+         InstalledNode node ;
+         CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+         const CHAR *pErrMsg = "" ;
+         // get install standalone information
+         rc = _getInstallInfo( *itr, installInfo ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get install standalone info, "
+                     "rc = %d", rc ) ;
+            goto error ;
+         }
+         // init the info of the installing node
+         node._role = ROLE_STANDALONE ;
+         node._dataGroupName = "" ;
+         node._hostName = installInfo._hostName.c_str() ;
+         node._svcName = installInfo._svcName.c_str() ;
+         // update install status for web before install standalone
+         ossSnprintf( desc, OMA_BUFF_SIZE, "Installing standalone[%s:%s]",
+                      installInfo._hostName.c_str(),
+                      installInfo._svcName.c_str() ) ;
+         rc = _updateInstallStatus( FALSE, SDB_OK, NULL, desc, NULL ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to update status before install "
+                     "standalone, rc = %d", rc ) ;
+            goto error ;
+         }
+         // install standalone
+         _omaRunCreateStandaloneJob runCmd( _pTask->getVCoordSvcName(),
+                                            installInfo ) ;
+         rc = runCmd.init( NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Job failed to init for creating standalone, "
+                    "rc = %d", rc ) ;
+            goto error ;
+         }
+         rc = runCmd.doit( retObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Job failed to create standalone, rc = %d", rc ) ;
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( tmpRc )
+            {
+               PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
+                        OMA_FIELD_DETAIL, tmpRc ) ;
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Failed to install standalone[%s:%s]",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "%s",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str(), pErrMsg ) ;
+            _updateInstallStatus( FALSE, rc, pErrMsg, desc, &node ) ;
+            goto error ;
+         }
+         else
+         {
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Finish installing standalone[%s:%s]",
+                         installInfo._hostName.c_str(),
+                         installInfo._svcName.c_str() ) ;
+            PD_LOG ( PDDEBUG, "Sucessed to install standalone[%s:%s]",
+                     installInfo._hostName.c_str(),
+                     installInfo._svcName.c_str() ) ;
+            _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
+         }
+      }
+      // set job status to be successful
+      setJobStatus( OMA_JOB_STATUS_FINISH ) ;
+   done:
+      return rc ;
+   error:
+      // set job status to be failing
+      setJobStatus( OMA_JOB_STATUS_FAIL ) ;
+      goto done ;
+   }
+
+   INT32 _omaCreateStandaloneJob::_getInstallInfo( BSONObj &obj,
+                                                   InstallInfo &info )
+   {
+      INT32 rc = SDB_OK ; 
+      const CHAR *pStr = NULL ;
+      BSONObj conf ;
+      BSONObj pattern ;
+
+      // _dataGroupName
+      rc = omaGetStringElement( obj, OMA_OPTION_DATAGROUPNAME,
+                                &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d",
+                OMA_OPTION_DATAGROUPNAME, rc ) ;
+      info._dataGroupName = pStr ;
+      // _hostname
+      rc = omaGetStringElement( obj, OMA_FIELD_HOSTNAME, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+      info._hostName = pStr ;
+      // _svcName
+      rc = omaGetStringElement( obj, OMA_OPTION_SVCNAME, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_OPTION_SVCNAME, rc ) ;
+      info._svcName = pStr ;
+      // _dbPath
+      rc = omaGetStringElement( obj, OMA_OPTION_DBPATH, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_OPTION_DBPATH, rc ) ;
+      info._dbPath = pStr ;
+      // _sdbUser
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBUSER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSER, rc ) ;
+      info._sdbUser = pStr ;
+      // _sdbPasswd
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBPASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBPASSWD, rc ) ;
+      info._sdbPasswd = pStr ;
+      // _sdbUserGroup
+      rc = omaGetStringElement( obj, OMA_FIELD_SDBUSERGROUP, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_SDBUSERGROUP, rc ) ;
+      info._sdbUserGroup = pStr ;
+      // _user
+      rc = omaGetStringElement( obj, OMA_FIELD_USER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_USER, rc ) ;
+      info._user = pStr ;
+      // _passwd
+      rc = omaGetStringElement( obj, OMA_FIELD_PASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                "Get field[%s] failed, rc: %d", OMA_FIELD_PASSWD, rc ) ;
+      info._passwd = pStr ;
+      // _conf
+      pattern = BSON( OMA_FIELD_HOSTNAME       << 1 <<
+                      OMA_OPTION_DATAGROUPNAME << 1 <<
+                      OMA_OPTION_SVCNAME       << 1 <<
+                      OMA_OPTION_DBPATH        << 1 <<
+                      OMA_FIELD_SDBUSER        << 1 <<
+                      OMA_FIELD_SDBPASSWD      << 1 << 
+                      OMA_FIELD_SDBUSERGROUP   << 1 <<
+                      OMA_FIELD_USER           << 1 <<
+                      OMA_FIELD_PASSWD         << 1 ) ;
+      conf = obj.filterFieldsUndotted( pattern, false ) ;
+      info._conf = conf.getOwned() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaCreateStandaloneJob::_updateInstallStatus( BOOLEAN isFinish,
+                                                        INT32 retRc,
+                                                        const CHAR *pErrMsg,
+                                                        const CHAR *pDesc,
+                                                        InstalledNode *pNode )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = _pTask->updateInstallStatus( isFinish, retRc, ROLE_STANDALONE,
+                                        pErrMsg, pDesc, NULL, pNode ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to update install catalog information, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+   
    /*
        omagent create catalog job
    */
@@ -110,7 +340,7 @@ namespace engine
             goto error ;
          }
          // install catalog
-         _omaRunInstallCatalogJob runCmd( _pTask->getVCoordSvcName(),
+         _omaRunCreateCatalogJob runCmd( _pTask->getVCoordSvcName(),
                                           installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
@@ -122,8 +352,7 @@ namespace engine
          rc = runCmd.doit( retObj ) ;
          if ( rc )
          {
-            tmpRc = SDB_OK ; ;
-            PD_LOG( PDERROR, "Job failed to create catalog,tmpRc = %d", rc ) ;
+            PD_LOG( PDERROR, "Job failed to create catalog, rc = %d", rc ) ;
             tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
             if ( tmpRc )
             {
@@ -346,7 +575,7 @@ namespace engine
             goto error ;
          }
          // install coord
-         _omaRunInstallCoordJob runCmd( _pTask->getVCoordSvcName(),
+         _omaRunCreateCoordJob runCmd( _pTask->getVCoordSvcName(),
                                         installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
@@ -358,7 +587,6 @@ namespace engine
          rc = runCmd.doit( retObj ) ;
          if ( rc )
          {
-            tmpRc = SDB_OK ; ;
             PD_LOG( PDERROR, "Job failed to create coord, rc = %d", rc ) ;
             tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
             if ( tmpRc )
@@ -586,7 +814,7 @@ namespace engine
             goto error ;
          }
          // install data node
-         _omaRunInstallDataNodeJob runCmd( _pTask->getVCoordSvcName(),
+         _omaRunCreateDataNodeJob runCmd( _pTask->getVCoordSvcName(),
                                            installInfo ) ;
          rc = runCmd.init( NULL ) ;
          if ( rc )
@@ -598,7 +826,6 @@ namespace engine
          rc = runCmd.doit( retObj ) ;
          if ( rc )
          {
-            tmpRc = SDB_OK ; ;
             PD_LOG( PDERROR, "Job failed to create data node, rc = %d", rc ) ;
             tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
             if ( tmpRc )
@@ -743,42 +970,40 @@ namespace engine
    /*
       install db business task rollback job
    */
-   _omaStartInstallDBBusinessTaskJob::_omaStartInstallDBBusinessTaskJob ( 
-                                                         BSONObj &installInfo )
+   _omaStartInsDBBusTaskJob::_omaStartInsDBBusTaskJob ( BSONObj &installInfo )
    {
       _installInfoObj = installInfo.getOwned() ;
       _name = OMA_JOB_START_INSTALL_DB_BUSINESS ;
       _pTask = NULL ;
    }
 
-   _omaStartInstallDBBusinessTaskJob::~_omaStartInstallDBBusinessTaskJob()
+   _omaStartInsDBBusTaskJob::~_omaStartInsDBBusTaskJob()
    {
    }
 
-   RTN_JOB_TYPE _omaStartInstallDBBusinessTaskJob::type () const
+   RTN_JOB_TYPE _omaStartInsDBBusTaskJob::type () const
    {
       return RTN_JOB_STARTINSDBBUSTASK ;
    }
 
-   const CHAR* _omaStartInstallDBBusinessTaskJob::name () const
+   const CHAR* _omaStartInsDBBusTaskJob::name () const
    {
       return _name.c_str() ;
    }
 
-   BOOLEAN _omaStartInstallDBBusinessTaskJob::muteXOn (
-                                                    const _rtnBaseJob *pOther )
+   BOOLEAN _omaStartInsDBBusTaskJob::muteXOn ( const _rtnBaseJob *pOther )
    {
       return FALSE ;
    }
 
-   INT32 _omaStartInstallDBBusinessTaskJob::init()
+   INT32 _omaStartInsDBBusTaskJob::init()
    {
       INT32 rc = SDB_OK ;
       BSONElement ele ;
       BSONObj filter ;
       BSONObj commonFileds ;
       BSONObjBuilder builder ;
-//      BSONObj vCoordRet ;
+      string deplayMod ;
       const CHAR *pStr = NULL ;
 
       // parse arguments
@@ -793,6 +1018,29 @@ namespace engine
          goto error ;
       }
       _taskID = ele.numberLong() ;
+      // get deployMod info from omsvc
+      ele = _installInfoObj.getField( OMA_FIELD_DEPLOYMOD ) ;
+      if ( String != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid content from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      deplayMod = ele.String() ;
+      if ( deplayMod == string(DEPLAY_SA) )
+      {
+         _isStandalone = TRUE ;
+      }
+      else if ( deplayMod == string(DEPLAY_DB) )
+      {
+         _isStandalone = FALSE ;
+      }
+      else
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid deplay mode from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
       // get common fields
       rc = omaGetStringElement ( _installInfoObj, OMA_FIELD_SDBUSER, &pStr ) ;
       PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
@@ -835,7 +1083,6 @@ namespace engine
             temp = ele.embeddedObject() ;
             bob.appendElements( temp ) ;
             bob.appendElements( commonFileds ) ;
-//            bob.appendElements( vCoordRet ) ;
             info = bob.obj() ;
             // category
             rc = omaGetStringElement ( temp, OMA_OPTION_ROLE, &value ) ;
@@ -881,7 +1128,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaStartInstallDBBusinessTaskJob::init2()
+   INT32 _omaStartInsDBBusTaskJob::init2()
    {
       INT32 rc                         = SDB_OK ;
       _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
@@ -900,19 +1147,18 @@ namespace engine
       if ( !_pTask )
       {
          rc = SDB_OOM ;
-         PD_LOG_MSG( PDERROR,
-                     "Failed to create install db business task, rc = %d",
-                     rc ) ;
+         PD_LOG_MSG( PDERROR, "Failed to create install db business task, "
+                     "rc = %d", rc ) ;
          goto error ;
       }
       // register install db business task
       pTaskMgr->addTask( _pTask, _taskID ) ;
-      rc = _pTask->init( _coord, _catalog, _data, otherInfo ) ;
+      rc = _pTask->init( _isStandalone, _standalone, _coord,
+                         _catalog, _data, otherInfo ) ;
       if ( rc  )
       {
-         PD_LOG_MSG( PDERROR,
-                     "Failed to init install db busniness task, rc = %d",
-                     rc ) ;
+         PD_LOG_MSG( PDERROR, "Failed to init install db busniness task, "
+                     "rc = %d", rc ) ;
          goto error ;
       }
 
@@ -922,7 +1168,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaStartInstallDBBusinessTaskJob::doit()
+   INT32 _omaStartInsDBBusTaskJob::doit()
    {
       INT32 rc = SDB_OK ;
       rc = _pTask->doit() ;
@@ -941,37 +1187,37 @@ namespace engine
   /*
       install db business task rollback job
    */
-   _omaInstallDBBusinessTaskRollbackJob::_omaInstallDBBusinessTaskRollbackJob (
+   _omaInsDBBusTaskRbJob::_omaInsDBBusTaskRbJob (
+                                              BOOLEAN isStandalone,
                                               string &vCoordSvcName,
                                               _omaInstallDBBusinessTask *pTask )
    {
-//      _status = OMA_JOB_STATUS_INIT ;
       _name = OMA_JOB_ROLLBACK_INSTALL_DB_BUSINESS ;
+      _isStandalone = isStandalone ;
       _vCoordSvcName = vCoordSvcName ;
       _pTask = pTask ;
    }
 
-   _omaInstallDBBusinessTaskRollbackJob::~_omaInstallDBBusinessTaskRollbackJob()
+   _omaInsDBBusTaskRbJob::~_omaInsDBBusTaskRbJob()
    {
    }
 
-   RTN_JOB_TYPE _omaInstallDBBusinessTaskRollbackJob::type () const
+   RTN_JOB_TYPE _omaInsDBBusTaskRbJob::type () const
    {
       return RTN_JOB_INSDBBUSTASKRB ;
    }
 
-   const CHAR* _omaInstallDBBusinessTaskRollbackJob::name () const
+   const CHAR* _omaInsDBBusTaskRbJob::name () const
    {
       return _name.c_str() ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTaskRollbackJob::muteXOn (
-                                                    const _rtnBaseJob *pOther )
+   BOOLEAN _omaInsDBBusTaskRbJob::muteXOn ( const _rtnBaseJob *pOther )
    {
       return FALSE ;
    }
 
-   INT32 _omaInstallDBBusinessTaskRollbackJob::doit()
+   INT32 _omaInsDBBusTaskRbJob::doit()
    {
       INT32 rc = SDB_OK ;
       RollbackInfo info ;
@@ -986,37 +1232,88 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to get rollback info, rc = %d", rc ) ;
          goto error ;
       }
-      // rollback data nodes
-      rc = _rollbackDataNode ( _vCoordSvcName,
-                               info._dataGroupRollbackInfo ) ;
-      if ( rc )
+      if ( _isStandalone )
       {
-         PD_LOG ( PDERROR, "Failed to rollback data nodes, rc = %d", rc ) ;
-         goto error ;
+         // rollback standalone
+         rc = _rollbackStandalone( _vCoordSvcName,
+                                   info._standaloneRollbackInfo ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to rollback standalone, rc = %d", rc ) ;
+            goto error ;
+         }
       }
-      // rollback coord nodes
-      rc = _rollbackCoord ( _vCoordSvcName,
-                            info._coordRollbackInfo ) ;
-      if ( rc )
+      else
       {
-         PD_LOG ( PDERROR, "Failed to rollback coord nodes, rc = %d", rc ) ;
-         goto error ;
+         // rollback data nodes
+         rc = _rollbackDataNode ( _vCoordSvcName,
+                                  info._dataGroupRollbackInfo ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to rollback data nodes, rc = %d", rc ) ;
+            goto error ;
+         }
+         // rollback coord nodes
+         rc = _rollbackCoord ( _vCoordSvcName,
+                               info._coordRollbackInfo ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to rollback coord nodes, rc = %d", rc ) ;
+            goto error ;
+         }
+         // rollback catalog nodes
+         rc = _rollbackCatalog ( _vCoordSvcName,
+                                 info._catalogRollbackInfo ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to rollback catalog nodes, rc = %d", rc ) ;
+            goto error ;
+         }
       }
-      // rollback catalog nodes
-      rc = _rollbackCatalog ( _vCoordSvcName,
-                              info._catalogRollbackInfo ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to rollback catalog nodes, rc = %d", rc ) ;
-         goto error ;
-      }      
       // set rollback finish
       _pTask->setIsRollbackFinish( TRUE ) ;
  
    done:
-      if ( _pTask->getIsRollbackFinish() )
+      // for standalone, when doing rollback, if finish rollback, it means add  
+      // business task finish, otherwise, if rollback failed, it means add 
+      // business task failed
+      if ( _isStandalone )
       {
-         _pTask->removeVirtualCoord() ;
+         // set task finish or fail
+         if ( _pTask->getIsRollbackFinish() )
+         {
+            _pTask->setIsTaskFinish( TRUE ) ;
+         }
+         else if ( _pTask->getIsRollbackFail() )
+         {
+            _pTask->setIsTaskFail( TRUE ) ;
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "Task[%s] in a unknown status",
+                     _pTask->taskName() ) ;
+#if defined (_DEBUG)
+            ossPanic() ;
+#endif
+            rc = SDB_OMA_TASK_FAIL ;
+            goto error ;
+         }
+      }
+      // for cluster, when doing rollback, if succeed, we need to
+      // remove virtual coord, and we judge whether task is succeeful or not
+      // there, but if fail, we don't remove virtual coord, and leave it for
+      // cleaning the environment manually, but we need to mark task to be
+      // failing
+      else
+      {
+         if ( _pTask->getIsRollbackFinish() )
+         {
+            _pTask->removeVirtualCoord() ;
+         }
+         else if ( _pTask->getIsRollbackFail() )
+         {
+            _pTask->setIsTaskFail( TRUE ) ;
+         }
       }
       return rc ;
    error:
@@ -1027,10 +1324,17 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTaskRollbackJob::_getRollbackInfo(
-                                                           RollbackInfo &info )
+   INT32 _omaInsDBBusTaskRbJob::_getRollbackInfo( RollbackInfo &info )
    {
       INT32 rc = SDB_OK ;
+      rc = _pTask->getInstalledNodeResult ( ROLE_STANDALONE,
+                                            info._standaloneRollbackInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get standalone rollback info, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
       rc = _pTask->getInstalledNodeResult ( ROLE_COORD,
                                             info._coordRollbackInfo ) ;
       if ( rc )
@@ -1061,7 +1365,46 @@ namespace engine
      goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackCoord (
+   INT32 _omaInsDBBusTaskRbJob::_rollbackStandalone (
+                                  string &vCoordSvcName,
+                                  map< string, vector< InstalledNode> > &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj retObj ;
+      _omaRunRollbackStandaloneJob rollbackStandalone ( vCoordSvcName, info ) ;
+      map< string, vector< InstalledNode> >::iterator it = info.begin() ;
+      
+      if ( ( 1 != info.size() ) && ( string( ROLE_STANDALONE) != it->first ) )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Invalid standalone's rollback info" ) ;
+         goto error ;
+      }
+      // rollback standalone
+      rc = rollbackStandalone.init( NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to rollback create standalone "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = rollbackStandalone.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to rollback create standalone, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      PD_LOG ( PDEVENT, "The rollback standalone's result is: %s",
+               retObj.toString(FALSE, TRUE).c_str() ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ; 
+   }
+
+   INT32 _omaInsDBBusTaskRbJob::_rollbackCoord (
                                   string &vCoordSvcName,
                                   map< string, vector< InstalledNode> > &info )
    {
@@ -1076,7 +1419,7 @@ namespace engine
          PD_LOG ( PDERROR, "Invalid coord's rollback info" ) ;
          goto error ;
       }
-      // rollback data group
+      // rollback coord
       rc = rollbackCoord.init( NULL ) ;
       if ( rc )
       {
@@ -1100,7 +1443,7 @@ namespace engine
       goto done ; 
    }
 
-   INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackCatalog (
+   INT32 _omaInsDBBusTaskRbJob::_rollbackCatalog (
                                   string &vCoordSvcName,
                                   map< string, vector< InstalledNode> > &info )
    {
@@ -1115,7 +1458,7 @@ namespace engine
          PD_LOG ( PDERROR, "Invalid catalog's rollback info" ) ;
          goto error ;
       }
-      // rollback data group
+      // rollback catalog
       rc = rollbackCatalog.init( NULL ) ;
       if ( rc )
       {
@@ -1139,7 +1482,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTaskRollbackJob::_rollbackDataNode (
+   INT32 _omaInsDBBusTaskRbJob::_rollbackDataNode (
                                   string &vCoordSvcName,
                                   map< string, vector< InstalledNode> > &info )
    {
@@ -1237,6 +1580,33 @@ namespace engine
       goto done ;
    }
 
+   INT32 startCreateStandaloneJob ( _omaInstallDBBusinessTask *pTask,
+                                    EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaCreateStandaloneJob *pJob = NULL ;
+      pJob = SDB_OSS_NEW _omaCreateStandaloneJob( pTask ) ;
+      if ( !pJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for creating "
+                  "standalone job" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         goto done ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 startCreateCatalogJob ( _omaInstallDBBusinessTask *pTask,
                                  EDUID *pEDUID )
    {
@@ -1317,17 +1687,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 startStartInstallDBBusinessTaskJob ( const CHAR *pInstallInfo,
-                                              EDUID *pEDUID )
+   INT32 startStartInsDBBusTaskJob ( const CHAR *pInstallInfo, EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN returnResult = FALSE ;
-      _omaStartInstallDBBusinessTaskJob *pJob = NULL ;
+      _omaStartInsDBBusTaskJob *pJob = NULL ;
 
       try
       {
          BSONObj info( pInstallInfo ) ;
-         pJob = SDB_OSS_NEW _omaStartInstallDBBusinessTaskJob( info ) ;
+         pJob = SDB_OSS_NEW _omaStartInsDBBusTaskJob( info ) ;
          if ( !pJob )
          {
             PD_LOG ( PDERROR, "Failed to alloc memory for starting "
@@ -1370,16 +1739,16 @@ namespace engine
       goto done ;
    }
 
-   INT32 startInstallDBBusinessTaskRollbackJob (
-                                              string &vCoordSvcName,
-                                              _omaInstallDBBusinessTask *pTask,
-                                              EDUID *pEDUID )
+   INT32 startInsDBBusTaskRbJob ( BOOLEAN isStandalone,
+                                  string &vCoordSvcName,
+                                  _omaInstallDBBusinessTask *pTask,
+                                  EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN returnResult = FALSE ;
-      _omaInstallDBBusinessTaskRollbackJob *pJob = NULL ;
-      pJob = SDB_OSS_NEW _omaInstallDBBusinessTaskRollbackJob( vCoordSvcName,
-                                                               pTask ) ;
+      _omaInsDBBusTaskRbJob *pJob = NULL ;
+      pJob = SDB_OSS_NEW _omaInsDBBusTaskRbJob( isStandalone, 
+                                                vCoordSvcName, pTask ) ;
       if ( !pJob )
       {
          PD_LOG ( PDERROR, "Failed to alloc memory for "

@@ -52,6 +52,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninsDBBus )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
 
@@ -226,6 +227,9 @@ namespace engine
                   "%s, rc = %d", name(),
                   _scope->getLastErrMsg(), rc ) ;
          rc = _scope->getLastError() ;
+         BSONObjBuilder bob ;
+         bob.append( OMA_FIELD_DETAIL, _scope->getLastErrMsg() ) ;
+         retObj = bob.obj() ;
          PD_LOG_MSG(PDERROR, "%s", _scope->getLastErrMsg() ) ;
          goto error ;
       }
@@ -1062,8 +1066,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       EDUID startDBTaskJobID = PMD_INVALID_EDUID ;
-      rc = startStartInstallDBBusinessTaskJob ( pInstallInfo,
-                                                &startDBTaskJobID ) ;
+      rc = startStartInsDBBusTaskJob ( pInstallInfo,
+                                       &startDBTaskJobID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to start install db business task "
@@ -1080,6 +1084,32 @@ namespace engine
    {
       return SDB_OK ;
    }
+
+   /******************************* uninstall db business *********************/
+   // _omaUninsDBBus
+   _omaUninsDBBus::_omaUninsDBBus ()
+   {
+   }
+
+   _omaUninsDBBus::~_omaUninsDBBus ()
+   {
+   }
+
+   INT32 _omaUninsDBBus::init( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaUninsDBBus::doit( BSONObj &retObj )
+   {
+      return SDB_OK ;
+   }
+
 
    /******************************* query install status *********************/
    /*

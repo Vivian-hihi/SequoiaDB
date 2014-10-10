@@ -297,6 +297,22 @@ namespace engine
          virtual INT32 doit ( BSONObj &retObj ) ;
    } ;
 
+   /******************************* uninstall db business *********************/
+   /*
+      _omaUninsDBBus
+   */
+   class _omaUninsDBBus : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaUninsDBBus () ;
+         ~_omaUninsDBBus () ;
+
+         virtual const CHAR* name () { return OMA_CMD_UNINSTALL_DB_BUSINESS ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 doit ( BSONObj &retObj ) ;
+   } ;
+
    /******************************* query install db business status *********/
    /*
       _omaInstallDBStatus
@@ -376,13 +392,31 @@ namespace engine
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
    } ;
 
-   // run install catalog job
-   class _omaRunInstallCatalogJob : public _omaCommand
+   // run create standalone job
+   class _omaRunCreateStandaloneJob : public _omaCommand
    {
       public:
-         _omaRunInstallCatalogJob ( string &vCoordSvcName,
+         _omaRunCreateStandaloneJob ( string &vCoordSvcName,
                                     InstallInfo &info ) ;
-         virtual ~_omaRunInstallCatalogJob () ;
+         virtual ~_omaRunCreateStandaloneJob () ;
+
+      public:
+         virtual const CHAR* name () { return OMA_CMD_RUN_CREATE_STANDALONE ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+
+      private:
+         BSONObj                                        _installInfo ;
+         InstallInfo                                    _info ;
+         string                                         _vCoordSvcName ;
+   } ;
+
+   // run create catalog job
+   class _omaRunCreateCatalogJob : public _omaCommand
+   {
+      public:
+         _omaRunCreateCatalogJob ( string &vCoordSvcName,
+                                    InstallInfo &info ) ;
+         virtual ~_omaRunCreateCatalogJob () ;
 
       public:
          virtual const CHAR* name () { return OMA_CMD_RUN_CREATE_CATALOG ; }
@@ -394,13 +428,13 @@ namespace engine
          string                                         _vCoordSvcName ;
    } ;
 
-   // run install coord job
-   class _omaRunInstallCoordJob : public _omaCommand
+   // run create coord job
+   class _omaRunCreateCoordJob : public _omaCommand
    {
       public:
-         _omaRunInstallCoordJob ( string &vCoordSvcName,
+         _omaRunCreateCoordJob ( string &vCoordSvcName,
                                   InstallInfo &info ) ;
-         virtual ~_omaRunInstallCoordJob () ;
+         virtual ~_omaRunCreateCoordJob () ;
 
       public:
          virtual const CHAR* name () { return OMA_CMD_RUN_CREATE_COORD ; }
@@ -412,13 +446,13 @@ namespace engine
          string                                         _vCoordSvcName ;
    } ;
 
-   // run install data node job
-   class _omaRunInstallDataNodeJob : public _omaCommand
+   // run create data node job
+   class _omaRunCreateDataNodeJob : public _omaCommand
    {
       public:
-         _omaRunInstallDataNodeJob ( string &vCoordSvcName,
+         _omaRunCreateDataNodeJob ( string &vCoordSvcName,
                                      InstallInfo &info ) ;
-         virtual ~_omaRunInstallDataNodeJob () ;
+         virtual ~_omaRunCreateDataNodeJob () ;
 
       public:
          virtual const CHAR* name () { return OMA_CMD_RUN_CREATE_DATANODE ; }
@@ -427,6 +461,26 @@ namespace engine
       private:
          BSONObj                                        _installInfo ;
          InstallInfo                                    _info ;
+         string                                         _vCoordSvcName ;
+   } ;
+
+   // install db business task run rollback standalone job
+   class _omaRunRollbackStandaloneJob : public _omaCommand
+   {
+      public:
+         _omaRunRollbackStandaloneJob ( string &vCoordSvcName, 
+                                        map< string, vector<InstalledNode> > &info
+                                 ) ;
+         ~_omaRunRollbackStandaloneJob () ;
+
+      public:
+         virtual const CHAR* name () { return OMA_JOB_ROLLBACK_STANDALONE ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+
+      private:
+         void _getInstallStandaloneInfo( BSONObj &obj ) ;
+         
+         map< string, vector< InstalledNode > >         &_info ;
          string                                         _vCoordSvcName ;
    } ;
 

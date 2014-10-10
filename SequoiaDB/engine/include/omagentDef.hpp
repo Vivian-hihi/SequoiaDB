@@ -115,7 +115,7 @@ namespace engine
    #define OMA_CMD_REMOVE_HOST                        OM_REMOVE_HOST_REQ
    #define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ
    #define OMA_CMD_UNINSTALL_DB_BUSINESS              OM_REMOVE_BUSINESS_REQ
-   #define OMA_CMD_START_DB_NUSINESS                  ""
+   #define OMA_CMD_START_DB_BUSINESS                  ""
    #define OMA_CMD_STOP_DB_BUSINESS                   ""
    #define OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS OM_QUERY_PROGRESS
    #define OMA_CMD_UPDATE_HOSTS                       OM_UPDATE_HOSTNAME_REQ
@@ -127,6 +127,7 @@ namespace engine
    #define OMA_CMD_CRRATE_VIRTUAL_COORD               "create virtual coord"
    #define OMA_CMD_REMOVE_VIRTUAL_COORD               "remove virtual coord"
    #define OMA_CMD_ROLLBACK_ADD_HOSTS                 "rollback add hosts"
+   #define OMA_CMD_RUN_CREATE_STANDALONE              "run create standalone job"
    #define OMA_CMD_RUN_CREATE_COORD                   "run create coord job"
    #define OMA_CMD_RUN_CREATE_CATALOG                 "run create catalog job"
    #define OMA_CMD_RUN_CREATE_DATANODE                "run create data node job"
@@ -134,10 +135,12 @@ namespace engine
    /*
       oma job
    */
+   #define OMA_JOB_CREATE_STANDALONE                  "create standalone job"
    #define OMA_JOB_CREATE_CATALOG                     "create catalog job"
    #define OMA_JOB_CREATE_COORD                       "create coord job"
    #define OMA_JOB_START_INSTALL_DB_BUSINESS          "start install db business job"
    #define OMA_JOB_ROLLBACK_INSTALL_DB_BUSINESS       "rollback install db business job"
+   #define OMA_JOB_ROLLBACK_STANDALONE                "rollback create standalone job"
    #define OMA_JOB_ROLLBACK_CATALOG                   "rollback create catalog job"
    #define OMA_JOB_ROLLBACK_COORD                     "rollback create coord job"
    #define OMA_JOB_REMOVE_VIRTUAL_COORD               "remove virtual coord job"
@@ -169,14 +172,17 @@ namespace engine
    #define FILE_UPDATE_HOSTS                "updateHosts.js"
 
 
+   #define FILE_CREATE_STANDALONE           "createStandalone.js"
    #define FILE_CREATE_CATALOG              "createCatalog.js"
    #define FILE_CREATE_COORD                "createCoord.js"
    #define FILE_CREATE_DATANODE             "createData.js"
-   
+
+   #define FILE_REMOVE_STANDALONE           "removeStandalone.js"
    #define FILE_REMOVE_CATALOG              "removeCatalog.js"
    #define FILE_REMOVE_COORD                "removeCoord.js"
    #define FILE_REMOVE_DATANODE             "removeData.js"
-   
+
+   #define FILE_ROLLBACK_STANDALONE         "rollbackStandalone.js"
    #define FILE_ROLLBACK_CATALOG            "rollbackCatalog.js"
    #define FILE_ROLLBACK_COORD              "rollbackCoord.js"
    #define FILE_ROLLBACK_DATANODE           "rollbackDataNode.js"
@@ -192,10 +198,16 @@ namespace engine
    /*
       oma create role
    */
+   #define ROLE_STANDALONE                  "standalone"
    #define ROLE_COORD                       "coord"
    #define ROLE_CATA                        "catalog"
    #define ROLE_DATA                        "data"
-   #define ROLE_STANDALONE                  "standalone"
+
+   /*
+      oma deplay mode
+   */
+   #define DEPLAY_SA                        "standalone"
+   #define DEPLAY_DB                        "distribution"
 
    /*
       oma misc

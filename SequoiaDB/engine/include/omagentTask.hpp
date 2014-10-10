@@ -158,7 +158,9 @@ namespace engine
          }
 
       public:
-         INT32 init( vector<BSONObj> coord,
+         INT32 init( BOOLEAN isStandalone,
+                     vector<BSONObj> standalone,
+                     vector<BSONObj> coord,
                      vector<BSONObj> catalog,
                      vector<BSONObj> data,
                      BSONObj &otherInfo ) ;
@@ -187,6 +189,7 @@ namespace engine
          BOOLEAN getIsTaskFail() ;
          void setErrDetail( const CHAR *pErrDetail ) ;
          string& getVCoordSvcName() { return _vCoordSvcName ; }
+         vector<BSONObj>& getInstallStandaloneInfo() ;
          vector<BSONObj>& getInstallCatalogInfo() ;
          vector<BSONObj>& getInstallCoordInfo() ;
          INT32 getInstallDataGroupInfo( string &name,
@@ -208,15 +211,18 @@ namespace engine
       private:
          INT32 _saveVCoordInfo( BSONObj &info ) ;
          INT32 _installVirtualCatalog() ;
+         INT32 _installStandalone() ;
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
          INT32 _installData() ;
 
          // install info
+         vector<BSONObj>                      _standalone ;
          vector<BSONObj>                      _catalog ;
          vector<BSONObj>                      _coord ;
          map< string, vector<BSONObj> >       _mapGroups ;
          // install result
+         InstallResult                        _standaloneResult ;
          InstallResult                        _catalogResult ;
          InstallResult                        _coordResult ;
          map< string, InstallResult >         _mapGroupsResult ;
@@ -233,6 +239,7 @@ namespace engine
          OMA_TASK_TYPE                        _taskType ;
          string                               _taskName ;
          OMA_INSTALL_DB_STAGE                 _stage ;
+         BOOLEAN                              _isStandalone ;
          BOOLEAN                              _isInstallFinish ;
          BOOLEAN                              _isRollbackFinish ;
          BOOLEAN                              _isRemoveVCoordFinish ;

@@ -38,20 +38,6 @@
 #include "omDef.hpp"
 #include "omagentDef.hpp"
 
-/*
-// command
-#define OMA_CMD_SCAN_HOST                          OM_SCAN_HOST_REQ
-#define OMA_CMD_BASIE_CHECK_HOST                   OM_BASIC_CHECK_REQ
-#define OMA_CMD_INSTALL_REMOTE_AGENT               OM_INSTALL_REMOTE_AGENT
-#define OMA_CMD_CHECK_HOST                         OM_CHECK_HOST_REQ
-#define OMA_CMD_UNINSTALL_REMOTE_AGENT             OM_UNINSTALL_REMOTE_AGENT
-#define OMA_CMD_ADD_HOST                           OM_ADD_HOST_REQ
-#define OMA_CMD_INSTALL_DB_BUSINESS                OM_INSTALL_BUSINESS_REQ
-#define OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS OM_QUERY_PROGRESS
-//#define OMA_CMD_ROLLBACK_INSTALL_DB_BUSINESS       OM_ROLLBACK_TRANSACTION_REQ
-#define OMA_CMD_UPDATE_HOSTS                       OM_UPDATE_HOSTNAME_REQ
-*/
-
 // field
 #define OMA_FIELD_HOSTINFO                         OM_REST_FIELD_HOST_INFO
 #define OMA_FIELD_SSH_PORT                         OM_BSON_FIELD_HOST_SSHPORT
@@ -89,11 +75,13 @@
 #define OMA_FIELD_HASPUSH                          "HasPush"
 #define OMA_FIELD_PORTHASUSED                      "PortHasUsed"
 #define OMA_FIELD_TASKID                           "TaskID"
+#define OMA_FIELD_DEPLOYMOD                        "DeployMod"
 #define OMA_FIELD_ISFINISH                         "IsFinish"
 #define OMA_FIELD_PROGRESS                         "Progress"
 #define OMA_FIELD_TOTALCOUNT                       "TotalCount"
 #define OMA_FIELD_INSTALLEDCOUNT                   "InstalledCount"
 #define OMA_FIELD_DESC                             "Desc"
+#define OMA_FIELD_STANDALONE                       "Standalone"
 #define OMA_FIELD_COORD                            "Coord"
 #define OMA_FIELD_CATALOG                          "Catalog"
 #define OMA_FIELD_DATA                             "Data"
@@ -113,9 +101,11 @@
 #define OMA_FIELD_INSTALLGROUPNAME                 "InstallGroupName"
 #define OMA_FIELD_INSTALLGROUPNAMES                "InstallGroupNames"
 #define OMA_FIELD_INSTALLHOSTNAME                  "InstallHostName"
+#define OMA_FIELD_INSTALLHOSTS                     "InstallHosts"
 #define OMA_FIELD_INSTALLSVCNAME                   "InstallSvcName"
 #define OMA_FIELD_INSTALLPATH2                     "InstallPath"
 #define OMA_FIELD_INSTALLCONFIG                    "InstallConfig"
+#define OMA_FIELD_AGENTPORT                        "AgentPort"
 
 // host info
 #define OMA_FIELD_HOST                             "Host"
@@ -219,13 +209,14 @@
 #define OMA_OPTION_NUMPAGECLEANERS                 PMD_OPTION_NUMPAGECLEANERS
 #define OMA_OPTION_PAGECLEANINTERVAL               PMD_OPTION_PAGECLEANINTERVAL
 
-
+/*
 #define OMA_FIELD_SCAN_HOST_RET                    "ScanHostRet"
 #define OMA_FIELD_INSATLL_REMOTE_AGENT_RET         "InstallRemoteAgentRet"
 #define OMA_FIELD_CHECK_REMOTE_AGENT_PROCESS_RET   "CheckRemoteAgentProcessRet"
 #define OMA_FIELD_INSTALL_AGENT_PROCESS_RET        "InstallAgentProcessRet"
 #define OMA_FIELD_GET_HOST_INFO_RET                "GetHostInfoRet"
 #define OMA_FIELD_GET_HOST_NAME_RET                "GetHostNameRet"
+*/
 
 
 #endif

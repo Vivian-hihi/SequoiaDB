@@ -50,6 +50,44 @@ namespace engine
    class _omaInstallDBBusinessTask ;
 
    /*
+      create standalone job
+   */
+   class _omaCreateStandaloneJob : public _rtnBaseJob
+   {
+      public:
+         _omaCreateStandaloneJob ( _omaInstallDBBusinessTask *pTask ) ;
+         virtual ~_omaCreateStandaloneJob () ;
+
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR*  name () const ;
+         virtual BOOLEAN      muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32        doit () ;
+
+         OMA_JOB_STATUS getJobStatus ()
+         {
+            return _status ;
+         }
+         void setJobStatus ( OMA_JOB_STATUS status )
+         {
+            _status = status ;
+            _pTask->updateInstallJobStatus( _name, status ) ;
+         }
+      private:
+
+         INT32 _getInstallInfo( BSONObj &obj, InstallInfo &installInfo ) ;
+         INT32 _updateInstallStatus( BOOLEAN isFinish,
+                                     INT32 retRc,
+                                     const CHAR *pErrMsg,
+                                     const CHAR *pDesc,
+                                     InstalledNode *pNode ) ;
+      private:
+         OMA_JOB_STATUS                      _status ;
+         string                              _name ;
+         _omaInstallDBBusinessTask*          _pTask ;
+   } ;
+
+   /*
       create catalog job
    */
    class _omaCreateCatalogJob : public _rtnBaseJob
@@ -170,11 +208,11 @@ namespace engine
    /*
       start install db business task job
    */
-   class _omaStartInstallDBBusinessTaskJob : public _rtnBaseJob
+   class _omaStartInsDBBusTaskJob : public _rtnBaseJob
    {
       public:
-         _omaStartInstallDBBusinessTaskJob ( BSONObj &installInfo ) ;
-         virtual ~_omaStartInstallDBBusinessTaskJob () ;
+         _omaStartInsDBBusTaskJob ( BSONObj &installInfo ) ;
+         virtual ~_omaStartInsDBBusTaskJob () ;
 
       public:
          virtual RTN_JOB_TYPE type () const ;
@@ -194,6 +232,7 @@ namespace engine
          vector<BSONObj>             _standalone ;
          // task info
          INT64                       _taskID ;
+         BOOLEAN                     _isStandalone ;
          string                      _name ;
          _omaInstallDBBusinessTask*  _pTask ;
    } ;
@@ -201,12 +240,13 @@ namespace engine
    /*
       install db business task rollback internal job
    */
-   class _omaInstallDBBusinessTaskRollbackJob : public _rtnBaseJob
+   class _omaInsDBBusTaskRbJob : public _rtnBaseJob
    {
       public:
-         _omaInstallDBBusinessTaskRollbackJob ( string &vCoordSvcName,
-                                            _omaInstallDBBusinessTask *pTask ) ;
-         virtual ~_omaInstallDBBusinessTaskRollbackJob () ;
+         _omaInsDBBusTaskRbJob ( BOOLEAN isStandalone,
+                                 string &vCoordSvcName,
+                                 _omaInstallDBBusinessTask *pTask ) ;
+         virtual ~_omaInsDBBusTaskRbJob () ;
 
       public:
          virtual RTN_JOB_TYPE type () const ;
@@ -216,13 +256,16 @@ namespace engine
  
       private:
          INT32 _getRollbackInfo ( RollbackInfo &info ) ;
+         INT32 _rollbackStandalone( string &vCoordSvcName,
+                                    map< string, vector<InstalledNode> > &info ) ;
          INT32 _rollbackCoord( string &vCoordSvcName,
                                map< string, vector<InstalledNode> > &info ) ;
          INT32 _rollbackCatalog( string &vCoordSvcName,
                                  map< string, vector<InstalledNode> > &info ) ;
          INT32 _rollbackDataNode( string &vCoordSvcName, 
                                   map< string,vector<InstalledNode> > &info ) ;
-         
+
+         BOOLEAN                             _isStandalone ;
          string                              _vCoordSvcName ;
          string                              _name ;
          _omaInstallDBBusinessTask*          _pTask ;
@@ -249,7 +292,9 @@ namespace engine
          _omaInstallDBBusinessTask   *_pTask ;
    } ;
 
-
+   // start create standalone job
+   INT32 startCreateStandaloneJob ( _omaInstallDBBusinessTask *pTask,
+                                    EDUID *pEDUID ) ;
    // start create catalog job
    INT32 startCreateCatalogJob ( _omaInstallDBBusinessTask *pTask,
                                  EDUID *pEDUID ) ;
@@ -261,13 +306,13 @@ namespace engine
                               _omaInstallDBBusinessTask *pTask,
                               EDUID *pEDUID ) ;
    // start install db business task job
-   INT32 startStartInstallDBBusinessTaskJob ( const CHAR *pInstallInfo,
-                                              EDUID *pEDUID ) ;
+   INT32 startStartInsDBBusTaskJob ( const CHAR *pInstallInfo,
+                                     EDUID *pEDUID ) ;
    // start install db business task rollback job
-   INT32 startInstallDBBusinessTaskRollbackJob (
-                                              string &vCoordSvcName,
-                                              _omaInstallDBBusinessTask *pTask,
-                                              EDUID *pEDUID ) ;
+   INT32 startInsDBBusTaskRbJob ( BOOLEAN isStandalone,
+                                  string &vCoordSvcName,
+                                  _omaInstallDBBusinessTask *pTask,
+                                  EDUID *pEDUID ) ;
    // start create remove virtual coord job
    INT32 startRemoveVirtualCoordJob ( const CHAR *vCoordSvcName,
                                       _omaInstallDBBusinessTask *pTask,

@@ -243,6 +243,7 @@ namespace engine
       _isRollbackFail       = FALSE ;
       _isRemoveVCoordFail   = FALSE ;
       _isTaskFail           = FALSE ;
+      _vCoordSvcName        = "" ;
       ossMemset( _detail, 0, OMA_BUFF_SIZE + 1 ) ;
    }
 
@@ -250,54 +251,66 @@ namespace engine
    {
    }
 
-   INT32 _omaInstallDBBusinessTask::init( vector<BSONObj> coord,
+   INT32 _omaInstallDBBusinessTask::init( BOOLEAN isStandalone,
+                                          vector<BSONObj> standalone,
+                                          vector<BSONObj> coord,
                                           vector<BSONObj> catalog,
                                           vector<BSONObj> data,
                                           BSONObj &other )
    {
       INT32 rc = SDB_OK ;
       vector<BSONObj>::iterator it ;
-      // init _coord and _coordResult
-      _coord = coord ;
-      _coordResult._rc = SDB_OK ;
-      _coordResult._totalNum = _coord.size() ;
-      _coordResult._finishNum = 0 ;
-      // init _catalog and _catalogResult
-      _catalog = catalog ;
-      _catalogResult._rc = SDB_OK ;
-      _catalogResult._totalNum = _catalog.size() ;
-      _catalogResult._finishNum = 0 ;
-      // init _mapGroups and _mapGroupsResult
-      it = data.begin() ;
-      // let data node sort by group name
-      while( it != data.end() )
-      {
-         const CHAR *name = NULL ;
-         string key = "" ;
-         rc = omaGetStringElement ( *it, OMA_OPTION_DATAGROUPNAME,
-                                    &name ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                   "Get field[%s] failed, rc: %d",
-                   OMA_OPTION_DATAGROUPNAME, rc ) ;
-         key = string( name ) ;
-         _mapGroups[key].push_back( *it ) ;
-         it++ ;
-      }
-      // init data node result
-      {
       map<string, vector<BSONObj> >::iterator iter ;
-      iter = _mapGroups.begin() ;
-      while ( iter != _mapGroups.end() )
+      _isStandalone = isStandalone ;
+      // in case of standalone
+      if ( isStandalone )
       {
-         string groupname = iter->first ;
-         InstallResult jobResult ;
-         jobResult._rc = 0 ;
-         jobResult._totalNum = (iter->second).size() ;
-         jobResult._finishNum = 0 ;
-         _mapGroupsResult.insert( std::pair<string,
-                                  InstallResult>( groupname, jobResult ) ) ;
-         iter++ ;
+         // init _standalone and _standaloneResult
+         _standalone = standalone ;
+         _standaloneResult._rc = SDB_OK ;
+         _standaloneResult._totalNum = _standalone.size() ;
+         _standaloneResult._finishNum = 0 ;
       }
+      else // in case of cluster
+      {
+         // init _coord and _coordResult
+         _coord = coord ;
+         _coordResult._rc = SDB_OK ;
+         _coordResult._totalNum = _coord.size() ;
+         _coordResult._finishNum = 0 ;
+         // init _catalog and _catalogResult
+         _catalog = catalog ;
+         _catalogResult._rc = SDB_OK ;
+         _catalogResult._totalNum = _catalog.size() ;
+         _catalogResult._finishNum = 0 ;
+         // init _mapGroups and _mapGroupsResult
+         it = data.begin() ;
+         // let data node sort by group name
+         while( it != data.end() )
+         {
+            const CHAR *name = NULL ;
+            string key = "" ;
+            rc = omaGetStringElement ( *it, OMA_OPTION_DATAGROUPNAME, &name ) ;
+            PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+                      "Get field[%s] failed, rc: %d",
+                      OMA_OPTION_DATAGROUPNAME, rc ) ;
+            key = string( name ) ;
+            _mapGroups[key].push_back( *it ) ;
+            it++ ;
+         }
+         // init data node result
+         iter = _mapGroups.begin() ;
+         while ( iter != _mapGroups.end() )
+         {
+            string groupname = iter->first ;
+            InstallResult jobResult ;
+            jobResult._rc = 0 ;
+            jobResult._totalNum = (iter->second).size() ;
+            jobResult._finishNum = 0 ;
+            _mapGroupsResult.insert( std::pair<string,
+                                     InstallResult>( groupname, jobResult ) ) ;
+            iter++ ;
+         }
       }
    done:
       return rc ;
@@ -308,33 +321,46 @@ namespace engine
    INT32 _omaInstallDBBusinessTask::doit()
    {
       INT32 rc = SDB_OK ;
-      // create virtual catalog
-      rc = _installVirtualCatalog() ;
-      if ( rc )
+      // in case of standalone
+      if ( _isStandalone )
       {
-         PD_LOG ( PDERROR, "Failed to create virtual catalog, rc = %d", rc ) ;
-         goto error ;
+         rc = _installStandalone() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to install standalone, rc = %d", rc ) ;
+            goto error ;
+         }
       }
-      // create catalog job
-      rc = _installCatalog() ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to start create catalog job, rc = %d", rc ) ;
-         goto error ;
-      }
-      // create coord job
-      rc = _installCoord() ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to start create coord job, rc = %d", rc ) ;
-         goto error ;
-      }
-      // create data node job
-      rc = _installData() ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to start create data node job, rc = %d", rc ) ;
-         goto error ;
+      else // in case of cluster
+      { 
+         // create virtual catalog
+         rc = _installVirtualCatalog() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to create virtual catalog, rc = %d", rc ) ;
+            goto error ;
+         }
+         // create catalog job
+         rc = _installCatalog() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to start create catalog job, rc = %d", rc ) ;
+            goto error ;
+         }
+         // create coord job
+         rc = _installCoord() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to start create coord job, rc = %d", rc ) ;
+            goto error ;
+         }
+         // create data node job
+         rc = _installData() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to start create data node job, rc = %d", rc ) ;
+            goto error ;
+         }
       }
    done:
       return rc ;
@@ -448,6 +474,11 @@ namespace engine
       ossSnprintf( _detail, OMA_BUFF_SIZE, pErrDetail ) ;
    }
 
+   vector<BSONObj>& _omaInstallDBBusinessTask::getInstallStandaloneInfo()
+   {
+      return _standalone;
+   }
+
    vector<BSONObj>& _omaInstallDBBusinessTask::getInstallCatalogInfo()
    {
       return _catalog ;
@@ -528,13 +559,13 @@ namespace engine
          if ( it != _mapGroupsResult.end() )
          {
             InstallResult &result = it->second ;
+            result._desc = pDesc ;
             if ( retRc )
             {
                result._rc = retRc ;
                result._errMsg = pErrMsg ;
                goto done ;
             }
-            result._desc = pDesc ;
             if ( isFinish )
             {
                result._finishNum++ ;
@@ -545,13 +576,13 @@ namespace engine
       else if ( 0 == ossStrncmp( pRole, ROLE_COORD,
                                  ossStrlen( ROLE_COORD ) ) )
       {
+         _coordResult._desc = pDesc ;
          if ( retRc )
          {
             _coordResult._rc = retRc ;
             _coordResult._errMsg = pErrMsg ;
             goto done ;
          }
-         _coordResult._desc = pDesc ;
          if ( isFinish )
          {
             _coordResult._finishNum++ ;
@@ -561,17 +592,40 @@ namespace engine
       else if ( 0 == ossStrncmp( pRole, ROLE_CATA,
                                  ossStrlen( ROLE_CATA ) ) )
       {
+         _catalogResult._desc = pDesc ;
          if ( retRc )
          {
             _catalogResult._rc = retRc ;
             _catalogResult._errMsg = pErrMsg ;
             goto done ;
          }
-         _catalogResult._desc = pDesc ;
          if ( isFinish )
          {
             _catalogResult._finishNum++ ;
             _catalogResult._installedNodes.push_back( *pNode ) ;
+         }
+      }
+      else if ( 0 == ossStrncmp( pRole, ROLE_STANDALONE,
+                                 ossStrlen( ROLE_STANDALONE) ) )
+      {
+         _standaloneResult._desc = pDesc ;
+         if ( retRc )
+         {
+            _standaloneResult._rc = retRc ;
+            _standaloneResult._errMsg = pErrMsg ;
+            // though this node failed to be created, it's info
+            // had been registed in remote sdbcm, we need to remove
+            // those info, so we need to keep this node's install info
+            // if it's offered
+            if ( NULL != pNode )
+            {
+               _standaloneResult._installedNodes.push_back( *pNode ) ;
+            }
+            goto done ;
+         }
+         if ( isFinish )
+         {
+            _standaloneResult._finishNum++ ;
          }
       }
       else
@@ -581,16 +635,25 @@ namespace engine
                   "Failed to update install result, rc = %d", rc ) ;
          goto error ;
       }
-      // check whether it's time to remove virtual coord
+      // check whether it's time to set task's status or 
+      // remove virtual coord
       if ( isInstallFinish() )
       {
          setIsInstallFinish( TRUE ) ;
-         // start an async job to remove virtual coord
-         rc = removeVirtualCoord() ;
-         if ( rc )
+         if ( _isStandalone )
          {
-            PD_LOG ( PDERROR, "Failed remove virtual coord, rc = %d", rc ) ;
-            goto error ;
+            setIsTaskFinish( TRUE ) ;
+            goto done ;
+         }
+         else
+         {
+            // start an async job to remove virtual coord
+            rc = removeVirtualCoord() ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed remove virtual coord, rc = %d", rc ) ;
+               goto error ;
+            }
          }
       }
    done:
@@ -629,6 +692,14 @@ namespace engine
             pair< string, vector<InstalledNode> >( string(ROLE_COORD), nodes )
          ) ;
       }
+      else if ( 0 == ossStrncmp( ROLE_STANDALONE, pRole,
+                                 ossStrlen(ROLE_STANDALONE) ) )
+      {
+         vector< InstalledNode > &nodes = _standaloneResult._installedNodes ;
+         info.insert (
+         pair< string, vector<InstalledNode> >( string(ROLE_STANDALONE), nodes )
+         ) ;
+      }
       else
       {
          rc = SDB_INVALIDARG ;
@@ -644,27 +715,42 @@ namespace engine
    BOOLEAN _omaInstallDBBusinessTask::isInstallFinish ()
    {
       // TODO: need to add a lock different with update install statue?
-      map<string, InstallResult>::iterator it ;
 
-      if ( _catalogResult._totalNum > _catalogResult._finishNum )
+      // in case of standalone
+      if ( _isStandalone )
       {
-         return FALSE ;
-      }
-      if ( _coordResult._totalNum > _coordResult._finishNum )
-      {
-         return FALSE ;
-      }
-      it = _mapGroupsResult.begin() ;
-      while( it != _mapGroupsResult.end() )
-      {
-         InstallResult &result = it->second ;
-         if ( result._totalNum > result._finishNum )
+         if ( _standaloneResult._totalNum == _standaloneResult._finishNum )
+         {
+            return TRUE ;
+         }
+         else
          {
             return FALSE ;
          }
-         it++ ;
       }
-      return TRUE ;
+      else // in case of cluster
+      {
+         map<string, InstallResult>::iterator it ;
+         if ( _catalogResult._totalNum > _catalogResult._finishNum )
+         {
+            return FALSE ;
+         }
+         if ( _coordResult._totalNum > _coordResult._finishNum )
+         {
+            return FALSE ;
+         }
+         it = _mapGroupsResult.begin() ;
+         while( it != _mapGroupsResult.end() )
+         {
+            InstallResult &result = it->second ;
+            if ( result._totalNum > result._finishNum )
+            {
+               return FALSE ;
+            }
+            it++ ;
+         }
+         return TRUE ;
+      }
    }
 
    INT32 _omaInstallDBBusinessTask::getInstallStatus ( BSONObj &progress )
@@ -672,6 +758,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
       BSONArrayBuilder bab ;
+      BSONObj standaloneResult ;
       BSONObj coordResult ;
       BSONObj catalogResult ;
       const CHAR *pStage = NULL ;
@@ -710,44 +797,61 @@ namespace engine
          // ErrMsg( fatal err, like failed to rollback or
          // failed to remove virtual coord)
          bob.append( OMA_FIELD_ERRMSG, _detail ) ;
-         // get coord status
-         coordResult = BSON ( OMA_FIELD_NAME
-                              << OMA_FIELD_COORD
-                              << OMA_FIELD_TOTALCOUNT
-                              << _coordResult._totalNum
-                              << OMA_FIELD_INSTALLEDCOUNT
-                              << _coordResult._finishNum
-                              << OMA_FIELD_DESC
-                              << _coordResult._desc.c_str() ) ;
-         bab.append ( coordResult ) ;
-         // get catalog status
-         catalogResult = BSON ( OMA_FIELD_NAME
-                                << OMA_FIELD_CATALOG
-                                << OMA_FIELD_TOTALCOUNT
-                                << _catalogResult._totalNum
-                                << OMA_FIELD_INSTALLEDCOUNT
-                                << _catalogResult._finishNum
-                                << OMA_FIELD_DESC
-                                << _catalogResult._desc.c_str() ) ;
-         bab.append ( catalogResult ) ;
-         // get data group status
-         std::map< string, InstallResult >::iterator it ;
-         it = _mapGroupsResult.begin() ;
-         while ( it != _mapGroupsResult.end() )
+         // in case of standalone
+         if ( _isStandalone )
          {
-            string groupname = it->first ;
-            InstallResult &result = it->second ;
-            BSONObj groupResult ;
-            groupResult = BSON ( OMA_FIELD_NAME
-                                 << groupname.c_str()
+            // get standalone status
+            standaloneResult = BSON ( OMA_FIELD_NAME
+                                      << OMA_FIELD_STANDALONE
+                                      << OMA_FIELD_TOTALCOUNT
+                                      << _standaloneResult._totalNum
+                                      << OMA_FIELD_INSTALLEDCOUNT
+                                      << _standaloneResult._finishNum
+                                      << OMA_FIELD_DESC
+                                      << _standaloneResult._desc.c_str() ) ;
+            bab.append ( standaloneResult ) ;
+         }
+         else // in case of cluster
+         {
+            // get coord status
+            coordResult = BSON ( OMA_FIELD_NAME
+                                 << OMA_FIELD_COORD
                                  << OMA_FIELD_TOTALCOUNT
-                                 << result._totalNum
+                                 << _coordResult._totalNum
                                  << OMA_FIELD_INSTALLEDCOUNT
-                                 << result._finishNum
+                                 << _coordResult._finishNum
                                  << OMA_FIELD_DESC
-                                 << result._desc.c_str() ) ;
-            bab.append ( groupResult ) ;
-            it++ ;
+                                 << _coordResult._desc.c_str() ) ;
+            bab.append ( coordResult ) ;
+            // get catalog status
+            catalogResult = BSON ( OMA_FIELD_NAME
+                                   << OMA_FIELD_CATALOG
+                                   << OMA_FIELD_TOTALCOUNT
+                                   << _catalogResult._totalNum
+                                   << OMA_FIELD_INSTALLEDCOUNT
+                                   << _catalogResult._finishNum
+                                   << OMA_FIELD_DESC
+                                   << _catalogResult._desc.c_str() ) ;
+            bab.append ( catalogResult ) ;
+            // get data group status
+            std::map< string, InstallResult >::iterator it ;
+            it = _mapGroupsResult.begin() ;
+            while ( it != _mapGroupsResult.end() )
+            {
+               string groupname = it->first ;
+               InstallResult &result = it->second ;
+               BSONObj groupResult ;
+               groupResult = BSON ( OMA_FIELD_NAME
+                                    << groupname.c_str()
+                                    << OMA_FIELD_TOTALCOUNT
+                                    << result._totalNum
+                                    << OMA_FIELD_INSTALLEDCOUNT
+                                    << result._finishNum
+                                    << OMA_FIELD_DESC
+                                    << result._desc.c_str() ) ;
+               bab.append ( groupResult ) ;
+               it++ ;
+            }
          }
          // set return result
          bob.appendArray( OMA_FIELD_PROGRESS, bab.arr() ) ;
@@ -786,6 +890,10 @@ namespace engine
       {
          setIsInstallFail( TRUE ) ;
       }
+      else
+      {
+         goto done ;
+      }
       // check whether is there any job failed or not,
       // and whether it's the time to rollback
       for ( it = _jobStatus.begin(); it != _jobStatus.end(); it++ )
@@ -804,8 +912,7 @@ namespace engine
             PD_LOG ( PDWARNING, "Some jobs are failing, need to rollback" ) ;
             needRollback = TRUE ;
          }
-      }  
-      
+      }
       if ( TRUE == needRollback )
       {
          PD_LOG ( PDWARNING, "Start to rollback.." ) ;
@@ -829,12 +936,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       EDUID jobID = PMD_INVALID_EDUID ;
-
       // set task stage
       setTaskStage ( OMA_INSTALL_ROLLBACK ) ;
-      rc = startInstallDBBusinessTaskRollbackJob ( _vCoordSvcName,
-                                                   this,
-                                                   &jobID ) ;
+      rc = startInsDBBusTaskRbJob ( _isStandalone, _vCoordSvcName,
+                                    this, &jobID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to start to roolback in add db business task "
@@ -892,6 +997,27 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to save virtual coord install result, "
                   "rc = %d", rc ) ;
          goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaInstallDBBusinessTask::_installStandalone()
+   {
+      INT32 rc = SDB_OK ;
+      EDUID createStandaloneJobID = PMD_INVALID_EDUID ;
+      // start create standalone job
+      rc = startCreateStandaloneJob( this, &createStandaloneJobID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to start create standalone job, rc = %d", rc ) ;
+         goto error ;
+      }
+      while ( rtnGetJobMgr()->findJob ( createStandaloneJobID ) )
+      {
+         ossSleep ( OSS_ONE_SEC ) ;
       }
    done:
       return rc ;
@@ -992,7 +1118,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       EDUID jobID = PMD_INVALID_EDUID ;
-
       // start remove virtual coord job
       rc = startRemoveVirtualCoordJob( _vCoordSvcName.c_str(), this, &jobID ) ;
       if ( rc )
@@ -1007,11 +1132,11 @@ namespace engine
          ossSleep ( OSS_ONE_SEC ) ;
       } 
       // set task finish or fail
-      if ( _isRemoveVCoordFinish )
+      if ( _isRemoveVCoordFinish && !_isRollbackFail)
       {
          setIsTaskFinish( TRUE ) ;
       }
-      else if ( _isRemoveVCoordFail )
+      else if ( _isRemoveVCoordFail || _isRollbackFail )
       {
          setIsTaskFail( TRUE ) ;
       }

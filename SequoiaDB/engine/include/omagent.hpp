@@ -68,6 +68,7 @@ namespace engine
       string _dbPath ;
       string _confPath ;
       string _dataGroupName ;
+//      string _agentPort ;
       string _sdbUser ;
       string _sdbPasswd ;
       string _sdbUserGroup ;
@@ -83,6 +84,7 @@ namespace engine
       string _dataGroupName ;
       string _hostName ;
       string _svcName ;
+//      string _agentPort ;
    } ;
    typedef struct _InstalledNode InstalledNode ;
 
@@ -99,6 +101,8 @@ namespace engine
 
    struct _RollbackInfo
    {
+      // standalone
+      map< string, vector<InstalledNode> > _standaloneRollbackInfo ;
       // coord
       map< string, vector<InstalledNode> > _coordRollbackInfo ;
       // catalog
