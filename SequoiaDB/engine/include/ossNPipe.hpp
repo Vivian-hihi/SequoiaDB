@@ -178,7 +178,8 @@ INT32 ossDeleteNamedPipe ( OSSNPIPE &handle ) ;
 
 // intends to be used when one thread want to kill the whole program
 // and clean up.
-INT32 ossCleanNamedPipeByName ( const CHAR * pipeName ) ;
+INT32 ossCleanNamedPipeByName ( const CHAR * pipeName,
+                                const CHAR *pRootPath = OSS_NPIPE_LOCAL_PREFIX ) ;
 
 // convert named pipe to C file descriptor
 INT32 ossNamedPipeToFd ( OSSNPIPE &handle , int * fd ) ;

@@ -909,7 +909,8 @@ error :
    goto done ;
 }
 
-INT32 ossCleanNamedPipeByName ( const CHAR * pipeName )
+INT32 ossCleanNamedPipeByName ( const CHAR * pipeName,
+                                const CHAR *pRootPath )
 {
    (void *) pipeName ; // avoid compiler warning
 
@@ -1306,10 +1307,24 @@ error :
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCLNPBYNM, "ossCleanNamedPipeByName" )
-INT32 ossCleanNamedPipeByName ( const CHAR * pipeName )
+INT32 ossCleanNamedPipeByName ( const CHAR * pipeName,
+                                const CHAR *pRootPath )
 {
    PD_TRACE_ENTRY ( SDB_OSSCLNPBYNM );
-   INT32 rc = unlink ( pipeName ) ;
+   std::string pathName ;
+   SDB_ASSERT ( pipeName && pipeName[0] != '\0',
+                "name can't be empty or null" ) ;
+
+   if ( pRootPath && 0 != *pRootPath )
+   {
+      pathName = pRootPath ;
+      if ( pRootPath[ ossStrlen( pRootPath ) - 1 ] != OSS_FILE_SEP_CHAR )
+      {
+         pathName += OSS_FILE_SEP_CHAR ;
+      }
+   }
+   pathName += pipeName ;
+   INT32 rc = unlink ( pathName.c_str() ) ;
    if ( -1 == rc )
       rc = SDB_SYS ;
    PD_TRACE_EXITRC ( SDB_OSSCLNPBYNM, rc );
