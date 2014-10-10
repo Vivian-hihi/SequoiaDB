@@ -1105,7 +1105,8 @@ INT32 ossConnectNamedPipe ( OSSNPIPE &handle,
                             UINT32 action,
                             SINT32 timeout )
 {
-   return ossOpenNamedPipe ( handle._name, handle._state, timeout, handle ) ;
+   return ossOpenNamedPipe ( handle._name, handle._state, timeout, handle,
+                             NULL ) ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRDNP, "ossReadNamedPipe" )
