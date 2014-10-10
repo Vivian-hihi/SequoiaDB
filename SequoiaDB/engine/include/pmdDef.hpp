@@ -233,6 +233,7 @@ namespace engine
    #define PROC_PATH                   "/proc"
    #define PROC_CMDLINE_PATH_FORMAT    PROC_PATH"/%s/cmdline"
    #define ENGINE_NAME                 "sequoiadb"
+   #define ENGINE_NPIPE_PREFIX_BW      "sequoiadb_engine_bw_"
    #elif defined (_WINDOWS)
    #define ENGINE_NAME                 "sequoiadb.exe"
    #define PMD_OPTION_AS_PROC          "asproc"
@@ -244,7 +245,6 @@ namespace engine
    #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"
    #define ENGINE_NPIPE_MSG_TYPE       "$type"
    #define ENGINE_NPIPE_MSG_ROLE       "$role"
-   #define LIST_TIMEOUT                0
 
    /*
       Config define

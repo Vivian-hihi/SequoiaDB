@@ -88,13 +88,9 @@ INT32 getPipeNames2( const OSSPID & ppid , const OSSPID & pid ,
 {
    INT32          rc          = SDB_OK ;
    INT32          nWritten    = 0 ;
-#if defined (_WINDOWS)
+
    const CHAR *   f2bFormat   = "sdb-shell-f2b-%u-%u" ;
    const CHAR *   b2fFormat   = "sdb-shell-b2f-%u-%u" ;
-#else
-   const CHAR *   f2bFormat   = "/tmp/sdb-shell-f2b-%u-%u" ;
-   const CHAR *   b2fFormat   = "/tmp/sdb-shell-b2f-%u-%u" ;
-#endif
 
    SDB_ASSERT ( f2bName && b2fName && f2bSize > 0 && b2fSize > 0 ,
                 "Invalid arguments" ) ;

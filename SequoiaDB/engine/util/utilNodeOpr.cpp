@@ -50,6 +50,372 @@
 namespace engine
 {
 
+   #define UTIL_NODE_PIPE_TIMEOUT         ( 1 )
+   #define UTIL_NODE_OPEN_PIPE_TIMEOUT    ( 0 )
+   #define UTIL_NODE_PIPE_BUFFSZ          ( 1024 )
+
+   /*
+      _utilNodePipe implement
+   */
+   _utilNodePipe::_utilNodePipe()
+   {
+      _isCreate = FALSE ;
+      _isOpen   = FALSE ;
+      _isConnect= FALSE ;
+      _connectError = FALSE ;
+
+      ossMemset( _pipeRName, 0, sizeof( _pipeRName ) ) ;
+      ossMemset( _pipeWName, 0, sizeof( _pipeWName ) ) ;
+   }
+
+   _utilNodePipe::~_utilNodePipe()
+   {
+      autoRelease() ;
+   }
+
+   INT32 _utilNodePipe::autoRelease()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _isCreate )
+      {
+         rc = deletePipe() ;
+      }
+      if ( _isOpen )
+      {
+         rc = closePipe() ;
+      }
+      return rc ;
+   }
+
+   INT32 _utilNodePipe::createPipe( const CHAR * svcname )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = autoRelease() ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+#if defined( _WINDOWS )
+      ossSnprintf ( _pipeRName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX"%s",
+                    svcname ) ;
+      ossSnprintf ( _pipeWName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX"%s",
+                    svcname ) ;
+      // create
+      rc = ossCreateNamedPipe( _pipeRName, UTIL_NODE_PIPE_BUFFSZ,
+                               UTIL_NODE_PIPE_BUFFSZ,
+                               OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK_WITH_TIMEOUT,
+                               OSS_NPIPE_UNLIMITED_INSTANCES,
+                               UTIL_NODE_PIPE_TIMEOUT, _pipeRHandle ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create named pipe[%s] failed, rc: %d",
+                 _pipeRName, rc ) ;
+         goto error ;
+      }
+#else
+      ossSnprintf ( _pipeRName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX"%s_%d",
+                    svcname, ossGetCurrentProcessID() ) ;
+      ossSnprintf ( _pipeWName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX_BW"%s_%d",
+                    svcname, ossGetCurrentProcessID() ) ;
+
+      // clear the exist 
+      ossCleanNamedPipeByName( _pipeRName ) ;
+      ossCleanNamedPipeByName( _pipeWName ) ;
+
+      // create
+      rc = ossCreateNamedPipe( _pipeRName, UTIL_NODE_PIPE_BUFFSZ, 0,
+                               OSS_NPIPE_INBOUND,
+                               OSS_NPIPE_UNLIMITED_INSTANCES,
+                               UTIL_NODE_PIPE_TIMEOUT, _pipeRHandle ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create named pipe[%s] failed, rc: %d",
+                 _pipeRName, rc ) ;
+         goto error ;
+      }
+
+      rc = ossCreateNamedPipe( _pipeWName, 0, UTIL_NODE_PIPE_BUFFSZ,
+                               OSS_NPIPE_OUTBOUND,
+                               OSS_NPIPE_UNLIMITED_INSTANCES,
+                               UTIL_NODE_PIPE_TIMEOUT, _pipeWHandle ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Create named pipe[%s] failed, rc: %d",
+                 _pipeWName, rc ) ;
+         ossDeleteNamedPipe( _pipeRHandle ) ;
+         goto error ;
+      }
+#endif // _WINDOWS
+
+      _isCreate = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      autoRelease() ;
+      goto done ;
+   }
+
+   INT32 _utilNodePipe::deletePipe()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( FALSE == _isCreate )
+      {
+         goto done ;
+      }
+
+      disconnectPipe() ;
+
+      rc = ossDeleteNamedPipe( _pipeRHandle ) ;
+#ifndef _WINDOWS
+      rc = ossDeleteNamedPipe( _pipeWHandle ) ;
+#endif
+      _isCreate = FALSE ;
+
+   done:
+      return rc ;
+   }
+
+   void _utilNodePipe::disconnectPipe()
+   {
+      if ( _isConnect )
+      {
+         INT32 tmp = ossDisconnectNamedPipe( _pipeRHandle ) ;
+#ifndef _WINDOWS
+         ossDisconnectNamedPipe( _pipeWHandle ) ;
+#endif
+         _isConnect = FALSE ;
+      }
+   }
+
+   INT32 _utilNodePipe::openPipe( const CHAR * svcname )
+   {
+      INT32 rc = SDB_OK ;
+
+      rc = autoRelease() ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+#if defined( _WINDOWS )
+      ossSnprintf ( _pipeRName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX"%s",
+                    svcname ) ;
+      ossSnprintf ( _pipeWName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX"%s",
+                    svcname ) ;
+      // open
+      rc = ossOpenNamedPipe( _pipeRName,
+                             OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK_WITH_TIMEOUT,
+                             UTIL_NODE_OPEN_PIPE_TIMEOUT, _pipeRHandle ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Open named pipe[%s] failed, rc: %d",
+                 _pipeRName, rc ) ;
+         goto error ;
+      }
+#else
+      ossSnprintf ( _pipeWName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX"%s_%d",
+                    svcname, ossGetCurrentProcessID() ) ;
+      ossSnprintf ( _pipeRName, OSS_NPIPE_MAX_NAME_LEN,
+                    ENGINE_NPIPE_PREFIX_BW"%s_%d",
+                    svcname, ossGetCurrentProcessID() ) ;
+
+      // open
+      rc = ossOpenNamedPipe( _pipeWName,
+                             OSS_NPIPE_OUTBOUND | OSS_NPIPE_BLOCK,
+                             UTIL_NODE_OPEN_PIPE_TIMEOUT, _pipeWHandle ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Open named pipe[%s] failed, rc: %d",
+                 _pipeWName, rc ) ;
+         goto error ;
+      }
+
+      rc = ossOpenNamedPipe( _pipeRName,
+                             OSS_NPIPE_INBOUND | OSS_NPIPE_BLOCK,
+                             UTIL_NODE_OPEN_PIPE_TIMEOUT, _pipeRHandle ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Open named pipe[%s] failed, rc: %d",
+                 _pipeRName, rc ) ;
+         ossCloseNamedPipe( _pipeWHandle ) ;
+         goto error ;
+      }
+#endif // _WINDOWS
+
+      _isOpen = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      autoRelease() ;
+      goto done ;
+   }
+
+   INT32 _utilNodePipe::closePipe()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( FALSE == _isOpen )
+      {
+         goto done ;
+      }
+
+      rc = ossCloseNamedPipe( _pipeRHandle ) ;
+#ifndef _WINDOWS
+      rc = ossCloseNamedPipe( _pipeWHandle ) ;
+#endif
+      _isOpen = FALSE ;
+
+   done:
+      return rc ;
+   }
+
+   INT32 _utilNodePipe::writePipe( const CHAR * pBuff, INT32 size )
+   {
+      INT32 rc = SDB_OK ;
+
+      _connectError = FALSE ;
+      rc = connectPipe() ;
+      if ( rc )
+      {
+         _connectError = TRUE ;
+         goto error ;
+      }
+#if defined( _WINDOWS )
+      rc = ossWriteNamedPipe( _pipeRHandle, pBuff, size, NULL ) ;
+#else
+      rc = ossWriteNamedPipe( _pipeWHandle, pBuff, size, NULL ) ;
+#endif //_WINDOWS
+      if ( rc )
+      {
+         if ( SDB_TIMEOUT != rc )
+         {
+            PD_LOG( PDERROR, "Write named pipe[%s] failed, rc: %d",
+                    _pipeWName, rc ) ;
+            disconnectPipe() ;
+         }
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilNodePipe::connectPipe()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( FALSE == _isCreate )
+      {
+         goto done ;
+      }
+      if ( _isConnect )
+      {
+         goto done ;
+      }
+#if defined ( _WINDOWS )
+      // connect
+      rc = ossConnectNamedPipe( _pipeRHandle,
+                                OSS_NPIPE_DUPLEX,
+                                UTIL_NODE_PIPE_TIMEOUT ) ;
+      if ( rc )
+      {
+         if ( SDB_TIMEOUT != rc )
+         {
+            PD_LOG( PDERROR, "Connect to named pipe[%s] failed, rc: %d",
+                    _pipeRName, rc ) ;
+         }
+         goto error ;
+      }
+#else
+      // connect
+      rc = ossConnectNamedPipe( _pipeRHandle,
+                                OSS_NPIPE_INBOUND | OSS_NPIPE_BLOCK,
+                                UTIL_NODE_PIPE_TIMEOUT ) ;
+      if ( rc )
+      {
+         if ( SDB_TIMEOUT != rc )
+         {
+            PD_LOG( PDERROR, "Connect to named pipe[%s] failed, rc: %d",
+                    _pipeRName, rc ) ;
+         }
+         goto error ;
+      }
+
+      rc = ossConnectNamedPipe( _pipeWHandle,
+                                OSS_NPIPE_OUTBOUND | OSS_NPIPE_BLOCK,
+                                UTIL_NODE_PIPE_TIMEOUT ) ;
+      if ( rc )
+      {
+         if ( SDB_TIMEOUT != rc )
+         {
+            PD_LOG( PDERROR, "Connect to named pipe[%s] failed, rc: %d",
+                    _pipeWName, rc ) ;
+         }
+         ossDisconnectNamedPipe( _pipeRHandle ) ;
+         goto error ;
+      }
+#endif // _WINDOWS
+
+      _isConnect = TRUE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _utilNodePipe::readPipe( CHAR *pBuff, INT32 readSize, INT32 &hasRead )
+   {
+      INT32 rc = SDB_OK ;
+      INT64 buffRead = 0 ;
+
+      _connectError = FALSE ;
+      rc = connectPipe() ;
+      if ( rc )
+      {
+         _connectError = TRUE ;
+         goto error ;
+      }
+
+      rc = ossReadNamedPipe( _pipeRHandle, pBuff, readSize, &buffRead,
+                             UTIL_NODE_PIPE_TIMEOUT ) ;
+      if ( rc )
+      {
+         if ( SDB_TIMEOUT != rc )
+         {
+            PD_LOG ( PDERROR, "Read named pipe[%s] failed, rc: %d",
+                     _pipeRName, rc ) ;
+            disconnectPipe() ;
+         }
+         goto error ;
+      }
+
+      hasRead = (INT32)buffRead ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      Local define
+   */
    static INT32 _utilCheckOrCleanNamedPipe( const CHAR *fullPipeName,
                                             OSSPID &pid )
    {
@@ -82,36 +448,57 @@ namespace engine
 #endif // _LINUX
    }
 
-   INT32 utilPrepareForNamedPipe( const CHAR * pPattern )
+   static INT32 _utilWriteReadPipe( const CHAR *pSvcName,
+                                    const CHAR *pWriteBuf, INT32 writeLen,
+                                    CHAR *pReadBuf, INT32 readLen )
    {
       INT32 rc = SDB_OK ;
-      OSSPID pid = OSS_INVALID_PID ;
-      vector< string > names ;
-      ossEnumNamedPipes( names, pPattern, OSS_MATCH_LEFT ) ;
+      utilNodePipe nodePipe ;
+      INT32 hasRead = 0 ;
 
-      for ( UINT32 i = 0 ; i < names.size() ; ++i )
+      rc = nodePipe.openPipe( pSvcName ) ;
+      if ( rc && SDB_FE != rc )
       {
-         rc = _utilCheckOrCleanNamedPipe( names[ i ].c_str(), pid ) ;
-         if ( SDB_FE == rc )
-         {
-            PD_LOG( PDERROR, "Named pipe[%s] process[%s] is running, "
-                    "conflict", names[ i ].c_str(), pid ) ;
-            goto error ;
-         }
-         else if ( rc )
-         {
-            PD_LOG( PDERROR, "Clean named pipe[%s] failed, rc: %d",
-                    names[ i ].c_str(), rc ) ;
-            goto error ;
-         }
+         PD_LOG ( PDERROR, "Failed to open named pipe: %s, rc: %d",
+                  nodePipe.getReadPipeName(), rc ) ;
+         goto error ;
+      }
+
+      rc = nodePipe.writePipe( pWriteBuf, writeLen ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to send %s to %s, rc: %d",
+                  pWriteBuf, nodePipe.getWritePipeName(), rc ) ;
+         goto error ;
+      }
+
+      if ( !pReadBuf || 0 == readLen )
+      {
+         goto done ;
+      }
+
+      rc = nodePipe.readPipe( pReadBuf, readLen, hasRead ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
+                  pWriteBuf, nodePipe.getReadPipeName(), rc ) ;
+         goto error ;
+      }
+
+      if ( readLen != hasRead )
+      {
+         PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
+                  pWriteBuf, nodePipe.getReadPipeName(), rc ) ;
+         rc = SDB_SYS ;
+         goto error ;
       }
 
    done:
+      nodePipe.closePipe() ;
       return rc ;
    error:
       goto done ;
    }
-
 
 #if defined (_LINUX)
    INT32 utilListNodes( UTIL_VEC_NODES & nodes,
@@ -278,66 +665,6 @@ namespace engine
 
 #else
 
-   static INT32 utilWriteReadPipe( const CHAR *pPipeName,
-                                   const CHAR *pWriteBuf, INT64 writeLen,
-                                   CHAR *pReadBuf, INT64 readLen,
-                                   INT64 *bufRead )
-   {
-      INT32 rc = SDB_OK ;
-      OSSNPIPE handle ;
-      BOOLEAN isOpen = FALSE ;
-
-      rc = ossOpenNamedPipe( pPipeName,
-                             OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
-                             OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle ) ;
-      if ( rc && SDB_FE != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to create named pipe: %s, rc: %d",
-                  pPipeName, rc ) ;
-         goto error ;
-      }
-      isOpen = TRUE ;
-
-      rc = ossWriteNamedPipe( handle, pWriteBuf, writeLen, NULL ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to send %s to %s, rc: %d",
-                  pWriteBuf, pPipeName, rc ) ;
-         goto error ;
-      }
-
-      if ( !pReadBuf || 0 == readLen )
-      {
-         goto done ;
-      }
-
-      rc = ossReadNamedPipe( handle, pReadBuf, readLen, bufRead,
-                             LIST_TIMEOUT ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
-                  pWriteBuf, pPipeName, rc ) ;
-         goto error ;
-      }
-
-      if ( readLen != *bufRead )
-      {
-         PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
-                  pWriteBuf, pPipeName, rc ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-   done:
-      if ( isOpen )
-      {
-         ossCloseNamedPipe( handle ) ;
-      }
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 utilListNodes( UTIL_VEC_NODES & nodes, INT32 typeFilter,
                         const CHAR * svcnameFilter, OSSPID pidFilter,
                         INT32 roleFilter )
@@ -345,7 +672,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       vector< string > names ;
       utilNodeInfo findNode ;
-      INT64 readSize = 0 ;
       UINT32 prefixLen = ossStrlen( ENGINE_NPIPE_PREFIX ) ;
       OSSPID pid = OSS_INVALID_PID ;
 
@@ -360,12 +686,19 @@ namespace engine
             continue ;
          }
 
-         // linux:   /tmp/sequoiadb_engine_11790(svcname)_2500(pid)
+         // linux:   sequoiadb_engine_11790(svcname)_2500(pid)
+         // linux:   sequoiadb_engine_bw_11790(svcname)_2500(pid)
          // windows: sequoiadb_engine_11790(svcname)
          // get svcname
 #if defined( _LINUX )
+         if ( 0 == ossStrncmp( names[ i ].c_str(), ENGINE_NPIPE_PREFIX_BW,
+                               ossStrlen( ENGINE_NPIPE_PREFIX_BW ) )
+         {
+            continue ;
+         }
+
          findNode._svcname = names[ i ].substr(
-                     prefixLen + ossStrlen( OSS_NPIPE_LOCAL_PREFIX ) ) ;
+            ossStrlen( ENGINE_NPIPE_PREFIX ) ) ;
          findNode._svcname = findNode._svcname.substr( 0,
                              findNode._svcname.find( "_" ) ) ;
 #else
@@ -380,12 +713,11 @@ namespace engine
          }
 
          // 2. type
-         rc = utilWriteReadPipe( names[ i ].c_str(),
-                                 ENGINE_NPIPE_MSG_TYPE,
-                                 sizeof( ENGINE_NPIPE_MSG_TYPE ),
-                                 (CHAR*)&findNode._type,
-                                 sizeof( findNode._type ),
-                                 &readSize ) ;
+         rc = _utilWriteReadPipe( findNode._svcname.c_str(),
+                                  ENGINE_NPIPE_MSG_TYPE,
+                                  sizeof( ENGINE_NPIPE_MSG_TYPE ),
+                                  (CHAR*)&findNode._type,
+                                  sizeof( findNode._type ) ) ;
          if ( rc )
          {
             continue ;
@@ -396,12 +728,11 @@ namespace engine
          }
 
          // 3. pid
-         rc = utilWriteReadPipe( names[ i ].c_str(),
-                                 ENGINE_NPIPE_MSG_PID,
-                                 sizeof( ENGINE_NPIPE_MSG_PID ),
-                                 (CHAR *)&findNode._pid,
-                                 sizeof( findNode._pid ),
-                                 &readSize ) ;
+         rc = _utilWriteReadPipe( findNode._svcname.c_str(),
+                                  ENGINE_NPIPE_MSG_PID,
+                                  sizeof( ENGINE_NPIPE_MSG_PID ),
+                                  (CHAR *)&findNode._pid,
+                                  sizeof( findNode._pid ) ) ;
          if ( rc )
          {
             continue ;
@@ -412,11 +743,11 @@ namespace engine
          }
 
          // 4. role
-         rc = utilWriteReadPipe( names[ i ].c_str(), ENGINE_NPIPE_MSG_ROLE,
-                                 sizeof( ENGINE_NPIPE_MSG_ROLE ),
-                                 (CHAR *)&findNode._role,
-                                 sizeof( findNode._role ),
-                                 &readSize ) ;
+         rc = _utilWriteReadPipe( findNode._svcname.c_str(),
+                                  ENGINE_NPIPE_MSG_ROLE,
+                                  sizeof( ENGINE_NPIPE_MSG_ROLE ),
+                                  (CHAR *)&findNode._role,
+                                  sizeof( findNode._role ) ) ;
          if ( rc )
          {
             continue ;
@@ -570,10 +901,10 @@ namespace engine
 #if defined( _LINUX )
       rc = ossTerminateProcess( node._pid, FALSE ) ;
 #else
-      rc = utilWriteReadPipe( node._orgname.c_str(),
-                              ENGINE_NPIPE_MSG_SHUTDOWN,
-                              sizeof( ENGINE_NPIPE_MSG_SHUTDOWN ),
-                              NULL, 0, NULL ) ;
+      rc = _utilWriteReadPipe( node._svcname.c_str(),
+                               ENGINE_NPIPE_MSG_SHUTDOWN,
+                               sizeof( ENGINE_NPIPE_MSG_SHUTDOWN ),
+                               NULL, 0 ) ;
 #endif // _LINUX
       if ( rc && ossIsProcessRunning( node._pid ) )
       {

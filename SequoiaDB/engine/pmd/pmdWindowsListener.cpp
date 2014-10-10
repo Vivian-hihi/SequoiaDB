@@ -48,8 +48,7 @@
 
 namespace engine
 {
-   // 1 seconds timeout
-   #define PMD_WL_NPIPE_TIMEOUT        1
+
    #define PMD_WL_NPIPE_BUFSZ          1024
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPIPELSTNNPNTPNT, "pmdPipeListenerEntryPoint" )
@@ -58,66 +57,38 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDPIPELSTNNPNTPNT );
       EDUID myEDUID = cb->getID () ;
-      CHAR namedPipe [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
-      OSSNPIPE pipeHandle ;
-      BOOLEAN pipeCreated = FALSE ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
-      CHAR tempBuffer [ PMD_WL_NPIPE_BUFSZ ] = {0} ;
+      CHAR tempBuffer [ PMD_WL_NPIPE_BUFSZ + 1 ] = {0} ;
       const CHAR *pSvcName = ( const CHAR* )pData ;
+      utilNodePipe nodePipe ;
 
-      INT32 dataSize = 0 ;
-      INT64 readSize = 0 ;
-      INT32 len = 0 ;
+      INT32 hasRead = 0 ;
       rc = eduMgr->activateEDU ( myEDUID ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to activate EDU, rc: %d", rc ) ;
          goto error ;
       }
-      ossSnprintf ( namedPipe, OSS_NPIPE_MAX_NAME_LEN,
-                    ENGINE_NPIPE_PREFIX"%s", pSvcName ) ;
-      PD_LOG ( PDINFO, "Attempt to create named pipe: %s",
-               namedPipe ) ;
-
-      // in linux, the named pipe will not delte when the process crash,
-      // so we need to enum first
-#if defined ( _LINUX )
-      rc = utilPrepareForNamedPipe( namedPipe ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to prepare for named pipe[%s], rc: %d",
-                   namedPipe, rc ) ;
-      ossSnprintf ( namedPipe, OSS_NPIPE_MAX_NAME_LEN,
-                    OSS_NPIPE_LOCAL_PREFIX ENGINE_NPIPE_PREFIX"%s_%u",
-                    pSvcName, ossGetCurrentProcessID() ) ;
-#endif // _LINUX
 
       // create a named pipe
-      rc = ossCreateNamedPipe ( namedPipe, PMD_WL_NPIPE_BUFSZ,
-                                PMD_WL_NPIPE_BUFSZ,
-                                OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK_WITH_TIMEOUT,
-                                OSS_NPIPE_UNLIMITED_INSTANCES,
-                                PMD_WL_NPIPE_TIMEOUT,
-                                pipeHandle ) ;
+      rc = nodePipe.createPipe( pSvcName ) ;
       if ( rc )
       {
          // if we are not able to create named pipe, then we are not able
          // to stop it using sdbstop.exe. So we should nicely shutdown
          // database in order to prevent killing process later
          PD_LOG ( PDSEVERE, "Failed to create named pipe: %s, rc = %d",
-                  namedPipe, rc ) ;
+                  nodePipe.getReadPipeName(), rc ) ;
          goto error ;
       }
-
-      pipeCreated = TRUE ;
 
       // just sit here do nothing at the moment
       while ( !cb->isDisconnected() )
       {
-         rc = ossConnectNamedPipe ( pipeHandle,
-                                    OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
-                                    PMD_WL_NPIPE_TIMEOUT ) ;
+         rc = nodePipe.connectPipe() ;
          if ( rc )
          {
-            // we just loop if nothing returns in PMD_WL_NPIPE_TIMEOUT
+            // we just loop if nothing returns in SDB_TIMEOUT
             if ( SDB_TIMEOUT == rc )
             {
                continue ;
@@ -126,15 +97,15 @@ namespace engine
             // to stop it using sdbstop.exe. So we should nicely shutdown
             // database in order to prevent killing process later
             PD_LOG ( PDSEVERE, "Failed to connect named pipe: %s, rc = %d",
-                     namedPipe, rc ) ;
+                     nodePipe.getReadPipeName(), rc ) ;
             goto error ;
          }
-         readSize = 0 ;
-         while ( 0 == readSize && !cb->isDisconnected() )
+
+         hasRead = 0 ;
+         while ( 0 == hasRead && !cb->isDisconnected() )
          {
             // then let's read from pipe. For this version let's just read
-            rc = ossReadNamedPipe ( pipeHandle, tempBuffer, PMD_WL_NPIPE_BUFSZ,
-                                    &readSize, PMD_WL_NPIPE_TIMEOUT ) ;
+            rc = nodePipe.readPipe( tempBuffer, PMD_WL_NPIPE_BUFSZ, hasRead ) ;
             if ( rc )
             {
                // if we simply timeout, maybe the sender is too slow. Let's continue
@@ -142,17 +113,16 @@ namespace engine
                   continue ;
                // if we failed to read, let's dump error and break out the loop
                PD_LOG ( PDERROR, "Failed to read packet, rc = %d", rc ) ;
-               readSize = 0 ;
+               hasRead = 0 ;
                rc = SDB_OK ;
                break ;
             }
          }
 
-         if ( readSize > 0 )
+         if ( hasRead > 0 )
          {
-            INT64 writeSize = 0 ;
             PD_LOG ( PDINFO, "Received message from windows listener: %s, "
-                     "size: %d", tempBuffer, readSize ) ;
+                     "size: %d", tempBuffer, hasRead ) ;
             if ( ossStrncmp ( tempBuffer, ENGINE_NPIPE_MSG_SHUTDOWN,
                               sizeof(ENGINE_NPIPE_MSG_SHUTDOWN) ) == 0 )
             {
@@ -163,9 +133,8 @@ namespace engine
                                    sizeof(ENGINE_NPIPE_MSG_PID) ) == 0 )
             {
                OSSPID currentProcessPID = ossGetCurrentProcessID () ;
-               rc = ossWriteNamedPipe ( pipeHandle, (CHAR*)&currentProcessPID,
-                                        sizeof(currentProcessPID),
-                                        &writeSize ) ;
+               rc = nodePipe.writePipe( (CHAR*)&currentProcessPID,
+                                        sizeof(currentProcessPID) ) ;
                if ( rc )
                {
                   PD_LOG ( PDWARNING, "Failed to write pid to named pipe, "
@@ -176,8 +145,7 @@ namespace engine
                                        sizeof( ENGINE_NPIPE_MSG_TYPE ) ) )
             {
                INT32 type = pmdGetDBType() ;
-               rc = ossWriteNamedPipe ( pipeHandle, (CHAR*)&type,
-                                        sizeof(type), &writeSize ) ;
+               rc = nodePipe.writePipe( (const CHAR*)&type, sizeof(type) ) ;
                if ( rc )
                {
                   PD_LOG ( PDWARNING, "Failed to write type to named pipe, "
@@ -188,8 +156,7 @@ namespace engine
                                        sizeof( ENGINE_NPIPE_MSG_ROLE ) ) )
             {
                INT32 role = pmdGetDBRole() ;
-               rc = ossWriteNamedPipe( pipeHandle, (CHAR*)&role,
-                                       sizeof(role), &writeSize ) ;
+               rc = nodePipe.writePipe( (const CHAR*)&role, sizeof(role) ) ;
                if ( rc )
                {
                   PD_LOG ( PDWARNING, "Failed to write role to named pipe, "
@@ -197,14 +164,12 @@ namespace engine
                }
             }
          }
-         ossDisconnectNamedPipe ( pipeHandle ) ;
+
+         nodePipe.disconnectPipe() ;
       }
 
    done :
-      if ( pipeCreated )
-      {
-         ossDeleteNamedPipe ( pipeHandle ) ;
-      }
+      nodePipe.autoRelease() ;
       PD_TRACE_EXITRC ( SDB_PMDPIPELSTNNPNTPNT, rc );
       return rc;
    error :

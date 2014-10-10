@@ -129,6 +129,7 @@ typedef class _OSSNPIPE OSSNPIPE ;
 #elif defined (_LINUX)
 #define OSS_NPIPE_UNLIMITED_INSTANCES      0
 #endif
+
 INT32 ossCreateNamedPipe ( const CHAR *name,
                            UINT32 inboundBufferSize,  // not valid on linux
                            UINT32 outboundBufferSize, // not valid on linux
@@ -144,12 +145,14 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
                            // unit: second
                            // can be OSS_NPIPE_INFINITE_TIMEOUT
                            SINT32 defaultTimeout,
-                           OSSNPIPE &handle ) ;
+                           OSSNPIPE &handle,
+                           const CHAR *pRootPath = OSS_NPIPE_LOCAL_PREFIX ) ;
 
 INT32 ossOpenNamedPipe ( const CHAR *name,
                          UINT32 action,
                          SINT32 openTimeout, // ignore on linux
-                         OSSNPIPE &handle ) ;
+                         OSSNPIPE &handle,
+                         const CHAR *pRootPath = OSS_NPIPE_LOCAL_PREFIX ) ;
 
 INT32 ossConnectNamedPipe ( OSSNPIPE &handle,
                             UINT32 action,

@@ -40,11 +40,54 @@
 #include "core.hpp"
 #include <string>
 #include <vector>
+#include "ossNPipe.hpp"
 
 using namespace std ;
 
 namespace engine
 {
+
+   /*
+      _utilNodePipe define
+   */
+   class _utilNodePipe
+   {
+      public:
+         _utilNodePipe() ;
+         ~_utilNodePipe() ;
+
+         INT32    createPipe( const CHAR *svcname ) ;
+         INT32    deletePipe() ;
+
+         INT32    openPipe( const CHAR *svcname ) ;
+         INT32    closePipe() ;
+
+         INT32    readPipe( CHAR *pBuff, INT32 readSize, INT32 &hasRead ) ;
+         INT32    writePipe( const CHAR *pBuff, INT32 size ) ;
+
+         INT32    autoRelease() ;
+
+         BOOLEAN  isConnectError() const { return _connectError ; }
+
+         const CHAR* getReadPipeName() const { return _pipeRName ; }
+         const CHAR* getWritePipeName() const { return _pipeWName ; }
+
+         INT32    connectPipe() ;
+         void     disconnectPipe() ;
+
+      private:
+         BOOLEAN        _isCreate ;
+         BOOLEAN        _isConnect ;
+         BOOLEAN        _isOpen ;
+         BOOLEAN        _connectError ;
+
+         OSSNPIPE       _pipeRHandle ;
+         OSSNPIPE       _pipeWHandle ;
+         CHAR           _pipeRName[ OSS_NPIPE_MAX_NAME_LEN + 1 ] ;
+         CHAR           _pipeWName[ OSS_NPIPE_MAX_NAME_LEN + 1 ] ;
+
+   } ;
+   typedef _utilNodePipe utilNodePipe ;
 
    /*
       _utilNodeInfo define
@@ -65,12 +108,6 @@ namespace engine
    typedef _utilNodeInfo utilNodeInfo ;
 
    typedef vector< utilNodeInfo >   UTIL_VEC_NODES ;
-
-   /*
-      check named pipe wether exist, if exist, but process is stop, will
-      clean dirty named pipe
-   */
-   INT32    utilPrepareForNamedPipe( const CHAR *pPattern ) ;
 
    /*
       list nodes

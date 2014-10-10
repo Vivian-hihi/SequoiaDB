@@ -103,7 +103,8 @@ typedef LONG ( WINAPI *PROCNTQDF ) ( HANDLE, HANDLE, PVOID, PVOID,
                                      UINT, BOOL, PUNICODE_STRING, BOOL ) ;
 #define OSS_NPIPE_NTQUERYDIRECTORYFILE "NtQueryDirectoryFile"
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSENUMNMPS, "_ossEnumNamedPipes" )
-static INT32 _ossEnumNamedPipes ( vector<string> &names )
+static INT32 _ossEnumNamedPipes ( vector<string> &names,
+                                  const CHAR *pRootPath )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__OSSENUMNMPS );
@@ -131,8 +132,7 @@ static INT32 _ossEnumNamedPipes ( vector<string> &names )
    }
 
    // prepare open pipe string
-   rc = ossANSI2WC ( OSS_NPIPE_LOCAL_PREFIX,
-                     &pszWString, &dwString ) ;
+   rc = ossANSI2WC ( pRootPath, &pszWString, &dwString ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to convert ansi to wc, rc = %d",
@@ -148,7 +148,7 @@ static INT32 _ossEnumNamedPipes ( vector<string> &names )
    if ( INVALID_HANDLE_VALUE == hPipe )
    {
       rc = ossGetLastError () ;
-      PD_LOG ( PDERROR, "Failed to open "OSS_NPIPE_LOCAL_PREFIX", error = %d",
+      PD_LOG ( PDERROR, "Failed to open %s, error = %d", pRootPath,
                rc ) ;
       goto error ;
    }
@@ -246,16 +246,30 @@ INT32 ossEnumNamedPipes ( std::vector<std::string> &names,
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__OSSENUMNMPS2 );
    const CHAR *pFind = NULL ;
+   std::string path ;
    std::vector<std::string> tempNames ;
+
+   SDB_ASSERT( rootPath && 0 != *rootPath, "rootPath can't be empty" ) ;
+
+   if ( rootPath && 0 != *rootPath )
+   {
+      path = rootPath ;
+      if ( rootPath[ ossStrlen( rootPath ) - 1 ] != OSS_FILE_SEP_CHAR )
+      {
+         path += OSS_FILE_SEP_CHAR ;
+      }
+   }
+
    if ( !pattern )
    {
-      return _ossEnumNamedPipes ( names ) ;
+      return _ossEnumNamedPipes ( names, path.c_str() ) ;
    }
-   rc = _ossEnumNamedPipes ( tempNames ) ;
+   rc = _ossEnumNamedPipes ( tempNames, path.c_str() ) ;
    if ( rc )
    {
       goto error ;
    }
+
    for ( INT32 i = 0; i < tempNames.size(); ++i )
    {
       const CHAR *pName = tempNames[i].c_str() ;
@@ -287,35 +301,36 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
                            UINT32 action,
                            UINT32 numInstances,
                            SINT32 defaultTimeout,
-                           OSSNPIPE &handle )
+                           OSSNPIPE &handle,
+                           const CHAR *pRootPath )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSCRTNMP );
    UINT32 openMode = 0 ;
    UINT32 pipeMode = 0 ;
    LPWSTR lpwstrName = NULL ;
-   CHAR fullName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
-   INT32 extraSize = ossStrlen(OSS_NPIPE_LOCAL_PREFIX) ;
+   std::string fullName ;
+
    SDB_ASSERT ( name && name[0] != '\0',
                 "name can't be empty or null" ) ;
-   ossMemset ( fullName, 0, sizeof(fullName) ) ;
-   // for windows pipe, it must start with "\\\\:\\pipe\\"
-   if ( ossStrncmp ( name, OSS_NPIPE_LOCAL_PREFIX,
-                     ossStrlen(OSS_NPIPE_LOCAL_PREFIX) ) != 0 )
+
+   if ( pRootPath && 0 != *pRootPath )
    {
-      ossStrncpy ( fullName, OSS_NPIPE_LOCAL_PREFIX, sizeof(fullName) ) ;
+      fullName = pRootPath ;
+      if ( pRootPath[ ossStrlen( pRootPath ) - 1 ] != OSS_FILE_SEP_CHAR )
+      {
+         fullName += OSS_FILE_SEP_CHAR ;
+      }
    }
-   else
+   fullName += name ;
+
+   if ( fullName.length() >= OSS_NPIPE_MAX_NAME_LEN )
    {
-      extraSize = 0 ;
-   }
-   if ( ossStrlen ( name ) + extraSize > OSS_NPIPE_MAX_NAME_LEN )
-   {
-      PD_LOG ( PDERROR, "Named pipe is too long: %s", name ) ;
+      PD_LOG ( PDERROR, "Named pipe is too long: %s", fullName.c_str() ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   ossStrncat ( fullName, name, OSS_NPIPE_MAX_NAME_LEN - extraSize + 1 ) ;
+
    handle._state = action ;
    // read or write or read/write
    switch ( action & OSS_NPIPE_DUPLEX )
@@ -332,7 +347,9 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
    }
 
    if ( numInstances > PIPE_UNLIMITED_INSTANCES )
+   {
       numInstances = PIPE_UNLIMITED_INSTANCES ;
+   }
 
    openMode |= OSS_NPIPE_FIRST_PIPE_INSTANCE ;
    if ( action & OSS_NPIPE_BLOCK_WITH_TIMEOUT )
@@ -344,11 +361,11 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
    {
       handle._overlappedFlag = 0 ;
    }
-   rc = ossANSI2WC ( fullName, &lpwstrName, NULL ) ;
+   rc = ossANSI2WC ( fullName.c_str(), &lpwstrName, NULL ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to convert name %s to double bytes",
-               fullName ) ;
+               fullName.c_str() ) ;
       goto error ;
    }
    handle._handle = CreateNamedPipe ( lpwstrName, openMode, pipeMode,
@@ -387,7 +404,7 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
                                                 NULL ) ; // unnamed
    }
    ossMemset ( handle._name, 0, sizeof(handle._name) ) ;
-   ossStrncpy ( handle._name, fullName, OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
+   ossStrncpy ( handle._name, fullName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
 done :
    if ( lpwstrName )
       SDB_OSS_FREE ( lpwstrName ) ;
@@ -401,7 +418,8 @@ error :
 INT32 ossOpenNamedPipe ( const CHAR *name,
                          UINT32 action,
                          SINT32 openTimeout,
-                         OSSNPIPE &handle )
+                         OSSNPIPE &handle,
+                         const CHAR *pRootPath )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSOPENNMP );
@@ -410,28 +428,27 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
    DWORD waitTimeout = 0 ;
    BOOLEAN doWait    = TRUE ;
    LPWSTR lpwstrName = NULL ;
-   CHAR fullName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
-   INT32 extraSize   = ossStrlen(OSS_NPIPE_LOCAL_PREFIX) ;
+   std::string fullName ;
+
    SDB_ASSERT ( name && name[0] != '\0',
                 "name can't be empty or null" ) ;
-   ossMemset ( fullName, 0, sizeof(fullName) ) ;
-   // for windows pipe, it must start with "\\\\:\\pipe\\"
-   if ( ossStrncmp ( name, OSS_NPIPE_LOCAL_PREFIX,
-                     ossStrlen(OSS_NPIPE_LOCAL_PREFIX) ) != 0 )
+
+   if ( pRootPath && 0 != *pRootPath )
    {
-      ossStrncpy ( fullName, OSS_NPIPE_LOCAL_PREFIX, sizeof(fullName) ) ;
+      fullName = pRootPath ;
+      if ( pRootPath[ ossStrlen( pRootPath ) - 1 ] != OSS_FILE_SEP_CHAR )
+      {
+         fullName += OSS_FILE_SEP_CHAR ;
+      }
    }
-   else
+   fullName += name ;
+
+   if ( fullName.length() >= OSS_NPIPE_MAX_NAME_LEN )
    {
-      extraSize = 0 ;
-   }
-   if ( ossStrlen ( name ) + extraSize > OSS_NPIPE_MAX_NAME_LEN )
-   {
-      PD_LOG ( PDERROR, "Named pipe is too long: %s", name ) ;
+      PD_LOG ( PDERROR, "Named pipe is too long: %s", fullName.c_str() ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   ossStrncat ( fullName, name, OSS_NPIPE_MAX_NAME_LEN - extraSize + 1 ) ;
 
    switch ( action & OSS_NPIPE_DUPLEX )
    {
@@ -463,7 +480,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
       waitTimeout = openTimeout * 1000 ;
    }
 
-   rc = ossANSI2WC ( fullName, &lpwstrName, NULL ) ;
+   rc = ossANSI2WC ( fullName.c_str(), &lpwstrName, NULL ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to convert name %s to double bytes",
@@ -512,7 +529,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
    }
    handle._state = action ;
    ossMemset ( handle._name, 0, sizeof(handle._name) ) ;
-   ossStrncpy ( handle._name, name, OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
+   ossStrncpy ( handle._name, fullName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
 done :
    if ( lpwstrName )
       SDB_OSS_FREE ( lpwstrName ) ;
@@ -909,22 +926,36 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
                            UINT32 action,
                            UINT32 numInstances,
                            SINT32 defaultTimeout,
-                           OSSNPIPE &handle )
+                           OSSNPIPE &handle,
+                           const CHAR *pRootPath )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_OSSCRTNP );
+   std::string pathName ;
+   PD_TRACE_ENTRY ( SDB_OSSCRTNP ) ;
    SDB_ASSERT ( name && name[0] != '\0',
                 "name can't be empty or null" ) ;
-   if ( ossStrlen ( name ) >= OSS_NPIPE_MAX_NAME_LEN )
+
+   if ( pRootPath && 0 != *pRootPath )
    {
-      PD_LOG ( PDERROR, "Named pipe is too long: %s", name ) ;
+      pathName = pRootPath ;
+      if ( pRootPath[ ossStrlen( pRootPath ) - 1 ] != OSS_FILE_SEP_CHAR )
+      {
+         pathName += OSS_FILE_SEP_CHAR ;
+      }
+   }
+   pathName += name ;
+
+   if ( pathName.length() >= OSS_NPIPE_MAX_NAME_LEN )
+   {
+      PD_LOG ( PDERROR, "Named pipe is too long: %s", pathName.c_str() ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+
    handle._state = action ;
    ossMemset ( handle._name, 0, sizeof(handle._name) ) ;
-   ossStrncpy ( handle._name, name, OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
-   handle._handle = mkfifo ( name, (S_IRUSR | S_IWUSR) ) ;
+   ossStrncpy ( handle._name, pathName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
+   handle._handle = mkfifo ( pathName.c_str(), (S_IRUSR | S_IWUSR) ) ;
    if ( -1 == handle._handle )
    {
       rc = ossGetLastError () ;
@@ -961,17 +992,30 @@ error :
 INT32 ossOpenNamedPipe ( const CHAR *name,
                          UINT32 action,
                          SINT32 openTimeout,
-                         OSSNPIPE &handle )
+                         OSSNPIPE &handle,
+                         const CHAR *pRootPath )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSOPENNP );
    INT32 openMode = 0 ;
+   std::string pathName ;
    struct stat64 st ;
    SDB_ASSERT ( name && name[0] != '\0',
                 "name can't be empty or null" ) ;
-   if ( ossStrlen ( name ) >= OSS_NPIPE_MAX_NAME_LEN )
+
+   if ( pRootPath && 0 != *pRootPath )
    {
-      PD_LOG ( PDERROR, "Named pipe is too long: %s", name ) ;
+      pathName = pRootPath ;
+      if ( pRootPath[ ossStrlen( pRootPath ) - 1 ] != OSS_FILE_SEP_CHAR )
+      {
+         pathName += OSS_FILE_SEP_CHAR ;
+      }
+   }
+   pathName += name ;
+
+   if ( pathName.length() >= OSS_NPIPE_MAX_NAME_LEN )
+   {
+      PD_LOG ( PDERROR, "Named pipe is too long: %s", pathName.c_str() ) ;
       rc = SDB_INVALIDARG ;
       // we don't need to check rc in error here
       goto done ;
@@ -996,7 +1040,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
    }
    do
    {
-      handle._handle = open ( name, openMode ) ;
+      handle._handle = open ( pathName.c_str(), openMode ) ;
    }
    while ( ( -1 == handle._handle ) && ( (rc = ossGetLastError()) == EINTR ) ) ;
    if ( -1 == handle._handle )
@@ -1006,7 +1050,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
 #if defined ( _DEBUG )
 #else
       PD_LOG ( PDERROR, "Failed to open named pipe: %s, errno = %d",
-               name, rc ) ;
+               pathName.c_str(), rc ) ;
 #endif
       goto error ;
    }
@@ -1016,7 +1060,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
       rc = ossGetLastError () ;
       close ( handle._handle ) ;
       PD_LOG ( PDERROR, "Failed to fstat named pipe: %s, errno = %d",
-               name, rc ) ;
+               pathName.c_str(), rc ) ;
       goto error ;
    }
    if ( !S_ISFIFO ( st.st_mode ) )
@@ -1032,11 +1076,11 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
       rc = ossGetLastError () ;
       close ( handle._handle ) ;
       PD_LOG ( PDERROR, "Failed to get pipe buf size for %s, errno = %d",
-               name, rc ) ;
+               pathName.c_str(), rc ) ;
       goto error ;
    }
    handle._state = action ;
-   ossStrncpy ( handle._name, name, OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
+   ossStrncpy ( handle._name, pathName.c_str(), OSS_NPIPE_MAX_NAME_LEN + 1 ) ;
 done :
    PD_TRACE_EXITRC ( SDB_OSSOPENNP, rc );
    return rc ;
@@ -1331,40 +1375,8 @@ INT32 ossEnumNamedPipes( vector<string > &names,
                          OSS_MATCH_TYPE type,
                          const CHAR * rootPath )
 {
-   INT32 rc = SDB_OK ;
-   vector<string > enumNames ;
-
-   rc = _ossEnumNamedPipes( rootPath, enumNames, pattern,
-                            ossStrlen( pattern ), type ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-
-   for ( UINT32 i = 0 ; i < enumNames.size() ; ++i )
-   {
-      if ( rootPath && *rootPath )
-      {
-         if ( rootPath[ ossStrlen( rootPath ) - 1 ] == '/' )
-         {
-            names.push_back( string( rootPath ) + enumNames[ i ] ) ;
-         }
-         else
-         {
-            names.push_back( string( rootPath ) + string("/") +
-                             enumNames[ i ] ) ;
-         }
-      }
-      else
-      {
-         names.push_back( enumNames[ i ] ) ;
-      }
-   }
-
-done:
-   return rc ;
-error:
-   goto done ;
+   return _ossEnumNamedPipes( rootPath, names, pattern,
+                              ossStrlen( pattern ), type ) ;
 }
 
 #endif
