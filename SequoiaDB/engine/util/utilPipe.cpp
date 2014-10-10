@@ -53,13 +53,8 @@ INT32 getPipeNames( const OSSPID & ppid , CHAR * f2bName , UINT32 f2bSize ,
 {
    INT32          rc          = SDB_OK ;
    INT32          nWritten    = 0 ;
-#if defined (_WINDOWS)
    const CHAR *   f2bFormat   = "sdb-shell-f2b-%u" ;
    const CHAR *   b2fFormat   = "sdb-shell-b2f-%u" ;
-#else
-   const CHAR *   f2bFormat   = "sdb-shell-f2b-%u" ;
-   const CHAR *   b2fFormat   = "sdb-shell-b2f-%u" ;
-#endif
 
    SDB_ASSERT ( f2bName && b2fName && f2bSize > 0 && b2fSize > 0 ,
                 "Invalid arguments" ) ;
@@ -147,5 +142,25 @@ done:
    return rc ;
 error:
    goto done ;
+}
+
+void clearDirtyShellPipe( const CHAR *prefix )
+{
+#ifndef _WINDOWS
+   std::vector < std::string > names ;
+   const CHAR *pFind = NULL ;
+   OSSPID pid = OSS_INVALID_PID ;
+
+   ossEnumNamedPipes( names, prefix, OSS_MATCH_LEFT ) ;
+   for( UINT32 i = 0 ; i < names.size() ; ++i )
+   {
+      pFind = ossStrrchr( names[ i ].c_str(), '-' ) ;
+      if ( pFind && 0 != ( pid = ossAtoi( pFind + 1 ) ) &&
+           FALSE == ossIsProcessRunning( pid ) )
+      {
+         ossCleanNamedPipeByName( names[ i ].c_str() ) ;
+      }
+   }
+#endif // _WINDOWS
 }
 

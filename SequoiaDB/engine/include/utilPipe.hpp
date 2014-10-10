@@ -28,6 +28,8 @@ INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
                      CHAR * bpb2fName , UINT32 bpb2fSize ,
                      CHAR * f2bName , CHAR * b2fName ) ;
 
+void  clearDirtyShellPipe( const CHAR *prefix ) ;
+
 
 #endif //UTILPIPE_HPP__
 

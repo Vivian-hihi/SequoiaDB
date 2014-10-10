@@ -558,6 +558,9 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       goto done ;
    }
 
+   clearDirtyShellPipe( "sdb-shell-f2b-" ) ;
+   clearDirtyShellPipe( "sdb-shell-b2f-" ) ;
+
    ppid = ossGetParentProcessID () ;
    SH_VERIFY_COND ( ppid != OSS_INVALID_PID , SDB_SYS ) ;
 
