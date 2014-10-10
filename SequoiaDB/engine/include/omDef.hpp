@@ -434,7 +434,8 @@ namespace engine
    #define  OM_LIST_NODE_REQ                 "list node"
 
 
-   #define  OM_BSON_FIELD_SVCNAME            "SvcName"
+   #define  OM_BSON_FIELD_SVCNAME            FIELD_NAME_SERVICE_NAME
+   #define  OM_BSON_FIELD_ROLE               FIELD_NAME_ROLE
    //******************************************************************
 
    // om query node req

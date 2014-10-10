@@ -5367,6 +5367,7 @@ namespace engine
       {
          BSONObj node ;
          node = BSON( OM_BSON_FIELD_HOST_NAME << (*iter).hostName 
+                      << OM_BSON_FIELD_ROLE << (*iter).role
                       << OM_BSON_FIELD_SVCNAME << (*iter).svcName ) ;
          _restAdaptor->appendHttpBody( _restSession, node.objdata(), 
                                        node.objsize(), 1 ) ;
