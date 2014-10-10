@@ -59,7 +59,10 @@ namespace engine
          INT32    createPipe( const CHAR *svcname ) ;
          INT32    deletePipe() ;
 
-         INT32    openPipe( const CHAR *svcname ) ;
+         /*
+            In windows, pid is not used
+         */
+         INT32    openPipe( const CHAR *svcname, OSSPID pid ) ;
          INT32    closePipe() ;
 
          INT32    readPipe( CHAR *pBuff, INT32 readSize, INT32 &hasRead ) ;

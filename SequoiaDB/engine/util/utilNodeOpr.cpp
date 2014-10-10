@@ -243,7 +243,7 @@ namespace engine
       }
    }
 
-   INT32 _utilNodePipe::openPipe( const CHAR * svcname )
+   INT32 _utilNodePipe::openPipe( const CHAR * svcname, OSSPID pid )
    {
       INT32 rc = SDB_OK ;
 
@@ -273,10 +273,10 @@ namespace engine
 #else
       ossSnprintf ( _pipeWName, OSS_NPIPE_MAX_NAME_LEN,
                     ENGINE_NPIPE_PREFIX"%s_%d",
-                    svcname, ossGetCurrentProcessID() ) ;
+                    svcname, pid ) ;
       ossSnprintf ( _pipeRName, OSS_NPIPE_MAX_NAME_LEN,
                     ENGINE_NPIPE_PREFIX_BW"%s_%d",
-                    svcname, ossGetCurrentProcessID() ) ;
+                    svcname, pid ) ;
 
       // open
       rc = ossOpenNamedPipe( _pipeWName,
@@ -467,7 +467,7 @@ namespace engine
    /*
       Local define
    */
-   static INT32 _utilWriteReadPipe( const CHAR *pSvcName,
+   static INT32 _utilWriteReadPipe( const CHAR *pSvcName, OSSPID pid,
                                     const CHAR *pWriteBuf, INT32 writeLen,
                                     CHAR *pReadBuf, INT32 readLen,
                                     BOOLEAN checkLen )
@@ -476,7 +476,7 @@ namespace engine
       utilNodePipe nodePipe ;
       INT32 hasRead = 0 ;
 
-      rc = nodePipe.openPipe( pSvcName ) ;
+      rc = nodePipe.openPipe( pSvcName, pid ) ;
       if ( rc && SDB_FE != rc )
       {
          PD_LOG ( PDERROR, "Failed to open named pipe: %s, rc: %d",
@@ -532,7 +532,7 @@ namespace engine
       info._groupName   = "" ;
 
       // group id
-      rc = _utilWriteReadPipe( info._svcname.c_str(),
+      rc = _utilWriteReadPipe( info._svcname.c_str(), info._pid,
                                ENGINE_NPIPE_MSG_GID,
                                sizeof( ENGINE_NPIPE_MSG_GID ),
                                (CHAR *)&info._groupID,
@@ -544,7 +544,7 @@ namespace engine
       }
 
       // node id
-      rc = _utilWriteReadPipe( info._svcname.c_str(),
+      rc = _utilWriteReadPipe( info._svcname.c_str(), info._pid,
                                ENGINE_NPIPE_MSG_NID,
                                sizeof( ENGINE_NPIPE_MSG_NID ),
                                (CHAR *)&info._nodeID,
@@ -556,7 +556,7 @@ namespace engine
       }
 
       // group name
-      rc = _utilWriteReadPipe( info._svcname.c_str(),
+      rc = _utilWriteReadPipe( info._svcname.c_str(), info._pid,
                                ENGINE_NPIPE_MSG_GNAME,
                                sizeof( ENGINE_NPIPE_MSG_GNAME ),
                                (CHAR *)groupName,
@@ -569,7 +569,7 @@ namespace engine
       info._groupName = groupName ;
 
       // dbpath
-      rc = _utilWriteReadPipe( info._svcname.c_str(),
+      rc = _utilWriteReadPipe( info._svcname.c_str(), info._pid,
                                ENGINE_NPIPE_MSG_PATH,
                                sizeof( ENGINE_NPIPE_MSG_PATH ),
                                (CHAR *)dbPath,
@@ -782,7 +782,7 @@ namespace engine
          }
 
          // 2. type
-         rc = _utilWriteReadPipe( findNode._svcname.c_str(),
+         rc = _utilWriteReadPipe( findNode._svcname.c_str(), 0,
                                   ENGINE_NPIPE_MSG_TYPE,
                                   sizeof( ENGINE_NPIPE_MSG_TYPE ),
                                   (CHAR*)&findNode._type,
@@ -798,7 +798,7 @@ namespace engine
          }
 
          // 3. pid
-         rc = _utilWriteReadPipe( findNode._svcname.c_str(),
+         rc = _utilWriteReadPipe( findNode._svcname.c_str(), 0,
                                   ENGINE_NPIPE_MSG_PID,
                                   sizeof( ENGINE_NPIPE_MSG_PID ),
                                   (CHAR *)&findNode._pid,
@@ -814,7 +814,7 @@ namespace engine
          }
 
          // 4. role
-         rc = _utilWriteReadPipe( findNode._svcname.c_str(),
+         rc = _utilWriteReadPipe( findNode._svcname.c_str(), findNode._pid,
                                   ENGINE_NPIPE_MSG_ROLE,
                                   sizeof( ENGINE_NPIPE_MSG_ROLE ),
                                   (CHAR *)&findNode._role,
@@ -980,7 +980,7 @@ namespace engine
 #if defined( _LINUX )
       rc = ossTerminateProcess( node._pid, FALSE ) ;
 #else
-      rc = _utilWriteReadPipe( node._svcname.c_str(),
+      rc = _utilWriteReadPipe( node._svcname.c_str(), node._pid,
                                ENGINE_NPIPE_MSG_SHUTDOWN,
                                sizeof( ENGINE_NPIPE_MSG_SHUTDOWN ),
                                NULL, 0, FALSE ) ;
