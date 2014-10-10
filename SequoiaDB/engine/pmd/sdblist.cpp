@@ -110,8 +110,8 @@ namespace engine
    /*
       Long format define
    */
-   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-11.10s %-6.5s %-6.5s %-6.5s %-20.19s %s"
-   #define PMD_LIST_TITLE        "Name       SvcName       Role        PID    GID    NID    GroupName            DBPath"
+   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-11.10s %-6.5s %-6.5s %-6.5s %-4.3s %-20.19s %s"
+   #define PMD_LIST_TITLE        "Name       SvcName       Role        PID    GID    NID    PRY  GroupName            DBPath"
 
    //print node's detail configuration by sdb conf file and svcname
    void _printfDetail( const CHAR *rootPath, const CHAR *svcname, INT32 type )
@@ -239,6 +239,7 @@ namespace engine
       {
          CHAR tmpGID[ 11 ] = { '-', 0 } ;
          CHAR tmpNID[ 11 ] = { '-', 0 } ;
+         CHAR tmpPRY[ 11 ] = { '-', 0 } ;
          string roleStr = utilDBRoleStr( (SDB_ROLE)node._role ) ;
          // name       svcname       role        pid    gid    nid    gname           dbpath
          // sequoaidb  11810         standalone  15896  1001   1001   db1             /opt/sequoiadb/database/coord/11810
@@ -252,6 +253,10 @@ namespace engine
          {
             ossSnprintf( tmpNID, sizeof( tmpNID ) - 1, "%d", node._nodeID ) ;
          }
+         if ( 0 != node._primary )
+         {
+            ossStrcpy( tmpPRY, "Y" ) ;
+         }
 
          ossPrintf( PMD_LIST_LONG_FORMAT OSS_NEWLINE,
                     utilDBTypeStr( (SDB_TYPE)node._type ),
@@ -260,6 +265,7 @@ namespace engine
                     tmpPID,
                     tmpGID,
                     tmpNID,
+                    tmpPRY,
                     node._groupName.empty() ? "-" : node._groupName.c_str(),
                     node._dbPath.empty() ? "-" : node._dbPath.c_str() ) ;
       }
@@ -588,7 +594,7 @@ namespace engine
                             procs[ i ]._pid ) ;
                ossPrintf( PMD_LIST_LONG_FORMAT OSS_NEWLINE,
                           PMDDMN_SVCNAME_DEFAULT,
-                          "-", "-", tmpPID, "-", "-", "-", "-" ) ;
+                          "-", "-", tmpPID, "-", "-", "-", "-", "-" ) ;
             }
          }
       }

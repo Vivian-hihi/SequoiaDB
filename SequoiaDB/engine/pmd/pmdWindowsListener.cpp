@@ -172,6 +172,13 @@ namespace engine
                const CHAR *path = pmdGetOptionCB()->getDbPath() ;
                rc = nodePipe.writePipe( path, ossStrlen( path ) + 1 ) ;
             }
+            else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_PRIMARY,
+                                       sizeof( ENGINE_NPIPE_MSG_PRIMARY ) ) )
+            {
+               INT32 primary = pmdIsPrimary() ? 1 : 0 ;
+               rc = nodePipe.writePipe( (const CHAR*)&primary,
+                                        sizeof(primary) ) ;
+            }
 
             if ( rc )
             {

@@ -528,6 +528,7 @@ namespace engine
 
       info._groupID     = 0 ;
       info._nodeID      = 0 ;
+      info._primary     = 0 ;
       info._dbPath      = "" ;
       info._groupName   = "" ;
 
@@ -549,6 +550,18 @@ namespace engine
                                sizeof( ENGINE_NPIPE_MSG_NID ),
                                (CHAR *)&info._nodeID,
                                sizeof( info._nodeID ),
+                               TRUE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // primary
+      rc = _utilWriteReadPipe( info._svcname.c_str(), info._pid,
+                               ENGINE_NPIPE_MSG_PRIMARY,
+                               sizeof( ENGINE_NPIPE_MSG_PRIMARY ),
+                               (CHAR *)&info._primary,
+                               sizeof( info._primary ),
                                TRUE ) ;
       if ( rc )
       {

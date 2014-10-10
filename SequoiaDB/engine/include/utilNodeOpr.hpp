@@ -105,15 +105,17 @@ namespace engine
       // extra info
       INT32    _groupID ;
       INT32    _nodeID ;
+      INT32    _primary ;
       string   _groupName ;
       string   _dbPath ;
       // extra info end
 
       _utilNodeInfo()
       {
-         _pid  = OSS_INVALID_PID ;
-         _groupID = 0 ;
-         _nodeID = 0 ;
+         _pid        = OSS_INVALID_PID ;
+         _groupID    = 0 ;
+         _nodeID     = 0 ;
+         _primary    = 0 ;
       }
    } ;
    typedef _utilNodeInfo utilNodeInfo ;
