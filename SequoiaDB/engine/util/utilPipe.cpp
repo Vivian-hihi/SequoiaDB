@@ -17,6 +17,7 @@
 *******************************************************************************/
 
 #include "utilPipe.hpp"
+#include "ossProc.hpp"
 #include "pd.hpp"
 #include "ossUtil.h"
 #include "ossPrimitiveFileOp.hpp"
