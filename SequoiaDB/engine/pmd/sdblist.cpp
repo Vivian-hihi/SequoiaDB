@@ -110,8 +110,8 @@ namespace engine
    /*
       Long format define
    */
-   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-5.4s %-6.5s %-6.5s %-6.5s %-20.19s %s"
-   #define PMD_LIST_TITLE        "Name       SvcName       Role  PID    GID    NID    GroupName            DBPath"
+   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-11.10s %-6.5s %-6.5s %-6.5s %-20.19s %s"
+   #define PMD_LIST_TITLE        "Name       SvcName       Role        PID    GID    NID    GroupName            DBPath"
 
    //print node's detail configuration by sdb conf file and svcname
    void _printfDetail( const CHAR *rootPath, const CHAR *svcname, INT32 type )
@@ -239,10 +239,10 @@ namespace engine
       {
          CHAR tmpGID[ 11 ] = { '-', 0 } ;
          CHAR tmpNID[ 11 ] = { '-', 0 } ;
-         string shortRole = utilDBRoleShortStr( (SDB_ROLE)node._role ) ;
-         // name       svcname       role  pid    gid    nid    gname           dbpath
-         // sequoaidb  11810         S     15896  1001   1001   db1             /opt/sequoiadb/database/coord/11810
-         // sdbcm      11790         -     10076  -      -      -               -
+         string roleStr = utilDBRoleStr( (SDB_ROLE)node._role ) ;
+         // name       svcname       role        pid    gid    nid    gname           dbpath
+         // sequoaidb  11810         standalone  15896  1001   1001   db1             /opt/sequoiadb/database/coord/11810
+         // sdbcm      11790         -           10076  -      -      -               -
 
          if ( 0 != node._groupID )
          {
@@ -256,7 +256,7 @@ namespace engine
          ossPrintf( PMD_LIST_LONG_FORMAT OSS_NEWLINE,
                     utilDBTypeStr( (SDB_TYPE)node._type ),
                     node._svcname.c_str(),
-                    shortRole.empty() ? "-" : shortRole.c_str(),
+                    roleStr.empty() ? "-" : roleStr.c_str(),
                     tmpPID,
                     tmpGID,
                     tmpNID,

@@ -131,6 +131,14 @@ namespace engine
 
       // 3. set startup ok
       pmdGetStartup().ok( TRUE ) ;
+      // set nodeid and group name
+      pmdGetKRCB().setGroupName( COORD_GROUPNAME ) ;
+      {
+         MsgRouteID id ;
+         id.value = MSG_INVALID_ROUTEID ;
+         id.columns.groupID = COORD_GROUPID ;
+         pmdSetNodeID( id ) ;
+      }
 
    done:
       return rc ;
