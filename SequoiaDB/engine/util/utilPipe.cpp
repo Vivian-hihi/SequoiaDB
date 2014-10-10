@@ -34,11 +34,7 @@ INT32 getWaitPipeName ( const OSSPID & ppid , CHAR * buf , UINT32 bufSize )
 {
    INT32          nWritten    = 0 ;
    INT32          rc          = SDB_OK ;
-#if defined (_WINDOWS)
    const CHAR *   waitFormat  = "sdb-shell-wait-%u" ;
-#else
-   const CHAR *   waitFormat  = "/tmp/sdb-shell-wait-%u" ;
-#endif
 
    SDB_ASSERT ( buf && bufSize > 0 , "invalid argument" ) ;
 
