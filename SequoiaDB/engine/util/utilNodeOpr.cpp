@@ -131,7 +131,9 @@ namespace engine
 
       // create
       rc = ossCreateNamedPipe( _pipeRName, UTIL_NODE_PIPE_BUFFSZ, 0,
-                               OSS_NPIPE_INBOUND | OSS_NPIPE_BLOCK_WITH_TIMEOUT,
+                               OSS_NPIPE_INBOUND |
+                               OSS_NPIPE_BLOCK_WITH_TIMEOUT |
+                               OSS_NPIPE_NONBLOCK,
                                OSS_NPIPE_UNLIMITED_INSTANCES,
                                UTIL_NODE_PIPE_TIMEOUT, _pipeRHandle ) ;
       if ( rc )
@@ -142,7 +144,9 @@ namespace engine
       }
 
       rc = ossCreateNamedPipe( _pipeWName, 0, UTIL_NODE_PIPE_BUFFSZ,
-                               OSS_NPIPE_OUTBOUND | OSS_NPIPE_BLOCK_WITH_TIMEOUT,
+                               OSS_NPIPE_OUTBOUND |
+                               OSS_NPIPE_BLOCK_WITH_TIMEOUT |
+                               OSS_NPIPE_NONBLOCK,
                                OSS_NPIPE_UNLIMITED_INSTANCES,
                                UTIL_NODE_PIPE_TIMEOUT, _pipeWHandle ) ;
       if ( rc )
@@ -233,7 +237,9 @@ namespace engine
 
       // open
       rc = ossOpenNamedPipe( _pipeWName,
-                             OSS_NPIPE_OUTBOUND | OSS_NPIPE_BLOCK_WITH_TIMEOUT,
+                             OSS_NPIPE_OUTBOUND |
+                             OSS_NPIPE_BLOCK_WITH_TIMEOUT |
+                             OSS_NPIPE_NONBLOCK,
                              UTIL_NODE_OPEN_PIPE_TIMEOUT, _pipeWHandle ) ;
       if ( rc )
       {
@@ -243,7 +249,9 @@ namespace engine
       }
 
       rc = ossOpenNamedPipe( _pipeRName,
-                             OSS_NPIPE_INBOUND | OSS_NPIPE_BLOCK_WITH_TIMEOUT,
+                             OSS_NPIPE_INBOUND |
+                             OSS_NPIPE_BLOCK_WITH_TIMEOUT |
+                             OSS_NPIPE_NONBLOCK,
                              UTIL_NODE_OPEN_PIPE_TIMEOUT, _pipeRHandle ) ;
       if ( rc )
       {
