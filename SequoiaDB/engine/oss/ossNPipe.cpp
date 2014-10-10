@@ -1035,7 +1035,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
    }
 
    // only write can't use O_NONBLOCK
-   if ( ( action & OSS_NPIPE_NONBLOCK ) && ( openMode & O_RDONLY ) )
+   if ( ( action & OSS_NPIPE_NONBLOCK ) && ( action & OSS_NPIPE_INBOUND ) )
    {
       openMode |= O_NONBLOCK ;
    }
