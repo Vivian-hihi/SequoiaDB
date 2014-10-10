@@ -81,24 +81,6 @@ namespace engine
       _msgObj = BSONObj () ;
    }
 
-   INT32 _rtnCoordLobDispatcher::init( const CHAR *fullName,
-                                       _pmdEDUCB *cb )
-   {
-      INT32 rc = SDB_OK ;
-
-      rc = rtnCoordGetCataInfo( cb, fullName, FALSE, _cataInfo ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get catalog info of:%s, rc:%d",
-                 fullName, rc ) ;
-         goto error ;
-      }
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
    void _rtnCoordLobDispatcher::setContextID( MsgRouteID id,
                                               SINT64 contextID )
    {
@@ -112,6 +94,7 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBDISPATCHER_CREATEMSG, "_rtnCoordLobDispatcher::createMsg" )
    INT32 _rtnCoordLobDispatcher::createMsg( INT32 opCode,
+                                            INT32 version,
                                             const msgOptions &options,
                                             const bson::BSONObj &obj )
    {
@@ -119,6 +102,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBDISPATCHER_CREATEMSG ) ;
       clear() ;
       _header.header.opCode = opCode ;
+      _header.version = version ;
       _options = options ;
       _msgObj = obj ;
       if ( !_msgObj.isEmpty() )
@@ -297,9 +281,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCOORDLOBDISPATCHER__GETREPLY ) ;
-      BOOLEAN updateCata = FALSE ;
       REPLY_QUE replyQueue ;
       INT32 lastErrRc = SDB_OK ;
+
       INT32 replyType = MAKE_REPLY_TYPE( _header.header.opCode ) ;
       rc = rtnCoordGetReply( cb, _sendMap, replyQueue, replyType,
                              TRUE, TRUE ) ;
@@ -359,20 +343,12 @@ namespace engine
          }
          else if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == flag )
          {
-            /// we only update catalog info once in a loop.
-            if ( !updateCata )
-            {
-               std::string fullName( _cataInfo->getCatalogSet()->name() ) ;
-               rc = rtnCoordGetCataInfo( cb, fullName.c_str(),
-                                         TRUE, _cataInfo ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to get catalog info of:%s, rc:%d",
-                          fullName.c_str(), rc ) ;
-                  goto error ;
-               }
-               updateCata = TRUE ;
-            }
+            /// here we do not retry to send msg.
+            /// coz we need to refresh catalog info and
+            /// reopen sub streams.
+            _replyBuf.push_back( replyHeader ) ;
+            _tuples.erase( id ) ; 
+            continue ;
          }
          else
          {
@@ -386,6 +362,7 @@ namespace engine
 
       if ( _tuples.empty() )
       {
+         rc = SDB_OK ;
          goto done ;
       }
       else if ( _retryTimes++ < RTN_COORD_LOB_RETRY_TIMES )
@@ -399,7 +376,7 @@ namespace engine
             dst = itr->first ;
             ss << dst.columns.groupID << ":" << dst.columns.nodeID << " " ;
          }
-         PD_LOG( PDEVENT, "the %dth times we retry to send msg:%s",
+         PD_LOG( PDEVENT, "the %dth time we retry to send msg:%s",
                  _retryTimes, ss.str().c_str() ) ;
 
          rc = wait4Reply( cb ) ;
@@ -434,7 +411,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCOORDLOBDISPATCHER__SENDMSG ) ;
-      _header.version = _cataInfo->getVersion() ;
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
       MSG_TUPLES::const_iterator itr = _tuples.begin() ;

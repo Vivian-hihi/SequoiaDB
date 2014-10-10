@@ -75,37 +75,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__PREPARE ) ;
 
-      rc = _dispatcher.init( fullName, cb ) ;
+      rc = _updateCataInfo( FALSE, cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to init dispatcher:%d", rc ) ;
-         goto error ;
-      }
-
-      if ( _dispatcher.getCataInfo()->isMainCL() )
-      {
-         PD_LOG( PDERROR, "can not open a lob in main cl" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else if ( _dispatcher.getCataInfo()->isRangeSharded() )
-      {
-         PD_LOG( PDERROR, "can not open a lob in range sharded cl" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      else
-      {
-         /// do nothing.
-      }
-
-      rc = _dispatcher.getCataInfo()
-                    ->getLobGropuID( oid,
-                                     DMS_LOB_META_SEQUENCE,
-                                     _metaGroup ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get meta group:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to update catalog info of:%s, rc:%d",
+                 fullName, rc ) ;
          goto error ;
       }
 
@@ -115,9 +89,52 @@ namespace engine
          PD_LOG( PDERROR, "failed to open sub streams:%d", rc ) ;
          goto error ;
       }
-
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__PREPARE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__UPDATECATAINFO, "_rtnCoordLobStream::_openSubStreams" )
+   INT32 _rtnCoordLobStream::_updateCataInfo( BOOLEAN refresh,
+                                              _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__UPDATECATAINFO ) ;
+      rc = rtnCoordGetCataInfo( cb, getFullName(), refresh, _cataInfo ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get catalog info of:%s, rc:%d",
+                 getFullName(), rc ) ;
+         goto error ;
+      }
+
+      if ( _cataInfo->isMainCL() )
+      {
+         PD_LOG( PDERROR, "can not open a lob in main cl" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else if ( _cataInfo->isRangeSharded() )
+      {
+         PD_LOG( PDERROR, "can not open a lob in range sharded cl" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         rc = _cataInfo->getLobGropuID( getOID(),
+                                     DMS_LOB_META_SEQUENCE,
+                                     _metaGroup ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get meta group:%d", rc ) ;
+            goto error ;
+         }    
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__UPDATECATAINFO, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -131,6 +148,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__OPENSUBSTREAMS ) ;
+      CoordGroupList gpLst ;
+
       rc = _openMainStream( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -138,7 +157,13 @@ namespace engine
          goto error ;
       }
 
-      rc = _openOtherStreams( fullName, oid, mode, cb ) ;
+      _cataInfo->getGroupLst( gpLst ) ;
+      SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
+
+      /// open other non-main substreams.
+      gpLst.erase( _metaGroup ) ;
+
+      rc = _openOtherStreams( fullName, oid, mode, gpLst, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open other streams:%d", rc ) ;
@@ -155,20 +180,14 @@ namespace engine
    INT32 _rtnCoordLobStream::_openOtherStreams( const CHAR *fullName,
                                                 const bson::OID &oid,
                                                 INT32 mode,
+                                                const CoordGroupList &gpLst,
                                                 _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__OPENOTHERSTREAMS ) ;
       BSONObjBuilder builder ;
       BSONObj obj ;
-      CoordGroupList gpLst ;
       MSG_OPTIONS options( SDB_LOB_MODE_R != mode, TRUE ) ;
-
-      _dispatcher.getCataInfo()->getGroupLst( gpLst ) ;
-      SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
-
-      /// erase the group which already has been handled.
-      gpLst.erase( _metaGroup ) ;
 
       builder.append( FIELD_NAME_COLLECTION, fullName )
              .append( FIELD_NAME_LOB_OID, oid )
@@ -183,6 +202,7 @@ namespace engine
       obj = builder.obj() ;
 
       rc = _dispatcher.createMsg( MSG_BS_LOB_OPEN_REQ,
+                                  _cataInfo->getVersion(),
                                   options,
                                   obj ) ;
       if ( SDB_OK != rc )
@@ -260,8 +280,10 @@ namespace engine
              .appendBool( FIELD_NAME_LOB_IS_MAIN_SHD, TRUE ) ;
       obj = builder.obj() ;
 
+   retry:
       _dispatcher.clear() ;
       rc = _dispatcher.createMsg( MSG_BS_LOB_OPEN_REQ,
+                                  _cataInfo->getVersion(),
                                   options,
                                   obj ) ;
       if ( SDB_OK != rc )
@@ -287,22 +309,36 @@ namespace engine
          goto error ;
       }
 
-      if ( SDB_OK != reply->flags )
+      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == reply->flags )
+      {
+         PD_LOG( PDEVENT, "our version is old, update catalog again" ) ;
+
+         rc = _updateCataInfo( TRUE, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to upate catalog info of:%s, rc:%d",
+                    getFullName(), rc ) ;
+            goto error ;
+         }
+         else
+         {
+            goto retry ;
+         }
+      }
+      else if ( SDB_OK != reply->flags )
       {
          rc = reply->flags ;
          PD_LOG( PDERROR, "failed to open lob on data node:%d", rc ) ;
          goto error ;
       }
-
-      if ( -1 == reply->contextID )
+      else if ( -1 == reply->contextID )
       {
          rc = SDB_SYS ;
          PD_LOG( PDERROR, "invalid context id" ) ;
          goto error ;
       }
-
-      if ( SDB_LOB_MODE_R == mode ||
-           SDB_LOB_MODE_REMOVE == mode )
+      else if ( SDB_LOB_MODE_R == mode ||
+                SDB_LOB_MODE_REMOVE == mode )
       {
          rc = _extractMeta( reply, _metaObj ) ;
          if ( SDB_OK != rc )
@@ -311,12 +347,13 @@ namespace engine
             goto error ;
          }
       }
+      else
+      {
+         /// do nothing.
+      }
 
       _add2Subs( reply->header.routeID.columns.groupID,
                  reply->contextID, reply->header.routeID ) ;
-
-      /// catalog info may be refreshed, here we assign it again.
-      _metaGroup = reply->header.routeID.columns.groupID ;
    done:
       _dispatcher.clear() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__OPENMAINSTREAM, rc ) ;
@@ -404,7 +441,6 @@ namespace engine
          goto error ;      
       }
 */
-   done:
       return rc ;
    }
 
@@ -423,7 +459,7 @@ namespace engine
       const subStream *sub = NULL ;
       const MsgOpReply *reply = NULL ;
 
-      rc = _dispatcher.getCataInfo()->
+      rc = _cataInfo->
                    getLobGropuID( *( record._oid ),
                                   record._sequence,
                                   groupID ) ;
@@ -436,6 +472,7 @@ namespace engine
       RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
 
       rc = _dispatcher.createMsg( MSG_BS_LOB_WRITE_REQ,
+                                  _cataInfo->getVersion(),
                                   options,
                                   BSONObj() ) ;
       if ( SDB_OK != rc )
@@ -496,6 +533,7 @@ namespace engine
 
       _dispatcher.clear() ;
       rc = _dispatcher.createMsg( MSG_BS_LOB_WRITE_REQ,
+                                  _cataInfo->getVersion(),
                                   options,
                                   BSONObj() ) ;
       if ( SDB_OK != rc )
@@ -514,7 +552,7 @@ namespace engine
          tuple.columns.offset = piece._offset ; /// offset in piece
          const subStream *sub = NULL ;
 
-         rc = _dispatcher.getCataInfo()->
+         rc = _cataInfo->
                    getLobGropuID( *( piece._oid ),
                                   piece._sequence,
                                   groupID ) ;
@@ -576,6 +614,7 @@ namespace engine
 
       _dispatcher.clear() ;
       rc = _dispatcher.createMsg( MSG_BS_LOB_READ_REQ,
+                                  _cataInfo->getVersion(),
                                   options,
                                   BSONObj() ) ;
       if ( SDB_OK != rc )
@@ -594,7 +633,7 @@ namespace engine
          tuple.columns.offset = piece._offset ; /// offset in piece
          const subStream *sub = NULL ;
 
-         rc = _dispatcher.getCataInfo()->
+         rc = _cataInfo->
                    getLobGropuID( *( piece._oid ),
                                   piece._sequence,
                                   groupID ) ;
@@ -660,13 +699,13 @@ namespace engine
          if ( SDB_OK != ( *itr )->flags )
          {
             rc = ( *itr )->flags ;
-            PD_LOG( PDERROR, "failed to write lob on node[%d:%hd], rc:%d",
+            PD_LOG( PDERROR, "failed to read lob on node[%d:%hd], rc:%d",
                     ( *itr )->header.routeID.columns.groupID,
                     ( *itr )->header.routeID.columns.nodeID, rc ) ;
             goto error ;
          }
 
-         rc = msgExtraceReadResult( *itr, &begin, &tupleSz ) ;
+         rc = msgExtractReadResult( *itr, &begin, &tupleSz ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to extract read result:%d", rc ) ;
@@ -748,6 +787,7 @@ namespace engine
 
       _dispatcher.clear() ;
       rc = _dispatcher.createMsg( MSG_BS_LOB_UPDATE_REQ,
+                                  _cataInfo->getVersion(),
                                   options,
                                   BSONObj() ) ;
       if ( SDB_OK != rc )
@@ -822,6 +862,7 @@ namespace engine
 
       _dispatcher.clear() ;
       rc = _dispatcher.createMsg( MSG_BS_LOB_CLOSE_REQ,
+                                  _cataInfo->getVersion(),
                                   options,
                                   BSONObj() ) ;
       if ( SDB_OK != rc )
@@ -988,6 +1029,7 @@ namespace engine
       _MsgLobTuple tuples[RTN_LOB_REMOVE_PIECE_NUM] ;
 
       rc = _dispatcher.createMsg( MSG_BS_LOB_REMOVE_REQ,
+                                  _cataInfo->getVersion(),
                                   options,
                                   BSONObj() ) ;
       if ( SDB_OK != rc )
@@ -1006,7 +1048,7 @@ namespace engine
          tuple.columns.offset = piece._offset ; /// offset in piece
          const subStream *sub = NULL ;
 
-         rc = _dispatcher.getCataInfo()->
+         rc = _cataInfo->
                    getLobGropuID( *( piece._oid ),
                                   piece._sequence,
                                   groupID ) ;
@@ -1051,5 +1093,6 @@ namespace engine
    error:
       goto done ;
    }
+
 }
 

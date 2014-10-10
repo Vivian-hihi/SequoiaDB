@@ -281,7 +281,7 @@ INT32 msgExtractRemoveLobRequest( const CHAR *pBuffer, const MsgOpLob **header,
 
 INT32 msgBuildGetLobMetaRequest( CHAR **ppBuffer, INT32 *pBufferSize ) ;
 
-INT32 msgExtraceReadResult( const MsgOpReply *header,
+INT32 msgExtractReadResult( const MsgOpReply *header,
                             const MsgLobTuple **begin,
                             UINT32 *tupleSz ) ;
 

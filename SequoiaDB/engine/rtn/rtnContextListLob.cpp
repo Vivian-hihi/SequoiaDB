@@ -181,6 +181,7 @@ namespace engine
       builder.appendTimestamp( FIELD_NAME_LOB_CREATTIME,
                                meta->_createTime,
                                (meta->_createTime - ( meta->_createTime / 1000 * 1000 ) ) * 1000) ;
+      builder.appendBool( FIELD_NAME_LOB_AVAILABLE, meta->isDone() ) ;
       obj = builder.obj() ;
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTLISTLOB__GETMETAINFO, rc ) ;

@@ -96,6 +96,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_OPEN ) ;
 
+      ossMemcpy( _fullName, fullName, ossStrlen( fullName ) ) ;
+      ossMemcpy( &_oid, &oid, sizeof( oid ) ) ;
+      _mode = mode ;
+
       rc = _prepare( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -104,10 +108,6 @@ namespace engine
                  oid.str().c_str(), fullName, rc ) ;
          goto error ;
       }
-
-      ossMemcpy( _fullName, fullName, ossStrlen( fullName ) ) ;
-      ossMemcpy( &_oid, &oid, sizeof( oid ) ) ;
-      _mode = mode ;
 
       if ( SDB_LOB_MODE_R == mode )
       {
@@ -176,8 +176,6 @@ namespace engine
       meta = _metaObj ;
    done:
       return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBSTREAM_CLOSE, "_rtnLobStream::close" )

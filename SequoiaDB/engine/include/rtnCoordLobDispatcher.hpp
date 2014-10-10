@@ -72,12 +72,10 @@ namespace engine
          }
       } ;
    public:
-      INT32 init( const CHAR *fullName,
-                  _pmdEDUCB *cb ) ;
-
       INT32 wait4Reply( _pmdEDUCB *cb ) ;
 
       INT32 createMsg( INT32 opCode,
+                       INT32 version,
                        const msgOptions &options,
                        const bson::BSONObj &obj ) ;
 
@@ -87,7 +85,7 @@ namespace engine
                                    const void *data,
                                    UINT32 len ) ;
 
-      /// the msg will be send does not have bodies.
+      /// the msg which does not have bodies will be send.
       _rtnCoordLobDispatcher &add( UINT32 groupID ) ;
 
       _rtnCoordLobDispatcher &add( MsgRouteID id ,
@@ -110,11 +108,6 @@ namespace engine
       const MsgOpReply *getFirstReply() const
       {
          return _replyBuf.empty() ? NULL : *( _replyBuf.begin() ) ;
-      }
-
-      CoordCataInfoPtr getCataInfo()
-      {
-         return _cataInfo ;
       }
 
    private:
@@ -161,7 +154,6 @@ namespace engine
       MSG_TUPLES _tuples ;
       MsgOpLob _header ;
       bson::BSONObj _msgObj ;
-      CoordCataInfoPtr _cataInfo ;
       msgOptions _options ;
       UINT32 _retryTimes ;
       CHAR _alignBuf[sizeof( UINT32 )] ;

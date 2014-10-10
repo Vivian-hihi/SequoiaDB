@@ -2188,7 +2188,7 @@ error:
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREREADRESULT, "msgExtraceReadResult" )
-INT32 msgExtraceReadResult( const MsgOpReply *header,
+INT32 msgExtractReadResult( const MsgOpReply *header,
                             const MsgLobTuple **begin,
                             UINT32 *tupleSz )
 {

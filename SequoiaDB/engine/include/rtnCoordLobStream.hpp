@@ -108,6 +108,7 @@ namespace engine
       INT32 _openOtherStreams( const CHAR *fullName,
                                const bson::OID &oid,
                                INT32 mode,
+                               const CoordGroupList &gpLst,
                                _pmdEDUCB *cb ) ;
 
       INT32 _extractMeta( const MsgOpReply *header,
@@ -147,8 +148,12 @@ namespace engine
          return ;
       }
 
+      INT32 _updateCataInfo( BOOLEAN refresh,
+                             _pmdEDUCB *cb ) ;
+
    private:
       rtnCoordLobDispatcher _dispatcher ;
+      CoordCataInfoPtr _cataInfo ;
       SUB_STREAMS _subs;
       bson::BSONObj _metaObj ;
       UINT32 _metaGroup ;
