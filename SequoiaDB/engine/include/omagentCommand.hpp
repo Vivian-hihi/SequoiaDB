@@ -540,6 +540,21 @@ namespace engine
          string                                         _vCoordSvcName ;
    } ;
 
+   // query host status
+   class _omaQueryHostStatus : public _omaCommand
+   {
+      DECLARE_OACMD_AUTO_REGISTER ()
+      public:
+         _omaQueryHostStatus() ;
+         ~_omaQueryHostStatus() ;
+
+      public:
+         virtual const CHAR* name () { return OMA_CMD_QUERY_HOST_STATUS ; }
+         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+
+      private:
+   } ;
+
 
 
 } // namespace engine

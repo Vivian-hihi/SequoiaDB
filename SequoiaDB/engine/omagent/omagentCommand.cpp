@@ -55,6 +55,7 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninsDBBus )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryHostStatus )
 
 
    /*
@@ -134,7 +135,7 @@ namespace engine
       if ( env ) para += env ;
       if ( other ) para += other ; 
       _jsFiles.push_back( pair<string, string>( name, para ) ) ;
- 
+
    done:
       return rc ;
    error:
@@ -145,7 +146,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       vector< pair<string, string> >::iterator it = _jsFiles.begin() ;
-      
+
       if ( it == _jsFiles.end() )
       {
          goto done ;
@@ -156,15 +157,16 @@ namespace engine
          rc = setJsFile( it->first.c_str() ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to set js file, rc = %d", rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d", 
+                         it->first.c_str(), rc ) ;
             goto error ;
          }
          rc = readFile ( _jsFileName, &_fileBuff,
                          &_buffSize, &_readSize ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to read js file[%s], rc = %d",
-                     _jsFileName, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to read js file[%s], rc = %d",
+                         _jsFileName, rc ) ;
             goto error ;
          }
          content += it->second ;
@@ -192,7 +194,7 @@ namespace engine
    INT32 _omaCommand::init ( const CHAR *pIndtallInfo )
    {
       INT32 rc = SDB_OK ;
-      
+
       return rc ;
    }
 
@@ -214,16 +216,16 @@ namespace engine
       if ( !_scope )
       {
          rc = SDB_OOM ;
-         PD_LOG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
          goto error ;
       }
       // execute js
       rc = _scope->eval( _content.c_str(), _content.size(),
                          "", 1, 1, rval, detail ) ;
- 
+
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to eval js file for command[%s]: "
+         PD_LOG_MSG ( PDERROR, "Failed to eval js file for command[%s]: "
                   "%s, rc = %d", name(),
                   _scope->getLastErrMsg(), rc ) ;
          rc = _scope->getLastError() ;
@@ -237,7 +239,7 @@ namespace engine
       rc = final ( rval, retObj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to extract result for command[%s], "
+         PD_LOG_MSG ( PDERROR, "Failed to extract result for command[%s], "
                   "rc = %d", name(), rc ) ;
          goto error ;
       }
@@ -378,7 +380,7 @@ namespace engine
       try
       {
          BSONObj obj( pInstallInfo ) ;
-   
+
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; "
                       "var %s = %s; var %s = %s; var %s = %s; ",
@@ -509,7 +511,7 @@ namespace engine
                   e.what() ) ;
          goto error ;
       }
-      
+
    done:
       return rc ;
    error:
@@ -976,7 +978,7 @@ namespace engine
       // return the total error detail
       ossSnprintf( pBuf, OMA_BUFF_SIZE, "%s, %s", pDetail, str.c_str() ) ;  
       PD_LOG_MSG ( PDERROR, pBuf ) ;
- 
+
    done:
       return rc ;
    error:
@@ -1051,7 +1053,7 @@ namespace engine
    error :
       goto done ;
    }
-   
+
    /******************************* add db business **************************/
    // _omaInstallDBBusiness
    _omaInstallDBBusiness::_omaInstallDBBusiness ()
@@ -1270,7 +1272,7 @@ namespace engine
    error:
       goto done ;
    }
- 
+
    INT32 _omaUpdateHostsInfo::doit ( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
@@ -1475,6 +1477,60 @@ namespace engine
          rc = SDB_INVALIDARG ;
          PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
                   e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
+   /*
+      install db business task run rollback data node job
+   */
+   _omaQueryHostStatus::_omaQueryHostStatus()
+   {
+   }
+
+   _omaQueryHostStatus::~_omaQueryHostStatus()
+   {
+   }
+
+   INT32 _omaQueryHostStatus::init ( const CHAR *pInstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONObj bus( pInstallInfo ) ;
+
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "_omaQueryHostStatus passes argument: %s",
+                  _jsFileArgs ) ;
+
+         rc = addJsFile( FILE_QUERY_HOSTSTATUS_ITEM ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_QUERY_HOSTSTATUS_ITEM, rc ) ;
+            goto error ;
+         }
+
+         rc = addJsFile( FILE_QUERY_HOSTSTATUS, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_QUERY_HOSTSTATUS, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:

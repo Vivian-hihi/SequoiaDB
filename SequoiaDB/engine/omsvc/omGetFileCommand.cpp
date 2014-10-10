@@ -2078,8 +2078,7 @@ namespace engine
                                                 OM_BSON_FIELD_HOST_PASSWD ) ;
       pGlobalSshPort = bsonHostInfo.getStringField( 
                                                 OM_BSON_FIELD_HOST_SSHPORT ) ;
-      pGlobalAgentPort = bsonHostInfo.getStringField( 
-                                                OM_BSON_FIELD_AGENT_PORT ) ;
+      pGlobalAgentPort = _localAgentService.c_str() ;
       clusterName      = bsonHostInfo.getStringField( 
                                                 OM_BSON_FIELD_CLUSTER_NAME ) ;
       if ( 0 == ossStrlen( pGlobalUser ) || 0 == ossStrlen( pGlobalPasswd )
@@ -4000,7 +3999,7 @@ namespace engine
                                                              EDU_INFO_ERROR ) ;
                   goto error ;
                }
-               
+
                // {"HostName":"host1", ...}
                oneHost  = ele.embeddedObject() ;
                hostName = oneHost.getStringField( OM_BSON_FIELD_HOST_NAME ) ;
@@ -6811,7 +6810,6 @@ namespace engine
    INT32 omRemoveBusinessCommand::doCommand()
    {
       BSONObj nodeInfos ;
-      BSONObj result ;
       BSONObj request ;
       UINT64 taskID ;
       BOOLEAN isBusinessExist     = FALSE ;
@@ -6876,10 +6874,10 @@ namespace engine
       }
 
       {
-         CHAR arrayID[ OM_INT64_LENGTH + 1 ] ;
-         ossLltoa( taskID, arrayID, OM_INT64_LENGTH ) ;
-         result = BSON( OM_REST_RES_RETCODE << SDB_OK
-                        << OM_BSON_TASKID << arrayID ) ;
+         BSONObj appendInfo = BSON( OM_BSON_TASKID << (long long)taskID) ;
+         _restAdaptor->appendHttpBody( _restSession, appendInfo.objdata(), 
+                                       appendInfo.objsize(), 1 ) ;
+         BSONObj result = BSON( OM_REST_RES_RETCODE << SDB_OK ) ;
          _restAdaptor->setOPResult( _restSession, SDB_OK, result ) ;
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       }
@@ -7212,7 +7210,6 @@ namespace engine
          goto error ;
       }
 
-      //TODO: 此处返回的subSessionVec是只有成功的,而不是全部.应该返回全部才对
       remoteSession->sendMsg( &sucNum, &totalNum ) ;
       rc = _getAllReplay( remoteSession, &subSessionVec ) ;
       if ( SDB_OK != rc )
@@ -7220,12 +7217,6 @@ namespace engine
          PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
          goto error ;
       }
-//      pmdSubSessionItr itr = remoteSession->getSubSessionItr( PMD_SSITR_ALL ) ;
-//      while ( itr.more() )
-//      {
-//         !pmdSubSession::getRspMsg()
-//      }
-
 
       for ( UINT32 i = 0 ; i < subSessionVec.size() ; i++ )
       {
@@ -7417,7 +7408,7 @@ namespace engine
             _errorDetail = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
             goto error ;
          }
-         
+
          BSONObj oneProperty = oneEle.embeddedObject() ;
          BSONElement nameEle = oneProperty.getField( 
                                                 OM_BSON_PROPERTY_NAME ) ;

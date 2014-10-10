@@ -390,7 +390,7 @@ namespace engine
          PD_LOG( PDERROR, "wait replay failed:rc=%d", rc ) ;
          goto error ;
       }
-      
+
       itr = remoteSession->getSubSessionItr( PMD_SSITR_ALL ) ;
       while ( itr.more() )
       {
@@ -555,7 +555,7 @@ namespace engine
    error:
       goto done ;
    }
-   
+
 
    omAgentReqBase::omAgentReqBase( BSONObj &request )
                   :_request( request.copy() ), _response( BSONObj() )

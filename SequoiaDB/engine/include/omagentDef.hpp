@@ -120,6 +120,8 @@ namespace engine
    #define OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS OM_QUERY_PROGRESS
    #define OMA_CMD_UPDATE_HOSTS                       OM_UPDATE_HOSTNAME_REQ
 
+   #define OMA_CMD_QUERY_HOST_STATUS                  OM_QUERY_HOST_STATUS_REQ
+
 
    /*
       oma internal command
@@ -186,6 +188,10 @@ namespace engine
    #define FILE_ROLLBACK_CATALOG            "rollbackCatalog.js"
    #define FILE_ROLLBACK_COORD              "rollbackCoord.js"
    #define FILE_ROLLBACK_DATANODE           "rollbackDataNode.js"
+
+
+   #define FILE_QUERY_HOSTSTATUS            "queryHostStatus.js"
+   #define FILE_QUERY_HOSTSTATUS_ITEM       "queryHostStatusItem.js"
 
    /*
       oma js argument type
