@@ -93,6 +93,7 @@ namespace engine
    #define PMD_OPTION_MODE             "mode"
    #define PMD_OPTION_DETAIL           "detail"
    #define PMD_OPTION_EXPAND           "expand"
+   #define PMD_OPTION_LONG             "long"
    #define SDB_CONF_FILE_PATH_FORMAT   SDBCM_LOCAL_PATH OSS_FILE_SEP "%s" OSS_FILE_SEP PMD_DFT_CONF
 
    #define COMMANDS_OPTIONS \
@@ -101,9 +102,16 @@ namespace engine
        ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p" ), po::value<string>(), "service name, use ',' as seperator" )  \
        ( PMD_COMMANDS_STRING( PMD_OPTION_MODE, ",m" ), po::value<string>(),"mode type: run/local, default: run" ) \
        ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog/om/cm" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_LONG, ",l" ), "show long style" ) \
        ( PMD_OPTION_VERSION, "version" ) \
        ( PMD_OPTION_DETAIL, "show details" ) \
        ( PMD_OPTION_EXPAND, "show expanded details" )
+
+   /*
+      Long format define
+   */
+   #define PMD_LIST_LONG_FORMAT  "%-10.9s %-13.12s %-5.4s %-6.5s %-6.5s %-6.5s %-20.19s %s"
+   #define PMD_LIST_TITLE        "Name       SvcName       Role  PID    GID    NID    GroupName            DBPath"
 
    //print node's detail configuration by sdb conf file and svcname
    void _printfDetail( const CHAR *rootPath, const CHAR *svcname, INT32 type )
@@ -210,21 +218,50 @@ namespace engine
 
    //printf detail or expand
    void _printfAll( const CHAR *rooPath, utilNodeInfo &node,
-                    BOOLEAN detail, BOOLEAN expand )
+                    BOOLEAN detail, BOOLEAN expand,
+                    BOOLEAN showLong )
    {
-      if( node._pid != OSS_INVALID_PID )
+      CHAR tmpPID[ 11 ] = { '-', 0 } ;
+
+      if ( node._pid != OSS_INVALID_PID )
       {
-         ossPrintf( "%s(%s) (%d) %s"OSS_NEWLINE,
+         ossSnprintf( tmpPID, sizeof( tmpPID ) - 1, "%d", node._pid ) ;
+      }
+
+      if ( !showLong )
+      {
+         ossPrintf( "%s(%s) (%s) %s"OSS_NEWLINE,
                     utilDBTypeStr( (SDB_TYPE)node._type ),
-                    node._svcname.c_str(), node._pid,
+                    node._svcname.c_str(), tmpPID,
                     utilDBRoleShortStr( (SDB_ROLE)node._role ) ) ;
       }
       else
       {
-         ossPrintf( "%s(%s) (-) %s"OSS_NEWLINE,
-                    utilDBTypeStr( (SDB_TYPE)node._type),
+         CHAR tmpGID[ 11 ] = { '-', 0 } ;
+         CHAR tmpNID[ 11 ] = { '-', 0 } ;
+         string shortRole = utilDBRoleShortStr( (SDB_ROLE)node._role ) ;
+         // name       svcname       role  pid    gid    nid    gname           dbpath
+         // sequoaidb  11810         S     15896  1001   1001   db1             /opt/sequoiadb/database/coord/11810
+         // sdbcm      11790         -     10076  -      -      -               -
+
+         if ( 0 != node._groupID )
+         {
+            ossSnprintf( tmpGID, sizeof( tmpGID ) - 1, "%d", node._groupID ) ;
+         }
+         if ( 0 != node._nodeID )
+         {
+            ossSnprintf( tmpNID, sizeof( tmpNID ) - 1, "%d", node._nodeID ) ;
+         }
+
+         ossPrintf( PMD_LIST_LONG_FORMAT OSS_NEWLINE,
+                    utilDBTypeStr( (SDB_TYPE)node._type ),
                     node._svcname.c_str(),
-                    utilDBRoleShortStr( (SDB_ROLE)node._role ) ) ;
+                    shortRole.empty() ? "-" : shortRole.c_str(),
+                    tmpPID,
+                    tmpGID,
+                    tmpNID,
+                    node._groupName.empty() ? "-" : node._groupName.c_str(),
+                    node._dbPath.empty() ? "-" : node._dbPath.c_str() ) ;
       }
 
       if( detail )
@@ -256,7 +293,7 @@ namespace engine
                            vector<string> &listServices,
                            INT32 &typeFilter, INT32 &modeFilter,
                            INT32 &roleFilter, BOOLEAN &detail,
-                           BOOLEAN &expand )
+                           BOOLEAN &expand, BOOLEAN &showLong )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBLIST_RESVARG ) ;
@@ -365,6 +402,12 @@ namespace engine
          expand = TRUE ;
          detail = FALSE ;
       }
+
+      if ( vm.count( PMD_OPTION_LONG ) )
+      {
+         showLong = TRUE ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_SDBLIST_RESVARG, rc ) ;
       return rc ;
@@ -384,6 +427,7 @@ namespace engine
       INT32 typeFilter     = SDB_TYPE_DB ;
       BOOLEAN detail       = FALSE ;
       BOOLEAN expand       = FALSE ;
+      BOOLEAN showLong     = FALSE ;
       INT32 roleFilter     =  -1 ;
       INT32 modeFilter     = RUN ;
       CHAR rootPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
@@ -394,7 +438,8 @@ namespace engine
 
       // validate arguments
       rc = resolveArgument ( desc, argc, argv, listServices, typeFilter,
-                             modeFilter, roleFilter, detail, expand ) ;
+                             modeFilter, roleFilter, detail, expand,
+                             showLong ) ;
       if( rc )
       {
          if( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
@@ -508,11 +553,16 @@ namespace engine
          }
       }
 
+      if ( showLong )
+      {
+         // print title
+         ossPrintf( "%s"OSS_NEWLINE, PMD_LIST_TITLE ) ;
+      }
       // print
       for ( UINT32 i = 0 ; i < listNodes.size() ; ++i )
       {
          ++total ;
-         _printfAll( rootPath, listNodes[ i ], detail, expand ) ;
+         _printfAll( rootPath, listNodes[ i ], detail, expand, showLong ) ;
       }
 
       // if no -p, and list all/list cm, need to show sdbcmd
@@ -526,8 +576,20 @@ namespace engine
          for ( UINT32 i = 0 ; i < procs.size() ; ++i )
          {
             ++total ;
-            ossPrintf( "%s (%d)"OSS_NEWLINE, PMDDMN_SVCNAME_DEFAULT,
-                       procs[ i ]._pid ) ;
+            if ( !showLong )
+            {
+               ossPrintf( "%s (%d)"OSS_NEWLINE, PMDDMN_SVCNAME_DEFAULT,
+                          procs[ i ]._pid ) ;
+            }
+            else
+            {
+               CHAR tmpPID[ 11 ] = { 0 } ;
+               ossSnprintf( tmpPID, sizeof( tmpPID ) - 1, "%d",
+                            procs[ i ]._pid ) ;
+               ossPrintf( PMD_LIST_LONG_FORMAT OSS_NEWLINE,
+                          PMDDMN_SVCNAME_DEFAULT,
+                          "-", "-", tmpPID, "-", "-", "-", "-" ) ;
+            }
          }
       }
       ossPrintf ( "Total: %d"OSS_NEWLINE, total ) ;
