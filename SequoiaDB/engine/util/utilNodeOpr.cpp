@@ -237,7 +237,7 @@ namespace engine
 
       // open
       rc = ossOpenNamedPipe( _pipeWName,
-                             OSS_NPIPE_OUTBOUND |
+                             OSS_NPIPE_DUPLEX |
                              OSS_NPIPE_BLOCK_WITH_TIMEOUT |
                              OSS_NPIPE_NONBLOCK,
                              UTIL_NODE_OPEN_PIPE_TIMEOUT, _pipeWHandle ) ;
@@ -249,7 +249,7 @@ namespace engine
       }
 
       rc = ossOpenNamedPipe( _pipeRName,
-                             OSS_NPIPE_INBOUND |
+                             OSS_NPIPE_DUPLEX |
                              OSS_NPIPE_BLOCK_WITH_TIMEOUT |
                              OSS_NPIPE_NONBLOCK,
                              UTIL_NODE_OPEN_PIPE_TIMEOUT, _pipeRHandle ) ;
@@ -352,7 +352,7 @@ namespace engine
 #else
       // connect
       rc = ossConnectNamedPipe( _pipeRHandle,
-                                OSS_NPIPE_INBOUND,
+                                OSS_NPIPE_DUPLEX,
                                 UTIL_NODE_PIPE_TIMEOUT ) ;
       if ( rc )
       {
@@ -365,7 +365,7 @@ namespace engine
       }
 
       rc = ossConnectNamedPipe( _pipeWHandle,
-                                OSS_NPIPE_OUTBOUND,
+                                OSS_NPIPE_DUPLEX,
                                 UTIL_NODE_PIPE_TIMEOUT ) ;
       if ( rc )
       {
