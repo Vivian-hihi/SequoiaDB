@@ -50,6 +50,38 @@
 namespace engine
 {
 
+   static INT32 _utilCheckOrCleanNamedPipe( const CHAR *fullPipeName,
+                                            OSSPID &pid )
+   {
+#if defined( _LINUX )
+      INT32 rc = SDB_OK ;
+      const CHAR *pPidPtr = NULL ;
+
+      pPidPtr = ossStrrchr( fullPipeName, '_' ) ;
+      if ( !pPidPtr || 0 == *( pPidPtr + 1 ) ||
+           0 == ( pid = ossAtoi( pPidPtr + 1 ) ) )
+      {
+         goto done ;
+      }
+      if ( ossIsProcessRunning( pid ) )
+      {
+         rc = SDB_FE ;
+         goto error ;
+      }
+      else
+      {
+         rc = ossCleanNamedPipeByName( fullPipeName ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+#else
+      return SDB_FE ;
+#endif // _LINUX
+   }
+
    #define UTIL_NODE_PIPE_TIMEOUT         ( 1 )
    #define UTIL_NODE_OPEN_PIPE_TIMEOUT    ( 0 )
    #define UTIL_NODE_PIPE_BUFFSZ          ( 1024 )
@@ -125,9 +157,20 @@ namespace engine
                     ENGINE_NPIPE_PREFIX_BW"%s_%d",
                     svcname, ossGetCurrentProcessID() ) ;
 
-      // clear the exist 
+      // clear when exist 
       ossCleanNamedPipeByName( _pipeRName ) ;
       ossCleanNamedPipeByName( _pipeWName ) ;
+
+      // clear other dirty pipe
+      {
+         vector< string > names ;
+         OSSPID pid = OSS_INVALID_PID ;
+         ossEnumNamedPipes ( names, ENGINE_NPIPE_PREFIX, OSS_MATCH_LEFT ) ;
+         for ( UINT32 i = 0 ; i < names.size() ; ++i )
+         {
+            _utilCheckOrCleanNamedPipe( names[ i ].c_str(), pid ) ;
+         }
+      }
 
       // create
       rc = ossCreateNamedPipe( _pipeRName, UTIL_NODE_PIPE_BUFFSZ, 0,
@@ -424,41 +467,10 @@ namespace engine
    /*
       Local define
    */
-   static INT32 _utilCheckOrCleanNamedPipe( const CHAR *fullPipeName,
-                                            OSSPID &pid )
-   {
-#if defined( _LINUX )
-      INT32 rc = SDB_OK ;
-      const CHAR *pPidPtr = NULL ;
-
-      pPidPtr = ossStrrchr( fullPipeName, '_' ) ;
-      if ( !pPidPtr || 0 == *( pPidPtr + 1 ) ||
-           0 == ( pid = ossAtoi( pPidPtr + 1 ) ) )
-      {
-         goto done ;
-      }
-      if ( ossIsProcessRunning( pid ) )
-      {
-         rc = SDB_FE ;
-         goto error ;
-      }
-      else
-      {
-         rc = ossCleanNamedPipeByName( fullPipeName ) ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-#else
-      return SDB_FE ;
-#endif // _LINUX
-   }
-
    static INT32 _utilWriteReadPipe( const CHAR *pSvcName,
                                     const CHAR *pWriteBuf, INT32 writeLen,
-                                    CHAR *pReadBuf, INT32 readLen )
+                                    CHAR *pReadBuf, INT32 readLen,
+                                    BOOLEAN checkLen )
    {
       INT32 rc = SDB_OK ;
       utilNodePipe nodePipe ;
@@ -493,7 +505,7 @@ namespace engine
          goto error ;
       }
 
-      if ( readLen != hasRead )
+      if ( checkLen && readLen != hasRead )
       {
          PD_LOG ( PDERROR, "Failed to read %s return from pip %s, rc: %d",
                   pWriteBuf, nodePipe.getReadPipeName(), rc ) ;
@@ -503,6 +515,73 @@ namespace engine
 
    done:
       nodePipe.closePipe() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 utilGetNodeExtraInfo( utilNodeInfo & info )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] = { 0 } ;
+      CHAR dbPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      info._groupID     = 0 ;
+      info._nodeID      = 0 ;
+      info._dbPath      = "" ;
+      info._groupName   = "" ;
+
+      // group id
+      rc = _utilWriteReadPipe( info._svcname.c_str(),
+                               ENGINE_NPIPE_MSG_GID,
+                               sizeof( ENGINE_NPIPE_MSG_GID ),
+                               (CHAR *)&info._groupID,
+                               sizeof( info._groupID ),
+                               TRUE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // node id
+      rc = _utilWriteReadPipe( info._svcname.c_str(),
+                               ENGINE_NPIPE_MSG_NID,
+                               sizeof( ENGINE_NPIPE_MSG_NID ),
+                               (CHAR *)&info._nodeID,
+                               sizeof( info._nodeID ),
+                               TRUE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // group name
+      rc = _utilWriteReadPipe( info._svcname.c_str(),
+                               ENGINE_NPIPE_MSG_GNAME,
+                               sizeof( ENGINE_NPIPE_MSG_GNAME ),
+                               (CHAR *)groupName,
+                               OSS_MAX_GROUPNAME_SIZE,
+                               FALSE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      info._groupName = groupName ;
+
+      // dbpath
+      rc = _utilWriteReadPipe( info._svcname.c_str(),
+                               ENGINE_NPIPE_MSG_PATH,
+                               sizeof( ENGINE_NPIPE_MSG_PATH ),
+                               (CHAR *)dbPath,
+                               OSS_MAX_PATHSIZE,
+                               FALSE ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      info._dbPath = dbPath ;
+
+   done:
       return rc ;
    error:
       goto done ;
@@ -651,6 +730,9 @@ namespace engine
          *pSvcEnd = ')' ;
          findNode._orgname = commandLine ;
 
+         // get extra info
+         utilGetNodeExtraInfo( findNode ) ;
+
          // find it
          nodes.push_back( findNode ) ;
 
@@ -688,30 +770,9 @@ namespace engine
 
       for ( UINT32 i = 0 ; i < names.size() ; ++i )
       {
-         rc = _utilCheckOrCleanNamedPipe( names[ i ].c_str(), pid ) ;
-         if ( SDB_FE != rc )
-         {
-            continue ;
-         }
-
-         // linux:   sequoiadb_engine_11790(svcname)_2500(pid)
-         // linux:   sequoiadb_engine_bw_11790(svcname)_2500(pid)
          // windows: sequoiadb_engine_11790(svcname)
          // get svcname
-#if defined( _LINUX )
-         if ( 0 == ossStrncmp( names[ i ].c_str(), ENGINE_NPIPE_PREFIX_BW,
-                               ossStrlen( ENGINE_NPIPE_PREFIX_BW ) )
-         {
-            continue ;
-         }
-
-         findNode._svcname = names[ i ].substr(
-            ossStrlen( ENGINE_NPIPE_PREFIX ) ) ;
-         findNode._svcname = findNode._svcname.substr( 0,
-                             findNode._svcname.find( "_" ) ) ;
-#else
          findNode._svcname = names[ i ].substr( prefixLen ) ;
-#endif // _LINUX
 
          // 1. svcname
          if ( svcnameFilter && 0 != *svcnameFilter &&
@@ -725,7 +786,8 @@ namespace engine
                                   ENGINE_NPIPE_MSG_TYPE,
                                   sizeof( ENGINE_NPIPE_MSG_TYPE ),
                                   (CHAR*)&findNode._type,
-                                  sizeof( findNode._type ) ) ;
+                                  sizeof( findNode._type ),
+                                  TRUE ) ;
          if ( rc )
          {
             continue ;
@@ -740,7 +802,8 @@ namespace engine
                                   ENGINE_NPIPE_MSG_PID,
                                   sizeof( ENGINE_NPIPE_MSG_PID ),
                                   (CHAR *)&findNode._pid,
-                                  sizeof( findNode._pid ) ) ;
+                                  sizeof( findNode._pid ),
+                                  TRUE ) ;
          if ( rc )
          {
             continue ;
@@ -755,7 +818,8 @@ namespace engine
                                   ENGINE_NPIPE_MSG_ROLE,
                                   sizeof( ENGINE_NPIPE_MSG_ROLE ),
                                   (CHAR *)&findNode._role,
-                                  sizeof( findNode._role ) ) ;
+                                  sizeof( findNode._role ),
+                                  TRUE ) ;
          if ( rc )
          {
             continue ;
@@ -767,6 +831,9 @@ namespace engine
 
          // find it
          findNode._orgname = names[ i ] ;
+         // get extra info
+         utilGetNodeExtraInfo( findNode ) ;
+         // push to vector
          nodes.push_back( findNode ) ;
 
          if ( pidFilter != OSS_INVALID_PID ||
@@ -834,6 +901,10 @@ namespace engine
          {
             continue ;
          }
+
+         // get dbpath
+         node._dbPath = "" ;
+         utilGetDBPathByConfigPath( confPath, node._dbPath ) ;
 
          // find it
          nodes.push_back( node ) ;
@@ -912,7 +983,7 @@ namespace engine
       rc = _utilWriteReadPipe( node._svcname.c_str(),
                                ENGINE_NPIPE_MSG_SHUTDOWN,
                                sizeof( ENGINE_NPIPE_MSG_SHUTDOWN ),
-                               NULL, 0 ) ;
+                               NULL, 0, FALSE ) ;
 #endif // _LINUX
       if ( rc && ossIsProcessRunning( node._pid ) )
       {

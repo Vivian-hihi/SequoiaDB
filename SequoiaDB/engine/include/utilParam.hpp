@@ -69,6 +69,10 @@ namespace engine
                                   INT32 &role,
                                   BOOLEAN allowFileNotExist = TRUE ) ;
 
+   INT32 utilGetDBPathByConfigPath( const string& confPath,
+                                    string &dbPath,
+                                    BOOLEAN allowFileNotExist = TRUE ) ;
+
    INT32 utilGetCMService( const string &rootPath,
                            const string &hostname,
                            string &svcname,

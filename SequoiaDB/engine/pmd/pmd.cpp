@@ -49,6 +49,7 @@ namespace engine
    :_mainEDU( &_eduMgr, EDU_TYPE_AGENT )
    {
       ossMemset( _hostName, 0, sizeof( _hostName ) ) ;
+      ossMemset( _groupName, 0, sizeof( _groupName ) ) ;
 
       for ( INT32 i = 0 ; i < SDB_CB_MAX ; ++i )
       {

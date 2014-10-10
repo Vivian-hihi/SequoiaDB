@@ -99,10 +99,18 @@ namespace engine
       INT32    _type ;
       INT32    _role ;
       OSSPID   _pid ;
+      // extra info
+      INT32    _groupID ;
+      INT32    _nodeID ;
+      string   _groupName ;
+      string   _dbPath ;
+      // extra info end
 
       _utilNodeInfo()
       {
          _pid  = OSS_INVALID_PID ;
+         _groupID = 0 ;
+         _nodeID = 0 ;
       }
    } ;
    typedef _utilNodeInfo utilNodeInfo ;
@@ -117,6 +125,11 @@ namespace engine
                            const CHAR *svcnameFilter = NULL,
                            OSSPID pidFilter = OSS_INVALID_PID,
                            INT32 roleFilter = -1 ) ;
+
+   /*
+      get node group id/name, node id, dbpath info
+   */
+   INT32    utilGetNodeExtraInfo( utilNodeInfo &info ) ;
 
    #define UTIL_WAIT_NODE_TIMEOUT         ( 15 * 60 ) // second
 

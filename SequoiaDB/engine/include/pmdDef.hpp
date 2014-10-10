@@ -245,6 +245,10 @@ namespace engine
    #define ENGINE_NPIPE_MSG_SHUTDOWN   "$shutdown"
    #define ENGINE_NPIPE_MSG_TYPE       "$type"
    #define ENGINE_NPIPE_MSG_ROLE       "$role"
+   #define ENGINE_NPIPE_MSG_GID        "$gid"
+   #define ENGINE_NPIPE_MSG_NID        "$nid"
+   #define ENGINE_NPIPE_MSG_GNAME      "$gname"
+   #define ENGINE_NPIPE_MSG_PATH       "$path"
 
    /*
       Config define

@@ -322,6 +322,53 @@ namespace engine
       goto done ;
    }
 
+   INT32 utilGetDBPathByConfigPath( const string & confPath,
+                                    string &dbPath,
+                                    BOOLEAN allowFileNotExist )
+   {
+      INT32 rc = SDB_OK ;
+      po::options_description desc ;
+      po::variables_map vm ;
+      desc.add_options()
+         ( PMD_OPTION_DBPATH, po::value<string>(), "" ) ;
+      CHAR conf[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+      dbPath = PMD_CURRENT_PATH ;
+
+      rc = utilBuildFullPath ( confPath.c_str(), PMD_DFT_CONF,
+                               OSS_MAX_PATHSIZE, conf ) ;
+      if ( rc )
+      {
+         std::cerr << "Failed to build full path, rc: " << rc << std::endl ;
+         goto error ;
+      }
+
+      if ( allowFileNotExist && SDB_OK != ossAccess( conf ) )
+      {
+         goto done ;
+      }
+
+      rc = utilReadConfigureFile( conf, desc, vm ) ;
+      if ( allowFileNotExist && SDB_IO == rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( vm.count ( PMD_OPTION_DBPATH ) )
+      {
+         dbPath = vm [ PMD_OPTION_DBPATH ].as<string>() ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
    INT32 utilGetCMService( const string & rootPath,
                            const string & hostname,
                            string & svcname,

@@ -60,6 +60,8 @@ namespace engine
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       CHAR tempBuffer [ PMD_WL_NPIPE_BUFSZ + 1 ] = {0} ;
       const CHAR *pSvcName = ( const CHAR* )pData ;
+      INT32 role = pmdGetDBRole() ;
+      INT32 type = pmdGetDBType() ;
       utilNodePipe nodePipe ;
 
       INT32 hasRead = 0 ;
@@ -135,33 +137,46 @@ namespace engine
                OSSPID currentProcessPID = ossGetCurrentProcessID () ;
                rc = nodePipe.writePipe( (CHAR*)&currentProcessPID,
                                         sizeof(currentProcessPID) ) ;
-               if ( rc )
-               {
-                  PD_LOG ( PDWARNING, "Failed to write pid to named pipe, "
-                           "rc = %d", rc ) ;
-               }
             }
             else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_TYPE,
                                        sizeof( ENGINE_NPIPE_MSG_TYPE ) ) )
             {
-               INT32 type = pmdGetDBType() ;
                rc = nodePipe.writePipe( (const CHAR*)&type, sizeof(type) ) ;
-               if ( rc )
-               {
-                  PD_LOG ( PDWARNING, "Failed to write type to named pipe, "
-                           "rc = %d", rc ) ;
-               }
             }
             else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_ROLE,
                                        sizeof( ENGINE_NPIPE_MSG_ROLE ) ) )
             {
-               INT32 role = pmdGetDBRole() ;
                rc = nodePipe.writePipe( (const CHAR*)&role, sizeof(role) ) ;
-               if ( rc )
-               {
-                  PD_LOG ( PDWARNING, "Failed to write role to named pipe, "
-                           "rc = %d", rc ) ;
-               }
+            }
+            else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_GID,
+                                       sizeof( ENGINE_NPIPE_MSG_GID ) ) )
+            {
+               INT32 gid = pmdGetNodeID().columns.groupID ;
+               rc = nodePipe.writePipe( (const CHAR*)&gid, sizeof(gid) ) ;
+            }
+            else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_NID,
+                                       sizeof( ENGINE_NPIPE_MSG_NID ) ) )
+            {
+               INT32 nid = pmdGetNodeID().columns.nodeID ;
+               rc = nodePipe.writePipe( (const CHAR*)&nid, sizeof(nid) ) ;
+            }
+            else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_GNAME,
+                                       sizeof( ENGINE_NPIPE_MSG_GNAME ) ) )
+            {
+               const CHAR *gname = pmdGetKRCB()->getGroupName() ;
+               rc = nodePipe.writePipe( gname, ossStrlen( gname ) + 1 ) ;
+            }
+            else if ( 0 == ossStrncmp( tempBuffer, ENGINE_NPIPE_MSG_PATH,
+                                       sizeof( ENGINE_NPIPE_MSG_PATH ) ) )
+            {
+               const CHAR *path = pmdGetOptionCB()->getDbPath() ;
+               rc = nodePipe.writePipe( path, ossStrlen( path ) + 1 ) ;
+            }
+
+            if ( rc )
+            {
+               PD_LOG ( PDWARNING, "Failed to write %s to named pipe, "
+                        "rc = %d", tempBuffer, rc ) ;
             }
          }
 
