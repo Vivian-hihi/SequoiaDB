@@ -198,7 +198,7 @@
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/samples" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/local" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/log" />
-		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/script">
+		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/script" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/www" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/tools/server/php" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/python" />
