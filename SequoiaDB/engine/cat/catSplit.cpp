@@ -70,7 +70,7 @@ namespace engine
       if ( splitKey.nFields() != cataSet.getShardingKey().nFields() )
       {
          PD_LOG( PDWARNING, "Split key fields not match sharding key fields" ) ;
-         rc = SDB_SYS ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
