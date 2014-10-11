@@ -27,7 +27,7 @@
    RET_JSON: the format is: {"errno":0,"detail":""}
 */
 
-//var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "11800", "InstallPath": "/opt/sequoiadb/database/catalog/11800", "InstallConfig": { "diaglevel": 3, "role": "catalog", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } };
+//var BUS_JSON = { "InstallHostName": "rhel64-test9", "InstallSvcName": "11900", "InstallPath": "/opt/sequoiadb/database/catalog/11900", "InstallConfig": { "diaglevel": 3, "role": "catalog", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } };
 //var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" };
 
 var RET_JSON        = new Object() ;
@@ -55,7 +55,19 @@ function waitCatalogRGReady( hostName, svcName )
          num = cur.size() ;
          if ( num )
          {
-            break ;
+            // for cur.size() had run out of cursor, we need to get again
+            cur = db.SYSCAT.SYSNODES.find({"GroupName": "SYSCatalogGroup"}) ;
+            var record = eval ( '(' + cur.next() + ')' ) ;
+            var n = record[PrimaryNode] ;
+            if ( "undefined" == typeof(n) )
+            {
+               sleep( OMA_SLEEP_TIME ) ;
+               continue ;   
+            }
+            else
+            {
+               break ;
+            }
          }
          else
          {

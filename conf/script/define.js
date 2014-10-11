@@ -76,6 +76,7 @@ var Path                         = "Path" ;
 var Passwd                       = "Passwd" ;
 var ProgPath                     = "ProgPath" ;
 var Port                         = "Port" ;
+var PrimaryNode                  = "PrimaryNode" ;
 var Rc                           = "Rc" ;
 var Errno                        = "errno" ;
 var Reachable                    = "Reachable" ;
