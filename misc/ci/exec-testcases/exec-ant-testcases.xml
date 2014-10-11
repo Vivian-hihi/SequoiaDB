@@ -79,7 +79,7 @@
 			<sequential> -->
 		<trycatch property="e">
 			<try>
-				<property name="command" value=" -f ${test.case.fullname} -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path} -DantTask.jar.path=${antTask.jar.path}" />
+				<property name="command" value=" -f ${test.case.fullname} test -Dhost.NAME=${host.NAME} -Dcoord.service.port=${coord.service.port} -DCS_PRIX=${CS_PRIX} -Dinstall.path=${install.path} -DantTask.jar.path=${antTask.jar.path}" />
 				<echo message="Command:ant ${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
 				<!-- <antfetch antfile="${test.case.fullname}" target="test" inheritAll="false" return="ret.code,error.msg">
