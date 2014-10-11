@@ -91,7 +91,7 @@ namespace engine
       {
          PD_LOG( PDWARNING, "Split key field not 1 or field type not Int, "
                  "split key: %s", splitKey.toString().c_str() ) ;
-         rc = SDB_SYS ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
