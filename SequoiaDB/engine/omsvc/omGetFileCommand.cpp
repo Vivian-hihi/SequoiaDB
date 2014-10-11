@@ -2130,6 +2130,7 @@ namespace engine
             host.passwd    = pGlobalPasswd ;
             host.sshPort   = pGlobalSshPort ;
             host.agentPort = pGlobalAgentPort ;
+            host.isNeedUninstall = false ;
 
             if ( oneHost.hasField( OM_BSON_FIELD_HOST_USER ) )
             {
@@ -2822,7 +2823,6 @@ namespace engine
          BSONObjBuilder builder ;
          BSONObj tmp ;
 
-         // TODO OM_HOST_FIELD_TIME
          _generateTableField( builder, OM_HOST_FIELD_NAME, *ite, 
                               OM_BSON_FIELD_HOST_NAME ) ;
          builder.append( OM_HOST_FIELD_CLUSTERNAME, clusterName ) ;
@@ -5938,6 +5938,7 @@ namespace engine
 
       confs = record.getObjectField( OM_CONFIGURE_FIELD_CONFIG ) ;
       {
+         CHAR catName[ OM_INT32_LENGTH + 1 ] = "" ;
          BSONObjIterator iter( confs ) ;
          while ( iter.more() )
          {
@@ -5954,6 +5955,12 @@ namespace engine
             BSONObj tmp = ele.embeddedObject() ;
             BSONObjBuilder builder ;
             builder.appendElements( tmp ) ;
+            //MSG_ROUTE_CAT_SERVICE
+            string svcName = tmp.getStringField( OM_CONF_DETAIL_SVCNAME ) ;
+            INT32 iSvcName = ossAtoi( svcName.c_str() ) ;
+            INT32 iCatName = iSvcName + MSG_ROUTE_CAT_SERVICE ;
+            ossItoa( iCatName, catName, OM_INT32_LENGTH ) ;
+            builder.append( OM_CONF_DETAIL_CATANAME, catName ) ;
             builder.append( OM_BSON_FIELD_HOST_NAME, hostInfo.hostName ) ;
             builder.append( OM_BSON_FIELD_HOST_USER, hostInfo.user ) ;
             builder.append( OM_BSON_FIELD_HOST_PASSWD, hostInfo.passwd ) ;
