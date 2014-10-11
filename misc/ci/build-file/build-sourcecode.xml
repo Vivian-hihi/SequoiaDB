@@ -198,6 +198,7 @@
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/samples" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/local" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/log" />
+		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/script">
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/www" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/tools/server/php" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/python" />
@@ -236,6 +237,9 @@
 		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sdbcs.dll" />
 		<copy todir="${RELEASE_DIR}/sequoiadb/hadoop" >
     		<fileset dir="${CODE_DIR}/driver/hadoop/hadoop-connector" includes="**/hadoop-connector*.jar" />
+    	</copy>
+    	<copy todir="${RELEASE_DIR}/sequoiadb/conf/script">
+    		<fileset dir="${CODE_DIR}/conf/script" includes="**/*" />
     	</copy>
 
 		<copy todir="${RELEASE_DIR}/sequoiadb/python">

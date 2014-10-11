@@ -80,10 +80,7 @@
 		<echo message="Now testcase ${test.case.name}.php begin with ${testcase.begin.time} on ${testcases.path}" />
 
 		<exec executable="${php-bin.dir}/php-bin" dir="${php-bin.dir}" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false" >
-			<arg line="${phpunit.phar.dir}   --log-junit ${reports.path}/${test.suite.class.name}.xml ${test.case.fullname}"/>
-
-			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:/opt/sequoiadb/lib/phplib" />
-
+			<arg line="${phpunit.phar.dir} --log-junit ${reports.path}/${test.suite.class.name}.xml ${test.case.fullname}"/>
 		</exec>
 		<echo message="${screen.output}" />
 
