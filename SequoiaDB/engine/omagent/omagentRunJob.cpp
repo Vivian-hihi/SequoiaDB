@@ -537,7 +537,7 @@ namespace engine
          string groupname = it->first ;
          bab.append( groupname.c_str() ) ;
       }
-      bob.appendArray( OMA_FIELD_INSTALLGROUPNAMES, bab.arr() ) ;
+      bob.appendArray( OMA_FIELD_UNINSTALLGROUPNAMES, bab.arr() ) ;
       obj = bob.obj() ;
    }
 

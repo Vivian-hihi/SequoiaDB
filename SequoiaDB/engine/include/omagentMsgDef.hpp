@@ -110,6 +110,7 @@
 #define OMA_FIELD_UNINSTALLHOSTNAME                "UninstallHostName"
 #define OMA_FIELD_UNINSTALLSVCNAME                 "UninstallSvcName"
 #define OMA_FIELD_UNINSTALLGROUPNAME               "UninstallGroupName"
+#define OMA_FIELD_UNINSTALLGROUPNAMES              "UninstallGroupNames"
 #define OMA_FIELD_AGENTPORT                        "AgentPort"
 #define OMA_FIELD_AUTHUSER                         "AuthUser"
 #define OMA_FIELD_AUTHPASSWD                       "AuthPasswd"

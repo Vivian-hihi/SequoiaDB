@@ -710,7 +710,59 @@ namespace engine
    error :
       goto done ;
    }
+/*
+   INT32 _omaAddHost::doit ( BSONObj &retObj )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj detail ;
+      BSONObj rval ;
 
+      rc = getExcuteJsContent( _content ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get js file's content to "
+                  "excute, rc = %d", rc ) ;
+         goto error ;
+      }
+      // get scope
+      _scope = sdbGetOMAgentMgr()->getScope() ;
+      if ( !_scope )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
+         goto error ;
+      }
+      // execute js
+      rc = _scope->eval( _content.c_str(), _content.size(),
+                         "", 1, 1, rval, detail ) ;
+
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to eval js file for command[%s]: "
+                  "%s, rc = %d", name(),
+                  _scope->getLastErrMsg(), rc ) ;
+         rc = _scope->getLastError() ;
+         BSONObjBuilder bob ;
+         bob.append( OMA_FIELD_DETAIL, _scope->getLastErrMsg() ) ;
+         retObj = bob.obj() ;
+         PD_LOG_MSG(PDERROR, "%s", _scope->getLastErrMsg() ) ;
+         goto error ;
+      }
+      // adapt the result
+      rc = final ( rval, retObj ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG ( PDERROR, "Failed to extract result for command[%s], "
+                  "rc = %d", name(), rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+*/
    INT32 _omaAddHost::final ( BSONObj &rval, BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
@@ -740,8 +792,8 @@ namespace engine
       }
       if ( retErrno )
       {
-         PD_LOG ( PDERROR, "Something wrong for add host, "
-                  "going to rollback internally, errno = %d", retErrno ) ;
+         PD_LOG ( PDERROR, "Failed to add all the hosts, "
+                  "going to rollback, rc = %d", retErrno ) ;
          // extract info for rollback
          rc = _getRollbackInfo( addHostResult , rollbackInfo ) ;
          if ( rc )
@@ -750,7 +802,7 @@ namespace engine
                      "failed to rollback, rc = %d", rc ) ;
             goto error ;
          }
-         rc = _rollback_internal( rollbackInfo, rollbackResult ) ;
+         rc = _rollbackAddedHost( rollbackInfo, rollbackResult ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to roolback add hosts, "
@@ -886,7 +938,7 @@ namespace engine
      goto done ;
    }
 
-   INT32 _omaAddHost::_rollback_internal ( BSONObj &rollbackInfo,
+   INT32 _omaAddHost::_rollbackAddedHost ( BSONObj &rollbackInfo,
                                            BSONObj &rollbackResult )
    {
       INT32 rc = SDB_OK ;

@@ -232,11 +232,7 @@ namespace engine
          map< string, InstallResult >         _mapGroupsResult ;
          // virtual coord info
          string                               _vCoordSvcName ;
-/*
-         string                               _sdbUser ;
-         string                               _sdbPasswd ;
-         string                               _sdbUserGroup ;
-*/
+
          ossSpinSLatch                        _taskLatch ;
          ossSpinSLatch                        _taskLatch2 ;
          ossSpinSLatch                        _jobLatch ;

@@ -227,7 +227,7 @@ namespace engine
       PD_CHECK ( Object == ele.type(), SDB_INVALIDARG, error, PDDEBUG,
                  "Unexpected field type : %s, supposed to be Object",
                  obj.toString().c_str()) ;
-      value = ele.embeddedObject() ;
+      value = ele.embeddedObject().getOwned() ;
    done :
       return rc ;
    error :

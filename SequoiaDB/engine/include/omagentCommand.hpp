@@ -248,12 +248,13 @@ namespace engine
          ~_omaAddHost () ;
          virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
+//         virtual INT32 doit ( BSONOBj &retObj ) ;
          virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
 
       private:
          INT32 _getRollbackInfo( BSONObj &addHostResult,
                                  BSONObj &rollbackInfo ) ;
-         INT32 _rollback_internal ( BSONObj &rollbackInfo,
+         INT32 _rollbackAddedHost ( BSONObj &rollbackInfo,
                                     BSONObj &rollbackResult ) ;
          INT32 _buildErrDetail ( BSONObj &addHostResult,
                                  BSONObj &rollbackResult,
@@ -559,7 +560,7 @@ namespace engine
          ~_omaRunRollbackDataNodeJob () ;
 
       public:
-         virtual const CHAR* name () { return "" ; }
+         virtual const CHAR* name () { return OMA_CMD_RM_DATA_RG ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
 
       private:
