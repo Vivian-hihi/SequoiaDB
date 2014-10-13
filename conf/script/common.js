@@ -25,7 +25,7 @@
 
 function installTmpCMResult()
 {
-   this.Errno                     = SDB_OK ;
+   this.errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.AgentPort                 = OMA_PORT_INVALID + "" ;
@@ -35,7 +35,7 @@ function installTmpCMResult()
 
 function uninstallTmpCMResult()
 {
-   this.Errno                     = SDB_OK ;
+   this.errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.IsOMStop                  = false ;
@@ -43,7 +43,7 @@ function uninstallTmpCMResult()
 
 function addHostResult()
 {
-   this.Errno                     = SDB_OK ;
+   this.errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.HasInstall                = false ;
@@ -51,7 +51,7 @@ function addHostResult()
 
 function addHostRollbackResult()
 {
-   this.Errno                     = SDB_OK ;
+   this.errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.HasUninstall              = false ;
@@ -59,7 +59,7 @@ function addHostRollbackResult()
 
 function removeHostResult()
 {
-   this.Errno                     = SDB_OK ;
+   this.errno                     = SDB_OK ;
    this.detail                    = "" ;
    this.IP                        = "" ;
    this.HasUninstall              = false ;

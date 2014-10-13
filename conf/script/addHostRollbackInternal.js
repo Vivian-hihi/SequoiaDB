@@ -31,6 +31,9 @@
 
 //var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.42", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" }, { "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" } ] } ;
 
+var RET_JSON = new Object() ;
+RET_JSON[HostInfo] = [] ;
+
 /* *****************************************************************************
 @discretion: uninstall db packet in remote host
 @author: Tanzhaobo

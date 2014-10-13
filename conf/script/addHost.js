@@ -32,8 +32,11 @@
 
 //var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.165","HostName":"rhe164-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
 
+//var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.165","HostName":"rhe164-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
 
 var RET_JSON       = new Object() ;
+RET_JSON[Errno]    = SDB_OK ;
+RET_JSON[Detail]   = "" ;
 RET_JSON[HostInfo] = [] ;
 
 /* *****************************************************************************
@@ -244,15 +247,18 @@ function main()
             retObj[Errno] = GETLASTERROR( e, false ) ;
             retObj[Detail] = GETLASTERRMSG() ;
             RET_JSON[HostInfo].push( retObj ) ;
-            setLastErrMsg( "Failed to install sdbcm in [" + ip + "]: " + retObj[Detail] ) ;
-            setLastError( e ) ;
-            throw e ;
+            RET_JSON[Errno] = e ;
+            RET_JSON[Detail] = "Failed to install sdbcm in [" + ip + "]: " + retObj[Detail] ;
+            break ;
          }
          else
          {
-            setLastErrMsg( "Failed to install sdbcm in [" + ip + "]" ) ;
-            setLastError( SDB_SYS ) ;
-            throw SDB_SYS ;
+            retObj[Errno] = GETLASTERROR( e, false ) ;
+            retObj[Detail] = GETLASTERRMSG() ;
+            RET_JSON[HostInfo].push( retObj ) ;
+            RET_JSON[Errno] = SDB_SYS ;
+            RET_JSON[Detail] = "Failed to install sdbcm in [" + ip + "]" ;
+            break ;
          }
       }
       RET_JSON[HostInfo].push( retObj ) ;
