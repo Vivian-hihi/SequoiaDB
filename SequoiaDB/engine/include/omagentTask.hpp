@@ -171,7 +171,7 @@ namespace engine
          // start job
          INT32 doit() ;
          // respond query of install status
-         INT32 queryProgress( BSONObj &progress ) ;
+         virtual INT32 queryProgress( BSONObj &progress ) ;
 
       public:
          void setTaskStage( OMA_INSTALL_DB_STAGE stage ) ;
@@ -285,7 +285,7 @@ namespace engine
          // start job
          INT32 doit() ;
          // respond query of remove task status
-         INT32 queryProgress( BSONObj &progress ) ;
+         virtual INT32 queryProgress( BSONObj &progress ) ;
 
       public:
          void setIsUninstallFinish( BOOLEAN isFinish ) ;
