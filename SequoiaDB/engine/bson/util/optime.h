@@ -88,11 +88,17 @@ namespace bson {
             has 5 bytes of overhead.
          */
         unsigned long long asDate() const {
-            return ( ( unsigned long long )i << 32 ) | secs ;
+            unsigned long long time = 0 ;
+            memcpy( (char *)&time, &i, sizeof( unsigned ) ) ;
+            memcpy( (char *)&time + sizeof( unsigned ), &secs,
+                    sizeof( unsigned ) ) ;
             //return reinterpret_cast<const unsigned long long*>(&i)[0];
         }
         long long asLL() const {
-            return ( ( long long ) i ) & secs ;
+            long long time = 0 ;
+            memcpy( (char *)&time, &i, sizeof( unsigned ) ) ;
+            memcpy( (char *)&time + sizeof( unsigned ), &secs,
+                    sizeof( unsigned ) ) ;
             //return reinterpret_cast<const long long*>(&i)[0];
         }
 
