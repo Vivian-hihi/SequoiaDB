@@ -229,7 +229,7 @@ namespace engine
    /*
       install database business
    */
-   _omaInstallDBBusinessTask::_omaInstallDBBusinessTask( UINT64 taskID )
+   _omaInsDBBusTask::_omaInsDBBusTask( UINT64 taskID )
    : _omaTask( taskID )
    {
       _taskType             = OMA_TASK_INSTALL_DB ;
@@ -247,16 +247,16 @@ namespace engine
       ossMemset( _detail, 0, OMA_BUFF_SIZE + 1 ) ;
    }
 
-   _omaInstallDBBusinessTask::~_omaInstallDBBusinessTask()
+   _omaInsDBBusTask::~_omaInsDBBusTask()
    {
    }
 
-   INT32 _omaInstallDBBusinessTask::init( BOOLEAN isStandalone,
-                                          vector<BSONObj> standalone,
-                                          vector<BSONObj> coord,
-                                          vector<BSONObj> catalog,
-                                          vector<BSONObj> data,
-                                          BSONObj &other )
+   INT32 _omaInsDBBusTask::init( BOOLEAN isStandalone,
+                                 vector<BSONObj> standalone,
+                                 vector<BSONObj> coord,
+                                 vector<BSONObj> catalog,
+                                 vector<BSONObj> data,
+                                 BSONObj &other )
    {
       INT32 rc = SDB_OK ;
       vector<BSONObj>::iterator it ;
@@ -303,12 +303,12 @@ namespace engine
          while ( iter != _mapGroups.end() )
          {
             string groupname = iter->first ;
-            InstallResult jobResult ;
-            jobResult._rc = 0 ;
-            jobResult._totalNum = (iter->second).size() ;
-            jobResult._finishNum = 0 ;
+            InstallResult result ;
+            result._rc = 0 ;
+            result._totalNum = (iter->second).size() ;
+            result._finishNum = 0 ;
             _mapGroupsResult.insert( std::pair<string,
-                                     InstallResult>( groupname, jobResult ) ) ;
+                                     InstallResult>( groupname, result ) ) ;
             iter++ ;
          }
       }
@@ -318,7 +318,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::doit()
+   INT32 _omaInsDBBusTask::doit()
    {
       INT32 rc = SDB_OK ;
       // in case of standalone
@@ -334,7 +334,7 @@ namespace engine
       else // in case of cluster
       { 
          // create virtual catalog
-         rc = _installVirtualCatalog() ;
+         rc = _installVirtualCoord() ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to create virtual catalog, rc = %d", rc ) ;
@@ -368,128 +368,128 @@ namespace engine
       goto done ;
    }
 
-   void _omaInstallDBBusinessTask::setTaskStage( OMA_INSTALL_DB_STAGE stage )
+   void _omaInsDBBusTask::setTaskStage( OMA_INSTALL_DB_STAGE stage )
    {
       _stage = stage ;
    }
 
-   void _omaInstallDBBusinessTask::setIsInstallFinish( BOOLEAN isFinish )
+   void _omaInsDBBusTask::setIsInstallFinish( BOOLEAN isFinish )
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       _isInstallFinish = isFinish ;
    }   
 
-   void _omaInstallDBBusinessTask::setIsRollbackFinish( BOOLEAN isFinish )
+   void _omaInsDBBusTask::setIsRollbackFinish( BOOLEAN isFinish )
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       _isRollbackFinish = isFinish ;
    } 
 
-   void _omaInstallDBBusinessTask::setIsRemoveVCoordFinish( BOOLEAN isFinish )
+   void _omaInsDBBusTask::setIsRemoveVCoordFinish( BOOLEAN isFinish )
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       _isRemoveVCoordFinish = isFinish ;
    }
 
-   void _omaInstallDBBusinessTask::setIsTaskFinish( BOOLEAN isFinish )
+   void _omaInsDBBusTask::setIsTaskFinish( BOOLEAN isFinish )
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       _isTaskFinish = isFinish ;
    }
 
-   void _omaInstallDBBusinessTask::setIsInstallFail( BOOLEAN isFail )
+   void _omaInsDBBusTask::setIsInstallFail( BOOLEAN isFail )
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       _isInstallFail = isFail ;
    }
 
-   void _omaInstallDBBusinessTask::setIsRollbackFail( BOOLEAN isFail )
+   void _omaInsDBBusTask::setIsRollbackFail( BOOLEAN isFail )
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       _isRollbackFail = isFail ;
    }   
 
-   void _omaInstallDBBusinessTask::setIsRemoveVCoordFail( BOOLEAN isFail )
+   void _omaInsDBBusTask::setIsRemoveVCoordFail( BOOLEAN isFail )
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       _isRemoveVCoordFail = isFail ;
    }   
 
-   void _omaInstallDBBusinessTask::setIsTaskFail( BOOLEAN isFail )
+   void _omaInsDBBusTask::setIsTaskFail( BOOLEAN isFail )
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       _isTaskFail = isFail ;
    }   
 
-   BOOLEAN _omaInstallDBBusinessTask::getIsInstallFinish()
+   BOOLEAN _omaInsDBBusTask::getIsInstallFinish()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       return _isInstallFinish ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::getIsRollbackFinish()
+   BOOLEAN _omaInsDBBusTask::getIsRollbackFinish()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       return _isRollbackFinish ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::getIsRemoveVCoordFinish()
+   BOOLEAN _omaInsDBBusTask::getIsRemoveVCoordFinish()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       return _isRemoveVCoordFinish ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::getIsTaskFinish()
+   BOOLEAN _omaInsDBBusTask::getIsTaskFinish()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       return _isTaskFinish ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::getIsInstallFail()
+   BOOLEAN _omaInsDBBusTask::getIsInstallFail()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       return _isInstallFail ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::getIsRollbackFail()
+   BOOLEAN _omaInsDBBusTask::getIsRollbackFail()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       return _isRollbackFail ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::getIsRemoveVCoordFail()
+   BOOLEAN _omaInsDBBusTask::getIsRemoveVCoordFail()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       return _isRemoveVCoordFail ;
    }
  
-   BOOLEAN _omaInstallDBBusinessTask::getIsTaskFail()
+   BOOLEAN _omaInsDBBusTask::getIsTaskFail()
    {
       ossScopedLock lock ( &_taskLatch, EXCLUSIVE ) ;
       return _isTaskFail ;
    }
 
-   void _omaInstallDBBusinessTask::setErrDetail( const CHAR *pErrDetail )
+   void _omaInsDBBusTask::setErrDetail( const CHAR *pErrDetail )
    {
       ossSnprintf( _detail, OMA_BUFF_SIZE, pErrDetail ) ;
    }
 
-   vector<BSONObj>& _omaInstallDBBusinessTask::getInstallStandaloneInfo()
+   vector<BSONObj>& _omaInsDBBusTask::getInstallStandaloneInfo()
    {
       return _standalone;
    }
 
-   vector<BSONObj>& _omaInstallDBBusinessTask::getInstallCatalogInfo()
+   vector<BSONObj>& _omaInsDBBusTask::getInstallCatalogInfo()
    {
       return _catalog ;
    }
 
-   vector<BSONObj>& _omaInstallDBBusinessTask::getInstallCoordInfo()
+   vector<BSONObj>& _omaInsDBBusTask::getInstallCoordInfo()
    {
       return _coord ;
    }
 
-   INT32 _omaInstallDBBusinessTask::getInstallDataGroupInfo( string &name,
+   INT32 _omaInsDBBusTask::getInstallDataGroupInfo( string &name,
                                         vector<BSONObj> &dataGroupInstallInfo )
    {
       INT32 rc  = SDB_OK ;
@@ -512,13 +512,13 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::updateInstallStatus( BOOLEAN isFinish,
-                                                         INT32 retRc,
-                                                         const CHAR *pRole,
-                                                         const CHAR *pErrMsg,
-                                                         const CHAR *pDesc,
-                                                         const CHAR *pGroupName,
-                                                         InstalledNode *pNode )
+   INT32 _omaInsDBBusTask::updateInstallStatus( BOOLEAN isFinish,
+                                                INT32 retRc,
+                                                const CHAR *pRole,
+                                                const CHAR *pErrMsg,
+                                                const CHAR *pDesc,
+                                                const CHAR *pGroupName,
+                                                InstalledNode *pNode )
    {
       INT32 rc = SDB_OK ;
       ossScopedLock lock ( &_jobLatch, EXCLUSIVE ) ;
@@ -662,7 +662,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::getInstalledNodeResult ( const CHAR *pRole,
+   INT32 _omaInsDBBusTask::getInstalledNodeResult ( const CHAR *pRole,
                                    map< string, vector<InstalledNode> >& info )
    {
       INT32 rc = SDB_OK ;
@@ -712,7 +712,7 @@ namespace engine
       goto done ;
    }
 
-   BOOLEAN _omaInstallDBBusinessTask::isInstallFinish ()
+   BOOLEAN _omaInsDBBusTask::isInstallFinish ()
    {
       // TODO: need to add a lock different with update install statue?
 
@@ -753,7 +753,7 @@ namespace engine
       }
    }
 
-   INT32 _omaInstallDBBusinessTask::getInstallStatus ( BSONObj &progress )
+   INT32 _omaInsDBBusTask::queryProgress ( BSONObj &progress )
    {
       INT32 rc = SDB_OK ;
       BSONObjBuilder bob ;
@@ -813,16 +813,6 @@ namespace engine
          }
          else // in case of cluster
          {
-            // get coord status
-            coordResult = BSON ( OMA_FIELD_NAME
-                                 << OMA_FIELD_COORD
-                                 << OMA_FIELD_TOTALCOUNT
-                                 << _coordResult._totalNum
-                                 << OMA_FIELD_INSTALLEDCOUNT
-                                 << _coordResult._finishNum
-                                 << OMA_FIELD_DESC
-                                 << _coordResult._desc.c_str() ) ;
-            bab.append ( coordResult ) ;
             // get catalog status
             catalogResult = BSON ( OMA_FIELD_NAME
                                    << OMA_FIELD_CATALOG
@@ -833,6 +823,16 @@ namespace engine
                                    << OMA_FIELD_DESC
                                    << _catalogResult._desc.c_str() ) ;
             bab.append ( catalogResult ) ;
+            // get coord status
+            coordResult = BSON ( OMA_FIELD_NAME
+                                 << OMA_FIELD_COORD
+                                 << OMA_FIELD_TOTALCOUNT
+                                 << _coordResult._totalNum
+                                 << OMA_FIELD_INSTALLEDCOUNT
+                                 << _coordResult._finishNum
+                                 << OMA_FIELD_DESC
+                                 << _coordResult._desc.c_str() ) ;
+            bab.append ( coordResult ) ;
             // get data group status
             std::map< string, InstallResult >::iterator it ;
             it = _mapGroupsResult.begin() ;
@@ -872,8 +872,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::updateInstallJobStatus( string &name,
-                                                         OMA_JOB_STATUS status )
+   INT32 _omaInsDBBusTask::updateInstallJobStatus( string &name,
+                                                   OMA_JOB_STATUS status )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN needRollback = FALSE ;
@@ -932,7 +932,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::rollbackInternal()
+   INT32 _omaInsDBBusTask::rollbackInternal()
    {
       INT32 rc = SDB_OK ;
       EDUID jobID = PMD_INVALID_EDUID ;
@@ -960,7 +960,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::_saveVCoordInfo( BSONObj &info )
+   INT32 _omaInsDBBusTask::_saveVCoordInfo( BSONObj &info )
    {
       INT32 rc                    = SDB_OK ;
       const CHAR *pVCoordSvcName  = NULL ;
@@ -978,7 +978,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::_installVirtualCatalog()
+   INT32 _omaInsDBBusTask::_installVirtualCoord()
    {
       INT32 rc = SDB_OK ;
       BSONObj vCoordRet ;
@@ -1004,7 +1004,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::_installStandalone()
+   INT32 _omaInsDBBusTask::_installStandalone()
    {
       INT32 rc = SDB_OK ;
       EDUID createStandaloneJobID = PMD_INVALID_EDUID ;
@@ -1025,7 +1025,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::_installCatalog()
+   INT32 _omaInsDBBusTask::_installCatalog()
    {
       INT32 rc = SDB_OK ;
       EDUID installCatalogJobID = PMD_INVALID_EDUID ;
@@ -1046,7 +1046,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::_installCoord()
+   INT32 _omaInsDBBusTask::_installCoord()
    {
       INT32 rc = SDB_OK ;
       EDUID installCoordJobID = PMD_INVALID_EDUID ;
@@ -1078,7 +1078,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::_installData()
+   INT32 _omaInsDBBusTask::_installData()
    {
       INT32 rc = SDB_OK ;
       map< string, vector<BSONObj> >::iterator it ;
@@ -1114,7 +1114,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusinessTask::removeVirtualCoord()
+   INT32 _omaInsDBBusTask::removeVirtualCoord()
    {
       INT32 rc = SDB_OK ;
       EDUID jobID = PMD_INVALID_EDUID ;
@@ -1137,6 +1137,879 @@ namespace engine
          setIsTaskFinish( TRUE ) ;
       }
       else if ( _isRemoveVCoordFail || _isRollbackFail )
+      {
+         setIsTaskFail( TRUE ) ;
+      }
+      else
+      {
+         PD_LOG ( PDERROR, "Task[%s] in a unknown status", taskName() ) ;
+#if defined (_DEBUG)
+         ossPanic() ;
+#endif
+         rc = SDB_OMA_TASK_FAIL ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      // set remove virtual coord fail detail
+      setIsRemoveVCoordFail( TRUE ) ;
+      setIsTaskFail( TRUE ) ;
+      setErrDetail( "Failed to remove virtual coord, please do it manually" ) ;
+      goto done ;
+   }
+
+   /*
+      remove database business
+   */
+   _omaRmDBBusTask::_omaRmDBBusTask( UINT64 taskID )
+   : _omaTask( taskID )
+   {
+      _taskType             = OMA_TASK_REMOVE_DB ;
+      _taskName             = OMA_TASK_NAME_REMOVE_DB_BUSINESS ;
+      _vCoordSvcName        = "" ;
+      _isStandalone         = FALSE ;
+      _isTaskFinish         = FALSE ;
+      _isUninstallFinish    = FALSE ;
+      _isRemoveVCoordFinish = FALSE ;
+      _isTaskFail           = FALSE ;
+      _isUninstallFail      = FALSE ;
+      _isRemoveVCoordFail   = FALSE ;
+      ossMemset( _detail, 0, OMA_BUFF_SIZE + 1 ) ;
+   }
+
+   _omaRmDBBusTask::~_omaRmDBBusTask()
+   {
+   }
+
+   INT32 _omaRmDBBusTask::init( BOOLEAN isStandalone,
+                                map<string, BSONObj> standalone,
+                                map<string, BSONObj> coord,
+                                map<string, BSONObj> catalog,
+                                map<string, BSONObj> data,
+                                BSONObj &other )
+   {
+      INT32 rc = SDB_OK ;
+      map<string, BSONObj>::iterator it ;
+      _isStandalone = isStandalone ;
+      _cataAddrInfo = other.getOwned() ;
+      // in case of standalone
+      if ( isStandalone )
+      {
+         // init _standalone and _standaloneResult
+         _standalone = standalone ;
+         _standaloneResult._rc = SDB_OK ;
+         _standaloneResult._totalNum = 1 ;
+         _standaloneResult._finishNum = 0 ;
+      }
+      else // in case of cluster
+      {
+         // init _coord and _coordResult
+         _coord = coord ;
+         _coordResult._rc = SDB_OK ;
+         _coordResult._totalNum = 1 ;
+         _coordResult._finishNum = 0 ;
+         // init _catalog and _catalogResult
+         _catalog = catalog ;
+         _catalogResult._rc = SDB_OK ;
+         _catalogResult._totalNum = 1 ;
+         _catalogResult._finishNum = 0 ;
+         // init _data and _mapGroupsResult
+         _data = data ;
+         it = _data.begin() ;
+         while ( it != _data.end() )
+         {
+            string groupname = it->first ;
+            UninstallResult result ;
+            result._rc = 0 ;
+            result._totalNum = 1 ;
+            result._finishNum = 0 ;
+            _mapDataResult.insert( 
+               pair<string, UninstallResult>( groupname, result ) ) ;
+            it++ ;
+         }
+      }
+      return rc ;
+   }
+
+   INT32 _omaRmDBBusTask::doit()
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN hasVCoordCreated = FALSE ;
+      // in case of standalone
+      if ( _isStandalone )
+      {
+         rc = _uninstallStandalone() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to remove standalone, rc = %d", rc ) ;
+            goto error ;
+         }
+      }
+      else // in case of cluster
+      { 
+         // create virtual coord
+         rc = _installVirtualCoord() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+            goto error ;
+         }
+         hasVCoordCreated = TRUE ;
+         // remove data group 
+         rc = _uninstallData() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to remove data groups, rc = %d", rc ) ;
+            goto error ;
+         }
+         // remove coord
+         rc = _uninstallCoord() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to remove coord group, rc = %d", rc ) ;
+            goto error ;
+         }
+         // remove catalog
+         rc = _uninstallCatalog() ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to remove catalog group, rc = %d", rc ) ;
+            goto error ;
+         }
+      }
+      setIsUninstallFinish( TRUE ) ;
+   done:
+      if ( _isStandalone )
+      {
+         if ( getIsUninstallFinish() )
+         {
+            setIsTaskFinish( TRUE ) ;
+         }
+      }
+      else
+      {
+         // remove virtual coord
+         if ( hasVCoordCreated )
+         {
+            rc = _removeVirtualCoord() ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to remove virtual coord, "
+                       "rc = %d", rc ) ;
+            }
+         }
+      }
+      return rc ;
+   error:
+      setIsUninstallFail( TRUE ) ;
+      setIsTaskFail( TRUE ) ;
+      goto done ;
+   }
+
+   void _omaRmDBBusTask::setIsTaskFail( BOOLEAN isFail )
+   {
+      _isTaskFail = isFail ;
+   }
+
+   void _omaRmDBBusTask::setIsUninstallFail( BOOLEAN isFail )
+   {
+      _isUninstallFail = isFail ;
+   }
+   
+   void _omaRmDBBusTask::setIsRemoveVCoordFail( BOOLEAN isFail )
+   {
+      _isRemoveVCoordFail = isFail ;
+   }
+
+   void _omaRmDBBusTask::setIsTaskFinish( BOOLEAN isFinish )
+   {
+      _isTaskFinish = isFinish ;
+   }
+
+   void _omaRmDBBusTask::setIsUninstallFinish( BOOLEAN isFinish )
+   {
+      _isUninstallFinish = isFinish ;
+   }
+   
+   void _omaRmDBBusTask::setIsRemoveVCoordFinish( BOOLEAN isFinish )
+   {
+      _isRemoveVCoordFinish = isFinish;
+   }
+
+   BOOLEAN _omaRmDBBusTask::getIsTaskFail()
+   {
+      return _isTaskFail ;
+   }
+
+   BOOLEAN _omaRmDBBusTask::getIsUninstallFail()
+   {
+      return _isUninstallFail ;
+   }
+
+   BOOLEAN _omaRmDBBusTask::getIsRemoveVCoordFail()
+   {
+      return _isRemoveVCoordFail ;
+   }
+
+   BOOLEAN _omaRmDBBusTask::getIsTaskFinish()
+   {
+      return _isTaskFinish ;
+   }
+
+   BOOLEAN _omaRmDBBusTask::getIsUninstallFinish()
+   {
+      return _isUninstallFinish ;
+   }
+
+   BOOLEAN _omaRmDBBusTask::getIsRemoveVCoordFinish()
+   {
+      return _isRemoveVCoordFinish ;
+   }
+
+   void _omaRmDBBusTask::setErrDetail( const CHAR *pErrDetail )
+   {
+      ossSnprintf( _detail, OMA_BUFF_SIZE, pErrDetail ) ;
+   }
+
+   INT32 _omaRmDBBusTask::_updateUninstallStatus( BOOLEAN isFinish,
+                                                  INT32 retRc,
+                                                  const CHAR *pRole,
+                                                  const CHAR *pErrMsg,
+                                                  const CHAR *pDesc,
+                                                  const CHAR *pGroupName )
+   {
+      INT32 rc = SDB_OK ;
+      // check argument
+      if ( NULL == pRole )
+      {
+         PD_LOG ( PDERROR,
+                  "Not speciefy role for updating remove result" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      if ( ( 0 == ossStrncmp( pRole, ROLE_DATA, ossStrlen( ROLE_DATA ) ) ) &&
+           ( NULL == pGroupName ) )
+      {
+         PD_LOG ( PDERROR,
+                  "Not speciefy data group for updating remove result" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      if ( NULL == pErrMsg ) pErrMsg = "" ;
+      if ( NULL == pDesc ) pDesc = "" ;
+      if ( NULL == pGroupName ) pGroupName = "" ;
+
+      // update the remove result
+      if ( 0 == ossStrncmp( pRole, ROLE_DATA, ossStrlen( ROLE_DATA ) ) )
+      {
+         map<string, UninstallResult>::iterator it ; 
+         string groupname = pGroupName ;
+         it = _mapDataResult.find( groupname ) ;
+         if ( it != _mapDataResult.end() )
+         {
+            UninstallResult &result = it->second ;
+            result._desc = pDesc ;
+            if ( retRc )
+            {
+               result._rc = retRc ;
+               result._errMsg = pErrMsg ;
+               goto done ;
+            }
+            if ( isFinish )
+            {
+               result._finishNum++ ;
+            }
+         }
+      }
+      else if ( 0 == ossStrncmp( pRole, ROLE_COORD,
+                                 ossStrlen( ROLE_COORD ) ) )
+      {
+         _coordResult._desc = pDesc ;
+         if ( retRc )
+         {
+            _coordResult._rc = retRc ;
+            _coordResult._errMsg = pErrMsg ;
+            goto done ;
+         }
+         if ( isFinish )
+         {
+            _coordResult._finishNum++ ;
+         }
+      }
+      else if ( 0 == ossStrncmp( pRole, ROLE_CATA,
+                                 ossStrlen( ROLE_CATA ) ) )
+      {
+         _catalogResult._desc = pDesc ;
+         if ( retRc )
+         {
+            _catalogResult._rc = retRc ;
+            _catalogResult._errMsg = pErrMsg ;
+            goto done ;
+         }
+         if ( isFinish )
+         {
+            _catalogResult._finishNum++ ;
+         }
+      }
+      else if ( 0 == ossStrncmp( pRole, ROLE_STANDALONE,
+                                 ossStrlen( ROLE_STANDALONE) ) )
+      {
+         _standaloneResult._desc = pDesc ;
+         if ( retRc )
+         {
+            _standaloneResult._rc = retRc ;
+            _standaloneResult._errMsg = pErrMsg ;
+            goto done ;
+         }
+         if ( isFinish )
+         {
+            _standaloneResult._finishNum++ ;
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR,
+                  "Failed to update install result, rc = %d", rc ) ;
+         goto error ;
+      }
+      // check whether uninstall is finish or not
+      if ( _isRemoveFinish() )
+      {
+         setIsTaskFinish( TRUE ) ;
+         goto done ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN _omaRmDBBusTask::_isRemoveFinish ()
+   {
+      // in case of standalone
+      if ( _isStandalone )
+      {
+         if ( _standaloneResult._totalNum == _standaloneResult._finishNum )
+         {
+            return TRUE ;
+         }
+         else
+         {
+            return FALSE ;
+         }
+      }
+      else // in case of cluster
+      {
+         map<string, UninstallResult>::iterator it ;
+         if ( _catalogResult._totalNum > _catalogResult._finishNum )
+         {
+            return FALSE ;
+         }
+         if ( _coordResult._totalNum > _coordResult._finishNum )
+         {
+            return FALSE ;
+         }
+         it = _mapDataResult.begin() ;
+         while( it != _mapDataResult.end() )
+         {
+            UninstallResult &result = it->second ;
+            if ( result._totalNum > result._finishNum )
+            {
+               return FALSE ;
+            }
+            it++ ;
+         }
+         return TRUE ;
+      }
+   }
+
+   INT32 _omaRmDBBusTask::queryProgress ( BSONObj &progress )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONArrayBuilder bab ;
+      BSONObj standaloneResult ;
+      BSONObj coordResult ;
+      BSONObj catalogResult ;
+      const CHAR *pStage = STAGE_UNINSTALL ;
+      
+      // while task has failed
+      if ( _isTaskFail )
+      {
+         PD_LOG_MSG ( PDERROR,"Task[%s] had failed, please check "
+                      "the dialog for more detail", taskName() ) ;
+         rc = SDB_OMA_TASK_FAIL ;
+         goto done ;
+      }
+      try
+      {
+         // taskID
+         bob.append( OMA_FIELD_TASKID, (SINT64)_taskID ) ;
+         // isFinish
+         bob.appendBool( OMA_FIELD_ISFINISH, _isTaskFinish ) ;
+         // status
+         bob.append( OMA_FIELD_STATUS, pStage ) ;
+         // ErrMsg( fatal err, like failed to remove virtual coord)
+         bob.append( OMA_FIELD_ERRMSG, _detail ) ;
+         // in case of standalone
+         if ( _isStandalone )
+         {
+            // get standalone status
+            standaloneResult = BSON ( OMA_FIELD_NAME
+                                      << OMA_FIELD_STANDALONE
+                                      << OMA_FIELD_TOTALCOUNT
+                                      << _standaloneResult._totalNum
+                                      << OMA_FIELD_UNINSTALLEDCOUNT
+                                      << _standaloneResult._finishNum
+                                      << OMA_FIELD_DESC
+                                      << _standaloneResult._desc.c_str() ) ;
+            bab.append ( standaloneResult ) ;
+         }
+         else // in case of cluster
+         {
+            // get catalog status
+            catalogResult = BSON ( OMA_FIELD_NAME
+                                   << OMA_FIELD_CATALOG
+                                   << OMA_FIELD_TOTALCOUNT
+                                   << _catalogResult._totalNum
+                                   << OMA_FIELD_UNINSTALLEDCOUNT
+                                   << _catalogResult._finishNum
+                                   << OMA_FIELD_DESC
+                                   << _catalogResult._desc.c_str() ) ;
+            bab.append ( catalogResult ) ;
+            // get coord status
+            coordResult = BSON ( OMA_FIELD_NAME
+                                 << OMA_FIELD_COORD
+                                 << OMA_FIELD_TOTALCOUNT
+                                 << _coordResult._totalNum
+                                 << OMA_FIELD_UNINSTALLEDCOUNT
+                                 << _coordResult._finishNum
+                                 << OMA_FIELD_DESC
+                                 << _coordResult._desc.c_str() ) ;
+            bab.append ( coordResult ) ;
+            // get data group status
+            std::map< string, UninstallResult >::iterator it ;
+            it = _mapDataResult.begin() ;
+            while ( it != _mapDataResult.end() )
+            {
+               string groupname = it->first ;
+               UninstallResult &result = it->second ;
+               BSONObj groupResult ;
+               groupResult = BSON ( OMA_FIELD_NAME
+                                    << groupname.c_str()
+                                    << OMA_FIELD_TOTALCOUNT
+                                    << result._totalNum
+                                    << OMA_FIELD_UNINSTALLEDCOUNT
+                                    << result._finishNum
+                                    << OMA_FIELD_DESC
+                                    << result._desc.c_str() ) ;
+               bab.append ( groupResult ) ;
+               it++ ;
+            }
+         }
+         // set return result
+         bob.appendArray( OMA_FIELD_PROGRESS, bab.arr() ) ;
+         progress = bob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR,
+                  "Failed to get remove db business progress: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRmDBBusTask::_saveVCoordInfo( BSONObj &info )
+   {
+      INT32 rc                    = SDB_OK ;
+      const CHAR *pVCoordSvcName  = NULL ;
+      rc = omaGetStringElement( info, OMA_FIELD_VCOORDSVCNAME, &pVCoordSvcName ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get filed[%s], rc = %s",
+                  OMA_FIELD_VCOORDSVCNAME, rc ) ;
+         goto error ;
+      }
+      _vCoordSvcName = pVCoordSvcName ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRmDBBusTask::_installVirtualCoord()
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj vCoordRet ;
+      _omaCreateVirtualCoord vCoord ;
+      
+      // create virtual coord and save it's info for future
+      rc = vCoord.init( _cataAddrInfo.objdata() ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init for creating "
+                  "virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = vCoord.doit( vCoordRet ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }  
+      /*
+      rc = createVCoord.createVirtualCoord( vCoordRet ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         goto error ;
+      }
+      */
+      rc = _saveVCoordInfo( vCoordRet ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to save virtual coord install result, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRmDBBusTask::_uninstallStandalone()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      BSONObj retObj ;
+      const CHAR *pInfo = NULL ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = "" ;
+      _omaRmStandalone rmSa ;
+      map<string, BSONObj>::iterator it = _standalone.begin() ;
+      if ( it != _standalone.end() )
+      {
+         pInfo = it->second.objdata() ;
+      }
+      else
+      {
+         PD_LOG_MSG( PDERROR, "No standalone's info for removing" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }      
+      // update status for web before remove catalog
+      ossSnprintf( desc, OMA_BUFF_SIZE, "Removing standalone" ) ;
+      rc = _updateUninstallStatus( FALSE, SDB_OK, ROLE_STANDALONE,
+                                   NULL, desc, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to update status before remove standalone, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      // remove standalone
+      rc = rmSa.init( pInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to remove standalone "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = rmSa.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to remove standalone, rc = %d", rc ) ;
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_DETAIL, tmpRc ) ;
+         }
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Failed to remove standalone" ) ;
+         PD_LOG_MSG ( PDERROR, "%s", desc ) ;
+         _updateUninstallStatus( FALSE, rc, ROLE_STANDALONE,
+                                 pErrMsg, desc, NULL ) ;
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "The remove standalone's result is: %s",
+                  retObj.toString(FALSE, TRUE).c_str() ) ;
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Finish removing standalone" ) ;
+         PD_LOG ( PDDEBUG, "Sucessed to remove standalone" ) ;
+         _updateUninstallStatus( TRUE, SDB_OK, ROLE_STANDALONE,
+                                 NULL, desc, NULL ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRmDBBusTask::_uninstallCatalog()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      BSONObj retObj ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = "" ;
+      const CHAR *pInfo = NULL ;
+      _omaRmCataRG rmCata( _vCoordSvcName ) ;
+      map<string, BSONObj>::iterator it = _catalog.begin() ;
+      if ( it != _catalog.end() )
+      {
+         pInfo = it->second.objdata() ;
+      }
+      else
+      {
+         PD_LOG_MSG( PDERROR, "No catalog's info for removing" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // update status for web before remove catalog
+      ossSnprintf( desc, OMA_BUFF_SIZE, "Removing catalog group" ) ;
+      rc = _updateUninstallStatus( FALSE, SDB_OK, ROLE_CATA,
+                                   NULL, desc, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to update status before remove catalog "
+                  "group, rc = %d", rc ) ;
+         goto error ;
+      }
+      // remove catalog
+      rc = rmCata.init( pInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to remove catalog "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = rmCata.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to remove catalog group, rc = %d", rc ) ;
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_DETAIL, tmpRc ) ;
+         }
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Failed to remove catalog group" ) ;
+         PD_LOG_MSG ( PDERROR, "%s", desc ) ;
+         _updateUninstallStatus( FALSE, rc, ROLE_CATA,
+                                 pErrMsg, desc, NULL ) ;
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "The remove catalog's result is: %s",
+                  retObj.toString(FALSE, TRUE).c_str() ) ;
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Finish removing catalog group" ) ;
+         PD_LOG ( PDDEBUG, "Sucessed to install catalog group" ) ;
+         _updateUninstallStatus( TRUE, SDB_OK, ROLE_CATA,
+                                 pErrMsg, desc, NULL ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRmDBBusTask::_uninstallCoord()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      BSONObj retObj ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = "" ;
+      const CHAR *pInfo = NULL ;
+      _omaRmCoordRG rmCoord( _vCoordSvcName ) ;
+      map<string, BSONObj>::iterator it = _coord.begin() ;
+      if ( it != _coord.end() )
+      {
+         pInfo = it->second.objdata() ;
+      }
+      else
+      {
+         PD_LOG_MSG( PDWARNING, "No coord's info for removing" ) ;
+         goto done ;
+      }
+      // update status for web before remove coord
+      ossSnprintf( desc, OMA_BUFF_SIZE, "Removing coord group" ) ;
+      rc = _updateUninstallStatus( FALSE, SDB_OK, ROLE_COORD,
+                                   NULL, desc, NULL ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to update status before remove coord "
+                  "group, rc = %d", rc ) ;
+         goto error ;
+      }
+      // remove coord
+      rc = rmCoord.init( pInfo ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to init to remove coord group"
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
+      rc = rmCoord.doit( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to remove coord group, rc = %d", rc ) ;
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
+                     OMA_FIELD_DETAIL, tmpRc ) ;
+         }
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Failed to remove coord group" ) ;
+         PD_LOG_MSG ( PDERROR, "%s", desc ) ;
+         _updateUninstallStatus( FALSE, rc, ROLE_COORD, pErrMsg, desc, NULL ) ;
+         goto error ;
+      }
+      else
+      {
+         PD_LOG ( PDEVENT, "The remove coord's result is: %s",
+                  retObj.toString(FALSE, TRUE).c_str() ) ;
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Finish removing coord group" ) ;
+         PD_LOG ( PDDEBUG, "Sucessed to install coord group" ) ;
+         _updateUninstallStatus( TRUE, SDB_OK, ROLE_COORD, NULL, desc, NULL ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRmDBBusTask::_uninstallData()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;   
+      BSONObj retObj ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = "" ;
+      const CHAR *pInfo = NULL ;
+      map<string, BSONObj>::iterator it = _data.begin() ;
+      if ( it == _data.end() )
+      {
+         PD_LOG_MSG( PDWARNING, "No data group's info for removing" ) ;
+         goto done ;
+      }
+      for( ; it != _data.end(); it++ )
+      {
+         _omaRmDataRG rmData( _vCoordSvcName ) ;
+         pInfo = it->second.objdata() ;
+         // update status for web before remove data group
+         ossSnprintf( desc, OMA_BUFF_SIZE, "Removing data group[%s]",
+                      it->first.c_str() ) ;
+         rc = _updateUninstallStatus( FALSE, SDB_OK, ROLE_DATA,
+                                      NULL, desc, it->first.c_str() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to update status before remove data "
+                     "group[%s], rc = %d", it->first.c_str(), rc ) ;
+            goto error ;
+         }
+         // remove data rg
+         rc = rmData.init( pInfo ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to init to remove data group "
+                     "rc = %d", rc ) ;
+            goto error ;
+         }
+         rc = rmData.doit( retObj ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to remove data group[%s], rc = %d",
+                    it->first.c_str(), rc ) ;
+            tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+            if ( tmpRc )
+            {
+               PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
+                        OMA_FIELD_DETAIL, tmpRc ) ;
+            }
+            ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to remove data"
+                         "group[%s]", it->first.c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "%s", desc ) ;
+            _updateUninstallStatus( FALSE, rc, ROLE_DATA,
+                                    pErrMsg, desc, it->first.c_str() ) ;
+            goto error ;
+         }
+         else
+         {
+            PD_LOG ( PDEVENT, "The remove data group[%s]'s result is: %s",
+                     it->first.c_str(), retObj.toString(FALSE, TRUE).c_str() ) ;
+            ossSnprintf( desc, OMA_BUFF_SIZE,
+                         "Finish removing data group[%s]", it->first.c_str() ) ;
+            PD_LOG ( PDDEBUG, "Sucessed to remove data group[%s]",
+                     it->first.c_str() ) ;
+            _updateUninstallStatus( TRUE, SDB_OK, ROLE_DATA,
+                                    NULL, desc, it->first.c_str() ) ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaRmDBBusTask::_removeVirtualCoord()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      BSONObj removeRet ;
+      const CHAR *pDetail = "" ;
+      string str ;
+      _omaRemoveVirtualCoord removeVCoord( _vCoordSvcName.c_str() ) ;
+      rc = removeVCoord.removeVirtualCoord ( removeRet ) ;
+      if ( rc )
+      {
+         tmpRc = omaGetStringElement( removeRet, OMA_FIELD_DETAIL, &pDetail ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDWARNING, "Failed to get[%s] field, rc = %d",
+                     OMA_FIELD_DETAIL, rc ) ;
+         }
+         setIsRemoveVCoordFail( TRUE ) ;
+         str += "Failed to remove virtual coord: " ;
+         str += pDetail ;
+         setErrDetail( str.c_str() ) ;
+         PD_LOG ( PDERROR, "Failed to remove virtual coord in remove "
+                  "db business task, rc = %d", rc ) ;
+         goto error ;
+      }
+      else
+      {
+         setIsRemoveVCoordFinish( TRUE ) ;
+      } 
+
+
+      
+      // set task finish or fail
+      if ( _isRemoveVCoordFinish && !_isUninstallFail )
+      {
+         setIsTaskFinish( TRUE ) ;
+      }
+      else if ( _isRemoveVCoordFail || _isUninstallFail )
       {
          setIsTaskFail( TRUE ) ;
       }

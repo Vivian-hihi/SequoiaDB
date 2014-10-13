@@ -50,6 +50,7 @@
 #define OMA_FIELD_PACKET_PATH                      OM_BSON_FIELD_PATCKET_PATH
 #define OMA_FIELD_CONFIG                           OM_CONFIGURE_FIELD_CONFIG
 #define OMA_FIELD_STAGE_INSTALL                    OM_TASK_STATUS_INSTALL
+#define OMA_FIELD_STAGE_UNINSTALL                  OM_TASK_STATUS_UNINSTALL
 #define OMA_FIELD_STAGE_ROLLBACK                   OM_TASK_STATUS_ROLLBACK
 
 #define OMA_FIELD_HOSTS                            "Hosts"
@@ -80,6 +81,7 @@
 #define OMA_FIELD_PROGRESS                         "Progress"
 #define OMA_FIELD_TOTALCOUNT                       "TotalCount"
 #define OMA_FIELD_INSTALLEDCOUNT                   "InstalledCount"
+#define OMA_FIELD_UNINSTALLEDCOUNT                 "UninstalledCount"
 #define OMA_FIELD_DESC                             "Desc"
 #define OMA_FIELD_STANDALONE                       "Standalone"
 #define OMA_FIELD_COORD                            "Coord"
@@ -105,7 +107,15 @@
 #define OMA_FIELD_INSTALLSVCNAME                   "InstallSvcName"
 #define OMA_FIELD_INSTALLPATH2                     "InstallPath"
 #define OMA_FIELD_INSTALLCONFIG                    "InstallConfig"
+#define OMA_FIELD_UNINSTALLHOSTNAME                "UninstallHostName"
+#define OMA_FIELD_UNINSTALLSVCNAME                 "UninstallSvcName"
+#define OMA_FIELD_UNINSTALLGROUPNAME               "UninstallGroupName"
 #define OMA_FIELD_AGENTPORT                        "AgentPort"
+#define OMA_FIELD_AUTHUSER                         "AuthUser"
+#define OMA_FIELD_AUTHPASSWD                       "AuthPasswd"
+#define OMA_FIELD_CATAADDR                         "CataAddr"
+#define OMA_FIELD_CATASVCNAME                      "CataSvcName"
+
 
 // host info
 #define OMA_FIELD_HOST                             "Host"
@@ -208,15 +218,6 @@
 #define OMA_OPTION_PREFINST                        PMD_OPTION_PREFINST
 #define OMA_OPTION_NUMPAGECLEANERS                 PMD_OPTION_NUMPAGECLEANERS
 #define OMA_OPTION_PAGECLEANINTERVAL               PMD_OPTION_PAGECLEANINTERVAL
-
-/*
-#define OMA_FIELD_SCAN_HOST_RET                    "ScanHostRet"
-#define OMA_FIELD_INSATLL_REMOTE_AGENT_RET         "InstallRemoteAgentRet"
-#define OMA_FIELD_CHECK_REMOTE_AGENT_PROCESS_RET   "CheckRemoteAgentProcessRet"
-#define OMA_FIELD_INSTALL_AGENT_PROCESS_RET        "InstallAgentProcessRet"
-#define OMA_FIELD_GET_HOST_INFO_RET                "GetHostInfoRet"
-#define OMA_FIELD_GET_HOST_NAME_RET                "GetHostNameRet"
-*/
 
 
 #endif

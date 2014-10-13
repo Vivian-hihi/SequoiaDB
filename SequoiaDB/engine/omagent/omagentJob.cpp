@@ -40,7 +40,7 @@ namespace engine
        omagent create standalone job
    */
    _omaCreateStandaloneJob::_omaCreateStandaloneJob (
-                                             _omaInstallDBBusinessTask *pTask )
+                                             _omaInsDBBusTask *pTask )
    {
       _name = OMA_JOB_CREATE_STANDALONE;
       _status = OMA_JOB_STATUS_INIT ;
@@ -269,7 +269,7 @@ namespace engine
        omagent create catalog job
    */
    _omaCreateCatalogJob::_omaCreateCatalogJob (
-                                             _omaInstallDBBusinessTask *pTask )
+                                             _omaInsDBBusTask *pTask )
    {
       _name = OMA_JOB_CREATE_CATALOG ;
       _status = OMA_JOB_STATUS_INIT ;
@@ -496,7 +496,7 @@ namespace engine
    /*
       omagent create coord job
    */
-   _omaCreateCoordJob::_omaCreateCoordJob ( _omaInstallDBBusinessTask *pTask )
+   _omaCreateCoordJob::_omaCreateCoordJob ( _omaInsDBBusTask *pTask )
    {
       _name =  OMA_JOB_CREATE_COORD;
       _status = OMA_JOB_STATUS_INIT ;
@@ -723,7 +723,7 @@ namespace engine
       omagent create data job
    */
    _omaCreateDataJob::_omaCreateDataJob ( const CHAR *pGroupName,
-                                          _omaInstallDBBusinessTask *pTask )
+                                          _omaInsDBBusTask *pTask )
    {
       _groupname = pGroupName ;
       _name = _name + "create data node in " + pGroupName  ;
@@ -972,6 +972,7 @@ namespace engine
    */
    _omaStartInsDBBusTaskJob::_omaStartInsDBBusTaskJob ( BSONObj &installInfo )
    {
+      _isStandalone = FALSE ;
       _installInfoObj = installInfo.getOwned() ;
       _name = OMA_JOB_START_INSTALL_DB_BUSINESS ;
       _pTask = NULL ;
@@ -1115,8 +1116,7 @@ namespace engine
             else
             {
                rc = SDB_INVALIDARG ;
-               PD_LOG_MSG( PDERROR, "Unknown role for install db business[%s]",
-                           temp.toString( FALSE, TRUE ).c_str() ) ;
+               PD_LOG_MSG( PDERROR, "Unknown role for install db business" ) ;
                goto error ;
             }
          }
@@ -1143,7 +1143,7 @@ namespace engine
          goto error ;
       }
       // create install db business task
-      _pTask = SDB_OSS_NEW _omaInstallDBBusinessTask( _taskID ) ;
+      _pTask = SDB_OSS_NEW _omaInsDBBusTask( _taskID ) ;
       if ( !_pTask )
       {
          rc = SDB_OOM ;
@@ -1174,7 +1174,253 @@ namespace engine
       rc = _pTask->doit() ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to do db busniness task, "
+         PD_LOG_MSG( PDERROR, "Failed to do install db busniness task, "
+                     "rc = %d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      remove db business task rollback job
+   */
+   _omaStartRmDBBusTaskJob::_omaStartRmDBBusTaskJob ( BSONObj &uninstallInfo )
+   {
+      _isStandalone = FALSE ;
+      _uninstallInfoObj = uninstallInfo.getOwned() ;
+      _name = OMA_JOB_START_REMOVE_DB_BUSINESS ;
+      _pTask = NULL ;
+   }
+
+   _omaStartRmDBBusTaskJob::~_omaStartRmDBBusTaskJob()
+   {
+   }
+
+   RTN_JOB_TYPE _omaStartRmDBBusTaskJob::type () const
+   {
+      return RTN_JOB_STARTRMDBBUSTASK ;
+   }
+
+   const CHAR* _omaStartRmDBBusTaskJob::name () const
+   {
+      return _name.c_str() ;
+   }
+
+   BOOLEAN _omaStartRmDBBusTaskJob::muteXOn ( const _rtnBaseJob *pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _omaStartRmDBBusTaskJob::init()
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      BSONObj filter ;
+      BSONObj commonFileds ;
+      BSONObjBuilder builder ;
+      string deplayMod ;
+      const CHAR *pStr = NULL ;
+
+      // parse arguments
+      PD_LOG ( PDDEBUG, "Remove db business passes argument: %s",
+               _uninstallInfoObj.toString( FALSE, TRUE ).c_str() ) ;
+      // get taskID from omsvc
+      ele = _uninstallInfoObj.getField( OMA_FIELD_TASKID ) ;
+      if ( NumberInt != ele.type() && NumberLong != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid task id from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      _taskID = ele.numberLong() ;
+      // get deployMod info from omsvc
+      ele = _uninstallInfoObj.getField( OMA_FIELD_DEPLOYMOD ) ;
+      if ( String != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid content from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      deplayMod = ele.String() ;
+      if ( deplayMod == string(DEPLAY_SA) )
+      {
+         _isStandalone = TRUE ;
+      }
+      else if ( deplayMod == string(DEPLAY_DB) )
+      {
+         _isStandalone = FALSE ;
+      }
+      else
+      {
+         PD_LOG_MSG ( PDERROR, "Receive invalid deplay mode from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // get common fields
+      rc = omaGetStringElement ( _uninstallInfoObj, OMA_FIELD_AUTHUSER, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_AUTHUSER, rc ) ;
+      builder.append( OMA_FIELD_AUTHUSER, pStr ) ;
+      rc = omaGetStringElement ( _uninstallInfoObj, OMA_FIELD_AUTHPASSWD, &pStr ) ;
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_AUTHPASSWD, rc ) ;
+      builder.append( OMA_FIELD_AUTHPASSWD, pStr ) ;
+      commonFileds = builder.obj() ;
+      // parse bson and get arguments info for js file
+      ele = _uninstallInfoObj.getField ( OMA_FIELD_CONFIG ) ;
+      if ( Array != ele.type() )
+      {
+         PD_LOG_MSG ( PDERROR, "Receive wrong format install "
+                      "info from omsvc" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      else
+      {
+         BSONObjBuilder cataInfoBuilder ;
+         BSONArrayBuilder bab ;
+         BSONObjIterator itr( ele.embeddedObject() ) ;
+         while ( itr.more() )
+         {
+            BSONObj temp ;
+            const CHAR *value = NULL ;
+            ele = itr.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG ( PDERROR, "Receive wrong format bson from omsvc" ) ;
+               goto error ;
+            }
+            temp = ele.embeddedObject() ;
+//            bob.appendElements( temp ) ;
+//            bob.appendElements( commonFileds ) ;
+//            info = bob.obj() ;
+            // category
+            rc = omaGetStringElement ( temp, OMA_OPTION_ROLE, &value ) ;
+            if ( rc )
+            {
+               PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc = %d",
+                            OMA_OPTION_ROLE, rc ) ;
+               goto error ;
+            }
+            if ( 0 == ossStrncmp( value, ROLE_DATA,
+                                  ossStrlen( ROLE_DATA ) ) )
+            {
+               BSONObjBuilder bob ;
+               BSONObj obj ;
+               bob.appendElements( commonFileds ) ;
+               rc = omaGetStringElement ( temp, OMA_OPTION_DATAGROUPNAME,
+                                          &value ) ;
+               PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_OPTION_DATAGROUPNAME, rc ) ;
+               bob.append( OMA_FIELD_UNINSTALLGROUPNAME, value ) ;
+               obj = bob.obj() ;
+               _data.insert( pair<string, BSONObj>( string(value), obj ) ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_COORD,
+                                       ossStrlen( ROLE_COORD ) ) )
+            {
+               _coord.insert( pair<string, BSONObj>( string(ROLE_COORD),
+                                                     commonFileds ) ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_CATA,
+                                       ossStrlen( ROLE_CATA ) ) )
+            {
+               BSONObjBuilder bob ;
+               rc = omaGetStringElement ( temp, OMA_FIELD_HOSTNAME, &pStr ) ;
+               PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+               bob.append( OMA_FIELD_HOSTNAME, pStr ) ;
+               rc = omaGetStringElement ( temp, OMA_OPTION_CATANAME, &pStr ) ;
+               PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_OPTION_CATANAME, rc ) ;
+               bob.append( OMA_FIELD_CATASVCNAME, pStr ) ;
+               bab.append( bob.obj() ) ;
+               _catalog.insert( pair<string, BSONObj>( string(ROLE_CATA),
+                                                       commonFileds ) ) ;
+            }
+            else if ( 0 == ossStrncmp( value, ROLE_STANDALONE,
+                                       ossStrlen( ROLE_STANDALONE ) ) )
+            {
+               BSONObjBuilder bob ;
+               rc = omaGetStringElement ( temp, OMA_FIELD_HOSTNAME, &pStr ) ;
+               PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+               bob.append( OMA_FIELD_HOSTNAME, pStr ) ;
+               rc = omaGetStringElement ( temp, OMA_FIELD_SVCNAME, &pStr ) ;
+               PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                "rc: %d", OMA_FIELD_SVCNAME, rc ) ;
+               bob.append( OMA_FIELD_SVCNAME, pStr ) ;
+               _standalone.insert( 
+                  pair<string, BSONObj>( string(ROLE_STANDALONE),
+                                         bob.obj() ) ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG_MSG( PDERROR, "Unknown role for remove db business" ) ;
+               goto error ;
+            }
+         }
+         cataInfoBuilder.appendArray( OMA_FIELD_CATAADDR, bab.arr() ) ;
+         _cataAddrInfo = cataInfoBuilder.obj() ;
+      }
+
+   done:
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _omaStartRmDBBusTaskJob::init2()
+   {
+      INT32 rc                         = SDB_OK ;
+      _omaTaskMgr *pTaskMgr            = getTaskMgr() ;
+      
+      // remove last task with the same name
+      rc = pTaskMgr->removeTask ( OMA_TASK_NAME_REMOVE_DB_BUSINESS ) ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to remove task[%s], "
+                     "rc = %d", OMA_TASK_NAME_REMOVE_DB_BUSINESS, rc ) ;
+         goto error ;
+      }
+      // create remove db business task
+      _pTask = SDB_OSS_NEW _omaRmDBBusTask( _taskID ) ;
+      if ( !_pTask )
+      {
+         rc = SDB_OOM ;
+         PD_LOG_MSG( PDERROR, "Failed to create remove db business task, "
+                     "rc = %d", rc ) ;
+         goto error ;
+      }
+      // register remove db business task
+      pTaskMgr->addTask( _pTask, _taskID ) ;
+      rc = _pTask->init( _isStandalone, _standalone, _coord,
+                         _catalog, _data, _cataAddrInfo ) ;
+      if ( rc  )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to init remove db busniness task, "
+                     "rc = %d", rc ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _omaStartRmDBBusTaskJob::doit()
+   {
+      INT32 rc = SDB_OK ;
+      rc = _pTask->doit() ;
+      if ( rc )
+      {
+         PD_LOG_MSG( PDERROR, "Failed to do remove db busniness task, "
                      "rc = %d", rc ) ;
          goto error ;
       }
@@ -1190,7 +1436,7 @@ namespace engine
    _omaInsDBBusTaskRbJob::_omaInsDBBusTaskRbJob (
                                               BOOLEAN isStandalone,
                                               string &vCoordSvcName,
-                                              _omaInstallDBBusinessTask *pTask )
+                                              _omaInsDBBusTask *pTask )
    {
       _name = OMA_JOB_ROLLBACK_INSTALL_DB_BUSINESS ;
       _isStandalone = isStandalone ;
@@ -1520,7 +1766,7 @@ namespace engine
    */
    _omaRemoveVirtualCoordJob::_omaRemoveVirtualCoordJob (
                                                     const CHAR *vCoordSvcName,
-                                              _omaInstallDBBusinessTask *pTask )
+                                              _omaInsDBBusTask *pTask )
    {
       _vCoordSvcName  = vCoordSvcName ;
       _pTask = pTask ;
@@ -1580,7 +1826,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 startCreateStandaloneJob ( _omaInstallDBBusinessTask *pTask,
+   INT32 startCreateStandaloneJob ( _omaInsDBBusTask *pTask,
                                     EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
@@ -1607,7 +1853,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 startCreateCatalogJob ( _omaInstallDBBusinessTask *pTask,
+   INT32 startCreateCatalogJob ( _omaInsDBBusTask *pTask,
                                  EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
@@ -1633,7 +1879,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 startCreateCoordJob ( _omaInstallDBBusinessTask *pTask,
+   INT32 startCreateCoordJob ( _omaInsDBBusTask *pTask,
                                EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
@@ -1660,7 +1906,7 @@ namespace engine
    }
 
    INT32 startCreateDataJob ( const CHAR *pGroupName,
-                              _omaInstallDBBusinessTask *pTask,
+                              _omaInsDBBusTask *pTask,
                               EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
@@ -1687,7 +1933,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 startStartInsDBBusTaskJob ( const CHAR *pInstallInfo, EDUID *pEDUID )
+   INT32 startInsDBBusTaskJob ( const CHAR *pInstallInfo, EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN returnResult = FALSE ;
@@ -1739,9 +1985,61 @@ namespace engine
       goto done ;
    }
 
+   INT32 startRmDBBusTaskJob ( const CHAR *pUninstallInfo, EDUID *pEDUID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN returnResult = FALSE ;
+      _omaStartRmDBBusTaskJob *pJob = NULL ;
+
+      try
+      {
+         BSONObj info( pUninstallInfo ) ;
+         pJob = SDB_OSS_NEW _omaStartRmDBBusTaskJob( info ) ;
+         if ( !pJob )
+         {
+            PD_LOG ( PDERROR, "Failed to alloc memory for starting "
+                     "install db business job" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         rc = pJob->init() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failded to init install db business task, "
+                     "rc = %d", rc) ;
+            goto error ;
+         }
+         rc = pJob->init2() ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failded to init install db business task, "
+                     "rc = %d", rc) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_SYS ;
+         PD_LOG ( PDERROR, "Occur error, exception is: %s", e.what() ) ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID,
+                                     returnResult ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to start job, rc = %d", rc ) ;
+         goto done ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 startInsDBBusTaskRbJob ( BOOLEAN isStandalone,
                                   string &vCoordSvcName,
-                                  _omaInstallDBBusinessTask *pTask,
+                                  _omaInsDBBusTask *pTask,
                                   EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;
@@ -1769,8 +2067,10 @@ namespace engine
       goto done ;
    }
 
+   // TODO: let remove virtual coord to be a function
+   // instead of to be an asyn job
    INT32 startRemoveVirtualCoordJob ( const CHAR *vCoordSvcName,
-                                      _omaInstallDBBusinessTask *pTask,
+                                      _omaInsDBBusTask *pTask,
                                       EDUID *pEDUID )
    {
       INT32 rc = SDB_OK ;

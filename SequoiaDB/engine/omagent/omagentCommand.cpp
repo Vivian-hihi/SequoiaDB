@@ -51,9 +51,9 @@ namespace engine
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninstallRemoteAgent )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaAddHost )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaRemoveHost )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBBusiness )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInsDBBus )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUninsDBBus )
-   IMPLEMENT_OACMD_AUTO_REGISTER( _omaInstallDBStatus )
+   IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryTaskProgress )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaUpdateHostsInfo )
    IMPLEMENT_OACMD_AUTO_REGISTER( _omaQueryHostStatus )
 
@@ -1055,21 +1055,20 @@ namespace engine
    }
 
    /******************************* add db business **************************/
-   // _omaInstallDBBusiness
-   _omaInstallDBBusiness::_omaInstallDBBusiness ()
+   // _omaInsDBBus
+   _omaInsDBBus::_omaInsDBBus ()
    {
    }
 
-   _omaInstallDBBusiness::~_omaInstallDBBusiness ()
+   _omaInsDBBus::~_omaInsDBBus ()
    {
    }
 
-   INT32 _omaInstallDBBusiness::init( const CHAR *pInstallInfo )
+   INT32 _omaInsDBBus::init( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       EDUID startDBTaskJobID = PMD_INVALID_EDUID ;
-      rc = startStartInsDBBusTaskJob ( pInstallInfo,
-                                       &startDBTaskJobID ) ;
+      rc = startInsDBBusTaskJob ( pInstallInfo, &startDBTaskJobID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to start install db business task "
@@ -1082,7 +1081,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBBusiness::doit( BSONObj &retObj )
+   INT32 _omaInsDBBus::doit( BSONObj &retObj )
    {
       return SDB_OK ;
    }
@@ -1097,13 +1096,20 @@ namespace engine
    {
    }
 
-   INT32 _omaUninsDBBus::init( const CHAR *pInstallInfo )
+   INT32 _omaUninsDBBus::init( const CHAR *pUninstallInfo )
    {
       INT32 rc = SDB_OK ;
-
+      EDUID removeDBTaskJobID = PMD_INVALID_EDUID ;
+      rc = startRmDBBusTaskJob ( pUninstallInfo, &removeDBTaskJobID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to start remove db business task "
+                 "job, rc = %d", rc ) ;
+         goto error ;
+      }
    done:
       return rc ;
-   error :
+   error:
       goto done ;
    }
 
@@ -1112,21 +1118,20 @@ namespace engine
       return SDB_OK ;
    }
 
-
-   /******************************* query install status *********************/
+   /******************************* query progress status *********************/
    /*
-      _omaInstallDBStatus
+      _omaQueryTaskProgress
    */
-   _omaInstallDBStatus::_omaInstallDBStatus ()
+   _omaQueryTaskProgress::_omaQueryTaskProgress ()
    {
       _taskID = OMA_INVALID_TASKID ;
    }
 
-   _omaInstallDBStatus::~_omaInstallDBStatus ()
+   _omaQueryTaskProgress::~_omaQueryTaskProgress ()
    {
    }
 
-   INT32 _omaInstallDBStatus::init ( const CHAR *pInstallInfo )
+   INT32 _omaQueryTaskProgress::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
       // parse bson to get task id
@@ -1159,31 +1164,25 @@ namespace engine
       goto done ;
    }
 
-   INT32 _omaInstallDBStatus::doit ( BSONObj &retObj )
+   INT32 _omaQueryTaskProgress::doit ( BSONObj &retObj )
    {
       INT32 rc = SDB_OK ;
       _omaTask *pTask  = NULL ;
-      _omaInstallDBBusinessTask *pChildTask = NULL ;
       pTask = _taskMgr->findTask( _taskID ) ;
-
-      if ( ( pChildTask = dynamic_cast<_omaInstallDBBusinessTask*>(pTask) ) )
-      {
-         rc = pChildTask->getInstallStatus( retObj ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to get install db business status, "
-                     "rc = %d", rc ) ;
-            goto error ;
-         }
-      }
-      else
+      if ( NULL == pTask )
       {
          rc = SDB_CAT_TASK_NOTFOUND ;
          PD_LOG_MSG ( PDERROR, "No such task with id[%ld], "
-                      "failed to get install status", (INT64)_taskID ) ;
+                      "failed to query task's progress", (INT64)_taskID ) ;
          goto error ;
       }
-
+      rc = pTask->queryProgress( retObj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to query task's progress, "
+                  "rc = %d", rc ) ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
@@ -1224,110 +1223,6 @@ namespace engine
    error:
       goto done ;
    }
-/*
-   INT32 _omaUpdateHostsInfo::init ( const CHAR *pInstallInfo )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj arg( pInstallInfo ) ;
-      CHAR tempBuff[ JS_ARG_LEN ] = { 0 } ;
-
-      // set js file
-      rc = setJsFile ( FILE_UPDATE_HOSTS_INFO ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG ( PDERROR, "Failed to set js file[%s], rc = %d",
-                      FILE_UPDATE_HOSTS_INFO, rc ) ;
-         goto error ;
-      }
-      // read js from file
-      rc = readFile ( _jsFileName, &_fileBuff, &_buffSize, &_readSize ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to read js file: %s, rc = %d",
-                  _jsFileName, rc ) ;
-         goto error ;
-      }
-      // build js arguments
-      ossSnprintf( tempBuff, JS_ARG_LEN,
-                   "var HOSTS_INFO = \'%s\';", arg.toString().c_str() ) ;
-      // TODO: username/password may leak in the log file
-      PD_LOG ( PDDEBUG, "Update hosts info passes arguments: "
-               "var HOSTS_INFO = \'%s\'; ", arg.toString().c_str() ) ;
-      _content.clear() ;
-      _content += tempBuff ;
-      _content += OSS_NEWLINE ;
-      _content += _fileBuff ;
-
-      // get scope
-      _scope = sdbGetOMAgentMgr()->getScope() ;
-      if ( !_scope )
-      {
-         rc = SDB_OOM ;
-         PD_LOG_MSG ( PDERROR, "Failed to get scope, rc = %d", rc ) ;
-         goto error ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaUpdateHostsInfo::doit ( BSONObj &retObj )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObj rval ;
-      BSONObj detail ;
-      BSONObj subObj ;
-
-      // execute js
-      rc = _scope->eval( _content.c_str(), _content.size(),
-                         _jsFileName, 1, 1, rval, detail ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR,
-                  "Failed to eval js file: %s, rc = %d, errmsg = %s",
-                  _jsFileName, rc, detail.toString().c_str() ) ;
-         BSONObjBuilder bob ;
-         bob.append ( OMA_FIELD_RC, rc ) ;
-         bob.append ( OMA_FIELD_DETAIL, detail.toString().c_str() ) ;
-         retObj = bob.obj() ;
-         goto error ;
-      }
-      // extract subObj
-      rc = omaGetObjElement( rval, "", subObj ) ;
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-                "Get field[%s] failed, rc: %d", "", rc ) ;
-      retObj = subObj.getOwned() ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   INT32 _omaUpdateHostsInfo::final ( BSONObj &rval, BSONObj &retObj )
-   {
-      INT32 rc = SDB_OK ;
-      BSONObjectBuilder bob ;
-      BSONObj subObj ;
-
-      rc = omaGetObjElement( rval, "", subObj ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Get field[%s] failed, rc: %d", "", rc ) ;
-         goto error ;
-      }
-      bob.appendElements( subObj ) ;
-      retObj = bob.obj() ;
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-*/
-
 
    /*************************** query host status **************************/
    /*
@@ -1395,14 +1290,41 @@ namespace engine
    INT32 _omaCreateVirtualCoord::init ( const CHAR *pInstallInfo )
    {
       INT32 rc = SDB_OK ;
-      PD_LOG ( PDDEBUG, "Create virtual coord does not pass any argument" ) ;
-      rc = addJsFile( FILE_CREATE_VIRTUAL_COORD ) ;
-      if ( rc )
+      try
       {
-         PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                  FILE_CREATE_VIRTUAL_COORD, rc ) ;
+         BSONObj bus ;
+         if ( NULL == pInstallInfo )
+         {
+            BSONObjBuilder bob ;
+            BSONArrayBuilder bab ;
+            bob.appendArray( OMA_FIELD_CATAADDR, bab.arr() ) ;
+            bus = bob.obj() ;
+         }
+         else
+         {
+            bus = BSONObj(pInstallInfo).getOwned() ;
+         }
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Create virtual coord passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FILE_CREATE_VIRTUAL_COORD, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_CREATE_VIRTUAL_COORD, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
          goto error ;
       }
+
    done:
       return rc ;
    error:
@@ -1513,7 +1435,6 @@ namespace engine
       try
       {
          BSONObj bus( pInstallInfo ) ;
-
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;

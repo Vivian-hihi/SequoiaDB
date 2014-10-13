@@ -41,19 +41,9 @@
 
 using namespace std ;
 using namespace bson ;
-/*
-#define OMA_BUFF_SIZE                    (1024)
-#define JS_FILE_NAME_LEN                 (512)
-#define JS_ARG_LEN                       (4096)
-#define WAITING_TIME                     (3000)
-
-#define ROLE_COORD                       "coord"
-#define ROLE_CATA                        "catalog"
-#define ROLE_DATA                        "data"
-#define ROLE_STANDALONE                  "standalone"
-*/
 
 #define STAGE_INSTALL                    OMA_FIELD_STAGE_INSTALL
+#define STAGE_UNINSTALL                  OMA_FIELD_STAGE_UNINSTALL
 #define STAGE_ROLLBACK                   OMA_FIELD_STAGE_ROLLBACK
 
 #define INSTALL_STAGE_INSTALL            ""
@@ -68,7 +58,6 @@ namespace engine
       string _dbPath ;
       string _confPath ;
       string _dataGroupName ;
-//      string _agentPort ;
       string _sdbUser ;
       string _sdbPasswd ;
       string _sdbUserGroup ;
@@ -84,7 +73,6 @@ namespace engine
       string _dataGroupName ;
       string _hostName ;
       string _svcName ;
-//      string _agentPort ;
    } ;
    typedef struct _InstalledNode InstalledNode ;
 
@@ -98,6 +86,16 @@ namespace engine
       vector< InstalledNode > _installedNodes ;
    } ;
    typedef struct _InstallResult InstallResult ;
+
+   struct _UninstallResult
+   {
+      INT32 _rc ;
+      INT32 _totalNum ;
+      INT32 _finishNum ;
+      string _errMsg ;
+      string _desc ;
+   } ;
+   typedef struct _UninstallResult UninstallResult ;
 
    struct _RollbackInfo
    {
@@ -136,7 +134,7 @@ namespace engine
       OMA_INSTALL_INSTALL         = 1,
       OMA_INSTALL_ROLLBACK        = 2,
 
-      OMA_INSTALL_END             = 3
+      OMA_INSTALL_END             = 10
    } ;
 
 }

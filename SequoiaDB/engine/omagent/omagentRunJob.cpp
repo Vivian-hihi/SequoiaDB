@@ -363,8 +363,8 @@ namespace engine
          vector< InstalledNode >::iterator iter = vec.begin() ;
          for( ; iter != vec.end(); iter++ )
          {
-            BSONObj temp = BSON ( OMA_FIELD_INSTALLHOSTNAME << iter->_hostName <<
-                                  OMA_FIELD_INSTALLSVCNAME << iter->_svcName ) ;
+            BSONObj temp = BSON ( OMA_FIELD_UNINSTALLHOSTNAME << iter->_hostName <<
+                                  OMA_FIELD_UNINSTALLSVCNAME << iter->_svcName ) ;
             bab.append( temp ) ;
          }
          break ;
@@ -541,6 +541,262 @@ namespace engine
       obj = bob.obj() ;
    }
 
-}
+   /*
+      remove standalone
+   */
+   _omaRmStandalone::_omaRmStandalone()
+   {
+   }
 
+   _omaRmStandalone::~_omaRmStandalone()
+   {
+   }
+
+   INT32 _omaRmStandalone::init ( const CHAR *pUninstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONArrayBuilder bab ;
+         BSONObjBuilder builder ;
+         BSONObjBuilder bob ;
+         BSONObj bus ;
+         BSONObj info = BSONObj( pUninstallInfo ).getOwned() ;
+         const CHAR *pStr = NULL ;
+         PD_LOG ( PDDEBUG, "Remove standalone info is: %s",
+                  info.toString(FALSE, TRUE).c_str() ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_HOSTNAME, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+         bob.append( OMA_FIELD_UNINSTALLHOSTNAME, pStr ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_SVCNAME, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_SVCNAME, rc ) ;
+         bob.append( OMA_FIELD_UNINSTALLSVCNAME, pStr ) ;
+         bab.append( bob.obj() ) ;
+         builder.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
+         bus = builder.obj() ;
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Remove standalone passes argument: %s",
+                  _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_STANDALONE, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_REMOVE_STANDALONE, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   /*
+      remove catalog rg
+   */
+
+   _omaRmCataRG::_omaRmCataRG ( string &vCoordSvcName )
+   {
+      _vCoordSvcName = vCoordSvcName ;
+   }
+
+   _omaRmCataRG::~_omaRmCataRG ()
+   {
+   }
+   
+   INT32 _omaRmCataRG::init ( const CHAR *pUninstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONArrayBuilder bab ;
+         BSONObjBuilder bob ;
+         BSONObj bus ;
+         BSONObj sys = BSON ( OMA_FIELD_VCOORDSVCNAME <<
+                              _vCoordSvcName.c_str() ) ;
+         BSONObj info = BSONObj( pUninstallInfo ).getOwned() ;
+         const CHAR *pStr = NULL ;
+         PD_LOG ( PDDEBUG, "Remove catalog group info is: %s",
+                  info.toString(FALSE, TRUE).c_str() ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_AUTHUSER, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_AUTHUSER, rc ) ;
+         bob.append( OMA_FIELD_AUTHUSER, pStr ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_AUTHPASSWD, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_AUTHPASSWD, rc ) ;
+         bob.append( OMA_FIELD_AUTHPASSWD, pStr ) ;
+         bus = bob.obj() ;
+         
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
+                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Remove catalog group passes "
+                  "argument: %s", _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_CATALOG_RG, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_REMOVE_CATALOG_RG, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   /*
+      remove coord rg
+   */
+
+   _omaRmCoordRG::_omaRmCoordRG ( string &vCoordSvcName )
+   {
+      _vCoordSvcName = vCoordSvcName ;
+   }
+
+   _omaRmCoordRG::~_omaRmCoordRG ()
+   {
+   }
+   
+   INT32 _omaRmCoordRG::init ( const CHAR *pUninstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONArrayBuilder bab ;
+         BSONObjBuilder bob ;
+         BSONObj bus ;
+         BSONObj sys = BSON ( OMA_FIELD_VCOORDSVCNAME <<
+                              _vCoordSvcName.c_str() ) ;
+         BSONObj info = BSONObj( pUninstallInfo ).getOwned() ;
+         const CHAR *pStr = NULL ;
+         PD_LOG ( PDDEBUG, "Remove coord group info is: %s",
+                  info.toString(FALSE, TRUE).c_str() ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_AUTHUSER, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_AUTHUSER, rc ) ;
+         bob.append( OMA_FIELD_AUTHUSER, pStr ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_AUTHPASSWD, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_AUTHPASSWD, rc ) ;
+         bob.append( OMA_FIELD_AUTHPASSWD, pStr ) ;
+         bus = bob.obj() ;
+         
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
+                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Remove coord group passes "
+                  "argument: %s", _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_COORD_RG, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_REMOVE_COORD_RG, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+   /*
+      remove data rg
+   */
+
+   _omaRmDataRG::_omaRmDataRG ( string &vCoordSvcName )
+   {
+      _vCoordSvcName = vCoordSvcName ;
+   }
+
+   _omaRmDataRG::~_omaRmDataRG ()
+   {
+   }
+   
+   INT32 _omaRmDataRG::init ( const CHAR *pUninstallInfo )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         BSONArrayBuilder bab ;
+         BSONObjBuilder bob ;
+         BSONObj bus ;
+         BSONObj sys = BSON ( OMA_FIELD_VCOORDSVCNAME <<
+                              _vCoordSvcName.c_str() ) ;
+         BSONObj info = BSONObj( pUninstallInfo ).getOwned() ;
+         const CHAR *pStr = NULL ;
+         PD_LOG ( PDDEBUG, "Remove data group info is: %s",
+                  info.toString(FALSE, TRUE).c_str() ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_AUTHUSER, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_AUTHUSER, rc ) ;
+         bob.append( OMA_FIELD_AUTHUSER, pStr ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_AUTHPASSWD, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_AUTHPASSWD, rc ) ;
+         bob.append( OMA_FIELD_AUTHPASSWD, pStr ) ;
+         rc = omaGetStringElement ( info, OMA_FIELD_UNINSTALLGROUPNAME, &pStr ) ;
+         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
+                   "rc: %d", OMA_FIELD_UNINSTALLGROUPNAME, rc ) ;
+         bob.append( OMA_FIELD_UNINSTALLGROUPNAME, pStr ) ;
+         bus = bob.obj() ;
+         
+         // build js file arguments
+         ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; var %s = %s; ",
+                      JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str(),
+                      JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
+         PD_LOG ( PDDEBUG, "Remove data group passes "
+                  "argument: %s", _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_DATA_RG, _jsFileArgs ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                     FILE_REMOVE_DATA_RG, rc ) ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+                  e.what() ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+     goto done ;
+   }
+
+}
 

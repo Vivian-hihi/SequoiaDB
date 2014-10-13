@@ -49,6 +49,7 @@ using namespace bson ;
 #define OMA_INVALID_TASKID     (0)
 
 #define OMA_TASK_NAME_INSTALL_DB_BUSINESS     "install db business task"
+#define OMA_TASK_NAME_REMOVE_DB_BUSINESS      "remove db business task"
 
 
 namespace engine
@@ -56,6 +57,7 @@ namespace engine
    enum OMA_TASK_TYPE
    {
       OMA_TASK_INSTALL_DB         = 0, // install db business
+      OMA_TASK_REMOVE_DB          = 1, // remove db business
 
       OMA_TASK_UNKNOW             = 255
    } ;
@@ -91,6 +93,8 @@ namespace engine
          INT32 setJobStatus( string &name, OMA_JOB_STATUS status ) ;
 
          INT32 getJobStatus( string &name, OMA_JOB_STATUS &status ) ;
+
+         virtual INT32 queryProgress( BSONObj &progress ) { return SDB_OK ; }
 
       public:
          virtual OMA_TASK_TYPE taskType () const = 0 ;
@@ -141,11 +145,11 @@ namespace engine
    /*
       install database business
    */
-   class _omaInstallDBBusinessTask : public _omaTask
+   class _omaInsDBBusTask : public _omaTask
    {
       public:
-         _omaInstallDBBusinessTask ( UINT64 taskID ) ;
-         virtual ~_omaInstallDBBusinessTask () ;
+         _omaInsDBBusTask ( UINT64 taskID ) ;
+         virtual ~_omaInsDBBusTask () ;
 
       public:
          virtual OMA_TASK_TYPE taskType () const
@@ -167,7 +171,7 @@ namespace engine
          // start job
          INT32 doit() ;
          // respond query of install status
-         INT32 getInstallStatus( BSONObj &progress ) ;
+         INT32 queryProgress( BSONObj &progress ) ;
 
       public:
          void setTaskStage( OMA_INSTALL_DB_STAGE stage ) ;
@@ -210,7 +214,7 @@ namespace engine
           
       private:
          INT32 _saveVCoordInfo( BSONObj &info ) ;
-         INT32 _installVirtualCatalog() ;
+         INT32 _installVirtualCoord() ;
          INT32 _installStandalone() ;
          INT32 _installCatalog() ;
          INT32 _installCoord() ;
@@ -228,11 +232,11 @@ namespace engine
          map< string, InstallResult >         _mapGroupsResult ;
          // virtual coord info
          string                               _vCoordSvcName ;
-         // 
+/*
          string                               _sdbUser ;
          string                               _sdbPasswd ;
          string                               _sdbUserGroup ;
-
+*/
          ossSpinSLatch                        _taskLatch ;
          ossSpinSLatch                        _taskLatch2 ;
          ossSpinSLatch                        _jobLatch ;
@@ -250,7 +254,95 @@ namespace engine
          BOOLEAN                              _isTaskFail ;
          CHAR                                 _detail[OMA_BUFF_SIZE + 1] ; 
    } ;
-   typedef _omaInstallDBBusinessTask omaInstallDBBusinessTask ;
+   typedef _omaInsDBBusTask omaInsDBBusTask ;
+
+   /*
+      remove database business
+   */
+   class _omaRmDBBusTask : public _omaTask
+   {
+      public:
+         _omaRmDBBusTask ( UINT64 taskID ) ;
+         virtual ~_omaRmDBBusTask () ;
+
+      public:
+         virtual OMA_TASK_TYPE taskType () const
+         {
+            return _taskType ;
+         }
+         virtual const CHAR*   taskName () const
+         {
+            return _taskName.c_str() ;
+         }
+
+      public:
+         INT32 init( BOOLEAN isStandalone,
+                     map<string, BSONObj> standalone,
+                     map<string, BSONObj> coord,
+                     map<string, BSONObj> catalog,
+                     map<string, BSONObj> data,
+                     BSONObj &otherInfo ) ;
+         // start job
+         INT32 doit() ;
+         // respond query of remove task status
+         INT32 queryProgress( BSONObj &progress ) ;
+
+      public:
+         void setIsUninstallFinish( BOOLEAN isFinish ) ;
+         void setIsRemoveVCoordFinish( BOOLEAN isFinish ) ;
+         void setIsTaskFinish( BOOLEAN isFinish ) ;
+         void setIsUninstallFail( BOOLEAN isFail ) ;
+         void setIsRemoveVCoordFail( BOOLEAN isFail ) ;
+         void setIsTaskFail( BOOLEAN isFail ) ;
+         BOOLEAN getIsUninstallFinish() ;
+         BOOLEAN getIsRemoveVCoordFinish() ;
+         BOOLEAN getIsTaskFinish() ;
+         BOOLEAN getIsUninstallFail() ;
+         BOOLEAN getIsRemoveVCoordFail() ;
+         BOOLEAN getIsTaskFail() ;
+         void setErrDetail( const CHAR *pErrDetail ) ;
+          
+      private:
+         BOOLEAN _isRemoveFinish() ;
+         INT32 _updateUninstallStatus( BOOLEAN isFinish,
+                                       INT32 retRc,
+                                       const CHAR *pRole,
+                                       const CHAR *pErrMsg,
+                                       const CHAR *pDesc,
+                                       const CHAR *pGroupName ) ;
+         INT32 _saveVCoordInfo( BSONObj &info ) ;
+         INT32 _installVirtualCoord() ;
+         INT32 _removeVirtualCoord() ;
+         INT32 _uninstallStandalone() ;
+         INT32 _uninstallCatalog() ;
+         INT32 _uninstallCoord() ;
+         INT32 _uninstallData() ;
+
+         // uninstall info
+         map<string, BSONObj>                 _standalone ;
+         map<string, BSONObj>                 _catalog ;
+         map<string, BSONObj>                 _coord ;
+         map<string, BSONObj>                 _data ;
+         // uninstall result
+         UninstallResult                      _standaloneResult ;
+         UninstallResult                      _catalogResult ;
+         UninstallResult                      _coordResult ;
+         map< string, UninstallResult >       _mapDataResult ;
+         // virtual coord info
+         BSONObj                              _cataAddrInfo ;
+         string                               _vCoordSvcName ;
+         string                               _taskName ;
+         OMA_TASK_TYPE                        _taskType ;
+         BOOLEAN                              _isStandalone ;
+         BOOLEAN                              _isTaskFinish ;
+         BOOLEAN                              _isUninstallFinish ;
+         BOOLEAN                              _isRemoveVCoordFinish ;
+         BOOLEAN                              _isTaskFail ;
+         BOOLEAN                              _isUninstallFail ;
+         BOOLEAN                              _isRemoveVCoordFail ;
+         CHAR                                 _detail[OMA_BUFF_SIZE + 1] ;
+   } ;
+   typedef _omaRmDBBusTask omaRmDBBusTask ;
 
 }
 

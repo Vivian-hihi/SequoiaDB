@@ -117,7 +117,7 @@ namespace engine
    #define OMA_CMD_UNINSTALL_DB_BUSINESS              OM_REMOVE_BUSINESS_REQ
    #define OMA_CMD_START_DB_BUSINESS                  ""
    #define OMA_CMD_STOP_DB_BUSINESS                   ""
-   #define OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS OM_QUERY_PROGRESS
+   #define OMA_CMD_QUERY_PROGRESS                     OM_QUERY_PROGRESS
    #define OMA_CMD_UPDATE_HOSTS                       OM_UPDATE_HOSTNAME_REQ
 
    #define OMA_CMD_QUERY_HOST_STATUS                  OM_QUERY_HOST_STATUS_REQ
@@ -133,6 +133,10 @@ namespace engine
    #define OMA_CMD_RUN_CREATE_COORD                   "run create coord job"
    #define OMA_CMD_RUN_CREATE_CATALOG                 "run create catalog job"
    #define OMA_CMD_RUN_CREATE_DATANODE                "run create data node job"
+   #define OMA_CMD_RM_STANDALONE                      "remove standalone"
+   #define OMA_CMD_RM_CATA_RG                         "remove cataloggroup"
+   #define OMA_CMD_RM_COORD_RG                        "remove coordgroup"
+   #define OMA_CMD_RM_DATA_RG                         "remove datagroup"
    
    /*
       oma job
@@ -141,6 +145,7 @@ namespace engine
    #define OMA_JOB_CREATE_CATALOG                     "create catalog job"
    #define OMA_JOB_CREATE_COORD                       "create coord job"
    #define OMA_JOB_START_INSTALL_DB_BUSINESS          "start install db business job"
+   #define OMA_JOB_START_REMOVE_DB_BUSINESS           "start remove db business job"
    #define OMA_JOB_ROLLBACK_INSTALL_DB_BUSINESS       "rollback install db business job"
    #define OMA_JOB_ROLLBACK_STANDALONE                "rollback create standalone job"
    #define OMA_JOB_ROLLBACK_CATALOG                   "rollback create catalog job"
@@ -180,11 +185,11 @@ namespace engine
    #define FILE_CREATE_DATANODE             "createData.js"
 
    #define FILE_REMOVE_STANDALONE           "removeStandalone.js"
-   #define FILE_REMOVE_CATALOG              "removeCatalog.js"
-   #define FILE_REMOVE_COORD                "removeCoord.js"
-   #define FILE_REMOVE_DATANODE             "removeData.js"
+   #define FILE_REMOVE_CATALOG_RG           "removeCatalogRG.js"
+   #define FILE_REMOVE_COORD_RG             "removeCoordRG.js"
+   #define FILE_REMOVE_DATA_RG          "removeDataRG.js"
 
-   #define FILE_ROLLBACK_STANDALONE         "rollbackStandalone.js"
+//   #define FILE_ROLLBACK_STANDALONE         "rollbackStandalone.js"
    #define FILE_ROLLBACK_CATALOG            "rollbackCatalog.js"
    #define FILE_ROLLBACK_COORD              "rollbackCoord.js"
    #define FILE_ROLLBACK_DATANODE           "rollbackDataNode.js"

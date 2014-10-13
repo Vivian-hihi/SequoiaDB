@@ -62,7 +62,8 @@ namespace engine
       RTN_JOB_CMSYNC             = 15, // cm and cmd sync info
       RTN_JOB_REMOVEVIRTUALCOORD = 16, // remove virtual coord
       RTN_JOB_STARTINSDBBUSTASK  = 17, // start install db business task
-      RTN_JOB_INSDBBUSTASKRB     = 18, // install db business task rollback
+      RTN_JOB_STARTRMDBBUSTASK   = 18, // start remove db business task
+      RTN_JOB_INSDBBUSTASKRB     = 19, // install db business task rollback
 
       RTN_JOB_MAX
    } ;

@@ -282,15 +282,15 @@ namespace engine
 
    /******************************* install db business ***********************/
    /*
-      _omaInstallDBBusiness
+      _omaInsDBBus
    */
    class _omaTaskMgr ;
-   class _omaInstallDBBusiness : public _omaCommand
+   class _omaInsDBBus : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omaInstallDBBusiness () ;
-         ~_omaInstallDBBusiness () ;
+         _omaInsDBBus () ;
+         ~_omaInsDBBus () ;
 
          virtual const CHAR* name () { return OMA_CMD_INSTALL_DB_BUSINESS ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
@@ -309,23 +309,34 @@ namespace engine
          ~_omaUninsDBBus () ;
 
          virtual const CHAR* name () { return OMA_CMD_UNINSTALL_DB_BUSINESS ; }
-         virtual INT32 init ( const CHAR *pInstallInfo ) ;
+         virtual INT32 init ( const CHAR *pUninstallInfo ) ;
          virtual INT32 doit ( BSONObj &retObj ) ;
+      private:
+         INT32 _getCataAddr( BSONObj &obj ) ;
+         
+         // raw unistall info
+         BSONObj                     _uninstallInfoObj ;
+         // uninstall info after category
+         vector<BSONObj>             _coord ;
+         vector<BSONObj>             _catalog ;
+         vector<BSONObj>             _data ;
+         vector<BSONObj>             _standalone ;
+         BOOLEAN                     _isStandalone ;
    } ;
 
-   /******************************* query install db business status *********/
+   /******************************* query progress status ********************/
    /*
-      _omaInstallDBStatus
+      _omaQueryTaskProgress
    */
-   class _omaInstallDBStatus : public _omaCommand
+   class _omaQueryTaskProgress : public _omaCommand
    {
       DECLARE_OACMD_AUTO_REGISTER ()
       public:
-         _omaInstallDBStatus () ;
-         ~_omaInstallDBStatus () ;
+         _omaQueryTaskProgress () ;
+         ~_omaQueryTaskProgress () ;
          virtual const CHAR* name ()
          { 
-            return OMA_CMD_QUERY_INSTALL_DB_BUSINESS_PROGRESS ;
+            return OMA_CMD_QUERY_PROGRESS ;
          }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
          virtual INT32 doit ( BSONObj &retObj ) ;
@@ -555,6 +566,76 @@ namespace engine
          void _getInstalledDataGroupInfo( BSONObj& obj ) ;         
 
          map< string, vector< InstalledNode > >         &_info ;
+         string                                         _vCoordSvcName ;
+   } ;
+
+   // remove standalone 
+   class _omaRmStandalone : public _omaCommand
+   {
+      public:
+         _omaRmStandalone () ;
+         virtual ~_omaRmStandalone () ;
+
+      public:
+         virtual const CHAR* name () { return OMA_CMD_RM_STANDALONE ; }
+         virtual INT32 init ( const CHAR *pUninstallInfo ) ;
+/*
+      private:
+         BSONObj                                        _uninstallInfo ;
+*/
+   } ;
+
+   // remove catalog group 
+   class _omaRmCataRG : public _omaCommand
+   {
+      public:
+         _omaRmCataRG ( string &vCoordSvcName ) ;
+         virtual ~_omaRmCataRG () ;
+
+      public:
+         virtual const CHAR* name () { return OMA_CMD_RM_CATA_RG ; }
+         virtual INT32 init ( const CHAR *pUninstallInfo ) ;
+
+      private:
+/*
+         BSONObj                                        _uninstallInfo ;
+*/
+         string                                         _vCoordSvcName ;
+   } ;
+
+   // remove coord group 
+   class _omaRmCoordRG : public _omaCommand
+   {
+      public:
+         _omaRmCoordRG ( string &vCoordSvcName ) ;
+         virtual ~_omaRmCoordRG () ;
+
+      public:
+         virtual const CHAR* name () { return OMA_CMD_RM_COORD_RG ; }
+         virtual INT32 init ( const CHAR *pUninstallInfo ) ;
+
+      private:
+/*
+         BSONObj                                        _uninstallInfo ;
+*/
+         string                                         _vCoordSvcName ;
+   } ;
+
+   // remove data group 
+   class _omaRmDataRG : public _omaCommand
+   {
+      public:
+         _omaRmDataRG ( string &vCoordSvcName ) ;
+         virtual ~_omaRmDataRG () ;
+
+      public:
+         virtual const CHAR* name () { return OMA_CMD_RM_DATA_RG ; }
+         virtual INT32 init ( const CHAR *pUninstallInfo ) ;
+
+      private:
+/*
+         BSONObj                                        _uninstallInfo ;
+*/
          string                                         _vCoordSvcName ;
    } ;
 
