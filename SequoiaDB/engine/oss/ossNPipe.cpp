@@ -867,7 +867,7 @@ INT32 ossDeleteNamedPipe ( OSSNPIPE &handle )
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSNMP2FD, "ossNamedPipeToFd" )
-INT32 ossNamedPipeToFd ( OSSNPIPE & handle , int * output )
+INT32 ossNamedPipeToFd ( OSSNPIPE & handle , INT32 * output )
 {
    INT32 rc    = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSNMP2FD );
@@ -1286,7 +1286,7 @@ error :
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSNP2FD, "ossNamedPipeToFd" )
-INT32 ossNamedPipeToFd ( OSSNPIPE & handle , int * output )
+INT32 ossNamedPipeToFd ( OSSNPIPE & handle , INT32 * output )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSNP2FD );

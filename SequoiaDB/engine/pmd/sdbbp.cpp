@@ -139,7 +139,7 @@ INT32 enterDaemonMode ( sptScope *scope ,
    CHAR *         code        = NULL ;
    BOOLEAN        exit        = FALSE ;
    FILE           oldStdout   = *stdout ;
-   int            fd          = -1 ;
+   INT32          fd          = -1 ;
    FILE *         newStdout   = NULL ;
    CHAR *         result      = NULL ;
    bson::BSONObj rval ;

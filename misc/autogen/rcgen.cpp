@@ -352,7 +352,7 @@ void RCGen::genJS ()
    }
    fout << endl ;
 
-   fout << "function getErr (errCode) {" << endl ;
+   fout << "function _getErr (errCode) {" << endl ;
    fout << "   var errDesp = [ " << endl ;
    fout << "                   \"Succeed\"," << endl ;
    for ( int i = 0 ; i < codelist.size() ; i++ )
@@ -365,6 +365,9 @@ void RCGen::genJS ()
    fout << "   if ( index < 0 || index >= errDesp.length ) " << endl ;
    fout << "      return \"unknown error\"" << endl ;
    fout << "   return errDesp[index] ;" << endl ;
+   fout << "}" << endl ;
+   fout << "function getErr (errCode) {" << endl ;
+   fout << "   return _getErr ( errCode ) ;" << endl ;
    fout << "}" << endl ;
 
    fout.close() ;

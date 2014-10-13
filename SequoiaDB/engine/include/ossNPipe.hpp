@@ -182,7 +182,7 @@ INT32 ossCleanNamedPipeByName ( const CHAR * pipeName,
                                 const CHAR *pRootPath = OSS_NPIPE_LOCAL_PREFIX ) ;
 
 // convert named pipe to C file descriptor
-INT32 ossNamedPipeToFd ( OSSNPIPE &handle , int * fd ) ;
+INT32 ossNamedPipeToFd ( OSSNPIPE &handle , INT32 * fd ) ;
 
 // enumate all named pipes that EXACT matches pattern
 // if pattern is NULL, the call will enumerate all pipes in the system
