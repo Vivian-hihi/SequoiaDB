@@ -60,7 +60,7 @@ function scanHost( user, passwd, hostname, ip )
       // hostname
       retObj.HostName = hostname ;
       // ping
-      var ret = System.ping( hostname, 3 ) ;
+      var ret = System.ping( hostname ) ;
       var ping = eval( "(" + ret + ")" ) ;
       if ( true != ping[Reachable] )
       {
@@ -155,6 +155,7 @@ function main()
    if ( arrLen == 0 )
    {
       setLastErrMsg( "Not specified any host to scan" ) ;
+      setLastError( SDB_INVALIDARG ) ;
       throw SDB_INVALIDARG ;
    }
    for( var i = 0; i < arrLen; i++ )
@@ -176,6 +177,7 @@ function main()
       else
       {
          setLastErrMsg( "Not specified hostname or ip" ) ;
+         setLastError( SDB_INVALIDARG ) ;
          throw SDB_INVALIDARG ;
       }
       RET_JSON[HostInfo].push( ret ) ;

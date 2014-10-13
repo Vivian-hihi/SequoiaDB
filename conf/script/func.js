@@ -518,15 +518,11 @@ function getAUsablePortFromLocal( osInfo )
             retPort = port ;
             break ;
          }
-         else
-         {
-            port++ ;
-         }
       }
    }
    else
    {
-      // TODOL
+      // TODO:
    }
    return retPort ;
 }

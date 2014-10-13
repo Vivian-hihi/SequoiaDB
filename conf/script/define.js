@@ -23,8 +23,13 @@
 
 // fields
 var AgentPort                    = "AgentPort" ;
+var AuthUser                     = "AuthUser" ;
+var AuthPasswd                   = "AuthPasswd" ;
 var Bandwidth                    = "Bandwidth" ;
 var Bit                          = "Bit" ;
+var CataAddr                     = "CataAddr" ;
+var CataSvcName                  = "CataSvcName" ;
+var CatalogAddr                  = "catalogaddr" ;
 var CanPing                      = "Ping" ;
 var CanSsh                       = "Ssh" ;
 var Core                         = "Core" ;
@@ -93,9 +98,14 @@ var Time                         = "Time" ;
 var Usable                       = "Usable" ;
 var Used                         = "Used" ;
 var User                         = "User" ;
+var UninstallGroupName           = "UninstallGroupName" ;
+var UninstallHostName            = "UninstallHostName" ;
+var UninstallSvcName             = "UninstallSvcName" ;
 var VCoordHostName               = "VCoordHostName" ;
 var VCoordSvcName                = "VCoordSvcName" ;
 var Version                      = "Version" ;
+var SvcName                      = "SvcName" ;
+var SvcName2                     = "svcname" ;
 var Sys                          = "Sys" ;
 var Idle                         = "Idle" ;
 var Other                        = "Other" ;
@@ -109,7 +119,7 @@ var OMA_PATH_TEMP_CONF_DIR_L          = "/tmp/omatmp/conf/" ;
 var OMA_PATH_TEMP_LOG_DIR_L           = "/tmp/omatmp/conf/log/" ;
 var OMA_PATH_TEMP_SPT_DIR_L           = "/tmp/omatmp/conf/script/" ;
 var OMA_PATH_TEMP_TEMP_DIR_L          = "/tmp/omatmp/temp/" ;
-var OMA_PATH_VCOORD_PATH_L            = "/tmp/omatmp/data/vCoord" ;
+var OMA_PATH_VCOORD_PATH_L            = "/tmp/omatmp/data/vCoord/" ;
 var OMA_PATH_SCRIPT_L                 = "script/" ;
 var OMA_PATH_BIN_L                    = "bin/"
 
@@ -150,8 +160,8 @@ var OMA_MISC_OM_RELEASE               = "Release: " ;
 var OMA_PORT_DEFAULT_SDBCM_PORT       = 11790 ;
 var OMA_PORT_MAX                      = 65535 ;
 var OMA_PORT_INVALID                  = -1 ;
-var OMA_PORT_TEMP_AGENT_PORT          = 11790 ;
-var OMA_RESERVED_PORT = [  [11800, 11804], [11810, 11814], [11820, 11824], 30000, 50000, 60000 ] ;
+var OMA_PORT_TEMP_AGENT_PORT          = 10000 ;
+var OMA_RESERVED_PORT = [ 11790, [11800, 11804], [11810, 11814], [11820, 11824], 30000, 50000, 60000 ] ;
 // option
 var OMA_OPTION_SDBCMART_1             = "--I" ;
 

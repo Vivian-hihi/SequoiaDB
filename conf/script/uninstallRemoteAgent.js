@@ -124,7 +124,8 @@ function main()
    var arrLen = infoArr.length ;
    if ( arrLen == 0 )
    {
-      setLastErrMsg( "Not specified any hosts to uninstall" ) ;
+      setLastErrMsg( "Not specified any hosts to uninstall it's sdbcm" ) ;
+      setLastError( SDB_INVALIDARG ) ;
       throw SDB_INVALIDARG ;
    }
    // get os infomation

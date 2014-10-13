@@ -58,7 +58,7 @@ function basicCheckHost( user, passwd, ip )
    // ip
    retObj[IP] = ip ;
    // ping
-   var ret = System.ping( ip, 3 ) ;
+   var ret = System.ping( ip ) ;
    var ping = eval( "(" + ret + ")" ) ;
    if ( true != ping[Reachable] )
    {
@@ -89,6 +89,7 @@ function main()
    if ( arrLen == 0 )
    {
       setLastErrMsg( "Not specified any host to check" ) ;
+      setLastError( SDB_INVALIDARG ) ;
       throw SDB_INVALIDARG ;
    }
    for( var i = 0; i < arrLen; i++ )

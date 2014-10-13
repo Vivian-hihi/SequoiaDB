@@ -27,8 +27,6 @@
    RET_JSON: the install result: { "HostInfo": [ { "errno": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.165" }, { "errno": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.166" } ] }
 */
 
-// TODO: remove this debug info
-
 //var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] };
 
 //var BUS_JSON = { "HostInfo": [  { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] };
@@ -390,6 +388,7 @@ function main()
    if ( arrLen == 0 )
    {
       setLastErrMsg( "Not specified any host to install" ) ;
+      setLastError( SDB_INVALIDARG ) ;
       throw SDB_INVALIDARG ;
    }
    // get os infomation

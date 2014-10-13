@@ -20,21 +20,21 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostInfo" : [ { "InstallHostName": "rhel64-test8", "InstallSvcName": "11820" } ] }
+   BUS_JSON: the format is: { "HostInfo" : [ { "UninstallHostName": "rhel64-test8", "UninstallSvcName": "11820" } ] }
 @return
    RET_JSON: the format is: {}
 */
 
-//var BUS_JSON = { "HostInfo" : [ { "InstallHostName": "rhel64-test8", "InstallSvcName": "11820" } ] } ;
+//var BUS_JSON = { "HostInfo" : [ { "UninstallHostName": "rhel64-test8", "UninstallSvcName": "11820" } ] } ;
 
 var RET_JSON = new Object() ;
 
 /* *****************************************************************************
 @discretion remove standalone
 @parameter
-   hostName[string]: install host name
-   svcName[string]: install svc name
-   agentPort[string]: the port of sdbcm in install host
+   hostName[string]: uninstall host name
+   svcName[string]: uninstall svc name
+   agentPort[string]: the port of sdbcm in standalone host
 @return void
 ***************************************************************************** */
 function removeStandalone( hostName, svcName, agentPort )
@@ -84,11 +84,11 @@ function main()
    for ( var i = 0; i < arrLen; i++ )
    {
       var obj = infoArr[i] ;
-      var installHostName   = obj[InstallHostName] ;
-      var installSvcName    = obj[InstallSvcName] ;
-      var agentPort         = getAgentPort( installHostName ) ;
+      var uninstallHostName   = obj[UninstallHostName] ;
+      var uninstallSvcName    = obj[UninstallSvcName] ;
+      var agentPort           = getAgentPort( uninstallHostName ) ;
       
-      removeStandalone( installHostName, installSvcName, agentPort ) ;
+      removeStandalone( uninstallHostName, uninstallSvcName, agentPort ) ;
       break ;
    }
    return RET_JSON ;
