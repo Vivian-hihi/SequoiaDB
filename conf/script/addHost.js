@@ -34,8 +34,6 @@
 
 
 var RET_JSON       = new Object() ;
-//RET_JSON[Errno]    = SDB_OK ;
-//RET_JSON[Detail]   = "" ;
 RET_JSON[HostInfo] = [] ;
 
 /* *****************************************************************************
