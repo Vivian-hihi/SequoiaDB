@@ -23,14 +23,12 @@
    SYS_JSON: the format is: { "VCoordSvcName": "11792" }
    ENV_JSON:
 @return
-   RET_JSON: the format is: {"errno":0,"detail":""}
+   RET_JSON: the format is: {}
 */
 
 //var SYS_JSON = { "VCoordSvcName": "11792" } ;
 
 var RET_JSON     = new Object() ;
-RET_JSON[Errno]  = SDB_OK ;
-RET_JSON[Detail] = "" ;
 
 function main()
 {

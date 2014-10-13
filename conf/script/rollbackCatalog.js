@@ -21,17 +21,15 @@
    2014-7-26 Zhaobo Tan  Init
 @parameter
    BUS_JSON:
-   SYS_JSON: the format is: { "VCoordSvcName": "11792" }
+   SYS_JSON: the format is: { "VCoordSvcName": "10000" }
    ENV_JSON:
 @return
-   RET_JSON: the format is: {"errno":0,"detail":""}
+   RET_JSON: the format is: {}
 */
 
 //var SYS_JSON = { "VCoordSvcName": "11792" } ;
 
 var RET_JSON     = new Object() ;
-RET_JSON[Errno]  = SDB_OK ;
-RET_JSON[Detail] = "" ;
 
 /* *****************************************************************************
 @discretion: remove catalog group

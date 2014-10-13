@@ -24,16 +24,13 @@
    SYS_JSON: the format is: { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" }
    ENV_JSON:
 @return
-   RET_JSON: the format is: {"errno":0,"detail":""}
+   RET_JSON: the format is: {}
 */
 
 // var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "11810", "InstallPath": "/opt/sequoiadb/database/coord", "InstallConfig": { "diaglevel": 3, "role": "coord", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } }; 
 // var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" };
 
 var RET_JSON     = new Object() ;
-RET_JSON[Errno]  = 0 ;
-RET_JSON[Detail] = "" ;
-
 
 /* *****************************************************************************
 @discretion: create coord

@@ -24,15 +24,12 @@
    SYS_JSON: the format is:
    ENV_JSON:
 @return
-   RET_JSON: the format is: {"errno":0,"detail":""}
+   RET_JSON: the format is: {}
 */
 
 //var BUS_JSON = { "HostName": "localhost", "IP": "127.0.0.1", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentPort":"11790" } ] } ;
 
 var RET_JSON          = new Object() ;
-RET_JSON[Errno]       = 0 ;
-RET_JSON[Detail]      = "" ;
-
 
 /* *****************************************************************************
 @discretion: get local db business install path

@@ -99,6 +99,7 @@ var Usable                       = "Usable" ;
 var Used                         = "Used" ;
 var User                         = "User" ;
 var UninstallGroupName           = "UninstallGroupName" ;
+var UninstallGroupNames          = "UninstallGroupNames" ;
 var UninstallHostName            = "UninstallHostName" ;
 var UninstallSvcName             = "UninstallSvcName" ;
 var VCoordHostName               = "VCoordHostName" ;

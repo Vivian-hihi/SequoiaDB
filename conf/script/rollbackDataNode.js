@@ -21,17 +21,15 @@
    2014-7-26 Zhaobo Tan  Init
 @parameter
    BUS_JSON: the format is:  
-   SYS_JSON: the format is: { "VCoordSvcName": "11792", "InstallGroupNames": [ "group1", "group2" ] }
+   SYS_JSON: the format is: { "VCoordSvcName": "10000", "UninstallGroupNames": [ "group1", "group2" ] }
    ENV_JSON:
 @return
-   RET_JSON: the format is: {"errno":0,"detail":""}
+   RET_JSON: the format is: {}
 */
 
-//var SYS_JSON = { "VCoordSvcName": "11792", "InstallGroupNames": [ "group3" ] } ;
+//var SYS_JSON = { "VCoordSvcName": "10000", "UninstallGroupNames": [ "group3" ] } ;
 
 var RET_JSON     = new Object() ;
-RET_JSON[Errno]  = SDB_OK ;
-RET_JSON[Detail] = "" ;
 
 /* *****************************************************************************
 @discretion: remove data group
@@ -106,7 +104,7 @@ function main()
 {
    var vCoordHostName   = System.getHostName() ;
    var vCoordSvcName    = SYS_JSON[VCoordSvcName] ;
-   var groups           = SYS_JSON[InstallGroupNames] ;
+   var groups           = SYS_JSON[UninstallGroupNames] ;
 
    // connect to virtual coord
    var db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
@@ -119,7 +117,7 @@ function main()
    }
    // remove data group
    removeDataGroup( db, groups ) ;
-print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;
 
 }
