@@ -92,6 +92,7 @@ namespace bson {
             memcpy( (char *)&time, &i, sizeof( unsigned ) ) ;
             memcpy( (char *)&time + sizeof( unsigned ), &secs,
                     sizeof( unsigned ) ) ;
+            return time ;
             //return reinterpret_cast<const unsigned long long*>(&i)[0];
         }
         long long asLL() const {
@@ -99,6 +100,7 @@ namespace bson {
             memcpy( (char *)&time, &i, sizeof( unsigned ) ) ;
             memcpy( (char *)&time + sizeof( unsigned ), &secs,
                     sizeof( unsigned ) ) ;
+            return time ;
             //return reinterpret_cast<const long long*>(&i)[0];
         }
 
