@@ -18,11 +18,11 @@
 	<!-- <property name="install.package.path" value="${test.basedir}" /> -->
 	<!-- <property name="is.standalone.mode" value="false" /> -->
 	
-	<!-- <taskdef resource="net/sf/antcontrib/antlib.xml">
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
-	</taskdef> -->
+	</taskdef>
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<pathelement location="${test.machine.deploy.path}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
