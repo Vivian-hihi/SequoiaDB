@@ -1616,15 +1616,14 @@ namespace engine
       shareTask = iter->second ;
       _lock.release() ;
 
-      rc    = shareTask->cancel() ;
+      shareTask->setDetail( detail ) ;
+      rc = shareTask->cancel() ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "cancel task failed:taskID="OSS_LL_PRINT_FORMAT
                  ",rc=%d", taskID, rc ) ;
          goto error ;
       }
-
-      shareTask->setDetail( detail ) ;
 
       _lock.get() ;
       _mapTasks.erase( taskID ) ;
