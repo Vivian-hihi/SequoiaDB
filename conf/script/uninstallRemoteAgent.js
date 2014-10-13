@@ -81,7 +81,6 @@ function stopRemoteSdbcmProgram( ssh, osInfo )
       cmd += OMA_PATH_TEMP_BIN_DIR_L ;
       cmd += OMA_PROG_SDBCMTOP_L ;
       cmd += " " + OMA_OPTION_SDBCMART_1 ;
-      // TODO: add try&catch
       try
       {
          ssh.exec( cmd ) ;

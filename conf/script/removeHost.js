@@ -21,7 +21,7 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is:
+   BUS_JSON: the format is: { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" }
    SYS_JSON: {}
    ENV_JSON: {}
    OTHER_JSON: {}

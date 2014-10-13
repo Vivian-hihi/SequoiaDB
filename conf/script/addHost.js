@@ -34,8 +34,8 @@
 
 
 var RET_JSON       = new Object() ;
-RET_JSON[Errno]    = SDB_OK ;
-RET_JSON[Detail]   = "" ;
+//RET_JSON[Errno]    = SDB_OK ;
+//RET_JSON[Detail]   = "" ;
 RET_JSON[HostInfo] = [] ;
 
 /* *****************************************************************************
@@ -205,6 +205,7 @@ function main()
    if ( arrLen == 0 )
    {
       setLastErrMsg( "Not specified any hosts to add" ) ;
+      setLastError( SDB_INVALIDARG ) ;
       throw SDB_INVALIDARG ;
    }
    // get os infomation
@@ -240,15 +241,25 @@ function main()
       }
       catch ( e )
       {
-         retObj[Errno]       = GETLASTERROR( e, false ) ;
-         retObj[Detail]      = GETLASTERRMSG() ;
-         RET_JSON[Errno]     = retObj[Errno] ;
-         RET_JSON[Detail]    = retObj[IP] + ": " + retObj[Detail] ;
-         break ;
+         if ( "number" == typeof(e) && e < 0 )
+         {
+            retObj[Errno] = GETLASTERROR( e, false ) ;
+            retObj[Detail] = GETLASTERRMSG() ;
+            RET_JSON[HostInfo].push( retObj ) ;
+            setLastErrMsg( "Failed to install sdbcm in [" + ip + "]: " + retObj[Detail] ) ;
+            setLastError( e ) ;
+            throw e ;
+         }
+         else
+         {
+            setLastErrMsg( "Failed to install sdbcm in [" + ip + "]" ) ;
+            setLastError( SDB_SYS ) ;
+            throw SDB_SYS ;
+         }
       }
       RET_JSON[HostInfo].push( retObj ) ;
    }
-print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    // return the result
    return RET_JSON ;
 }
