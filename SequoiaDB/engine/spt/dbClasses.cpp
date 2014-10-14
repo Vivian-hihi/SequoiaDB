@@ -54,7 +54,7 @@
 
 #define REPORT_RC(cond, funcName, rc)                       \
    do {                                                     \
-      engine::sdbSetErrMsg( NULL ) ;                        \
+      engine::sdbSetErrMsg( getErrDesp( rc ) ) ;            \
       engine::sdbSetErrno( rc ) ;                           \
       if ( ! (cond) ) {                                     \
          ret = JS_FALSE ;                                   \
