@@ -1932,6 +1932,11 @@ namespace engine
          for ( UINT i = 0 ; i < pTable->dwNumEntries ; i++ )
          {
             MIB_IFROW Row = pTable->table[i];
+            if ( IF_TYPE_ETHERNET_CSMACD != Row.dwType )
+            {
+               continue ;
+            }
+
             BSONObjBuilder innerBuilder ;
             stringstream ss ;
             ss << "eth" << Row.dwIndex ;
@@ -1967,7 +1972,7 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      
+
    done:
       if ( NULL != pTable )
       {
@@ -2005,7 +2010,7 @@ namespace engine
       }
 
       rval.setBSONObj( "", builder.obj() ) ;
-      
+
    done:
       return rc ;
    error:
