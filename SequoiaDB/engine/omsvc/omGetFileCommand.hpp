@@ -749,6 +749,12 @@ namespace engine
          void            _appendErrorResult( BSONArrayBuilder &arrayBuilder, 
                                              const string &host, INT32 err,
                                              const string &detail ) ;
+         void            _formatHostStatusOneNet( BSONObj &oneNet ) ;
+         void            _formatHostStatusNet( BSONObj &net ) ;
+         void            _formatHostStatusCPU( BSONObj &cpu ) ;
+         void            _formatHostStatus( BSONObj &status ) ;
+
+         void            _seperateMegaBitValue( BSONObj &obj, long value ) ;
    } ;
 
    class omPredictCapacity : public omAuthCommand

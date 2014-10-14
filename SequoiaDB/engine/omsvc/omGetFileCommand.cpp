@@ -3857,14 +3857,7 @@ namespace engine
          goto error ;
       }
 
-      if ( existType == "" )
-      {
-         // no record
-         goto done ;
-      }
-
-      if ( businessType != existType || deployMod != existDeployMod 
-           || clusterName != existClusterName )
+      if ( existType != "" )
       {
          rc = SDB_INVALIDARG ;
          _errorDetail = string( "business conflict with same name:exist=[" ) 
@@ -7292,6 +7285,7 @@ namespace engine
          }
 
          BSONObj result = objVec[0] ;
+         _formatHostStatus( result ) ;
          arrayBuilder.append( result ) ;
       }
 
@@ -7302,6 +7296,216 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   /*
+      {
+         "Name":"eth1","RXBytes":15686963,"RXPackets":192255,"RXErrors":0,
+         "RXDrops":0,"TXBytes":4064080,"TXPackets":42780,"TXErrors":0,
+         "TXDrops":0
+      }
+   */
+   void omQueryHostStatusCommand::_formatHostStatusOneNet( BSONObj &oneNet )
+   {
+      BSONElement rxbyteEle  = oneNet.getField( OM_BSON_FIELD_NET_RXBYTES ) ;
+      BSONElement rxpackEle  = oneNet.getField( OM_BSON_FIELD_NET_RXPACKETS ) ;
+      BSONElement rxerrorEle = oneNet.getField( OM_BSON_FIELD_NET_RXERRORS ) ;
+      BSONElement rxdropEle  = oneNet.getField( OM_BSON_FIELD_NET_RXDROPS ) ;
+      if ( !rxbyteEle.isNumber() || !rxpackEle.isNumber() 
+           || !rxerrorEle.isNumber() || !rxdropEle.isNumber() )
+      {
+         return ;
+      }
+
+      BSONObj newRxByte ;
+      _seperateMegaBitValue( newRxByte, rxbyteEle.numberLong() ) ;
+
+      BSONObj newRxPack ;
+      _seperateMegaBitValue( newRxPack, rxpackEle.numberLong() ) ;
+
+      BSONObj newRxErr ;
+      _seperateMegaBitValue( newRxErr, rxerrorEle.numberLong() ) ;
+
+      BSONObj newRxDrop ;
+      _seperateMegaBitValue( newRxDrop, rxdropEle.numberLong() ) ;
+
+      BSONElement txbyteEle  = oneNet.getField( OM_BSON_FIELD_NET_TXBYTES ) ;
+      BSONElement txpackEle  = oneNet.getField( OM_BSON_FIELD_NET_TXPACKETS ) ;
+      BSONElement txerrorEle = oneNet.getField( OM_BSON_FIELD_NET_TXERRORS ) ;
+      BSONElement txdropEle  = oneNet.getField( OM_BSON_FIELD_NET_TXDROPS ) ;
+      if ( !txbyteEle.isNumber() || !txpackEle.isNumber() 
+           || !txerrorEle.isNumber() || !txdropEle.isNumber() )
+      {
+         return ;
+      }
+
+      BSONObj newTxByte ;
+      _seperateMegaBitValue( newTxByte, txbyteEle.numberLong() ) ;
+
+      BSONObj newTxPack ;
+      _seperateMegaBitValue( newTxPack, txpackEle.numberLong() ) ;
+
+      BSONObj newTxErr ;
+      _seperateMegaBitValue( newTxErr, txerrorEle.numberLong() ) ;
+
+      BSONObj newTxDrop ;
+      _seperateMegaBitValue( newTxDrop, txdropEle.numberLong() ) ;
+
+      oneNet = BSON( OM_BSON_FIELD_NET_NAME 
+                     << oneNet.getStringField( OM_BSON_FIELD_NET_NAME )
+                     << OM_BSON_FIELD_NET_RXBYTES << newRxByte
+                     << OM_BSON_FIELD_NET_RXPACKETS << newRxPack 
+                     << OM_BSON_FIELD_NET_RXERRORS << newRxErr 
+                     << OM_BSON_FIELD_NET_RXDROPS << newRxDrop
+                     << OM_BSON_FIELD_NET_TXBYTES << newTxByte
+                     << OM_BSON_FIELD_NET_TXPACKETS << newTxPack 
+                     << OM_BSON_FIELD_NET_TXERRORS << newTxErr 
+                     << OM_BSON_FIELD_NET_TXDROPS << newTxDrop ) ;
+   }
+
+   /*
+      {
+         "Net":[
+            {
+               "Name":"eth1","RXBytes":15686963,"RXPackets":192255,"RXErrors":0,
+               "RXDrops":0,"TXBytes":4064080,"TXPackets":42780,"TXErrors":0,
+               "TXDrops":0
+            }
+         ]
+      }
+   */
+   void omQueryHostStatusCommand::_formatHostStatusNet( BSONObj &net )
+   {
+      BSONElement netEle = net.getField( OM_BSON_FIELD_NET ) ;
+      if ( Array != netEle.type() )
+      {
+         return ;
+      }
+
+      BSONArrayBuilder arrayBuilder ;
+
+      BSONObj nets = net.getObjectField( OM_BSON_FIELD_NET ) ;
+      BSONObjIterator iter( nets ) ;
+      while ( iter.more() )
+      {
+         BSONElement ele = iter.next() ;
+         if ( ele.type() != Object )
+         {
+            return ;
+         }
+
+         BSONObj oneNet = ele.embeddedObject() ;
+         _formatHostStatusOneNet( oneNet ) ;
+
+         arrayBuilder.append( oneNet ) ;
+      }
+
+      net = BSON( OM_BSON_FIELD_NET << arrayBuilder.arr() ) ;
+   }
+
+   void omQueryHostStatusCommand::_seperateMegaBitValue( BSONObj &obj, 
+                                                         long value )
+   {
+      INT32 megabit = ( INT32 ) value/OM_SIZE_MEGABIT ;
+      INT32 unit    = ( INT32 ) value%OM_SIZE_MEGABIT ;
+      obj = BSON( OM_BSON_FIELD_CPU_MEGABIT << megabit 
+                  << OM_BSON_FIELD_CPU_UNIT  << unit ) ;
+   }
+
+   /*
+      {
+         CPU: { "Sys":349550,"Idle":404327420,"Other":149190,"User":402630 }
+      }
+   */
+   void omQueryHostStatusCommand::_formatHostStatusCPU( BSONObj &cpu )
+   {
+      BSONElement cpuEle = cpu.getField( OM_BSON_FIELD_CPU ) ;
+      if ( Object != cpuEle.type() )
+      {
+         return ;
+      }
+
+      BSONObj cpuValue     = cpuEle.embeddedObject() ;
+
+      BSONElement sysEle   = cpuValue.getField( OM_BSON_FIELD_CPU_SYS ) ;
+      BSONElement idleEle  = cpuValue.getField( OM_BSON_FIELD_CPU_IDLE ) ;
+      BSONElement otherEle = cpuValue.getField( OM_BSON_FIELD_CPU_OTHER ) ;
+      BSONElement userEle  = cpuValue.getField( OM_BSON_FIELD_CPU_USER ) ;
+      if ( !sysEle.isNumber() || !idleEle.isNumber() || !otherEle.isNumber()
+           || !userEle.isNumber() )
+      {
+         return ;
+      }
+
+      BSONObj newSys ;
+      _seperateMegaBitValue( newSys, sysEle.numberLong() ) ;
+
+      BSONObj newIdle ;
+      _seperateMegaBitValue( newIdle, idleEle.numberLong() ) ;
+
+      BSONObj newOther ;
+      _seperateMegaBitValue( newOther, otherEle.numberLong() ) ;
+
+      BSONObj newUser ;
+      _seperateMegaBitValue( newUser, userEle.numberLong() ) ;
+
+      BSONObj cpuNewValue = BSON( OM_BSON_FIELD_CPU_SYS << newSys 
+                                  << OM_BSON_FIELD_CPU_IDLE << newIdle
+                                  << OM_BSON_FIELD_CPU_OTHER << newOther
+                                  << OM_BSON_FIELD_CPU_USER << newUser ) ;
+
+      cpu = BSON( OM_BSON_FIELD_CPU << cpuNewValue ) ;
+   }
+
+   void omQueryHostStatusCommand::_formatHostStatus( BSONObj &status )
+   {
+      BSONObj filterCPU = BSON( OM_BSON_FIELD_CPU << "" ) ;
+      BSONObj cpu       = status.filterFieldsUndotted( filterCPU, true ) ;
+      BSONObj others    = status.filterFieldsUndotted( filterCPU, false ) ;
+
+      _formatHostStatusCPU( cpu ) ;
+
+      BSONObj filterNet = BSON( OM_BSON_FIELD_NET << "" ) ;
+      BSONObj net  = others.filterFieldsUndotted( filterNet, true ) ;
+      BSONObj left = others.filterFieldsUndotted( filterNet, false ) ;
+
+      /*
+         {
+           "Net": { 
+                     "CalendarTime": 1413277808, 
+                     "Net": [ 
+                     { 
+                        "Name": "lo", "RXBytes": 5125811, "RXPackets": 95615, 
+                        "RXErrors": 0, "RXDrops": 0, "TXBytes": 5125811, 
+                        "TXPackets": 95615, "TXErrors": 0, "TXDrops": 0 
+                     } 
+                     ]
+                  }
+         }
+      */
+      BSONElement netEle = net.getField( OM_BSON_FIELD_NET ) ;
+      if ( Object != netEle.type() )
+      {
+         return ;
+      }
+
+      BSONObj netValue = netEle.embeddedObject() ;
+      
+      BSONObj innerNetOther = netValue.filterFieldsUndotted( filterNet, false ) ;
+      BSONObj innerNet = netValue.filterFieldsUndotted( filterNet, true ) ;
+      _formatHostStatusNet( innerNet ) ;
+
+      BSONObjBuilder innerBuilder ;
+      innerBuilder.appendElements( innerNetOther ) ;
+      innerBuilder.appendElements( innerNet ) ;
+      BSONObj newNet = BSON( OM_BSON_FIELD_NET << innerBuilder.obj() ) ;
+
+      BSONObjBuilder builder ;
+      builder.appendElements( cpu ) ;
+      builder.appendElements( newNet ) ;
+      builder.appendElements( left ) ;
+
+      status = builder.obj() ;
    }
 
    INT32 omQueryHostStatusCommand::doCommand()

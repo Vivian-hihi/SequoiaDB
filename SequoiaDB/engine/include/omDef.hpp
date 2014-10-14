@@ -65,6 +65,8 @@ namespace engine
    // Session Time out
    #define OM_REST_SESSION_TIMEOUT           ( 10 * 60 * 1000 )
 
+   #define OM_SIZE_MEGABIT                   ( 1024 * 1024 )
+
    #define OM_INT32_LENGTH                   (20)
    #define OM_INT64_LENGTH                   (20)
 
@@ -115,20 +117,20 @@ namespace engine
    #define OM_HOST_FIELD_OS                  "OS"
    #define OM_HOST_FIELD_OM                  "OM"
    #define OM_HOST_FIELD_MEMORY              "Memory"
-   
+
    #define OM_HOST_FIELD_DISK                "Disk"
    #define OM_HOST_FIELD_DISK_NAME           "Name"
    #define OM_HOST_FIELD_DISK_SIZE           "Size"
    #define OM_HOST_FIELD_DISK_MOUNT          "Mount"
    #define OM_HOST_FIELD_DISK_FREE_SIZE      "Free"
    #define OM_HOST_FIELD_DISK_USED           "Used"
-   
+
    #define OM_HOST_FIELD_CPU                 "CPU"
 
    #define OM_HOST_FIELD_NET                 "Net"
    #define OM_HOST_FIELD_NET_NAME            "Name"
    #define OM_HOST_FIELD_NET_IP              OM_HOST_FIELD_IP
-   
+
    #define OM_HOST_FIELD_PORT                "Port"
    #define OM_HOST_FIELD_SERVICE             "Service"
    #define OM_HOST_FIELD_SAFETY              "Safety"
@@ -305,7 +307,7 @@ namespace engine
 
    // MB
    #define  OM_MIN_DISK_FREE_SIZE            (600)
-   
+
    // array
    #define  OM_BSON_FIELD_CPU                OM_HOST_FIELD_CPU
    // array
@@ -337,7 +339,7 @@ namespace engine
    // om rest list_host_req
    #define  OM_LIST_HOST_REQ                 "list host"
    // *****************************************************************
-   
+
    // *****************************************************************
    // om rest query_host_req
    #define  OM_QUERY_HOST_REQ                "query host"
@@ -346,6 +348,28 @@ namespace engine
    // *****************************************************************
    // query host status
    #define  OM_QUERY_HOST_STATUS_REQ         "query host status"
+
+   #define  OM_BSON_FIELD_CPU_SYS            "Sys"
+   #define  OM_BSON_FIELD_CPU_IDLE           "Idle"
+   #define  OM_BSON_FIELD_CPU_OTHER          "Other"
+   #define  OM_BSON_FIELD_CPU_USER           "User"
+
+   #define  OM_BSON_FIELD_CPU_MEGABIT        "Megabit"
+   #define  OM_BSON_FIELD_CPU_UNIT           "Unit"
+
+   #define  OM_BSON_FIELD_NET_MEGABIT        OM_BSON_FIELD_CPU_MEGABIT
+   #define  OM_BSON_FIELD_NET_UNIT           OM_BSON_FIELD_CPU_UNIT
+
+   #define  OM_BSON_FIELD_NET_NAME           "Name"
+   #define  OM_BSON_FIELD_NET_RXBYTES        "RXBytes"
+   #define  OM_BSON_FIELD_NET_RXPACKETS      "RXPackets"
+   #define  OM_BSON_FIELD_NET_RXERRORS       "RXErrors"
+   #define  OM_BSON_FIELD_NET_RXDROPS        "RXDrops"
+   #define  OM_BSON_FIELD_NET_TXBYTES        "TXBytes"
+   #define  OM_BSON_FIELD_NET_TXPACKETS      "TXPackets"
+   #define  OM_BSON_FIELD_NET_TXERRORS       "TXErrors"
+   #define  OM_BSON_FIELD_NET_TXDROPS        "TXDrops"
+
    // *****************************************************************
 
    // om rest query_business_type_req
@@ -444,7 +468,7 @@ namespace engine
 
    #define  OM_REST_BUSINESS_NAME            OM_BSON_BUSINESS_NAME
    #define  OM_REST_SVCNAME                  FIELD_NAME_SERVICE_NAME
-   
+
    //******************************************************************
 
    // om list business req
