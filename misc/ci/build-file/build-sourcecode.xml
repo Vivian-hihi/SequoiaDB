@@ -50,6 +50,14 @@
 			<arg line="${compile.arg.line} --all -j 4" />
 		</exec>
 
+		<echo message="Compile the connector of postgresql..." />
+		<exec executable="make" dir="${WORKSPACE}/sequoiadb/driver/postgresql" failonerror="false">
+			<arg line=" local" />
+		</exec>
+		<exec executable="make" dir="${WORKSPACE}/sequoiadb/driver/postgresql" failonerror="false">
+			<arg line=" all" />
+		</exec>
+
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/java/build_driver.xml" >
 		   <property name="JDK.VERIONS.5" value="${choise.jdk5}" />
 		   <property name="base.dir" value="${WORKSPACE}/sequoiadb/driver/java" />
@@ -105,6 +113,7 @@
 		<mkdir dir="${DRIVER.DIR}/lib" />
 		<mkdir dir="${DRIVER.DIR}/python" />
 		<mkdir dir="${DRIVER.DIR}/samples" />
+		<mkdir dir="${DRIVER.DIR}/postgresql" />
 
     	<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
@@ -119,6 +128,10 @@
 		<copy todir="${DRIVER.DIR}/include">
 			<fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
 		</copy>
+
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.so" />
+		<!-- <copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.control" tofile="${DRIVER.DIR}/postgresql/sdb_fdw.control" />
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw--1.0.sql" tofile="${DRIVER.DIR}/postgresql/sdb_fdw--1.0.sql" /> -->
 
 	  	<property name="test-type-linux-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.4.6,5.5.0" />
 	  	<property name="test-type-win32-list" value="5.3.18,5.4.15" />
@@ -202,6 +215,9 @@
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/www" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/tools/server/php" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/python" />
+		<mkdir dir="${RELEASE_DIR}/sequoiadb/postgresql" />
+
+		<mkdir dir="${RELEASE_DIR}/sequoiadb/packet" />
 
 		<if>
 			<equals arg1="${compile.debug}" arg2="true" />
@@ -248,6 +264,8 @@
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${RELEASE_DIR}/sequoiadb/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
+
+		<copy file="${CODE_DIR}/driver/postgresql/sdb_fdw.so" tofile="${RELEASE_DIR}/sequoiadb/postgresql/sdb_fdw.so" />
 		
 		<if>
 			<equals arg1="${os.arch}" arg2="ppc64" />
