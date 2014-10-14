@@ -232,10 +232,7 @@ namespace engine
       }
       else if ( startTimerCount >= PMD_START_WAIT_TIME )
       {
-         PMD_SHUTDOWN_DB( SDB_TIMEOUT ) ;
-         PD_LOG( PDERROR, "Start failed(wait business ative timeout)" ) ;
-         rc = SDB_TIMEOUT ;
-         goto error ;
+         PD_LOG( PDWARNING, "Start warning(wait business ative timeout)" ) ;
       }
 
 #if defined (_LINUX)
