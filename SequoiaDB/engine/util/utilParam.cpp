@@ -230,6 +230,7 @@ namespace engine
 
    INT32 utilGetServiceByConfigPath( const string & confPath,
                                      string & svcname,
+                                     const string &defaultName,
                                      BOOLEAN allowFileNotExist )
    {
       INT32 rc = SDB_OK ;
@@ -238,7 +239,14 @@ namespace engine
       desc.add_options()
          ( PMD_OPTION_SVCNAME, po::value<string>(), "" ) ;
       CHAR conf[OSS_MAX_PATHSIZE + 1] = { 0 } ;
-      svcname = boost::lexical_cast<string>(OSS_DFT_SVCPORT) ;
+      if ( defaultName.empty() )
+      {
+         svcname = boost::lexical_cast<string>(OSS_DFT_SVCPORT) ;
+      }
+      else
+      {
+         svcname = defaultName ;
+      }
 
       rc = utilBuildFullPath ( confPath.c_str(), PMD_DFT_CONF,
                                OSS_MAX_PATHSIZE, conf ) ;

@@ -113,6 +113,8 @@ namespace engine
       _utilNodeInfo()
       {
          _pid        = OSS_INVALID_PID ;
+         _type       = 0 ;
+         _role       = 0 ;
          _groupID    = 0 ;
          _nodeID     = 0 ;
          _primary    = -1 ;

@@ -51,6 +51,7 @@
 #include "utilParam.hpp"
 #include "ossVer.h"
 #include "omagentDef.hpp"
+#include "ossIO.hpp"
 
 #include <vector>
 #include <string>
@@ -61,13 +62,18 @@ using namespace std;
 namespace engine
 {
 
-   #define PMD_OPTION_CREATE        "create"
+   #define PMD_OPTION_FORCE         "force"
+   #define PMD_OPTION_OPTIONS       "options"
 
    #define COMMANDS_OPTIONS \
-       ( PMD_COMMANDS_STRING(PMD_OPTION_HELP, ",h"), "help" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_HELP, ",h"), "help" ) \
        ( PMD_OPTION_VERSION, "version" ) \
-       ( PMD_COMMANDS_STRING(PMD_OPTION_CONFPATH, ",c"), po::value<string>(), "configure file path" ) \
-       ( PMD_OPTION_CREATE, "create when not exist" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_CONFPATH, ",c"), po::value<string>(), "configure file path" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_SVCNAME, ",p"), po::value<string>(), "service name, separated by comma (',')" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_TYPE, ",t"), po::value<string>(), "node type: db/om/all, default: db" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_ROLE, ",r" ), po::value<string>(), "role type: coord/data/catalog/om" ) \
+       ( PMD_OPTION_FORCE, "force start when the config not exist" ) \
+       ( PMD_COMMANDS_STRING( PMD_OPTION_OPTIONS, ",o" ), po::value<string>(), "SequoiaDB start arguments, but not use '-c/--confpath/-p/--svcname'" ) \
 
 
    #define COMMANDS_HIDE_OPTIONS \
@@ -84,7 +90,6 @@ namespace engine
       PMD_ADD_PARAM_OPTIONS_BEGIN ( all )
          COMMANDS_OPTIONS
          COMMANDS_HIDE_OPTIONS
-         ( "*", po::value<string>(), "" )
       PMD_ADD_PARAM_OPTIONS_END
    }
 
@@ -113,14 +118,16 @@ namespace engine
                            po::variables_map &vm,
                            INT32 argc, CHAR **argv,
                            vector< string > &configs,
-                           vector< utilNodeInfo > &nodesinfo )
+                           vector< utilNodeInfo > &nodesinfo,
+                           INT32 &typeFilter, INT32 &roleFilter,
+                           string &options )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTART_RESVARG );
       string confPath ;
       utilNodeInfo info ;
 
-      rc = utilReadCommandLine( argc, argv, all, vm, TRUE ) ;
+      rc = utilReadCommandLine( argc, argv, all, vm, FALSE ) ;
       if ( rc )
       {
          goto error ;
@@ -146,6 +153,81 @@ namespace engine
          nodesinfo.push_back( info ) ;
       }
 
+      if ( vm.count( PMD_OPTION_SVCNAME ) )
+      {
+         vector< string > listServices ;
+         CHAR localPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         CHAR path[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         string svcname = vm[PMD_OPTION_SVCNAME].as<string>() ;
+         // break service names using ';'
+         rc = utilSplitStr( svcname, listServices, ", \t" ) ;
+         if ( rc )
+         {
+            std::cout << "Parse svcname failed: " << rc << endl ;
+            goto error ;
+         }
+         ossGetEWD( localPath, OSS_MAX_PATHSIZE ) ;
+         utilCatPath( localPath, OSS_MAX_PATHSIZE, SDBCM_LOCAL_PATH ) ;
+         for ( UINT32 i = 0 ; i < listServices.size() ; ++i )
+         {
+            utilBuildFullPath( localPath, listServices[ i ].c_str(),
+                               OSS_MAX_PATHSIZE, path ) ;
+            configs.push_back( string( path ) ) ;
+            info._svcname = listServices[ i ] ;
+            nodesinfo.push_back( info ) ;
+         }
+      }
+      if ( vm.count( PMD_OPTION_TYPE ) )
+      {
+         string listType = vm[ PMD_OPTION_TYPE ].as<string>() ;
+         if ( 0 == ossStrcasecmp( listType.c_str(), "db" ) )
+         {
+            typeFilter = SDB_TYPE_DB ;
+         }
+         else if ( 0 == ossStrcasecmp( listType.c_str(), "om" ) )
+         {
+            typeFilter = SDB_TYPE_OM ;
+         }
+         else if ( 0 == ossStrcasecmp( listType.c_str(), "all" ) )
+         {
+            typeFilter = -1 ;
+         }
+         else
+         {
+            std::cout << "type invalid" << endl ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      if ( vm.count( PMD_OPTION_ROLE ))
+      {
+         string roleTemp = vm[PMD_OPTION_ROLE].as<string>() ;
+         roleFilter = utilGetRoleEnum( roleTemp.c_str() ) ;
+         if ( SDB_ROLE_MAX == roleFilter ||
+              SDB_ROLE_OMA == roleFilter )
+         {
+            std::cout << "role invalid" << endl ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      if ( vm.count( PMD_OPTION_OPTIONS ) )
+      {
+         options = vm[ PMD_OPTION_OPTIONS ].as<string>() ;
+         // can't include '-c/--confpath/-p/--svcname'
+         if ( ossStrstr( options.c_str(), "-c" ) ||
+              ossStrstr( options.c_str(), "-p" ) ||
+              ossStrstr( options.c_str(),
+                         SDBCM_OPTION_PREFIX PMD_OPTION_SVCNAME ) ||
+              ossStrstr( options.c_str(),
+                         SDBCM_OPTION_PREFIX PMD_OPTION_CONFPATH ) )
+         {
+            std::cout << "options invalid" << std::endl ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_SDBSTART_RESVARG, rc ) ;
       return rc ;
@@ -154,25 +236,34 @@ namespace engine
    }
 
    void buildListArgs( const CHAR * pEnginePathName,
-                       BOOLEAN useAgrs,
-                       INT32 argc, CHAR **argv,
-                       const CHAR *pConfPath,
+                       BOOLEAN isForce,
+                       const CHAR * pConfPath,
+                       const CHAR * pOptions,
+                       const CHAR * svcname,
                        list< const CHAR *> &listArgv )
    {
       listArgv.clear() ;
       listArgv.push_back( pEnginePathName ) ;
 
-      if ( useAgrs )
+      if ( pConfPath && 0 != ossStrlen( pConfPath ) )
       {
-         for ( INT32 i = 1 ; i < argc ; ++i )
+         // when is force, the config file is not exist, can't add config info
+         if ( !isForce || 0 == ossAccess( pConfPath ) )
          {
-            listArgv.push_back( argv[ i ] ) ;
+            listArgv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_CONFPATH ) ;
+            listArgv.push_back( pConfPath ) ;
          }
       }
-      else
+
+      if ( pOptions && 0 != ossStrlen( pOptions ) )
       {
-         listArgv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_CONFPATH ) ;
-         listArgv.push_back( pConfPath ) ;
+         listArgv.push_back( pOptions ) ;
+      }
+      // when is force, need add svcname
+      if ( isForce && svcname && 0 != ossStrlen( svcname ) )
+      {
+         listArgv.push_back( SDBCM_OPTION_PREFIX PMD_OPTION_SVCNAME ) ;
+         listArgv.push_back( svcname ) ;
       }
    }
 
@@ -187,10 +278,14 @@ namespace engine
       vector< string > configs ;
       vector< utilNodeInfo > nodesInfo ;
       list<const CHAR*> listArgs ;
-      BOOLEAN useAgr = TRUE ;
-      INT32 total = 0 ;
-      INT32 succeedNum = 0 ;
-      INT32 failedNum = 0 ;
+      BOOLEAN useAgr    = TRUE ;
+      INT32 typeFilter  = SDB_TYPE_DB ;
+      INT32 roleFilter  =  -1 ;
+      string options ;
+      BOOLEAN isForce   = FALSE ;
+      INT32 total       = 0 ;
+      INT32 succeedNum  = 0 ;
+      INT32 failedNum   = 0 ;
       po::options_description desc ( "Command options" ) ;
       po::options_description all ( "Command options" ) ;
       po::variables_map vm ;
@@ -199,7 +294,8 @@ namespace engine
       init( desc, all ) ;
 
       // validate arguments
-      rc = resolveArgument ( desc, all, vm, argc, argv, configs, nodesInfo ) ;
+      rc = resolveArgument ( desc, all, vm, argc, argv, configs, nodesInfo,
+                             typeFilter, roleFilter, options ) ;
       if ( rc )
       {
          if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
@@ -217,6 +313,10 @@ namespace engine
       if ( !vm.count( PMD_OPTION_CURUSER ) )
       {
          UTIL_CHECK_AND_CHG_USER() ;
+      }
+      if ( vm.count( PMD_OPTION_FORCE ) )
+      {
+         isForce = TRUE ;
       }
 
       // make path
@@ -239,7 +339,6 @@ namespace engine
       if ( configs.size() == 0 )
       {
          useAgr = FALSE ;
-         vector< string > svcnames ;
          utilNodeInfo info ;
          // get all configs
          CHAR localPath [ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
@@ -252,8 +351,8 @@ namespace engine
                        rc ) ;
             goto error ;
          }
-
-         rc = ossEnumSubDirs( localPath, svcnames, 1 ) ;
+         rc = utilEnumNodes( localPath, nodesInfo, typeFilter,
+                             NULL, roleFilter ) ;
          if ( rc )
          {
             ossPrintf( "Error: Enum [%s] sub dirs failed: %d"OSS_NEWLINE,
@@ -261,12 +360,11 @@ namespace engine
             goto error ;
          }
 
-         for ( UINT32 i = 0 ; i < svcnames.size() ; ++i )
+         for ( UINT32 i = 0 ; i < nodesInfo.size() ; ++i )
          {
             configs.push_back( string( localPath ) +
                                string( OSS_FILE_SEP ) +
-                               svcnames[ i ] ) ;
-            nodesInfo.push_back( info ) ;
+                               nodesInfo[ i ]._svcname ) ;
          }
       }
 
@@ -279,7 +377,8 @@ namespace engine
          ++total ;
          utilNodeInfo &info = nodesInfo[ j ] ;
          // first check
-         rc = utilGetServiceByConfigPath( configs[ j ], svcname ) ;
+         rc = utilGetServiceByConfigPath( configs[ j ], svcname,
+                                          info._svcname ) ;
          if ( SDB_OK == rc && !svcname.empty() &&
               serviceExists( svcname.c_str(), info ) )
          {
@@ -291,8 +390,11 @@ namespace engine
          }
 
          // start node
-         buildListArgs( enginePathName, useAgr, argc, argv,
-                        configs[ j ].c_str(), listArgs ) ;
+         buildListArgs( enginePathName, isForce,
+                        configs[ j ].c_str(),
+                        options.c_str(),
+                        svcname.c_str(),
+                        listArgs ) ;
          tmpRC = ossStartProcess( listArgs, info._pid ) ;
          if ( tmpRC )
          {

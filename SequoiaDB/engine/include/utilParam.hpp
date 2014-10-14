@@ -63,6 +63,7 @@ namespace engine
 
    INT32 utilGetServiceByConfigPath( const string& confPath,
                                      string &svcname,
+                                     const string &defaultName,
                                      BOOLEAN allowFileNotExist = TRUE ) ;
 
    INT32 utilGetRoleByConfigPath( const string& confPath,
