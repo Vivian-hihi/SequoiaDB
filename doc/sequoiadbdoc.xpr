@@ -825,6 +825,7 @@
                     <file name="references/methods/topics/dbupdate.dita"/>
                     <file name="references/methods/topics/deleteCurrent_en.dita"/>
                     <file name="references/methods/topics/deleteCurrent.dita"/>
+                    <file name="references/methods/topics/deleteLob.dita"/>
                     <file name="references/methods/topics/detachCL_en.dita"/>
                     <file name="references/methods/topics/detachCL.dita"/>
                     <file name="references/methods/topics/domainalter.dita"/>
@@ -858,6 +859,7 @@
                     <file name="references/methods/topics/getHostName.dita"/>
                     <file name="references/methods/topics/getIndex_en.dita"/>
                     <file name="references/methods/topics/getIndex.dita"/>
+                    <file name="references/methods/topics/getlob.dita"/>
                     <file name="references/methods/topics/getMaster_en.dita"/>
                     <file name="references/methods/topics/getMaster.dita"/>
                     <file name="references/methods/topics/getNode_en.dita"/>
@@ -885,6 +887,7 @@
                     <file name="references/methods/topics/listDomains.dita"/>
                     <file name="references/methods/topics/listIndexes_en.dita"/>
                     <file name="references/methods/topics/listIndexes.dita"/>
+                    <file name="references/methods/topics/listLobs.dita"/>
                     <file name="references/methods/topics/listProcedures_en.dita"/>
                     <file name="references/methods/topics/listProcedures.dita"/>
                     <file name="references/methods/topics/listReplicaGroups_en.dita"/>
@@ -901,6 +904,7 @@
                     <file name="references/methods/topics/nodestart.dita"/>
                     <file name="references/methods/topics/nodestop_en.dita"/>
                     <file name="references/methods/topics/nodestop.dita"/>
+                    <file name="references/methods/topics/putlob.dita"/>
                     <file name="references/methods/topics/remove_en.dita"/>
                     <file name="references/methods/topics/remove.dita"/>
                     <file name="references/methods/removeBackup_en.dita"/>

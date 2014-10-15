@@ -63,6 +63,11 @@
      <topicref href="topics/dbupdate.dita"/>
      <topicref href="topics/upsert.dita"/>
      
+     <topicref href="topics/deleteLob.dita"/>
+     <topicref href="topics/getlob.dita"/>
+     <topicref href="topics/listLobs.dita"/>
+     <topicref href="topics/putlob.dita"/>
+     
      <topicref href="topics/cclose.dita"/>
      <topicref href="topics/ccurrent.dita"/>
      <topicref href="topics/explain.dita"/>
