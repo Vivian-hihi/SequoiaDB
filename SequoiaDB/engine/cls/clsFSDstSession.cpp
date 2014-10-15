@@ -982,7 +982,6 @@ namespace engine
             PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
             goto error ;
          }
-         PD_LOG( PDERROR, "+++++++++++++++++++++++++++++%d", tuple->columns.sequence ) ;
       }
    done:
       PD_TRACE_EXITRC( SDB__CLSDATADBS__REPLAYLOB, rc ) ;
