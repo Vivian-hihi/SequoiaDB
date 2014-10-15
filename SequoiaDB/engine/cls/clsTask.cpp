@@ -373,7 +373,8 @@ namespace engine
       if ( cataSet.isHashSharding() )
       {
          PD_CHECK( bKey.firstElement().numberInt() <
-                   groupUpBound.firstElement().numberInt(), SDB_SYS,
+                   groupUpBound.firstElement().numberInt() &&
+                   bKey.firstElement().numberInt() >= 0, SDB_SYS,
                    error, PDERROR, "Init split task failed, catalog info: %s, "
                    "source group id: %d, bKey: %s",
                    cataSet.toCataInfoBson().toString().c_str(), sourceID,
