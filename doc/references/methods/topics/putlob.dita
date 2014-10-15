@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_mzj_1gk_tp">
-  <title>db.foo.bar.putLob()</title>
+  <title>db.collectionspace.collection.putLob()</title>
   <body>
-    <section><title>db.foo.bar.putLob(&lt;file path>)</title>
+    <section><title>db.collectionspace.collection.putLob(&lt;file path>)</title>
       <p>在集合中插入大对象。</p>
     </section>
     <section><title>参数描述</title>

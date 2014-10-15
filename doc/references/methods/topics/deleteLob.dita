@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_2rh_wjk_tp">
-  <title>db.foo.bar.deleteLob()</title>
+  <title>db.collectionspace.collection.deleteLob()</title>
   <body>
-    <section><title>db.foo.bar.deleteLob(&lt;oid>)</title>
+    <section><title>db.collectionspace.collection.deleteLob(&lt;oid>)</title>
       <p>删除集合中的大对象。</p>
     </section>
     <section><title>参数描述</title>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_wpq_n3k_tp">
-  <title>db.foo.bar.getLob()</title>
+  <title>db.collectionspace.collection.getLob()</title>
   <body>
-    <section><title>db.foo.bar.getLob(&lt;oid>,&lt;file path>,[forced])</title>
+    <section><title>db.collectionspace.collection.getLob(&lt;oid>,&lt;file path>,[forced])</title>
       <p>读取集合中的大对象。</p>
     </section>
     <section><title>参数描述</title>
