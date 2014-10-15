@@ -34,8 +34,10 @@ import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.bson.util.JSON;
 
+import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.net.IConnection;
+import com.sequoiadb.util.Helper;
 import com.sequoiadb.util.SDBMessageHelper;
 
 /**
@@ -160,6 +162,24 @@ public class DBCollection {
 		this.insert_buffer = null;
 		this.mainKeys = new HashSet<String>();
 	}
+	
+	/**
+     * @fn ByteBuffer sendRequest( byte[] msg, int length )
+     * @brief send request to db and receive response
+     * @param request
+     *            the request to be send
+     * @return ByteBuffer the response from db
+     * @exception com.sequoiadb.exception.BaseException
+     */
+    public ByteBuffer sendRequest( byte[] request, int length )
+            throws BaseException {
+        if ( request == null ) {
+            throw new BaseException( "SDB_INVALIDARG", "request can't be null" );
+        }
+        
+        connection.sendMessage( request, length );
+        return connection.receiveMessage(sequoiadb.endianConvert);
+    }
 
 	/**
 	 * @fn Object insert(BSONObject obj)
@@ -1673,5 +1693,43 @@ public class DBCollection {
 		if (flags != 0)
 			throw new BaseException(flags, matcher, modifier, hint);
 	}
+	
+    public DBCursor listLobs() throws BaseException {
+        String commandString = SequoiadbConstants.ADMIN_PROMPT
+                + SequoiadbConstants.LIST_LOBS;
+        BSONObject dummyObj = new BasicBSONObject();
+        BSONObject obj = new BasicBSONObject();
+        obj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
 
+        SDBMessage rtn = adminCommand(commandString, obj, dummyObj, dummyObj,
+                dummyObj, -1, -1, 0);
+        int flags = rtn.getFlags();
+        DBCursor cursor = null;
+        if (flags != 0) {
+            if (flags == SequoiadbConstants.SDB_DMS_EOC) {
+                return cursor;
+            } else {
+                throw new BaseException(flags);
+            }
+        }
+        cursor = new DBCursor(rtn, sequoiadb);
+        return cursor;
+    }
+    
+    public void removeLob( ObjectId lobID ) throws BaseException {
+        BSONObject removeObj = new BasicBSONObject();
+        removeObj.put( SequoiadbConstants.FIELD_COLLECTION, 
+                collectionFullName );
+        removeObj.put( SequoiadbConstants.FIELD_NAME_LOB_OID, lobID );
+
+        byte[] request = SDBMessageHelper.generateRemoveLobRequest( removeObj, 
+                                sequoiadb.endianConvert );
+        ByteBuffer res = sendRequest( request, request.length );
+        
+        SDBMessage resMessage = SDBMessageHelper.msgExtractLobOpenReply( res );
+        int flag = resMessage.getFlags();
+        if ( 0 != flag ) {
+            throw new BaseException( flag, removeObj );
+        }
+    }
 }

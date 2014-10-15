@@ -54,6 +54,45 @@ public class SDBMessage {
 	private String messageText;
 	private int rc;
 	
+	private int lobLen;
+    private long lobOffset;
+    private int lobSequence;
+    byte[] lobBuff;
+	
+    public int getLobLen() {
+        return lobLen;
+    }
+
+    public void setLobLen(int lobLen) {
+        this.lobLen = lobLen;
+    }
+
+    public long getLobOffset() {
+        return lobOffset;
+    }
+
+    public void setLobOffset(long lobOffset) {
+        this.lobOffset = lobOffset;
+    }
+
+    public int getLobSequence() {
+        return lobSequence;
+    }
+
+    public void setLobSequence(int lobSequence) {
+        this.lobSequence = lobSequence;
+    }
+
+    public byte[] getLobBuff() {
+        return lobBuff;
+    }
+
+    public void setLobBuff(byte[] lobBuff) {
+        this.lobBuff = lobBuff;
+    }
+
+
+	
 	public SDBMessage() {
 	}
 

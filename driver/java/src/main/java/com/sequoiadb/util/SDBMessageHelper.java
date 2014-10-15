@@ -77,7 +77,13 @@ public class SDBMessageHelper {
 
 	// msg.h - struct _MsgOpKillContexts
 	private final static int MESSAGE_OPKILLCONTEXT_LENGTH = 36;
-
+	
+	// msg.h - struct _MsgOpLob
+	public final static int MESSAGE_OPLOB_LENGTH = 52;
+	
+	// msg.h - struct _MsgLobTuple
+    public final static int MESSAGE_LOBTUPLE_LENGTH = 16;
+	
 	private final static Byte BTYE_FILL = 0;
 
 	public static byte[] buildSysInfoRequest() {
@@ -653,6 +659,176 @@ public class SDBMessageHelper {
 
 		return sdbMessage;
 	}
+	
+	public static void addLobMsgHeader( ByteBuffer buff, int totalLen, 
+	        int opCode, byte[] nodeID, long requestID ) {
+        
+        //MsgHeader.messageLength
+        buff.putInt( totalLen );
+        //MsgHeader.opCode
+        buff.putInt( opCode );
+        //MsgHeader.TID + MsgHeader.routeID
+        buff.put( nodeID );
+        //MsgHeader.requestID
+        buff.putLong(requestID);
+    }
+	
+	public static void addLobOpMsg( ByteBuffer buff, int version, short w, 
+            short padding, int flags, long contextID, int bsonLen ) {
+        
+        //_MsgOpLob.version
+        buff.putInt( version );
+        //_MsgOpLob.w
+        buff.putShort( w );
+        //_MsgOpLob.padding
+        buff.putShort( padding );
+        //_MsgOpLob.flags
+        buff.putInt( flags );
+        //_MsgOpLob.contextID
+        buff.putLong( contextID );
+        //_MsgOpLob.bsonLen
+        buff.putInt( bsonLen );
+    }
+	
+	public static byte[] generateRemoveLobRequest( BSONObject removeObj,
+	        boolean endianConvert) {
+	    byte bRevemoObj[] = bsonObjectToByteArray( removeObj );
+        int totalLen = MESSAGE_OPLOB_LENGTH 
+                        + Helper.roundToMultipleXLength( bRevemoObj.length, 4 );
+        
+        // convert the openLob's buff
+        if ( !endianConvert ) {
+            bsonEndianConvert( bRevemoObj, 0, bRevemoObj.length, true );
+        }
+        
+        // add _MsgOpLob into buff with convert(db.endianConvert)
+        ByteBuffer buff = ByteBuffer.allocate( 
+                                SDBMessageHelper.MESSAGE_OPLOB_LENGTH );
+        if ( endianConvert ) {
+            buff.order( ByteOrder.LITTLE_ENDIAN );
+        } else {
+            buff.order( ByteOrder.BIG_ENDIAN );
+        }
+        
+        //*******************MsgHeader*******************
+        addLobMsgHeader( buff, totalLen, 
+                Operation.MSG_BS_LOB_REMOVE_REQ.getOperationCode(), 
+                SequoiadbConstants.ZERO_NODEID, 0 );
+        
+        //*******************_MsgOpLob**********************
+        addLobOpMsg( buff, SequoiadbConstants.DEFAULT_VERSION, 
+                   SequoiadbConstants.DEFAULT_W, (short)0, 
+                   SequoiadbConstants.DEFAULT_FLAGS, 
+                   SequoiadbConstants.DEFAULT_CONTEXTID, bRevemoObj.length );
+        
+        List<byte[]> buffList = new ArrayList<byte[]>();
+        buffList.add( buff.array() );
+        buffList.add( Helper.roundToMultipleX( bRevemoObj, 4 ) );
+
+        return Helper.concatByteArray( buffList );
+	}
+	
+	public static SDBMessage msgExtractLobOpenReply(ByteBuffer byteBuffer)
+            throws BaseException {
+
+        SDBMessage sdbMessage = new SDBMessage();
+
+        int MessageLength = byteBuffer.getInt();
+
+        if (MessageLength < MESSAGE_HEADER_LENGTH) {
+            throw new BaseException("SDB_INVALIDSIZE");
+        }
+
+        // Request message length
+        sdbMessage.setRequestLength(MessageLength);
+
+        // Action code
+        sdbMessage.setOperationCode(Operation.getByValue(byteBuffer.getInt()));
+
+        // nodeID
+        byte[] nodeID = new byte[12];
+        byteBuffer.get(nodeID, 0, 12);
+        sdbMessage.setNodeID(nodeID);
+
+        // Request id
+        sdbMessage.setRequestID(byteBuffer.getLong());
+
+        // context id
+        List<Long> contextIDList = new ArrayList<Long>();
+        contextIDList.add(byteBuffer.getLong());
+        sdbMessage.setContextIDList(contextIDList);
+
+        // flags
+        sdbMessage.setFlags(byteBuffer.getInt());
+
+        // Start from
+        sdbMessage.setStartFrom(byteBuffer.getInt());
+
+        // Return record rows
+        int numReturned = byteBuffer.getInt();
+        sdbMessage.setNumReturned(numReturned);
+
+        List<BSONObject> objList = extractBSONObject(byteBuffer);
+        sdbMessage.setObjectList(objList);
+
+        return sdbMessage;
+    }
+	
+	public static SDBMessage msgExtractLobReadReply(ByteBuffer byteBuffer)
+            throws BaseException {
+
+        SDBMessage sdbMessage = new SDBMessage();
+
+        int MessageLength = byteBuffer.getInt();
+
+        if (MessageLength < MESSAGE_HEADER_LENGTH) {
+            throw new BaseException("SDB_INVALIDSIZE");
+        }
+
+        // Request message length
+        sdbMessage.setRequestLength(MessageLength);
+
+        // Action code
+        sdbMessage.setOperationCode(Operation.getByValue(byteBuffer.getInt()));
+
+        // nodeID
+        byte[] nodeID = new byte[12];
+        byteBuffer.get(nodeID, 0, 12);
+        sdbMessage.setNodeID(nodeID);
+
+        // Request id
+        sdbMessage.setRequestID(byteBuffer.getLong());
+
+        // context id
+        List<Long> contextIDList = new ArrayList<Long>();
+        contextIDList.add(byteBuffer.getLong());
+        sdbMessage.setContextIDList(contextIDList);
+
+        // flags
+        sdbMessage.setFlags(byteBuffer.getInt());
+
+        // Start from
+        sdbMessage.setStartFrom(byteBuffer.getInt());
+
+        // Return record rows
+        int numReturned = byteBuffer.getInt();
+        sdbMessage.setNumReturned(numReturned);
+
+        sdbMessage.setObjectList(null);
+        
+        if ( sdbMessage.getFlags() == 0 ) {
+            // _MsgLobTuple
+            sdbMessage.setLobLen(byteBuffer.getInt());
+            sdbMessage.setLobSequence(byteBuffer.getInt());
+            sdbMessage.setLobOffset(byteBuffer.getLong());
+            
+            byte[] buff   = new byte[sdbMessage.getLobLen()];
+            byteBuffer.get(buff);
+            sdbMessage.setLobBuff(buff);
+        }
+
+        return sdbMessage;
+    }
 
 	public static SDBMessage msgExtractEvalReply(ByteBuffer byteBuffer)
 			throws BaseException {

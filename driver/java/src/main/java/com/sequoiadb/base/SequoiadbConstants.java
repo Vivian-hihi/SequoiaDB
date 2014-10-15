@@ -30,6 +30,8 @@ public class SequoiadbConstants {
 	public final static int COLLECTION_SPACE_MAX_SZ = 127;
 	public final static int COLLECTION_MAX_SZ = 127;
 	public final static int MAX_CS_SIZE = 127;
+	
+	public final static int MAX_MSG_LENGTH = 512 * 1024 * 1024;
 
 	public static final String UNKNOWN_TYPE = "UNKNOWN";
 	public static final String UNKNOWN_DESC = "Unknown Error";
@@ -68,6 +70,7 @@ public class SequoiadbConstants {
 	public final static String RENAME_COLLECTION = "rename collection";
 	public final static String GROUP = "group";
 	public final static String GROUPS = "groups";
+	public final static String LIST_LOBS = "list lobs";
 
 	public final static String SDB_AUTH_USER = "User";
 	public final static String SDB_AUTH_PASSWD = "Passwd";
@@ -147,6 +150,11 @@ public class SequoiadbConstants {
 	public final static String FIELD_NAME_OPTIONS = "Options";
 	public final static String FIELD_NAME_DOMAIN = "Domain";
 	
+	public final static String FIELD_NAME_LOB_OPEN_MODE = "Mode";
+	public final static String FIELD_NAME_LOB_OID = "Oid";
+	public final static String FIELD_NAME_LOB_SIZE = "Size";
+    public final static String FIELD_NAME_LOB_CREATTIME = "CreateTime";
+	
 	public final static String FMP_FUNC_TYPE = "funcType";
 	public final static String FIELD_COLLECTION = "Collection";
 	public final static String FIELD_TOTAL = "Total";
@@ -172,6 +180,8 @@ public class SequoiadbConstants {
 	public final static int MSG_SYSTEM_INFO_EYECATCHER_REVERT = 0xFCFDFEFF;
 	
 
+    public final static int SDB_EOF = 
+                                new BaseException("SDB_EOF").getErrorCode();
 	public final static int SDB_DMS_EOC = new BaseException("SDB_DMS_EOC")
 			.getErrorCode();
 
@@ -181,6 +191,11 @@ public class SequoiadbConstants {
 
 	public final static byte[] ZERO_NODEID = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0 };
+	
+	public final static int DEFAULT_VERSION    = 0;
+	public final static short DEFAULT_W        = 1;
+	public final static int DEFAULT_FLAGS      = 0;
+	public final static long DEFAULT_CONTEXTID = -1;
 
 	public enum Operation {
 		OP_REPLY(1), OP_MSG(1000), OP_UPDATE(2001), OP_INSERT(2002),
@@ -188,7 +203,10 @@ public class SequoiadbConstants {
 		OP_KILL_CONTEXT(2007), OP_DISCONNECT(2008), MSG_BS_INTERRUPTE(2009),
 		OP_AGGREGATE(2019), MSG_AUTH_VERIFY(7000), MSG_AUTH_CRTUSR(7001),
 		MSG_AUTH_DELUSR(7002), TRANS_BEGIN_REQ(2010), TRANS_COMMIT_REQ(2011),
-		TRANS_ROLLBACK_REQ(2012);
+		TRANS_ROLLBACK_REQ(2012), MSG_BS_LOB_OPEN_REQ(8001), 
+		MSG_BS_LOB_WRITE_REQ(8002), MSG_BS_LOB_READ_REQ(8003),
+		MSG_BS_LOB_REMOVE_REQ(8004), MSG_BS_LOB_UPDATE_REQ(8005),
+		MSG_BS_LOB_CLOSE_REQ(8006);
 
 		private int operationCode;
 
