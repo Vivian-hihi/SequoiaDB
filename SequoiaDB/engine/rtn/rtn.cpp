@@ -294,12 +294,14 @@ namespace engine
    INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,
                                   const CHAR *dataPath,
                                   const CHAR *indexPath,
+                                  const CHAR *lobPath,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN checkOnly )
    {
       SDB_ASSERT ( pCSName, "pCSName can't be NULL" ) ;
       SDB_ASSERT ( dataPath, "data path can't be NULL" ) ;
       SDB_ASSERT ( indexPath, "index path can't be NULL" ) ;
+      SDB_ASSERT ( lobPath, "lob path can't be NULL" ) ;
 
       INT32 rc                                 = SDB_DMS_CS_NOTEXIST ;
       PD_TRACE_ENTRY ( SDB_RTNLOADCS );
@@ -348,7 +350,7 @@ namespace engine
                         // container, if we can't open the container, maybe
                         // it's just invalid, let's continue open other storage
                         // units without this one
-                        rc = storageUnit->open ( dataPath, indexPath, FALSE ) ;
+                        rc = storageUnit->open ( dataPath, indexPath, lobPath, FALSE ) ;
                         if ( rc )
                         {
                            SDB_OSS_DEL storageUnit ;
@@ -415,6 +417,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOADCSS, "rtnLoadCollectionSpaces" )
    INT32 rtnLoadCollectionSpaces ( const CHAR *dataPath,
                                    const CHAR *indexPath,
+                                   const CHAR *lobPath,
                                    SDB_DMSCB *dmsCB )
    {
       INT32 rc                                 = SDB_OK ;
@@ -425,6 +428,7 @@ namespace engine
 
       SDB_ASSERT ( dataPath, "data path can't be NULL" ) ;
       SDB_ASSERT ( indexPath, "index path can't be NULL" ) ;
+      SDB_ASSERT ( lobPath, "lob path can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
       try
@@ -458,8 +462,9 @@ namespace engine
                      // container, if we can't open the container, maybe it's
                      // just invalid, let's continue open other storage units
                      // without this one
-                     rc = storageUnit->open ( pmdGetOptionCB()->getDbPath(),
-                                              pmdGetOptionCB()->getIndexPath(),
+                     rc = storageUnit->open ( dataPath,
+                                              indexPath,
+                                              lobPath,
                                               FALSE ) ;
                      if ( rc )
                      {
@@ -715,6 +720,7 @@ namespace engine
          rc = rtnLoadCollectionSpace ( pCollectionSpaceName,
                                        pmdGetOptionCB()->getDbPath(),
                                        pmdGetOptionCB()->getIndexPath(),
+                                       pmdGetOptionCB()->getLobPath(),
                                        dmsCB, FALSE ) ;
          if ( rc )
          {

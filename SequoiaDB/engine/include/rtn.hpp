@@ -215,11 +215,13 @@ namespace engine
    INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,
                                   const CHAR *dataPath,
                                   const CHAR *indexPath,
+                                  const CHAR *lobPath,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN checkOnly = FALSE ) ;
 
    INT32 rtnLoadCollectionSpaces ( const CHAR *dataPath,
                                    const CHAR *indexPath,
+                                   const CHAR *lobPath,
                                    SDB_DMSCB *dmsCB ) ;
 
    INT32 rtnDelCollectionSpaceCommand ( const CHAR *pCollectionSpace,

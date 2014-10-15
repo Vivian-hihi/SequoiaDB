@@ -1994,6 +1994,7 @@ namespace engine
                   // need to load dms
                   rc = rtnLoadCollectionSpaces ( _pOptCB->getDbPath(),
                                                  _pOptCB->getIndexPath(),
+                                                 _pOptCB->getLobPath(),
                                                  _pDMSCB ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to load collection spaces, "
                                "rc: %d", rc ) ;
@@ -2194,6 +2195,7 @@ namespace engine
             // load all collectionspaces
             rc = rtnLoadCollectionSpaces ( _pOptCB->getDbPath(),
                                            _pOptCB->getIndexPath(),
+                                           _pOptCB->getLobPath(),
                                            _pDMSCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to load collection spaces, "
                          "rc: %d", rc ) ;

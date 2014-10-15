@@ -280,6 +280,10 @@ namespace engine
          {
             return _krcbWWWPath ;
          }
+         OSS_INLINE const CHAR *getLobPath() const
+         {
+            return _krcbLobPath ;
+         }
          OSS_INLINE const CHAR *getDiagLogPath() const
          {
             return _krcbDiagLogPath;
@@ -389,6 +393,7 @@ namespace engine
          CHAR        _krcbLogPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbBkupPath[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _krcbWWWPath[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR        _krcbLobPath[ OSS_MAX_PATHSIZE + 1 ] ;
          UINT32      _krcbMaxPool ;
          CHAR        _krcbSvcName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR        _replServiceName[ OSS_MAX_SERVICENAME + 1 ] ;

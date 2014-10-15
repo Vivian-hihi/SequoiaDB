@@ -132,6 +132,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSU_OPEN, "_dmsStorageUnit::open" )
    INT32 _dmsStorageUnit::open( const CHAR *pDataPath, const CHAR *pIndexPath,
+                                const CHAR *pLobPath,
                                 BOOLEAN createNew, BOOLEAN delWhenExist )
    {
       INT32 rc = SDB_OK ;
@@ -173,7 +174,7 @@ namespace engine
       // open lob
       if ( DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize )
       {
-         rc = _pLobSu->open( pDataPath, createNew, delWhenExist ) ;
+         rc = _pLobSu->open( pLobPath, createNew, delWhenExist ) ;
          if ( SDB_OK != rc )
          {
              PD_LOG( PDERROR, "failed to open storage lob, rc:%d", rc ) ;

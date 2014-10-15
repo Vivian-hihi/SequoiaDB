@@ -1036,6 +1036,7 @@ namespace engine
          rc = rtnLoadCollectionSpace ( pCollectionSpace,
                                        pmdGetOptionCB()->getDbPath(),
                                        pmdGetOptionCB()->getIndexPath(),
+                                       pmdGetOptionCB()->getLobPath(),
                                        dmsCB, FALSE ) ;
          if ( rc != SDB_DMS_CS_NOTEXIST )
          {
@@ -1057,6 +1058,7 @@ namespace engine
 
       rc = su->open ( pmdGetOptionCB()->getDbPath(),
                       pmdGetOptionCB()->getIndexPath(),
+                      pmdGetOptionCB()->getLobPath(),                
                       TRUE, delWhenExist ) ;
       if ( rc )
       {

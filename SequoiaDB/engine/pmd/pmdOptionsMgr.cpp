@@ -909,6 +909,7 @@ namespace engine
       ossMemset( _prefReplStr, 0, PMD_MAX_ENUM_STR_LEN + 1 ) ;
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      ossMemset( _krcbLobPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
 
       _krcbMaxPool         = 0 ;
       _krcbDiagLvl         = (UINT16)PDWARNING ;
@@ -980,6 +981,11 @@ namespace engine
       // --wwwpath
       rdxPath( pEX, PMD_OPTION_WWWPATH, _krcbWWWPath, sizeof(_krcbWWWPath),
                FALSE, FALSE, "", TRUE ) ;
+
+      // --lobpath
+      rdxPath( pEX, PMD_OPTION_LOBPATH, _krcbLobPath, sizeof(_krcbLobPath),
+               FALSE, FALSE, "" ) ;
+
       // --maxpool
       rdxUInt( pEX, PMD_OPTION_MAXPOOL, _krcbMaxPool, FALSE, TRUE, 0 ) ;
       // --diagnum
@@ -1246,6 +1252,11 @@ namespace engine
          }
       }
 
+      if ( 0 == _krcbLobPath[0] )
+      {
+         ossStrcpy( _krcbLobPath, _krcbDbPath ) ;
+      }
+
       if ( 0 == _dmsTmpBlkPath[0] )
       {
          if ( SDB_OK != utilBuildFullPath( _krcbDbPath, PMD_OPTION_TMPBLK_PATH,
@@ -1291,6 +1302,12 @@ namespace engine
          if ( 0 == ossStrcmp( _krcbWWWPath, _dmsTmpBlkPath ) )
          {
             std::cerr << "tmp path and www path should not be the same" << endl ;
+            rc = SDB_INVALIDPATH ;
+            goto error ;
+         }
+         if ( 0 == ossStrcmp( _krcbLobPath, _dmsTmpBlkPath ) )
+         {
+            std::cerr << "tmp path and lob path should not be the same" << endl ;
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
@@ -1609,6 +1626,13 @@ namespace engine
                       _krcbDiagLogPath, rc ) ;
      }
 
+      if ( _krcbLobPath[ 0 ] != 0 && 0 == ossAccess( _krcbLobPath ) )
+      {
+         rc = ossDelete( _krcbLobPath ) ;
+         PD_RC_CHECK( rc, PDERROR, "Remove dir[%s] failed, rc: %d",
+                      _krcbLobPath, rc ) ;
+     }
+
       if ( _krcbIndexPath[ 0 ] != 0 && 0 == ossAccess( _krcbIndexPath ) )
       {
          rc = ossDelete( _krcbIndexPath ) ;
@@ -1678,6 +1702,14 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to create tmp dir: %s, rc = %d",
                   _krcbBkupPath, rc ) ;
+         goto error ;
+      }
+
+      rc = ossMkdir( _krcbLobPath, OSS_CREATE|OSS_READWRITE ) ;
+      if ( rc && SDB_FE != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to create lob dir: %s, rc = %d",
+                  _krcbLobPath, rc ) ;
          goto error ;
       }
 
