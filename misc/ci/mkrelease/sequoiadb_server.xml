@@ -57,7 +57,7 @@
         </runProgram>
         <runProgram>
             <abortOnError>0</abortOnError>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateUser.error)}</customErrorMessage>
+            <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>useradd</program>
             <programArguments> ${username} -d ${installdir} -g ${username}_group  -s /bin/bash </programArguments>
             <ruleList>
@@ -118,6 +118,7 @@
             </ruleList>
         </exit>
     </readyToInstallActionList>
+
     <postInstallationActionList>
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so</linkName>
