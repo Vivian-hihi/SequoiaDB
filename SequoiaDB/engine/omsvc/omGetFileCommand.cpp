@@ -7406,8 +7406,8 @@ namespace engine
    void omQueryHostStatusCommand::_seperateMegaBitValue( BSONObj &obj, 
                                                          long value )
    {
-      INT32 megabit = ( INT32 ) value/OM_SIZE_MEGABIT ;
-      INT32 unit    = ( INT32 ) value%OM_SIZE_MEGABIT ;
+      INT32 megabit = ( INT32 ) ( value/OM_SIZE_MEGABIT ) ;
+      INT32 unit    = ( INT32 ) ( value%OM_SIZE_MEGABIT ) ;
       obj = BSON( OM_BSON_FIELD_CPU_MEGABIT << megabit 
                   << OM_BSON_FIELD_CPU_UNIT  << unit ) ;
    }
