@@ -73,7 +73,7 @@ int main ( int argc, char **argv )
    // Jun dirty test
 
    printf("size=%d\n", (INT32)sizeof(ixmKeyNode));
-   rc = myUnit.open("./", "./", TRUE ) ;
+   rc = myUnit.open("./", "./", "./", TRUE ) ;
    if ( rc )
    {
       printf("Failed to open collection, rc = %d\n", rc ) ;
