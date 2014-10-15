@@ -180,7 +180,7 @@ namespace engine
          return &_catlogSet ;
       }
 
-      INT32 getLobGropuID( const bson::OID &oid,
+      INT32 getLobGroupID( const bson::OID &oid,
                            UINT32 sequence,
                            UINT32 &groupID )
       {

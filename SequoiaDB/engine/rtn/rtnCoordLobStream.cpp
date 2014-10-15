@@ -126,7 +126,7 @@ namespace engine
       }
       else
       {
-         rc = _cataInfo->getLobGropuID( getOID(),
+         rc = _cataInfo->getLobGroupID( getOID(),
                                      DMS_LOB_META_SEQUENCE,
                                      _metaGroup ) ;
          if ( SDB_OK != rc )
@@ -468,7 +468,7 @@ namespace engine
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
          _header.version = _cataInfo->getVersion() ;
-         rc = _cataInfo->getLobGropuID( *( record._oid ),
+         rc = _cataInfo->getLobGroupID( *( record._oid ),
                                         record._sequence,
                                         groupID ) ;
          if ( SDB_OK != rc )
@@ -1387,7 +1387,7 @@ namespace engine
             continue ;
          }
 
-         rc = _cataInfo->getLobGropuID( *( piece._oid ),
+         rc = _cataInfo->getLobGroupID( *( piece._oid ),
                                         piece._sequence,
                                         groupID ) ;
          if ( SDB_OK != rc )
