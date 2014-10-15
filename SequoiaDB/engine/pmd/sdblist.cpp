@@ -397,6 +397,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         typeFilter = -1 ;
       }
 
       if( vm.count(PMD_OPTION_DETAIL ) )

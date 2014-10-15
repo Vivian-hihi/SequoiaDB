@@ -148,6 +148,7 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
+         typeFilter = -1 ;
       }
 
    done :
