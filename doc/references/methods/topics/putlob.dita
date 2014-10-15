@@ -35,4 +35,9 @@ db.foo.createCL('bar')</codeblock></li>
       </ul>      
     </section>
   </body>
+  <related-links>
+    <link href="deleteLob.dita" format="dita" type="topic"></link>
+    <link href="getlob.dita" format="dita" type="topic"></link>
+    <link href="listLobs.dita" format="dita" type="topic"></link>
+  </related-links>
 </topic>

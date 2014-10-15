@@ -28,5 +28,10 @@
       </ul>      
     </section>
   </body>
+  <related-links>
+    <link href="getlob.dita" format="dita" type="topic"></link>    
+    <link href="listLobs.dita" format="dita" type="topic"></link>
+    <link href="putlob.dita" format="dita" type="topic"></link>
+  </related-links>
 </topic>
 
