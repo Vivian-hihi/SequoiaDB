@@ -59,9 +59,9 @@ public class DBLob {
     private int          _mode;
     private long         _size;
     private long         _createTime;
-    //private long         _lobPageSize;
     private long         _readOffset = 0;
     private boolean      _endianConvert;
+    private boolean      _isOpen = false;
     
     /* when first open/create DBLob, sequoiadb return the contextID for the
      * further reading/writing/close
@@ -120,6 +120,11 @@ public class DBLob {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void open( ObjectId id, int mode ) throws BaseException {
+        if ( _isOpen ) {
+            throw new BaseException( "SDB_INVALIDARG", "lob have opened:id="
+                    + _id );
+        }
+        
         if ( SDB_LOB_CREATEONLY != mode && SDB_LOB_READ != mode ) {
             throw new BaseException( "SDB_INVALIDARG", "mode is unsupported:" 
                             + mode );
@@ -139,9 +144,11 @@ public class DBLob {
             }
         }
 
-        _mode = mode;
-        
+        _mode       = mode;
+        _readOffset = 0;
+
         _open();
+        _isOpen = true;
     }
     
     /**
@@ -220,6 +227,10 @@ public class DBLob {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void close() throws BaseException {
+        if ( !_isOpen ) {
+            return;
+        }
+        
         byte[] request = generateCloseLobRequest();
         ByteBuffer res = _cl.sendRequest( request, request.length );
         
@@ -229,6 +240,8 @@ public class DBLob {
         if ( 0 != flag ) {
             throw new BaseException( flag );
         }
+        
+        _isOpen = false;
     }
     
     /**
@@ -239,6 +252,10 @@ public class DBLob {
      * @exception com.sequoiadb.exception.BaseException
      */
     public void write( byte[] input ) throws BaseException {
+        if ( !_isOpen ) {
+            throw new BaseException( "SDB_IO", "lob is not open" );
+        }
+        
         if ( input == null ) {
             throw new BaseException( "SDB_INVALIDARG", "input is null" );
         }
@@ -265,6 +282,10 @@ public class DBLob {
     }
     
     public int read( byte[] b ) throws BaseException {
+        if ( !_isOpen ) {
+            throw new BaseException( "SDB_IO", "lob is not open" );
+        }
+        
         if ( b == null ) {
             throw new BaseException( "SDB_INVALIDARG", "b is null" );
         }
@@ -277,6 +298,10 @@ public class DBLob {
     }
     
     public void seek( long size, int seekType ) throws BaseException {
+        if ( !_isOpen ) {
+            throw new BaseException( "SDB_IO", "lob is not open" );
+        }
+        
         if ( _mode != SDB_LOB_READ ) {
             throw new BaseException( "SDB_INVALIDARG", "seek() is not supported"
                     + "int mode=" + _mode );
@@ -308,13 +333,6 @@ public class DBLob {
             throw new BaseException( "SDB_INVALIDARG", "unreconigzed seekType:"
                     + seekType );
         }
-    }
-    
-    public static void removeLob( ObjectId lobID ) throws BaseException {
-        if ( lobID == null ) {
-            throw new BaseException( "SDB_INVALIDARG", "lobID is null" );
-        }
-        
     }
     
     private int _read( byte[] b ) {
@@ -497,14 +515,14 @@ public class DBLob {
     }
     
     private void displayResponse( SDBMessage resMessage ) {
-        int flag = resMessage.getFlags();
-        System.out.println( "flags=" + flag );
-        List<BSONObject> objList = resMessage.getObjectList();
-        if ( objList != null ) {
-            for ( int i = 0; i < objList.size(); i++ ) {
-                BSONObject obj = objList.get( i );
-                System.out.println( "obj " + i + ":" + obj.toString() );
-            }
-        }
+//        int flag = resMessage.getFlags();
+//        System.out.println( "flags=" + flag );
+//        List<BSONObject> objList = resMessage.getObjectList();
+//        if ( objList != null ) {
+//            for ( int i = 0; i < objList.size(); i++ ) {
+//                BSONObject obj = objList.get( i );
+//                System.out.println( "obj " + i + ":" + obj.toString() );
+//            }
+//        }
     }
 }
