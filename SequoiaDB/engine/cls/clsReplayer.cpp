@@ -1012,6 +1012,19 @@ namespace engine
                         _dmsCB, _dpsCB ) ;
    }
 
+   INT32 _clsReplayer::replayWriteLob( const CHAR *fullName,
+                                       const bson::OID &oid,
+                                       UINT32 sequence,
+                                       UINT32 offset,
+                                       UINT32 len,
+                                       const CHAR *data,
+                                       _pmdEDUCB *eduCB )
+   {
+      return rtnWriteLob( fullName, oid, sequence,
+                          offset, len, data, eduCB,
+                          1, _dpsCB ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTINXJOB, "startIndexJob" )
    INT32 startIndexJob ( RTN_JOB_TYPE type,
                          const dpsLogRecordHeader *recordHeader,

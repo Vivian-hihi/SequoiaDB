@@ -91,6 +91,14 @@ namespace engine
       INT32 rollback( const dpsLogRecordHeader *recordHeader,
                       _pmdEDUCB *eduCB ) ;
 
+      INT32 replayWriteLob( const CHAR *fullName,
+                            const bson::OID &oid,
+                            UINT32 sequence,
+                            UINT32 offset,
+                            UINT32 len,
+                            const CHAR *data,
+                            _pmdEDUCB *eduCB ) ;
+
    private:
       _SDB_DMSCB              *_dmsCB ;
       _dpsLogWrapper          *_dpsCB ;

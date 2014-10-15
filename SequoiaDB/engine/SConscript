@@ -188,7 +188,6 @@ rtnFiles = [
       "rtn/rtnLobWindow.cpp",
       "rtn/rtnContextLob.cpp",
       "rtn/rtnLobDataPool.cpp",
-      "rtn/rtnCoordLobDispatcher.cpp",
       "rtn/rtnCoordLobStream.cpp",
       "rtn/rtnCoordLob.cpp",
       "rtn/rtnContextShdOfLob.cpp",

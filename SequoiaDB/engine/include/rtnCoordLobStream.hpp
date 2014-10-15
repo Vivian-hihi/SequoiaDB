@@ -35,8 +35,10 @@
 #define RTN_COORDLOBSTREAM_
 
 #include "rtnLobStream.hpp"
+#include "netDef.hpp"
+#include "coordDef.hpp"
 #include "msg.h"
-#include "rtnCoordLobDispatcher.hpp"
+#include "netMultiRouteAgent.hpp"
 
 namespace engine
 {
@@ -95,6 +97,81 @@ namespace engine
       virtual INT32 _close( _pmdEDUCB *cb ) ;
 
    private:
+      struct subStream
+      {
+         SINT64 contextID ;
+         MsgRouteID id ;
+
+         subStream()
+         :contextID( -1 )
+         {
+            id.value = MSG_INVALID_ROUTEID ;
+         }
+
+         subStream( SINT64 context, MsgRouteID route )
+         :contextID( context ),
+          id( route )
+         {
+         }
+      } ;
+
+      struct dataGroup
+      {
+         SINT64 contextID ;
+         MsgRouteID id ;
+         netIOVec body ;
+         UINT32 bodyLen ;
+         std::list<ossValuePtr> tuples ;
+
+         dataGroup()
+         :contextID( -1 ),
+          bodyLen( 0 )
+         {
+            id.value = MSG_INVALID_ROUTEID ;
+         }
+
+         BOOLEAN hasData() const
+         {
+            return 0 < bodyLen ;
+         }
+
+         void addData( const MsgLobTuple &tuple,
+                       const void *data,
+                       const void *alignedBuf )
+         {
+            body.push_back( netIOV( tuple.data, sizeof( tuple ) ) ) ;
+            bodyLen += sizeof( tuple ) ;
+            tuples.push_back( ( ossValuePtr )( &tuple ) ) ;
+            if ( NULL != data )
+            {
+               body.push_back( netIOV( data, tuple.columns.len ) ) ;
+               bodyLen += tuple.columns.len ;
+            }
+            return ;
+         }
+
+         void clearData()
+         {
+            body.clear() ;
+            bodyLen = 0 ;
+            tuples.clear() ;
+         }
+      } ;
+
+
+      enum RETRY_TAG
+      {
+         RETRY_TAG_NULL = 0,
+         RETRY_TAG_RETRY = 0x00000001,
+         RETRY_TAG_REOPEN = 0x00000010,
+      } ;
+
+      typedef std::map<UINT32, subStream> SUB_STREAMS ;
+      typedef std::set<ossValuePtr> DONE_LST ;
+      typedef std::vector<MsgLobTuple> TUPLES ;
+      typedef std::map<UINT32, dataGroup> DATA_GROUPS ;
+
+   private:
       INT32 _openSubStreams( const CHAR *fullName,
                              const bson::OID &oid,
                              INT32 mode,
@@ -108,7 +185,6 @@ namespace engine
       INT32 _openOtherStreams( const CHAR *fullName,
                                const bson::OID &oid,
                                INT32 mode,
-                               const CoordGroupList &gpLst,
                                _pmdEDUCB *cb ) ;
 
       INT32 _extractMeta( const MsgOpReply *header,
@@ -118,29 +194,36 @@ namespace engine
 
       INT32 _closeSubStreamsWithException( _pmdEDUCB *cb ) ;
 
-      INT32 _push2Pool( _pmdEDUCB *cb ) ;
+      INT32 _push2Pool( const MsgOpReply *header ) ;
 
-   private:
-      struct subStream
-      {
-         SINT64 contextID ;
-         MsgRouteID id ;
+      INT32 _getReply( _pmdEDUCB *cb,
+                       BOOLEAN nodeSpecified,
+                       INT32 &tag ) ;
 
-         subStream()
-         :contextID( -1 )
-         {
-            id.value = MSG_INVALID_ROUTEID ;
-         }        
+      void _clearMsgData() ;
 
-         subStream( SINT64 context, MsgRouteID route )
-         :contextID( context ),
-          id( route )
-         {
+      INT32 _reopenSubStreams( _pmdEDUCB *cb ) ;
 
-         }
-      } ;
+      INT32 _addSubStreamsFromReply() ;
 
-      typedef std::map<UINT32, subStream> SUB_STREAMS ;
+      INT32 _updateCataInfo( BOOLEAN refresh,
+                             _pmdEDUCB *cb ) ;
+
+      INT32 _shardData( const _dmsLobRecord *pieces,
+                        UINT32 cnt,
+                        BOOLEAN isWrite,
+                        const DONE_LST &doneLst ) ;
+
+      void _initTuples( const _dmsLobRecord *pieces,
+                        UINT32 cnt ) ;
+
+      INT32 _handleReadResults( _pmdEDUCB *cb, DONE_LST &doneLst ) ;
+
+      INT32 _add2DoneLstFromReply( DONE_LST &doneLst ) ;
+
+      INT32 _add2DoneLst( UINT32 groupID, DONE_LST &doneLst ) ;
+
+      INT32 _removeClosedSubStreams() ;
 
       void _add2Subs( UINT32 groupID, SINT64 contextID, MsgRouteID id )
       {
@@ -148,15 +231,27 @@ namespace engine
          return ;
       }
 
-      INT32 _updateCataInfo( BOOLEAN refresh,
-                             _pmdEDUCB *cb ) ;
+      void _pushLobHeader( const MsgOpLob *header,
+                           const BSONObj &obj,
+                           netIOVec &iov ) ;
 
+      void _pushLobData( const void *data,
+                         UINT32 len,
+                         netIOVec &iov ) ;
    private:
-      rtnCoordLobDispatcher _dispatcher ;
       CoordCataInfoPtr _cataInfo ;
+
+      std::vector<MsgOpReply *> _results ;
+      REQUESTID_MAP _sendMap ;
+      DATA_GROUPS _dataGroups ;
+      TUPLES _tuplePool ;
+      MsgOpLob _header ;
+
       SUB_STREAMS _subs;
       bson::BSONObj _metaObj ;
       UINT32 _metaGroup ;
+
+      UINT32 _alignBuf ;
    } ;
    typedef class _rtnCoordLobStream rtnCoordLobStream ;
 }

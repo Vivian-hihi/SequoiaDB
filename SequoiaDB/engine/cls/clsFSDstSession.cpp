@@ -973,15 +973,16 @@ namespace engine
       while ( _more( msg, itr, oid,
                      tuple, data ) )
       {
-         rc = rtnWriteLob( fullName,
-                           *oid, tuple->columns.sequence,
-                           0, tuple->columns.len, data,
-                           eduCB(), 1, NULL ) ;
+         rc = _replayer.replayWriteLob( fullName,
+                                        *oid, tuple->columns.sequence,
+                                        0, tuple->columns.len, data,
+                                        eduCB() ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
             goto error ;
          }
+         PD_LOG( PDERROR, "+++++++++++++++++++++++++++++%d", tuple->columns.sequence ) ;
       }
    done:
       PD_TRACE_EXITRC( SDB__CLSDATADBS__REPLAYLOB, rc ) ;
@@ -1014,25 +1015,34 @@ namespace engine
       {
          oid = ( const bson::OID * )itr ;
          tuple = ( const MsgLobTuple * )( itr + sizeof( bson::OID ) ) ;
-         UINT32 alignedLen = ossRoundUpToMultipleX(
-                                 sizeof( bson::OID ) +
-                                 sizeof( MsgLobTuple ) +
-                                 tuple->columns.len,
-                                 4 ) ;
-         if ( lastSize < alignedLen )
+         UINT32 realLen = sizeof( bson::OID ) +
+                          sizeof( MsgLobTuple ) +
+                          tuple->columns.len ;
+         UINT32 alignedLen = ossRoundUpToMultipleX( realLen, 4 ) ;
+         UINT32 skipLen = 0 ;
+
+         if ( alignedLen <= lastSize )
+         {
+            skipLen = alignedLen ;
+         }
+         else if ( realLen <= lastSize )
+         {
+            skipLen = realLen ;
+         }
+         else
          {
             goto done ;
          }
 
          data = itr + sizeof( MsgLobTuple ) + sizeof( bson::OID ) ;
          rc = TRUE ;
-         if ( alignedLen == lastSize )
+         if ( lastSize == skipLen )
          {
             itr = NULL ;
          }
          else
          {
-            itr += alignedLen ;
+            itr += skipLen ;
          }
       }
    done:

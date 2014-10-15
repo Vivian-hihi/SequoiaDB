@@ -282,7 +282,7 @@
 #define FIELD_NAME_LOB_IS_MAIN_SHD           "IsMainShard"
 #define FIELD_NAME_LOB_META_DATA             "MetaData"
 #define FIELD_NAME_LOB_LIST_PIECES_MODE      "ListPieces"
-#define FIELD_NAME_LOB_AVAILABLE             "Availble"
+#define FIELD_NAME_LOB_AVAILABLE             "Available"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"

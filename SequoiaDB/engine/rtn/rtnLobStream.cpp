@@ -127,6 +127,13 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open lob[%s], rc:%d",
+                 oid.str().c_str(), rc ) ;
+         goto error ;
+      }
       
       rc = _getLobPageSize( _lobPageSz ) ;
       if ( SDB_OK != rc )
@@ -221,7 +228,7 @@ namespace engine
       else if ( SDB_LOB_MODE_REMOVE & _mode )
       {
          _dmsLobRecord piece ;
-         piece.set( &_oid, 0, 0, 0, NULL ) ;
+         piece.set( &_oid, DMS_LOB_META_SEQUENCE, 0, 0, NULL ) ;
          rc = _removev( &piece, 1, cb ) ;
          if ( SDB_OK != rc )
          {

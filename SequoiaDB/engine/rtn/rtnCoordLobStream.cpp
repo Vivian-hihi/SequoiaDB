@@ -37,6 +37,7 @@
 #include "rtnCoordCommon.hpp"
 #include "pmd.hpp"
 #include "msgMessage.hpp"
+#include "coordSession.hpp"
 
 #define RTN_COORD_LOB_GET_SUBSTREAM( groupID, s ) \
         do\
@@ -53,12 +54,13 @@
 
 namespace engine
 {
-   typedef _rtnCoordLobDispatcher::msgOptions MSG_OPTIONS ;
-
    _rtnCoordLobStream::_rtnCoordLobStream()
-   :_metaGroup( 0 )
+   :_metaGroup( 0 ),
+    _alignBuf( 0 )
    {
-
+      ossMemset( &_header, 0, sizeof( _header ) ) ;
+      _header.contextID = -1 ;
+      _header.header.opCode = MSG_NULL ;
    }
 
    _rtnCoordLobStream::~_rtnCoordLobStream()
@@ -148,8 +150,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__OPENSUBSTREAMS ) ;
-      CoordGroupList gpLst ;
-
       rc = _openMainStream( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )
       {
@@ -157,13 +157,7 @@ namespace engine
          goto error ;
       }
 
-      _cataInfo->getGroupLst( gpLst ) ;
-      SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
-
-      /// open other non-main substreams.
-      gpLst.erase( _metaGroup ) ;
-
-      rc = _openOtherStreams( fullName, oid, mode, gpLst, cb ) ;
+      rc = _openOtherStreams( fullName, oid, mode, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to open other streams:%d", rc ) ;
@@ -180,14 +174,17 @@ namespace engine
    INT32 _rtnCoordLobStream::_openOtherStreams( const CHAR *fullName,
                                                 const bson::OID &oid,
                                                 INT32 mode,
-                                                const CoordGroupList &gpLst,
                                                 _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__OPENOTHERSTREAMS ) ;
+
+      CoordGroupList gpLst ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
       BSONObjBuilder builder ;
       BSONObj obj ;
-      MSG_OPTIONS options( SDB_LOB_MODE_R != mode, TRUE ) ;
+      netIOVec iov ;
 
       builder.append( FIELD_NAME_COLLECTION, fullName )
              .append( FIELD_NAME_LOB_OID, oid )
@@ -201,60 +198,71 @@ namespace engine
 
       obj = builder.obj() ;
 
-      rc = _dispatcher.createMsg( MSG_BS_LOB_OPEN_REQ,
-                                  _cataInfo->getVersion(),
-                                  options,
-                                  obj ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to create new msg:%d", rc ) ;
-         goto error ;
-      }
+      _header.bsonLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+      _header.header.messageLength = sizeof( _header ) + _header.bsonLen ;
+      _header.header.opCode = MSG_BS_LOB_OPEN_REQ ;
+      _pushLobHeader( &_header, obj, iov ) ;
 
+      do
       {
-      CoordGroupList::const_iterator itr = gpLst.begin() ;
-      for ( ; itr != gpLst.end(); ++itr )
-      {
-         _dispatcher.add( itr->first ) ;
-      }
-      }
+         INT32 tag = RETRY_TAG_NULL ;
+         _clearMsgData() ;
+         _cataInfo->getGroupLst( gpLst ) ;
+         SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
+         _header.version = _cataInfo->getVersion() ;
 
-      _dispatcher.addDone() ;
-      rc = _dispatcher.wait4Reply( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
-         goto error ;
-      }
-
-      {
-      const std::vector<MsgOpReply *> &replyMsgs = _dispatcher.getReplyMsgs() ;
-      std::vector<MsgOpReply *>::const_iterator itr = replyMsgs.begin() ;
-      for ( ; itr != replyMsgs.end(); ++itr )
-      {
-         if ( SDB_OK != ( *itr )->flags )
+         for ( CoordGroupList::const_iterator itr = gpLst.begin();
+               itr != gpLst.end();
+               ++itr )
          {
-            rc = ( *itr )->flags ;
-            PD_LOG( PDERROR, "failed to write lob on node[%d:%hd], rc:%d",
-                    ( *itr )->header.routeID.columns.groupID,
-                    ( *itr )->header.routeID.columns.nodeID, rc ) ;
+            rc = rtnCoordSendRequestToNodeGroup( &( _header.header ),
+                                                 itr->first,
+                                                 SDB_LOB_MODE_R != mode,
+                                                 routeAgent,
+                                                 cb, iov,
+                                                 _sendMap ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to send open msg to group:%d, rc:%d",
+                       itr->first, rc ) ;
+               goto error ;
+            }
+         }
+
+         rc = _getReply( cb, FALSE, tag ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
             goto error ;
          }
 
-         if ( -1 == ( *itr )->contextID )
+         /// when retry is true, we need to close contexts on nodes those returned ok.
+         rc = _addSubStreamsFromReply() ;
+         if ( SDB_OK != rc )
          {
-            rc = SDB_SYS ;
-            PD_LOG( PDERROR, "invalid context id" ) ;
             goto error ;
          }
 
-         _add2Subs( ( *itr )->header.routeID.columns.groupID,
-                    ( *itr )->contextID,
-                    ( *itr )->header.routeID ) ;
-      }
-      }
+         if ( RETRY_TAG_NULL == tag )
+         {
+            break ;
+         }
+         else if ( RETRY_TAG_REOPEN & tag )
+         {
+            rc = _openOtherStreams( getFullName(), getOID(), _getMode(), cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to reopen sub streams:%d", rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            continue ;
+         }
+      } while ( TRUE ) ;
    done:
-      _dispatcher.clear() ;
+      _clearMsgData() ; 
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__OPENOTHERSTREAMS, rc ) ;
       return rc ;
    error:
@@ -269,10 +277,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__OPENMAINSTREAM ) ;
-      BSONObjBuilder builder ;
-      BSONObj obj ;
-      MSG_OPTIONS options( SDB_LOB_MODE_R != mode, TRUE ) ;
+
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
       const MsgOpReply *reply = NULL ;
+      BSONObj obj ;
+      BSONObjBuilder builder ;
+      netIOVec iov ;
 
       builder.append( FIELD_NAME_COLLECTION, fullName )
              .append( FIELD_NAME_LOB_OID, oid )
@@ -280,65 +291,51 @@ namespace engine
              .appendBool( FIELD_NAME_LOB_IS_MAIN_SHD, TRUE ) ;
       obj = builder.obj() ;
 
-   retry:
-      _dispatcher.clear() ;
-      rc = _dispatcher.createMsg( MSG_BS_LOB_OPEN_REQ,
-                                  _cataInfo->getVersion(),
-                                  options,
-                                  obj ) ;
-      if ( SDB_OK != rc )
+      _header.header.opCode = MSG_BS_LOB_OPEN_REQ ;
+      _header.bsonLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+      _header.header.messageLength = sizeof( _header ) + _header.bsonLen ;
+
+      _pushLobHeader( &_header, obj, iov ) ;
+
+      do
       {
-         PD_LOG( PDERROR, "failed to create new msg:%d", rc ) ;
-         goto error ;
-      }
-
-      _dispatcher.add( _metaGroup ).addDone() ;
-
-      rc = _dispatcher.wait4Reply( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
-         goto error ;
-      }
-
-      reply = _dispatcher.getFirstReply() ;
-      if ( NULL == reply )
-      {
-         PD_LOG( PDERROR, "we got nothing from msg queue" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == reply->flags )
-      {
-         PD_LOG( PDEVENT, "our version is old, update catalog again" ) ;
-
-         rc = _updateCataInfo( TRUE, cb ) ;
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         _header.version = _cataInfo->getVersion() ;
+         rc = rtnCoordSendRequestToNodeGroup( &( _header.header ),
+                                              _metaGroup,
+                                              SDB_LOB_MODE_R != mode,
+                                              routeAgent,
+                                              cb, iov,
+                                              _sendMap ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to upate catalog info of:%s, rc:%d",
-                    getFullName(), rc ) ;
+            PD_LOG( PDERROR, "failed to send open msg to group:%d, rc:%d",
+                    _metaGroup, rc ) ;
             goto error ;
+         }
+
+         rc = _getReply( cb, FALSE, tag ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
+            goto error ;
+         }
+         else if ( RETRY_TAG_NULL == tag )
+         {
+            SDB_ASSERT( 1 == _results.size(), "impossible" ) ;
+            reply = _results.empty() ? NULL : *( _results.begin() ) ;
+            break ;
          }
          else
          {
-            goto retry ;
+            continue ;
+            /// sth wrong happened, do again.
          }
-      }
-      else if ( SDB_OK != reply->flags )
-      {
-         rc = reply->flags ;
-         PD_LOG( PDERROR, "failed to open lob on data node:%d", rc ) ;
-         goto error ;
-      }
-      else if ( -1 == reply->contextID )
-      {
-         rc = SDB_SYS ;
-         PD_LOG( PDERROR, "invalid context id" ) ;
-         goto error ;
-      }
-      else if ( SDB_LOB_MODE_R == mode ||
-                SDB_LOB_MODE_REMOVE == mode )
+      } while ( TRUE ) ;
+
+      if ( SDB_LOB_MODE_R == mode ||
+           SDB_LOB_MODE_REMOVE == mode )
       {
          rc = _extractMeta( reply, _metaObj ) ;
          if ( SDB_OK != rc )
@@ -347,15 +344,11 @@ namespace engine
             goto error ;
          }
       }
-      else
-      {
-         /// do nothing.
-      }
 
       _add2Subs( reply->header.routeID.columns.groupID,
                  reply->contextID, reply->header.routeID ) ;
    done:
-      _dispatcher.clear() ;
+      _clearMsgData() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__OPENMAINSTREAM, rc ) ;
       return rc ;
    error:
@@ -450,69 +443,78 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__WRITE ) ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
       UINT32 groupID = 0 ;
-      MSG_OPTIONS options( FALSE, FALSE ) ;
       _MsgLobTuple tuple ;
       tuple.columns.len = record._dataLen ;
       tuple.columns.sequence = record._sequence ;
       tuple.columns.offset = record._offset ; /// offset in piece
       const subStream *sub = NULL ;
-      const MsgOpReply *reply = NULL ;
+      netIOVec iov ;
 
-      rc = _cataInfo->
-                   getLobGropuID( *( record._oid ),
-                                  record._sequence,
-                                  groupID ) ;
-      if ( SDB_OK != rc )
+      _header.header.messageLength = sizeof( _header ) +
+                                     sizeof( _MsgLobTuple ) +
+                                     tuple.columns.len ;
+      _header.header.opCode = MSG_BS_LOB_WRITE_REQ ;
+      _header.bsonLen = 0 ;
+
+      _pushLobHeader( &_header, BSONObj(), iov ) ;
+      _pushLobData( tuple.data, sizeof( tuple ), iov ) ;
+      _pushLobData( record._data, tuple.columns.len, iov ) ;
+
+      do
       {
-         PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
-         goto error ;
-      }
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         _header.version = _cataInfo->getVersion() ;
+         rc = _cataInfo->getLobGropuID( *( record._oid ),
+                                        record._sequence,
+                                        groupID ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
+            goto error ;
+         }
 
-      RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         _header.contextID = sub->contextID ;
+         rc = rtnCoordSendRequestToNode( &( _header.header ),
+                                         sub->id,
+                                         routeAgent,
+                                         cb,
+                                         iov,
+                                         _sendMap ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+                    sub->id.columns.groupID, sub->id.columns.nodeID, rc ) ;
+            goto error ;
+         }
 
-      rc = _dispatcher.createMsg( MSG_BS_LOB_WRITE_REQ,
-                                  _cataInfo->getVersion(),
-                                  options,
-                                  BSONObj() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to create new msg:%d", rc ) ;
-         goto error ;
-      }
+         rc = _getReply( cb, TRUE, tag ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
+            goto error ;
+         }
 
-      _dispatcher.add( sub->id, tuple.data, sizeof( tuple ) )
-                 .add( sub->id, record._data, record._dataLen)
-                 .addDone() ;
-
-      _dispatcher.setContextID( sub->id, sub->contextID ) ;
-
-      rc = _dispatcher.wait4Reply( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
-         goto error ;
-      }
-
-      reply = _dispatcher.getFirstReply() ;
-      if ( NULL == reply )
-      {
-         PD_LOG( PDERROR, "we got nothing from msg queue" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( SDB_OK != reply->flags )
-      {
-         rc = reply->flags ;
-         PD_LOG( PDERROR, "failed to write lob on data node:[%d:%d], rc%d",
-                 reply->header.routeID.columns.groupID,
-                 reply->header.routeID.columns.nodeID, rc ) ;
-         goto error ;
-      }
-       
+         if ( RETRY_TAG_NULL == tag )
+         {
+            break ;
+         }
+         else 
+         {
+            rc = _reopenSubStreams( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to reopen sub streams:%d", rc ) ;
+               goto error ;
+            }
+         }
+      } while ( TRUE ) ;
    done:
-      _dispatcher.clear() ;
+      _clearMsgData() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__WRITE, rc ) ;
       return rc ;
    error:
@@ -528,72 +530,98 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__WRITEV ) ;
       SDB_ASSERT( cnt <= RTN_LOB_WRITE_PIECE_NUM, "can not over it" ) ;
-      MSG_OPTIONS options( FALSE, FALSE ) ;
-      _MsgLobTuple tuples[RTN_LOB_WRITE_PIECE_NUM] ;
 
-      _dispatcher.clear() ;
-      rc = _dispatcher.createMsg( MSG_BS_LOB_WRITE_REQ,
-                                  _cataInfo->getVersion(),
-                                  options,
-                                  BSONObj() ) ;
-      if ( SDB_OK != rc )
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
+      DONE_LST doneLst ;
+      BOOLEAN reshard = TRUE ;
+
+      /// will reassign length
+      _header.header.messageLength = sizeof( _header ) ;
+      _header.header.opCode = MSG_BS_LOB_WRITE_REQ ;
+      _header.bsonLen = 0 ;
+
+      _initTuples( pieces, cnt ) ;
+
+      do
       {
-         PD_LOG( PDERROR, "failed to create new msg:%d", rc ) ;
-         goto error ;
-      }
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         _header.version = _cataInfo->getVersion() ;
 
-      for ( UINT32 i = 0; i < cnt; ++i )
-      {
-         const _dmsLobRecord &piece = pieces[i] ;
-         UINT32 groupID = 0 ;
-         _MsgLobTuple &tuple = tuples[i] ;
-         tuple.columns.len = piece._dataLen ;
-         tuple.columns.sequence = piece._sequence ;
-         tuple.columns.offset = piece._offset ; /// offset in piece
-         const subStream *sub = NULL ;
+         if ( reshard )
+         {
+            rc = _shardData( pieces, cnt, TRUE, doneLst ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
+               goto error ;
+            }
 
-         rc = _cataInfo->
-                   getLobGropuID( *( piece._oid ),
-                                  piece._sequence,
-                                  groupID ) ;
+            reshard = FALSE ;
+         }
+
+         for ( DATA_GROUPS::iterator itr = _dataGroups.begin();
+               itr != _dataGroups.end();
+               ++itr )
+         {
+            const dataGroup &dg = itr->second ;
+
+            if ( !dg.hasData() )
+            {
+               continue ;
+            }
+
+            /// we have pushed part of header to body.
+            _header.header.messageLength = sizeof( MsgHeader ) +
+                                           dg.bodyLen ;
+            _header.contextID = dg.contextID ;
+
+            rc = rtnCoordSendRequestToNode( &( _header.header ),
+                                            dg.id,
+                                            routeAgent,
+                                            cb,
+                                            dg.body,
+                                            _sendMap ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+                    dg.id.columns.groupID, dg.id.columns.nodeID, rc ) ;
+               goto error ;
+            }
+         }
+
+         rc = _getReply( cb, TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
             goto error ;
          }
 
-         RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
-
-         _dispatcher.add( sub->id, tuple.data, sizeof( tuple ) )
-                 .add( sub->id, piece._data, piece._dataLen) ;
-         _dispatcher.setContextID( sub->id, sub->contextID ) ;
-      }
-      _dispatcher.addDone() ;
-
-      rc = _dispatcher.wait4Reply( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
-         goto error ;
-      }
-
-      {
-      const std::vector<MsgOpReply *> &replyMsgs = _dispatcher.getReplyMsgs() ;
-      std::vector<MsgOpReply *>::const_iterator itr = replyMsgs.begin() ;
-      for ( ; itr != replyMsgs.end(); ++itr )
-      {
-         if ( SDB_OK != ( *itr )->flags )
+         rc = _add2DoneLstFromReply( doneLst ) ;
+         if ( SDB_OK != rc )
          {
-            rc = ( *itr )->flags ;
-            PD_LOG( PDERROR, "failed to write lob on node[%d:%hd], rc:%d",
-                    ( *itr )->header.routeID.columns.groupID,
-                    ( *itr )->header.routeID.columns.nodeID, rc ) ;
             goto error ;
          }
-      }
-      }
+
+         if ( RETRY_TAG_NULL == tag )
+         {
+            break ;
+         }
+         else
+         {
+            rc = _reopenSubStreams( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to reopen sub streams:%d", rc ) ;
+               goto error ;
+            }
+            reshard = TRUE ;
+         }
+      } while ( TRUE ) ;
+
    done:
-      _dispatcher.clear() ;
+      _clearMsgData() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__WRITEV, rc ) ;
       return rc ;
    error:
@@ -609,73 +637,112 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__READV ) ;
       SDB_ASSERT( cnt <= RTN_LOB_READ_PIECE_NUM, "impossible" ) ;
-      MSG_OPTIONS options( FALSE, FALSE ) ;
-      _MsgLobTuple tuples[RTN_LOB_READ_PIECE_NUM] ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
+      DONE_LST doneLst ; 
+      BOOLEAN needReshard = TRUE ;
 
-      _dispatcher.clear() ;
-      rc = _dispatcher.createMsg( MSG_BS_LOB_READ_REQ,
-                                  _cataInfo->getVersion(),
-                                  options,
-                                  BSONObj() ) ;
-      if ( SDB_OK != rc )
+      _header.header.messageLength = sizeof( _header ) ;
+      _header.header.opCode = MSG_BS_LOB_READ_REQ ;
+      _header.bsonLen = 0 ;
+      
+      _initTuples( pieces, cnt ) ;
+
+      do
       {
-         PD_LOG( PDERROR, "failed to create new msg:%d", rc ) ;
-         goto error ;
-      }
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         _header.version = _cataInfo->getVersion() ;
 
-      for ( UINT32 i = 0; i < cnt; ++i )
-      {
-         const _dmsLobRecord &piece = pieces[i] ;
-         UINT32 groupID = 0 ;
-         _MsgLobTuple &tuple = tuples[i] ;
-         tuple.columns.len = piece._dataLen ;
-         tuple.columns.sequence = piece._sequence ;
-         tuple.columns.offset = piece._offset ; /// offset in piece
-         const subStream *sub = NULL ;
+         if ( needReshard )
+         {
+            rc = _shardData( pieces, cnt, FALSE, doneLst ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
+               goto error ;
+            }
+            needReshard = FALSE ;
+         }
 
-         rc = _cataInfo->
-                   getLobGropuID( *( piece._oid ),
-                                  piece._sequence,
-                                  groupID ) ;
+         for ( DATA_GROUPS::iterator itr = _dataGroups.begin();
+               itr != _dataGroups.end();
+               ++itr )
+         {
+            const dataGroup &dg = itr->second ;
+            if ( !dg.hasData() )
+            {
+               continue ;
+            }
+
+            _header.header.messageLength = sizeof( MsgHeader ) +
+                                           dg.bodyLen ;
+            _header.contextID = dg.contextID ;
+
+            rc = rtnCoordSendRequestToNode( &( _header.header ),
+                                            dg.id,
+                                            routeAgent,
+                                            cb,
+                                            dg.body,
+                                            _sendMap ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+                    dg.id.columns.groupID, dg.id.columns.nodeID, rc ) ;
+               goto error ;
+            }
+         }
+
+         rc = _getReply( cb, TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
             goto error ;
          }
 
-         RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
+         rc = _handleReadResults( cb, doneLst ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
 
-         _dispatcher.add( sub->id, tuple.data, sizeof( tuple ) ) ;
-         _dispatcher.setContextID( sub->id, sub->contextID ) ;
-      }
-      _dispatcher.addDone() ;
-
-      rc = _dispatcher.wait4Reply( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
-         goto error ;
-      }
-
-      rc = _push2Pool( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to resort data:%d", rc ) ;
-         goto error ;
-      }
+         if ( RETRY_TAG_NULL == tag )
+         {
+            _getPool().pushDone() ;
+            break ;
+         }
+         else
+         {
+            rc = _reopenSubStreams( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to reopen sub streams:%d", rc ) ;
+               goto error ;
+            }
+            needReshard = TRUE ;
+         }
+      } while ( TRUE ) ;
    done:
+      _clearMsgData() ;
+      _tuplePool.clear() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__READV, rc ) ;
       return rc ;
    error:
+      _getPool().clear() ;
       goto done ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__PUSH2POOL, "_rtnCoordLobStream::_push2Pool" )
-   INT32 _rtnCoordLobStream::_push2Pool( _pmdEDUCB *cb )
+   INT32 _rtnCoordLobStream::_push2Pool( const MsgOpReply *header )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__PUSH2POOL ) ;
 
+      const MsgLobTuple *begin = NULL ;
+      UINT32 tupleSz = 0 ;
+      const MsgLobTuple *curTuple = NULL ;
+      const CHAR *data = NULL ;
+      BOOLEAN got = FALSE ;
       INT32 pageSz = 0 ;
       rc = _getLobPageSize( pageSz ) ;
       if ( SDB_OK != rc )
@@ -684,84 +751,47 @@ namespace engine
          goto error ;
       }
 
-      _getPool().clear() ;
+      rc = msgExtractReadResult( header, &begin, &tupleSz ) ;
+      if ( SDB_OK != rc )
       {
-      const std::vector<MsgOpReply *> &replyMsgs = _dispatcher.getReplyMsgs() ;
-      std::vector<MsgOpReply *>::const_iterator itr = replyMsgs.begin() ;
-      for ( ; itr != replyMsgs.end(); ++itr )
+         PD_LOG( PDERROR, "failed to extract read result:%d", rc ) ;
+         goto error ;
+      }
+
+      while ( TRUE )
       {
-         const MsgLobTuple *begin = NULL ;
-         UINT32 tupleSz = 0 ;
-         const MsgLobTuple *curTuple = NULL ;
-         const CHAR *data = NULL ;
-         BOOLEAN got = FALSE ;
-
-         if ( SDB_OK != ( *itr )->flags )
-         {
-            rc = ( *itr )->flags ;
-            PD_LOG( PDERROR, "failed to read lob on node[%d:%hd], rc:%d",
-                    ( *itr )->header.routeID.columns.groupID,
-                    ( *itr )->header.routeID.columns.nodeID, rc ) ;
-            goto error ;
-         }
-
-         rc = msgExtractReadResult( *itr, &begin, &tupleSz ) ;
+         rc = msgExtractTuplesAndData( &begin, &tupleSz,
+                                       &curTuple, &data, &got ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to extract read result:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to extract tuple from msg:%d", rc ) ;
             goto error ;
          }
-
-         while ( TRUE )
+         else if ( got )
          {
-            rc = msgExtractTuplesAndData( &begin, &tupleSz,
-                                          &curTuple, &data, &got ) ;
-            if ( SDB_OK != rc )
+            if ( 0 == curTuple->columns.sequence )
             {
-               PD_LOG( PDERROR, "failed to extract tuple from msg:%d", rc ) ;
+               PD_LOG( PDERROR, "we should not get sequence 0" ) ;
+               rc = SDB_SYS ;
                goto error ;
             }
-            else if ( got )
-            {
-               if ( 0 == curTuple->columns.sequence )
-               {
-                  PD_LOG( PDERROR, "we should not get sequence 0" ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-               }
 
-               rc = _getPool().push( data, curTuple->columns.len,
-                                     RTN_LOB_GET_OFFSET_OF_LOB(
-                                            pageSz,
-                                            curTuple->columns.sequence,
-                                            curTuple->columns.offset ) ) ;
-               if ( SDB_OK != rc )
-               {
-                  PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
-                  goto error ;
-               }
-            }
-            else
+            rc = _getPool().push( data, curTuple->columns.len,
+                                  RTN_LOB_GET_OFFSET_OF_LOB(
+                                         pageSz,
+                                         curTuple->columns.sequence,
+                                         curTuple->columns.offset ) ) ;
+            if ( SDB_OK != rc )
             {
-               break ;
+               PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
+               goto error ;
             }
          }
+         else
+         {
+            break ;
+         }
       }
-      }
-
-      _getPool().pushDone() ;
-
-      {
-      const std::vector<MsgOpReply *> &replyMsgs = _dispatcher.getReplyMsgs() ;
-      std::vector<MsgOpReply *>::const_iterator itr = replyMsgs.begin() ;
-      for ( ; itr != replyMsgs.end(); ++itr )
-      {
-         _getPool().entrust( ( CHAR * )( *itr ) ) ;
-      }
-      }
-
-      /// MsgOpReply will be freed by pool. 
-      _dispatcher.clear( FALSE ) ;
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__PUSH2POOL, rc ) ;
       return rc ;
@@ -775,54 +805,68 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__COMPLETELOB ) ;
-      MSG_OPTIONS options( FALSE, FALSE ) ;
       _MsgLobTuple tuple ;
       tuple.columns.len = sizeof( meta ) ;
       tuple.columns.sequence = DMS_LOB_META_SEQUENCE ;
       tuple.columns.offset = 0 ; /// offset in piece
       const subStream *sub = NULL ;
-      const MsgOpReply *reply = NULL ;
+      netIOVec iov ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
 
-      RTN_COORD_LOB_GET_SUBSTREAM( _metaGroup, sub ) ;
+      _header.header.messageLength = sizeof( _header ) +
+                                     sizeof( tuple ) +
+                                     sizeof( meta );
+      _header.header.opCode = MSG_BS_LOB_UPDATE_REQ ;
+      _header.bsonLen = 0 ;
 
-      _dispatcher.clear() ;
-      rc = _dispatcher.createMsg( MSG_BS_LOB_UPDATE_REQ,
-                                  _cataInfo->getVersion(),
-                                  options,
-                                  BSONObj() ) ;
-      if ( SDB_OK != rc )
+      _pushLobHeader( &_header, BSONObj(), iov ) ;
+      _pushLobData( &tuple, sizeof( tuple ), iov ) ;
+      _pushLobData( &meta, sizeof( meta ), iov ) ;
+
+      do
       {
-         PD_LOG( PDERROR, "failed to create new msg:%d", rc ) ;
-         goto error ;
-      }
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         _header.version = _cataInfo->getVersion() ;
+         RTN_COORD_LOB_GET_SUBSTREAM( _metaGroup, sub ) ;
 
-      _dispatcher.add( sub->id, tuple.data, sizeof( tuple ) )
-                 .add( sub->id, &meta, sizeof( meta ) )
-                 .addDone() ;
+         _header.contextID = sub->contextID ;
 
-      _dispatcher.setContextID( sub->id, sub->contextID ) ;
+         rc = rtnCoordSendRequestToNode( &( _header.header ),
+                                         sub->id,
+                                         routeAgent,
+                                         cb,
+                                         iov,
+                                         _sendMap ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+                    sub->id.columns.groupID, sub->id.columns.nodeID, rc ) ;
+            goto error ;
+         }
 
-      rc = _dispatcher.wait4Reply( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
-         goto error ;
-      }
+         rc = _getReply( cb, TRUE, tag ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
+            goto error ;
+         }
 
-      reply = _dispatcher.getFirstReply() ;
-      if ( NULL == reply )
-      {
-         PD_LOG( PDERROR, "we got nothing from msg queue" ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      if ( SDB_OK != reply->flags )
-      {
-         rc = reply->flags ;
-         PD_LOG( PDERROR, "failed to write lob on data node:%d", rc ) ;
-         goto error ;
-      }
+         if ( RETRY_TAG_NULL == tag )
+         {
+            break ;
+         }
+         else
+         {
+            rc = _reopenSubStreams( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to reopen sub streams:%d", rc ) ;
+               goto error ;
+            }
+         }
+      } while ( TRUE ) ;
    done:
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__COMPLETELOB, rc ) ;
       return rc ;
@@ -858,62 +902,66 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__CLOSESUBSTREAMS ) ;
-      MSG_OPTIONS options( FALSE, FALSE ) ;
 
-      _dispatcher.clear() ;
-      rc = _dispatcher.createMsg( MSG_BS_LOB_CLOSE_REQ,
-                                  _cataInfo->getVersion(),
-                                  options,
-                                  BSONObj() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to create new msg:%d", rc ) ;
-         goto error ;
-      }
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
+      _header.header.messageLength = sizeof( _header ) ;
+      _header.header.opCode = MSG_BS_LOB_CLOSE_REQ ;
+      _header.bsonLen = 0 ;
+      _header.header.messageLength = sizeof( _header ) ;
 
+      do
       {
-      SUB_STREAMS::const_iterator itr = _subs.begin() ;
-      for ( ; itr != _subs.end(); ++itr )
-      {
-         _dispatcher.add( itr->second.id ) ;
-      }
-      }
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         _header.version = _cataInfo->getVersion() ;
 
-      {
-      SUB_STREAMS::const_iterator itr = _subs.begin() ;
-      for ( ; itr != _subs.end(); ++itr )
-      {
-         _dispatcher.setContextID( itr->second.id,
-                                   itr->second.contextID ) ;
-      }
-      }
-
-      _dispatcher.addDone() ;
-      rc = _dispatcher.wait4Reply( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
-         goto error ;
-      }
-
-      {
-      const std::vector<MsgOpReply *> &replyMsgs = _dispatcher.getReplyMsgs() ;
-      std::vector<MsgOpReply *>::const_iterator itr = replyMsgs.begin() ;
-      for ( ; itr != replyMsgs.end(); ++itr )
-      {
-         if ( SDB_OK != ( *itr )->flags )
+         for ( SUB_STREAMS::iterator itr = _subs.begin();
+               itr != _subs.end();
+               ++itr )
          {
-            rc = ( *itr )->flags ;
-            PD_LOG( PDERROR, "failed to close lob on node[%d:%hd], rc:%d",
-                    ( *itr )->header.routeID.columns.groupID,
-                    ( *itr )->header.routeID.columns.nodeID, rc ) ;
+            _header.contextID = itr->second.contextID ;
+            rc = rtnCoordSendRequestToNode( &( _header.header ),
+                                            itr->second.id,
+                                            routeAgent,
+                                            cb,
+                                            _sendMap ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+                    itr->second.id.columns.groupID,
+                    itr->second.id.columns.nodeID, rc ) ;
+               goto error ;
+            }
+         }
+
+         rc = _getReply( cb, TRUE, tag ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
             goto error ;
          }
-      }
-      }
-      _subs.clear() ;
+
+         rc = _removeClosedSubStreams() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to close sub streams:%d", rc ) ;
+            goto error ;
+         }
+
+         if ( RETRY_TAG_NULL == tag )
+         {
+            break ;            
+         }
+         else
+         {
+            /// here we only need to close opened sub streams.
+            /// do not reopen new streams.
+            continue ;
+         }
+      } while ( TRUE ) ;
    done:
-      _dispatcher.clear() ;
+      _clearMsgData() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__CLOSESUBSTREAMS, rc ) ;
       return rc ;
    error:
@@ -981,6 +1029,13 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__EXTRACTMETA ) ;
       const CHAR *metaRaw = NULL ;
 
+      if ( NULL == header )
+      {
+         PD_LOG( PDERROR, "header is NULL" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
       if ( ( UINT32 )header->header.messageLength <
            ( sizeof( MsgOpReply ) + 5 ) )
       {
@@ -1024,34 +1079,317 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__REMOVEV ) ;
       SDB_ASSERT( cnt <= RTN_LOB_REMOVE_PIECE_NUM, "can not over it" ) ;
-      MSG_OPTIONS options( TRUE, FALSE ) ;
-      _dispatcher.clear() ;
-      _MsgLobTuple tuples[RTN_LOB_REMOVE_PIECE_NUM] ;
 
-      rc = _dispatcher.createMsg( MSG_BS_LOB_REMOVE_REQ,
-                                  _cataInfo->getVersion(),
-                                  options,
-                                  BSONObj() ) ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
+      BOOLEAN reshard = TRUE ;
+      DONE_LST doneLst ;
+
+      _header.header.messageLength = sizeof( _header ) ;
+      _header.header.opCode = MSG_BS_LOB_REMOVE_REQ ;
+      _header.bsonLen = 0 ;
+
+      _initTuples( pieces, cnt ) ;
+
+      do
+      {
+         _clearMsgData() ;
+         INT32 tag = RETRY_TAG_NULL ;
+         _header.version = _cataInfo->getVersion() ;
+         if ( reshard )
+         {
+            rc = _shardData( pieces, cnt, TRUE, doneLst ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
+               goto error ;
+            }
+
+            reshard = FALSE ;
+         }
+
+         for ( DATA_GROUPS::iterator itr = _dataGroups.begin();
+               itr != _dataGroups.end();
+               ++itr )
+         {
+            const dataGroup &dg = itr->second ;
+            if ( !dg.hasData() )
+            {
+               continue ;
+            }
+
+            _header.contextID = dg.contextID ;
+            _header.header.messageLength = sizeof( MsgHeader ) + itr->second.bodyLen ;
+            rc = rtnCoordSendRequestToNode( &( _header.header ),
+                                            dg.id,
+                                            routeAgent,
+                                            cb,
+                                            _sendMap ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to send msg to node[%d:%hd], rc:%d",
+                    dg.id.columns.groupID,
+                    dg.id.columns.nodeID, rc ) ;
+               goto error ;
+            }      
+         }
+
+         rc = _getReply( cb, TRUE, tag ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = _add2DoneLstFromReply( doneLst ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         if ( RETRY_TAG_NULL == tag )
+         {
+            break ;
+         }
+         else
+         {
+            rc = _reopenSubStreams( cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to reopen sub streams:%d", rc ) ;
+               goto error ;
+            }
+            reshard = TRUE ;
+         }
+      } while ( TRUE ) ;
+   done:
+      _clearMsgData() ;
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__REMOVEV, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCoordLobStream::_addSubStreamsFromReply()
+   {
+      INT32 rc = SDB_OK ;
+      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      for ( ; itr != _results.end(); ++itr )
+      {
+         if ( SDB_OK != ( *itr )->flags )
+         {
+            rc = ( *itr )->flags ;
+            PD_LOG( PDERROR, "failed to write lob on node[%d:%hd], rc:%d",
+                    ( *itr )->header.routeID.columns.groupID,
+                    ( *itr )->header.routeID.columns.nodeID, rc ) ;
+            goto error ;
+         }
+
+         if ( -1 == ( *itr )->contextID )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "invalid context id" ) ;
+            goto error ;
+         }
+
+         _add2Subs( ( *itr )->header.routeID.columns.groupID,
+                    ( *itr )->contextID,
+                    ( *itr )->header.routeID ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__GETREPLY, "_rtnCoordLobStream::_getReply" )
+   INT32 _rtnCoordLobStream::_getReply( _pmdEDUCB *cb,
+                                        BOOLEAN nodeSpecified,
+                                        INT32 &tag )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__GETREPLY ) ;
+      INT32 replyType = MAKE_REPLY_TYPE( _header.header.opCode ) ;
+      REPLY_QUE replyQueue ;
+      tag = ( INT32 )RETRY_TAG_NULL ;
+
+      rc = rtnCoordGetReply( cb, _sendMap, replyQueue, replyType,
+                             TRUE, TRUE ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to create new msg:%d", rc ) ;
+         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
          goto error ;
       }
 
+       /// TODO: rewrite this part when new coord session is done.
+      while ( !replyQueue.empty() )
+      {
+         MsgOpReply *replyHeader = ( MsgOpReply * )( replyQueue.front() ) ;
+         replyQueue.pop() ;
+         INT32 flag = replyHeader->flags ;
+         MsgRouteID id ;
+         id.value = MSG_INVALID_ROUTEID ;
+         id.columns.groupID = replyHeader->header.routeID.columns.groupID ;
+
+         if ( SDB_OK == flag )
+         {
+            /// replyHeader will be released by _clearMsgData()    
+            _results.push_back( replyHeader ) ;
+            continue ;
+         }
+         else if ( SDB_CLS_FULL_SYNC == flag )
+         {
+            PD_LOG( PDWARNING, "node[%d:%hd] is in full sync",
+                    id.columns.groupID, id.columns.nodeID ) ;
+            cb->getCoordSession()->removeLastNode( id.columns.groupID ) ;
+            rtnCoordUpdateNodeStatByRC( replyHeader->header.routeID,
+                                        flag );
+            if ( !nodeSpecified )
+            {
+               tag |= ( INT32 )RETRY_TAG_RETRY ;
+               flag = SDB_OK ;
+            }
+         }
+         else if ( SDB_CLS_NOT_PRIMARY == flag )
+         {
+            if ( !nodeSpecified )
+            {
+               tag |= ( INT32 )RETRY_TAG_RETRY ;
+               flag = SDB_OK ;
+            }
+
+            PD_LOG( PDWARNING, "node[%d:%hd] is not primary",
+                    id.columns.groupID, id.columns.nodeID ) ;
+            cb->getCoordSession()->removeLastNode( id.columns.groupID ) ;
+            CoordGroupInfoPtr groupInfoTmp ;
+            rc = rtnCoordGetGroupInfo( cb, id.columns.groupID, TRUE,
+                                       groupInfoTmp );
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to refresh group info:%d", rc ) ;
+               /// do not goto error, we need to free replyHeader
+            }
+         }
+         else if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == flag )
+         {
+            PD_LOG( PDWARNING, "catalog version is updated[%d:%hd]",
+                    id.columns.groupID, id.columns.nodeID ) ;
+            flag = SDB_OK ;
+            tag |= ( ( INT32 )RETRY_TAG_RETRY | ( INT32 )RETRY_TAG_REOPEN ) ;
+            rc = _updateCataInfo( TRUE, cb ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to update catalog info:%d", rc ) ;
+               /// do not goto error, we need to free replyHeader
+            }
+         }
+         else
+         {
+            PD_LOG( PDERROR, "node returned error code:%d", flag ) ;
+            rc = flag ;
+         }
+
+         SDB_OSS_FREE( replyHeader ) ;
+         rc = SDB_OK == rc ? flag : rc ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+   done:
+      while ( !replyQueue.empty() )
+      {
+         CHAR *p = replyQueue.front();
+         replyQueue.pop();
+         SAFE_OSS_FREE( p ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__GETREPLY, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnCoordLobStream::_clearMsgData()
+   {
+      std::vector<MsgOpReply *>::iterator itr =
+                                          _results.begin() ;
+      for ( ; itr != _results.end(); ++itr )
+      {
+         SAFE_OSS_FREE( *itr ) ;
+      }
+
+      _results.clear() ;
+      _sendMap.clear() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__REOPENSS, "_rtnCoordLobStream::_reopenSubStreams" ) 
+   INT32 _rtnCoordLobStream::_reopenSubStreams( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__REOPENSS ) ;
+      rc = _closeSubStreams( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to close sub streams:%d", rc ) ;
+         goto error ;
+      }
+
+      /// main stream was opened before, the meta piece may be synced
+      ///  to other group. we open all streams as normal.
+      rc = _openOtherStreams( getFullName(), getOID(), _getMode(), cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open sub streams:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__REOPENSS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnCoordLobStream::_initTuples( const _dmsLobRecord *pieces,
+                                         UINT32 cnt )
+   {
+      _tuplePool.clear() ;
       for ( UINT32 i = 0; i < cnt; ++i )
       {
          const _dmsLobRecord &piece = pieces[i] ;
-         UINT32 groupID = 0 ;
-         _MsgLobTuple &tuple = tuples[i] ;
+         MsgLobTuple tuple ;
          tuple.columns.len = piece._dataLen ;
          tuple.columns.sequence = piece._sequence ;
-         tuple.columns.offset = piece._offset ; /// offset in piece
-         const subStream *sub = NULL ;
+         tuple.columns.offset = piece._offset ;
+         _tuplePool.push_back( tuple ) ;
+      }
+      return ;
+   }
 
-         rc = _cataInfo->
-                   getLobGropuID( *( piece._oid ),
-                                  piece._sequence,
-                                  groupID ) ;
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__SHARDDATA, "_rtnCoordLobStream::_shardData" )
+   INT32 _rtnCoordLobStream::_shardData( const _dmsLobRecord *pieces,
+                                         UINT32 cnt,
+                                         BOOLEAN isWrite,
+                                         const DONE_LST &doneLst )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__SHARDDATA ) ;
+      _dataGroups.clear() ;
+
+      for ( UINT32 i = 0; i < cnt; ++i )
+      {
+         const subStream *sub = NULL ;
+         UINT32 groupID = 0 ;
+         const _dmsLobRecord &piece = pieces[i] ;
+         dataGroup *dg = NULL ;
+         
+         if ( 0 < doneLst.count( (ossValuePtr)( &piece ) ) )
+         {
+            continue ;
+         }
+
+         rc = _cataInfo->getLobGropuID( *( piece._oid ),
+                                        piece._sequence,
+                                        groupID ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get destination:%d", rc ) ;
@@ -1060,39 +1398,177 @@ namespace engine
 
          RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
 
-         _dispatcher.add( sub->id, tuple.data, sizeof( tuple ) ) ;
-         _dispatcher.setContextID( sub->id, sub->contextID ) ;
+         dg = &( _dataGroups[groupID] ) ;
+         if ( !dg->hasData() )
+         {
+            _pushLobHeader( &_header, BSONObj(), dg->body ) ;
+            dg->bodyLen += sizeof( MsgOpLob ) - sizeof( MsgHeader ) ;
+         }
+         dg->addData( _tuplePool[i],
+                      isWrite ? piece._data : NULL,
+                      &_alignBuf ) ;
+         dg->contextID = sub->contextID ;
+         dg->id = sub->id ;
       }
-      _dispatcher.addDone() ;
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__SHARDDATA, rc ) ;
+      return rc ;
+   error:
+      _dataGroups.clear() ;
+      goto done ;
+   }
 
-      rc = _dispatcher.wait4Reply( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
-         goto error ;
-      }
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__HANDLEREADRES, "_rtnCoordLobStream::_handleReadResults" )
+   INT32 _rtnCoordLobStream::_handleReadResults( _pmdEDUCB *cb,
+                                                 DONE_LST &doneLst )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__HANDLEREADRES ) ;
+      SDB_ASSERT( !_results.empty(), "impossible" ) ;
 
-      {
-      const std::vector<MsgOpReply *> &replyMsgs = _dispatcher.getReplyMsgs() ;
-      std::vector<MsgOpReply *>::const_iterator itr = replyMsgs.begin() ;
-      for ( ; itr != replyMsgs.end(); ++itr )
+      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      for ( ; itr != _results.end(); ++itr )
       {
          if ( SDB_OK != ( *itr )->flags )
          {
             rc = ( *itr )->flags ;
-            PD_LOG( PDERROR, "failed to remove lob on node[%d:%hd], rc:%d",
+            PD_LOG( PDERROR, "failed to read lob on node[%d:%hd], rc:%d",
                     ( *itr )->header.routeID.columns.groupID,
                     ( *itr )->header.routeID.columns.nodeID, rc ) ;
             goto error ;
          }
+
+         rc = _push2Pool( *itr ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
+            goto error ;
+         }
+
+         rc = _add2DoneLst( ( *itr )->header.routeID.columns.groupID,
+                            doneLst ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add tuples to done list:%d", rc ) ;
+            goto error ;
+         }
       }
+
+      /// we need to keep reply msg in memory.
+      {
+      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      for ( ; itr != _results.end(); ++itr )
+      {
+         _getPool().entrust( ( CHAR * )( *itr ) ) ;
+      }
+      }
+      _results.clear() ;
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__HANDLEREADRES, rc ) ;
+      return rc ;
+   error:
+      _getPool().clear() ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__ADD2DONELSTFROMREPLY, "_rtnCoordLobStream::_add2DoneLstFromReply" )
+   INT32 _rtnCoordLobStream::_add2DoneLstFromReply( DONE_LST &doneLst )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__ADD2DONELSTFROMREPLY ) ;
+      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      for ( ; itr != _results.end(); ++itr )
+      {
+         rc = _add2DoneLst( ( *itr )->header.routeID.columns.groupID,
+                            doneLst ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add group to done list:%d", rc ) ;
+            goto error ;
+         }
       }
    done:
-      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__REMOVEV, rc ) ;
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__ADD2DONELSTFROMREPLY, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__ADD2DONELST, "_rtnCoordLobStream::_add2DoneLst" )
+   INT32 _rtnCoordLobStream::_add2DoneLst( UINT32 groupID, DONE_LST &doneLst )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__ADD2DONELST ) ;
+      DATA_GROUPS::iterator itr = _dataGroups.find( groupID ) ;
+      if ( _dataGroups.end() == itr )
+      {
+         PD_LOG( PDERROR, "we can not find group:%d", groupID ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      {
+      dataGroup &dg = itr->second ;
+      for ( list<ossValuePtr>::const_iterator titr =
+                                               dg.tuples.begin() ;
+            titr != dg.tuples.end() ;
+            ++titr )
+      {
+         if ( !doneLst.insert( *titr ).second )
+         {
+            PD_LOG( PDERROR, "we already pushed tuple to pool[%d:%d:%lld]",
+                    (( MsgLobTuple *)( *titr ))->columns.len,
+                    (( MsgLobTuple *)( *titr ))->columns.sequence,
+                    (( MsgLobTuple *)( *titr ))->columns.offset ) ;
+            rc = SDB_SYS ;
+         }
+      }
+
+      dg.clearData() ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__ADD2DONELST, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnCoordLobStream::_removeClosedSubStreams()
+   {
+      INT32 rc = SDB_OK ;
+      std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
+      for ( ; itr != _results.end(); ++itr )
+      {
+         _subs.erase( ( *itr )->header.routeID.columns.groupID ) ;
+      }
+      return rc ;
+   }
+
+   void _rtnCoordLobStream::_pushLobHeader( const MsgOpLob *header,
+                                            const BSONObj &obj,
+                                            netIOVec &iov )
+   {
+      const CHAR *off = ( const CHAR * )header + sizeof( MsgHeader ) ;
+      UINT32 len = sizeof( MsgOpLob ) - sizeof( MsgHeader ) ;
+      iov.push_back( netIOV( off, len ) ) ;
+
+      if ( !obj.isEmpty() )
+      {
+         iov.push_back( netIOV( obj.objdata(), obj.objsize() ) ) ;
+	 UINT32 alignedLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
+         if ( ( UINT32 )obj.objsize() < alignedLen )
+         {
+            iov.push_back( netIOV( &_alignBuf, alignedLen - obj.objsize() ) ) ;
+         }
+      }
+      return ;
+   }
+
+   void _rtnCoordLobStream::_pushLobData( const void *data,
+                                          UINT32 len,
+                                          netIOVec &iov )
+   {
+      iov.push_back( netIOV( data, len ) ) ;
+   }
 }
 

@@ -298,7 +298,8 @@ namespace engine
                           cb, dataOfTuple, onceRead ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to read lob[%s:%d]:%d",
+                    _oid.str().c_str(), t.columns.sequence, rc ) ;
             goto error ;
          }
 
