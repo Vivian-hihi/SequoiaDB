@@ -4679,13 +4679,21 @@ namespace engine
       try
       {
          BSONElement e = explainOptions.getField( FIELD_NAME_RUN ) ;
-         if ( e.isNumber() )
+         if ( e.eoo() )
+         {
+            _needRun = FALSE ;
+         }
+         else if ( e.isNumber() )
          {
             _needRun = e.numberInt() == 0 ? FALSE : TRUE ;
          }
          else if ( e.isBoolean() )
          {
             _needRun = e.booleanSafe() ;
+         }
+         else
+         {
+            _needRun = FALSE ;
          }
       }
       catch( std::exception &e )
@@ -4800,16 +4808,19 @@ namespace engine
       _builder.append( FIELD_NAME_NODE_NAME, ss.str() ) ;
 
       /// get some info before explain
-      rc = _getMonInfo( cb, _beginMon ) ;
-      if ( SDB_OK != rc )
+      if ( _needRun )
       {
-         PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
-         goto error ;
+         rc = _getMonInfo( cb, _beginMon ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
+            goto error ;
+         }
+         ossGetCurrentTime( _beginTime ) ;
       }
 
       _queryContextID = queryContextID ;
       _cbOfQuery = cb ;
-      ossGetCurrentTime( _beginTime ) ;
    done:
       PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN, rc ) ;
       return rc ;
@@ -4925,15 +4936,23 @@ namespace engine
          }
       }
 
-      /// get time first.
-      ossGetCurrentTime( _endTime ) ;
-      rc = _getMonInfo( cb, _endMon ) ;
-      if ( SDB_OK != rc )
+      if ( _needRun )
       {
-         PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
-         goto error ;
+         ossGetCurrentTime( _endTime ) ;
+         rc = _getMonInfo( cb, _endMon ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
+            goto error ;
+         }
       }
    done:
+      if ( -1 != _queryContextID )
+      {
+         sdbGetRTNCB()->contextDelete( _queryContextID,
+                                       _cbOfQuery ) ;
+         _queryContextID = -1 ;
+      }
       PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY, rc ) ;
       return rc ;
    error:
@@ -4946,42 +4965,45 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT ) ;
 
-      _builder.appendNumber( FIELD_NAME_RETURN_NUM, _recordNum ) ;
-      UINT64 beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
-      UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
-      _builder.append( FIELD_NAME_ELAPSED_TIME,
-                       FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ; 
+      if ( _needRun )
+      {
+         _builder.appendNumber( FIELD_NAME_RETURN_NUM, _recordNum ) ;
+         UINT64 beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
+         UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
+         _builder.append( FIELD_NAME_ELAPSED_TIME,
+                          FLOAT64( ( endTime - beginTime ) / 1000000.0 ) ) ; 
       
-      BSONElement begin = _beginMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
-      BSONElement end = _endMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
-      if ( begin.isNumber() && end.isNumber() )
-      {
-         _builder.appendNumber( FIELD_NAME_INDEXREAD,
-                                end.Long() - begin.Long() ) ;
-      }
+         BSONElement begin = _beginMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
+         BSONElement end = _endMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
+         if ( begin.isNumber() && end.isNumber() )
+         {
+            _builder.appendNumber( FIELD_NAME_INDEXREAD,
+                                   end.Long() - begin.Long() ) ;
+         }
 
-      begin = _beginMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
-      end = _endMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
-      if ( begin.isNumber() && end.isNumber() )
-      {
-         _builder.appendNumber( FIELD_NAME_DATAREAD,
-                                end.Long() - begin.Long() ) ;
-      }
+         begin = _beginMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
+         end = _endMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
+         if ( begin.isNumber() && end.isNumber() )
+         {
+            _builder.appendNumber( FIELD_NAME_DATAREAD,
+                                   end.Long() - begin.Long() ) ;
+         }
 
-      begin = _beginMon.getField( FIELD_NAME_USERCPU ) ;
-      end = _endMon.getField( FIELD_NAME_USERCPU ) ;
-      if ( begin.isNumber() && end.isNumber() )
-      {
-         _builder.append( FIELD_NAME_USERCPU,
-                          FLOAT64( end.Number() - begin.Number() ) ) ;
-      }
+         begin = _beginMon.getField( FIELD_NAME_USERCPU ) ;
+         end = _endMon.getField( FIELD_NAME_USERCPU ) ;
+         if ( begin.isNumber() && end.isNumber() )
+         {
+            _builder.append( FIELD_NAME_USERCPU,
+                             FLOAT64( end.Number() - begin.Number() ) ) ;
+         }
       
-      begin = _beginMon.getField( FIELD_NAME_SYSCPU ) ;
-      end = _endMon.getField( FIELD_NAME_SYSCPU ) ;
-      if ( begin.isNumber() && end.isNumber() )
-      {
-         _builder.append( FIELD_NAME_SYSCPU,
-                          FLOAT64( end.Number() - begin.Number() ) ) ;
+         begin = _beginMon.getField( FIELD_NAME_SYSCPU ) ;
+         end = _endMon.getField( FIELD_NAME_SYSCPU ) ;
+         if ( begin.isNumber() && end.isNumber() )
+         {
+            _builder.append( FIELD_NAME_SYSCPU,
+                             FLOAT64( end.Number() - begin.Number() ) ) ;
+         }
       }
 
       rc = append( _builder.obj() ) ;
