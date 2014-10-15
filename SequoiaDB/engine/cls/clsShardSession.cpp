@@ -45,6 +45,7 @@ namespace engine
 {
 
 #define SHD_SESSION_TIMEOUT         (60)
+#define SHD_INTERRUPT_CHECKPOINT    (10)
 
    BEGIN_OBJ_MSG_MAP( _clsShdSession, _pmdAsyncSession )
       ON_MSG ( MSG_BS_UPDATE_REQ, _onOPMsg )
@@ -2631,6 +2632,8 @@ namespace engine
          goto error ;
       }
 
+      _pEDUCB->writingDB( TRUE ) ;
+
       while ( TRUE )
       {
          BOOLEAN got = FALSE ;
@@ -2659,6 +2662,12 @@ namespace engine
          }
 
          ++tupleNum ;
+         if ( 0 == tupleNum % SHD_INTERRUPT_CHECKPOINT &&
+              _pEDUCB->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
       }
 
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] write done",
@@ -2818,6 +2827,7 @@ namespace engine
       BSONObj obj ;
       BOOLEAN isMainCl = FALSE ;
       INT16 w = 0 ;
+      UINT32 tupleNum = 0 ;
 
       rc = msgExtractLobRequest( ( const CHAR * )msg, &header,
                                  obj, &begin, &tuplesSize ) ;
@@ -2860,6 +2870,8 @@ namespace engine
          goto error ;
       }
 
+      _pEDUCB->writingDB( TRUE ) ;
+
       while ( TRUE )
       {
          BOOLEAN got = FALSE ;
@@ -2884,8 +2896,17 @@ namespace engine
             PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
             goto error ;
          }
+
+         if ( 0 == ++tupleNum % SHD_INTERRUPT_CHECKPOINT &&
+              _pEDUCB->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
       }
 
+      PD_LOG( PDDEBUG, "%d pieces of lob[%s] remove done",
+              tupleNum, lobContext->getOID().str().c_str() ) ;
    done:
       return rc ;
    error:
@@ -2946,6 +2967,7 @@ namespace engine
          goto error ;
       }
 
+      _pEDUCB->writingDB( TRUE ) ;
       while ( TRUE )
       {
          BOOLEAN got = FALSE ;
@@ -2973,7 +2995,12 @@ namespace engine
             goto error ;
          }
 
-         ++tupleNum ;
+         if ( 0 == ++tupleNum % SHD_INTERRUPT_CHECKPOINT &&
+              _pEDUCB->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
       }
 
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] update done",
