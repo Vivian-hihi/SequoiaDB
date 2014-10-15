@@ -321,7 +321,7 @@ namespace engine
       }
       else if ( vm.count( PMD_OPTION_VERSION ) )
       {
-         ossPrintVersion( "Sdb list Version" ) ;
+         ossPrintVersion( "Sdb List Version" ) ;
          rc = SDB_PMD_VERSION_ONLY ;
          goto error ;
       }
