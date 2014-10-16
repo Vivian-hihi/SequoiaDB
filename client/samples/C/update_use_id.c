@@ -96,8 +96,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       printf("Failed to create collection space, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting( 1 ) ;
+
    // create collection in a specified colletion space.
    rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
    if( rc!=SDB_OK )
@@ -105,9 +104,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       printf("Failed to create collection, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting( 1 ) ;
-
+   
    // prepare record
    bson_init( &record ) ;
    bson_append_int( &record, "age", 10 ) ;

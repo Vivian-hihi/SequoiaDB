@@ -89,22 +89,18 @@ INT32 main ( INT32 argc, CHAR **argv )
                                    SDB_PAGESIZE_4K, &collectionspace ) ;
    if( rc!=SDB_OK )
    {
-      printf("Failed to create collection space, rc = %d" OSS_NEWLINE, rc ) ;
+      printf( "Failed to create collection space, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
 
    // create collection in a specified colletion space.
    // Here,we build it up in the new collection.
    rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
    if( rc!=SDB_OK )
    {
-      printf("Failed to create collection, rc = %d" OSS_NEWLINE, rc ) ;
+      printf( "Failed to create collection, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
 
    // first,build up a bson obj for inserting
    bson_init( &obj ) ;
@@ -113,7 +109,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    rc = bson_finish( &obj ) ;
    CHECK_RC ( rc, "Failed to build bson" ) ;
 
-   printf("The inserted record is :") ;
+   printf( "The inserted record is :" ) ;
    bson_print( &obj ) ;
 
    // then,insert to the specified collection
@@ -123,14 +119,14 @@ INT32 main ( INT32 argc, CHAR **argv )
       printf ( "Failed to insert record, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   printf("Success to insert!" OSS_NEWLINE ) ;
+   printf( "Success to insert! " OSS_NEWLINE ) ;
 
    // drop the specified collection
    rc = sdbDropCollection( collectionspace,COLLECTION_NAME ) ;
    if( rc!=SDB_OK )
    {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
+      printf( "Failed to drop the specified collection, "
+              "rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
 
@@ -138,8 +134,8 @@ INT32 main ( INT32 argc, CHAR **argv )
    rc = sdbDropCollectionSpace( connection,COLLECTION_SPACE_NAME ) ;
    if( rc!=SDB_OK )
    {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
+      printf( "Failed to drop the specified collection, "
+              "rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
 

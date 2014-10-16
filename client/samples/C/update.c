@@ -84,15 +84,9 @@ INT32 main ( INT32 argc, CHAR **argv )
                                    SDB_PAGESIZE_4K, &collectionspace ) ;
    CHECK_RC ( rc, "Failed to create collection space" ) ;
 
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
-
    // create collection in a specified colletion space.
    rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
    CHECK_RC ( rc, "Failed to create collection" ) ;
-
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
 
    // insert records to the collection
    bson_init ( &obj ) ;

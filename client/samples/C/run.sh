@@ -11,6 +11,7 @@ echo "###############building file..."
 ./buildApp.sh index
 ./buildApp.sh subArrayLen
 ./buildApp.sh upsert
+./buildApp.sh lob
 
 echo "###############running connect..."
 ./build/connect localhost 11810 "" ""
@@ -34,6 +35,8 @@ echo "###############running subArrayLen..."
 ./build/subArrayLen localhost 11810 "" ""
 echo "###############running upsert..."
 ./build/upsert localhost 11810 "" ""
+echo "###############running lob..."
+./build/lob localhost 11810 "" ""
 
 echo "###############running connect.static..."
 ./build/connect.static localhost 11810 "" ""
@@ -57,4 +60,6 @@ echo "###############running subArrayLen.static..."
 ./build/subArrayLen.static localhost 11810 "" ""
 echo "###############running upsert.static..."
 ./build/upsert.static localhost 11810 "" ""
+echo "###############running lob.static..."
+./build/lob.static localhost 11810 "" ""
 

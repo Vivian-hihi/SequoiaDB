@@ -93,8 +93,6 @@ INT32 main ( INT32 argc, CHAR **argv )
       cout<<"Failed to create collection space, rc = "<<rc<<endl ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
 
    // create collection in a specified colletion space.
    // Here,we build it up in the new collection.
@@ -104,8 +102,6 @@ INT32 main ( INT32 argc, CHAR **argv )
       cout<<"Failed to create collection, rc = "<<rc<<endl ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
 
    // insert records to the collection
    // insert a English record

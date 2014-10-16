@@ -7,6 +7,7 @@ echo "###############building file..."
 ./buildApp.sh sql
 ./buildApp.sh insert
 ./buildApp.sh update
+./buildApp.sh lob
 
 echo "###############running connect..."
 ./build/connect localhost 11810 "" ""
@@ -22,6 +23,8 @@ echo "###############running insert..."
 ./build/insert localhost 11810 "" ""
 echo "###############running update..."
 ./build/update localhost 11810 "" ""
+echo "###############running lob..."
+./build/lob localhost 11810 "" ""
 
 
 
@@ -39,4 +42,6 @@ echo "###############running insert.static..."
 ./build/insert.static localhost 11810 "" ""
 echo "###############running update.staic..."
 ./build/update.static localhost 11810 "" ""
+echo "###############running lob.staic..."
+./build/lob.static localhost 11810 "" ""
 

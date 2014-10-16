@@ -97,8 +97,6 @@ INT32 main ( INT32 argc, CHAR **argv )
       printf("Failed to create collection space, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
 
    // create collection
    rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
@@ -107,9 +105,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       printf("Failed to create collection, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
-
+   
    // load some data
    for( i = 0; i < NUM; i++ )
    {

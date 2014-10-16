@@ -90,9 +90,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       cout<<"Failed to create collection space, rc = "<<rc<<endl ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
-
+   
    // create collection in a specified colletion space.
    // Here,we build it up in the new collection.
    rc = collectionspace.createCollection ( COLLECTION_NAME, collection ) ;
@@ -101,8 +99,6 @@ INT32 main ( INT32 argc, CHAR **argv )
       cout<<"Failed to create collection, rc = "<<rc<<endl ;
       goto error ;
    }
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
 
    // build a bson for index definition
    obj = BSON ( "name" << 1 << "age" << -1 ) ;
