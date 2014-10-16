@@ -111,10 +111,8 @@ class DBLobConcrete implements DBLob {
     public final static int SDB_LOB_CREATEONLY = 0x00000001;
     public final static int SDB_LOB_READ       = 0x00000004;
     
-    
-    
     // the max lob data size to send for one message
-    private final static int SDB_LOB_MAX_DATA_LENGTH = 1024 * 1024;
+    private final static int SDB_LOB_MAX_DATA_LENGTH  = 1024 * 1024;
 //    private final static int SDB_LOB_MAX_DATA_LENGTH = 1024 * 1024;
     
     private final static long SDB_LOB_DEFAULT_OFFSET  = -1;

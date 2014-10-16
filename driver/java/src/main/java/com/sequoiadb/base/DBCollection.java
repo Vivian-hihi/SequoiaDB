@@ -1723,13 +1723,13 @@ public class DBCollection {
     }
     
     /**
-     * @fn          getLob( ObjectId id )
-     * @brief       create a lob with a given id
+     * @fn          openLob( ObjectId id )
+     * @brief       open an exist lob with id
      * @param       id   the lob's id. 
      * @return      DBLob object
      * @exception   com.sequoiadb.exception.BaseException.
      */
-    public DBLob getLob( ObjectId id ) throws BaseException {
+    public DBLob openLob( ObjectId id ) throws BaseException {
         DBLobConcrete lob = new DBLobConcrete( this );
         lob.open( id, DBLobConcrete.SDB_LOB_READ );
         return lob;
