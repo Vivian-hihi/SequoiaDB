@@ -35,6 +35,11 @@ SDB_EXTERN_C_START
 BOOLEAN g_disablePassEncode = FALSE ;
 SDB_EXTERN_C_END
 
+#define CLIENT_UNUSED( p )         \
+   do { \
+      p = p ; \
+   } while ( 0 )
+
 #define HANDLE_CHECK( handle, interhandle, handletype ) \
 do                                                      \
 {                                                       \
@@ -1398,6 +1403,8 @@ void _sdbDisconnect_inner ( sdbConnectionHandle handle )
    Node *cursors  = NULL ;
    Node *sockets  = NULL ;
 
+   CLIENT_UNUSED( rc ) ;
+
    HANDLE_CHECK( handle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // if we had disconnected
    if ( -1 == connection->_sock )
@@ -1439,6 +1446,8 @@ SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
 {
    INT32 rc                        = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)handle ;
+
+   CLIENT_UNUSED( rc ) ;
 
    HANDLE_CHECK( handle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
    // if we had disconnected
@@ -2086,6 +2095,8 @@ SDB_EXPORT BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle )
    INT32 rc = SDB_OK ;
    sdbRGStruct *r    = (sdbRGStruct*)cHandle ;
    BOOLEAN isCatalog = FALSE ;
+
+   CLIENT_UNUSED( rc ) ;
 
    HANDLE_CHECK( cHandle, r, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
 
@@ -5905,6 +5916,8 @@ SDB_EXPORT void sdbReleaseConnection ( sdbConnectionHandle cHandle )
    INT32 rc = SDB_OK ;
    sdbConnectionStruct *cs = (sdbConnectionStruct*)cHandle ;
 
+   CLIENT_UNUSED( rc ) ;
+
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CONNECTION ) ;
 
    if ( cs->_pSendBuffer )
@@ -5927,6 +5940,8 @@ SDB_EXPORT void sdbReleaseCollection ( sdbCollectionHandle cHandle )
 {
    INT32 rc = SDB_OK ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+
+   CLIENT_UNUSED( rc ) ;
 
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
@@ -5954,6 +5969,8 @@ SDB_EXPORT void sdbReleaseCS ( sdbCSHandle cHandle )
    sdbCSStruct *cs = (sdbCSStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CS ) ;
 
+   CLIENT_UNUSED( rc ) ;
+
    _unregSocket( cs->_connection, &cs->_sock ) ;
 
    if ( cs->_pSendBuffer )
@@ -5976,6 +5993,8 @@ SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle )
    INT32 rc = SDB_OK ;
    sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
    HANDLE_CHECK( cHandle, rg, SDB_HANDLE_TYPE_REPLICAGROUP ) ;
+
+   CLIENT_UNUSED( rc ) ;
 
    _unregSocket( rg->_connection, &rg->_sock ) ;
 
@@ -6000,6 +6019,8 @@ SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle )
    sdbRNStruct *rn = (sdbRNStruct*)cHandle ;
    HANDLE_CHECK( cHandle, rn, SDB_HANDLE_TYPE_REPLICANODE ) ;
 
+   CLIENT_UNUSED( rc ) ;
+
    _unregSocket( rn->_connection, &rn->_sock ) ;
 
    if ( rn->_pSendBuffer )
@@ -6021,6 +6042,8 @@ SDB_EXPORT void sdbReleaseDomain ( sdbDomainHandle cHandle )
 {
    INT32 rc = SDB_OK ;
    sdbDomainStruct *s = (sdbDomainStruct*)cHandle ;
+
+   CLIENT_UNUSED( rc ) ;
 
    HANDLE_CHECK( cHandle, s, SDB_HANDLE_TYPE_DOMAIN ) ;
 
