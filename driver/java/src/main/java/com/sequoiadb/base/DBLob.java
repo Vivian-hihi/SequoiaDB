@@ -42,8 +42,8 @@ public class DBLob {
     
     // lob seek type
     public final static int SDB_LOB_SEEK_SET   = 0;
-    public final static int SDB_LOB_SEEK_CUR   = 0;
-    public final static int SDB_LOB_SEEK_END   = 0;
+    public final static int SDB_LOB_SEEK_CUR   = 1;
+    public final static int SDB_LOB_SEEK_END   = 2;
     
     // the max lob data size to send for one message
     private final static int SDB_LOB_MAX_DATA_LENGTH = 1024 * 1024;
@@ -53,7 +53,6 @@ public class DBLob {
     private final static int SDB_LOB_DEFAULT_SEQ      = 0;
     
     private DBCollection _cl;
-    private IConnection  _connection;
     private ObjectId     _id;
     private int          _mode;
     private long         _size;
@@ -79,7 +78,6 @@ public class DBLob {
         }
         
         _cl            = cl;
-        _connection    = cl.getConnection();
         _endianConvert = cl.getSequoiadb().endianConvert;
     }
     
@@ -181,8 +179,8 @@ public class DBLob {
             throw new BaseException( "SDB_INVALIDARG", "request can't be null" );
         }
         
-        _connection.sendMessage( request, length );
-        return _connection.receiveMessage(_endianConvert);
+        _cl.getConnection().sendMessage( request, length );
+        return _cl.getConnection().receiveMessage(_endianConvert);
     }
     
     /**
