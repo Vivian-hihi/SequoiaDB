@@ -63,7 +63,7 @@ public class Lob {
             ObjectId id = lob.getID();
             
             // read the data from an exist lob with id
-            lob = cl.getLob(id);
+            lob = cl.openLob(id);
             byte[] readData = new byte[20];
             int readLen = lob.read(readData);
             lob.close();
