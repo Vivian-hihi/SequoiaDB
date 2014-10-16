@@ -162,24 +162,6 @@ public class DBCollection {
 		this.insert_buffer = null;
 		this.mainKeys = new HashSet<String>();
 	}
-	
-	/**
-     * @fn ByteBuffer sendRequest( byte[] msg, int length )
-     * @brief send request to db and receive response
-     * @param request
-     *            the request to be send
-     * @return ByteBuffer the response from db
-     * @exception com.sequoiadb.exception.BaseException
-     */
-    public ByteBuffer sendRequest( byte[] request, int length )
-            throws BaseException {
-        if ( request == null ) {
-            throw new BaseException( "SDB_INVALIDARG", "request can't be null" );
-        }
-        
-        connection.sendMessage( request, length );
-        return connection.receiveMessage(sequoiadb.endianConvert);
-    }
 
 	/**
 	 * @fn Object insert(BSONObject obj)
@@ -1724,7 +1706,8 @@ public class DBCollection {
 
         byte[] request = SDBMessageHelper.generateRemoveLobRequest( removeObj, 
                                 sequoiadb.endianConvert );
-        ByteBuffer res = sendRequest( request, request.length );
+        connection.sendMessage( request, request.length );
+        ByteBuffer res = connection.receiveMessage(sequoiadb.endianConvert);
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobOpenReply( res );
         int flag = resMessage.getFlags();

@@ -20,9 +20,6 @@
  */
 package com.sequoiadb.base;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -35,6 +32,7 @@ import org.bson.types.ObjectId;
 
 import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
+import com.sequoiadb.net.IConnection;
 import com.sequoiadb.util.Helper;
 import com.sequoiadb.util.SDBMessageHelper;
 
@@ -55,6 +53,7 @@ public class DBLob {
     private final static int SDB_LOB_DEFAULT_SEQ      = 0;
     
     private DBCollection _cl;
+    private IConnection  _connection;
     private ObjectId     _id;
     private int          _mode;
     private long         _size;
@@ -69,55 +68,51 @@ public class DBLob {
     private long _contextID ;
     
     /**
-     * @fn DBLob( DBCollection cl )
-     * @brief create an object of lob
-     * @param cl
-     *          The DBCollection object
-     * @return 
-     * @exception com.sequoiadb.exception.BaseException
+     * @fn          DBLob( DBCollection cl )
+     * @brief       Constructor
+     * @param       cl   The instance of DBCollection 
+     * @exception   com.sequoiadb.exception.BaseException
      */
     public DBLob( DBCollection cl ) throws BaseException {
-        
         if ( cl == null ) {
             throw new BaseException( "SDB_INVALIDARG", "cl is null" );
         }
         
-        _cl   = cl;
+        _cl            = cl;
+        _connection    = cl.getConnection();
         _endianConvert = cl.getSequoiadb().endianConvert;
-    }    
+    }
     
     /**
-     * @fn open()
-     * @brief create a lob, lob's id will auto generate in this function
-     * @return 
-     * @exception com.sequoiadb.exception.BaseException
+     * @fn          open()
+     * @brief       create a lob, lob's id will auto generate in this function
+     * @exception   com.sequoiadb.exception.BaseException.
      */
     public void open() {
         open( null, SDB_LOB_CREATEONLY );
     }
-    
+
     /**
-     * @fn open( ObjectId id )
-     * @brief open an exist lob with id
-     * @param id
-     *              the lob's id
-     * @return 
-     * @exception com.sequoiadb.exception.BaseException
+     * @fn          open( ObjectId id )
+     * @brief       open an exist lob with id
+     * @param       id   the lob's id
+     * @exception   com.sequoiadb.exception.BaseException.
      */
     public void open( ObjectId id ) {
         open( id, SDB_LOB_READ );
     }
     
     /**
-     * @fn open( ObjectId id, int mode )
-     * @brief open an exist lob, or create a lob
-     * @param id
-     *          The lob's id
-     * @param mode 
-     *          SDB_LOB_CREATEONLY create a new lob with given id;
-     *          SDB_LOB_READ read an exist lob
-     * @return 
-     * @exception com.sequoiadb.exception.BaseException
+     * @fn          open( ObjectId id, int mode )
+     * @brief       open an exist lob, or create a lob
+     * @param       id   the lob's id
+     * @param       mode available mode is SDB_LOB_CREATEONLY or SDB_LOB_READ.
+     *              SDB_LOB_CREATEONLY 
+     *                  create a new lob with given id, if id is null, it will 
+     *                  be generated in this function;
+     *              SDB_LOB_READ
+     *                  read an exist lob
+     * @exception   com.sequoiadb.exception.BaseException.
      */
     public void open( ObjectId id, int mode ) throws BaseException {
         if ( _isOpen ) {
@@ -151,12 +146,6 @@ public class DBLob {
         _isOpen = true;
     }
     
-    /**
-     * @fn _open()
-     * @brief open lob
-     * @return 
-     * @exception com.sequoiadb.exception.BaseException
-     */
     private void _open() throws BaseException {
         BSONObject openLob = new BasicBSONObject();
         openLob.put( SequoiadbConstants.FIELD_COLLECTION, _cl.getFullName() );
@@ -164,7 +153,7 @@ public class DBLob {
         openLob.put( SequoiadbConstants.FIELD_NAME_LOB_OPEN_MODE, _mode );
         
         byte[] request = generateOpenLobRequest( openLob );
-        ByteBuffer res = _cl.sendRequest( request, request.length );
+        ByteBuffer res = sendRequest( request, request.length );
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobOpenReply( res );
         displayResponse( resMessage );
@@ -186,45 +175,47 @@ public class DBLob {
         _contextID = resMessage.getContextIDList().get(0);
     }
     
+    private ByteBuffer sendRequest( byte[] request, int length )
+            throws BaseException {
+        if ( request == null ) {
+            throw new BaseException( "SDB_INVALIDARG", "request can't be null" );
+        }
+        
+        _connection.sendMessage( request, length );
+        return _connection.receiveMessage(_endianConvert);
+    }
+    
     /**
-     * @fn getID()
-     * @brief get the lob's id
-     * @param
-     * @return the lob's id
-     * @exception
+     * @fn          getID()
+     * @brief       get the lob's id
+     * @return      the lob's id
      */
     public ObjectId getID() {
         return _id;
     }
-    
+
     /**
-     * @fn getSize()
-     * @brief get size of the lob
-     * @param
-     * @return the lob's size
-     * @exception
+     * @fn          getSize()
+     * @brief       get the size of lob
+     * @return      the lob's size
      */
     public long getSize() {
         return _size;
     }
     
     /**
-     * @fn getCreateTime()
-     * @brief get createTime of the lob
-     * @param
-     * @return the lob's create time( milliseconds )
-     * @exception
+     * @fn          getCreateTime()
+     * @brief       get the create time of lob
+     * @return      the lob's create time
      */
     public long getCreateTime() {
         return _createTime;
     }
     
     /**
-     * @fn close()
-     * @brief close the lob
-     * @param
-     * @return
-     * @exception com.sequoiadb.exception.BaseException
+     * @fn          close()
+     * @brief       close the lob
+     * @exception   com.sequoiadb.exception.BaseException
      */
     public void close() throws BaseException {
         if ( !_isOpen ) {
@@ -232,7 +223,7 @@ public class DBLob {
         }
         
         byte[] request = generateCloseLobRequest();
-        ByteBuffer res = _cl.sendRequest( request, request.length );
+        ByteBuffer res = sendRequest( request, request.length );
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractReply( res );
         displayResponse( resMessage );
@@ -245,42 +236,53 @@ public class DBLob {
     }
     
     /**
-     * @fn write( byte[] input )
-     * @brief write input data into the lob
-     * @param input the data to write
-     * @return
-     * @exception com.sequoiadb.exception.BaseException
+     * @fn          write( byte[] b )
+     * @brief       Writes <code>b.length</code> bytes from the specified 
+     *              byte array to this lob. 
+     * @param       b   the data.
+     * @exception   com.sequoiadb.exception.BaseException.
      */
-    public void write( byte[] input ) throws BaseException {
+    public void write( byte[] b ) throws BaseException {
         if ( !_isOpen ) {
             throw new BaseException( "SDB_IO", "lob is not open" );
         }
-        
-        if ( input == null ) {
+
+        if ( b == null ) {
             throw new BaseException( "SDB_INVALIDARG", "input is null" );
         }
         
-        if ( input.length <= SDB_LOB_MAX_DATA_LENGTH ) {
-            _write( input );
+        if ( b.length <= SDB_LOB_MAX_DATA_LENGTH ) {
+            _write( b );
             return;
         }
         
-        /* if input' length is more then SDB_LOB_MAX_DATA_LENGTH. we will split 
-         * the input to pieces with length=SDB_LOB_MAX_DATA_LENGTH. 
-         * besides data copy is a must in this case.
+        /* if b.length is more then SDB_LOB_MAX_DATA_LENGTH. we will split 
+         * the data to pieces with length=SDB_LOB_MAX_DATA_LENGTH. 
+         * besides, data copy is a must in this case.
          */
         int offset = 0;
-        while ( input.length > offset ) {
-            int leftLen  = input.length - offset;
+        while ( b.length > offset ) {
+            int leftLen  = b.length - offset;
             int writeLen = leftLen > SDB_LOB_MAX_DATA_LENGTH ? 
                                              SDB_LOB_MAX_DATA_LENGTH : leftLen;
             
-            _write( Arrays.copyOfRange( input, offset, offset + writeLen ) );
+            _write( Arrays.copyOfRange( b, offset, offset + writeLen ) );
             
             offset += writeLen;
         }
     }
     
+    /**
+     * @fn          read( byte[] b )
+     * @brief       Reads up to <code>b.length</code> bytes of data from this 
+     *              lob into an array of bytes. 
+     * @param       b   the buffer into which the data is read.
+     * @return      the total number of bytes read into the buffer, or
+     *              <code>-1</code> if there is no more data because the end of
+     *              the file has been reached, or <code>0<code> if 
+     *              <code>b.length</code> is Zero.
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
     public int read( byte[] b ) throws BaseException {
         if ( !_isOpen ) {
             throw new BaseException( "SDB_IO", "lob is not open" );
@@ -293,18 +295,30 @@ public class DBLob {
         if ( b.length == 0 ) {
             return 0;
         }
-        
+
         return _read( b );
     }
     
+    /**
+     * @fn          seek( long size, int seekType )
+     * @brief       change the read position of the lob. The new position is 
+     *              obtained by adding <code>size</code> to the position 
+     *              specified by <code>seekType</code>. If <code>seekType</code> 
+     *              is set to SDB_LOB_SEEK_SET, SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, 
+     *              the offset is relative to the start of the lob, the current 
+     *              position of lob, or the end of lob.
+     * @param       size the adding size.
+     * @param       seekType  SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
     public void seek( long size, int seekType ) throws BaseException {
         if ( !_isOpen ) {
             throw new BaseException( "SDB_IO", "lob is not open" );
         }
-        
+
         if ( _mode != SDB_LOB_READ ) {
             throw new BaseException( "SDB_INVALIDARG", "seek() is not supported"
-                    + "int mode=" + _mode );
+                    + "in mode=" + _mode );
         }
         
         if ( SDB_LOB_SEEK_SET == seekType ) {
@@ -337,7 +351,7 @@ public class DBLob {
     
     private int _read( byte[] b ) {
         byte[] request = generateReadLobRequest( b.length );
-        ByteBuffer res = _cl.sendRequest( request, request.length );
+        ByteBuffer res = sendRequest( request, request.length );
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractLobReadReply( res );
         displayResponse( resMessage );
@@ -345,7 +359,7 @@ public class DBLob {
         
         // meet the end of the lob
         if ( SequoiadbConstants.SDB_EOF == flag ) {
-            return 0;
+            return -1;
         }
         
         if ( 0 != flag ) {
@@ -394,7 +408,7 @@ public class DBLob {
 
     private void _write( byte[] input ) throws BaseException {
         byte[] request = generateWriteLobRequest( input );
-        ByteBuffer res = _cl.sendRequest( request, request.length );
+        ByteBuffer res = sendRequest( request, request.length );
         
         SDBMessage resMessage = SDBMessageHelper.msgExtractReply( res );
         displayResponse( resMessage );
