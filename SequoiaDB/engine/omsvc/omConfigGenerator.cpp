@@ -783,17 +783,17 @@ namespace engine
       _availableSvcName      += OM_SVCNAME_STEP ;
       confDetail.role        = role ;
 
-      CHAR dbRolePath[OM_PATH_LENGTH + 1] = "" ;
-      utilBuildFullPath( disk.mountPath.c_str(), confDetail.role.c_str(), 
-                         OM_PATH_LENGTH, dbRolePath ) ;
+      CHAR dbPath[OM_PATH_LENGTH + 1] = "";
+      utilBuildFullPath( disk.mountPath.c_str(), OM_DBPATH_PREFIX_DATABASE, 
+                         OM_PATH_LENGTH, dbPath ) ;
+
+      utilCatPath( dbPath, OM_PATH_LENGTH, confDetail.role.c_str() ) ;
 
       CHAR subSvcName[OM_PATH_LENGTH+1] = "" ;
       ossSnprintf( subSvcName, OM_PATH_LENGTH, "%d", confDetail.svcName ) ;
+      utilCatPath( dbPath, OM_PATH_LENGTH, subSvcName ) ;
 
-      CHAR dbSvcPath[OM_PATH_LENGTH + 1] = "" ;
-      utilBuildFullPath( dbRolePath, subSvcName, OM_PATH_LENGTH, dbSvcPath ) ;
-
-      confDetail.dbPath  = string( dbSvcPath ) ;
+      confDetail.dbPath  = string( dbPath ) ;
       _increaseNodeCount( confDetail.dbPath, role ) ;
 
       omNodeInfo nodeInfo;

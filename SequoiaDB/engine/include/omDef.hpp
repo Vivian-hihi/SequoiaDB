@@ -45,6 +45,9 @@ namespace engine
    #define OM_TEMPLATE_COORD_NUM       "coordnum"
    #define OM_TEMPLATE_TRANSACTION     PMD_OPTION_TRANSACTIONON
 
+   // database
+   #define OM_DBPATH_PREFIX_DATABASE   "database"
+
    // extend configure
    #define OM_CONF_DETAIL_EX_DG_NAME   "datagroupname"
 
