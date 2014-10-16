@@ -1412,8 +1412,8 @@ void _sdbDisconnect_inner ( sdbConnectionHandle handle )
    cursors = connection->_cursors ;
    while ( cursors )
    {
-      ((sdbCursorStruct*)sockets->data)->_isClosed = TRUE ;
-      ((sdbCursorStruct*)sockets->data)->_contextID = -1 ;
+      ((sdbCursorStruct*)cursors->data)->_isClosed = TRUE ;
+      ((sdbCursorStruct*)cursors->data)->_contextID = -1 ;
       connection->_cursors = cursors->next ;
       SDB_OSS_FREE( cursors ) ;
       cursors = connection->_cursors ;
