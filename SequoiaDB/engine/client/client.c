@@ -795,7 +795,7 @@ static INT32 _unregSocket( ossValuePtr cHandle, SOCKET *pSock )
       goto done ;
    }
 
-   rc = _removeHandle ( &connection->_cursors, (ossValuePtr)pSock,
+   rc = _removeHandle ( &connection->_sockets, (ossValuePtr)pSock,
                         &ptrRemoved ) ;
    if ( SDB_OK != rc )
    {
