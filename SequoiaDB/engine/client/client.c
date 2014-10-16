@@ -1427,6 +1427,7 @@ error :
 
 SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
 {
+   INT32 rc                        = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)handle ;
 
    HANDLE_CHECK( handle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
@@ -1445,6 +1446,11 @@ SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
    }
 
    _sdbDisconnect_inner( handle ) ;
+
+done:
+   return ;
+error:
+   goto done ;
 }
 
 SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
