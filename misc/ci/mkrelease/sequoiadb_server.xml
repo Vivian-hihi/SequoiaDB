@@ -118,7 +118,6 @@
             </ruleList>
         </exit>
     </readyToInstallActionList>
-
     <postInstallationActionList>
         <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so</linkName>
@@ -486,8 +485,8 @@
                             <descriptionRetype>${msg(Install.Paramers.user.reentry_password.description)}</descriptionRetype>
                             <width>20</width>
 
-	<!-- throw an error if password is empty -->
-	<validationActionList>
+                            <!-- throw an error if password is empty -->
+                            <validationActionList>
                                 <throwError>
                                     <text>${msg(Install.Paramers.user.password.error)}</text>
                                     <ruleList>
@@ -516,6 +515,36 @@
                     <default>true</default>
                     <cliOptionText>${msg(Install.Paramers.processAutoStart.explanation)}</cliOptionText>
                 </booleanParameter>
+                <parameterGroup>
+                    <name>OM</name>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <parameterList>
+                        <stringParameter>
+                            <name>svcname</name>
+                            <title>${msg(Install.Paramers.svcname.title)}</title>
+                            <description>${msg(Install.Paramers.svcname.Description)}</description>
+                            <explanation>${msg(Install.Paramers.svcname.explanation)}</explanation>
+                            <value>11780</value>
+                            <default>11780</default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>40</width>
+                        </stringParameter>
+                        <directoryParameter>
+                            <name>dbpath</name>
+                            <description>Installer.Parameter.dbpath.description</description>
+                            <explanation>Installer.Parameter.dbpath.explanation</explanation>
+                            <value></value>
+                            <default>${platform_install_prefix}/${product_shortname}/database/11780</default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <cliOptionName>dbpath</cliOptionName>
+                            <mustBeWritable>1</mustBeWritable>
+                            <mustExist>0</mustExist>
+                            <width>40</width>
+                        </directoryParameter>
+                    </parameterList>
+                </parameterGroup>
             </parameterList>
         </parameterGroup>
     </parameterList>
