@@ -100,7 +100,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">str</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">1. Synchronous log file willbe generated when replication node does full sync. This parameter is used to specified the path of  synchronous log file.
+					<td valign="top" headers="d34306e28" class="stentry">1. Synchronous log files will be created when replication node does full sync. This parameter is used to specified the path of  synchronous log file.
              2. If it is not specified, the default path is "Data file path/replicalog".</td>
 
 				</tr>
@@ -276,7 +276,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">number of page pre-loaders, default:0, value range:[0,100]</td>
+					<td valign="top" headers="d34306e28" class="stentry">The number of pre-loaders, default:0, value range:[0,100]</td>
 
 				</tr>
 <tr class="strow">
@@ -286,17 +286,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">maximum number of prefetchers, default:200, value range:[0,1000]</td>
-
-				</tr>
-<tr class="strow">
-					<td valign="top" headers="d34306e19" class="stentry">--maxsubquery</td>
-
-					<td valign="top" headers="d34306e22" class="stentry">--</td>
-
-					<td valign="top" headers="d34306e25" class="stentry">num</td>
-
-					<td valign="top" headers="d34306e28" class="stentry">maximum number of query's sub-query, default:10, min value is 0, max value can't more than param 'maxprefpool'</td>
+					<td valign="top" headers="d34306e28" class="stentry">The maximum number of prefetchers, default:200, value range:[0,1000]</td>
 
 				</tr>
 <tr class="strow">
@@ -306,7 +296,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync</td>
+					<td valign="top" headers="d34306e28" class="stentry">The maximum number of repl-sync threads, default:10, value range:[0, 200], 0:disable concurrent repl-sync</td>
 
 				</tr>
 <tr class="strow">
@@ -316,7 +306,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">the replica-log's memory page number,default is 1024, value range:[512,1024000], but total log memory size can't more than all log file size; a page size is 64KB</td>
+					<td valign="top" headers="d34306e28" class="stentry">The number of pages ( in 64KB ) for replica log memory ( default:1024, value range:[512,1024000] ), the size should be smaller than log space</td>
 
 				</tr>
 <tr class="strow">
@@ -326,7 +316,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">The temp path of db, default is 'dbpath'+'/tmp'</td>
+					<td valign="top" headers="d34306e28" class="stentry">The path of temp files, default is 'dbpath'+'/tmp'</td>
 
 				</tr>
 <tr class="strow">
@@ -336,7 +326,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">size of the sorting buf(MB), default:256, min value:128</td>
+					<td valign="top" headers="d34306e28" class="stentry">Size of the sorting buf(MB), default:256, min value:128</td>
 
 				</tr>
 <tr class="strow">
@@ -346,7 +336,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">size of the hash join buf(MB), default:128, min value:64</td>
+					<td valign="top" headers="d34306e28" class="stentry">Size of the hash join buf(MB), default:128, min value:64</td>
 
 				</tr>
 <tr class="strow">
@@ -367,11 +357,11 @@
 					<td valign="top" headers="d34306e25" class="stentry">str</td>
 
 					<td valign="top" headers="d34306e28" class="stentry">1. It specifies the instance on which to query.
-             2. If it is not specifed, the default value is anyone.
+             2. If it is not specifed, the default value is A.
              3. value enum:
                     M--read and write instance,
                     S--read only instance,
-                    A--anyone instance,
+                    A--any instance,
                     1-7--the nth instance</td>
 
 				</tr>
@@ -382,7 +372,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">The number of page cleaners to start during database startup.
+					<td valign="top" headers="d34306e28" class="stentry">The number of page cleaner threads to start during database startup.
              0 means do not start any page cleaners, default 1, value range:[0, 50].</td>
 
 				</tr>
@@ -393,7 +383,7 @@
 
 					<td valign="top" headers="d34306e25" class="stentry">num</td>
 
-					<td valign="top" headers="d34306e28" class="stentry">The minimum interval between two cleans for each CS
+					<td valign="top" headers="d34306e28" class="stentry">The minimum interval between two cleanup actions for each CS
              Unit: ms, Default: 10000, Min: 1000</td>
 
 				</tr>
