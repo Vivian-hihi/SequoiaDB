@@ -148,6 +148,10 @@ if ( handle )                        \
 
 static BOOLEAN _sdbIsSrand = FALSE ;
 
+// Local function define
+void _sdbDisconnect_inner ( sdbConnectionHandle handle ) ;
+
+
 #if defined (_LINUX)
 static UINT32 _sdbRandSeed = 0 ;
 #endif
@@ -316,7 +320,7 @@ static INT32 _send1 ( sdbConnectionHandle cHandle, SOCKET sock,
       if ( ( SDB_NETWORK == rc || SDB_NETWORK_CLOSE == rc ) &&
            -1 != sock )
       {
-         sdbDisconnect( cHandle ) ;
+         _sdbDisconnect_inner( cHandle ) ;
       }
       goto error ;
    }
@@ -401,7 +405,7 @@ error :
    if ( ( SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc ) &&
         -1 != sock )
    {
-      sdbDisconnect( cHandle ) ;
+      _sdbDisconnect_inner( cHandle ) ;
    }
    goto done ;
 }
@@ -646,7 +650,7 @@ static INT32 requestSysInfo ( sdbConnectionStruct *connection )
          continue ;
       if ( SDB_OK != rc )
       {
-         sdbDisconnect( (sdbConnectionHandle)connection ) ;
+         _sdbDisconnect_inner( (sdbConnectionHandle)connection ) ;
          goto error ;
       }
       break ;
@@ -1377,7 +1381,7 @@ error:
    goto done;
 }
 
-SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
+void _sdbDisconnect_inner ( sdbConnectionHandle handle )
 {
    INT32 rc = SDB_OK ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)handle ;
@@ -1391,13 +1395,6 @@ SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
       return ;
    }
 
-   if ( !clientBuildDisconnectMsg ( &connection->_pSendBuffer,
-                                    &connection->_sendBufferSize,
-                                    0, connection->_endianConvert ))
-   {
-      _send ( handle, connection->_sock, (MsgHeader*)connection->_pSendBuffer,
-              connection->_endianConvert ) ;
-   }
    clientDisconnect ( connection->_sock ) ;
    connection->_sock = -1 ;
 
@@ -1426,6 +1423,28 @@ done :
    return ;
 error :
    goto done ;
+}
+
+SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
+{
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)handle ;
+
+   HANDLE_CHECK( handle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
+   // if we had disconnected
+   if ( -1 == connection->_sock )
+   {
+      return ;
+   }
+
+   if ( !clientBuildDisconnectMsg ( &connection->_pSendBuffer,
+                                    &connection->_sendBufferSize,
+                                    0, connection->_endianConvert ))
+   {
+      _send ( handle, connection->_sock, (MsgHeader*)connection->_pSendBuffer,
+              connection->_endianConvert ) ;
+   }
+
+   _sdbDisconnect_inner( handle ) ;
 }
 
 SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
