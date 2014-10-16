@@ -43,7 +43,7 @@
 
 namespace engine
 {
-   #define SPT_SCOPE_CACHE_SIZE                 (30)
+   #define SPT_SCOPE_CACHE_SIZE                 0 //(30)
 
    _sptContainer::_sptContainer( INT32 loadMask )
    {
