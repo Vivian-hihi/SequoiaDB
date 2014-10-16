@@ -297,6 +297,9 @@
 		</copy>
 		<copy file="${CODE_DIR}/script/sequoiadb" todir="${RELEASE_DIR}/sequoiadb/" />
 		<replaceregexp file="${RELEASE_DIR}/sequoiadb/sequoiadb" match="&#13;&#10;" replace="&#10;" flags="g" />
+
+		<copy file="${CODE_DIR}/script/install_om.sh" todir="${RELEASE_DIR}/sequoiadb/install_om.sh" />
+
 	  	<copy file="${CODE_DIR}/script/sdbwsart" todir="${RELEASE_DIR}/sequoiadb/bin" />
 	  	<replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwsart" match="&#13;&#10;" replace="&#10;" flags="g" />  
 	  	<copy file="${CODE_DIR}/script/sdbwstop" todir="${RELEASE_DIR}/sequoiadb/bin" />
