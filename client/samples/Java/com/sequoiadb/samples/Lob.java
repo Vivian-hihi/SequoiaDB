@@ -53,9 +53,8 @@ public class Lob {
             cl = cs.createCollection(Constants.CL_NAME);
 
         try {
-            DBLob lob = new DBLob(cl);
             // create a lob and write some data("HelloWorld")
-            lob.open();
+            DBLob lob = cl.createLob();
             String testData = "HelloWorld";
             lob.write(testData.getBytes());
             System.out.println("write:" + testData);
@@ -64,7 +63,7 @@ public class Lob {
             ObjectId id = lob.getID();
             
             // read the data from an exist lob with id
-            lob.open(id);
+            lob = cl.getLob(id);
             byte[] readData = new byte[20];
             int readLen = lob.read(readData);
             lob.close();
