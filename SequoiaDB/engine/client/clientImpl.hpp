@@ -29,13 +29,17 @@ namespace sdbclient
 #define CLIENT_CS_NAMESZ                   127
 #define CLIENT_REPLICAGROUP_NAMESZ         127
 #define CLIENT_DOMAIN_NAMESZ               127
-   class _sdbColletionSpaceImpl ;
+   class _sdbCollectionSpaceImpl ;
    class _sdbCollectionImpl ;
    class _sdbReplicaGroupImpl ;
    class _sdbNodeImpl ;
-   class _sdbDomain ;
+   class _sdbDomainImpl ;
+   class _sdbLobImpl ;
    class _sdbImpl ;
 
+   /*
+      _sdbCursorImpl
+   */
    class _sdbCursorImpl : public _sdbCursor
    {
    private :
@@ -76,8 +80,12 @@ namespace sdbclient
       //INT32 updateCurrent ( BSONObj &rule ) ;
       //INT32 delCurrent    () ;
    } ;
+   
    typedef class _sdbCursorImpl sdbCursorImpl ;
 
+   /*
+      _sdbCollectionImpl
+   */
    class _sdbCollectionImpl : public _sdbCollection
    {
    private :
@@ -101,6 +109,7 @@ namespace sdbclient
                                   1 ] ;
       INT32 _setName ( const CHAR *pCollectionFullName ) ;
       void _setConnection ( _sdb *connection ) ;
+      void* _getConnection () ;
       void _dropConnection()
       {
          _connection = NULL ;
@@ -125,6 +134,8 @@ namespace sdbclient
                       INT32 flag ) ;
       INT32 _appendOID ( const BSONObj &input,
                          BSONObj &output ) ;
+      INT32 _runCmdOfLob ( const CHAR *cmd, const BSONObj &obj,
+                           _sdbCursor **cursor ) ;
 #if defined CLIENT_THREAD_SAFE
       void lock ()
       {
@@ -301,9 +312,37 @@ namespace sdbclient
       INT32 detachCollection ( const CHAR *subClFullName) ;
 
       INT32 alterCollection ( const bson::BSONObj &options ) ;
-} ;
+      /// lob
+      INT32 createLob( _sdbLob **lob, const bson::OID *oid = NULL ) ;
+      
+      virtual INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL )
+      {
+         return createLob( &lob.pLob, oid ) ;
+      }
+
+      virtual INT32 removeLob( const bson::OID &oid ) ;
+
+      INT32 openLob( _sdbLob **lob, const bson::OID &oid ) ;
+      
+      virtual INT32 openLob( sdbLob &lob, const bson::OID &oid )
+      {
+         return openLob( &lob.pLob, oid ) ;
+      }
+
+      INT32 listLobs ( _sdbCursor **cursor ) ;
+      
+      virtual INT32 listLobs( sdbCursor &cursor )
+      {
+         return listLobs( &cursor.pCursor ) ;
+      }
+
+   } ;
+   
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
 
+   /*
+      _sdbNodeImpl
+   */
 #define SDB_NODE_INVALID_NODEID -1
    class _sdbNodeImpl : public _sdbNode
    {
@@ -367,8 +406,12 @@ namespace sdbclient
       // modify config for the current node
 /*      INT32 modifyConfig ( std::map<std::string,std::string> &config ) ;*/
    } ;
+
    typedef class _sdbNodeImpl sdbNodeImpl ;
 
+   /*
+      _sdbReplicaGroupImpl
+   */
    class _sdbReplicaGroupImpl : public _sdbReplicaGroup
    {
    private :
@@ -457,7 +500,12 @@ namespace sdbclient
          return _isCatalog ;
       }
    } ;
+   
    typedef class _sdbReplicaGroupImpl sdbReplicaGroupImpl ;
+
+   /*
+      _sdbCollectionSpaceImpl
+   */
    class _sdbCollectionSpaceImpl : public _sdbCollectionSpace
    {
    private :
@@ -530,6 +578,9 @@ namespace sdbclient
 
    typedef class _sdbCollectionSpaceImpl sdbCollectionSpaceImpl ;
 
+   /*
+      _sdbDomainImpl
+   */
    class _sdbDomainImpl : public _sdbDomain
    {
    private :
@@ -579,6 +630,73 @@ namespace sdbclient
 
    typedef class _sdbDomainImpl sdbDomainImpl ;
 
+   /*
+      _sdbLobImpl
+   */
+   class _sdbLobImpl : public _sdbLob
+   {
+   private :
+      _sdbLobImpl ( const _sdbLobImpl& other ) ;
+      _sdbLobImpl& operator= ( const _sdbLobImpl& other ) ;
+#if defined CLIENT_THREAD_SAFE
+      ossSpinSLatch           _mutex ;
+#endif
+      _sdbImpl                *_connection ;
+      _sdbCollectionImpl      *_collection ;
+      CHAR                    *_pSendBuffer ;
+      INT32                   _sendBufferSize ;
+      CHAR                    *_pReceiveBuffer ;
+      INT32                   _receiveBufferSize ;
+
+      BOOLEAN                 _isOpen ;
+      SINT64                  _contextID ;
+      INT32                   _mode ;
+      bson::OID                _oid ;
+      UINT64                  _createTime ;
+      SINT64                  _lobSize ;
+      SINT64                  _currentOffset ;
+      SINT64                  _cachedOffset ;
+      UINT32                  _cachedSize ;
+      UINT32                  _pageSize ;
+      const CHAR              *_dataCache ;
+
+      void _setConnection( _sdb *pConnection ) ;
+      void _setCollection( _sdbCollectionImpl *pCollection ) ;
+      void _cleanup () ;
+      BOOLEAN _dataCached() ;
+      void _readInCache( void *buf, UINT32 len, UINT32 *read ) ;
+      UINT32 _reviseReadLen( UINT32 needLen ) ;
+      INT32 _onceRead( CHAR *buf, UINT32 len, UINT32 *read ) ;
+
+      friend class _sdbImpl ;
+      friend class _sdbCollectionImpl ;
+   public :
+      _sdbLobImpl () ;
+      ~_sdbLobImpl () ;
+
+      virtual INT32 close () ;
+
+      virtual INT32 isClosed( BOOLEAN &flag ) ;
+
+      virtual INT32 read ( UINT32 len, CHAR *buf, UINT32 *read ) ;
+
+      virtual INT32 write ( const CHAR *buf, UINT32 len ) ;
+
+      virtual INT32 seek ( SINT64 size, SDB_LOB_SEEK whence ) ;
+
+      virtual INT32 getOid( bson::OID &oid ) ;
+
+      virtual INT32 getSize( SINT64 *size ) ;
+         
+      virtual INT32 getCreateTime ( UINT64 *millis ) ;
+      
+   } ;
+
+   typedef class _sdbLobImpl sdbLobImpl ;
+
+   /*
+      _sdbImpl
+   */
    class _sdbImpl : public _sdb
    {
    private :
@@ -595,12 +713,13 @@ namespace sdbclient
       CHAR                    *_pReceiveBuffer ;
       INT32                    _receiveBufferSize ;
       BOOLEAN                  _endianConvert ;
-      std::set<ossValuePtr> _cursors ;
-      std::set<ossValuePtr> _collections ;
-      std::set<ossValuePtr> _collectionspaces ;
-      std::set<ossValuePtr> _nodes ;
-      std::set<ossValuePtr> _replicaGroups ;
-      std::set<ossValuePtr> _domain ;
+      std::set<ossValuePtr>    _cursors ;
+      std::set<ossValuePtr>    _collections ;
+      std::set<ossValuePtr>    _collectionspaces ;
+      std::set<ossValuePtr>    _nodes ;
+      std::set<ossValuePtr>    _replicaGroups ;
+      std::set<ossValuePtr>    _domain ;
+      std::set<ossValuePtr>    _lob ;
 
       void _disconnect () ;
       INT32 _send ( CHAR *pBuffer ) ;
@@ -648,7 +767,13 @@ namespace sdbclient
          _domain.insert ( (ossValuePtr)domain ) ;
          unlock () ;
       }
-      void _unregCursor ( _sdbCursorImpl * cursor )
+      void _regLob ( _sdbLobImpl *lob )
+      {
+         lock () ;
+         _lob.insert ( (ossValuePtr)lob ) ;
+         unlock () ;
+      }
+      void _unregCursor ( _sdbCursorImpl *cursor )
       {
          lock () ;
          _cursors.erase ( (ossValuePtr)cursor ) ;
@@ -703,6 +828,12 @@ namespace sdbclient
          _domain.erase ( (ossValuePtr)domain ) ;
          unlock () ;
       }
+      void _unregLob ( _sdbLobImpl *lob )
+      {
+         lock () ;
+         _lob.erase ( (ossValuePtr)lob ) ;
+         unlock () ;
+      }
 
       INT32 _connect( const CHAR *pHostName,
                       UINT16 port ) ;
@@ -713,6 +844,7 @@ namespace sdbclient
       friend class _sdbNodeImpl ;
       friend class _sdbReplicaGroupImpl ;
       friend class _sdbDomainImpl ;
+      friend class _sdbLobImpl ;
    public :
       _sdbImpl () ;
       ~_sdbImpl () ;

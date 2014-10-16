@@ -7785,7 +7785,7 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
       }
       lob->_currentOffset += size ;
    }
-   else
+   else if ( SDB_LOB_SEEK_END == whence )
    {
       if ( size < 0 || lob->_lobSize < size )
       {
@@ -7794,6 +7794,11 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
       }
 
       lob->_currentOffset = lob->_lobSize - size ;
+   }
+   else
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
    }
 done:
    return rc ;

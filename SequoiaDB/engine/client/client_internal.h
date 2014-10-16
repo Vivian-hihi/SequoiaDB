@@ -196,9 +196,9 @@ struct _sdbLobStruct
    INT32 _sendBufferSize ;
    CHAR *_pReceiveBuffer ;
    INT32 _receiveBufferSize ;
-   SINT64 _contextID ;
    BOOLEAN _endianConvert ;
 
+   SINT64 _contextID ;
    INT32 _mode ;
    CHAR _oid[12] ; //DMS_LOB_OID_LEN
    UINT64 _createTime ;

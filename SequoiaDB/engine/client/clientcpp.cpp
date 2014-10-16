@@ -49,6 +49,9 @@
 
 using namespace std ;
 using namespace bson ;
+
+#define LOB_ALIGNED_LEN 524288
+
 namespace sdbclient
 {
    static BOOLEAN _sdbIsSrand = FALSE ;
@@ -184,23 +187,23 @@ namespace sdbclient
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SETCOLLECTION, "_sdbCursorImpl::_setCollection" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SETCOLLECTIONINCUR, "_sdbCursorImpl::_setCollection" )
    void _sdbCursorImpl::_setCollection ( _sdbCollectionImpl *collection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT__SETCOLLECTION ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT__SETCOLLECTIONINCUR ) ;
       _collection = collection ;
       if ( _collection )
          _collection->_regCursor ( this ) ;
-      PD_TRACE_EXIT ( SDB_CLIENT__SETCOLLECTION ) ;
+      PD_TRACE_EXIT ( SDB_CLIENT__SETCOLLECTIONINCUR ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CURSORIMPL__SETCONNECTION, "_sdbCursorImpl::_setConnection" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CURSORIMPL__SETCONNECTIONINCUR, "_sdbCursorImpl::_setConnection" )
    void _sdbCursorImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_CURSORIMPL__SETCONNECTION ) ;
+      PD_TRACE_ENTRY ( SDB_CURSORIMPL__SETCONNECTIONINCUR ) ;
       _connection = (_sdbImpl*)connection ;
       _connection->_regCursor ( this ) ;
-      PD_TRACE_EXIT ( SDB_CURSORIMPL__SETCONNECTION ) ;
+      PD_TRACE_EXIT ( SDB_CURSORIMPL__SETCONNECTIONINCUR ) ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__KILLCURSOR, "_sdbCursorImpl::_killCursor" )
@@ -701,11 +704,11 @@ namespace sdbclient
       goto done ;
    }*/
 
+
    /*
     * sdbCollectionImpl
     * Collection Implementation
     */
-
    _sdbCollectionImpl::_sdbCollectionImpl () :
    _connection ( NULL ),
    _pSendBuffer ( NULL ),
@@ -920,13 +923,21 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIMPL__SETCONNECTION, "_sdbCollectionImpl::_setConnection" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIMPL__SETCONNECTIONINCL, "_sdbCollectionImpl::_setConnection" )
    void _sdbCollectionImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_CLIMPL__SETCONNECTION ) ;
+      PD_TRACE_ENTRY ( SDB_CLIMPL__SETCONNECTIONINCL ) ;
       _connection = (_sdbImpl*)connection ;
       _connection->_regCollection ( this ) ;
-      PD_TRACE_EXIT ( SDB_CLIMPL__SETCONNECTION );
+      PD_TRACE_EXIT ( SDB_CLIMPL__SETCONNECTIONINCL );
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIMPL__GETCONNECTIONINCL, "_sdbCollectionImpl::_getConnection" )
+   void* _sdbCollectionImpl::_getConnection ()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIMPL__GETCONNECTIONINCL ) ;
+      return _connection ;
+      PD_TRACE_EXIT ( SDB_CLIMPL__GETCONNECTIONINCL );
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCOUNT, "_sdbCollectionImpl::getCount" )
@@ -1246,6 +1257,7 @@ namespace sdbclient
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
+      BOOLEAN locked = FALSE ;
       if ( _collectionFullName [0] == '\0' || !_connection || !cursor )
       {
          rc = SDB_INVALIDARG ;
@@ -1264,6 +1276,7 @@ namespace sdbclient
          goto done ;
       }
       _connection->lock () ;
+      locked = TRUE ;
       rc = _connection->_send ( _pSendBuffer ) ;
       if ( rc )
       {
@@ -1290,10 +1303,11 @@ namespace sdbclient
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
       ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
    done :
+      if ( locked )
+         _connection->unlock () ;
       PD_TRACE_EXITRC ( SDB_CLIENT_QUERY, rc );
       return rc ;
    error :
-      _connection->unlock () ;
       goto done;
    }
 
@@ -1352,7 +1366,7 @@ namespace sdbclient
          delete *cursor ;
          *cursor = NULL ;
       }
-      *cursor = (_sdbCursor*)( new(std::nothrow) sdbCursorImpl () ) ;
+      *cursor = (_sdbCursor*)( new(std::nothrow) _sdbCursorImpl () ) ;
       if ( !*cursor )
       {
          rc = SDB_OOM ;
@@ -2252,7 +2266,7 @@ namespace sdbclient
       goto done ;
    }
 
-//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ALTERCOLLECTION, "_sdbCollectionSpaceImpl::alterCollection" )
+//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ALTERCOLLECTION, "_sdbCollectionImpl::alterCollection" )
    INT32 _sdbCollectionImpl::alterCollection ( const bson::BSONObj &options )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_ALTERCOLLECTION ) ;
@@ -2296,6 +2310,442 @@ namespace sdbclient
 
    }
 
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATELOB, "_sdbCollectionImpl::createLob" )
+   INT32 _sdbCollectionImpl::createLob( _sdbLob **lob, const bson::OID *oid )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_CREATELOB ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONObj obj ;
+      SINT64 contextID = -1 ;
+      BOOLEAN result = FALSE ;
+      BOOLEAN locked = FALSE ;
+      const CHAR *bsonBuf = NULL ;
+      OID oidObj ;
+
+      // check
+      if ( '\0' == _collectionFullName[0] || NULL == _connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build oid
+      if ( oid )
+      {
+         oidObj = *oid ;
+      }
+      else
+      {
+         oidObj = OID::gen() ;
+      }
+      // append info
+      try
+      {
+         bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
+         bob.appendOID( FIELD_NAME_LOB_OID, &oidObj ) ;
+         bob.append( FIELD_NAME_LOB_OPEN_MODE, SDB_LOB_CREATEONLY ) ;
+         obj = bob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // build msg
+      rc = clientBuildOpenLobMsgCpp( &_pSendBuffer, &_sendBufferSize,
+                                     obj.objdata(), 0, 1, 0,
+                                     _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // get reply bson from received msg
+      bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
+      try
+      {
+         obj = BSONObj( bsonBuf ).getOwned() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // build _sdbLob object
+      if ( *lob )
+      {
+         delete *lob ;
+         *lob = NULL ;
+      }
+      *lob = (_sdbLob*)( new(std::nothrow) _sdbLobImpl() ) ;
+      if ( !(*lob) )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      // set attribute of the newly created _sdbLob object
+      ((_sdbLobImpl*)*lob)->_setConnection( _connection ) ;
+      ((_sdbLobImpl*)*lob)->_setCollection( this ) ;
+      ((_sdbLobImpl*)*lob)->_oid = oidObj ;      
+      ((_sdbLobImpl*)*lob)->_contextID = contextID ;
+      ((_sdbLobImpl*)*lob)->_isOpen = TRUE ;
+      ((_sdbLobImpl*)*lob)->_mode = SDB_LOB_CREATEONLY ;
+
+   done:
+      if ( locked )
+         _connection->unlock () ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_CREATELOB, rc ) ;
+      return rc ;
+   error:
+      if ( *lob )
+      {
+         delete *lob ;
+         *lob = NULL ;
+      }
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVELOB, "_sdbCollectionImpl::removeLob" )
+   INT32 _sdbCollectionImpl::removeLob( const bson::OID &oid )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVELOB ) ;
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BOOLEAN result = FALSE ;
+      BOOLEAN locked = FALSE ;
+      BSONObjBuilder bob ;
+      BSONObj meta ;
+      
+      // check
+      if ( '\0' == _collectionFullName[0] || NULL == _connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // append info
+      try
+      {
+         bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
+         bob.appendOID( FIELD_NAME_LOB_OID, (OID *)(&oid) ) ;
+         meta = bob.obj() ;         
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // build msg
+      rc = clientBuildRemoveLobMsgCpp( &_pSendBuffer, &_sendBufferSize,
+                                       meta.objdata(), 0, 1, 0,
+                                       _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVELOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_OPENLOB, "_sdbCollectionImpl::openLob" )
+   INT32 _sdbCollectionImpl::openLob( _sdbLob **lob, const bson::OID &oid )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_OPENLOB ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONObj obj ;
+      BSONElement ele ;
+      BSONType bType ;
+      SINT64 contextID = -1 ;
+      BOOLEAN result = FALSE ;
+      BOOLEAN locked = FALSE ;
+      const CHAR *bsonBuf = NULL ;
+
+      // check
+      if ( '\0' == _collectionFullName[0] || NULL == _connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // append info
+      try
+      {
+         bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
+         bob.appendOID( FIELD_NAME_LOB_OID, (bson::OID *)&oid ) ;
+         bob.append( FIELD_NAME_LOB_OPEN_MODE, SDB_LOB_READ ) ;
+         obj = bob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // build msg
+      rc = clientBuildOpenLobMsgCpp( &_pSendBuffer, &_sendBufferSize,
+                                     obj.objdata(), 0, 1, 0,
+                                     _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // get reply bson from received msg
+      bsonBuf = _pReceiveBuffer + sizeof( MsgOpReply ) ;
+      try
+      {
+         obj = BSONObj( bsonBuf ).getOwned() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // build _sdbLob object
+      if ( *lob )
+      {
+         delete *lob ;
+         *lob = NULL ;
+      }
+      *lob = (_sdbLob*)( new(std::nothrow) _sdbLobImpl() ) ;
+      if ( !(*lob) )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      // set attribute of the newly created _sdbLob object
+      ((_sdbLobImpl*)*lob)->_setConnection( _connection ) ;
+      ((_sdbLobImpl*)*lob)->_setCollection( this ) ;
+      ((_sdbLobImpl*)*lob)->_oid = oid ;    
+      ((_sdbLobImpl*)*lob)->_contextID = contextID ;
+      ((_sdbLobImpl*)*lob)->_isOpen = TRUE ;
+      ((_sdbLobImpl*)*lob)->_mode = SDB_LOB_READ ;
+      // set another info received from engine
+      // lobSize
+      ele = obj.getField( FIELD_NAME_LOB_SIZE ) ;
+      bType = ele.type() ;
+      if ( NumberInt == bType || NumberLong == bType )
+      {
+         ((_sdbLobImpl*)*lob)->_lobSize = ele.numberLong() ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      // createTime
+      ele = obj.getField( FIELD_NAME_LOB_CREATTIME ) ;
+      bType = ele.type() ;
+      if ( NumberLong == bType )
+      {
+         ((_sdbLobImpl*)*lob)->_createTime = ele.numberLong() ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      // lob pageSize
+      ele = obj.getField( FIELD_NAME_LOB_PAGE_SIZE ) ;
+      bType = ele.type() ;
+      if ( NumberInt == bType )
+      {
+         ((_sdbLobImpl*)*lob)->_pageSize =  ele.numberInt() ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      if ( locked )
+         _connection->unlock () ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_OPENLOB, rc ) ;
+      return rc ;
+   error:
+      if ( *lob )
+      {
+         delete *lob ;
+         *lob = NULL ;
+      }
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_LISTLOBS, "_sdbCollectionImpl::listLobs" )
+   INT32 _sdbCollectionImpl::listLobs ( _sdbCursor **cursor )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVELOB ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONObj obj ;
+      
+      // check
+      if ( '\0' == _collectionFullName[0] || NULL == _connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // append info
+      try
+      {
+         bob.append( FIELD_NAME_COLLECTION, _collectionFullName ) ;
+         obj = bob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // run command
+      rc = _runCmdOfLob( CMD_ADMIN_PREFIX CMD_NAME_LIST_LOBS, obj, cursor ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVELOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_RUNCMDOFLOB, "_sdbCollectionImpl::_runCmdOfLob" )
+   INT32 _sdbCollectionImpl::_runCmdOfLob ( const CHAR *cmd, const BSONObj &obj,
+                                            _sdbCursor **cursor )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_RUNCMDOFLOB ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN result = FALSE ;
+      BOOLEAN locked = FALSE ;
+      SINT64 contextID = -1 ;
+
+      // check
+      if ( '\0' == _collectionFullName[0] || NULL == _connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( NULL == cursor )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build msg      
+      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
+                                    cmd, 0, 0, -1, -1,
+                                    obj.objdata(), NULL, NULL, NULL,
+                                    _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // build return cursor object
+      if ( -1 != contextID )
+      {
+         if ( *cursor )
+         {
+            delete *cursor ;
+            *cursor = NULL ;
+         }
+         *cursor = (_sdbCursor*)( new(std::nothrow) _sdbCursorImpl () ) ;
+         if ( NULL == *cursor )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         ((_sdbCursorImpl*)*cursor)->_setCollection ( this ) ;
+         ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
+         ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
+      }
+
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_RUNCMDOFLOB, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+/*
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETLOBOBJ, "_sdbCollectionImpl::getLobObj" )
+   _sdbLob* _sdbCollectionImpl::getLobObj ()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETLOBOBJ ) ;
+      _sdbLobImpl* pLob = NULL ;
+      pLob = new(std::nothrow) _sdbLobImpl () ;
+      pLob->_setCollection ( this ) ;
+      pLob->_setConnection ( _connection ) ;
+      return (_sdbLob*)( pLob ) ;
+      PD_TRACE_EXIT ( SDB_CLIENT_GETLOBOBJ );
+   }
+*/
+
+   /*
+    * _sdbNodeImpl
+    * Sdb Node Implementation
+    */
    _sdbNodeImpl::_sdbNodeImpl () :
    _connection ( NULL )
    {
@@ -3128,13 +3578,13 @@ namespace sdbclient
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCSIMPL__SETCONNECTION, "_sdbCollectionSpaceImpl::_setConnection" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCSIMPL__SETCONNECTIONINCS, "_sdbCollectionSpaceImpl::_setConnection" )
    void _sdbCollectionSpaceImpl::_setConnection ( _sdb *connection )
    {
-      PD_TRACE_ENTRY ( SDB_SDBCSIMPL__SETCONNECTION ) ;
+      PD_TRACE_ENTRY ( SDB_SDBCSIMPL__SETCONNECTIONINCS ) ;
       _connection = (_sdbImpl*)connection ;
       _connection->_regCollectionSpace ( this ) ;
-      PD_TRACE_EXIT ( SDB_SDBCSIMPL__SETCONNECTION );
+      PD_TRACE_EXIT ( SDB_SDBCSIMPL__SETCONNECTIONINCS );
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCOLLECTIONINCS, "_sdbCollectionSpaceImpl::getCollection" )
@@ -3533,6 +3983,704 @@ namespace sdbclient
       goto done ;
    }
 
+   /*
+    * sdbLobImpl
+    * SequoiaDB large object Implementation
+    */
+   _sdbLobImpl::_sdbLobImpl () :
+   _pSendBuffer ( NULL ),
+   _sendBufferSize ( 0 ),
+   _pReceiveBuffer ( NULL ),
+   _receiveBufferSize ( 0 ),
+   _isOpen( FALSE ),
+   _contextID ( -1 ),
+   _mode( -1 ),
+   _createTime( 0 ),
+   _lobSize( 0 ),
+   _currentOffset( 0 ),
+   _cachedOffset( 0 ),
+   _cachedSize( 0 ),
+   _pageSize( 0 ),
+   _dataCache( NULL )
+   {
+      _oid = OID() ;
+   }
+
+   _sdbLobImpl::~_sdbLobImpl ()
+   {
+      if ( _connection )
+      {
+         _connection->_unregLob ( this ) ;
+      }
+      if ( _pSendBuffer )
+      {
+         SDB_OSS_FREE ( _pSendBuffer ) ;
+      }
+      if ( _pReceiveBuffer )
+      {
+         SDB_OSS_FREE ( _pReceiveBuffer ) ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SETCONNECTIONINLOB, "_setLobImpl::_setConnection" )
+   void _sdbLobImpl::_setConnection ( _sdb *connection )
+   {
+      PD_TRACE_ENTRY ( SDB_SDBCSIMPL__SETCONNECTIONINCS ) ;
+      _connection = (_sdbImpl*)connection ;
+      if ( _connection )
+      {
+         _connection->_regLob ( this ) ;
+      }
+      PD_TRACE_EXIT ( SDB_SDBCSIMPL__SETCONNECTIONINCS );
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__SETCOLLECTIONINLOB, "_sdbLobImpl::_setCollection" )
+   void _sdbLobImpl::_setCollection ( _sdbCollectionImpl *collection )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__SETCOLLECTIONINLOB ) ;
+      _collection = collection ;
+      PD_TRACE_EXIT ( SDB_CLIENT__SETCOLLECTIONINLOB ) ;
+   }
+
+   void _sdbLobImpl::_cleanup()
+   {
+      // not set _connection to been NULL,
+      // we need to use it in isClose()
+      _collection = NULL ;
+      _contextID = -1 ;
+      _mode = -1 ;
+      _oid = bson::OID() ;
+      _createTime = 0 ;
+      _lobSize = 0 ;
+      _currentOffset = 0 ;
+      _cachedOffset = 0 ;
+      _cachedSize = 0 ;
+      _pageSize = 0 ;
+      _dataCache = NULL ;
+      if ( _pSendBuffer )
+      {
+         SAFE_OSS_FREE ( _pSendBuffer ) ;
+         _sendBufferSize = 0 ;
+      }
+      if ( _pReceiveBuffer )
+      {
+         SAFE_OSS_FREE ( _pReceiveBuffer ) ;
+         _receiveBufferSize = 0 ;
+      }
+   }
+
+   BOOLEAN _sdbLobImpl::_dataCached()
+   {
+      return ( NULL != _dataCache && 0 < _cachedSize &&
+               0 <= _cachedOffset &&
+               _cachedOffset <= _currentOffset &&
+               _currentOffset < ( _cachedOffset + _cachedSize ) ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__READINCACHE, "_setLobImpl::_readInCache" )
+   void _sdbLobImpl::_readInCache( void *buf, UINT32 len, UINT32 *read )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__READINCACHE ) ;
+      const CHAR *cache = NULL ;
+      UINT32 readInCache = _cachedOffset + _cachedSize - _currentOffset ;
+      readInCache = readInCache <= len ?
+                    readInCache : len ;
+      cache = _dataCache + _currentOffset - _cachedOffset ;
+      ossMemcpy( buf, cache, readInCache ) ;
+      _cachedSize -= readInCache + cache - _dataCache ;
+
+      if ( 0 == _cachedSize )
+      {
+         _dataCache = NULL ;
+         _cachedOffset = -1 ;
+      }
+      else
+      {
+         _dataCache = cache + readInCache ;
+         _cachedOffset = readInCache + _currentOffset ;
+      }
+
+      *read = readInCache ;
+      PD_TRACE_EXIT ( SDB_CLIENT__READINCACHE );
+      return ;                        
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__REVISEREADLEN, "_setLobImpl::_reviseReadLen" )
+   UINT32 _sdbLobImpl::_reviseReadLen( UINT32 needLen )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__REVISEREADLEN ) ;
+      UINT32 pageSize = _pageSize ;
+      UINT32 mod = _currentOffset & ( pageSize - 1 ) ;
+      UINT32 alignedLen = ossRoundUpToMultipleX( needLen,
+                                                 LOB_ALIGNED_LEN ) ;
+      alignedLen -= mod ;
+      if ( alignedLen < LOB_ALIGNED_LEN )
+      {
+         alignedLen += LOB_ALIGNED_LEN ;
+      }
+      PD_TRACE_EXIT ( SDB_CLIENT__REVISEREADLEN );
+      return alignedLen ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__ONCEREAD, "_setLobImpl::_onceRead" )
+   INT32 _sdbLobImpl::_onceRead( CHAR *buf, UINT32 len, UINT32 *read )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__ONCEREAD ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked ;
+      UINT32 needRead = len ;
+      UINT32 totalRead = 0 ;
+      CHAR *localBuf = buf ;
+      UINT32 onceRead = 0 ;
+      const MsgOpReply *reply = NULL ;
+      const MsgLobTuple *tuple = NULL ;
+      const CHAR *body = NULL ;
+      UINT32 alignedLen = 0 ;
+      SINT64 contextID = -1 ;
+      BOOLEAN result = TRUE ;
+
+      if ( _dataCached() )
+      {
+         _readInCache( localBuf, needRead, &onceRead ) ;
+
+         totalRead += onceRead ;
+         needRead -= onceRead ;
+         _currentOffset += onceRead ;
+         localBuf += onceRead ;
+
+         if ( onceRead == len )
+         {
+            *read = totalRead ;
+            goto done ;
+         }
+
+         onceRead = 0 ;
+      }
+
+      _cachedOffset = -1 ;
+      _cachedSize = 0 ;
+      _dataCache = NULL ;
+
+      alignedLen = _reviseReadLen( needRead ) ;
+
+      rc = clientBuildReadLobMsg( &_pSendBuffer, &_sendBufferSize,
+                                  alignedLen, _currentOffset,
+                                  0, _contextID, 0,
+                                  _connection->_endianConvert ) ;
+      _connection->lock() ;
+      locked = TRUE ;
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_EOF == rc )
+      {
+         if ( 0 < totalRead )
+         {
+            rc = SDB_OK ;
+            *read = totalRead ;
+            goto done ;   
+         }
+         else
+         {
+            goto error ;
+         }
+      }
+      else if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      reply = ( const MsgOpReply * )( _pReceiveBuffer ) ;
+      if ( ( UINT32 )( reply->header.messageLength ) <
+           ( sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ) )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      tuple = ( const MsgLobTuple *)
+              ( _pReceiveBuffer + sizeof( MsgOpReply ) ) ;
+      if ( _currentOffset != tuple->columns.offset )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      else if ( ( UINT32 )( reply->header.messageLength ) < 
+                ( sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) +
+                tuple->columns.len ) )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      body = _pReceiveBuffer + sizeof( MsgOpReply ) + sizeof( MsgLobTuple ) ;
+
+      if ( needRead < tuple->columns.len )
+      {
+         ossMemcpy( localBuf, body, needRead ) ;
+         totalRead += needRead ;
+         _currentOffset += needRead ;
+         _cachedOffset = _currentOffset ;
+         _cachedSize = tuple->columns.len - needRead ;
+         _dataCache = body + needRead ;
+      }
+      else
+      {
+         ossMemcpy( localBuf, body, tuple->columns.len ) ;
+         totalRead += tuple->columns.len ;
+         _currentOffset += tuple->columns.len ;
+         _cachedOffset = -1 ;
+         _cachedSize = 0 ;
+         _dataCache = NULL ;
+      }
+
+      *read = totalRead ;
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXIT ( SDB_CLIENT__ONCEREAD );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ISCLOSED, "_sdbLobImpl::isClosed" )
+    INT32 _sdbLobImpl::isClosed( BOOLEAN &flag )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ISCLOSED ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      if ( NULL == _connection )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      flag = !_isOpen ;
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_ISCLOSED, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CLOSE, "_sdbLobImpl::close" )
+   INT32 _sdbLobImpl::close ()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_CLOSE ) ;
+      SINT64 contextID = -1 ;
+      BOOLEAN result = FALSE ;
+      BOOLEAN locked = FALSE ;
+
+      // check
+      if (  !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error;
+      }
+      // check wether lob has been open or not
+      _connection->lock() ;
+      locked = TRUE ;
+      if ( !_isOpen )
+      {
+         goto done ;
+      }
+      locked = FALSE;
+      _connection->unlock() ;
+      // build msg
+      rc = clientBuildCloseLobMsg( &_pSendBuffer, &_sendBufferSize,
+                                   0, 1, _contextID, 0,
+                                   _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg from engine
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // release the resource hold in _sdbLobImpl
+      // and cleanup data member of this object
+      _cleanup() ;
+      // set lob to be close
+      _isOpen = FALSE ;
+
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_CLOSE, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_READ, "_sdbLobImpl::read" )
+   INT32 _sdbLobImpl::read ( UINT32 len, CHAR *buf, UINT32 *read )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_READ ) ;
+      INT32 rc = SDB_OK ;
+      UINT32 needRead = len ;
+      CHAR *localBuf = buf ;
+      UINT32 onceRead = 0 ;
+      UINT32 totalRead = 0 ;
+      BOOLEAN locked = FALSE ;
+      
+      // check
+      if (  !_connection )
+      {
+         rc = SDB_SYS ;
+         goto error;
+      }
+      // check wether lob has been open or not
+      _connection->lock() ;
+      locked = TRUE ;
+      if ( !_isOpen )
+      {
+         rc = SDB_LOB_NOT_OPEN ;
+         goto error ;
+      }
+      locked = FALSE;
+      _connection->unlock() ;
+      // check argument
+      if (  NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( SDB_LOB_READ != _mode || -1 == _contextID )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( _currentOffset == _lobSize )
+      {
+         rc = SDB_EOF ;
+         goto error ;
+      }
+
+      if ( 0 == len )
+      {
+         *read = 0 ;
+         goto done ;
+      }
+
+      while ( 0 < needRead && _currentOffset < _lobSize )
+      {
+         rc = _onceRead( localBuf, needRead, &onceRead ) ;
+         if ( SDB_EOF == rc )
+         {
+            if ( 0 < totalRead )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
+         else if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         needRead -= onceRead ;
+         totalRead += onceRead ;
+         localBuf += onceRead ;
+         onceRead = 0 ;
+      }
+
+      *read = totalRead ;
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_READ, rc );
+      return rc ;
+   error:
+      *read = 0 ;
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_WRITE, "_sdbLobImpl::write" )
+   INT32 _sdbLobImpl::write ( const CHAR *buf, UINT32 len )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_WRITE ) ;
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BOOLEAN result = FALSE ;
+      BOOLEAN locked = FALSE ;
+      
+      // check
+      if (  !_connection )
+      {
+         rc = SDB_SYS ;
+         goto error;
+      }
+      // check wether lob has been open or not
+      _connection->lock() ;
+      locked = TRUE ;
+      if ( !_isOpen )
+      {
+         rc = SDB_LOB_NOT_OPEN ;
+         goto error ;
+      }
+      locked = FALSE;
+      _connection->unlock() ;
+      // check argument
+      if ( NULL == buf )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( SDB_LOB_CREATEONLY != _mode )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( 0 == len )
+      {
+         goto done ;
+      }
+      // build msg
+      rc = clientBuildWriteLobMsg( &_pSendBuffer, &_sendBufferSize,
+                                   buf, len, -1, 0, 1,
+                                   _contextID, 0,
+                                   _connection->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      _connection->lock() ;
+      locked = TRUE ;
+      // send msg
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      // receive and extract msg from engine
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_WRITE, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_SEEK, "_sdbLobImpl::seek" )
+   INT32 _sdbLobImpl::seek ( SINT64 size, SDB_LOB_SEEK whence )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_SEEK ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      
+      // check
+      if (  !_connection )
+      {
+         rc = SDB_SYS ;
+         goto error;
+      }
+      // check wether lob has been open or not
+      _connection->lock() ;
+      locked = TRUE ;
+      if ( !_isOpen )
+      {
+         rc = SDB_LOB_NOT_OPEN ;
+         goto error ;
+      }
+      locked = FALSE;
+      _connection->unlock() ;
+      if ( SDB_LOB_READ != _mode || -1 == _contextID )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // set seek point
+      if ( SDB_LOB_SEEK_SET == whence )
+      {
+         if ( size < 0 || _lobSize < size )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _currentOffset = size ;
+      }
+      else if ( SDB_LOB_SEEK_CUR == whence )
+      {
+         if ( _lobSize < size + _currentOffset ||
+              size + _currentOffset < 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _currentOffset += size ;
+      }
+      else if ( SDB_LOB_SEEK_END == whence )
+      {
+         if ( size < 0 || _lobSize < size )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         _currentOffset = _lobSize - size ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_SEEK, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETOID, "_sdbLobImpl::getOid" )
+   INT32 _sdbLobImpl::getOid( bson::OID &oid )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETOID ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+
+      // check
+      if (  !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error;
+      }
+      // check wether lob has been open or not
+      _connection->lock() ;
+      locked = TRUE ;
+      if ( !_isOpen )
+      {
+         rc = SDB_LOB_NOT_OPEN ;
+         goto error ;
+      }
+      locked = FALSE;
+      _connection->unlock() ;
+      // get oid
+      oid = _oid ;
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETOID, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+   
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSIZE, "_sdbLobImpl::getSize" )
+   INT32 _sdbLobImpl::getSize( SINT64 *size )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETSIZE ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+
+      // check
+      if (  !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto done;
+      }
+      // check wether lob has been open or not
+      _connection->lock() ;
+      locked = TRUE ;
+      if ( !_isOpen )
+      {
+         rc = SDB_LOB_NOT_OPEN ;
+         goto error ;
+      }
+      locked = FALSE;
+      _connection->unlock() ;
+      // check
+      if ( SDB_LOB_READ != _mode || -1 == _contextID )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // get size
+      *size = _lobSize ;
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETSIZE, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETCREATETIME, "_sdbLobImpl::getCreateTime" )
+   INT32 _sdbLobImpl::getCreateTime ( UINT64 *millis )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETCREATETIME ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+
+      // check
+      if (  !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto done;
+      }
+      // check wether lob has been open or not
+      _connection->lock() ;
+      locked = TRUE ;
+      if ( !_isOpen )
+      {
+         rc = SDB_LOB_NOT_OPEN ;
+         goto error ;
+      }
+      locked = FALSE;
+      _connection->unlock() ;
+      // check
+      if ( SDB_LOB_READ != _mode || -1 == _contextID )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // get time
+      *millis = _createTime ;
+   done:
+      if ( locked )
+         _connection->unlock() ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETCREATETIME, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
 
    /*
     * sdbImpl
@@ -5156,7 +6304,6 @@ namespace sdbclient
                               _endianConvert ) ;
       if ( SDB_OK != rc )
       {
-         ossPrintf ( "Failed to build flush msg, rc = %d"OSS_NEWLINE, rc ) ;
          goto error ;
       }
 
@@ -5209,7 +6356,6 @@ namespace sdbclient
                                    _endianConvert ) ;
       if ( SDB_OK != rc )
       {
-         ossPrintf ( "Failed to build create JS procedure msg, rc = %d"OSS_NEWLINE, rc ) ;
          goto error ;
       }
 
@@ -5257,7 +6403,6 @@ namespace sdbclient
                                  _endianConvert ) ;
       if ( SDB_OK != rc )
       {
-         ossPrintf ( "Failed to build remove procedure msg, rc = %d"OSS_NEWLINE, rc ) ;
          goto error ;
       }
 
@@ -5315,7 +6460,6 @@ namespace sdbclient
                                  _endianConvert ) ;
       if ( SDB_OK != rc )
       {
-         ossPrintf ( "Failed to build evalJS msg, rc = %d"OSS_NEWLINE, rc ) ;
          goto error ;
       }
 

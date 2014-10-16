@@ -98,17 +98,35 @@
 
 #define activateReplicaGroup   activateReplicaGroup
 
+enum _SDB_LOB_OPEN_MODE
+{
+   SDB_LOB_CREATEONLY = 0x00000001,
+   SDB_LOB_READ = 0x00000004
+} ;
+typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE ;
+
+enum _SDB_LOB_SEEK
+{
+   SDB_LOB_SEEK_SET = 0,
+   SDB_LOB_SEEK_CUR,
+   SDB_LOB_SEEK_END 
+} ;
+typedef enum _SDB_LOB_SEEK SDB_LOB_SEEK ;
+
 /** \namespace sdbclient
     \brief SequoiaDB Driver for C++
 */
 namespace sdbclient
 {
    const static bson::BSONObj _sdbStaticObject ;
+   const static bson::OID _sdbStaticOid ;
    class _sdbCursor ;
    class _sdbCollection ;
    class sdb ;
    class _sdb ;
    class _ossSocket ;
+   class _sdbLob ;
+   class sdbLob ;
 
    class DLLEXPORT _sdbCursor
    {
@@ -137,7 +155,7 @@ namespace sdbclient
 /** \var pCursor
       \breif A pointer of virtual base class _sdbCursor
 
-      Class sdbCursor is a shell for _sdbCursor.We use pCursor to
+      Class sdbCursor is a shell for _sdbCursor. We use pCursor to
       call the methods in class _sdbCursor.
 */
       _sdbCursor *pCursor ;
@@ -362,6 +380,15 @@ namespace sdbclient
       virtual INT32 detachCollection ( const CHAR *subClFullName) = 0 ;
 
       virtual INT32 alterCollection ( const bson::BSONObj &options ) = 0 ;
+      /// lob
+      virtual INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL ) = 0 ;
+
+      virtual INT32 removeLob( const bson::OID &oid ) = 0 ;
+
+      virtual INT32 openLob( sdbLob &lob, const bson::OID &oid ) = 0 ;
+      
+      virtual INT32 listLobs( sdbCursor &cursor ) = 0 ;
+      
    } ;
 
 /** \class sdbCollection
@@ -386,7 +413,7 @@ namespace sdbclient
 /** \var pCollection
       \breif A pointer of virtual base class _sdbCollection
 
-      Class sdbCollection is a shell for _sdbCollection.We use pCollection to
+      Class sdbCollection is a shell for _sdbCollection. We use pCollection to
       call the methods in class _sdbCollection.
 */
       _sdbCollection *pCollection ;
@@ -978,6 +1005,62 @@ namespace sdbclient
        return pCollection->detachCollection ( subClFullName ) ;
     }
 
+/** \fn INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL )
+    \brief Create large object.
+    \param [in] oid The id of the large object
+    \param [out] lob The newly create large object
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \note When oid is offered, use it to create a lob for writing, otherwise, API will generate one. After creating a lob, need to close it to release resource.
+*/
+    INT32 createLob( sdbLob &lob, const bson::OID *oid = NULL )
+    {
+       if ( !pCollection )
+         return SDB_NOT_CONNECTED ;
+       return pCollection->createLob( lob, oid ) ;
+    }
+
+/** \fn INT32 removeLob( const bson::OID &oid )
+    \brief Remove large object.
+    \param [in] oid The id of the large object
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+    INT32 removeLob( const bson::OID &oid )
+    {
+       if ( !pCollection )
+         return SDB_NOT_CONNECTED ;
+       return pCollection->removeLob( oid ) ;
+    }
+
+/** \fn INT32 openLob( sdbLob &lob, const bson::OID &oid )
+    \brief Open an existing large object for reading.
+    \param [in] oid The id of the large object
+    \param [out] lob The large object to get
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+    \note Need to close lob to release resource, after opening a lob.
+*/
+    INT32 openLob( sdbLob &lob, const bson::OID &oid )
+    {
+       if ( !pCollection )
+         return SDB_NOT_CONNECTED ;
+       return pCollection->openLob( lob, oid ) ;
+    }
+
+/** \fn INT32 listLobs( sdbCursor &cursor )
+    \brief List all the lobs' meta data in current collection.
+    \param [out] cursor The curosr reference of the result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+    INT32 listLobs( sdbCursor &cursor )
+    {
+       if ( !pCollection )
+         return SDB_NOT_CONNECTED ;
+       return pCollection->listLobs( cursor ) ;
+    }
+
    } ;
 
 /** \enum sdbNodeStatus
@@ -1056,7 +1139,7 @@ namespace sdbclient
 /** \var pNode
     \breif A pointer of virtual base class _sdbNode
 
-    Class sdbNode is a shell for _sdbNode.We use pNode to
+    Class sdbNode is a shell for _sdbNode. We use pNode to
     call the methods in class _sdbNode.
 */
       _sdbNode *pNode ;
@@ -1246,10 +1329,10 @@ namespace sdbclient
       sdbReplicaGroup& operator=( const sdbReplicaGroup& ) ;
    public :
 /** \var pReplicaGroup
-      \breif A pointer of virtual base class _sdbReplicaGroup
+    \breif A pointer of virtual base class _sdbReplicaGroup
 
-      Class sdbReplicaGroup is a shell for _sdbReplicaGroup.We use pCursor to
-      call the methods in class _sdbReplicaGroup.
+     Class sdbReplicaGroup is a shell for _sdbReplicaGroup. We use pCursor to
+     call the methods in class _sdbReplicaGroup.
 */
       _sdbReplicaGroup *pReplicaGroup ;
 
@@ -1578,15 +1661,15 @@ namespace sdbclient
       sdbCollectionSpace& operator=( const sdbCollectionSpace& ) ;
    public :
 /** \var pCollectionSpace
-      \breif A pointer of virtual base class _sdbCollectionSpace
+    \breif A pointer of virtual base class _sdbCollectionSpace
 
-      Class sdbCollectionSpace is a shell for _sdbCollectionSpace.We use pCursor to
-      call the methods in class _sdbCollectionSpace.
+     Class sdbCollectionSpace is a shell for _sdbCollectionSpace. We use
+     pCollectionSpace to call the methods in class _sdbCollectionSpace.
 */
       _sdbCollectionSpace *pCollectionSpace ;
 
-/** \fn sdbCollectionSpace( )
-   \brief Default constructor.
+/** \fn sdbCollectionSpace ()
+    \brief Default constructor.
 */
       sdbCollectionSpace ()
       {
@@ -1594,7 +1677,7 @@ namespace sdbclient
       }
 
 /** \fn ~sdbCollectionSpace ()
-   \brief Destructor.
+    \brief Destructor.
 */
       ~sdbCollectionSpace ()
       {
@@ -1801,9 +1884,24 @@ namespace sdbclient
       sdbDomain ( const sdbDomain& ) ; // non construction-copyable
       sdbDomain& operator= ( const sdbDomain& ) ; // non copyable
    public :
+
+/** \var pDomain
+    \breif A pointer of virtual base class _sdbDomain
+
+     Class sdbDomain is a shell for _sdbDomain. We use pDomain to
+     call the methods in class _sdbDomain.
+*/
       _sdbDomain *pDomain ;
+
+/** \fn sdbCollectionSpace ()
+    \brief Default constructor.
+*/
       sdbDomain() { pDomain = NULL ; }
-      virtual ~sdbDomain()
+
+/** \fn ~sdbCollectionSpace ()
+    \brief Destructor.
+*/
+      ~sdbDomain()
       {
          if ( pDomain )
             delete pDomain ;
@@ -1862,6 +1960,176 @@ namespace sdbclient
       }
 
    };
+
+   class DLLEXPORT _sdbLob
+   {
+   private :
+      _sdbLob ( const _sdbLob& other ) ; // non construction-copyable
+      _sdbLob& operator= ( const _sdbLob& ) ; // non copyable
+    
+   public :
+      _sdbLob () {}
+
+      virtual ~_sdbLob () {}
+
+      virtual INT32 close () = 0 ;
+
+      virtual INT32 isClosed( BOOLEAN &flag ) = 0 ;
+
+      virtual INT32 read ( UINT32 len, CHAR *buf, UINT32 *read ) = 0 ;
+
+      virtual INT32 write ( const CHAR *buf, UINT32 len ) = 0 ;
+
+      virtual INT32 seek ( SINT64 size, SDB_LOB_SEEK whence ) = 0 ;
+
+      virtual INT32 getOid( bson::OID &oid ) = 0 ;
+
+      virtual INT32 getSize( SINT64 *size ) = 0 ;
+         
+      virtual INT32 getCreateTime ( UINT64 *millis ) = 0 ;
+
+   } ;
+
+   /** \class  sdbLob
+       \brief Database operation interfaces of large object.
+   */
+   class DLLEXPORT sdbLob
+   {
+   private :
+      sdbLob ( const sdbLob& ) ; // non construction-copyable
+      sdbLob& operator= ( const sdbLob& ) ; // non copyable
+
+   public :
+
+/** \var pLob
+    \breif A pointer of virtual base class _sdbLob
+
+    Class sdbLob is a shell for _sdbLob. We use pLob to
+    call the methods in class _sdbLob.
+*/
+      _sdbLob *pLob ;
+/** \fn sdbLob()
+    \brief Default constructor.
+*/
+      sdbLob() { pLob = NULL ; }
+
+/** \fn ~sdb()
+    \brief Destructor.
+*/
+      ~sdbLob()
+      {
+         if ( pLob )
+            delete pLob ;
+      }
+
+/** \fn INT32 close ()
+    \brief Close lob.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 close ()
+      {
+         if ( !pLob )
+            return SDB_SYS ;
+         return pLob->close() ;
+      }
+
+/** \fn INT32 isClosed( BOOLEAN &flag )
+    \brief Test whether lob has been closed or not.
+    \param [out] flag TRUE for lob has been closed, FALSE for not.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+    INT32 isClosed( BOOLEAN &flag )
+    {
+       if ( !pLob )
+         return SDB_SYS ;
+       return pLob->isClosed ( flag ) ;
+    }
+
+/** \fn INT32 read ( UINT32 len, CHAR *buf, UINT32 *read )
+    \brief Read lob.
+    \param [in] len The length want to read
+    \param [out] buf Put the data into buf
+    \param [out] read The length of read
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 read ( UINT32 len, CHAR *buf, UINT32 *read )
+      {
+         if ( !pLob )
+            return SDB_SYS ;
+         return pLob->read( len, buf, read ) ;
+      }
+
+/** \fn INT32 write ( const CHAR *buf, UINT32 len )
+    \brief Write lob.
+    \param [in] buf The buf of write
+    \param [in] len The length of write
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 write ( const CHAR *buf, UINT32 len )
+      {
+         if ( !pLob )
+            return SDB_SYS ;
+         return pLob->write( buf, len ) ;
+      }
+
+/** \fn INT32 seek ( SINT64 size, SDB_LOB_SEEK whence )
+    \brief Seek the place to read.
+    \param [in] size The size of seek
+    \param [in] whence The whence of seek
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 seek ( SINT64 size, SDB_LOB_SEEK whence )
+      {
+         if ( !pLob )
+            return SDB_SYS ;
+         return pLob->seek( size, whence ) ;
+      }
+
+/** \fn INT32 getOid ( bson::OID &oid )
+    \brief Get the lob's oid.
+    \param [out] oid The oid of the lob
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 getOid ( bson::OID &oid )
+      {
+         if ( !pLob )
+            return SDB_SYS ;
+         return pLob->getOid( oid ) ;
+      }
+
+/** \fn INT32 getSize ( SINT64 *size )
+    \brief Get the lob's size.
+    \param [out] size The size of lob
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 getSize ( SINT64 *size )
+      {
+         if ( !pLob )
+            return SDB_SYS ;
+         return pLob->getSize( size ) ;
+      }
+
+/** \fn INT32 getCreateTime ( UINT64 *millis )
+    \brief Get lob's create time.
+    \param [out] millis The create time in milliseconds of lob
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 getCreateTime ( UINT64 *millis )
+      {
+         if ( !pLob )
+            return SDB_SYS ;
+         return pLob->getCreateTime( millis ) ;
+      }
+      
+   } ;
 
    class DLLEXPORT _sdb
    {
@@ -2139,9 +2407,9 @@ namespace sdbclient
       sdb& operator=( const sdb& ) ;
    public :
 /** \var pSDB
-    \breif A pointer of virtual base class _sdbCursor
+    \breif A pointer of virtual base class _sdb
 
-    Class sdb is a shell for _sdb.We use pSDB to
+    Class sdb is a shell for _sdb. We use pSDB to
     call the methods in class _sdb.
 */
       _sdb *pSDB ;

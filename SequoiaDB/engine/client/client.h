@@ -73,7 +73,7 @@ enum SDB_LIST_TYPE
 enum _SDB_LOB_OPEN_MODE
 {
    SDB_LOB_CREATEONLY = 0x00000001,
-   SDB_LOB_READ = 0x00000004,
+   SDB_LOB_READ = 0x00000004
 } ;
 typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE ;
 
@@ -81,7 +81,7 @@ enum _SDB_LOB_SEEK
 {
    SDB_LOB_SEEK_SET = 0,
    SDB_LOB_SEEK_CUR,
-   SDB_LOB_SEEK_END, 
+   SDB_LOB_SEEK_END 
 } ;
 typedef enum _SDB_LOB_SEEK SDB_LOB_SEEK ;
 
@@ -1826,21 +1826,21 @@ SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
                                   SINT64 sessionID ) ;
 
 /** \fn INT32 sdbOpenLob( sdbCollectionHandle cHandle,
- *                        const bson_oid_t *,
+ *                        const bson_oid_t *oid,
  *                        INT32 mode,
-                          sdbLobHandle * )
+                          sdbLobHandle *lobHandle )
     \brief create a large object
     \param [in] cHandle The collection handle
     \param [in] oid The object id
-    \param [in] mode The open mode: LOB_C/LOB_R
-    \param [out] The handle of object 
+    \param [in] mode The open mode: SDB_LOB_CREATEONLY/SDB_LOB_READ
+    \param [out] lobHandle The handle of object 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
-                             const bson_oid_t *,
+                             const bson_oid_t *oid,
                              INT32 mode,
-                             sdbLobHandle * ) ;
+                             sdbLobHandle *lobHandle ) ;
 
 /** \fn INT32 sdbWriteLob( sdbLobHandle lobHandle,
  *                         const void *buf,
@@ -1857,13 +1857,13 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
                               UINT32 len );
 
 /** \fn INT32 sdbReadLob( sdbLobHandle lobHandle,
- *                        void *buf,
  *                        UINT32 len,
+ *                        void *buf,
  *                        UINT32 &read )
  *   \brief read lob
  *   \param [in] lobHandle The large object handle
  *   \param [in] len The length want to read
- *   \param [in] buf Put the data into buf
+ *   \param [out] buf Put the data into buf
  *   \param [out] read The length of read
  *   \retval SDB_OK Operation Success
  *   \retval Others Operation Fail
@@ -1881,7 +1881,7 @@ SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
  *  */
 SDB_EXPORT INT32 sdbCloseLob( sdbLobHandle *lobHandle ) ;
 
-/** \fn INT32 sdbRemoveLob( const CHAR *fullName,
+/** \fn INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
  *                          const bson_oid_t *oid )
  *   \brief remove lob
  *   \param [in] cHandle The handle of collection
@@ -1894,6 +1894,7 @@ SDB_EXPORT INT32 sdbRemoveLob( sdbCollectionHandle cHandle,
 
 /** \fn INT32 sdbGetLobSize( sdbLobHandle lobHandle,
  *                           SINT64 *size )
+ *  \brief get the lob's size
  *  \param [in] lobHandle The large object handle
  *  \param [out] size The size of lob
  *  \retval SDB_OK Operation Success
@@ -1904,8 +1905,9 @@ SDB_EXPORT INT32 sdbGetLobSize( sdbLobHandle lobHandle,
 
 /** \fn INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
  *                                 UINT64 *millis )
+ *  \brief get lob's create time
  *  \param [in] lobHandle The large object handle
- *  \param [out] millis The create time of lob
+ *  \param [out] millis The create time in milliseconds of lob
  *  \retval SDB_OK Operation Success
  *  \retval Others Operation Fail
  */
@@ -1916,6 +1918,7 @@ SDB_EXPORT INT32 sdbGetLobCreateTime( sdbLobHandle lobHandle,
 /** \fn INT32 sdbSeekLob( sdbLobHandle lobHandle,
  *                        SINT64 size,
  *                        SDB_LOB_SEEK whence )
+ *  \brief seek the place to read
  *  \param [in] lobHandle The large object handle
  *  \param [in] size The size of seek
  *  \param [in] whence The whence of seek
@@ -1928,7 +1931,7 @@ SDB_EXPORT INT32 sdbSeekLob( sdbLobHandle lobHandle,
 
 /** \fn INT32 sdbListLobs( sdbCollectionHandle cHandle,
  *                         sdbCursorHandle *cursor )
- *  \brief list every lob's meta data
+ *  \brief list all the lobs' meta data in current collection
  *  \param [in] cHandle The collection handle
  *  \param [out] cursor The cursor handle of current query
  *  \retval SDB_OK Operation Success

@@ -2346,6 +2346,27 @@ error:
    goto done ;
 }
 
+INT32 clientBuildLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
+                            INT32 msgType, const CHAR *pMeta,
+                            SINT32 flags, SINT16 w, SINT64 contextID,
+                            UINT64 reqID, const SINT64 *lobOffset,
+                            const UINT32 *len, const CHAR *data,
+                            BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   bson bi ;
+   bson_init ( &bi ) ;
+   bson_init_finished_data ( &bi, pMeta ) ;
+   rc = clientBuildLobMsg( ppBuffer, bufferSize,
+                           msgType, &bi,
+                           flags, w, contextID,
+                           reqID, lobOffset,
+                           len, data,
+                           endianConvert ) ;
+   bson_destroy ( &bi ) ;
+   return rc ;
+}
+
 INT32 clientBuildOpenLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                              const bson *meta, SINT32 flags, SINT16 w,
                              UINT64 reqID,
@@ -2356,6 +2377,27 @@ INT32 clientBuildOpenLobMsg( CHAR **ppBuffer, INT32 *bufferSize,
                            MSG_BS_LOB_OPEN_REQ, meta,
                            flags, w, -1, reqID, NULL,
                            NULL, NULL, endianConvert ) ;
+
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 clientBuildOpenLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
+                                const CHAR *pMeta, SINT32 flags, SINT16 w,
+                                UINT64 reqID,
+                                BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsgCpp( ppBuffer, bufferSize,
+                              MSG_BS_LOB_OPEN_REQ, pMeta,
+                              flags, w, -1, reqID, NULL,
+                              NULL, NULL, endianConvert ) ;
 
    if ( SDB_OK != rc )
    {
@@ -2449,3 +2491,25 @@ done:
 error:
    goto done ;   
 }
+
+INT32 clientBuildRemoveLobMsgCpp( CHAR **ppBuffer, INT32 *bufferSize,
+                                  const CHAR *pMeta,
+                                  SINT32 flags, SINT16 w,
+                                  UINT64 reqID,
+                                  BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   rc = clientBuildLobMsgCpp( ppBuffer, bufferSize,
+                              MSG_BS_LOB_REMOVE_REQ, pMeta,
+                              flags, w, -1, reqID,
+                              NULL, NULL, NULL, endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;   
+}
+
