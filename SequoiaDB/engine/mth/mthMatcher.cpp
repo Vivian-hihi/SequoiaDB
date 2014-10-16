@@ -457,8 +457,30 @@ namespace engine
                         }
                         fieldCom = MTH_MATCHER_FIELD_EQU ;
                         predicatable = FALSE ;
+                     }                     
+                     // $regex
+                     else if ( embFieldName[1] == 'r' && embFieldName[2] == 'e' &&
+                           embFieldName[3] == 'g' && embFieldName[4] == 'e' && 
+                           embFieldName[5] == 'x'  && embFieldName[6] == 0 )
+                     {
+                        rc = _injectElement ( ele, BSONObj::opREGEX, lme ) ;
+                        if ( rc )
+                        {
+                           PD_LOG ( PDERROR, "Failed inject element, rc: %d", rc ) ;
+                           goto error ;
+                        }
+                        
+                        continue;
                      }
-
+                     // $options
+                     else if ( embFieldName[1] == 'o' && embFieldName[2] == 'p' &&
+                           embFieldName[3] == 't' && embFieldName[4] == 'i' && 
+                           embFieldName[5] == 'o' && embFieldName[6] == 'n' && 
+                           embFieldName[7] == 's'  && embFieldName[8] == 0)
+                     {
+                        continue;
+                     }
+                     
                      if ( predicatable )
                      {
                         INT32 opTemp = embEle.getGtLtOp ( -1 ) ;
@@ -875,7 +897,70 @@ namespace engine
          //set weight
          _setWeight ( clme, type ) ;
          //create regex Match Element, memory free is in the destructor
-         clme->_rme = SDB_OSS_NEW REMatchElement ( ele ) ;
+
+         switch ( ele.type() )
+         {
+         case RegEx:
+         {
+            clme->_rme = SDB_OSS_NEW REMatchElement ( ele ) ;
+            break;
+         }
+         case Object:
+         {
+            const CHAR *fieldName = NULL;
+            const CHAR *regex = NULL;
+            const CHAR *options = NULL;
+
+            fieldName = ele.fieldName();
+            BSONObjIterator i( ele.embeddedObject() );
+            while(i.more())
+            {
+               BSONElement embEle = i.next();
+
+               const CHAR *embFieldName = embEle.fieldName () ;
+
+               if ( MTH_OPERATOR_EYECATCHER == embFieldName[0] &&
+                    String == embEle.type() )               
+               {
+                  if ( embFieldName[1] == 'r' && embFieldName[2] == 'e' &&
+                       embFieldName[3] == 'g' && embFieldName[4] == 'e' && 
+                       embFieldName[5] == 'x'  && embFieldName[6] == 0)
+                  {
+                     regex = embEle.valuestrsafe();
+                  }
+                  else if ( embFieldName[1] == 'o' && embFieldName[2] == 'p' &&
+                       embFieldName[3] == 't' && embFieldName[4] == 'i' && 
+                       embFieldName[5] == 'o' && embFieldName[6] == 'n' && 
+                       embFieldName[7] == 's'  && embFieldName[8] == 0)
+                  {
+                     options = embEle.valuestrsafe();
+                  }
+                  else
+                  {
+                     continue;
+                  }
+               }
+            }
+
+            //options can be null
+            if( fieldName == NULL || regex == NULL)
+            {
+               PD_LOG ( PDERROR, "Some regex elements missing." ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;               
+            }
+            
+            clme->_rme = SDB_OSS_NEW REMatchElement ( fieldName, regex, options ) ;
+            break;
+         }
+         default:
+         {
+            PD_LOG ( PDERROR, "Regex element type should be 'Object' or 'Regex'." ) ;            
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }// end default
+         }// end switch
+         
          if ( !clme->_rme )
          {
             PD_LOG ( PDERROR, "Failed to allocate memory for REMatchElement" ) ;
