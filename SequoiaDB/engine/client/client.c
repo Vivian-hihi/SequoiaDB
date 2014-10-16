@@ -314,11 +314,16 @@ static INT32 _send1 ( sdbConnectionHandle cHandle, SOCKET sock,
 {
    INT32 rc = SDB_OK ;
 
+   if ( -1 == sock )
+   {
+      rc = SDB_INVALID_HANDLE ;
+      goto error ;
+   }
+
    rc = clientSend ( sock, pMsg, len, SDB_CLIENT_DFT_NETWORK_TIMEOUT ) ;
    if ( SDB_OK != rc )
    {
-      if ( ( SDB_NETWORK == rc || SDB_NETWORK_CLOSE == rc ) &&
-           -1 != sock )
+      if ( SDB_NETWORK == rc || SDB_NETWORK_CLOSE == rc )
       {
          _sdbDisconnect_inner( cHandle ) ;
       }
@@ -356,6 +361,12 @@ static INT32 _recv ( sdbConnectionHandle cHandle, SOCKET sock,
    INT32 len       = 0 ;
    INT32 realLen   = 0 ;
    CHAR **ppBuffer = (CHAR**)msg ;
+
+   if ( -1 == sock )
+   {
+      rc = SDB_INVALID_HANDLE ;
+      goto error ;
+   }
 
    while ( TRUE )
    {
@@ -402,8 +413,7 @@ static INT32 _recv ( sdbConnectionHandle cHandle, SOCKET sock,
 done :
    return rc ;
 error :
-   if ( ( SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc ) &&
-        -1 != sock )
+   if ( SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc )
    {
       _sdbDisconnect_inner( cHandle ) ;
    }
