@@ -36,14 +36,82 @@ import com.sequoiadb.net.IConnection;
 import com.sequoiadb.util.Helper;
 import com.sequoiadb.util.SDBMessageHelper;
 
-public class DBLob {
-    public final static int SDB_LOB_CREATEONLY = 0x00000001;
-    public final static int SDB_LOB_READ       = 0x00000004;
-    
+public interface DBLob {
     // lob seek type
     public final static int SDB_LOB_SEEK_SET   = 0;
     public final static int SDB_LOB_SEEK_CUR   = 1;
     public final static int SDB_LOB_SEEK_END   = 2;
+    
+    /**
+     * @fn          getID()
+     * @brief       get the lob's id
+     * @return      the lob's id
+     */
+    public ObjectId getID();
+
+    /**
+     * @fn          getSize()
+     * @brief       get the size of lob
+     * @return      the lob's size
+     */
+    public long getSize();
+    
+    /**
+     * @fn          getCreateTime()
+     * @brief       get the create time of lob
+     * @return      the lob's create time
+     */
+    public long getCreateTime();
+    
+    /**
+     * @fn          write( byte[] b )
+     * @brief       Writes <code>b.length</code> bytes from the specified 
+     *              byte array to this lob. 
+     * @param       b   the data.
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
+    public void write( byte[] b ) throws BaseException;
+    
+    /**
+     * @fn          read( byte[] b )
+     * @brief       Reads up to <code>b.length</code> bytes of data from this 
+     *              lob into an array of bytes. 
+     * @param       b   the buffer into which the data is read.
+     * @return      the total number of bytes read into the buffer, or
+     *              <code>-1</code> if there is no more data because the end of
+     *              the file has been reached, or <code>0<code> if 
+     *              <code>b.length</code> is Zero.
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
+    public int read( byte[] b ) throws BaseException;
+    
+    /**
+     * @fn          seek( long size, int seekType )
+     * @brief       change the read position of the lob. The new position is 
+     *              obtained by adding <code>size</code> to the position 
+     *              specified by <code>seekType</code>. If <code>seekType</code> 
+     *              is set to SDB_LOB_SEEK_SET, SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, 
+     *              the offset is relative to the start of the lob, the current 
+     *              position of lob, or the end of lob.
+     * @param       size the adding size.
+     * @param       seekType  SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
+    public void seek( long size, int seekType ) throws BaseException;
+    
+    /**
+     * @fn          close()
+     * @brief       close the lob
+     * @exception   com.sequoiadb.exception.BaseException
+     */
+    public void close() throws BaseException;
+}
+
+class DBLobConcrete implements DBLob {
+    public final static int SDB_LOB_CREATEONLY = 0x00000001;
+    public final static int SDB_LOB_READ       = 0x00000004;
+    
+    
     
     // the max lob data size to send for one message
     private final static int SDB_LOB_MAX_DATA_LENGTH = 1024 * 1024;
@@ -72,7 +140,7 @@ public class DBLob {
      * @param       cl   The instance of DBCollection 
      * @exception   com.sequoiadb.exception.BaseException
      */
-    public DBLob( DBCollection cl ) throws BaseException {
+    public DBLobConcrete( DBCollection cl ) throws BaseException {
         if ( cl == null ) {
             throw new BaseException( "SDB_INVALIDARG", "cl is null" );
         }

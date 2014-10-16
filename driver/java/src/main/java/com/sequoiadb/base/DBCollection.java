@@ -1698,6 +1698,43 @@ public class DBCollection {
         return cursor;
     }
     
+    /**
+     * @fn          createLob()
+     * @brief       create a lob
+     * @return      DBLob object
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
+    public DBLob createLob() throws BaseException {
+        return createLob( null );
+    }
+    
+    /**
+     * @fn          createLob( ObjectId id )
+     * @brief       create a lob with a given id
+     * @param       id   the lob's id. if id is null, it will be generated in 
+     *                   this function
+     * @return      DBLob object
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
+    public DBLob createLob( ObjectId id ) throws BaseException {
+        DBLobConcrete lob = new DBLobConcrete( this );
+        lob.open( id, DBLobConcrete.SDB_LOB_CREATEONLY );
+        return lob;
+    }
+    
+    /**
+     * @fn          getLob( ObjectId id )
+     * @brief       create a lob with a given id
+     * @param       id   the lob's id. 
+     * @return      DBLob object
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
+    public DBLob getLob( ObjectId id ) throws BaseException {
+        DBLobConcrete lob = new DBLobConcrete( this );
+        lob.open( id, DBLobConcrete.SDB_LOB_READ );
+        return lob;
+    }
+    
     public void removeLob( ObjectId lobID ) throws BaseException {
         BSONObject removeObj = new BasicBSONObject();
         removeObj.put( SequoiadbConstants.FIELD_COLLECTION, 
