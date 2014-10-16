@@ -9,7 +9,7 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.createCS()"/>
 <meta name="description" content="db.createCS(&lt;name&gt;,[options]) 在数据库对象中创建集合空间。 参数描述 参数名 参数类型 描述 是否必填 name string 集合空间名。同一个数据库对象中，集合空间名必须唯一。 是 options Json 对象 集合空间可选属性。 否 options 格式 属性名 描述 格式 PageSize 数据页大小。默认为65536B。 PageSize:&lt;int32&gt; ..."/>
-<meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../../references/methods/jssequoiadb.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/database/topics/collectionspace.html"/>
 <meta name="DC.Relation" scheme="URI" content="dropCS.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -33,7 +33,7 @@
 <body onload="highlightSearchTerm()" id="references_method_createCS"><a name="references_method_createCS"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../references/methods/jssequoiadb.html" title="sequoiadb"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">sequoiadb</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a> / <a class="navheader_parent_path" href="../../../references/methods/jssequoiadb.html" title="sequoiadb">sequoiadb</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">db.createCS()</h1>
 
@@ -45,33 +45,33 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d100252e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d100736e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d100252e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d100736e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d100252e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d100736e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d100252e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d100252e26" class="stentry">name</td>
-
-          <td valign="top" headers="d100252e29" class="stentry">string</td>
-
-          <td valign="top" headers="d100252e32" class="stentry">集合空间名。同一个数据库对象中，集合空间名必须唯一。</td>
-
-          <td valign="top" headers="d100252e35" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d100736e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100252e26" class="stentry">options</td>
+          <td valign="top" headers="d100736e26" class="stentry">name</td>
 
-          <td valign="top" headers="d100252e29" class="stentry">Json 对象</td>
+          <td valign="top" headers="d100736e29" class="stentry">string</td>
 
-          <td valign="top" headers="d100252e32" class="stentry">集合空间可选属性。</td>
+          <td valign="top" headers="d100736e32" class="stentry">集合空间名。同一个数据库对象中，集合空间名必须唯一。</td>
 
-          <td valign="top" headers="d100252e35" class="stentry">否</td>
+          <td valign="top" headers="d100736e35" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d100736e26" class="stentry">options</td>
+
+          <td valign="top" headers="d100736e29" class="stentry">Json 对象</td>
+
+          <td valign="top" headers="d100736e32" class="stentry">集合空间可选属性。</td>
+
+          <td valign="top" headers="d100736e35" class="stentry">否</td>
 
         </tr>
 </table>
@@ -80,27 +80,27 @@
 
     <div class="section"><h2 class="title sectiontitle">options 格式</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d100252e79" class="stentry">属性名</th>
+          <th valign="bottom" align="left" id="d100736e79" class="stentry">属性名</th>
 
-          <th valign="bottom" align="left" id="d100252e82" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d100736e82" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d100252e85" class="stentry">格式</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d100252e79" class="stentry">PageSize</td>
-
-          <td valign="top" headers="d100252e82" class="stentry">数据页大小。默认为65536B。</td>
-
-          <td valign="top" headers="d100252e85" class="stentry">PageSize:&lt;int32&gt;</td>
+          <th valign="bottom" align="left" id="d100736e85" class="stentry">格式</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100252e79" class="stentry">Domain</td>
+          <td valign="top" headers="d100736e79" class="stentry">PageSize</td>
 
-          <td valign="top" headers="d100252e82" class="stentry">所属域</td>
+          <td valign="top" headers="d100736e82" class="stentry">数据页大小。默认为65536B。</td>
 
-          <td valign="top" headers="d100252e85" class="stentry">Domain:&lt;string&gt;</td>
+          <td valign="top" headers="d100736e85" class="stentry">PageSize:&lt;int32&gt;</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d100736e79" class="stentry">Domain</td>
+
+          <td valign="top" headers="d100736e82" class="stentry">所属域</td>
+
+          <td valign="top" headers="d100736e85" class="stentry">Domain:&lt;string&gt;</td>
 
         </tr>
 </table>
@@ -153,7 +153,7 @@
 <div><a class="navheader_parent_path" href="dropCS.html" title="db.dropCS()">db.dropCS()</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../references/methods/jssequoiadb.html" title="sequoiadb"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">sequoiadb</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

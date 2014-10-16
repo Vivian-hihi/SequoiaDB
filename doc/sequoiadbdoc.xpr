@@ -956,6 +956,7 @@
                     <file name="references/methods/topics_en_v2/cl.attachCL.dita"/>
                     <file name="references/methods/topics_en_v2/cl.count.dita"/>
                     <file name="references/methods/topics_en_v2/cl.createIndex.dita"/>
+                    <file name="references/methods/topics_en_v2/cl.deleteLob.dita"/>
                     <file name="references/methods/topics_en_v2/cl.detachCL.dita"/>
                     <file name="references/methods/topics_en_v2/cl.dropIndex.dita"/>
                     <file name="references/methods/topics_en_v2/cl.find.dita"/>
@@ -1038,6 +1039,20 @@
                     <file name="references/methods/topics_en_v2/rg.start.dita"/>
                     <file name="references/methods/topics_en_v2/rg.stop.dita"/>
                 </folder>
+                <file name="references/methods/jscollection.dita"/>
+                <file name="references/methods/jscollection.ditamap"/>
+                <file name="references/methods/jscollectionspace.dita"/>
+                <file name="references/methods/jscollectionspace.ditamap"/>
+                <file name="references/methods/jscursor.dita"/>
+                <file name="references/methods/jscursor.ditamap"/>
+                <file name="references/methods/jsdomain.dita"/>
+                <file name="references/methods/jsdomain.ditamap"/>
+                <file name="references/methods/jsnode.dita"/>
+                <file name="references/methods/jsnode.ditamap"/>
+                <file name="references/methods/jsrg.dita"/>
+                <file name="references/methods/jsrg.ditamap"/>
+                <file name="references/methods/jssequoiadb.dita"/>
+                <file name="references/methods/jssequoiadb.ditamap"/>
                 <file name="references/methods/methodlist_en_v2.ditamap"/>
                 <file name="references/methods/methodlist_en.ditamap"/>
                 <file name="references/methods/methodlist.ditamap"/>

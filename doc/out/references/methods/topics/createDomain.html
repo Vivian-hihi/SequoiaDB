@@ -9,7 +9,7 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.createDomain()"/>
 <meta name="description" content="db.createDomain(&lt;name&gt;,&lt;groups&gt;,[options]) 创建一个域。域中可以包含若干个复制组（Replica Group）。 参数描述 参数名 参数类型 描述 是否必填 name string 域名，全局唯一。 是 groups Json 数组 域包含的复制组。 是 options Json 对象 在创建域时可以通过 options 设置其他属性。 否 格式 目前通过 ..."/>
-<meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../../references/methods/jssequoiadb.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_4fr_h2v_l4"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
@@ -31,7 +31,7 @@
 <body onload="highlightSearchTerm()" id="topic_4fr_h2v_l4"><a name="topic_4fr_h2v_l4"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../references/methods/jssequoiadb.html" title="sequoiadb"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">sequoiadb</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a> / <a class="navheader_parent_path" href="../../../references/methods/jssequoiadb.html" title="sequoiadb">sequoiadb</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">db.createDomain()</h1>
 
@@ -43,43 +43,43 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d100796e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d101280e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d100796e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d101280e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d100796e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d101280e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d100796e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d100796e26" class="stentry">name</td>
-
-          <td valign="top" headers="d100796e29" class="stentry">string</td>
-
-          <td valign="top" headers="d100796e32" class="stentry">域名，全局唯一。</td>
-
-          <td valign="top" headers="d100796e35" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d101280e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100796e26" class="stentry">groups</td>
+          <td valign="top" headers="d101280e26" class="stentry">name</td>
 
-          <td valign="top" headers="d100796e29" class="stentry">Json 数组</td>
+          <td valign="top" headers="d101280e29" class="stentry">string</td>
 
-          <td valign="top" headers="d100796e32" class="stentry">域包含的复制组。</td>
+          <td valign="top" headers="d101280e32" class="stentry">域名，全局唯一。</td>
 
-          <td valign="top" headers="d100796e35" class="stentry">是</td>
+          <td valign="top" headers="d101280e35" class="stentry">是</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100796e26" class="stentry">options</td>
+          <td valign="top" headers="d101280e26" class="stentry">groups</td>
 
-          <td valign="top" headers="d100796e29" class="stentry">Json 对象</td>
+          <td valign="top" headers="d101280e29" class="stentry">Json 数组</td>
 
-          <td valign="top" headers="d100796e32" class="stentry">在创建域时可以通过 options 设置其他属性。</td>
+          <td valign="top" headers="d101280e32" class="stentry">域包含的复制组。</td>
 
-          <td valign="top" headers="d100796e35" class="stentry">否</td>
+          <td valign="top" headers="d101280e35" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d101280e26" class="stentry">options</td>
+
+          <td valign="top" headers="d101280e29" class="stentry">Json 对象</td>
+
+          <td valign="top" headers="d101280e32" class="stentry">在创建域时可以通过 options 设置其他属性。</td>
+
+          <td valign="top" headers="d101280e35" class="stentry">否</td>
 
         </tr>
 </table>
@@ -90,19 +90,19 @@
       <p class="p">目前通过 options 可设置域的属性有：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d100796e97" class="stentry">属性名</th>
+          <th valign="bottom" align="left" id="d101280e97" class="stentry">属性名</th>
 
-          <th valign="bottom" align="left" id="d100796e100" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d101280e100" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d100796e103" class="stentry">格式</th>
+          <th valign="bottom" align="left" id="d101280e103" class="stentry">格式</th>
           
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d100796e97" class="stentry">AutoSplit</td>
+          <td valign="top" headers="d101280e97" class="stentry">AutoSplit</td>
 
-          <td valign="top" headers="d100796e100" class="stentry">自动切分散列分区集合。</td>
+          <td valign="top" headers="d101280e100" class="stentry">自动切分散列分区集合。</td>
 
-          <td valign="top" headers="d100796e103" class="stentry">AutoSplit:true|false</td>
+          <td valign="top" headers="d101280e103" class="stentry">AutoSplit:true|false</td>
 
         </tr>
 </table>
@@ -143,7 +143,7 @@
   </div>
 
 <div class="related-links"/>
-<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../references/methods/jssequoiadb.html" title="sequoiadb"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">sequoiadb</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

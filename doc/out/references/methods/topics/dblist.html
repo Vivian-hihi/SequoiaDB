@@ -9,7 +9,7 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.list()"/>
 <meta name="description" content="db.list(&lt;listType&gt;,[con],[sel],[sort]) 枚举列表。列表是一种轻量级得到当前系统状态的命令。查看更多有关 列表信息 参数描述 参数名 参数类型 描述 是否必填 listType 枚举 列表类型 。 是 con Json 对象 选择条件，只返回符合 con 字段值的记录，为 null 时，返回所有。 否 sel Json 对象 选择返回字段名。为 null ..."/>
-<meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../../references/methods/jssequoiadb.html"/>
 <meta name="DC.Relation" scheme="URI" content="removeRG.html"/>
 <meta name="DC.Relation" scheme="URI" content="listCollectionSpaces.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/database/topics/EDU.html"/>
@@ -35,7 +35,7 @@
 <body onload="highlightSearchTerm()" id="references_method_createRG"><a name="references_method_createRG"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../references/methods/jssequoiadb.html" title="sequoiadb"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">sequoiadb</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a> / <a class="navheader_parent_path" href="../../../references/methods/jssequoiadb.html" title="sequoiadb">sequoiadb</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">db.list()</h1>
 
@@ -48,53 +48,53 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d106797e30" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d107281e30" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d106797e33" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d107281e33" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d106797e36" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d107281e36" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d106797e39" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d106797e30" class="stentry">listType</td>
-
-          <td valign="top" headers="d106797e33" class="stentry">枚举</td>
-
-          <td valign="top" headers="d106797e36" class="stentry"><a class="xref" href="../../../administration/database/topics/monitoring.html">列表类型</a>。</td>
-
-          <td valign="top" headers="d106797e39" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d107281e39" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d106797e30" class="stentry">con</td>
+          <td valign="top" headers="d107281e30" class="stentry">listType</td>
 
-          <td valign="top" headers="d106797e33" class="stentry">Json 对象</td>
+          <td valign="top" headers="d107281e33" class="stentry">枚举</td>
 
-          <td valign="top" headers="d106797e36" class="stentry">选择条件，只返回符合 con 字段值的记录，为 null 时，返回所有。</td>
+          <td valign="top" headers="d107281e36" class="stentry"><a class="xref" href="../../../administration/database/topics/monitoring.html">列表类型</a>。</td>
 
-          <td valign="top" headers="d106797e39" class="stentry">否</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d106797e30" class="stentry">sel</td>
-
-          <td valign="top" headers="d106797e33" class="stentry">Json 对象</td>
-
-          <td valign="top" headers="d106797e36" class="stentry">选择返回字段名。为 null 时，返回所有的字段名。</td>
-
-          <td valign="top" headers="d106797e39" class="stentry">否</td>
+          <td valign="top" headers="d107281e39" class="stentry">是</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d106797e30" class="stentry">sort</td>
+          <td valign="top" headers="d107281e30" class="stentry">con</td>
 
-          <td valign="top" headers="d106797e33" class="stentry">Json 对象</td>
+          <td valign="top" headers="d107281e33" class="stentry">Json 对象</td>
 
-          <td valign="top" headers="d106797e36" class="stentry">对返回的记录按选定的字段排序。1为升序；-1为降序。</td>
+          <td valign="top" headers="d107281e36" class="stentry">选择条件，只返回符合 con 字段值的记录，为 null 时，返回所有。</td>
 
-          <td valign="top" headers="d106797e39" class="stentry">否</td>
+          <td valign="top" headers="d107281e39" class="stentry">否</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d107281e30" class="stentry">sel</td>
+
+          <td valign="top" headers="d107281e33" class="stentry">Json 对象</td>
+
+          <td valign="top" headers="d107281e36" class="stentry">选择返回字段名。为 null 时，返回所有的字段名。</td>
+
+          <td valign="top" headers="d107281e39" class="stentry">否</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d107281e30" class="stentry">sort</td>
+
+          <td valign="top" headers="d107281e33" class="stentry">Json 对象</td>
+
+          <td valign="top" headers="d107281e36" class="stentry">对返回的记录按选定的字段排序。1为升序；-1为降序。</td>
+
+          <td valign="top" headers="d107281e39" class="stentry">否</td>
 
         </tr>
 </table>
@@ -188,7 +188,7 @@
 <div><a class="navheader_parent_path" href="../../console/topics/console.html" title="操作符">操作符</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../references/methods/jssequoiadb.html" title="sequoiadb"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">sequoiadb</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }

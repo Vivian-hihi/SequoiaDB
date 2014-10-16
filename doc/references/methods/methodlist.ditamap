@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/map.dtd">
-<map title="References_Mothods">
+<map title="References_Mothods">    
  <topicref href="topics/methodlist.dita">
-     <topicref href="topics/backupoffline.dita"/>
+     
+     <anchorref href="jssequoiadb.ditamap"/>
+     <anchorref href="jscollectionspace.ditamap"/>
+     <anchorref href="jscollection.ditamap"/>
+     <anchorref href="jscursor.ditamap"/>
+     <anchorref href="jsrg.ditamap"/>
+     <anchorref href="jsnode.ditamap"/>
+     <anchorref href="jsdomain.ditamap"/>
+     <!--<topicref href="topics/backupoffline.dita"/>
      <topicref href="cancelTask.dita"/>
      <topicref href="topics/createcatarg.dita"/>
      <topicref href="topics/createCS.dita"/>
@@ -40,13 +48,13 @@
      <topicref href="topics/transBegin.dita"/>
      <topicref href="topics/transCommit.dita"/>
      <topicref href="topics/transRollback.dita"/>
-     <topicref href="waitTasks.dita"/>
+     <topicref href="waitTasks.dita"/>-->
      
-     <topicref href="topics/createCL.dita"/>
+     <!--<topicref href="topics/createCL.dita"/>
      <topicref href="topics/dropCL.dita"/>
-     <topicref href="topics/getCL.dita"/>
+     <topicref href="topics/getCL.dita"/>-->
      
-     <topicref href="topics/dbaggregate.dita"/>
+     <!--<topicref href="topics/dbaggregate.dita"/>
      <topicref href="topics/ccalter.dita"/>
      <topicref href="topics/attachCL.dita"/>
      <topicref href="topics/dbcount.dita"/>
@@ -65,9 +73,9 @@
      <topicref href="topics/dbsplit.dita"/>
      <topicref href="topics/splitAsync.dita"/>
      <topicref href="topics/dbupdate.dita"/>
-     <topicref href="topics/upsert.dita"/>    
+     <topicref href="topics/upsert.dita"/>-->    
      
-     <topicref href="topics/cclose.dita"/>
+     <!--<topicref href="topics/cclose.dita"/>
      <topicref href="topics/ccurrent.dita"/>
      <topicref href="topics/explain.dita"/>
      <topicref href="topics/hint.dita"/>
@@ -76,27 +84,27 @@
      <topicref href="topics/csize.dita"/>
      <topicref href="topics/cskip.dita"/>
      <topicref href="topics/csort.dita"/>
-     <topicref href="topics/toArray.dita"/>
+     <topicref href="topics/toArray.dita"/>-->
      
-     <topicref href="topics/createNode.dita"/>
+     <!--<topicref href="topics/createNode.dita"/>
      <topicref href="topics/getDetail.dita"/>
      <topicref href="topics/getMaster.dita"/>
      <topicref href="topics/getNode.dita"/>
      <topicref href="topics/getSlave.dita"/>
      <topicref href="topics/removeNode.dita"/>
      <topicref href="topics/rgstart.dita"/>
-     <topicref href="topics/rgstop.dita"/>
+     <topicref href="topics/rgstop.dita"/>-->
      
-     <topicref href="topics/nodeconnect.dita"/>
+     <!--<topicref href="topics/nodeconnect.dita"/>
      <topicref href="topics/getHostName.dita"/>
      <topicref href="topics/getNodeDetail.dita"/>
      <topicref href="topics/getServiceName.dita"/>
      <topicref href="topics/nodestart.dita"/>
-     <topicref href="topics/nodestop.dita"/>
+     <topicref href="topics/nodestop.dita"/>-->
      
-     <topicref href="topics/domainalter.dita"/>
+     <!--<topicref href="topics/domainalter.dita"/>
      <topicref href="topics/listCollections_domain.dita"/>
-     <topicref href="topics/listCollectionSpaces_domain.dita"/> 
+     <topicref href="topics/listCollectionSpaces_domain.dita"/>--> 
      
      <!--<topicref href="topics/getCS.dita"/>
      <topicref href="topics/getRG.dita"/>

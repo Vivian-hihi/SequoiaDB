@@ -9,7 +9,7 @@
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="rg.getNode()"/>
 <meta name="description" content="rg.getNode(&lt;nodename|hostname&gt;,&lt;servicename&gt;) 返回指定节点信息。 参数描述 参数名 参数类型 描述 是否必填 nodename string 节点名称。 nodename 与 hostname 二选一 hostname string 主机名。 hostname 与 nodename 二选一 servicename string 服务器名称。 是 格式 ..."/>
-<meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
+<meta name="DC.Relation" scheme="URI" content="../../../references/methods/jsrg.html"/>
 <meta name="DC.Relation" scheme="URI" content="createNode.html"/>
 <meta name="DC.Relation" scheme="URI" content="getMaster.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -33,7 +33,7 @@
 <body onload="highlightSearchTerm()" id="references_method_getNode"><a name="references_method_getNode"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
-                    --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a></td></tr></tbody></table>
+                    --></script></span><a class="link" href="../../../references/methods/jsrg.html" title="replica group"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">replica group</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="methodlist.html" title="SequoiaDB JavaScript 方法">SequoiaDB JavaScript 方法</a> / <a class="navheader_parent_path" href="../../../references/methods/jsrg.html" title="replica group">replica group</a></td></tr></tbody></table>
 
   <h1 class="title topictitle1">rg.getNode()</h1>
 
@@ -45,43 +45,43 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <a name="references_method_getNode__references_method_getNode_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_method_getNode__references_method_getNode_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115633e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d116117e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d115633e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d116117e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d115633e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d116117e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d115633e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115633e26" class="stentry">nodename</td>
-
-          <td valign="top" headers="d115633e29" class="stentry">string</td>
-
-          <td valign="top" headers="d115633e32" class="stentry">节点名称。</td>
-
-          <td valign="top" headers="d115633e35" class="stentry">nodename 与 hostname 二选一</td>
+          <th valign="bottom" align="left" id="d116117e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115633e26" class="stentry">hostname</td>
+          <td valign="top" headers="d116117e26" class="stentry">nodename</td>
 
-          <td valign="top" headers="d115633e29" class="stentry">string</td>
+          <td valign="top" headers="d116117e29" class="stentry">string</td>
 
-          <td valign="top" headers="d115633e32" class="stentry">主机名。</td>
+          <td valign="top" headers="d116117e32" class="stentry">节点名称。</td>
 
-          <td valign="top" headers="d115633e35" class="stentry">hostname 与 nodename 二选一</td>
+          <td valign="top" headers="d116117e35" class="stentry">nodename 与 hostname 二选一</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115633e26" class="stentry">servicename</td>
+          <td valign="top" headers="d116117e26" class="stentry">hostname</td>
 
-          <td valign="top" headers="d115633e29" class="stentry">string</td>
+          <td valign="top" headers="d116117e29" class="stentry">string</td>
 
-          <td valign="top" headers="d115633e32" class="stentry">服务器名称。</td>
+          <td valign="top" headers="d116117e32" class="stentry">主机名。</td>
 
-          <td valign="top" headers="d115633e35" class="stentry">是</td>
+          <td valign="top" headers="d116117e35" class="stentry">hostname 与 nodename 二选一</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d116117e26" class="stentry">servicename</td>
+
+          <td valign="top" headers="d116117e29" class="stentry">string</td>
+
+          <td valign="top" headers="d116117e32" class="stentry">服务器名称。</td>
+
+          <td valign="top" headers="d116117e35" class="stentry">是</td>
 
         </tr>
 </table>
@@ -112,7 +112,7 @@ vmsvr2-suse-x64:11800</pre>
 <div><a class="navheader_parent_path" href="getMaster.html" title="rg.getMaster()">rg.getMaster()</a></div>
 </div>
 </div>
-<div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB JavaScript 方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB JavaScript 方法</span></a>  <script type="text/javascript"><!--         
+<div class="navfooter"><a class="link" href="../../../references/methods/jsrg.html" title="replica group"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">replica group</span></a>  <script type="text/javascript"><!--         
     function expand(){
         parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
     }
