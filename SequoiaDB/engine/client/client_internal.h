@@ -47,6 +47,7 @@ struct _sdbConnectionStruct
    INT32 _receiveBufferSize ;
    BOOLEAN _endianConvert ;
    Node *_cursors ;
+   Node *_sockets ;
 
    UINT64 reserveSpace1 ;
 } ;

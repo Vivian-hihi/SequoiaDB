@@ -202,7 +202,6 @@ INT32 clientSend ( SOCKET sock, const CHAR *pMsg, INT32 len, INT32 timeout )
 done :
    return rc ;
 error :
-   clientDisconnect ( sock ) ;
    goto done ;
 }
 #define MAX_RECV_RETRIES 5
@@ -302,7 +301,6 @@ INT32 clientRecv ( SOCKET sock, CHAR *pMsg, INT32 len, INT32 timeout )
 done :
    return rc ;
 error :
-   clientDisconnect ( sock ) ;
    goto done ;
 }
 
