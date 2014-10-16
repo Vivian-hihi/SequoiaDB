@@ -241,6 +241,10 @@
                 </platformTest>
             </ruleList>
         </runProgram>
+        <runProgram>
+            <program>${installdir}/script/install_om.sh</program>
+            <programArguments>-rootPath ${installdir} -cmPort ${port} -svcname ${svcname} -dbpath ${dbpath}</programArguments>
+        </runProgram>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
@@ -516,10 +520,11 @@
                     <cliOptionText>${msg(Install.Paramers.processAutoStart.explanation)}</cliOptionText>
                 </booleanParameter>
                 <parameterGroup>
-                    <name>OM</name>
+                    <name>type</name>
                     <explanation></explanation>
                     <value></value>
-                    <default></default>
+                    <default>DB</default>
+                    <cliOptionName>type</cliOptionName>
                     <parameterList>
                         <stringParameter>
                             <name>svcname</name>
@@ -529,6 +534,7 @@
                             <value>11780</value>
                             <default>11780</default>
                             <allowEmptyValue>0</allowEmptyValue>
+                            <cliOptionName>svcname</cliOptionName>
                             <width>40</width>
                         </stringParameter>
                         <directoryParameter>
