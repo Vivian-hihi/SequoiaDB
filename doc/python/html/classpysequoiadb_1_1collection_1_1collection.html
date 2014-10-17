@@ -151,6 +151,14 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:adfb42a07a5fd91c726024c26ccb2e46e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59fe0f3be6f268362142980bc48973c7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a59fe0f3be6f268362142980bc48973c7">detach_collection</a></td></tr>
 <tr class="separator:a59fe0f3be6f268362142980bc48973c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27b737239cfd58c864c012e7aff52f5f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a27b737239cfd58c864c012e7aff52f5f">create_lob</a></td></tr>
+<tr class="separator:a27b737239cfd58c864c012e7aff52f5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a4337ac0e2e0f9c7d82be3b33d3680f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a3a4337ac0e2e0f9c7d82be3b33d3680f">get_lob</a></td></tr>
+<tr class="separator:a3a4337ac0e2e0f9c7d82be3b33d3680f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae29b71dbe335749bef2d8406b6ff2338"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#ae29b71dbe335749bef2d8406b6ff2338">remove_lob</a></td></tr>
+<tr class="separator:ae29b71dbe335749bef2d8406b6ff2338"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7c570b0f461fe6d407f470413e2ebb4"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#ad7c570b0f461fe6d407f470413e2ebb4">list_lobs</a></td></tr>
+<tr class="separator:ad7c570b0f461fe6d407f470413e2ebb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><pre class="fragment">Collection for SequoiaDB
@@ -406,6 +414,41 @@ Exceptions:
 </pre> 
 </div>
 </div>
+<a class="anchor" id="a27b737239cfd58c864c012e7aff52f5f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.create_lob </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>oid</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">create lob.
+
+Parameters:
+   Name     Type                 Info:
+   oid      bson.ObjectId        Specified the oid of lob to be created,
+                           if None, the oid is generated automatically
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
 <a class="anchor" id="a08431e592c6ee801dd35bdb0c1961e55"></a>
 <div class="memitem">
 <div class="memproto">
@@ -652,6 +695,40 @@ Exceptions:
 </pre> 
 </div>
 </div>
+<a class="anchor" id="a3a4337ac0e2e0f9c7d82be3b33d3680f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.get_lob </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>oid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">get the specified lob.
+
+Parameters:
+   Name     Type                 Info:
+   oid      str/bson.ObjectId    The specified oid
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
 <a class="anchor" id="a76728ff0c3f96a62681e838b50858f45"></a>
 <div class="memitem">
 <div class="memproto">
@@ -738,6 +815,31 @@ Exceptions:
 </pre> 
 </div>
 </div>
+<a class="anchor" id="ad7c570b0f461fe6d407f470413e2ebb4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.list_lobs </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">list all lobs.
+
+Parameters:
+   Name     Type                 Info:
+
+Return values:
+   a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
 <a class="anchor" id="a6a128fdbc0bcbf3d5729c869b9694ddc"></a>
 <div class="memitem">
 <div class="memproto">
@@ -781,6 +883,40 @@ Parameters:
                               all results.
 Return values:
    a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="ae29b71dbe335749bef2d8406b6ff2338"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.remove_lob </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>oid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">remove lob.
+
+Parameters:
+   Name     Type                 Info:
+   oid      str/bson.ObjectId    The oid of the lob to be remove.
 Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
@@ -1129,7 +1265,7 @@ Note:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Sep 19 2014 08:59:08 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 17 2014 16:43:18 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

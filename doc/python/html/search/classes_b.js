@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['uuidlegacy',['UUIDLegacy',['../classbson_1_1binary_1_1UUIDLegacy.html',1,'bson::binary']]]
+  ['timestamp',['Timestamp',['../classbson_1_1timestamp_1_1Timestamp.html',1,'bson::timestamp']]]
 ];
