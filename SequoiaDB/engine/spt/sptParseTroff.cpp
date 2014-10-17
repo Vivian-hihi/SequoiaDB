@@ -41,7 +41,7 @@
 #define CURSOR_CATEGORY "cursor"
 #define CLCOUNT_CATEGORY "count"
 #define DOMAIN_CATEGORY "domain"
-#define OM_CATEGORY "oma"
+#define OMA_CATEGORY "oma"
 
 #define READ_CHARACTOR_NUM 1024
 #define CMD_NAME_LEN  255
@@ -72,7 +72,7 @@ const CHAR* CATE_ARR[ CATE_SIZE ] =
    CURSOR_CATEGORY,
    CLCOUNT_CATEGORY,
    DOMAIN_CATEGORY,
-   OM_CATEGORY
+   OMA_CATEGORY
  } ;
 
 // remove some useless mark in a c-type string
@@ -384,7 +384,7 @@ INT32 manHelp::scanFile()
                _mdomain.insert( std::pair<string, string>(synopsis,
                                 cutline) ) ;
             }
-            else if ( ossMemcmp( pFileName, OM_CATEGORY,
+            else if ( ossMemcmp( pFileName, OMA_CATEGORY,
                                  ossStrlen( pFileName ) ) == 0 )
             {
                _moma.insert( std::pair<string,string>(synopsis,
@@ -604,7 +604,7 @@ ssmap& manHelp::getCategoryMap( const CHAR *category )
     {
        return _mdomain ;
     }
-    else if ( ossMemcmp( category, OM_CATEGORY,
+    else if ( ossMemcmp( category, OMA_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
        return _moma ;
@@ -619,12 +619,15 @@ INT32 manHelp::displayMethod( const CHAR *category )
 {
    INT32 rc = SDB_OK ;
    ssmap &cate = getCategoryMap( category ) ;
-   if ( cate == _mempty )
+   if ( 0 == cate.size() )
    {
+      /*
       ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE,
                   __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
+      */
+      goto done ;
    }
    else
    {
