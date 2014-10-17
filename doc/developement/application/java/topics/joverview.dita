@@ -5,11 +5,11 @@
   <body>
     <section>
       <title>概述</title>   
-    <p>SequoiaDB Java 驱动提供了数据库操作和集群操作的接口。主要包括以下7个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域。</p>
+      <p>SequoiaDB Java 驱动提供了数据库操作和集群操作的接口。主要包括以下8个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域，大对象。</p>
     <p>Java 驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。 </p>
       <ul>
         <li><p>数据库操作实例</p><p>SequoiaDB 数据库中的数据存放分为三个级别：</p><p>&nbsp;1）数据库</p><p>&nbsp;2）集合空间</p><p>&nbsp;3）集合</p>
-        <p>因此，在数据库操作中，可用3个类来分别表示连接，集合空间，集合实例，另1个类表示游标实例：</p>
+          <p>因此，在数据库操作中，可用3个类来分别表示连接，集合空间，集合实例，另2个类分别表示游标实例和大对象实例：</p>
           <simpletable>
           <strow>
             <stentry>SequoiaDB</stentry>
@@ -31,6 +31,11 @@
             <stentry>游标实例</stentry>
             <stentry>代表一个查询产生的结果集</stentry>
           </strow>
+          <strow>
+            <stentry>DBLob</stentry>
+            <stentry>大对象实例</stentry>
+            <stentry>代表一个大对象</stentry>
+          </strow> 
           </simpletable>
           <p>Java 驱动需要使用不同的实例进行操作。譬如读取数据的操作需要游标实例，而创建表空间则需要数据库实例。</p>
           <note><p>SequoiaDB 只建立一条 Socket 连接，且内部没有对网络操作加锁。如果需要多线程连接数据库，各个线程必须各自新建一个 SequoiaDB 对象及其之上的 CollectionSpace/DBCollection/DBCursor 对象。</p></note>

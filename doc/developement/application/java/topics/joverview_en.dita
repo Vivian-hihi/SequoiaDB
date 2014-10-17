@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>Outline</title>   
-      <p>SequoiaDB Java driver provides an interface database operations, and cluster operations. Includes the following seven levels of operation: database, collection space, collection, cursor, replica group, node, domain.</p>
+      <p>SequoiaDB Java driver provides an interface database operations, and cluster operations. Includes the following seven levels of operation: database, collection space, collection, cursor, replica group, node, domain, 大对象.</p>
       <p>There are two driving Java class instances. A database operation, another operation for the cluster. </p>
       <ul>
         <li>
@@ -22,8 +22,7 @@
             256GB.</p>
           <p>Compared with relation database, we can regard record as line in relation database. We
             can regard collection as table in relation database. </p>
-          <p>So in client, there are 3 classes representing 3 kinds of objects. The other class
-            represents cursor:</p><simpletable>
+          <p>So in client, there are 3 classes representing 3 kinds of objects. 另2个类分别表示游标实例和大对象实例:</p><simpletable>
               <strow>
                 <stentry>Sequoiadb </stentry>
                 <stentry>Database instance </stentry>
@@ -44,6 +43,11 @@
                 <stentry>Cursor Instance</stentry>
                 <stentry>It represents a result set of a query</stentry>
               </strow>
+            <strow>
+              <stentry>DBLob</stentry>
+              <stentry>大对象实例</stentry>
+              <stentry>代表一个大对象</stentry>
+            </strow>
             </simpletable>
             <note>
               <p>SequoiaDB only builds one Socket connection, and it does not lock the network operation internally. If more threads are needed to connect the database, each thread must create a new Sequoiadb object by itself respectively, and also the CollectionSpace/DBColltion/DBCursor objects belong to each Sequoiadb.</p>
