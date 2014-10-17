@@ -4,7 +4,11 @@ var help = function( val ) {
       println("   var db = new Sdb()                     connect to database use default host 'localhost' and default port 11810");
       println("   var db = new Sdb('localhost',11810)    connect to database use specified host and port");
       println("   var db = new Sdb('ubuntu',11810,\'\',\'\') connect to database with username and password");
+      println("   var om = new Oma()                     connect to om agent use default host 'localhost' and default port 11810") ;
+      println("   var om = new Oma('localhost',11810)    connect to om agent use specified host and port") ;
+      println("   var om = new Oma('ubuntu',11810,\'\',\'\') connect to om agent with username and password") ;
       println("   help(<method>)                         help on specified method, e.g. help(\'createCS\')");
+      println("   om.help()                              help on om methods");
       println("   db.help()                              help on db methods");
       println("   db.cs.help()                           help on collection space cs");
       println("   db.cs.cl                               access collection cl on collection space cs");
@@ -43,6 +47,8 @@ Sdb.prototype.help = function( val ) {
       man( "db", val ) ;
    }
 }
+
+
 
 SdbNode.prototype.help = function( val ) {
    if ( val == undefined )
