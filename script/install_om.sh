@@ -16,11 +16,11 @@ dbpath=$4
 sdbFile=$1/bin/sdb
 
 # first to start sdbcm
-$rootPath/bin/sdbcmart
-if [ [ $? != 0 ] ] ; then
-   echo "Start sdbcm failed"
-   exit 1
-fi
+# $rootPath/bin/sdbcmart
+# if [  $? != 0  ] ; then
+#    echo "Start sdbcm failed"
+#    exit 1
+# fi
 
 # second to create om
 $sdbFile -s " var oma = new Oma('localhost', '${cmPort}' ); \
@@ -36,7 +36,8 @@ $sdbFile -s " var oma = new Oma('localhost', '${cmPort}' ); \
                  oma.removeOM( '${svcname}' ) ; \
                  throw e ; \
               } "
-if [ [ $? != 0 ] ] ; then
+if [  $? != 0  ] ; 
+then
    echo "Create OM failed"
    exit 1
 else
