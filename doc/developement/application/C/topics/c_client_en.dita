@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>Outline</title>
-      <p>C client application is mainly to provide database connection, collectionspaces, collections, cursor, replica group, node, 大对象, domain. <xref href="..\..\..\..\..\c\html\index.html" format="html"
+      <p>C client application is mainly to provide database connection, collectionspaces, collections, cursor, replica group, node, domain, lob. <xref href="..\..\..\..\..\c\html\index.html" format="html"
         >More refer to the online C API</xref></p>
     </section>
     <section>
@@ -20,8 +20,7 @@
             Every collection can contain more than one record. In a physical system, the size of a
             collection space is at most 256GB.</p><p>Compared with relation database, we can regard
             record as line in relation database. We can regard collection as table in relation
-            database. </p><p>So in client, there are 3 Handles representing
-              connection, collectionspace and collection. 1个句柄代表游标, 1个句柄表示大对象:</p><simpletable>
+            database. </p><p>So in client, there are 3 Handles representing connection, collectionspace and collection, including 1 handle represents cursor, 1 handle represents LOB:</p><simpletable>
             <strow>
               <stentry>sdbConnectionHandle </stentry>
               <stentry>Database instance </stentry>
@@ -44,8 +43,8 @@
             </strow>
             <strow>
               <stentry>sdbLobHandle</stentry>
-              <stentry>大对象句柄</stentry>
-              <stentry>代表一个大对象</stentry>
+              <stentry>LOB's handle</stentry>
+              <stentry>Represent a LOB</stentry>
             </strow>
           </simpletable><p>C client-driven application operate with different handles. For
             example, reading data will use Cursor Handle, then creating collectionspace uses database

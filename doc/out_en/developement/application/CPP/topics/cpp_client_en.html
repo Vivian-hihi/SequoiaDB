@@ -38,7 +38,7 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">Outline</h2>
       
-      <p class="p">C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 8 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain, 大对象.</p>
+      <p class="p">C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 8 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain, lob.</p>
 
     <p class="p"><a class="xref" href="../../../../cpp/html/index.html">For more please refer to online C++ API</a>。</p>
 
@@ -54,13 +54,13 @@
 <p class="p"> 1) Database</p>
 <p class="p"> 2) Collection space</p>
 <p class="p"> 3) Collection</p>
-<p class="p"> 因此，在数据库操作中，可用3个类来分别表示数据库连接，集合空间，集合，1个类表示游标，1个类表达大对象: </p>
+<p class="p"> So, in operations of database, we can use 3 classes to represent, one for database connection, collectionspace and collection, one represents cursor, and one for LOB. </p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
               <td valign="top" class="stentry">Sdb </td>
 
               <td valign="top" class="stentry"> Database class </td>
 
-              <td valign="top" class="stentry"> 数据库类主要用于管理整个数据库，包括建立连接，创建集合空间等  </td>
+              <td valign="top" class="stentry"> This class mainly for managing the whole database, including connection creating, collectionspace creating  </td>
 
             </tr>
 <tr class="strow">
@@ -68,7 +68,7 @@
 
               <td valign="top" class="stentry"> CollectionSpace class </td>
 
-              <td valign="top" class="stentry"> 集合空间主要用于管理集合 </td>
+              <td valign="top" class="stentry"> This mainly for managing collections </td>
 
             </tr>
 <tr class="strow">
@@ -76,7 +76,7 @@
 
               <td valign="top" class="stentry">Collection class</td>
 
-              <td valign="top" class="stentry"> 集合类主要用于对数据进行增删改查等操作  </td>
+              <td valign="top" class="stentry"> This class is for CRUD operations of database  </td>
 
             </tr>
 <tr class="strow">
@@ -84,15 +84,15 @@
 
               <td valign="top" class="stentry"> Cursor class</td>
 
-              <td valign="top" class="stentry"> 游标类主要用于遍历查询、快照返回的结果游标实例代表一个查询产生的游标 </td>
+              <td valign="top" class="stentry"> Thisclass is mainly for traverse querying. The result cursor that snapshot returning  represent a cursor created from query </td>
 
             </tr>
 <tr class="strow">
               <td valign="top" class="stentry">sdbLob</td>
 
-              <td valign="top" class="stentry">大对象类</td>
+              <td valign="top" class="stentry">Large Object Class</td>
 
-              <td valign="top" class="stentry">大对象类用于对大对象进行读写等操作</td>
+              <td valign="top" class="stentry">This class is for the operations of LOB</td>
 
             </tr>
 </table>

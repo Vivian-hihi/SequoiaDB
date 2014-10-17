@@ -38,7 +38,7 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">Outline</h2>
          
-      <p class="p">SequoiaDB Java driver provides an interface database operations, and cluster operations. Includes the following seven levels of operation: database, collection space, collection, cursor, replica group, node, domain, 大对象.</p>
+      <p class="p">SequoiaDB Java driver provides an interface database operations, and cluster operations. Includes the following seven levels of operation: database, collection space, collection, cursor, replica group, node, domain, lob.</p>
 
       <p class="p">There are two driving Java class instances. A database operation, another operation for the cluster. </p>
 
@@ -65,7 +65,7 @@
           <p class="p">Compared with relation database, we can regard record as line in relation database. We
             can regard collection as table in relation database. </p>
 
-          <p class="p">So in client, there are 3 classes representing 3 kinds of objects. 另2个类分别表示游标实例和大对象实例:</p>
+          <p class="p">So in client, there are 3 Handles representing connection, collectionspace and collection, including 1 handle represents cursor, 1 handle represents LOB:</p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
                 <td valign="top" class="stentry">Sequoiadb </td>
 
@@ -101,9 +101,9 @@
 <tr class="strow">
               <td valign="top" class="stentry">DBLob</td>
 
-              <td valign="top" class="stentry">大对象实例</td>
+              <td valign="top" class="stentry">LOB instance</td>
 
-              <td valign="top" class="stentry">代表一个大对象</td>
+              <td valign="top" class="stentry">Represents a LOB</td>
 
             </tr>
 </table>

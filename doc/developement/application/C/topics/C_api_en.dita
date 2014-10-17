@@ -8,16 +8,16 @@
     <section>
       <title>History Updates:</title>
       <p><b>Version 1.10</b></p>
-      <p>1. 添加获取查询访问计划的接口：</p><codeblock>sdbExplain，获取查询的访问计划</codeblock>
-      <p>2. 添加用于大对象（lob）操作的接口：</p><codeblock>sdbListLobs，列出集合中的所有lob
-sdbOpenLob，创建或打开一个lob
-sdbCloseLob，关闭一个lob
-sdbRemoveLob， 删除一个lob
-sdbSeekLob，设置读起始位置，该版本中，seek只用于读操作
-sdbReadLob，从lob中读取数据
-sdbWriteLob，把数据写入lob
-sdbGetLobSize，获取lob的大小
-sdbGetLobCreateTime，获取lob的创建时间</codeblock>
+      <p>1. Added the interface to get visiting plan of the queries.</p><codeblock>sdbExplain, Get visiting plan of the queries.</codeblock>
+      <p>2. Added interfaces for operations of LOBs.</p><codeblock>sdbListLobs, list all LOBs in the collection
+sdbOpenLob, create or open a LOB
+sdbCloseLob, close a LOB
+sdbRemoveLob, delete a LOB
+sdbSeekLob, set the start position of read operations (in this version, seek is only used for read operations)
+sdbReadLob, read data from LOB
+sdbWriteLob, writes data to LOB
+sdbGetLobSize, get the size of a LOB
+sdbGetLobCreateTime, get the creating time of a LOB</codeblock>
       <p><b>Version 1.8</b></p>
       <p>New APIs in C:</p><codeblock>sdbConnect1, multiple connection address can be provided, one of the random valid addresses will be used to connect to database
 sdbCreateCollectionSpaceV2, a BSON parameter is provided to make the creating of a collection space more flexible

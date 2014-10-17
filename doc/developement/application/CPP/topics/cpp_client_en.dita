@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>Outline</title>
-      <p>C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 8 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain, 大对象.</p>
+      <p>C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 8 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain, lob.</p>
     <p><xref href="..\..\..\..\cpp\html\index.html" format="html">For more please refer to online C++ API</xref>。</p>
     </section>
     <section><title>C++ Class Instances</title>
@@ -13,31 +13,31 @@
       to operate database, the other is used to operate cluster.</p>
       <ul>
         <li>Database operation instance <p>There are 3 degrees of data in
-          SequoiaDB:</p><p> 1) Database</p><p> 2) Collection space</p><p> 3) Collection</p><p> 因此，在数据库操作中，可用3个类来分别表示数据库连接，集合空间，集合，1个类表示游标，1个类表达大对象: </p><simpletable>
+          SequoiaDB:</p><p> 1) Database</p><p> 2) Collection space</p><p> 3) Collection</p><p> So, in operations of database, we can use 3 classes to represent, one for database connection, collectionspace and collection, one represents cursor, and one for LOB. </p><simpletable>
             <strow>
               <stentry>Sdb </stentry>
               <stentry> Database class </stentry>
-              <stentry> 数据库类主要用于管理整个数据库，包括建立连接，创建集合空间等  </stentry>
+              <stentry> This class mainly for managing the whole database, including connection creating, collectionspace creating  </stentry>
             </strow>
             <strow>
               <stentry>sdbCollectionSpace </stentry>
               <stentry> CollectionSpace class </stentry>
-              <stentry> 集合空间主要用于管理集合 </stentry>
+              <stentry> This mainly for managing collections </stentry>
             </strow>
             <strow>
               <stentry>sdbCollection</stentry>
               <stentry>Collection class</stentry>
-              <stentry> 集合类主要用于对数据进行增删改查等操作  </stentry>
+              <stentry> This class is for CRUD operations of database  </stentry>
             </strow>
             <strow>
               <stentry>sdbCursor</stentry>
               <stentry> Cursor class</stentry>
-              <stentry> 游标类主要用于遍历查询、快照返回的结果游标实例代表一个查询产生的游标 </stentry>
+              <stentry> Thisclass is mainly for traverse querying. The result cursor that snapshot returning  represent a cursor created from query </stentry>
             </strow>
             <strow>
               <stentry>sdbLob</stentry>
-              <stentry>大对象类</stentry>
-              <stentry>大对象类用于对大对象进行读写等操作</stentry>
+              <stentry>Large Object Class</stentry>
+              <stentry>This class is for the operations of LOB</stentry>
             </strow>
           </simpletable><p> C++ client-driven application operate with different instances.For
             example,reading data will use Cursor instance,then creating collectionspace uses

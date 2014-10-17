@@ -87,7 +87,8 @@ terminate and return after finishing the data split.
        field of sharding key is in descending order, like:
        {groupingKey:{<Field 1>:<-1>}, the starting point in
        "condition" or "partition" should be larger than the
-       ending point.
+       ending point. The Hash Sharding's parameter Partition must
+       be integer type, not any other type.
 .sp 2
 
 .SH "Examples"

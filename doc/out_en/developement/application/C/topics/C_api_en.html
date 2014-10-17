@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C API"/>
-<meta name="description" content="This part is related to C API document. C API History Updates: Version 1.10 1. 添加获取查询访问计划的接口： sdbExplain，获取查询的访问计划 2. 添加用于大对象（lob）操作的接口： sdbListLobs，列出集合中的所有lob sdbOpenLob，创建或打开一个lob ..."/>
+<meta name="description" content="This part is related to C API document. C API History Updates: Version 1.10 1. Added the interface to get visiting plan of the queries. sdbExplain, Get visiting plan of the queries. 2. Added ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/C/topics/c_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_qcm_qzy_3k"/>
@@ -44,19 +44,19 @@
       
       <p class="p"><strong class="ph b">Version 1.10</strong></p>
 
-      <p class="p">1. 添加获取查询访问计划的接口：</p>
-<pre class="pre codeblock">sdbExplain，获取查询的访问计划</pre>
+      <p class="p">1. Added the interface to get visiting plan of the queries.</p>
+<pre class="pre codeblock">sdbExplain, Get visiting plan of the queries.</pre>
 
-      <p class="p">2. 添加用于大对象（lob）操作的接口：</p>
-<pre class="pre codeblock">sdbListLobs，列出集合中的所有lob
-sdbOpenLob，创建或打开一个lob
-sdbCloseLob，关闭一个lob
-sdbRemoveLob， 删除一个lob
-sdbSeekLob，设置读起始位置，该版本中，seek只用于读操作
-sdbReadLob，从lob中读取数据
-sdbWriteLob，把数据写入lob
-sdbGetLobSize，获取lob的大小
-sdbGetLobCreateTime，获取lob的创建时间</pre>
+      <p class="p">2. Added interfaces for operations of LOBs.</p>
+<pre class="pre codeblock">sdbListLobs, list all LOBs in the collection
+sdbOpenLob, create or open a LOB
+sdbCloseLob, close a LOB
+sdbRemoveLob, delete a LOB
+sdbSeekLob, set the start position of read operations (in this version, seek is only used for read operations)
+sdbReadLob, read data from LOB
+sdbWriteLob, writes data to LOB
+sdbGetLobSize, get the size of a LOB
+sdbGetLobCreateTime, get the creating time of a LOB</pre>
 
       <p class="p"><strong class="ph b">Version 1.8</strong></p>
 
