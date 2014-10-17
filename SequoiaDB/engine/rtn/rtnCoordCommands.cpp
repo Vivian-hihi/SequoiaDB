@@ -2837,25 +2837,32 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMDSSRESETTMP_BUILDREQMSG, "rtnCoordCMDSnapshotResetTmp::BuildRequestMsg" )
-   INT32 rtnCoordCMDSnapshotResetTmp::BuildRequestMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                              SINT32 flag, SINT64 numToSkip,
-                              SINT64 numToReturn, bson::BSONObj *query,
-                              bson::BSONObj *fieldSelector, bson::BSONObj *orderBy,
-                              bson::BSONObj *hint )
+   INT32 rtnCoordCMDSnapshotResetTmp::BuildRequestMsg  ( CHAR **ppBuffer,
+                                                         INT32 *bufferSize,
+                                                         SINT32 flag,
+                                                         SINT64 numToSkip,
+                                                         SINT64 numToReturn,
+                                                         BSONObj *query,
+                                                         BSONObj *fieldSelector,
+                                                         BSONObj *orderBy,
+                                                         BSONObj *hint )
    {
       INT32 rc = SDB_OK ;
       //PD_TRACE_ENTRY ( SDB_RTNCOCMDSSRESETTMP_BUILDREQMSG ) ;
       rc = msgBuildQueryMsg( ppBuffer, bufferSize, COORD_CMD_SNAPSHOTRESET,
-                              flag, 0, numToSkip, numToReturn, query, fieldSelector,
-                              orderBy, hint );
+                             flag, 0, numToSkip, numToReturn, query, fieldSelector,
+                             orderBy, hint );
       //PD_TRACE_EXITRC ( SDB_RTNCOCMDSSRESETTMP_BUILDREQMSG, rc ) ;
       return rc ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_EXE, "rtnCoordCMD2PhaseCommit::execute" )
-   INT32 rtnCoordCMD2PhaseCommit::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                                          CHAR **ppResultBuffer, pmdEDUCB * cb,
-                                          MsgOpReply &replyHeader, BSONObj **ppErrorObj )
+   INT32 rtnCoordCMD2PhaseCommit::execute( CHAR *pReceiveBuffer,
+                                           SINT32 packSize,
+                                           CHAR **ppResultBuffer,
+                                           pmdEDUCB * cb,
+                                           MsgOpReply &replyHeader,
+                                           BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_EXE ) ;
@@ -2899,8 +2906,7 @@ namespace engine
       //PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_EXE, rc ) ;
       return rc;
    error:
-      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc
-         && !hasRetry )
+      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc && !hasRetry )
       {
          if ( -1 != contextID )
          {
@@ -2924,8 +2930,8 @@ namespace engine
    }
 
    void rtnCoordCMD2PhaseCommit::fillReply( MsgHeader *pSrcMsg,
-                                          INT32 rc, BSONObj **ppErrorObj,
-                                          MsgOpReply &replyHeader )
+                                            INT32 rc, BSONObj **ppErrorObj,
+                                            MsgOpReply &replyHeader )
    {
       replyHeader.header.messageLength = sizeof( MsgOpReply );
       replyHeader.header.opCode        = MSG_BS_QUERY_RES;
@@ -2940,11 +2946,11 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_DOP1, "rtnCoordCMD2PhaseCommit::doP1OnDataGroup" )
-   INT32 rtnCoordCMD2PhaseCommit::doP1OnDataGroup(CHAR *pReceiveBuffer,
-                                                pmdEDUCB * cb,
-                                                SINT64 &contextID,
-                                                std::set<INT32> &ignoreRCList,
-                                                BOOLEAN isNeedRefresh )
+   INT32 rtnCoordCMD2PhaseCommit::doP1OnDataGroup( CHAR *pReceiveBuffer,
+                                                   pmdEDUCB * cb,
+                                                   SINT64 &contextID,
+                                                   std::set<INT32> &ignoreRCList,
+                                                   BOOLEAN isNeedRefresh )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_DOP1 ) ;
@@ -2959,23 +2965,21 @@ namespace engine
       rtnContextCoord *pContext = NULL;
       rtnCoordQuery queryHandler;
       rc = pRtncb->contextNew( RTN_CONTEXT_COORD, (rtnContext **)&pContext,
-                              contextID, cb );
+                               contextID, cb );
       PD_RC_CHECK( rc, PDERROR, "failed to  create context(rc=%d)", rc );
       rc = pContext->open( boEmpty, -1, 0 );
-      PD_RC_CHECK( rc, PDERROR,
-                  "open context failed(rc=%d)", rc );
+      PD_RC_CHECK( rc, PDERROR, "open context failed(rc=%d)", rc ) ;
       do
       {
          CoordGroupList groupLst;
          hasRefresh = isNeedRefresh;
-         rc = getGroupList( pReceiveBuffer, groupLst, sendGroupLst, cb, isNeedRefresh );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to get group-list(rc=%d)",
-                     rc );
+         rc = getGroupList( pReceiveBuffer, groupLst, sendGroupLst,
+                            cb, isNeedRefresh );
+         PD_RC_CHECK( rc, PDERROR, "Failed to get group-list(rc=%d)", rc );
          rc = queryHandler.queryToDataNodeGroup( pReceiveBuffer, groupLst,
-                                                   sendGroupLst, pRouteAgent,
-                                                   cb, pContext, TRUE,
-                                                   &ignoreRCList );
+                                                 sendGroupLst, pRouteAgent,
+                                                 cb, pContext, TRUE,
+                                                 &ignoreRCList );
          if ( rc != SDB_OK )
          {
             if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc
@@ -2989,8 +2993,8 @@ namespace engine
          isNeedRefresh = FALSE;
       }while( isNeedRefresh );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to execute phase-1 on data node(rc=%d)",
-                  rc );
+                   "Failed to execute phase-1 on data node(rc=%d)",
+                   rc );
    done:
       //PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_DOP1, rc ) ;
       return rc;
@@ -3005,9 +3009,9 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCOCMD2PC_DOP2, "rtnCoordCMD2PhaseCommit::doP2OnDataGroup" )
-   INT32 rtnCoordCMD2PhaseCommit::doP2OnDataGroup(CHAR *pReceiveBuffer,
-                                                pmdEDUCB * cb,
-                                                SINT64 &contextID )
+   INT32 rtnCoordCMD2PhaseCommit::doP2OnDataGroup( CHAR *pReceiveBuffer,
+                                                   pmdEDUCB * cb,
+                                                   SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_DOP2 ) ;
@@ -3015,15 +3019,15 @@ namespace engine
       _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       rtnContextBuf buffObj;
       SINT64 start = 0;
-      rc = rtnGetMore( contextID, -1, buffObj, start, cb, pRtncb );
+      rc = rtnGetMore( contextID, -1, buffObj, start, cb, pRtncb ) ;
       if ( SDB_DMS_EOC == rc )
       {
          contextID = -1;
          rc = SDB_OK;
       }
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to execute phase-2 on data node(rc=%d)",
-                  rc );
+                   "Failed to execute phase-2 on data node(rc=%d)",
+                   rc );
    done:
       //PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_DOP2, rc ) ;
       return rc;

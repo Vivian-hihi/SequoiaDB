@@ -354,8 +354,8 @@ namespace engine
    }
 
    INT32 rtnTransTryLockCL( const CHAR *pCollection, INT32 lockType,
-                           _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
-                           SDB_DPSCB *dpsCB )
+                            _pmdEDUCB *cb,SDB_DMSCB *dmsCB,
+                            SDB_DPSCB *dpsCB )
    {
       INT32 rc = SDB_OK;
       dmsStorageUnitID suID = DMS_INVALID_CS;

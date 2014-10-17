@@ -795,14 +795,13 @@ namespace engine
       {
          rtnContextDelCL *delContext = NULL;
          rc = rtnCB->contextNew( RTN_CONTEXT_DELCL, (rtnContext **)&delContext,
-                              *pContextID, cb );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to create context, drop collection failed(rc=%d)",
-                     rc );
+                                 *pContextID, cb );
+         PD_RC_CHECK( rc, PDERROR, "Failed to create context, drop "
+                      "collection failed(rc=%d)", rc );
          rc = delContext->open( _collectionName, cb );
-         PD_RC_CHECK(rc, PDERROR,
-                     "failed to open context, drop collection failed(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "Failed to open context, drop "
+                      "collection failed(rc=%d)",
+                      rc );
       }
       else
       {
@@ -883,15 +882,14 @@ namespace engine
       if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
       {
          rtnContextDelCS *delContext = NULL;
-         rc = rtnCB->contextNew( RTN_CONTEXT_DELCS, (rtnContext **)&delContext,
-                              *pContextID, cb );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to create context, drop cs failed(rc=%d)",
-                     rc );
+         rc = rtnCB->contextNew( RTN_CONTEXT_DELCS,
+                                 (rtnContext **)&delContext,
+                                 *pContextID, cb );
+         PD_RC_CHECK( rc, PDERROR, "Failed to create context, "
+                      "drop cs failed(rc=%d)", rc );
          rc = delContext->open( _spaceName, cb );
-         PD_RC_CHECK(rc, PDERROR,
-                     "failed to open context, drop cs failed(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "Failed to open context, drop cs "
+                      "failed(rc=%d)", rc );
       }
       else
       {
