@@ -3846,10 +3846,10 @@ static void sdb_destructor ( JSContext *cx , JSObject *obj )
    if ( connection )
    {
       // first need to convert retval to double
-      __sdbGetReserveSpace1 ( *connection, &addr ) ;
+      /*__sdbGetReserveSpace1 ( *connection, &addr ) ;
       void *p = (void*)addr ;
       JS_RemoveValueRoot ( cx, (jsval*)p ) ;
-      SAFE_JS_FREE ( cx, p ) ;
+      SAFE_JS_FREE ( cx, p ) ; */
       sdbDisconnect ( *connection ) ;
       SAFE_RELEASE_CONNECTION ( connection ) ;
       SAFE_JS_FREE ( cx , connection ) ;
@@ -4158,6 +4158,7 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    // new a js sdb object
    obj = JS_NewObject ( cx , &sdb_class, NULL, NULL ) ;
    VERIFY ( obj ) ;
+   /*
    // set the newly build js sdb object as a return value,
    // so we can hold this object in the sdb client like this:
    // var sdb = new Sdb("localhost", 11810)
@@ -4165,15 +4166,16 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    VERIFY ( pv ) ;
    *pv = OBJECT_TO_JSVAL ( obj ) ;
    JS_SET_RVAL ( cx , vp , *pv ) ;
-   //JS_SET_RVAL ( cx, vp, OBJECT_TO_JSVAL(obj) ) ;
    JS_AddValueRoot ( cx, pv ) ;
    __sdbSetReserveSpace1 ( *connection, (UINT64)pv ) ;
    // *pv must be set 0 here, otherwise destructor will not be called
    // why? i donno... maybe some magic happen in spider monkey
    *pv = 0 ;
+   */
    // set the connection as one of the newly build js sdb object
    // so this object holds a handle of sdb, and can use it communicate
    // with datebase
+   JS_SET_RVAL ( cx, vp, OBJECT_TO_JSVAL(obj) ) ;
    ret = JS_SetPrivate ( cx , obj , connection ) ;
    VERIFY ( ret ) ;
    // we need to set host and port as properties of the newly build
@@ -6279,11 +6281,13 @@ static JSBool sdb_close ( JSContext *cx, uintN argc, jsval *vp )
    REPORT ( connection, "Sdb.close: no connection handle" ) ;
 
    sdbDisconnect(*connection ) ;
+   /*
    __sdbGetReserveSpace1 ( *connection, &addr ) ;
    __sdbSetReserveSpace1 ( *connection, 0 ) ;
    p = (void*)addr ;
    JS_RemoveValueRoot ( cx, (jsval*)p ) ;
    SAFE_JS_FREE ( cx, p ) ;
+   */
 
    //set sdb handle to invalid handle(0)
    ret = JS_SetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ), 0 ) ;
