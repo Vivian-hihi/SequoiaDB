@@ -548,52 +548,73 @@
                     <cliOptionText>${msg(Installer.Paramers.installationType.explanation)}</cliOptionText>
                     <parameterList>
                         <stringParameter>
-                            <name>svcname</name>
+                            <name>DB</name>
                             <description></description>
                             <explanation></explanation>
                             <value></value>
-                            <default>11780</default>
+                            <default></default>
                             <allowEmptyValue>1</allowEmptyValue>
-                            <cliOptionName>svcname</cliOptionName>
-                            <cliOptionText>${msg(Installer.Paramers.svcnamePort.explanation)}</cliOptionText>
                             <width>40</width>
                             <ruleList>
                                 <componentTest>
                                     <logic>exists</logic>
                                     <name>${type}</name>
                                 </componentTest>
-                                <compareValues>
-                                    <logic>equals</logic>
-                                    <value1>${type}</value1>
-                                    <value2>OM</value2>
-                                </compareValues>
                             </ruleList>
                         </stringParameter>
-                        <directoryParameter>
-                            <name>dbpath</name>
-                            <description></description>
+                        <parameterGroup>
+                            <name>OM</name>
                             <explanation></explanation>
                             <value></value>
-                            <default>${platform_install_prefix}/${product_shortname}/database/${svcname}</default>
-                            <allowEmptyValue>0</allowEmptyValue>
-                            <cliOptionName>dbpath</cliOptionName>
-                            <cliOptionText>${msg(Installer.Paramers.dbpath.explanation)}</cliOptionText>
-                            <mustBeWritable>1</mustBeWritable>
-                            <mustExist>0</mustExist>
-                            <width>40</width>
-                            <ruleList>
-                                <componentTest>
-                                    <logic>exists</logic>
-                                    <name>${type}</name>
-                                </componentTest>
-                                <compareValues>
-                                    <logic>equals</logic>
-                                    <value1>${type}</value1>
-                                    <value2>OM</value2>
-                                </compareValues>
-                            </ruleList>
-                        </directoryParameter>
+                            <default></default>
+                            <parameterList>
+                                <stringParameter>
+                                    <name>svcname</name>
+                                    <description></description>
+                                    <explanation></explanation>
+                                    <value>11780</value>
+                                    <default>11780</default>
+                                    <allowEmptyValue>1</allowEmptyValue>
+                                    <cliOptionName>svcname</cliOptionName>
+                                    <cliOptionText>${msg(Installer.Paramers.svcnamePort.explanation)}</cliOptionText>
+                                    <width>40</width>
+                                    <ruleList>
+                                        <compareValues>
+                                            <logic>equals</logic>
+                                            <value1>${type}</value1>
+                                            <value2>OM</value2>
+                                        </compareValues>
+                                    </ruleList>
+                                </stringParameter>
+                                <directoryParameter>
+                                    <name>dbpath</name>
+                                    <description></description>
+                                    <explanation></explanation>
+                                    <value></value>
+                                    <default>${platform_install_prefix}/${product_shortname}/database/${svcname}</default>
+                                    <allowEmptyValue>0</allowEmptyValue>
+                                    <cliOptionName>dbpath</cliOptionName>
+                                    <cliOptionText>${msg(Installer.Paramers.dbpath.explanation)}</cliOptionText>
+                                    <mustBeWritable>0</mustBeWritable>
+                                    <mustExist>1</mustExist>
+                                    <width>40</width>
+                                    <ruleList>
+                                        <compareValues>
+                                            <logic>equals</logic>
+                                            <value1>${type}</value1>
+                                            <value2>OM</value2>
+                                        </compareValues>
+                                    </ruleList>
+                                </directoryParameter>
+                            </parameterList>
+                        </parameterGroup>
                     </parameterList>
+                    <ruleList>
+                        <componentTest>
+                            <logic>exists</logic>
+                            <name>${type}</name>
+                        </componentTest>
+                    </ruleList>
                 </choiceParameterGroup>
             </parameterList>
         </parameterGroup>
