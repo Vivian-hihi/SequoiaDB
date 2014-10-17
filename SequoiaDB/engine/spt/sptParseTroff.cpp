@@ -41,7 +41,7 @@
 #define CURSOR_CATEGORY "cursor"
 #define CLCOUNT_CATEGORY "count"
 #define DOMAIN_CATEGORY "domain"
-#define OM_CATEGORY "om"
+#define OM_CATEGORY "oma"
 
 #define READ_CHARACTOR_NUM 1024
 #define CMD_NAME_LEN  255
@@ -387,7 +387,7 @@ INT32 manHelp::scanFile()
             else if ( ossMemcmp( pFileName, OM_CATEGORY,
                                  ossStrlen( pFileName ) ) == 0 )
             {
-               _mom.insert( std::pair<string,string>(synopsis,
+               _moma.insert( std::pair<string,string>(synopsis,
                                  cutline) ) ;
             }
 
@@ -607,7 +607,7 @@ ssmap& manHelp::getCategoryMap( const CHAR *category )
     else if ( ossMemcmp( category, OM_CATEGORY,
                          ossStrlen( category ) ) == 0 )
     {
-       return _mom ;
+       return _moma ;
     }
     else
     {

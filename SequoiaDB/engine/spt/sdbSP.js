@@ -23,12 +23,12 @@ Oma.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("OMA methods:") ;
-      println("   oma.help(<method>)           help on specified method of om, e.g. db.help(\'createData\')");
-      man( "om" ) ;
+      println("   oma.help(<method>)           help on specified method of oma, e.g. oma.help(\'createData\')");
+      man( "oma" ) ;
    }
    else
    {
-      man( "om", val ) ;
+      man( "oma", val ) ;
    }
 }
 // end Oma
