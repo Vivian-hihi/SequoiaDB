@@ -898,7 +898,7 @@ class collection(object):
          raise SDBTypeError("oid must be an instance of str or bson.ObjectId")
 
       try:
-         rc = sdb.cl_remove_lob(self._cl, oid )
+         rc = sdb.cl_remove_lob(self._cl, str_id )
          pysequoiadb._raise_if_error("Failed to remove lob", rc)
       except SDBBaseError:
          raise

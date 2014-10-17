@@ -32,6 +32,8 @@ class lob(object):
    def close(self):
       """close lob
 
+      Exceptions:
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc = sdb.lob_close(self._handle)
@@ -40,10 +42,12 @@ class lob(object):
          raise
 
    def get_size(self) :
-      """seek in lob.
+      """get the size of lob.
 
       Return Values:
          the size of current lob
+      Exceptions:
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, size = sdb.lob_get_size(self._handle)
@@ -53,10 +57,12 @@ class lob(object):
       return size
 
    def get_oid(self):
-      """seek in lob.
+      """get the oid of lob.
 
       Return Values:
          the oid of current lob
+      Exceptions:
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, id_str = sdb.lob_get_oid(self._handle)
@@ -68,10 +74,12 @@ class lob(object):
       return oid
 
    def get_create_time(self):
-      """seek in lob.
+      """get create-time of lob
 
       Return Values:
          a long int of time
+      Exceptions:
+         pysequoiadb.error.SDBBaseError
       """
       try:
          rc, mms = sdb.lob_get_create_time(self._handle) ;
@@ -106,7 +114,7 @@ class lob(object):
          raise
 
    def read(self, len):
-      """write data into lob.
+      """ream data from lob.
 
       Parameters:
          Name     Type                 Info:
