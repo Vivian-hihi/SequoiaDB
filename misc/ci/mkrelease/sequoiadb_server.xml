@@ -544,8 +544,8 @@
                     <explanation></explanation>
                     <value></value>
                     <default>DB</default>
-                    <cliOptionName>${type}</cliOptionName>
-                    <cliOptionText>${Installer.Paramers.installationType.explanation}</cliOptionText>
+                    <cliOptionName>type</cliOptionName>
+                    <cliOptionText>${msg(Installer.Paramers.installationType.explanation)}</cliOptionText>
                     <parameterList>
                         <stringParameter>
                             <name>svcname</name>
@@ -554,8 +554,8 @@
                             <value></value>
                             <default>11780</default>
                             <allowEmptyValue>1</allowEmptyValue>
-                            <cliOptionName>${svcname}</cliOptionName>
-                            <cliOptionText>${Installer.Paramers.svcnamePort.explanation}</cliOptionText>
+                            <cliOptionName>svcname</cliOptionName>
+                            <cliOptionText>${msg(Installer.Paramers.svcnamePort.explanation)}</cliOptionText>
                             <width>40</width>
                             <ruleList>
                                 <componentTest>
@@ -576,8 +576,8 @@
                             <value></value>
                             <default>${platform_install_prefix}/${product_shortname}/database/${svcname}</default>
                             <allowEmptyValue>0</allowEmptyValue>
-                            <cliOptionName>${dbpath}</cliOptionName>
-                            <cliOptionText>${Installer.Paramers.dbpath.explanation}</cliOptionText>
+                            <cliOptionName>dbpath</cliOptionName>
+                            <cliOptionText>${msg(Installer.Paramers.dbpath.explanation)}</cliOptionText>
                             <mustBeWritable>1</mustBeWritable>
                             <mustExist>0</mustExist>
                             <width>40</width>
