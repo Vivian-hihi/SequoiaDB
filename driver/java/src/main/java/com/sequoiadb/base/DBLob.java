@@ -18,6 +18,7 @@
  * @brief SequoiaDB Driver for Java
  * @author YouBin Lin
  */
+
 package com.sequoiadb.base;
 
 import java.nio.ByteBuffer;
@@ -32,14 +33,30 @@ import org.bson.types.ObjectId;
 
 import com.sequoiadb.base.SequoiadbConstants.Operation;
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.net.IConnection;
 import com.sequoiadb.util.Helper;
 import com.sequoiadb.util.SDBMessageHelper;
 
+/**
+ * @class DBLob
+ * @brief Operation interfaces of DBLob.
+ */
 public interface DBLob {
-    // lob seek type
+    /**
+     * @memberof SDB_LOB_SEEK_SET 0
+     * @brief Change the position from the beginning of lob 
+     */
     public final static int SDB_LOB_SEEK_SET   = 0;
+    
+    /**
+     * @memberof SDB_LOB_SEEK_CUR 1
+     * @brief Change the position from the current position of lob 
+     */
     public final static int SDB_LOB_SEEK_CUR   = 1;
+    
+    /**
+     * @memberof SDB_LOB_SEEK_END 2
+     * @brief Change the position from the end of lob 
+     */
     public final static int SDB_LOB_SEEK_END   = 2;
     
     /**
@@ -68,31 +85,30 @@ public interface DBLob {
      * @brief       Writes <code>b.length</code> bytes from the specified 
      *              byte array to this lob. 
      * @param       b   the data.
-     * @exception   com.sequoiadb.exception.BaseException.
+     * @exception   com.sequoiadb.exception.BaseException
      */
     public void write( byte[] b ) throws BaseException;
     
     /**
      * @fn          read( byte[] b )
-     * @brief       Reads up to <code>b.length</code> bytes of data from this 
-     *              lob into an array of bytes. 
+     * @brief       Reads up to b.length bytes of data from this lob into 
+     *              an array of bytes. 
      * @param       b   the buffer into which the data is read.
-     * @return      the total number of bytes read into the buffer, or
-     *              <code>-1</code> if there is no more data because the end of
-     *              the file has been reached, or <code>0<code> if 
-     *              <code>b.length</code> is Zero.
-     * @exception   com.sequoiadb.exception.BaseException.
+     * @return      the total number of bytes read into the buffer, or-1 if 
+     *              there is no more data because the end of the file has been 
+     *              reached, or 0 if b.length is Zero.
+     * @exception   com.sequoiadb.exception.BaseException
      */
     public int read( byte[] b ) throws BaseException;
     
     /**
      * @fn          seek( long size, int seekType )
      * @brief       change the read position of the lob. The new position is 
-     *              obtained by adding <code>size</code> to the position 
-     *              specified by <code>seekType</code>. If <code>seekType</code> 
-     *              is set to SDB_LOB_SEEK_SET, SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, 
-     *              the offset is relative to the start of the lob, the current 
-     *              position of lob, or the end of lob.
+     *              obtained by adding size to the position specified by 
+     *              seekType. If seekType is set to SDB_LOB_SEEK_SET, 
+     *              SDB_LOB_SEEK_CUR, or SDB_LOB_SEEK_END, the offset is 
+     *              relative to the start of the lob, the current position 
+     *              of lob, or the end of lob.
      * @param       size the adding size.
      * @param       seekType  SDB_LOB_SEEK_SET/SDB_LOB_SEEK_CUR/SDB_LOB_SEEK_END
      * @exception   com.sequoiadb.exception.BaseException.
