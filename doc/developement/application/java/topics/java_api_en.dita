@@ -8,17 +8,17 @@
     <section>
       <title>History Updates:</title>
       <p><b>Version 1.10</b></p>
-      <p>1. DBCollection 类新添加的接口：</p><codeblock>createLob，创建一个大对象
-openLob，打开一个已存在的大对象
-removeLob，删除一个大对象
-listLobs，列出所有大对象</codeblock>
-      <p>2. 新增大对象类，用于操作大对象：</p><codeblock>write，向一个大对象写入数据
-read，从大对象中读取数据
-seek，指定读取数据的偏移
-close，关闭一个大对象
-getID，获取大对象的标识ID
-getSize，获取大对象的大小
-getCreateTime，获取大对象的创建时间</codeblock>
+      <p>1. 1.	DBCollection class' new interfaces:</p><codeblock>createLob, create a large object(LOB)
+openLob, open an existed LOB
+removeLob, remove a LOB
+listLobs, list all the LOBs in the collection</codeblock>
+      <p>2. Added a class of large objects (LOBs), to do operations on large objects.</p><codeblock>write, write and insert LOB
+read, read LOB from data
+seek, specifies the migration of the data to be read
+close, close a LOB
+getID, get the oid of a LOB
+getSize,  get the size of a LOB
+getCreateTime, get the time of creation of a LOB</codeblock>
       <p><b>Version 1.8</b></p>
       <p>1. New APIs in Sequoiadb Class:</p><codeblock>isValid, checks whether the current connection is valid or not
 createCollectionSpace, a BSONObject parameter is provided to make the creating of a collection space more flexible
