@@ -5,33 +5,38 @@
   <body>
     <section>
       <title>概述</title>    
-      <p>C++ 客户端驱动提供了数据库操作和集群操作的接口。主要包括以下7个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域。更多参考 <xref href="..\..\..\..\cpp\html\index.html" format="html">C++ 在线 API</xref></p>
+      <p>C++ 客户端驱动提供了数据库操作和集群操作的接口。主要包括以下8个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域，大对象。更多参考 <xref href="..\..\..\..\cpp\html\index.html" format="html">C++ 在线 API</xref></p>
     </section>
     <section>
       <title>C++ 类实例</title>
       <p>C++ 客户端驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。</p>
       <ul>
         <li>数据库操作实例<p>SequoiaDB 数据库中的数据存放分为三个级别：</p><p>&nbsp;&nbsp;1）数据库</p><p> &nbsp;&nbsp;2）集合空间</p><p> &nbsp;&nbsp;3）集合 </p>
-          <p>因此，在数据库操作中，可用3个类来分别表示连接，集合空间，集合实例，另1个类表示游标实例：</p><simpletable>
+          <p>因此，在数据库操作中，可用3个类来分别表示数据库连接，集合空间，集合，1个类表示游标，1个类表达大对象：</p><simpletable>
             <strow>
               <stentry>Sdb</stentry>
               <stentry>数据库类</stentry>
-              <stentry>连接实例代表一个单独的数据库连接</stentry>
+              <stentry>数据库类主要用于管理整个数据库，包括建立连接，创建集合空间等</stentry>
             </strow>
             <strow>
               <stentry>sdbCollectionSpace</stentry>
               <stentry>集合空间类</stentry>
-              <stentry>集合空间实例代表一个单独的集合空间</stentry>
+              <stentry>集合空间主要用于管理集合</stentry>
             </strow>
             <strow>
               <stentry>sdbCollection</stentry>
               <stentry>集合类</stentry>
-              <stentry>集合实例代表一个单独的集合</stentry>
+              <stentry>集合类主要用于对数据进行增删改查等操作</stentry>
             </strow>
             <strow>
               <stentry>sdbCursor</stentry>
               <stentry>游标类</stentry>
-              <stentry>游标实例代表一个查询产生的游标</stentry>
+              <stentry>游标类主要用于遍历查询、快照返回的结果游标实例代表一个查询产生的游标</stentry>
+            </strow>
+            <strow>
+              <stentry>sdbLob</stentry>
+              <stentry>大对象类</stentry>
+              <stentry>大对象类用于对大对象进行读写等操作</stentry>
             </strow>
           </simpletable><p>C++ 客户端需要使用不同的实例进行操作。譬如读取数据的操作需要游标实例，而创建表空间则需要数据库实例。</p>
           <note>

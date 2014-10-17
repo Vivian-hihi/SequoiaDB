@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>Outline</title>
-    <p>C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 7 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain.</p>
+      <p>C++ client-driven provide interfaces of database operations and cluster operations. Mainly include the following 8 lvevls: database operation, collection spaces, collections, cursor, replica group, node, domain, 大对象.</p>
     <p><xref href="..\..\..\..\cpp\html\index.html" format="html">For more please refer to online C++ API</xref>。</p>
     </section>
     <section><title>C++ Class Instances</title>
@@ -13,13 +13,11 @@
       to operate database, the other is used to operate cluster.</p>
       <ul>
         <li>Database operation instance <p>There are 3 degrees of data in
-            SequoiaDB:</p><p> 1) Database</p><p> 2) Collection space</p><p> 3) Collection</p><p> So in
-            client, there are 3 Handles representing connection,collectionspace and collection. The
-            other Handle represents cursor: </p><simpletable>
+          SequoiaDB:</p><p> 1) Database</p><p> 2) Collection space</p><p> 3) Collection</p><p> 因此，在数据库操作中，可用3个类来分别表示数据库连接，集合空间，集合，1个类表示游标，1个类表达大对象: </p><simpletable>
             <strow>
               <stentry>Sdb </stentry>
               <stentry> Database class </stentry>
-              <stentry> it represents a stand-alone database connection  </stentry>
+              <stentry> 数据库类主要用于管理整个数据库，包括建立连接，创建集合空间等  </stentry>
             </strow>
             <strow>
               <stentry>sdbCollectionSpace </stentry>
