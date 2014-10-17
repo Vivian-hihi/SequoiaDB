@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C++ 驱动"/>
-<meta name="description" content="概述 C++ 客户端驱动提供了数据库操作和集群操作的接口。主要包括以下7个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域。更多参考 C++ 在线 API C++ 类实例 C++ 客户端驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。 数据库操作实例 SequoiaDB 数据库中的数据存放分为三个级别：   1）数据库   2）集合空间   3）集合 ..."/>
+<meta name="description" content="概述 C++ 客户端驱动提供了数据库操作和集群操作的接口。主要包括以下8个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域，大对象。更多参考 C++ 在线 API C++ 类实例 C++ 客户端驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。 数据库操作实例 SequoiaDB 数据库中的数据存放分为三个级别：   1）数据库   2）集合空间   3）集合 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/CPP/topics/cpp.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_kmr_n2s_wj"/>
@@ -38,7 +38,7 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">概述</h2>
           
-      <p class="p">C++ 客户端驱动提供了数据库操作和集群操作的接口。主要包括以下7个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域。更多参考 <a class="xref" href="../../../../cpp/html/index.html">C++ 在线 API</a></p>
+      <p class="p">C++ 客户端驱动提供了数据库操作和集群操作的接口。主要包括以下8个级别的操作：数据库，集合空间，集合，游标，副本组，节点，域，大对象。更多参考 <a class="xref" href="../../../../cpp/html/index.html">C++ 在线 API</a></p>
 
     </div>
 
@@ -52,13 +52,13 @@
 <p class="p">   2）集合空间</p>
 <p class="p">   3）集合 </p>
 
-          <p class="p">因此，在数据库操作中，可用3个类来分别表示连接，集合空间，集合实例，另1个类表示游标实例：</p>
+          <p class="p">因此，在数据库操作中，可用3个类来分别表示数据库连接，集合空间，集合，1个类表示游标，1个类表达大对象：</p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
               <td valign="top" class="stentry">Sdb</td>
 
               <td valign="top" class="stentry">数据库类</td>
 
-              <td valign="top" class="stentry">连接实例代表一个单独的数据库连接</td>
+              <td valign="top" class="stentry">数据库类主要用于管理整个数据库，包括建立连接，创建集合空间等</td>
 
             </tr>
 <tr class="strow">
@@ -66,7 +66,7 @@
 
               <td valign="top" class="stentry">集合空间类</td>
 
-              <td valign="top" class="stentry">集合空间实例代表一个单独的集合空间</td>
+              <td valign="top" class="stentry">集合空间主要用于管理集合</td>
 
             </tr>
 <tr class="strow">
@@ -74,7 +74,7 @@
 
               <td valign="top" class="stentry">集合类</td>
 
-              <td valign="top" class="stentry">集合实例代表一个单独的集合</td>
+              <td valign="top" class="stentry">集合类主要用于对数据进行增删改查等操作</td>
 
             </tr>
 <tr class="strow">
@@ -82,7 +82,15 @@
 
               <td valign="top" class="stentry">游标类</td>
 
-              <td valign="top" class="stentry">游标实例代表一个查询产生的游标</td>
+              <td valign="top" class="stentry">游标类主要用于遍历查询、快照返回的结果游标实例代表一个查询产生的游标</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" class="stentry">sdbLob</td>
+
+              <td valign="top" class="stentry">大对象类</td>
+
+              <td valign="top" class="stentry">大对象类用于对大对象进行读写等操作</td>
 
             </tr>
 </table>

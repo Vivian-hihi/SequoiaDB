@@ -22,17 +22,22 @@
             <strow>
               <stentry>sdbCollectionSpace </stentry>
               <stentry> CollectionSpace class </stentry>
-              <stentry> it represents a stand-alone collection space </stentry>
+              <stentry> 集合空间主要用于管理集合 </stentry>
             </strow>
             <strow>
               <stentry>sdbCollection</stentry>
               <stentry>Collection class</stentry>
-              <stentry> it represents a stand-alone collection  </stentry>
+              <stentry> 集合类主要用于对数据进行增删改查等操作  </stentry>
             </strow>
             <strow>
               <stentry>sdbCursor</stentry>
               <stentry> Cursor class</stentry>
-              <stentry> it represents a result set of a query </stentry>
+              <stentry> 游标类主要用于遍历查询、快照返回的结果游标实例代表一个查询产生的游标 </stentry>
+            </strow>
+            <strow>
+              <stentry>sdbLob</stentry>
+              <stentry>大对象类</stentry>
+              <stentry>大对象类用于对大对象进行读写等操作</stentry>
             </strow>
           </simpletable><p> C++ client-driven application operate with different instances.For
             example,reading data will use Cursor instance,then creating collectionspace uses
