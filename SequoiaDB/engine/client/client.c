@@ -7316,6 +7316,8 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
    sdbLobStruct *lob = ( sdbLobStruct * )lobHandle ;
    SINT64 contextID = -1 ;
    BOOLEAN result = TRUE ;
+   UINT32 totalLen = 0 ;
+   const UINT32 maxSendLen = 2 * 1024 * 1024 ;
 
    HANDLE_CHECK( lobHandle, lob, SDB_HANDLE_TYPE_LOB ) ;
 
@@ -7336,30 +7338,37 @@ SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
       goto done ;
    }
 
-   rc = clientBuildWriteLobMsg( &(lob->_pSendBuffer), &lob->_sendBufferSize,
-                                buf, len, -1, 0, 1,
-                                lob->_contextID, 0,
-                                lob->_endianConvert ) ;
-   if ( SDB_OK != rc )
+   do
    {
-      goto error ;
-   }
+      UINT32 sendLen = maxSendLen <= len - totalLen ?
+                       maxSendLen : len - totalLen ;
+      rc = clientBuildWriteLobMsg( &(lob->_pSendBuffer), &lob->_sendBufferSize,
+                                   buf + totalLen, sendLen, -1, 0, 1,
+                                   lob->_contextID, 0,
+                                   lob->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
 
-   rc = _send ( lob->_connection, lob->_sock, (MsgHeader*)lob->_pSendBuffer,
-                lob->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
+      rc = _send ( lob->_connection, lob->_sock, (MsgHeader*)lob->_pSendBuffer,
+                   lob->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
 
-   rc = _recvExtract ( lob->_connection, lob->_sock,
-                       (MsgHeader**)&lob->_pReceiveBuffer,
-                       &lob->_receiveBufferSize, &contextID, &result,
-                       lob->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
+      rc = _recvExtract ( lob->_connection, lob->_sock,
+                          (MsgHeader**)&lob->_pReceiveBuffer,
+                          &lob->_receiveBufferSize, &contextID, &result,
+                          lob->_endianConvert ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      totalLen += sendLen ;
+   } while ( totalLen < len ) ;
 done:
    return rc ;
 error:
