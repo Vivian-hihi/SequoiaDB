@@ -770,8 +770,8 @@ namespace engine
    /*
       rule1: the less the better which disk contains role's count
    */
-   INT32 omHostInfo::assign( string role, string dataGroupID, 
-                             sdbConfDetail &confDetail )
+   INT32 omHostInfo::assign( string businessType, string role, 
+                             string dataGroupID, sdbConfDetail &confDetail )
    {
       omDiskInfo disk ;
       _getBestDisk( role, disk ) ;
@@ -784,9 +784,9 @@ namespace engine
       confDetail.role        = role ;
 
       CHAR dbPath[OM_PATH_LENGTH + 1] = "";
-      utilBuildFullPath( disk.mountPath.c_str(), OM_DBPATH_PREFIX_DATABASE, 
+      utilBuildFullPath( disk.mountPath.c_str(), businessType.c_str(), 
                          OM_PATH_LENGTH, dbPath ) ;
-
+      utilCatPath( dbPath, OM_PATH_LENGTH, OM_DBPATH_PREFIX_DATABASE ) ;
       utilCatPath( dbPath, OM_PATH_LENGTH, confDetail.role.c_str() ) ;
 
       CHAR subSvcName[OM_PATH_LENGTH+1] = "" ;
@@ -2167,7 +2167,7 @@ namespace engine
       }
 
       details = _confDetailSample ;
-      host->assign( OM_NODE_ROLE_STANDALONE, "", details ) ;
+      host->assign( _businessType, OM_NODE_ROLE_STANDALONE, "", details ) ;
       configList.push_back( details ) ;
 
    done:
@@ -2243,7 +2243,7 @@ namespace engine
 
          details = _confDetailSample ;
          details.dataGroupID = "" ;
-         host->assign( OM_NODE_ROLE_COORD, "", details ) ;
+         host->assign( _businessType, OM_NODE_ROLE_COORD, "", details ) ;
          configList.push_back( details ) ;
          coordCount++ ;
       }
@@ -2263,7 +2263,7 @@ namespace engine
 
          details = _confDetailSample ;
          details.dataGroupID = "" ;
-         host->assign( OM_NODE_ROLE_CATALOG, "", details ) ;
+         host->assign( _businessType, OM_NODE_ROLE_CATALOG, "", details ) ;
          configList.push_back( details ) ;
          catalogCount++ ;
       }
@@ -2288,7 +2288,7 @@ namespace engine
          groupID = _calculateGroupID( baseGroupID, dataCount, 
                                       _confTemplate.replicaNum, 
                                       _confTemplate.dataGroupNum ) ;
-         host->assign( OM_NODE_ROLE_DATA, groupID, details ) ;
+         host->assign( _businessType, OM_NODE_ROLE_DATA, groupID, details ) ;
          configList.push_back( details ) ;
          dataCount++ ;
       }

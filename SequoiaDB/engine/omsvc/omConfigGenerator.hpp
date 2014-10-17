@@ -190,8 +190,8 @@ namespace engine
          INT32      init( const BSONObj &hostInfo, const BSONObj &config,
                           map<string, omConfigItem*> *confDetailMap,
                           string businessName ) ;
-         INT32      assign( string role, string dataGroupID, 
-                            sdbConfDetail &confDetail) ;
+         INT32      assign( string businessType, string role, 
+                            string dataGroupID, sdbConfDetail &confDetail ) ;
          INT32      getAvailableGroupID() ;
          INT32      getNodeCount( string role ) ;
          INT32      getNodeCount() ;
