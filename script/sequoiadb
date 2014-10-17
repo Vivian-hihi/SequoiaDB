@@ -197,10 +197,10 @@ do_start()
 {
   # Set ulimit 
   ulimit -Sc 0   #no coredump
-  ulimit -Sd unlimited #data seg size
-  ulimit -Sf unlimited #file size
-  ulimit -Sv unlimited #virtual memory
-  ulimit -Sn unlimited #open files
+  ulimit -Sd 'ulimit -Hd' #data seg size
+  ulimit -Sf 'ulimit -Hf' #file size 
+  ulimit -Sv 'ulimit -Hv' #virtual memory 
+  ulimit -Sn 'ulimit -Hn' #open files
 
 	# Return
 	#   0 if daemon has been started
