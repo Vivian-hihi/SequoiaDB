@@ -969,6 +969,7 @@ namespace engine
       csInfo._pCSName = NULL ;
       csInfo._domainName = NULL ;
       csInfo._pageSize = DMS_PAGE_SIZE_DFT ;
+      csInfo._lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       INT32 expected = 0 ;
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR__CHECKCSOBJ ) ;
@@ -1013,6 +1014,28 @@ namespace engine
                       "Field[%s] type[%d] error", CAT_DOMAIN_NAME,
                       ele.type() ) ;
             csInfo._domainName = ele.valuestr() ;
+            ++expected ;
+         }
+         // lob page size
+         else if ( 0 == ossStrcmp( ele.fieldName(), CAT_LOB_PAGE_SZ_NAME ) )
+         {
+            PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                      "Field[%s] type[%d] error", CAT_LOB_PAGE_SZ_NAME,
+                      ele.type() ) ;
+            if ( 0 != ele.numberInt() )
+            {
+               csInfo._lobPageSize = ele.numberInt() ;
+            }
+
+            PD_CHECK ( csInfo._lobPageSize == DMS_PAGE_SIZE4K ||
+                       csInfo._lobPageSize == DMS_PAGE_SIZE8K ||
+                       csInfo._lobPageSize == DMS_PAGE_SIZE16K ||
+                       csInfo._lobPageSize == DMS_PAGE_SIZE32K ||
+                       csInfo._lobPageSize == DMS_PAGE_SIZE64K ||
+                       csInfo._lobPageSize == DMS_PAGE_SIZE128K ||
+                       csInfo._lobPageSize == DMS_PAGE_SIZE256K ||
+                       csInfo._lobPageSize == DMS_PAGE_SIZE512K, SDB_INVALIDARG,
+                       error, PDERROR, "PageSize must be 4K/8K/16K/32K/64K/128K/256K/512K" ) ;
             ++expected ;
          }
          else

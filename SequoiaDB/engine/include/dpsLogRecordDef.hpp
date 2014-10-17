@@ -78,6 +78,7 @@ namespace engine
    {
       DPS_LOG_CSCRT_CSNAME = 1,
       DPS_LOG_CSCRT_PAGESIZE = 2,
+      DPS_LOG_CSCRT_LOBPAGESZ = 3,
    } ;
 
    enum DPS_LOG_CSDEL

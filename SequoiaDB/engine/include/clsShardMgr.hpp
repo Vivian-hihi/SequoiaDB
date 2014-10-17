@@ -95,12 +95,14 @@ namespace engine
          std::string    csName ;
          ossEvent       event ;
          UINT32         pageSize ;
+         UINT32         lobPageSize ;
          INT32          sendNums ;
 
          _clsCSEventItem()
          {
             pageSize = 0 ;
             sendNums = 0 ;
+            lobPageSize = 0 ;
          }
    } ;
    typedef _clsCSEventItem clsCSEventItem ;
@@ -158,6 +160,7 @@ namespace engine
          INT32 unlockGroupItem( clsGroupItem *item ) ;
 
          INT32 rGetCSPageSize( const CHAR *csName, UINT32 &pageSize,
+                               UINT32 &lobPageSize,
                                INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
       public:

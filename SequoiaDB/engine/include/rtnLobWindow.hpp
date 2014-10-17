@@ -35,6 +35,7 @@
 #define RTN_LOBWINDOW_HPP_
 
 #include "dmsLobDef.hpp"
+#include "rtnLobTuple.hpp"
 
 namespace engine
 {
@@ -44,64 +45,37 @@ namespace engine
       _rtnLobWindow() ;
       virtual ~_rtnLobWindow() ;
 
-   private:
-      struct pieceFromUsr
-      {
-         SINT64 offset ;
-         UINT32 len ;
-         const CHAR *data ;
-         pieceFromUsr()
-         :offset( -1 ),
-          len( 0 ),
-          data( NULL )
-         {
-
-         }
-
-         BOOLEAN empty() const
-         {
-            return -1 == offset &&
-                   len == 0 && NULL == data ;
-         }
-
-         void clear()
-         {
-            offset = -1 ;
-            len = 0 ;
-            data = NULL ;
-         }
-      } ;
-
    public:
-      /// do not destruct meta until rtnLobWindow is released.
-      INT32 init( const bson::OID *oid, INT32 pageSize ) ;
+      INT32 init( INT32 pageSize ) ;
 
+      /// for write
       INT32 prepare2Write( SINT64 offset, UINT32 len, const CHAR *data ) ;
 
-      BOOLEAN getNextWriteSequence( _dmsLobRecord &piece ) ;
+      BOOLEAN getNextWriteSequences( RTN_LOB_TUPLES &tuples ) ;
 
-      /// do not call this func until u have write all sequences.
       void cacheLastDataOrClearCache() ;
 
-      BOOLEAN getCachedData( _dmsLobRecord &piece ) ;
+      BOOLEAN getCachedData( _rtnLobTuple &tuple ) ;
 
-      INT32 prepare2Read( SINT64 lobLen, SINT64 offset,
-                          UINT32 len, UINT32 &readLen,
-                          UINT32 maxPieceNum,
-                          _dmsLobRecord *pieces,
-                          UINT32 &pieceNum ) ;
-
-//      BOOLEAN getNextReadSequence( _dmsLobRecord &piece ) ;
+      
+      /// for read
+      INT32 prepare2Read( SINT64 lobLen,
+                          SINT64 offset,
+                          UINT32 len,
+                          RTN_LOB_TUPLES &tuples ) ;
+   private:
+      BOOLEAN _getNextWriteSequence( _rtnLobTuple &tuple ) ;
 
    private:
-      const bson::OID *_oid ;
       SINT32 _pageSize ;
       UINT32 _logarithmic ;
 
       SINT64 _curOffset ;
       CHAR *_pool ;
       INT32 _cachedSz ;
-      pieceFromUsr _writeData ;
+
+      /// reuse rtnLobPiece to keep write data.
+      _rtnLobTuple _writeData ;
       BOOLEAN _analysisCache ;
    } ;
    typedef class _rtnLobWindow rtnLobWindow ;

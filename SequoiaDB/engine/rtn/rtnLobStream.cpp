@@ -142,7 +142,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _lw.init( &( getOID() ), _lobPageSz ) ;
+      rc = _lw.init( _lobPageSz ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to init stream window:%d", rc ) ;
@@ -198,10 +198,10 @@ namespace engine
       if ( SDB_LOB_MODE_CREATEONLY & _mode )
       {
          ossTimestamp t ;
-         _dmsLobRecord piece ;
-         if ( _lw.getCachedData( piece ) )
+         _rtnLobTuple tuple ;
+         if ( _lw.getCachedData( tuple ) )
          {
-            rc = _write( piece, cb ) ;
+            rc = _write( tuple, cb ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
@@ -227,9 +227,10 @@ namespace engine
       }
       else if ( SDB_LOB_MODE_REMOVE & _mode )
       {
-         _dmsLobRecord piece ;
-         piece.set( &_oid, DMS_LOB_META_SEQUENCE, 0, 0, NULL ) ;
-         rc = _removev( &piece, 1, cb ) ;
+         _rtnLobTuple tuple( 0, DMS_LOB_META_SEQUENCE, 0, NULL ) ;
+         RTN_LOB_TUPLES tuples ;
+         tuples.push_back( tuple ) ;
+         rc = _removev( tuples, cb ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove meta data of lob:%d", rc ) ;
@@ -292,8 +293,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_WRITE ) ;
-      _dmsLobRecord pieces[RTN_LOB_WRITE_PIECE_NUM] ;
-      UINT32 writeNum = 0 ;
+      RTN_LOB_TUPLES tuples ;
 
       if ( !isOpened() )
       {
@@ -323,7 +323,7 @@ namespace engine
       /// some data will not be removed when rollback
       _offset += len ;
 
-      while ( _lw.getNextWriteSequence( pieces[writeNum] )  )
+      while ( _lw.getNextWriteSequences( tuples )  )
       {
          if ( cb->isInterrupted() )
          {
@@ -331,32 +331,15 @@ namespace engine
             goto error ;
          }
 
-         ++writeNum ;
-         if ( writeNum == RTN_LOB_WRITE_PIECE_NUM )
-         {
-            UINT32 doneNum = 0 ;
-            rc = _writev( pieces, writeNum, cb, doneNum ) ;
-            if ( SDB_OK != rc )
-            {
-               PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
-                       _oid.str().c_str(), rc ) ;
-               goto error ;
-            }
-            writeNum = 0 ;
-         }
-      }
-
-      if ( 0 != writeNum )
-      {
-         UINT32 doneNum = 0 ;
-         rc = _writev( pieces, writeNum, cb, doneNum ) ;
+         rc = _writev( tuples, cb ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to write lob[%s], rc:%d",
                     _oid.str().c_str(), rc ) ;
             goto error ;
          }
-         writeNum = 0 ;
+
+         tuples.clear() ;
       }
 
       _lw.cacheLastDataOrClearCache() ;
@@ -378,9 +361,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBSTREAM_READ ) ;
       UINT32 readLen = 0 ;
-      UINT32 needLen = 0 ;
-      _dmsLobRecord pieces[RTN_LOB_READ_PIECE_NUM] ;
-      UINT32 pieceNum = 0 ;
+      RTN_LOB_TUPLES tuples ;
       
       SDB_ASSERT( _meta.isDone(), "lob has not been completed yet" ) ;
 
@@ -404,6 +385,12 @@ namespace engine
       {
          rc = SDB_EOF ;
          goto error ;
+      }
+
+      if ( 0 == len )
+      {
+         goto done ;
+         read = 0 ;
       }
 
       /// data may be cached.
@@ -434,16 +421,14 @@ namespace engine
       /// create read piece by read size rather than piece num.
       rc = _lw.prepare2Read( _meta._lobLen,
                              _offset, len,
-                             needLen,
-                             RTN_LOB_READ_PIECE_NUM,
-                             pieces, pieceNum ) ;
+                             tuples ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to prepare to read:%d", rc ) ;
          goto error ;      
       }
 
-      rc = _readv( pieces, pieceNum, cb, needLen ) ;
+      rc = _readv( tuples, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob[%s], rc:%d",
@@ -509,52 +494,41 @@ namespace engine
       SDB_ASSERT( SDB_LOB_MODE_REMOVE == _mode && 0 == len,
                   "do not support other params now" ) ;
 
-      dmsLobRecord *pieces = NULL ;
-      UINT32 bufLen = sizeof( dmsLobRecord ) * RTN_LOB_REMOVE_PIECE_NUM ;
+      RTN_LOB_TUPLES tuples ;
       UINT32 pieceNum = 0 ;
-      UINT32 onceRmNum = 0 ;
-
-      pieces = ( dmsLobRecord * )SDB_OSS_MALLOC( bufLen ) ;
-      if ( NULL == pieces )
-      {
-         PD_LOG( PDERROR, "failed to allocate mem." ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      ossMemset( pieces, 0 , bufLen ) ;
+      UINT32 oneLoopNum = 0 ;
 
       RTN_LOB_GET_SEQUENCE_NUM( _meta._lobLen, _lobPageSz, pieceNum ) ;
       while ( 1 < pieceNum-- )
       {
-         if ( RTN_LOB_REMOVE_PIECE_NUM == onceRmNum )
+         tuples.push_back( _rtnLobTuple( 0, pieceNum, 0, NULL ) ) ;
+         ++oneLoopNum ;
+
+         if ( 1000 == oneLoopNum )
          {
-            rc = _removev( pieces, onceRmNum, cb ) ;
+            rc = _removev( tuples, cb ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to truncate lob:%d", rc ) ;
                goto error ;
             }
 
-            onceRmNum = 0 ;
-         }
-
-         {
-         dmsLobRecord &piece = pieces[onceRmNum++] ;
-         piece.set( &_oid, pieceNum, 0, 0, NULL ) ;
+            oneLoopNum = 0 ;
+            tuples.clear() ;
          }
       }
 
-      if ( 0 < onceRmNum )
+      if ( !tuples.empty() )
       {
-         rc = _removev( pieces, onceRmNum, cb ) ;
+         rc = _removev( tuples, cb ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to truncate lob:%d", rc ) ;
             goto error ;
          }
+         tuples.clear() ;
       }
    done:
-      SAFE_OSS_FREE( pieces ) ;
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM_TRUNCATE, rc ) ;
       return rc ;
    error:

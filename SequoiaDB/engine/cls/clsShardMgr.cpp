@@ -1502,6 +1502,7 @@ namespace engine
 
    INT32 _clsShardMgr::rGetCSPageSize( const CHAR * csName,
                                        UINT32 &pageSize,
+                                       UINT32 &lobPageSize,
                                        INT64 waitMillSec )
    {
       INT32 rc = SDB_OK ;
@@ -1546,6 +1547,7 @@ namespace engine
                    "rc: %d", rc ) ;
 
       pageSize = item->pageSize ;
+      lobPageSize = item->lobPageSize ;
 
    done:
       _catLatch.get() ;
@@ -1646,6 +1648,17 @@ namespace engine
          else
          {
             csItem->pageSize = DMS_PAGE_SIZE_DFT ;
+         }
+
+         ele = objList[0].getField( CAT_LOB_PAGE_SZ_NAME ) ;
+         if ( ele.isNumber() )
+         {
+            csItem->lobPageSize = (UINT32)ele.numberInt() ;
+         }
+         else
+         {
+            PD_LOG( PDWARNING, "%s is not valid in result:%s, we use default value(256KB)" ) ;
+            csItem->lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
          }
       }
 

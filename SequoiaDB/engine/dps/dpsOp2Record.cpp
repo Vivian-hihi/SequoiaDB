@@ -420,6 +420,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CSCRT2RECORD, "dpsCSCrt2Record" )
    INT32 dpsCSCrt2Record( const CHAR *csName,
                           const INT32 &pageSize,
+                          const INT32 &lobPageSize,
                           dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_CSCRT2RECORD ) ;
@@ -446,6 +447,15 @@ namespace engine
          goto error ;
       }
 
+      rc = record.push( DPS_LOG_CSCRT_LOBPAGESZ,
+                        sizeof( lobPageSize),
+                        (CHAR *)( &lobPageSize)) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "Failed to push lob pagesize to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
       header._length = record.alignedLen() ;
    done:
       PD_TRACE_EXITRC( SDB__DPS_CSCRT2RECORD, rc ) ;
@@ -457,7 +467,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2CSCRT, "dpsRecord2CSCrt" )
    INT32 dpsRecord2CSCrt( const CHAR *logRecord,
                           const CHAR **csName,
-                          INT32 &pageSize )
+                          INT32 &pageSize,
+                          INT32 &lobPageSize )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CSCRT ) ;
       INT32 rc = SDB_OK ;
@@ -471,7 +482,7 @@ namespace engine
       }
 
       {
-      dpsLogRecord::iterator itrCsName, itrPageSize ;
+      dpsLogRecord::iterator itrCsName, itrPageSize, itrLobPageSz ;
       itrCsName = record.find( DPS_LOG_CSCRT_CSNAME ) ;
       if ( !itrCsName.valid() )
       {
@@ -489,7 +500,19 @@ namespace engine
       }
 
       *csName = itrCsName.value() ;
-      pageSize = *((UINT32 *)itrPageSize.value()) ;
+      pageSize = *((INT32 *)itrPageSize.value()) ;
+
+      itrLobPageSz = record.find( DPS_LOG_CSCRT_LOBPAGESZ ) ;
+      if ( !itrLobPageSz.valid() )
+      {
+         PD_LOG( PDWARNING, "Failed to find tag lob pagesize in record"
+                 ", use default value(256KB)" ) ;
+         lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+      }
+      else
+      {
+         lobPageSize = *(( INT32 *)itrLobPageSz.value()) ;
+      }
       }
    done:
       PD_TRACE_EXITRC( SDB__DPS_RECORD2CSCRT, rc ) ;

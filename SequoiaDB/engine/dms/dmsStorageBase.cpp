@@ -539,9 +539,9 @@ namespace engine
                 DMS_PAGE_SIZE256K != pHeader->_lobdPageSize &&
                 DMS_PAGE_SIZE512K != pHeader->_lobdPageSize )
       {
-         PD_LOG ( PDERROR, "Invalid lob page size: %u in file[%s], lob page "
+         PD_LOG ( PDERROR, "Invalid lob page size: %d in file[%s], lob page "
                   "size must be one of 4K/8K/16K/32K/64K/128K/256K/512K",
-                  getSuFileName(), pHeader->_lobdPageSize ) ;
+                  pHeader->_lobdPageSize, getSuFileName() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

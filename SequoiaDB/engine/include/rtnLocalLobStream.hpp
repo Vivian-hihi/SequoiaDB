@@ -68,34 +68,29 @@ namespace engine
 
       virtual INT32 _getLobPageSize( INT32 &pageSize ) ;
 
-      virtual INT32 _write( const _dmsLobRecord &record,
+      virtual INT32 _write( const _rtnLobTuple &tuple, 
                             _pmdEDUCB *cb ) ;
 
-      virtual INT32 _writev( const _dmsLobRecord *pieces,
-                             UINT32 cnt,
-                             _pmdEDUCB *cb,
-                             UINT32 &doneNum ) ;
+      virtual INT32 _writev( const RTN_LOB_TUPLES &tuples,
+                             _pmdEDUCB *cb ) ;
 
       virtual INT32 _completeLob( const _dmsLobMeta &meta,
                                   _pmdEDUCB *cb ) ;
 
       virtual INT32 _rollback( _pmdEDUCB *cb ) ;
 
-      virtual INT32 _readv( const _dmsLobRecord *pieces,
-                            UINT32 cnt,
-                            _pmdEDUCB *cb,
-                            UINT32 totalLen ) ;
+      virtual INT32 _readv( const RTN_LOB_TUPLES &tuples,
+                            _pmdEDUCB *cb ) ;
 
       virtual INT32 _queryAndInvalidateMetaData( _pmdEDUCB *cb,
                                                  _dmsLobMeta &meta ) ;
 
-      virtual INT32 _removev( const _dmsLobRecord *pieces,
-                              UINT32 cnt,
+      virtual INT32 _removev( const RTN_LOB_TUPLES &tuples,
                               _pmdEDUCB *cb ) ;
 
       virtual INT32 _close( _pmdEDUCB *cb ) { return SDB_OK ;}
 
-      INT32 _read( const _dmsLobRecord &record,
+      INT32 _read( const _rtnLobTuple &tuple,
                    _pmdEDUCB *cb,
                    CHAR *buf ) ;
    private:

@@ -104,12 +104,14 @@ namespace engine
       const CHAR  *_pCSName ;
       INT32       _pageSize ;
       const CHAR  *_domainName ;
+      INT32       _lobPageSize ;
 
       _catCSInfo()
       {
          _pCSName = NULL ;
          _pageSize = DMS_PAGE_SIZE_DFT ;
          _domainName = NULL ;
+         _lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       }
 
       BSONObj toBson()
@@ -121,6 +123,7 @@ namespace engine
          {
             builder.append( CAT_DOMAIN_NAME, _domainName ) ;
          }
+         builder.append( CAT_LOB_PAGE_SZ_NAME, _lobPageSize ) ;
          return builder.obj() ;
       }
    } ;

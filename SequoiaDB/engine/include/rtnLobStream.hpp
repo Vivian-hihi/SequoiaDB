@@ -41,9 +41,6 @@
 
 namespace engine
 {
-#define RTN_LOB_WRITE_PIECE_NUM 10
-#define RTN_LOB_READ_PIECE_NUM 10
-#define RTN_LOB_REMOVE_PIECE_NUM 1000
 #define SDB_LOB_MODE_REMOVE 0x00000010
 
    class _pmdEDUCB ;
@@ -161,22 +158,14 @@ namespace engine
 
       virtual INT32 _getLobPageSize( INT32 &pageSize ) = 0 ;
 
-      virtual INT32 _write( const _dmsLobRecord &piece,
+      virtual INT32 _write( const _rtnLobTuple &tuple,
                             _pmdEDUCB *cb ) = 0 ;
 
-      virtual INT32 _writev( const _dmsLobRecord *pieces,
-                             UINT32 cnt,
-                             _pmdEDUCB *cb,
-                             UINT32 &succNum ) = 0 ;
+      virtual INT32 _writev( const RTN_LOB_TUPLES &tuples,
+                             _pmdEDUCB *cb ) = 0 ;
 
-//      virtual INT32 _read( const _dmsLobRecord &piece,
-//                           _pmdEDUCB *cb,
-//                           CHAR *buf ) = 0 ;
-
-      virtual INT32 _readv( const _dmsLobRecord *pieces,
-                            UINT32 cnt,
-                            _pmdEDUCB *cb,
-                            UINT32 totalLen ) = 0 ;
+      virtual INT32 _readv( const RTN_LOB_TUPLES &tuples,
+                            _pmdEDUCB *cb ) = 0 ;
 
       virtual INT32 _completeLob( const _dmsLobMeta &meta,
                                   _pmdEDUCB *cb ) = 0 ;
@@ -188,8 +177,7 @@ namespace engine
       virtual INT32 _queryAndInvalidateMetaData( _pmdEDUCB *cb,
                                                  _dmsLobMeta &meta ) = 0 ;
 
-      virtual INT32 _removev( const _dmsLobRecord *pieces,
-                              UINT32 cnt,
+      virtual INT32 _removev( const RTN_LOB_TUPLES &tuples,
                               _pmdEDUCB *cb ) = 0 ;
 
    private:

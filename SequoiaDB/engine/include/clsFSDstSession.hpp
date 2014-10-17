@@ -106,7 +106,7 @@ namespace engine
          INT32          _extractFullNames( const CHAR *names ) ;
          INT32          _extractMeta( const CHAR *objdata, string &cs,
                                       string &collection, UINT32 &pageSize,
-                                      UINT32 &attributes ) ;
+                                      UINT32 &attributes, INT32 &lobPageSize ) ;
          INT32          _extractIndex( const CHAR *objdata, vector<BSONObj> &index,
                                        BOOLEAN &noMore ) ;
 
@@ -133,7 +133,26 @@ namespace engine
          UINT64               _requestID ;
          DPS_LSN              _expectLSN ;
          BOOLEAN              _needMoreDoc ;  /// when we begin to get lob, we do not want to sync doc any more.
-         std::map<string, INT32> _mapEmptyCS ;
+         struct pageSzTuple
+         {
+            INT32 pageSize ;
+            INT32 lobPageSize ;
+            pageSzTuple( INT32 ps, INT32 lps )
+            :pageSize( ps ),
+             lobPageSize( lps )
+            {
+
+            }
+
+            pageSzTuple()
+            :pageSize( 0 ),
+             lobPageSize( 0 )
+            {
+
+            }
+         } ;
+         typedef std::map<string, pageSzTuple> CS_PS_TUPLES ;
+         CS_PS_TUPLES _mapEmptyCS ;
 
    };
 

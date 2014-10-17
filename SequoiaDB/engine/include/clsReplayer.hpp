@@ -73,7 +73,7 @@ namespace engine
       INT32 replayByBucket( dpsLogRecordHeader *recordHeader,
                             _pmdEDUCB *eduCB, _clsBucket *pBucket ) ;
 
-      INT32 replayCrtCS( const CHAR *cs, INT32 pageSize,
+      INT32 replayCrtCS( const CHAR *cs, INT32 pageSize, INT32 lobPageSize,
                          _pmdEDUCB *eduCB, BOOLEAN delWhenExist = FALSE ) ;
 
       INT32 replayCrtCollection( const CHAR *collection,

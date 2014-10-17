@@ -283,6 +283,7 @@
 #define FIELD_NAME_LOB_META_DATA             "MetaData"
 #define FIELD_NAME_LOB_LIST_PIECES_MODE      "ListPieces"
 #define FIELD_NAME_LOB_AVAILABLE             "Available"
+#define FIELD_NAME_LOB_PAGE_SZ               "LobPageSize"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"

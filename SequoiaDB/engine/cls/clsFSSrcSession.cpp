@@ -397,7 +397,9 @@ namespace engine
             {
                csArrayBuilder.append( BSON( CLS_FS_CSNAME << itCS->_name <<
                                             CLS_FS_PAGE_SIZE <<
-                                            itCS->_pageSize ) ) ;
+                                            itCS->_pageSize <<
+                                            CLS_FS_LOB_PAGE_SIZE <<
+                                            itCS->_lobPageSize ) ) ;
             }
          }
          b.appendArray( CLS_FS_CSNAMES, csArrayBuilder.arr() ) ;
@@ -445,6 +447,7 @@ namespace engine
       builder1.append( CLS_FS_PAGE_SIZE,
                        su->getPageSize() ) ;
       builder1.append( CLS_FS_ATTRIBUTES, attributes ) ;
+      builder1.append( CLS_FS_LOB_PAGE_SIZE, su->getLobPageSize() ) ;
       builder2.append( CLS_FS_CS_META_NAME, builder1.obj() ) ;
       builder2.append( CLS_FS_CS_NAME, cs ) ;
       builder2.append( CLS_FS_COLLECTION_NAME, collection ) ;

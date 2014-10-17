@@ -172,18 +172,15 @@ namespace engine
       }
 
       // open lob
-      if ( DMS_DO_NOT_CREATE_LOB != _storageInfo._lobdPageSize )
+      rc = _pLobSu->open( pLobPath, createNew, delWhenExist ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _pLobSu->open( pLobPath, createNew, delWhenExist ) ;
-         if ( SDB_OK != rc )
+         PD_LOG( PDERROR, "failed to open storage lob, rc:%d", rc ) ;
+         if ( createNew )
          {
-             PD_LOG( PDERROR, "failed to open storage lob, rc:%d", rc ) ;
-            if ( createNew )
-            {
-               goto rmboth ;
-            }
-            goto error ;
+            goto rmboth ;
          }
+         goto error ;
       }
 
    done:

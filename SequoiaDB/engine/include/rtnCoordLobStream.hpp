@@ -69,18 +69,14 @@ namespace engine
 
       virtual INT32 _getLobPageSize( INT32 &pageSize ) ;
 
-      virtual INT32 _write( const _dmsLobRecord &record,
+      virtual INT32 _write( const _rtnLobTuple &tuple,
                             _pmdEDUCB *cb ) ;
 
-      virtual INT32 _writev( const _dmsLobRecord *pieces,
-                             UINT32 cnt,
-                             _pmdEDUCB *cb,
-                             UINT32 &succNum ) ;
+      virtual INT32 _writev( const RTN_LOB_TUPLES &tuples,
+                             _pmdEDUCB *cb ) ;
 
-      virtual INT32 _readv( const _dmsLobRecord *pieces,
-                            UINT32 cnt,
-                            _pmdEDUCB *cb,
-                            UINT32 totalLen ) ; 
+      virtual INT32 _readv( const RTN_LOB_TUPLES &tuples,
+                            _pmdEDUCB *cb ) ;
 
       virtual INT32 _completeLob( const _dmsLobMeta &meta,
                                   _pmdEDUCB *cb ) ;
@@ -90,8 +86,7 @@ namespace engine
       virtual INT32 _queryAndInvalidateMetaData( _pmdEDUCB *cb,
                                                  _dmsLobMeta &meta ) ;
 
-      virtual INT32 _removev( const _dmsLobRecord *pieces,
-                              UINT32 cnt,
+      virtual INT32 _removev( const RTN_LOB_TUPLES &tuples,
                               _pmdEDUCB *cb ) ;
 
       virtual INT32 _close( _pmdEDUCB *cb ) ;
@@ -136,8 +131,7 @@ namespace engine
          }
 
          void addData( const MsgLobTuple &tuple,
-                       const void *data,
-                       const void *alignedBuf )
+                       const void *data )
          {
             body.push_back( netIOV( tuple.data, sizeof( tuple ) ) ) ;
             bodyLen += sizeof( tuple ) ;
@@ -168,7 +162,6 @@ namespace engine
 
       typedef std::map<UINT32, subStream> SUB_STREAMS ;
       typedef std::set<ossValuePtr> DONE_LST ;
-      typedef std::vector<MsgLobTuple> TUPLES ;
       typedef std::map<UINT32, dataGroup> DATA_GROUPS ;
 
    private:
@@ -209,13 +202,9 @@ namespace engine
       INT32 _updateCataInfo( BOOLEAN refresh,
                              _pmdEDUCB *cb ) ;
 
-      INT32 _shardData( const _dmsLobRecord *pieces,
-                        UINT32 cnt,
+      INT32 _shardData( const RTN_LOB_TUPLES &tuples,
                         BOOLEAN isWrite,
                         const DONE_LST &doneLst ) ;
-
-      void _initTuples( const _dmsLobRecord *pieces,
-                        UINT32 cnt ) ;
 
       INT32 _handleReadResults( _pmdEDUCB *cb, DONE_LST &doneLst ) ;
 
@@ -238,13 +227,15 @@ namespace engine
       void _pushLobData( const void *data,
                          UINT32 len,
                          netIOVec &iov ) ;
+
+      INT32 _getPageSizeFromCatalog( _pmdEDUCB *cb,
+                                     INT32 &size ) ;
    private:
       CoordCataInfoPtr _cataInfo ;
 
       std::vector<MsgOpReply *> _results ;
       REQUESTID_MAP _sendMap ;
       DATA_GROUPS _dataGroups ;
-      TUPLES _tuplePool ;
       MsgOpLob _header ;
 
       SUB_STREAMS _subs;

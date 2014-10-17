@@ -846,6 +846,7 @@ namespace engine
       dpsMergeInfo info ;
       dpsLogRecord &record = info.getMergeBlock().record();
       INT32 pageSize = 0 ;
+      INT32 lobPageSz = 0 ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_ADDCS );
       DMSCB_XLOCK
@@ -866,10 +867,11 @@ namespace engine
       }
 
       pageSize = su->getPageSize() ;
+      lobPageSz = su->getLobPageSize() ;
       if ( NULL != dpsCB )
       {
          // reserved log-size
-         rc = dpsCSCrt2Record( pName, pageSize, record ) ;
+         rc = dpsCSCrt2Record( pName, pageSize, lobPageSz, record ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to build record:%d",rc ) ;
@@ -1161,6 +1163,7 @@ namespace engine
          ossMemset ( cs._name, 0, sizeof(cs._name) ) ;
          ossStrncpy ( cs._name, cscb->_name, DMS_COLLECTION_SPACE_NAME_SZ);
          cs._pageSize = su->getPageSize() ;
+         cs._lobPageSize = su->getLobPageSize() ;
          cs._totalSize = su->totalSize() ;
          cs._clNum    = statInfo._clNum ;
          cs._totalRecordNum = statInfo._totalCount ;

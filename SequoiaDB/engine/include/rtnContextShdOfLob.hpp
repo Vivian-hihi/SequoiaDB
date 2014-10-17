@@ -131,6 +131,7 @@ namespace engine
       CHAR *_buf ;
       UINT32 _bufLen ;
       std::set<UINT32> _written ;
+      _dmsStorageUnit *_su ;
    } ;
    typedef class _rtnContextShdOfLob rtnContextShdOfLob ;
 }

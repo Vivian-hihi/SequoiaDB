@@ -138,6 +138,7 @@ namespace engine
          _totalRecordNum = 0 ;
          _totalSize = 0 ;
          _freeSize  = 0 ;
+         _lobPageSize = 0 ;
       }
       _monCollectionSpace ( const _monCollectionSpace &right )
       {
@@ -148,6 +149,7 @@ namespace engine
          _totalRecordNum = right._totalRecordNum ;
          _totalSize = right._totalSize ;
          _freeSize  = right._freeSize ;
+         _lobPageSize = right._lobPageSize ;
          try
          {
             for ( it = right._collections.begin();
@@ -189,6 +191,7 @@ namespace engine
       INT64 _totalRecordNum ;
       INT64 _totalSize ;
       INT64 _freeSize ;
+      INT32 _lobPageSize ;
 
       OSS_INLINE BOOLEAN operator<(const _monCollectionSpace &r) const
       {
@@ -203,6 +206,7 @@ namespace engine
          _totalRecordNum = right._totalRecordNum ;
          _totalSize      = right._totalSize ;
          _freeSize       = right._freeSize ;
+         _lobPageSize    = right._lobPageSize ;
          try
          {
             for ( it = right._collections.begin();
@@ -242,6 +246,7 @@ namespace engine
       SINT32 _numCollections ;
       SINT32 _collectionHWM ;
       SINT64 _size ;
+      SINT32 _lobPageSize ;
       OSS_INLINE BOOLEAN operator<(const _monStorageUnit &r) const
       {
          SINT32 rc = ossStrncmp( _name, r._name, sizeof(_name))<0 ;

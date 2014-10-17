@@ -268,31 +268,29 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITEV, "_rtnLocalLobStream::_writev" )
-   INT32 _rtnLocalLobStream::_writev( const _dmsLobRecord *pieces,
-                                      UINT32 cnt,
-                                      _pmdEDUCB *cb,
-                                      UINT32 &succNum )
+   INT32 _rtnLocalLobStream::_writev( const RTN_LOB_TUPLES &tuples,
+                                      _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITEV ) ;
-      UINT32 i = 0 ;
-      for ( ; i < cnt; ++i )
+      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
+            itr != tuples.end() ;
+            ++itr ) 
       {
-         SDB_ASSERT( !pieces[i].empty(), "can not be empty" ) ;
+         SDB_ASSERT( !itr->empty(), "can not be empty" ) ;
          if ( cb->isInterrupted() )
          {
             rc = SDB_INTERRUPT ;
             goto error ;
          }
 
-         rc = _write( pieces[i], cb ) ;
+         rc = _write( *itr, cb ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
       }
    done:
-      succNum = i ;
       PD_TRACE_EXITRC( SDB_RTNLOCALLOBSTREAM__WRITEV, rc ) ;
       return rc ;
    error:
@@ -301,13 +299,14 @@ namespace engine
 
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__WRITE, "_rtnLocalLobStream::_write" )
-   INT32 _rtnLocalLobStream::_write( const _dmsLobRecord &record,
+   INT32 _rtnLocalLobStream::_write( const _rtnLobTuple &tuple,
                                      _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__WRITE ) ;
       SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
       BOOLEAN lockDms = FALSE ;
+      _dmsLobRecord record ;
 
       rc = dmsCB->writable( cb ) ;
       if ( SDB_OK !=rc )
@@ -317,6 +316,11 @@ namespace engine
       }
       lockDms = TRUE ;
 
+      record.set( &getOID(),
+                  tuple.tuple.columns.sequence,
+                  tuple.tuple.columns.offset,
+                  tuple.tuple.columns.len,
+                  tuple.data ) ;
       rc = _su->lob()->write( record, _mbContext, cb,
                               _getDPSCB() ) ;
       if ( SDB_OK != rc )
@@ -338,18 +342,26 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__READV, "_rtnLocalLobStream::_readv" )
-   INT32 _rtnLocalLobStream::_readv( const _dmsLobRecord *pieces,
-                                     UINT32 cnt,
-                                     _pmdEDUCB *cb,
-                                     UINT32 needLen )
+   INT32 _rtnLocalLobStream::_readv( const RTN_LOB_TUPLES &tuples,
+                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__READV ) ;
-      SDB_ASSERT( 0 < cnt, "can not be zero" ) ;
+      SDB_ASSERT( !tuples.empty(), "can not be empty" ) ;
+
       CHAR *buf = NULL ;
       SINT64 readSize = 0 ;
       INT32 pageSize =  _su->getLobPageSize() ;
+      UINT32 needLen = 0 ;
       _getPool().clear() ;
+
+      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
+            itr != tuples.end() ;
+            ++itr )
+      {
+         needLen += itr->tuple.columns.len ;
+      }
+
       rc = _getPool().allocate( needLen, &buf ) ;
       if ( SDB_OK != rc )
       {
@@ -357,22 +369,24 @@ namespace engine
          goto error ;
       }
 
-      for ( UINT32 i = 0; i < cnt; ++i )
+      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
+            itr != tuples.end() ;
+            ++itr )
       {
-         rc = _read( pieces[i], cb, buf + readSize ) ;
+         rc = _read( *itr, cb, buf + readSize ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
-         readSize += pieces[i]._dataLen ;
+         readSize += itr->tuple.columns.len ;
       }
 
       SDB_ASSERT( readSize == needLen, "impossible" ) ;
       rc = _getPool().push( buf, readSize,
                             RTN_LOB_GET_OFFSET_OF_LOB(
                                 pageSize,
-                                pieces[0]._sequence,
-                                pieces[0]._offset ) ) ;
+                                tuples.begin()->tuple.columns.sequence,
+                                tuples.begin()->tuple.columns.offset ) ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to push data to pool:%d", rc ) ;
@@ -387,12 +401,18 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnLocalLobStream::_read( const _dmsLobRecord &record,
+   INT32 _rtnLocalLobStream::_read( const _rtnLobTuple &tuple,
                                     _pmdEDUCB *cb,
                                     CHAR *buf )
    {
       INT32 rc = SDB_OK ;
       UINT32 len = 0 ;
+      dmsLobRecord record ;
+      record.set( &getOID(),
+                  tuple.tuple.columns.sequence,
+                  tuple.tuple.columns.offset,
+                  tuple.tuple.columns.len,
+                  tuple.data ) ;
       rc = _su->lob()->read( record, _mbContext, cb,
                              buf, len ) ;
       if ( SDB_OK != rc )
@@ -480,14 +500,14 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOCALLOBSTREAM__REMOVEV, "_rtnLocalLobStream::_removev" )
-   INT32 _rtnLocalLobStream::_removev( const _dmsLobRecord *pieces,
-                                       UINT32 cnt,
+   INT32 _rtnLocalLobStream::_removev( const RTN_LOB_TUPLES &tuples,
                                        _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOCALLOBSTREAM__REMOVEV ) ;
       SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
       BOOLEAN lockDms = FALSE ;
+      dmsLobRecord record ;
 
       rc = dmsCB->writable( cb ) ;
       if ( SDB_OK !=rc )
@@ -497,15 +517,22 @@ namespace engine
       }
       lockDms = TRUE ;
 
-      for ( UINT32 i = 0 ; i < cnt; ++i )
+      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
+            itr != tuples.end() ;
+            ++itr )
       {
-         rc = _su->lob()->remove( pieces[i], _mbContext, cb,
+         record.set( &getOID(),
+                     itr->tuple.columns.sequence,
+                     itr->tuple.columns.offset,
+                     itr->tuple.columns.len,
+                     itr->data ) ;
+         rc = _su->lob()->remove( record, _mbContext, cb,
                                   _getDPSCB() ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to remove lob[%s],"
-                    "sequence:%d, rc:%d", pieces[i]._oid->str().c_str(),
-                    pieces[i]._sequence, rc ) ;
+                    "sequence:%d, rc:%d", record._oid->str().c_str(),
+                    record._sequence, rc ) ;
             goto error ;
          }
       }

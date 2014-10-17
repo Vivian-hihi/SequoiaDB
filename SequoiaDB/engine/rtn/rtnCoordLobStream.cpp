@@ -334,15 +334,11 @@ namespace engine
          }
       } while ( TRUE ) ;
 
-      if ( SDB_LOB_MODE_R == mode ||
-           SDB_LOB_MODE_REMOVE == mode )
+      rc = _extractMeta( reply, _metaObj ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _extractMeta( reply, _metaObj ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to extract meta data from reply msg:%d", rc ) ;
-            goto error ;
-         }
+         PD_LOG( PDERROR, "failed to extract meta data from reply msg:%d", rc ) ;
+         goto error ;
       }
 
       _add2Subs( reply->header.routeID.columns.groupID,
@@ -409,11 +405,12 @@ namespace engine
       return rc ;
    }
 
+   //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__GETLOBPAGESIZE, "_rtnCoordLobStream::_getLobPageSize" )
    INT32 _rtnCoordLobStream::_getLobPageSize( INT32 &pageSize )
    {
       INT32 rc = SDB_OK ;
-      pageSize = DMS_PAGE_SIZE256K ;
-/*
+      PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__GETLOBPAGESIZE ) ;
+
       try
       {
          BSONElement ele = _metaObj.getField( FIELD_NAME_LOB_PAGE_SIZE ) ;
@@ -431,14 +428,17 @@ namespace engine
       {
          PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
          rc = SDB_SYS ;
-         goto error ;      
+         goto error ;
       }
-*/
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__GETLOBPAGESIZE, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__WRITE, "_rtnCoordLobStream::_write" )
-   INT32 _rtnCoordLobStream::_write( const _dmsLobRecord &record,
+   INT32 _rtnCoordLobStream::_write( const _rtnLobTuple &tuple,
                                      _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -446,30 +446,26 @@ namespace engine
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
       UINT32 groupID = 0 ;
-      _MsgLobTuple tuple ;
-      tuple.columns.len = record._dataLen ;
-      tuple.columns.sequence = record._sequence ;
-      tuple.columns.offset = record._offset ; /// offset in piece
       const subStream *sub = NULL ;
       netIOVec iov ;
 
       _header.header.messageLength = sizeof( _header ) +
                                      sizeof( _MsgLobTuple ) +
-                                     tuple.columns.len ;
+                                     tuple.tuple.columns.len ;
       _header.header.opCode = MSG_BS_LOB_WRITE_REQ ;
       _header.bsonLen = 0 ;
 
       _pushLobHeader( &_header, BSONObj(), iov ) ;
-      _pushLobData( tuple.data, sizeof( tuple ), iov ) ;
-      _pushLobData( record._data, tuple.columns.len, iov ) ;
+      _pushLobData( tuple.tuple.data, sizeof( tuple.tuple ), iov ) ;
+      _pushLobData( tuple.data, tuple.tuple.columns.len, iov ) ;
 
       do
       {
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
          _header.version = _cataInfo->getVersion() ;
-         rc = _cataInfo->getLobGroupID( *( record._oid ),
-                                        record._sequence,
+         rc = _cataInfo->getLobGroupID( getOID(),
+                                        tuple.tuple.columns.sequence,
                                         groupID ) ;
          if ( SDB_OK != rc )
          {
@@ -522,14 +518,11 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__WRITEV, "_rtnCoordLobStream::_writev" )
-   INT32 _rtnCoordLobStream::_writev( const _dmsLobRecord *pieces,
-                                      UINT32 cnt,
-                                      _pmdEDUCB *cb,
-                                      UINT32 &succNum )
+   INT32 _rtnCoordLobStream::_writev( const RTN_LOB_TUPLES &tuples,
+                                      _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__WRITEV ) ;
-      SDB_ASSERT( cnt <= RTN_LOB_WRITE_PIECE_NUM, "can not over it" ) ;
 
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
@@ -541,8 +534,6 @@ namespace engine
       _header.header.opCode = MSG_BS_LOB_WRITE_REQ ;
       _header.bsonLen = 0 ;
 
-      _initTuples( pieces, cnt ) ;
-
       do
       {
          _clearMsgData() ;
@@ -551,7 +542,7 @@ namespace engine
 
          if ( reshard )
          {
-            rc = _shardData( pieces, cnt, TRUE, doneLst ) ;
+            rc = _shardData( tuples, TRUE, doneLst ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -629,14 +620,11 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__READV, "_rtnCoordLobStream::_readv" )
-   INT32 _rtnCoordLobStream::_readv( const _dmsLobRecord *pieces,
-                                     UINT32 cnt,
-                                     _pmdEDUCB *cb,
-                                     UINT32 totalLen )
+   INT32 _rtnCoordLobStream::_readv( const RTN_LOB_TUPLES &tuples,
+                                     _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__READV ) ;
-      SDB_ASSERT( cnt <= RTN_LOB_READ_PIECE_NUM, "impossible" ) ;
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
       DONE_LST doneLst ; 
@@ -646,8 +634,6 @@ namespace engine
       _header.header.opCode = MSG_BS_LOB_READ_REQ ;
       _header.bsonLen = 0 ;
       
-      _initTuples( pieces, cnt ) ;
-
       do
       {
          _clearMsgData() ;
@@ -656,7 +642,7 @@ namespace engine
 
          if ( needReshard )
          {
-            rc = _shardData( pieces, cnt, FALSE, doneLst ) ;
+            rc = _shardData( tuples, FALSE, doneLst ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -724,7 +710,6 @@ namespace engine
       } while ( TRUE ) ;
    done:
       _clearMsgData() ;
-      _tuplePool.clear() ;
       PD_TRACE_EXITRC( SDB_RTNCOORDLOBSTREAM__READV, rc ) ;
       return rc ;
    error:
@@ -1072,13 +1057,11 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__REMOVEV, "_rtnCoordLobStream::_removev" )
-   INT32 _rtnCoordLobStream::_removev( const _dmsLobRecord *pieces,
-                                       UINT32 cnt,
+   INT32 _rtnCoordLobStream::_removev( const RTN_LOB_TUPLES &tuples,
                                        _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__REMOVEV ) ;
-      SDB_ASSERT( cnt <= RTN_LOB_REMOVE_PIECE_NUM, "can not over it" ) ;
 
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
@@ -1089,8 +1072,6 @@ namespace engine
       _header.header.opCode = MSG_BS_LOB_REMOVE_REQ ;
       _header.bsonLen = 0 ;
 
-      _initTuples( pieces, cnt ) ;
-
       do
       {
          _clearMsgData() ;
@@ -1098,7 +1079,7 @@ namespace engine
          _header.version = _cataInfo->getVersion() ;
          if ( reshard )
          {
-            rc = _shardData( pieces, cnt, TRUE, doneLst ) ;
+            rc = _shardData( tuples, TRUE, doneLst ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -1349,25 +1330,8 @@ namespace engine
       goto done ;
    }
 
-   void _rtnCoordLobStream::_initTuples( const _dmsLobRecord *pieces,
-                                         UINT32 cnt )
-   {
-      _tuplePool.clear() ;
-      for ( UINT32 i = 0; i < cnt; ++i )
-      {
-         const _dmsLobRecord &piece = pieces[i] ;
-         MsgLobTuple tuple ;
-         tuple.columns.len = piece._dataLen ;
-         tuple.columns.sequence = piece._sequence ;
-         tuple.columns.offset = piece._offset ;
-         _tuplePool.push_back( tuple ) ;
-      }
-      return ;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__SHARDDATA, "_rtnCoordLobStream::_shardData" )
-   INT32 _rtnCoordLobStream::_shardData( const _dmsLobRecord *pieces,
-                                         UINT32 cnt,
+   INT32 _rtnCoordLobStream::_shardData( const RTN_LOB_TUPLES &tuples,
                                          BOOLEAN isWrite,
                                          const DONE_LST &doneLst )
    {
@@ -1375,20 +1339,22 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__SHARDDATA ) ;
       _dataGroups.clear() ;
 
-      for ( UINT32 i = 0; i < cnt; ++i )
+      for ( RTN_LOB_TUPLES::const_iterator itr = tuples.begin() ;
+            itr != tuples.end() ;
+            ++itr )
       {
          const subStream *sub = NULL ;
          UINT32 groupID = 0 ;
-         const _dmsLobRecord &piece = pieces[i] ;
          dataGroup *dg = NULL ;
+         const MsgLobTuple *tuple = ( const MsgLobTuple * )(&( *itr )) ;
          
-         if ( 0 < doneLst.count( (ossValuePtr)( &piece ) ) )
+         if ( 0 < doneLst.count( (ossValuePtr)tuple ) )
          {
             continue ;
          }
 
-         rc = _cataInfo->getLobGroupID( *( piece._oid ),
-                                        piece._sequence,
+         rc = _cataInfo->getLobGroupID( getOID(),
+                                        tuple->columns.sequence,
                                         groupID ) ;
          if ( SDB_OK != rc )
          {
@@ -1404,9 +1370,8 @@ namespace engine
             _pushLobHeader( &_header, BSONObj(), dg->body ) ;
             dg->bodyLen += sizeof( MsgOpLob ) - sizeof( MsgHeader ) ;
          }
-         dg->addData( _tuplePool[i],
-                      isWrite ? piece._data : NULL,
-                      &_alignBuf ) ;
+         dg->addData( *tuple,
+                      isWrite ? itr->data : NULL ) ;
          dg->contextID = sub->contextID ;
          dg->id = sub->id ;
       }

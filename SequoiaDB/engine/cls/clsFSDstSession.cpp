@@ -434,6 +434,8 @@ namespace engine
             BSONElement next = csIt.next() ;
             BSONElement csNameEle ;
             BSONElement csPageSizeEle ;
+            BSONElement csLobPageSizeEle ;
+            INT32 lobPageSize = 0 ;
 
             if ( Object != next.type() )
             {
@@ -452,7 +454,25 @@ namespace engine
                goto error ;
             }
 
-            _mapEmptyCS[ csNameEle.str() ] = csPageSizeEle.numberInt() ;
+            csLobPageSizeEle = next.embeddedObject().getField( CLS_FS_LOB_PAGE_SIZE ) ;
+            if ( NumberInt != csLobPageSizeEle.type() &&
+                 !csLobPageSizeEle.eoo() )
+            {
+               PD_LOG( PDERROR, "Session[%s]: wrong type of lob pagesize[%s]"
+                       " failed", sessionName(), next.toString().c_str() ) ;
+               goto error ;
+            }
+            else if ( NumberInt == csLobPageSizeEle.type() )
+            {
+               lobPageSize = csLobPageSizeEle.numberInt() ;
+            }
+            else
+            {
+               lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+            }
+
+            _mapEmptyCS[ csNameEle.str() ] = pageSzTuple( csPageSizeEle.numberInt(),
+                                                          lobPageSize ) ;
          }
 
          // collection list
@@ -509,7 +529,8 @@ namespace engine
                                                string &cs,
                                                string &collection,
                                                UINT32 &pageSize,
-                                               UINT32 &attributes )
+                                               UINT32 &attributes,
+                                               INT32 &lobPageSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDATADBS__EXTMETA );
@@ -520,6 +541,7 @@ namespace engine
          BSONElement collecionEle ;
          BSONElement ele ;
          BSONElement attri ;
+         BSONElement lobPageEle ;
          BSONElement csEle = obj.getField( CLS_FS_CS_NAME ) ;
          PD_LOG( PDDEBUG, "Session[%s]: get meta data: %s", sessionName(),
                  obj.toString().c_str() ) ;
@@ -556,6 +578,21 @@ namespace engine
          else
          {
             attributes = attri.Number() ;
+         }
+
+         lobPageEle =  ele.embeddedObject().getField( CLS_FS_LOB_PAGE_SIZE ) ;
+         if ( NumberInt != lobPageEle.type() && !lobPageEle.eoo() )
+         {
+            goto error ;
+         }
+         else if ( NumberInt == lobPageEle.type() )
+         {
+            lobPageSize = lobPageEle.numberInt() ;
+         }
+         else
+         {
+            /// forward-compatible -- yunwu
+            lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
          }
 
       }
@@ -681,11 +718,13 @@ namespace engine
                     DMS_COLLECTION_SPACE_NAME_SZ + 2] ;
       CHAR *objdata = ( CHAR *)( &( msg->header ) ) +
                                  sizeof( MsgClsFSMetaRes ) ;
+      INT32 lobPageSize = 0 ;
       // extract the meta response
       if ( SDB_OK != _extractMeta( objdata,
                                    cs, collection,
                                    pageSize,
-                                   attributes ) )
+                                   attributes,
+                                   lobPageSize ) )
       {
          _disconnect() ;
          goto done ;
@@ -701,7 +740,8 @@ namespace engine
          goto done ;
       }
       // create local cs and collection
-      rc = _replayer.replayCrtCS( cs.c_str(), pageSize, eduCB(),
+      rc = _replayer.replayCrtCS( cs.c_str(), pageSize, lobPageSize,
+                                  eduCB(),
                                   SDB_SESSION_FS_DST == sessionType() ?
                                   TRUE : FALSE ) ;
       rc = _replayer.replayCrtCollection( fullName, attributes, eduCB() ) ;
@@ -1328,10 +1368,12 @@ namespace engine
 
       // create empty collection space
       {
-         std::map<string, INT32>::iterator itCS = _mapEmptyCS.begin() ;
+         CS_PS_TUPLES::iterator itCS = _mapEmptyCS.begin() ;
          while ( itCS != _mapEmptyCS.end() )
          {
-            rc = _replayer.replayCrtCS( itCS->first.c_str(), itCS->second,
+            rc = _replayer.replayCrtCS( itCS->first.c_str(),
+                                        itCS->second.pageSize,
+                                        itCS->second.lobPageSize,
                                         eduCB(), TRUE ) ;
             if ( SDB_OK != rc && SDB_DMS_CS_EXIST != rc )
             {

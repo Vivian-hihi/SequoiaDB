@@ -37,9 +37,12 @@
 
 namespace engine
 {
+const UINT32 RTN_MIN_READ_LEN = DMS_PAGE_SIZE512K ;
+const UINT32 RTN_MAX_READ_LEN = DMS_PAGE_SIZE128K * 1024 ;
+const UINT32 RTN_LOOP_WRITE_LEN = DMS_PAGE_SIZE512K * 4 ;
+
    _rtnLobWindow::_rtnLobWindow()
-   :_oid( NULL ),
-    _pageSize( DMS_DO_NOT_CREATE_LOB ),
+   :_pageSize( DMS_DO_NOT_CREATE_LOB ),
     _logarithmic( 0 ),
     _curOffset( 0 ),
     _pool( NULL ),
@@ -58,11 +61,10 @@ namespace engine
       }
    }
 
-   INT32 _rtnLobWindow::init( const bson::OID *oid, INT32 pageSize )
+   INT32 _rtnLobWindow::init( INT32 pageSize )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( DMS_DO_NOT_CREATE_LOB < pageSize &&
-                  NULL != oid,
+      SDB_ASSERT( DMS_DO_NOT_CREATE_LOB < pageSize,
                   "invalid arguments" ) ;
       SDB_ASSERT( _writeData.empty(), "impossible" ) ;
 
@@ -83,7 +85,6 @@ namespace engine
       }
 
       _pageSize = pageSize ;
-      _oid = oid ;
    done:
       return rc ;
    error:
@@ -111,8 +112,8 @@ namespace engine
       /// never cached data
       if ( 0 == _cachedSz )
       {
-         _writeData.offset = offset ;
-         _writeData.len = len ;
+         _writeData.tuple.columns.offset = offset ;
+         _writeData.tuple.columns.len = len ;
          _writeData.data = data ;
          _analysisCache = FALSE ;
       }
@@ -126,8 +127,8 @@ namespace engine
          _cachedSz += mvSize ;
          if ( 0 != len - mvSize )
          {
-            _writeData.offset = offset + mvSize ;
-            _writeData.len = len - mvSize ;
+            _writeData.tuple.columns.offset = offset + mvSize ;
+            _writeData.tuple.columns.len = len - mvSize ;
             _writeData.data = data + mvSize ;
          }
 
@@ -141,27 +142,52 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBWINDOW_GETNEXTWRITESEQUENCE, "_rtnLobWindow::getNextWriteSequence" )
-   BOOLEAN _rtnLobWindow::getNextWriteSequence( _dmsLobRecord &piece )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBWINDOW_GETNEXTWRITESEQUENCES, "_rtnLobWindow::getNextWriteSequences" )
+   BOOLEAN _rtnLobWindow::getNextWriteSequences( RTN_LOB_TUPLES &tuples )
    {
-      PD_TRACE_ENTRY( SDB_RTNLOBWINDOW_GETNEXTWRITESEQUENCE ) ;
+      PD_TRACE_ENTRY( SDB_RTNLOBWINDOW_GETNEXTWRITESEQUENCES ) ;
+      _rtnLobTuple tuple ;
       BOOLEAN hasNext = FALSE ;
+      while ( _getNextWriteSequence( tuple ) )
+      {
+         tuples.push_back( tuple ) ;
+         hasNext = TRUE ;
+      }
+
+      PD_TRACE_EXIT( SDB_RTNLOBWINDOW_GETNEXTWRITESEQUENCES ) ;
+      return hasNext ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOBWINDOW__GETNEXTWRITESEQUENCE, "_rtnLobWindow::_getNextWriteSequence" )
+   BOOLEAN _rtnLobWindow::_getNextWriteSequence( _rtnLobTuple &tuple )
+   {
+      PD_TRACE_ENTRY( SDB_RTNLOBWINDOW__GETNEXTWRITESEQUENCE ) ;
+      BOOLEAN hasNext = FALSE ;
+      MsgLobTuple &t = tuple.tuple ;
 
       if ( !_analysisCache )
       {
-         if ( (UINT32)_pageSize < _writeData.len )
+         if ( (UINT32)_pageSize < _writeData.tuple.columns.len )
          {
-            piece.set( _oid, RTN_LOB_GET_SEQUENCE(( _writeData.offset ),_logarithmic),
-                       0, _pageSize, _writeData.data ) ;
-            _writeData.len -= _pageSize ;
-            _writeData.offset += _pageSize ;
+            t.columns.len = _pageSize ;
+            t.columns.sequence = RTN_LOB_GET_SEQUENCE(
+                                         ( _writeData.tuple.columns.offset ),_logarithmic) ;
+            t.columns.offset = 0 ;
+            tuple.data = _writeData.data ;
+
+            _writeData.tuple.columns.len -= _pageSize ;
+            _writeData.tuple.columns.offset += _pageSize ;
             _writeData.data += _pageSize ;
             hasNext = TRUE ;
          }
-         else if ( (UINT32)_pageSize == _writeData.len )
+         else if ( (UINT32)_pageSize == _writeData.tuple.columns.len )
          {
-            piece.set( _oid, RTN_LOB_GET_SEQUENCE(( _writeData.offset ),_logarithmic),
-                       0, _pageSize, _writeData.data ) ;
+            t.columns.len = _pageSize ;
+            t.columns.sequence = RTN_LOB_GET_SEQUENCE(
+                                     ( _writeData.tuple.columns.offset ),_logarithmic) ;
+            t.columns.offset = 0 ;
+            tuple.data = _writeData.data ;
+
             hasNext = TRUE ;
             _writeData.clear() ;
          }
@@ -174,9 +200,14 @@ namespace engine
       else if ( _pageSize == _cachedSz )
       {
          /// we should find the exact offset.
-         SINT64 offset = _writeData.empty() ? _curOffset : _writeData.offset ;
-         piece.set( _oid, RTN_LOB_GET_SEQUENCE(( offset - _cachedSz ),_logarithmic),
-                       0, _cachedSz, _pool ) ;
+         SINT64 offset = _writeData.empty() ?
+                         _curOffset : _writeData.tuple.columns.offset ;
+         t.columns.len = _cachedSz ;
+         t.columns.sequence = RTN_LOB_GET_SEQUENCE(
+                              ( offset - _cachedSz ),_logarithmic) ;
+         t.columns.offset = 0 ;
+         tuple.data = _pool ;
+
          hasNext = TRUE ;
          _analysisCache = FALSE ;
       }
@@ -185,7 +216,7 @@ namespace engine
          SDB_ASSERT( _writeData.empty(), "should be joined before" ) ;
       }
    done:
-      PD_TRACE_EXIT( SDB_RTNLOBWINDOW_GETNEXTWRITESEQUENCE ) ;
+      PD_TRACE_EXIT( SDB_RTNLOBWINDOW__GETNEXTWRITESEQUENCE ) ;
       return hasNext ;
    }
 
@@ -198,10 +229,10 @@ namespace engine
 
       if ( !_writeData.empty() )
       {
-         SDB_ASSERT( _writeData.len < ( UINT32 )_pageSize, "impossible" ) ;
+         SDB_ASSERT( _writeData.tuple.columns.len < ( UINT32 )_pageSize, "impossible" ) ;
          SDB_ASSERT( 0 == _cachedSz || _cachedSz == _pageSize, "impossible" ) ;
-         ossMemcpy( _pool, _writeData.data, _writeData.len ) ;
-         _cachedSz += _writeData.len ;
+         ossMemcpy( _pool, _writeData.data, _writeData.tuple.columns.len ) ;
+         _cachedSz += _writeData.tuple.columns.len ;
          _writeData.clear() ;
       }
 
@@ -209,17 +240,21 @@ namespace engine
       return ;
    }
 
-   BOOLEAN _rtnLobWindow::getCachedData( _dmsLobRecord &piece )
+   BOOLEAN _rtnLobWindow::getCachedData( _rtnLobTuple &tuple )
    {
       BOOLEAN hasNext = FALSE ;
+      MsgLobTuple &t = tuple.tuple ;
       if ( 0 == _cachedSz )
       {
          goto done ;
       }
 
-      piece.set( _oid,
-                 RTN_LOB_GET_SEQUENCE( _curOffset - _cachedSz, _logarithmic ),
-                 0, _cachedSz, _pool ) ;
+      t.columns.len = _cachedSz ;
+      t.columns.sequence = RTN_LOB_GET_SEQUENCE(
+                          _curOffset - _cachedSz, _logarithmic ) ;
+      t.columns.offset = 0 ;
+      tuple.data = _pool ;
+
       hasNext = TRUE ;
       _cachedSz = 0 ;
       _analysisCache = FALSE ; 
@@ -231,41 +266,50 @@ namespace engine
    INT32 _rtnLobWindow::prepare2Read( SINT64 lobLen,
                                       SINT64 offset,
                                       UINT32 len,
-                                      UINT32 &readLen,
-                                      UINT32 maxPieceNum,
-                                      _dmsLobRecord *pieces,
-                                      UINT32 &pieceNum )
+                                      RTN_LOB_TUPLES &tuples )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNLOBWINDOW_PREPARE2READ ) ;
       SDB_ASSERT( offset < lobLen, "impossible" ) ;
-      UINT32 i = 0 ;
-      while ( readLen < len && offset < lobLen && i < maxPieceNum )
+      UINT32 totalRead = 0 ;
+      SINT64 currentOffset = offset ;
+      UINT32 maxLen = RTN_MAX_READ_LEN <= ( lobLen - offset ) ?
+                      RTN_MAX_READ_LEN : ( lobLen - offset ) ;
+      UINT32 needRead = len <= RTN_MIN_READ_LEN ?
+                        RTN_MIN_READ_LEN : len ;
+      tuples.clear() ;
+
+      do
       {
-         UINT32 offstInPiece = RTN_LOB_GET_OFFSET_IN_SEQUENCE( offset, _pageSize ) ;
-//         UINT32 lenInPiece =  ( _pageSize - offstInPiece ) < len ?
-//                              ( _pageSize - offstInPiece ) : len ;
-         UINT32 lenInPiece = _pageSize - offstInPiece ;
-         lenInPiece = lenInPiece <= ( lobLen - offset ) ?
-                      lenInPiece : ( lobLen - offset ) ;
-         UINT32 sequence = RTN_LOB_GET_SEQUENCE( offset, _logarithmic ) ;
+         UINT32 offsetOfTuple =
+                      RTN_LOB_GET_OFFSET_IN_SEQUENCE( currentOffset,
+                                                      _pageSize ) ;
+         UINT32 lenOfTuple = _pageSize - offsetOfTuple ;
+         if ( ( lobLen - offset ) < lenOfTuple )
+         {
+            /// we want to read a whole piece unless hit the end of lob.
+            lenOfTuple = lobLen - offset ;
+         }
+         UINT32 sequence = RTN_LOB_GET_SEQUENCE( currentOffset,
+                                                 _logarithmic ) ;
 
-         offset += lenInPiece ;
-         readLen += lenInPiece ;
+         currentOffset += lenOfTuple ;
+         totalRead += lenOfTuple ;
 
-         pieces[i++].set( _oid, sequence, offstInPiece,
-                          lenInPiece, NULL ) ;
-      }
-      
-      pieceNum = i ;
+         tuples.push_back( _rtnLobTuple( lenOfTuple,
+                                         sequence,
+                                         offsetOfTuple,
+                                         NULL ) ) ;
+      } while ( totalRead < needRead &&
+                totalRead < maxLen ) ;
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBWINDOW_PREPARE2READ, rc ) ;
       return rc ;
    error:
-      readLen = 0 ;
-      pieceNum = 0 ;
+      tuples.clear() ;
       goto done ;
    }
 
+   
 }
 

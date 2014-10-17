@@ -48,7 +48,8 @@ namespace engine
     _dpsCB( NULL ),
     _closeWithException( TRUE ),
     _buf( NULL ),
-    _bufLen( 0 )
+    _bufLen( 0 ),
+    _su( NULL )
    {
 
    }
@@ -64,11 +65,16 @@ namespace engine
       }
 
       SAFE_OSS_FREE( _buf ) ;
+      if ( NULL != _su )
+      {
+         sdbGetDMSCB()->suUnlock ( _su->CSID() ) ;
+         _su = NULL ;
+      }
    }
 
    _dmsStorageUnit* _rtnContextShdOfLob::getSU ()
    {
-      return NULL ;
+      return _su ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNCONTEXTSHDOFLOB_OPEN, "_rtnContextShdOfLob::open" )
@@ -81,6 +87,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNCONTEXTSHDOFLOB_OPEN ) ;
+      SDB_DMSCB *dmsCB = sdbGetDMSCB() ;
+      const CHAR *clName = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
       BSONElement ele = lob.getField( FIELD_NAME_COLLECTION ) ;
       if ( String != ele.type() )
       {
@@ -89,6 +98,16 @@ namespace engine
          goto error ;
       }
       _fullName.assign( ele.valuestr() ) ;
+
+      rc = rtnResolveCollectionNameAndLock( _fullName.c_str(),
+                                            dmsCB, &_su,
+                                            &clName, suID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get cs lock:%s, rc:%d",
+                 _fullName.c_str(), rc ) ;
+         goto error ;
+      }
 
       ele = lob.getField( FIELD_NAME_LOB_OPEN_MODE ) ;
       if ( NumberInt != ele.type() )
@@ -151,6 +170,11 @@ namespace engine
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB_OPEN, rc ) ;
       return rc ;
    error:
+      if ( NULL != _su )
+      {
+         dmsCB->suUnlock( _su->CSID() ) ;
+         _su = NULL ;
+      }
       goto done ;
    }
 
@@ -226,7 +250,6 @@ namespace engine
             goto error ;
          }
 
-         _meta2Obj( _metaObj ) ;
       }
       else if ( SDB_LOB_MODE_CREATEONLY == _mode &&
            _isMainShd )
@@ -249,12 +272,17 @@ namespace engine
             PD_LOG( PDERROR, "failed to invalidate lob:%d", rc ) ;
             goto error ;
          }
-
-         _meta2Obj( _metaObj ) ;
       }
       else
       {
          /// do nothing.
+      }
+
+      if ( _isMainShd )
+      {
+         /// we need to send back pagesize when this node
+         ///  is not the main shard.
+         _meta2Obj( _metaObj ) ;
       }
    done:
       PD_TRACE_EXITRC( SDB__RTNCONTEXTSHDOFLOB__OPEN, rc ) ;
@@ -330,6 +358,11 @@ namespace engine
    INT32 _rtnContextShdOfLob::close( _pmdEDUCB *cb )
    {
       _closeWithException = FALSE ;
+      if ( NULL != _su )
+      {
+         sdbGetDMSCB()->suUnlock( _su->CSID() ) ;
+         _su = NULL ;
+      }
       return SDB_OK ; 
    }
 
@@ -375,7 +408,9 @@ namespace engine
    {
       BSONObjBuilder builder ;
       builder.append( FIELD_NAME_LOB_SIZE, (long long)_meta._lobLen ) ;
-      builder.append( FIELD_NAME_LOB_PAGE_SIZE, DMS_PAGE_SIZE256K ) ;
+      builder.append( FIELD_NAME_LOB_PAGE_SIZE,
+                      NULL != _su ?
+                     _su->getLobPageSize() : 0 ) ;
       builder.append( FIELD_NAME_LOB_CREATTIME, (long long)_meta._createTime ) ;
       obj = builder.obj() ;
       return ;

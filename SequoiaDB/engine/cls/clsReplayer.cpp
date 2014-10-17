@@ -359,14 +359,15 @@ namespace engine
          {
             const CHAR *cs = NULL ;
             INT32 pageSize = 0 ;
+            INT32 lobPageSize = 0 ;
             rc = dpsRecord2CSCrt( (CHAR *)recordHeader,
-                                  &cs, pageSize ) ;
+                                  &cs, pageSize, lobPageSize ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
             }
             rc = rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB, _dpsCB,
-                                                  pageSize, DMS_DEFAULT_LOB_PAGE_SZ,
+                                                  pageSize, lobPageSize,
                                                   TRUE ) ;
             if ( SDB_DMS_CS_EXIST == rc )
             {
@@ -748,8 +749,9 @@ namespace engine
          {
             const CHAR *cs = NULL ;
             INT32 pageSize = 0 ;
+            INT32 lobPageSize = 0 ;
             rc = dpsRecord2CSCrt( (const CHAR *)recordHeader,
-                                  &cs, pageSize ) ;
+                                  &cs, pageSize, lobPageSize ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -975,12 +977,14 @@ namespace engine
    }
 
    INT32 _clsReplayer::replayCrtCS( const CHAR *cs, INT32 pageSize,
-                                    _pmdEDUCB *eduCB, BOOLEAN delWhenExist )
+                                    INT32 lobPageSize,
+                                    _pmdEDUCB *eduCB,
+                                    BOOLEAN delWhenExist )
    {
       SDB_ASSERT( NULL != cs, "cs should not be NULL" ) ;
       return rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
                                               _dpsCB, pageSize,
-                                              DMS_DEFAULT_LOB_PAGE_SZ,
+                                              lobPageSize,
                                               TRUE,
                                               delWhenExist ) ;
    }
