@@ -47,7 +47,7 @@
                 <pd><b>Percentage split:</b> db.foo.bar.split("&lt;source shard>","&lt;target shard>",&lt;percent>)</pd>
               </plentry>              
             </parml>
-            <note> When using range split, if the specified field of sharding key is in descending order, like: {groupingKey:{&lt;Field 1>:&lt;-1>}, the starting point in "condition" or "partition" should be larger than the ending point.</note>
+            <note> When using range split, if the specified field of sharding key is in descending order, like: {groupingKey:{&lt;Field 1>:&lt;-1>}, the starting point in "condition" or "partition" should be larger than the ending point. Hash 分区使用的 Partition（分区数）必须为整形，不能为其他的类型。</note>
           </pd>
         </plentry>        
       </parml>      
