@@ -1314,7 +1314,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                            INT64 numToReturn,
                            bson *options,                          
                            sdbCursorHandle *handle )
-    \brief Get the matching documents in current collection
+    \brief get access plan of query
     \param [in] cHandle The collection handle
     \param [in] condition The matching rule, return all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -1942,7 +1942,7 @@ SDB_EXPORT INT32 sdbListLobs( sdbCollectionHandle cHandle,
 
 /** \fn INT32 sdbListLobPieces( sdbCollectionHandle cHandle,
  *                              sdbCursorHandle *cursor )
- *  \brief list all lobs in sequences
+ *  \brief list all the pieces in the lob
  *  \param [in] cHandle The collection handle
  *  \param [out] cursor The cursor handle of current query
  *  \retval SDB_OK Operation Success

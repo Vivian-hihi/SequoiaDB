@@ -7402,7 +7402,7 @@ static void sdbReadInCache( sdbLobStruct *lob,
    return ;                        
 }
 
-static UINT32 sdbReviceReadLen( sdbLobStruct *lob,
+static UINT32 sdbReviseReadLen( sdbLobStruct *lob,
                                 UINT32 needLen )
 {
    UINT32 pageSize = lob->_pageSize ;
@@ -7456,7 +7456,7 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
    lob->_cachedSize = 0 ;
    lob->_dataCache = NULL ;
 
-   alignedLen = sdbReviceReadLen( lob, needRead ) ;
+   alignedLen = sdbReviseReadLen( lob, needRead ) ;
 
    rc = clientBuildReadLobMsg( &(lob->_pSendBuffer), &lob->_sendBufferSize,
                                alignedLen, lob->_currentOffset,
