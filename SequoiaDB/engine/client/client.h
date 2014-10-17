@@ -72,16 +72,16 @@ enum SDB_LIST_TYPE
 
 enum _SDB_LOB_OPEN_MODE
 {
-   SDB_LOB_CREATEONLY = 0x00000001,
-   SDB_LOB_READ = 0x00000004
+   SDB_LOB_CREATEONLY = 0x00000001, /**< Open a new lob only */
+   SDB_LOB_READ = 0x00000004        /**< Open an existing lob to read */
 } ;
 typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE ;
 
 enum _SDB_LOB_SEEK
 {
-   SDB_LOB_SEEK_SET = 0,
-   SDB_LOB_SEEK_CUR,
-   SDB_LOB_SEEK_END 
+   SDB_LOB_SEEK_SET = 0, /**< Seek from the beginning of file */
+   SDB_LOB_SEEK_CUR,     /**< Seek from the current place */
+   SDB_LOB_SEEK_END      /**< Seek from the end of file  */
 } ;
 typedef enum _SDB_LOB_SEEK SDB_LOB_SEEK ;
 
@@ -1814,8 +1814,8 @@ SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
 SDB_EXPORT INT32 sdbInvalidateCache( sdbConnectionHandle cHandle,
                                      bson *condition ) ;
 
-/** \fn INT32 sdbInterruptSession( sdbConnectionHandle cHandle,
-                                   SINT64 sessionID )
+/** \fn INT32 sdbForceSession( sdbConnectionHandle cHandle,
+                               SINT64 sessionID )
     \brief interrupte the session
     \param [in] cHandle The connection handle
     \param [in] sessionID The id of the session which we want to inerrupt
@@ -1826,8 +1826,8 @@ SDB_EXPORT INT32 sdbForceSession( sdbConnectionHandle cHandle,
                                   SINT64 sessionID ) ;
 
 /** \fn INT32 sdbOpenLob( sdbCollectionHandle cHandle,
- *                        const bson_oid_t *oid,
- *                        INT32 mode,
+                          const bson_oid_t *oid,
+                          INT32 mode,
                           sdbLobHandle *lobHandle )
     \brief create a large object
     \param [in] cHandle The collection handle
@@ -1843,8 +1843,8 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
                              sdbLobHandle *lobHandle ) ;
 
 /** \fn INT32 sdbWriteLob( sdbLobHandle lobHandle,
- *                         const void *buf,
- *                         UINT32 len )
+                           const CHAR *buf,
+                           UINT32 len )
     \brief write lob
     \param [in] lobHandle The large object handle
     \param [in] buf The buf of write
@@ -1854,12 +1854,12 @@ SDB_EXPORT INT32 sdbOpenLob( sdbCollectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbWriteLob( sdbLobHandle lobHandle,
                               const CHAR *buf,
-                              UINT32 len );
+                              UINT32 len ) ;
 
 /** \fn INT32 sdbReadLob( sdbLobHandle lobHandle,
- *                        UINT32 len,
- *                        void *buf,
- *                        UINT32 &read )
+                          UINT32 len,
+                          CHAR *buf,
+                          UINT32 *read )
  *   \brief read lob
  *   \param [in] lobHandle The large object handle
  *   \param [in] len The length want to read

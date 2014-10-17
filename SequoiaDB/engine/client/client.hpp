@@ -100,16 +100,16 @@
 
 enum _SDB_LOB_OPEN_MODE
 {
-   SDB_LOB_CREATEONLY = 0x00000001,
-   SDB_LOB_READ = 0x00000004
+   SDB_LOB_CREATEONLY = 0x00000001, /**< Open a new lob only */
+   SDB_LOB_READ = 0x00000004        /**< Open an existing lob to read */
 } ;
 typedef enum _SDB_LOB_OPEN_MODE SDB_LOB_OPEN_MODE ;
 
 enum _SDB_LOB_SEEK
 {
-   SDB_LOB_SEEK_SET = 0,
-   SDB_LOB_SEEK_CUR,
-   SDB_LOB_SEEK_END 
+   SDB_LOB_SEEK_SET = 0, /**< Seek from the beginning of file */
+   SDB_LOB_SEEK_CUR,     /**< Seek from the current place */
+   SDB_LOB_SEEK_END      /**< Seek from the end of file  */
 } ;
 typedef enum _SDB_LOB_SEEK SDB_LOB_SEEK ;
 
@@ -392,7 +392,7 @@ namespace sdbclient
    } ;
 
 /** \class sdbCollection
-      \brief Database operation interfaces of cursor.
+      \brief Database operation interfaces of collection.
 */
    class DLLEXPORT sdbCollection
    {
@@ -1115,7 +1115,7 @@ namespace sdbclient
    } ;
 
 /** \class sdbNode
-    \brief Database operation interfaces of node.This class takes the place of class "replicaNode".
+    \brief Database operation interfaces of node. This class takes the place of class "replicaNode".
     \note We use concept "node" instead of "replica node",
             and change the class name "ReplicaNode" to "Node".
             class "ReplicaNode" will be deprecated in version 2.x.
