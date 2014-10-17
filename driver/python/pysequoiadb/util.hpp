@@ -36,7 +36,7 @@
 #define __METHOD_DECLARE(name) \
    static PYOBJECT* name( PYOBJECT *self, PYOBJECT *args )
 
-#define __IMP_FUNCTION(name) \
+#define __METHOD_IMP(name) \
    __METHOD_DECLARE(name)
 
 #define PARSE_PYTHON_ARGS PyArg_ParseTuple
@@ -74,11 +74,17 @@
 #define MAKE_RETURN_INT_LONG( ret_value, long_value ) \
    ( PyObject * )Py_BuildValue( "(i,L)", ret_value, long_value )
 
+#define MAKE_RETURN_INT_ULLONG( ret_value, ull_value ) \
+   ( PyObject * )Py_BuildValue( "(i,K)", ret_value, ull_value )
+
 #define MAKE_RETURN_INT_OBJECT( ret_value, py_object ) \
    ( PyObject * )Py_BuildValue( "(i,O)", ret_value, py_object )
 
 #define MAKE_RETURN_INT_PYSTRING( ret_value, c_string ) \
    ( PyObject * )Py_BuildValue( "(i,s)", ret_value, c_string )
+
+#define MAKE_RETURN_INT_PYSTRING_UINT( ret_value, c_string, c_stringsize ) \
+   ( PyObject * )Py_BuildValue( "(i,s,k)", ret_value, c_string, c_stringsize )
 
 #define MAKE_RETURN_INT_PYSTRING_SIZE( ret_value, c_string, c_stringsize ) \
    ( PyObject * )Py_BuildValue( "(i,s#)", ret_value, c_string, c_stringsize )

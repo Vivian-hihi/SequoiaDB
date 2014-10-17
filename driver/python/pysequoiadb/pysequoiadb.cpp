@@ -6,7 +6,7 @@
 
 using namespace sdbclient;
 
-__IMP_FUNCTION(sdb_create_client)
+__METHOD_IMP(sdb_create_client)
 {
    sdb *client = NULL;
    NEW_CPPOBJECT( client, sdb ) ;
@@ -18,7 +18,7 @@ __IMP_FUNCTION(sdb_create_client)
    return MAKE_PYOBJECT( client ) ;
 }
 
-__IMP_FUNCTION(sdb_release_client)
+__METHOD_IMP(sdb_release_client)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -37,7 +37,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_connect)
+__METHOD_IMP(sdb_connect)
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
@@ -61,7 +61,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_disconnect)
+__METHOD_IMP(sdb_disconnect)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -81,7 +81,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_create_user)
+__METHOD_IMP(sdb_create_user)
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
@@ -103,7 +103,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_remove_user)
+__METHOD_IMP(sdb_remove_user)
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
@@ -125,7 +125,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_get_snapshot)
+__METHOD_IMP(sdb_get_snapshot)
 {
    INT32 rc                       = 0 ;
    INT32 snap_type                = 0 ;
@@ -167,7 +167,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_reset_snapshot)
+__METHOD_IMP(sdb_reset_snapshot)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -191,7 +191,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_get_list)
+__METHOD_IMP(sdb_get_list)
 {
    INT32 rc                       = 0 ;
    INT32 list_type                = 0 ;
@@ -232,7 +232,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_get_collection_space)
+__METHOD_IMP(sdb_get_collection_space)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -260,7 +260,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_get_collection)
+__METHOD_IMP(sdb_get_collection)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -288,7 +288,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_create_collection_space)
+__METHOD_IMP(sdb_create_collection_space)
 {
    INT32 rc               = 0 ;
    INT32 page_size        = 0 ;
@@ -318,7 +318,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_drop_collection_space)
+__METHOD_IMP(sdb_drop_collection_space)
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
@@ -343,7 +343,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_list_collection_spaces)
+__METHOD_IMP(sdb_list_collection_spaces)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -370,7 +370,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_list_collections)
+__METHOD_IMP(sdb_list_collections)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -397,7 +397,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_list_replica_groups)
+__METHOD_IMP(sdb_list_replica_groups)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -424,7 +424,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_get_replica_group_by_name)
+__METHOD_IMP(sdb_get_replica_group_by_name)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -452,7 +452,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_get_replica_group_by_id)
+__METHOD_IMP(sdb_get_replica_group_by_id)
 {
    INT32 rc               = 0 ;
    INT32 group_id         = 0 ;
@@ -480,7 +480,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_create_replica_group)
+__METHOD_IMP(sdb_create_replica_group)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -507,7 +507,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_remove_replica_group)
+__METHOD_IMP(sdb_remove_replica_group)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -532,7 +532,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_create_replica_cata_group)
+__METHOD_IMP(sdb_create_replica_cata_group)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -564,7 +564,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_exec_update)
+__METHOD_IMP(sdb_exec_update)
 {
    INT32 rc        = 0 ;
    PYOBJECT *obj   = NULL ;
@@ -589,7 +589,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_exec_sql)
+__METHOD_IMP(sdb_exec_sql)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -617,7 +617,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_transaction_begin)
+__METHOD_IMP(sdb_transaction_begin)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -637,7 +637,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_transaction_commit)
+__METHOD_IMP(sdb_transaction_commit)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -657,7 +657,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_transaction_rollback)
+__METHOD_IMP(sdb_transaction_rollback)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -677,7 +677,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_flush_configure)
+__METHOD_IMP(sdb_flush_configure)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
@@ -705,7 +705,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_create_JS_procedure)
+__METHOD_IMP(sdb_create_JS_procedure)
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
@@ -730,7 +730,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_remove_procedure)
+__METHOD_IMP(sdb_remove_procedure)
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
@@ -755,7 +755,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_list_procedures)
+__METHOD_IMP(sdb_list_procedures)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -787,7 +787,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_eval_JS)
+__METHOD_IMP(sdb_eval_JS)
 {
    INT32 rc                          = 0 ;
    SDB_SPD_RES_TYPE sdb_spd_res_type = SDB_SPD_RES_TYPE_VOID ;
@@ -817,7 +817,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_backup_offline)
+__METHOD_IMP(sdb_backup_offline)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
@@ -845,7 +845,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_list_backup)
+__METHOD_IMP(sdb_list_backup)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -889,7 +889,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_remove_backup)
+__METHOD_IMP(sdb_remove_backup)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
@@ -917,7 +917,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_list_tasks)
+__METHOD_IMP(sdb_list_tasks)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -961,7 +961,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_wait_task)
+__METHOD_IMP(sdb_wait_task)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -993,7 +993,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_cancel_task)
+__METHOD_IMP(sdb_cancel_task)
 {
    INT32 rc         = 0 ;
    PYOBJECT *obj    = NULL ;
@@ -1019,7 +1019,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_set_session_attri)
+__METHOD_IMP(sdb_set_session_attri)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
@@ -1047,7 +1047,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_close_all_cursors)
+__METHOD_IMP(sdb_close_all_cursors)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -1071,7 +1071,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(sdb_is_valid)
+__METHOD_IMP(sdb_is_valid)
 {
    INT32 rc        = 0 ;
    INT32 result    = FALSE ;
@@ -1104,7 +1104,7 @@ done:
    return MAKE_RETURN_INT_INT( rc, result ) ;
 }
 
-__IMP_FUNCTION(sdb_get_version)
+__METHOD_IMP(sdb_get_version)
 {
    int version = 0 ;
    int sub_version = 0 ;
@@ -1117,7 +1117,7 @@ __IMP_FUNCTION(sdb_get_version)
 }
 
 ///< implement collection space
-__IMP_FUNCTION(create_cs)
+__METHOD_IMP(create_cs)
 {
    sdbCollectionSpace *cs = NULL ;
    NEW_CPPOBJECT( cs, sdbCollectionSpace ) ;
@@ -1129,7 +1129,7 @@ __IMP_FUNCTION(create_cs)
    return MAKE_PYOBJECT( cs ) ;
 }
 
-__IMP_FUNCTION(release_cs)
+__METHOD_IMP(release_cs)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -1148,7 +1148,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cs_get_collection)
+__METHOD_IMP(cs_get_collection)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -1176,7 +1176,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cs_create_collection)
+__METHOD_IMP(cs_create_collection)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -1204,7 +1204,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cs_create_collection_use_opt)
+__METHOD_IMP(cs_create_collection_use_opt)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
@@ -1237,7 +1237,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cs_drop_collection)
+__METHOD_IMP(cs_drop_collection)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -1262,7 +1262,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cs_get_collection_space_name)
+__METHOD_IMP(cs_get_collection_space_name)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -1284,7 +1284,7 @@ done :
 }
 
 ///< implement collection
-__IMP_FUNCTION(create_cl) 
+__METHOD_IMP(create_cl) 
 {
    sdbCollection *cl = NULL;
    NEW_CPPOBJECT( cl, sdbCollection ) ;
@@ -1296,7 +1296,7 @@ __IMP_FUNCTION(create_cl)
    return MAKE_PYOBJECT( cl ) ;
 }
 
-__IMP_FUNCTION(release_cl)
+__METHOD_IMP(release_cl)
 {
    INT32 rc          = 0 ;
    PYOBJECT *obj     = NULL ;
@@ -1315,7 +1315,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_get_count)
+__METHOD_IMP(cl_get_count)
 {
    INT32 rc                       = 0 ;
    SINT64 count                   = 0 ;
@@ -1343,7 +1343,7 @@ done:
    return MAKE_RETURN_INT_LONG( rc, count ) ;
 }
 
-__IMP_FUNCTION(cl_split_by_condition)
+__METHOD_IMP(cl_split_by_condition)
 {
    INT32 rc                           = 0 ;
    PYOBJECT *obj                      = NULL ;
@@ -1378,7 +1378,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_split_by_percent)
+__METHOD_IMP(cl_split_by_percent)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -1406,7 +1406,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_split_async_by_condition)
+__METHOD_IMP(cl_split_async_by_condition)
 {
    INT32 rc                           = 0 ;
    PYOBJECT *obj                      = NULL ;
@@ -1443,7 +1443,7 @@ done:
    return MAKE_RETURN_INT_LONG( rc, task_id ) ;
 }
 
-__IMP_FUNCTION(cl_splite_async_by_percent)
+__METHOD_IMP(cl_splite_async_by_percent)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -1472,7 +1472,7 @@ done:
    return MAKE_RETURN_INT_LONG( rc, task_id ) ;
 }
 
-__IMP_FUNCTION(cl_bulk_insert)
+__METHOD_IMP(cl_bulk_insert)
 {
    INT32 rc              = 0 ;
    SINT32 flags          = 0 ;
@@ -1500,7 +1500,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_insert)
+__METHOD_IMP(cl_insert)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
@@ -1527,7 +1527,7 @@ done:
    return MAKE_RETURN_INT_PYSTRING( rc, id.toString().c_str() ) ;
 }
 
-__IMP_FUNCTION(cl_update)
+__METHOD_IMP(cl_update)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -1564,7 +1564,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_upsert)
+__METHOD_IMP(cl_upsert)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -1601,7 +1601,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_del)
+__METHOD_IMP(cl_del)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -1633,7 +1633,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_query)
+__METHOD_IMP(cl_query)
 {
    INT32 rc                       = 0 ;
    INT64 num_to_skip              = 0 ;
@@ -1681,7 +1681,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_create_index)
+__METHOD_IMP(cl_create_index)
 {
    INT32 rc                       = 0 ;
    BOOLEAN is_unique              = 0 ;
@@ -1713,7 +1713,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_get_index)
+__METHOD_IMP(cl_get_index)
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
@@ -1746,7 +1746,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_drop_index)
+__METHOD_IMP(cl_drop_index)
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -1771,7 +1771,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_get_collection_name)
+__METHOD_IMP(cl_get_collection_name)
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
@@ -1792,7 +1792,7 @@ done:
    return MAKE_RETURN_INT_PYSTRING( rc, cl_name ) ;
 }
 
-__IMP_FUNCTION(cl_get_collection_space_name)
+__METHOD_IMP(cl_get_collection_space_name)
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
@@ -1813,7 +1813,7 @@ done:
    return MAKE_RETURN_INT_PYSTRING( rc, cs_name ) ;
 }
 
-__IMP_FUNCTION(cl_get_full_name)
+__METHOD_IMP(cl_get_full_name)
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
@@ -1834,7 +1834,7 @@ done:
    return MAKE_RETURN_INT_PYSTRING( rc, full_name ) ;
 }
 
-__IMP_FUNCTION(cl_aggregate)
+__METHOD_IMP(cl_aggregate)
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
@@ -1864,7 +1864,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_get_query_meta)
+__METHOD_IMP(cl_get_query_meta)
 {
    INT32 rc                       = 0 ;
    INT64 num_to_skip              = 0 ;
@@ -1908,7 +1908,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_attach_collection)
+__METHOD_IMP(cl_attach_collection)
 {
    INT32 rc                    = 0 ;
    PYOBJECT *obj               = NULL ;
@@ -1936,7 +1936,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cl_detach_collection)
+__METHOD_IMP(cl_detach_collection)
 {
    INT32 rc                  = 0 ;
    PYOBJECT *obj             = NULL ;
@@ -1960,8 +1960,123 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
+__METHOD_IMP(cl_create_lob)
+{
+   INT32 rc           = SDB_OK ;
+   PYOBJECT *obj      = NULL ;
+   PYOBJECT *obj_lob  = NULL ;
+   PYOBJECT *oid_obj  = NULL ;
+   sdbCollection *cl  = NULL ;
+   sdbLob *lob        = NULL ;
+   const CHAR * str_id= NULL ;
+   bson::OID *pOid    = NULL ;
+   bson::OID oid;
+   
+
+   if ( !PARSE_PYTHON_ARGS(args, "OOO", &obj, &obj_lob, &oid_obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj_lob, sdbLob, lob ) ;
+   if ( Py_None != oid_obj )
+   {
+      str_id = (const CHAR *)PyCObject_AsVoidPtr(oid_obj) ;
+      if ( NULL != str_id )
+      {
+         oid.init( str_id ) ;
+         pOid = &oid ;
+      }
+   }
+   
+
+   rc = cl->createLob(*lob, pOid) ;
+
+done:
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(cl_get_lob)
+{
+   INT32 rc           = SDB_OK ;
+   PYOBJECT *obj      = NULL ;
+   PYOBJECT *obj_lob  = NULL ;
+   sdbCollection *cl  = NULL ;
+   sdbLob *lob        = NULL ;
+   const CHAR *str_id = NULL ;
+   bson::OID oid;
+
+   if ( !PARSE_PYTHON_ARGS(args, "OOs", &obj, &obj_lob, &str_id) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj_lob, sdbLob, lob ) ;
+   oid.init(str_id) ;
+   rc = cl->openLob(*lob, oid) ;
+
+done:
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(cl_remove_lob)
+{
+   INT32 rc           = SDB_OK ;
+   PYOBJECT *obj      = NULL ;
+   sdbCollection *cl  = NULL ;
+   const CHAR *str_id = NULL ;
+   bson::OID oid ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "Os", &obj, &str_id) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   oid.init(str_id) ;
+   rc = cl->removeLob( oid ) ;
+
+done:
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(cl_list_lobs)
+{
+   INT32 rc           = SDB_OK ;
+   PYOBJECT *obj      = NULL ;
+   PYOBJECT *obj_cr   = NULL ;
+   sdbCollection *cl  = NULL ;
+   sdbCursor  *cursor = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "OO", &obj, &obj_cr) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj_cr, sdbCursor, cursor) ;
+   rc = cl->listLobs( *cursor ) ;
+
+done:
+   return MAKE_RETURN_INT(rc) ;
+error:
+   goto done ;
+}
+
 ///< implement cursor
-__IMP_FUNCTION(create_cursor)
+__METHOD_IMP(create_cursor)
 {
    sdbCursor *cursor = NULL;
    if ( !PARSE_PYTHON_ARGS(args, "") )
@@ -1978,7 +2093,7 @@ __IMP_FUNCTION(create_cursor)
    return MAKE_PYOBJECT( cursor ) ;
 }
 
-__IMP_FUNCTION(release_cursor)
+__METHOD_IMP(release_cursor)
 {
    INT32 rc          = 0 ;
    PYOBJECT *obj     = NULL ;
@@ -1996,7 +2111,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(cr_next)
+__METHOD_IMP(cr_next)
 {
    INT32 rc          = 0 ;
    PYOBJECT *obj     = NULL ;
@@ -2023,7 +2138,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(cr_current)
+__METHOD_IMP(cr_current)
 {
    INT32 rc          = 0 ;
    PYOBJECT *obj     = NULL ;
@@ -2048,7 +2163,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(cr_close)
+__METHOD_IMP(cr_close)
 {
    INT32 rc          = 0 ;
    PYOBJECT *obj     = NULL ;
@@ -2074,7 +2189,7 @@ error :
 
 ///< implement group
 typedef sdbReplicaGroup Group ;
-__IMP_FUNCTION(create_group)
+__METHOD_IMP(create_group)
 {
    Group *replica_group = NULL;
    if ( !PARSE_PYTHON_ARGS(args, "") )
@@ -2091,7 +2206,7 @@ __IMP_FUNCTION(create_group)
    return MAKE_PYOBJECT( replica_group ) ;
 }
 
-__IMP_FUNCTION(release_group)
+__METHOD_IMP(release_group)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -2109,7 +2224,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(gp_get_nodenum)
+__METHOD_IMP(gp_get_nodenum)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -2131,7 +2246,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_get_detail)
+__METHOD_IMP(gp_get_detail)
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -2206,7 +2321,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_get_master)
+__METHOD_IMP(gp_get_master)
 {
    INT32 rc             = 0 ;
    sdbNode *node        = NULL ;
@@ -2229,7 +2344,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_get_slave)
+__METHOD_IMP(gp_get_slave)
 {
    INT32 rc             = 0 ;
    sdbNode *node        = NULL ;
@@ -2251,7 +2366,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_get_node_by_name)
+__METHOD_IMP(gp_get_node_by_name)
 {
    INT32 rc             = 0 ;
    PYOBJECT *group_obj  = NULL ;
@@ -2280,7 +2395,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_get_node_by_endpoint)
+__METHOD_IMP(gp_get_node_by_endpoint)
 {
    INT32 rc                = 0 ;
    PYOBJECT *group_obj     = NULL ;
@@ -2310,9 +2425,7 @@ error :
    goto done ;
 }
 
-
-
-__IMP_FUNCTION(gp_create_node)
+__METHOD_IMP(gp_create_node)
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
@@ -2349,7 +2462,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_remove_node)
+__METHOD_IMP(gp_remove_node)
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
@@ -2382,7 +2495,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_start)
+__METHOD_IMP(gp_start)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -2402,7 +2515,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_stop)
+__METHOD_IMP(gp_stop)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -2422,7 +2535,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(gp_is_catalog)
+__METHOD_IMP(gp_is_catalog)
 {
    INT32 rc                       = 0 ;
    PYOBJECT *obj                  = NULL ;
@@ -2443,7 +2556,7 @@ error :
 }
 
 /// implement node
-__IMP_FUNCTION(create_node)
+__METHOD_IMP(create_node)
 {
    sdbNode *node = NULL;
    if ( !PARSE_PYTHON_ARGS(args, "") )
@@ -2460,7 +2573,7 @@ __IMP_FUNCTION(create_node)
    return MAKE_PYOBJECT( node ) ;
 }
 
-__IMP_FUNCTION(release_node)
+__METHOD_IMP(release_node)
 {
    INT32 rc       = 0 ;
    PYOBJECT *obj  = NULL ;
@@ -2478,7 +2591,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-__IMP_FUNCTION(nd_connect)
+__METHOD_IMP(nd_connect)
 {
    INT32 rc         = 0 ;
    PYOBJECT *obj    = NULL ;
@@ -2501,7 +2614,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(nd_get_status)
+__METHOD_IMP(nd_get_status)
 {
    INT32  rc        = 0 ;
    PYOBJECT *obj    = NULL ;
@@ -2522,7 +2635,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(nd_get_hostname)
+__METHOD_IMP(nd_get_hostname)
 {
    INT32  rc            = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -2543,7 +2656,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(nd_get_servicename)
+__METHOD_IMP(nd_get_servicename)
 {
    INT32  rc               = 0 ;
    PYOBJECT *obj           = NULL ;
@@ -2564,7 +2677,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(nd_get_nodename)
+__METHOD_IMP(nd_get_nodename)
 {
    INT32  rc            = 0 ;
    PYOBJECT *obj        = NULL ;
@@ -2585,7 +2698,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(nd_stop)
+__METHOD_IMP(nd_stop)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -2605,7 +2718,7 @@ error :
    goto done ;
 }
 
-__IMP_FUNCTION(nd_start)
+__METHOD_IMP(nd_start)
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
@@ -2626,6 +2739,257 @@ error :
 }
 
 
+__METHOD_IMP(lob_create)
+{
+   INT32 rc           = SDB_OK ;
+   sdbLob *ret_obj    = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, ""))
+   {
+      return NULL ;
+   }
+
+   NEW_CPPOBJECT(ret_obj, sdbLob);
+   if ( NULL == ret_obj )
+   {
+      return NULL ;
+   }
+
+   return MAKE_PYOBJECT(ret_obj) ;
+}
+
+__METHOD_IMP(lob_release)
+{
+   INT32 rc           = SDB_OK ;
+   PYOBJECT *obj      = NULL ;
+   sdbLob *lob        = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj))
+   {
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   if ( NULL == obj )
+   {
+      rc = SDB_INVALIDARG ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   DELETE_CPPOBJECT(lob) ;
+done:
+   return MAKE_RETURN_INT(rc) ;
+}
+/*
+__METHOD_IMP(lob_open)
+{
+   INT32 rc = SDB_OK ;
+   PYOBJECT *obj = NULL ;
+   sdbLob *lob = NULL ;
+   INT32 mode = 0 ;
+   const CHAR *str_id = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "Oi|s", &obj, &mode, &str_id) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( NULL == str_id && mode == SDB_LOB_READ )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->open( mode, str_id ) ;
+   
+done:
+   return MAKE_RETURN_INT_PYSTRING( rc, str_id ) ;
+error:
+   goto done ;
+}
+*/
+__METHOD_IMP(lob_close)
+{
+   INT32 rc = SDB_OK ;
+   PYOBJECT *obj = NULL ;
+   sdbLob *lob = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->close() ;
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(lob_read)
+{
+   INT32 rc = SDB_OK ;
+   PYOBJECT *obj = NULL ;
+   sdbLob *lob = NULL ;
+   UINT32 len = 0 ;
+   UINT32 realLen = 0 ;
+   CHAR *buffer = NULL ;
+   std::string str_data;
+
+   if ( !PARSE_PYTHON_ARGS(args, "OI", &obj, &len ) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( len <= 0 )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   buffer = new CHAR[len + 1] ;
+   ossMemset( buffer, 0, len + 1) ;
+   rc = lob->read( len, buffer, &realLen ) ;
+   str_data = buffer ;
+
+done:
+   if ( NULL != buffer )
+   {
+      delete [] buffer ;
+      buffer = NULL ;
+   }
+   return MAKE_RETURN_INT_PYSTRING_UINT( rc, str_data.c_str(), realLen ) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(lob_write)
+{
+   INT32 rc = SDB_OK ;
+   PYOBJECT *obj = NULL ;
+   sdbLob *lob = NULL ;
+   INT32 len = 0 ;
+   INT32 realLen = 0 ;
+   CHAR *str = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "Osi", &obj, &str, &len ) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( len <= 0 )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->write( str, len ) ;
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(lob_seek)
+{
+   INT32 rc = SDB_OK ;
+   PYOBJECT *obj = NULL ;
+   sdbLob *lob   = NULL ;
+   SINT64 offset = 0 ;
+   INT32 whence = 0 ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "Oli", &obj, &offset, &whence))
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->seek(offset, (SDB_LOB_SEEK)whence) ;
+   
+done:
+   return MAKE_RETURN_INT( rc ) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(lob_get_create_time)
+{
+   INT32 rc = SDB_OK ;
+   UINT64 ms = 0;
+   PYOBJECT *obj = NULL ;
+   sdbLob  *lob  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->getCreateTime(&ms) ;
+   
+done:
+   return MAKE_RETURN_INT_ULLONG( rc, ms ) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(lob_get_size)
+{
+   INT32 rc = SDB_OK ;
+   SINT64 lobSize = 0;
+   PYOBJECT *obj = NULL ;
+   sdbLob  *lob  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->getSize(&lobSize) ;
+
+done:
+   return MAKE_RETURN_INT_LONG( rc, lobSize ) ;
+error:
+   goto done ;
+}
+
+__METHOD_IMP(lob_get_oid)
+{
+   INT32 rc = SDB_OK ;
+   UINT64 ms = 0;
+   PYOBJECT *obj = NULL ;
+   sdbLob  *lob  = NULL ;
+   bson::OID oid ;
+
+   if ( !PARSE_PYTHON_ARGS(args, "O", &obj) )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
+   rc = lob->getOid(oid) ;
+
+done:
+   return MAKE_RETURN_INT_PYSTRING( rc, oid.getData() ) ;
+error:
+   goto done ;
+}
 
 static PyMethodDef sequoiadb_methods[] = {
    /** client */
@@ -2702,6 +3066,11 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_get_query_meta",               cl_get_query_meta,               METH_VARARGS},
    {"cl_attach_collection",            cl_attach_collection,            METH_VARARGS},
    {"cl_detach_collection",            cl_detach_collection,            METH_VARARGS},
+   {"cl_create_lob",                   cl_create_lob,                   METH_VARARGS},
+   {"cl_get_lob",                      cl_get_lob,                      METH_VARARGS},
+   {"cl_remove_lob",                   cl_remove_lob,                   METH_VARARGS},
+   {"cl_list_lobs",                    cl_list_lobs,                    METH_VARARGS},
+   
    /** cr */
    {"create_cursor",                   create_cursor,                   METH_VARARGS},
    {"release_cursor",                  release_cursor,                  METH_VARARGS},
@@ -2732,6 +3101,16 @@ static PyMethodDef sequoiadb_methods[] = {
    {"nd_get_nodename",                 nd_get_nodename,                 METH_VARARGS},
    {"nd_stop",                         nd_stop,                         METH_VARARGS},
    {"nd_start",                        nd_start,                        METH_VARARGS},
+   /** lob */
+   {"create_lob",                      lob_create,                      METH_VARARGS},
+   {"release_lob",                     lob_release,                     METH_VARARGS},
+   {"lob_close",                       lob_close,                       METH_VARARGS},
+   {"lob_read",                        lob_read,                        METH_VARARGS},
+   {"lob_write",                       lob_write,                       METH_VARARGS},
+   {"lob_seek",                        lob_seek,                        METH_VARARGS},
+   {"lob_get_size",                    lob_get_size,                    METH_VARARGS},
+   {"lob_get_oid",                     lob_get_oid,                     METH_VARARGS},
+   {"lob_get_create_time",             lob_get_create_time,             METH_VARARGS},
    {NULL, NULL}
 };
 

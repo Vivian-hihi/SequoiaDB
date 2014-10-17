@@ -79,6 +79,10 @@ __METHOD_DECLARE(cl_aggregate) ;
 __METHOD_DECLARE(cl_get_query_meta) ;
 __METHOD_DECLARE(cl_attach_collection) ;
 __METHOD_DECLARE(cl_detach_collection) ;
+__METHOD_DECLARE(cl_create_lob) ;
+__METHOD_DECLARE(cl_get_lob) ;
+__METHOD_DECLARE(cl_remove_lob) ;
+__METHOD_DECLARE(cl_list_lobs) ;
 
 ///< cursor
 __METHOD_DECLARE(create_cursor) ;
@@ -113,4 +117,14 @@ __METHOD_DECLARE(nd_get_nodename) ;
 __METHOD_DECLARE(nd_stop) ;
 __METHOD_DECLARE(nd_start) ;
 
+///< lob
+__METHOD_DECLARE(create_lob) ;
+__METHOD_DECLARE(release_lob) ;
+__METHOD_DECLARE(lob_close) ;
+__METHOD_DECLARE(lob_read) ;
+__METHOD_DECLARE(lob_write) ;
+__METHOD_DECLARE(lob_seek) ;
+__METHOD_DECLARE(lob_get_create_time) ; 
+__METHOD_DECLARE(lob_get_size) ;
+__METHOD_DECLARE(lob_get_oid) ;
 #endif

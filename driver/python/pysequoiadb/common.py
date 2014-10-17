@@ -52,6 +52,9 @@ const.SDB_INVALID_FILE_TYPE      = -20
 const.SDB_OOM                    = -2
 const.SDB_SYS                    = -10
 
+const.LOB_CREATE = 1
+const.LOB_READ   = 4
+
 def get_info(code):
    try:
       info = const.errmaps[code]

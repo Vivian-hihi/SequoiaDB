@@ -25,9 +25,10 @@ from bson.objectid import ObjectId
 import pysequoiadb
 
 from pysequoiadb.cursor import cursor
+from pysequoiadb.lob import lob
 from pysequoiadb import error
 from pysequoiadb.common import const
-from pysequoiadb.error import (SDBBaseError, SDBTypeError)
+from pysequoiadb.error import (SDBBaseError, SDBTypeError, SDBSystemError)
 
 class collection(object):
    """Collection for SequoiaDB
@@ -66,7 +67,7 @@ class collection(object):
       try:
          self._cl = sdb.create_cl()
       except SystemError:
-         raise SDBBaseError("Failed to alloc collection", const.SDB_OOM)
+         raise SDBSystemError("Failed to alloc collection", const.SDB_OOM)
 
    def __del__(self):
       """delete a object existed.
@@ -825,3 +826,103 @@ class collection(object):
          pysequoiadb._raise_if_error("Failed to detach collection", rc)
       except SDBBaseError:
          raise
+
+   def create_lob(self, oid = None):
+      """create lob.
+
+      Parameters:
+         Name     Type                 Info:
+         oid      bson.ObjectId        Specified the oid of lob to be created,
+                                       if None, the oid is generated automatically
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      if oid is None:
+         str_id = None
+      elif isinstance(oid, bson.ObjectId):
+         str_id = oid.binary
+      else:
+         raise SDBTypeError("oid must be an instance of bson.ObjectId")
+
+      try:
+         obj = lob()
+         rc = sdb.cl_create_lob(self._cl, obj._handle, str_id)
+         pysequoiadb._raise_if_error("Failed to create lob", rc)
+      except SDBBaseError:
+         raise
+
+      return obj
+
+   def get_lob(self, oid):
+      """get the specified lob.
+
+      Parameters:
+         Name     Type                 Info:
+         oid      str/bson.ObjectId    The specified oid
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      if not isinstance(oid, bson.ObjectId) and not isinstance(oid, basestring):
+         raise SDBTypeError("oid must be bson.ObjectId or string")
+
+      if isinstance(oid, bson.ObjectId):
+         str_id = oid.binary
+      else:
+         str_id = oid
+      try:
+         obj = lob()
+         rc = sdb.cl_get_lob(self._cl, obj._handle, str_id)
+         pysequoiadb._raise_if_error("Failed to get specified lob", rc)
+      except SDBBaseError:
+         raise
+
+      return obj
+
+   def remove_lob(self, oid):
+      """remove lob.
+
+      Parameters:
+         Name     Type                 Info:
+         oid      str/bson.ObjectId    The oid of the lob to be remove.
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      if isinstance(oid, bson.ObjectId):
+         str_id = oid.binary
+      elif isinstance(oid, str):
+         str_id = oid
+      else:
+         raise SDBTypeError("oid must be an instance of str or bson.ObjectId")
+
+      try:
+         rc = sdb.cl_remove_lob(self._cl, oid )
+         pysequoiadb._raise_if_error("Failed to remove lob", rc)
+      except SDBBaseError:
+         raise
+
+   def list_lobs(self):
+      """list all lobs.
+
+      Parameters:
+         Name     Type                 Info:
+
+      Return values:
+         a cursor object of query
+      Exceptions:
+         pysequoiadb.error.SDBBaseError
+      """
+      try:
+         result = cursor()
+         rc = sdb.cl_list_lobs(self._cl, result._cursor)
+         pysequoiadb._raise_if_error("Failed to list lobs", rc)
+      except SDBBaseError:
+         del result
+         result = None
+         raise
+
+      return result
+
+         
