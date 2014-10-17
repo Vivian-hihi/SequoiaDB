@@ -166,6 +166,10 @@
             <files>${installdir}/www/shell/*</files>
             <permissions>0755</permissions>
         </changePermissions>
+        <changePermissions>
+            <files>${installdir}/install_om.sh</files>
+            <permissions>0755</permissions>
+        </changePermissions>
         <dos2unix>
             <files>${installdir}/tools/server/php/bin/php</files>
         </dos2unix>
@@ -532,7 +536,7 @@
                 </booleanParameter>
                 <stringParameter>
                     <name>type</name>
-                    <description></description>
+                    <description>Installation mode</description>
                     <explanation></explanation>
                     <value></value>
                     <default>DB</default>
