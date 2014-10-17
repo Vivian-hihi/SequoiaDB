@@ -251,11 +251,11 @@
             <ruleList>
                 <componentTest>
                     <logic>exists</logic>
-                    <name>type</name>
+                    <name>${type}</name>
                 </componentTest>
                 <compareValues>
                     <logic>equals</logic>
-                    <value1>type</value1>
+                    <value1>${type}</value1>
                     <value2>OM</value2>
                 </compareValues>
             </ruleList>
@@ -556,15 +556,15 @@
                     <allowEmptyValue>0</allowEmptyValue>
                     <width>40</width>
                     <ruleList>
-                        <compareValues>
-                            <logic>equals</logic>
-                            <value1>type</value1>
-                            <value2>OM</value2>
-                        </compareValues>
                         <componentTest>
                             <logic>exists</logic>
-                            <name>type</name>
+                            <name>${type}</name>
                         </componentTest>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${type}</value1>
+                            <value2>OM</value2>
+                        </compareValues>
                     </ruleList>
                 </stringParameter>
                 <directoryParameter>
@@ -581,11 +581,11 @@
                     <ruleList>
                         <componentTest>
                             <logic>exists</logic>
-                            <name>type</name>
+                            <name>${type}</name>
                         </componentTest>
                         <compareValues>
                             <logic>equals</logic>
-                            <value1>type</value1>
+                            <value1>${type}</value1>
                             <value2>OM</value2>
                         </compareValues>
                     </ruleList>
