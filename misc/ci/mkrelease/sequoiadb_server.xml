@@ -260,6 +260,10 @@
                 </compareValues>
             </ruleList>
         </runProgram>
+        <changePermissions>
+            <files>${installdir}/postgresql/*</files>
+            <permissions>0755</permissions>
+        </changePermissions>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
