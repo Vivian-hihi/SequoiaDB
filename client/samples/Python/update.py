@@ -65,4 +65,5 @@ if __name__ == "__main__":
 
    except (SDBTypeError, SDBBaseError), e:
       pysequoiadb._print(e)
+   except SDBBaseError, e:
       pysequoiadb._print(e.detail)

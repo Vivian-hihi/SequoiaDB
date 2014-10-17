@@ -44,6 +44,8 @@ if __name__ == "__main__":
       pysequoiadb._print(lob_two.get_create_time())
       datafrom = lob_two.read(20)
       pysequoiadb._print(datafrom)
+      cl.remove_lob(oid)
+      pysequoiadb._print("remove success")
       # drop collection
       cs.drop_collection( cl_name )
       del cl
