@@ -74,7 +74,7 @@ class lob(object):
          a long int of time
       """
       try:
-         rc, mms = sdb.get_create_time(self._handle) ;
+         rc, mms = sdb.lob_get_create_time(self._handle) ;
          pysequoiadb._raise_if_error("Failed to get createtime of lob", rc)
       except SDBBaseError:
          raise

@@ -841,7 +841,7 @@ class collection(object):
       if oid is None:
          str_id = None
       elif isinstance(oid, bson.ObjectId):
-         str_id = oid.binary
+         str_id = str(oid)
       else:
          raise SDBTypeError("oid must be an instance of bson.ObjectId")
 
@@ -868,7 +868,7 @@ class collection(object):
          raise SDBTypeError("oid must be bson.ObjectId or string")
 
       if isinstance(oid, bson.ObjectId):
-         str_id = oid.binary
+         str_id = str(oid)
       else:
          str_id = oid
       try:
@@ -891,7 +891,7 @@ class collection(object):
          pysequoiadb.error.SDBBaseError
       """
       if isinstance(oid, bson.ObjectId):
-         str_id = oid.binary
+         str_id = str(oid)
       elif isinstance(oid, str):
          str_id = oid
       else:

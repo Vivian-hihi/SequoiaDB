@@ -2018,7 +2018,9 @@ __METHOD_IMP(cl_get_lob)
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( obj_lob, sdbLob, lob ) ;
+   printf(str_id) ;
    oid.init(str_id) ;
+
    rc = cl->openLob(*lob, oid) ;
 
 done:
@@ -2781,36 +2783,7 @@ __METHOD_IMP(lob_release)
 done:
    return MAKE_RETURN_INT(rc) ;
 }
-/*
-__METHOD_IMP(lob_open)
-{
-   INT32 rc = SDB_OK ;
-   PYOBJECT *obj = NULL ;
-   sdbLob *lob = NULL ;
-   INT32 mode = 0 ;
-   const CHAR *str_id = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS(args, "Oi|s", &obj, &mode, &str_id) )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
-   if ( NULL == str_id && mode == SDB_LOB_READ )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT(obj, sdbLob, lob) ;
-   rc = lob->open( mode, str_id ) ;
-   
-done:
-   return MAKE_RETURN_INT_PYSTRING( rc, str_id ) ;
-error:
-   goto done ;
-}
-*/
 __METHOD_IMP(lob_close)
 {
    INT32 rc = SDB_OK ;
