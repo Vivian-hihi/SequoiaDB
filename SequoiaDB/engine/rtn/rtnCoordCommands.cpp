@@ -3206,10 +3206,10 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCS_GETGPLST, "rtnCoordCMDDropCollectionSpace::getGroupList" )
    INT32 rtnCoordCMDDropCollectionSpace::getGroupList( CHAR *pReceiveBuffer,
-                                                      CoordGroupList &groupLst,
-                                                      CoordGroupList &sendGroupLst,
-                                                      pmdEDUCB * cb,
-                                                      BOOLEAN isNeedRefresh )
+                                                       CoordGroupList &groupLst,
+                                                       CoordGroupList &sendGroupLst,
+                                                       pmdEDUCB * cb,
+                                                       BOOLEAN isNeedRefresh )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCODROPCS_GETGPLST ) ;
@@ -3234,9 +3234,8 @@ namespace engine
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCommandName,
                             &numToSkip, &numToReturn, &pQuery, &pFieldSelector,
                             &pOrderBy, &pHint );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to parse the request(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse the request(rc=%d)",
+                   rc ) ;
 
       try
       {
@@ -3244,25 +3243,24 @@ namespace engine
          BSONElement beCSName
             = boQuery.getField( CAT_COLLECTION_SPACE_NAME );
          PD_CHECK( beCSName.type() == String, SDB_INVALIDARG,
-                  error, PDERROR, "failed to get cs name" );
+                   error, PDERROR, "failed to get cs name" );
       }
       catch( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG( PDERROR,
-               "failed to drop cs, received unexpected error:%s",
-               e.what() );
+         PD_LOG( PDERROR, "Failed to drop cs, received unexpected error:%s",
+                 e.what() );
+         goto error ;
       }
 
       rc = msgBuildQuerySpaceReqMsg( &pBuffer, &bufferSize, 0, 0, 0, -1,
-                                    cb->getTID(), &boQuery, &boEmpty,
-                                    &boEmpty, &boEmpty );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to build query request(rc=%d)",
-                  rc );
+                                     cb->getTID(), &boQuery, &boEmpty,
+                                     &boEmpty, &boEmpty );
+      PD_RC_CHECK( rc, PDERROR, "Failed to build query request(rc=%d)",
+                   rc );
       rc = executeOnCataGroup( pBuffer, pRouteAgent, cb, NULL, &groupLst );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get cs info from catalog(rc=%d)", rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get cs info from catalog(rc=%d)",
+                   rc );
 
       iter = sendGroupLst.begin();
       while( iter != sendGroupLst.end() )
@@ -3280,7 +3278,7 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION (SDB_RTNCODROPCS_DOONCATA, "rtnCoordCMDDropCollectionSpace::doOnCataGroup" )
    INT32 rtnCoordCMDDropCollectionSpace::doOnCataGroup( CHAR *pReceiveBuffer,
-                                                      pmdEDUCB * cb )
+                                                        pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCODROPCS_DOONCATA ) ;
@@ -3299,489 +3297,16 @@ namespace engine
       pDropReq->header.TID = cb->getTID();
 
       rc = executeOnCataGroup( pReceiveBuffer, pRouteAgent, cb );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to drop the catalog of cs(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to drop the catalog of cs, rc: %d",
+                   rc ) ;
 
    done:
-      pDropReq->header.opCode = opCode;
-      pDropReq->header.TID = TID;
+      pDropReq->header.opCode = opCode ;
+      pDropReq->header.TID = TID ;
       //PD_TRACE_EXITRC ( SDB_RTNCODROPCS_DOONCATA, rc ) ;
       return rc;
    error:
       goto done;
-   }
-   
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDROPCL_EXE, "rtnCoordCMDDropCollection::execute" )
-   INT32 rtnCoordCMDDropCollectionOld::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                              CHAR **ppResultBuffer, pmdEDUCB *cb, MsgOpReply &replyHeader,
-                              BSONObj **ppErrorObj )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDDROPCL_EXE ) ;
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      std::set<INT32> ignoreList ;
-      ignoreList.insert ( SDB_DMS_NOTEXIST ) ;
-      std::string strMainCL;
-
-      // fill default-reply(drop collection success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
-
-      INT32 flag                       = 0;
-      CHAR *pCommandName               = NULL;
-      SINT64 numToSkip                 = 0;
-      SINT64 numToReturn               = 0;
-      CHAR *pQuery                     = NULL;
-      CHAR *pFieldSelector             = NULL;
-      CHAR *pOrderBy                   = NULL;
-      CHAR *pHint                      = NULL;
-      BSONObj boQuery;
-      std::string strCollectionName;
-      CoordCataInfoPtr cataInfo;
-      BOOLEAN isNeedRefresh            = FALSE ;
-      CoordGroupList dataNodeGroupLst;
-      CoordGroupList sendGroupLst;
-      CoordGroupList lockedGroupLst;
-      MsgOpQuery *pDropReq             = NULL ;
-      MsgOpTransTryLock *pLockReq      = NULL ;
-      MsgOpTransReleaseLock *pReleaseReq = NULL ;
-      INT32 lockBuffSize               = 0;
-      INT32 releaseBuffSize            = 0;
-
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCommandName,
-                            &numToSkip, &numToReturn, &pQuery, &pFieldSelector,
-                            &pOrderBy, &pHint );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR,
-                  "failed to parse drop collection request(rc=%d)",
-                  rc );
-         goto error ;
-      }
-
-      try
-      {
-         boQuery = BSONObj( pQuery );
-         BSONElement beCollectionName
-                     = boQuery.getField( CAT_COLLECTION_NAME );
-         if ( beCollectionName.eoo() || beCollectionName.type() != String )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "failed to drop collection, failed to get collection name" );
-            goto error ;
-         }
-         strCollectionName = beCollectionName.str();
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,
-                  "failed to drop collection, received unexpected error:%s",
-                  e.what() );
-         goto error ;
-      }
-      rc = msgBuildTryLockMsg( (CHAR **)(&pLockReq),
-                                 &lockBuffSize,
-                                 strCollectionName.c_str(),
-                                 cb->getTID(), DPS_TRANSLOCK_X );
-      PD_RC_CHECK( rc, PDERROR,
-                  "build lock message failed(rc=%d)",
-                  rc );
-      rc = msgBuildLockReleaseMsg( (CHAR **)(&pReleaseReq) ,
-                                    &releaseBuffSize,
-                                    strCollectionName.c_str(),
-                                    cb->getTID() );
-      PD_RC_CHECK( rc, PDERROR,
-                  "build release message failed(rc=%d)",
-                  rc );
-   retry :
-      // first time we use cached version
-      rc = rtnCoordGetCataInfo( cb, strCollectionName.c_str(),
-                                isNeedRefresh, cataInfo );
-      if ( rc != SDB_OK )
-      {
-         // if we cannot find such error, let's return SDB_DMS_NOTEXIST
-         PD_LOG ( PDERROR,
-                  "failed to drop collection(%s), "
-                  "get catalogue failed(rc=%d)",
-                  strCollectionName.c_str(), rc );
-         goto error;
-      }
-      strMainCL = cataInfo->getCatalogSet()->getMainCLName();
-
-      // then build drop request
-      rc = rtnCoordGetGroupsByCataInfo( cataInfo, lockedGroupLst,
-                                        dataNodeGroupLst ) ;
-      if ( rc != SDB_OK )
-      {
-         if ( SDB_CAT_NO_MATCH_CATALOG == rc )
-         {
-            goto error_retry;
-         }
-         PD_LOG ( PDERROR, "failed to get group list(rc=%d)", rc ) ;
-         goto error;
-      }
-
-      /****STEP-1****/
-      // get COLLECTION-LOCK-X
-      pLockReq->version = cataInfo->getVersion();
-      rc = executeOnDataGroup( (MsgHeader *)pLockReq, dataNodeGroupLst,
-                               lockedGroupLst, pRouteAgent, cb, TRUE,
-                               &ignoreList ) ;
-      if ( rc != SDB_OK )
-      {
-         goto error_retry;
-      }
-
-      /****STEP-2****/
-      // drop collection and release COLLECTION-LOCK-X
-      pDropReq = ( MsgOpQuery *)pReceiveBuffer;
-      pDropReq->version = cataInfo->getVersion();
-      pDropReq->header.routeID.value = 0;
-      pDropReq->header.TID = cb->getTID();
-      pDropReq->header.opCode = MSG_BS_QUERY_REQ;
-      // execute drop request on the given data nodes
-      // ignore SDB_DMS_NOTEXIST
-      rc = executeOnDataGroup( (MsgHeader *)pDropReq,
-                                lockedGroupLst, sendGroupLst,
-                                pRouteAgent, cb, TRUE, &ignoreList );
-      if ( rc )
-      {
-         PD_LOG ( PDWARNING,
-                  "failed to drop collection on data node" );
-      }
-
-      pDropReq->header.opCode = MSG_CAT_DROP_COLLECTION_REQ;
-      // once all nodes are droped, let's perform drop on catalog
-      rc = executeOnCataGroup( (CHAR *)pDropReq,
-                               pRouteAgent, cb ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR,
-                  "failed to drop the collection(%s), "
-                  "drop on catalogue-node failed(rc=%d)",
-                  strCollectionName.c_str(), rc );
-         goto error ;
-      }
-      pCoordcb->delCataInfo( strCollectionName );
-      if ( !strMainCL.empty() )
-      {
-         pCoordcb->delCataInfo( strMainCL );
-      }
-   done :
-      if ( pLockReq )
-      {
-         SDB_OSS_FREE( pLockReq );
-      }
-      if ( pReleaseReq )
-      {
-         SDB_OSS_FREE( pReleaseReq );
-      }
-      replyHeader.flags = rc;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDDROPCL_EXE, rc ) ;
-      return rc;
-   error_retry :
-      // if we get version too old error, and we haven't performed refresh,
-      // let's do refresh and try again
-      if ( !isNeedRefresh && rtnCoordWriteRetryRC( rc ) )
-      {
-         isNeedRefresh = TRUE ;
-         goto retry ;
-      }
-      // if we get here, that means executeOnDataGroup get non-version error or
-      // we already performed refresh, let's log error
-      PD_LOG ( PDERROR,
-               "failed to drop the collection(%s), "
-               "get collection-X-LOCK failed(rc=%d)",
-               strCollectionName.c_str(), rc );
-   error :
-      // release COLLECTION-LOCK-X.
-      // lock has been released on the node which drop collection successed.
-      // so released-operation only need execute on the node
-      // which drop collection failed
-      if ( pReleaseReq )
-      {
-         executeOnDataGroup( (MsgHeader *)pReleaseReq,
-                             lockedGroupLst, sendGroupLst,
-                             pRouteAgent, cb, TRUE );
-      }
-      if ( lockedGroupLst.size() != 0 )
-      {
-         CoordGroupList::iterator iterLst = lockedGroupLst.begin();
-         while ( iterLst != lockedGroupLst.end() )
-         {
-            PD_LOG ( PDWARNING,
-                     "failed to release lock(groupID:%u)",
-                     iterLst->first );
-            ++iterLst;
-         }
-      }
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDROPCS_EXE, "rtnCoordCMDDropCollectionSpace::execute" )
-   INT32 rtnCoordCMDDropCollectionSpaceOld::execute( CHAR *pReceiveBuffer,
-                                                SINT32 packSize,
-                                                CHAR **ppResultBuffer,
-                                                pmdEDUCB *cb,
-                                                MsgOpReply &replyHeader,
-                                                BSONObj **ppErrorObj )
-   {
-      INT32 rc                         = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDDROPCS_EXE ) ;
-      pmdKRCB *pKrcb                   = pmdGetKRCB();
-      CoordCB *pCoordcb                = pKrcb->getCoordCB();
-      netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      std::set<INT32> ignoreList ;
-      ignoreList.insert ( SDB_DMS_CS_NOTEXIST ) ;
-      // fill default-reply(drop collection success)
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
-      replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
-
-      INT32 flag                       = 0;
-      CHAR *pCommandName               = NULL;
-      SINT64 numToSkip                 = 0;
-      SINT64 numToReturn               = 0;
-      CHAR *pQuery                     = NULL;
-      CHAR *pFieldSelector             = NULL;
-      CHAR *pOrderBy                   = NULL;
-      CHAR *pHint                      = NULL;
-      BSONObj boQuery;
-      std::string strSpaceName;
-      CoordGroupList groupLst;
-      CoordGroupList sendGroupLst;
-      CoordGroupList lockedGroupLst;
-      MsgOpQuery *pDropReq             = NULL ;
-      MsgOpTransTryLock *pLockReq      = NULL ;
-      MsgOpTransReleaseLock *pReleaseReq = NULL ;
-      INT32 lockBuffSize               = 0 ;
-      INT32 releaseBuffSize            = 0 ;
-
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCommandName,
-                            &numToSkip, &numToReturn, &pQuery, &pFieldSelector,
-                            &pOrderBy, &pHint );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR,
-                  "failed to parse drop collection-space request(rc=%d)",
-                  rc );
-         goto error ;
-      }
-
-      try
-      {
-         boQuery = BSONObj( pQuery );
-         BSONElement beCollectionSpaceName
-                     = boQuery.getField( CAT_COLLECTION_SPACE_NAME );
-         if ( beCollectionSpaceName.eoo() ||
-              beCollectionSpaceName.type() != String )
-         {
-            rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "failed to drop collection-space, "
-                     "failed to get collectionSpace name" );
-            goto error ;
-         }
-         strSpaceName = beCollectionSpaceName.str();
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,
-                  "failed to drop collection-space, "
-                  "received unexpected error:%s",
-                  e.what() );
-         goto error ;
-      }
-
-      rc = getSpaceGroupInfo( cb, strSpaceName.c_str(),
-                              groupLst, pRouteAgent );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR,
-                  "failed to drop collection-space(%s), "
-                  "failed to get collectionSpace info(%d)",
-                  strSpaceName.c_str(), rc );
-         goto error ;
-      }
-
-      // print debug info
-      PD_LOG ( PDDEBUG,
-               "drop collection-space(name:%s)",
-               strSpaceName.c_str() );
-      if ( getPDLevel() >= PDDEBUG )
-      {
-         CoordGroupList::iterator iterLst = groupLst.begin();
-         while( iterLst != groupLst.end() )
-         {
-            PD_LOG ( PDDEBUG,
-                     "drop collection-space(name:%s) on group:%u",
-                     strSpaceName.c_str(), iterLst->first );
-            ++iterLst;
-         }
-      }
-      rc = msgBuildTryLockMsg( (CHAR **)(&pLockReq), &lockBuffSize,
-                                 strSpaceName.c_str(), cb->getTID(),
-                                 DPS_TRANSLOCK_X );
-      PD_RC_CHECK( rc, PDERROR,
-                  "build lock message failed(rc=%d)", rc );
-      rc = msgBuildLockReleaseMsg( (CHAR **)(&pReleaseReq), &releaseBuffSize,
-                                 strSpaceName.c_str(), cb->getTID() );
-      PD_RC_CHECK( rc, PDERROR,
-                  "build release message failed(rc=%d)", rc );
-
-      /******STEP-1*******/
-      // get SPACE-LOCK-X
-      rc = executeOnDataGroup( (MsgHeader *)pLockReq,
-                               groupLst, lockedGroupLst, pRouteAgent,
-                               cb, TRUE, &ignoreList );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get space-X-LOCK(rc=%d)",
-                  rc );
-
-      /*******STEP-2*******/
-      // drop space
-      pDropReq = ( MsgOpQuery *)pReceiveBuffer;
-      pDropReq->header.opCode = MSG_CAT_DROP_SPACE_REQ;
-      pDropReq->header.routeID.value = 0;
-      pDropReq->header.TID = cb->getTID();
-      rc = executeOnCataGroup( (CHAR *)pDropReq, pRouteAgent,
-                               cb ) ;
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR,
-                  "failed to drop the collection-space(%s), "
-                  "drop on catalogue-node failed(rc=%d)",
-                  strSpaceName.c_str(), rc );
-         goto error ;
-      }
-      pDropReq->header.opCode = MSG_BS_QUERY_REQ;
-      pDropReq->header.routeID.value = 0;
-      pDropReq->header.TID = cb->getTID();
-      rc = executeOnDataGroup( (MsgHeader *)pDropReq, lockedGroupLst,
-                                sendGroupLst, pRouteAgent, cb,
-                                TRUE, &ignoreList );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR,
-                  "failed to drop the collection-space(%s), "
-                  "drop on data-node failed(rc=%d)",
-                  strSpaceName.c_str(), rc );
-         goto error ;
-      }
-
-
-   done :
-      if ( pLockReq )
-      {
-         SDB_OSS_FREE( pLockReq );
-      }
-      if ( pReleaseReq )
-      {
-         SDB_OSS_FREE( pReleaseReq );
-      }
-      replyHeader.flags = rc;
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDDROPCS_EXE, rc ) ;
-      return rc;
-   error :
-      // release SPACE-LOCK-X.
-      // lock has been released on the node which drop space successed.
-      // so released-operation only need execute on the node
-      // which drop space failed
-      if ( pReleaseReq )
-      {
-         executeOnDataGroup( (MsgHeader *)pReleaseReq,
-                             lockedGroupLst, sendGroupLst,
-                             pRouteAgent, cb, TRUE );
-      }
-      if ( lockedGroupLst.size() != 0 )
-      {
-         CoordGroupList::iterator iterLst = lockedGroupLst.begin();
-         while ( iterLst != lockedGroupLst.end() )
-         {
-            PD_LOG ( PDWARNING,
-                     "failed to release lock(groupID:%u)",
-                     iterLst->first );
-            ++iterLst;
-         }
-      }
-      goto done ;
-   }
-
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDROPCS_GETSGRINFO, "rtnCoordCMDDropCollectionSpace::getSpaceGroupInfo" )
-   INT32 rtnCoordCMDDropCollectionSpaceOld::getSpaceGroupInfo( pmdEDUCB *cb,
-                                                            const CHAR *pSpaceName,
-                                                            CoordGroupList &groupLst,
-                                                            netMultiRouteAgent * pRouteAgent )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_RTNCOCMDDROPCS_GETSGRINFO ) ;
-      CHAR *pBuffer = NULL;
-      INT32 bufferSize = 0;
-      BSONObj boQuery;
-      BSONObj boSelector;
-      BSONObj boOrderBy;
-      BSONObj boHint;
-      try
-      {
-         BSONObjBuilder bobQuery;
-         bobQuery.append( CAT_COLLECTION_SPACE_NAME, pSpaceName );
-         boQuery = bobQuery.obj();
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR, "Failed to get collection-space info, occured "
-                  "unexpected error:%s", e.what() );
-         goto error ;
-      }
-      rc = msgBuildQuerySpaceReqMsg( &pBuffer, &bufferSize, 0, 0, 0,
-                                     1, cb->getTID(), &boQuery, &boSelector,
-                                     &boOrderBy, &boHint );
-      if ( rc != SDB_OK )
-      {
-         PD_LOG ( PDERROR, "Failed to get collection-space ifno, build "
-                  "request failed(rc=%d)", rc );
-         goto error ;
-      }
-
-      rc = executeOnCataGroup ( (CHAR*)pBuffer, pRouteAgent,
-                                cb, NULL, &groupLst ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "drop collection failed, rc = %d", rc ) ;
-         goto error ;
-      }
-   done :
-      if ( NULL != pBuffer )
-      {
-         SDB_OSS_FREE( pBuffer );
-         pBuffer = NULL;
-      }
-      PD_TRACE_EXITRC ( SDB_RTNCOCMDDROPCS_GETSGRINFO, rc ) ;
-      return rc;
-   error :
-      goto done ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDQUBASE_QUTOCANOGR, "rtnCoordCMDQueryBase::queryToCataNodeGroup" )

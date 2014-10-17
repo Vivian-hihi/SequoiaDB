@@ -226,13 +226,6 @@ INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize ) ;
 INT32 msgExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN &endianConvert,
                                INT32 *osType ) ;
 
-INT32 msgBuildTryLockMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *CollectionName, UINT32 TID,
-                          INT32 lockType );
-
-INT32 msgBuildLockReleaseMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *CollectionName, UINT32 TID );
-
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize );
 
 INT32 msgBuildTransCommitMsg ( CHAR **ppBuffer, INT32 *bufferSize );

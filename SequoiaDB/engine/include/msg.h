@@ -35,10 +35,6 @@ enum MSG_TYPE
    MSG_BS_TRANS_COMMIT_RSP             = MAKE_REPLY_TYPE(MSG_BS_TRANS_COMMIT_REQ),
    MSG_BS_TRANS_ROLLBACK_REQ           = 2012,
    MSG_BS_TRANS_ROLLBACK_RSP           = MAKE_REPLY_TYPE(MSG_BS_TRANS_ROLLBACK_REQ),
-   MSG_BS_TRYLOCK_REQ                  = 2013,
-   MSG_BS_TRYLOCK_RSP                  = MAKE_REPLY_TYPE(MSG_BS_TRYLOCK_REQ),
-   MSG_BS_RELEASELOCK_REQ              = 2014,
-   MSG_BS_RELEASELOCK_RSP              = MAKE_REPLY_TYPE(MSG_BS_RELEASELOCK_REQ),
    MSG_BS_TRANS_COMMITPRE_REQ          = 2015,
    MSG_BS_TRANS_COMMITPRE_RSP          = MAKE_REPLY_TYPE(MSG_BS_TRANS_COMMITPRE_REQ),
    MSG_BS_TRANS_INSERT_REQ             = 2016,
@@ -634,22 +630,6 @@ typedef struct _MsgOpTransRollback
 {
    MsgHeader header;
 } MsgOpTransRollback;
-
-typedef struct _MsgOpTransTryLock
-{
-   MsgHeader   header;
-   INT32       version;
-   INT32       lockType;
-   SINT32      nameLength;
-   CHAR        name[1];
-} MsgOpTransTryLock;
-
-typedef struct _MsgOpTransReleaseLock
-{
-   MsgHeader   header;
-   SINT32      nameLength;
-   CHAR        name[1];
-} MsgOpTransReleaseLock;
 
 typedef struct _MsgCoordCheckRouteID
 {

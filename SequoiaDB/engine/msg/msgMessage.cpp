@@ -1608,69 +1608,6 @@ INT32 msgExtractSql( CHAR *pBuffer, CHAR **sql )
    return rc ;
 }
 
-INT32 msgBuildTryLockMsg ( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *CollectionName, UINT32 TID,
-                          INT32 lockType )
-{
-   SDB_ASSERT( ppBuffer && CollectionName && bufferSize,
-               "invlaid input" ) ;
-   INT32 rc = SDB_OK;
-   MsgOpTransTryLock *pMsg = NULL;
-   INT32 packetLength
-            = ossRoundUpToMultipleX( offsetof(MsgOpTransTryLock, name) +
-                                       ossStrlen ( CollectionName ) + 1,
-                                       4 );
-   PD_CHECK( (packetLength > 0), SDB_INVALIDARG, error, PDERROR,
-            "Packet size overflow" );
-   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength );
-   PD_RC_CHECK( rc, PDERROR, "failed to check buffer" );
-   pMsg = (MsgOpTransTryLock *)(*ppBuffer);
-   pMsg->header.messageLength = packetLength;
-   pMsg->header.opCode = MSG_BS_TRYLOCK_REQ;
-   pMsg->header.routeID.value = 0;
-   pMsg->header.TID = TID;
-   pMsg->lockType = lockType;
-   pMsg->nameLength = ossStrlen( CollectionName );
-   pMsg->version = 0;
-   ossStrncpy( pMsg->name, CollectionName, pMsg->nameLength );
-   pMsg->name[pMsg->nameLength] = 0;
-
-done:
-   return rc;
-error:
-   goto done;
-}
-
-INT32 msgBuildLockReleaseMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
-                          const CHAR *CollectionName, UINT32 TID )
-{
-   SDB_ASSERT( ppBuffer && CollectionName && bufferSize,
-               "invlaid input" ) ;
-   INT32 rc = SDB_OK;
-   MsgOpTransReleaseLock *pMsg = NULL;
-   INT32 packetLength
-            = ossRoundUpToMultipleX( offsetof(MsgOpTransReleaseLock, name) +
-                                       ossStrlen ( CollectionName ) + 1,
-                                       4 );
-   PD_CHECK( (packetLength > 0), SDB_INVALIDARG, error, PDERROR,
-            "Packet size overflow" );
-   rc = msgCheckBuffer( ppBuffer, bufferSize, packetLength );
-   PD_RC_CHECK( rc, PDERROR, "failed to check buffer" );
-   pMsg = (MsgOpTransReleaseLock *)(*ppBuffer);
-   pMsg->header.messageLength = packetLength;
-   pMsg->header.opCode = MSG_BS_RELEASELOCK_REQ;
-   pMsg->header.routeID.value = 0;
-   pMsg->header.TID = TID;
-   pMsg->nameLength = ossStrlen( CollectionName );
-   ossStrncpy( pMsg->name, CollectionName, pMsg->nameLength );
-   pMsg->name[pMsg->nameLength] = 0;
-
-done:
-   return rc;
-error:
-   goto done;
-}
-
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize )
 {
    SDB_ASSERT( ppBuffer, "invlaid input" ) ;

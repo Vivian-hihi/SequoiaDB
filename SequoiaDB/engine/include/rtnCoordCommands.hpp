@@ -658,29 +658,6 @@ namespace engine
                                     pmdEDUCB * cb );
    };
 
-   class rtnCoordCMDDropCollectionOld : public rtnCoordCommand
-   {
-   public:
-      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                     CHAR **ppResultBuffer,
-                     pmdEDUCB *cb, MsgOpReply &replyHeader,
-                     BSONObj **ppErrorObj );
-   };
-
-   class rtnCoordCMDDropCollectionSpaceOld : public rtnCoordCommand
-   {
-   public:
-      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                     CHAR **ppResultBuffer,
-                     pmdEDUCB *cb, MsgOpReply &replyHeader,
-                     BSONObj **ppErrorObj );
-   private:
-      INT32 getSpaceGroupInfo( pmdEDUCB *cb,
-                               const CHAR *pSpaceName,
-                               CoordGroupList &groupLst,
-                               netMultiRouteAgent * pRouteAgent );
-   };
-
    class rtnCoordCMDQueryBase : public rtnCoordCommand
    {
    public:

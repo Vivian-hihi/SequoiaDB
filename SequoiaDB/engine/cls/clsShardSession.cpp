@@ -59,8 +59,6 @@ namespace engine
       ON_MSG ( MSG_BS_TRANS_BEGIN_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_COMMIT_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_ROLLBACK_REQ, _onOPMsg )
-      ON_MSG ( MSG_BS_TRYLOCK_REQ, _onOPMsg )
-      ON_MSG ( MSG_BS_RELEASELOCK_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_COMMITPRE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_UPDATE_REQ, _onOPMsg )
       ON_MSG ( MSG_BS_TRANS_DELETE_REQ, _onOPMsg )
@@ -439,14 +437,6 @@ namespace engine
 
             case MSG_BS_TRANS_ROLLBACK_REQ:
                rc = _onTransRollbackMsg();
-               break;
-
-            case MSG_BS_TRYLOCK_REQ:
-               rc = _onTryLockMsg( msg );
-               break;
-
-            case MSG_BS_RELEASELOCK_REQ:
-               rc = _onReleaseLockMsg( msg );
                break;
 
             case MSG_BS_TRANS_COMMITPRE_REQ:
@@ -1279,157 +1269,6 @@ namespace engine
       return rtnTransRollback( _pEDUCB, _pDpsCB ) ;
    }
 
-   INT32 _clsShdSession::_onTryLockMsg( MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK;
-      MsgOpTransTryLock *pReqMsg = (MsgOpTransTryLock *)msg;
-      CHAR *pCollectionName = pReqMsg->name;
-      CHAR *pDot = NULL;
-      CHAR *pDot1 = NULL;
-      INT16 w = 1;
-      BOOLEAN isMainCL = FALSE;
-
-      rc = _check ( w ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-
-      pDot = (CHAR *)ossStrchr( pCollectionName, '.' );
-      pDot1 = (CHAR *)ossStrrchr( pCollectionName, '.' );
-      PD_CHECK( (pDot == pDot1 && pCollectionName != pDot), SDB_INVALIDARG,
-                 error, PDERROR, "invalid format for collection name:%s, "
-                 "expected format:<collectionspace>[.<collectionname>]",
-                 pCollectionName );
-      _pCollectionName = pCollectionName;
-
-      // lock collection, check catalog-info at first
-      if ( pDot )
-      {
-         rc = _checkCata( pReqMsg->version, pCollectionName, w, isMainCL );
-         if ( rc )
-         {
-            goto error;
-         }
-         if ( !isMainCL )
-         {
-            rc = rtnTransTryLockCL( pCollectionName, pReqMsg->lockType,
-                                    _pEDUCB, _pDmsCB, _pDpsCB );
-         }
-         else
-         {
-            BSONObj emptyObj;
-            BSONObj tmpObj;
-            std::vector< std::string > strSubCLList;
-            std::vector< std::string > strLockedSubCLList;
-            std::vector< std::string >::iterator iterSubCL;
-            rc = _getSubCLList( emptyObj, pCollectionName, tmpObj,
-                              strSubCLList );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to get sub-collection(rc=%d)", rc );
-            iterSubCL = strSubCLList.begin();
-            while( iterSubCL != strSubCLList.end() )
-            {
-               rc = rtnTransTryLockCL( (*iterSubCL).c_str(), pReqMsg->lockType,
-                                       _pEDUCB, _pDmsCB, _pDpsCB );
-               if ( rc )
-               {
-                  PD_LOG( PDERROR, "lock sub-collection(%s) failed",
-                        (*iterSubCL).c_str() );
-                  break;
-               }
-               strLockedSubCLList.push_back( *iterSubCL );
-               ++iterSubCL;
-            }
-            if ( rc )
-            {
-               std::vector< std::string >::iterator iterLockCL
-                                       =  strLockedSubCLList.begin();
-               while( iterLockCL != strLockedSubCLList.end() )
-               {
-                  rtnTransReleaseLock( (*iterSubCL).c_str(),
-                                       _pEDUCB, _pDmsCB, _pDpsCB );
-                  ++iterLockCL;
-               }
-               goto error;
-            }
-         }
-      }
-      else
-      {
-         rc = rtnTransTryLockCS( pCollectionName, pReqMsg->lockType,
-                                 _pEDUCB, _pDmsCB, _pDpsCB );
-         PD_RC_CHECK( rc, PDERROR,
-                      "get transaction-lock of CS(%s) failed(rc=%d)",
-                      pCollectionName, rc );
-      }
-   done:
-      return rc ;
-   error:
-      goto done;
-   }
-
-   INT32 _clsShdSession::_onReleaseLockMsg( MsgHeader *msg )
-   {
-      INT32 rc = SDB_OK;
-      MsgOpTransReleaseLock *pReqMsg = (MsgOpTransReleaseLock *)msg;
-      CHAR *pCollectionName = pReqMsg->name;
-      CHAR *pDot = NULL;
-      CHAR *pDot1 = NULL;
-      BOOLEAN isMainCL = FALSE;
-      std::vector< std::string > strSubCLList;
-      pDot = (CHAR *)ossStrchr( pCollectionName, '.' );
-      pDot1 = (CHAR *)ossStrrchr( pCollectionName, '.' );
-      PD_CHECK( (pDot == pDot1 && pCollectionName != pDot), SDB_INVALIDARG,
-                error, PDERROR, "invalid format for collection name:%s, "
-                "expected format:<collectionspace>[.<collectionname>]",
-                pCollectionName );
-      if ( pDot )
-      {
-         _clsCatalogSet *pCataSet = NULL;
-         _pCatAgent->lock_r();
-         pCataSet = _pCatAgent->collectionSet( pCollectionName );
-         if ( NULL == pCataSet )
-         {
-            _pCatAgent->release_r();
-            PD_RC_CHECK( SDB_DMS_NOTEXIST, PDERROR,
-                        "can not fine collection:%s", pCollectionName );
-         }
-         isMainCL = pCataSet->isMainCL();
-         _pCatAgent->release_r();
-      }
-      if ( isMainCL )
-      {
-         BSONObj boMatch;
-         BSONObj boNewMatch;
-         std::vector< std::string >::iterator iterSubCL;
-         rc = _getSubCLList( boMatch, pCollectionName, boNewMatch,
-                             strSubCLList );
-         PD_RC_CHECK( rc, PDERROR,
-                     "get sub-collection of main collection(%s) failed(rc=%d)",
-                     pCollectionName, rc );
-         iterSubCL = strSubCLList.begin();
-         while( iterSubCL != strSubCLList.end() )
-         {
-            INT32 rcTmp = rtnTransReleaseLock( (*iterSubCL).c_str(),
-                                             _pEDUCB, _pDmsCB, _pDpsCB );
-            if ( rcTmp != SDB_OK && SDB_OK == rc )
-            {
-               rc = rcTmp;
-            }
-            ++iterSubCL;
-         }
-      }
-      else
-      {
-         rc = rtnTransReleaseLock( pReqMsg->name, _pEDUCB, _pDmsCB, _pDpsCB );
-      }
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
    INT32 _clsShdSession::_onTransCommitPreMsg( MsgHeader *msg )
    {
       if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
@@ -1761,8 +1600,8 @@ namespace engine
          while( iter.more() )
          {
             BSONElement beTmp = iter.next();
-            if ( beTmp.type() == Array
-               && 0 == ossStrcmp(beTmp.fieldName(), CAT_SUBCL_NAME ) )
+            if ( beTmp.type() == Array &&
+                 0 == ossStrcmp(beTmp.fieldName(), CAT_SUBCL_NAME ) )
             {
                BSONObj boSubCLList = beTmp.embeddedObject();
                BSONObjIterator iterSubCL( boSubCLList );
@@ -2265,23 +2104,23 @@ namespace engine
       goto done;
    }
 
-   INT32 _clsShdSession::_dropMainCL(const CHAR *pCollection,
-                                    INT16 w,
-                                    SINT64 &contextID )
+   INT32 _clsShdSession::_dropMainCL( const CHAR *pCollection,
+                                      INT16 w,
+                                      SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
       contextID = -1;
       rtnContextDelMainCL *delContext = NULL;
       rc = _pRtnCB->contextNew( RTN_CONTEXT_DELMAINCL,
-                              (rtnContext **)&delContext,
-                              contextID, _pEDUCB );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to create context, drop main-collection failed(rc=%d)",
-                  rc );
+                                (rtnContext **)&delContext,
+                                contextID, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR, "Failed to create context, drop "
+                   "main collection[%s] failed, rc: %d", pCollection,
+                   rc ) ;
       rc = delContext->open( pCollection, _pEDUCB );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to open context, drop main-collection failed(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to open context, drop "
+                   "main collection[%s] failed, rc: %d", pCollection,
+                   rc );
    done:
       return rc;
    error:

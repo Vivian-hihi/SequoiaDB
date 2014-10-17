@@ -93,8 +93,6 @@ namespace engine
          INT32 _onTransBeginMsg ();
          INT32 _onTransCommitMsg ();
          INT32 _onTransRollbackMsg ();
-         INT32 _onTryLockMsg( MsgHeader *msg );
-         INT32 _onReleaseLockMsg( MsgHeader *msg );
          INT32 _onTransCommitPreMsg( MsgHeader *msg );
          INT32 _onTransUpdateReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                       INT64 &updateNum ) ;
