@@ -35,7 +35,8 @@ namespace engine
    static OSS_THREAD_LOCAL BOOLEAN __printError__ = TRUE ;
    static OSS_THREAD_LOCAL BOOLEAN __hasReadData__ = FALSE ;
 
-   static OSS_THREAD_LOCAL BOOLEAN __hasSetErr__ = FALSE ;
+   static OSS_THREAD_LOCAL BOOLEAN __hasSetErrMsg__ = FALSE ;
+   static OSS_THREAD_LOCAL BOOLEAN __hasSetErrNo__  = FALSE ;
    static OSS_THREAD_LOCAL BOOLEAN __needClearErrorInfo__ = FALSE ;
 
    const CHAR *sdbGetErrMsg()
@@ -55,7 +56,7 @@ namespace engine
       {
          __errmsg__ = ossStrdup( err ) ;
       }
-      __hasSetErr__ = TRUE ;
+      __hasSetErrMsg__ = TRUE ;
    }
 
    BOOLEAN sdbIsErrMsgEmpty()
@@ -75,6 +76,7 @@ namespace engine
    void sdbSetErrno( INT32 errNum )
    {
       __errno__ = errNum ;
+      __hasSetErrNo__ = TRUE ;
    }
 
    void sdbClearErrorInfo()
@@ -118,7 +120,7 @@ namespace engine
    {
       BOOLEAN add = FALSE ;
 
-      if ( SDB_OK == sdbGetErrno() )
+      if ( SDB_OK == sdbGetErrno() || !__hasSetErrNo__ )
       {
          const CHAR *p = NULL ;
          if ( JSREPORT_IS_EXCEPTION( report->flags ) && msg &&
@@ -133,7 +135,7 @@ namespace engine
          }
       }
 
-      if ( ( sdbIsErrMsgEmpty() || !__hasSetErr__ ) && msg )
+      if ( ( sdbIsErrMsgEmpty() || !__hasSetErrMsg__ ) && msg )
       {
          if ( report->filename )
          {
@@ -162,7 +164,8 @@ namespace engine
             ossPrintf( "%s\n", sdbGetErrMsg() ) ;
          }
       }
-      __hasSetErr__ = FALSE ;
+      __hasSetErrMsg__ = FALSE ;
+      __hasSetErrNo__  = FALSE ;
    }
 
 }
