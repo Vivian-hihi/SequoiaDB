@@ -471,20 +471,6 @@ public class SequoiadbDatasource
 			db.disconnect();
 			i--;
 		}
-		// remove the timeout connection in used connection queue when the datasource is going to be full
-		if (MULTIPLE2 * dsOpt.getMaxConnectionNum() <= used_sequoiadbs.size())
-		{
-			ListIterator<Sequoiadb> list2 = used_sequoiadbs.listIterator(0);
-			while(list2.hasNext())
-			{
-				Sequoiadb db2 = list2.next();
-				lastTime = db2.getConnection().getLastUseTime(); 
-				if (currentTime - lastTime >= dsOpt.getAbandonTime())
-				{
-					list2.remove();
-				}
-			}
-		}
 
 	}
 	
