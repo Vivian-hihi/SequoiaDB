@@ -250,11 +250,18 @@
             <program>${installdir}/install_om.sh</program>
             <programArguments>${installdir} ${port} ${svcname} ${dbpath}</programArguments>
             <ruleList>
-                <registryTest>
-                    <key>${type}</key>
-                    <logic>exists</logic>
-                    <name>OM</name>
-                </registryTest>
+                <fileExists>
+                    <path>${installdir}/install_om.sh</path>
+                </fileExists>
+                <portTest>
+                    <condition>cannot_bind</condition>
+                    <port>${svcname}</port>
+                </portTest>
+                <compareText>
+                    <logic>equals</logic>
+                    <text>${type}</text>
+                    <value>OM</value>
+                </compareText>
             </ruleList>
         </runProgram>
         <changePermissions>
@@ -589,20 +596,6 @@
                                     </ruleList>
                                 </directoryParameter>
                             </parameterList>
-                            <postShowPageActionList>
-                                <runProgram>
-                                    <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
-                                    <program>${installdir}/install_om.sh</program>
-                                    <programArguments>${installdir} ${port} ${svcname} ${dbpath}</programArguments>
-                                    <ruleList>
-                                        <compareValues>
-                                            <logic>equals</logic>
-                                            <value1>${type}</value1>
-                                            <value2>OM</value2>
-                                        </compareValues>
-                                    </ruleList>
-                                </runProgram>
-                            </postShowPageActionList>
                         </parameterGroup>
                         <parameterGroup>
                             <name>DB</name>
