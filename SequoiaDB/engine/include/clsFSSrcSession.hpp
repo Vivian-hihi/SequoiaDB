@@ -168,7 +168,6 @@ namespace engine
          deque<DPS_LSN_OFFSET>            _deqLSN ;
          ossSpinXLatch                    _LSNlatch ;
          _rtnLobFetcher                   _lobFetcher ;
-         BOOLEAN                          _docIsDone ;
    };
 
    class _clsFSSrcSession : public _clsDataSrcBaseSession

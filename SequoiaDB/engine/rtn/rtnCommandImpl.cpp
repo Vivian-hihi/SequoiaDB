@@ -1621,6 +1621,27 @@ namespace engine
          goto error ;
       }
 
+      if ( su->lob()->isOpened() )
+      {
+         _dmsMBContext *mbContext = NULL ;
+         rc = su->data()->getMBContext( &mbContext, pCollectionShortName, -1 ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to resolve collection name:%s, rc:%d",
+                    pCollection, rc ) ;
+            goto error ;
+         }
+
+         rc = su->lob()->truncate( mbContext, cb, NULL ) ;
+         su->data()->releaseMBContext( mbContext ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to remove all lobs in cl:%s, rc:%d",
+                    pCollection, rc ) ;
+            goto error ;
+         }
+      }
+
    done :
       if ( writable )
       {

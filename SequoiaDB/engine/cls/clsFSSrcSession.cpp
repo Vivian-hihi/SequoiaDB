@@ -804,7 +804,7 @@ namespace engine
       }
       else
       {
-         if ( !_docIsDone )
+         if ( !_findEnd )
          { 
             _syncRecord( handle, packet, routeID, TID, requestID ) ;
          }
@@ -954,7 +954,6 @@ namespace engine
          {
             msg.eof = CLS_FS_EOF ;
             msg.lsn = pmdGetKRCB()->getDPSCB()->expectLsn () ;
-            _docIsDone = TRUE ;
 
             _LSNlatch.get () ;
             if ( _deqLSN.size() > 0 )
@@ -1125,7 +1124,6 @@ namespace engine
          }
          _curCollection = curCollection ;
 
-         _docIsDone = FALSE ;
          rc = _lobFetcher.init( _curCollecitonName.c_str(),
                                 FALSE ) ;
          if ( SDB_OK != rc )
@@ -1580,6 +1578,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSFSSS_NTFLSN );
       UINT64 fullCLLID = ossPack32To64 ( suLID, clLID ) ;
       map<UINT64, UINT32>::iterator it ;
+      BOOLEAN needRelease = FALSE ;
 
       if ( !_init || _quit || offset < _beginLSNOffset )
       {
@@ -1587,6 +1586,7 @@ namespace engine
       }
 
       _LSNlatch.get() ;
+      needRelease = TRUE ;
 
       PD_LOG ( PDINFO, "FS Session[%s]: dps notify[suLID:%d, clLID:%d, "
                "extLID:%d, offset:%lld], curScan extLID:%d", sessionName(),
@@ -1623,47 +1623,48 @@ namespace engine
             goto error ;
          }
 
-         if ( !_docIsDone )
+         if ( !_findEnd )
          {
-            if ( LOG_TYPE_LOB_WRITE == record.head()._type ||
-                 LOG_TYPE_LOB_REMOVE == record.head()._type ||
-                 LOG_TYPE_LOB_UPDATE == record.head()._type )
-            {
-               goto done ;
-            }
-            else if ( extLID <= _curExtID || _findEnd )
+            if ( LOG_TYPE_LOB_WRITE != record.head()._type &&
+                 LOG_TYPE_LOB_REMOVE != record.head()._type &&
+                 LOG_TYPE_LOB_UPDATE != record.head()._type &&
+                 ( extLID <= _curExtID ) )
             {
                _deqLSN.push_back ( offset ) ;
             }
+            else
+            {
+               goto done ;
+            }
+            
          }
          else
          {
-            if ( !( LOG_TYPE_LOB_WRITE == record.head()._type ||
-                 LOG_TYPE_LOB_REMOVE == record.head()._type ||
-                 LOG_TYPE_LOB_UPDATE == record.head()._type ))
+            if ( ( LOG_TYPE_LOB_WRITE != record.head()._type &&
+                   LOG_TYPE_LOB_REMOVE != record.head()._type &&
+                   LOG_TYPE_LOB_UPDATE != record.head()._type ))
             {
                _deqLSN.push_back ( offset ) ;
             }
             else if ( DMS_LOB_INVALID_PAGEID == _lobFetcher.toBeFetched() )
             {
                _deqLSN.push_back( offset ) ;
-               goto done ;
             }
             else if ( extLID < _lobFetcher.toBeFetched() )
             {
                _deqLSN.push_back( offset ) ;
-               goto done ;
             }
             else
             {
-               goto done ;
+               /// do nothing.
             }
          }
       }
-
-      _LSNlatch.release () ;
-
    done:
+      if ( needRelease )
+      {
+         _LSNlatch.release () ;
+      }
       PD_TRACE_EXIT ( SDB__CLSFSSS_NTFLSN );
       return SDB_OK ;
    error:
@@ -1825,17 +1826,17 @@ namespace engine
 
          /// we will sync lob after doc is done.
          /// ignore lob's log here.
-         if ( !_docIsDone &&
+         if ( !_findEnd &&
               ( LOG_TYPE_LOB_WRITE == record.head()._type ||
                 LOG_TYPE_LOB_REMOVE == record.head()._type ||
                 LOG_TYPE_LOB_UPDATE == record.head()._type ))
          {
             goto done ;
          }
-         else if ( _docIsDone &&
-                   (LOG_TYPE_LOB_WRITE == record.head()._type ||
-                   LOG_TYPE_LOB_REMOVE == record.head()._type ||
-                   LOG_TYPE_LOB_UPDATE == record.head()._type) )
+         else if ( _findEnd &&
+                  ( LOG_TYPE_LOB_WRITE == record.head()._type ||
+                    LOG_TYPE_LOB_REMOVE == record.head()._type ||
+                    LOG_TYPE_LOB_UPDATE == record.head()._type) )
          {
             if ( DMS_LOB_INVALID_PAGEID == _lobFetcher.toBeFetched() )
             {
