@@ -621,12 +621,6 @@ INT32 manHelp::displayMethod( const CHAR *category )
    ssmap &cate = getCategoryMap( category ) ;
    if ( 0 == cate.size() )
    {
-      /*
-      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE,
-                  __FILE__, __LINE__ ) ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-      */
       goto done ;
    }
    else
