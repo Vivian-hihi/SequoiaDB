@@ -4808,16 +4808,13 @@ namespace engine
       _builder.append( FIELD_NAME_NODE_NAME, ss.str() ) ;
 
       /// get some info before explain
-      if ( _needRun )
+      rc = _getMonInfo( cb, _beginMon ) ;
+      if ( SDB_OK != rc )
       {
-         rc = _getMonInfo( cb, _beginMon ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
-            goto error ;
-         }
-         ossGetCurrentTime( _beginTime ) ;
+         PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
+         goto error ;
       }
+      ossGetCurrentTime( _beginTime ) ;
 
       _queryContextID = queryContextID ;
       _cbOfQuery = cb ;
