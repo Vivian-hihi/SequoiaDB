@@ -2018,7 +2018,6 @@ __METHOD_IMP(cl_get_lob)
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( obj_lob, sdbLob, lob ) ;
-   printf(str_id) ;
    oid.init(str_id) ;
 
    rc = cl->openLob(*lob, oid) ;

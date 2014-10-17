@@ -89,14 +89,16 @@ class lob(object):
 
       return mms
 
-   def seek(self, seek_pos, whence) :
+   def seek(self, seek_pos, whence = 0) :
       """seek in lob.
 
       Parameters:
          Name        Type                 Info:
          seek_pos    int                  The length to seek
-         whence      int                  where to seek, it must be 0/1/2, other
-                                          value will be ignored
+         whence      int                  whence of seek, it must be 0/1/2
+                                          0 means seek from begin to end of lob
+                                          1 means seek from currend position to end of lob
+                                          2 means seek from end to begin of lob
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
