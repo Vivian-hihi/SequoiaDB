@@ -116,7 +116,7 @@
         <li class="li">范围切分<div class="p">范围切分时，Range 分区使用精确条件，而 Hash 分区使用 Partition（分区数）条件。切分时起始条件为必填字段，而结束条件为选填条件，结束条件默认为切分源当前包含的最大数据范围。<pre class="pre codeblock">("&lt;源分区组&gt;","&lt;目标分区组&gt;"，&lt;condition&gt;|&lt;Partition&gt;) </pre>
 
         </div>
-<div class="note note"><span class="notetitle">Note:</span> 范围分区时，如果指定分区键字段为降序时，如：{groupingKey:{&lt;字段1&gt;:&lt;-1&gt;}，condition（或 Partition）中的起始条件中的范围应该大于终止条件中的范围。Hash 分区使用的 Partition（分区数）必须为整形,不能为其他的类型。</div>
+<div class="note note"><span class="notetitle">Note:</span> 范围分区时，如果指定分区键字段为降序时，如：{groupingKey:{&lt;字段1&gt;:&lt;-1&gt;}，condition（或 Partition）中的起始条件中的范围应该大于终止条件中的范围。Hash 分区使用的 Partition（分区数）必须为整形，不能为其他的类型。</div>
 </li>
 
         <li class="li">百分比切分<pre class="pre codeblock">db.foo.bar.split("&lt;源分区组&gt;","&lt;目标分区组&gt;"，&lt;percent&gt;) </pre>
