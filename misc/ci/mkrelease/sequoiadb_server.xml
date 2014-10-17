@@ -246,8 +246,16 @@
             </ruleList>
         </runProgram>
         <runProgram>
+            <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
             <programArguments>${installdir} ${port} ${svcname} ${dbpath}</programArguments>
+            <ruleList>
+                <registryTest>
+                    <key>${type}</key>
+                    <logic>exists</logic>
+                    <name>OM</name>
+                </registryTest>
+            </ruleList>
         </runProgram>
         <changePermissions>
             <files>${installdir}/postgresql/*</files>

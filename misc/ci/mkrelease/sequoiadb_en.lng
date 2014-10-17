@@ -31,3 +31,5 @@ Install.ErrorMsg.StartWindowsService.error=Failed to start Sequoiadb Cluster Man
 Install.ErrorrMsg.StopSdbCm.error=Failed to stop Sequoiadb Cluster Manager Service(sdbcm)
 Install.ErrorMsg.StopSequoiadb.error=Failed to stop SequoiaDB database service
 Install.ErrorMsg.DeleteUser.error=Failed to delete user:${username}
+
+Install.ErrorMsg.IntallationOM.error=Create OM failed

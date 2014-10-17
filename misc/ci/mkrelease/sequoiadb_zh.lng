@@ -33,3 +33,5 @@ Install.ErrorMsg.StartWindowsService.error=启动集群管理服务(sdbcm)失败
 Install.ErrorMsg.StopSdbCm.error=停止集群管理服务(sdbcm)失败
 Install.ErrorMsg.StopSequoiadb.error=停止SequoiaDB数据库服务失败
 Install.ErrorMsg.DeleteUser.error=删除用户${username}失败
+
+Install.ErrorMsg.IntallationOM.error=创建OM失败
