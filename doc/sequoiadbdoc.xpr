@@ -904,6 +904,15 @@
                     <file name="references/methods/topics/nodestart.dita"/>
                     <file name="references/methods/topics/nodestop_en.dita"/>
                     <file name="references/methods/topics/nodestop.dita"/>
+                    <file name="references/methods/topics/omaclose.dita"/>
+                    <file name="references/methods/topics/omacreateCoord.dita"/>
+                    <file name="references/methods/topics/omacreateData.dita"/>
+                    <file name="references/methods/topics/omacreateOM.dita"/>
+                    <file name="references/methods/topics/omaremoveCoord.dita"/>
+                    <file name="references/methods/topics/omaremoveData.dita"/>
+                    <file name="references/methods/topics/omaremoveOM.dita"/>
+                    <file name="references/methods/topics/omastartNode.dita"/>
+                    <file name="references/methods/topics/omastopNode.dita"/>
                     <file name="references/methods/topics/putlob.dita"/>
                     <file name="references/methods/topics/remove_en.dita"/>
                     <file name="references/methods/topics/remove.dita"/>
@@ -1052,6 +1061,8 @@
                 <file name="references/methods/jsdomain.ditamap"/>
                 <file name="references/methods/jsnode.dita"/>
                 <file name="references/methods/jsnode.ditamap"/>
+                <file name="references/methods/jsoma.dita"/>
+                <file name="references/methods/jsoma.ditamap"/>
                 <file name="references/methods/jsrg.dita"/>
                 <file name="references/methods/jsrg.ditamap"/>
                 <file name="references/methods/jssequoiadb.dita"/>
