@@ -1623,12 +1623,19 @@ namespace engine
             goto error ;
          }
 
-         if ( !_findEnd )
+         if ( LOG_TYPE_LOB_WRITE == record.head()._type ||
+              LOG_TYPE_LOB_REMOVE == record.head()._type ||
+              LOG_TYPE_LOB_UPDATE == record.head()._type )
          {
-            if ( LOG_TYPE_LOB_WRITE != record.head()._type &&
-                 LOG_TYPE_LOB_REMOVE != record.head()._type &&
-                 LOG_TYPE_LOB_UPDATE != record.head()._type &&
-                 ( extLID <= _curExtID ) )
+            if ( !_findEnd )
+            {
+               goto done ;
+            }
+            else if ( _lobFetcher.hitEnd() )
+            {
+               _deqLSN.push_back ( offset ) ;
+            }
+            else if ( extLID < _lobFetcher.toBeFetched() )
             {
                _deqLSN.push_back ( offset ) ;
             }
@@ -1636,28 +1643,14 @@ namespace engine
             {
                goto done ;
             }
-            
+         }
+         else if ( _findEnd || extLID <= _curExtID )
+         {
+            _deqLSN.push_back ( offset ) ;
          }
          else
          {
-            if ( ( LOG_TYPE_LOB_WRITE != record.head()._type &&
-                   LOG_TYPE_LOB_REMOVE != record.head()._type &&
-                   LOG_TYPE_LOB_UPDATE != record.head()._type ))
-            {
-               _deqLSN.push_back ( offset ) ;
-            }
-            else if ( DMS_LOB_INVALID_PAGEID == _lobFetcher.toBeFetched() )
-            {
-               _deqLSN.push_back( offset ) ;
-            }
-            else if ( extLID < _lobFetcher.toBeFetched() )
-            {
-               _deqLSN.push_back( offset ) ;
-            }
-            else
-            {
-               /// do nothing.
-            }
+            goto done ;
          }
       }
    done:
@@ -1795,6 +1788,7 @@ namespace engine
          goto done ;
       }
       // no sharding index, scan by table
+      // log of lob can be ignored, coz _findEnd is false.
       else if ( TBSCAN == _scanType() && !inEndMap && !_findEnd &&
                 extLID > _curExtID )
       {
@@ -1824,34 +1818,54 @@ namespace engine
             goto error ;
          }
 
-         /// we will sync lob after doc is done.
-         /// ignore lob's log here.
-         if ( !_findEnd &&
-              ( LOG_TYPE_LOB_WRITE == record.head()._type ||
-                LOG_TYPE_LOB_REMOVE == record.head()._type ||
-                LOG_TYPE_LOB_UPDATE == record.head()._type ))
+         if ( LOG_TYPE_LOB_WRITE == record.head()._type ||
+              LOG_TYPE_LOB_REMOVE == record.head()._type ||
+              LOG_TYPE_LOB_UPDATE == record.head()._type )
          {
-            goto done ;
-         }
-         else if ( _findEnd &&
-                  ( LOG_TYPE_LOB_WRITE == record.head()._type ||
-                    LOG_TYPE_LOB_REMOVE == record.head()._type ||
-                    LOG_TYPE_LOB_UPDATE == record.head()._type) )
-         {
-            if ( DMS_LOB_INVALID_PAGEID == _lobFetcher.toBeFetched() )
+            if ( !_findEnd )
             {
-               _deqLSN.push_back( offset ) ;
-               goto done ;
+               /// we will sync lob after doc is done. ignore lob's log here.
             }
-            else if ( extLID < _lobFetcher.toBeFetched() )
+            else if ( _lobFetcher.hitEnd() ||
+                      extLID < _lobFetcher.toBeFetched() )
             {
-               _deqLSN.push_back( offset ) ;
-               goto done ;
+               const bson::OID *oid = NULL ;
+               const UINT32 *sequence = NULL ;
+               INT32 range = 0 ;
+               dpsLogRecord::iterator itr =
+                             record.find( DPS_LOG_LOB_OID ) ;
+               if ( !itr.valid() )
+               {
+                  PD_LOG( PDERROR, "Split Session[%s]: can not find oid obj in "
+                         "record.", sessionName() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+               oid = ( const bson::OID * )( itr.value() ) ;
+
+               itr = record.find( DPS_LOG_LOB_SEQUENCE ) ;
+               if ( !itr.valid() )
+               {
+                  PD_LOG( PDERROR, "Split Session[%s]: can not find oid obj in "
+                         "record.", sessionName() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+               sequence = ( const UINT32 * )( itr.value() ) ;
+
+               range = clsPartition( *oid, *sequence, _partitionBit ) ;
+               if ( _rangeKeyObj.firstElement().Int() <= range &&
+                   ( !_hasEndRange || range < _rangeEndKeyObj.firstElement().Int() ) )
+               {
+                  _deqLSN.push_back( offset ) ;
+               }
             }
             else
             {
-               goto done ;
+               /// will sync this record by _syncLob.
             }
+
+            goto done ;
          }
 
          if ( LOG_TYPE_DATA_INSERT == record.head()._type )

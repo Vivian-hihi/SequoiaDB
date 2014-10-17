@@ -53,7 +53,12 @@ namespace engine
                    _dmsLobInfoOnPage &piece,
                    _dpsMessageBlock *mb = NULL ) ;
 
-      OSS_INLINE DMS_LOB_PAGEID toBeFetched() const
+      BOOLEAN hitEnd() const
+      {
+         return _hitEnd ;
+      }
+
+      DMS_LOB_PAGEID toBeFetched() const
       {
          return _pos ;
       }
