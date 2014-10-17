@@ -266,7 +266,7 @@ Exceptions:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>whence</em>&#160;</td>
+          <td class="paramname"><em>whence</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -280,8 +280,10 @@ Exceptions:
 Parameters:
    Name        Type                 Info:
    seek_pos    int                  The length to seek
-   whence      int                  where to seek, it must be 0/1/2, other
-                              value will be ignored
+   whence      int                  whence of seek, it must be 0/1/2
+                              0 means seek from begin to end of lob
+                              1 means seek from currend position to end lob
+                              2 means seek from end to begin of lob
 Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
@@ -335,7 +337,7 @@ Exceptions:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Oct 17 2014 16:43:18 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Oct 17 2014 17:18:32 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>
