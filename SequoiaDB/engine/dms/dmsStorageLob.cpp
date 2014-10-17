@@ -283,6 +283,8 @@ namespace engine
       goto done ;
    }
 
+   /// TODO: add a mutil-write interface to increase
+   /// sequential writeing.
    INT32 _dmsStorageLob::write( const dmsLobRecord &record,
                                 dmsMBContext *mbContext,
                                 pmdEDUCB *cb,
