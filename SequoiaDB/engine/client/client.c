@@ -1134,8 +1134,8 @@ error :
 }
 
 static INT32 _sdbGetReplicaGroup( sdbConnectionHandle cHandle,
-                                 bson condition,
-                                 sdbReplicaGroupHandle *handle )
+                                  bson condition,
+                                  sdbReplicaGroupHandle *handle )
 {
    INT32 rc                 = SDB_OK;
    sdbCursorHandle cursor   = SDB_INVALID_HANDLE ;
@@ -1161,9 +1161,9 @@ static INT32 _sdbGetReplicaGroup( sdbConnectionHandle cHandle,
          rc = SDB_SYS ;
          goto error ;
       }
-       pGroupName = bson_iterator_string ( &it ) ;
+      pGroupName = bson_iterator_string ( &it ) ;
 
-       ALLOC_HANDLE( r, sdbRGStruct ) ;
+      ALLOC_HANDLE( r, sdbRGStruct ) ;
       r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
       r->_connection    = cHandle ;
       r->_sock          = connection->_sock ;
@@ -1173,6 +1173,7 @@ static INT32 _sdbGetReplicaGroup( sdbConnectionHandle cHandle,
       {
          goto error ;
       }
+      _regSocket( cHandle, &r->_sock ) ;
 
       if ( !ossStrcmp ( pGroupName, CATALOG_GROUPNAME ) )
       {
@@ -2448,6 +2449,7 @@ SDB_EXPORT INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
    {
       goto error ;
    }
+   _regSocket( cHandle, &s->_sock ) ;
    *handle = (sdbCSHandle)s ;
 
 done:
@@ -3440,6 +3442,7 @@ SDB_EXPORT INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
    {
       goto error ;
    }
+   _regSocket( cs->_connection, &s->_sock ) ;
    *handle = (sdbCollectionHandle)s ;
 done :
    BSON_DESTROY( newObj ) ;
@@ -3513,6 +3516,7 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
    {
       goto error ;
    }
+   _regSocket( cs->_connection, &s->_sock ) ;
    *handle = (sdbCollectionHandle)s ;
 done :
    BSON_DESTROY( newObj ) ;
@@ -6943,6 +6947,7 @@ SDB_EXPORT INT32 sdbGetDomain ( sdbConnectionHandle cHandle,
    {
       ALLOC_HANDLE( s, sdbDomainStruct ) ;
       INIT_DOMAINHANDLE( s, connection, pDomainName ) ;
+      _regSocket( cHandle, &s->_sock ) ;
       *handle = (sdbDomainHandle) s ;
    }
    else if ( SDB_DMS_EOC != rc )
