@@ -61,7 +61,7 @@ private:
    ssmap _mclcount ;
    ssmap _mdomain ;
    ssmap _mempty ;
-   ssmap _mom ;
+   ssmap _moma ;
    BOOLEAN troffFileNotEixt ;
 } ;
 
