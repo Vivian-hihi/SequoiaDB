@@ -523,7 +523,7 @@
                     <name>type</name>
                     <description></description>
                     <explanation></explanation>
-                    <value>DB,OM</value>
+                    <value></value>
                     <default>DB</default>
                     <allowEmptyValue>1</allowEmptyValue>
                     <width>40</width>
