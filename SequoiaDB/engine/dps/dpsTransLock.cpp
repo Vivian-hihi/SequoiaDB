@@ -720,7 +720,7 @@ namespace engine
          rc = testIX( eduCB, iLockId);
    
          PD_RC_CHECK( rc, PDINFO, "Failed to test the intention-lock, "
-                      "test X-lock failed(rc=%d)", rc );
+                      "test IX-lock failed(rc=%d)", rc );
       }
 
       if ( pLockInfo )
