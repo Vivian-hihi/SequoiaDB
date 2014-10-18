@@ -608,7 +608,7 @@ namespace engine
       rc = _queryLobMeta( cb, _meta ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to open lob[%d] in collection[%s], rc:%d",
+         PD_LOG( PDERROR, "failed to open lob[%s] in collection[%s], rc:%d",
                  _oid.str().c_str(), _fullName, rc ) ;
          goto error ;
       }
