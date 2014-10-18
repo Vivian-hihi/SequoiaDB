@@ -258,6 +258,18 @@
                 </compareText>
             </ruleList>
         </runProgram>
+        <copyFile>
+            <destination>${installdir}/packet</destination>
+            <origin>${fullName}</origin>
+            <ruleEvaluationLogic>or</ruleEvaluationLogic>
+            <ruleList>
+                <compareText>
+                    <logic>equals</logic>
+                    <text>${type}</text>
+                    <value>OM</value>
+                </compareText>
+            </ruleList>
+        </copyFile>
         <changePermissions>
             <files>${installdir}/postgresql/*</files>
             <permissions>0755</permissions>

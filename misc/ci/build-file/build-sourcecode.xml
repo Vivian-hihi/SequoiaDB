@@ -168,32 +168,13 @@
 
  	<target name="build-and-copy-python" depends="">
  		<property name="python.tar" value="pysequoiadb.tar.gz" />
-<!-- 	    <if>
-	    	<equals arg1="${os.arch}" arg2="ppc64" />
-	    	<then>
-	    		<property name="python.tar" value="pysequoiadb-1.0.linux-${os.arch}.tar" />
-	      	</then>
-	    </if>    
-		<if>
-			<equals arg1="${os.arch}" arg2="amd64" />
-			<then>
-				<property name="python.tar" value="pysequoiadb-1.0.linux-x86_64.tar" />
-			</then>
-		</if> -->
-
 		<exec executable="scons" dir="${python.dir}">
 			<arg line=" " />
 		</exec>
 		<exec executable="/bin/chmod" dir="${python.dir}">
 			<arg line=" u+x ${python.tar}" />
 		</exec>
-<!-- 		<exec executable="/bin/tar" dir="${python.dir}">
-			<arg line=" -xvf ${python.tar}" />
-		</exec> -->
 		<copy file="${python.dir}/${python.tar}" todir="${DRIVER.DIR}/python" />
-<!-- 		<copy todir="${DRIVER.DIR}/python">
-    		<fileset dir="${python.dir}/python" includes="**/*" />
-    	</copy>  -->
  	</target>
   
 	<target name="mk-release" depends="mk-driver,compile-src">
@@ -214,8 +195,9 @@
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/tools/server/php" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/python" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/postgresql" />
-
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/packet" />
+
+		<mkdir dir="${RELEASE_DIR}/sequoiadb/bin/www" />
 
 		<if>
 			<equals arg1="${compile.debug}" arg2="true" />
@@ -231,6 +213,11 @@
 	       <fileset dir="${CODE_DIR}/bin">
 	       		<include name="**/*" />
 	       		<exclude name="lib*" />
+	       </fileset>
+	    </copy>
+	    <copy todir="${RELEASE_DIR}/sequoiadb/bin/www" >
+	       <fileset dir="${CODE_DIR}/SequoiaDB/www">
+	       		<include name="**/*" />
 	       </fileset>
 	    </copy>
 		<copy todir="${RELEASE_DIR}/sequoiadb/lib">
@@ -255,7 +242,6 @@
     	<copy todir="${RELEASE_DIR}/sequoiadb/conf/script">
     		<fileset dir="${CODE_DIR}/conf/script" includes="**/*" />
     	</copy>
-
 		<copy todir="${RELEASE_DIR}/sequoiadb/python">
 			<fileset dir="${DRIVER.DIR}/python" />
 		</copy>
