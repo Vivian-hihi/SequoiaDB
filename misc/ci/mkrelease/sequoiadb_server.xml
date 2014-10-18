@@ -249,14 +249,8 @@
             <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
             <programArguments>${installdir} ${port} ${svcname} ${dbpath}</programArguments>
+            <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
-                <fileExists>
-                    <path>${installdir}/install_om.sh</path>
-                </fileExists>
-                <portTest>
-                    <condition>cannot_bind</condition>
-                    <port>${svcname}</port>
-                </portTest>
                 <compareText>
                     <logic>equals</logic>
                     <text>${type}</text>
