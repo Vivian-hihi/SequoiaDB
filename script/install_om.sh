@@ -27,8 +27,6 @@ echo "cmPort=" $2
 echo "svcname=" $3
 echo "dbpath=" $4
 
-
-
 # second to create om
 $sdbFile -s " var oma = new Oma('localhost', '${cmPort}' ); \
              try { \
