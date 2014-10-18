@@ -1120,7 +1120,6 @@ namespace engine
    {
       pHeader->_pageSize = DMS_PAGE_SIZE256B ;
       pHeader->_lobdPageSize = pInfo->_lobdPageSize ;
-      PD_LOG( PDERROR, "======================%d", pHeader->_lobdPageSize ) ;
    }
 
    INT32 _dmsStorageLob::_checkPageSize( dmsStorageUnitHeader * pHeader )

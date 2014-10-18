@@ -58,9 +58,6 @@ namespace engine
    :_metaGroup( 0 ),
     _alignBuf( 0 )
    {
-      ossMemset( &_header, 0, sizeof( _header ) ) ;
-      _header.contextID = -1 ;
-      _header.header.opCode = MSG_NULL ;
    }
 
    _rtnCoordLobStream::~_rtnCoordLobStream()
@@ -179,6 +176,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__OPENOTHERSTREAMS ) ;
 
+      MsgOpLob header ;
       CoordGroupList gpLst ;
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
@@ -198,10 +196,11 @@ namespace engine
 
       obj = builder.obj() ;
 
-      _header.bsonLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
-      _header.header.messageLength = sizeof( _header ) + _header.bsonLen ;
-      _header.header.opCode = MSG_BS_LOB_OPEN_REQ ;
-      _pushLobHeader( &_header, obj, iov ) ;
+      _initHeader( header,
+                   MSG_BS_LOB_OPEN_REQ,
+                   ossRoundUpToMultipleX( obj.objsize(), 4 ),
+                   -1 ) ;
+      _pushLobHeader( &header, obj, iov ) ;
 
       do
       {
@@ -209,13 +208,13 @@ namespace engine
          _clearMsgData() ;
          _cataInfo->getGroupLst( gpLst ) ;
          SDB_ASSERT( 1 == gpLst.count( _metaGroup ), "impossible" ) ;
-         _header.version = _cataInfo->getVersion() ;
+         header.version = _cataInfo->getVersion() ;
 
          for ( CoordGroupList::const_iterator itr = gpLst.begin();
                itr != gpLst.end();
                ++itr )
          {
-            rc = rtnCoordSendRequestToNodeGroup( &( _header.header ),
+            rc = rtnCoordSendRequestToNodeGroup( &( header.header ),
                                                  itr->first,
                                                  SDB_LOB_MODE_R != mode,
                                                  routeAgent,
@@ -229,7 +228,7 @@ namespace engine
             }
          }
 
-         rc = _getReply( cb, FALSE, tag ) ;
+         rc = _getReply( header, cb, FALSE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -280,6 +279,7 @@ namespace engine
 
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
+      MsgOpLob header ;
       const MsgOpReply *reply = NULL ;
       BSONObj obj ;
       BSONObjBuilder builder ;
@@ -291,18 +291,17 @@ namespace engine
              .appendBool( FIELD_NAME_LOB_IS_MAIN_SHD, TRUE ) ;
       obj = builder.obj() ;
 
-      _header.header.opCode = MSG_BS_LOB_OPEN_REQ ;
-      _header.bsonLen = ossRoundUpToMultipleX( obj.objsize(), 4 ) ;
-      _header.header.messageLength = sizeof( _header ) + _header.bsonLen ;
-
-      _pushLobHeader( &_header, obj, iov ) ;
+      _initHeader( header, MSG_BS_LOB_OPEN_REQ,
+                   ossRoundUpToMultipleX( obj.objsize(), 4 ),
+                   -1 ) ;
+      _pushLobHeader( &header, obj, iov ) ;
 
       do
       {
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
-         _header.version = _cataInfo->getVersion() ;
-         rc = rtnCoordSendRequestToNodeGroup( &( _header.header ),
+         header.version = _cataInfo->getVersion() ;
+         rc = rtnCoordSendRequestToNodeGroup( &( header.header ),
                                               _metaGroup,
                                               SDB_LOB_MODE_R != mode,
                                               routeAgent,
@@ -315,7 +314,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _getReply( cb, FALSE, tag ) ;
+         rc = _getReply( header, cb, FALSE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -445,17 +444,17 @@ namespace engine
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__WRITE ) ;
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
+      MsgOpLob header ;
       UINT32 groupID = 0 ;
       const subStream *sub = NULL ;
       netIOVec iov ;
 
-      _header.header.messageLength = sizeof( _header ) +
-                                     sizeof( _MsgLobTuple ) +
-                                     tuple.tuple.columns.len ;
-      _header.header.opCode = MSG_BS_LOB_WRITE_REQ ;
-      _header.bsonLen = 0 ;
-
-      _pushLobHeader( &_header, BSONObj(), iov ) ;
+      _initHeader( header, MSG_BS_LOB_WRITE_REQ,
+                   0, -1,
+                   sizeof( header ) +
+                   sizeof( _MsgLobTuple ) +
+                   tuple.tuple.columns.len ) ;
+      _pushLobHeader( &header, BSONObj(), iov ) ;
       _pushLobData( tuple.tuple.data, sizeof( tuple.tuple ), iov ) ;
       _pushLobData( tuple.data, tuple.tuple.columns.len, iov ) ;
 
@@ -463,7 +462,7 @@ namespace engine
       {
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
-         _header.version = _cataInfo->getVersion() ;
+         header.version = _cataInfo->getVersion() ;
          rc = _cataInfo->getLobGroupID( getOID(),
                                         tuple.tuple.columns.sequence,
                                         groupID ) ;
@@ -474,8 +473,8 @@ namespace engine
          }
 
          RTN_COORD_LOB_GET_SUBSTREAM( groupID, sub ) ;
-         _header.contextID = sub->contextID ;
-         rc = rtnCoordSendRequestToNode( &( _header.header ),
+         header.contextID = sub->contextID ;
+         rc = rtnCoordSendRequestToNode( &( header.header ),
                                          sub->id,
                                          routeAgent,
                                          cb,
@@ -488,7 +487,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _getReply( cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -528,21 +527,21 @@ namespace engine
                                        getRouteAgent() ;
       DONE_LST doneLst ;
       BOOLEAN reshard = TRUE ;
+      MsgOpLob header ;
 
       /// will reassign length
-      _header.header.messageLength = sizeof( _header ) ;
-      _header.header.opCode = MSG_BS_LOB_WRITE_REQ ;
-      _header.bsonLen = 0 ;
+      _initHeader( header, MSG_BS_LOB_WRITE_REQ,
+                   0, -1 ) ;
 
       do
       {
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
-         _header.version = _cataInfo->getVersion() ;
+         header.version = _cataInfo->getVersion() ;
 
          if ( reshard )
          {
-            rc = _shardData( tuples, TRUE, doneLst ) ;
+            rc = _shardData( header, tuples, TRUE, doneLst ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -564,11 +563,11 @@ namespace engine
             }
 
             /// we have pushed part of header to body.
-            _header.header.messageLength = sizeof( MsgHeader ) +
+            header.header.messageLength = sizeof( MsgHeader ) +
                                            dg.bodyLen ;
-            _header.contextID = dg.contextID ;
+            header.contextID = dg.contextID ;
 
-            rc = rtnCoordSendRequestToNode( &( _header.header ),
+            rc = rtnCoordSendRequestToNode( &( header.header ),
                                             dg.id,
                                             routeAgent,
                                             cb,
@@ -582,7 +581,7 @@ namespace engine
             }
          }
 
-         rc = _getReply( cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -629,20 +628,19 @@ namespace engine
                                        getRouteAgent() ;
       DONE_LST doneLst ; 
       BOOLEAN needReshard = TRUE ;
-
-      _header.header.messageLength = sizeof( _header ) ;
-      _header.header.opCode = MSG_BS_LOB_READ_REQ ;
-      _header.bsonLen = 0 ;
+      MsgOpLob header ;
+      _initHeader( header, MSG_BS_LOB_READ_REQ,
+                   0, -1 ) ;
       
       do
       {
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
-         _header.version = _cataInfo->getVersion() ;
+         header.version = _cataInfo->getVersion() ;
 
          if ( needReshard )
          {
-            rc = _shardData( tuples, FALSE, doneLst ) ;
+            rc = _shardData( header, tuples, FALSE, doneLst ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -661,11 +659,11 @@ namespace engine
                continue ;
             }
 
-            _header.header.messageLength = sizeof( MsgHeader ) +
+            header.header.messageLength = sizeof( MsgHeader ) +
                                            dg.bodyLen ;
-            _header.contextID = dg.contextID ;
+            header.contextID = dg.contextID ;
 
-            rc = rtnCoordSendRequestToNode( &( _header.header ),
+            rc = rtnCoordSendRequestToNode( &( header.header ),
                                             dg.id,
                                             routeAgent,
                                             cb,
@@ -679,7 +677,7 @@ namespace engine
             }
          }
 
-         rc = _getReply( cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -798,14 +796,14 @@ namespace engine
       netIOVec iov ;
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
-
-      _header.header.messageLength = sizeof( _header ) +
-                                     sizeof( tuple ) +
-                                     sizeof( meta );
-      _header.header.opCode = MSG_BS_LOB_UPDATE_REQ ;
-      _header.bsonLen = 0 ;
-
-      _pushLobHeader( &_header, BSONObj(), iov ) ;
+      MsgOpLob header ;
+      _initHeader( header,
+                   MSG_BS_LOB_UPDATE_REQ,
+                   0, -1,
+                   sizeof( header ) +
+                   sizeof( tuple ) +
+                   sizeof( meta )) ;
+      _pushLobHeader( &header, BSONObj(), iov ) ;
       _pushLobData( &tuple, sizeof( tuple ), iov ) ;
       _pushLobData( &meta, sizeof( meta ), iov ) ;
 
@@ -813,12 +811,12 @@ namespace engine
       {
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
-         _header.version = _cataInfo->getVersion() ;
+         header.version = _cataInfo->getVersion() ;
          RTN_COORD_LOB_GET_SUBSTREAM( _metaGroup, sub ) ;
 
-         _header.contextID = sub->contextID ;
+         header.contextID = sub->contextID ;
 
-         rc = rtnCoordSendRequestToNode( &( _header.header ),
+         rc = rtnCoordSendRequestToNode( &( header.header ),
                                          sub->id,
                                          routeAgent,
                                          cb,
@@ -831,7 +829,7 @@ namespace engine
             goto error ;
          }
 
-         rc = _getReply( cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -890,23 +888,22 @@ namespace engine
 
       netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
                                        getRouteAgent() ;
-      _header.header.messageLength = sizeof( _header ) ;
-      _header.header.opCode = MSG_BS_LOB_CLOSE_REQ ;
-      _header.bsonLen = 0 ;
-      _header.header.messageLength = sizeof( _header ) ;
+      MsgOpLob header ;
+      _initHeader( header, MSG_BS_LOB_CLOSE_REQ,
+                   0, -1, sizeof( header ) ) ;
 
       do
       {
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
-         _header.version = _cataInfo->getVersion() ;
+         header.version = _cataInfo->getVersion() ;
 
          for ( SUB_STREAMS::iterator itr = _subs.begin();
                itr != _subs.end();
                ++itr )
          {
-            _header.contextID = itr->second.contextID ;
-            rc = rtnCoordSendRequestToNode( &( _header.header ),
+            header.contextID = itr->second.contextID ;
+            rc = rtnCoordSendRequestToNode( &( header.header ),
                                             itr->second.id,
                                             routeAgent,
                                             cb,
@@ -920,7 +917,7 @@ namespace engine
             }
          }
 
-         rc = _getReply( cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -1067,19 +1064,20 @@ namespace engine
                                        getRouteAgent() ;
       BOOLEAN reshard = TRUE ;
       DONE_LST doneLst ;
+      MsgOpLob header ;
 
-      _header.header.messageLength = sizeof( _header ) ;
-      _header.header.opCode = MSG_BS_LOB_REMOVE_REQ ;
-      _header.bsonLen = 0 ;
+      _initHeader( header,
+                   MSG_BS_LOB_REMOVE_REQ,
+                   0, -1, sizeof( header ) ) ;
 
       do
       {
          _clearMsgData() ;
          INT32 tag = RETRY_TAG_NULL ;
-         _header.version = _cataInfo->getVersion() ;
+         header.version = _cataInfo->getVersion() ;
          if ( reshard )
          {
-            rc = _shardData( tuples, TRUE, doneLst ) ;
+            rc = _shardData( header, tuples, TRUE, doneLst ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to shard pieces:%d", rc ) ;
@@ -1099,12 +1097,13 @@ namespace engine
                continue ;
             }
 
-            _header.contextID = dg.contextID ;
-            _header.header.messageLength = sizeof( MsgHeader ) + itr->second.bodyLen ;
-            rc = rtnCoordSendRequestToNode( &( _header.header ),
+            header.contextID = dg.contextID ;
+            header.header.messageLength = sizeof( MsgHeader ) + itr->second.bodyLen ;
+            rc = rtnCoordSendRequestToNode( &( header.header ),
                                             dg.id,
                                             routeAgent,
                                             cb,
+                                            dg.body,
                                             _sendMap ) ;
             if ( SDB_OK != rc )
             {
@@ -1115,7 +1114,7 @@ namespace engine
             }      
          }
 
-         rc = _getReply( cb, TRUE, tag ) ;
+         rc = _getReply( header, cb, TRUE, tag ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get reply msg:%d", rc ) ;
@@ -1184,13 +1183,14 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__GETREPLY, "_rtnCoordLobStream::_getReply" )
-   INT32 _rtnCoordLobStream::_getReply( _pmdEDUCB *cb,
+   INT32 _rtnCoordLobStream::_getReply( const MsgOpLob &header,
+                                        _pmdEDUCB *cb,
                                         BOOLEAN nodeSpecified,
                                         INT32 &tag )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_RTNCOORDLOBSTREAM__GETREPLY ) ;
-      INT32 replyType = MAKE_REPLY_TYPE( _header.header.opCode ) ;
+      INT32 replyType = MAKE_REPLY_TYPE( header.header.opCode ) ;
       REPLY_QUE replyQueue ;
       tag = ( INT32 )RETRY_TAG_NULL ;
 
@@ -1266,7 +1266,9 @@ namespace engine
          }
          else
          {
-            PD_LOG( PDERROR, "node returned error code:%d", flag ) ;
+            PD_LOG( PDERROR, "node[%d:%hd] returned error code:%d",
+                    id.columns.groupID,
+                    id.columns.nodeID, flag ) ;
             rc = flag ;
          }
 
@@ -1331,7 +1333,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOORDLOBSTREAM__SHARDDATA, "_rtnCoordLobStream::_shardData" )
-   INT32 _rtnCoordLobStream::_shardData( const RTN_LOB_TUPLES &tuples,
+   INT32 _rtnCoordLobStream::_shardData( const MsgOpLob &header,
+                                         const RTN_LOB_TUPLES &tuples,
                                          BOOLEAN isWrite,
                                          const DONE_LST &doneLst )
    {
@@ -1367,7 +1370,7 @@ namespace engine
          dg = &( _dataGroups[groupID] ) ;
          if ( !dg->hasData() )
          {
-            _pushLobHeader( &_header, BSONObj(), dg->body ) ;
+            _pushLobHeader( &header, BSONObj(), dg->body ) ;
             dg->bodyLen += sizeof( MsgOpLob ) - sizeof( MsgHeader ) ;
          }
          dg->addData( *tuple,
@@ -1534,6 +1537,22 @@ namespace engine
                                           netIOVec &iov )
    {
       iov.push_back( netIOV( data, len ) ) ;
+   }
+
+   void _rtnCoordLobStream::_initHeader( MsgOpLob &header,
+                                         INT32 opCode,
+                                         INT32 bsonLen,
+                                         SINT64 contextID,
+                                         INT32 msgLen )
+   {
+      ossMemset( &header, 0, sizeof( header ) ) ;
+      header.header.opCode = opCode ;
+      header.bsonLen = bsonLen ;
+      header.contextID = contextID ;
+      header.header.messageLength = msgLen < 0 ?
+                                    sizeof( header ) + bsonLen :
+                                    msgLen ;
+      return ;
    }
 }
 

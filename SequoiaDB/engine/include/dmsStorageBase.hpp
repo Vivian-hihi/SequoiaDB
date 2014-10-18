@@ -257,6 +257,10 @@ namespace engine
          virtual void   _initHeaderPageSize( dmsStorageUnitHeader *pHeader,
                                              dmsStorageInfo *pInfo ) ;
          virtual INT32  _checkPageSize( dmsStorageUnitHeader *pHeader ) ;
+         virtual BOOLEAN _keepInRam() const
+         {
+            return FALSE ;
+         }
 
       protected:
          // No space will extent new segment

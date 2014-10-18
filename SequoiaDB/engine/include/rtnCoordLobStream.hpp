@@ -189,7 +189,8 @@ namespace engine
 
       INT32 _push2Pool( const MsgOpReply *header ) ;
 
-      INT32 _getReply( _pmdEDUCB *cb,
+      INT32 _getReply( const MsgOpLob &header,
+                       _pmdEDUCB *cb,
                        BOOLEAN nodeSpecified,
                        INT32 &tag ) ;
 
@@ -202,7 +203,8 @@ namespace engine
       INT32 _updateCataInfo( BOOLEAN refresh,
                              _pmdEDUCB *cb ) ;
 
-      INT32 _shardData( const RTN_LOB_TUPLES &tuples,
+      INT32 _shardData( const MsgOpLob &header,
+                        const RTN_LOB_TUPLES &tuples,
                         BOOLEAN isWrite,
                         const DONE_LST &doneLst ) ;
 
@@ -230,13 +232,18 @@ namespace engine
 
       INT32 _getPageSizeFromCatalog( _pmdEDUCB *cb,
                                      INT32 &size ) ;
+
+      void _initHeader( MsgOpLob &header,
+                        INT32 opCode,
+                        INT32 bsonLen,
+                        INT64 contextID,
+                        INT32 msgLen = -1 ) ;
    private:
       CoordCataInfoPtr _cataInfo ;
 
       std::vector<MsgOpReply *> _results ;
       REQUESTID_MAP _sendMap ;
       DATA_GROUPS _dataGroups ;
-      MsgOpLob _header ;
 
       SUB_STREAMS _subs;
       bson::BSONObj _metaObj ;
