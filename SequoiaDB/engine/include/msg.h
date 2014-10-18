@@ -532,16 +532,6 @@ struct _MsgOpMsg
 } ;
 typedef struct _MsgOpMsg MsgOpMsg ;
 
-// set when getMore is called but context id is invalid, 0 results
-#define FLG_REPLY_CONTEXTSORNOTFOUND  0x00000001
-// set when query fail, results include one document containing an $err field
-//#define FLG_REPLY_QUERYFAIL           0x00000002
-// set when shards config is inconsistent
-#define FLG_REPLY_SHARDCONFSTALE      0x00000004
-// set when query hit end of collection
-//#define FLG_REPLY_EOC                 0x00000008
-// set when slave node received the request that is part of primary node
-//#define FLG_REPLY_NOT_PRIMARY         0X00000010
 // Followed by numReturned BSON objects
 struct _MsgOpReply
 {
