@@ -96,7 +96,8 @@ namespace engine
          INT32 _onDelReqMsg( MsgHeader *msg ) ;
          INT32 _onInterruptMsg( MsgHeader *msg ) ;
          INT32 _onMsgReqMsg( MsgHeader *msg ) ;
-         INT32 _onQueryReqMsg( MsgHeader *msg, INT64 &contextID ) ;
+         INT32 _onQueryReqMsg( MsgHeader *msg, _rtnContextBuf &buffObj,
+                               INT32 &startingPos, INT64 &contextID ) ;
          INT32 _onGetMoreReqMsg( MsgHeader *msg, _rtnContextBuf &buffObj,
                                  INT32 &startingPos, INT64 &contextID ) ;
          INT32 _onKillContextsReqMsg( MsgHeader *msg ) ;

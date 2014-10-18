@@ -982,6 +982,7 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    JSObject *objHint                = NULL ;
    int32_t numToSkip                = 0 ;
    int32_t numToRet                 = -1 ;
+   int32_t flags                    = 0 ;
    bson *bsonCond                   = NULL ;
    bson *bsonSel                    = NULL ;
    bson *bsonOrder                  = NULL ;
@@ -1089,6 +1090,19 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    {
       REPORT ( FALSE , "SdbCollection.rawFind(): wrong argument in limit(<num>)" ) ;
    }
+   // flags
+   if ( JSVAL_IS_VOID( argv[6] ) || JSVAL_IS_NULL( argv[6] ) )
+   {
+      // use the default num 0
+   }
+   else if ( JSVAL_IS_INT( argv[6] ) )
+   {
+      flags = JSVAL_TO_INT ( argv[6] ) ;
+   }
+   else
+   {
+      REPORT ( FALSE , "SdbCollection.rawFind(): wrong argument in flags(<num>)" ) ;
+   }
 /*
    // get arguments
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) , "/ooooii" ,
@@ -1134,8 +1148,8 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
 
    JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
 
-   rc = sdbQuery ( *collection , bsonCond , bsonSel , bsonOrder , bsonHint ,
-                   numToSkip , numToRet , cursor ) ;
+   rc = sdbQuery1( *collection , bsonCond , bsonSel , bsonOrder , bsonHint ,
+                   numToSkip , numToRet , flags , cursor ) ;
    REPORT_RC ( SDB_OK == rc || SDB_DMS_EOC == rc ,
                "SdbCollection.find()" , rc ) ;
 
@@ -2645,6 +2659,7 @@ static JSBool query_constructor ( JSContext *cx , uintN argc , jsval *vp )
    JSObject *objHint          = NULL ;
    int32_t skip               = 0 ;
    int32_t limit              = -1 ;
+   int32_t flags              = 0 ;
    JSObject *obj              = NULL ;
    jsval val                  = JSVAL_VOID ;
    JSBool ret                 = JS_TRUE ;
@@ -2697,6 +2712,9 @@ static JSBool query_constructor ( JSContext *cx , uintN argc , jsval *vp )
    // _limit
    val = INT_TO_JSVAL ( limit ) ;
    VERIFY ( JS_SetProperty ( cx , obj , "_limit" , &val ) ) ;
+   // _flags
+   val = INT_TO_JSVAL ( flags ) ;
+   VERIFY ( JS_SetProperty ( cx , obj , "_flags" , &val ) ) ;
    // _cursor
    val = JSVAL_NULL ;
    VERIFY ( JS_SetProperty ( cx , obj , "_cursor" , &val ) ) ;

@@ -154,7 +154,7 @@ if ( handle )                        \
 static BOOLEAN _sdbIsSrand = FALSE ;
 
 // Local function define
-void _sdbDisconnect_inner ( sdbConnectionHandle handle ) ;
+void  _sdbDisconnect_inner ( sdbConnectionHandle handle ) ;
 
 
 #if defined (_LINUX)
@@ -458,6 +458,7 @@ static INT32 _recvExtract ( sdbConnectionHandle cHandle, SOCKET sock,
    {
       *result = TRUE ;
    }
+
 done :
    return rc ;
 error :
@@ -509,49 +510,6 @@ error :
    goto done ;
 }
 
-static void _killCursor ( sdbCursorHandle cursor )
-{
-   INT32 rc          = SDB_OK ;
-   BOOLEAN result    = FALSE ;
-   SINT64 lcontextID = -1 ;
-   sdbCursorStruct *cs = (sdbCursorStruct*)cursor ;
-
-   HANDLE_CHECK( cursor, cs, SDB_HANDLE_TYPE_CURSOR ) ;
-
-   lcontextID = cs->_contextID ;
-
-   rc = clientBuildKillContextsMsg ( &cs->_pSendBuffer,
-                                     &cs->_sendBufferSize,
-                                     0, 1,
-                                     &lcontextID,
-                                     cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-   cs->_contextID = -1 ;
-   rc = _send ( cs->_connection, cs->_sock,
-                (MsgHeader*)cs->_pSendBuffer,
-                cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-   rc = _recvExtract ( cs->_connection, cs->_sock,
-                       (MsgHeader**)&cs->_pReceiveBuffer,
-                       &cs->_receiveBufferSize, &lcontextID,
-                       &result, cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-done:
-   return ;
-error:
-   goto done ;
-}
-
 static INT32 _readNextBuffer ( sdbCursorHandle cursor )
 {
    INT32 rc          = SDB_OK ;
@@ -560,6 +518,13 @@ static INT32 _readNextBuffer ( sdbCursorHandle cursor )
    sdbCursorStruct *pCursor = ( sdbCursorStruct* )cursor ;
 
    HANDLE_CHECK( cursor, pCursor, SDB_HANDLE_TYPE_CURSOR ) ;
+
+   // if contextid is not invalid
+   if ( -1 == pCursor->_contextID )
+   {
+      rc = SDB_DMS_EOC ;
+      goto error ;
+   }
 
    rc = clientBuildGetMoreMsg ( &pCursor->_pSendBuffer,
                                 &pCursor->_sendBufferSize, -1,
@@ -591,7 +556,7 @@ done :
 error :
    if ( SDB_DMS_EOC != rc )
    {
-      _killCursor ( cursor ) ;
+      sdbCloseCursor( cursor ) ;
    }
    goto done ;
 }
@@ -717,7 +682,6 @@ error :
 static INT32 _removeHandle ( Node **ptr, ossValuePtr handle,
                              Node **ptrRemoved )
 {
-   INT32 rc        = SDB_OK ;
    Node *pcurrent  = NULL ;
    Node *pprevious = NULL ;
 
@@ -735,7 +699,7 @@ static INT32 _removeHandle ( Node **ptr, ossValuePtr handle,
 
    if ( !pcurrent )
    {
-      goto error ;
+      goto done ;
    }
    // test wether the first node is the one we interested
    if ( !pprevious )
@@ -757,9 +721,7 @@ static INT32 _removeHandle ( Node **ptr, ossValuePtr handle,
    }
 
 done :
-   return rc ;
-error :
-   goto done ;
+   return SDB_OK ;
 }
 
 static INT32 _regSocket( ossValuePtr cHandle, SOCKET *pSock )
@@ -4775,11 +4737,23 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
    ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
                sizeof(cursor->_collectionFullName) ) ;
 
-   // register cursor in connection
-   rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
-   if ( SDB_OK != rc )
+   // find one
+   if ( flag & FLG_QUERY_FINDONE )
    {
-      goto error ;
+      cursor->_pReceiveBuffer = cs->_pReceiveBuffer ;
+      cs->_pReceiveBuffer = NULL ;
+      cursor->_receiveBufferSize = cs->_receiveBufferSize ;
+      cs->_receiveBufferSize = 0 ;
+   }
+
+   if ( -1 != contextID )
+   {
+      // register cursor in connection
+      rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
    }
    // set output result
    *handle = (sdbCursorHandle)cursor ;
@@ -4793,77 +4767,7 @@ error :
    SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
-/*
-static INT32 _sdbQuery ( SOCKET sock, CHAR *pCollectionFullName,
-                         CHAR **ppSendBuffer, INT32 *sendBufferSize,
-                         CHAR **ppReceiveBuffer, INT32 *receiveBufferSize,
-                         BOOLEAN endianConvert,
-                         bson *condition,
-                         bson *select,
-                         bson *orderBy,
-                         bson *hint,
-                         INT64 numToSkip,
-                         INT64 numToReturn,
-                         sdbCursorHandle *handle )
-{
-   INT32 rc = SDB_OK ;
-   SINT64 contextID ;
-   BOOLEAN result ;
-   sdbCursorStruct *cursor = NULL ;
-   if ( !pCollectionFullName || !ppSendBuffer || !sendBufferSize ||
-        !ppReceiveBuffer || !receiveBufferSize  )
-   {
-      rc = SDB_SYS ;
-      goto error ;
-   }
-   if ( pCollectionFullName[0] == '\0' )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   rc = clientBuildQueryMsg ( ppSendBuffer, sendBufferSize,
-                              pCollectionFullName, 0, 0,
-                              numToSkip, numToReturn, condition,
-                              select, orderBy, hint, endianConvert ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-   rc = _send ( sock, (MsgHeader*)(*ppSendBuffer),
-                endianConvert ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-   rc = _recvExtract ( sock, (MsgHeader**)ppReceiveBuffer,
-                       receiveBufferSize, &contextID, &result,
-                       endianConvert ) ;
-   if ( rc )
-   {
-      goto error ;
-   }
-   cursor = (sdbCursorStruct*) SDB_OSS_MALLOC ( sizeof(sdbCursorStruct) ) ;
-   if ( !cursor )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
-   ossMemset ( cursor, 0, sizeof(sdbCursorStruct) ) ;
-   cursor->_handleType      = SDB_HANDLE_TYPE_CURSOR ;
-   cursor->_sock            = sock ;
-   cursor->_contextID       = contextID ;
-   ossMemcpy ( cursor->_collectionFullName, pCollectionFullName,
-               sizeof(cursor->_collectionFullName) ) ;
-//   cursor->_isDeleteCurrent = FALSE ;
-   cursor->_offset          = -1 ;
-   cursor->_endianConvert   = endianConvert ;
-   *handle = (sdbCursorHandle)cursor ;
-done :
-   return rc ;
-error :
-   goto done ;
-}
-*/
+
 SDB_EXPORT INT32 sdbNext ( sdbCursorHandle cHandle,
                            bson *obj )
 {
@@ -4880,7 +4784,7 @@ SDB_EXPORT INT32 sdbNext ( sdbCursorHandle cHandle,
       goto error ;
    }
    // check whether the cursor had been close
-   if ( cs->_isClosed || -1 == cs->_contextID )
+   if ( cs->_isClosed )
    {
       rc = SDB_RTN_CONTEXT_NOTEXIST ;
       goto error ;
@@ -4972,7 +4876,7 @@ SDB_EXPORT INT32 sdbCurrent ( sdbCursorHandle cHandle,
    sdbCursorStruct *cs = (sdbCursorStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CURSOR ) ;
    // check whether the cursor had been close
-   if ( cs->_isClosed || -1 == cs->_contextID )
+   if ( cs->_isClosed )
    {
       rc = SDB_RTN_CONTEXT_NOTEXIST ;
       goto error ;
@@ -4986,8 +4890,6 @@ SDB_EXPORT INT32 sdbCurrent ( sdbCursorHandle cHandle,
    }
 
    BSON_INIT( localobj );
-   //make sure the obj has been initialized
-   BSON_INIT( *obj );
 
    /*
    //we can't get the current record when it was deleted
@@ -5065,6 +4967,7 @@ error :
    }
    goto done ;
 }
+
 /*
 SDB_EXPORT INT32 sdbUpdateCurrent ( sdbCursorHandle cHandle,
                                     bson *rule )
@@ -5341,11 +5244,12 @@ SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle )
    {
       goto done ;
    }
-   if ( -1 == cs->_contextID )
+   if ( -1 == cs->_sock || -1 != cs->_contextID )
    {
-      rc = SDB_RTN_CONTEXT_NOTEXIST ;
-      goto error ;
+      cs->_isClosed = TRUE ;
+      goto done ;
    }
+
    rc = clientBuildKillContextsMsg ( &cs->_pSendBuffer,
                                      &cs->_sendBufferSize, 0, 1,
                                      &cs->_contextID, cs->_endianConvert ) ;
@@ -5363,18 +5267,16 @@ SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle )
                        (MsgHeader**)&cs->_pReceiveBuffer,
                        &cs->_receiveBufferSize, &contextID,
                        &result, cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
    // unregister from connection
-   rc = _unregCursor ( cs->_connection, cHandle ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
+   _unregCursor ( cs->_connection, cHandle ) ;
    cs->_contextID = -1 ;
    cs->_isClosed = TRUE ;
+
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
 done :
    return rc ;
 error :
@@ -6075,18 +5977,12 @@ SDB_EXPORT void sdbReleaseCursor ( sdbCursorHandle cHandle )
 
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CURSOR ) ;
 
+   sdbCloseCursor( cHandle ) ;
+
    if ( !cs->_isClosed )
    {
-      if ( -1 != cs->_sock && -1 != cs->_contextID )
-      {
-         _killCursor ( cHandle ) ;
-      }
       // unregister
-      rc = _unregCursor ( cs->_connection, cHandle ) ;
-      if ( SDB_OK != rc )
-      {
-         ossPrintf( "Failed to unregister cursor, rc = %d"OSS_NEWLINE, rc ) ;
-      }
+      _unregCursor ( cs->_connection, cHandle ) ;
    }
    if ( cs->_pSendBuffer )
    {

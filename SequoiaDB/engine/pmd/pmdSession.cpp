@@ -538,19 +538,13 @@ namespace engine
             rc = _onInsertReqMsg( msg ) ;
             break ;
          case MSG_BS_QUERY_REQ :
-            rc = _onQueryReqMsg( msg, contextID ) ;
+            rc = _onQueryReqMsg( msg, _contextBuff, startPos, contextID ) ;
             break ;
          case MSG_BS_DELETE_REQ :
             rc = _onDelReqMsg( msg ) ;
             break ;
          case MSG_BS_GETMORE_REQ :
             rc = _onGetMoreReqMsg( msg, _contextBuff, startPos, contextID ) ;
-            if ( SDB_OK == rc )
-            {
-               *ppBody     = _contextBuff.data() ;
-               bodyLen     = _contextBuff.size() ;
-               returnNum   = _contextBuff.recordNum() ;
-            }
             break ;
          case MSG_BS_KILL_CONTEXT_REQ :
             rc = _onKillContextsReqMsg( msg ) ;
@@ -600,6 +594,11 @@ namespace engine
             rc = SDB_INVALIDARG ;
             break ;
       }
+
+      // set return body
+      *ppBody     = _contextBuff.data() ;
+      bodyLen     = _contextBuff.size() ;
+      returnNum   = _contextBuff.recordNum() ;
 
       if ( rc )
       {
@@ -793,7 +792,10 @@ namespace engine
       return rtnMsg( (MsgOpMsg*)msg ) ;
    }
 
-   INT32 _pmdLocalSession::_onQueryReqMsg( MsgHeader * msg, INT64 &contextID )
+   INT32 _pmdLocalSession::_onQueryReqMsg( MsgHeader * msg,
+                                           _rtnContextBuf &buffObj,
+                                           INT32 &startingPos,
+                                           INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       INT32 flags = 0 ;
@@ -837,6 +839,35 @@ namespace engine
             rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                            hint, flags, _pEDUCB, numToSkip, numToReturn,
                            _pDMSCB, _pRTNCB, contextID, NULL, TRUE ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            if ( ( flags & FLG_QUERY_FINDONE ) && -1 != contextID )
+            {
+               INT64 startPos64 = 0 ;
+               rc = rtnGetMore ( contextID, 1, buffObj, startPos64,
+                                 _pEDUCB, _pRTNCB ) ;
+               startingPos = ( INT32 )startPos64 ;
+
+               if ( SDB_OK == rc )
+               {
+                  _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
+               }
+               contextID = -1 ;
+
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+               }
+               else if ( rc )
+               {
+                  PD_LOG( PDERROR, "Session[%s] failed to query with find "
+                          "one, rc: %d", sessionName(), rc ) ;
+                  goto error ;
+               }
+            }
          }
          catch ( std::exception &e )
          {
@@ -871,6 +902,10 @@ namespace engine
          rc = rtnRunCommand( pCommand, getServiceType(),
                              _pEDUCB, _pDMSCB, _pRTNCB,
                              _pDPSCB, 1, &contextID ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
 
    done:

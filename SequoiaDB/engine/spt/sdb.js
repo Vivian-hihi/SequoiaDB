@@ -159,6 +159,10 @@ SdbCollection.prototype.find = function( query, select ) {
    return new SdbQuery( this , query, select );
 }
 
+SdbCollection.prototype.findOne = function( query, select ) {
+   return new SdbQuery( this , query, select ).flags( 0x00000200 ) ;
+}
+
 SdbCollection.prototype.getIndex = function( name ) {
    if ( ! name )
       throw "SdbCollection.getIndex(): 1st parameter should be valid string" ;
@@ -219,12 +223,16 @@ SdbQuery.prototype._checkExecuted = function() {
 
 SdbQuery.prototype._exec = function() {
    if ( ! this._cursor ) {
+      if ( 1 == this._limit ) {
+	     this._flags |= 0x00000200 ;
+      }
       this._cursor = this._collection.rawFind( this._query,
                                                this._select,
                                                this._sort,
                                                this._hint,
                                                this._skip,
-                                               this._limit );
+                                               this._limit,
+                                               this._flags );
    }
    return this._cursor;
 }
@@ -250,6 +258,12 @@ SdbQuery.prototype.skip = function( skip ) {
 SdbQuery.prototype.limit = function( limit ) {
    this._checkExecuted();
    this._limit = limit;
+   return this;
+}
+
+SdbQuery.prototype.flags = function( flags ) {
+   this._checkExecuted();
+   this._flags = flags;
    return this;
 }
 
