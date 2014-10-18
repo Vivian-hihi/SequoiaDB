@@ -5244,7 +5244,7 @@ SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle )
    {
       goto done ;
    }
-   if ( -1 == cs->_sock || -1 != cs->_contextID )
+   if ( -1 == cs->_sock || -1 == cs->_contextID )
    {
       cs->_isClosed = TRUE ;
       goto done ;
