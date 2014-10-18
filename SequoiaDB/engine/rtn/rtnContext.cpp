@@ -677,7 +677,7 @@ namespace engine
          rc = SDB_OK ;
 
          // if get all data
-         if ( isEmpty() )
+         if ( isEmpty() && !eof() )
          {
             _bufferCurrentOffset = 0 ;
             _bufferEndOffset     = 0 ;

@@ -816,6 +816,10 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
+         if ( flags & FLG_QUERY_FINDONE )
+         {
+            numToReturn = 1 ;
+         }
          try
          {
             BSONObj matcher ( pQueryBuff ) ;

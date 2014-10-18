@@ -160,7 +160,7 @@ SdbCollection.prototype.find = function( query, select ) {
 }
 
 SdbCollection.prototype.findOne = function( query, select ) {
-   return new SdbQuery( this , query, select ).flags( 0x00000200 ) ;
+   return new SdbQuery( this , query, select ).limit( 1 ).flags( 0x00000200 ) ;
 }
 
 SdbCollection.prototype.getIndex = function( name ) {
