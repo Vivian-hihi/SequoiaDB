@@ -544,7 +544,7 @@ namespace engine
 
             rc = rtnWriteLob( fullName, *oid, sequence,
                               offset, len, data, eduCB,
-                              1, NULL ) ;
+                              1, _dpsCB ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
@@ -573,7 +573,7 @@ namespace engine
 
             rc = rtnRemoveLobPiece( fullName, *oid,
                                     sequence, eduCB,
-                                    1, NULL ) ;
+                                    1, _dpsCB ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to remove lob:%d", rc ) ;
@@ -605,7 +605,7 @@ namespace engine
 
             rc = rtnUpdateLob( fullName, *oid, sequence,
                                offset, len, data, eduCB,
-                               1, NULL ) ;
+                               1, _dpsCB ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
