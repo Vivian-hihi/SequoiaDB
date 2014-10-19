@@ -452,8 +452,8 @@ typedef struct _MsgOpInsert MsgOpInsert ;
 #define FLG_QUERY_FORCE_HINT          0x00000080
 // Enable paralled sub querys
 #define FLG_QUERY_PARALLED            0x00000100
-// Find one only
-#define FLG_QUERY_FINDONE             0x00000200
+// Find with return data in query response, can use for find one
+#define FLG_QUERY_WITH_RETURNDATA     0x00000200
 // explain query
 #define FLG_QUERY_EXPLAIN             0x00000400
 
