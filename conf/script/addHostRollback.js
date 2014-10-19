@@ -16,23 +16,21 @@
 
 *******************************************************************************/
 /*
-@description: remove the installation packet from the host to add
+@description: remove the installed db packet
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]}
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "SshPort": "22", "AgentPort": "11790", "InstallPath": "/opt/sequoiadb" } ] }
    SYS_JSON: {}
    ENV_JSON: {}
    OTHER_JSON: {}
 @return
-   RET_JSON: the format is: {"HostInfo":[{"errno":0,"detail":"","IP":"192.168.20.42","HasUninstall":true},{"errno":0,"detail":"","IP":"192.168.20.165","HasUninstall":true}]}
+   RET_JSON: the format is: {"HostInfo":[{"errno":0,"detail":"","IP":"192.168.20.165","HasUninstall":true}]}
 */
 
-
-//var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.42", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" }, { "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" } ] } ;
-
-var RET_JSON = new Object() ;
+var RET_JSON       = new Object() ;
 RET_JSON[HostInfo] = [] ;
+var errMsg         = "" ;
 
 /* *****************************************************************************
 @discretion: uninstall db packet in remote host
@@ -57,9 +55,8 @@ function uninstallDBPacket ( ssh, osInfo, path )
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to uninstall db packet in remote" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
+         errMsg = "Failed to uninstall db packet in host [" + ssh.getPeerIP() + "]" ;
+         exception_handle( e, errMsg ) ;
       }
    }
    else
@@ -76,6 +73,7 @@ function main()
    if ( arrLen == 0 )
    {
       setLastErrMsg( "Not specified any hosts to uninstall" ) ;
+      setLastError( SDB_INVALIDARG ) ;
       throw SDB_INVALIDARG ;
    }
    // get os infomation
@@ -105,7 +103,6 @@ function main()
       }
       RET_JSON[HostInfo].push( retObj ) ;
    }
-//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    // return the result
    return RET_JSON ;
 }
