@@ -3857,14 +3857,15 @@ static JSFunctionSpec domain_functions[] = {
 // PD_TRACE_DECLARE_FUNCTION ( SDB_DESTRUCTOR, "sdb_destructor" )
 static void sdb_destructor ( JSContext *cx , JSObject *obj )
 {
-   UINT64                  addr       = 0 ;
    PD_TRACE_ENTRY ( SDB_DESTRUCTOR );
    sdbConnectionHandle *connection = NULL ;
    connection = (sdbConnectionHandle *) JS_GetPrivate ( cx , obj ) ;
    if ( connection )
    {
       // first need to convert retval to double
-      /*__sdbGetReserveSpace1 ( *connection, &addr ) ;
+      /*
+      UINT64 addr = 0 ;
+      __sdbGetReserveSpace1 ( *connection, &addr ) ;
       void *p = (void*)addr ;
       JS_RemoveValueRoot ( cx, (jsval*)p ) ;
       SAFE_JS_FREE ( cx, p ) ; */
@@ -4031,7 +4032,6 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
    jsval                val         = JSVAL_VOID ;
-   jsval                *pv         = NULL ;
 // fmp use localhost and coord's port in current version
 #if defined (SDB_FMP)
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
@@ -4180,7 +4180,7 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    // set the newly build js sdb object as a return value,
    // so we can hold this object in the sdb client like this:
    // var sdb = new Sdb("localhost", 11810)
-   pv = (jsval*)JS_malloc ( cx, sizeof(jsval) ) ;
+   jsval *pv = (jsval*)JS_malloc ( cx, sizeof(jsval) ) ;
    VERIFY ( pv ) ;
    *pv = OBJECT_TO_JSVAL ( obj ) ;
    JS_SET_RVAL ( cx , vp , *pv ) ;
@@ -6292,14 +6292,14 @@ static JSBool sdb_close ( JSContext *cx, uintN argc, jsval *vp )
    PD_TRACE_ENTRY ( SDB_SDB_CLOSE );
    sdbCollectionHandle   *connection        = NULL ;
    JSBool                 ret               = JS_TRUE ;
-   UINT64                 addr              = 0 ;
-   void                  *p                 = NULL ;
    connection = (sdbConnectionHandle *)
                JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( connection, "Sdb.close: no connection handle" ) ;
 
    sdbDisconnect(*connection ) ;
    /*
+   UINT64 addr = 0 ;
+   void *p = NULL ;
    __sdbGetReserveSpace1 ( *connection, &addr ) ;
    __sdbSetReserveSpace1 ( *connection, 0 ) ;
    p = (void*)addr ;
