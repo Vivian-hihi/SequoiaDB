@@ -67,7 +67,7 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCATAQUERY ) ;
-      pmdKRCB *pKrcb = pmdGetKRCB();
+      pmdKRCB *pKrcb    = pmdGetKRCB();
       CoordCB *pCoordcb = pKrcb->getCoordCB();
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent();
@@ -80,10 +80,11 @@ namespace engine
       REPLY_QUE replyQue;
       REQUESTID_MAP sendNodes;
       BOOLEAN hasRetry = FALSE;
-      MsgRouteID routeID;
+      MsgOpReply *pReply = NULL ;
+      BOOLEAN takeOver = FALSE ;
+
       groupLst[CATALOG_GROUPID] = CATALOG_GROUPID;
       contextID = -1;
-      INT64 dataContextID = -1 ;
 
       rc = msgBuildQueryMsg( &pBuf, &bufferSize, pCollectionName, flag, 0,
                              numToSkip, numToReturn, &matcher, &selector,
@@ -112,19 +113,13 @@ namespace engine
       SDB_ASSERT( replyQue.size() == 1, "The replyQue size must be 1" );
       while ( !replyQue.empty() )
       {
-         MsgOpReply *pReply = NULL;
-         pReply = (MsgOpReply *)(replyQue.front());
-         replyQue.pop();
-         rc = pReply->flags;
-         if ( SDB_OK == rc )
+         if ( pReply )
          {
-            dataContextID = pReply->contextID;
-            routeID = pReply->header.routeID;
+            SDB_OSS_FREE( pReply ) ;
          }
-         if ( NULL != pReply )
-         {
-            SDB_OSS_FREE( pReply );
-         }
+         pReply = (MsgOpReply *)(replyQue.front()) ;
+         replyQue.pop() ;
+         rc = pReply->flags ;
       }
       if ( rc )
       {
@@ -144,7 +139,7 @@ namespace engine
          goto error;
       }
 
-      rc = pContext->addSubContext( routeID, dataContextID );
+      rc = pContext->addSubContext( pReply, takeOver );
       PD_RC_CHECK( rc, PDERROR, "failed to add sub-context(rc=%d)", rc ) ;
       pContext->addSubDone( cb ) ;
 
@@ -152,6 +147,10 @@ namespace engine
       if ( pBuf )
       {
          SDB_OSS_FREE( pBuf );
+      }
+      if ( pReply && !takeOver )
+      {
+         SDB_OSS_FREE( pReply ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNCOCATAQUERY, rc ) ;
       return rc;

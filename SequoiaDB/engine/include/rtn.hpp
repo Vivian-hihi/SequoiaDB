@@ -148,7 +148,7 @@ namespace engine
                     SDB_DMSCB *dmsCB,
                     SDB_RTNCB *rtnCB,
                     SINT64 &contextID,
-                    rtnContextData **ppContext = NULL,
+                    rtnContextBase **ppContext = NULL,
                     BOOLEAN enablePrefetch = FALSE ) ;
 
    INT32 rtnSort ( rtnContext **ppContext,
@@ -473,7 +473,8 @@ namespace engine
                      SINT64 numToSkip,
                      SINT64 numToReturn,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                     SDB_RTNCB *rtnCB, INT64 &contextID ) ;
+                     SDB_RTNCB *rtnCB, INT64 &contextID,
+                     rtnContextBase **ppContext = NULL ) ;
 }
 
 #endif

@@ -678,7 +678,8 @@ namespace engine
 
       // start query
       rc = rtnQuery ( pCollectionName, dummyObj, dummyObj, dummyObj,
-                      hint, 0, cb, 0, -1, dmsCB, rtnCB, contextID, &context ) ;
+                      hint, 0, cb, 0, -1, dmsCB, rtnCB, contextID,
+                      (rtnContextBase**)&context ) ;
       if ( rc )
       {
          if ( SDB_DMS_EOC == rc )

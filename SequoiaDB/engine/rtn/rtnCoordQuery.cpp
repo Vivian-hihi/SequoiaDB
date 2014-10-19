@@ -72,6 +72,7 @@ namespace engine
       BOOLEAN hasRetry = FALSE;
       MsgHeader *pHead = (MsgHeader *)pBuffer;
       SINT32 resCode = MAKE_REPLY_TYPE(pHead->opCode);
+      BOOLEAN takeOver = FALSE ;
 
       do
       {
@@ -108,10 +109,11 @@ namespace engine
 
          while ( !replyQue.empty() )
          {
-            MsgOpReply *pReply = NULL;
-            pReply = (MsgOpReply *)(replyQue.front());
+            MsgOpReply *pReply   = NULL;
+            takeOver             = FALSE ;
+            pReply               = (MsgOpReply *)(replyQue.front());
+            rcTmp                = pReply->flags;
             replyQue.pop();
-            rcTmp = pReply->flags;
             UINT32 groupID = pReply->header.routeID.columns.groupID;
 
             if ( rcTmp != SDB_OK )
@@ -130,7 +132,7 @@ namespace engine
                   if ( SDB_CLS_FULL_SYNC == rcTmp )
                   {
                      rtnCoordUpdateNodeStatByRC( pReply->header.routeID,
-                                                rcTmp );
+                                                 rcTmp );
                   }
                   if ( !hasRetry )
                   {
@@ -161,8 +163,7 @@ namespace engine
             }
             else
             {
-               rcTmp = pContext->addSubContext( pReply->header.routeID,
-                                                pReply->contextID );
+               rcTmp = pContext->addSubContext( pReply, takeOver );
                if ( SDB_OK == rcTmp )
                {
                   sendGroupLst[ groupID ] = groupID;
@@ -176,14 +177,17 @@ namespace engine
                {
                   rc = rcTmp;
                }
-               PD_LOG( PDERROR, "failed to query on data node"
-                     "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
-                     pReply->header.routeID.columns.groupID,
-                     pReply->header.routeID.columns.nodeID,
-                     pReply->header.routeID.columns.serviceID,
-                     rcTmp );
+               PD_LOG( PDERROR, "Failed to query on data node"
+                       "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",
+                       pReply->header.routeID.columns.groupID,
+                       pReply->header.routeID.columns.nodeID,
+                       pReply->header.routeID.columns.serviceID,
+                       rcTmp );
             }
-            SDB_OSS_FREE( pReply );
+            if ( !takeOver )
+            {
+               SDB_OSS_FREE( pReply ) ;
+            }
          }
 
          if ( rc != SDB_OK )
@@ -326,7 +330,10 @@ namespace engine
       CHAR *pBuffer = NULL;
       INT32 bufferSize = 0;
       REPLY_QUE replyQue;
+      BOOLEAN takeOver = FALSE ;
+
       SDB_ASSERT( pContext, "pContext can't be NULL!" );
+
       try
       {
          CoordGroupSubCLMap::iterator iterGroup;
@@ -345,14 +352,14 @@ namespace engine
          BSONObj boOrderBy;
          BSONObj boHint;
          rc = msgExtractQuery( (CHAR *)pSrc, &flag, &pCollectionName,
-                              &numToSkip, &numToReturn, &pQuery,
-                              &pFieldSelector, &pOrderBy, &pHint );
+                               &numToSkip, &numToReturn, &pQuery,
+                               &pFieldSelector, &pOrderBy, &pHint );
          PD_RC_CHECK( rc, PDERROR,
                      "failed to parse query message(rc=%d)", rc );
-         boQuery = BSONObj( pQuery );
-         boFieldSelector = BSONObj( pFieldSelector );
-         boOrderBy = BSONObj( pOrderBy );
-         boHint = BSONObj( pHint );
+         boQuery           = BSONObj( pQuery );
+         boFieldSelector   = BSONObj( pFieldSelector );
+         boOrderBy         = BSONObj( pOrderBy );
+         boHint            = BSONObj( pHint );
 
          iterGroup = groupSubCLMap.begin();
          while( iterGroup != groupSubCLMap.end() )
@@ -371,28 +378,31 @@ namespace engine
             bobNewQuery.appendArray( CAT_SUBCL_NAME, babSubCL.arr() );
             BSONObj boNewQuery = bobNewQuery.obj();
             rc = msgBuildQueryMsg( &pBuffer, &bufferSize, pCollectionName,
-                                 flag, 0, numToSkip, numToReturn, &boNewQuery,
-                                 &boFieldSelector, &boOrderBy, &boHint );
+                                   flag, 0, numToSkip, numToReturn,
+                                   &boNewQuery, &boFieldSelector,
+                                   &boOrderBy, &boHint );
             PD_CHECK( SDB_OK == rc, rc, RECV_MSG, PDERROR,
-                     "failed to build query message(rc=%d)", rc );
+                      "Failed to build query message(rc=%d)", rc );
             {
                MsgOpQuery *pReqMsg = (MsgOpQuery *)pBuffer;
                pReqMsg->version = pSrc->version;
                pReqMsg->w = pSrc->w;
             }
-            rc = rtnCoordGetGroupInfo( cb, iterGroup->first, FALSE, groupInfo );
+            rc = rtnCoordGetGroupInfo( cb, iterGroup->first, FALSE,
+                                       groupInfo ) ;
             PD_CHECK( SDB_OK == rc, rc, RECV_MSG, PDERROR,
-                     "failed to get group info(groupId=%u, rc=%d)",
-                     iterGroup->first, rc );
+                      "Failed to get group info(groupId=%u, rc=%d)",
+                      iterGroup->first, rc ) ;
             rc = rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
-                                          pRouteAgent, MSG_ROUTE_SHARD_SERVCIE, cb );
+                                           pRouteAgent,
+                                           MSG_ROUTE_SHARD_SERVCIE, cb ) ;
             PD_CHECK( SDB_OK == rc, rc, RECV_MSG, PDERROR,
-                     "failed to send request(rc=%d)", rc );
+                      "Failed to send request(rc=%d)", rc ) ;
             ++iterGroup;
          }
 
       RECV_MSG:
-         rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue, MSG_BS_QUERY_RES );
+         rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue, MSG_BS_QUERY_RES ) ;
          if ( SDB_OK != rcTmp )
          {
             PD_LOG( PDWARNING, "failed to get reply(rcTmp=%d)", rcTmp );
@@ -405,10 +415,11 @@ namespace engine
          }
          while( !replyQue.empty() )
          {
-            MsgOpReply *pReply = NULL;
-            pReply = (MsgOpReply *)(replyQue.front());
+            takeOver             = FALSE ;
+            MsgOpReply *pReply   = NULL;
+            pReply               = (MsgOpReply *)(replyQue.front());
+            rcTmp                = pReply->flags ;
             replyQue.pop();
-            rcTmp = pReply->flags;
             UINT32 groupID = pReply->header.routeID.columns.groupID;
             if ( rcTmp != SDB_OK )
             {
@@ -437,8 +448,8 @@ namespace engine
                                                    groupInfoTmp );
                      if ( rcTmp )
                      {
-                        PD_LOG ( PDERROR,
-                                 "failed to update group info(groupID=%u, rc=%d)",
+                        PD_LOG ( PDERROR, "Failed to update group info"
+                                 "(groupID=%u, rc=%d)",
                                  pReply->header.routeID.columns.groupID,
                                  rcTmp );
                         if ( SDB_OK == rc )
@@ -451,8 +462,7 @@ namespace engine
             }
             else
             {
-               rcTmp = pContext->addSubContext( pReply->header.routeID,
-                                                pReply->contextID );
+               rcTmp = pContext->addSubContext( pReply, takeOver );
                if ( SDB_OK == rcTmp )
                {
                   sendGroupList[ groupID ] = groupID;
@@ -463,14 +473,17 @@ namespace engine
             {
                rc = rcTmp;
             }
-            SDB_OSS_FREE( pReply );
+
+            if ( !takeOver )
+            {
+               SDB_OSS_FREE( pReply );
+            }
          }
       }
       catch ( std::exception &e )
       {
-         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                     "occur unexpected error:%s",
-                     e.what() );
+         PD_RC_CHECK( SDB_INVALIDARG, PDERROR, "Occur unexpected error:%s",
+                      e.what() ) ;
       }
    done:
       if ( pBuffer != NULL )
@@ -502,11 +515,9 @@ namespace engine
       MsgOpQuery *pQuery = (MsgOpQuery *)pSrc ;
       SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
       rc = pRtncb->contextNew( RTN_CONTEXT_COORD,
-                              (rtnContext **)&pContext,
-                              contextID, cb ) ;
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to allocate context(rc=%d)",
-                  rc ) ;
+                               (rtnContext **)&pContext,
+                               contextID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to allocate context(rc=%d)", rc ) ;
 
       if ( FLG_QUERY_EXPLAIN & pQuery->flags )
       {
@@ -517,8 +528,7 @@ namespace engine
          rc = pContext->open( boOrderBy, pQuery->numToReturn,
                               pQuery->numToSkip ) ;
       }
-      PD_RC_CHECK( rc, PDERROR,
-                  "open context failed(rc=%d)", rc ) ;
+      PD_RC_CHECK( rc, PDERROR, "Open context failed(rc=%d)", rc ) ;
       pQuery->header.routeID.value = 0;
       pQuery->header.TID = cb->getTID();
       if ( pQuery->numToReturn > 0 && pQuery->numToSkip > 0 )
@@ -532,10 +542,10 @@ namespace engine
 
    retry:
       rc = rtnCoordGetCataInfo( cb, pCollectionName,
-                              isNeedRefresh, cataInfo ) ;
+                                isNeedRefresh, cataInfo ) ;
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to get the catalog info(collection:%s)",
-                  pCollectionName ) ;
+                   "Failed to get the catalog info(collection:%s)",
+                   pCollectionName ) ;
       pQuery->version = cataInfo->getVersion() ;
       if ( cataInfo->isMainCL() )
       {
@@ -544,32 +554,32 @@ namespace engine
          CoordGroupSubCLMap groupSubCLMap ;
          rc = cataInfo->getMatchSubCLs( boQuery, subCLList ) ;
          PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
-                  "failed to get match sub collection(rc=%d)",
-                  rc ) ;
+                   "Failed to get match sub collection(rc=%d)",
+                   rc ) ;
          rc = rtnCoordGetSubCLsByGroups( subCLList, sendGroupList,
-                                       cb, groupSubCLMap ) ;
+                                         cb, groupSubCLMap ) ;
          PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
-                  "failed to get sub-collection info(rc=%d)",
-                  rc );
+                   "Failed to get sub-collection info(rc=%d)",
+                   rc );
          rc = queryOnMainCL( groupSubCLMap, pQuery, cb, pRouteAgent,
-                           sendGroupList, pContext ) ;
+                             sendGroupList, pContext ) ;
          PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
-                  "query on main collection failed(rc=%d)",
-                  rc );
+                   "Query on main collection failed(rc=%d)",
+                   rc );
       }
       else
       {
          CoordGroupList groupList ;
          // query on normal collection
          rc = getNodeGroups( cataInfo, boQuery,
-                           sendGroupList, groupList ) ;
+                             sendGroupList, groupList ) ;
          PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
-                  "failed to get match sharding(rc=%d)",
-                  rc ) ;
+                   "Failed to get match sharding(rc=%d)",
+                   rc ) ;
          rc = queryToDataNodeGroup( pSrc, groupList, sendGroupList,
                                     pRouteAgent, cb, pContext ) ;
          PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
-                   "query on data node failed(rc=%d)",
+                   "Query on data node failed(rc=%d)",
                    rc ) ;
       }
 

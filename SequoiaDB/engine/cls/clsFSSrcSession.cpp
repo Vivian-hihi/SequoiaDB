@@ -318,7 +318,7 @@ namespace engine
          rc = rtnQuery( fullName, selector, matcher, orderBy, hint, 0, eduCB(),
                         0, -1,  pmdGetKRCB()->getDMSCB(),
                         pmdGetKRCB()->getRTNCB(),
-                        _contextID, &_context ) ;
+                        _contextID, (rtnContextBase**)&_context ) ;
       }
       // SHARD KEY INDEX SCAN
       else

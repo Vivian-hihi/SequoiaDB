@@ -816,7 +816,7 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
-         rtnContextData *pContext = NULL ;
+         rtnContextBase *pContext = NULL ;
          try
          {
             BSONObj matcher ( pQueryBuff ) ;

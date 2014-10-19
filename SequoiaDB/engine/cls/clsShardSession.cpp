@@ -358,7 +358,7 @@ namespace engine
 
       INT32 flags = 0 ;
       SINT64 contextID = -1 ;
-      INT32 statFrom = 0 ;
+      INT32 startFrom = 0 ;
       INT32 numReturn = 0 ;
       const CHAR  *pReponseBuff = NULL ;
       INT32  buffLen = 0 ;
@@ -385,16 +385,10 @@ namespace engine
                rc = _onDeleteReqMsg ( handle, msg, contextID ) ;
                break ;
             case MSG_BS_QUERY_REQ :
-               rc = _onQueryReqMsg ( handle, msg, contextID ) ;
+               rc = _onQueryReqMsg ( handle, msg, buffObj, startFrom, contextID ) ;
                break ;
             case MSG_BS_GETMORE_REQ :
-               rc = _onGetMoreReqMsg ( msg, buffObj, statFrom, contextID ) ;
-               if ( SDB_OK == rc )
-               {
-                  pReponseBuff = buffObj.data() ;
-                  buffLen = buffObj.size() ;
-                  numReturn = buffObj.recordNum() ;
-               }
+               rc = _onGetMoreReqMsg ( msg, buffObj, startFrom, contextID ) ;
                break ;
             case MSG_BS_TRANS_UPDATE_REQ :
                isNeedRollback = TRUE ;
@@ -559,12 +553,18 @@ namespace engine
                      sessionName(), msg->opCode, rc ) ;
          }
       }
+      else
+      {
+         pReponseBuff = buffObj.data() ;
+         buffLen = buffObj.size() ;
+         numReturn = buffObj.recordNum() ;
+      }
 
       _replyHeader.header.messageLength += buffLen ;
       _replyHeader.flags = flags ;
       _replyHeader.contextID = contextID ;
       _replyHeader.numReturned = numReturn ;
-      _replyHeader.startFrom = statFrom ;
+      _replyHeader.startFrom = startFrom ;
 
       rc = _reply ( &_replyHeader, pReponseBuff, buffLen ) ;
 
@@ -952,6 +952,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONQYREQMSG, "_clsShdSession::_onQueryReqMsg" )
    INT32 _clsShdSession::_onQueryReqMsg ( NET_HANDLE handle, MsgHeader * msg,
+                                          rtnContextBuf &buffObj,
+                                          INT32 &startingPos,
                                           INT64 &contextID )
    {
       PD_LOG ( PDDEBUG, "session[%s] _onQueryReqMsg", sessionName() ) ;
@@ -983,6 +985,7 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
+         rtnContextBase *pContext = NULL ;
          _pCollectionName = pCollectionName ;
          //check cata
          w = 1 ;
@@ -1001,10 +1004,10 @@ namespace engine
             MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_QUERY_REQ,
                               "CL:%s, Match:%s, Selector:%s, OrderBy:%s, Hint:%s",
                               pCollectionName,
-                              matcher.toString( false, false ).c_str(),
-                              selector.toString(false, false ).c_str(),
-                              orderBy.toString(false, false ).c_str(),
-                              hint.toString(false, false ).c_str() ) ;
+                              matcher.toString().c_str(),
+                              selector.toString().c_str(),
+                              orderBy.toString().c_str(),
+                              hint.toString().c_str() ) ;
 
             PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
                      "%s\norderBy: %s\nhint:%s", sessionName(),
@@ -1015,13 +1018,42 @@ namespace engine
             {
                rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                               hint, flags, _pEDUCB, numToSkip, numToReturn,
-                              _pDmsCB, _pRtnCB, contextID, NULL, TRUE ) ;
+                              _pDmsCB, _pRtnCB, contextID, &pContext, TRUE ) ;
             }
             else
             {
                rc = _queryToMainCL( pCollectionName, selector, matcher,
                                     orderBy, hint, flags, _pEDUCB, numToSkip,
-                                    numToReturn, _pDmsCB, _pRtnCB, contextID ) ;
+                                    numToReturn, contextID, &pContext ) ;
+            }
+
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            // query with return data
+            if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && NULL != pContext )
+            {
+               INT64 startPos64 = 0 ;
+               rc = pContext->getMore( -1, buffObj, startPos64, _pEDUCB ) ;
+               if ( rc || pContext->eof() )
+               {
+                  _pRtnCB->contextDelete( contextID, _pEDUCB ) ;
+                  contextID = -1 ;
+               }
+               startingPos = ( INT32 )startPos64 ;
+
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+               }
+               else if ( rc )
+               {
+                  PD_LOG( PDERROR, "Session[%s] failed to query with find "
+                          "one, rc: %d", sessionName(), rc ) ;
+                  goto error ;
+               }
             }
          }
          catch ( std::exception &e )
@@ -1496,9 +1528,8 @@ namespace engine
                                          pmdEDUCB *cb,
                                          SINT64 numToSkip,
                                          SINT64 numToReturn,
-                                         SDB_DMSCB *dmsCB,
-                                         SDB_RTNCB *rtnCB,
-                                         SINT64 &contextID )
+                                         SINT64 &contextID,
+                                         _rtnContextBase **ppContext )
    {
       INT32 rc = SDB_OK;
       std::vector< std::string > strSubCLList;
@@ -1506,16 +1537,20 @@ namespace engine
       rtnContextMainCL *pContextMainCL = NULL;
       BOOLEAN includeShardingOrder = FALSE;
       SINT64 tmpContextID = -1 ;
+      INT64 subNumToReturn = numToReturn ;
 
       SDB_ASSERT( pCollectionName, "collection name can't be NULL!" ) ;
       SDB_ASSERT( cb, "educb can't be NULL!" );
-      SDB_ASSERT( dmsCB, "dmsCB can't be NULL!");
-      SDB_ASSERT( rtnCB, "rtnCB can't be NULL!" );
+
+      if ( numToReturn > 0 && numToSkip > 0 )
+      {
+         subNumToReturn = numToReturn + numToSkip ;
+      }
+
       rc = _includeShardingOrder( pCollectionName, orderBy,
-                                 includeShardingOrder );
+                                  includeShardingOrder );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to check order-key(rc=%d)",
-                  rc );
+                   "Failed to check order-key(rc=%d)", rc );
 
       rc = _getSubCLList( matcher, pCollectionName,
                           boNewMatcher, strSubCLList );
@@ -1524,9 +1559,9 @@ namespace engine
          goto error;
       }
 
-      rc = rtnCB->contextNew( RTN_CONTEXT_MAINCL,
-                              (rtnContext **)&pContextMainCL,
-                              tmpContextID, cb );
+      rc = _pRtnCB->contextNew( RTN_CONTEXT_MAINCL,
+                                (rtnContext **)&pContextMainCL,
+                                tmpContextID, cb ) ;
       PD_RC_CHECK( rc, PDERROR,
                    "Failed to create new main-collection context(rc=%d)",
                    rc );
@@ -1538,17 +1573,16 @@ namespace engine
                    rc );
 
       {
-      std::vector< std::string >::iterator iterSubCLSet
-                                       = strSubCLList.begin();
+      std::vector< std::string >::iterator iterSubCLSet = strSubCLList.begin();
       while( iterSubCLSet != strSubCLList.end() )
       {
          SINT64 subContextID = -1;
          rc = rtnQuery( (*iterSubCLSet).c_str(), selector, boNewMatcher,
-                        orderBy, hint, flags, cb, 0, numToReturn, dmsCB,
-                        rtnCB, subContextID );
+                        orderBy, hint, flags, cb, 0, subNumToReturn, _pDmsCB,
+                        _pRtnCB, subContextID ) ;
          PD_RC_CHECK( rc, PDERROR,
-                     "query sub-collection(%s) failed!(rc=%d)",
-                     iterSubCLSet->c_str(), rc );
+                      "Query sub-collection(%s) failed!(rc=%d)",
+                      iterSubCLSet->c_str(), rc );
          pContextMainCL->addSubContext( subContextID );
          ++iterSubCLSet;
       }
@@ -1569,18 +1603,23 @@ namespace engine
       {
          contextID = tmpContextID ;
          tmpContextID = -1 ;
+
+         if ( ppContext )
+         {
+            *ppContext = pContextMainCL ;
+         }
       }
    done:
       return rc;
    error:
       if ( -1 != contextID )
       {
-         rtnCB->contextDelete( contextID, cb );
+         _pRtnCB->contextDelete( contextID, cb );
          contextID = -1;
       }
       if ( -1 != tmpContextID )
       {
-         rtnCB->contextDelete( tmpContextID, cb );
+         _pRtnCB->contextDelete( tmpContextID, cb );
          tmpContextID = -1;
       }
       goto done;

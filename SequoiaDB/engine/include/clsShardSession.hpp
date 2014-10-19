@@ -47,6 +47,7 @@ namespace engine
    class _SDB_RTNCB ;
    class _dpsLogWrapper ;
    class _clsCatalogAgent ;
+   class _rtnContextBase ;
 
    class _clsShdSession : public _pmdAsyncSession
    {
@@ -84,6 +85,7 @@ namespace engine
          INT32 _onDeleteReqMsg ( NET_HANDLE handle, MsgHeader *msg,
                                  INT64 &delNum ) ;
          INT32 _onQueryReqMsg ( NET_HANDLE handle, MsgHeader *msg, 
+                                rtnContextBuf &buffObj, INT32 &startingPos,
                                 INT64 &contextID ) ;
          INT32 _onGetMoreReqMsg ( MsgHeader *msg, rtnContextBuf &buffObj,
                                   INT32 &startingPos, INT64 &contextID ) ;
@@ -137,9 +139,8 @@ namespace engine
                                pmdEDUCB *cb,
                                SINT64 numToSkip,
                                SINT64 numToReturn,
-                               SDB_DMSCB *dmsCB,
-                               SDB_RTNCB *rtnCB,
-                               SINT64 &contextID );
+                               SINT64 &contextID,
+                               _rtnContextBase **ppContext = NULL ) ;
          INT32 _updateToMainCL( const CHAR *pCollectionName,
                                 const BSONObj &selector,
                                 const BSONObj &updator,

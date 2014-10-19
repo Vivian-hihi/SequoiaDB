@@ -1861,8 +1861,8 @@ namespace engine
             {
                maxReturnNum = _numToSkip ;
             }
-            else if ( _numToReturn > 0 &&
-                      _numToReturn < pContext->numRecords() )
+            else if ( _numToReturn > 0 /*&&
+                      _numToReturn < pContext->numRecords()*/ )
             {
                maxReturnNum = _numToReturn ;
             }
@@ -2432,6 +2432,13 @@ namespace engine
       emptyIter = _emptyContextMap.begin() ;
       while( emptyIter != _emptyContextMap.end() )
       {
+         if ( -1 == emptyIter->second->getContextID() )
+         {
+            SDB_OSS_DEL emptyIter->second ;
+            _emptyContextMap.erase( emptyIter++ ) ;
+            continue ;
+         }
+
          routeID.value = emptyIter->first ;
          msgReq.contextID = emptyIter->second->getContextID() ;
          rc = rtnCoordSendRequestToNode( (void *)(&msgReq), routeID, _netAgent,
@@ -2583,8 +2590,7 @@ namespace engine
 
    done:
       // pre-read
-      if ( SDB_OK == rc && _numToReturn != 0
-         && _preRead )
+      if ( SDB_OK == rc && _numToReturn != 0 && _preRead )
       {
          _send2EmptyNodes( cb ) ;
       }
@@ -2673,8 +2679,6 @@ namespace engine
       EMPTY_CONTEXT_MAP::iterator iter ;
       coordSubContext *pSubContext = NULL ;
 
-      SDB_ASSERT ( -1 != contextID, "context id can't be -1" ) ;
-
       if ( !_isOpened || NULL == _netAgent )
       {
          rc = SDB_DMS_CONTEXT_IS_CLOSE ;
@@ -2707,6 +2711,50 @@ namespace engine
 
       _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type( routeID.value,
                                pSubContext ) ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::addSubContext( MsgOpReply * pReply,
+                                          BOOLEAN & takeOver )
+   {
+      INT32 rc = SDB_OK ;
+      takeOver = FALSE ;
+
+      SDB_ASSERT ( NULL != pReply, "reply can't be NULL" ) ;
+
+      rc = addSubContext( pReply->header.routeID, pReply->contextID ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // query with return data
+      if ( pReply->numReturned > 0 )
+      {
+         EMPTY_CONTEXT_MAP::iterator it ;
+         it = _emptyContextMap.find( pReply->header.routeID.value ) ;
+         SDB_ASSERT( it != _emptyContextMap.end(), "System error" ) ;
+
+         _prepareContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
+                                    it->first, it->second ) ) ;
+         _emptyContextMap.erase( it ) ;
+
+         pReply->header.opCode = MSG_BS_GETMORE_RES ;
+         rc = _appendSubData( (CHAR*)pReply ) ;
+         if ( SDB_OK == rc )
+         {
+            takeOver = TRUE ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "Append sub data failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
 
    done:
       return rc ;
@@ -3062,8 +3110,8 @@ namespace engine
                                        SINT64 contextID,
                                        _ixmIndexKeyGen *keyGen )
    : _routeID( routeID ),
-   _contextID( contextID ),
-   _keyGen( keyGen )
+     _contextID( contextID ),
+     _keyGen( keyGen )
    {
       _pData = NULL ;
       _curOffset = 0 ;
@@ -3429,7 +3477,7 @@ namespace engine
    }
 
    _rtnSubCLBuf::_rtnSubCLBuf( BSONObj &orderBy,
-                              _ixmIndexKeyGen *keyGen )
+                               _ixmIndexKeyGen *keyGen )
    {
       _orderKey.setOrderBy( orderBy );
       _isOrderKeyChange = TRUE;
@@ -3513,17 +3561,14 @@ namespace engine
             try
             {
                BSONObj boRecord( front() );
-               rc = _orderKey.generateKey( boRecord,
-                                          _keyGen );
-               PD_RC_CHECK( rc, PDERROR,
-                           "failed to get order-key(rc=%d)",
-                           rc );
+               rc = _orderKey.generateKey( boRecord, _keyGen );
+               PD_RC_CHECK( rc, PDERROR, "Failed to get order-key(rc=%d)",
+                            rc );
             }
             catch ( std::exception &e )
             {
                PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                           "occur unexpected error:%s",
-                           e.what() );
+                            "Occur unexpected error:%s", e.what() ) ;
             }
          }
       }
@@ -3574,9 +3619,9 @@ namespace engine
    }
 
    INT32 _rtnContextMainCL::open( const bson::BSONObj & orderBy,
-                                 INT64 numToReturn,
-                                 INT64 numToSkip,
-                                 BOOLEAN includeShardingOrder )
+                                  INT64 numToReturn,
+                                  INT64 numToSkip,
+                                  BOOLEAN includeShardingOrder )
    {
       INT32 rc = SDB_OK;
       _orderBy = orderBy.getOwned();
@@ -3584,7 +3629,7 @@ namespace engine
       _numToSkip = numToSkip;
       _keyGen = SDB_OSS_NEW _ixmIndexKeyGen( _orderBy ) ;
       PD_CHECK( _keyGen != NULL, SDB_OOM, error, PDERROR,
-               "malloc failed!" ) ;
+                "malloc failed!" ) ;
 
       _isOpened = TRUE;
       _includeShardingOrder = includeShardingOrder;
@@ -3604,8 +3649,7 @@ namespace engine
 
    INT32 _rtnContextMainCL::addSubContext( SINT64 contextID )
    {
-      rtnSubCLBuf emptyCTXBuf( _orderBy,
-                              _keyGen );
+      rtnSubCLBuf emptyCTXBuf( _orderBy, _keyGen ) ;
       _subCLBufList[ contextID ] = emptyCTXBuf;
       return SDB_OK;
    }
@@ -3629,6 +3673,21 @@ namespace engine
       pmdKRCB *pKrcb = pmdGetKRCB();
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
 
+      // release buff obj
+      buffObj.release() ;
+
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
+      else if ( eof() && isEmpty() )
+      {
+         rc = SDB_DMS_EOC ;
+         _isOpened = FALSE ;
+         goto error ;
+      }
+
       // OrderBy: get data one by one and caused copy
       if ( !isEmpty() || ( requireOrder() && !_includeShardingOrder ) )
       {
@@ -3641,11 +3700,16 @@ namespace engine
       // directly get data from sub-context
       while( !hasData )
       {
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
          // skip the records
          while ( _numToSkip > 0 )
          {
-            SubCLBufList::iterator iterSubCTXSkip
-                              = _subCLBufList.begin();
+            SubCLBufList::iterator iterSubCTXSkip = _subCLBufList.begin();
             if ( _subCLBufList.end() == iterSubCTXSkip ||
                  iterSubCTXSkip->second.recordNum() <= 0 )
             {
@@ -3666,13 +3730,21 @@ namespace engine
          SubCLBufList::iterator iterSubCTX = _subCLBufList.begin();
          if ( _subCLBufList.end() == iterSubCTX )
          {
+            _hitEnd = TRUE ;
+            _isOpened = FALSE ;
             rc = SDB_DMS_EOC;
-            break;
+            goto error ;
          }
 
          if ( iterSubCTX->second.recordNum() <= 0 )
          {
-            rc = _prepareSubCTXData( iterSubCTX, cb, maxNumToReturn );
+            INT32 returnNum = maxNumToReturn ;
+            if ( _numToReturn > 0 && ( returnNum < 0 ||
+                 returnNum > _numToReturn ) )
+            {
+               returnNum = _numToReturn ;
+            }
+            rc = _prepareSubCTXData( iterSubCTX, cb, returnNum ) ;
             if ( rc != SDB_OK )
             {
                pRtncb->contextDelete( iterSubCTX->first, cb );
@@ -3682,12 +3754,25 @@ namespace engine
                   goto error;
                }
             }
-            continue;
+            continue ;
          }
-         buffObj = iterSubCTX->second.buffer();
-         iterSubCTX->second.popAll();
-         hasData = TRUE;
+         buffObj = iterSubCTX->second.buffer() ;
+         iterSubCTX->second.popAll() ;
+         hasData = TRUE ;
+
+         if ( _numToReturn > 0 )
+         {
+            _numToReturn -= ( buffObj.recordNum() > _numToReturn ?
+                              _numToReturn :
+                              buffObj.recordNum() )  ;
+         }
       }
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
    done:
       return rc;
    error:
@@ -3708,9 +3793,10 @@ namespace engine
       {
          goto done;
       }
+
       pContext = pRtnCB->contextFind( iterSubCTX->first );
       PD_CHECK( pContext, SDB_RTN_CONTEXT_NOTEXIST, error, PDERROR,
-               "Context %lld does not exist", iterSubCTX->first );
+                "Context %lld does not exist", iterSubCTX->first );
       rc = pContext->getMore( maxNumToReturn,
                               contextBuf,
                               startPos, cb );
@@ -3743,12 +3829,19 @@ namespace engine
       INT32 rc = SDB_OK;
       pmdKRCB *pKrcb = pmdGetKRCB();
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
-      while ( TRUE )
+
+      while ( 0 != _numToReturn )
       {
-         SubCLBufList::iterator iterSubCTXFirst
-                              = _subCLBufList.begin();
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         SubCLBufList::iterator iterSubCTXFirst = _subCLBufList.begin();
          if ( _subCLBufList.end() == iterSubCTXFirst )
          {
+            _hitEnd = TRUE ;
             if ( isEmpty() )
             {
                rc = SDB_DMS_EOC;
@@ -3779,7 +3872,7 @@ namespace engine
          coordOrderKey curOrderKey;
          rc = iterSubCTXFirst->second.getOrderKey( firstOrderKey );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to generate order-key(rc=%d)", rc );
+                      "Failed to generate order-key(rc=%d)", rc );
          while( iterSubCTXCur != _subCLBufList.end() )
          {
             if ( iterSubCTXCur->second.recordNum() <= 0 )
@@ -3802,7 +3895,7 @@ namespace engine
             }
             rc = iterSubCTXCur->second.getOrderKey( curOrderKey );
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to generate order-key(rc=%d)", rc );
+                         "Failed to generate order-key(rc=%d)", rc );
             if ( curOrderKey < firstOrderKey )
             {
                iterSubCTXFirst = iterSubCTXCur;
@@ -3816,15 +3909,24 @@ namespace engine
             try
             {
                BSONObj obj( iterSubCTXFirst->second.front() );
-               rc = append( obj );
+               rc = append( obj ) ;
                PD_RC_CHECK( rc, PDERROR,
-                           "failed to append data(rc=%d)", rc );
+                            "Failed to append data(rc=%d)", rc );
             }
             catch ( std::exception &e )
             {
                PD_LOG( PDERROR, "occur unexpected error:%s", e.what() );
                goto error;
             }
+
+            if ( _numToReturn > 0 )
+            {
+               --_numToReturn ;
+            }
+         }
+         else
+         {
+            --_numToSkip ;
          }
          rc = iterSubCTXFirst->second.pop();
          if ( rc )
@@ -3832,6 +3934,12 @@ namespace engine
             goto error;
          }
       }
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
    done:
       return rc;
    error:
@@ -4741,6 +4849,8 @@ namespace engine
       }
 
       _explained = TRUE ;
+      _hitEnd    = TRUE ;
+
    done:
       PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__PREPAREDATA, rc ) ;
       return rc ;
@@ -4759,7 +4869,7 @@ namespace engine
       _optAccessPlan *plan = NULL ;
       CHAR hostName[OSS_MAX_HOSTNAME + 1] = { 0 } ;
       stringstream ss ;
-      _rtnContextData *contextOfQuery = NULL ;
+      _rtnContextBase *contextOfQuery = NULL ;
 
       rc = rtnQuery( _options._fullName, _options._selector,
                      _options._query, _options._orderBy,

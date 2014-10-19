@@ -217,7 +217,7 @@ namespace engine
                     SDB_DMSCB *dmsCB,
                     SDB_RTNCB *rtnCB,
                     SINT64 &contextID,
-                    rtnContextData **ppContext,
+                    rtnContextBase **ppContext,
                     BOOLEAN enablePrefetch )
    {
       INT32 rc = SDB_OK ;
@@ -255,7 +255,8 @@ namespace engine
                           flags, numToSkip,
                           numToReturn,
                           cb, dmsCB, rtnCB,
-                          contextID ) ;
+                          contextID,
+                          ppContext ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to explain query:%d", rc ) ;
@@ -604,7 +605,8 @@ namespace engine
                      SINT64 numToSkip,
                      SINT64 numToReturn,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB,
-                     SDB_RTNCB *rtnCB, INT64 &contextID )
+                     SDB_RTNCB *rtnCB, INT64 &contextID,
+                     rtnContextBase **ppContext )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNEXPLAIN ) ;
@@ -648,6 +650,11 @@ namespace engine
       {
          PD_LOG( PDERROR, "failed to open explain context:%d", rc ) ;
          goto error ;
+      }
+
+      if ( ppContext )
+      {
+         *ppContext = context ;
       }
    done:
       PD_TRACE_EXITRC( SDB_RTNEXPLAIN, rc ) ;

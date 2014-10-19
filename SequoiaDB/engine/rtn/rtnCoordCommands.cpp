@@ -694,7 +694,8 @@ namespace engine
       }
       // send a request to priamry
       rc = rtnCoordSendRequestToPrimary( pBuffer, catGroupInfo, sendNodes,
-                                 pRouteAgent, MSG_ROUTE_CAT_SERVICE, cb );
+                                         pRouteAgent, MSG_ROUTE_CAT_SERVICE,
+                                         cb );
       if ( rc )
       {
          probe = 200 ;
@@ -702,7 +703,7 @@ namespace engine
       }
       // get reply message
       rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                     MAKE_REPLY_TYPE( ((MsgHeader*)pBuffer)->opCode ));
+                             MAKE_REPLY_TYPE(((MsgHeader*)pBuffer)->opCode) ) ;
       if ( rc )
       {
          probe = 300 ;
@@ -3317,6 +3318,7 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       BOOLEAN isNeedRefresh = FALSE;
+      BOOLEAN takeOver = FALSE ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDQUBASE_QUTOCANOGR );
 
       do
@@ -3358,22 +3360,25 @@ namespace engine
          }
          while ( !replyQue.empty() )
          {
-            MsgOpReply *pReply = NULL;
+            takeOver             = FALSE ;
+            MsgOpReply *pReply   = NULL;
             pReply = (MsgOpReply *)(replyQue.front());
             replyQue.pop();
             if ( SDB_OK == rc )
             {
                if ( SDB_OK == pReply->flags )
                {
-                  rc = pContext->addSubContext( pReply->header.routeID,
-                                                pReply->contextID );
+                  rc = pContext->addSubContext( pReply, takeOver );
                }
                else
                {
                   rc = pReply->flags ;
                }
             }
-            SDB_OSS_FREE( pReply );
+            if ( !takeOver )
+            {
+               SDB_OSS_FREE( pReply ) ;
+            }
          }
          if ( rc != SDB_OK && rc != SDB_DMS_EOC )
          {
