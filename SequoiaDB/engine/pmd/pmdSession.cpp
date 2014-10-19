@@ -816,10 +816,7 @@ namespace engine
 
       if ( !rtnIsCommand ( pCollectionName ) )
       {
-         if ( flags & FLG_QUERY_FINDONE )
-         {
-            numToReturn = 1 ;
-         }
+         rtnContextData *pContext = NULL ;
          try
          {
             BSONObj matcher ( pQueryBuff ) ;
@@ -842,24 +839,22 @@ namespace engine
 
             rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
                            hint, flags, _pEDUCB, numToSkip, numToReturn,
-                           _pDMSCB, _pRTNCB, contextID, NULL, TRUE ) ;
+                           _pDMSCB, _pRTNCB, contextID, &pContext, TRUE ) ;
             if ( rc )
             {
                goto error ;
             }
 
-            if ( ( flags & FLG_QUERY_FINDONE ) && -1 != contextID )
+            if ( ( flags & FLG_QUERY_WITH_RETURNDATA ) && NULL != pContext )
             {
                INT64 startPos64 = 0 ;
-               rc = rtnGetMore ( contextID, 1, buffObj, startPos64,
-                                 _pEDUCB, _pRTNCB ) ;
-               startingPos = ( INT32 )startPos64 ;
-
-               if ( SDB_OK == rc )
+               rc = pContext->getMore( -1, buffObj, startPos64, _pEDUCB ) ;
+               if ( rc || pContext->eof() )
                {
                   _pRTNCB->contextDelete( contextID, _pEDUCB ) ;
+                  contextID = -1 ;
                }
-               contextID = -1 ;
+               startingPos = ( INT32 )startPos64 ;
 
                if ( SDB_DMS_EOC == rc )
                {

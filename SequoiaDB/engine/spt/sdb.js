@@ -160,7 +160,7 @@ SdbCollection.prototype.find = function( query, select ) {
 }
 
 SdbCollection.prototype.findOne = function( query, select ) {
-   return new SdbQuery( this , query, select ).limit( 1 ).flags( 0x00000200 ) ;
+   return new SdbQuery( this , query, select ).limit( 1 ) ;
 }
 
 SdbCollection.prototype.getIndex = function( name ) {
@@ -223,9 +223,6 @@ SdbQuery.prototype._checkExecuted = function() {
 
 SdbQuery.prototype._exec = function() {
    if ( ! this._cursor ) {
-      if ( 1 == this._limit ) {
-	     this._flags |= 0x00000200 ;
-      }
       this._cursor = this._collection.rawFind( this._query,
                                                this._select,
                                                this._sort,

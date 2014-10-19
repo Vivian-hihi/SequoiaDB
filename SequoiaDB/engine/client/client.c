@@ -4709,6 +4709,11 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
       goto error ;
    }
 
+   if ( 1 == numToReturn )
+   {
+      flag |= FLG_QUERY_WITH_RETURNDATA ;
+   }
+
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
                               cs->_collectionFullName, flag, 0,
                               numToSkip, numToReturn, condition,
@@ -4737,8 +4742,9 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
    ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
                sizeof(cursor->_collectionFullName) ) ;
 
-   // find one
-   if ( flag & FLG_QUERY_FINDONE )
+   // query with return data
+   if ( ((MsgHeader*)cs->_pReceiveBuffer)->messageLength >
+        ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) )
    {
       cursor->_pReceiveBuffer = cs->_pReceiveBuffer ;
       cs->_pReceiveBuffer = NULL ;
