@@ -214,6 +214,11 @@ namespace engine
                itr != gpLst.end();
                ++itr )
          {
+            if ( 0 < _subs.count( itr->first ) )
+            {
+               continue ;
+            }
+
             rc = rtnCoordSendRequestToNodeGroup( &( header.header ),
                                                  itr->first,
                                                  SDB_LOB_MODE_R != mode,
@@ -248,10 +253,10 @@ namespace engine
          }
          else if ( RETRY_TAG_REOPEN & tag )
          {
-            rc = _openOtherStreams( getFullName(), getOID(), _getMode(), cb ) ;
+            rc = _closeSubStreams( cb ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR, "failed to reopen sub streams:%d", rc ) ;
+               PD_LOG( PDERROR, "failed to close sub streams:%d", rc ) ;
                goto error ;
             }
          }
@@ -1317,6 +1322,8 @@ namespace engine
          goto error ;
       }
 
+      SDB_ASSERT( _subs.empty(), "impossible" ) ;
+
       /// main stream was opened before, the meta piece may be synced
       ///  to other group. we open all streams as normal.
       rc = _openOtherStreams( getFullName(), getOID(), _getMode(), cb ) ;
@@ -1507,6 +1514,7 @@ namespace engine
       std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
+         SDB_ASSERT( 1 == _subs.count( ( *itr )->header.routeID.columns.groupID ), "impossible" ) ;
          _subs.erase( ( *itr )->header.routeID.columns.groupID ) ;
       }
       return rc ;
@@ -1552,6 +1560,15 @@ namespace engine
       header.header.messageLength = msgLen < 0 ?
                                     sizeof( header ) + bsonLen :
                                     msgLen ;
+      return ;
+   }
+
+   void _rtnCoordLobStream::_add2Subs( UINT32 groupID,
+                                       SINT64 contextID,
+                                       MsgRouteID id )
+   {
+      SDB_ASSERT( 0 == _subs.count( groupID ), "impossible" ) ;
+      _subs[groupID] = subStream( contextID, id ) ;
       return ;
    }
 }
