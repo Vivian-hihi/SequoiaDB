@@ -216,11 +216,7 @@ namespace engine
 
       INT32 _removeClosedSubStreams() ;
 
-      void _add2Subs( UINT32 groupID, SINT64 contextID, MsgRouteID id )
-      {
-         _subs[groupID] = subStream( contextID, id ) ;
-         return ;
-      }
+      void _add2Subs( UINT32 groupID, SINT64 contextID, MsgRouteID id ) ;
 
       void _pushLobHeader( const MsgOpLob *header,
                            const BSONObj &obj,
