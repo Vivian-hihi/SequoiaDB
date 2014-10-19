@@ -336,25 +336,6 @@
                 </fileExists>
             </ruleList>
         </deleteFile>
-        <runProgram>
-            <customErrorMessage>${msg(Install.ErrorMsg.DeleteUser.error)}</customErrorMessage>
-            <program>userdel</program>
-            <programArguments>${username}</programArguments>
-            <ruleList>
-                <userTest>
-                    <logic>exists</logic>
-                    <password>${username}</password>
-                    <username>${username}</username>
-                </userTest>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
-        <deleteGroup>
-            <groupname>${username}_group</groupname>
-            <showMessageOnError>1</showMessageOnError>
-        </deleteGroup>
     </postUninstallationActionList>
     <allowedLanguages>en zh_CN</allowedLanguages>
     <debuggerPassword>sequoiadb</debuggerPassword>
