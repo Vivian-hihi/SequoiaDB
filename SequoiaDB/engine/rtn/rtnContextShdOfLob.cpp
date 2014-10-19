@@ -394,7 +394,8 @@ namespace engine
          }
       }
 
-      PD_LOG( PDEVENT, "rollback: we removed %d pieces, failed:%d",
+      PD_LOG( PDEVENT, "rollback[%s]: we removed %d pieces, failed:%d",
+              _oid.str().c_str(),
               _written.size(), failedNum ) ;
       _written.clear() ;
    done:
