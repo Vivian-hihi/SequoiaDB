@@ -4792,7 +4792,7 @@ SDB_EXPORT INT32 sdbNext ( sdbCursorHandle cHandle,
    // check whether the cursor had been close
    if ( cs->_isClosed )
    {
-      rc = SDB_RTN_CONTEXT_NOTEXIST ;
+      rc = SDB_DMS_CONTEXT_IS_CLOSE ;
       goto error ;
    }
 
@@ -4884,7 +4884,7 @@ SDB_EXPORT INT32 sdbCurrent ( sdbCursorHandle cHandle,
    // check whether the cursor had been close
    if ( cs->_isClosed )
    {
-      rc = SDB_RTN_CONTEXT_NOTEXIST ;
+      rc = SDB_DMS_CONTEXT_IS_CLOSE ;
       goto error ;
    }
 
