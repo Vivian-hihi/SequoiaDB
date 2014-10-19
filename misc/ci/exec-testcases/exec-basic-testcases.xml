@@ -42,7 +42,7 @@
 
 		<property name="sdb.cmd.allPrepare" value=" -e &quot;var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_prepare.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allPrepare}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="allPrepare.screen.output"  resultproperty="allPrepare.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="100000" outputproperty="allPrepare.screen.output"  resultproperty="allPrepare.ret.code">
 			<arg line="${sdb.cmd.allPrepare}" />
 		</exec>
 		<echo message="${allPrepare.screen.output}" />
@@ -59,7 +59,7 @@
 
 		<property name="sdb.cmd.allClean" value=" -e &quot;var COORDSVCNAME=${coord.service.port};&quot; -f &quot;${basic.testcase.path}/libs/func.js,${basic.testcase.path}/libs/all_clean.js&quot;" />
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.allClean}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="allClean.screen.output" resultproperty="allClean.ret.code">
+		<exec executable="${sdb.fullname}" dir="" timeout="100000" outputproperty="allClean.screen.output" resultproperty="allClean.ret.code">
 			<arg line="${sdb.cmd.allClean}" />
 		</exec>
 		<echo message="${allClean.screen.output}" />
@@ -106,7 +106,7 @@
 	</target>
 
 	<target name="test-one-case" depends="">
-		<exec executable="${sdb.fullname}" timeout="300000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
+		<exec executable="${sdb.fullname}" timeout="100000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
 			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});var rg = db.listReplicaGroups();println(rg);db.close(); &quot;" />
 		</exec>
 		<if>
@@ -144,7 +144,7 @@
 
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}" />
-		<exec executable="${sdb.fullname}" dir="" timeout="300000">
+		<exec executable="${sdb.fullname}" dir="" timeout="100000">
 			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testBeginStr}');db.close(); &quot;" />
 		</exec>
 
@@ -153,7 +153,7 @@
 			<then>
 				<property name="sdb.cmd.beforeTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/before_usecase.js&quot;" />
 				<echo message="Exec:${sdb.fullname}${sdb.cmd.beforeTestcase}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
+				<exec executable="${sdb.fullname}" dir="" timeout="120000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
 					<arg line="${sdb.cmd.beforeTestcase}" />
 				</exec>
 				<echo message="${beforeTestcase.screen.output}" />
@@ -162,14 +162,14 @@
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+				<exec executable="${sdb.fullname}" dir="" timeout="120000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 					<arg line="${sdb.cmd.argument}" />
 				</exec>
 				<echo message="${screen.output}" />
 				
 				<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
 				<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
+				<exec executable="${sdb.fullname}" dir="" timeout="120000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
 					<arg line="${sdb.cmd.afterTestcase}" />
 				</exec>
 				<echo message="${afterTestcase.screen.output}" />
@@ -179,13 +179,13 @@
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+				<exec executable="${sdb.fullname}" dir="" timeout="120000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 					<arg line="${sdb.cmd.argument}" />
 				</exec>
 				<echo message="${screen.output}" />
 			</else>
 		</if>
-		<exec executable="${sdb.fullname}" dir="" timeout="300000">
+		<exec executable="${sdb.fullname}" dir="" timeout="100000">
 			<arg line=" -s &quot; db = new Sdb('localhost',${coord.service.port});db.msg('${testEndStr}');db.close(); &quot;" />
 		</exec>
 
