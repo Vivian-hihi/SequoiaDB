@@ -82,7 +82,7 @@
 			<isset property="commlib.exist" />
 			<then>
 				<echo message="${test.suite.fullname}/commlib is exist , then test will add it " />
-				<sdbProperty name="commlib.option" value=",${test.suite.fullname}/commlib.js" />
+				<sdbProperty name="commlib.option" value="${test.suite.fullname}/commlib.js" />
 			</then>	
 			<else>
 				<echo message="${test.suite.fullname}/commlib is not exist , then test will not add it" />
