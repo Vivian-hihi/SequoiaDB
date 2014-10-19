@@ -2695,8 +2695,8 @@ namespace engine
       }
 
       pSubContext = SDB_OSS_NEW coordSubContext( routeID,
-                                                contextID,
-                                                _keyGen ) ;
+                                                 contextID,
+                                                 _keyGen ) ;
       if ( NULL == pSubContext )
       {
          rc = SDB_OOM;
