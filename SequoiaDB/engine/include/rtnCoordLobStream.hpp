@@ -156,8 +156,8 @@ namespace engine
       enum RETRY_TAG
       {
          RETRY_TAG_NULL = 0,
-         RETRY_TAG_RETRY = 0x00000001,
-         RETRY_TAG_REOPEN = 0x00000010,
+         RETRY_TAG_RETRY = 0x00001,
+         RETRY_TAG_REOPEN = 0x00002,
       } ;
 
       typedef std::map<UINT32, subStream> SUB_STREAMS ;
