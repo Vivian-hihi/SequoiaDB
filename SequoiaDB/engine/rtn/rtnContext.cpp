@@ -2648,8 +2648,7 @@ namespace engine
       else
       {
          coordOrderKey orderKey ;
-         rc = pSubContext->getOrderKey( orderKey,
-                                       _keyGen ) ;
+         rc = pSubContext->getOrderKey( orderKey, _keyGen ) ;
          if ( rc != SDB_OK )
          {
             pSubContext->clearData() ;
