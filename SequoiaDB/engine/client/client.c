@@ -5981,6 +5981,8 @@ SDB_EXPORT void sdbReleaseCursor ( sdbCursorHandle cHandle )
    INT32 rc = SDB_OK ;
    sdbCursorStruct *cs = (sdbCursorStruct*)cHandle ;
 
+   CLIENT_UNUSED( rc ) ;
+
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CURSOR ) ;
 
    sdbCloseCursor( cHandle ) ;
