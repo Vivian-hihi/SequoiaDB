@@ -152,9 +152,6 @@ const UINT32 RTN_LOOP_WRITE_LEN = DMS_PAGE_SIZE512K * 4 ;
       {
          tuples.push_back( tuple ) ;
          hasNext = TRUE ;
-
-         /// TODO:remove this code when repair bug in split lob.
-         break ;
       }
 
       PD_TRACE_EXIT( SDB_RTNLOBWINDOW_GETNEXTWRITESEQUENCES ) ;
