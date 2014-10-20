@@ -27,14 +27,9 @@
    RET_JSON: the install result: { "HostInfo": [ { "errno": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.165" }, { "errno": 0, "detail": "", "IsNeedUninstall": true, "AgentPort": "10001", "IP": "192.168.20.166" } ] }
 */
 
-//var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] };
-
-//var BUS_JSON = { "HostInfo": [  { "IP": "192.168.20.42", "HostName": "susetzb", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] };
-
-//var SYS_JSON = { "ProgPath": "/home/users/tanzhaobo/sequoiadb/bin/" } ;
-
-var RET_JSON = new Object() ;
+var RET_JSON       = new Object() ;
 RET_JSON[HostInfo] = [] ;
+var errMsg         = "" ;
 
 var LOCAL_PROG_PATH = SYS_JSON[ProgPath] ;
 var LOCAL_CONF_PATH = Oma.getOmaConfigFile() ;
@@ -192,40 +187,41 @@ function modifyAndSendConfigFile( ssh, osInfo, port )
       // cp sdbcm config file to /tmp and then modify it
       var src = Oma.getOmaConfigFile() ;
       var dst = OMA_PATH_TEMP_TEMP_DIR_L + OMA_FILE_SDBCM_CONF ;
-      var cmd = new Cmd() ;
       var ret = SDB_OK ;
       try
       {
          // copy a config file to local tmp directory then modify it
-         cmd.run( "mkdir -p " + OMA_PATH_TEMP_TEMP_DIR_L ) ;
+         File.mkdir( OMA_PATH_TEMP_TEMP_DIR_L ) ;
       }
       catch ( e )
       {
-         ret = cmd.getLastRet() ;
-         if (  ret > 0 )
-         {
-            setLastErrMsg( "Failed to create: " + OMA_PATH_TEMP_TEMP_DIR_L ) ;
-            setLastError( SDB_SYS ) ;
-            throw SDB_SYS ;
-         }
+         errMsg = "Failed to make directory[" + OMA_PATH_TEMP_TEMP_DIR_L + "] in host[" + ssh.getLocalIP() + "]" ;
+         exception_handle( e, errMsg ) ;
       }
       try
       {
-         cmd.run( "cp " + src + " " + dst ) ;
+         File.copy( src, dst ) ;
       }
       catch ( e )
       {
-         ret = cmd.getLastRet() ;
-         if ( ret > 0 )
-         {
-            setLastErrMsg( "Failed to copy " + src + " to " + dst ) ;
-            setLastError( SDB_SYS ) ;
-            throw SDB_SYS ;
-         }
+         errMsg = "Failed to copy[" + src + "] to [" + dst + "] in host[" + ssh.getLocalIP() + "]" ;
+         exception_handle( e, errMsg ) ;
       }
       // modify config file
       var obj = eval( '(' + Oma.getOmaConfigs( dst ) + ')' ) ;
+      var str = "" ;
+      try
+      {
+         str = ssh.exec("hostname") ;
+         str = removeLineBreak( str ) + OMA_MISC_CONFIG_PORT ;
+      }
+      catch ( e )
+      {
+         errMsg = "Failed to modify config file in host[" + ssh.getLocalIP() + "]" ;
+         exception_handle( e, errMsg ) ;
+      }
       obj[DefaultPort] = port + "" ;
+      obj[str] = port + "" ;
       Oma.setOmaConfigs( obj, dst ) ;
       // send the config file to remote host
       src = dst
@@ -260,7 +256,7 @@ function startRemoteSdbcm( ssh, osInfo )
       }
       catch ( e )
       {
-         errMsg = "Failed to start remote sdbcm" ;
+         errMsg = "Failed to start sdbcm in host[" + ssh.getPeerIP() + "]" ;
          exception_handle( e, errMsg ) ;
       }
       // wait util sdbcm start in remote
@@ -279,7 +275,7 @@ function startRemoteSdbcm( ssh, osInfo )
       }
       if ( OMA_TRY_TIMES <= times )
       {
-         setLastErrMsg( "Time out, remote sdbcm does not start successfully" ) ;
+         setLastErrMsg( "Time out, sdbcm does not start successfully in host[" + ssh.getPeerIP() + "]" ) ;
          setLastError( SDB_SYS ) ;
          throw SDB_SYS ;
       }
@@ -300,12 +296,11 @@ function startRemoteSdbcm( ssh, osInfo )
 ***************************************************************************** */
 function cleanup( ssh, osInfo )
 {
-   var cmd = new Cmd() ;
    try
    {
       if ( OMA_LINUX == osInfo )
       {
-         cmd.run( " rm -rf " + OMA_PATH_TEMP_OMA_DIR_L ) ;
+         File.remove( OMA_PATH_TEMP_OMA_DIR_L ) ;
       }
       else
       {
@@ -358,10 +353,6 @@ function installRemoteAgent( ssh, osInfo, ip )
       retObj[AgentPort] = "" + getRemoteSdbcmPort( ssh, osInfo ) ;
       return retObj ;
    }
-/*
-   // push other packet to remote
-   pushPacket2( ssh, osInfo ) ; 
-*/
    // get a port in remote machine for installing sdbcm in remote machine
    var port = getAUsablePortFromRemote( ssh, osInfo ) ;
    if ( OMA_PORT_INVALID == port )
@@ -419,7 +410,7 @@ function main()
       // clean up something
       cleanup( ssh, osInfo ) ;
    }
-
+println("RET_JSON is: " + JSON.stringify(RET_JSON)) ;
    return RET_JSON ;
 }
 
