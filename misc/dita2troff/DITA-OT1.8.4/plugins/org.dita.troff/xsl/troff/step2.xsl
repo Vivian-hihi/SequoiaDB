@@ -23,7 +23,7 @@
 
 <!-- Set the default justification -->
 <xsl:template name="set-default-justification">
-	<xsl:value-of/>.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"<xsl:value-of select="$newline"/>
+	<xsl:value-of/>.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb Method's Manual"<xsl:value-of select="$newline"/>
   <xsl:choose>
     <xsl:when test="/dita/@dir='rtl'">
       <xsl:value-of/>.ad r<xsl:value-of/>
