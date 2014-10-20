@@ -20,7 +20,7 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the info for scan host, it's format is as: { "HostInfo": [ { "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
    SYS_JSON:
    ENV_JSON:
 @return
@@ -29,7 +29,7 @@
 
 var RET_JSON       = new Object() ;
 RET_JSON[HostInfo] = [] ;
-
+var errMsg         = "" ;
 /* *****************************************************************************
 @discretion: scan a remote host, to check wether it can been "ping" and "ssh"
              or not, and try to get it's hostname if hostname is not specified
@@ -46,6 +46,8 @@ RET_JSON[HostInfo] = [] ;
 ***************************************************************************** */
 function scanHost( user, passwd, hostname, ip )
 {
+   var ssh             = null ;
+   var ping            = null ;
    var retObj          = new Object() ;
    retObj[Errno]       = SDB_OK ;
    retObj[Detail]      = "" ;
@@ -61,7 +63,7 @@ function scanHost( user, passwd, hostname, ip )
       retObj.HostName = hostname ;
       // ping
       var ret = System.ping( hostname ) ;
-      var ping = eval( "(" + ret + ")" ) ;
+      ping = eval( "(" + ret + ")" ) ;
       if ( true != ping[Reachable] )
       {
          return retObj ;
@@ -70,17 +72,17 @@ function scanHost( user, passwd, hostname, ip )
       // ssh
       try
       {
-         var ssh = new Ssh( hostname, user, passwd ) ;
+         ssh = new Ssh( hostname, user, passwd ) ;
          retObj[CanSsh] = true ;
       }
       catch ( e )
       {
          retObj[Errno] = getLastError() ;
          retObj[Detail] = getLastErrMsg() ;
-         retObj[CanSsh] = false ;
+         return retObj ;
       }
       // ip
-      var ipTmp = null ;
+      var ipTmp = "" ;
       try
       {
          ipTmp = ssh.getPeerIP() ;
@@ -103,26 +105,15 @@ function scanHost( user, passwd, hostname, ip )
       retObj[IP] = ip ;
       // ping
       var ret = System.ping( ip, 3 ) ;
-      var ping = eval( "(" + ret + ")" ) ;
+      ping = eval( "(" + ret + ")" ) ;
       if ( true != ping[Reachable] )
          return retObj ;
       retObj[CanPing] = true ;
       // ssh
       try
       {
-         var ssh = new Ssh( ip, user, passwd ) ;
+         ssh = new Ssh( ip, user, passwd ) ;
          retObj[CanSsh] = true ;
-      }
-      catch ( e )
-      {
-         retObj[CanSsh] = false ;
-         retObj[Errno] = getLastError() ;
-         retObj[Detail] = getLastErrMsg() ;
-      }
-      // hostName
-      try
-      {
-         var name = ssh.exec("hostname") ;
       }
       catch ( e )
       {
@@ -130,13 +121,15 @@ function scanHost( user, passwd, hostname, ip )
          retObj[Detail] = getLastErrMsg() ;
          return retObj ;
       }
+      // hostName
+      var name = "" ;
       try
       {
-         SSH_CHECK ( ssh, SDB_SYS ) ;
+         name = ssh.exec("hostname") ;
       }
-      catch( e )
+      catch ( e )
       {
-         retObj[Errno] = e ;
+         retObj[Errno] = getLastError() ;
          retObj[Detail] = getLastErrMsg() ;
          return retObj ;
       }
@@ -160,25 +153,49 @@ function main()
    }
    for( var i = 0; i < arrLen; i++ )
    {
-      var obj      = infoArr[i] ;
-      var user     = obj[User] ;
-      var passwd   = obj[Passwd] ;
-      var hostname = obj[HostName] ;
-      var ip       = obj[IP] ;
+      var obj      = null ;
+      var user     = null ;
+      var passwd   = null ;
+      var hostname = null ;
+      var ip       = null ;
       var ret      = null ;
-      if ( undefined != hostname )
-      { 
-         ret = scanHost( user, passwd, hostname, null ) ;
-      }
-      else if ( undefined != ip )
+      try
       {
-         ret = scanHost( user, passwd, null, ip ) ;
+         obj       = infoArr[i] ;
+         user      = obj[User] ;
+         passwd    = obj[Passwd] ;
+         hostname  = obj[HostName] ;
+         ip        = obj[IP] ;
+         if ( undefined != hostname )
+         { 
+            ret = scanHost( user, passwd, hostname, null ) ;
+         }
+         else if ( undefined != ip )
+         {
+            ret = scanHost( user, passwd, null, ip ) ;
+         }
+         else
+         {
+            setLastErrMsg( "Not specified hostname or ip" ) ;
+            setLastError( SDB_INVALIDARG ) ;
+            throw SDB_INVALIDARG ;
+         }
       }
-      else
+      catch ( e )
       {
-         setLastErrMsg( "Not specified hostname or ip" ) ;
-         setLastError( SDB_INVALIDARG ) ;
-         throw SDB_INVALIDARG ;
+         if ( undefined != hostname )
+         {
+            errMsg = "Failed to scan host[" + hostname + "]" ;
+         }
+         else if ( undefined != ip )
+         {
+            errMsg = "Failed to scan host [" + ip + "]" ;
+         }
+         else
+         {
+            errMsg = "Failed to scan host" ;
+         }
+         exception_handle( e, errMsg ) ;
       }
       RET_JSON[HostInfo].push( ret ) ;
    }
