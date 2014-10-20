@@ -58,6 +58,7 @@
          <topicref href="database_tool/topics/sdbinspt_en.dita"/>
          <topicref href="database_tool/topics/tool_sdbtop_en.dita"/>
          <topicref href="database_tool/topics/sdbinspect_en.dita"/>
+         <topicref href="database_tool/topics/sdbsupport_en.dita"/>
      </topicref>
  </topicref>
 </map>
