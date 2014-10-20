@@ -198,7 +198,7 @@
     </section>
     <section>
       <title>信息归类</title>
-      <p>通过执行 ./sdbsupport.sh xxx xxx…. 收集的数据库信息信息，会全部收集到本地的 log 文件夹中。收集的信息是以主机为单位打成的压缩包，名称以“主机名-年月日-时分秒”命名。将此文件解压缩后会得四个文件夹：SDBNODES/，SDBSNAPS/，OSINFO/，HARDINFO。</p>
+      <p>通过执行 ./sdbsupport.sh xxx xxx…. 收集的数据库信息信息，会全部收集到本地的 log 文件夹中。收集的信息是以主机为单位打成的压缩包，名称以“主机名-年月日-时分秒”命名。将此文件解压缩后会得四个文件夹：SDBNODES，SDBSNAPS，OSINFO，HARDINFO。</p>
       <p>SDBNODES：存放收集的数据库配置、日志信息</p>
       <p>SDBSNAPS：存放收集的数据库快照信息</p>
       <p>OSINFO：存放收集的操作系统信息</p>

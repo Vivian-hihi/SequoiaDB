@@ -351,20 +351,16 @@
 
     <div class="section"><h2 class="title sectiontitle">信息归类</h2>
       
-      <p class="p">通过执行 ./sdbsupport.sh xxx xxx…. 收集的数据库信息信息，会全部收集到本地的 log 文件夹中。收集的信息是以主机为单位打成的压缩包，名称以“主机名-年月日-时分秒”命名。将此文件解压缩后会得四个文件夹：SDBNODES/，SDBSNAPS/，OSINFO/，HARDINFO。</p>
+      <p class="p">通过执行 ./sdbsupport.sh xxx xxx…. 收集的数据库信息信息，会全部收集到本地的 log 文件夹中。收集的信息是以主机为单位打成的压缩包，名称以“主机名-年月日-时分秒”命名。将此文件解压缩后会得四个文件夹：SDBNODES，SDBSNAPS，OSINFO，HARDINFO。</p>
 
-      
       <p class="p">SDBNODES：存放收集的数据库配置、日志信息</p>
 
-      
       <p class="p">SDBSNAPS：存放收集的数据库快照信息</p>
 
-      
       <p class="p">OSINFO：存放收集的操作系统信息</p>
 
-      
-      <div class="p">HARDINFO：存放收集的硬件信息
-      
+      <p class="p">HARDINFO：存放收集的硬件信息</p>
+
       <div class="note note"><span class="notetitle">Note:</span> <div class="p">数据库集群内的机器，如果没有配置信任关系，在收集时，需要输入密码，如：<pre class="pre codeblock">/opt/sequoiadb/tools/sdbsupport/expect/expect
 Success to export System environment variable : /opt/sequoiadb/tools/sdbsupport/expect/
 Check over Environment!
@@ -372,8 +368,7 @@ Complete database database cluster
 The host sdbadmin@htest2's password :</pre>
 【此时需要输入 htest2 机器，sdbadmin 用户的密码，然后 Enter】</div>
 </div>
-  </div>
-    
+      
     </div>
 
   </div>

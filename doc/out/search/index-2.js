@@ -1,4 +1,5 @@
 //Auto generated index for searching.
+w["collecionspace"]="746*3";
 w["collecionspaces"]="746*2";
 w["collecionspaces."]="746*2";
 w["colleciont"]="542*2";
@@ -5481,6 +5482,4 @@ w["wrap"]="218*2,232*4,277*1,278*1,941*1";
 w["wrapped"]="943*1,964*1";
 w["wrapper"]="943*1";
 w["writablecomparable"]="706*1";
-w["write"]="367*1,368*1,419*1,421*1,702*1,706*4,746*2";
-w["write:"]="702*1";
 
