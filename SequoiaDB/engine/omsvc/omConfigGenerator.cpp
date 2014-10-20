@@ -53,7 +53,7 @@ namespace engine
 
    #define OM_DEPLOY_MOD_STANDALONE       "standalone"
    #define OM_DEPLOY_MOD_DISTRIBUTION     "distribution"
-   
+
    #define OM_NODE_ROLE_STANDALONE        SDB_ROLE_STANDALONE_STR
    #define OM_NODE_ROLE_COORD             SDB_ROLE_COORD_STR
    #define OM_NODE_ROLE_CATALOG           SDB_ROLE_CATALOG_STR
@@ -495,45 +495,50 @@ namespace engine
 
    void omHostInfo::_increaseNodeCount( string dbpath, string role )
    {
-      DISKINFO_ITER iterDisk ;
-      iterDisk = _diskList.begin() ;
+      INT32 maxFitSize = 0 ;
+      DISKINFO_ITER maxFitDisk = _diskList.end();
+
+      DISKINFO_ITER iterDisk = _diskList.begin() ;
       while ( iterDisk != _diskList.end() )
       {
-         string::size_type pathPos ;
-         pathPos = dbpath.find( iterDisk->mountPath ) ;
+         string::size_type pathPos = dbpath.find( iterDisk->mountPath ) ;
          if ( pathPos != string::npos )
          {
-            iterDisk->isUsed = TRUE ;
-            // record the unique disk path
-            _usedDiskSet.insert( iterDisk->mountPath ) ;
-            break ;
+            INT32 tmpSize = iterDisk->mountPath.length() ;
+            if ( maxFitSize < tmpSize )
+            {
+               maxFitSize = tmpSize ;
+               maxFitDisk = iterDisk ;
+            }
          }
 
          iterDisk++ ;
       }
 
-      SDB_ASSERT( iterDisk != _diskList.end(), "" ) ;
+      SDB_ASSERT( maxFitDisk != _diskList.end(), "" ) ;
+      maxFitDisk->isUsed = TRUE ;
+      _usedDiskSet.insert( maxFitDisk->mountPath ) ;
 
       // calculate the role count
       if ( role.compare( OM_NODE_ROLE_STANDALONE ) == 0 )
       {
          _nodeCounter.standAloneCount++ ;
-         iterDisk->standAloneCount++ ;
+         maxFitDisk->standAloneCount++ ;
       }
       else if ( role.compare( OM_NODE_ROLE_COORD ) == 0 )
       {
          _nodeCounter.coordCount++ ;
-         iterDisk->coordCount++ ;
+         maxFitDisk->coordCount++ ;
       }
       else if ( role.compare( OM_NODE_ROLE_CATALOG ) == 0 )
       {
          _nodeCounter.catalogCount++ ;
-         iterDisk->catalogCount++ ;
+         maxFitDisk->catalogCount++ ;
       }
       else if ( role.compare( OM_NODE_ROLE_DATA ) == 0 )
       {
          _nodeCounter.dataCount++ ;
-         iterDisk->dataCount++ ;
+         maxFitDisk->dataCount++ ;
       }
       else
       {
@@ -1099,14 +1104,14 @@ namespace engine
    void omConfigGenerator::_resolveConfValue( BSONObj &bsonConfValue )
    {
       BSONObjBuilder newConfValueBuilder ;
-      
+
       BSONArrayBuilder arrayBuilder ;
 
       BSONObj filter = BSON( OM_BSON_FIELD_CONFIG << "" ) ;
       BSONObj others = bsonConfValue.filterFieldsUndotted( filter, false ) ;
       BSONObj config = bsonConfValue.filterFieldsUndotted( filter, true ) ;
       newConfValueBuilder.appendElements( others ) ;
-      
+
       BSONObj configObj = config.getObjectField( OM_BSON_FIELD_CONFIG ) ;
       BSONObjIterator NodeIter( configObj ) ;
       while ( NodeIter.more() )
