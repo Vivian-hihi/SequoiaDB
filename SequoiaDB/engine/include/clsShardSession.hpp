@@ -109,14 +109,12 @@ namespace engine
 
          INT32 _onOpenLobReq( MsgHeader *msg,
                               SINT64 &contextID,
-                              const CHAR **data,
-                              INT32 &bufLen ) ;
+                              rtnContextBuf &buf ) ;
 
          INT32 _onWriteLobReq( MsgHeader *msg ) ;
 
          INT32 _onReadLobReq( MsgHeader *msg,
-                              const CHAR **pReponseBuff,
-                              INT32 &buffLen ) ;
+                              rtnContextBuf &buf ) ;
 
          INT32 _onUpdateLobReq( MsgHeader *msg ) ;
 

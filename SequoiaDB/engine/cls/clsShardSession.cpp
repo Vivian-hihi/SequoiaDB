@@ -443,13 +443,13 @@ namespace engine
 
             case MSG_BS_LOB_OPEN_REQ:
                rc = _onOpenLobReq( msg, contextID,
-                                   &pReponseBuff, buffLen ) ;
+                                   buffObj ) ;
                break ;
             case MSG_BS_LOB_WRITE_REQ:
                rc = _onWriteLobReq( msg ) ;
                break ;
             case MSG_BS_LOB_READ_REQ:
-               rc = _onReadLobReq( msg, &pReponseBuff, buffLen ) ;
+               rc = _onReadLobReq( msg, buffObj ) ;
                break ;
             case MSG_BS_LOB_CLOSE_REQ:
                rc = _onCloseLobReq( msg ) ;
@@ -2361,8 +2361,7 @@ namespace engine
 
    INT32 _clsShdSession::_onOpenLobReq( MsgHeader *msg,
                                         SINT64 &contextID,
-                                        const CHAR **data,
-                                        INT32 &bufLen )
+                                        rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
@@ -2439,8 +2438,9 @@ namespace engine
       /// if sequence 0 is not on this node, we have nothing to send back.
       if ( !meta.isEmpty() )
       {
-         *data = meta.objdata() ;
-         bufLen = meta.objsize() ;
+         buffObj = rtnContextBuf( meta.objdata(),
+                                  meta.objsize(),
+                                  1 ) ;
       }
    done:
       return rc ;
@@ -2614,8 +2614,7 @@ namespace engine
    }
 
    INT32 _clsShdSession::_onReadLobReq( MsgHeader *msg,
-                                        const CHAR **pReponseBuff,
-                                        INT32 &buffLen )
+                                        rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
@@ -2673,8 +2672,7 @@ namespace engine
          goto error ;
       }
 
-      *pReponseBuff = data ;
-      buffLen = ( INT32 )read ;
+      buffObj = rtnContextBuf( data, read, 0 ) ;
    done:
       return rc ;
    error:
