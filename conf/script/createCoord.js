@@ -20,18 +20,14 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "InstallHostName": "rhel64-test8", "InstallSvcName": "11810", "InstallPath": "/opt/sequoiadb/database/coord", "InstallConfig": { "diaglevel": 3, "role": "coord", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } } 
-   SYS_JSON: the format is: { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" }
-   ENV_JSON:
+   BUS_JSON: the format is: { "InstallHostName": "rhel64-test8", "InstallSvcName": "11810", "InstallPath": "/opt/sequoiadb/database/coord", "InstallConfig": { "diaglevel": 3, "role": "coord", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } } ;
+   SYS_JSON: the format is:  { "VCoordSvcName": "10000", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" } ;
 @return
    RET_JSON: the format is: {}
 */
 
-// var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "11810", "InstallPath": "/opt/sequoiadb/database/coord", "InstallConfig": { "diaglevel": 3, "role": "coord", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } }; 
-// var SYS_JSON = { "VCoordSvcName": "11792", "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" };
-
 var RET_JSON     = new Object() ;
-
+var errMsg       = "" ;
 /* *****************************************************************************
 @discretion: create coord
 @parameter
@@ -61,96 +57,68 @@ function createCoordNode( db, hostName, svcName, installPath, config )
          }
          catch ( e )
          {
-            if ( "number" == typeof( e ) )
-            {
-               setLastErrMsg( "Failed to create coord group: " + getErr( e ) ) ;
-               setLastError( e ) ;
-               throw e ;
-            }
-            else
-            {
-               throw e ;
-            }
+            errMsg = "Failed to create coord group" ;
+            exception_handle( e, errMsg ) ;
          }
       }
       else
       {
-         if ( "number" == typeof( e ) ) 
-         {
-            setLastErrMsg( "Failed to get coord group: " + getErr( e ) ) ;
-            setlastError( e ) ;
-            throw e ;
-         }
-         else
-         {
-            throw e ;
-         }
+         errMsg = "Failed to get coord group" ;
+         exception_handle( e, errMsg ) ;
       }
    }
-   // create and start coord node
+   // create coord node
    try
    {
       node = rg.createNode( hostName, svcName, installPath, config ) ;
    }
    catch ( e )
    {
-      if ( "number" == typeof( e ) )
-      {
-         setLastErrMsg( "Failed to create coord: " + getErr( e ) ) ;
-         setLastError( e ) ;
-         throw e ;
-      }
-      else
-      {
-         throw e ;
-      }
+      errMsg = "Failed to create coord node [" + hostName + ":" + svcName + "]" ;
+      exception_handle( e, errMsg ) ;
    }
+   // start coord node
    try
    {
       node.start() ;
    }
    catch ( e )
    {
-      if ( "number" == typeof( e ) )
-      {
-         setLastErrMsg( "Failed to start coord node: " + getErr( e ) ) ;
-         setLastError( e ) ;
-         throw e ;
-      }
-      else
-      {
-         throw e ;
-      }
+      errMsg = "Failed to start coord node [" + hostName + ":" + svcName + "]" ;
+      exception_handle( e, errMsg ) ;
    }
 }
 
 function main()
 {
-    var vCoordHostName  = System.getHostName() ;
-    var vCoordSvcName   = SYS_JSON[VCoordSvcName] ;
-    var sdbUser         = SYS_JSON[SdbUser] ;
-    var sdbUserGroup    = SYS_JSON[SdbUserGroup] ;
-    var user            = SYS_JSON[User] ;
-    var passwd          = SYS_JSON[Passwd] ;
-    var installHostName = BUS_JSON[InstallHostName] ;
-    var installSvcName  = BUS_JSON[InstallSvcName] ;
-    var installPath     = BUS_JSON[InstallPath] ;
-    var installConfig   = BUS_JSON[InstallConfig] ;
-
-    var ssh             = new Ssh( installHostName, user, passwd ) ;
-    var osInfo          = System.type() ;
-print("1111111111111111\n")
-    // change install path owner
-    changeDirOwner( ssh, osInfo, installPath, sdbUser, sdbUserGroup ) ;
-print("222222222222222222222\n")
-    // connect to virtual coord
-    var db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
-    // create coord node
-print("3333333333333333333333333333\n") ;
-    createCoordNode( db, installHostName, installSvcName,
-                     installPath, installConfig ) ;
-print("444444444444444444444444444444\n")
-print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+   var vCoordHostName  = System.getHostName() ;
+   var vCoordSvcName   = SYS_JSON[VCoordSvcName] ;
+   var sdbUser         = SYS_JSON[SdbUser] ;
+   var sdbUserGroup    = SYS_JSON[SdbUserGroup] ;
+   var user            = SYS_JSON[User] ;
+   var passwd          = SYS_JSON[Passwd] ;
+   var installHostName = BUS_JSON[InstallHostName] ;
+   var installSvcName  = BUS_JSON[InstallSvcName] ;
+   var installPath     = BUS_JSON[InstallPath] ;
+   var installConfig   = BUS_JSON[InstallConfig] ;
+   var db              = null ;
+   var ssh             = new Ssh( installHostName, user, passwd ) ;
+   var osInfo          = System.type() ;
+   // change install path owner
+   changeDirOwner( ssh, osInfo, installPath, sdbUser, sdbUserGroup ) ;
+   // connect to virtual coord
+   try
+   {
+      db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   }
+   catch ( e )
+   {
+      errMsg = "Failed to connect to temporary coord [" + vCoordHostName + ":" + vCoordSvcName  + "]" ;
+      exception_handle( e, errMsg ) ;
+   }
+   // create coord node
+   createCoordNode( db, installHostName, installSvcName,
+                    installPath, installConfig ) ;
    return RET_JSON ;
 }
 

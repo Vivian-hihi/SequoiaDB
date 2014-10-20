@@ -28,12 +28,6 @@
    RET_JSON: the format is: {"errno":0,"detail":"","HostInfo":[{"errno":0,"detail":"","IP":"192.168.20.42","HasInstall":true},{"errno":0,"detail":"","IP":"192.168.20.165","HasInstall":true}]}
 */
 
-//var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.42","HostName":"susetzb","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.165","HostName":"rhel64-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
-
-//var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.165","HostName":"rhe164-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"},{"IP":"192.168.20.166","HostName":"rhel64-test9","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
-
-//var BUS_JSON = {"SdbUser":"sdbadmin","SdbPasswd":"sdbadmin","SdbUserGroup":"sdbadmin_group","InstallPacket":"/home/users/tanzhaobo/sequoiadb/bin/../packet/sequoiadb-1.8-linux_x86_64-installer.run","HostInfo":[{"IP":"192.168.20.165","HostName":"rhe164-test8","User":"root","Passwd":"sequoiadb","SshPort":"22","AgentPort":"11790","InstallPath":"/opt/sequoiadb"}]} ;
-
 var RET_JSON       = new Object() ;
 RET_JSON[Errno]    = SDB_OK ;
 RET_JSON[Detail]   = "" ;
@@ -55,17 +49,21 @@ function getInstallPacketName( osInfo, packet )
    var i = 1 ;
    var packetname = "" ;
    if ( OMA_LINUX == osInfo )
-      s = "/" ;
-   else
-      s = "\\" ;
-   i = packet.lastIndexOf( s ) ;
-   if ( -1 != i )
    {
-      packetname = packet.substring( i+1 ) ;
+      s = "/" ;
+      i = packet.lastIndexOf( s ) ;
+      if ( -1 != i )
+      {
+         packetname = packet.substring( i+1 ) ;
+      }
+      else
+      {
+         packetname = packet ;
+      }
    }
    else
    {
-      packetname = packet ;
+      // TODO:
    }
    return packetname ;
 }
@@ -95,14 +93,14 @@ function createTmpDir( ssh, osInfo )
          cmd = "mkdir -p " + OMA_PATH_VCOORD_PATH_L ;
          ssh.exec( cmd ) ;
          // chmod
+         // TODO: 
          cmd = "chmod -R 777 " + OMA_PATH_TEMP_OMA_DIR_L ;
          ssh.exec( cmd ) ;
       }
       catch( e )
       {
-         setLastErrMsg( "Failed to create tmp director" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
+         errMsg = "Failed to create tmp director in check host" ;
+         exception_handle( e, errMsg ) ;
       }
    }
    else
@@ -122,7 +120,7 @@ function createTmpDir( ssh, osInfo )
                    e.g. /tmp/packet/sequoiadb-1.8-linux_x86_64-installer.run
 @return void
 ***************************************************************************** */
-function pushInstallationPacket( ssh, osInfo, packet )
+function pushInstallPacket( ssh, osInfo, packet )
 {
    var src = "" ;
    var dest = "" ;
@@ -141,9 +139,8 @@ function pushInstallationPacket( ssh, osInfo, packet )
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to push db packet to remote" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
+         errMsg = "Failed to push db packet to host [" + ssh.getPeerIP() + "]" ;
+         exception_handle( e, errMsg ) ;
       }
    }
    else
@@ -183,9 +180,8 @@ function installDBPacket( ssh, osInfo, sdbuser, sdbpasswd, packet, path )
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to insall db packet" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
+         errMsg = "Failed to insall db packet in host [" + ssh.getPeerIP() + "]" ;
+         exception_handle( e, errMsg ) ;
       }
    }
    else
@@ -197,37 +193,78 @@ function installDBPacket( ssh, osInfo, sdbuser, sdbpasswd, packet, path )
 
 function main()
 {
-   var sdbUser         = BUS_JSON[SdbUser] ;
-   var sdbPasswd       = BUS_JSON[SdbPasswd] ;
-   var sdbUserGroup    = BUS_JSON[SdbUserGroup] ;
-   var installPacket   = BUS_JSON[InstallPacket] ;
-   var infoArr         = BUS_JSON[HostInfo] ;
-   var arrLen          = infoArr.length ;
+   var sdbUser         = null ;
+   var sdbPasswd       = null ;
+   var sdbUserGroup    = null ;
+   var installPacket   = null ;
+   var infoArr         = null ;
+   var arrLen          = null ;
+   var ssh             = null ;
+   var osInfo          = null ;
+
+   try
+   {
+      sdbUser          = BUS_JSON[SdbUser] ;
+      sdbPasswd        = BUS_JSON[SdbPasswd] ;
+      sdbUserGroup     = BUS_JSON[SdbUserGroup] ;
+      installPacket    = BUS_JSON[InstallPacket] ;
+      infoArr          = BUS_JSON[HostInfo] ;
+      arrLen           = infoArr.length ;
+   }
+   catch ( e )
+   {
+      RET_JSON[Errno] = SDB_INVALIDARG ;
+      RET_JSON[Detail] = "Failed to get field: " + e ;
+      return RET_JSON ;
+
+   }
+   // check
    if ( arrLen == 0 )
    {
-      setLastErrMsg( "Not specified any hosts to add" ) ;
-      setLastError( SDB_INVALIDARG ) ;
-      throw SDB_INVALIDARG ;
+      RET_JSON[Errno] = SDB_INVALIDARG ;
+      RET_JSON[Detail] = "Not specified any hosts to add" ;
+      return RET_JSON ;
    }
    // get os infomation
-   var osInfo = System.type() ;
+   try
+   {
+      osInfo = System.type() ;
+   }
+   catch ( e )
+   {
+      RET_JSON[Errno] = SDB_INVALIDARG ;
+      RET_JSON[Detail] = "Failed to get os info: " + e ;
+      return RET_JSON ;
+
+   }
+   // add host
    for ( var i = 0; i < arrLen; i++ )
    {
-      var ssh         = null ;
-      var obj         = infoArr[i] ;
-      var ip          = obj[IP] ;
-      var user        = obj[User] ;
-      var passwd      = obj[Passwd] ;
-      var sshPort     = obj[SshPort] ;
-      var agentPort   = obj[AgentPort] ;
-      var installPath = obj[InstallPath] ;
-      var retObj      = new addHostResult() ;
-      retObj[IP]      = ip ;
+      var ssh          = null ;
+      var obj          = null ;
+      var ip           = null ;
+      var user         = null ;
+      var passwd       = null ;
+      var sshPort      = null ;
+      var agentPort    = null ;
+      var installPath  = null ;
+      var retObj       = null ;
+
       try
       {
+         retObj        = new addHostResult() ;
+         obj           = infoArr[i] ;
+         ip            = obj[IP] ;
+         retObj[IP]    = obj[IP] ;
+         user          = obj[User] ;
+         passwd        = obj[Passwd] ;
+         sshPort       = obj[SshPort] ;
+         agentPort     = obj[AgentPort] ;
+         installPath   = obj[InstallPath] ;
+
          // ssh
          var ssh = new Ssh( ip, user, passwd ) ;
-         // judge whether it's in local mathine, if so, no need to install
+         // judge whether it's in local host, if so, no need to install
          var isLocal = isInLocalHost( ssh ) ;
          if ( isLocal )
          {
@@ -235,8 +272,8 @@ function main()
             RET_JSON[HostInfo].push( retObj ) ;
             continue ;
          }
-         // push packet to remote machine
-         pushInstallationPacket( ssh, osInfo, installPacket ) ;
+         // push packet to remote host
+         pushInstallPacket( ssh, osInfo, installPacket ) ;
          installDBPacket( ssh, osInfo, sdbUser, sdbPasswd, installPacket, installPath ) ;
          retObj[HasInstall] = true ;
       }
@@ -244,26 +281,25 @@ function main()
       {
          if ( "number" == typeof(e) && e < 0 )
          {
-            retObj[Errno] = GETLASTERROR( e, false ) ;
+            retObj[Errno] = e ;
             retObj[Detail] = GETLASTERRMSG() ;
             RET_JSON[HostInfo].push( retObj ) ;
             RET_JSON[Errno] = e ;
-            RET_JSON[Detail] = "Failed to install sdbcm in [" + ip + "]: " + retObj[Detail] ;
+            RET_JSON[Detail] = "Failed to add host [" + ip + "]: " + retObj[Detail] ;
             break ;
          }
          else
          {
-            retObj[Errno] = GETLASTERROR( e, false ) ;
+            retObj[Errno] = SDB_SYS ;
             retObj[Detail] = GETLASTERRMSG() ;
             RET_JSON[HostInfo].push( retObj ) ;
             RET_JSON[Errno] = SDB_SYS ;
-            RET_JSON[Detail] = "Failed to install sdbcm in [" + ip + "]" ;
+            RET_JSON[Detail] = "Failed to add host [" + ip + "]: " + e ;
             break ;
          }
       }
       RET_JSON[HostInfo].push( retObj ) ;
    }
-//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    // return the result
    return RET_JSON ;
 }

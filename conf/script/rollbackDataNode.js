@@ -27,10 +27,8 @@
    RET_JSON: the format is: {}
 */
 
-//var SYS_JSON = { "VCoordSvcName": "10000", "UninstallGroupNames": [ "group3" ] } ;
-
 var RET_JSON     = new Object() ;
-
+var errMsg       = "" ;
 /* *****************************************************************************
 @discretion: remove data group
 @parameter
@@ -54,12 +52,8 @@ function removeGroup( db, name )
       }
       else
       {
-         if ( "number" == typeof(e) )
-         {
-            setLastErrMsg( "Failed to get group[" + name + "]: " + getErr( e ) ) ;
-            setLastError( e ) ;
-         }
-         throw e ;
+         errMsg = "Failed to get data group [" + name + "]" ;
+         exception_handle( e, errMsg ) ;
       }
    }
    // stop all the data node in this group
@@ -69,12 +63,8 @@ function removeGroup( db, name )
    }
    catch ( e )
    {
-      if ( "number" == typeof(e) )
-      {
-         setLastErrMsg( "Failed to stop group[" + name + "]: " + getErr( e ) ) ;
-         setLastError( e ) ;
-      }
-      throw e ;
+      errMsg = "Failed to stop data group [" + name + "]" ;
+      exception_handle( e, errMsg ) ;
    } 
    // remove data group
    try
@@ -83,12 +73,8 @@ function removeGroup( db, name )
    }
    catch ( e )
    {
-      if ( "number" == typeof(e) )
-      {
-         setLastErrMsg( "Failed to remove group[" + name + "]: " + getErr( e ) ) ;
-         setLastError( e ) ;
-      }
-      throw e ;
+      errMsg = "Failed to remove data group [" + name + "]" ;
+      exception_handle( e, errMsg ) ;
    }
 }
 
@@ -105,9 +91,17 @@ function main()
    var vCoordHostName   = System.getHostName() ;
    var vCoordSvcName    = SYS_JSON[VCoordSvcName] ;
    var groups           = SYS_JSON[UninstallGroupNames] ;
-
+   var db               = null ;
    // connect to virtual coord
-   var db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   try
+   {
+      db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   }
+   catch ( e )
+   {
+      errMsg = "Failed to connect to temporary coord [" + vCoordHostName + ":" + vCoordSvcName  + "]" ;
+      exception_handle( e, errMsg ) ;
+   }
    // test whether catalog is running or not
    // if catalog is not running, no need to rollback data group
    var flag = isCatalogRunning( db ) ;
@@ -117,7 +111,7 @@ function main()
    }
    // remove data group
    removeDataGroup( db, groups ) ;
-//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+
    return RET_JSON ;
 
 }

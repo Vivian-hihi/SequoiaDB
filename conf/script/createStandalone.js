@@ -27,11 +27,8 @@
    RET_JSON: the format is: {}
 */
 
-//var BUS_JSON = { "InstallHostName": "rhel64-test8", "InstallSvcName": "11820", "InstallPath": "/opt/sequoiadb/database/standalone", "InstallConfig": { "diaglevel": 3, "role": "standalone", "logfilesz": 64, "logfilenum": 20, "transactionon": "false", "preferedinstance": "A", "numpagecleaners": 1, "pagecleaninterval": 10000, "hjbuf": 128, "logbuffsize": 1024, "maxprefpool": 200, "maxreplsync": 10, "numpreload": 0, "sortbuf": 512, "syncstrategy": "none" } };
-
-//var SYS_JSON = { "SdbUser": "sdbadmin", "SdbPasswd": "sdbadmin", "SdbUserGroup": "sdbadmin_group", "User": "root", "Passwd": "sequoiadb" };
-
 var RET_JSON        = new Object() ;
+var errMsg          = "" ;
 
 /* *****************************************************************************
 @discretion: create standalone
@@ -45,9 +42,10 @@ var RET_JSON        = new Object() ;
 ***************************************************************************** */
 function createStandalone( hostName, svcName, installPath, config, agentPort )
 {
-   var oma = new Oma( hostName, agentPort ) ;
+   var oma = null ;
    try
    {
+      oma = new Oma( hostName, agentPort ) ;
       oma.createData( svcName, installPath, config ) ;
       oma.startNode( svcName ) ;
       oma.close() ;
@@ -65,18 +63,8 @@ function createStandalone( hostName, svcName, installPath, config, agentPort )
          {
          }
       }
-      if ( "number" == typeof(e) && e < 0 )
-      {
-         setLastErrMsg( "Failed to create standalone: " + getErr(e) ) ;
-         setLastError( e )
-         throw e ;
-      }
-      else
-      {
-         setLastErrMsg( "Failed to create standalone: " + getLastErrMsg() ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
+      errMsg = "Failed to create standalone [" + hostName + ":" + svcName + "]" ;
+      exception_handle( e, errMsg ) ;
    }
 }
 

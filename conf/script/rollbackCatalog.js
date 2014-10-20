@@ -27,10 +27,8 @@
    RET_JSON: the format is: {}
 */
 
-//var SYS_JSON = { "VCoordSvcName": "11792" } ;
-
 var RET_JSON     = new Object() ;
-
+var errMsg       = "" ;
 /* *****************************************************************************
 @discretion: remove catalog group
 @parameter
@@ -40,7 +38,6 @@ var RET_JSON     = new Object() ;
 function removeCatalogGroup( db )
 {
    var rg = null ;
-
    try
    {
       rg = db.getCatalogRG() ;
@@ -53,12 +50,8 @@ function removeCatalogGroup( db )
       }
       else
       {
-         if ( "number" == typeof(e) )
-         {
-            setLastErrMsg( "Failed to get catalog group: " + getErr( e ) ) ;
-            setLastError( e ) ;
-         }
-         throw e ;
+         errMsg = "Failed to get catalog group" ;
+         exception_handle( e, errMsg ) ;
       }
    }
    // remove
@@ -68,12 +61,9 @@ function removeCatalogGroup( db )
    }
    catch ( e )
    {
-      if ( "number" == typeof(e) )
-      {
-         setLastErrMsg( "Failed to remove catalog group: " + getErr( e ) ) ;
-         setLastError( e ) ;
-      }
-      throw e ;
+
+      errMsg = "Failed to remove catalog group" ;
+      exception_handle( e, errMsg ) ;
    }
 }
 
@@ -81,8 +71,17 @@ function main()
 {
    var vCoordHostName   = System.getHostName() ;
    var vCoordSvcName    = SYS_JSON[VCoordSvcName] ;
+   var db               = null ;
    // connect to virtual coord
-   db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   try
+   {
+      db = new Sdb( vCoordHostName, vCoordSvcName, "", "" ) ;
+   }
+   catch ( e )
+   {
+      errMsg = "Failed to connect to temporary coord [" + vCoordHostName + ":" + vCoordSvcName  + "]" ;
+      exception_handle( e, errMsg ) ;
+   }
    // test whether catalog is running or not
    // if catalog is not running, no need to rollback
    var flag = isCatalogRunning( db ) ;
@@ -90,10 +89,9 @@ function main()
    {
       return RET_JSON ;
    }
-   // remove coord nodes
+   // remove catalog
    removeCatalogGroup( db ) ;
 
-//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;
 }
 

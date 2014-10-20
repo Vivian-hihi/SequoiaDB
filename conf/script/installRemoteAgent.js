@@ -16,11 +16,11 @@
 
 *******************************************************************************/
 /*
-@description: install SequoiaDB Cluster Manager(sdbcm) in remote mechine
+@description: install SequoiaDB Cluster Manager(sdbcm) in remote host
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the info for installing remote sdbcm: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
    SYS_JSON: the system info: { "ProgPath": "/home/users/tanzhaobo/sequoiadb/bin/" }
    ENV_JSON:
 @return
@@ -100,7 +100,7 @@ function pushPacket1( ssh, osInfo )
 {
    var src = "" ;
    var dest = "" ;
-   if ( "LINUX" == osInfo )
+   if ( OMA_LINUX == osInfo )
    {
       // sdblist
       src = LOCAL_PROG_PATH + OMA_PROG_SDBLIST_L ;
@@ -153,7 +153,7 @@ function pushPacket2( ssh, osInfo )
 {
    var src = "" ;
    var dest = "" ;
-   if ( "LINUX" == osInfo )
+   if ( OMA_LINUX == osInfo )
    {
       // sdbcm
       src = LOCAL_PROG_PATH + OMA_PROG_SDBCM_L;
@@ -249,7 +249,7 @@ function modifyAndSendConfigFile( ssh, osInfo, port )
 function startRemoteSdbcm( ssh, osInfo )
 {
    var cmd = "" ;
-   if ( "LINUX" == osInfo )
+   if ( OMA_LINUX == osInfo )
    {
       cmd += OMA_PATH_TEMP_BIN_DIR_L ;
       cmd += OMA_PROG_SDBCMART_L ;
@@ -260,8 +260,8 @@ function startRemoteSdbcm( ssh, osInfo )
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to start remote sdbcm" ) ;
-         throw SDB_SYS ;
+         errMsg = "Failed to start remote sdbcm" ;
+         exception_handle( e, errMsg ) ;
       }
       // wait util sdbcm start in remote
       var times = 0 ;
@@ -279,7 +279,8 @@ function startRemoteSdbcm( ssh, osInfo )
       }
       if ( OMA_TRY_TIMES <= times )
       {
-         setLastErrMsg( "Time out, remote sdbcm does not start sucessful" ) ;
+         setLastErrMsg( "Time out, remote sdbcm does not start successfully" ) ;
+         setLastError( SDB_SYS ) ;
          throw SDB_SYS ;
       }
    }
@@ -290,7 +291,7 @@ function startRemoteSdbcm( ssh, osInfo )
 }
 
 /* *****************************************************************************
-@discretion: clean up something
+@discretion: clean up the temp directory
 @author: Tanzhaobo
 @parameter
    ssh[object]: ssh object

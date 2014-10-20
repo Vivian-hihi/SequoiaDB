@@ -71,7 +71,6 @@ function snapshotNetInfo()
       for ( var j = 0; j < expectArr.length; j++ )
       {
          var oneExpect = expectArr[j] ;
-         //print("expect is: " + JSON.stringify(oneExpect) + "\n") ;
          if ( oneNet[Name] == oneExpect[Name] )
          {
            netResult.push( oneNet ) ; 
@@ -97,7 +96,6 @@ function snapshotDiskInfo()
       for ( var j = 0; j < expectArr.length; j++ )
       {
          var oneExpect = expectArr[j] ;
-         //print("expect is: " + JSON.stringify(oneExpect) + "\n") ;       
          if ( oneDisk[Filesystem] == oneExpect[Name] )
          {
             // find the expect disk 
@@ -121,7 +119,6 @@ function main()
    snapshotMemoryInfo() ;
    snapshotNetInfo() ;
    snapshotDiskInfo() ;
-   print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ; 
 }
 

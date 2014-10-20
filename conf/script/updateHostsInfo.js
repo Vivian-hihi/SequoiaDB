@@ -20,26 +20,25 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the format is: { "HostName": "localhost", "IP": "127.0.0.1", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentPort":"11790" } ] }
+   BUS_JSON: the format is: { "HostName": "rhel64-test8", "IP": "192.168.20.42", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentPort":"11790" } ] }
    SYS_JSON: the format is:
    ENV_JSON:
 @return
    RET_JSON: the format is: {}
 */
 
-//var BUS_JSON = { "HostName": "localhost", "IP": "127.0.0.1", "User": "root", "Passwd": "sequoiadb", "HostInfo": [ { "HostName": "rhel64-test8", "IP": "192.168.20.165" }, { "HostName": "rhel64-test9", "IP": "192.168.20.166", "AgentPort":"11790" } ] } ;
-
 var RET_JSON          = new Object() ;
-
+var errMsg            = "" ;
 /* *****************************************************************************
 @discretion: get local db business install path
 @author: Tanzhaobo
 @parameter
+   ssh[object]: ssh Object
    osInfo[string]: os information, "LINUX" or "WINDOWS"
 @return
    installpath[string]: the db business install director
 ***************************************************************************** */
-function getLocalDBInstallPath( osInfo )
+function getLocalDBInstallPath( ssh, osInfo )
 {
    var omaInstallInfo = null ;
    var installpath = null ;
@@ -49,12 +48,8 @@ function getLocalDBInstallPath( osInfo )
    }
    catch( e )
    {
-      if ( "number" == typeof( e ) )
-      {
-         setLastErrMsg( "Failed to get oma install info: " + getLastErrMsg() ) ;
-         setLastError( e ) ;
-      }
-      throw e ;
+      errMsg = "Failed to get db install path in host[" + ssh.getLocalIP() + "]" ;
+      exception_handle( e, errMsg ) ;
    }
    installpath = adaptPath ( osInfo, omaInstallInfo[INSTALL_DIR] ) ;
    return installpath ;
@@ -71,7 +66,7 @@ function getLocalDBInstallPath( osInfo )
 ***************************************************************************** */
 function updateHostInfo( ssh, osInfo, arr )
 {
-   var installpath = getLocalDBInstallPath( osInfo ) ; 
+   var installpath = getLocalDBInstallPath( ssh, osInfo ) ; 
    if ( OMA_LINUX == osInfo )
    {
       var sdbpath = installpath + OMA_PROG_BIN_SDB_L ;
@@ -89,12 +84,8 @@ function updateHostInfo( ssh, osInfo, arr )
          }
          catch ( e )
          {
-            if ( "number" == typeof(e) )
-            {
-               setLastErrMsg( "Failed to set info [" + ip + "   " + hostname + "] to hosts table in " + ssh.getLocalIP() + ": " + getLastErrMsg() ) ;
-               setLastError( e ) ;
-            }
-            throw e ;   
+            errMsg = "Failed to set info [" + ip + " " + hostname + "] to hosts table in host[" + ssh.getLocalIP() + "]" ;
+            exception_handle( e, errMsg ) ;
          }
       }
    }
@@ -124,12 +115,8 @@ function updateSdbcmCfgFile( ssh, osInfo, arr )
    }
    catch ( e )
    {
-      if ( "number" == typeof( e ) )
-      {
-         setLastErrMsg( "Failed to get oma config info: " + getErr( e ) ) ;
-         setLastErr( e ) ;
-      }
-      throw e ;
+      errMsg = "Failed to get oma config info in host [" + ssh.getLocalIP() + "]" ;
+      exception_handle( e, errMsg ) ;
    }
    for ( var i = 0; i < arr.length; i++ )
    {
@@ -151,21 +138,8 @@ function updateSdbcmCfgFile( ssh, osInfo, arr )
    }
    catch ( e )
    {
-      if ( "number" == typeof(e) )
-      {
-         if ( e < 0 )
-         {
-            setLastErrMsg( "Failed to set oma config info: " + getLastErrMsg() )
-            setLastError( e ) ;
-         }
-         else
-         {
-            setLastErrMsg( "Failed to set oma config info" )
-            setLastError( SDB_SYS ) ;
-            e = SDB_SYS ;
-         }
-      }
-      throw e ;
+      errMsg = "Failed to set oma config info in host [" + ssh.getLocalIP() + "]" ;
+      exception_handle( e, errMsg ) ;
    }
 }
 
@@ -186,7 +160,7 @@ function main()
    updateHostInfo( ssh, osInfo, updateInfoArr ) ;     
    // update sdbcm comfig file
    updateSdbcmCfgFile( ssh, osInfo, updateInfoArr ) ;
-//print("RET_JOSN is: " + JSON.stringify(RET_JSON) + "\n") ;
+
    return RET_JSON ;
 }
 

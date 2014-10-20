@@ -53,7 +53,7 @@ function uninstallRemoteTmpPacket( ssh, osInfo )
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to remove the temperary directores" ) ;
+         setLastErrMsg( "Failed to remove director[" + OMA_PATH_TEMP_OMA_DIR_L + "] in host [" + ssh.getPeerIP() + "]" ) ;
          setLastError( SDB_SYS ) ;
          throw SDB_SYS ;
       }
@@ -87,7 +87,7 @@ function stopRemoteSdbcmProgram( ssh, osInfo )
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to stop sdbcm in remote" ) ;
+         setLastErrMsg( "Failed to stop sdbcm in host[" + ssh.getPeerIP() + "]" ) ;
          setLastError( SDB_SYS ) ;
          throw SDB_SYS ;
       }
@@ -107,7 +107,7 @@ function stopRemoteSdbcmProgram( ssh, osInfo )
       }
       if ( OMA_TRY_TIMES <= times )
       {
-         setLastErrMsg( "Failed to stop sdbcm in remote" ) ;
+         setLastErrMsg( "Time out, failed to stop sdbcm in host[" + ssh.getPeerIP() + "]" ) ;
          throw e ;
       }
    }
@@ -164,7 +164,7 @@ function main()
       }
       RET_JSON[HostInfo].push( retObj ) ;
    }
-//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+
    // return the result
    return RET_JSON ;
 }

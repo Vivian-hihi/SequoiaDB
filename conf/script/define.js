@@ -94,6 +94,7 @@ var SdbUser                      = "SdbUser" ;
 var Service                      = "Service" ;
 var Size                         = "Size" ;
 var SshPort                      = "SshPort" ;
+var Status                       = "Status" ;
 var Time                         = "Time" ;
 var Usable                       = "Usable" ;
 var Used                         = "Used" ;
@@ -120,7 +121,8 @@ var OMA_PATH_TEMP_CONF_DIR_L          = "/tmp/omatmp/conf/" ;
 var OMA_PATH_TEMP_LOG_DIR_L           = "/tmp/omatmp/conf/log/" ;
 var OMA_PATH_TEMP_SPT_DIR_L           = "/tmp/omatmp/conf/script/" ;
 var OMA_PATH_TEMP_TEMP_DIR_L          = "/tmp/omatmp/temp/" ;
-var OMA_PATH_VCOORD_PATH_L            = "/tmp/omatmp/data/vCoord/" ;
+var OMA_PATH_VCOORD_PATH_L            = "/tmp/omatmp/data/tempCoord/" ;
+var OMA_PATH_VCOORD_BACKUP_PATH_L     = "/tmp/omatmp/data/tempCoord/backup/" ;
 var OMA_PATH_SCRIPT_L                 = "script/" ;
 var OMA_PATH_BIN_L                    = "bin/"
 
@@ -136,7 +138,6 @@ var OMA_FILE_DEFINE                  = "define.js" ;
 var OMA_FILE_FUNC                    = "func.js" ;
 var OMA_FILE_CHECK_HOST_ITEM         = "checkHostItem.js" ;
 var OMA_FILE_CHECK_HOST              = "checkHost.js" ;
-
 
 
 

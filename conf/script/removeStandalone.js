@@ -25,10 +25,8 @@
    RET_JSON: the format is: {}
 */
 
-//var BUS_JSON = { "HostInfo" : [ { "UninstallHostName": "rhel64-test8", "UninstallSvcName": "11820" } ] } ;
-
 var RET_JSON = new Object() ;
-
+var errMsg   = "" ;
 /* *****************************************************************************
 @discretion remove standalone
 @parameter
@@ -39,7 +37,17 @@ var RET_JSON = new Object() ;
 ***************************************************************************** */
 function removeStandalone( hostName, svcName, agentPort )
 {
-   var oma = new Oma( hostName, agentPort ) ;
+   var oma = null ;
+   try
+   {
+      oma = new Oma( hostName, agentPort ) ;
+   }
+   catch ( e )
+   {
+      errMsg = "Failed to connect to oma[" + hostName + ":" + agentPort + "]" ;
+      exception_handle( e, errMsg ) ;
+   }
+   // remove standalone
    try
    {
       oma.removeData( svcName ) ;
@@ -58,18 +66,8 @@ function removeStandalone( hostName, svcName, agentPort )
          {
          }
       }
-      if ( "number" == typeof(e) && e < 0 )
-      {
-         setLastErrMsg( "Failed to remove standalone: " + getErr(e) ) ;
-         setLastError( e )
-         throw e ;
-      }
-      else
-      {
-         setLastErrMsg( "Failed to remove standalone: " + getLastErrMsg() ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
+      errMsg = "Failed to remove standalone[" + hostName + ":" + svcName + "]" ;
+      exception_handle( e, errMsg ) ;
    }
 }
 

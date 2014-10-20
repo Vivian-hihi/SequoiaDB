@@ -16,7 +16,7 @@
 
 *******************************************************************************/
 /*
-@description: common things for all the js files in current document
+@description: common function for all the js files in current document
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 */
@@ -32,28 +32,20 @@
 ***************************************************************************** */
 function GETLASTERROR ( e, flag )
 {
-   var ret = getLastError() ;
-   if ( SDB_OK == typeof(ret) )
+   if ( "number" == typeof(e) && e < 0 )
    {
-      return ret ;
+      return e ;
    }
    else
    {
-      if ( "number" == typeof(e) )
+      if ( flag )
       {
-         return e ;
+         throw e ;
       }
       else
       {
-         if ( flag )
-         {
-            throw e ;
-         }
-         else
-         {
-            return SDB_SYS ;
-         } 
-      }
+         return SDB_SYS ;
+      } 
    }
 }
 
@@ -76,44 +68,27 @@ function GETLASTERRMSG ()
 }
 
 /* *****************************************************************************
-@discretion: check whether a value is usable or not
+@discretion: handle exception
 @author: Tanzhaobo
 @parameter
-   val: the value to check
+   exp[object]: the exception
+   msg[string]: error message 
 @return void
 ***************************************************************************** */
-function VALUE_CHECK ( val )
+function exception_handle( exp, msg )
 {
-   if ( val == null || typeof(val) == "undefined" )
-   {
-      setLastErrMsg( "value is undefined" ) ;
-      setLastError( SDB_INVALIDARG ) ;
-      throw SDB_INVALIDARG ;
-   }
-}
-
-/* *****************************************************************************
-@discretion: check whether cmd execute is successful or not
-@author: Tanzhaobo
-@parameter
-   ssh[object]: the ssh object
-   exp[number]: error number
-@return void
-***************************************************************************** */
-function CMD_CHECK( cmd, exp )
-{
-   if ( typeof (cmd) == "undefined" )
-   {
-      setLastErrMsg( "Invalid Cmd object" ) ;
-      setLastError( SDB_INVALIDARG ) ;
-      throw SDB_INVALIDARG ;
-   }
-   if ( cmd.getLastRet() )
-   {
-      setLastErrMsg( ssh.getLastOut() ) ;
-      setLastError( exp ) ;
-      throw exp ;
-   }
+    if ( "number" == typeof( exp ) && exp < 0 )
+    {
+       setLastErrMsg( msg + ": " + getErr( exp ) ) ;
+       setLastError( exp ) ;
+       throw exp ;
+    }
+    else
+    {
+       setLastErrMsg( msg + ", exception is: " + exp ) ;
+       setLastError( SDB_SYS ) ;
+       throw SDB_SYS ;
+    }
 }
 
 /* *****************************************************************************
@@ -153,7 +128,7 @@ function removeLineBreak ( str )
    var osInfo = System.type() ;
    var retStr = str ;
 
-   if ( "LINUX" == osInfo )
+   if ( OMA_LINUX == osInfo )
    {
       var i = str.indexOf( "\n" ) ;
       if ( -1 != i )
@@ -634,7 +609,7 @@ function getThePlaceToChangeOwner( osInfo, path )
 }
 
 /* *****************************************************************************
-@discretion: change the  owner of the directory
+@discretion: change the owner of the directory
 @author: Tanzhaobo
 @parameter
    ssh[object]: ssh object
@@ -658,9 +633,8 @@ function changeDirOwner( ssh, osInfo, path, user, userGroup )
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to create path: " + path ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
+         errMsg = "Failed to create path [" + path + "] in " + "[" + ssh.getPeerIP() + "]" ;
+         exception_handle( e, errMsg ) ;
       }
       path = getThePlaceToChangeOwner( osInfo, path ) ;
       str = user + ":" + userGroup ;
@@ -671,9 +645,8 @@ function changeDirOwner( ssh, osInfo, path, user, userGroup )
       }
       catch ( e )
       {
-         setLastErrMsg( "Failed to change path owner" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
+         errMsg = "Failed to change path [" + path + "]'s owner in " + "[" + ssh.getPeerIP() + "]" ;
+         exception_handle( e, errMsg ) ;
       }
    }
    else

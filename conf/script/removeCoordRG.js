@@ -26,11 +26,8 @@
    RET_JSON: the format is: {}
 */
 
-//var BUS_JSON = { "AuthUser": "", "AuthPasswd": "" };
-//var SYS_JSON = { "VCoordSvcName": "10000" };
-
 var RET_JSON = new Object() ;
-
+var errMsg   = "" ;
 function main()
 {
    var localHostName = System.getHostName() ;
@@ -46,18 +43,8 @@ function main()
    }
    catch ( e )
    {
-      if ( "number" == typeof(e) && e < 0 )
-      {
-         setLastErrMsg( "Failed to remove coord group: " + getErr(e) ) ;
-         setLastError( e ) ;
-         throw e ;
-      }
-      else
-      {
-         setLastErrMsg( "Failed to remove coord group" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
+      errMsg = "Failed to remove coord group" ;
+      exception_handle( e, errMsg ) ;
    }
 
    return RET_JSON ;

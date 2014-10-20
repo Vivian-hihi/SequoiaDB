@@ -27,8 +27,6 @@
    RET_JSON: the check host result: {"IP":"192.168.20.165","HostName":"rhel64-test8","OS":{"Distributor":"RedHatEnterpriseServer","Release":"6.4","Bit":64},"OM":{"HasInstalled":true,"Version":"1.8","Path":"/opt/sequoiadb/bin/","Port":"11790","Release":15348},"CPU":[{"ID":"","Model":"","Core":2,"Freq":"2.00GHz"}],"Memory":{"Model":"","Size":2887,"Free":174},"Disk":[{"Name":"/dev/mapper/vg_rhel64test8-lv_root","Mount":"/","Size":43659,"Free":35065,"IsLocal":false},{"Name":"/dev/sda1","Mount":"/boot","Size":460,"Free":423,"IsLocal":true},{"Name":"//192.168.20.10/files","Mount":"/mnt","Size":47836,"Free":29332,"IsLocal":false}],"Net":[{"Name":"lo","Model":"","Bandwidth":"","IP":"127.0.0.1"},{"Name":"eth0","Model":"","Bandwidth":"","IP":"192.168.20.165"}],"Port":[{"Port":"","CanUse":false}],"Service":[{"Name":"","IsRunning":false,"Version":""}],"Safety":{"Name":"","Context":"","IsRunning":false}} 
 */
 
-//var BUS_JSON = { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb" } ;
-
 var RET_JSON = new Object() ;
 
 RET_JSON[IP]         = "" ;
@@ -229,6 +227,8 @@ function extractOMInfo ( obj )
    }
    else
    {
+      // TODO:
+      // windows 
    }
    return retObj ;
 }
@@ -248,7 +248,6 @@ function main()
    getServiceInfo() ;
    getSafetyInfo() ;
 
-//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;
 }
 

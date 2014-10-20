@@ -26,11 +26,8 @@
    RET_JSON: the format is: {}
 */
 
-//var BUS_JSON = { "AuthUser": "", "AuthPasswd": "", "UninstallGroupName": "group1" };
-//var SYS_JSON = { "VCoordSvcName": "10000" };
-
 var RET_JSON = new Object() ;
-
+var errMsg   = "" ;
 function main()
 {
    var localHostName = System.getHostName() ;
@@ -47,18 +44,8 @@ function main()
    }
    catch ( e )
    {
-      if ( "number" == typeof(e) && e < 0 )
-      {
-         setLastErrMsg( "Failed to remove data group[" + groupName + "]: " + getErr(e) ) ;
-         setLastError( e ) ;
-         throw e ;
-      }
-      else
-      {
-         setLastErrMsg( "Failed to remove data group[" + groupName + "]" ) ;
-         setLastError( SDB_SYS ) ;
-         throw SDB_SYS ;
-      }
+      errMsg = "Failed to remove data group[" + groupName + "]" ;
+      exception_handle( e, errMsg ) ;
    }
 
    return RET_JSON ;

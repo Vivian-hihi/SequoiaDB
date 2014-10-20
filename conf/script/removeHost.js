@@ -32,7 +32,7 @@
 //var BUS_JSON = { "HostName": "rhel64-test8", "IP": "192.168.20.165", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb" }; 
 
 var RET_JSON       = new Object() ;
-
+var errMsg         = "" ;
 /* *****************************************************************************
 @discretion: uninstall sequoiadb packet and stop sdbcm in remote host
 @author: Tanzhaobo
@@ -60,9 +60,8 @@ function uninstallPacketInRemote( ssh, osInfo, path )
    }
    catch ( e )
    {
-      setLastErrMsg( "Failed to uninstall sequoiadb packet: " + getLastErrMsg() ) ;
-      setLastError( SDB_SYS ) ;
-      throw SDB_SYS ;
+      errMsg = "Failed to uninstall sequoiadb packet" ;
+      exception_handle( e, errMsg ) ;
    }
 }
 

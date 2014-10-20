@@ -30,9 +30,7 @@ function OSInfo()
 
 function OMInfo()
 {
-   // TODO: change 'Status' to HasInstalled
    this.HasInstalled       = false ;
-//   this.Status             = false ;
    this.Version            = "" ;
    this.Path               = "" ;
    this.Port               = "" ;
@@ -74,16 +72,12 @@ function NetInfo()
 function PortInfo()
 {
    this.Port               = "" ;
-   // TODO: change 'Status' to 'CanUse'
-// this.Status = false ;
    this.CanUse             = false ;
 }
 
 function ServiceInfo()
 {
    this.Name               = "" ;
-   // TODO: change 'Status' to 'IsRunning'
-//this.Status = false ;
    this.IsRunning          = false ;
    this.Version            = "" ;
 }
@@ -92,7 +86,5 @@ function SafetyInfo()
 {
    this.Name               = "" ;
    this.Context            = "" ;
-   // TODO: change 'Status' to "IsRunning"
-//this.Status = false ;
    this.IsRunning          = false ;
 }

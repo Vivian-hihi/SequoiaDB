@@ -20,16 +20,12 @@
 @modify list:
    2014-7-26 Zhaobo Tan  Init
 @parameter
-   BUS_JSON: the info for basic check host, it's format is as: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] }
+   BUS_JSON: the format is: { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] }
    SYS_JSON:
    ENV_JSON:
 @return
    RET_JSON: the basic check result, the format is as: { "HostInfo": [ { "IP": "192.168.20.165", "Ping": true, "Ssh": true, "errno": 0, "detail": "" }, { "IP": "192.168.20.166", "Ping": true, "Ssh": true, "errno": 0, "detail": "" } ] }
-
 */
-
-//var BUS_JSON = { "HostInfo": [ { "IP": "192.168.20.165", "HostName": "rhel64-test8", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" }, { "IP": "192.168.20.166", "HostName": "rhel64-test9", "User": "root", "Passwd": "sequoiadb", "InstallPath": "/opt/sequoiadb", "SshPort": "22", "AgentPort": "11790" } ] } ;
-
 
 var RET_JSON = new Object() ;
 RET_JSON[HostInfo] = [] ;
@@ -102,7 +98,6 @@ function main()
       ret = basicCheckHost( user, passwd, ip ) ;
       RET_JSON[HostInfo].push( ret ) ;
    }
-//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
    return RET_JSON ;
 }
 
