@@ -584,6 +584,24 @@
                                         </compareValues>
                                     </ruleList>
                                 </directoryParameter>
+                                <stringParameter>
+                                    <name>restPort</name>
+                                    <description></description>
+                                    <explanation></explanation>
+                                    <value>8000</value>
+                                    <default>8000</default>
+                                    <allowEmptyValue>1</allowEmptyValue>
+                                    <cliOptionName>restPort</cliOptionName>
+                                    <cliOptionText>${msg(Installer.Paramers.restPort.explanation)}</cliOptionText>
+                                    <width>40</width>
+                                    <ruleList>
+                                        <compareValues>
+                                            <logic>equals</logic>
+                                            <value1>${type}</value1>
+                                            <value2>OM</value2>
+                                        </compareValues>
+                                    </ruleList>
+                                </stringParameter>
                             </parameterList>
                         </parameterGroup>
                         <parameterGroup>
