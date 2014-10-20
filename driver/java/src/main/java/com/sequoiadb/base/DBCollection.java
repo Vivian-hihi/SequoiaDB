@@ -858,6 +858,9 @@ public class DBCollection {
 			hint = dummy;
 		if (returnRows == 0)
 			returnRows = -1;
+		if ( returnRows == 1) {
+		    flag = flag | DBQuery.FLG_QUERY_WITH_RETURNDATA;
+		}
 		SDBMessage rtnSDBMessage = adminCommand(collectionFullName, matcher,
 				selector, orderBy, hint, skipRows, returnRows, flag);
 		DBCursor cursor = null;

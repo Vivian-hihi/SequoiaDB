@@ -61,6 +61,11 @@ public class DBCursor {
 		current = null;
 		times = 0;
 		index = -1;
+		
+		List<BSONObject> tmpList = sdbMessage.getObjectList();
+		if ( null != tmpList && tmpList.size() != 0 ) {
+		    list = tmpList;
+		}
 	}
 
 	DBCursor(SDBMessage rtnSDBMessage, Sequoiadb sdb) {
@@ -77,6 +82,11 @@ public class DBCursor {
 		times = 0;
 		index = -1;
 		endianConvert = sdb.endianConvert;
+		
+		List<BSONObject> tmpList = sdbMessage.getObjectList();
+        if ( tmpList.size() != 0 ) {
+            list = tmpList;
+        }
 	}
 
 	/**
@@ -245,9 +255,18 @@ public class DBCursor {
 	}
 
 	private void getListFromDB(boolean decode) {
-		if (connection == null || contextId == -1)
+		if (connection == null)
 			throw new BaseException("SDB_NOT_CONNECTED");
 
+		if ( contextId == -1 ){
+		    hasMore = false;
+            index = -1;
+            current = null;
+            list = null;
+            listRaw = null;
+            return;
+		}
+		
 		if (decode) {
 			list.clear();
 		} else {
