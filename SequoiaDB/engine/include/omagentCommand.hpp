@@ -248,14 +248,13 @@ namespace engine
          ~_omaAddHost () ;
          virtual const CHAR * name () { return OMA_CMD_ADD_HOST ; }
          virtual INT32 init ( const CHAR *pInstallInfo ) ;
-//         virtual INT32 doit ( BSONOBj &retObj ) ;
          virtual INT32 final( BSONObj &rval, BSONObj &retObj ) ;
 
       private:
          INT32 _getRollbackInfo( BSONObj &addHostResult,
                                  BSONObj &rollbackInfo ) ;
-         INT32 _rollbackAddedHost ( BSONObj &rollbackInfo,
-                                    BSONObj &rollbackResult ) ;
+         INT32 _addHostRollback ( BSONObj &rollbackInfo,
+                                  BSONObj &rollbackResult ) ;
          INT32 _buildErrDetail ( BSONObj &addHostResult,
                                  BSONObj &rollbackResult,
                                  CHAR *pBuf,

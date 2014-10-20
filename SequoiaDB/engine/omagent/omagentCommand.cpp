@@ -802,7 +802,7 @@ namespace engine
                      "failed to rollback, rc = %d", rc ) ;
             goto error ;
          }
-         rc = _rollbackAddedHost( rollbackInfo, rollbackResult ) ;
+         rc = _addHostRollback( rollbackInfo, rollbackResult ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to roolback add hosts, "
@@ -938,8 +938,8 @@ namespace engine
      goto done ;
    }
 
-   INT32 _omaAddHost::_rollbackAddedHost ( BSONObj &rollbackInfo,
-                                           BSONObj &rollbackResult )
+   INT32 _omaAddHost::_addHostRollback ( BSONObj &rollbackInfo,
+                                         BSONObj &rollbackResult )
    {
       INT32 rc = SDB_OK ;
 
@@ -973,10 +973,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONElement ele ;
-      BSONObjBuilder bob ;
-      BSONObj obj ;
+      BSONArrayBuilder bab ;
+      BSONArray arr ;
       const CHAR *pDetail = NULL ;
-      string str = "rollback situation: " ;
+      string str = "" ;
 
       // get error detail from add hosts result
       rc = omaGetStringElement( addHostResult, OMA_FIELD_DETAIL, &pDetail ) ;
@@ -1022,13 +1022,20 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to get bson field[%s], "
                         "rc = %d", OMA_FIELD_HASUNINSTALL, rc ) ;
             }
-            bob.appendBool ( ip, hasUninstall ) ;
+            if ( !hasUninstall )
+            {
+               bab.append ( ip ) ;
+            }
          }
-         obj = bob.obj() ;
-         str += obj.toString( FALSE, TRUE ).c_str() ;
+         arr = bab.arr() ;
+         if ( !arr.isEmpty() )
+         {
+            str = ", need to uninstall db packet in these hosts manually: " ;
+            str += arr.toString( TRUE, FALSE ).c_str() ;
+         }
       }
       // return the total error detail
-      ossSnprintf( pBuf, OMA_BUFF_SIZE, "%s, %s", pDetail, str.c_str() ) ;  
+      ossSnprintf( pBuf, OMA_BUFF_SIZE, "%s%s", pDetail, str.c_str() ) ;  
       PD_LOG_MSG ( PDERROR, pBuf ) ;
 
    done:
@@ -1359,13 +1366,13 @@ namespace engine
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Create virtual coord passes argument: %s",
+         PD_LOG ( PDDEBUG, "Create temp coord passes argument: %s",
                   _jsFileArgs ) ;
-         rc = addJsFile( FILE_CREATE_VIRTUAL_COORD, _jsFileArgs ) ;
+         rc = addJsFile( FILE_CREATE_TEMP_COORD, _jsFileArgs ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_CREATE_VIRTUAL_COORD, rc ) ;
+                     FILE_CREATE_TEMP_COORD, rc ) ;
             goto error ;
          }
       }
@@ -1390,13 +1397,13 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to init for creating "
-                  "virtual coord, rc = %d", rc ) ;
+                  "temp coord, rc = %d", rc ) ;
          goto error ;
       }
       rc = doit( retObj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to create temp coord, rc = %d", rc ) ;
          goto error ;
       }     
    done:
@@ -1427,13 +1434,13 @@ namespace engine
          // build js file arguments
          ossSnprintf( _jsFileArgs, JS_ARG_LEN, "var %s = %s; ",
                       JS_ARG_SYS, sys.toString(FALSE, TRUE).c_str() ) ;
-         PD_LOG ( PDDEBUG, "Remove virtual coord passes argument: %s",
+         PD_LOG ( PDDEBUG, "Remove temp coord passes argument: %s",
                   _jsFileArgs ) ;
-         rc = addJsFile( FILE_REMOVE_VIRTUAL_COORD, _jsFileArgs ) ;
+         rc = addJsFile( FILE_REMOVE_TEMP_COORD, _jsFileArgs ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_REMOVE_VIRTUAL_COORD, rc ) ;
+                     FILE_REMOVE_TEMP_COORD, rc ) ;
             goto error ;
          }
       }
@@ -1456,14 +1463,14 @@ namespace engine
       rc = init( NULL ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to init for creating virtual coord, "
+         PD_LOG ( PDERROR, "Failed to init for creating temp coord, "
                   "rc = %d", rc ) ;
          goto error ;
       }
       rc = doit( retObj ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         PD_LOG( PDERROR, "Failed to create temp coord, rc = %d", rc ) ;
          goto error ;
       }
    done:
@@ -1492,11 +1499,11 @@ namespace engine
                       JS_ARG_BUS, bus.toString(FALSE, TRUE).c_str() ) ;
          PD_LOG ( PDDEBUG, "Rollback add hosts passes argument: %s",
                   _jsFileArgs ) ;
-         rc = addJsFile( FILE_ADDHOST_ROLLBACK_INTERNAL, _jsFileArgs ) ;
+         rc = addJsFile( FILE_ADDHOST_ROLLBACK, _jsFileArgs ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_ADDHOST_ROLLBACK_INTERNAL, rc ) ;
+                     FILE_ADDHOST_ROLLBACK, rc ) ;
             goto error ;
          }
       }
