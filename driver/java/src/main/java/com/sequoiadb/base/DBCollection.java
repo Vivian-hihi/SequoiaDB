@@ -903,6 +903,7 @@ public class DBCollection {
 	public BSONObject queryOne(BSONObject matcher, BSONObject selector,
 			                   BSONObject orderBy, BSONObject hint,
 			                   int flag) throws BaseException {
+	    flag = flag | DBQuery.FLG_QUERY_WITH_RETURNDATA;
 		DBCursor cursor = null;
 		try {
 			cursor = query(matcher, selector, orderBy, hint, 0, 1, flag);
