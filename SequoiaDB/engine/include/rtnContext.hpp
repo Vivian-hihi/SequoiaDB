@@ -105,6 +105,7 @@ namespace engine
          INT32       recordNum () const { return _recordNum ; }
          BOOLEAN     eof () const { return _curOffset >= _buffSize ; }
          void        resetItr () { _curOffset = 0 ; }
+         INT32       truncate ( UINT32 num ) ;
 
          OSS_INLINE   INT32  nextObj ( BSONObj &obj ) ;
 
@@ -152,6 +153,7 @@ namespace engine
       public:
          _rtnContextBuf () ;
          _rtnContextBuf( const _rtnContextBuf &right ) ;
+         _rtncontextBuf( const CHAR *pBuff, INT32 buffLen, INT32 recordNum ) ;
          virtual ~_rtnContextBuf () ;
          _rtnContextBuf& operator=( const _rtnContextBuf &right ) ;
 

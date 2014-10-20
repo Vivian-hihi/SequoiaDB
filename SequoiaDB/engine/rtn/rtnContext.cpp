@@ -132,6 +132,49 @@ namespace engine
       return *this ;
    }
 
+   INT32 _rtnObjBuff::truncate( UINT32 num )
+   {
+      INT32 rc          = SDB_OK ;
+      INT32 offset      = 0 ;
+      INT32 recordNum   = 0 ;
+
+      if ( num >= _recordNum )
+      {
+         goto done ;
+      }
+
+      while( ossAlign4( offset ) < _buffSize && recordNum < num )
+      {
+         offset = ossAlign4( offset ) ;
+         try
+         {
+            BSONObj objTemp( &_pBuff[_curOffset] ) ;
+            offset += objTemp.objsize() ;
+            ++recordNum ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Failed to create bson object: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+
+      if ( offset < _buffSize )
+      {
+         _buffSize = offset ;
+      }
+      if ( recordNum < _recordNum )
+      {
+         _recordNum = recordNum ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    /*
       _rtnContextBuf implement
    */
@@ -158,6 +201,16 @@ namespace engine
       }
    }
 
+   _rtnContextBuf::_rtnContextBuf( const CHAR *pBuff, INT32 buffLen,
+                                   INT32 recordNum )
+   :_rtnObjBuff( pBuff, buffLen, recordNum )
+   {
+      _pBuffCounter  = NULL ;
+      _pBuffLock     = NULL ;
+      _released      = TRUE ;
+      _context       = NULL ;
+   }
+
    _rtnContextBuf::~_rtnContextBuf()
    {
       release () ;
@@ -176,7 +229,7 @@ namespace engine
       _context  = right._context ;
 
       // increase counter
-      if ( !_released && NULL != _pBuffCounter)
+      if ( !_released && NULL != _pBuffCounter )
       {
          ++(*_pBuffCounter) ;
       }
