@@ -2569,8 +2569,6 @@ namespace engine
       rtnContextShdOfLob *lobContext = NULL ;
       rtnContext *context = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
-      BOOLEAN isMainCl = FALSE ;
-      INT16 w = 0 ;
 
       rc = msgExtractCloseLobRequest( ( const CHAR * )msg, &header ) ;
       if ( SDB_OK != rc )
@@ -2595,17 +2593,9 @@ namespace engine
          goto error ;
       }
 
+      /// do not check version coz we will not
+      ///  change any thing except close the context.
       lobContext = ( rtnContextShdOfLob * )context ;
-      _pCollectionName = lobContext->getFullName() ;
-      w = lobContext->getW() ;
-      rc = _checkCata( header->version, lobContext->getFullName(),
-                       w, isMainCl, FALSE ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
-         goto error ;
-      }
-
       rc = lobContext->close( _pEDUCB ) ;
       if ( SDB_OK != rc )
       {
@@ -2614,9 +2604,7 @@ namespace engine
       }
 
    done:
-      if ( NULL != context &&
-           SDB_CLS_COORD_NODE_CAT_VER_OLD != rc &&
-           SDB_CLS_DATA_NODE_CAT_VER_OLD != rc  )
+      if ( NULL != context ) 
       {
          rtnCB->contextDelete ( context->contextID(), _pEDUCB ) ;
       }
