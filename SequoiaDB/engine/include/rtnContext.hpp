@@ -153,7 +153,7 @@ namespace engine
       public:
          _rtnContextBuf () ;
          _rtnContextBuf( const _rtnContextBuf &right ) ;
-         _rtncontextBuf( const CHAR *pBuff, INT32 buffLen, INT32 recordNum ) ;
+         _rtnContextBuf( const CHAR *pBuff, INT32 buffLen, INT32 recordNum ) ;
          virtual ~_rtnContextBuf () ;
          _rtnContextBuf& operator=( const _rtnContextBuf &right ) ;
 
