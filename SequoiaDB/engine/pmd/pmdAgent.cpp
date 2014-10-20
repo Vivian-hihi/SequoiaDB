@@ -1497,8 +1497,11 @@ namespace engine
          if ( MSG_BS_INTERRUPTE != GET_REQUEST_TYPE(replyHeader.header.opCode)
               && !disconnect )
          {
-            replyHeader.numReturned = buffObj.recordNum() ;
-            replyHeader.header.messageLength += buffObj.size() ;
+            if ( buffObj.recordNum() > 0 )
+            {
+               replyHeader.numReturned = buffObj.recordNum() ;
+               replyHeader.header.messageLength += buffObj.size() ;
+            }
 
             // we want to reserve rc from pmdProcessAgentRequest, let's use
             // another sendRC
