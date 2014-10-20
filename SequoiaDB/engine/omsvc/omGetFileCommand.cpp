@@ -7490,7 +7490,7 @@ namespace engine
       }
 
       BSONObj netValue = netEle.embeddedObject() ;
-      
+
       BSONObj innerNetOther = netValue.filterFieldsUndotted( filterNet, false ) ;
       BSONObj innerNet = netValue.filterFieldsUndotted( filterNet, true ) ;
       _formatHostStatusNet( innerNet ) ;
@@ -7949,9 +7949,11 @@ namespace engine
       _restAdaptor->appendHttpBody( _restSession, pContent, contentLength ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
 
-      _restSession->releaseBuff( pContent, contentLength ) ;
-
    done:
+      if ( NULL != pContent )
+      {
+         _restSession->releaseBuff( pContent, contentLength ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -8004,13 +8006,12 @@ namespace engine
          ossClose( file ) ;
       }
 
+      return rc ;
+   error:
       if ( isAllocBuff )
       {
          _restSession->releaseBuff( *pFileContent, buffSize ) ;
       }
-
-      return rc ;
-   error:
       goto done ;
    }
 
