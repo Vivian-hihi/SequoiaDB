@@ -213,7 +213,6 @@ namespace engine
          _suID = DMS_INVALID_CS ;
       }
 
-      _pos = DMS_LOB_INVALID_PAGEID ;
       _onlyMetaPage = FALSE ;
 
       return ;
