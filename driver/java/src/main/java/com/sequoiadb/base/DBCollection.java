@@ -836,9 +836,11 @@ public class DBCollection {
 	 *            only return returnRows documents, return all if this parameter is -1
 	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
      * <ul>
-     * <li>BDQuery.FLG_QUERY_STRINGOUT
-     * <li>BDQuery.FLG_QUERY_FORCE_HINT 
-     * <li>BDQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_STRINGOUT
+     * <li>DBQuery.FLG_QUERY_FORCE_HINT 
+     * <li>DBQuery.FLG_QUERY_PARALLED
+     * <li>DBQuery.FLG_QUERY_WITH_RETURNDATA
+     * <li>DBQuery.FLG_QUERY_EXPLAIN
      * </ul>  
 	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException

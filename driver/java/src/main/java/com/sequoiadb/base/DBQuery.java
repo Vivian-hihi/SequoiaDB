@@ -56,7 +56,10 @@ public class DBQuery {
 	 */
 	public static final int FLG_QUERY_PARALLED = 0x00000100;
 	
-	// Find with return data in query response, can use for find one
+	/**
+     * @memberof FLG_QUERY_WITH_RETURNDATA 0x00000200
+     * @brief return data in query response
+     */
 	public static final int FLG_QUERY_WITH_RETURNDATA = 0x00000200;
 	
 	/**
