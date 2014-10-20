@@ -143,9 +143,9 @@ namespace engine
          goto done ;
       }
 
-      while( ossAlign4( offset ) < _buffSize && recordNum < num )
+      while( ossAlign4( (UINT32)offset ) < _buffSize && recordNum < num )
       {
-         offset = ossAlign4( offset ) ;
+         offset = ossAlign4( (UINT32)offset ) ;
          try
          {
             BSONObj objTemp( &_pBuff[_curOffset] ) ;
@@ -482,23 +482,23 @@ namespace engine
 
       if ( 0 < len )
       {
-      if ( needAliened )
-      {
-         _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
-      }
-
-      if ( _bufferEndOffset + len > _resultBufferSize )
-      {
-         rc = _reallocBuffer ( _bufferEndOffset + len ) ;
-         if ( rc )
+         if ( needAliened )
          {
-            PD_LOG ( PDERROR, "Failed to reallocate buffer for context, rc: "
-                     "%d", rc ) ;
-            goto error ;
+            _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
          }
-      }
 
-      ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), pObjBuff, len ) ;
+         if ( _bufferEndOffset + len > _resultBufferSize )
+         {
+            rc = _reallocBuffer ( _bufferEndOffset + len ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to reallocate buffer for context, "
+                        "rc: %d", rc ) ;
+               goto error ;
+            }
+         }
+
+         ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), pObjBuff, len ) ;
       }
 
       _totalRecords += num ; // total num
@@ -3791,13 +3791,7 @@ namespace engine
 
          if ( iterSubCTX->second.recordNum() <= 0 )
          {
-            INT32 returnNum = maxNumToReturn ;
-            if ( _numToReturn > 0 && ( returnNum < 0 ||
-                 returnNum > _numToReturn ) )
-            {
-               returnNum = _numToReturn ;
-            }
-            rc = _prepareSubCTXData( iterSubCTX, cb, returnNum ) ;
+            rc = _prepareSubCTXData( iterSubCTX, cb, maxNumToReturn ) ;
             if ( rc != SDB_OK )
             {
                pRtncb->contextDelete( iterSubCTX->first, cb );
@@ -3815,9 +3809,11 @@ namespace engine
 
          if ( _numToReturn > 0 )
          {
-            _numToReturn -= ( buffObj.recordNum() > _numToReturn ?
-                              _numToReturn :
-                              buffObj.recordNum() )  ;
+            if ( buffObj.recordNum() > _numToReturn )
+            {
+               buffObj.truncate( _numToReturn ) ;
+            }
+            _numToReturn -= buffObj.recordNum() ;
          }
       }
 
