@@ -57,6 +57,11 @@ namespace engine
 
 #define CLS_SYNC_MAX_TIME           (5)
 
+#define CLS_IS_LOB_LOG( type )\
+        ( LOG_TYPE_LOB_WRITE == ( type ) || \
+          LOG_TYPE_LOB_REMOVE == ( type ) ||\
+          LOG_TYPE_LOB_UPDATE == ( type) )
+
    /*
    _clsDataSrcBaseSession : implement
    */
@@ -1743,10 +1748,15 @@ namespace engine
                                          const DPS_LSN_OFFSET & offset )
    {
       PD_TRACE_ENTRY ( SDB__CLSSPLSS_NTFLSN );
+      INT32 rc = SDB_OK ;
       UINT32 curSULID, curCLLID ;
       ossUnpack32From64( _curCollection, curSULID, curCLLID ) ;
       BOOLEAN locked = FALSE ;
       BOOLEAN inEndMap = FALSE ;
+      dpsLogRecord record ;
+      DPS_LSN lsn ;
+      BSONObj recordObj ;
+      SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
 
       if ( !_init || _quit || PMD_INVALID_EDUID != _cleanupJobID ||
            0 == _needData || offset < _beginLSNOffset )
@@ -1787,87 +1797,79 @@ namespace engine
          _deqLSN.push_back( offset ) ;
          goto done ;
       }
+
+      lsn.offset = offset ;
+      _lsnSearchMB.clear() ;
+      rc = dpsCB->search( lsn, &_lsnSearchMB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Split Session[%s]: Failed to load dps "
+                  "log[offset:%lld, rc:%d]", sessionName(), offset, rc ) ;
+         goto error ;
+      }
+
+      rc = record.load( _lsnSearchMB.startPtr() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Split Session[%s]: parse dps log failed[rc:%d]",
+                  sessionName(), rc ) ;
+         goto error ;
+      }
+
+      
       // no sharding index, scan by table
       // log of lob can be ignored, coz _findEnd is false.
-      else if ( TBSCAN == _scanType() && !inEndMap && !_findEnd &&
-                extLID > _curExtID )
+      if ( TBSCAN == _scanType() && !inEndMap && !_findEnd &&
+           extLID > _curExtID && !( CLS_IS_LOB_LOG( record.head()._type ) ) )
       {
+         goto done ;
+      }
+      else if ( CLS_IS_LOB_LOG( record.head()._type ) )
+      {
+         if ( inEndMap ||
+              _lobFetcher.hitEnd() ||
+              extLID < _lobFetcher.toBeFetched() )
+         {
+            const bson::OID *oid = NULL ;
+            const UINT32 *sequence = NULL ;
+            INT32 range = 0 ;
+            dpsLogRecord::iterator itr =
+                          record.find( DPS_LOG_LOB_OID ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "Split Session[%s]: can not find oid obj in "
+                      "record.", sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            oid = ( const bson::OID * )( itr.value() ) ;
+
+            itr = record.find( DPS_LOG_LOB_SEQUENCE ) ;
+            if ( !itr.valid() )
+            {
+               PD_LOG( PDERROR, "Split Session[%s]: can not find oid obj in "
+                      "record.", sessionName() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            sequence = ( const UINT32 * )( itr.value() ) ;
+
+            range = clsPartition( *oid, *sequence, _partitionBit ) ;
+            if ( _rangeKeyObj.firstElement().Int() <= range &&
+                ( !_hasEndRange || range < _rangeEndKeyObj.firstElement().Int() ) )
+            {
+               _deqLSN.push_back( offset ) ;
+            }
+         }
+         else
+         {
+            /// will sync this record by _syncLob.
+         }
+
          goto done ;
       }
       else
       {
-         dpsLogRecord record ;
-         DPS_LSN lsn ;
-         BSONObj recordObj ;
-         lsn.offset = offset ;
-         SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-         _lsnSearchMB.clear() ;
-         INT32 rc = dpsCB->search( lsn, &_lsnSearchMB ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG ( PDERROR, "Split Session[%s]: Failed to load dps "
-                     "log[offset:%lld, rc:%d]", sessionName(), offset, rc ) ;
-            goto error ;
-         }
-
-         rc = record.load( _lsnSearchMB.startPtr() ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG ( PDERROR, "Split Session[%s]: parse dps log failed[rc:%d]",
-                     sessionName(), rc ) ;
-            goto error ;
-         }
-
-         if ( LOG_TYPE_LOB_WRITE == record.head()._type ||
-              LOG_TYPE_LOB_REMOVE == record.head()._type ||
-              LOG_TYPE_LOB_UPDATE == record.head()._type )
-         {
-            if ( !_findEnd )
-            {
-               /// we will sync lob after doc is done. ignore lob's log here.
-            }
-            else if ( _lobFetcher.hitEnd() ||
-                      extLID < _lobFetcher.toBeFetched() )
-            {
-               const bson::OID *oid = NULL ;
-               const UINT32 *sequence = NULL ;
-               INT32 range = 0 ;
-               dpsLogRecord::iterator itr =
-                             record.find( DPS_LOG_LOB_OID ) ;
-               if ( !itr.valid() )
-               {
-                  PD_LOG( PDERROR, "Split Session[%s]: can not find oid obj in "
-                         "record.", sessionName() ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-               }
-               oid = ( const bson::OID * )( itr.value() ) ;
-
-               itr = record.find( DPS_LOG_LOB_SEQUENCE ) ;
-               if ( !itr.valid() )
-               {
-                  PD_LOG( PDERROR, "Split Session[%s]: can not find oid obj in "
-                         "record.", sessionName() ) ;
-                  rc = SDB_SYS ;
-                  goto error ;
-               }
-               sequence = ( const UINT32 * )( itr.value() ) ;
-
-               range = clsPartition( *oid, *sequence, _partitionBit ) ;
-               if ( _rangeKeyObj.firstElement().Int() <= range &&
-                   ( !_hasEndRange || range < _rangeEndKeyObj.firstElement().Int() ) )
-               {
-                  _deqLSN.push_back( offset ) ;
-               }
-            }
-            else
-            {
-               /// will sync this record by _syncLob.
-            }
-
-            goto done ;
-         }
-
          if ( LOG_TYPE_DATA_INSERT == record.head()._type )
          {
             dpsLogRecord::iterator itr =
