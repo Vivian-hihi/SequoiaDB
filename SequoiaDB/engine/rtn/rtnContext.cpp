@@ -1914,11 +1914,6 @@ namespace engine
             {
                maxReturnNum = _numToSkip ;
             }
-            else if ( _numToReturn > 0 /*&&
-                      _numToReturn < pContext->numRecords()*/ )
-            {
-               maxReturnNum = _numToReturn ;
-            }
             else
             {
                maxReturnNum = -1 ;
@@ -1942,6 +1937,11 @@ namespace engine
             {
                _numToSkip -= buffObj.recordNum() ;
                continue ;
+            }
+
+            if ( _numToReturn > 0 && buffObj.recordNum() > _numToReturn )
+            {
+               buffObj.truncate( _numToReturn ) ;
             }
             // append data
             rc = appendObjs( buffObj.data(), buffObj.size(),
