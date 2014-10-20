@@ -60,6 +60,7 @@ var Netcards                     = "Netcards" ;
 var ID                           = "ID" ;
 var IP                           = "IP" ;
 var Ip                           = "Ip" ;
+var Info                         = "Info" ;
 var IsLocal                      = "IsLocal" ;
 var IsNeedUninstall              = "IsNeedUninstall" ;
 var LocalHost                    = "localhost" ;

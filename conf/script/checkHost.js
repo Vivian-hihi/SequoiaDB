@@ -133,7 +133,7 @@ function getCPUInfo()
       var cpuInfo    = new CPUInfo() ;
       // TODO: not offer ID and Model
       cpuInfo[ID]    = "" ;
-      cpuInfo[Model] = "" ;
+      cpuInfo[Model] = obj[Info] ;
       cpuInfo[Core]  = obj[Core] ;
       cpuInfo[Freq]  = obj[Freq] ;
       cpuInfos.push( cpuInfo ) ;
