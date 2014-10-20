@@ -2830,6 +2830,7 @@ namespace engine
       }
 
       lobContext = ( rtnContextShdOfLob * )context ;
+      _pCollectionName = lobContext->getFullName() ;
       w = lobContext->getW() ;
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
@@ -2863,7 +2864,7 @@ namespace engine
                                   data, _pEDUCB ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to write lob:%d", rc ) ;
+            PD_LOG( PDERROR, "failed to update lob:%d", rc ) ;
             goto error ;
          }
 
@@ -2878,7 +2879,6 @@ namespace engine
       PD_LOG( PDDEBUG, "%d pieces of lob[%s] update done",
               tupleNum, lobContext->getOID().str().c_str() ) ;      
    done:
-      
       return rc ;
    error:
       if ( NULL != context &&
