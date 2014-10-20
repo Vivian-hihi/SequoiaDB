@@ -48,6 +48,13 @@ Create a collection space in a database instance.
 .br
               Domain:<string>
 .sp 2
+       \fBLobPageSize\fR
+.br
+              Lob size of data page. The default value is
+              262144B.
+.br
+              LobPageSize:<int32>
+.sp 2
 
 .sp 2
 \fBNote: \fR
@@ -70,6 +77,10 @@ Create a collection space in a database instance.
 .sp 2
    *  It is compatible with earlier version interface, and
    function db.createCS(<name>, [PageSize]) can alsobe used.
+.sp 2
+   *  LobPageSize can only be one of the following nine: 0, 4096,
+   8192, 16384, 32768, 65536, 131072, 262144 and 524288, The
+   default value is 262144.
 .SH "Examples"
 
 .sp 2

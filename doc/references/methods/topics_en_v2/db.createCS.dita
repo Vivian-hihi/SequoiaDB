@@ -37,6 +37,11 @@
                 <pd>Domain that collection space belongs to.</pd>
                 <pd>Domain:&lt;string></pd>
               </plentry>
+              <plentry>
+                <pt>LobPageSize</pt>
+                <pd>Lob size of data page. The default value is 262144B.</pd>
+                <pd>LobPageSize:&lt;int32></pd>
+              </plentry>
             </parml>
           </pd>          
         </plentry>        
@@ -48,6 +53,7 @@
           <li>PageSize can only be one of the following six: 0, 4096, 8192, 16384, 32768, and 65536. The default value is 0.</li>
           <li>Domain must already exist, and cannot be SYSDOMAIN.</li>
           <li>It is compatible with earlier version interface, and function db.createCS(&lt;name>, [PageSize]) can alsobe used.</li>
+          <li>LobPageSize can only be one of the following nine: 0, 4096, 8192, 16384, 32768, 65536, 131072, 262144 and 524288, The default value is 262144.</li>
         </ul></note>
     </section>    
     <section>

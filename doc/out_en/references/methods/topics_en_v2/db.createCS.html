@@ -87,6 +87,14 @@ Sequoiadb
                 <dd class="dd pd">Domain:&lt;string&gt;</dd>
 
               
+              
+                <dt class="dt pt dlterm">LobPageSize</dt>
+
+                <dd class="dd pd">Lob size of data page. The default value is 262144B.</dd>
+
+                <dd class="dd pd">LobPageSize:&lt;int32&gt;</dd>
+
+              
             </dl>
 
           </dd>
@@ -106,6 +114,8 @@ Sequoiadb
           <li class="li">Domain must already exist, and cannot be SYSDOMAIN.</li>
 
           <li class="li">It is compatible with earlier version interface, and function db.createCS(&lt;name&gt;, [PageSize]) can alsobe used.</li>
+
+          <li class="li">LobPageSize can only be one of the following nine: 0, 4096, 8192, 16384, 32768, 65536, 131072, 262144 and 524288, The default value is 262144.</li>
 
         </ul>
 </div>

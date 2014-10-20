@@ -102,6 +102,14 @@
           <td valign="top" headers="d132370e85" class="stentry">Domain:&lt;string&gt;</td>
 
         </tr>
+<tr class="strow">
+          <td valign="top" headers="d132370e79" class="stentry">LobPageSize</td>
+
+          <td valign="top" headers="d132370e82" class="stentry">Lob 数据页大小。默认262144B</td>
+
+          <td valign="top" headers="d132370e85" class="stentry">LobPageSize:&lt;int32&gt;</td>
+
+        </tr>
 </table>
       
       <div class="note note"><span class="notetitle">Note:</span> 
@@ -117,6 +125,8 @@
           <li class="li">所属域必须已经存在，且不能为 SYSDOMAIN。</li>
 
           <li class="li">为兼容较早版本接口，db.createCS(&lt;name&gt;,[PageSize]) 同样可以工作。</li>
+
+          <li class="li">LobPageSize 只能选填0，4096，8192，16384，32768，65536，131072，262144，524288之一，0即为默认值262144。</li>
 
         </ul>
 

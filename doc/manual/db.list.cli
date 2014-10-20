@@ -41,7 +41,7 @@ system status.
 \fBsel (json object)\fR
 .br
        Select fields to be returned. When it is null, return all
-       records.
+       the fields.
 .sp 2
 \fBsort (json object)\fR
 .br
