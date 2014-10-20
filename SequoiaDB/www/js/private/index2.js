@@ -433,7 +433,7 @@ function createRightPic()
 						//计算内存
 						var memorySize = hostInfoT['Memory']['Size'] ;
 						var memoryUsed = hostInfoT['Memory']['Used'] ;
-						var tempMemory = ( memoryUsed * 100 / memoryUsed ) ;
+						var tempMemory = ( memoryUsed * 100 / memorySize ) ;
 						memoryList.push( tempMemory ) ;
 						//计算硬盘
 						var diskSize = 0 ;
