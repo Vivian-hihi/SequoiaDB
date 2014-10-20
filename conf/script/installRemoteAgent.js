@@ -419,7 +419,7 @@ function main()
       // clean up something
       cleanup( ssh, osInfo ) ;
    }
-//print("RET_JSON is: " + JSON.stringify(RET_JSON) + "\n") ;
+
    return RET_JSON ;
 }
 
