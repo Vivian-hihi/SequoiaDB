@@ -81,9 +81,7 @@ function main()
    var isLocal = isInLocalHost( ssh ) ;
    if ( isLocal )
    {
-      setLastErrMsg( "Can't uninsatll local db packet, it will stop the working sdbcm" ) ;
-      setLastEerr( SDB_INVALIDARG ) ;
-      throw SDB_INVALIDARG ;
+      return RET_JSON ;
    }
    // uninstall db packet and stop sdbcm in remote host
    uninstallPacketInRemote( ssh, osInfo, installPath ) ;
