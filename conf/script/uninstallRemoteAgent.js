@@ -46,7 +46,7 @@ function uninstallRemoteTmpPacket( ssh, osInfo )
    var cmd = "" ;
    if ( OMA_LINUX == osInfo )
    {
-      cmd = "rm -rf " + OMA_PATH_TEMP_OMA_DIR_L ;
+      cmd = "rm -rf " + OMA_PATH_TEMP_OMA_DIR_L2 ;
       try
       {
          ssh.exec( cmd ) ;

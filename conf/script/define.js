@@ -115,6 +115,7 @@ var CalendarTime                 = "CalendarTime" ;
 var NetCards                     = "NetCards" ;
 
 var OMA_PATH_TEMP_OMA_DIR_L           = "/tmp/omatmp/" ;
+var OMA_PATH_TEMP_OMA_DIR_L2          = "/tmp/omatmp" ;
 var OMA_PATH_TEMP_BIN_DIR_L           = "/tmp/omatmp/bin/" ;
 var OMA_PATH_TEMP_PACKET_DIR_L        = "/tmp/omatmp/packet/" ;
 var OMA_PATH_TEMP_CONF_DIR_L          = "/tmp/omatmp/conf/" ;
