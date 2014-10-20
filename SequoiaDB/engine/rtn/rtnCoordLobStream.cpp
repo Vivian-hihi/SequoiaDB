@@ -1213,9 +1213,7 @@ namespace engine
          MsgOpReply *replyHeader = ( MsgOpReply * )( replyQueue.front() ) ;
          replyQueue.pop() ;
          INT32 flag = replyHeader->flags ;
-         MsgRouteID id ;
-         id.value = MSG_INVALID_ROUTEID ;
-         id.columns.groupID = replyHeader->header.routeID.columns.groupID ;
+         MsgRouteID id = replyHeader->header.routeID ;
 
          if ( SDB_OK == flag )
          {
@@ -1454,6 +1452,7 @@ namespace engine
       std::vector<MsgOpReply *>::const_iterator itr = _results.begin() ;
       for ( ; itr != _results.end(); ++itr )
       {
+         SDB_ASSERT( SDB_OK == ( *itr )->flags, "impossible" ) ; 
          rc = _add2DoneLst( ( *itr )->header.routeID.columns.groupID,
                             doneLst ) ;
          if ( SDB_OK != rc )
