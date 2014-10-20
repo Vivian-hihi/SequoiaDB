@@ -12,6 +12,7 @@ rootPath=$1
 cmPort=$2
 svcname=$3
 dbpath=$4
+restPort=$5
 
 sdbFile=$1/bin/sdb
 
@@ -26,11 +27,13 @@ echo "rootPath=" $1
 echo "cmPort=" $2
 echo "svcname=" $3
 echo "dbpath=" $4
+echo "restPort=" $5
 
 # second to create om
 $sdbFile -s " var oma = new Oma('localhost', '${cmPort}' ); \
              try { \
-                 oma.createOM( '${svcname}', '${dbpath}' ) ; \
+                 oma.createOM( '${svcname}', '${dbpath}' ,{httpname: '${restPort}'}
+) ; \
               } catch( e ) { \
                  if ( e != SDBCM_NODE_EXISTED ) { \
                     throw e ; } \
