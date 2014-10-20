@@ -171,6 +171,7 @@
                             <file name="administration/database/database_tool/topics/sdbinspect.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspt_en.dita"/>
                             <file name="administration/database/database_tool/topics/sdbinspt.dita"/>
+                            <file name="administration/database/database_tool/topics/sdbsupport.dita"/>
                             <file name="administration/database/database_tool/topics/tool_sdbtop_en.dita"/>
                             <file name="administration/database/database_tool/topics/tool_sdbtop.dita"/>
                         </folder>
