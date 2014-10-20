@@ -98,5 +98,15 @@
   <topicref href="topics_en_v2/domain.alter.dita"/>
   <topicref href="topics_en_v2/domain.listCollections.dita"/>
   <topicref href="topics_en_v2/domain.listCollectionSpaces.dita"/>
+   
+  <topicref href="topics_en_v2/oma.close.dita"/>
+  <topicref href="topics_en_v2/oma.createCoord.dita"/>
+  <topicref href="topics_en_v2/oma.createData.dita"/>
+  <topicref href="topics_en_v2/oma.createOM.dita"/>
+  <topicref href="topics_en_v2/oma.removeCoord.dita"/>
+  <topicref href="topics_en_v2/oma.removeData.dita"/>
+  <topicref href="topics_en_v2/oma.removeOM.dita"/>
+  <topicref href="topics_en_v2/oma.startNode.dita"/>
+  <topicref href="topics_en_v2/oma.stopNode.dita"/>
  </topicref>
 </map>

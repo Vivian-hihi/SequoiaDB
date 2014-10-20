@@ -45,6 +45,11 @@
           <stentry>所属域</stentry>
           <stentry>Domain:&lt;string></stentry>
         </strow>
+        <strow>
+          <stentry>LobPageSize</stentry>
+          <stentry>Lob 数据页大小。默认262144B</stentry>
+          <stentry>LobPageSize:&lt;int32></stentry>
+        </strow>
       </simpletable>      
       <note>
         <ul>
@@ -54,6 +59,7 @@
           <li>PageSize 只能选填0，4096，8192，16384，32768，65536之一，0即为默认值65536。</li>
           <li>所属域必须已经存在，且不能为 SYSDOMAIN。</li>
           <li>为兼容较早版本接口，db.createCS(&lt;name>,[PageSize]) 同样可以工作。</li>
+          <li>LobPageSize 只能选填0，4096，8192，16384，32768，65536，131072，262144，524288之一，0即为默认值262144。</li>
         </ul>
       </note>
     </section>

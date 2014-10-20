@@ -6,20 +6,20 @@
     <p>This part is related to the Python API document.</p>
     <p><xref href="..\..\..\..\python\html\index.html" format="html">Python API</xref></p>
     <section>
-      <title>历史更新情况：</title>
+      <title>History Updates:</title>
       <p><b>Version 1.10</b></p>
-      <p>1. 新增接口类 lob：</p><codeblock>close，关闭创建的lob对象，用以刷新数据
-read，可从lob对象中读取数据
-write，可把数据写入lob
-seek，可跳转到到指定数据位置
-get_oid，可获取lob对象的oid
-get_size，可获取lob对象的大小(bytes)
-get_create_time，可获取lob对象的创建时间</codeblock>
-      <p>2. collection 新增接口：</p><codeblock>create_lob，可在当前的collection中创建一个lob对象
-remove_lob，可在当前的collection中删除指定lob对象
-get_lob，可获取当前collection中指定oid的lob对象
-list_lobs，可列出当前collection中所有的lob</codeblock>      
-      <p>详情请查看相关 API。</p>
+      <p>1. New interfaces class Lob:</p><codeblock>close, close the Lob object that created before, to refresh the data
+readto, read data from Lob objects
+write, insert data into Lob
+seek, skip to a specified position of data
+get_oid, get the oid of a Lob
+get_size, get the size of Lob object
+get_create_time, get the creating time of a LOB</codeblock>
+      <p>2. New interfaces of Collection:</p><codeblock>create_lob, create a Lob object in current collection
+remove_lob, remove a Lob object in current collection
+get_lob, get Lob object with specific oid in current collection
+list_lobs, list all Lobs in current collection</codeblock>      
+      <p>For details, please see the relevant API.</p>
     </section>
   </body>
 </topic>

@@ -1042,6 +1042,15 @@
                     <file name="references/methods/topics_en_v2/node.getServiceName.dita"/>
                     <file name="references/methods/topics_en_v2/node.start.dita"/>
                     <file name="references/methods/topics_en_v2/node.stop.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.close.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.createCoord.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.createData.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.createOM.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.removeCoord.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.removeData.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.removeOM.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.startNode.dita"/>
+                    <file name="references/methods/topics_en_v2/oma.stopNode.dita"/>
                     <file name="references/methods/topics_en_v2/rg.createNode.dita"/>
                     <file name="references/methods/topics_en_v2/rg.getDetail.dita"/>
                     <file name="references/methods/topics_en_v2/rg.getMaster.dita"/>
