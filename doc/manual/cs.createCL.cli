@@ -1,4 +1,4 @@
-.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb Method's Manual"
 .ad l.ll 72.ce 1000
 \fBdb.collectionspace.createCL()\fR
 .ce 0
@@ -129,8 +129,8 @@ should belong to one and only one collection.
 .sp 2
    *  AutoSplit and Group cannot be set at the same time.
 .sp 2
-   *  If AutoSplit is not specified in a collection, the value of
-   AutoSplit will come from domain.
+   *  If AutoSplit is not specOKified in a collection, the value
+   of AutoSplit will come from domain.
 .sp 2
    *  Group must exist in a domain, which contains a collection
    space, which has the group(All replica group belong to
