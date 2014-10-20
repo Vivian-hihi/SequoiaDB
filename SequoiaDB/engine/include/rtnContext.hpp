@@ -154,6 +154,7 @@ namespace engine
          _rtnContextBuf () ;
          _rtnContextBuf( const _rtnContextBuf &right ) ;
          _rtnContextBuf( const CHAR *pBuff, INT32 buffLen, INT32 recordNum ) ;
+         _rtnContextBuf( const BSONObj &obj ) ;
          virtual ~_rtnContextBuf () ;
          _rtnContextBuf& operator=( const _rtnContextBuf &right ) ;
 
@@ -164,6 +165,8 @@ namespace engine
          ossRWMutex           *_pBuffLock ;
          _rtnContextBase      *_context ;
          BOOLEAN              _released ;
+
+         BSONObj              _object ;
 
    } ;
    typedef _rtnContextBuf rtnContextBuf ;

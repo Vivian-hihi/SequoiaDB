@@ -4597,9 +4597,6 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
    INT32 rc = SDB_OK ;
    bson newObj ;
    BOOLEAN bsoninit = FALSE ;
-   SINT64 contextID = -1 ;
-   sdbCursorStruct *cursor = NULL ;
-   BOOLEAN result = FALSE ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
    HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
 
@@ -4622,54 +4619,18 @@ SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
    }
    BSON_FINISH ( newObj ) ;
 
-   rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                              cs->_collectionFullName,
-                              flags | FLG_QUERY_EXPLAIN, 0,
-                              numToSkip, numToReturn,
-                              condition, selector, orderBy,
-                              &newObj, cs->_endianConvert ) ;
-
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-   rc = _send ( cs->_connection, cs->_sock, (MsgHeader*)cs->_pSendBuffer,
-                cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
+   rc = sdbQuery1( cHandle, condition, selector, orderBy, &newObj,
+                   numToSkip, numToReturn, flags | FLG_QUERY_EXPLAIN,
+                   handle ) ;
+   if ( rc )
    {
       goto error ;
    }
 
-   rc = _recvExtract ( cs->_connection, cs->_sock,
-                       (MsgHeader**)&cs->_pReceiveBuffer,
-                       &cs->_receiveBufferSize, &contextID, &result,
-                       cs->_endianConvert ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   ALLOC_HANDLE( cursor, sdbCursorStruct ) ;
-   INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
-   ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
-               sizeof(cursor->_collectionFullName) ) ;
-
-   rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
-   if ( SDB_OK != rc )
-   {
-      goto error ;
-   }
-
-   *handle = (sdbCursorHandle)cursor ;
 done:
    BSON_DESTROY( newObj ) ;
    return rc ;
 error:
-   if ( cursor )
-   {
-      SDB_OSS_FREE ( cursor ) ;
-   }
-   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 

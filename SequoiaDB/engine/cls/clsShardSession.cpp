@@ -1050,8 +1050,8 @@ namespace engine
                }
                else if ( rc )
                {
-                  PD_LOG( PDERROR, "Session[%s] failed to query with find "
-                          "one, rc: %d", sessionName(), rc ) ;
+                  PD_LOG( PDERROR, "Session[%s] failed to query with return "
+                          "data, rc: %d", sessionName(), rc ) ;
                   goto error ;
                }
             }

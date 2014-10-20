@@ -105,6 +105,7 @@ namespace engine
    error :
       goto done ;
    }
+
    /*
     * This is the master function to process coord agent request
     * This function interpret the incoming request and break the packet into
@@ -113,7 +114,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPROCCOORDAGENTREQ, "pmdProcessCoordAgentRequest" )
    static INT32 pmdProcessCoordAgentRequest( CHAR *pReceiveBuffer,
                                              SINT32 packetSize,
-                                             const CHAR **data,
+                                             rtnContextBuf &buffObj,
                                              BOOLEAN *disconnect,
                                              pmdEDUCB *cb,
                                              MsgOpReply &replyHeader,
@@ -123,18 +124,20 @@ namespace engine
       SDB_ASSERT ( pReceiveBuffer, "pReceivedBuffer is NULL" ) ;
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_PMDPROCCOORDAGENTREQ ) ;
-      /*TODO:add a thread
-      static pmdEDUCB pSubCB = NULL;
 
-      //not need lock
-      if ( NULL == pSubCB )
-      {
-         pmdKRCB *pKrCB = pmdGetKRCB();
-         pmdEDUMgr *pEduMgr = pKrCB->getEDUMgr();
-      }*/
-      MsgHeader *pHead = (MsgHeader *)pReceiveBuffer;
-      CHAR *newMsg = NULL ;
+      MsgHeader *pHead  = (MsgHeader *)pReceiveBuffer;
       CHAR *pResultBuff = NULL ;
+
+      // fill reply header
+      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      replyHeader.header.opCode = MAKE_REPLY_TYPE( pHead->opCode ) ;
+      replyHeader.header.requestID = pHead->requestID ;
+      replyHeader.header.routeID.value = pmdGetNodeID().value ;
+      replyHeader.header.TID = pHead->TID ;
+      replyHeader.contextID = -1 ;
+      replyHeader.flags = SDB_OK ;
+      replyHeader.numReturned = 0 ;
+      replyHeader.startFrom = 0 ;
 
       do
       {
@@ -148,6 +151,7 @@ namespace engine
          }
          pmdKRCB *pKrcb                   = pmdGetKRCB();
          CoordCB *pCoordcb                = pKrcb->getCoordCB();
+         SDB_RTNCB *pRTNCB                = pKrcb->getRTNCB() ;
          rtnCoordProcesserFactory *pProcesserFactory
                                     = pCoordcb->getProcesserFactory();
          PD_TRACE1 ( SDB_PMDPROCCOORDAGENTREQ, PD_PACK_INT(pHead->opCode) );
@@ -158,17 +162,10 @@ namespace engine
             break ;
          case MSG_BS_QUERY_REQ:
             {
-               //TODO:parse query message
-               //TODO:check collectionspacename collectionname while create
-               //     these name != groups nodes collectionspaces collections
-               //pQuery->name:groups nodes
-
                //get query-name
-               SINT32 queryNameLen = 0 ;
-               CHAR *pQueryName = NULL ;
-               MsgOpQuery *pQueryMsg = (MsgOpQuery *)pReceiveBuffer;
-               pQueryName = pQueryMsg->name;
-               queryNameLen = pQueryMsg->nameLength;
+               MsgOpQuery *pQueryMsg   = (MsgOpQuery *)pReceiveBuffer ;
+               CHAR *pQueryName        = pQueryMsg->name ;
+               SINT32 queryNameLen     = pQueryMsg->nameLength ;
                if ( queryNameLen > 0 && '$' == pQueryName[0] )
                {
                   // execute query-command
@@ -187,6 +184,8 @@ namespace engine
                /// warning: will go on default when not a command.
             }
          default:
+            {
+               rtnContextBase *pContext = NULL ;
                rtnCoordOperator *pOperator =
                   pProcesserFactory->getOperator( pHead->opCode );
                rc = pOperator->execute( pReceiveBuffer,
@@ -195,7 +194,36 @@ namespace engine
                                         cb,
                                         replyHeader,
                                         ppErrorObj ) ;
-               break;
+               // query with return data
+               if ( MSG_BS_QUERY_REQ == pHead->opCode &&
+                    -1 != replyHeader.contextID &&
+                    NULL != ( pContext = pRTNCB->contextFind(
+                              replyHeader.contextID ) ) &&
+                    ( ((MsgOpQuery*)pHead)->flags & FLG_QUERY_WITH_RETURNDATA ) )
+               {
+                  INT64 startPos64 = 0 ;
+                  rc = pContext->getMore( -1, buffObj, startPos64, cb ) ;
+                  if ( rc || pContext->eof() )
+                  {
+                     pRTNCB->contextDelete( replyHeader.contextID, cb ) ;
+                     replyHeader.contextID = -1 ;
+                  }
+                  replyHeader.startFrom = ( INT32 )startPos64 ;
+                  replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+
+                  if ( SDB_DMS_EOC == rc )
+                  {
+                     rc = SDB_OK ;
+                  }
+                  else if ( rc )
+                  {
+                     PD_LOG( PDERROR, "Failed to query with return data, "
+                             "rc: %d", rc ) ;
+                  }
+                  replyHeader.flags = rc ;
+               }
+            }
+            break;
          }
       }while ( FALSE ) ;
 
@@ -203,30 +231,32 @@ namespace engine
            MSG_BS_LOB_READ_REQ == pHead->opCode ) &&
            NULL != pResultBuff )
       {
-         *data = pResultBuff ;
+         INT32 dataLen = replyHeader.header.messageLength -
+                         sizeof( MsgOpReply ) ;
+         buffObj = rtnContextBuf( pResultBuff, dataLen, 1 ) ;
       }
       else
       {
          SDB_ASSERT( pResultBuff == NULL, "Result must be NULL" ) ;
       }
 
-      if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
+      if ( rc && buffObj.size() == 0 )
       {
-         PD_LOG ( PDERROR, "Session[%s] OP[type:%u] return code error[rc:%d]",
-                  cb->getName(), pHead->opCode, rc ) ;
-         rc = SDB_SYS ;
+         if ( *ppErrorObj )
+         {
+            buffObj = rtnContextBuf( **ppErrorObj ) ;
+         }
+         else
+         {
+            BSONObj obj = utilGetErrorBson( rc,
+                                            cb->getInfo( EDU_INFO_ERROR ) ) ;
+            buffObj = rtnContextBuf( obj ) ;
+         }
       }
 
-      if ( rc != SDB_OK && NULL == *ppErrorObj )
-      {
-         replyHeader.header.messageLength = sizeof ( MsgOpReply )
-            + utilGetErrorBson( rc, NULL ).objsize() ;
-         replyHeader.numReturned = 1;
-      }
-      if ( NULL != newMsg )
-      {
-         SDB_OSS_FREE( newMsg ) ;
-      }
+      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      replyHeader.flags = rc ;
+
       PD_TRACE_EXITRC ( SDB_PMDPROCCOORDAGENTREQ, rc );
       return rc;
    }
@@ -237,11 +267,11 @@ namespace engine
     * different variables, and call Runtime component to execute the request
     */
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPROCAGENTREQ, "pmdProcessAgentRequest" )
-   static INT32 pmdProcessAgentRequest ( CHAR *pReceiveBuffer, SINT32 packetSize,
+   static INT32 pmdProcessAgentRequest ( CHAR *pReceiveBuffer,
+                                         SINT32 packetSize,
                                          rtnContextBuf &buffObj,
                                          BOOLEAN *disconnect, pmdEDUCB *cb,
-                                         MsgOpReply &replyHeader,
-                                         BSONObj **ppErrorObj )
+                                         MsgOpReply &replyHeader )
    {
       INT32 rc                 = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDPROCAGENTREQ ) ;
@@ -249,8 +279,6 @@ namespace engine
       SINT32 opCode            = 0 ;
       UINT32 probe             = 0 ;
       BOOLEAN isNeedRollback   = FALSE ;
-      CHAR   nameBuffer [ OP_MAXNAMELENGTH + 1 ] ;
-      ossMemset ( nameBuffer, 0, sizeof(nameBuffer)) ;
       pmdKRCB *krcb        = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB     = krcb->getDMSCB () ;
       SDB_RTNCB *rtnCB     = krcb->getRTNCB () ;
@@ -258,21 +286,18 @@ namespace engine
       SDB_ASSERT ( disconnect, "disconnect can't be NULL" ) ;
       SDB_ASSERT ( pReceiveBuffer, "pReceivedBuffer is NULL" ) ;
       *disconnect          = FALSE ;
-      NodeID curNodeID     = pmdGetNodeID() ;
       // cast the buffer into MsgHeader first
       // here we know the buffer must be greater than 4 bytes, so it's safe to
       // do direct cast and validate size>headersize later
       MsgHeader *header    = (MsgHeader *)pReceiveBuffer ;
-      SINT32 messageLength = header->messageLength ;
       INT32 flags          = 0 ;
       SINT64 numToSkip     = -1 ;
       SINT64 numToReturn   = -1 ;
-      SINT64 contextStart  = 0 ;
-      SINT64 contextID     = -1 ;
+      SINT64 contextStart  = 0 ;    // startFrom
+      SINT64 contextID     = -1 ;   // contextID
       SINT32 numToRead     = 0 ;
       CHAR *pCollectionName= NULL ;
-      CHAR *pQuery         = NULL ;
-      CHAR *pFieldSelector = NULL ;
+      CHAR *pMatcherBuffer = NULL ;
       CHAR *pSelectorBuffer= NULL ;
       CHAR *pUpdatorBuffer = NULL ;
       CHAR *pInsertorBuffer= NULL ;
@@ -289,7 +314,7 @@ namespace engine
       }
 
       // the packet must be larger than message header size
-      if ( (UINT32)messageLength < sizeof (MsgHeader) )
+      if ( (UINT32)header->messageLength < sizeof (MsgHeader) )
       {
          probe = 5 ;
          rc = SDB_INVALIDARG ;
@@ -297,18 +322,23 @@ namespace engine
       }
       requestID = header->requestID ;
       opCode = header->opCode ;
-      PD_TRACE2 ( SDB_PMDPROCAGENTREQ, PD_PACK_ULONG(requestID), PD_PACK_INT(opCode) );
+      PD_TRACE2 ( SDB_PMDPROCAGENTREQ, PD_PACK_ULONG(requestID),
+                  PD_PACK_INT(opCode) ) ;
+
+      // fill reply header
+      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      replyHeader.header.opCode = MAKE_REPLY_TYPE( opCode ) ;
+      replyHeader.header.requestID = requestID ;
+      replyHeader.header.routeID.value = pmdGetNodeID().value ;
+      replyHeader.header.TID = header->TID ;
+      replyHeader.contextID = -1 ;
+      replyHeader.flags = SDB_OK ;
+      replyHeader.numReturned = 0 ;
+      replyHeader.startFrom = 0 ;
 
       try
       {
-         if ( IS_REPLY_TYPE(opCode) )
-         {
-            // should never receive any packet with this mode
-            probe = 10 ;
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         else if ( MSG_BS_INTERRUPTE == opCode )
+         if ( MSG_BS_INTERRUPTE == opCode )
          {
             PD_LOG ( PDEVENT, "Recieve interrupt msg in session[%lld, %s]", 
                      cb->getID(), cb->getName() ) ;
@@ -329,7 +359,7 @@ namespace engine
             // In update, we have two BSON objects
             PD_LOG ( PDDEBUG, "Update request received" ) ;
             rc = msgExtractUpdate ( pReceiveBuffer, &flags, &pCollectionName,
-                                    &pSelectorBuffer, &pUpdatorBuffer,
+                                    &pMatcherBuffer, &pUpdatorBuffer,
                                     &pHintBuffer ) ;
             if ( rc )
             {
@@ -339,25 +369,25 @@ namespace engine
             }
             try
             {
-               BSONObj selector( pSelectorBuffer ) ;
+               BSONObj matcher( pMatcherBuffer ) ;
                BSONObj updator ( pUpdatorBuffer ) ;
                BSONObj hint ( pHintBuffer ) ;
                MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_UPDATE_REQ,
                            "CL:%s, Match:%s, Updator:%s, Hint:%s",
                            pCollectionName,
-                           selector.toString( false, false ).c_str(),
-                           updator.toString(false, false ).c_str(),
-                           hint.toString(false, false ).c_str() ) ;
+                           matcher.toString().c_str(),
+                           updator.toString().c_str(),
+                           hint.toString().c_str() ) ;
 #if defined (_DEBUG)
                PD_LOG ( PDDEBUG,
-                       "Update: selector: %s\nupdator: %s\nhint: %s",
-                       selector.toString().c_str(),
+                       "Update: matcher: %s\nupdator: %s\nhint: %s",
+                       matcher.toString().c_str(),
                        updator.toString().c_str(),
                        hint.toString().c_str() ) ;
 #endif
                // call runtime update to update the request
                rc = rtnUpdate ( pCollectionName,
-                                selector,
+                                matcher,
                                 updator,
                                 hint,
                                 flags, cb,
@@ -366,7 +396,7 @@ namespace engine
             }
             catch ( std::exception &e )
             {
-               PD_LOG ( PDERROR, "Failed to create selector and updator for "
+               PD_LOG ( PDERROR, "Failed to create matcher and updator for "
                         "UPDATE: %s", e.what() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
@@ -399,9 +429,8 @@ namespace engine
                        insertor.toString().c_str(),
                        pCollectionName ) ;
 #endif
-               ossStrncpy ( nameBuffer, pCollectionName, OP_MAXNAMELENGTH ) ;
-               rc = rtnInsert ( nameBuffer, insertor, recordNum, flags, cb,
-                                dmsCB, dpsCB ) ;
+               rc = rtnInsert ( pCollectionName, insertor, recordNum,
+                                flags, cb, dmsCB, dpsCB ) ;
             }
             catch ( std::exception &e )
             {
@@ -415,8 +444,8 @@ namespace engine
          {
             PD_LOG ( PDDEBUG, "Query request received" ) ;
             rc = msgExtractQuery ( pReceiveBuffer, &flags, &pCollectionName,
-                                   &numToSkip, &numToReturn, &pQuery,
-                                   &pFieldSelector, &pOrderByBuffer,
+                                   &numToSkip, &numToReturn, &pMatcherBuffer,
+                                   &pSelectorBuffer, &pOrderByBuffer,
                                    &pHintBuffer ) ;
             if ( rc )
             {
@@ -440,8 +469,8 @@ namespace engine
                   goto error ;
                }
                rc = rtnInitCommand( pCommand, flags, numToSkip, numToReturn,
-                                    pQuery, pFieldSelector, pOrderByBuffer,
-                                    pHintBuffer ) ;
+                                    pMatcherBuffer, pSelectorBuffer,
+                                    pOrderByBuffer, pHintBuffer ) ;
                if ( SDB_OK != rc )
                {
                   goto error ;
@@ -454,26 +483,26 @@ namespace engine
             {
                try
                {
-                  BSONObj matcher ( pQuery ) ;
-                  BSONObj selector ( pFieldSelector ) ;
+                  BSONObj matcher ( pMatcherBuffer ) ;
+                  BSONObj selector ( pSelectorBuffer ) ;
                   BSONObj orderBy ( pOrderByBuffer ) ;
                   BSONObj hint ( pHintBuffer ) ;
                   MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_QUERY_REQ,
                               "CL:%s, Match:%s, Selector:%s, OrderBy:%s, Hint:%s",
                               pCollectionName,
-                              matcher.toString( false, false ).c_str(),
-                              selector.toString(false, false ).c_str(),
-                              orderBy.toString(false, false ).c_str(),
-                              hint.toString(false, false ).c_str() ) ;
+                              matcher.toString().c_str(),
+                              selector.toString().c_str(),
+                              orderBy.toString().c_str(),
+                              hint.toString().c_str() ) ;
 
 #if defined (_DEBUG)
                   PD_LOG ( PDDEBUG,
-                          "Query: matcher: %s\nselector: %s\n"
-                          "orderBy: %s\nhint: %s",
-                          matcher.toString().c_str(),
-                          selector.toString().c_str(),
-                          orderBy.toString().c_str(),
-                          hint.toString().c_str() ) ;
+                           "Query: matcher: %s\nselector: %s\n"
+                           "orderBy: %s\nhint: %s",
+                           matcher.toString().c_str(),
+                           selector.toString().c_str(),
+                           orderBy.toString().c_str(),
+                           hint.toString().c_str() ) ;
 #endif
                   rc = rtnQuery ( pCollectionName, // collection name
                                   selector, // selector
@@ -550,7 +579,6 @@ namespace engine
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-
          }
          else if ( MSG_BS_KILL_CONTEXT_REQ == opCode )
          {
@@ -652,97 +680,31 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      if ( rc && SDB_DMS_EOC != rc )
+
+      if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to perform operation:%d", rc ) ;
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to perform operation, rc: %d", rc ) ;
+         }
          goto error ;
       }
+
+      replyHeader.contextID = contextID ;
+      replyHeader.startFrom = contextStart ;
 
    done :
       if ( pCommand )
       {
          rtnReleaseCommand( &pCommand ) ;
       }
-
-      PD_LOG ( PDDEBUG, "Making reply package, err = %d", rc ) ;
-
-      if ( !*disconnect )
+      replyHeader.flags = rc ;
+      if ( rc && buffObj.size() == 0 )
       {
-         // we are going to build reply header here.
-         // few conditions we need to deal with
-         // 1) error happened, in this case we don't care if it's query or not,
-         // we simply construct a header with size (headersize + error object
-         // size)
-         // 2) error not happened and it's not query/getmore, in this case we
-         // just construct a header with empty data, means we complete request
-         // 3) error not happened and it's from getmore, in this case we need
-         // to construct a header with size (headersize + result data size)
-         if ( rc || (MSG_BS_GETMORE_REQ != opCode) )
-         {
-            // condition 1 and 2
-            if ( rc )
-            {
-               if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
-               {
-                  PD_LOG ( PDERROR, "Session[%s] OP[type:%u] return code error[rc:%d]",
-                           cb->getName(), opCode, rc ) ;
-                  rc = SDB_SYS ;
-               }
-
-               UINT32 flag = rc ;
-               BSONObj errorObj = utilGetErrorBson( rc, cb->getInfo(
-                                                    EDU_INFO_ERROR ) ) ;
-               BSONObj *pErrObj = &errorObj ;
-
-               if ( ppErrorObj && cb->getInfo( EDU_INFO_ERROR ) )
-               {
-                  *ppErrorObj = SDB_OSS_NEW BSONObj ;
-                  *(*ppErrorObj) = errorObj ;
-                  pErrObj = *ppErrorObj ;
-               }
-
-               // condition 1
-               // error happened
-               msgBuildReplyMsgHeader ( replyHeader, // header
-                    sizeof(replyHeader)+pErrObj->objsize(),
-                    header->opCode,
-                    flag, // flag
-                    contextID, // contextID
-                    0, // start from
-                    1, // 1 element for error code
-                    curNodeID,
-                    requestID ) ; // request id
-            }
-            else
-            {
-               // condition 2
-               // everything is fine
-               msgBuildReplyMsgHeader ( replyHeader, // header
-                    sizeof(replyHeader),
-                    header->opCode,
-                    0, // flag
-                    contextID, // contextID
-                    0, // start from
-                    0, // 0 element for success msg
-                    curNodeID,
-                    requestID ) ; // request id
-            }
-         }
-         else
-         {
-            // condition 3
-            // this is for MSG_BS_GETMORE_REQ ONLY
-            msgBuildReplyMsgHeader ( replyHeader,
-                    sizeof(replyHeader)+buffObj.size(), // length
-                    header->opCode,
-                    0, // flag
-                    contextID, // context ID
-                    contextStart, // starting position for the context
-                    buffObj.recordNum(), //number of records return
-                    curNodeID,
-                    requestID ) ;
-         }
+         BSONObj obj = utilGetErrorBson( rc, cb->getInfo( EDU_INFO_ERROR ) ) ;
+         buffObj = rtnContextBuf( obj ) ;
       }
+
       MON_END_OP( cb->getMonAppCB() ) ;
       PD_TRACE_EXITRC ( SDB_PMDPROCAGENTREQ, rc ) ;
       return rc ;
@@ -788,11 +750,10 @@ namespace engine
       BOOLEAN disconnect       = FALSE ;
       CHAR *pReceiveBuffer     = NULL ;
       rtnContextBuf  buffObj ;
-      const CHAR *resultBuf = NULL ;
       BOOLEAN isSendHeader     = FALSE ;
       // create reply header
       MsgOpReply replyHeader ;
-      ossMemset ( &replyHeader, 0, sizeof(replyHeader)) ;
+      ossMemset ( &replyHeader, 0, sizeof( replyHeader ) ) ;
       // 0 means receive buffer doesn't exist
       SINT32 receiveBufferSize = 0 ;
       SINT32 packetLength = 0 ;
@@ -849,10 +810,8 @@ namespace engine
          {
             goto error ;
          }
-         if ( !replyHeader.numReturned )
-         {
-            replyHeader.numReturned = 1 ;
-         }
+         replyHeader.numReturned = 1 ;
+         replyHeader.flags = rc ;
          sendRC = httpAdaptor.sendReply ( replyHeader, errorObj.objdata(),
                                           errorObj.objsize(), sock, needFetch,
                                           isSendHeader ) ;
@@ -893,9 +852,8 @@ namespace engine
          // for coord node, we should create coord agent instead of regular
          // agent
          rc = pmdProcessCoordAgentRequest ( pReceiveBuffer, packetLength,
-                                            &resultBuf, &disconnect, cb,
-                                            replyHeader,
-                                            &pErrorObj ) ;
+                                            buffObj, &disconnect,
+                                            cb, replyHeader, &pErrorObj ) ;
       }
 
       if ( SDB_ROLE_STANDALONE == dbrole ||
@@ -911,7 +869,7 @@ namespace engine
          // first 4 bytes in pReceiveBuffer represent the size of data
          rc = pmdProcessAgentRequest ( pReceiveBuffer, packetLength,
                                        buffObj, &disconnect, cb,
-                                       replyHeader, &pErrorObj ) ;
+                                       replyHeader ) ;
       }
 
       // if the return code is not SDB_OK
@@ -929,72 +887,37 @@ namespace engine
          }
       }
 
-      // let's see if we hit any error
-      if ( rc )
+      // send rest result
+      sendRC = httpAdaptor.sendReply ( replyHeader, buffObj.data(),
+                                       buffObj.size(),
+                                       sock, needFetch, isSendHeader ) ;
+      buffObj.release() ; //release lock for data prepare
+      if ( sendRC )
       {
-         BSONObj errorObj = utilGetErrorBson( rc, NULL ) ;
-         BSONObj *pObj = &errorObj ;
-         if ( pErrorObj )
+         rc = sendRC ;
+         if ( SDB_APP_FORCED == sendRC )
          {
-            pObj = pErrorObj ;
+            goto done ;
          }
-
-         sendRC = httpAdaptor.sendReply ( replyHeader,
-                                          pObj->objdata(),
-                                          pObj->objsize(),
-                                          sock, needFetch, isSendHeader ) ;
-         if ( sendRC )
+         probe = 70 ;
+         goto error ;
+      }
+      if ( needFetch )
+      {
+         rc = msgBuildGetMoreMsg ( &pReceiveBuffer, &receiveBufferSize,
+                                   -1, replyHeader.contextID,
+                                   replyHeader.header.requestID ) ;
+         if ( rc )
          {
-            rc = sendRC ;
-            if ( SDB_APP_FORCED == sendRC )
-            {
-               // if we failed to header because it's forced, let's not
-               // reporting anything
-               goto done ;
-            }
-            probe = 70 ;
+            PD_LOG ( PDERROR, "Failed to build get more request, rc = %d",
+                     rc ) ;
+            probe = 80 ;
             goto error ;
          }
+         // since we need to fetch more, let's continue
+         goto start ;
       }
-      // if rc = SDB_OK
-      else
-      {
-         if ( NULL != buffObj.data() )
-         {
-            resultBuf = buffObj.data() ;
-         }
 
-         sendRC = httpAdaptor.sendReply ( replyHeader, resultBuf,
-                                          replyHeader.header.messageLength -
-                                          sizeof(replyHeader),
-                                          sock, needFetch, isSendHeader ) ;
-         buffObj.release() ; //release lock for data prepare
-         if ( sendRC )
-         {
-            rc = sendRC ;
-            if ( SDB_APP_FORCED == sendRC )
-            {
-               goto done ;
-            }
-            probe = 70 ;
-            goto error ;
-         }
-         if ( needFetch )
-         {
-            rc = msgBuildGetMoreMsg ( &pReceiveBuffer, &receiveBufferSize,
-                                      -1, replyHeader.contextID,
-                                      replyHeader.header.requestID ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to build get more request, rc = %d",
-                        rc ) ;
-               probe = 80 ;
-               goto error ;
-            }
-            // since we need to fetch more, let's continue
-            goto start ;
-         }
-      }
       if ( SDB_OK != ( rc = eduMgr->waitEDU ( cb )) )
       {
          goto error ;
@@ -1313,32 +1236,31 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDAGENTENTPNT, "pmdAgentEntryPoint" )
    INT32 pmdAgentEntryPoint ( pmdEDUCB *cb, void *pData )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc                   = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDAGENTENTPNT );
-      BSONObj *pErrorObj = NULL ;
-      INT32 sendRC = SDB_OK ;
-      UINT32 probe = 0 ;
-      EDUID myEDUID = cb->getID () ;
-      pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
-      BOOLEAN disconnect = FALSE ;
-      CHAR *pReceiveBuffer = NULL ;
+      BSONObj *pErrorObj         = NULL ;
+      INT32 sendRC               = SDB_OK ;
+      UINT32 probe               = 0 ;
+      EDUID myEDUID              = cb->getID () ;
+      pmdEDUMgr * eduMgr         = cb->getEDUMgr() ;
+      BOOLEAN disconnect         = FALSE ;
+      CHAR *pReceiveBuffer       = NULL ;
       rtnContextBuf buffObj ;
-      const CHAR *resultBuf = NULL ;
       MsgOpReply replyHeader ;
       MsgOpReply authReply ;
       ossMemset ( &replyHeader, 0, sizeof(replyHeader)) ;
       // make sure we use multiple of page size
-      SINT32 receiveBufferSize = ossRoundUpToMultipleX (
+      SINT32 receiveBufferSize   = ossRoundUpToMultipleX (
             PMD_AGENT_RECIEVE_BUFFER_SZ, SDB_PAGE_SIZE ) ;
-      SINT32 packetLength = 0 ;
+      SINT32 packetLength        = 0 ;
       SDB_ASSERT ( pData, "Null pointer passed to pmdAgentEntryPoint" ) ;
       // get the socket from arg
-      SOCKET s = *(( SOCKET *) &pData ) ;
+      SOCKET s                   = *(( SOCKET *) &pData ) ;
       CHAR clientName [ PMD_EDU_NAME_LENGTH + 1] = {0} ;
-      UINT16 clientPort = 0 ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      monDBCB *mondbcb = krcb->getMonDBCB () ;
-      SDB_ROLE dbrole = krcb->getDBRole () ;
+      UINT16 clientPort          = 0 ;
+      pmdKRCB *krcb              = pmdGetKRCB() ;
+      monDBCB *mondbcb           = krcb->getMonDBCB () ;
+      SDB_ROLE dbrole            = krcb->getDBRole () ;
 
       // create socket
       ossSocket sock ( &s, PMD_AGENT_SOCKET_DFT_TIMEOUT ) ;
@@ -1470,11 +1392,12 @@ namespace engine
          }
          // Now let's make sure the receiving buffer is large enough for
          // packetLength + 1 bytes
-         if ( receiveBufferSize < packetLength+1 )
+         if ( receiveBufferSize < packetLength + 1 )
          {
             PD_LOG ( PDDEBUG, "Receive buffer size is too small: %d vs %d, "
                      "increasing...", receiveBufferSize, packetLength ) ;
-            INT32 newSize = ossRoundUpToMultipleX ( packetLength+1, SDB_PAGE_SIZE ) ;
+            INT32 newSize = ossRoundUpToMultipleX ( packetLength+1,
+                                                    SDB_PAGE_SIZE ) ;
             // make sure the new buffersize doesn't overflow
             if ( newSize < 0 )
             {
@@ -1484,7 +1407,7 @@ namespace engine
             }
             // use free and malloc instead of realloc, to skip a memory copy
             SDB_OSS_FREE ( pReceiveBuffer ) ;
-            pReceiveBuffer = (CHAR*)SDB_OSS_MALLOC ( sizeof(CHAR) * (newSize) ) ;
+            pReceiveBuffer = (CHAR*)SDB_OSS_MALLOC ( newSize ) ;
             if ( !pReceiveBuffer )
             {
                rc = SDB_OOM ;
@@ -1531,7 +1454,7 @@ namespace engine
             // for coord node, we should create coord agent instead of regular
             // agent
             rc = pmdProcessCoordAgentRequest ( pReceiveBuffer, packetLength,
-                                               &resultBuf, &disconnect, cb,
+                                               buffObj, &disconnect, cb,
                                                replyHeader, &pErrorObj ) ;
          }
 
@@ -1548,7 +1471,7 @@ namespace engine
             // first 4 bytes in pReceiveBuffer represent the size of data
             rc = pmdProcessAgentRequest ( pReceiveBuffer, packetLength,
                                           buffObj, &disconnect, cb,
-                                          replyHeader, &pErrorObj ) ;
+                                          replyHeader ) ;
          }
 
          if ( rc )
@@ -1572,8 +1495,11 @@ namespace engine
          // make sure we get some result (some operation doesn't ack to client)
          // and the session is not trying to disconnect
          if ( MSG_BS_INTERRUPTE != GET_REQUEST_TYPE(replyHeader.header.opCode)
-            && !disconnect )
+              && !disconnect )
          {
+            replyHeader.numReturned = buffObj.recordNum() ;
+            replyHeader.header.messageLength += buffObj.size() ;
+
             // we want to reserve rc from pmdProcessAgentRequest, let's use
             // another sendRC
             sendRC = SDB_OK ;
@@ -1592,46 +1518,11 @@ namespace engine
                goto error ;
             }
 
-            // when we get here, sendRC is SDB_OK but rc may be fault, we know
-            // when rc is 0, we either have empty data for Insert/Update/Delete,
-            // or something from query. However if rc != 0, that means we are
-            // going to send rc from utilGetErrorBson( rc, NULL ).objsize()
-            if ( rc )
+            // send data
+            if ( buffObj.size() > 0 )
             {
-               BSONObj errorObj = utilGetErrorBson( rc, NULL ) ;
-               BSONObj *pObj = &errorObj ;
-               if ( pErrorObj )
-               {
-                  pObj = pErrorObj ;
-               }
-               // let's send the data directly from the static buffer, so that
-               // we can avoid a memory copy into result buffer
-               sendRC = pmdSend ( pObj->objdata(), pObj->objsize(), &sock, cb ) ;
-               if ( sendRC )
-               {
-                  rc = sendRC ;
-                  if ( SDB_APP_FORCED == sendRC )
-                  {
-                     disconnect = TRUE ;
-                     continue ;
-                  }
-                  probe = 80 ;
-                  goto error ;
-               }
-               SDB_ASSERT ( (UINT32)replyHeader.header.messageLength ==
-                            sizeof(replyHeader) + pObj->objsize(),
-                            "Reply size doesn't match actual" ) ;
-            }
-            else if ( replyHeader.header.messageLength-sizeof(replyHeader)!= 0 )
-            {
-               if ( NULL != buffObj.data() )
-               {
-                  resultBuf = buffObj.data() ;
-               }
                // send rest of buffer
-               sendRC = pmdSend ( resultBuf,
-                        replyHeader.header.messageLength - sizeof(replyHeader),
-                        &sock, cb ) ;
+               sendRC = pmdSend ( buffObj.data(), buffObj.size(), &sock, cb ) ;
                buffObj.release() ; // release lock for data prepare
                if ( sendRC )
                {

@@ -211,6 +211,16 @@ namespace engine
       _context       = NULL ;
    }
 
+   _rtnContextBuf::_rtnContextBuf( const BSONObj &obj )
+   :_rtnObjBuff( obj.objdata(), obj.objsize(), 1 )
+   {
+      _pBuffCounter  = NULL ;
+      _pBuffLock     = NULL ;
+      _released      = TRUE ;
+      _context       = NULL ;
+      _object        = obj ;
+   }
+
    _rtnContextBuf::~_rtnContextBuf()
    {
       release () ;
@@ -252,15 +262,16 @@ namespace engine
             SDB_OSS_DEL _context ;
          }
 
-         _pBuff = NULL ;
-         _buffSize = 0 ;
-         _recordNum = 0 ;
-         _curOffset = 0 ;
          _pBuffCounter  = NULL ;
          _pBuffLock     = NULL ;
          _released      = TRUE ;
          _context       = NULL ;
       }
+
+      _pBuff         = NULL ;
+      _buffSize      = 0 ;
+      _recordNum     = 0 ;
+      _curOffset     = 0 ;
    }
 
    void _rtnContextBuf::_reference( INT32 * pCounter, ossRWMutex *pMutex )
