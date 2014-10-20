@@ -15,7 +15,7 @@ removeOM - Remove an OM node.
 .sp 2
 
 .sp 2
-oma.removeCoord(\fB<svcname>\fR)
+oma.removeOM(\fB<svcname>\fR)
 .SH "CATEGORY"
 
 .sp 2
