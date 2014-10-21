@@ -180,6 +180,10 @@ namespace engine
 #endif // SDB_ENGINE
 
       _pErrorBuff = (CHAR *)SDB_OSS_MALLOC( EDU_ERROR_BUFF_SIZE + 1 ) ;
+      if ( _pErrorBuff )
+      {
+         ossMemset( _pErrorBuff, 0, EDU_ERROR_BUFF_SIZE + 1 ) ;
+      }
    }
 
    _pmdEDUCB::~_pmdEDUCB ()
