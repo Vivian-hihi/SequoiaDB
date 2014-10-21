@@ -248,7 +248,7 @@
         <runProgram>
             <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
-            <programArguments>${installdir} ${port} ${svcname} ${dbpath} ${restname}</programArguments>
+            <programArguments>${installdir} ${port} ${svcname} ${dbpath} ${restname} ${installer_pathname}</programArguments>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <compareText>
@@ -258,18 +258,6 @@
                 </compareText>
             </ruleList>
         </runProgram>
-        <copyFile>
-            <destination>${installdir}/packet</destination>
-            <origin>${platform_install_prefix}/sequoiadb-*-installer.run</origin>
-            <ruleEvaluationLogic>or</ruleEvaluationLogic>
-            <ruleList>
-                <compareText>
-                    <logic>equals</logic>
-                    <text>${type}</text>
-                    <value>SMS</value>
-                </compareText>
-            </ruleList>
-        </copyFile>
         <changePermissions>
             <files>${installdir}/postgresql/*</files>
             <permissions>0755</permissions>
@@ -278,6 +266,11 @@
             <files>/tmp</files>
             <permissions>0777</permissions>
         </changePermissions>
+        <changeOwnerAndGroup>
+            <files>${installdir}/packet</files>
+            <group>${username}_group</group>
+            <owner>${username}</owner>
+        </changeOwnerAndGroup>
     </postInstallationActionList>
     <preUninstallationActionList>
         <stopWindowsService>
