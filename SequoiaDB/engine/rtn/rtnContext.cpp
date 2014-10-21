@@ -194,6 +194,7 @@ namespace engine
       _pBuffLock    = right._pBuffLock ;
       _released     = right._released ;
       _context      = right._context ;
+      _object       = right._object ;
 
       if ( !_released )
       {
@@ -237,6 +238,7 @@ namespace engine
       _pBuffLock = right._pBuffLock ;
       _released = right._released ;
       _context  = right._context ;
+      _object   = right._object ;
 
       // increase counter
       if ( !_released && NULL != _pBuffCounter )
