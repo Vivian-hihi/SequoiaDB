@@ -92,6 +92,7 @@ namespace engine
       if ( NULL == fileName )
       {
          rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( PDERROR, "Invalid js file name" ) ;
          goto error ;
       }
       tmp = sdbGetOMAgentOptions()->getScriptPath() ;
@@ -126,7 +127,7 @@ namespace engine
          if ( it->first == name )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG ( PDWARNING, "Js file[%s] already exit", fileName ) ;
+            PD_LOG_MSG ( PDWARNING, "Js file[%s] already exit", fileName ) ;
             goto error ;
          }
       }
@@ -207,8 +208,8 @@ namespace engine
       rc = getExcuteJsContent( _content ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to get js file's content to "
-                  "excute, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to get js file's content to "
+                      "excute, rc = %d", rc ) ;
          goto error ;
       }
       // get scope
@@ -222,7 +223,6 @@ namespace engine
       // execute js
       rc = _scope->eval( _content.c_str(), _content.size(),
                          "", 1, 1, rval, detail ) ;
-
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to eval js file for command[%s]: "
@@ -232,7 +232,7 @@ namespace engine
          BSONObjBuilder bob ;
          bob.append( OMA_FIELD_DETAIL, _scope->getLastErrMsg() ) ;
          retObj = bob.obj() ;
-         PD_LOG_MSG(PDERROR, "%s", _scope->getLastErrMsg() ) ;
+         PD_LOG_MSG( PDERROR, "%s", _scope->getLastErrMsg() ) ;
          goto error ;
       }
       // adapt the result
@@ -1371,16 +1371,16 @@ namespace engine
          rc = addJsFile( FILE_CREATE_TEMP_COORD, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_CREATE_TEMP_COORD, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_CREATE_TEMP_COORD, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
 
@@ -1439,16 +1439,16 @@ namespace engine
          rc = addJsFile( FILE_REMOVE_TEMP_COORD, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_REMOVE_TEMP_COORD, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_REMOVE_TEMP_COORD, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:

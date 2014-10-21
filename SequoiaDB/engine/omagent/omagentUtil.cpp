@@ -96,13 +96,14 @@ namespace engine
       rc = op.Open ( name , OSS_PRIMITIVE_FILE_OP_READ_WRITE ) ;
       if ( rc != SDB_OK )
       {
-         ossPrintf ( "Can't open file: %s"OSS_NEWLINE, name ) ;
+         PD_LOG ( PDERROR, "Can't open file: %s", name ) ;
          goto error ;
       }
 
       rc = op.getSize ( &offset ) ;
       if ( rc != SDB_OK )
       {
+         PD_LOG ( PDERROR, "Failed to get file's size" ) ;
          goto error ;
       }
 
@@ -118,7 +119,7 @@ namespace engine
          if ( ! *buf )
          {
             rc = SDB_OOM ;
-            PD_LOG ( PDERROR , "fail to alloc memory" ) ;
+            PD_LOG ( PDERROR , "Failed to alloc memory" ) ;
             goto error ;
          }
          *bufSize = offset.offset + 1 ;
@@ -127,6 +128,7 @@ namespace engine
       rc = op.Read ( offset.offset , *buf , NULL ) ;
       if ( rc != SDB_OK )
       {
+         PD_LOG ( PDERROR, "Failed to read file" ) ;
          goto error ;
       }
       (*buf)[ offset.offset ] = 0 ;

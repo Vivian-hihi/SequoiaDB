@@ -35,6 +35,7 @@
 #include "omagentTask.hpp"
 #include "omagentJob.hpp"
 #include "pmdDef.hpp"
+#include "pmdEDU.hpp"
 
 namespace engine
 {
@@ -333,11 +334,11 @@ namespace engine
       }
       else // in case of cluster
       { 
-         // create virtual catalog
+         // create temporary catalog
          rc = _installVirtualCoord() ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to create virtual catalog, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to create temporary coord, rc = %d", rc ) ;
             goto error ;
          }
          // create catalog job
@@ -365,6 +366,7 @@ namespace engine
    done:
       return rc ;
    error:
+      setIsTaskFail( TRUE ) ;
       goto done ;
    }
 
@@ -703,7 +705,7 @@ namespace engine
       else
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Invalid role for get installed node result" ) ;
+         PD_LOG_MSG ( PDERROR, "Invalid role for get installed node result" ) ;
          goto error ;
       }
    done:
@@ -764,10 +766,17 @@ namespace engine
       const CHAR *pStage = NULL ;
       
       // while task has failed
-      if ( _isTaskFail )
+      if ( getIsTaskFail() )
       {
-         PD_LOG_MSG ( PDERROR,"Task[%s] had failed, please check "
-                      "the dialog for more detail", taskName() ) ;
+         if ( '\0' == _detail[0] )
+         {
+            PD_LOG_MSG ( PDERROR,"Task[%s] had failed, please check "
+                         "the dialog for more detail", taskName() ) ;
+         }
+         else
+         {
+            PD_LOG_MSG ( PDERROR, _detail ) ;
+         }
          rc = SDB_OMA_TASK_FAIL ;
          goto done ;
       }
@@ -794,13 +803,14 @@ namespace engine
          bob.appendBool( OMA_FIELD_ISFINISH, _isTaskFinish ) ;
          // status
          bob.append( OMA_FIELD_STATUS, pStage ) ;
-         // ErrMsg( fatal err, like failed to rollback or
-         // failed to remove virtual coord)
-         bob.append( OMA_FIELD_ERRMSG, _detail ) ;
          // in case of standalone
          if ( _isStandalone )
          {
             // get standalone status
+            if ( _standaloneResult._rc )
+            {
+               bob.append( OMA_FIELD_ERRMSG, _standaloneResult._errMsg ) ;
+            }
             standaloneResult = BSON ( OMA_FIELD_NAME
                                       << OMA_FIELD_STANDALONE
                                       << OMA_FIELD_TOTALCOUNT
@@ -814,6 +824,10 @@ namespace engine
          else // in case of cluster
          {
             // get catalog status
+            if ( _catalogResult._rc )
+            {
+               bob.append( OMA_FIELD_ERRMSG, _catalogResult._errMsg ) ;
+            }
             catalogResult = BSON ( OMA_FIELD_NAME
                                    << OMA_FIELD_CATALOG
                                    << OMA_FIELD_TOTALCOUNT
@@ -824,6 +838,10 @@ namespace engine
                                    << _catalogResult._desc.c_str() ) ;
             bab.append ( catalogResult ) ;
             // get coord status
+            if ( ( _coordResult._rc ) && ( !bob.hasField(OMA_FIELD_ERRMSG) ) )
+            {
+               bob.append( OMA_FIELD_ERRMSG, _coordResult._errMsg ) ;
+            }
             coordResult = BSON ( OMA_FIELD_NAME
                                  << OMA_FIELD_COORD
                                  << OMA_FIELD_TOTALCOUNT
@@ -841,6 +859,10 @@ namespace engine
                string groupname = it->first ;
                InstallResult &result = it->second ;
                BSONObj groupResult ;
+               if ( ( result._rc ) && ( !bob.hasField(OMA_FIELD_ERRMSG) ) )
+               {
+                  bob.append( OMA_FIELD_ERRMSG, result._errMsg ) ;
+               }
                groupResult = BSON ( OMA_FIELD_NAME
                                     << groupname.c_str()
                                     << OMA_FIELD_TOTALCOUNT
@@ -852,6 +874,11 @@ namespace engine
                bab.append ( groupResult ) ;
                it++ ;
             }
+         }
+         // try to set ErrMsg
+         if ( !(bob.hasField( OMA_FIELD_ERRMSG ) ) )
+         {
+            bob.append( OMA_FIELD_ERRMSG, "" );
          }
          // set return result
          bob.appendArray( OMA_FIELD_PROGRESS, bab.arr() ) ;
@@ -981,6 +1008,9 @@ namespace engine
    INT32 _omaInsDBBusTask::_installVirtualCoord()
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      const CHAR *pErrMsg = NULL ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
       BSONObj vCoordRet ;
       _omaCreateVirtualCoord createVCoord ;
       
@@ -988,7 +1018,24 @@ namespace engine
       rc = createVCoord.createVirtualCoord( vCoordRet ) ;
       if ( rc )
       {
-         PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( vCoordRet, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
+         }
+         ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to create temporary "
+                      "coord: %s", pErrMsg ) ;
+         PD_LOG_MSG( PDERROR, desc ) ;
+         // set task to be failing
+         setIsTaskFail( TRUE ) ;
+         // set error detail
+         setErrDetail( desc ) ;
          goto error ;
       }
       rc = _saveVCoordInfo( vCoordRet ) ;
@@ -1122,7 +1169,7 @@ namespace engine
       rc = startRemoveVirtualCoordJob( _vCoordSvcName.c_str(), this, &jobID ) ;
       if ( rc )
       {
-         PD_LOG( PDERROR, "Failed to start remove virtual coord job, "
+         PD_LOG( PDERROR, "Failed to start remove temperary coord job, "
                  "rc = %d", rc ) ;
          goto error ;
       }
@@ -1155,7 +1202,7 @@ namespace engine
       // set remove virtual coord fail detail
       setIsRemoveVCoordFail( TRUE ) ;
       setIsTaskFail( TRUE ) ;
-      setErrDetail( "Failed to remove virtual coord, please do it manually" ) ;
+      setErrDetail( "Failed to remove temporary coord, please do it manually" ) ;
       goto done ;
    }
 
@@ -1304,6 +1351,16 @@ namespace engine
    error:
       setIsUninstallFail( TRUE ) ;
       setIsTaskFail( TRUE ) ;
+      if ( '\0' == _detail[0] )
+      {
+         const CHAR *pErrMsg = NULL ;
+         pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+         if ( NULL == pErrMsg )
+         {
+            pErrMsg = "" ;
+         }
+         setErrDetail( pErrMsg ) ;
+      }
       goto done ;
    }
 
@@ -1383,16 +1440,16 @@ namespace engine
       // check argument
       if ( NULL == pRole )
       {
-         PD_LOG ( PDERROR,
-                  "Not speciefy role for updating remove result" ) ;
+         PD_LOG_MSG ( PDERROR, "Not speciefy role for "
+                      "updating uninstall status" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
       if ( ( 0 == ossStrncmp( pRole, ROLE_DATA, ossStrlen( ROLE_DATA ) ) ) &&
            ( NULL == pGroupName ) )
       {
-         PD_LOG ( PDERROR,
-                  "Not speciefy data group for updating remove result" ) ;
+         PD_LOG_MSG ( PDERROR, "Not speciefy data group "
+                      "for updating uninstall status" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -1470,8 +1527,7 @@ namespace engine
       else
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR,
-                  "Failed to update install result, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Invalid role for updating uninstall status" ) ;
          goto error ;
       }
       // check whether uninstall is finish or not
@@ -1536,10 +1592,17 @@ namespace engine
       const CHAR *pStage = STAGE_UNINSTALL ;
       
       // while task has failed
-      if ( _isTaskFail )
+      if ( getIsTaskFail() )
       {
-         PD_LOG_MSG ( PDERROR,"Task[%s] had failed, please check "
-                      "the dialog for more detail", taskName() ) ;
+         if ( '\0' == _detail[0] )
+         {
+            PD_LOG_MSG ( PDERROR,"Task[%s] had failed, please check "
+                         "the dialog for more detail", taskName() ) ;
+         }
+         else
+         {
+            PD_LOG_MSG ( PDERROR, _detail ) ;
+         }
          rc = SDB_OMA_TASK_FAIL ;
          goto done ;
       }
@@ -1551,12 +1614,16 @@ namespace engine
          bob.appendBool( OMA_FIELD_ISFINISH, _isTaskFinish ) ;
          // status
          bob.append( OMA_FIELD_STATUS, pStage ) ;
-         // ErrMsg( fatal err, like failed to remove virtual coord)
+
          bob.append( OMA_FIELD_ERRMSG, _detail ) ;
          // in case of standalone
          if ( _isStandalone )
          {
             // get standalone status
+            if ( _standaloneResult._rc )
+            {
+               bob.append( OMA_FIELD_ERRMSG, _standaloneResult._errMsg ) ;
+            }
             standaloneResult = BSON ( OMA_FIELD_NAME
                                       << OMA_FIELD_STANDALONE
                                       << OMA_FIELD_TOTALCOUNT
@@ -1570,6 +1637,10 @@ namespace engine
          else // in case of cluster
          {
             // get catalog status
+            if ( _catalogResult._rc )
+            {
+               bob.append( OMA_FIELD_ERRMSG, _catalogResult._errMsg ) ;
+            }
             catalogResult = BSON ( OMA_FIELD_NAME
                                    << OMA_FIELD_CATALOG
                                    << OMA_FIELD_TOTALCOUNT
@@ -1580,6 +1651,10 @@ namespace engine
                                    << _catalogResult._desc.c_str() ) ;
             bab.append ( catalogResult ) ;
             // get coord status
+            if ( ( _coordResult._rc ) && ( !bob.hasField(OMA_FIELD_ERRMSG) ) )
+            {
+               bob.append( OMA_FIELD_ERRMSG, _coordResult._errMsg ) ;
+            }
             coordResult = BSON ( OMA_FIELD_NAME
                                  << OMA_FIELD_COORD
                                  << OMA_FIELD_TOTALCOUNT
@@ -1597,6 +1672,10 @@ namespace engine
                string groupname = it->first ;
                UninstallResult &result = it->second ;
                BSONObj groupResult ;
+               if ( ( result._rc ) && ( !bob.hasField(OMA_FIELD_ERRMSG) ) )
+               {
+                  bob.append( OMA_FIELD_ERRMSG, result._errMsg ) ;
+               }
                groupResult = BSON ( OMA_FIELD_NAME
                                     << groupname.c_str()
                                     << OMA_FIELD_TOTALCOUNT
@@ -1608,6 +1687,11 @@ namespace engine
                bab.append ( groupResult ) ;
                it++ ;
             }
+         }
+         // try to set ErrMsg
+         if ( !(bob.hasField( OMA_FIELD_ERRMSG ) ) )
+         {
+            bob.append( OMA_FIELD_ERRMSG, "" );
          }
          // set return result
          bob.appendArray( OMA_FIELD_PROGRESS, bab.arr() ) ;
@@ -1649,6 +1733,9 @@ namespace engine
    INT32 _omaRmDBBusTask::_installVirtualCoord()
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      const CHAR *pErrMsg = NULL ;
+      CHAR detail[OMA_BUFF_SIZE + 1] = { 0 } ;
       BSONObj vCoordRet ;
       _omaCreateVirtualCoord vCoord ;
       
@@ -1657,28 +1744,33 @@ namespace engine
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to init for creating "
-                  "virtual coord, rc = %d", rc ) ;
+                  "temporary coord, rc = %d", rc ) ;
          goto error ;
       }
       rc = vCoord.doit( vCoordRet ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
-         goto error ;
-      }  
-      /*
-      rc = createVCoord.createVirtualCoord( vCoordRet ) ;
-      if ( rc )
-      {
-         PD_LOG_MSG( PDERROR, "Failed to create virtual coord, rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( vCoordRet, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
+         }
+         ossSnprintf( detail, OMA_BUFF_SIZE, "Failed to create temporary "
+                      "coord: %s", pErrMsg ) ;
+         PD_LOG_MSG( PDERROR, detail ) ;
          goto error ;
       }
-      */
       rc = _saveVCoordInfo( vCoordRet ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to save virtual coord install result, "
-                  "rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to save temporary coord install result, "
+                      "rc = %d", rc ) ;
          goto error ;
       }
    done:
@@ -1729,15 +1821,22 @@ namespace engine
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to remove standalone, rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
          tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
          if ( tmpRc )
          {
-            PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_DETAIL, tmpRc ) ;
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
          }
          ossSnprintf( desc, OMA_BUFF_SIZE,
                       "Failed to remove standalone" ) ;
-         PD_LOG_MSG ( PDERROR, "%s", desc ) ;
+         _updateUninstallStatus( FALSE, rc, ROLE_STANDALONE,
+                                 pErrMsg, desc, NULL ) ;
+         PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
          _updateUninstallStatus( FALSE, rc, ROLE_STANDALONE,
                                  pErrMsg, desc, NULL ) ;
          goto error ;
@@ -1748,7 +1847,7 @@ namespace engine
                   retObj.toString(FALSE, TRUE).c_str() ) ;
          ossSnprintf( desc, OMA_BUFF_SIZE,
                       "Finish removing standalone" ) ;
-         PD_LOG ( PDDEBUG, "Sucessed to remove standalone" ) ;
+         PD_LOG ( PDEVENT, "Succeed to remove standalone" ) ;
          _updateUninstallStatus( TRUE, SDB_OK, ROLE_STANDALONE,
                                  NULL, desc, NULL ) ;
       }
@@ -1801,15 +1900,20 @@ namespace engine
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to remove catalog group, rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
          tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
          if ( tmpRc )
          {
-            PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_DETAIL, tmpRc ) ;
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
          }
          ossSnprintf( desc, OMA_BUFF_SIZE,
                       "Failed to remove catalog group" ) ;
-         PD_LOG_MSG ( PDERROR, "%s", desc ) ;
+         PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
          _updateUninstallStatus( FALSE, rc, ROLE_CATA,
                                  pErrMsg, desc, NULL ) ;
          goto error ;
@@ -1820,7 +1924,7 @@ namespace engine
                   retObj.toString(FALSE, TRUE).c_str() ) ;
          ossSnprintf( desc, OMA_BUFF_SIZE,
                       "Finish removing catalog group" ) ;
-         PD_LOG ( PDDEBUG, "Sucessed to install catalog group" ) ;
+         PD_LOG ( PDEVENT, "Succeed to install catalog group" ) ;
          _updateUninstallStatus( TRUE, SDB_OK, ROLE_CATA,
                                  pErrMsg, desc, NULL ) ;
       }
@@ -1864,23 +1968,28 @@ namespace engine
       rc = rmCoord.init( pInfo ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to init to remove coord group"
-                  "rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to init to remove coord group"
+                      "rc = %d", rc ) ;
          goto error ;
       }
       rc = rmCoord.doit( retObj ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Failed to remove coord group, rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
          tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
          if ( tmpRc )
          {
-            PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
-                     OMA_FIELD_DETAIL, tmpRc ) ;
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
          }
          ossSnprintf( desc, OMA_BUFF_SIZE,
                       "Failed to remove coord group" ) ;
-         PD_LOG_MSG ( PDERROR, "%s", desc ) ;
+         PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
          _updateUninstallStatus( FALSE, rc, ROLE_COORD, pErrMsg, desc, NULL ) ;
          goto error ;
       }
@@ -1890,7 +1999,7 @@ namespace engine
                   retObj.toString(FALSE, TRUE).c_str() ) ;
          ossSnprintf( desc, OMA_BUFF_SIZE,
                       "Finish removing coord group" ) ;
-         PD_LOG ( PDDEBUG, "Sucessed to install coord group" ) ;
+         PD_LOG ( PDEVENT, "Succeed to install coord group" ) ;
          _updateUninstallStatus( TRUE, SDB_OK, ROLE_COORD, NULL, desc, NULL ) ;
       }
    done:
@@ -1932,8 +2041,8 @@ namespace engine
          rc = rmData.init( pInfo ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to init to remove data group "
-                     "rc = %d", rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to init to remove data group[%s] "
+                         "rc = %d", it->first.c_str(), rc ) ;
             goto error ;
          }
          rc = rmData.doit( retObj ) ;
@@ -1941,15 +2050,20 @@ namespace engine
          {
             PD_LOG( PDERROR, "Failed to remove data group[%s], rc = %d",
                     it->first.c_str(), rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
             tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
             if ( tmpRc )
             {
-               PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
-                        OMA_FIELD_DETAIL, tmpRc ) ;
+               pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pErrMsg )
+               {
+                  pErrMsg = "" ;
+               }
             }
             ossSnprintf( desc, OMA_BUFF_SIZE, "Failed to remove data"
                          "group[%s]", it->first.c_str() ) ;
-            PD_LOG_MSG ( PDERROR, "%s", desc ) ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
             _updateUninstallStatus( FALSE, rc, ROLE_DATA,
                                     pErrMsg, desc, it->first.c_str() ) ;
             goto error ;
@@ -1960,7 +2074,7 @@ namespace engine
                      it->first.c_str(), retObj.toString(FALSE, TRUE).c_str() ) ;
             ossSnprintf( desc, OMA_BUFF_SIZE,
                          "Finish removing data group[%s]", it->first.c_str() ) ;
-            PD_LOG ( PDDEBUG, "Sucessed to remove data group[%s]",
+            PD_LOG ( PDEVENT, "Succeed to remove data group[%s]",
                      it->first.c_str() ) ;
             _updateUninstallStatus( TRUE, SDB_OK, ROLE_DATA,
                                     NULL, desc, it->first.c_str() ) ;
@@ -1976,33 +2090,39 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 tmpRc = SDB_OK ;
+      CHAR detail[OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = NULL ;
       BSONObj removeRet ;
-      const CHAR *pDetail = "" ;
-      string str ;
       _omaRemoveVirtualCoord removeVCoord( _vCoordSvcName.c_str() ) ;
       rc = removeVCoord.removeVirtualCoord ( removeRet ) ;
       if ( rc )
       {
-         tmpRc = omaGetStringElement( removeRet, OMA_FIELD_DETAIL, &pDetail ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDWARNING, "Failed to get[%s] field, rc = %d",
-                     OMA_FIELD_DETAIL, rc ) ;
-         }
-         setIsRemoveVCoordFail( TRUE ) ;
-         str += "Failed to remove virtual coord: " ;
-         str += pDetail ;
-         setErrDetail( str.c_str() ) ;
-         PD_LOG ( PDERROR, "Failed to remove virtual coord in remove "
+         PD_LOG ( PDERROR, "Failed to remove temporary coord in remove "
                   "db business task, rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement( removeRet, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
+         }
+         ossSnprintf( detail, OMA_BUFF_SIZE, "Failed to remove temporary "
+                      "coord: %s", pErrMsg ) ;
+         // set remove temp coord to be failing
+         setIsRemoveVCoordFail( TRUE ) ;
+         // set error detail
+         setErrDetail( detail ) ;
          goto error ;
       }
       else
       {
+         PD_LOG ( PDEVENT, "Succeed to remove temporary coord" ) ;
          setIsRemoveVCoordFinish( TRUE ) ;
       } 
-
-
       
       // set task finish or fail
       if ( _isRemoveVCoordFinish && !_isUninstallFail )
@@ -2028,7 +2148,6 @@ namespace engine
       // set remove virtual coord fail detail
       setIsRemoveVCoordFail( TRUE ) ;
       setIsTaskFail( TRUE ) ;
-      setErrDetail( "Failed to remove virtual coord, please do it manually" ) ;
       goto done ;
    }
 

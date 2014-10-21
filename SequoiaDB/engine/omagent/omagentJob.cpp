@@ -32,6 +32,7 @@
 #include "omagentUtil.hpp"
 #include "omagentJob.hpp"
 #include "omagentCommand.hpp"
+#include "pmdEDU.hpp"
 
 namespace engine
 {
@@ -137,12 +138,10 @@ namespace engine
                         OMA_FIELD_DETAIL, tmpRc ) ;
             }
             ossSnprintf( desc, OMA_BUFF_SIZE,
-                         "Failed to install standalone[%s:%s]",
-                         installInfo._hostName.c_str(),
-                         installInfo._svcName.c_str() ) ;
-            PD_LOG_MSG ( PDERROR, "%s",
+                         "Failed to install standalone[%s:%s]: %s",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str(), pErrMsg ) ;
+            PD_LOG_MSG ( PDERROR, desc ) ;
             _updateInstallStatus( FALSE, rc, pErrMsg, desc, &node ) ;
             goto error ;
          }
@@ -310,7 +309,7 @@ namespace engine
       if ( 0 == num )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "No install catalog info, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "No install catalog info, rc = %d", rc ) ;
          goto error ;
       }
       itr = catalogInstallInfo.begin() ;
@@ -324,8 +323,8 @@ namespace engine
          rc = _getInstallInfo( *itr, installInfo ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to get install catalog info, "
-                     "rc = %d", rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to get install catalog info, "
+                         "rc = %d", rc ) ;
             goto error ;
          }
          // update install status for web before install catalog
@@ -353,19 +352,22 @@ namespace engine
          if ( rc )
          {
             PD_LOG( PDERROR, "Job failed to create catalog, rc = %d", rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
             tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
             if ( tmpRc )
             {
-               PD_LOG ( PDWARNING, "Get field[%s] failed, rc = %d",
-                        OMA_FIELD_DETAIL, tmpRc ) ;
+               pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pErrMsg )
+               {
+                  pErrMsg = "" ;
+               }
             }
             ossSnprintf( desc, OMA_BUFF_SIZE,
                          "Failed to install catalog[%s:%s]",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str() ) ;
-            PD_LOG_MSG ( PDERROR, "Failed to install catalog[%s:%s]: %s",
-                         installInfo._hostName.c_str(),
-                         installInfo._svcName.c_str(), pErrMsg ) ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
             _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
@@ -380,7 +382,7 @@ namespace engine
                          "Finish installing catalog[%s:%s]",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str() ) ;
-            PD_LOG ( PDDEBUG, "Sucessed to install catalog[%s:%s]",
+            PD_LOG ( PDEVENT, "Sucessed to install catalog[%s:%s]",
                      installInfo._hostName.c_str(),
                      installInfo._svcName.c_str() ) ;
             _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
@@ -482,8 +484,8 @@ namespace engine
                                         pErrMsg, pDesc, NULL, pNode ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to update install catalog information, "
-                  "rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to update install catalog information, "
+                      "rc = %d", rc ) ;
          goto error ;
       }
 
@@ -537,7 +539,7 @@ namespace engine
       if ( 0 == num )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "No install catalog info, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "No install catalog info, rc = %d", rc ) ;
          goto error ;
       }
       itr = coordInstallInfo.begin() ;
@@ -588,19 +590,22 @@ namespace engine
          if ( rc )
          {
             PD_LOG( PDERROR, "Job failed to create coord, rc = %d", rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
             tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
             if ( tmpRc )
             {
-               PD_LOG ( PDWARNING, "Get field[%s] failed, tmpRc = %d",
-                        OMA_FIELD_DETAIL, tmpRc ) ;
+               pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pErrMsg )
+               {
+                  pErrMsg = "" ;
+               }
             }
             ossSnprintf( desc, OMA_BUFF_SIZE,
                          "Failed to install coord[%s:%s]",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str() ) ;
-            PD_LOG_MSG ( PDERROR, "Failed to install coord[%s:%s]: %s",
-                         installInfo._hostName.c_str(),
-                         installInfo._svcName.c_str(), pErrMsg ) ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
             _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
@@ -615,7 +620,7 @@ namespace engine
                          "Finish installing coord[%s:%s]",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str() ) ;
-            PD_LOG ( PDDEBUG, "Sucessed to install coord[%s:%s]",
+            PD_LOG ( PDEVENT, "Sucessed to install coord[%s:%s]",
                      installInfo._hostName.c_str(),
                      installInfo._svcName.c_str() ) ;
             _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
@@ -765,8 +770,8 @@ namespace engine
                                             dataNodeInstallInfo ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to get install data node information "
-                  "in group %s, rc = %d", _groupname.c_str(), rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to get install data node information "
+                      "in group %s, rc = %d", _groupname.c_str(), rc ) ;
          goto error ;
       }
       // check the install info
@@ -774,8 +779,8 @@ namespace engine
       if ( 0 == num )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "No install data node info in group %s, rc = %d",
-                  _groupname.c_str(), rc ) ;
+         PD_LOG_MSG ( PDERROR, "No install data node info in group %s, rc = %d",
+                      _groupname.c_str(), rc ) ;
          goto error ;
       }
       itr = dataNodeInstallInfo.begin() ;
@@ -798,8 +803,8 @@ namespace engine
          rc = _getInstallInfo( *itr, installInfo ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to get install data node info, "
-                     "rc = %d", rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to get install data node info, "
+                         "rc = %d", rc ) ;
             goto error ;
          }
          // update install status for web before install data node
@@ -827,19 +832,22 @@ namespace engine
          if ( rc )
          {
             PD_LOG( PDERROR, "Job failed to create data node, rc = %d", rc ) ;
+            // if we can't get field "detail", it means we failed in CPP,
+            // we had not executed js file yet
             tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
             if ( tmpRc )
             {
-               PD_LOG ( PDERROR, "Get field[%s] failed, rc = %d",
-                        OMA_FIELD_DETAIL, tmpRc ) ;
+               pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+               if ( NULL == pErrMsg )
+               {
+                  pErrMsg = "" ;
+               }
             }
             ossSnprintf( desc, OMA_BUFF_SIZE,
                          "Failed to install data node[%s:%s]",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str() ) ;
-            PD_LOG_MSG ( PDERROR, "Failed to install data node[%s:%s]: %s",
-                         installInfo._hostName.c_str(),
-                         installInfo._svcName.c_str(), pErrMsg ) ;
+            PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;
             _updateInstallStatus( FALSE, rc, pErrMsg, desc, NULL ) ;
             goto error ;
          }
@@ -854,7 +862,7 @@ namespace engine
                          "Finish installing data node[%s:%s]",
                          installInfo._hostName.c_str(),
                          installInfo._svcName.c_str() ) ;
-            PD_LOG ( PDDEBUG, "Sucessed to install data node[%s:%s]",
+            PD_LOG ( PDEVENT, "Sucessed to install data node[%s:%s]",
                      installInfo._hostName.c_str(),
                      installInfo._svcName.c_str() ) ;
             _updateInstallStatus( TRUE, SDB_OK, pErrMsg, desc, &node ) ;
@@ -1295,9 +1303,6 @@ namespace engine
                goto error ;
             }
             temp = ele.embeddedObject() ;
-//            bob.appendElements( temp ) ;
-//            bob.appendElements( commonFileds ) ;
-//            info = bob.obj() ;
             // category
             rc = omaGetStringElement ( temp, OMA_OPTION_ROLE, &value ) ;
             if ( rc )
@@ -1466,6 +1471,7 @@ namespace engine
    INT32 _omaInsDBBusTaskRbJob::doit()
    {
       INT32 rc = SDB_OK ;
+      const CHAR *pErrMsg = NULL ;
       RollbackInfo info ;
       BSONObj retObj ;
 
@@ -1475,7 +1481,7 @@ namespace engine
       rc = _getRollbackInfo ( info ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to get rollback info, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to get rollback info, rc = %d", rc ) ;
          goto error ;
       }
       if ( _isStandalone )
@@ -1521,7 +1527,7 @@ namespace engine
  
    done:
       // for standalone, when doing rollback, if finish rollback, it means add  
-      // business task finish, otherwise, if rollback failed, it means add 
+      // business task finish, if rollback failed, it means add 
       // business task failed
       if ( _isStandalone )
       {
@@ -1546,8 +1552,8 @@ namespace engine
          }
       }
       // for cluster, when doing rollback, if succeed, we need to
-      // remove virtual coord, and we judge whether task is succeeful or not
-      // there, but if fail, we don't remove virtual coord, and leave it for
+      // remove virtual coord, and we judge whether task is succeeful or not,
+      // but if fail, we don't remove virtual coord, and leave it for
       // cleaning the environment manually, but we need to mark task to be
       // failing
       else
@@ -1565,8 +1571,17 @@ namespace engine
    error:
       // set rollback failing
       _pTask->setIsRollbackFail( TRUE ) ;
-      _pTask->setErrDetail( "Failed to rollback in add db business task, "
-                            "please do it manually" ) ;
+      // set the error reason
+      pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+      if ( NULL == pErrMsg )
+      {
+         _pTask->setErrDetail( "Failed to rollback in add db business task, "
+                               "please do it manually" ) ;
+      }
+      else
+      {
+         _pTask->setErrDetail ( pErrMsg ) ;
+      }
       goto done ;
    }
 
@@ -1616,29 +1631,44 @@ namespace engine
                                   map< string, vector< InstalledNode> > &info )
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
       BSONObj retObj ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = NULL ;
       _omaRunRollbackStandaloneJob rollbackStandalone ( vCoordSvcName, info ) ;
       map< string, vector< InstalledNode> >::iterator it = info.begin() ;
       
       if ( ( 1 != info.size() ) && ( string( ROLE_STANDALONE) != it->first ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Invalid standalone's rollback info" ) ;
+         PD_LOG_MSG ( PDERROR, "Invalid standalone's rollback info" ) ;
          goto error ;
       }
       // rollback standalone
       rc = rollbackStandalone.init( NULL ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to init to rollback create standalone "
-                  "rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to init to rollback create standalone "
+                      "rc = %d", rc ) ;
          goto error ;
       }
       rc = rollbackStandalone.doit( retObj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to rollback create standalone, "
-                  "rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
+         }
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Failed to rollback standalone" ) ;
+         PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;         
          goto error ;
       }
       PD_LOG ( PDEVENT, "The rollback standalone's result is: %s",
@@ -1655,6 +1685,9 @@ namespace engine
                                   map< string, vector< InstalledNode> > &info )
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = NULL ;
       BSONObj retObj ;
       _omaRunRollbackCoordJob rollbackCoord ( vCoordSvcName, info ) ;
       map< string, vector< InstalledNode> >::iterator it = info.begin() ;
@@ -1662,22 +1695,34 @@ namespace engine
       if ( ( 1 != info.size() ) && ( string( ROLE_COORD ) != it->first ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Invalid coord's rollback info" ) ;
+         PD_LOG_MSG ( PDERROR, "Invalid coord's rollback info" ) ;
          goto error ;
       }
       // rollback coord
       rc = rollbackCoord.init( NULL ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to init to do rollback create coord "
-                  "rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to init to do rollback create coord "
+                      "rc = %d", rc ) ;
          goto error ;
       }
       rc = rollbackCoord.doit( retObj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to do rollback create coord, "
-                  "rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
+         }
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Failed to rollback coord" ) ;
+         PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;   
          goto error ;
       }
       PD_LOG ( PDEVENT, "The rollback coord's result is: %s",
@@ -1694,6 +1739,9 @@ namespace engine
                                   map< string, vector< InstalledNode> > &info )
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = NULL ;
       BSONObj retObj ;
       _omaRunRollbackCatalogJob rollbackCatalog ( vCoordSvcName, info ) ;
       map< string, vector< InstalledNode> >::iterator it = info.begin() ;
@@ -1701,7 +1749,7 @@ namespace engine
       if ( ( 1 != info.size() ) && ( string( ROLE_CATA ) != it->first ) )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Invalid catalog's rollback info" ) ;
+         PD_LOG_MSG ( PDERROR, "Invalid catalog's rollback info" ) ;
          goto error ;
       }
       // rollback catalog
@@ -1715,8 +1763,20 @@ namespace engine
       rc = rollbackCatalog.doit( retObj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to do rollback create catalog, "
-                  "rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
+         }
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Failed to rollback catalog" ) ;
+         PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;     
          goto error ;
       }
       PD_LOG ( PDEVENT, "The rollback catalog's result is: %s",
@@ -1733,6 +1793,9 @@ namespace engine
                                   map< string, vector< InstalledNode> > &info )
    {
       INT32 rc = SDB_OK ;
+      INT32 tmpRc = SDB_OK ;
+      CHAR desc [OMA_BUFF_SIZE + 1] = { 0 } ;
+      const CHAR *pErrMsg = NULL ;
       BSONObj retObj ;
       _omaRunRollbackDataNodeJob rollbackDataNode ( vCoordSvcName, info ) ;
       map< string, vector<InstalledNode> >::iterator it = info.begin() ;
@@ -1748,8 +1811,20 @@ namespace engine
       rc = rollbackDataNode.doit( retObj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to do rollback create data node job, "
-                  "rc = %d", rc ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement ( retObj, OMA_FIELD_DETAIL, &pErrMsg ) ;
+         if ( tmpRc )
+         {
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
+         }
+         ossSnprintf( desc, OMA_BUFF_SIZE,
+                      "Failed to rollback data groups" ) ;
+         PD_LOG_MSG ( PDERROR, "%s: %s", desc, pErrMsg ) ;   
          goto error ;
       }
       PD_LOG ( PDEVENT, "The rollback data groups' result is: %s",
@@ -1796,28 +1871,33 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 tmpRc = SDB_OK ;
       BSONObj removeRet ;
-      const CHAR *pDetail = "" ;
+      const CHAR *pErrMsg = NULL ;
       string str ;
       _omaRemoveVirtualCoord removeVCoord( _vCoordSvcName.c_str() ) ;
       rc = removeVCoord.removeVirtualCoord ( removeRet ) ;
       if ( rc )
       {
-         // TODO: how to tell the fail result to omasvc ?
-         tmpRc = omaGetStringElement( removeRet, OMA_FIELD_DETAIL, &pDetail ) ;
+         // if we can't get field "detail", it means we failed in CPP,
+         // we had not executed js file yet
+         tmpRc = omaGetStringElement( removeRet, OMA_FIELD_DETAIL, &pErrMsg ) ;
          if ( rc )
          {
-            PD_LOG ( PDWARNING, "Failed to get[%s] field, rc = %d",
-                     OMA_FIELD_DETAIL, rc ) ;
+            pErrMsg = pmdGetThreadEDUCB()->getInfo( EDU_INFO_ERROR ) ;
+            if ( NULL == pErrMsg )
+            {
+               pErrMsg = "" ;
+            }
          }
          _pTask->setIsRemoveVCoordFail( TRUE ) ;
-         str += "Failed to remove virtual coord: " ;
-         str += pDetail ;
+         str += "Failed to remove temporary coord: " ;
+         str += pErrMsg ;
          _pTask->setErrDetail( str.c_str() ) ;
-         PD_LOG ( PDERROR, "Failed to remove virtual coord, rc = %d", rc ) ;
+         PD_LOG_MSG ( PDERROR, "%s", str.c_str() ) ;
          goto error ;
       }
       else
       {
+         PD_LOG ( PDEVENT, "Succeed to remove temporary coord" ) ;
          _pTask->setIsRemoveVCoordFinish( TRUE ) ;
       } 
    done:
@@ -2081,7 +2161,7 @@ namespace engine
       if ( !pJob )
       {
          PD_LOG ( PDERROR, "Failed to alloc memory for "
-                  "removing virtual coord job" ) ;
+                  "removing temporary coord job" ) ;
          rc = SDB_OOM ;
          goto error ;
       }

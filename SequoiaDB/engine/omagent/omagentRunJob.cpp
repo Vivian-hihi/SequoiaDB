@@ -151,15 +151,15 @@ namespace engine
          rc = addJsFile( FILE_CREATE_CATALOG, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_CREATE_CATALOG, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_CREATE_CATALOG, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
                   e.what() ) ;
          goto error ;
       }
@@ -216,16 +216,16 @@ namespace engine
          rc = addJsFile( FILE_CREATE_COORD, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_CREATE_COORD, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_CREATE_COORD, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:
@@ -284,16 +284,16 @@ namespace engine
          rc = addJsFile( FILE_CREATE_DATANODE, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_CREATE_DATANODE, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_CREATE_DATANODE, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:
@@ -342,7 +342,7 @@ namespace engine
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
                   e.what() ) ;
          goto error ;
       }
@@ -404,16 +404,16 @@ namespace engine
          rc = addJsFile( FILE_ROLLBACK_COORD, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_ROLLBACK_COORD, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_ROLLBACK_COORD, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:
@@ -453,16 +453,16 @@ namespace engine
          rc = addJsFile( FILE_ROLLBACK_CATALOG, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_ROLLBACK_CATALOG, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_ROLLBACK_CATALOG, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:
@@ -508,16 +508,16 @@ namespace engine
          rc = addJsFile( FILE_ROLLBACK_DATANODE, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_ROLLBACK_DATANODE, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_ROLLBACK_DATANODE, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:
@@ -566,12 +566,20 @@ namespace engine
          PD_LOG ( PDDEBUG, "Remove standalone info is: %s",
                   info.toString(FALSE, TRUE).c_str() ) ;
          rc = omaGetStringElement ( info, OMA_FIELD_HOSTNAME, &pStr ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
-                   "rc: %d", OMA_FIELD_HOSTNAME, rc ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+                         OMA_FIELD_HOSTNAME, rc ) ;
+            goto error ;
+         }
          bob.append( OMA_FIELD_UNINSTALLHOSTNAME, pStr ) ;
          rc = omaGetStringElement ( info, OMA_FIELD_SVCNAME, &pStr ) ;
-         PD_CHECK( SDB_OK == rc, rc, error, PDERROR, "Get field[%s] failed, "
-                   "rc: %d", OMA_FIELD_SVCNAME, rc ) ;
+         if ( rc )
+         {
+            PD_LOG_MSG ( PDERROR, "Get field[%s] failed, rc: %d",
+                         OMA_FIELD_SVCNAME, rc ) ;
+            goto error ;
+         }
          bob.append( OMA_FIELD_UNINSTALLSVCNAME, pStr ) ;
          bab.append( bob.obj() ) ;
          builder.appendArray( OMA_FIELD_HOSTINFO, bab.arr() ) ;
@@ -584,16 +592,16 @@ namespace engine
          rc = addJsFile( FILE_REMOVE_STANDALONE, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_REMOVE_STANDALONE, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_REMOVE_STANDALONE, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:
@@ -712,16 +720,16 @@ namespace engine
          rc = addJsFile( FILE_REMOVE_COORD_RG, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_REMOVE_COORD_RG, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_REMOVE_COORD_RG, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:
@@ -780,16 +788,16 @@ namespace engine
          rc = addJsFile( FILE_REMOVE_DATA_RG, _jsFileArgs ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to add js file[%s], rc = %d ",
-                     FILE_REMOVE_DATA_RG, rc ) ;
+            PD_LOG_MSG ( PDERROR, "Failed to add js file[%s], rc = %d ",
+                         FILE_REMOVE_DATA_RG, rc ) ;
             goto error ;
          }
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "Failed to build bson, exception is: %s",
-                  e.what() ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to build bson, exception is: %s",
+                      e.what() ) ;
          goto error ;
       }
    done:
