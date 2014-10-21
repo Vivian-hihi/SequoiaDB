@@ -84,7 +84,7 @@ public class DBCursor {
 		endianConvert = sdb.endianConvert;
 		
 		List<BSONObject> tmpList = sdbMessage.getObjectList();
-        if ( tmpList.size() != 0 ) {
+        if ( null != tmpList && tmpList.size() != 0 ) {
             list = tmpList;
         }
 	}
