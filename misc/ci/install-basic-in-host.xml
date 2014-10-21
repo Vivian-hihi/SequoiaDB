@@ -94,7 +94,10 @@
 				</if>
 
 				<exec executable="chown" dir="${db.path}/conf/local">
-                    <arg line=" -R sdbadmin ${coord.service.port}" />
+                    <arg line=" -R ${install.user} ${coord.service.port}" />
+                </exec>
+                <exec executable="chgrp" dir="${db.path}/conf/local">
+                    <arg line=" -R ${install.user}_group ${coord.service.port}" />
                 </exec>
 
 				<echo message="Start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
