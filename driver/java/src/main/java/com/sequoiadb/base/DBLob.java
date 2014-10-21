@@ -60,21 +60,21 @@ public interface DBLob {
     public final static int SDB_LOB_SEEK_END   = 2;
     
     /**
-     * @fn          getID()
+     * @fn          ObjectId getID()
      * @brief       get the lob's id
      * @return      the lob's id
      */
     public ObjectId getID();
 
     /**
-     * @fn          getSize()
+     * @fn          long getSize()
      * @brief       get the size of lob
      * @return      the lob's size
      */
     public long getSize();
     
     /**
-     * @fn          getCreateTime()
+     * @fn          long getCreateTime()
      * @brief       get the create time of lob
      * @return      the lob's create time
      */
@@ -90,7 +90,7 @@ public interface DBLob {
     public void write( byte[] b ) throws BaseException;
     
     /**
-     * @fn          read( byte[] b )
+     * @fn          int read( byte[] b )
      * @brief       Reads up to b.length bytes of data from this lob into 
      *              an array of bytes. 
      * @param       b   the buffer into which the data is read.

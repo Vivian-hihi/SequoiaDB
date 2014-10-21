@@ -1682,6 +1682,12 @@ public class DBCollection {
 			throw new BaseException(flags, matcher, modifier, hint);
 	}
 	
+	/**
+     * @fn DBCursor listLobs()
+     * @brief Get all of the lobs in current collection
+     * @return DBCursor of lobs
+     * @exception com.sequoiadb.exception.BaseException
+     */
     public DBCursor listLobs() throws BaseException {
         String commandString = SequoiadbConstants.ADMIN_PROMPT
                 + SequoiadbConstants.LIST_LOBS;
@@ -1705,7 +1711,7 @@ public class DBCollection {
     }
     
     /**
-     * @fn          createLob()
+     * @fn          DBLob createLob()
      * @brief       create a lob
      * @return      DBLob object
      * @exception   com.sequoiadb.exception.BaseException.
@@ -1715,7 +1721,7 @@ public class DBCollection {
     }
     
     /**
-     * @fn          createLob( ObjectId id )
+     * @fn          DBLob createLob( ObjectId id )
      * @brief       create a lob with a given id
      * @param       id   the lob's id. if id is null, it will be generated in 
      *                   this function
@@ -1729,7 +1735,7 @@ public class DBCollection {
     }
     
     /**
-     * @fn          openLob( ObjectId id )
+     * @fn          DBLob openLob( ObjectId id )
      * @brief       open an exist lob with id
      * @param       id   the lob's id. 
      * @return      DBLob object
@@ -1741,6 +1747,12 @@ public class DBCollection {
         return lob;
     }
     
+    /**
+     * @fn          removeLob( ObjectId id )
+     * @brief       remove an exist lob
+     * @param       id   the lob's id. 
+     * @exception   com.sequoiadb.exception.BaseException.
+     */
     public void removeLob( ObjectId lobID ) throws BaseException {
         BSONObject removeObj = new BasicBSONObject();
         removeObj.put( SequoiadbConstants.FIELD_COLLECTION, 
