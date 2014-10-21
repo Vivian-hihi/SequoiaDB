@@ -1452,10 +1452,10 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDROPCSP1CANCEL, "rtnDropCollectionSpaceP1Cancel" )
    INT32 rtnDropCollectionSpaceP1Cancel ( const CHAR *pCollectionSpace,
-                                    _pmdEDUCB *cb,
-                                    SDB_DMSCB *dmsCB,
-                                    SDB_DPSCB *dpsCB,
-                                    BOOLEAN   sysCall )
+                                          _pmdEDUCB *cb,
+                                          SDB_DMSCB *dmsCB,
+                                          SDB_DPSCB *dpsCB,
+                                          BOOLEAN   sysCall )
    {
       INT32 rc = SDB_OK ;
       // PD_TRACE_ENTRY ( SDB_RTNDROPCSP1CANCEL ) ;
