@@ -175,6 +175,8 @@ namespace engine
 
          INT32             _checkTaskResponse( BSONObj &response ) ;
 
+         void              _updateHostOMVersion( const string &hostName ) ;
+
       protected:
          //TODO: to protect the progress ;
          ossSpinSLatch     _lock ;

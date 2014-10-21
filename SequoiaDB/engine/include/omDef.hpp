@@ -118,7 +118,14 @@ namespace engine
    #define OM_HOST_FIELD_PASSWORD            "Passwd"
    #define OM_HOST_FIELD_TIME                "Time"
    #define OM_HOST_FIELD_OS                  "OS"
+
    #define OM_HOST_FIELD_OM                  "OM"
+   #define OM_HOST_FIELD_OM_HASINSTALL       "HasInstalled"
+   #define OM_HOST_FIELD_OM_VERSION          "Version"
+   #define OM_HOST_FIELD_OM_PATH             "Path"
+   #define OM_HOST_FIELD_OM_PORT             "Port"
+   #define OM_HOST_FIELD_OM_RELEASE          "Release"
+   
    #define OM_HOST_FIELD_MEMORY              "Memory"
 
    #define OM_HOST_FIELD_DISK                "Disk"

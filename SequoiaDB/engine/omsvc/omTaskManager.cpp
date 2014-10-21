@@ -33,6 +33,7 @@
 #include "omTaskManager.hpp"
 #include "omDef.hpp"
 #include "rtn.hpp"
+#include "ossVer.hpp"
 
 using namespace bson ;
 
@@ -664,6 +665,45 @@ namespace engine
       goto done ;
    }
 
+   void omInstallTask::_updateHostOMVersion( const string &hostName )
+   {
+      pmdEDUCB *cb     = pmdGetThreadEDUCB() ;
+      INT32 rc         = SDB_OK ;
+      INT32 version    = 0 ;
+      INT32 subVersion = 0 ;
+      INT32 release    = 0 ;
+      ossGetVersion( &version, &subVersion, &release, NULL ) ;
+
+      CHAR ver[ OM_INT32_LENGTH+1 ]    = "" ;
+      CHAR subVer[ OM_INT32_LENGTH+1 ] = "" ;
+      ossItoa( version, ver, OM_INT32_LENGTH ) ;
+      ossItoa( subVersion, subVer, OM_INT32_LENGTH ) ;
+      string fullVer = string( ver ) + "." + subVer ;
+
+      BSONObj selector = BSON( OM_HOST_FIELD_NAME << hostName );
+      BSONObj tmp = BSON( OM_HOST_FIELD_OM_HASINSTALL << true 
+                          << OM_HOST_FIELD_OM_VERSION << fullVer
+                          << OM_HOST_FIELD_OM_RELEASE << release ) ;
+
+      BSONObj om      = BSON( OM_HOST_FIELD_OM << tmp ) ;
+      BSONObj updator = BSON( "$set" << om ) ;
+      {
+         BSONObj hint ;
+         rc = rtnUpdate( OM_CS_DEPLOY_CL_HOST, selector, updator, hint,
+                         0, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to update config for %s in %s:rc=%d", 
+                    hostName.c_str(), OM_CS_DEPLOY_CL_HOST, rc ) ;
+            goto error ;
+         }
+      }
+   done:
+      return ;
+   error:
+      goto done ;
+   }
+
    INT32 omInstallTask::_storeConfigInfo()
    {
       string businessName ;
@@ -706,6 +746,8 @@ namespace engine
                   goto error ;
                }
             }
+
+            _updateHostOMVersion( hostName ) ;
          }
       }
    done:
@@ -758,7 +800,7 @@ namespace engine
                  "type=%d", OM_BSON_TASK_STATUS, ele.type() ) ;
          goto error ;
       }
-      
+
       ele = response.getField( OM_BSON_TASK_PROGRESS ) ;
       if ( ele.type() != Array )
       {
@@ -767,7 +809,7 @@ namespace engine
                  "type=%d", OM_BSON_TASK_PROGRESS, ele.type() ) ;
          goto error ;
       }
-      
+
       ele = response.getField( OM_BSON_TASK_ISFINISHED ) ;
       if ( ele.type() != Bool )
       {
@@ -1755,7 +1797,7 @@ namespace engine
                                     const string &agentService, 
                                     list<omTaskInfo> &taskList )
    {
-      
+
       _lock.get() ;
       MAP_TASK_INTER iter = _mapTasks.begin() ;
       while ( iter != _mapTasks.end() )
