@@ -308,7 +308,8 @@ namespace engine
          BOOLEAN isGotMsg = cb->waitEvent( pmdEvent, waitTime ) ;
          // if we hit interrupt, let's just get out of here. Don't need to worry
          // about cb queue, pmdEDUCB::clear() is going to clean it up.
-         PD_CHECK( !cb->isInterrupted(), SDB_APP_INTERRUPT, error, PDERROR,
+         PD_CHECK( !cb->isInterrupted() && !cb->isForced(),
+                   SDB_APP_INTERRUPT, error, PDERROR,
                    "Interrupt! stop receiving reply!" ) ;
 
          // if we didn't receive anything
