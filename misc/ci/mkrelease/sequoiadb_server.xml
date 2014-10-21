@@ -259,7 +259,7 @@
             </ruleList>
         </runProgram>
         <copyFile>
-            <destination>${installdir}/packet</destination>
+            <destination>${installdir}/packet/</destination>
             <explanation>${fullName}</explanation>
             <origin>${installer_pathname}</origin>
             <progressText>${fullName}</progressText>
