@@ -95,7 +95,7 @@ public class CataNodeGroup extends NodeGroup {
 					break;
 				}
 			} catch (BaseException baseException) {
-				System.out.println("group="+group);
+				//System.out.println("group="+group);
 				// Do nothing
 			}
 
