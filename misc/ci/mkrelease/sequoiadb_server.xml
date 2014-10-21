@@ -261,7 +261,7 @@
         <copyFile>
             <destination>${installdir}/packet</destination>
             <explanation>${fullName}</explanation>
-            <origin>${platform_install_prefix}/sequoiadb-*-installer.run</origin>
+            <origin>${installer_pathname}</origin>
             <progressText>${fullName}</progressText>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
