@@ -47,6 +47,7 @@ namespace engine
    void sdbSetErrMsg( const CHAR *err )
    {
       static CHAR* s_emptyMsg = "" ;
+      __hasSetErrMsg__        = FALSE ;
       if ( NULL != __errmsg__ && s_emptyMsg != __errmsg__ )
       {
          SDB_OSS_FREE( __errmsg__ ) ;
@@ -55,8 +56,8 @@ namespace engine
       if ( err && 0 != *err )
       {
          __errmsg__ = ossStrdup( err ) ;
+         __hasSetErrMsg__ = TRUE ;
       }
-      __hasSetErrMsg__ = TRUE ;
    }
 
    BOOLEAN sdbIsErrMsgEmpty()
@@ -76,7 +77,7 @@ namespace engine
    void sdbSetErrno( INT32 errNum )
    {
       __errno__ = errNum ;
-      __hasSetErrNo__ = TRUE ;
+      __hasSetErrNo__ = errNum ? TRUE : FALSE ;
    }
 
    void sdbClearErrorInfo()
