@@ -248,13 +248,13 @@
         <runProgram>
             <customErrorMessage>${msg(Install.ErrorMsg.IntallationOM.error)}</customErrorMessage>
             <program>${installdir}/install_om.sh</program>
-            <programArguments>${installdir} ${port} ${svcname} ${dbpath}</programArguments>
+            <programArguments>${installdir} ${port} ${svcname} ${dbpath} ${restname}</programArguments>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <compareText>
                     <logic>equals</logic>
                     <text>${type}</text>
-                    <value>OM</value>
+                    <value>SMS</value>
                 </compareText>
             </ruleList>
         </runProgram>
@@ -268,7 +268,7 @@
                 <compareText>
                     <logic>equals</logic>
                     <text>${type}</text>
-                    <value>OM</value>
+                    <value>SMS</value>
                 </compareText>
             </ruleList>
         </copyFile>
@@ -541,7 +541,7 @@
                     <cliOptionText>${msg(Installer.Paramers.installationType.explanation)}</cliOptionText>
                     <parameterList>
                         <parameterGroup>
-                            <name>OM</name>
+                            <name>SMS</name>
                             <explanation></explanation>
                             <value></value>
                             <default></default>
@@ -560,7 +560,7 @@
                                         <compareValues>
                                             <logic>equals</logic>
                                             <value1>${type}</value1>
-                                            <value2>OM</value2>
+                                            <value2>SMS</value2>
                                         </compareValues>
                                     </ruleList>
                                 </stringParameter>
@@ -569,7 +569,7 @@
                                     <description></description>
                                     <explanation></explanation>
                                     <value></value>
-                                    <default>${platform_install_prefix}/${product_shortname}/database/${svcname}</default>
+                                    <default>${platform_install_prefix}/${product_shortname}/database/sms/${svcname}</default>
                                     <allowEmptyValue>0</allowEmptyValue>
                                     <cliOptionName>dbpath</cliOptionName>
                                     <cliOptionText>${msg(Installer.Paramers.dbpath.explanation)}</cliOptionText>
@@ -580,25 +580,25 @@
                                         <compareValues>
                                             <logic>equals</logic>
                                             <value1>${type}</value1>
-                                            <value2>OM</value2>
+                                            <value2>SMS</value2>
                                         </compareValues>
                                     </ruleList>
                                 </directoryParameter>
                                 <stringParameter>
-                                    <name>restPort</name>
+                                    <name>restname</name>
                                     <description></description>
                                     <explanation></explanation>
                                     <value>8000</value>
                                     <default>8000</default>
                                     <allowEmptyValue>1</allowEmptyValue>
-                                    <cliOptionName>restPort</cliOptionName>
+                                    <cliOptionName>restname</cliOptionName>
                                     <cliOptionText>${msg(Installer.Paramers.restPort.explanation)}</cliOptionText>
                                     <width>40</width>
                                     <ruleList>
                                         <compareValues>
                                             <logic>equals</logic>
                                             <value1>${type}</value1>
-                                            <value2>OM</value2>
+                                            <value2>SMS</value2>
                                         </compareValues>
                                     </ruleList>
                                 </stringParameter>
