@@ -732,11 +732,17 @@ function checkHostInfo()
 					{
 						if( _hostConf[i]['Disk'][k]['CanUse'] == false )
 						{
+							_hostConf[i]['Disk'][k]['checked'] = false ;
 							++warningNum ;
 						}
 						else if ( _hostConf[i]['Disk'][k]['IsLocal'] == true )
 						{
+							_hostConf[i]['Disk'][k]['checked'] = true ;
 							++useNum ;
+						}
+						else
+						{
+							_hostConf[i]['Disk'][k]['checked'] = false ;
 						}
 					}
 					var leftListStatus = '<span class="badge badge-info" data-type="tooltip">' + useNum + '</span>' ;
@@ -774,7 +780,7 @@ function checkHostInfo()
 	}
 	else
 	{
-		showInfoFromFoot( 'danger', '没有机器选择!' ) ;
+		showInfoFromFoot( 'danger', '没有选择机器!' ) ;
 	}
 }
 

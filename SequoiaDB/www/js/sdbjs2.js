@@ -803,6 +803,17 @@ sdbjs.fun.isArray = function( object )
  */
 sdbjs.fun.getHostList = function( str )
 {
+	//数字字符串自动补零
+	function pad(num, n)
+	{
+		var len = num.toString().length;
+		while(len < n)
+		{
+			num = "0" + num;
+			len++;
+		}
+		return num;
+	}
 	var obj = new Object ;
 	var link_search = new Array() ;
 	var ip_search = new Array() ;
