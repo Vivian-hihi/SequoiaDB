@@ -143,11 +143,11 @@ namespace engine
       }
       if ( arg.argc() >= 2 )
       {
-         rc = arg.getString( 0, _svcname ) ;
+         rc = arg.getString( 1, _svcname ) ;
          if ( rc )
          {
             INT16 port = 0 ;
-            rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
+            rc = arg.getNative( 1, (void*)&port, SPT_NATIVE_INT16 ) ;
             if ( rc )
             {
                detail = BSON( SPT_ERR << "svcname must be string or int" ) ;
