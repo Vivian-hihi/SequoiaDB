@@ -86,12 +86,12 @@
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
-				<if>
+				<!-- <if>
 					<equals arg1="${is.coord.master}" arg2="false" />
 					<then>
 						<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="# catalogaddr=" replace="catalogaddr=${catalog.addrs}" flags="g" />
 					</then>
-				</if>
+				</if> -->
 
 				<exec executable="chown" dir="${db.path}/conf/local">
                     <arg line=" -R ${install.user} ${coord.service.port}" />
