@@ -570,13 +570,13 @@ namespace engine
             rc = _onAggrReqMsg( msg, contextID ) ;
             break ;
          case MSG_BS_LOB_OPEN_REQ :
-            rc = _onOpenLobMsg( msg, contextID, ppBody, bodyLen ) ;
+            rc = _onOpenLobMsg( msg, contextID, _contextBuff ) ;
             break ;
          case MSG_BS_LOB_WRITE_REQ:
             rc = _onWriteLobMsg( msg ) ;
             break ;
          case MSG_BS_LOB_READ_REQ:
-            rc = _onReadLobMsg( msg, ppBody, bodyLen ) ;
+            rc = _onReadLobMsg( msg, _contextBuff ) ;
             break ;
          case MSG_BS_LOB_CLOSE_REQ:
             rc = _onCloseLobMsg( msg ) ;
@@ -1089,9 +1089,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onOpenLobMsg( MsgHeader *msg, SINT64 &contextID,
-                                          const CHAR **data,
-                                          INT32 &len )
+   INT32 _pmdLocalSession::_onOpenLobMsg( MsgHeader *msg,
+                                          SINT64 &contextID,
+                                          rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
@@ -1112,8 +1112,7 @@ namespace engine
          goto error ;
       }
 
-      *data = meta.objdata() ;
-      len = meta.objsize() ;
+      buffObj = rtnContextBuf( meta.objdata(), meta.objsize(), 1 ) ;
    done:
       return rc ;
    error:
@@ -1149,14 +1148,14 @@ namespace engine
    }
 
    INT32 _pmdLocalSession::_onReadLobMsg( MsgHeader *msg,
-                                          const CHAR **data,
-                                          INT32 &len )
+                                          rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       const MsgOpLob *header = NULL ;
       SINT64 offset = -1 ;
       UINT32 readLen = 0 ;
       UINT32 length = 0 ;
+      const CHAR *data = NULL ;
 
       rc = msgExtractReadLobRequest( ( const CHAR * )msg, &header,
                                       &readLen, &offset ) ;
@@ -1167,15 +1166,14 @@ namespace engine
       }
 
       rc = rtnReadLob( header->contextID, _pEDUCB,
-                       readLen, offset, data, length ) ;
+                       readLen, offset, &data, length ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to read lob:%d", rc ) ;
          goto error ;
       }
 
-      len = length ;
-      SDB_ASSERT( 0 < len, "impossible" ) ;
+      buffObj = rtnContextBuf( data, length, 0 ) ;
    done:
       return rc ;
    error:
@@ -1233,8 +1231,7 @@ namespace engine
    }
 
    INT32 _pmdLocalSession::_onGetLobMeta( MsgHeader *msg,
-                                          const CHAR **data,
-                                          INT32 &len )
+                                          rtnContextBuf &buffObj )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
@@ -1255,8 +1252,7 @@ namespace engine
          goto error ;
       }
 
-      *data = obj.objdata() ;
-      len = obj.objsize() ;
+      buffObj = rtnContextBuf( obj.objdata(), obj.objsize(), 1 ) ;
    done:
       return rc ;
    error:
