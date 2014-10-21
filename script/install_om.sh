@@ -13,6 +13,7 @@ cmPort=$2
 svcname=$3
 dbpath=$4
 restPort=$5
+installer_pathname=$6
 
 sdbFile=$1/bin/sdb
 
@@ -28,6 +29,7 @@ echo "cmPort=" $2
 echo "svcname=" $3
 echo "dbpath=" $4
 echo "restPort=" $5
+echo "installer_pathname=" $6
 
 # second to create om
 $sdbFile -s " var oma = new Oma('localhost', '${cmPort}' ); \
@@ -44,6 +46,9 @@ $sdbFile -s " var oma = new Oma('localhost', '${cmPort}' ); \
                  oma.removeOM( '${svcname}' ) ; \
                  throw e ; \
               } "
+#copy installer file to packet dir
+cp $6  $1/packet
+
 if [  $? != 0  ] ; 
 then
    echo "Create OM failed"
