@@ -224,7 +224,7 @@ do_stop()
         #   0 if daemon has been stopped
         #   other if a failure occurred
         $INSTALL_DIR/bin/$DAEMON_STOP
-		$INSTALL_DIR/bin/$DB_STOP
+		$INSTALL_DIR/bin/$DB_STOP -t all
         return $?
 }
 
