@@ -20,5 +20,6 @@
         <topicref href="topics/dataexamples.dita"/>
         <topicref href="topics/read_write.dita"/>
         <topicref href="topics/bg_task.dita"/>
+        <topicref href="topics/lob.dita"/>
     </topicref>
 </map>

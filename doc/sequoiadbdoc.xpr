@@ -134,6 +134,7 @@
                         <file name="administration/concepts/database/topics/document.dita"/>
                         <file name="administration/concepts/database/topics/index_en.dita"/>
                         <file name="administration/concepts/database/topics/index.dita"/>
+                        <file name="administration/concepts/database/topics/lob.dita"/>
                         <file name="administration/concepts/database/topics/objectid_en.dita"/>
                         <file name="administration/concepts/database/topics/objectid.dita"/>
                         <file name="administration/concepts/database/topics/read_write_en.dita"/>
