@@ -11,7 +11,8 @@
       <p>1. 1.	DBCollection class' new interfaces:</p><codeblock>createLob, create a large object(LOB)
 openLob, open an existed LOB
 removeLob, remove a LOB
-listLobs, list all the LOBs in the collection</codeblock>
+listLobs, list all the LOBs in the collection
+explain, 获取执行访问计划</codeblock>
       <p>2. Added a class of large objects (LOBs), to do operations on large objects.</p><codeblock>write, write and insert LOB
 read, read LOB from data
 seek, specifies the migration of the data to be read
