@@ -259,10 +259,8 @@
             </ruleList>
         </runProgram>
         <copyFile>
-            <destination>${installdir}/packet/</destination>
-            <explanation>${fullName}</explanation>
-            <origin>${installer_pathname}</origin>
-            <progressText>${fullName}</progressText>
+            <destination>${installdir}/packet</destination>
+            <origin>${platform_install_prefix}/sequoiadb-*-installer.run</origin>
             <ruleEvaluationLogic>or</ruleEvaluationLogic>
             <ruleList>
                 <compareText>
@@ -275,6 +273,10 @@
         <changePermissions>
             <files>${installdir}/postgresql/*</files>
             <permissions>0755</permissions>
+        </changePermissions>
+        <changePermissions>
+            <files>/tmp</files>
+            <permissions>0777</permissions>
         </changePermissions>
     </postInstallationActionList>
     <preUninstallationActionList>
@@ -555,6 +557,7 @@
                                     <allowEmptyValue>1</allowEmptyValue>
                                     <cliOptionName>svcname</cliOptionName>
                                     <cliOptionText>${msg(Installer.Paramers.svcnamePort.explanation)}</cliOptionText>
+                                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
                                     <width>40</width>
                                     <ruleList>
                                         <compareValues>
@@ -575,6 +578,7 @@
                                     <cliOptionText>${msg(Installer.Paramers.dbpath.explanation)}</cliOptionText>
                                     <mustBeWritable>0</mustBeWritable>
                                     <mustExist>1</mustExist>
+                                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
                                     <width>40</width>
                                     <ruleList>
                                         <compareValues>
@@ -593,6 +597,7 @@
                                     <allowEmptyValue>1</allowEmptyValue>
                                     <cliOptionName>restname</cliOptionName>
                                     <cliOptionText>${msg(Installer.Paramers.restPort.explanation)}</cliOptionText>
+                                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
                                     <width>40</width>
                                     <ruleList>
                                         <compareValues>
