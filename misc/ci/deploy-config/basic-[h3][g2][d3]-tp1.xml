@@ -17,7 +17,7 @@
 	<property file="${properties.dir}" />
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
-			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/ant-sdbtasks.jar" />
+			<pathelement location="${WORKSPACE}/deploy/ant-sdbtasks/*.jar" />
 		</classpath>
 	</taskdef> 
 
