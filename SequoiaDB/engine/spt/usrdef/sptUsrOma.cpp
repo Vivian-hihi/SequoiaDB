@@ -143,10 +143,24 @@ namespace engine
       }
       if ( arg.argc() >= 2 )
       {
-         rc = arg.getString( 1, _svcname ) ;
+         rc = arg.getString( 0, _svcname ) ;
          if ( rc )
          {
-            detail = BSON( SPT_ERR << "svcname must be string" ) ;
+            INT16 port = 0 ;
+            rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
+            if ( rc )
+            {
+               detail = BSON( SPT_ERR << "svcname must be string or int" ) ;
+            }
+            else if ( port <= 0 || port >= 65535 )
+            {
+               detail = BSON( SPT_ERR << "svcname must in range ( 0, 65535 )" ) ;
+               rc = SDB_INVALIDARG ;
+            }
+            else
+            {
+               _svcname = boost::lexical_cast< string >( port ) ;
+            }
          }
          PD_RC_CHECK( rc, PDERROR, "Failed to get svcname, rc: %d", rc ) ;
       }
