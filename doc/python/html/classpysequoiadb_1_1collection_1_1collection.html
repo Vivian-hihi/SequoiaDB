@@ -159,6 +159,8 @@ def&#160;</td><td class="memItemRight" valign="bottom"><b>__repr__</b></td></tr>
 <tr class="separator:ae29b71dbe335749bef2d8406b6ff2338"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7c570b0f461fe6d407f470413e2ebb4"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#ad7c570b0f461fe6d407f470413e2ebb4">list_lobs</a></td></tr>
 <tr class="separator:ad7c570b0f461fe6d407f470413e2ebb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6aa9dd355f9f4a2e40dd5ea139dbf42b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a6aa9dd355f9f4a2e40dd5ea139dbf42b">query_one</a></td></tr>
+<tr class="separator:a6aa9dd355f9f4a2e40dd5ea139dbf42b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><pre class="fragment">Collection for SequoiaDB
@@ -443,6 +445,8 @@ Parameters:
    Name     Type           Info:
    oid      bson.ObjectId  Specified the oid of lob to be created,
                            if None, the oid is generated automatically
+Return values:
+   a lob object
 Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
@@ -723,6 +727,8 @@ Exceptions:
 Parameters:
    Name     Type                 Info:
    oid      str/bson.ObjectId    The specified oid
+Return values:
+   a lob object
 Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
@@ -883,6 +889,52 @@ Parameters:
                               all results.
 Return values:
    a cursor object of query
+Exceptions:
+   pysequoiadb.error.SDBTypeError
+   pysequoiadb.error.SDBBaseError
+</pre> 
+</div>
+</div>
+<a class="anchor" id="a6aa9dd355f9f4a2e40dd5ea139dbf42b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pysequoiadb.collection.collection.query_one </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>kwargs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Get one matching documents in current collection.
+
+Parameters:
+   Name              Type     Info:
+   **kwargs                   Useful options are below
+   - condition       dict     The matching rule, update all the
+                              documents if not provided.
+   - selected        dict     The selective rule, return the whole
+                              document if not provided.
+   - order_by        dict     The ordered rule, result set is unordered
+                              if not provided.
+   - hint            dict     The hint, automatically match the optimal
+                              hint if not provided.
+   - num_to_skip     long     Skip the first numToSkip documents,
+                              default is 0L.
+Return values:
+   a record of json/dict
 Exceptions:
    pysequoiadb.error.SDBTypeError
    pysequoiadb.error.SDBBaseError
@@ -1265,7 +1317,7 @@ Note:
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Oct 18 2014 13:07:18 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 22 2014 17:29:29 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>
