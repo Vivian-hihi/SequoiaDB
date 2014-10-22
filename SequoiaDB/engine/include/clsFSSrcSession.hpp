@@ -264,6 +264,7 @@ namespace engine
 
          UINT64                           _taskID ;
          UINT64                           _updateMetaTime ;
+         UINT64                           _lastEndNtyTime ;
    };
 }
 
