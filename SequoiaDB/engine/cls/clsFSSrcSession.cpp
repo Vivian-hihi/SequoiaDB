@@ -748,6 +748,7 @@ namespace engine
       BOOLEAN retryTime = 0 ;
 
    retry:
+      bEnd = FALSE ;
       _mb.clear() ;
       while ( TRUE )
       {
