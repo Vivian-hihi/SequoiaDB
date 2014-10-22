@@ -192,6 +192,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>close()
 : <a class="el" href="classpysequoiadb_1_1cursor_1_1cursor.html#a60e560821e39d8f3752bab0b533e59a0">pysequoiadb.cursor.cursor</a>
+, <a class="el" href="classpysequoiadb_1_1lob_1_1lob.html#af6452a5b46d21b8ad4247636f4a6d7bd">pysequoiadb.lob.lob</a>
 </li>
 <li>close_all_cursors()
 : <a class="el" href="classpysequoiadb_1_1client_1_1client.html#aac17be205eaf4e1f9abd7afd7088d999">pysequoiadb.client.client</a>
@@ -217,6 +218,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>create_index()
 : <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a0823f6a6b07a2f7504880632366c82fe">pysequoiadb.collection.collection</a>
+</li>
+<li>create_lob()
+: <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a27b737239cfd58c864c012e7aff52f5f">pysequoiadb.collection.collection</a>
 </li>
 <li>create_node()
 : <a class="el" href="classpysequoiadb_1_1replicagroup_1_1replicagroup.html#ae95a48dd45d0e48edee6ad9f6ea47e08">pysequoiadb.replicagroup.replicagroup</a>
@@ -319,6 +323,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>get_count()
 : <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a9db2fb7cdecd89f7803b70b7dbb857af">pysequoiadb.collection.collection</a>
 </li>
+<li>get_create_time()
+: <a class="el" href="classpysequoiadb_1_1lob_1_1lob.html#a3ad80bb513f6955ac003b4194091575b">pysequoiadb.lob.lob</a>
+</li>
 <li>get_cs_name()
 : <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a4a488b7137c6da483d7b5887341d1ac4">pysequoiadb.collection.collection</a>
 </li>
@@ -337,6 +344,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>get_list()
 : <a class="el" href="classpysequoiadb_1_1client_1_1client.html#aa46aadcceaa60e051232b5f11e8e2fa6">pysequoiadb.client.client</a>
 </li>
+<li>get_lob()
+: <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a3a4337ac0e2e0f9c7d82be3b33d3680f">pysequoiadb.collection.collection</a>
+</li>
 <li>get_master()
 : <a class="el" href="classpysequoiadb_1_1replicagroup_1_1replicagroup.html#a0b19ea443219ee3be7d103e3b79b2fcd">pysequoiadb.replicagroup.replicagroup</a>
 </li>
@@ -352,6 +362,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>get_nodenum()
 : <a class="el" href="classpysequoiadb_1_1replicagroup_1_1replicagroup.html#ac8b5744efc884e01b53d23b63e7485e5">pysequoiadb.replicagroup.replicagroup</a>
 </li>
+<li>get_oid()
+: <a class="el" href="classpysequoiadb_1_1lob_1_1lob.html#a39fdf1bf547277878df594584e036a8a">pysequoiadb.lob.lob</a>
+</li>
 <li>get_query_meta()
 : <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a76728ff0c3f96a62681e838b50858f45">pysequoiadb.collection.collection</a>
 </li>
@@ -363,6 +376,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>get_servicename()
 : <a class="el" href="classpysequoiadb_1_1replicanode_1_1replicanode.html#a0eb527c05ff1f3b4ef92b8c3eb1b3a8c">pysequoiadb.replicanode.replicanode</a>
+</li>
+<li>get_size()
+: <a class="el" href="classpysequoiadb_1_1lob_1_1lob.html#a6f0fdb89bf112567ff692b4fa16bfc6d">pysequoiadb.lob.lob</a>
 </li>
 <li>get_slave()
 : <a class="el" href="classpysequoiadb_1_1replicagroup_1_1replicagroup.html#a31ad310b0b0e61e5032012b6796dba20">pysequoiadb.replicagroup.replicagroup</a>
@@ -406,6 +422,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>list_collections()
 : <a class="el" href="classpysequoiadb_1_1client_1_1client.html#a289ea32fe644eceb22f6307b3fd07774">pysequoiadb.client.client</a>
 </li>
+<li>list_lobs()
+: <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#ad7c570b0f461fe6d407f470413e2ebb4">pysequoiadb.collection.collection</a>
+</li>
 <li>list_procedures()
 : <a class="el" href="classpysequoiadb_1_1client_1_1client.html#a88d894f9bb1629581ea2394e763f1c4f">pysequoiadb.client.client</a>
 </li>
@@ -429,12 +448,21 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>query()
 : <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a6a128fdbc0bcbf3d5729c869b9694ddc">pysequoiadb.collection.collection</a>
 </li>
+<li>query_one()
+: <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#a6aa9dd355f9f4a2e40dd5ea139dbf42b">pysequoiadb.collection.collection</a>
+</li>
 </ul>
 
 
 <h3><a class="anchor" id="index_r"></a>- r -</h3><ul>
+<li>read()
+: <a class="el" href="classpysequoiadb_1_1lob_1_1lob.html#afdd33ceb8a07fd9972d4084597f78238">pysequoiadb.lob.lob</a>
+</li>
 <li>remove_backup()
 : <a class="el" href="classpysequoiadb_1_1client_1_1client.html#ae0220a5e47c7a7736d5226727b971da7">pysequoiadb.client.client</a>
+</li>
+<li>remove_lob()
+: <a class="el" href="classpysequoiadb_1_1collection_1_1collection.html#ae29b71dbe335749bef2d8406b6ff2338">pysequoiadb.collection.collection</a>
 </li>
 <li>remove_node()
 : <a class="el" href="classpysequoiadb_1_1replicagroup_1_1replicagroup.html#ade1b7f511b284b41b00883ac30793f4b">pysequoiadb.replicagroup.replicagroup</a>
@@ -457,6 +485,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <h3><a class="anchor" id="index_s"></a>- s -</h3><ul>
 <li>scope()
 : <a class="el" href="classbson_1_1code_1_1Code.html#a469e80e1b36d72a12fe207a350aae8ba">bson.code.Code</a>
+</li>
+<li>seek()
+: <a class="el" href="classpysequoiadb_1_1lob_1_1lob.html#a1b86b8f45fa45a0c6103c8fe673d57e9">pysequoiadb.lob.lob</a>
 </li>
 <li>set_session_attri()
 : <a class="el" href="classpysequoiadb_1_1client_1_1client.html#a294103e4431a7fb950c7377c7c46d3b6">pysequoiadb.client.client</a>
@@ -526,11 +557,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>wait_task()
 : <a class="el" href="classpysequoiadb_1_1client_1_1client.html#a441c693adb76d50b7f68423aa2a1ad33">pysequoiadb.client.client</a>
 </li>
+<li>write()
+: <a class="el" href="classpysequoiadb_1_1lob_1_1lob.html#adbc7fb5271c443bf37f0479963708598">pysequoiadb.lob.lob</a>
+</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Sep 19 2014 08:59:08 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Oct 22 2014 17:29:30 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>
