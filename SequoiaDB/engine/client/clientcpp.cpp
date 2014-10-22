@@ -128,21 +128,21 @@ namespace sdbclient
    done :
       return rc ;
    }
-
+   
    /*
     * sdbCursorImpl
     * Cursor Implementation
     */
    _sdbCursorImpl::_sdbCursorImpl () :
-   _collection ( NULL ),
-   _contextID ( -1 ),
    _connection ( NULL ),
+   _collection ( NULL ),
    _pSendBuffer ( NULL ),
    _sendBufferSize ( 0 ),
    _pReceiveBuffer ( NULL ),
    _receiveBufferSize ( 0 ),
    _modifiedCurrent ( NULL ),
    _isDeleteCurrent ( FALSE ),
+   _contextID ( -1 ),
    _isClosed ( FALSE ),
    _totalRead ( 0 ),
    _offset ( -1 )
@@ -155,7 +155,8 @@ namespace sdbclient
       if ( _connection )
       {
          // if the cursor had been closed manually
-         // it would be unregister in function isClosed()
+         // it would be unregister in function close()
+         // so no need to do here
          if ( !_isClosed )
          {
             if ( -1 != _contextID )
@@ -168,9 +169,12 @@ namespace sdbclient
       if ( _collection )
       {
          // if the cursor had been closed manually
-         // it would be unregister in function isClosed()
+         // it would be unregister in function close()
+         // so no need to do here
          if ( !_isClosed )
+         {
             _collection->_unregCursor ( this ) ;
+         }
       }
       if ( _pSendBuffer )
       {
@@ -213,33 +217,44 @@ namespace sdbclient
       INT32 rc         = SDB_OK ;
       SINT64 contextID = 0 ;
       BOOLEAN result   = FALSE ;
+      BOOLEAN locked   = FALSE ;
+
+      // check
       if ( -1 == _contextID || !_connection )
-         goto exit ;
+      {
+         goto done ;
+      }
+      // build msg
       rc = clientBuildKillContextsMsg ( &_pSendBuffer, &_sendBufferSize, 0,
                                         1, &_contextID,
                                         _connection->_endianConvert ) ;
       if ( rc )
       {
-         goto exit ;
+         goto error ;
       }
       _connection->lock () ;
+      locked = TRUE ;
+      // send msg
       rc = _connection->_send ( _pSendBuffer ) ;
       if ( rc )
       {
          goto error ;
       }
+      // receive msg from engine
       rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
                                        contextID, result ) ;
       if ( rc )
       {
          goto error ;
       }
-   exit :
+
+   done :
+      if ( locked )
+      {
+         _connection->unlock () ;
+      }
       PD_TRACE_EXIT ( SDB_CLIENT__KILLCURSOR ) ;
       return ;
-   done :
-      _connection->unlock () ;
-      goto exit ;
    error :
       goto done ;
    }
@@ -250,12 +265,21 @@ namespace sdbclient
       PD_TRACE_ENTRY ( SDB_CLIENT__READNEXTBUF ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
+      BOOLEAN locked  = FALSE ;
       SINT64 contextID = 0 ;
-      if ( -1 == _contextID || !_connection )
+      // if contextid is not invalid
+      if ( -1 == _contextID )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+      // check
+      if ( !_connection )
       {
          rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
+      // build msg
       rc = clientBuildGetMoreMsg ( &_pSendBuffer, &_sendBufferSize, -1,
                                    _contextID, 0, _connection->_endianConvert ) ;
       if ( rc )
@@ -263,23 +287,29 @@ namespace sdbclient
          goto error ;
       }
       _connection->lock () ;
+      locked = TRUE ;
+      // send msg
       rc = _connection->_send ( _pSendBuffer ) ;
       if ( rc )
       {
-         _connection->unlock () ;
          goto error ;
       }
+      // receive from engine
       rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
                                        contextID, result ) ;
-      _connection->unlock () ;
       if ( rc || contextID != _contextID )
       {
          goto error ;
       }
    done :
+      if ( locked )
+      {
+         _connection->unlock () ;
+      }
       PD_TRACE_EXITRC ( SDB_CLIENT__READNEXTBUF, rc ) ;
       return rc ;
    error :
+      // release resource kept in cursor
       if ( SDB_DMS_EOC != rc )
       {
          _killCursor () ;
@@ -308,9 +338,9 @@ namespace sdbclient
       BSONObj localobj ;
       MsgOpReply *pReply = NULL ;
       // check wether the cursor had been close or not
-      if ( _isClosed || -1 == _contextID )
+      if ( _isClosed )
       {
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
          goto error ;
       }
       // begin to get next record
@@ -392,9 +422,9 @@ namespace sdbclient
       MsgOpReply *pReply = NULL ;
       BSONObj localobj ;
       // check wether the cursor had been close or not
-      if ( _isClosed || -1 == _contextID )
+      if ( _isClosed )
       {
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
          goto error ;
       }
       // begin to get next record
@@ -478,13 +508,13 @@ namespace sdbclient
       BOOLEAN result ;
       SINT64 contextID = 0 ;
       // check wether the cursor had been close or not
-      if ( _isClosed )
+      if ( _isClosed || -1 == _contextID )
       {
          goto done ;
       }
-      if (  -1 == _contextID )
+      if ( NULL == _connection )
       {
-         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
       rc = clientBuildKillContextsMsg( &_pSendBuffer, &_sendBufferSize, 0, 1,
@@ -1248,23 +1278,32 @@ namespace sdbclient
                                      const BSONObj &orderBy,
                                      const BSONObj &hint,
                                      INT64 numToSkip,
-                                     INT64 numToReturn )
+                                     INT64 numToReturn,
+                                     INT32 flag )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_QUERY ) ;
-      PD_TRACE2 ( SDB_CLIENT_QUERY,
+      PD_TRACE3 ( SDB_CLIENT_QUERY,
                   PD_PACK_LONG(numToSkip),
-                  PD_PACK_LONG(numToReturn) );
+                  PD_PACK_LONG(numToReturn),
+                  PD_PACK_INT( flag ) );
       INT32 rc = SDB_OK ;
       BOOLEAN result ;
       SINT64 contextID = 0 ;
       BOOLEAN locked = FALSE ;
+      // check
       if ( _collectionFullName [0] == '\0' || !_connection || !cursor )
       {
          rc = SDB_INVALIDARG ;
          goto done;
       }
+      // try to set flag to be find one
+      if ( 1 == numToReturn )
+      {
+         flag |= FLG_QUERY_WITH_RETURNDATA ;
+      }
+      // build msg
       rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                    _collectionFullName, 0, 0, numToSkip,
+                                    _collectionFullName, flag, 0, numToSkip,
                                     numToReturn,
                                     condition.objdata(),
                                     selected.objdata(),
@@ -1275,6 +1314,7 @@ namespace sdbclient
       {
          goto done ;
       }
+      // send msg
       _connection->lock () ;
       locked = TRUE ;
       rc = _connection->_send ( _pSendBuffer ) ;
@@ -1282,12 +1322,14 @@ namespace sdbclient
       {
          goto error ;
       }
+      // receive from engine
       rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
                                        contextID, result ) ;
       if ( rc )
       {
          goto error ;
       }
+      // build cursor
       if ( *cursor )
       {
          delete *cursor ;
@@ -1302,6 +1344,15 @@ namespace sdbclient
       ((_sdbCursorImpl*)*cursor)->_setCollection ( this ) ;
       ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
       ((_sdbCursorImpl*)*cursor)->_setConnection ( _connection ) ;
+      // query with return data
+      if ( ((UINT32)((MsgHeader*)_pReceiveBuffer)->messageLength) >
+           ossRoundUpToMultipleX( sizeof(MsgOpReply), 4 ) )
+      {
+         ((_sdbCursorImpl*)*cursor)->_pReceiveBuffer = _pReceiveBuffer ;
+         _pReceiveBuffer = NULL ;
+         ((_sdbCursorImpl*)*cursor)->_receiveBufferSize = _receiveBufferSize ;
+         _receiveBufferSize = 0 ;
+      }
    done :
       if ( locked )
          _connection->unlock () ;
@@ -2308,6 +2359,56 @@ namespace sdbclient
    error :
       goto done ;
 
+   }
+
+//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_EXPLAIN, "_sdbCollectionImpl::explain" )
+   INT32 _sdbCollectionImpl::explain ( 
+                              _sdbCursor **cursor,
+                              const bson::BSONObj &condition,
+                              const bson::BSONObj &select,
+                              const bson::BSONObj &orderBy,
+                              const bson::BSONObj &hint,
+                              INT64 numToSkip,
+                              INT64 numToReturn,
+                              INT32 flag,
+                              const bson::BSONObj &options )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_EXPLAIN ) ;
+      INT32 rc = SDB_OK ;
+      BSONObjBuilder bob ;
+      BSONObj newObj ;
+
+      // check
+      if ( '\0' == _collectionFullName[0] || !_connection )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // append info
+      try
+      {
+         bob.append( FIELD_NAME_HINT, hint ) ;
+         bob.append( FIELD_NAME_OPTIONS, options ) ;
+         newObj= bob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // get query explain
+      rc = query( cursor, condition, select, orderBy, newObj,
+                  numToSkip, numToReturn, flag | FLG_QUERY_EXPLAIN ) ;
+      if ( rc )
+      {
+         goto error ;
+      }  
+
+   done:
+      PD_TRACE_EXITRC ( SDB_CLIENT_EXPLAIN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    //PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATELOB, "_sdbCollectionImpl::createLob" )
@@ -4430,6 +4531,8 @@ namespace sdbclient
       SINT64 contextID = -1 ;
       BOOLEAN result = FALSE ;
       BOOLEAN locked = FALSE ;
+      UINT32 totalLen = 0 ;
+      const UINT32 maxSendLen = 2 * 1024 * 1024 ;
       
       // check
       if (  !_connection )
@@ -4465,29 +4568,39 @@ namespace sdbclient
          goto done ;
       }
       // build msg
-      rc = clientBuildWriteLobMsg( &_pSendBuffer, &_sendBufferSize,
-                                   buf, len, -1, 0, 1,
-                                   _contextID, 0,
-                                   _connection->_endianConvert ) ;
-      if ( SDB_OK != rc )
+      do
       {
-         goto error ;
-      }
-      _connection->lock() ;
-      locked = TRUE ;
-      // send msg
-      rc = _connection->_send ( _pSendBuffer ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
-      // receive and extract msg from engine
-      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                                       contextID, result ) ;
-      if ( SDB_OK != rc )
-      {
-         goto error ;
-      }
+         UINT32 sendLen = maxSendLen <= len - totalLen ?
+                          maxSendLen : len - totalLen ;
+         rc = clientBuildWriteLobMsg( &_pSendBuffer, &_sendBufferSize,
+                                      buf + totalLen, sendLen, -1, 0, 1,
+                                      _contextID, 0,
+                                      _connection->_endianConvert ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         _connection->lock() ;
+         locked = TRUE ;
+         // send msg
+         rc = _connection->_send ( _pSendBuffer ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         // receive and extract msg from engine
+         rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                          contextID, result ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         locked = FALSE ;
+         _connection->unlock() ;
+         
+         totalLen += sendLen ;
+      } while ( totalLen < len ) ;
+      
    done:
       if ( locked )
          _connection->unlock() ;
@@ -6943,27 +7056,11 @@ namespace sdbclient
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_CLOSE_ALL_CURSORS ) ;
       INT32 rc = SDB_OK ;
-      BOOLEAN locked = FALSE ;
-/*
-      rc = clientBuildKillAllContextsMsg( &_pSendBuffer, &_sendBufferSize, 0,
-                                         _endianConvert ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      lock () ;
-      locked = TRUE ;
-      rc = _send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-*/
+
       // set all the cursors' status to be closed
       for ( std::set<ossValuePtr>::iterator it = _cursors.begin();
             it != _cursors.end(); ++it )
       {
-//         ((_sdbCursorImpl *)(*it))->_isClosed = TRUE ;
          rc = ((_sdbCursorImpl *)(*it))->close() ;
          if ( rc )
          {
@@ -6971,10 +7068,6 @@ namespace sdbclient
          }
       }
    done :
-      if ( locked )
-      {
-         unlock () ;
-      }
       PD_TRACE_EXITRC ( SDB_CLIENT_CLOSE_ALL_CURSORS, rc );
       return rc ;
    error :

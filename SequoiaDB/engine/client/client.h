@@ -1259,7 +1259,13 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
     \param [in] hint The hint, automatically match the optimal hint if null
     \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
     \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
-    \param [in] flag The query flag
+    \param [in] flag The query flag, default to be 0
+
+        FLG_QUERY_FORCE_HINT(0x00000080)      : Force to use specified hint to query, if database have no index assigned by the hint, fail to query
+        FLG_QUERY_PARALLED(0x00000100)        : Enable paralled sub query
+        FLG_QUERY_WITH_RETURNDATA(0x00000200) : In general, query won't return data until cursor get from database,
+                                                when add this flag, return data in query response, it will be more high-performance
+        
     \param [out] handle The cursor handle of current query
     \retval SDB_OK Operation Success
     \retval Others Operation Fail

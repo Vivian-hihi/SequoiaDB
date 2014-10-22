@@ -43,18 +43,18 @@ namespace sdbclient
    class _sdbCursorImpl : public _sdbCursor
    {
    private :
-      BSONObj _hintObj ;
-      _sdbCollectionImpl *_collection ;
       _sdbCursorImpl ( const _sdbCursorImpl& other ) ;
       _sdbCursorImpl& operator=( const _sdbCursorImpl& ) ;
-      SINT64 _contextID ;
       _sdbImpl *_connection ;
+      _sdbCollectionImpl *_collection ;
       CHAR *_pSendBuffer ;
       INT32 _sendBufferSize ;
       CHAR *_pReceiveBuffer ;
       INT32 _receiveBufferSize ;
       BSONObj *_modifiedCurrent ;
       BOOLEAN _isDeleteCurrent ;
+      SINT64 _contextID ;
+      BSONObj _hintObj ;
       BOOLEAN _isClosed ;
 
       INT64 _totalRead ;
@@ -211,25 +211,27 @@ namespace sdbclient
       // output: sdbCursor ( required )
       INT32 query  ( _sdbCursor **cursor,
                      const BSONObj &condition = _sdbStaticObject,
-                     const BSONObj &selected = _sdbStaticObject,
-                     const BSONObj &orderBy = _sdbStaticObject,
-                     const BSONObj &hint = _sdbStaticObject,
-                     INT64 numToSkip = 0,
-                     INT64 numToReturn = -1
+                     const BSONObj &selected  = _sdbStaticObject,
+                     const BSONObj &orderBy   = _sdbStaticObject,
+                     const BSONObj &hint      = _sdbStaticObject,
+                     INT64 numToSkip          = 0,
+                     INT64 numToReturn        = -1,
+                     INT32 flag               = 0
                    ) ;
 
       INT32 query  ( sdbCursor &cursor,
                      const BSONObj &condition = _sdbStaticObject,
-                     const BSONObj &selected = _sdbStaticObject,
-                     const BSONObj &orderBy = _sdbStaticObject,
-                     const BSONObj &hint = _sdbStaticObject,
-                     INT64 numToSkip = 0,
-                     INT64 numToReturn = -1
+                     const BSONObj &selected  = _sdbStaticObject,
+                     const BSONObj &orderBy   = _sdbStaticObject,
+                     const BSONObj &hint      = _sdbStaticObject,
+                     INT64 numToSkip          = 0,
+                     INT64 numToReturn        = -1,
+                     INT32 flag               = 0
                    )
       {
          return query ( &cursor.pCursor,
                         condition, selected, orderBy, hint,
-                        numToSkip, numToReturn ) ;
+                        numToSkip, numToReturn, flag ) ;
       }
       //INT32 rename ( const CHAR *pNewName ) ;
       // create an index for the current collection
@@ -312,6 +314,32 @@ namespace sdbclient
       INT32 detachCollection ( const CHAR *subClFullName) ;
 
       INT32 alterCollection ( const bson::BSONObj &options ) ;
+
+      /// explain
+      INT32 explain ( _sdbCursor **cursor,
+                              const bson::BSONObj &condition = _sdbStaticObject,
+                              const bson::BSONObj &select    = _sdbStaticObject,
+                              const bson::BSONObj &orderBy   = _sdbStaticObject,
+                              const bson::BSONObj &hint      = _sdbStaticObject,
+                              INT64 numToSkip                = 0,
+                              INT64 numToReturn              = -1,
+                              INT32 flag                     = 0,
+                              const bson::BSONObj &options   = _sdbStaticObject ) ;
+
+      virtual INT32 explain ( sdbCursor &cursor,
+                              const bson::BSONObj &condition = _sdbStaticObject,
+                              const bson::BSONObj &select    = _sdbStaticObject,
+                              const bson::BSONObj &orderBy   = _sdbStaticObject,
+                              const bson::BSONObj &hint      = _sdbStaticObject,
+                              INT64 numToSkip                = 0,
+                              INT64 numToReturn              = -1,
+                              INT32 flag                     = 0,
+                              const bson::BSONObj &options   = _sdbStaticObject )
+      {
+         return explain( &cursor.pCursor, condition, select, orderBy, hint,
+                         numToSkip, numToReturn, flag, options ) ;
+      }
+
       /// lob
       INT32 createLob( _sdbLob **lob, const bson::OID *oid = NULL ) ;
       
