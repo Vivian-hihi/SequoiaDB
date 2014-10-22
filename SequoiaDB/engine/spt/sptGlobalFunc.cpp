@@ -69,6 +69,7 @@ JS_MAPPING_END()
                                           BSONObj & detail )
    {
       string msg ;
+      sdbSetNeedClearErrorInfo( FALSE ) ;
       if ( SDB_OK == arg.getString( 0, msg ) )
       {
          sdbSetErrMsg( msg.c_str() ) ;
@@ -92,6 +93,7 @@ JS_MAPPING_END()
                                        BSONObj & detail )
    {
       INT32 errNum = SDB_OK ;
+      sdbSetNeedClearErrorInfo( FALSE ) ;
       if( SDB_OK == arg.getNative( 0, (void*)&errNum, SPT_NATIVE_INT32 ) )
       {
          sdbSetErrno( errNum ) ;
