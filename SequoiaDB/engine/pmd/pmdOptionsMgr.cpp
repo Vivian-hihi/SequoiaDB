@@ -910,6 +910,7 @@ namespace engine
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbLobPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      ossMemset( _krcbCurPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
 
       _krcbMaxPool         = 0 ;
       _krcbDiagLvl         = (UINT16)PDWARNING ;
@@ -1242,8 +1243,8 @@ namespace engine
       }
       if ( 0 == _krcbWWWPath[0] )
       {
-         if ( SDB_OK != utilBuildFullPath( PMD_CURRENT_PATH,
-                                           PMD_OPTION_WWW_PATH_DIR,
+         if ( SDB_OK != utilBuildFullPath( _krcbCurPath,
+                                           ".."OSS_FILE_SEP PMD_OPTION_WWW_PATH_DIR,
                                            OSS_MAX_PATHSIZE, _krcbWWWPath ) )
          {
             std::cerr << "www path is too long!" << endl ;
@@ -1492,6 +1493,9 @@ namespace engine
       PMD_ADD_PARAM_OPTIONS_BEGIN( display )
          PMD_COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
+
+      rc = ossGetEWD( _krcbCurPath, OSS_MAX_PATHSIZE ) ;
+      JUDGE_RC( rc )
 
       rc = utilReadCommandLine( argc, argv, all, vm );
       JUDGE_RC( rc )
