@@ -24,8 +24,14 @@
     </section>    
     <section><title>示例</title>
       <ul>
-        <li>关闭数据库引擎跟踪：<codeblock>db.traceOff(&lt;dumpfile>);</codeblock></li>
+        <li>关闭数据库引擎跟踪：<codeblock>db.traceOff("/opt/sequoiadb/trace.dump");</codeblock></li>
       </ul>      
     </section>
-  </body>  
+  </body>
+  <related-links>
+  <link href="traceFmt.dita" format="dita" type="topic"></link>
+  <link href="traceOn.dita" format="dita" type="topic"></link>
+  <link href="traceResume.dita" format="dita" type="topic"></link>        
+  <link href="traceStatus.dita" format="dita" type="topic"></link>
+    </related-links>
 </topic>

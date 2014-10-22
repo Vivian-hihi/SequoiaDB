@@ -62,10 +62,10 @@
         <div class="p">2. 在任意一台数据库服务器上（以下步骤都只需要在这台服务器上操作），启动 SequoiaDB Shell 控制台<pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
 </div>
 
-        <div class="p">3. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock"> var oma = new Oma('localhost', 11790)</pre>
+        <div class="p">3. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock"> var oma = new Oma("localhost", 11790)</pre>
 </div>
 
-        <div class="p">4. 创建临时协调节点<pre class="pre codeblock">oma. createCoord(18800, '/opt/sequoiadb/database/coord/18800')</pre>
+        <div class="p">4. 创建临时协调节点<pre class="pre codeblock">oma.createCoord(18800, "/opt/sequoiadb/database/coord/18800")</pre>
 </div>
 
         <div class="p">5. 启动临时协调节点<pre class="pre codeblock"> oma.startNode(18800)</pre>
@@ -74,7 +74,7 @@
         
       <li class="li">步骤三：通过命令配置和启动编目节点        
         <p class="p">1. 连接到临时协调节点，在 shell 命令中输入：</p>
-<div class="p">在shell 命令中输入：<pre class="pre codeblock">&gt; var db = new Sdb("localhost",18800)</pre>
+<div class="p"><pre class="pre codeblock">&gt; var db = new Sdb("localhost",18800)</pre>
 其中18800为协调节点端口号</div>
 
         <div class="p">2. 创建一个编目节点组<pre class="pre codeblock">&gt; db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>

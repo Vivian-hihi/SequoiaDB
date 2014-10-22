@@ -63,5 +63,11 @@
 }</codeblock></li>        
       </ul>      
     </section>
-  </body>  
+  </body>
+  <related-links>
+  <link href="traceFmt.dita" format="dita" type="topic"></link>
+  <link href="traceOff.dita" format="dita" type="topic"></link>
+  <link href="traceOn.dita" format="dita" type="topic"></link>        
+  <link href="traceResume.dita" format="dita" type="topic"></link>
+    </related-links>
 </topic>

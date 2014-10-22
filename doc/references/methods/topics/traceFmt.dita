@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_fcp_xzm_zj">
-  <title>db.traceFmt()</title>
+  <title>traceFmt()</title>
   <body>
-    <section><title>db.traceFmt(&lt;formatType>,&lt;input>,&lt;output>)</title>
+    <section><title>traceFmt(&lt;formatType>,&lt;input>,&lt;output>)</title>
       <p>根据程序跟踪输出相应的信息到文件。</p>
     </section>
     <section><title>参数描述</title>
@@ -39,5 +39,11 @@
         <li>根据程序的跟踪情况形成文件打印出来：<codeblock>traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")</codeblock></li>        
       </ul>      
     </section>
-  </body>  
+  </body>
+  <related-links>  
+  <link href="traceOff.dita" format="dita" type="topic"></link>
+  <link href="traceOn.dita" format="dita" type="topic"></link>
+  <link href="traceResume.dita" format="dita" type="topic"></link>
+  <link href="traceStatus.dita" format="dita" type="topic"></link>
+    </related-links>
 </topic>

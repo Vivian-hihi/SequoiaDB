@@ -15,11 +15,11 @@
       <li>步骤二：启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，后面会删除）
         <p>1. 切换到 sdbadmin 用户<codeblock>su sdbadmin</codeblock></p>
         <p>2. 在任意一台数据库服务器上（以下步骤都只需要在这台服务器上操作），启动 SequoiaDB Shell 控制台<codeblock>/opt/sequoiadb/bin/sdb</codeblock></p>
-        <p>3. 连接到本地的集群管理服务进程 sdbcm<codeblock> var oma = new Oma('localhost', 11790)</codeblock></p>
-        <p>4. 创建临时协调节点<codeblock>oma. createCoord(18800, '/opt/sequoiadb/database/coord/18800')</codeblock></p>
+        <p>3. 连接到本地的集群管理服务进程 sdbcm<codeblock> var oma = new Oma("localhost", 11790)</codeblock></p>
+        <p>4. 创建临时协调节点<codeblock>oma.createCoord(18800, "/opt/sequoiadb/database/coord/18800")</codeblock></p>
         <p>5. 启动临时协调节点<codeblock> oma.startNode(18800)</codeblock></p></li>        
       <li>步骤三：通过命令配置和启动编目节点        
-        <p>1. 连接到临时协调节点，在 shell 命令中输入：</p><p>在shell 命令中输入：<codeblock>> var db = new Sdb("localhost",18800)</codeblock>其中18800为协调节点端口号</p>
+        <p>1. 连接到临时协调节点，在 shell 命令中输入：</p><p><codeblock>> var db = new Sdb("localhost",18800)</codeblock>其中18800为协调节点端口号</p>
         <p>2. 创建一个编目节点组<codeblock>> db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock></p>
         <p>其中</p><p>sdbserver1：第一个服务器主机名；</p><p>11800：为编目节点服务端口（该端口配置不要与随机端口冲突，以下其它端口的配置也需要注意）；</p><p>/opt/sequoiadb/database/cata/11800：为编目节点的数据文件存放路径；
           <note>请确保存放路径的权限，如果 SequoiaDB 采用的默认安装，那么给路径赋予 sdbadmin 权限，下同。</note></p>
