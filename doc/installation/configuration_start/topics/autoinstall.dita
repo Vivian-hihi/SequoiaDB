@@ -3,6 +3,74 @@
 <topic id="topic_vb1_njh_vp">
   <title>自动化安装</title>
   <body>
-    <p>Topic paragraph</p>
+    <p>OM 支持 IE7/8/9+、chrome、firefox 等主流浏览器。</p>
+    <ul>
+      <li>步骤一：登录 OM
+        <p>1.1 浏览器访问，访问地址为 OM 的地址，访问端口默认8000</p>
+        <p>1.2 例如 http://192.168.1.100:8000/login.html</p>
+        <p>1.3 登录用户名默认 admin，初始密码 admin</p>
+        <p>1.4 输入默认密码 admin</p>
+        <p>1.5 点击 &lt;<b>登录</b>> 按钮</p>
+        <p><image href="../images/s1.jpg"/></p></li>
+      <li>步骤二：开始部署
+        <p>2.1 点击导航栏的 &lt;<b>部署引导</b>></p>
+        <p><image href="../images/s21.jpg"/></p>
+        <p>2.2 集群的参数都有默认值，除了 &lt;<b>集群名</b>> 和 &lt;<b>业务名</b>>，基本上不需要修改其他参数，点击高级选项，可以设置更多的参数。修改后点击确定。</p>
+        <p><image href="../images/s22.jpg"/></p></li>
+      <li>步骤三：添加主机
+        <p>3.1 在左边操作栏，输入 &lt;<b>地址</b>>、&lt;<b>用户名</b>>、&lt;<b>密码</b>>、&lt;<b>SSH 端口</b>>，可以扫描出添加的主机。&lt;<b>地址</b>> 不仅支持 IP、HostName 扫描主机，还可以通过 IP 段和 HostName 段，&lt;<b>地址</b>> 可以参考左边操作栏的提示，点击 &lt;<b>帮助</b>>。</p>
+        <p><image href="../images/s31.jpg"/></p>
+        <p>3.2 在左边操作栏，输入 &lt;<b>地址</b>>、&lt;<b>用户名</b>>、&lt;<b>密码</b>>、&lt;<b>SSH 端口</b>>，然后点击 &lt;<b>扫描</b>>。</p>
+        <p><image href="../images/s32.jpg"/></p>
+        <p>3.3 扫描完成后，扫描结果会在右边显示出来，默认正常连接的主机都会选上，有问题的主机不会选择，点击有问题的主机，可以重新输入参数，点击输入框以外的地方，自动重新扫描主机。</p>
+        <p><image href="../images/s331.jpg"/></p>
+        <p><image href="../images/s332.jpg"/></p>
+        <p>3.4 在主机列表选择要添加的主机，图中3台主机都添加，因此全选。点击 &lt;<b>下一步</b>>。</p>
+        <p><image href="../images/s34.jpg"/></p>
+        <p>3.5 等待 OM 获取主机信息。</p>
+        <p><image href="../images/s35.jpg"/></p>
+        <p>3.6 左边是主机列表栏，右边是主机的详细信息，点击左边列表的主机，可以显示该主机信息。</p>
+        <p><image href="../images/s36.jpg"/></p>
+        <p>3.7 主机列表，蓝色提示已选择的磁盘数，黄色提示该主机有4个警告，当鼠标移到提示中，会自动显示内容。（注意：图中3台主机都有1个磁盘是满足容量的）</p>
+        <p><image href="../images/s37.jpg"/></p>
+        <p>3.8 检查主机没有问题，点击 &lt;<b>下一步</b>>，等待完成。完成后会自动进入下一步操作。</p>
+        <p><image href="../images/s381.jpg"/></p>
+        <p><image href="../images/s382.jpg"/></p></li>
+      <li>步骤四：创建业务
+        <p>4.1 配置业务信息，可以通过下拉菜单选择 &lt;<b>集群模式</b>> 和 &lt;<b>独立模式</b>>。</p>
+        <p><image href="../images/s41.jpg"/></p>
+        <p>4.2 &lt;<b>高级选项</b>>，可以选择指定的1台或多台主机安装业务，默认由系统自动分配。</p>
+        <p><image href="../images/s42.jpg"/></p>
+        <p>4.3 设置好参数后，点击 &lt;<b>下一步</b>>。</p>
+        <p><image href="../images/s43.jpg"/></p>
+        <p>4.4 左边是业务和每一个分区组信息，可以通过业务添加分区组，通过分区组添加删除节点、删除分区组。（注意：协调组和编目组是不能删除的）</p>
+        <p><image href="../images/s441.jpg"/></p>
+        <p><image href="../images/s442.jpg"/></p>
+        <p><image href="../images/s443.jpg"/></p>
+        <p><image href="../images/s444.jpg"/></p>
+        <p>4.5 右边是节点列表，点击列表每一行，都可以修改该行节点的配置。</p>
+        <p><image href="../images/s45.jpg"/></p>
+        <p>4.6 批量修改节点配置，可以在节点列表每一行的方框打勾来指定要修改的节点，也可以点击 &lt;<b>选择操作</b>> - &lt;<b>全选</b>> - &lt;<b>反选</b>> 来选择，然后点击 &lt;<b>已选定操作</b>> - &lt;<b>修改节点配置</b>>进行修改。</p>
+        <p><image href="../images/s46.jpg"/></p>
+        <p>4.7 节点列表第二行是查找条件，通过输入参数，可以快速找到指定条件的节点。</p>
+        <p><image href="../images/s471.jpg"/></p>
+        <p><image href="../images/s472.jpg"/></p>
+        <p><image href="../images/s473.jpg"/></p>
+        <p>4.8 批量修改节点配置，&lt;<b>数据路径</b>> 和 &lt;<b>服务名</b>> 可以通过规则来设置。点击左边 &lt;<b>提示</b>> - &lt;<b>帮助</b>>，有详细说明。</p>
+        <p><image href="../images/s481.jpg"/></p>
+        <p><image href="../images/s482.jpg"/></p>
+        <p>4.9 业务配置修改完成后，点击 &lt;<b>下一步</b>>，开始安装业务。</p>
+        <p><image href="../images/s49.jpg"/></p></li>
+      <li>步骤五：安装业务
+        <p>	5.1开始安装业务</p>
+        <p><image href="../images/s511.jpg"/></p>
+        <p><image href="../images/s512.jpg"/></p>
+        <p><image href="../images/s513.jpg"/></p>
+        <p><image href="../images/s514.jpg"/></p>
+        <p>5.2 安装完成，点击 &lt;<b>返回</b>>。</p>
+        <p><image href="../images/s52.jpg"/></p>
+        <p>5.3 业务安装完成。</p>
+        <p><image href="../images/s53.jpg"/></p></li>      
+    </ul>
   </body>
 </topic>
