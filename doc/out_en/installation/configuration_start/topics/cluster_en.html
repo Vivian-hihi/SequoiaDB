@@ -61,63 +61,31 @@
           following command to reconfigurate service program: service sdbcm start</p>
 </li>
 
-      <li class="li">Step 2: Start one coord node <div class="p">1. Switch to
+      <li class="li">Step 2: 启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，后面会删除）<div class="p">1. Switch to
           "sdbadmin"<pre class="pre codeblock">su sdbadmin </pre>
 </div>
-<p class="p">2. On any database server (the
-          following steps are manipulated on this server), create the coord node configuration
-          catalog</p>
-<div class="p"><pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/11810</pre>
- Here "11810"
-          is the service port of coord node. It can be set according to requirement. </div>
-<p class="p">3. Copy
-          sample configuration file of coord node</p>
-<div class="p">
-          <pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
 
-        </div>
-<p class="p">4. Alter configuration file</p>
-<div class="p">
-          <pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
+        <p class="p">2. On any database server (the following steps are manipulated on this server), 启动 SequoiaDB Shell 控制台</p>
+<div class="p"><pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
+</div>
 
-        </div>
-<p class="p">Alter content </p>
-<div class="p">
-          <pre class="pre codeblock"># database path           </pre>
+        <div class="p">3. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma("localhost", 11790)</pre>
+</div>
 
-        </div>
-<div class="p"><pre class="pre codeblock">dbpath=/opt/sequoiadb/database/coord      </pre>
-This is the path of
-          database. It can be changed according ot requirement. Please ensure that the path exists
-          (Please create manually if it does't exsit.)</div>
-<p class="p">5. Type in ":wq" to save and
-          exit</p>
-<p class="p">6. Create path that stores data
-          file</p>
-<div class="p"><pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/coord </pre>
-The path is the
-          path in previous step </div>
-<p class="p">7. Start coord node process</p>
-<div class="p">
-          <pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</pre>
+        <div class="p">4. 创建临时协调节点<pre class="pre codeblock">oma.createCoord(18800, "/opt/sequoiadb/database/coord/18800")</pre>
+</div>
 
-        </div>
+        <div class="p">5. 启动临时协调节点<pre class="pre codeblock">oma.startNode(18800)</pre>
+</div>
 </li>
 
-      <li class="li">Step 3: Configurate and start catalog nodes with statements<p class="p">1. Start SequoiaDB Shell
-          console on the physical machine of coord node</p>
-<div class="p">
-          <pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
+      <li class="li">Step 3: Configurate and start catalog nodes with statements
+        <p class="p">1. 连接到临时协调节点，在 shell 命令中输入：</p>
+<div class="p"><pre class="pre codeblock">&gt; var db = new Sdb("localhost",18800)</pre>
+其中18800为协调节点端口号</div>
 
-        </div>
-<p class="p">2. Connect to coord node </p>
-<div class="p">Input in shell:
-          <pre class="pre codeblock">&gt; var db = new Sdb("localhost",11810)</pre>
- Here "11810" is the service
-          port of coord node. </div>
-<p class="p">3. Create a catalog node group</p>
-<div class="p">
-          <pre class="pre codeblock">&gt; db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
+        <p class="p">2. Create a catalog node group</p>
+<div class="p"><pre class="pre codeblock">&gt; db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
 
         </div>
 <p class="p">Here "sdbserver1" is the hostname of the 1st server.</p>
@@ -125,7 +93,8 @@ The path is the
           service port of catalog node. (The port is configured not to conflict with a random port, other ports in the following configuration also requires attention. </p>
 <p class="p">" /opt/sequoiadb/database/cata/11800" is the path of
           data file of catalog node.</p>
-<p class="p">4. Wait for 5 second, and add 2 more catalog nodes</p>
+
+        <p class="p">3. Wait for 5 second, and add 2 more catalog nodes</p>
 <div class="p">
           <pre class="pre codeblock">&gt; var cataRG = db.getRG("SYSCatalogGroup");      </pre>
 
@@ -138,7 +107,8 @@ The path is the
           <pre class="pre codeblock">&gt; var node2 = cataRG.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</pre>
 
         </div>
-<div class="p">5. Start catalog node group <pre class="pre codeblock">&gt; node1.start()
+
+        <div class="p">4. Start catalog node group <pre class="pre codeblock">&gt; node1.start()
 &gt; node2.start()</pre>
 </div>
 <div class="p">
@@ -179,45 +149,31 @@ The path is the
           <pre class="pre codeblock">&gt; dataRG.start()</pre>
 
         </div>
-<p class="p">4. Exit SequoiaDB shell console</p>
-<div class="p">
-          <pre class="pre codeblock">&gt; quit</pre>
-
-        </div>
 </li>
 
-      <li class="li">Step 5: Start coord node on other 2 servers <p class="p">1. Create configuration catalog of coord
-          node</p>
-<pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/11810      Here "11810" is the service port of coord node. It can be set according to requirement. </pre>
+      <li class="li">Step 5: 部署启动协调节点<div class="p">1. 创建协调节点组<pre class="pre codeblock">var rg = db.createCoordRG()</pre>
+</div>
 
-        <p class="p">2. Copy sample configuration file of coord node</p>
-<pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
+        <div class="p">2. 创建协调节点<pre class="pre codeblock">rg.createNode("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")
+rg.createNode("sdbserver2", 11810, "/opt/sequoiadb/database/coord/11810")
+rg.createNode("sdbserver3", 11810, "/opt/sequoiadb/database/coord/11810")</pre>
+</div>
 
-        <p class="p">3. Alter configuration file</p>
-<pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf
-Alter content
-# database path
-dbpath=/opt/sequoiadb/database/coord  This is the path of database. It can be changed according ot requirement. 
-Please ensure that the path exists.(Please create manually if it does't exsit.)
+        <div class="p">3. 启动协调节点<pre class="pre codeblock">rg.start()</pre>
+</div>
+</li>
 
-the following line
-# catalog addr (hostname1:servicename1,hostname2:servicename2,...)
-#catalogaddr=
-modify to
-# catalog addr (hostname1:servicename1,hostname2:servicename2,...)
-catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803  This id the address and port of Catalog service.</pre>
+        <li class="li">步骤六：删除临时协调节点
+          <div class="p">1. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma("localhost", 11790)</pre>
+</div>
 
-        <p class="p">4. Type in ":wq" to save and exit</p>
-<p class="p">5. Create path of data file</p>
-<pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/coord  This path is the one in previous step.</pre>
+          <div class="p">2. 删除临时协调节点<pre class="pre codeblock">oma.removeCoord(18800)</pre>
+</div>
 
-        <p class="p">6. Start coord node
-          process</p>
-<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</pre>
-<p class="p">End</p>
-
-      </li>
-
+          <p class="p">End</p>
+</li>
+ 
+      
     </ul>
 
   </div>
