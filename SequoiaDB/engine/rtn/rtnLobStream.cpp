@@ -222,7 +222,7 @@ namespace engine
             goto error ;
          }
 
-         PD_LOG( PDEVENT, "lob [%s] is closed, len:%lld",
+         PD_LOG( PDDEBUG, "lob [%s] is closed, len:%lld",
                  getOID().str().c_str(), _offset ) ;
       }
       else if ( SDB_LOB_MODE_REMOVE & _mode )
@@ -236,7 +236,7 @@ namespace engine
             PD_LOG( PDERROR, "failed to remove meta data of lob:%d", rc ) ;
             goto error ;
          }
-         PD_LOG( PDEVENT, "lob [%s] is removed",
+         PD_LOG( PDDEBUG, "lob [%s] is removed",
                  getOID().str().c_str() ) ;
       }
 
@@ -641,7 +641,7 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG( PDEVENT, "lob[%s] in [%s] is created, wait to be completed",
+      PD_LOG( PDDEBUG, "lob[%s] in [%s] is created, wait to be completed",
               getOID().str().c_str(), _fullName ) ;
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBSTREAM__OPEN4CREATE, rc ) ;
