@@ -261,7 +261,8 @@ namespace engine
 
             // perform truncation
             rc = su->data()->truncateCollection ( pCollectionName, cb, NULL,
-                                                  TRUE, mbContext ) ;
+                                                  TRUE, mbContext,
+                                                  FALSE ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to truncate collection, rc = %d",
@@ -496,7 +497,8 @@ namespace engine
          mbContext->mb()->_flag = flag ;
 
          rc = su->data()->truncateCollection ( mbContext->mb()->_collectionName,
-                                               cb, NULL, TRUE, mbContext ) ;
+                                               cb, NULL, TRUE, mbContext,
+                                               FALSE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to truncate collection, rc = %d", rc ) ;

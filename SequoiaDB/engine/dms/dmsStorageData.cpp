@@ -1635,7 +1635,8 @@ namespace engine
                                               pmdEDUCB *cb,
                                               SDB_DPSCB *dpscb,
                                               BOOLEAN sysCollection,
-                                              dmsMBContext *context )
+                                              dmsMBContext *context,
+                                              BOOLEAN needChangeCLID )
    {
       INT32 rc           = SDB_OK ;
       BOOLEAN getContext = FALSE ;
@@ -1712,7 +1713,10 @@ namespace engine
       // pause mb lock and change metadata
       context->pause() ;
       ossLatch( &_metadataLatch, EXCLUSIVE ) ;
-      newCLID = _dmsHeader->_MBHWM++ ;
+      if ( needChangeCLID )
+      {
+         newCLID = _dmsHeader->_MBHWM++ ;
+      }
       ossUnlatch( &_metadataLatch, EXCLUSIVE ) ;
 
       // resume context lock
@@ -1720,8 +1724,11 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "dms mb context resume falied, rc: %d", rc ) ;
 
       // change mb metadata
-      context->mb()->_logicalID = newCLID ;
-      context->_clLID           = newCLID ;
+      if ( needChangeCLID )
+      {
+         context->mb()->_logicalID = newCLID ;
+         context->_clLID           = newCLID ;
+      }
 
       rc = _pIdxSU->truncateIndexes( context ) ;
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] indexes failed, "
