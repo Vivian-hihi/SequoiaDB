@@ -1,5 +1,4 @@
 //Auto generated index for searching.
-w["yyyy-mm-dd-hh.mm.ss.ffffff"]="44*1,50*4";
 w["yyyy-mm-dd-hh:mm:ss"]="1150*1";
 w["y，按回车，同意"]="716*1";
 w["y，按回车，系统启动安装，此时需要等待大约1分钟，系统安装完成"]="716*1";

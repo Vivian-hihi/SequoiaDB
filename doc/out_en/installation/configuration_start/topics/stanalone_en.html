@@ -51,58 +51,21 @@
       <li class="li">Switch to "sdbadmin"<pre class="pre codeblock">su sdbadmin </pre>
 </li>
 
-      <li class="li">Enter installation catalog (The following content supposes that the default installation
-        path is "/opt/sequoiadb")<div class="p">
-          <pre class="pre codeblock">cd/opt/sequoiadb</pre>
-
-        </div>
+      <li class="li">启动 SequoiaDB Shell 控制台（下文以默认安装路径 /opt/sequoiadb 为例）<div class="p"><pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
+</div>
+</li>
+      
+      <li class="li">连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma("localhost", 11790)</pre>
 </li>
 
-      <li class="li">Create a catalog to store configuration
-          file<div class="p"><pre class="pre codeblock">mkdir –p /opt/sequoiadb/conf/local/11810</pre>
- (Here 11810 is the port of database service. To avoid port conflicts and other issues, not the database 
-            port configuration in the random port range. Such as: Most linux default random port range of 32768~61000 can be configured in the database port 32767 or less.)</div>
+      <li class="li">创建独立模式的数据节点<pre class="pre codeblock">oma.createData(11810, "/opt/sequoiadb/database/standalone/11810")</pre>
+(Here 11810 is the port of database service. To avoid port conflicts and other issues, not the database 
+        port configuration in the random port range. Such as: Most linux default random port range of 32768~61000 can be configured in the database port 32767 or less.)<p class="p"/>
 </li>
 
-      <li class="li"><p class="p">Copy the sample configuraiton of standalone mode</p>
- <div class="p">
-          <pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.standalone /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
-
-        </div>
+      <li class="li">启动该节点<pre class="pre codeblock">oma.startNode(11810)</pre>
 </li>
-
-      <li class="li">Open the configuration file<div class="p">
-          <pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
-
-        </div>
-</li>
-
-      <li class="li">Alter nessesary configuration parameters <div class="p">
-          <pre class="pre codeblock"># database path         </pre>
-
-        </div>
-<div class="p"><pre class="pre codeblock">dbpath=/opt/sequoiadb/database/standalone</pre>
-The path of database.
-          It is configurated according to requirement, and ensure that the path exists (Please do
-          not manually create it! ) </div>
-</li>
-
-      <li class="li"><p class="p">Type in ":wq" to save and exit.</p>
- </li>
-
-      <li class="li">Create the path to store data
-          file<div class="p"><pre class="pre codeblock">mkdir –p /opt/sequoiadb/database/standalone </pre>
-This path is the
-          same as that in previous step</div>
-</li>
-
-      <li class="li"><p class="p">Start database process</p>
- <div class="p">
-          <pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart –c /opt/sequoiadb/conf/local/11810</pre>
-
-        </div>
-</li>
-
+      
       <li class="li">Finish configuration and startup of database</li>
 
     </ul>
