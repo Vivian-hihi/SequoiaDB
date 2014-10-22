@@ -1,49 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_3bg_thh_vp">
-  <title>oma.createCoord()</title>
+  <title>traceFmt()</title>
   <body>
     <section>
       <title>NAME</title>
-      <p>createCoord - Create a CoordNode in the cluster.</p>
+      <p>traceFmt() - Output information into file according to the program's trace.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>oma.createCoord</apiname>(<parmname>&lt;svcname>&lt;dbpath>,[config obj]</parmname>)
+      <p></p><apiname>traceFmt</apiname>(<parmname>&lt;formatType>&lt;input>,&lt;input></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
-      <p></p>Oma
+      <p></p>Sequoiadb
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Create a CoordNode in the cluster.</p>
+      <p>Output information into file according to the program's trace.</p>
       <parml>
         <plentry>
-          <pt>svcname (string)</pt>
-          <pd>Port number of the node.</pd>
+          <pt>formatType (int)</pt>
+          <pd>Format type of the.</pd>
         </plentry>
         <plentry>
-          <pt>dbpath (string)</pt>
-          <pd>Nodes path.</pd>
+          <pt>input (string)</pt>
+          <pd>Input file.</pd>
         </plentry>
         <plentry>
-          <pt>config (Json Object)</pt>
-          <pd>Configuration file of the node, including setting log's size, whether open transaction.</pd>
+          <pt>output (String)</pt>
+          <pd>Output file.</pd>
         </plentry>
-      </parml>
-      <note>
-        <p>
-          <ul>
-            <li>In a collection, we can create multiple nodes, but port number of each two nodes must be apart at least 5 ports, because each node's backend control 5 communication ports.</li>           
-          </ul>
-        </p>
-      </note>
+      </parml>      
     </section>    
     <section>
       <title>Examples</title>
-      <p>Create a Coord Node at port 11810, and set the log file size to 64MB.</p>
-      <codeblock>oma.createCoord(11810,"/opt/sequoiadb/coord/11810",{logfilesz:64})</codeblock>      
+      <p>Output information into file according to the program's trace, and print it out.</p>
+      <codeblock>traceFmt(0, "/opt/sequoiadb/trace.dump", "/opt/sequoiadb/trace.flw")</codeblock>      
     </section>
   </body>
 </topic>

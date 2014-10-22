@@ -1,8 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_m1h_shh_vp">
-  <title>Topic title</title>
+  <title>db.traceResume()</title>
   <body>
-    <p>Topic paragraph</p>
+    <section>
+      <title>NAME</title>
+      <p>traceResume - Resume the breakpoint trace tool.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.traceResume</apiname>()
+    </section> 
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Resume the breakpoint trace tool.</p>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Resume the breakpoint trace tool.</p>
+      <codeblock>db.traceResume()</codeblock>
+    </section>
   </body>
 </topic>

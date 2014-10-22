@@ -1,8 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_5g2_qhh_vp">
-  <title>Topic title</title>
+  <title>db.traceOff()</title>
   <body>
-    <p>Topic paragraph</p>
+    <section>
+      <title>NAME</title>
+      <p>traceOff() - Turn off the trace function of the database engine.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>traceOff</apiname>(<parmname>&lt;Dump file></parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Turn off the trace function of the database engine.</p>
+      <parml>
+        <plentry>
+          <pt>Dump file (string)</pt>
+          <pd>Name of dump file.</pd>
+        </plentry>        
+      </parml>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Turn off the trace function of the database engine.</p>
+      <codeblock>db.traceOff("/opt/sequoiadb/trace.dump");</codeblock>      
+    </section>
   </body>
 </topic>

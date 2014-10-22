@@ -134,6 +134,7 @@
                         <file name="administration/concepts/database/topics/document.dita"/>
                         <file name="administration/concepts/database/topics/index_en.dita"/>
                         <file name="administration/concepts/database/topics/index.dita"/>
+                        <file name="administration/concepts/database/topics/lob_en.dita"/>
                         <file name="administration/concepts/database/topics/lob.dita"/>
                         <file name="administration/concepts/database/topics/objectid_en.dita"/>
                         <file name="administration/concepts/database/topics/objectid.dita"/>
@@ -513,6 +514,7 @@
                 <folder name="images"/>
                 <folder name="tasks"/>
                 <folder name="topics">
+                    <file name="installation/configuration_start/topics/autoinstall_en.dita"/>
                     <file name="installation/configuration_start/topics/autoinstall.dita"/>
                     <file name="installation/configuration_start/topics/cluster_en.dita"/>
                     <file name="installation/configuration_start/topics/cluster.dita"/>
