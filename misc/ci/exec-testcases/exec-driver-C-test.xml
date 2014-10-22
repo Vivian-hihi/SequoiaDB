@@ -27,7 +27,7 @@
     <target name="Test-C-Samples" depends="Clean-C-Reports">
         <hostinfo prefix="host" />
         <echo message="Begin test c samples testcases..." />
-        <echo message="Perform the c samples testcases,with testcase.path=${samples.testcase.path}/C" />
+        <echo message="Perform the c samples testcases with testcase.path=${samples.testcase.path}/C" />
 
         <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
         <property name="test.suite.class.name" value="testcases-samples-c.${deploy.name}-${host.NAME}-${parallel.num}" />
