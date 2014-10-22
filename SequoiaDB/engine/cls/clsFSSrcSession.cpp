@@ -83,6 +83,7 @@ namespace engine
       _query = NULL ;
       _queryLen = 0 ;
       _packetID = -1 ;
+      _canResend= TRUE ;
       _dataType = CLS_FS_NOTIFY_TYPE_DOC ;
       _quit = FALSE ;
       _needData = 1 ;
@@ -744,7 +745,9 @@ namespace engine
       BOOLEAN bEnd = FALSE ;
       time_t bTime = time( NULL ) ;
       _dataType = CLS_FS_NOTIFY_TYPE_LOG ;
+      BOOLEAN retryTime = 0 ;
 
+   retry:
       _mb.clear() ;
       while ( TRUE )
       {
@@ -812,6 +815,17 @@ namespace engine
             _syncLob( handle, packet, routeID, TID, requestID ) ;
          }
       }
+      else if ( retryTime < 100 )
+      {
+         ++retryTime ;
+         ossSleep( 20 ) ;
+         goto retry ;
+      }
+      else
+      {
+         _canResend = FALSE ;
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSDSBS__SYNCLOG, rc );
       return rc ;
@@ -1266,7 +1280,7 @@ namespace engine
       }
       /// msg was delayed or lost.
       /// resend last msg.
-      else if ( msg->packet == _packetID )
+      else if ( msg->packet == _packetID && _canResend )
       {
          PD_LOG( PDWARNING, "Session[%s]: msg was delayed or lost. resend "
                  "packet. [packet:%lld][type:%d]", sessionName(),
@@ -1274,12 +1288,10 @@ namespace engine
          _resend( handle, msg ) ;
          goto done ;
       }
-      else
-      {
-         /// do nothing.
-      }
 
       _packetID = msg->packet ;
+      _canResend= TRUE ;
+
       if ( CLS_FS_NOTIFY_TYPE_DOC == msg->type )
       {
          rc = _syncRecord( handle, msg->packet, header->routeID,

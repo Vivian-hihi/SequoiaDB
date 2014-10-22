@@ -152,6 +152,7 @@ namespace engine
          _dpsMessageBlock                 _mb ;
          SINT64                           _packetID ;
          INT32                            _dataType ;
+         BOOLEAN                          _canResend ;
          BOOLEAN                          _quit ;
          BOOLEAN                          _hasMeta ;
          INT32                            _needData ;
