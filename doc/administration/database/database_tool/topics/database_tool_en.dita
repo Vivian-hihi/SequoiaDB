@@ -9,6 +9,6 @@
     <p><xref href="sdbinspt_en.dita">Database Detecting Tool — sdbdmsdump</xref></p>
     <p><xref href="tool_sdbtop_en.dita">Database Performance Monitoring Tool — sdbtop</xref></p>
     <p><xref href="sdbinspect_en.dita">Database Cluster Nodes'Data Consistency Inspection Tool — sdbinspect</xref></p>
-    <p><xref href="sdbsupport_en.dita">数据库信息收集工具 — sdbsupport</xref></p>
+    <p><xref href="sdbsupport_en.dita">Database Information Collection Tool — sdbsupport</xref></p>
   </body>
 </topic>

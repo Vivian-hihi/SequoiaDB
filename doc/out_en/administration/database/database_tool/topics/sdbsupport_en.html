@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="数据库信息收集工具 — sdbsupport"/>
-<meta name="description" content="sdbsupport 是用于收集 SequoiaDB 相关信息的工具，位于目录 /opt/sequoiadb/tools 下面。此工具收集的信息包括：数据库配置信息、数据库日志信息、数据库所在主机的硬件信息和数据库、操作系统信息以及数据库快照信息。 使用此工具需要先为 sdbsupport.sh 赋执行权限： chmod 755 sdbsupport.sh 权限需求 数据库用户权限。 选项 参数 ..."/>
+<meta name="DC.Title" content="Database Information Collection Tool — sdbsupport"/>
+<meta name="description" content="Sdbsupport is used for collection information of SequoiaDB, which under the path of /opt/sequoiadb/tools. This tool collects information of : database configuration info, database log info, the ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/database/database_tool/topics/database_tool_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_p5m_3p5_5p"/>
 <link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
-<title>数据库信息收集工具 — sdbsupport</title>
+<title>Database Information Collection Tool — sdbsupport</title>
 <script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../../index.html";
     var ratingFile = "";
@@ -33,28 +33,28 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../../administration/database/database_tool/topics/database_tool_en.html" title="DataBase Tool"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">DataBase Tool</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/database_en.html" title="DataBase Management">DataBase Management</a> / <a class="navheader_parent_path" href="../../../../administration/database/database_tool/topics/database_tool_en.html" title="DataBase Tool">DataBase Tool</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">数据库信息收集工具 — sdbsupport</h1>
+  <h1 class="title topictitle1">Database Information Collection Tool — sdbsupport</h1>
 
   <div class="body">
-    <p class="p">sdbsupport 是用于收集 SequoiaDB 相关信息的工具，位于目录 /opt/sequoiadb/tools 下面。此工具收集的信息包括：数据库配置信息、数据库日志信息、数据库所在主机的硬件信息和数据库、操作系统信息以及数据库快照信息。</p>
+    <p class="p">Sdbsupport is used for collection information of SequoiaDB, which under the path of /opt/sequoiadb/tools. This tool collects information of : database configuration info, database log info, the hardware info of the machine database installed, OS info and database snapshots information.</p>
 
-    <div class="p">使用此工具需要先为 sdbsupport.sh 赋执行权限：<pre class="pre codeblock">chmod 755 sdbsupport.sh</pre>
+    <div class="p">This tool need to give authorization to sdbsupport.sh.<pre class="pre codeblock">chmod 755 sdbsupport.sh</pre>
 </div>
 
-    <div class="section"><h2 class="title sectiontitle">权限需求</h2>
+    <div class="section"><h2 class="title sectiontitle">Authorization required</h2>
       
-      <p class="p">数据库用户权限。</p>
+      <p class="p">Database user permission.</p>
 
     </div>
     
-    <div class="section"><h2 class="title sectiontitle">选项</h2>
+    <div class="section"><h2 class="title sectiontitle">Options</h2>
       
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d22126e36" class="stentry">参数</th>
+          <th valign="bottom" align="left" id="d22126e36" class="stentry">Parameters</th>
 
-          <th valign="bottom" align="left" id="d22126e39" class="stentry">缩写</th>
+          <th valign="bottom" align="left" id="d22126e39" class="stentry">Abbr</th>
 
-          <th valign="bottom" align="left" id="d22126e42" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d22126e42" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
@@ -62,7 +62,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">帮助选项</td>
+          <td valign="top" headers="d22126e42" class="stentry">Help options</td>
 
         </tr>
 <tr class="strow">
@@ -70,7 +70,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry">-N arg</td>
 
-          <td valign="top" headers="d22126e42" class="stentry">所需要收集的信息的主机名字 </td>
+          <td valign="top" headers="d22126e42" class="stentry">Host name you want to collect information</td>
 
         </tr>
 <tr class="strow">
@@ -78,7 +78,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry">-p arg</td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定特定端口收集其配置、日志及快照信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Specify a port to collect its configuration, log and snapshot</td>
 
         </tr>
 <tr class="strow">
@@ -86,7 +86,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry">-s</td>
 
-          <td valign="top" headers="d22126e42" class="stentry">收集快照信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect snapshot information</td>
 
         </tr>
 <tr class="strow">
@@ -94,7 +94,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry">-o</td>
 
-          <td valign="top" headers="d22126e42" class="stentry">收集操作系统信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect OS information</td>
 
         </tr>
 <tr class="strow">
@@ -102,7 +102,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry">-h</td>
 
-          <td valign="top" headers="d22126e42" class="stentry">收集硬件信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect hardware information</td>
 
         </tr>
 <tr class="strow">
@@ -110,7 +110,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集数据库所有信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect all the information </td>
 
         </tr>
 <tr class="strow">
@@ -118,7 +118,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集配置文件的信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect configuration info</td>
 
         </tr>
 <tr class="strow">
@@ -126,7 +126,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集日志文件信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect log file info</td>
 
         </tr>
 <tr class="strow">
@@ -134,7 +134,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集 CM 配置、日志信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect CM's configuration and log info</td>
 
         </tr>
 <tr class="strow">
@@ -142,7 +142,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集 CPU 信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect CPU info</td>
 
         </tr>
 <tr class="strow">
@@ -150,7 +150,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集内存信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect memory info</td>
 
         </tr>
 <tr class="strow">
@@ -158,7 +158,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集硬盘信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect disk info</td>
 
         </tr>
 <tr class="strow">
@@ -166,7 +166,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集网卡信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect netcard info</td>
 
         </tr>
 <tr class="strow">
@@ -174,7 +174,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集主板信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect mainboard info</td>
 
         </tr>
 <tr class="strow">
@@ -182,7 +182,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集编目节点快照</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect catalog node snapshot</td>
 
         </tr>
 <tr class="strow">
@@ -190,7 +190,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集数据库集群组的信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect database group info</td>
 
         </tr>
 <tr class="strow">
@@ -198,7 +198,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集上下文快照信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect specified context snapshot info</td>
 
         </tr>
 <tr class="strow">
@@ -206,7 +206,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集会话快照信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect session's snapshot info</td>
 
         </tr>
 <tr class="strow">
@@ -214,7 +214,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集集合快照信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect collection snapshot info</td>
 
         </tr>
 <tr class="strow">
@@ -222,7 +222,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集集合空间信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect collectionspace info</td>
 
         </tr>
 <tr class="strow">
@@ -230,7 +230,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集数据库快照信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect database snapshot info</td>
 
         </tr>
 <tr class="strow">
@@ -238,7 +238,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集系统快照信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect system snapshot info</td>
 
         </tr>
 <tr class="strow">
@@ -246,7 +246,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集操作系统硬盘管理信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect OS disk mangement info</td>
 
         </tr>
 <tr class="strow">
@@ -254,7 +254,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集操作系统基本信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect basic OS info</td>
 
         </tr>
 <tr class="strow">
@@ -262,7 +262,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集内核加载模块信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect kernel module's loading info</td>
 
         </tr>
 <tr class="strow">
@@ -270,7 +270,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集操作系统环境变量信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect OS environment parameter's info</td>
 
         </tr>
 <tr class="strow">
@@ -278,7 +278,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集 IP 地址等网络信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect network information like IP address</td>
 
         </tr>
 <tr class="strow">
@@ -286,7 +286,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集操作系统进程信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect OS processes info</td>
 
         </tr>
 <tr class="strow">
@@ -294,7 +294,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集用户登陆此机所进行操作的历史信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect the operation information of users who have login in the system</td>
 
         </tr>
 <tr class="strow">
@@ -302,7 +302,7 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集操作系统用户限制信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect OS users' limitation info</td>
 
         </tr>
 <tr class="strow">
@@ -310,63 +310,65 @@
 
           <td valign="top" headers="d22126e39" class="stentry"> </td>
 
-          <td valign="top" headers="d22126e42" class="stentry">指定收集给定时间间隔内的服务状态值信息</td>
+          <td valign="top" headers="d22126e42" class="stentry">Collect service status information of a period of time</td>
 
         </tr>
 </table>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">用法示例</h2>
+    <div class="section"><h2 class="title sectiontitle">Examples</h2>
       
-      <p class="p">1.	获取参数信息。</p>
+      <p class="p">1.	Get parameters info</p>
 
       <pre class="pre codeblock">./sdbsupport.sh --help</pre>
 
-      <p class="p">2.	收集本机的数据信息。【包括配置、日志、硬件、操作系统及快照信息】</p>
+      <p class="p">2.	Collect local data information (configuration, log, hardware, OS and snapshot)</p>
 
       <pre class="pre codeblock">./sdbsupport.sh</pre>
 
-      <p class="p">3.	收集整个数据库集群信息</p>
+      <p class="p">3.	Collect info of the whole database</p>
 
       <pre class="pre codeblock">./sdbsupport.sh --all</pre>
 
-      <p class="p">4.	收集指定主机信息。</p>
+      <p class="p">4.	Collect info of specific host</p>
 
       <pre class="pre codeblock">./sdbsuport.sh -N htest2</pre>
 
-      <p class="p">5.	收集指定主机指定端口信息。</p>
+      <p class="p">5.	Collect info of specific port on specific host</p>
 
       <pre class="pre codeblock">./sdbsuppor.sh -N htest3 -p 50000</pre>
 
-      <p class="p">6.	收集操作系统信息。</p>
+      <p class="p">6.	Collect OS info</p>
 
       <pre class="pre codeblock">./sdbsupport.h --sinfo</pre>
 
-      <p class="p">7.	收集特定主机特定端口的日志信息及快照信息。</p>
+      <p class="p">7.	Collect log and snapshot info of specific port on specific host</p>
 
       <pre class="pre codeblock">./sdbsupport.sh -N htest2 -p 11810 --snapshot --log</pre>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">信息归类</h2>
+    <div class="section"><h2 class="title sectiontitle">Information classification</h2>
       
-      <p class="p">通过执行 ./sdbsupport.sh xxx xxx…. 收集的数据库信息信息，会全部收集到本地的 log 文件夹中。收集的信息是以主机为单位打成的压缩包，名称以“主机名-年月日-时分秒”命名。将此文件解压缩后会得四个文件夹：SDBNODES，SDBSNAPS，OSINFO，HARDINFO。</p>
+      <p class="p">With executing the  ./sdbsupport/sh xxx xxx... to collect database information, and all the information will be store at the local log folder. </p>
 
-      <p class="p">SDBNODES：存放收集的数据库配置、日志信息</p>
+      <p class="p">The information collected will pack as compressed packages classified with the hostname. Packages are named with "hostname-yymmdd-time". After decompression, the package will have 4 folders: SDBNODES, SDBSNAPS, OSINFO, HARDINFO.</p>
 
-      <p class="p">SDBSNAPS：存放收集的数据库快照信息</p>
+      <p class="p">SDBNODES: store collected database configuration info, log info</p>
 
-      <p class="p">OSINFO：存放收集的操作系统信息</p>
+      <p class="p">SDBSNAPS: store collected database snapshot info</p>
 
-      <p class="p">HARDINFO：存放收集的硬件信息</p>
+      <p class="p">OSINFO: store collected OS info</p>
 
-      <div class="note note"><span class="notetitle">Note:</span> <div class="p">数据库集群内的机器，如果没有配置信任关系，在收集时，需要输入密码，如：<pre class="pre codeblock">/opt/sequoiadb/tools/sdbsupport/expect/expect
+      <p class="p">HARDINFO: store collected hardware info</p>
+
+      <div class="note note"><span class="notetitle">Note:</span> <div class="p">If Machines in database group they don't have the trust relationship, uses need to insert password when they want to execute the collection.<pre class="pre codeblock">/opt/sequoiadb/tools/sdbsupport/expect/expect
 Success to export System environment variable : /opt/sequoiadb/tools/sdbsupport/expect/
 Check over Environment!
 Complete database database cluster
 The host sdbadmin@htest2's password :</pre>
-【此时需要输入 htest2 机器，sdbadmin 用户的密码，然后 Enter】</div>
+【now insert machine name: htest2, username: sdbadmin, and password then Enter】</div>
 </div>
       
     </div>
@@ -383,7 +385,7 @@ The host sdbadmin@htest2's password :</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.10
           
     </div>
 </body>
