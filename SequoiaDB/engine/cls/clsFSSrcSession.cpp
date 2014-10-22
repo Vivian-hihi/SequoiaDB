@@ -815,10 +815,10 @@ namespace engine
             _syncLob( handle, packet, routeID, TID, requestID ) ;
          }
       }
-      else if ( retryTime < 100 )
+      else if ( retryTime < 20 )
       {
          ++retryTime ;
-         ossSleep( 20 ) ;
+         ossSleep( 100 ) ;
          goto retry ;
       }
       else
