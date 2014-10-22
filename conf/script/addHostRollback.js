@@ -55,7 +55,7 @@ function uninstallDBPacket ( ssh, osInfo, path )
       }
       catch ( e )
       {
-         errMsg = "Failed to uninstall db packet in host [" + ssh.getPeerIP() + "]" ;
+         errMsg = "Failed to uninstall db packet in host[" + ssh.getPeerIP() + "]" ;
          exception_handle( e, errMsg ) ;
       }
    }

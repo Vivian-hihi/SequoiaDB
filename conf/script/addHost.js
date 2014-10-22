@@ -285,7 +285,7 @@ function main()
             retObj[Detail] = GETLASTERRMSG() ;
             RET_JSON[HostInfo].push( retObj ) ;
             RET_JSON[Errno] = e ;
-            RET_JSON[Detail] = "Failed to add host [" + ip + "]: " + retObj[Detail] ;
+            RET_JSON[Detail] = "Failed to add host[" + ip + "]: " + retObj[Detail] ;
             break ;
          }
          else
@@ -294,7 +294,7 @@ function main()
             retObj[Detail] = GETLASTERRMSG() ;
             RET_JSON[HostInfo].push( retObj ) ;
             RET_JSON[Errno] = SDB_SYS ;
-            RET_JSON[Detail] = "Failed to add host [" + ip + "]: " + e ;
+            RET_JSON[Detail] = "Failed to add host[" + ip + "]: " + e ;
             break ;
          }
       }
