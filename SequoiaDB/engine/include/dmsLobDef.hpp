@@ -183,14 +183,16 @@ namespace engine
       SINT32         _lastPageInBucket ;
       SINT32         _nextPageInBucket ;
       UINT32         _clLogicalID ;
-      CHAR           _pad2[214];  /// DMS_LOB_DATA_MAP_BLK_LEN - 4 * 7 - DMS_LOB_OID_LEN
+      UINT16         _mbID ;
+      CHAR           _pad2[212];  /// sizeof( _dmsLobDataMapBlk ) == 256B
 
       _dmsLobDataMapBlk()
       :_sequence( 0 ),
        _dataLen( 0 ),
        _lastPageInBucket( DMS_LOB_INVALID_PAGEID ),
        _nextPageInBucket( DMS_LOB_INVALID_PAGEID ),
-       _clLogicalID( 0 )
+       _clLogicalID( DMS_INVALID_CLID ),
+       _mbID( DMS_INVALID_MBID )
       {
          ossMemset( this, 0, sizeof( _pad1 ) + sizeof( _oid ) ) ;
          ossMemset( _pad2, 0, sizeof( _pad2 ) ) ;

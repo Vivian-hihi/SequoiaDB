@@ -702,7 +702,6 @@ namespace engine
                                     dmsMBContext *context )
    {
       INT32 rc = SDB_OK ;
-      dmsMB *mb = context->mb() ;
       _dmsLobDataMapBlk *blk = NULL ;
 
       ossValuePtr extent = extentAddr( page ) ;
@@ -718,7 +717,8 @@ namespace engine
       ossMemcpy( blk->_oid, record._oid, DMS_LOB_OID_LEN ) ;
       blk->_sequence = record._sequence ;
       blk->_dataLen = record._dataLen ;
-      blk->_clLogicalID = mb->_logicalID ;
+      blk->_clLogicalID = context->clLID() ;
+      blk->_mbID = context->mbID() ;
 
       rc = _push2Bucket( _getBucket( record._hash ),
                          page, *blk ) ;
