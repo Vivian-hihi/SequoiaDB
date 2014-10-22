@@ -1738,6 +1738,7 @@ namespace engine
 
       _taskID           = 0 ;
       _updateMetaTime   = 0 ;
+      _lastEndNtyTime   = 0 ;
    }
 
    _clsSplitSrcSession::~_clsSplitSrcSession()
@@ -2050,7 +2051,18 @@ namespace engine
          {
             return FALSE ;
          }
+
+         if ( 0 == _lastEndNtyTime )
+         {
+            _lastEndNtyTime = ( UINT64 )time( NULL ) ;
+         }
+
+         if ( ( UINT64 )time( NULL ) - _lastEndNtyTime <= 2 )
+         {
+            return FALSE ; // delay 2 seconds
+         }
       }
+
       return TRUE ;
    }
 
