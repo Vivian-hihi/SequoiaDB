@@ -285,11 +285,17 @@ const UINT32 RTN_LOOP_WRITE_LEN = DMS_PAGE_SIZE512K * 4 ;
                       RTN_LOB_GET_OFFSET_IN_SEQUENCE( currentOffset,
                                                       _pageSize ) ;
          UINT32 lenOfTuple = _pageSize - offsetOfTuple ;
-         if ( ( lobLen - offset ) < lenOfTuple )
+         if ( ( lobLen - currentOffset ) < lenOfTuple )
          {
             /// we want to read a whole piece unless hit the end of lob.
-            lenOfTuple = lobLen - offset ;
+            lenOfTuple = lobLen - currentOffset ;
          }
+
+         if ( 0 == lenOfTuple )
+         {
+            break ;
+         }
+
          UINT32 sequence = RTN_LOB_GET_SEQUENCE( currentOffset,
                                                  _logarithmic ) ;
 
