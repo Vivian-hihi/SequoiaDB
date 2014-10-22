@@ -405,9 +405,11 @@ function adaptPath( osInfo, path )
    {
       s = "\\" ;
    }
-   i = path.indexOf( s ) ;
-   if ( (i != -1) && (i != path.length) )
+   i = path.lastIndexOf( s ) ;
+   if ( i != ( path.length -1 ) )
+   {
       path += s ;
+   }
    return path ;
 }
 
@@ -703,3 +705,34 @@ function getAgentPort( hostname )
    return retPort + "" ;
 }
 
+
+/* *****************************************************************************
+@discretion: get local ip from hosts table
+@parameter void
+@return
+   localIP[string]: local ip address
+***************************************************************************** */
+function getLocalIPAddr()
+{
+   var localIP = null ;
+   var cmd = new Cmd() ;
+   var osInfo = System.type() ;
+   try
+   {
+      if ( OMA_LINUX == osInfo )
+      {
+         localIP = cmd.run("hostname -i") ;
+         localIP = removeLineBreak( localIP ) ; 
+      }
+      else
+      {
+         // TODO:
+      }
+   }
+   catch ( e )
+   {
+      errMsg = "Failed to get localhost ip address" ;
+      exception_handle( e, errMsg ) ;   
+   } 
+   return localIP ;
+}

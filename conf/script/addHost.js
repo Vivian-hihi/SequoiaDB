@@ -32,6 +32,97 @@ var RET_JSON       = new Object() ;
 RET_JSON[Errno]    = SDB_OK ;
 RET_JSON[Detail]   = "" ;
 RET_JSON[HostInfo] = [] ;
+var errMsg         = "" ;
+
+/* *****************************************************************************
+@discretion: check when install infos include installing in local, whether these
+             infos match local installed db's infos or not
+@author: Tanzhaobo
+@parameter
+   osInfo[string]: os type
+@return
+   [bool]: true or false
+***************************************************************************** */
+function isMatchLocalInfo( osInfo )
+{
+   var infoArr          = null ;
+   var arrLen           = null ;
+   var localInstallInfo = null ;
+   var adminUser        = null ;
+   var installPath      = null ;
+   var localAgentPort   = null ;
+   var localIP          = getLocalIPAddr() ;
+   // get local install info
+   try
+   {
+      localInstallInfo = eval( '(' + Oma.getOmaInstallInfo() + ')' ) ;
+   }
+   catch ( e )
+   {
+      // when no install info in /etc/default/sequoiadb, think it to be false
+      errMsg = "Failed to get localhost[" + localIP + "] db install info" ;
+      exception_handle( e, errMsg ) ;
+   }
+   if ( null == localInstallInfo || "undefined" == typeof( localInstallInfo ) )
+   {
+      errMsg = "Failed to get localhost[" + localIP + "] db install info" ;
+      exception_handle( e, errMsg ) ;
+   }
+   adminUser      = localInstallInfo[SDBADMIN_USER] ;
+   installPath    = localInstallInfo[INSTALL_DIR] ;
+   try
+   {
+      localAgentPort = Oma.getAOmaSvcName("127.0.0.1") ;
+   }
+   catch ( e )
+   {
+      // when no agent port info in sdbcm.conf, think it to be false
+      errMsg = "Failed to get localhost[" + localIP + "] sdbcm port" ;
+      exception_handle( e, errMsg ) ;
+   }
+   
+   // check wether BUS_JSON include info installing in local host
+   // if so, get them for compare
+   infoArr       = BUS_JSON[HostInfo] ;
+   arrLen        = infoArr.length ;
+   var sdbUser   = BUS_JSON[SdbUser] ;
+   // first, check sdb user
+   if ( adminUser != sdbUser )
+   {
+      errMsg = "When install db packet in localhost, sdb admin user[" + sdbUser  + "] does not match current one[" + adminUser + "]" ;
+      setLastErrMsg( errMsg ) ;
+      return false ;
+   }
+   for( var i = 0; i < arrLen; i++ )
+   {
+      var obj = infoArr[i] ;
+      var ip = obj[IP] ;
+
+      if ( localIP == ip )
+      {
+         var path = obj[InstallPath] ;
+         var port = obj[AgentPort] ;
+         // second, check install path
+         var path1 = adaptPath(osInfo, installPath) ;
+         var path2 = adaptPath(osInfo, path) ;
+         if ( path1 != path2 )
+         {
+            errMsg = "When install db packet in localhost, install path[" + path  + "] does not match current one[" + installPath  + "]" ;
+            setLastErrMsg( errMsg ) ;
+            return false ;
+         }
+         // third, check agent port
+         if ( localAgentPort != port )
+         {
+            errMsg = "When install db packet in localhost, agent port[" + port  + "] does not match current one[" + localAgentPort  + "]" ;
+            setLastErrMsg( errMsg ) ;
+            return false ;
+         }
+      }
+   }
+ 
+   return true ;
+}
 
 /* *****************************************************************************
 @discretion: get the name of install packet
@@ -237,6 +328,25 @@ function main()
       return RET_JSON ;
 
    }
+   // check install info
+   var isMatch = null ;
+   try
+   {
+      isMatch = isMatchLocalInfo ( osInfo ) ;
+      if ( !isMatch )
+      {
+         RET_JSON[Errno] = SDB_INVALIDARG ;
+         RET_JSON[Detail] = getLastErrMsg() ;
+         return RET_JSON ;
+      }
+   }
+   catch ( e )
+   {
+      RET_JSON[Errno] = getLastError() ;
+      RET_JSON[Detail] = getLastErrMsg() ;
+      return RET_JSON ;
+   }
+
    // add host
    for ( var i = 0; i < arrLen; i++ )
    {

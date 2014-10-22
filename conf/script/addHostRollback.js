@@ -72,9 +72,7 @@ function main()
    var arrLen = infoArr.length ;
    if ( arrLen == 0 )
    {
-      setLastErrMsg( "Not specified any hosts to uninstall" ) ;
-      setLastError( SDB_INVALIDARG ) ;
-      throw SDB_INVALIDARG ;
+      return RET_JSON ;
    }
    // get os infomation
    var osInfo = System.type() ;
@@ -92,6 +90,14 @@ function main()
       {
          // ssh
          var ssh = new Ssh( ip, user, passwd ) ;
+         // judge whether it's in local host, if so, no need to uninstall
+         var isLocal = isInLocalHost( ssh ) ;
+         if ( isLocal )
+         {
+            retObj[HasUninstall] = true ;
+            RET_JSON[HostInfo].push( retObj ) ;
+            continue ;
+         }
          // uninstall business packet from remote host
          uninstallDBPacket( ssh, osInfo, installPath ) ;
          retObj[HasUninstall] = true ;

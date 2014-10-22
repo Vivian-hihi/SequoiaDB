@@ -107,6 +107,7 @@ var UninstallSvcName             = "UninstallSvcName" ;
 var VCoordHostName               = "VCoordHostName" ;
 var VCoordSvcName                = "VCoordSvcName" ;
 var Version                      = "Version" ;
+var SDBADMIN_USER                = "SDBADMIN_USER" ;
 var SvcName                      = "SvcName" ;
 var SvcName2                     = "svcname" ;
 var Sys                          = "Sys" ;
