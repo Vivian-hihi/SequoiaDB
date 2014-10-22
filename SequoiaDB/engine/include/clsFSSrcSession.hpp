@@ -91,7 +91,7 @@ namespace engine
                                             INT32 &outSize ) = 0 ;
          virtual INT32     _onFSMeta ( const CHAR *clFullName ) = 0 ;
          virtual INT32     _scanType () const = 0 ;
-         virtual BOOLEAN   _canSwitchWhenSyncLog() const = 0 ;
+         virtual BOOLEAN   _canSwitchWhenSyncLog() = 0 ;
 
          virtual void      _reset () ;
          virtual INT32     _onLobFilter( const _dmsLobInfoOnPage &info,
@@ -202,7 +202,7 @@ namespace engine
                                   BOOLEAN &need2Send ) ;
       virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
       virtual INT32   _scanType () const ;
-      virtual BOOLEAN _canSwitchWhenSyncLog() const ;
+      virtual BOOLEAN _canSwitchWhenSyncLog() ;
 
    private:
       _dpsMessageBlock _mb ;
@@ -230,7 +230,7 @@ namespace engine
                                             INT32 &outSize ) ;
          virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
          virtual INT32   _scanType () const ;
-         virtual BOOLEAN _canSwitchWhenSyncLog() const ;
+         virtual BOOLEAN _canSwitchWhenSyncLog() ;
          virtual INT32   _onLobFilter( const _dmsLobInfoOnPage &info,
                                        BOOLEAN &need2Send ) ;
 

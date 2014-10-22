@@ -1686,7 +1686,7 @@ namespace engine
       return TBSCAN ;
    }
 
-   BOOLEAN _clsFSSrcSession::_canSwitchWhenSyncLog() const
+   BOOLEAN _clsFSSrcSession::_canSwitchWhenSyncLog()
    {
       return TRUE ;
    }
@@ -2042,7 +2042,7 @@ namespace engine
       return TBSCAN ;
    }
 
-   BOOLEAN _clsSplitSrcSession::_canSwitchWhenSyncLog() const
+   BOOLEAN _clsSplitSrcSession::_canSwitchWhenSyncLog()
    {
       if ( _updateMetaTime > 0 )
       {
@@ -2057,7 +2057,8 @@ namespace engine
             _lastEndNtyTime = ( UINT64 )time( NULL ) ;
          }
 
-         if ( ( UINT64 )time( NULL ) - _lastEndNtyTime <= 2 )
+         if ( sdbGetReplCB()->getNtyQue()->size() > 0 &&
+              ( UINT64 )time( NULL ) - _lastEndNtyTime <= 2 )
          {
             return FALSE ; // delay 2 seconds
          }
