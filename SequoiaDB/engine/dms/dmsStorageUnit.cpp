@@ -63,6 +63,11 @@ namespace engine
          pageSize = DMS_PAGE_SIZE_DFT ;
       }
 
+      if ( 0 == lobPageSize )
+      {
+         lobPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
+      }
+
       CHAR dataFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
       CHAR idxFileName[DMS_SU_FILENAME_SZ + 1] = {0} ;
 
