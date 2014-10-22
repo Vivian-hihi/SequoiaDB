@@ -1973,7 +1973,7 @@ __METHOD_IMP(cl_create_lob)
    bson::OID oid;
    
 
-   if ( !PARSE_PYTHON_ARGS(args, "OOO", &obj, &obj_lob, &oid_obj) )
+   if ( !PARSE_PYTHON_ARGS(args, "OOs", &obj, &obj_lob, &oid_obj) )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
