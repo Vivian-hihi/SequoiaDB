@@ -1,3 +1,8 @@
+//--------------------------------- 通用变量 ---------------------------------//
+
+//判断是否正在发包
+var isSending = false ;
+
 //--------------------------------- 通用函数 ---------------------------------//
 
 /*
@@ -16,7 +21,14 @@ function showInfoFromFoot( type, text )
  */
 function gotoPage( address )
 {
-	window.location.href = address ;
+	while( true )
+	{
+		if ( isSending == false )
+		{
+			window.location.href = address ;
+			break ;
+		}
+	}
 }
 
 /*
@@ -113,7 +125,9 @@ function errorProcess( errno, detail )
  */
 function ajaxSendMsg( data, async, success, error, complete )
 {
+	isSending = true ;
 	$.ajax( { 'type': 'POST', 'async': async, 'url': './', 'data': data, 'success': function( json ){
+		isSending = false ;
 		if( json == '' )
 		{
 			errorProcess( -15, '网络异常，请检测网络是否连接正常。' ) ;
@@ -135,7 +149,9 @@ function ajaxSendMsg( data, async, success, error, complete )
 					if( error( jsonArr ) == true )
 					{
 						//重发
+						isSending = true ;
 						$.ajax( { 'type': 'POST', 'async': async, 'url': './', 'data': data, 'success': function( json ){
+							isSending = false ;
 							var jsonArr = sdbjs.fun.parseJson( json ) ;
 							if( jsonArr[0]['errno'] == 0 )
 							{
@@ -151,12 +167,16 @@ function ajaxSendMsg( data, async, success, error, complete )
 									error( jsonArr ) ;
 								}
 							}
+						}, 'error': function( XMLHttpRequest, textStatus, errorThrown ) {
+							isSending = false ;
+							errorProcess( -15, '网络异常，请检测网络是否连接正常。' ) ;
 						} } ) ;
 					}
 				}
 			}
 		}
 	}, 'error': function( XMLHttpRequest, textStatus, errorThrown ) {
+		isSending = false ;
 		errorProcess( -15, '网络异常，请检测网络是否连接正常。' ) ;
 	}, 'complete': function (XMLHttpRequest, textStatus) {
 		if( typeof( complete ) == 'function' )
