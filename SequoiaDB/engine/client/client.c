@@ -7448,16 +7448,16 @@ SDB_EXPORT INT32 sdbReadLob( sdbLobHandle lobHandle,
       goto error ;
    }
 
-   if ( lob->_currentOffset == lob->_lobSize )
-   {
-      rc = SDB_EOF ;
-      goto error ;
-   }
-
    if ( 0 == len )
    {
       *read = 0 ;
       goto done ;
+   }
+
+   if ( lob->_currentOffset == lob->_lobSize )
+   {
+      rc = SDB_EOF ;
+      goto error ;
    }
 
    while ( 0 < needRead && lob->_currentOffset < lob->_lobSize )
