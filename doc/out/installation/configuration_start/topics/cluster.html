@@ -116,9 +116,9 @@
           <div class="p">1. 创建协调节点组<pre class="pre codeblock">var rg = db.createCoordRG()</pre>
 </div>
 
-          <div class="p">2. 创建协调节点<pre class="pre codeblock">rg.createNode('sdbserver1', 11810, '/opt/sequoiadb/database/coord/11810')
-rg.createNode('sdbserver2', 11810, '/opt/sequoiadb/database/coord/11810')
-rg.createNode('sdbserver3', 11810, '/opt/sequoiadb/database/coord/11810')</pre>
+          <div class="p">2. 创建协调节点<pre class="pre codeblock">rg.createNode("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")
+rg.createNode("sdbserver2", 11810, "/opt/sequoiadb/database/coord/11810")
+rg.createNode("sdbserver3", 11810, "/opt/sequoiadb/database/coord/11810")</pre>
 </div>
 
           <div class="p">3. 启动协调节点<pre class="pre codeblock">rg.start()</pre>
@@ -126,7 +126,7 @@ rg.createNode('sdbserver3', 11810, '/opt/sequoiadb/database/coord/11810')</pre>
 </li>
 
       <li class="li">步骤六：删除临时协调节点
-        <div class="p">1. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma('localhost', 11790)</pre>
+        <div class="p">1. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma("localhost", 11790)</pre>
 </div>
 
         <div class="p">2. 删除临时协调节点<pre class="pre codeblock">oma.removeCoord(18800)</pre>

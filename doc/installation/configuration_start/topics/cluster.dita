@@ -36,12 +36,12 @@
         <p>3. 启动数据节点组<codeblock>> dataRG.start()</codeblock></p></li>        
         <li>步骤五：部署启动协调节点
           <p>1. 创建协调节点组<codeblock>var rg = db.createCoordRG()</codeblock></p>
-          <p>2. 创建协调节点<codeblock>rg.createNode('sdbserver1', 11810, '/opt/sequoiadb/database/coord/11810')
-rg.createNode('sdbserver2', 11810, '/opt/sequoiadb/database/coord/11810')
-rg.createNode('sdbserver3', 11810, '/opt/sequoiadb/database/coord/11810')</codeblock></p>
+          <p>2. 创建协调节点<codeblock>rg.createNode("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")
+rg.createNode("sdbserver2", 11810, "/opt/sequoiadb/database/coord/11810")
+rg.createNode("sdbserver3", 11810, "/opt/sequoiadb/database/coord/11810")</codeblock></p>
           <p>3. 启动协调节点<codeblock>rg.start()</codeblock></p></li>
       <li>步骤六：删除临时协调节点
-        <p>1. 连接到本地的集群管理服务进程 sdbcm<codeblock>var oma = new Oma('localhost', 11790)</codeblock></p>
+        <p>1. 连接到本地的集群管理服务进程 sdbcm<codeblock>var oma = new Oma("localhost", 11790)</codeblock></p>
         <p>2. 删除临时协调节点<codeblock>oma.removeCoord(18800)</codeblock></p>
       <p>End</p></li>        
     </ul>
