@@ -949,6 +949,8 @@
                     <file name="references/methods/topics/traceOff.dita"/>
                     <file name="references/methods/topics/traceOn_en.dita"/>
                     <file name="references/methods/topics/traceOn.dita"/>
+                    <file name="references/methods/topics/traceResume.dita"/>
+                    <file name="references/methods/topics/traceStatus.dita"/>
                     <file name="references/methods/topics/transBegin_en.dita"/>
                     <file name="references/methods/topics/transBegin.dita"/>
                     <file name="references/methods/topics/transCommit_en.dita"/>

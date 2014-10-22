@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
-<topic id="topic_x44_wzm_zj">
-  <title>db.traceOff()</title>
+<topic id="topic_whg_32h_vp">
+  <title>db.traceResume()</title>
   <body>
-    <section><title>db.traceOff(&lt;dump file>)</title>
-      <p>开启数据库引擎跟踪功能。</p>
+    <section><title>db.traceResume()</title>
+      <p>重新开启断点跟踪程序。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable id="references_method_createNode_table">
@@ -13,18 +13,18 @@
           <stentry>参数类型</stentry>
           <stentry>描述</stentry>
           <stentry>是否必填</stentry>
-        </sthead>        
+        </sthead>
         <strow>
-          <stentry>dump file</stentry>
-          <stentry>string</stentry>
-          <stentry>dump 的文件名称。</stentry>
-          <stentry>是</stentry>
+          <stentry>-</stentry>
+          <stentry>-</stentry>
+          <stentry>-</stentry>
+          <stentry>-</stentry>
         </strow>        
       </simpletable>      
     </section>    
     <section><title>示例</title>
       <ul>
-        <li>关闭数据库引擎跟踪：<codeblock>db.traceOff(&lt;dumpfile>);</codeblock></li>
+        <li>重新开启断点跟踪程序：<codeblock>db.traceResume()</codeblock></li>        
       </ul>      
     </section>
   </body>  
