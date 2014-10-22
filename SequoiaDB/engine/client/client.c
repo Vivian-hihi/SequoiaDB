@@ -7321,14 +7321,8 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
       needRead -= onceRead ;
       lob->_currentOffset += onceRead ;
       localBuf += onceRead ;
-
-      if ( onceRead == len )
-      {
-         *read = totalRead ;
-         goto done ;
-      }
-
-      onceRead = 0 ;
+      *read = totalRead ;
+      goto done ;
    }
 
    lob->_cachedOffset = -1 ;
@@ -7353,20 +7347,7 @@ static INT32 sdbOnceRead( sdbLobStruct *lob,
                        (MsgHeader**)&lob->_pReceiveBuffer,
                        &lob->_receiveBufferSize, &contextID, &result,
                        lob->_endianConvert ) ;
-   if ( SDB_EOF == rc )
-   {
-      if ( 0 < totalRead )
-      {
-         rc = SDB_OK ;
-         *read = totalRead ;
-         goto done ;   
-      }
-      else
-      {
-         goto error ;
-      }
-   }
-   else if ( SDB_OK != rc )
+   if ( SDB_OK != rc )
    {
       goto error ;
    }
