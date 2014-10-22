@@ -279,7 +279,9 @@ const UINT32 RTN_LOOP_WRITE_LEN = DMS_PAGE_SIZE512K * 4 ;
                         RTN_MIN_READ_LEN : len ;
       tuples.clear() ;
 
-      do
+      while ( currentOffset < lobLen &&
+              totalRead < needRead &&
+              totalRead < maxLen ) 
       {
          UINT32 offsetOfTuple =
                       RTN_LOB_GET_OFFSET_IN_SEQUENCE( currentOffset,
@@ -306,8 +308,7 @@ const UINT32 RTN_LOOP_WRITE_LEN = DMS_PAGE_SIZE512K * 4 ;
                                          sequence,
                                          offsetOfTuple,
                                          NULL ) ) ;
-      } while ( totalRead < needRead &&
-                totalRead < maxLen ) ;
+      }
    done:
       PD_TRACE_EXITRC( SDB_RTNLOBWINDOW_PREPARE2READ, rc ) ;
       return rc ;
