@@ -1,5 +1,4 @@
 //Auto generated index for searching.
-w["collectionname"]="542*4,543*20,652*2,733*4,734*20";
 w["collections"]="368*2,420*4,428*2,452*4,542*1,748*5,892*1,973*3,1258*1,1261*101,1262*1,1274*1,1278*2";
 w["collections."]="748*2";
 w["collectionsp"]="1073*1,1212*1";
