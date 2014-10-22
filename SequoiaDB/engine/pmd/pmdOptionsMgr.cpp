@@ -1252,7 +1252,7 @@ namespace engine
          {
             rc = utilBuildFullPath( PMD_CURRENT_PATH,
                                     PMD_OPTION_WWW_PATH_DIR,
-                                    OSS_MAX_PATHSIZE, _krcbWWWPath )
+                                    OSS_MAX_PATHSIZE, _krcbWWWPath ) ;
          }
          if ( SDB_OK != rc )
          {
