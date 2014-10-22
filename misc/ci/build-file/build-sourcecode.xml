@@ -197,7 +197,7 @@
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/postgresql" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/packet" />
 
-		<mkdir dir="${RELEASE_DIR}/sequoiadb/bin/www" />
+		<mkdir dir="${RELEASE_DIR}/sequoiadb/web" />
 
 		<if>
 			<equals arg1="${compile.debug}" arg2="true" />
@@ -215,8 +215,8 @@
 	       		<exclude name="lib*" />
 	       </fileset>
 	    </copy>
-	    <copy todir="${RELEASE_DIR}/sequoiadb/bin/www" >
-	       <fileset dir="${CODE_DIR}/SequoiaDB/www">
+	    <copy todir="${RELEASE_DIR}/sequoiadb/web" >
+	       <fileset dir="${CODE_DIR}/SequoiaDB/web">
 	       		<include name="**/*" />
 	       </fileset>
 	    </copy>
