@@ -93,9 +93,9 @@ class lob(object):
       """seek in lob.
 
       Parameters:
-         Name        Type                 Info:
-         seek_pos    int                  The length to seek
-         whence      int                  whence of seek, it must be 0/1/2
+         Name        Type           Info:
+         seek_pos    int            The length to seek
+         whence      int            whence of seek, it must be 0/1/2
                                           0 means seek from begin to end of lob
                                           1 means seek from currend position to end of lob
                                           2 means seek from end to begin of lob

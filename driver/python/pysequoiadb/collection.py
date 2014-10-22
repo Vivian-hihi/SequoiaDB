@@ -28,7 +28,10 @@ from pysequoiadb.cursor import cursor
 from pysequoiadb.lob import lob
 from pysequoiadb import error
 from pysequoiadb.common import const
-from pysequoiadb.error import (SDBBaseError, SDBTypeError, SDBSystemError)
+from pysequoiadb.error import (SDBBaseError,
+                               SDBTypeError,
+                               SDBSystemError,
+                               SDBEndOfCursor)
 
 class collection(object):
    """Collection for SequoiaDB
@@ -831,9 +834,11 @@ class collection(object):
       """create lob.
 
       Parameters:
-         Name     Type                 Info:
-         oid      bson.ObjectId        Specified the oid of lob to be created,
+         Name     Type           Info:
+         oid      bson.ObjectId  Specified the oid of lob to be created,
                                        if None, the oid is generated automatically
+      Return values:
+         a lob object
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
@@ -860,6 +865,8 @@ class collection(object):
       Parameters:
          Name     Type                 Info:
          oid      str/bson.ObjectId    The specified oid
+      Return values:
+         a lob object
       Exceptions:
          pysequoiadb.error.SDBTypeError
          pysequoiadb.error.SDBBaseError
@@ -925,4 +932,78 @@ class collection(object):
 
       return result
 
-         
+   def query_one(self, **kwargs):
+      """Get one matching documents in current collection.
+
+      Parameters:
+         Name              Type     Info:
+         **kwargs                   Useful options are below
+         - condition       dict     The matching rule, update all the
+                                          documents if not provided.
+         - selected        dict     The selective rule, return the whole
+                                          document if not provided.
+         - order_by        dict     The ordered rule, result set is unordered
+                                          if not provided.
+         - hint            dict     The hint, automatically match the optimal
+                                          hint if not provided.
+         - num_to_skip     long     Skip the first numToSkip documents,
+                                          default is 0L.
+      Return values:
+         a record of json/dict
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+      bson_condition = None
+      bson_selector = None
+      bson_order_by = None
+      bson_hint = None
+      
+      num_to_skip = 0L
+
+      if "condition" in kwargs:
+         if not isinstance(kwargs.get("condition"), dict):
+            raise SDBTypeError("condition must be an instance of dict")
+         bson_condition = bson.BSON.encode(kwargs.get("condition"))
+      if "selector" in kwargs:
+         if not isinstance(kwargs.get("selector"), dict):
+            raise SDBTypeError("selector must be an instance of dict")
+         bson_selector = bson.BSON.encode(kwargs.get("selector"))
+      if "order_by" in kwargs:
+         if not isinstance(kwargs.get("order_by"), dict):
+            raise SDBTypeError("order_by must be an instance of dict")
+         bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
+      if "hint" in kwargs:
+         if not isinstance(kwargs.get("hint"), dict):
+            raise SDBTypeError("hint must be an instance of dict")
+         bson_hint = bson.BSON.encode(kwargs.get("hint"))
+      if "num_to_skip" in kwargs:
+         if not isinstance(kwargs.get("num_to_skip"), long):
+            raise SDBTypeError("num_to_skip must be an instance of long")
+         else:
+            num_to_skip = kwargs.get("num_to_skip")
+
+      try:
+         result = cursor()
+         rc = sdb.cl_query(self._cl, result._cursor,
+                          bson_condition, bson_selector,
+                          bson_order_by, bson_hint,
+                          num_to_skip, 1L)
+         pysequoiadb._raise_if_error("Failed to query one", rc)
+      except SDBBaseError:
+         del result
+         result = None
+         raise
+
+      try:
+         record = result.next()
+      except SDBEndOfCursor :
+         record = None
+      except SDBBaseError:
+         raise
+
+      del result
+      result = None
+
+      return record
+
