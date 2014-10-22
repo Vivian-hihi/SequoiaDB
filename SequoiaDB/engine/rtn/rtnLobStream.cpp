@@ -381,16 +381,16 @@ namespace engine
          goto error ;
       }
 
-      if ( _meta._lobLen == _offset )
-      {
-         rc = SDB_EOF ;
-         goto error ;
-      }
-
       if ( 0 == len )
       {
          goto done ;
          read = 0 ;
+      }
+
+      if ( _meta._lobLen == _offset )
+      {
+         rc = SDB_EOF ;
+         goto error ;
       }
 
       /// data may be cached.
