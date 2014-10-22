@@ -38,7 +38,12 @@
   <topicref href="topics_en_v2/db.setSessionAttr.dita"/>
   <topicref href="topics_en_v2/db.snapshot.dita"/>
   <topicref href="topics_en_v2/db.startRG.dita"/>
-    <topicref href="topics_en_v2/db.transBegin.dita"/>
+  <topicref href="topics_en_v2/db.traceFmt.dita"/>
+  <topicref href="topics_en_v2/db.traceOff.dita"/>
+  <topicref href="topics_en_v2/db.traceOn.dita"/>
+  <topicref href="topics_en_v2/db.traceResume.dita"/>
+  <topicref href="topics_en_v2/db.traceStatus.dita"/>
+  <topicref href="topics_en_v2/db.transBegin.dita"/>
   <topicref href="topics_en_v2/db.transCommit.dita"/>
   <topicref href="topics_en_v2/db.transRollback.dita"/>
   <topicref href="topics_en_v2/db.waitTasks.dita"/>

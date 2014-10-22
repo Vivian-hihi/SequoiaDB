@@ -1033,6 +1033,11 @@
                     <file name="references/methods/topics_en_v2/db.setSessionAttr.dita"/>
                     <file name="references/methods/topics_en_v2/db.snapshot.dita"/>
                     <file name="references/methods/topics_en_v2/db.startRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.traceFmt.dita"/>
+                    <file name="references/methods/topics_en_v2/db.traceOff.dita"/>
+                    <file name="references/methods/topics_en_v2/db.traceOn.dita"/>
+                    <file name="references/methods/topics_en_v2/db.traceResume.dita"/>
+                    <file name="references/methods/topics_en_v2/db.traceStatus.dita"/>
                     <file name="references/methods/topics_en_v2/db.transBegin.dita"/>
                     <file name="references/methods/topics_en_v2/db.transCommit.dita"/>
                     <file name="references/methods/topics_en_v2/db.transRollback.dita"/>
