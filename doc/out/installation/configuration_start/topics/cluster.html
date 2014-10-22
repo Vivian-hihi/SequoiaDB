@@ -55,40 +55,29 @@
 </div>
 </li>
 
-      <li class="li">步骤二：启动一个协调节点
+      <li class="li">步骤二：启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，后面会删除）
         <div class="p">1. 切换到 sdbadmin 用户<pre class="pre codeblock">su sdbadmin</pre>
 </div>
 
-        <div class="p">2. 在任意一台数据库服务器上（以下步骤都只需要在这台服务器上操作），创建协调节点配置目录<pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/11810</pre>
-其中11810为协调节点的服务端口，可根据需要配置</div>
-
-        <div class="p">3. 拷贝协调节点样例配置文件<pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
+        <div class="p">2. 在任意一台数据库服务器上（以下步骤都只需要在这台服务器上操作），启动 SequoiaDB Shell 控制台<pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
 </div>
 
-        <div class="p">4. 修改配置文件<pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
+        <div class="p">3. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock"> var oma = new Oma('localhost', 11790)</pre>
 </div>
-<div class="p">修改内容<pre class="pre codeblock"># database path
-dbpath=/opt/sequoiadb/database/coord</pre>
-该参数为数据库放置路径，可根据需要修改，请确保路径已经存在（不存在请手工创建）</div>
 
-        <p class="p">5. 按 :wq，保存退出 vi</p>
+        <div class="p">4. 创建临时协调节点<pre class="pre codeblock">oma. createCoord(18800, '/opt/sequoiadb/database/coord/18800')</pre>
+</div>
 
-        <div class="p">6. 创建数据文件存放路径<pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/coord </pre>
-路径为上一步骤配置的路径</div>
-
-        <div class="p">7. 启动协调节点进程<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</pre>
+        <div class="p">5. 启动临时协调节点<pre class="pre codeblock"> oma.startNode(18800)</pre>
 </div>
 </li>
+        
+      <li class="li">步骤三：通过命令配置和启动编目节点        
+        <p class="p">1. 连接到临时协调节点，在 shell 命令中输入：</p>
+<div class="p">在shell 命令中输入：<pre class="pre codeblock">&gt; var db = new Sdb("localhost",18800)</pre>
+其中18800为协调节点端口号</div>
 
-      <li class="li">步骤三：通过命令配置和启动编目节点
-        <div class="p">1. 在启动了协调节点的物理机上启动 SequoiaDB Shell 控制台<pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
-</div>
-
-        <p class="p">2. 连接到协调节点</p>
-<div class="p">在shell 命令中输入：<pre class="pre codeblock">&gt; var db = new Sdb("localhost",11810)</pre>
-其中11810为协调节点端口号</div>
-
-        <div class="p">3. 创建一个编目节点组<pre class="pre codeblock">&gt; db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
+        <div class="p">2. 创建一个编目节点组<pre class="pre codeblock">&gt; db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
 </div>
 
         <p class="p">其中</p>
@@ -98,12 +87,12 @@ dbpath=/opt/sequoiadb/database/coord</pre>
           <div class="note note"><span class="notetitle">Note:</span> 请确保存放路径的权限，如果 SequoiaDB 采用的默认安装，那么给路径赋予 sdbadmin 权限，下同。</div>
 </div>
 
-        <div class="p">4. 等待5秒，开始添加另外两个编目节点<pre class="pre codeblock">&gt; var cataRG = db.getRG("SYSCatalogGroup");
+        <div class="p">3. 等待5秒，开始添加另外两个编目节点<pre class="pre codeblock">&gt; var cataRG = db.getRG("SYSCatalogGroup");
 &gt; var node1 = cataRG.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800")
 &gt; var node2 = cataRG.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</pre>
 </div>
 
-        <div class="p">5. 启动编目节点组<pre class="pre codeblock">&gt; node1.start()
+        <div class="p">4. 启动编目节点组<pre class="pre codeblock">&gt; node1.start()
 &gt; node2.start()</pre>
 </div>
 <div class="note note"><span class="notetitle">Note:</span> 创建节点的第一个参数必须为“主机名”，而不能使主机的 IP。</div>
@@ -121,42 +110,31 @@ dbpath=/opt/sequoiadb/database/coord</pre>
 
         <div class="p">3. 启动数据节点组<pre class="pre codeblock">&gt; dataRG.start()</pre>
 </div>
+</li>
+        
+        <li class="li">步骤五：部署启动协调节点
+          <div class="p">1. 创建协调节点组<pre class="pre codeblock">var rg = db.createCoordRG()</pre>
+</div>
 
-        <div class="p">4. 退出 SequoiaDB Shell控制台<pre class="pre codeblock">&gt; quit</pre>
+          <div class="p">2. 创建协调节点<pre class="pre codeblock">rg.createNode('sdbserver1', 11810, '/opt/sequoiadb/database/coord/11810')
+rg.createNode('sdbserver2', 11810, '/opt/sequoiadb/database/coord/11810')
+rg.createNode('sdbserver3', 11810, '/opt/sequoiadb/database/coord/11810')</pre>
+</div>
+
+          <div class="p">3. 启动协调节点<pre class="pre codeblock">rg.start()</pre>
 </div>
 </li>
 
-      <li class="li">步骤五：在另外两台服务器上启动协调节点
-        <div class="p">1. 创建协调节点配置目录<pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/11810</pre>
-其中11810为协调节点的服务端口，可根据需要配置</div>
-
-        <div class="p">2. 拷贝协调节点样例配置文件<pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
+      <li class="li">步骤六：删除临时协调节点
+        <div class="p">1. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma('localhost', 11790)</pre>
 </div>
 
-        <div class="p">3. 修改配置文件<pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
-修改内容<pre class="pre codeblock">
-# database path
-dbpath=/opt/sequoiadb/database/coord</pre>
-该参数为数据库放置路径，可根据需要修改，请确保路径已经存在（不存在请手工创建）</div>
-
-          <div class="p">将如下行：<pre class="pre codeblock"># catalog addr (hostname1:servicename1,hostname2:servicename2,...)
-#catalogaddr=</pre>
-修改<pre class="pre codeblock"># catalog addr (hostname1:servicename1,hostname2:servicename2,...)
-catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803</pre>
-该参数为 Catalog 服务地址和端口</div>
-
-        <p class="p">4. 按 :wq，保存退出 vi</p>
-
-        <div class="p">5. 创建数据文件存放路径<pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/coord</pre>
-路径为上一步骤配置的路径</div>
-
-        <div class="p">6. 启动协调节点进程<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</pre>
+        <div class="p">2. 删除临时协调节点<pre class="pre codeblock">oma.removeCoord(18800)</pre>
 </div>
 
-        <p class="p">End</p>
-
-      </li>
-
+      <p class="p">End</p>
+</li>
+        
     </ul>
 
   </div>

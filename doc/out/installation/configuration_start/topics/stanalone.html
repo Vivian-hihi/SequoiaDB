@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="独立模式的配置与启动"/>
-<meta name="description" content="说明：   （1）本节按照最简部署为例，介绍配置和启动步骤；   （2）以下操作步骤假设 SequoiaDB 程序安装在 /opt/sequoiadb 目录下；   （3）sdb 服务进程全部以 sdbadmin 用户运行，请确保所有数据库目录都赋予 sdbadmin 读写权限。 切换到 sdbadmin 用户 su sdbadmin 进入安装目录下（下文以默认安装路径 ..."/>
+<meta name="description" content="说明：   （1）本节按照最简部署为例，介绍配置和启动步骤；   （2）以下操作步骤假设 SequoiaDB 程序安装在 /opt/sequoiadb 目录下；   （3）sdb 服务进程全部以 sdbadmin 用户运行，请确保所有数据库目录都赋予 sdbadmin 读写权限。 切换到 sdbadmin 用户 su sdbadmin 启动 SequoiaDB Shell ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../installation/configuration_start/topics/configuration_start.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_qh4_p4y_wj"/>
@@ -48,36 +48,23 @@
       <li class="li">切换到 sdbadmin 用户<pre class="pre codeblock">su sdbadmin</pre>
 </li>
 
-      <li class="li">进入安装目录下（下文以默认安装路径 /opt/sequoiadb 为例）<div class="p"><pre class="pre codeblock">cd /opt/sequoiadb</pre>
+      <li class="li">启动 SequoiaDB Shell 控制台（下文以默认安装路径 /opt/sequoiadb 为例）<div class="p"><pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
 </div>
 </li>
 
-      <li class="li">创建配置文件存放目录<pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/11810</pre>
-<div class="note note"><span class="notetitle">Note:</span> 其中11810为数据库服务端口名，为避免出现端口冲突等问题，切勿将数据库端口配置在随机端口范围以内。如：多数 linux 默认随机端口范围为32768～61000，可将数据库端口配置在32767以下。</div>
+      <li class="li">连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma('localhost', 11790)</pre>
 </li>
 
-      <li class="li">拷贝独立模式的样例配置<pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.standalone /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
+      <li class="li">创建独立模式的数据节点<pre class="pre codeblock">oma.createData(11810, "/opt/sequoiadb/database/standalone/11810")</pre>
+
+        <div class="note note"><span class="notetitle">Note:</span> 其中11810为数据库服务端口名，为避免出现端口冲突等问题，切勿将数据库端口配置在随机端口范围以内。如：多数 Linux 默认随机端口范围为32768～61000，可将数据库端口配置在32767以下。</div>
 </li>
 
-      <li class="li">打开配置<pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
-</li>
-
-      <li class="li">修改必要的配置参数<pre class="pre codeblock"># database path
-dbpath=/opt/sequoiadb/database/standalone</pre>
-数据库存放路径，根据需要进行配置，并确保路径已经存在（不存在请手工创建）</li>
-
-      <li class="li"><p class="p">按 :wq ，保存退出 vi </p>
-</li>
-
-      <li class="li">创建数据文件存放路径<pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/standalone</pre>
-路径为上一步骤配置的路径</li>
-
-      <li class="li"><div class="p">启动数据库进程<pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</pre>
-</div>
+      <li class="li">启动该节点<pre class="pre codeblock">oma.startNode(11810)</pre>
 </li>
 
       <li class="li">数据库配置启动完成</li>
-
+      
     </ul>
 
   </div>
