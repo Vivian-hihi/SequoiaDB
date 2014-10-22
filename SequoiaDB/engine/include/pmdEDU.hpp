@@ -128,8 +128,13 @@ namespace engine
       void setTID ( UINT32 tid ) { _tid = tid ; }
       void setType ( EDU_TYPES type ) ;
 
-      void writingDB( BOOLEAN writing ) { _writingDB = writing ; }
+      void writingDB( BOOLEAN writing )
+      {
+         _writingDB = writing ;
+         _writingTime = writing ? (UINT64)time( NULL ) : 0 ;
+      }
       BOOLEAN isWritingDB() const { return _writingDB ; }
+      UINT64  getWritingTime() const { return _writingTime ; }
 
    #if defined ( _LINUX )
       void        setThreadID ( pthread_t id ) { _threadID = id ; }
@@ -399,6 +404,7 @@ namespace engine
 
       INT32          _ctrlFlag ;
       BOOLEAN        _writingDB ;
+      UINT64         _writingTime ;
 
       string         _userName ;
       string         _passWord ;

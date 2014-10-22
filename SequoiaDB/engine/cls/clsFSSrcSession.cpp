@@ -785,12 +785,6 @@ namespace engine
                break ;
             }
          }
-         /*else if ( SDB_DPS_LSN_OUTOFRANGE == rc )
-         {
-            // if the expected lsn is not exist, let's break
-            rc = SDB_OK ;
-            break ;
-         }*/
          else
          {
             // if other errors happened during search, let's dump error
@@ -807,7 +801,7 @@ namespace engine
          _agent->syncSend( handle, &(msg.header.header),
                            _mb.offset( 0 ), _mb.length() ) ;
       }
-      else
+      else if ( _canSwitchWhenSyncLog() )
       {
          if ( !_findEnd )
          { 
@@ -1679,6 +1673,11 @@ namespace engine
       return TBSCAN ;
    }
 
+   BOOLEAN _clsFSSrcSession::_canSwitchWhenSyncLog() const
+   {
+      return TRUE ;
+   }
+
    BOOLEAN _clsFSSrcSession::_isReady()
    {
       /*return MSG_INVALID_ROUTEID !=
@@ -1724,7 +1723,8 @@ namespace engine
       _hasEndRange      = TRUE ;
       _partitionBit     = 0 ;
 
-      _taskID = 0 ; 
+      _taskID           = 0 ;
+      _updateMetaTime   = 0 ;
    }
 
    _clsSplitSrcSession::~_clsSplitSrcSession()
@@ -2028,6 +2028,19 @@ namespace engine
       return TBSCAN ;
    }
 
+   BOOLEAN _clsSplitSrcSession::_canSwitchWhenSyncLog() const
+   {
+      if ( _updateMetaTime > 0 )
+      {
+         pmdEDUMgr *pEDUMgr = eduCB()->getEDUMgr() ;
+         if ( pEDUMgr->getWritingEDUCount( -1, _updateMetaTime ) > 0 )
+         {
+            return FALSE ;
+         }
+      }
+      return TRUE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLSS_HNDBEGIN, "_clsSplitSrcSession::handleBegin" )
    INT32 _clsSplitSrcSession::handleBegin( NET_HANDLE handle,
                                            MsgHeader* header )
@@ -2209,6 +2222,7 @@ namespace engine
       if ( !pSet || !pSet->isKeyInGroup( _rangeKeyObj, groupID ) )
       {
          sendRsp = TRUE ;
+         _updateMetaTime = (UINT64)time( NULL ) ;
       }
       _pCatAgent->release_r() ;     //unlock
       if ( !mainCLName.empty() )

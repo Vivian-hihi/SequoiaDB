@@ -735,7 +735,7 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
-      _pEDUCB->writingDB( TRUE ) ;
+      _pEDUCB->writingDB( TRUE ) ; // it call must before _checkCata
 
       //check version
       rc = _checkCata ( pUpdate->version, pCollectionName, w, isMainCL ) ;
@@ -818,7 +818,7 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
-      _pEDUCB->writingDB( TRUE ) ;
+      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
 
       //check catalog
       rc = _checkCata ( pInsert->version, pCollectionName, w, isMainCL ) ;
@@ -896,7 +896,7 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
-      _pEDUCB->writingDB( TRUE ) ;
+      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
 
       //check cata
       rc = _checkCata ( pDelete->version, pCollectionName, w, isMainCL ) ;
@@ -1091,7 +1091,7 @@ namespace engine
             {
                goto error ;
             }
-            _pEDUCB->writingDB( TRUE ) ;
+            _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
          }
          else
          {
@@ -2502,6 +2502,8 @@ namespace engine
          goto error ;
       }
 
+      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
+
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
       if ( SDB_OK != rc )
@@ -2509,8 +2511,6 @@ namespace engine
          PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
          goto error ;
       }
-
-      _pEDUCB->writingDB( TRUE ) ;
 
       while ( TRUE )
       {
@@ -2732,6 +2732,7 @@ namespace engine
          goto error ;
       }
 
+      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
       rc = _checkCata( header->version, lobContext->getFullName(),
                        w, isMainCl, FALSE ) ;
       if ( SDB_OK != rc )
@@ -2739,8 +2740,6 @@ namespace engine
          PD_LOG( PDERROR, "failed to check catainfo:%d", rc ) ;
          goto error ;
       }
-
-      _pEDUCB->writingDB( TRUE ) ;
 
       while ( TRUE )
       {
@@ -2829,6 +2828,8 @@ namespace engine
          goto error ;
       }
 
+      _pEDUCB->writingDB( TRUE ) ;  // it call must before _checkCata
+
       lobContext = ( rtnContextShdOfLob * )context ;
       _pCollectionName = lobContext->getFullName() ;
       w = lobContext->getW() ;
@@ -2840,7 +2841,6 @@ namespace engine
          goto error ;
       }
 
-      _pEDUCB->writingDB( TRUE ) ;
       while ( TRUE )
       {
          BOOLEAN got = FALSE ;

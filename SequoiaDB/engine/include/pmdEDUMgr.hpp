@@ -204,7 +204,8 @@ namespace engine
       UINT32   _getIOServiceCount() ;
 
       INT32    _interruptWritingEDUs() ;
-      UINT32   _getWritingEDUCount() ;
+      UINT32   _getWritingEDUCount( INT32 eduTypeFilter = -1,
+                                    UINT64 timeThreshold = 0 ) ;
 
       void setDestroyed ( BOOLEAN b )
       {
@@ -391,7 +392,11 @@ namespace engine
       INT32 interruptUserEDU( EDUID eduID ) ;
 
       INT32    interruptWritingEDUS() { return _interruptWritingEDUs() ; }
-      UINT32   getWritingEDUCount() { return _getWritingEDUCount() ; }
+      UINT32   getWritingEDUCount( INT32 eduTypeFilter = -1,
+                                   UINT64 timeThreshold = 0 )
+      {
+         return _getWritingEDUCount( eduTypeFilter, timeThreshold ) ;
+      }
 
       pmdEDUCB *getEDU ( UINT32 tid ) ;
       pmdEDUCB *getEDU () ;

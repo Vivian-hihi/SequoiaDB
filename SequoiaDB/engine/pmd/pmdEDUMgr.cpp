@@ -386,7 +386,8 @@ namespace engine
       return SDB_OK ;
    }
 
-   UINT32 _pmdEDUMgr::_getWritingEDUCount ()
+   UINT32 _pmdEDUMgr::_getWritingEDUCount ( INT32 eduTypeFilter,
+                                            UINT64 timeThreshold )
    {
       UINT32 eduCount = 0 ;
       std::map<EDUID, pmdEDUCB*>::iterator it ;
@@ -398,6 +399,16 @@ namespace engine
          {
             if ( (*it).second->isWritingDB() )
             {
+               if ( -1 != eduTypeFilter &&
+                    eduTypeFilter != (*it).second->getType() )
+               {
+                  continue ;
+               }
+               else if ( 0 != timeThreshold &&
+                         (*it).second->getWritingTime() > timeThreshold )
+               {
+                  continue ;
+               }
                ++eduCount ;
             }
          }

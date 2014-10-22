@@ -147,6 +147,7 @@ namespace engine
    _eduType( type ),
    _ctrlFlag( 0 ),
    _writingDB( FALSE ),
+   _writingTime( 0 ),
    _threadHdl( 0 ),
 #if defined (_LINUX)
    _threadID( 0 ),
