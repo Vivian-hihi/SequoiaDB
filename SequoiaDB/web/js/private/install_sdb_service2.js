@@ -111,6 +111,7 @@ function updateProgress()
 		$( '.modal' ).each(function(index, element) {
          $( this ).hide() ;
       });
+		var comeback = ( $.cookie( 'SdbComeback' ) == undefined ? 'index.html' : $.cookie( 'SdbComeback' ) ) ;
 		if( progressInfo['IsEnable'] == false )
 		{
 			$( '#installPanel > .panel-header > span:eq(1)' ).text( '安装错误，回滚失败' ) ;
@@ -138,12 +139,11 @@ function updateProgress()
 				$( '#installFinishModal > .modal-title' ).text( '安装结果' ) ;
 				$( '#installFinishModal > .modal-body > div' ).text( '业务安装完成， 系统将会在10秒后返回。或点击下方按钮马上返回。' ) ;
 				sdbjs.fun.moveModal( 'installFinishModal' ) ;
+				setTimeout( 'gotoPage("' + comeback + '")', 10000 ) ;
 			}
 		}
 		progressTimer = null ;
 		$( '#installPanel > .panel-body > div:eq(0) > div' ).css( 'width', '100%' ) ;
-		var comeback = ( $.cookie( 'SdbComeback' ) == undefined ? 'index.html' : $.cookie( 'SdbComeback' ) ) ;
-		setTimeout( 'gotoPage("' + comeback + '")', 10000 ) ;
 		$( '#installFinishModal > .modal-foot > button' ).get(0).onclick = Function( 'gotoPage("' + comeback + '")' ) ; ;
 	}
 	sdbjs.fun.gridRevise( 'progressListGrid' ) ;
