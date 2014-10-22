@@ -236,7 +236,8 @@ namespace engine
 
       public:
 
-         INT32 init( INT32 argc, CHAR **argv ) ;
+         INT32 init( INT32 argc, CHAR **argv,
+                     const std::string &exePath = "" ) ;
 
          INT32 initFromFile( const CHAR *pConfigFile,
                              BOOLEAN allowFileNotExist = FALSE ) ;
@@ -438,6 +439,7 @@ namespace engine
          CHAR        _krcbCatFile[ OSS_MAX_PATHSIZE + 1 ] ;
          pmdAddrPair _cat[ CATA_NODE_MAX_NUM ] ;
          UINT16      _krcbSvcPort ;
+         std::string _exePath ;
 
    } ;
 

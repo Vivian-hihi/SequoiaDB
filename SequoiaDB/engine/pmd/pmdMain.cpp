@@ -66,7 +66,16 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDRESVARGS ) ;
-      rc = pmdGetOptionCB()->init( argc, argv ) ;
+      CHAR exePath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+
+      rc = ossGetEWD( exePath, OSS_MAX_PATHSIZE ) ;
+      if ( rc )
+      {
+         std::cerr << "Get module path failed: " << rc << std::endl ;
+         goto error ;
+      }
+
+      rc = pmdGetOptionCB()->init( argc, argv, exePath ) ;
       // if user only ask for help information, we simply return
       if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
       {

@@ -910,7 +910,6 @@ namespace engine
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
       ossMemset( _krcbLobPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
-      ossMemset( _krcbCurPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
 
       _krcbMaxPool         = 0 ;
       _krcbDiagLvl         = (UINT16)PDWARNING ;
@@ -1243,9 +1242,19 @@ namespace engine
       }
       if ( 0 == _krcbWWWPath[0] )
       {
-         if ( SDB_OK != utilBuildFullPath( _krcbCurPath,
-                                           ".."OSS_FILE_SEP PMD_OPTION_WWW_PATH_DIR,
-                                           OSS_MAX_PATHSIZE, _krcbWWWPath ) )
+         if ( !_exePath.empty() )
+         {
+            rc = utilBuildFullPath( _exePath.c_str(),
+                                    ".."OSS_FILE_SEP PMD_OPTION_WWW_PATH_DIR,
+                                    OSS_MAX_PATHSIZE, _krcbWWWPath ) ;
+         }
+         else
+         {
+            rc = utilBuildFullPath( PMD_CURRENT_PATH,
+                                    PMD_OPTION_WWW_PATH_DIR,
+                                    OSS_MAX_PATHSIZE, _krcbWWWPath )
+         }
+         if ( SDB_OK != rc )
          {
             std::cerr << "www path is too long!" << endl ;
             rc = SDB_INVALIDPATH ;
@@ -1474,7 +1483,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR_INIT, "_pmdOptionsMgr::init" )
-   INT32 _pmdOptionsMgr::init( INT32 argc, CHAR **argv )
+   INT32 _pmdOptionsMgr::init( INT32 argc, CHAR **argv,
+                               const std::string &exePath )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB__PMDOPTMGR_INIT ) ;
@@ -1494,8 +1504,7 @@ namespace engine
          PMD_COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
-      rc = ossGetEWD( _krcbCurPath, OSS_MAX_PATHSIZE ) ;
-      JUDGE_RC( rc )
+      _exePath = exePath ;
 
       rc = utilReadCommandLine( argc, argv, all, vm );
       JUDGE_RC( rc )
