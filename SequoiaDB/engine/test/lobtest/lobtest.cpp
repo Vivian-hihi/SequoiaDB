@@ -249,10 +249,6 @@ TEST(lobTest, seek_1)
          cout << "buf2:" << dump << endl ;
          hexDump( buf+ seekSize, readSize, dump );
          cout << "buf:" << dump << endl ;
-         //cout << "buf2:" << endl << buf2 << endl ;
-         //string tmp;
-         //tmp.assign( buf + seekSize, readSize ) ;
-         //cout << "buf:" << endl << tmp << endl ;
          cout << "seek size:" << seekSize << endl ;
 
          ASSERT_TRUE( FALSE ) ;
@@ -283,6 +279,134 @@ TEST(lobTest, seek_1)
 
    rc = sdbCloseLob( &lob ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbRemoveLob( cl, &oid ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+}
+
+TEST(lobTest, seek_2)
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+   bson_oid_t oid ;
+   bson_oid_gen( &oid ) ;
+
+   rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   const UINT32 bufSize = 1024 * 1024 * 10 + 1924 ;
+   CHAR *buf = new CHAR[bufSize] ;
+
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   SINT64 totalWriteLen = 0 ;
+   while ( totalWriteLen < bufSize )
+   {
+      UINT32 writeLen = bufSize - totalWriteLen < 1844 ? bufSize - totalWriteLen : 1844 ;
+      rc = sdbWriteLob( lob, buf + totalWriteLen, writeLen ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      totalWriteLen += writeLen ;
+   }
+   ASSERT_EQ( totalWriteLen, bufSize ) ;
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   for ( UINT32 i = 0; i < 10000; ++i )
+   {
+      cout << "the " << i << "th time" << endl ;
+      SINT64 seekSize = rand() % bufSize ;
+      rc = sdbSeekLob( lob, seekSize, SDB_LOB_SEEK_SET ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      UINT32 readSize = bufSize ;
+      UINT32 read = 0 ;
+      rc = sdbReadLob( lob, readSize, buf, &read ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      ASSERT_EQ( bufSize - seekSize, read ) ;
+   }
+
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   rc = sdbRemoveLob( cl, &oid ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+}
+
+TEST(lobTest, cache_1)
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionHandle conn = SDB_INVALID_HANDLE ;
+   sdbCollectionHandle cl = SDB_INVALID_HANDLE ;
+   sdbLobHandle lob = SDB_INVALID_HANDLE ;
+   bson_oid_t oid ;
+   bson_oid_gen( &oid ) ;
+
+   rc = sdbConnect( "localhost", "11810", "", "", &conn ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   rc = sdbGetCollection( conn, "foo.bar", &cl ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   const UINT32 bufSize = 1024 * 1024 * 10 + 1924 ;
+   CHAR *buf = new CHAR[bufSize] ;
+   for ( UINT32 j = 0 ; j < bufSize; ++j )
+   {
+      buf[j] = ( CHAR )rand() ;
+   }
+
+   rc = sdbOpenLob( cl, &oid, SDB_LOB_CREATEONLY, &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+   SINT64 totalWriteLen = 0 ;
+   while ( totalWriteLen < bufSize )
+   {
+      UINT32 writeLen = bufSize - totalWriteLen < 1844 ? bufSize - totalWriteLen : 1844 ;
+      rc = sdbWriteLob( lob, buf + totalWriteLen, writeLen ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+      totalWriteLen += writeLen ;
+   }
+   ASSERT_EQ( totalWriteLen, bufSize ) ;
+   rc = sdbCloseLob( &lob ) ;
+   ASSERT_EQ( SDB_OK, rc ) ;
+
+   for ( UINT32 i = 0; i < 10; ++i )
+   {
+      CHAR readBuf = '\0' ;
+      cout << "the " << i << "th time" << endl ;
+      UINT32 read = 0 ;
+      UINT32 totalRead = 0 ;
+
+      rc = sdbOpenLob( cl, &oid, SDB_LOB_READ, &lob ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+
+      do
+      {
+         rc = sdbReadLob( lob, 1, &readBuf, &read ) ;
+         if ( SDB_OK == rc )
+         {
+            ASSERT_EQ( 1, read ) ;
+            ASSERT_EQ( readBuf, buf[totalRead] ) ;
+            ++totalRead ;
+         }
+         else if ( SDB_EOF == rc )
+         {
+            break ;
+         }
+         else
+         {
+            ASSERT_EQ( SDB_OK , rc ) ;
+         }
+      } while ( TRUE ) ;
+
+      ASSERT_EQ( totalRead, bufSize ) ;
+      rc = sdbCloseLob( &lob ) ;
+      ASSERT_EQ( SDB_OK, rc ) ;
+   }
+
    rc = sdbRemoveLob( cl, &oid ) ;
    ASSERT_EQ( SDB_OK, rc ) ;
 }
