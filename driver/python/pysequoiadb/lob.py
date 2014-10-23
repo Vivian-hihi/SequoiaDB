@@ -111,7 +111,7 @@ class lob(object):
          raise InvalidParameter("value of whence is in valid",
                                 const.SDB_INVALIDARG)
       try:
-         rc = sdb.lob_seek(self._handle, seek_pos)
+         rc = sdb.lob_seek(self._handle, seek_pos, whence)
          pysequoiadb._raise_if_error("Failed to seek lob", rc)
       except SDBBaseError:
          raise
