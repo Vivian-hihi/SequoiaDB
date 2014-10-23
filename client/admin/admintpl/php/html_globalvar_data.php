@@ -31,7 +31,7 @@ array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_hint',				'input' => 'in
 array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_numtoskip',			'input' => 'input', 	'name_title' => 'Num To Skip',			'placeholder' => '跳过记录数，default：0',	'type' => 1 ),
 array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_numbertoreturn',	'input' => 'input', 	'name_title' => 'Num To Return',		'placeholder' => '返回记录数，default：-1',	'type' => 1 ),
 array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_csname',			'input' => 'input', 	'name_title' => 'Collection Space Name','placeholder' => '集合空间名',		 		'type' => 1 ),
-array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_pagesize',			'input' => 'select', 	'name_title' => 'Page Size',			'placeholder' => '',		 				'type' => 2 ),
+array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_pagesize',			'input' => 'input', 	'name_title' => 'Options',			'placeholder' => '',		 				'type' => 1 ),
 array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_clname',			'input' => 'input', 	'name_title' => 'Collection Name',		'placeholder' => '集合名',		 			'type' => 1 ),
 array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_options',			'input' => 'text', 		'name_title' => 'Options',				'placeholder' => '参数，default：NULL',		'type' => 1 ),
 array( 'showid' => 'tb-data-', 	'inputid' => 'tool_data_indexdef',			'input' => 'input', 	'name_title' => 'Index Definition',		'placeholder' => '索引定义',		 			'type' => 1 ),
