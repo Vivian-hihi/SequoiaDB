@@ -641,11 +641,15 @@ function saveEditHostGrid( num )
 		{
 			desc = '连接成功' ;
 		}
+		_hostlist[ num ]['HostName'] = temp['HostName'] ;
+		_hostlist[ num ]['IP'] = temp['IP'] ;
 		
 	}, function( jsonArr ){
 		return errorProcess( jsonArr[0]['errno'], jsonArr[0]['detail'] ) ;
 	}, function(){
 		$( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(0)' ).html( inputStr ) ;
+		$( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(1)' ).css( { 'z-index': 'auto', 'position': 'static' } ).text( _hostlist[ num ]['HostName'] ).get(0).onclick = Function( 'openEditHostGrid(' + num + ')' ) ;
+		$( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(2)' ).css( { 'z-index': 'auto', 'position': 'static' } ).text( _hostlist[ num ]['IP'] ).get(0).onclick = Function( 'openEditHostGrid(' + num + ')' ) ;
 		$( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(3)' ).css( { 'z-index': 'auto', 'position': 'static' } ).text( _hostlist[ num ]['User'] ).get(0).onclick = Function( 'openEditHostGrid(' + num + ')' ) ;
 		$( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(4)' ).css( { 'z-index': 'auto', 'position': 'static' } ).text( '***' ).get(0).onclick = Function( 'openEditHostGrid(' + num + ')' ) ;
 		$( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(5)' ).css( { 'z-index': 'auto', 'position': 'static' } ).text( _hostlist[ num ]['SshPort'] ).get(0).onclick = Function( 'openEditHostGrid(' + num + ')' ) ;
