@@ -102,23 +102,33 @@ function updateProgress()
 		$( '#installPanel > .panel-header > span:eq(1)' ).text( '正在卸载' ) ;
 	}
 	
-	if( progressInfo['IsFinish'] == true  )
+	if( progressInfo['IsFinish'] == true || progressInfo['IsEnable'] == false )
 	{
 		$( '.modal' ).each(function(index, element) {
          $( this ).hide() ;
       });
-
-		$( '#installPanel > .panel-header > span:eq(1)' ).text( '卸载完成' ) ;
-		sdbjs.fun.openModal( 'installFinishModal' ) ;
-		$( '#installFinishModal > .modal-title' ).text( '卸载结果' ) ;
-		$( '#installFinishModal > .modal-body > div' ).text( '业务卸载完成， 系统将会在10秒后返回。或点击下方按钮马上返回。' ) ;
 		var comeback = $.cookie( 'SdbComeback' ) ;
-		setTimeout( 'gotoPage("' + comeback + '")', 10000 ) ;
-		$( '#installFinishModal > .modal-foot > button' ).get(0).onclick = Function( 'gotoPage("' + comeback + '")' ) ; ;
-		sdbjs.fun.moveModal( 'installFinishModal' ) ;
-
+		if( progressInfo['IsEnable'] == false )
+		{
+			$( '#installPanel > .panel-header > span:eq(1)' ).text( '卸载错误' ) ;
+			sdbjs.fun.openModal( 'installFinishModal' ) ;
+			$( '#installFinishModal > .modal-title' ).text( '卸载结果' ) ;
+			$( '#installFinishModal > .modal-body > div' ).text( '业务卸载错误，错误原因：' + progressInfo['ErrMsg'] + '。' ) ;
+			sdbjs.fun.moveModal( 'installFinishModal' ) ;
+			$( '#installPanel > .panel-body > div:eq(0) > div' ).css( 'background-color', '#ae3027' ) ;
+		}
+		else
+		{
+			$( '#installPanel > .panel-header > span:eq(1)' ).text( '卸载完成' ) ;
+			sdbjs.fun.openModal( 'installFinishModal' ) ;
+			$( '#installFinishModal > .modal-title' ).text( '卸载结果' ) ;
+			$( '#installFinishModal > .modal-body > div' ).text( '业务卸载完成， 系统将会在10秒后返回。或点击下方按钮马上返回。' ) ;
+			setTimeout( 'gotoPage("' + comeback + '")', 10000 ) ;
+			sdbjs.fun.moveModal( 'installFinishModal' ) ;
+		}
 		progressTimer = null ;
 		$( '#installPanel > .panel-body > div:eq(0) > div' ).css( 'width', '100%' ) ;
+		$( '#installFinishModal > .modal-foot > button' ).get(0).onclick = Function( 'gotoPage("' + comeback + '")' ) ; ;
 	}
 	sdbjs.fun.gridRevise( 'progressListGrid' ) ;
 }
