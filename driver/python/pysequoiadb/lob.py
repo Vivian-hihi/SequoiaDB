@@ -28,6 +28,7 @@ class lob(object):
             pysequoiadb._raise_if_error("Failed to release lob", rc)
          except SDBBaseError:
             raise
+         self._handle = None
 
    def close(self):
       """close lob
