@@ -1,75 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_z5d_k1j_vp">
-  <title>自动化安装</title>
+  <title>Automatic installing</title>
   <body>
-    <p>OM 支持 IE7/8/9+、chrome、firefox 等主流浏览器。</p>
+    <p>OM supports IE 7/8/9+, Chrome, Firefox and other main stream web browsers.</p>
     <ul>
-      <li>步骤一：登录 OM
-        <p>1.1 浏览器访问，访问地址为 OM 的地址，访问端口默认8000</p>
-        <p>1.2 例如 http://192.168.1.100:8000/login.html</p>
-        <p>1.3 登录用户名默认 admin，初始密码 admin</p>
-        <p>1.4 输入默认密码 admin</p>
-        <p>1.5 点击 &lt;<b>登录</b>> 按钮</p>
+      <li>Step1: Login OM
+        <p>1.1 Access with web browser, address is the OM's address, and the default port number is 8000.</p>
+        <p>1.2 For example, http://192.168.1.100:8000/login.html</p>
+        <p>1.3 Login user name default is admin, psw admin.</p>
+        <p>1.4 Input the default psw admin.</p>
+        <p>1.5 Click &lt;<b>登录</b>> button.</p>
         <p><image href="../images/s1.jpg"/></p></li>
-      <li>步骤二：开始部署
-        <p>2.1 点击导航栏的 &lt;<b>部署引导</b>></p>
+      <li>Step2: Deployment
+        <p>2.1 Click the &lt;<b>部署引导</b>> in the navigation bar. </p>
         <p><image href="../images/s21.jpg"/></p>
-        <p>2.2 集群的参数都有默认值，除了 &lt;<b>集群名</b>> 和 &lt;<b>业务名</b>>，基本上不需要修改其他参数，点击高级选项，可以设置更多的参数。修改后点击确定。</p>
+        <p>2.2 Cluster's parameters have been filled in as default, we are not required to change too much except the &lt;<b>集群名</b>> and &lt;<b>业务名</b>>, because each cluster's name must be unique in database. If you want to change more parameters, you can choose the &lt;<b>高级选项</b>> under. After all set, click &lt;<b>确定</b>> to continue. </p>
         <p><image href="../images/s22.jpg"/></p></li>
-      <li>步骤三：添加主机
-        <p>3.1 在左边操作栏，输入 &lt;<b>地址</b>>、&lt;<b>用户名</b>>、&lt;<b>密码</b>>、&lt;<b>SSH 端口</b>>，可以扫描出添加的主机。&lt;<b>地址</b>> 不仅支持 IP、HostName 扫描主机，还可以通过 IP 段和 HostName 段，&lt;<b>地址</b>> 可以参考左边操作栏的提示，点击 &lt;<b>帮助</b>>。</p>
+      <li>Step3: Add host
+        <p>3.1 Input the &lt;<b>地址</b>>, &lt;<b>用户名</b>>, &lt;<b>密码</b>>, &lt;<b>SSH 端口</b>> in the operation column on the left, the system will show the host already added. The &lt;<b>地址</b>> not only supports IP address, and Hostname to scanning but also supports segments of IP and Hostnames. If you need help with the &lt;<b>地址</b>>, you can click &lt;<b>帮助</b>>.</p>
         <p><image href="../images/s31.jpg"/></p>
-        <p>3.2 在左边操作栏，输入 &lt;<b>地址</b>>、&lt;<b>用户名</b>>、&lt;<b>密码</b>>、&lt;<b>SSH 端口</b>>，然后点击 &lt;<b>扫描</b>>。</p>
+        <p>3.2 Input the &lt;<b>地址</b>>, &lt;<b>用户名</b>>, &lt;<b>密码</b>>, &lt;<b>SSH 端口</b>> in the operation column on the left, then click &lt;<b>扫描</b>> to sacn.</p>
         <p><image href="../images/s32.jpg"/></p>
-        <p>3.3 扫描完成后，扫描结果会在右边显示出来，默认正常连接的主机都会选上，有问题的主机不会选择，点击有问题的主机，可以重新输入参数，点击输入框以外的地方，自动重新扫描主机。</p>
+        <p>3.3 After scanning, the result will be shown on the right. Correct hosts will be tagged by default, and those not chosen are incorrect hosts, and need to re-input. You can choose the host and re-input the parameters then scan again. Click input outside the input box can start the scanning.</p>
         <p><image href="../images/s331.jpg"/></p>
         <p><image href="../images/s332.jpg"/></p>
-        <p>3.4 在主机列表选择要添加的主机，图中3台主机都添加，因此全选。点击 &lt;<b>下一步</b>>。</p>
+        <p>3.4 In the list of hosts, you should choose the hosts you want to add, tag them, click &lt;<b>下一步</b>>.</p>
         <p><image href="../images/s34.jpg"/></p>
-        <p>3.5 等待 OM 获取主机信息。</p>
+        <p>3.5 Wait for OM to get hosts' information.</p>
         <p><image href="../images/s35.jpg"/></p>
-        <p>3.6 左边是主机列表栏，右边是主机的详细信息，点击左边列表的主机，可以显示该主机信息。</p>
+        <p>3.6 Left is the list of hosts, detail info of the host is on the right, choose a host on the list, you can check the detail info on the right.</p>
         <p><image href="../images/s36.jpg"/></p>
-        <p>3.7 主机列表，蓝色提示已选择的磁盘数，黄色提示该主机有4个警告，当鼠标移到提示中，会自动显示内容。（注意：图中3台主机都有1个磁盘是满足容量的）</p>
+        <p>3.7 In the host list, blue bubble means the number of chosen disks, yellow bubble means the number of host's warning. (When pointed, system will pump up notes)</p>
         <p><image href="../images/s37.jpg"/></p>
-        <p>3.8 检查主机没有问题，点击 &lt;<b>下一步</b>>，等待完成。完成后会自动进入下一步操作。</p>
+        <p>3.8 Ensure the hosts are all correct, click &lt;<b>下一步</b>>, when completed, system will automatically jump to the next page.</p>
         <p><image href="../images/s381.jpg"/></p>
         <p><image href="../images/s382.jpg"/></p></li>
-      <li>步骤四：创建业务
-        <p>4.1 配置业务信息，可以通过下拉菜单选择 &lt;<b>集群模式</b>> 和 &lt;<b>独立模式</b>>。</p>
+      <li>Step 4: Create Business
+        <p>4.1 Setting business information, you can pull down the list and choose &lt;<b>集群模式</b>> or &lt;<b>独立模式</b>></p>
         <p><image href="../images/s41.jpg"/></p>
-        <p>4.2 &lt;<b>高级选项</b>>，可以选择指定的1台或多台主机安装业务，默认由系统自动分配。</p>
+        <p>4.2 &lt;<b>高级选项</b>>, we can choose one or multiple hosts to install business, default arrange by the system.</p>
         <p><image href="../images/s42.jpg"/></p>
-        <p>4.3 设置好参数后，点击 &lt;<b>下一步</b>>。</p>
+        <p>4.3 Set the parameters, click &lt;<b>下一步</b>>.</p>
         <p><image href="../images/s43.jpg"/></p>
-        <p>4.4 左边是业务和每一个分区组信息，可以通过业务添加分区组，通过分区组添加删除节点、删除分区组。（注意：协调组和编目组是不能删除的）</p>
+        <p>4.4 At the left, there shows the information of each cluster and business, we can use business to add partition group, and we can use the partition group to add, remove nodes. (Warning: Catalog group and Coord group can't be removed).</p>
         <p><image href="../images/s441.jpg"/></p>
         <p><image href="../images/s442.jpg"/></p>
         <p><image href="../images/s443.jpg"/></p>
         <p><image href="../images/s444.jpg"/></p>
-        <p>4.5 右边是节点列表，点击列表每一行，都可以修改该行节点的配置。</p>
+        <p>4.5 At the right, there is a list of nodes, choose a row then you can edit the configuration of the host.</p>
         <p><image href="../images/s45.jpg"/></p>
-        <p>4.6 批量修改节点配置，可以在节点列表每一行的方框打勾来指定要修改的节点，也可以点击 &lt;<b>选择操作</b>> - &lt;<b>全选</b>> - &lt;<b>反选</b>> 来选择，然后点击 &lt;<b>已选定操作</b>> - &lt;<b>修改节点配置</b>>进行修改。</p>
+        <p>4.6 To Batch edit the node, we can tag the row you want to edit, and click &lt;<b>选择操作</b>> - &lt;<b>全选</b>> - &lt;<b>反选</b>>, &lt;<b>已选定操作</b>> - &lt;<b>修改节点配置</b>> to edit.</p>
         <p><image href="../images/s46.jpg"/></p>
-        <p>4.7 节点列表第二行是查找条件，通过输入参数，可以快速找到指定条件的节点。</p>
+        <p>4.7 The second row of the list , we have boxes of query conditions, input parameters, we can find the node we want.</p>
         <p><image href="../images/s471.jpg"/></p>
         <p><image href="../images/s472.jpg"/></p>
         <p><image href="../images/s473.jpg"/></p>
-        <p>4.8 批量修改节点配置，&lt;<b>数据路径</b>> 和 &lt;<b>服务名</b>> 可以通过规则来设置。点击左边 &lt;<b>提示</b>> - &lt;<b>帮助</b>>，有详细说明。</p>
+        <p>4.8 To Batch edit the node, &lt;<b>数据路径</b>>, &lt;<b>服务名</b>> can be set in batch by specific rules you give. Click &lt;<b>帮助</b>> to have further instruction for the operation.</p>
         <p><image href="../images/s481.jpg"/></p>
         <p><image href="../images/s482.jpg"/></p>
-        <p>4.9 业务配置修改完成后，点击 &lt;<b>下一步</b>>，开始安装业务。</p>
+        <p>4.9 After setting, click &lt;<b>下一步</b>> to install all the hosts.</p>
         <p><image href="../images/s49.jpg"/></p></li>
-      <li>步骤五：安装业务
-        <p>	5.1开始安装业务</p>
+      <li>Step 5: Installing business
+        <p>	5.1 Start installing business.</p>
         <p><image href="../images/s511.jpg"/></p>
         <p><image href="../images/s512.jpg"/></p>
         <p><image href="../images/s513.jpg"/></p>
         <p><image href="../images/s514.jpg"/></p>
-        <p>5.2 安装完成，点击 &lt;<b>返回</b>>。</p>
+        <p>5.2 Installing completed, click &lt;<b>返回</b>>.</p>
         <p><image href="../images/s52.jpg"/></p>
-        <p>5.3 业务安装完成。</p>
+        <p>5.3 Business installing completed.</p>
         <p><image href="../images/s53.jpg"/></p></li>      
     </ul>
   </body>

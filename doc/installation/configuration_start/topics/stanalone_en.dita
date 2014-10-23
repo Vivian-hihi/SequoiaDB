@@ -12,11 +12,11 @@
       database files have the "sdbadmin" read and write permissions.</p>
     <ul>
       <li>Switch to "sdbadmin"<codeblock>su sdbadmin </codeblock></li>
-      <li>启动 SequoiaDB Shell 控制台（下文以默认安装路径 /opt/sequoiadb 为例）<p><codeblock>/opt/sequoiadb/bin/sdb</codeblock></p></li>      
-      <li>连接到本地的集群管理服务进程 sdbcm<codeblock>var oma = new Oma("localhost", 11790)</codeblock></li>
-      <li>创建独立模式的数据节点<codeblock>oma.createData(11810, "/opt/sequoiadb/database/standalone/11810")</codeblock>(Here 11810 is the port of database service. To avoid port conflicts and other issues, not the database 
+      <li>Start SequoiaDB Shell (the following instruction will set default installing path as /opt/sequoiadb)<p><codeblock>/opt/sequoiadb/bin/sdb</codeblock></p></li>      
+      <li>Connect to local cluster management service process sdbcm<codeblock>var oma = new Oma("localhost", 11790)</codeblock></li>
+      <li>Create data node of standalone mode.<codeblock>oma.createData(11810, "/opt/sequoiadb/database/standalone/11810")</codeblock>(Here 11810 is the port of database service. To avoid port conflicts and other issues, not the database 
         port configuration in the random port range. Such as: Most linux default random port range of 32768~61000 can be configured in the database port 32767 or less.)<p></p></li>
-      <li>启动该节点<codeblock>oma.startNode(11810)</codeblock></li>      
+      <li>Start the node.<codeblock>oma.startNode(11810)</codeblock></li>      
       <li>Finish configuration and startup of database</li>
     </ul>
   </body>

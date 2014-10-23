@@ -20,14 +20,14 @@
           service status of SequoiaDB in each database server:  service sdbcm status </p><p>If the
           system prompts "sdbcm is running", we can know that service is running, or please run the
           following command to reconfigurate service program: service sdbcm start</p></li>
-      <li>Step 2: 启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，后面会删除）<p>1. Switch to
+      <li>Step 2: Start a temporary Coord node(this node is used for creating other nodes, and will be deleted after build success).<p>1. Switch to
           "sdbadmin"<codeblock>su sdbadmin </codeblock></p>
-        <p>2. On any database server (the following steps are manipulated on this server), 启动 SequoiaDB Shell 控制台</p><p><codeblock>/opt/sequoiadb/bin/sdb</codeblock></p>
-        <p>3. 连接到本地的集群管理服务进程 sdbcm<codeblock>var oma = new Oma("localhost", 11790)</codeblock></p>
-        <p>4. 创建临时协调节点<codeblock>oma.createCoord(18800, "/opt/sequoiadb/database/coord/18800")</codeblock></p>
-        <p>5. 启动临时协调节点<codeblock>oma.startNode(18800)</codeblock></p></li>
+        <p>2. On any database server (the following steps are manipulated on this server), Start SequoiaDB Shell console</p><p><codeblock>/opt/sequoiadb/bin/sdb</codeblock></p>
+        <p>3. Connect to local cluster management service process sdbcm.<codeblock>var oma = new Oma("localhost", 11790)</codeblock></p>
+        <p>4. Create a temporary Coord Node.<codeblock>oma.createCoord(18800, "/opt/sequoiadb/database/coord/18800")</codeblock></p>
+        <p>5. Start the temporary Coord node.<codeblock>oma.startNode(18800)</codeblock></p></li>
       <li>Step 3: Configurate and start catalog nodes with statements
-        <p>1. 连接到临时协调节点，在 shell 命令中输入：</p><p><codeblock>> var db = new Sdb("localhost",18800)</codeblock>其中18800为协调节点端口号</p>
+        <p>1. 1.	Connect to the temporary Coord node, and insert instructions in Shell.</p><p><codeblock>> var db = new Sdb("localhost",18800)</codeblock>Here 18800 is the port number of this Coord node.</p>
         <p>2. Create a catalog node group</p><p><codeblock>> db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
         </p><p>Here "sdbserver1" is the hostname of the 1st server.</p><p>Here "11800" is the
           service port of catalog node. (The port is configured not to conflict with a random port, other ports in the following configuration also requires attention. </p><p>" /opt/sequoiadb/database/cata/11800" is the path of
@@ -60,16 +60,15 @@
         </note><p>3. Start data node group</p><p>
           <codeblock>> dataRG.start()</codeblock>
         </p></li>
-      <li>Step 5: 部署启动协调节点<p>1. 创建协调节点组<codeblock>var rg = db.createCoordRG()</codeblock></p>
-        <p>2. 创建协调节点<codeblock>rg.createNode("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")
+      <li>Step 5: Deploy and Start the Coord node.<p>1. Create coord replica group (CoordRG)<codeblock>var rg = db.createCoordRG()</codeblock></p>
+        <p>2. Create Coord nodes.<codeblock>rg.createNode("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")
 rg.createNode("sdbserver2", 11810, "/opt/sequoiadb/database/coord/11810")
 rg.createNode("sdbserver3", 11810, "/opt/sequoiadb/database/coord/11810")</codeblock></p>
-        <p>3. 启动协调节点<codeblock>rg.start()</codeblock></p></li>
-        <li>步骤六：删除临时协调节点
-          <p>1. 连接到本地的集群管理服务进程 sdbcm<codeblock>var oma = new Oma("localhost", 11790)</codeblock></p>
-          <p>2. 删除临时协调节点<codeblock>oma.removeCoord(18800)</codeblock></p>
-          <p>End</p></li> 
-      
+        <p>3. Start the Coord nodes.<codeblock>rg.start()</codeblock></p></li>
+      <li>Step6: Delete the temporary Coord node.
+        <p>1. Connect to local cluster management service process sdbcm.<codeblock>var oma = new Oma("localhost", 11790)</codeblock></p>
+        <p>2. Remove temporary Coord node.<codeblock>oma.removeCoord(18800)</codeblock></p>
+          <p>End</p></li>      
     </ul>
   </body>
 </topic>
