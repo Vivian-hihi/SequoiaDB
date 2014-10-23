@@ -2,6 +2,7 @@ var searchData=
 [
   ['dbcollection',['DBCollection',['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html',1,'com::sequoiadb::base']]],
   ['dbcursor',['DBCursor',['../classcom_1_1sequoiadb_1_1base_1_1DBCursor.html',1,'com::sequoiadb::base']]],
+  ['dblob',['DBLob',['../interfacecom_1_1sequoiadb_1_1base_1_1DBLob.html',1,'com::sequoiadb::base']]],
   ['dbquery',['DBQuery',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html',1,'com::sequoiadb::base']]],
   ['delete',['delete',['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ad6f3f0ba7a9f730cefe9590909025a46',1,'com.sequoiadb.base.DBCollection.delete(BSONObject matcher)'],['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a04a5c915a48bbbdeb96876aef7ad4385',1,'com.sequoiadb.base.DBCollection.delete(String matcher)'],['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ae4032fd54ae8880c46aee7e0f302a702',1,'com.sequoiadb.base.DBCollection.delete(String matcher, String hint)'],['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a0e5ad742053d57a0446e749295b5f27d',1,'com.sequoiadb.base.DBCollection.delete(BSONObject matcher, BSONObject hint)']]],
   ['deprecated_20list',['Deprecated List',['../deprecated.html',1,'']]],
