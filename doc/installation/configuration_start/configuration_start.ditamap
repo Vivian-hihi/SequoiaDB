@@ -6,5 +6,6 @@
   <topicref href="topics/stanalone.dita"/>
   <topicref href="topics/cluster.dita"/>
   <topicref href="topics/autoinstall.dita"/>
+  <topicref href="topics/automoni.dita"/>
  </topicref>
 </map>

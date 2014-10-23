@@ -516,6 +516,8 @@
                 <folder name="topics">
                     <file name="installation/configuration_start/topics/autoinstall_en.dita"/>
                     <file name="installation/configuration_start/topics/autoinstall.dita"/>
+                    <file name="installation/configuration_start/topics/automoni_en.dita"/>
+                    <file name="installation/configuration_start/topics/automoni.dita"/>
                     <file name="installation/configuration_start/topics/cluster_en.dita"/>
                     <file name="installation/configuration_start/topics/cluster.dita"/>
                     <file name="installation/configuration_start/topics/configuration_start_en.dita"/>

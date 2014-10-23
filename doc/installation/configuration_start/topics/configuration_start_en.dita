@@ -8,5 +8,7 @@
       <xref href="stanalone_en.dita">Configuration and Startup of Standalone Mode</xref></p>
     <p>
       <xref href="cluster_en.dita">Configuration and Startup of Cluster Mode</xref></p>
+    <p><xref href="autoinstall_en.dita">Automatic installing</xref></p>
+    <p><xref href="automoni_en.dita">监控管理</xref></p>
   </body>
 </topic>
