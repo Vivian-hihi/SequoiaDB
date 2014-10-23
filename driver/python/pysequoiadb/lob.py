@@ -105,10 +105,11 @@ class lob(object):
       """
       if not isinstance(seek_pos, int):
          raise SDBTypeError("seek_pos must be an instance of int")
-      if isinstance(whence, int):
+      if not isinstance(whence, int):
          raise SDBTypeError("seek_pos must be an instance of int")
-      if whence is not [ 0, 1, 2 ]:
-         raise InvalidParameter("value of whence is in valid")
+      if whence not in (0, 1, 2):
+         raise InvalidParameter("value of whence is in valid",
+                                const.SDB_INVALIDARG)
       try:
          rc = sdb.lob_seek(self._handle, seek_pos)
          pysequoiadb._raise_if_error("Failed to seek lob", rc)
