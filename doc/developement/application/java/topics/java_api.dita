@@ -13,7 +13,7 @@ openLob，打开一个已存在的大对象
 removeLob，删除一个大对象
 listLobs，列出所有大对象
 explain，获取执行访问计划</codeblock>
-      <p>2. 新增大对象类，用于操作大对象：</p><codeblock>write，向一个大对象写入数据
+      <p>2. 新增大对象类 DBLob，用于操作大对象：</p><codeblock>write，向一个大对象写入数据
 read，从大对象中读取数据
 seek，指定读取数据的偏移
 close，关闭一个大对象

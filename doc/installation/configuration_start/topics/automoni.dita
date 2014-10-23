@@ -3,13 +3,16 @@
 <topic id="topic_ck5_zs4_vp">
   <title>监控管理</title>
   <body>
-    <p>OM 支持 IE7/8/9+、chrome、firefox 等主流浏览器。</p>
+    <p>PHP 监控支持 IE9+、chrome、firefox 等主流浏览器。</p>
     <ul>
-      <li>1. 主页左边是集群列表，右边是集群实时监控信息        
-        <p><image href="../images/m1.jpg"/></p></li>
-      <li>2. 创建集群
-        <p>2.1 点击 &lt;<b>状态</b>> 旁边的下拉菜单；</p>
-        <p><image href="../images/m21.jpg"/></p>
+      <li>1. 启动PHP服务
+        <p>1.1 在安装了 sequoiadb 的主机上，执行 sequoiadb 目录下 bin/sdbwsart。例如：<codeblock>/opt/sequoiadb/bin/sdbwsart</codeblock></p>        
+        <p><image href="../images/o11.jpg"/></p>
+        <p>1.2 在浏览器输入 【步骤1.1】 的地址 http://192.168.1.215:8080/</p>
+        <p><image href="../images/o12.jpg"/></p></li>      
+      <li>2. 连接监控页面
+        <p>2.1 在连接管理 &lt;<b>连接地址</b>> 输入地址，点击 &lt;<b>连接测试</b>>，连接成功后，点击 &lt;<b>连接</b>>；</p>
+        <p><image href="../images/o21.jpg"/></p>
         <p>2.2 点击 &lt;<b>创建集群</b>>；</p>
         <p><image href="../images/m22.jpg"/></p>
         <p>2.3 输入集群参数，点击 &lt;<b>高级选项</b>> 可以设置更多参数；</p>
