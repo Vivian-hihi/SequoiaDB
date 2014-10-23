@@ -625,6 +625,10 @@ namespace sdbclient
       CHAR _domainName[ CLIENT_DOMAIN_NAMESZ+1 ] ;
 
       void _setConnection ( _sdb *connection ) ;
+      void _dropConnection()
+      {
+         _connection = NULL ;
+      }
       INT32 _setName ( const CHAR *pDomainName ) ;
 
       friend class _sdbImpl ;
@@ -689,6 +693,10 @@ namespace sdbclient
       const CHAR              *_dataCache ;
 
       void _setConnection( _sdb *pConnection ) ;
+      void _dropConnection()
+      {
+         _connection = NULL ;
+      }
       void _setCollection( _sdbCollectionImpl *pCollection ) ;
       void _cleanup () ;
       BOOLEAN _dataCached() ;
@@ -746,8 +754,8 @@ namespace sdbclient
       std::set<ossValuePtr>    _collectionspaces ;
       std::set<ossValuePtr>    _nodes ;
       std::set<ossValuePtr>    _replicaGroups ;
-      std::set<ossValuePtr>    _domain ;
-      std::set<ossValuePtr>    _lob ;
+      std::set<ossValuePtr>    _domains ;
+      std::set<ossValuePtr>    _lobs ;
 
       void _disconnect () ;
       INT32 _send ( CHAR *pBuffer ) ;
@@ -792,13 +800,13 @@ namespace sdbclient
       void _regDomain ( _sdbDomainImpl *domain )
       {
          lock () ;
-         _domain.insert ( (ossValuePtr)domain ) ;
+         _domains.insert ( (ossValuePtr)domain ) ;
          unlock () ;
       }
       void _regLob ( _sdbLobImpl *lob )
       {
          lock () ;
-         _lob.insert ( (ossValuePtr)lob ) ;
+         _lobs.insert ( (ossValuePtr)lob ) ;
          unlock () ;
       }
       void _unregCursor ( _sdbCursorImpl *cursor )
@@ -853,13 +861,13 @@ namespace sdbclient
       void _unregDomain ( _sdbDomainImpl *domain )
       {
          lock () ;
-         _domain.erase ( (ossValuePtr)domain ) ;
+         _domains.erase ( (ossValuePtr)domain ) ;
          unlock () ;
       }
       void _unregLob ( _sdbLobImpl *lob )
       {
          lock () ;
-         _lob.erase ( (ossValuePtr)lob ) ;
+         _lobs.erase ( (ossValuePtr)lob ) ;
          unlock () ;
       }
 

@@ -4248,14 +4248,8 @@ namespace sdbclient
          needRead -= onceRead ;
          _currentOffset += onceRead ;
          localBuf += onceRead ;
-
-         if ( onceRead == len )
-         {
-            *read = totalRead ;
-            goto done ;
-         }
-
-         onceRead = 0 ;
+         *read = totalRead ;
+         goto done ;
       }
 
       _cachedOffset = -1 ;
@@ -4278,20 +4272,7 @@ namespace sdbclient
 
       rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
                                        contextID, result ) ;
-      if ( SDB_EOF == rc )
-      {
-         if ( 0 < totalRead )
-         {
-            rc = SDB_OK ;
-            *read = totalRead ;
-            goto done ;   
-         }
-         else
-         {
-            goto error ;
-         }
-      }
-      else if ( SDB_OK != rc )
+      if ( SDB_OK != rc )
       {
          goto error ;
       }
@@ -4358,7 +4339,7 @@ namespace sdbclient
       BOOLEAN locked = FALSE ;
       if ( NULL == _connection )
       {
-         rc = SDB_SYS ;
+         rc = SDB_NOT_CONNECTED ;
          goto error ;
       }
       _connection->lock() ;
@@ -4385,7 +4366,7 @@ namespace sdbclient
       // check
       if (  !_connection )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_NOT_CONNECTED ;
          goto error;
       }
       // check wether lob has been open or not
@@ -4449,7 +4430,7 @@ namespace sdbclient
       // check
       if (  !_connection )
       {
-         rc = SDB_SYS ;
+         rc = SDB_NOT_CONNECTED ;
          goto error;
       }
       // check wether lob has been open or not
@@ -4474,16 +4455,16 @@ namespace sdbclient
          goto error ;
       }
 
-      if ( _currentOffset == _lobSize )
-      {
-         rc = SDB_EOF ;
-         goto error ;
-      }
-
       if ( 0 == len )
       {
          *read = 0 ;
          goto done ;
+      }
+      
+      if ( _currentOffset == _lobSize )
+      {
+         rc = SDB_EOF ;
+         goto error ;
       }
 
       while ( 0 < needRead && _currentOffset < _lobSize )
@@ -4537,7 +4518,7 @@ namespace sdbclient
       // check
       if (  !_connection )
       {
-         rc = SDB_SYS ;
+         rc = SDB_NOT_CONNECTED ;
          goto error;
       }
       // check wether lob has been open or not
@@ -4620,7 +4601,7 @@ namespace sdbclient
       // check
       if (  !_connection )
       {
-         rc = SDB_SYS ;
+         rc = SDB_NOT_CONNECTED ;
          goto error;
       }
       // check wether lob has been open or not
@@ -4691,7 +4672,7 @@ namespace sdbclient
       // check
       if (  !_connection )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_NOT_CONNECTED ;
          goto error;
       }
       // check wether lob has been open or not
@@ -4725,7 +4706,7 @@ namespace sdbclient
       // check
       if (  !_connection )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_NOT_CONNECTED ;
          goto done;
       }
       // check wether lob has been open or not
@@ -4765,7 +4746,7 @@ namespace sdbclient
       // check
       if (  !_connection )
       {
-         rc = SDB_INVALIDARG ;
+         rc = SDB_NOT_CONNECTED ;
          goto done;
       }
       // check wether lob has been open or not
@@ -4832,6 +4813,14 @@ namespace sdbclient
       for ( it = _replicaGroups.begin(); it != _replicaGroups.end(); ++it )
       {
          ((_sdbReplicaGroupImpl*)(*it))->_dropConnection () ;
+      }
+      for ( it = _domains.begin(); it != _domains.end(); ++it )
+      {
+         ((_sdbDomainImpl*)(*it))->_dropConnection () ;
+      }
+      for ( it = _lobs.begin(); it != _lobs.end(); ++it )
+      {
+         ((_sdbLobImpl*)(*it))->_dropConnection () ;
       }
       if ( _sock )
          _disconnect () ;
