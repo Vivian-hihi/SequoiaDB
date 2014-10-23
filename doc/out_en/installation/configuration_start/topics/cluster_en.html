@@ -61,28 +61,28 @@
           following command to reconfigurate service program: service sdbcm start</p>
 </li>
 
-      <li class="li">Step 2: 启动一个临时协调节点（该节点只是为了创建其它节点而临时使用，后面会删除）<div class="p">1. Switch to
+      <li class="li">Step 2: Start a temporary Coord node(this node is used for creating other nodes, and will be deleted after build success).<div class="p">1. Switch to
           "sdbadmin"<pre class="pre codeblock">su sdbadmin </pre>
 </div>
 
-        <p class="p">2. On any database server (the following steps are manipulated on this server), 启动 SequoiaDB Shell 控制台</p>
+        <p class="p">2. On any database server (the following steps are manipulated on this server), Start SequoiaDB Shell console</p>
 <div class="p"><pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
 </div>
 
-        <div class="p">3. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma("localhost", 11790)</pre>
+        <div class="p">3. Connect to local cluster management service process sdbcm.<pre class="pre codeblock">var oma = new Oma("localhost", 11790)</pre>
 </div>
 
-        <div class="p">4. 创建临时协调节点<pre class="pre codeblock">oma.createCoord(18800, "/opt/sequoiadb/database/coord/18800")</pre>
+        <div class="p">4. Create a temporary Coord Node.<pre class="pre codeblock">oma.createCoord(18800, "/opt/sequoiadb/database/coord/18800")</pre>
 </div>
 
-        <div class="p">5. 启动临时协调节点<pre class="pre codeblock">oma.startNode(18800)</pre>
+        <div class="p">5. Start the temporary Coord node.<pre class="pre codeblock">oma.startNode(18800)</pre>
 </div>
 </li>
 
       <li class="li">Step 3: Configurate and start catalog nodes with statements
-        <p class="p">1. 连接到临时协调节点，在 shell 命令中输入：</p>
+        <p class="p">1. 1.	Connect to the temporary Coord node, and insert instructions in Shell.</p>
 <div class="p"><pre class="pre codeblock">&gt; var db = new Sdb("localhost",18800)</pre>
-其中18800为协调节点端口号</div>
+Here 18800 is the port number of this Coord node.</div>
 
         <p class="p">2. Create a catalog node group</p>
 <div class="p"><pre class="pre codeblock">&gt; db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
@@ -151,28 +151,27 @@
         </div>
 </li>
 
-      <li class="li">Step 5: 部署启动协调节点<div class="p">1. 创建协调节点组<pre class="pre codeblock">var rg = db.createCoordRG()</pre>
+      <li class="li">Step 5: Deploy and Start the Coord node.<div class="p">1. Create coord replica group (CoordRG)<pre class="pre codeblock">var rg = db.createCoordRG()</pre>
 </div>
 
-        <div class="p">2. 创建协调节点<pre class="pre codeblock">rg.createNode("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")
+        <div class="p">2. Create Coord nodes.<pre class="pre codeblock">rg.createNode("sdbserver1", 11810, "/opt/sequoiadb/database/coord/11810")
 rg.createNode("sdbserver2", 11810, "/opt/sequoiadb/database/coord/11810")
 rg.createNode("sdbserver3", 11810, "/opt/sequoiadb/database/coord/11810")</pre>
 </div>
 
-        <div class="p">3. 启动协调节点<pre class="pre codeblock">rg.start()</pre>
+        <div class="p">3. Start the Coord nodes.<pre class="pre codeblock">rg.start()</pre>
 </div>
 </li>
 
-        <li class="li">步骤六：删除临时协调节点
-          <div class="p">1. 连接到本地的集群管理服务进程 sdbcm<pre class="pre codeblock">var oma = new Oma("localhost", 11790)</pre>
+      <li class="li">Step6: Delete the temporary Coord node.
+        <div class="p">1. Connect to local cluster management service process sdbcm.<pre class="pre codeblock">var oma = new Oma("localhost", 11790)</pre>
 </div>
 
-          <div class="p">2. 删除临时协调节点<pre class="pre codeblock">oma.removeCoord(18800)</pre>
+        <div class="p">2. Remove temporary Coord node.<pre class="pre codeblock">oma.removeCoord(18800)</pre>
 </div>
 
           <p class="p">End</p>
 </li>
- 
       
     </ul>
 
