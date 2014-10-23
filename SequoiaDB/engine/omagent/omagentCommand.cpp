@@ -222,7 +222,7 @@ namespace engine
       }
       // execute js
       rc = _scope->eval( _content.c_str(), _content.size(),
-                         "", 1, 1, rval, detail ) ;
+                         "", 1, SPT_EVAL_FLAG_NONE, rval, detail ) ;
       if ( rc )
       {
          PD_LOG_MSG ( PDERROR, "Failed to eval js file for command[%s]: "
