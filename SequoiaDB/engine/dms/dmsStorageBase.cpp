@@ -134,7 +134,6 @@ namespace engine
       INT32 rc               = SDB_OK ;
       UINT64 fileSize        = 0 ;
       UINT64 currentOffset   = 0 ;
-      UINT32 pathLength      = 0 ;
       UINT32 mode = OSS_READWRITE|OSS_EXCLUSIVE ;
 
       SDB_ASSERT( pPath, "path can't be NULL" ) ;
@@ -232,6 +231,13 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to map header: %s", _suFileName ) ;
          goto error ;
+      }
+
+      /// lobPageSize is 0 if it was created by db with older version.
+      /// we reassign it with 256K -- yunwu
+      if ( 0 == _dmsHeader->_lobdPageSize )
+      {
+         _dmsHeader->_lobdPageSize = DMS_DEFAULT_LOB_PAGE_SZ ;
       }
 
       // after we load SU, let's verify it's expected file
