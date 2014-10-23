@@ -8,7 +8,8 @@
     <section>
       <title>History Updates:</title>
       <p><b>Version 1.10</b></p>
-      <p>1. SdbCollection class's new interfaces:</p><codeblock>createLob, create a new LOB 
+      <p>1. SdbCollection class's new interfaces:</p><codeblock>explain，获取查询的访问计划
+createLob, create a new LOB 
 openLob, open an existed LOB
 removeLob, remove a LOB
 listLobs, list all the LOBs in the collection</codeblock>
