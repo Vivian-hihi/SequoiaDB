@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="监控管理"/>
-<meta name="description" content="OM 支持 IE7/8/9+、chrome、firefox 等主流浏览器。 1. 主页左边是集群列表，右边是集群实时监控信息 2. 创建集群 2.1 点击 &lt; 状态 &gt; 旁边的下拉菜单； 2.2 点击 &lt; 创建集群 &gt;； 2.3 输入集群参数，点击 &lt; 高级选项 &gt; 可以设置更多参数； 2.4 点击 &lt; 确定 &gt;，完成创建。 3. 查看业务信息和删除业务 3.1 查看当前已安装的业务（图中 ..."/>
+<meta name="description" content="PHP 监控支持 IE9+、chrome、firefox 等主流浏览器。 1. 启动PHP服务 1.1 在安装了 sequoiadb 的主机上，执行 sequoiadb 目录下 bin/sdbwsart。例如： /opt/sequoiadb/bin/sdbwsart 1.2 在浏览器输入 【步骤1.1】 的地址 http://192.168.1.215:8080/ 2. 连接监控页面 2.1 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../installation/configuration_start/topics/configuration_start_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_4s1_j5p_vp"/>
@@ -36,129 +36,76 @@
   <h1 class="title topictitle1">监控管理</h1>
 
   <div class="body">
-    <p class="p">OM 支持 IE7/8/9+、chrome、firefox 等主流浏览器。</p>
+    <p class="p">PHP 监控支持 IE9+、chrome、firefox 等主流浏览器。</p>
 
     <ul class="ul">
-      <li class="li">1. 主页左边是集群列表，右边是集群实时监控信息        
-        <p class="p"><img class="image" src="../images/m1.jpg"/></p>
-</li>
-
-      <li class="li">2. 创建集群
-        <p class="p">2.1 点击 &lt;<strong class="ph b">状态</strong>&gt; 旁边的下拉菜单；</p>
-
-        <p class="p"><img class="image" src="../images/m21.jpg"/></p>
-
-        <p class="p">2.2 点击 &lt;<strong class="ph b">创建集群</strong>&gt;；</p>
-
-        <p class="p"><img class="image" src="../images/m22.jpg"/></p>
-
-        <p class="p">2.3 输入集群参数，点击 &lt;<strong class="ph b">高级选项</strong>&gt; 可以设置更多参数；</p>
-
-        <p class="p"><img class="image" src="../images/m231.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m232.jpg"/></p>
-
-        <p class="p">2.4 点击 &lt;<strong class="ph b">确定</strong>&gt;，完成创建。</p>
-
-        <p class="p"><img class="image" src="../images/m24.jpg"/></p>
-</li>
-
-      <li class="li">3. 查看业务信息和删除业务
-        <p class="p">3.1 查看当前已安装的业务（图中 myBusiness 是已经安装的一个业务，myBusiness 是业务名）；</p>
-
-        <p class="p"><img class="image" src="../images/m31.jpg"/></p>
-
-        <p class="p">3.2 点击表格 &lt;<strong class="ph b">业务</strong>&gt; 查看业务信息（一）；</p>
-
-        <p class="p"><img class="image" src="../images/m321.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m322.jpg"/></p>
-
-        <p class="p">3.3 点击业务名旁边的下拉菜单，点击 &lt;<strong class="ph b">业务列表</strong>&gt; 看业务信息（二）；</p>
-
-        <p class="p"><img class="image" src="../images/m331.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m332.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m333.jpg"/></p>
-
-        <p class="p">3.4 删除业务，在业务列表，点击业务对应的 &lt;<strong class="ph b">删除业务</strong>&gt; 按钮，弹出警告窗口，点击 &lt;<strong class="ph b">确定</strong>&gt; 开始删除业务，等待卸载完成，完成后弹出提示，点击 &lt;<strong class="ph b">返回</strong>&gt;。</p>
-
-        <p class="p"><img class="image" src="../images/m341.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m342.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m343.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m344.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m345.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m346.jpg"/></p>
-</li>
-
-      <li class="li">4. 查看集群主机数量和主机详细信息，删除主机
-        <p class="p">4.1 点击要查看的集群名；</p>
-
-        <p class="p"><img class="image" src="../images/m41.jpg"/></p>
-
-        <p class="p">4.2 鼠标移动到主机旁边蓝色的徽章，徽章上面的数字就是当前主机数量；</p>
-
-        <p class="p"><img class="image" src="../images/m42.jpg"/></p>
-
-        <p class="p">4.3 表格第二列是显示当前状态信息，黄色表示 warning，红色表示 danger；</p>
-
-        <p class="p"><img class="image" src="../images/m431.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m432.jpg"/></p>
-
-        <p class="p">4.4 主页右边的 &lt;<strong class="ph b">实时监控</strong>&gt;，监控集群的平均 CPU 使用率， 平均内存使用率， 平均磁盘使用率，网络入口流量，网络出口流量，网络每秒接收数据包个数，网络每秒发送数据包个数；</p>
-
-        <p class="p"><img class="image" src="../images/m44.jpg"/></p>
+      <li class="li">1. 启动PHP服务
+        <div class="p">1.1 在安装了 sequoiadb 的主机上，执行 sequoiadb 目录下 bin/sdbwsart。例如：<pre class="pre codeblock">/opt/sequoiadb/bin/sdbwsart</pre>
+</div>
         
-        <p class="p">4.5 点击表格 &lt;<strong class="ph b">主机</strong>&gt;，查看主机列表；</p>
+        <p class="p"><img class="image" src="../images/o11.jpg"/></p>
 
-        <p class="p"><img class="image" src="../images/m451.jpg"/></p>
+        <p class="p">1.2 在浏览器输入 【步骤1.1】 的地址 http://192.168.1.215:8080/</p>
 
-        <p class="p"><img class="image" src="../images/m452.jpg"/></p>
-
-        <p class="p">4.6 点击业务名旁边的下拉菜单，点击 &lt;<strong class="ph b">主机列表</strong>&gt;查看主机列表；</p>
-
-        <p class="p"><img class="image" src="../images/m461.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m462.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m463.jpg"/></p>
-
-        <p class="p">4.7 删除主机，选择要删除的主机，点击 &lt;<strong class="ph b">已选定操作</strong>&gt;，点击 &lt;<strong class="ph b">删除主机</strong>&gt;，弹出警告窗口，点击 &lt;<strong class="ph b">确定</strong>&gt; 开始删除主机，等待完成，完成后弹出删除结果，点击 &lt;<strong class="ph b">关闭</strong>&gt;。</p>
-
-        <p class="p"><img class="image" src="../images/m471.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m472.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m473.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m474.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m475.jpg"/></p>
-
-        <p class="p"><img class="image" src="../images/m476.jpg"/></p>
-</li>
-
-      <li class="li">5. 删除集群
-        <p class="p">5.1 回到主页，点击要删除的集群旁边下拉菜单；</p>
-
-        <p class="p"><img class="image" src="../images/m51.jpg"/></p>
-        
-        <p class="p">5.2 点击菜单的 &lt;<strong class="ph b">删除集群</strong>&gt;；</p>
-
-        <p class="p"><img class="image" src="../images/m52.jpg"/></p>
-
-        <p class="p">5.3 删除完成。</p>
-
-        <p class="p"><img class="image" src="../images/m53.jpg"/></p>
+        <p class="p"><img class="image" src="../images/o12.jpg"/></p>
 </li>
       
+      <li class="li">2. 连接监控页面
+        <p class="p">2.1 在连接管理 &lt;<strong class="ph b">连接地址</strong>&gt; 输入地址，点击 &lt;<strong class="ph b">连接测试</strong>&gt;，连接成功后，点击 &lt;<strong class="ph b">连接</strong>&gt;；</p>
+
+        <p class="p"><img class="image" src="../images/o21.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o22.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o23.jpg"/></p>
+        </li>
+
+      <li class="li">3. 创建集合空间、集合、插入数据
+        <p class="p">3.1 创建集合空间，点击 &lt;<strong class="ph b">工具栏</strong>&gt; 的<img class="image" src="../images/o30.jpg"/>按钮，输入 &lt;<strong class="ph b">集合空间名</strong>&gt;，点击 &lt;<strong class="ph b">确定</strong>&gt;；</p>
+
+        <p class="p"><img class="image" src="../images/o311.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o312.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o313.jpg"/></p>
+
+        <p class="p">3.2 创建集合，点击集合空间foo的 &lt;<strong class="ph b">属性</strong>&gt;，点击工具栏的<img class="image" src="../images/o301.jpg"/>按钮，输入 &lt;<strong class="ph b">集合名</strong>&gt;，点击 &lt;<strong class="ph b">确定</strong>&gt;；</p>
+
+        <p class="p"><img class="image" src="../images/o321.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o322.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o323.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o324.jpg"/></p>
+
+        <p class="p">3.3 插入数据，点击集合 bar 的 &lt;<strong class="ph b">数据</strong>&gt;，点击工具栏的<img class="image" src="../images/o302.jpg"/>按钮，输入 json 记录，点击 &lt;<strong class="ph b">确定</strong>&gt;；</p>
+
+        <p class="p"><img class="image" src="../images/o331.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o332.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o333.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o334.jpg"/></p>
+
+        <p class="p">3.4 格式化 Json 记录，点击工具栏的<img class="image" src="../images/o303.jpg"/>按钮。</p>
+
+        <p class="p"><img class="image" src="../images/o341.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o342.jpg"/></p>
+</li>
+
+      <li class="li">4. 集群管理
+        <p class="p">4.1 查看集群，点击导航 &lt;<strong class="ph b">集群管理</strong>&gt;；</p>
+
+        <p class="p"><img class="image" src="../images/o41.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o42.jpg"/></p>
+
+        <p class="p"><img class="image" src="../images/o43.jpg"/></p>
+</li>
+            
     </ul>
 
   </div>
