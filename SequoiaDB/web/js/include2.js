@@ -21,14 +21,17 @@ function showInfoFromFoot( type, text )
  */
 function gotoPage( address )
 {
-	while( true )
+	var timers = null ;
+	function tempGoPage()
 	{
 		if ( isSending == false )
 		{
 			window.location.href = address ;
-			break ;
+			clearInterval( timers ) ;
+			timers = null ;
 		}
 	}
+	timers = setInterval( tempGoPage, 100 ) ;
 }
 
 /*
