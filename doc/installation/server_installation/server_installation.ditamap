@@ -4,5 +4,6 @@
  <title>server_installation</title>
  <topicref href="topics/server_installation.dita">
   <topicref href="topics/linux.dita"></topicref>
+  <topicref href="topics/linuxom.dita"></topicref>
  </topicref>
 </map>

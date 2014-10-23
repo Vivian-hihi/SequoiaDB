@@ -554,6 +554,7 @@
                 <folder name="topics">
                     <file name="installation/server_installation/topics/linux_en.dita"/>
                     <file name="installation/server_installation/topics/linux.dita"/>
+                    <file name="installation/server_installation/topics/linuxom.dita"/>
                     <file name="installation/server_installation/topics/server_installation_en.dita"/>
                     <file name="installation/server_installation/topics/server_installation.dita"/>
                 </folder>

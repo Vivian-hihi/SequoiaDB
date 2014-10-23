@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
-<topic id="topic_yyl_fly_wj">
-        <title>Linux 版本的 DB 安装</title>
+<topic id="topic_n4j_bbq_vp">
+  <title>Linux 版本的 OM 安装</title>
   <body>
     <section>
       <title>安装前准备</title>
@@ -21,10 +21,10 @@
       <p>&nbsp;&nbsp;（2）步骤以命令行方式进行介绍，图形界面按照图像向导提示完成。</p>
       <note>如果有多台服务器，每台机器都需要重复如下步骤安装服务器程序。</note>
       <ul>
-          <li><p>参照<xref href="../../system_require/topics/software.dita">系统配置需求</xref>配置好主机名以及修改系统内核参数</p></li>
-          <li><p>运行安装程序<codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type DB</codeblock></p>
-                  <note>type 参数的默认值为 DB，当安装 DB 时，type 参数可省略。</note></li>
-          <li><p>程序提示选择向导语言<codeblock>Language Selection 
+        <li><p>参照<xref href="../../system_require/topics/software.dita">系统配置需求</xref>配置好主机名以及修改系统内核参数</p></li>
+        <li><p>运行安装程序<codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type SMS --svcname 11780 --dbpath /opt/sequoiadb/database/sms/11780 --restname 8000</codeblock></p>
+          <note>type 参数的默认值为 DB，当安装 OM 时，type 参数必须注明。svcname、dbpath 和 restname 三个参数只有在 OM 安装时才需要注明。</note></li>
+        <li><p>程序提示选择向导语言<codeblock>Language Selection 
 Please select the installation language
 [1] English - English       
 [2] Simplified Chinese - 简体中文         
@@ -62,3 +62,4 @@ Please choose an option [1] :2 </codeblock></p></li>
     </section>
   </body>
 </topic>
+
