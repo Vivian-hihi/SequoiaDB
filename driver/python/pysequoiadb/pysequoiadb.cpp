@@ -1990,7 +1990,6 @@ __METHOD_IMP(cl_create_lob)
          pOid = &oid ;
       }
    }
-   
 
    rc = cl->createLob(*lob, pOid) ;
 
@@ -2742,14 +2741,7 @@ error :
 
 __METHOD_IMP(lob_create)
 {
-   INT32 rc           = SDB_OK ;
    sdbLob *ret_obj    = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS(args, ""))
-   {
-      return NULL ;
-   }
-
    NEW_CPPOBJECT(ret_obj, sdbLob);
    if ( NULL == ret_obj )
    {
@@ -2766,12 +2758,6 @@ __METHOD_IMP(lob_release)
    sdbLob *lob        = NULL ;
 
    if ( !PARSE_PYTHON_ARGS(args, "O", &obj))
-   {
-      rc = SDB_INVALIDARG ;
-      goto done ;
-   }
-
-   if ( NULL == obj )
    {
       rc = SDB_INVALIDARG ;
       goto done ;
@@ -2958,7 +2944,7 @@ __METHOD_IMP(lob_get_oid)
    rc = lob->getOid(oid) ;
 
 done:
-   return MAKE_RETURN_INT_PYSTRING( rc, oid.getData() ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, oid.str().c_str()) ;
 error:
    goto done ;
 }
