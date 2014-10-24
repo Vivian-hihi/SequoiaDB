@@ -25,7 +25,7 @@ $( document ).keydown( function(e){
  */
 function searchTabList()
 {
-	var value = $( '#searchHostList' ).val() ;
+	var value = $.trim( $( '#searchHostList' ).val() ) ;
 	if( value == '' )
 	{
 		$( '#hostSwitchList' ).children().show() ;
@@ -112,11 +112,11 @@ function addHostList()
 	$( '#scanTable .form-control' ).each(function() {
       value.push( $( this ).val() ) ;
    });
-	var addressList = value[0] ;
-	var user = value[1] ;
+	var addressList = $.trim( value[0] ) ;
+	var user = $.trim( value[1] ) ;
 	var pwd = value[2] ;
-	var ssh = value[3] ;
-	var agent = value[4] ;
+	var ssh = $.trim( value[3] ) ;
+	var agent = $.trim( value[4] ) ;
 	
 	if( !sdbjs.fun.checkString( addressList, 1, 255 ) )
 	{
@@ -572,10 +572,10 @@ function showHostData( num )
  */
 function saveEditHostGrid( num )
 {
-	var user  = $( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(3)' ).children( 'input' ).val() ;
+	var user  = $.trim( $( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(3)' ).children( 'input' ).val() ) ;
 	var pwd   = $( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(4)' ).children( 'input' ).val() ;
-	var ssh   = $( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(5)' ).children( 'input' ).val() ;
-	var agent = $( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(6)' ).children( 'input' ).val() ;
+	var ssh   = $.trim( $( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(5)' ).children( 'input' ).val() ) ;
+	var agent = $.trim( $( '#hostGridList > .grid-body > .grid-tr:eq(' + num + ')' ).children( '.grid-td:eq(6)' ).children( 'input' ).val() ) ;
 	
 	if( !sdbjs.fun.checkString( user, 1, 255 ) )
 	{

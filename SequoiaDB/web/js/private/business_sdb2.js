@@ -225,6 +225,10 @@ function checkBusinessConfig()
 	for( var k = 0; k < propertyLen; ++k )
 	{
 		var inputValue = $( inputArray ).eq(k).val() ;
+		if( property[k]['Display'] == 'edit box' )
+		{
+			inputValue = $.trim( inputValue ) ;
+		}
 		var returnValue = checkInputValue( property[k]['Display'], property[k]['Type'], property[k]['Valid'], property[k]['WebName'], inputValue ) ;
 		if( returnValue[0] == false )
 		{
@@ -238,7 +242,14 @@ function checkBusinessConfig()
 	var propertyLen = _businessTemplate[selectNum]['Property'].length ;
 	for( var k = 0; k < propertyLen; ++k )
 	{
-		_businessConfig['Property'].push( { 'Name': _businessTemplate[selectNum]['Property'][k]['Name'], 'Value': $( inputArray ).eq(k).val() } ) ;
+		if( property[k]['Display'] == 'edit box' )
+		{
+			_businessConfig['Property'].push( { 'Name': _businessTemplate[selectNum]['Property'][k]['Name'], 'Value': $.trim( $( inputArray ).eq(k).val() ) } ) ;
+		}
+		else
+		{
+			_businessConfig['Property'].push( { 'Name': _businessTemplate[selectNum]['Property'][k]['Name'], 'Value': $( inputArray ).eq(k).val() } ) ;
+		}
 	}
 	$.cookie( 'SdbBusinessConfig', JSON.stringify( _businessConfig ) ) ;
 	gotoPage( __Deployment[2] ) ;

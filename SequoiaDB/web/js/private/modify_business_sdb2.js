@@ -89,7 +89,7 @@ function searchNodeGrid()
 {
 	var value = [] ;
 	$( '#nodeGrid > .grid-title > .grid-tr:last > .grid-th > .form-control' ).each(function(index, element) {
-      value.push( $( this ).val() ) ;
+      value.push( $.trim( $( this ).val() ) ) ;
    });
 	
 	if( value[0] == '' && value[1] == '' && value[2] == '' && value[3] == '全部' && value[4] == '全部' )
@@ -250,6 +250,10 @@ function saveNodeConfig( line )
 		var returnValue ;
 		for( var i = 0; i < configLen; ++i )
 		{
+			if( _configProperty[i]['Display'] == 'edit box' )
+			{
+				valueList[i] = $.trim( valueList[i] ) ;
+			}
 			returnValue = checkInputValue( _configProperty[i]['Display'], _configProperty[i]['Type'], _configProperty[i]['Valid'], _configProperty[i]['WebName'], valueList[i] ) ;
 			if( returnValue[0] == false )
 			{
@@ -285,6 +289,10 @@ function saveNodeConfig( line )
 		var returnValue ;
 		for( var i = 0; i < configLen; ++i )
 		{
+			if( _configProperty[i]['Display'] == 'edit box' )
+			{
+				valueList[i] = $.trim( valueList[i] ) ;
+			}
 			//数据路径和服务名不做检查
 			if( _configProperty[i]['Name'] != 'dbpath' && _configProperty[i]['Name'] != 'svcname' )
 			{
@@ -507,7 +515,7 @@ function openAddGroupModal()
  */
 function addGroup()
 {
-	var groupName = $( '#addGroupModal > .modal-body .form-control' ).val() ;
+	var groupName = $.trim( $( '#addGroupModal > .modal-body .form-control' ).val() ) ;
 	if ( sdbjs.fun.checkStrName( groupName ) )
 	{
 		var isExists = false ;
@@ -635,6 +643,10 @@ function addNode()
 	var returnValue ;
 	for( var i = 0; i < configLen; ++i )
 	{
+		if( _configProperty[i]['Display'] == 'edit box' )
+		{
+			valueList[i] = $.trim( valueList[i] ) ;
+		}
 		returnValue = checkInputValue( _configProperty[i]['Display'], _configProperty[i]['Type'], _configProperty[i]['Valid'], _configProperty[i]['WebName'], valueList[i] ) ;
 		if( returnValue[0] == false )
 		{
@@ -944,6 +956,10 @@ function addStandalone()
 	var returnValue ;
 	for( var i = 0; i < configLen; ++i )
 	{
+		if( _configProperty[i]['Display'] == 'edit box' )
+		{
+			valueList[ i + 1 ] = $.trim( valueList[ i + 1 ] ) ;
+		}
 		returnValue = checkInputValue( _configProperty[i]['Display'], _configProperty[i]['Type'], _configProperty[i]['Valid'], _configProperty[i]['WebName'], valueList[ i + 1 ] ) ;
 		if( returnValue[0] == false )
 		{

@@ -3,7 +3,7 @@
  */
 function login()
 {
-	var user = $( '#userName' ).val() ;
+	var user = $.trim( $( '#userName' ).val() ) ;
 	var pwd = $( '#passwd').val() ;
 	pwd = $.md5( pwd ) ;
 	var jsonArr = loginOM( user, pwd ) ;

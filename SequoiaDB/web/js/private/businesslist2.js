@@ -14,6 +14,7 @@ function gotoBusiness()
 	$( '#addbusinessModal > .modal-body .form-control' ).each(function(index, element) {
       value.push( $( this ).val() ) ;
    });
+	value[0] = $.trim( value[0] ) ;
 	if( !sdbjs.fun.checkStrName( value[0] ) )
 	{
 		$( '#addbusinessModal > .modal-body' ).children( ':eq(1)' ).text( '业务名必须以下划线或英文字母开头，只含有下划线英文字母数字，长度在 1 - 255 范围。' ) ;

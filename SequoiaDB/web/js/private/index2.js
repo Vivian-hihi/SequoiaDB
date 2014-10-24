@@ -23,6 +23,11 @@ function createCluster()
       value.push( $( this ).val() ) ;
    });
 	
+	value[0] = $.trim( value[0] ) ;
+	value[1] = $.trim( value[1] ) ;
+	value[3] = $.trim( value[3] ) ;
+	value[4] = $.trim( value[4] ) ;
+	
 	if( !sdbjs.fun.checkStrName( value[0] ) )
 	{
 		$( '#createClusterAdvanced' ).children( ':eq(1)' ).text( '集群名必须以下划线或英文字母开头，只含有下划线英文字母数字，长度在 1 - 255 范围。' ) ;
@@ -121,6 +126,13 @@ function guideStart()
 	$( '#deploymentGuide > .modal-body .form-control' ).each(function(index, element) {
       value.push( $( this ).val() ) ;
    });
+	
+	value[0] = $.trim( value[0] ) ;
+	value[1] = $.trim( value[1] ) ;
+	value[3] = $.trim( value[3] ) ;
+	value[5] = $.trim( value[5] ) ;
+	value[6] = $.trim( value[6] ) ;
+	
 	if( !sdbjs.fun.checkStrName( value[0] ) )
 	{
 		$( '#deploymentGuideAdvanced' ).children( ':eq(1)' ).text( '集群名必须以下划线或英文字母开头，只含有下划线英文字母数字，长度在 1 - 255 范围。' ) ;
@@ -675,7 +687,7 @@ $(document).ready(function()
 		
 		createClusterList() ;
 		
-		sdbjs.parts.foldBox.create( 'omFold', {}, 'SMS', '<table class="simple-table"><tr><td width="50%"><b>节点</b></td><td></td></tr></table>', true, false, 'om' ).appendTo( $( '#leftPanel > .panel-body' ) ) ;
+		sdbjs.parts.foldBox.create( 'omFold', {}, 'SMS', '<table class="simple-table"><tr><td width="60%"><b>节点</b></td><td></td></tr></table>', true, false, 'om' ).appendTo( $( '#leftPanel > .panel-body' ) ) ;
 		
 		getBusinessType() ;
 		
