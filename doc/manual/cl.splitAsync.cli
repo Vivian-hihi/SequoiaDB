@@ -18,7 +18,7 @@ is created.
 .sp 2
 
 .sp 2
-db.collectionspace.collection. splitAsync(\fB<source
+db.collectionspace.collection.splitAsync(\fB<source
 group>\fR,\fB<target
 group>\fR,\fB<percent(0~100)|cond>\fR,\fB[endcondition]\fR)
 .SH "CATEGORY"

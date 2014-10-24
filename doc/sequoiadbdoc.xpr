@@ -982,6 +982,7 @@
                     <file name="references/methods/topics_en_v2/cl.detachCL.dita"/>
                     <file name="references/methods/topics_en_v2/cl.dropIndex.dita"/>
                     <file name="references/methods/topics_en_v2/cl.find.dita"/>
+                    <file name="references/methods/topics_en_v2/cl.findOne.dita"/>
                     <file name="references/methods/topics_en_v2/cl.getIndex.dita"/>
                     <file name="references/methods/topics_en_v2/cl.getLob.dita"/>
                     <file name="references/methods/topics_en_v2/cl.insert.dita"/>

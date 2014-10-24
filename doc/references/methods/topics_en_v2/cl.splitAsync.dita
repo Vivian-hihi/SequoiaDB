@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection. splitAsync</apiname>(<parmname>&lt;source group></parmname>,<parmname>&lt;target group></parmname>,<parmname>&lt;percent(0~100)|cond></parmname>,<parmname>[endcondition]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.splitAsync</apiname>(<parmname>&lt;source group></parmname>,<parmname>&lt;target group></parmname>,<parmname>&lt;percent(0~100)|cond></parmname>,<parmname>[endcondition]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
