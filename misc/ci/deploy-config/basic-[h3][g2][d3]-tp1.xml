@@ -109,8 +109,8 @@
 
 	<target name="H3-G2-D3" depends="">
 		<hostinfo prefix="host" />
-		<!-- <property name="test-type-list" value="basic,driver-python" /> -->
-		<property name="test-type-list" value="driver-C,driver-CPP" />
+		<property name="test-type-list" value="basic,driver-python" />
+		<!-- <property name="test-type-list" value="driver-C,driver-CPP" /> -->
 		<property name="copy.test.log" value="true"/>
 		<!-- <property name="import.file.name" value="basic-testcases-time.json" /> -->
 
