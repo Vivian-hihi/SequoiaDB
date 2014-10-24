@@ -14,6 +14,7 @@
 #include "sptCommon.hpp"
 #include "utilPipe.hpp"
 #include "sptContainer.hpp"
+#include "ossSignal.hpp"
 
 using std::string ;
 using namespace engine ;
@@ -251,6 +252,10 @@ int main ( int argc , const char * argv[] )
       rc = SDB_SYS ;
       goto error ;
    }
+
+#if defined( _LINUX )
+   signal( SIGCHLD, SIG_IGN ) ;
+#endif // _LINUX
 
    ossMemset ( waitName , 0 , sizeof ( waitName ) ) ;
    ossMemset ( f2bName , 0 , sizeof ( f2bName ) ) ;

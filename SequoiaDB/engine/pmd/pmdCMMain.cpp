@@ -192,6 +192,10 @@ namespace engine
                                  delSig ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to enable trap, rc: %d", rc ) ;
 
+#if defined( _LINUX )
+      signal( SIGCHLD, SIG_IGN ) ;
+#endif // _LINUX
+
       // 6. register agent cb
       PMD_REGISTER_CB( sdbGetOMAgentMgr() ) ;
 
