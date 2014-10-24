@@ -5,7 +5,7 @@
   <body>
     <p>PHP 监控支持 IE9+、chrome、firefox 等主流浏览器。</p>
     <ul>
-      <li>1. 启动PHP服务
+      <li>1. 启动 PHP 服务
         <p>1.1 在安装了 sequoiadb 的主机上，执行 sequoiadb 目录下 bin/sdbwsart。例如：<codeblock>/opt/sequoiadb/bin/sdbwsart</codeblock></p>        
         <p><image href="../images/o11.jpg"/></p>
         <p>1.2 在浏览器输入 【步骤1.1】 的地址 http://192.168.1.215:8080/</p>
@@ -20,21 +20,21 @@
         <p><image href="../images/o311.jpg"/></p>
         <p><image href="../images/o312.jpg"/></p>
         <p><image href="../images/o313.jpg"/></p>
-        <p>3.2 创建集合，点击集合空间foo的 &lt;<b>属性</b>>，点击工具栏的<image href="../images/o301.jpg"/>按钮，输入 &lt;<b>集合名</b>>，点击 &lt;<b>确定</b>>；</p>
+        <p>3.2 创建集合，点击集合空间 foo 的 &lt;<b>属性</b>>，点击 &lt;<b>工具栏</b>> 的<image href="../images/o301.jpg"/>按钮，输入 &lt;<b>集合名</b>>，点击 &lt;<b>确定</b>>；</p>
         <p><image href="../images/o321.jpg"/></p>
         <p><image href="../images/o322.jpg"/></p>
         <p><image href="../images/o323.jpg"/></p>
         <p><image href="../images/o324.jpg"/></p>
-        <p>3.3 插入数据，点击集合 bar 的 &lt;<b>数据</b>>，点击工具栏的<image href="../images/o302.jpg"/>按钮，输入 json 记录，点击 &lt;<b>确定</b>>；</p>
+        <p>3.3 插入数据，点击集合 bar 的 &lt;<b>数据</b>>，点击 &lt;<b>工具栏</b>> 的<image href="../images/o302.jpg"/>按钮，输入 json 记录，点击 &lt;<b>确定</b>>；</p>
         <p><image href="../images/o331.jpg"/></p>
         <p><image href="../images/o332.jpg"/></p>
         <p><image href="../images/o333.jpg"/></p>
         <p><image href="../images/o334.jpg"/></p>
-        <p>3.4 格式化 Json 记录，点击工具栏的<image href="../images/o303.jpg"/>按钮。</p>
+        <p>3.4 格式化 Json 记录，点击 &lt;<b>工具栏</b>> 的<image href="../images/o303.jpg"/>按钮。</p>
         <p><image href="../images/o341.jpg"/></p>
         <p><image href="../images/o342.jpg"/></p></li>
       <li>4. 集群管理
-        <p>4.1 查看集群，点击导航 &lt;<b>集群管理</b>>；</p>
+        <p>4.1 查看集群，点击导航 &lt;<b>集群管理</b>>。</p>
         <p><image href="../images/o41.jpg"/></p>
         <p><image href="../images/o42.jpg"/></p>
         <p><image href="../images/o43.jpg"/></p></li>            

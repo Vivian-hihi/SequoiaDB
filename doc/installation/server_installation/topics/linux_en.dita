@@ -29,7 +29,7 @@
           requirement </xref> to configure Host Name and change the system kernel params.</p></li>
         <li>Run installation program<p>
             <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type DB</codeblock>
-        </p><note>type 参数的默认值为 DB，当安装 DB 时，type 参数可省略。</note></li>
+        </p><note>Parameter type is set as DB by default, when installing DB, the parameter type is unnecessary.</note></li>
         <li>The system prompt you to choose wizard language <p>
           <codeblock>Language Selection 
 Please select the installation language

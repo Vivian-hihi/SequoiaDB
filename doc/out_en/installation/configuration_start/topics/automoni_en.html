@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="监控管理"/>
-<meta name="description" content="PHP 监控支持 IE9+、chrome、firefox 等主流浏览器。 1. 启动PHP服务 1.1 在安装了 sequoiadb 的主机上，执行 sequoiadb 目录下 bin/sdbwsart。例如： /opt/sequoiadb/bin/sdbwsart 1.2 在浏览器输入 【步骤1.1】 的地址 http://192.168.1.215:8080/ 2. 连接监控页面 2.1 ..."/>
+<meta name="DC.Title" content="Monitoring Management"/>
+<meta name="description" content="PHP monitoring supports IE 9+, Chrome, Firefox and other popular browsers. 1. Start PHP service 1.1 On the host that installed SequoiaDB, execute bin/sdbwsart under sequoiadb path. For example: ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../installation/configuration_start/topics/configuration_start_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_4s1_j5p_vp"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>监控管理</title>
+<title>Monitoring Management</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -33,25 +33,25 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../installation/configuration_start/topics/configuration_start_en.html" title="System Configuration and Startup"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">System Configuration and Startup</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/install_overview_en.html" title="Install Overview">Install Overview</a> / <a class="navheader_parent_path" href="../../../installation/configuration_start/topics/configuration_start_en.html" title="System Configuration and Startup">System Configuration and Startup</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">监控管理</h1>
+  <h1 class="title topictitle1">Monitoring Management</h1>
 
   <div class="body">
-    <p class="p">PHP 监控支持 IE9+、chrome、firefox 等主流浏览器。</p>
+    <p class="p">PHP monitoring supports IE 9+, Chrome, Firefox and other popular browsers.</p>
 
     <ul class="ul">
-      <li class="li">1. 启动PHP服务
-        <div class="p">1.1 在安装了 sequoiadb 的主机上，执行 sequoiadb 目录下 bin/sdbwsart。例如：<pre class="pre codeblock">/opt/sequoiadb/bin/sdbwsart</pre>
+      <li class="li">1. Start PHP service
+        <div class="p">1.1 On the host that installed SequoiaDB, execute bin/sdbwsart under sequoiadb path. For example:<pre class="pre codeblock">/opt/sequoiadb/bin/sdbwsart</pre>
 </div>
         
         <p class="p"><img class="image" src="../images/o11.jpg"/></p>
 
-        <p class="p">1.2 在浏览器输入 【步骤1.1】 的地址 http://192.168.1.215:8080/</p>
+        <p class="p">1.2 1.2	Input the host address and port number in the browser of last step. http://192.168.1.215:8080/</p>
 
         <p class="p"><img class="image" src="../images/o12.jpg"/></p>
 </li>
       
-      <li class="li">2. 连接监控页面
-        <p class="p">2.1 在连接管理 &lt;<strong class="ph b">连接地址</strong>&gt; 输入地址，点击 &lt;<strong class="ph b">连接测试</strong>&gt;，连接成功后，点击 &lt;<strong class="ph b">连接</strong>&gt;；</p>
+      <li class="li">2. Connect monitoring page
+        <p class="p">2.1 In Connection Management, insert the address in &lt;<strong class="ph b">连接地址</strong>&gt; and click &lt;<strong class="ph b">连接测试</strong>&gt;. After test succeed click &lt;<strong class="ph b">连接</strong>&gt;.</p>
 
         <p class="p"><img class="image" src="../images/o21.jpg"/></p>
 
@@ -60,8 +60,8 @@
         <p class="p"><img class="image" src="../images/o23.jpg"/></p>
         </li>
 
-      <li class="li">3. 创建集合空间、集合、插入数据
-        <p class="p">3.1 创建集合空间，点击 &lt;<strong class="ph b">工具栏</strong>&gt; 的<img class="image" src="../images/o30.jpg"/>按钮，输入 &lt;<strong class="ph b">集合空间名</strong>&gt;，点击 &lt;<strong class="ph b">确定</strong>&gt;；</p>
+      <li class="li">3. 3.	Create collectionspace, collection and insert data.
+        <p class="p">3.1 To create collectionspace, click <img class="image" src="../images/o30.jpg"/> button in the &lt;<strong class="ph b">工具栏</strong>&gt;. Then, you may input the &lt;<strong class="ph b">集合空间名</strong>&gt; and click &lt;<strong class="ph b">确定</strong>&gt;.</p>
 
         <p class="p"><img class="image" src="../images/o311.jpg"/></p>
 
@@ -69,7 +69,7 @@
 
         <p class="p"><img class="image" src="../images/o313.jpg"/></p>
 
-        <p class="p">3.2 创建集合，点击集合空间foo的 &lt;<strong class="ph b">属性</strong>&gt;，点击工具栏的<img class="image" src="../images/o301.jpg"/>按钮，输入 &lt;<strong class="ph b">集合名</strong>&gt;，点击 &lt;<strong class="ph b">确定</strong>&gt;；</p>
+        <p class="p">3.2 To create collection in a CS, choose &lt;<strong class="ph b">属性</strong>&gt; of the CS(like CS foo here), then click the <img class="image" src="../images/o301.jpg"/> button in the &lt;<strong class="ph b">工具栏</strong>&gt;. Input &lt;<strong class="ph b">集合名</strong>&gt; and click &lt;<strong class="ph b">确定</strong>&gt;.</p>
 
         <p class="p"><img class="image" src="../images/o321.jpg"/></p>
 
@@ -79,7 +79,7 @@
 
         <p class="p"><img class="image" src="../images/o324.jpg"/></p>
 
-        <p class="p">3.3 插入数据，点击集合 bar 的 &lt;<strong class="ph b">数据</strong>&gt;，点击工具栏的<img class="image" src="../images/o302.jpg"/>按钮，输入 json 记录，点击 &lt;<strong class="ph b">确定</strong>&gt;；</p>
+        <p class="p">3.3 To insert data, choose the collection (like bar here), click the &lt;<strong class="ph b">数据</strong>&gt; of the collection. Use the button <img class="image" src="../images/o302.jpg"/> in the &lt;<strong class="ph b">工具栏</strong>&gt;, input the JSON record, click &lt;<strong class="ph b">确定</strong>&gt;.</p>
 
         <p class="p"><img class="image" src="../images/o331.jpg"/></p>
 
@@ -89,15 +89,15 @@
 
         <p class="p"><img class="image" src="../images/o334.jpg"/></p>
 
-        <p class="p">3.4 格式化 Json 记录，点击工具栏的<img class="image" src="../images/o303.jpg"/>按钮。</p>
+        <p class="p">3.4 Formatting the JSON record, use the button <img class="image" src="../images/o303.jpg"/> in the &lt;<strong class="ph b">工具栏</strong>&gt;.</p>
 
         <p class="p"><img class="image" src="../images/o341.jpg"/></p>
 
         <p class="p"><img class="image" src="../images/o342.jpg"/></p>
 </li>
 
-      <li class="li">4. 集群管理
-        <p class="p">4.1 查看集群，点击导航 &lt;<strong class="ph b">集群管理</strong>&gt;；</p>
+      <li class="li">4. Cluster Management
+        <p class="p">4.1 Check the cluster, click &lt;<strong class="ph b">集群管理</strong>&gt; in the navigation bar. Then you can manage the clusters.</p>
 
         <p class="p"><img class="image" src="../images/o41.jpg"/></p>
 

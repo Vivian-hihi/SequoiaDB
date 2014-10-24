@@ -20,8 +20,8 @@
       GUI. It there is no X Server in Linux, users can choose to install through text
       interface.</section>
   <p>
-    <xref href="linux_en.dita">Installation of SequoiaDB in Linux</xref>
-    <xref href="linuxom_en.dita">Installation of SequoiaDB in Linux</xref>
-    </p>
+    <xref href="linux_en.dita">Installation of SequoiaDB in Linux</xref>    
+  </p>
+    <p><xref href="linuxom_en.dita">Installation of SequoiaDB in Linux</xref></p>
   </body>
 </topic>
