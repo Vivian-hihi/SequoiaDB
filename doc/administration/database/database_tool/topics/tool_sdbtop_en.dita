@@ -43,6 +43,10 @@
           <stentry>database password</stentry>
         </strow>
       </simpletable>
+      <p><note>对于 Ubuntu 等系统，需要安装 Ncurses 库，否则将会提示“Error opening terminal: TERM”
+        <p>1. 联网安装：<codeblock>sudo apt-get install libncurses5-dev</codeblock></p>
+        <p>2. 源码安装：解压 tar -xvzf ncurses-5.5.tar.gz，进入ncurses-5.5目录<codeblock>./configure
+sudo make &amp;&amp; make install</codeblock></p></note></p>      
     </section>
     <section>
       <title>Usage</title>

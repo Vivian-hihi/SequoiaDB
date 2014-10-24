@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="Java BSON Usage"/>
-<meta name="description" content="Java BSON data type SequoiaDB supports various BSON data type. For more details, please check Database Concept-Database-Document section. Java BSON Structured Data Type Integer/Float Java BSON ..."/>
+<meta name="DC.Title" content="Java BSON 使用"/>
+<meta name="description" content="Java BSON 数据类型 目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看 数据库概念 - 数据库 - 文档 一节。 Java 构造 BSON 数据类型 整数/符浮点数 Java BSON 构造整数/符浮点数类型 // {a:123, b:3.14} BSONObject obj = new BasicBSONObject(); obj.put(&#34;a&#34;, 123); obj ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/java/topics/java_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
-<meta name="DC.Identifier" content="topic_cwm_sts_r4"/>
+<meta name="DC.Identifier" content="topic_zdx_1vx_vp"/>
 <link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
-<title>Java BSON Usage</title>
+<title>Java BSON 使用</title>
 <script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../../index.html";
     var ratingFile = "";
@@ -28,54 +28,52 @@
         }
     }
 //--></script></head>
-<body onload="highlightSearchTerm()" id="topic_cwm_sts_r4"><a name="topic_cwm_sts_r4"><!-- --></a>
+<body onload="highlightSearchTerm()" id="topic_zdx_1vx_vp"><a name="topic_zdx_1vx_vp"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../../developement/application/java/topics/java_en.html" title="Java Driver"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Java Driver</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application_en.html" title="SequoiaDB Application Development">SequoiaDB Application Development</a> / <a class="navheader_parent_path" href="../../../../developement/application/java/topics/java_en.html" title="Java Driver">Java Driver</a></td></tr></tbody></table>
 
-        <h1 class="title topictitle1">Java BSON Usage</h1>
+  <h1 class="title topictitle1">Java BSON 使用</h1>
 
-  <div class="body">
-    <p class="p"/>
-
-    <div class="section"><h2 class="title sectiontitle">Java BSON data type</h2>
-            
-            <p class="p">SequoiaDB supports various BSON data type. For more details, please check <a class="xref" href="../../../../administration/concepts/database/topics/document_en.html">Database Concept-Database-Document</a> section.</p>
+  <div class="body">    
+    <div class="section"><h2 class="title sectiontitle">Java BSON 数据类型</h2>
+      
+      <p class="p">目前，SequoiaDB 支持多种 BSON 数据类型。详情请查看<a class="xref" href="../../../../administration/concepts/database/topics/document.html">数据库概念 - 数据库 - 文档</a>一节。</p>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">Java BSON Structured Data Type</h2>
-            
+    <div class="section"><h2 class="title sectiontitle">Java 构造 BSON 数据类型</h2>
+      
       <ul class="ul">
-              <li class="li"><p class="p">Integer/Float</p>
-Java BSON structured integer/float type:<pre class="pre codeblock">// {a:123, b:3.14}
+        <li class="li"><p class="p">整数/符浮点数</p>
+Java BSON 构造整数/符浮点数类型<pre class="pre codeblock">// {a:123, b:3.14}
 BSONObject obj = new BasicBSONObject();
 obj.put("a", 123);
 obj.put("b", 3.14);</pre>
 </li>
 
-              <li class="li"><p class="p">String</p>
-Java BSON structured string type:<pre class="pre codeblock">// {a:"hi"}
+        <li class="li"><p class="p">字符串</p>
+Java BSON 构造字符串类型<pre class="pre codeblock">// {a:"hi"}
 BSONObject obj = new BasicBSONObject();
 obj.put("a", "hi");</pre>
 </li>
 
-              <li class="li"><p class="p">null</p>
-Java BSON structured null type:<pre class="pre codeblock">// {a:null}
+        <li class="li"><p class="p">空类型</p>
+Java BSON 构造空类型<pre class="pre codeblock">// {a:null}
 BSONObject obj = new BasicBSONObject();
 obj.put("a", null);</pre>
 </li>
 
-              <li class="li"><p class="p">object</p>
-Java BSON structured nested object type:<pre class="pre codeblock">// {b:{a:1}}
+        <li class="li"><p class="p">对象</p>
+Java BSON 构造嵌套对象类型<pre class="pre codeblock">// {b:{a:1}}
 BSONObject subObj = new BasicBSONObject();
 subObj.put("a", 1);
 BSONObject obj = new BasicBSONObject();
 obj.put("b", subObj);</pre>
 </li>
 
-              <li class="li"><p class="p">array</p>
-Java BSON uses org.bson.types/BasicBSONList to structure the array type:<pre class="pre codeblock">// {a:[0,1,2]}
+        <li class="li"><p class="p">数组</p>
+Java BSON 使用 org.bson.types.BasicBSONList 来构造数组类型<pre class="pre codeblock">// {a:[0,1,2]}
 BSONObject obj = new BasicBSONObject();
 BSONObject arr = new BasicBSONList();
 arr.put("0", 0);
@@ -84,52 +82,52 @@ arr.put("2", 2);
 obj.put("a", arr);</pre>
 </li>
 
-              <li class="li"><p class="p">Boolean</p>
-Java BSON structured boolean type:<pre class="pre codeblock">// {a:true, b:false}
+        <li class="li"><p class="p">布尔</p>
+Java BSON 构造布尔类型<pre class="pre codeblock">// {a:true, b:false}
 BSONObject obj = new BasicBSONObject();
 obj.put("a", true);
 obj.put("b", false);</pre>
 </li>
 
-              <li class="li"><p class="p">objectID</p>
-Java BSON uses org.bson.types.ObjectId to generate the value of each "_id" field. Java BSON's ObjectID is 12 bits long which is a little different from the ObjectID introduced in <a class="xref" href="../../../../administration/concepts/database/topics/objectid_en.html">Database Concept-Databse-Document-ObjectID</a> section, currently, the 12 bits of a Java ObjectId are composed of three parts: 4 bits for a timestamp accurate to milliseconds, 4 bits for the identification of the system (physical machine).<pre class="pre codeblock">BSONObject obj = new BasicBSONObject();
+        <li class="li"><p class="p">对象 ID</p>
+Java BSON 使用 org.bson.types.ObjectId 来生成每条记录的“_id”字段内容。Java BSON 12 字节的 ObjectId 与<a class="xref" href="../../../../administration/concepts/database/topics/objectid.html">数据库概念 - 数据库 - 文档 - 对象 ID</a> 一节介绍的对象 ID 略有不同，目前，Java ObjectId 的12字节内容由三部分组成：4字节精确到秒的时间戳，4字节系统（物理机）标示，4字节由随机数起始的序列号。默认情况下，数据库为每条记录生成一个字段名为“_id”的唯一对象 ID。<pre class="pre codeblock">BSONObject obj = new BasicBSONObject();
 ObjectId id1 = new ObjectId();
 ObjectId id2 = new ObjectId("53bb5667c5d061d6f579d0bb");
 obj.put("_id", id1);</pre>
 </li>
 
-              <li class="li"><p class="p">regex</p>
-Java Bson uses java.util.regex. Pattern to structure the regex data type.<pre class="pre codeblock">BSONObject matcher = new BasicBSONObject();
+        <li class="li"><p class="p">正则表达式</p>
+Java BSON 使用 java.util.regex.Pattern 来构造正则表达式数据类型。<pre class="pre codeblock">BSONObject matcher = new BasicBSONObject();
 Pattern obj = Pattern.compile("^2001",Pattern.CASE_INSENSITIVE);
 matcher.put("serial_num", obj);
 BSONObject modifier = new BasicBSONObject("$set", new BasicBSONObject("count",1000));
 cl.update(matcher, modifier, null);</pre>
-The above regex structures a matching condition; it modifies the value of the "count" field of all the records with a serial number that starts with 2001 into 1000.<div class="note note"><span class="notetitle">Note:</span> <p class="p"/>
-The above uses Pattern to structure the bson matcher, but if using matcher.toString(), the content will be:<pre class="pre codeblock">{ "serial_num" : { "$options" : "i" , "$regex" : "^2001"}}</pre>
-The same content can also be obtained by using the following bson structuring method:<pre class="pre codeblock">BSONObject matcher2 = new BasicBSONObject();
+以上使用正则表达式构造了一个匹配条件，将序列号以“2001”开头的记录的“count”字段内容改为“1000”。
+          <div class="note note"><span class="notetitle">Note:</span> 以上使用 Patten 构造的 bson matcher，当使用 matcher.toString()，内容为：<pre class="pre codeblock">{ "serial_num" : { "$options" : "i" , "$regex" : "^2001"}}</pre>
+通过以下 bson 构造方式也可以得到相同的内容：<pre class="pre codeblock">BSONObject matcher2 = new BasicBSONObject();
 BSONObject obj2 = new BasicBSONObject();
 obj2.put("$regex","^2001");
 obj2.put("$options","i");		
 matcher2.put("serial_num", obj2);</pre>
-But matcher2 structured in the latter way is a common nested type instead of a regex.</div>
+但是，通过后者构造出的 matcher2 的数据类型是一个普通的对象嵌套类型，而不是正则表达式类型。</div>
 </li>
 
-              <li class="li"><p class="p">Date</p>
-Java BSON uses java.util.Date to structure the date type:<pre class="pre codeblock">BSONObject obj = new BasicBSONObject();
+        <li class="li"><p class="p">日期</p>
+Java BSON 使用 java.util.Date 来构造日期类型。<pre class="pre codeblock">BSONObject obj = new BasicBSONObject();
 Date now = new Date();
 obj.put("date", now);</pre>
 </li>
 
-              <li class="li"><p class="p">Binary</p>
-Java BSON uses java.util.type.Binary to structure the binary type:<pre class="pre codeblock">BSONObject obj = new BasicBSONObject();
+        <li class="li"><p class="p">二进制</p>
+Java BSON 使用 org.bson.types.Binary 来构造二进制类型。<pre class="pre codeblock">BSONObject obj = new BasicBSONObject();
 String str = "hello world";
 byte[] arr = str.getBytes();
 Binary bindata = new Binary(arr);
 obj.put("bindata", bindata);</pre>
 </li>
 
-              <li class="li"><p class="p">TimeStamp</p>
-Java BSON uses org.bson.types.BSONTimestamp to structre the time stamp type:<pre class="pre codeblock">int sec = 1404189030 ; // 2014-07-01 12:30:30
+        <li class="li"><p class="p">时间戳</p>
+Java BSON 使用 org.bson.types.BSONTimestamp 来构造时间戳类型。<pre class="pre codeblock">int sec = 1404189030 ; // 2014-07-01 12:30:30
 BSONObject obj = new BasicBSONObject();
 BSONTimestamp ts = new BSONTimestamp(sec, 0);
 obj.put("timestamp", ts);</pre>
@@ -151,7 +149,7 @@ obj.put("timestamp", ts);</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.9B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.10
           
     </div>
 </body>
