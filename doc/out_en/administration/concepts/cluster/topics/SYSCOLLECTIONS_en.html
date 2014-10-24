@@ -48,71 +48,71 @@
       <p class="p">Every file contains the following fields:</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d2841e32" class="stentry">Field Name</th>
+          <th valign="bottom" align="left" id="d2658e32" class="stentry">Field Name</th>
 
-          <th valign="bottom" align="left" id="d2841e35" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d2658e35" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d2841e38" class="stentry">Descrption</th>
+          <th valign="bottom" align="left" id="d2658e38" class="stentry">Descrption</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2841e32" class="stentry">Name</td>
+          <td valign="top" headers="d2658e32" class="stentry">Name</td>
 
-          <td valign="top" headers="d2841e35" class="stentry">String</td>
+          <td valign="top" headers="d2658e35" class="stentry">String</td>
 
-          <td valign="top" headers="d2841e38" class="stentry">Full name of a collection. The form is &lt;collection space&gt;.&lt;collection
+          <td valign="top" headers="d2658e38" class="stentry">Full name of a collection. The form is &lt;collection space&gt;.&lt;collection
             name&gt;.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2841e32" class="stentry">Version</td>
+          <td valign="top" headers="d2658e32" class="stentry">Version</td>
 
-          <td valign="top" headers="d2841e35" class="stentry">Integer</td>
+          <td valign="top" headers="d2658e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d2841e38" class="stentry">Version number of the collection, starts with 1. It increases by 1 after any
+          <td valign="top" headers="d2658e38" class="stentry">Version number of the collection, starts with 1. It increases by 1 after any
             metadata alteration on the collection.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2841e32" class="stentry">ReplSize</td>
+          <td valign="top" headers="d2658e32" class="stentry">ReplSize</td>
 
-          <td valign="top" headers="d2841e35" class="stentry">Integer</td>
+          <td valign="top" headers="d2658e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d2841e38" class="stentry">The minimum replica group, to ensure that any write operation must be copied to at least return after a specified number of nodes success.</td>
+          <td valign="top" headers="d2658e38" class="stentry">The minimum replica group, to ensure that any write operation must be copied to at least return after a specified number of nodes success.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2841e32" class="stentry">ShardingKey</td>
+          <td valign="top" headers="d2658e32" class="stentry">ShardingKey</td>
 
-          <td valign="top" headers="d2841e35" class="stentry">Object</td>
+          <td valign="top" headers="d2658e35" class="stentry">Object</td>
 
-          <td valign="top" headers="d2841e38" class="stentry">ShardingKey is in sharding collections. It contains one or more fields. The field
+          <td valign="top" headers="d2658e38" class="stentry">ShardingKey is in sharding collections. It contains one or more fields. The field
             name is its sharding field name. The value is 1 or -1, which represents forward or
             reserve sequencing.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2841e32" class="stentry">ShardingType</td>
+          <td valign="top" headers="d2658e32" class="stentry">ShardingType</td>
 
-          <td valign="top" headers="d2841e35" class="stentry">String</td>
+          <td valign="top" headers="d2658e35" class="stentry">String</td>
 
-          <td valign="top" headers="d2841e38" class="stentry">Partition types: the presence in the partition collection. Partition types: range partitioning(Range) and hash partitioning(Hash) two.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d2841e32" class="stentry">Partition</td>
-
-          <td valign="top" headers="d2841e35" class="stentry">Integer</td>
-
-          <td valign="top" headers="d2841e38" class="stentry">The partition size of the hash value must be a power of 2.</td>
+          <td valign="top" headers="d2658e38" class="stentry">Partition types: the presence in the partition collection. Partition types: range partitioning(Range) and hash partitioning(Hash) two.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d2841e32" class="stentry">CataInfo</td>
+          <td valign="top" headers="d2658e32" class="stentry">Partition</td>
 
-          <td valign="top" headers="d2841e35" class="stentry">Array</td>
+          <td valign="top" headers="d2658e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d2841e38" class="stentry">Information of logical nodes of a collection. In a single sharding collection,
+          <td valign="top" headers="d2658e38" class="stentry">The partition size of the hash value must be a power of 2.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d2658e32" class="stentry">CataInfo</td>
+
+          <td valign="top" headers="d2658e35" class="stentry">Array</td>
+
+          <td valign="top" headers="d2658e38" class="stentry">Information of logical nodes of a collection. In a single sharding collection,
             the arrary contains only one element, which represents the replset of the collection. In
             a multiple sharding collection, the array contains one or more elements, which represent
             the replset which covers all the ranges of values in the collection. Every range of

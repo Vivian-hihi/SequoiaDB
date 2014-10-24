@@ -41,17 +41,17 @@
       <ul class="ul">
         <li class="li">System configuration requirement <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d91988e24" class="stentry">Configuration Item</th>
+              <th valign="bottom" align="left" id="d91769e24" class="stentry">Configuration Item</th>
 
-              <th valign="bottom" align="left" id="d91988e27" class="stentry">Configuration method</th>
+              <th valign="bottom" align="left" id="d91769e27" class="stentry">Configuration method</th>
 
-              <th valign="bottom" align="left" id="d91988e30" class="stentry">Verification method</th>
+              <th valign="bottom" align="left" id="d91769e30" class="stentry">Verification method</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d91988e24" class="stentry">Set hostname</td>
+              <td valign="top" headers="d91769e24" class="stentry">Set hostname</td>
 
-              <td valign="top" headers="d91988e27" class="stentry"> 1. Log in with root privileges, perform hostname sdbserver1(sdbserver1 hostname can be modified as needed);<p class="p"/>
+              <td valign="top" headers="d91769e27" class="stentry"> 1. Log in with root privileges, perform hostname sdbserver1(sdbserver1 hostname can be modified as needed);<p class="p"/>
 <ul class="ul">
                 <li class="li">For SUSE: <p class="p">2. Open the /etc/HOSTNAME file;</p>
 <p class="p">  vi /etc/HOSTNAME</p>
@@ -76,15 +76,15 @@
               </ul>
 </td>
 
-              <td valign="top" headers="d91988e30" class="stentry">Execute hostname command to verify whether the information is printed "sdbserver1" </td>
+              <td valign="top" headers="d91769e30" class="stentry">Execute hostname command to verify whether the information is printed "sdbserver1" </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d91988e24" class="stentry">
+              <td valign="top" headers="d91769e24" class="stentry">
                 Enable server nodes to visit each other through hostname
               </td>
 
-              <td valign="top" headers="d91988e27" class="stentry">
+              <td valign="top" headers="d91769e27" class="stentry">
                 <ul class="ul">
                   <li class="li">Log in the system in the role of root, open "/etc/hosts" with the command "vi
                     /etc/hosts"</li>
@@ -102,7 +102,7 @@
 
               </td>
 
-              <td valign="top" headers="d91988e30" class="stentry">Check with "ping sdbserver1"<p class="p"/>
+              <td valign="top" headers="d91769e30" class="stentry">Check with "ping sdbserver1"<p class="p"/>
 Check with "ping sdbserver2"</td>
 
             </tr>
@@ -112,18 +112,18 @@ Check with "ping sdbserver2"</td>
         <li class="li"><p class="p">Close the firewall</p>
  <p class="p"/>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-            <th valign="bottom" align="left" id="d91988e129" class="stentry">Configuration Item </th>
+            <th valign="bottom" align="left" id="d91769e129" class="stentry">Configuration Item </th>
 
-            <th valign="bottom" align="left" id="d91988e132" class="stentry">Configuration method</th>
+            <th valign="bottom" align="left" id="d91769e132" class="stentry">Configuration method</th>
 
-            <th valign="bottom" align="left" id="d91988e135" class="stentry">Verification method</th>
+            <th valign="bottom" align="left" id="d91769e135" class="stentry">Verification method</th>
 
           </tr>
 <tr class="strow"/>
 <tr class="strow">
-            <td valign="top" headers="d91988e129" class="stentry"> Close the firewall</td>
+            <td valign="top" headers="d91769e129" class="stentry"> Close the firewall</td>
 
-            <td valign="top" headers="d91988e132" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
+            <td valign="top" headers="d91769e132" class="stentry">Close the firewall operation, need administrator privileges.<p class="p"/>
 <ul class="ul">
               <li class="li">For SUSE:<p class="p">1. SuSEfirewall2 stop;</p>
 
@@ -140,7 +140,7 @@ Check with "ping sdbserver2"</td>
             </ul>
 </td>
 
-            <td valign="top" headers="d91988e135" class="stentry"><ul class="ul">
+            <td valign="top" headers="d91769e135" class="stentry"><ul class="ul">
               <li class="li">For SUSE:<p class="p"> chkconfig -list | grep fire;</p>
 
               </li>

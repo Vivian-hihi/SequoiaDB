@@ -48,33 +48,33 @@
       <p class="p">在集群环境下，每个集合还可以拥有除名称外的以下属性：</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d11828e28" class="stentry">属性名</th>
+        <th valign="bottom" align="left" id="d11645e28" class="stentry">属性名</th>
 
-        <th valign="bottom" align="left" id="d11828e31" class="stentry">描述</th>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d11828e28" class="stentry">分区键（ShardingKey）</td>
-
-        <td valign="top" headers="d11828e31" class="stentry">指定集合的分区键，集合中所有的文档将分区键中指定的字段作为分区信息，文档分别存放在所对应的分区中。</td>
+        <th valign="bottom" align="left" id="d11645e31" class="stentry">描述</th>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d11828e28" class="stentry">分区类型（ShardingType）</td>
+        <td valign="top" headers="d11645e28" class="stentry">分区键（ShardingKey）</td>
 
-        <td valign="top" headers="d11828e31" class="stentry">指定集合的分区类型：范围分区（Range）或散列分区（Hash）。</td>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d11828e28" class="stentry">写副本数（ReplSize）</td>
-
-        <td valign="top" headers="d11828e31" class="stentry">指定该集合默认的写副本数。如果该值 ≤ 1，数据的写请求在一个副本写入成功后就会返回。如果该值 &gt; 1，则需要等到至少指定数量的副本被成功写入数据后才会返回。</td>
+        <td valign="top" headers="d11645e31" class="stentry">指定集合的分区键，集合中所有的文档将分区键中指定的字段作为分区信息，文档分别存放在所对应的分区中。</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d11828e28" class="stentry">数据压缩（Compressed）</td>
+        <td valign="top" headers="d11645e28" class="stentry">分区类型（ShardingType）</td>
 
-        <td valign="top" headers="d11828e31" class="stentry">创建集合时，指定 Compressed 属性的值代表着在做插入操作时，是否以压缩的形式存储数据，它的值有 true 和 false，默认为 false。</td>
+        <td valign="top" headers="d11645e31" class="stentry">指定集合的分区类型：范围分区（Range）或散列分区（Hash）。</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d11645e28" class="stentry">写副本数（ReplSize）</td>
+
+        <td valign="top" headers="d11645e31" class="stentry">指定该集合默认的写副本数。如果该值 ≤ 1，数据的写请求在一个副本写入成功后就会返回。如果该值 &gt; 1，则需要等到至少指定数量的副本被成功写入数据后才会返回。</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d11645e28" class="stentry">数据压缩（Compressed）</td>
+
+        <td valign="top" headers="d11645e31" class="stentry">创建集合时，指定 Compressed 属性的值代表着在做插入操作时，是否以压缩的形式存储数据，它的值有 true 和 false，默认为 false。</td>
 
       </tr>
 </table>

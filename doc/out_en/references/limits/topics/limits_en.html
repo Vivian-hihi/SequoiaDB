@@ -38,28 +38,28 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">Document</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d134128e18" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d133909e18" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d134128e21" class="stentry">Limits</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e18" class="stentry">Minimum length of document</td>
-
-          <td valign="top" headers="d134128e21" class="stentry">At least contains one field</td>
+          <th valign="bottom" align="left" id="d133909e21" class="stentry">Limits</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e18" class="stentry">Maximum length of document</td>
+          <td valign="top" headers="d133909e18" class="stentry">Minimum length of document</td>
 
-          <td valign="top" headers="d134128e21" class="stentry">When document is transformed into BSON, the length should be lesser than 16777168
+          <td valign="top" headers="d133909e21" class="stentry">At least contains one field</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e18" class="stentry">Maximum length of document</td>
+
+          <td valign="top" headers="d133909e21" class="stentry">When document is transformed into BSON, the length should be lesser than 16777168
             bytes.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e18" class="stentry">Field name</td>
+          <td valign="top" headers="d133909e18" class="stentry">Field name</td>
 
-          <td valign="top" headers="d134128e21" class="stentry">It should not be started with "$". It should not contain ".".</td>
+          <td valign="top" headers="d133909e21" class="stentry">It should not be started with "$". It should not contain ".".</td>
 
         </tr>
 </table>
@@ -68,34 +68,34 @@
 
     <div class="section"><h2 class="title sectiontitle">Collection</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d134128e62" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d133909e62" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d134128e65" class="stentry">Limits</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e62" class="stentry">Maximum length of  collection name</td>
-
-          <td valign="top" headers="d134128e65" class="stentry">127 bytes</td>
+          <th valign="bottom" align="left" id="d133909e65" class="stentry">Limits</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e62" class="stentry">Collection name</td>
+          <td valign="top" headers="d133909e62" class="stentry">Maximum length of  collection name</td>
 
-          <td valign="top" headers="d134128e65" class="stentry">It should not be started with "$" or "SYS". It should not contain ".".</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e62" class="stentry">Maximum capacity of collection consisted of single node</td>
-
-          <td valign="top" headers="d134128e65" class="stentry">It is the maximum capacity of collection space</td>
+          <td valign="top" headers="d133909e65" class="stentry">127 bytes</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e62" class="stentry">Maximum amount of collections in a collection space consisted of single
+          <td valign="top" headers="d133909e62" class="stentry">Collection name</td>
+
+          <td valign="top" headers="d133909e65" class="stentry">It should not be started with "$" or "SYS". It should not contain ".".</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e62" class="stentry">Maximum capacity of collection consisted of single node</td>
+
+          <td valign="top" headers="d133909e65" class="stentry">It is the maximum capacity of collection space</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e62" class="stentry">Maximum amount of collections in a collection space consisted of single
             node</td>
 
-          <td valign="top" headers="d134128e65" class="stentry">4096</td>
+          <td valign="top" headers="d133909e65" class="stentry">4096</td>
 
         </tr>
 </table>
@@ -104,41 +104,41 @@
 
     <div class="section"><h2 class="title sectiontitle">Collection Space</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d134128e115" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d133909e115" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d134128e118" class="stentry">Limits</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e115" class="stentry">Maximum length of  collection space name</td>
-
-          <td valign="top" headers="d134128e118" class="stentry">127 bytes</td>
+          <th valign="bottom" align="left" id="d133909e118" class="stentry">Limits</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e115" class="stentry">Collection space name</td>
+          <td valign="top" headers="d133909e115" class="stentry">Maximum length of  collection space name</td>
 
-          <td valign="top" headers="d134128e118" class="stentry">It should not be started with "$" or "SYS". It should not contain ".".</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e115" class="stentry">Size of data page</td>
-
-          <td valign="top" headers="d134128e118" class="stentry">4096, 8192, 16384, 32768, 65536</td>
+          <td valign="top" headers="d133909e118" class="stentry">127 bytes</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e115" class="stentry">Maximum capacity of collection space consisted of single node</td>
+          <td valign="top" headers="d133909e115" class="stentry">Collection space name</td>
 
-          <td valign="top" headers="d134128e118" class="stentry">
+          <td valign="top" headers="d133909e118" class="stentry">It should not be started with "$" or "SYS". It should not contain ".".</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e115" class="stentry">Size of data page</td>
+
+          <td valign="top" headers="d133909e118" class="stentry">4096, 8192, 16384, 32768, 65536</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e115" class="stentry">Maximum capacity of collection space consisted of single node</td>
+
+          <td valign="top" headers="d133909e118" class="stentry">
             It can be 512GB, 1TB, 2TB, 4TB, 8TB.
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e115" class="stentry">Maximum amount of standalone-node collection space</td>
+          <td valign="top" headers="d133909e115" class="stentry">Maximum amount of standalone-node collection space</td>
 
-          <td valign="top" headers="d134128e118" class="stentry">4096</td>
+          <td valign="top" headers="d133909e118" class="stentry">4096</td>
 
         </tr>
 </table>
@@ -147,41 +147,41 @@
 
     <div class="section"><h2 class="title sectiontitle">Index</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d134128e178" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d133909e178" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d134128e181" class="stentry">Limits</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e178" class="stentry">Maximum length of each data index key</td>
-
-          <td valign="top" headers="d134128e181" class="stentry">1024 bytes</td>
+          <th valign="bottom" align="left" id="d133909e181" class="stentry">Limits</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e178" class="stentry">Total length of index (It includes index name, index key, etc.) .</td>
+          <td valign="top" headers="d133909e178" class="stentry">Maximum length of each data index key</td>
 
-          <td valign="top" headers="d134128e181" class="stentry">When an index is transformed into BSON, the length should be equal to or lesser
+          <td valign="top" headers="d133909e181" class="stentry">1024 bytes</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e178" class="stentry">Total length of index (It includes index name, index key, etc.) .</td>
+
+          <td valign="top" headers="d133909e181" class="stentry">When an index is transformed into BSON, the length should be equal to or lesser
             than the size of data page minus 48 bytes. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e178" class="stentry">Multiple index</td>
+          <td valign="top" headers="d133909e178" class="stentry">Multiple index</td>
 
-          <td valign="top" headers="d134128e181" class="stentry">It can contain all kinds of legal fields. But it contains at most one field which
+          <td valign="top" headers="d133909e181" class="stentry">It can contain all kinds of legal fields. But it contains at most one field which
             contains array. </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e178" class="stentry">Order value of index key</td>
+          <td valign="top" headers="d133909e178" class="stentry">Order value of index key</td>
 
-          <td valign="top" headers="d134128e181" class="stentry">1 or -1</td>
+          <td valign="top" headers="d133909e181" class="stentry">1 or -1</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e178" class="stentry">Maximum amount of index in one collection</td>
+          <td valign="top" headers="d133909e178" class="stentry">Maximum amount of index in one collection</td>
 
-          <td valign="top" headers="d134128e181" class="stentry">64</td>
+          <td valign="top" headers="d133909e181" class="stentry">64</td>
 
         </tr>
 </table>
@@ -190,21 +190,21 @@
 
     <div class="section"><h2 class="title sectiontitle">Database</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d134128e241" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d133909e241" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d134128e244" class="stentry">Limits</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e241" class="stentry">Minimum size of log file</td>
-
-          <td valign="top" headers="d134128e244" class="stentry">64MB</td>
+          <th valign="bottom" align="left" id="d133909e244" class="stentry">Limits</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e241" class="stentry">Maximum size of log file</td>
+          <td valign="top" headers="d133909e241" class="stentry">Minimum size of log file</td>
 
-          <td valign="top" headers="d134128e244" class="stentry">2GB</td>
+          <td valign="top" headers="d133909e244" class="stentry">64MB</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e241" class="stentry">Maximum size of log file</td>
+
+          <td valign="top" headers="d133909e244" class="stentry">2GB</td>
 
         </tr>
 </table>
@@ -213,34 +213,34 @@
 
     <div class="section"><h2 class="title sectiontitle">Node</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d134128e277" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d133909e277" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d134128e280" class="stentry">Limits</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e277" class="stentry">Maximum amount of nodes in each replset</td>
-
-          <td valign="top" headers="d134128e280" class="stentry">7</td>
+          <th valign="bottom" align="left" id="d133909e280" class="stentry">Limits</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e277" class="stentry">Create node</td>
+          <td valign="top" headers="d133909e277" class="stentry">Maximum amount of nodes in each replset</td>
 
-          <td valign="top" headers="d134128e280" class="stentry">Nodes should be created through hostname rather than IP address.</td>
+          <td valign="top" headers="d133909e280" class="stentry">7</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e277" class="stentry">Network</td>
+          <td valign="top" headers="d133909e277" class="stentry">Create node</td>
 
-          <td valign="top" headers="d134128e280" class="stentry">All the systems in a cluster should be able to visit each other through
+          <td valign="top" headers="d133909e280" class="stentry">Nodes should be created through hostname rather than IP address.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e277" class="stentry">Network</td>
+
+          <td valign="top" headers="d133909e280" class="stentry">All the systems in a cluster should be able to visit each other through
             hostname.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e277" class="stentry">Vote condition of master node</td>
+          <td valign="top" headers="d133909e277" class="stentry">Vote condition of master node</td>
 
-          <td valign="top" headers="d134128e280" class="stentry">Vote will not be carried out unless more than half of nodes in replset take part
+          <td valign="top" headers="d133909e280" class="stentry">Vote will not be carried out unless more than half of nodes in replset take part
             in it.</td>
 
         </tr>
@@ -250,34 +250,34 @@
 
     <div class="section"><h2 class="title sectiontitle">Shard</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d134128e330" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d133909e330" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d134128e333" class="stentry">Limits</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d134128e330" class="stentry">Data split </td>
-
-          <td valign="top" headers="d134128e333" class="stentry">Each moment, only a range of data can be split in each collection.</td>
+          <th valign="bottom" align="left" id="d133909e333" class="stentry">Limits</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e330" class="stentry">Shard key</td>
+          <td valign="top" headers="d133909e330" class="stentry">Data split </td>
 
-          <td valign="top" headers="d134128e333" class="stentry">The value of shard key is unchangable after data is inserted.</td>
+          <td valign="top" headers="d133909e333" class="stentry">Each moment, only a range of data can be split in each collection.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e330" class="stentry">_id</td>
+          <td valign="top" headers="d133909e330" class="stentry">Shard key</td>
 
-          <td valign="top" headers="d134128e333" class="stentry">"_id" in shard collection is unique in replset, but maybe not globally
+          <td valign="top" headers="d133909e333" class="stentry">The value of shard key is unchangable after data is inserted.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d133909e330" class="stentry">_id</td>
+
+          <td valign="top" headers="d133909e333" class="stentry">"_id" in shard collection is unique in replset, but maybe not globally
             unique.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e330" class="stentry">Unique index</td>
+          <td valign="top" headers="d133909e330" class="stentry">Unique index</td>
 
-          <td valign="top" headers="d134128e333" class="stentry">It should contain all fields in sharding key.</td>
+          <td valign="top" headers="d133909e333" class="stentry">It should contain all fields in sharding key.</td>
 
         </tr>
 </table>
@@ -286,15 +286,15 @@
 
     <div class="section"><h2 class="title sectiontitle">Driver</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d134128e383" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d133909e383" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d134128e386" class="stentry">Limits</th>
+          <th valign="bottom" align="left" id="d133909e386" class="stentry">Limits</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d134128e383" class="stentry">Thread-safe</td>
+          <td valign="top" headers="d133909e383" class="stentry">Thread-safe</td>
 
-          <td valign="top" headers="d134128e386" class="stentry">
+          <td valign="top" headers="d133909e386" class="stentry">
             Each connection object and its subobject are not thread-safe to each other. Different
               connections are thread-safe to each other.
           </td>
