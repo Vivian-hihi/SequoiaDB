@@ -493,7 +493,7 @@ function showHostData( num )
 		}
 		else
 		{
-			if( hostDisk[i]['checked'] == true )
+			if( hostDisk[i]['checked'] != false )
 			{
 				inputStr = '<input type="checkbox" checked="checked" onclick="switchDisk(this,' + num + ',' + i + ')">' ;
 			}
