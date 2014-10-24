@@ -120,7 +120,7 @@ namespace engine
 #if defined (_LINUX)
       cmd << "ping " << " -q -c 1"  << "\"" << host << "\"" ;
 #elif defined (_WINDOWS)
-      cmd << "ping -n 2 -w 1000 " << host ;
+      cmd << "ping -n 2 -w 1000 " << "\"" << host << "\"" ;
 #endif
 
       rc = runner.exec( cmd.str().c_str(), exitCode ) ;
