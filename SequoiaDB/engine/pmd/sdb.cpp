@@ -25,6 +25,7 @@
 #include "utilPath.hpp"
 #include "utilPipe.hpp"
 #include "sptContainer.hpp"
+#include "ossSignal.hpp"
 
 using namespace bson ;
 
