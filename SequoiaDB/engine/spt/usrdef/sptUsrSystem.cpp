@@ -118,7 +118,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get hostname, rc: %d", rc ) ;
 
 #if defined (_LINUX)
-      cmd << "ping " << host << " -q -c 1" ;
+      cmd << "ping " << " -q -c 1"  << "\"" << host << "\"" ;
 #elif defined (_WINDOWS)
       cmd << "ping -n 2 -w 1000 " << host ;
 #endif
