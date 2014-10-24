@@ -795,6 +795,9 @@ int main ( int argc , CHAR **argv )
    {
       goto error ;
    }
+#if defined( _LINUX )
+   signal( SIGCHLD, SIG_IGN ) ;
+#endif // _LINUX
    //
    linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
 
