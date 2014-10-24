@@ -15,7 +15,7 @@ traceOn() - Turn on the trace function of the database engine.
 .sp 2
 
 .sp 2
-traceOn(\fB<bufferSize>[strComp],[strBreakPoint]\fR)
+traceOn(\fB<bufferSize>,[strComp],[strBreakPoint]\fR)
 .SH "CATEGORY"
 
 .sp 2
