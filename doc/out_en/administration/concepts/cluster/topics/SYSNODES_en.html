@@ -48,43 +48,43 @@
       <p class="p">Every file contains fields as follow: </p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d3116e32" class="stentry">Field Name</th>
+          <th valign="bottom" align="left" id="d3299e32" class="stentry">Field Name</th>
 
-          <th valign="bottom" align="left" id="d3116e35" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d3299e35" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d3116e38" class="stentry">Describtion</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3116e32" class="stentry">GroupName</td>
-
-          <td valign="top" headers="d3116e35" class="stentry">String</td>
-
-          <td valign="top" headers="d3116e38" class="stentry">ReplicaGroup name.</td>
+          <th valign="bottom" align="left" id="d3299e38" class="stentry">Describtion</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3116e32" class="stentry">GroupID</td>
+          <td valign="top" headers="d3299e32" class="stentry">GroupName</td>
 
-          <td valign="top" headers="d3116e35" class="stentry">Integer</td>
+          <td valign="top" headers="d3299e35" class="stentry">String</td>
 
-          <td valign="top" headers="d3116e38" class="stentry">ReplicaGroup ID. It is unique in the cluster.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3116e32" class="stentry">PrimaryNode</td>
-
-          <td valign="top" headers="d3116e35" class="stentry">Integer</td>
-
-          <td valign="top" headers="d3116e38" class="stentry">The ID of the master node in a ReplicaGroup.</td>
+          <td valign="top" headers="d3299e38" class="stentry">ReplicaGroup name.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3116e32" class="stentry">Role</td>
+          <td valign="top" headers="d3299e32" class="stentry">GroupID</td>
 
-          <td valign="top" headers="d3116e35" class="stentry">Integer</td>
+          <td valign="top" headers="d3299e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d3116e38" class="stentry">The role of a ReplicaGroup. It can be:
+          <td valign="top" headers="d3299e38" class="stentry">ReplicaGroup ID. It is unique in the cluster.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d3299e32" class="stentry">PrimaryNode</td>
+
+          <td valign="top" headers="d3299e35" class="stentry">Integer</td>
+
+          <td valign="top" headers="d3299e38" class="stentry">The ID of the master node in a ReplicaGroup.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d3299e32" class="stentry">Role</td>
+
+          <td valign="top" headers="d3299e35" class="stentry">Integer</td>
+
+          <td valign="top" headers="d3299e38" class="stentry">The role of a ReplicaGroup. It can be:
             <ul class="ul">
               <li class="li">0: data node</li>
 
@@ -96,11 +96,11 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3116e32" class="stentry">Status</td>
+          <td valign="top" headers="d3299e32" class="stentry">Status</td>
 
-          <td valign="top" headers="d3116e35" class="stentry">Integer</td>
+          <td valign="top" headers="d3299e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d3116e38" class="stentry">
+          <td valign="top" headers="d3299e38" class="stentry">
             <ul class="ul">
               <li class="li">1: activate ReplicaGroup</li>
 
@@ -114,20 +114,20 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3116e32" class="stentry">Version</td>
+          <td valign="top" headers="d3299e32" class="stentry">Version</td>
 
-          <td valign="top" headers="d3116e35" class="stentry">Integer</td>
+          <td valign="top" headers="d3299e35" class="stentry">Integer</td>
 
-          <td valign="top" headers="d3116e38" class="stentry">Version number. It starts with 1. It increases by 1 after any execution on the
+          <td valign="top" headers="d3299e38" class="stentry">Version number. It starts with 1. It increases by 1 after any execution on the
             ReplicaGroup.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3116e32" class="stentry">Group</td>
+          <td valign="top" headers="d3299e32" class="stentry">Group</td>
 
-          <td valign="top" headers="d3116e35" class="stentry">Array</td>
+          <td valign="top" headers="d3299e35" class="stentry">Array</td>
 
-          <td valign="top" headers="d3116e38" class="stentry">It contains information of nodes in a ReplicaGroup, as it is shown as follow:</td>
+          <td valign="top" headers="d3299e38" class="stentry">It contains information of nodes in a ReplicaGroup, as it is shown as follow:</td>
 
         </tr>
 </table>
@@ -135,45 +135,45 @@
       <p class="p">If there are more than one node in a ReplicaGroup, each node is store in Group as an object. Each object contains:</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d3116e156" class="stentry">Field Nmae</th>
+          <th valign="bottom" align="left" id="d3299e156" class="stentry">Field Nmae</th>
 
-          <th valign="bottom" align="left" id="d3116e159" class="stentry">Type</th>
+          <th valign="bottom" align="left" id="d3299e159" class="stentry">Type</th>
 
-          <th valign="bottom" align="left" id="d3116e162" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d3299e162" class="stentry">Description</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3116e156" class="stentry">HostName</td>
+          <td valign="top" headers="d3299e156" class="stentry">HostName</td>
 
-          <td valign="top" headers="d3116e159" class="stentry">String</td>
+          <td valign="top" headers="d3299e159" class="stentry">String</td>
 
-          <td valign="top" headers="d3116e162" class="stentry">The hostname which a node belongs to, should absolutely matches the output of the
+          <td valign="top" headers="d3299e162" class="stentry">The hostname which a node belongs to, should absolutely matches the output of the
             instruction, "hostname", that runs on the operating system in which the node
             exists.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3116e156" class="stentry">dbpath</td>
+          <td valign="top" headers="d3299e156" class="stentry">dbpath</td>
 
-          <td valign="top" headers="d3116e159" class="stentry">String</td>
+          <td valign="top" headers="d3299e159" class="stentry">String</td>
 
-          <td valign="top" headers="d3116e162" class="stentry">Database path, is the absolute path of a physical node that the node belongs to.</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3116e156" class="stentry">NodeID</td>
-
-          <td valign="top" headers="d3116e159" class="stentry">Integer</td>
-
-          <td valign="top" headers="d3116e162" class="stentry">Node ID,is unique in the cluster.</td>
+          <td valign="top" headers="d3299e162" class="stentry">Database path, is the absolute path of a physical node that the node belongs to.</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3116e156" class="stentry">Service</td>
+          <td valign="top" headers="d3299e156" class="stentry">NodeID</td>
 
-          <td valign="top" headers="d3116e159" class="stentry">Array</td>
+          <td valign="top" headers="d3299e159" class="stentry">Integer</td>
 
-          <td valign="top" headers="d3116e162" class="stentry">Server name. Every logical node corresponds to 4 services. Every service contains its type and server name (it may be port number of server name in service files). The types <div class="fig fignone"/>
+          <td valign="top" headers="d3299e162" class="stentry">Node ID,is unique in the cluster.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d3299e156" class="stentry">Service</td>
+
+          <td valign="top" headers="d3299e159" class="stentry">Array</td>
+
+          <td valign="top" headers="d3299e162" class="stentry">Server name. Every logical node corresponds to 4 services. Every service contains its type and server name (it may be port number of server name in service files). The types <div class="fig fignone"/>
 are as follow:
             <ul class="ul">
               <li class="li">0：direct service, corresponds to database argument svcname</li>

@@ -59,116 +59,116 @@
       <p class="p">每个字段的键值为字符串，而数值则可以为数字，字符串，嵌套 JSON，嵌套数组等对象。SequoiaDB 所支持的数值类型见下表：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d13548e46" class="stentry">数值类型</th>
+          <th valign="bottom" align="left" id="d13731e46" class="stentry">数值类型</th>
 
-          <th valign="bottom" align="left" id="d13548e49" class="stentry">定义</th>
+          <th valign="bottom" align="left" id="d13731e49" class="stentry">定义</th>
 
-          <th valign="bottom" align="left" id="d13548e52" class="stentry">用例</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">整数</td>
-
-          <td valign="top" headers="d13548e49" class="stentry">整数，范围 -2147483648 至 2147483647</td>
-
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : 123 }</td>
+          <th valign="bottom" align="left" id="d13731e52" class="stentry">用例</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">长整数</td>
+          <td valign="top" headers="d13731e46" class="stentry">整数</td>
 
-          <td valign="top" headers="d13548e49" class="stentry">整数，范围 -9223372036854775808 至 9223372036854775807<div class="fig fignone"/>
+          <td valign="top" headers="d13731e49" class="stentry">整数，范围 -2147483648 至 2147483647</td>
+
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : 123 }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13731e46" class="stentry">长整数</td>
+
+          <td valign="top" headers="d13731e49" class="stentry">整数，范围 -9223372036854775808 至 9223372036854775807<div class="fig fignone"/>
 如果用户指定的数值无法适用于整数，则 SequoiaDB 自动将其转化为长整数</td>
 
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : 3000000000 }</td>
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : 3000000000 }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">浮点数</td>
+          <td valign="top" headers="d13731e46" class="stentry">浮点数</td>
 
-          <td valign="top" headers="d13548e49" class="stentry">浮点数，范围 1.7E-308 至 1.7E+308</td>
+          <td valign="top" headers="d13731e49" class="stentry">浮点数，范围 1.7E-308 至 1.7E+308</td>
 
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : 123.456 } 或 { "key" : 123e+50 }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">字符串</td>
-
-          <td valign="top" headers="d13548e49" class="stentry">双引号包含的字符串</td>
-
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : "value" }</td>
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : 123.456 } 或 { "key" : 123e+50 }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">对象 ID（OID）</td>
+          <td valign="top" headers="d13731e46" class="stentry">字符串</td>
 
-          <td valign="top" headers="d13548e49" class="stentry">十二字节对象 ID</td>
+          <td valign="top" headers="d13731e49" class="stentry">双引号包含的字符串</td>
 
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : { "$oid" : "123abcd00ef12358902300ef" } }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">布尔</td>
-
-          <td valign="top" headers="d13548e49" class="stentry">true 或者 false</td>
-
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : true } 或 { "key" : false }</td>
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : "value" }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">日期</td>
+          <td valign="top" headers="d13731e46" class="stentry">对象 ID（OID）</td>
 
-          <td valign="top" headers="d13548e49" class="stentry">YYYY-MM-DD 的日期形式</td>
+          <td valign="top" headers="d13731e49" class="stentry">十二字节对象 ID</td>
 
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : { "$date" : "2012-01-01" } }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">时间戳</td>
-
-          <td valign="top" headers="d13548e49" class="stentry">YYYY-MM-DD-HH.mm.ss.ffffff 的形式存取</td>
-
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : { "$timestamp" : "2012-01-01-13.14.26.124233" } }</td>
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : { "$oid" : "123abcd00ef12358902300ef" } }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">二进制数据</td>
+          <td valign="top" headers="d13731e46" class="stentry">布尔</td>
 
-          <td valign="top" headers="d13548e49" class="stentry">Base64 形式的二进制数据</td>
+          <td valign="top" headers="d13731e49" class="stentry">true 或者 false</td>
 
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">正则表达式</td>
-
-          <td valign="top" headers="d13548e49" class="stentry">正则表达式</td>
-
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : { "$regex" : "^张", "$options" : "i" } }</td>
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : true } 或 { "key" : false }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">对象</td>
+          <td valign="top" headers="d13731e46" class="stentry">日期</td>
 
-          <td valign="top" headers="d13548e49" class="stentry">嵌套 JSON 文档对象</td>
+          <td valign="top" headers="d13731e49" class="stentry">YYYY-MM-DD 的日期形式</td>
 
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : { "subobj" : "value" } }</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">数组</td>
-
-          <td valign="top" headers="d13548e49" class="stentry">嵌套数组对象</td>
-
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : [ "abc", 0, "def" ] }</td>
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : { "$date" : "2012-01-01" } }</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d13548e46" class="stentry">空</td>
+          <td valign="top" headers="d13731e46" class="stentry">时间戳</td>
 
-          <td valign="top" headers="d13548e49" class="stentry">null</td>
+          <td valign="top" headers="d13731e49" class="stentry">YYYY-MM-DD-HH.mm.ss.ffffff 的形式存取</td>
 
-          <td valign="top" headers="d13548e52" class="stentry">{ "key" : null }</td>
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : { "$timestamp" : "2012-01-01-13.14.26.124233" } }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13731e46" class="stentry">二进制数据</td>
+
+          <td valign="top" headers="d13731e49" class="stentry">Base64 形式的二进制数据</td>
+
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : { "$binary" : "aGVsbG8gd29ybGQ=", "$type" : "1" } }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13731e46" class="stentry">正则表达式</td>
+
+          <td valign="top" headers="d13731e49" class="stentry">正则表达式</td>
+
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : { "$regex" : "^张", "$options" : "i" } }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13731e46" class="stentry">对象</td>
+
+          <td valign="top" headers="d13731e49" class="stentry">嵌套 JSON 文档对象</td>
+
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : { "subobj" : "value" } }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13731e46" class="stentry">数组</td>
+
+          <td valign="top" headers="d13731e49" class="stentry">嵌套数组对象</td>
+
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : [ "abc", 0, "def" ] }</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d13731e46" class="stentry">空</td>
+
+          <td valign="top" headers="d13731e49" class="stentry">null</td>
+
+          <td valign="top" headers="d13731e52" class="stentry">{ "key" : null }</td>
 
         </tr>
 </table>
