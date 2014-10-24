@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>traceFmt</apiname>(<parmname>&lt;formatType>&lt;input>,&lt;input></parmname>)
+      <p></p><apiname>traceFmt</apiname>(<parmname>&lt;formatType>,&lt;input>,&lt;input></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

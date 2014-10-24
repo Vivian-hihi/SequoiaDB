@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>traceOn</apiname>(<parmname>&lt;bufferSize>[strComp],[strBreakPoint]</parmname>)
+      <p></p><apiname>traceOn</apiname>(<parmname>&lt;bufferSize>,[strComp],[strBreakPoint]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

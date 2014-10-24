@@ -15,7 +15,7 @@ traceOff() - Turn off the trace function of the database engine.
 .sp 2
 
 .sp 2
-traceOff(\fB<Dump file>\fR)
+traceOff(\fB<dumpFile>\fR)
 .SH "CATEGORY"
 
 .sp 2

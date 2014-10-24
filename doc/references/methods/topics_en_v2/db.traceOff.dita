@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>traceOff</apiname>(<parmname>&lt;Dump file></parmname>)
+      <p></p><apiname>traceOff</apiname>(<parmname>&lt;dumpFile></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

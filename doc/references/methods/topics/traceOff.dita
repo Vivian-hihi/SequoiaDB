@@ -3,7 +3,7 @@
 <topic id="topic_x44_wzm_zj">
   <title>db.traceOff()</title>
   <body>
-    <section><title>db.traceOff(&lt;dump file>)</title>
+    <section><title>db.traceOff(&lt;dumpFile>)</title>
       <p>开启数据库引擎跟踪功能。</p>
     </section>
     <section><title>参数描述</title>
