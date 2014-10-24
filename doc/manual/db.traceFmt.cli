@@ -16,7 +16,7 @@ program's trace.
 .sp 2
 
 .sp 2
-traceFmt(\fB<formatType><input>,<input>\fR)
+traceFmt(\fB<formatType>,<input>,<input>\fR)
 .SH "CATEGORY"
 
 .sp 2
