@@ -384,6 +384,14 @@ function checkInputValue( inputType, valueType, valid, key, value )
 					}
 				}
 			}
+			else
+			{
+				if( !sdbjs.fun.checkInt( value, '', '' ) )
+				{
+					returnValue[0] = false ;
+					returnValue[1] = key + '不是整数' ;
+				}
+			}
 		}
 		else if( valueType == 'port' )
 		{
