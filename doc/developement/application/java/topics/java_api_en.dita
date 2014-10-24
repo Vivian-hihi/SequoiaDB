@@ -12,7 +12,7 @@
 openLob, open an existed LOB
 removeLob, remove a LOB
 listLobs, list all the LOBs in the collection
-explain, 获取执行访问计划</codeblock>
+explain, Get the access of plan of the executions.</codeblock>
       <p>2. Added a class of large objects (LOBs), to do operations on large objects.</p><codeblock>write, write and insert LOB
 read, read LOB from data
 seek, specifies the migration of the data to be read

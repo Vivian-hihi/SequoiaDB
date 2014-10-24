@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_xfp_5gq_vp">
-  <title>Linux 版本的 OM 安装</title>
+  <title>Installation of Linux version OM</title>
   <body>
     <section>
       <title>Preparation before installation</title>
@@ -29,7 +29,7 @@
           requirement </xref> to configure Host Name and change the system kernel params.</p></li>
         <li>Run installation program<p>
           <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text --type SMS --svcname 11780 --dbpath /opt/sequoiadb/database/sms/11780 --restname 8000</codeblock></p>
-          <note>type 参数的默认值为 DB，当安装 OM 时，type 参数必须注明。svcname、dbpath 和 restname 三个参数只有在 OM 安装时才需要注明。</note></li>
+          <note>Parameter typeis set to DB by default, when installing OM, type must be set first. Svcname, dbpath and restname , these three parameters only need to be pre-set when installing OM.</note></li>
         <li>The system prompt you to choose wizard language <p>
           <codeblock>Language Selection 
 Please select the installation language

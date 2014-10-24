@@ -10,8 +10,8 @@
     </p>
     <p><xref href="jbase_operations_en.dita">Java Development Foundation</xref>
     </p>
-    <p><xref href="jbson.dita">Java CSON Usage</xref></p>
-    <p><xref href="datasource.dita">Java Datasource Introduction</xref></p>
+    <p><xref href="jbson_en.dita">Java CSON Usage</xref></p>
+    <p><xref href="datasource_en.dita">Java Datasource Introduction</xref></p>
     <p><xref href="jsql_en.dita">SQL to SequoiaDB shell to Java</xref></p>
     <p><xref href="..\..\..\..\java\html\index.html" format="html">Java API</xref></p>
   </body>
