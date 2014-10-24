@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Delete the specified node in the replica group</p>
+      <p>Delete the specified node in the replica group.</p>
       <parml>
         <plentry>
           <pt>host (string)</pt>

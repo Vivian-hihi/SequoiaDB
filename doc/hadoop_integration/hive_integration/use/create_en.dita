@@ -10,6 +10,6 @@
 OK
 Time taken: 0.386 seconds</codeblock>
     <p>Of which:</p>
-    <p>Sdb.address SequoiaDB coord node is used to specify the IP and port, if there are multiple coord node, you can write to multiple, separated by commas.</p>
+    <p>Sdb.address SequoiaDB coord node is used to specify the IP and port, if there are multiple coord node, you can write to multiple, separated by commas. 表的数据库对应SequoiaDB的集合空间,表对应集合空间中的集合.</p>
   </body>
 </topic>
