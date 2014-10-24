@@ -89,7 +89,7 @@
 					<property name="install.path" value="${install.path}" />
 				</antfetch>
  -->
-				<exec executable="ant" dir="." timeout="300000" outputproperty="error.msg"  resultproperty="ret.code">
+				<exec executable="ant" dir="." timeout="900000" outputproperty="error.msg"  resultproperty="ret.code">
 					<arg line="${command}" />
 				</exec>
 			</try>

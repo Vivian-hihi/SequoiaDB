@@ -153,7 +153,7 @@
 			<then>
 				<property name="sdb.cmd.beforeTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/before_usecase.js&quot;" />
 				<echo message="Exec:${sdb.fullname}${sdb.cmd.beforeTestcase}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="600000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
+				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="beforeTestcase.screen.output" resultproperty="beforeTestcase.ret.code">
 					<arg line="${sdb.cmd.beforeTestcase}" />
 				</exec>
 				<echo message="${beforeTestcase.screen.output}" />
@@ -162,14 +162,14 @@
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="600000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 					<arg line="${sdb.cmd.argument}" />
 				</exec>
 				<echo message="${screen.output}" />
 				
 				<property name="sdb.cmd.afterTestcase" value=" -e &quot; var COORDSVCNAME='${coord.service.port}' ;&quot; -f &quot;${testcases.path}/libs/func.js,${testcases.path}/libs/after_usecase.js&quot;" />
 				<echo message="Exec:${sdb.fullname} ${sdb.cmd.afterTestcase}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="600000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
+				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="afterTestcase.screen.output" resultproperty="afterTestcase.ret.code">
 					<arg line="${sdb.cmd.afterTestcase}" />
 				</exec>
 				<echo message="${afterTestcase.screen.output}" />
@@ -179,7 +179,7 @@
 				<property name="command" value="${sdb.fullname}${sdb.cmd.argument}" />
 				<echo message="Command:${command}" />
 				<echo message="The testcase ${test.case.fullname} path on ${testcases.path}" />
-				<exec executable="${sdb.fullname}" dir="" timeout="600000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
+				<exec executable="${sdb.fullname}" dir="" timeout="900000" outputproperty="screen.output" resultproperty="ret.code" failonerror="false">
 					<arg line="${sdb.cmd.argument}" />
 				</exec>
 				<echo message="${screen.output}" />
