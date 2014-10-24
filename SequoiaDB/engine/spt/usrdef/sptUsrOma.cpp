@@ -146,7 +146,7 @@ namespace engine
          rc = arg.getString( 1, _svcname ) ;
          if ( rc )
          {
-            INT16 port = 0 ;
+            UINT16 port = 0 ;
             rc = arg.getNative( 1, (void*)&port, SPT_NATIVE_INT16 ) ;
             if ( rc )
             {
@@ -254,7 +254,7 @@ namespace engine
       }
       else if ( rc )
       {
-         INT16 port = 0 ;
+         UINT16 port = 0 ;
          rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
          if ( rc )
          {
@@ -344,7 +344,7 @@ namespace engine
       }
       else if ( rc )
       {
-         INT16 port = 0 ;
+         UINT16 port = 0 ;
          rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
          if ( rc )
          {
@@ -407,7 +407,7 @@ namespace engine
       }
       else if ( rc )
       {
-         INT16 port = 0 ;
+         UINT16 port = 0 ;
          rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
          if ( rc )
          {
@@ -449,7 +449,7 @@ namespace engine
       }
       else if ( rc )
       {
-         INT16 port = 0 ;
+         UINT16 port = 0 ;
          rc = arg.getNative( 0, (void*)&port, SPT_NATIVE_INT16 ) ;
          if ( rc )
          {
