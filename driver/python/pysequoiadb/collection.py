@@ -1006,4 +1006,91 @@ class collection(object):
       result = None
 
       return record
+   def explain(self, **kwargs):
+      """Get the matching documents in current collection.
 
+      Parameters:
+         Name              Type     Info:
+         **kwargs                   Useful options are below
+         - condition       dict     The matching rule, update all the
+                                          documents if not provided.
+         - selected        dict     The selective rule, return the whole
+                                          document if not provided.
+         - order_by        dict     The ordered rule, result set is unordered
+                                          if not provided.
+         - hint            dict     The hint, automatically match the optimal
+                                          hint if not provided.
+         - num_to_skip     long     Skip the first numToSkip documents,
+                                          default is 0L.
+         - num_to_return   long     Only return numToReturn documents,
+                                          default is -1L for returning
+                                          all results.
+         - flag            int      
+         - options         json     
+      Return values:
+         a cursor object of query
+      Exceptions:
+         pysequoiadb.error.SDBTypeError
+         pysequoiadb.error.SDBBaseError
+      """
+
+      bson_condition = None
+      bson_selector = None
+      bson_order_by = None
+      bson_hint = None
+      bson_options = None
+      
+      num_to_skip = 0L
+      num_to_return = -1L
+      flag = 0
+
+      if "condition" in kwargs:
+         if not isinstance(kwargs.get("condition"), dict):
+            raise SDBTypeError("condition must be an instance of dict")
+         bson_condition = bson.BSON.encode(kwargs.get("condition"))
+      if "selector" in kwargs:
+         if not isinstance(kwargs.get("selector"), dict):
+            raise SDBTypeError("selector must be an instance of dict")
+         bson_selector = bson.BSON.encode(kwargs.get("selector"))
+      if "order_by" in kwargs:
+         if not isinstance(kwargs.get("order_by"), dict):
+            raise SDBTypeError("order_by must be an instance of dict")
+         bson_order_by = bson.BSON.encode(kwargs.get("order_by"))
+      if "hint" in kwargs:
+         if not isinstance(kwargs.get("hint"), dict):
+            raise SDBTypeError("hint must be an instance of dict")
+         bson_hint = bson.BSON.encode(kwargs.get("hint"))
+      if "num_to_skip" in kwargs:
+         if not isinstance(kwargs.get("num_to_skip"), long):
+            raise SDBTypeError("num_to_skip must be an instance of long")
+         else:
+            num_to_skip = kwargs.get("num_to_skip")
+      if "num_to_return" in kwargs:
+         if not isinstance(kwargs.get("num_to_return"), long):
+            raise SDBTypeError("num_to_return must be an instance of long")
+         else:
+            num_to_return = kwargs.get("num_to_return")
+      if "flag" in kwargs:
+         if not isinstance(kwargs.get("flag"), int):
+            raise SDBTypeError("flag must be an instance of int")
+         else:
+            num_to_return = kwargs.get("flag")
+      if "options" in kwargs:
+         if not isinstance(kwargs.get("options"), dict):
+            raise SDBTypeError("options must be an instance of dict")
+         bson_options = bson.BSON.encode(kwargs.get("options"))
+
+      try:
+         result = cursor()
+         rc = sdb.cl_explain(self._cl, result._cursor,
+                             bson_condition, bson_selector,
+                             bson_order_by, bson_hint,
+                             num_to_skip, num_to_return,
+                             flag, bson_options)
+         pysequoiadb._raise_if_error("Failed to explain", rc)
+      except SDBBaseError:
+         del result
+         result = None
+         raise
+
+      return result

@@ -2075,6 +2075,59 @@ error:
    goto done ;
 }
 
+__METHOD_IMP(cl_explain)
+{
+   INT32 rc                       = 0 ;
+   INT64 num_to_skip              = 0 ;
+   INT64 num_to_return            = -1 ;
+   INT32 flag                     = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_object        = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   PYOBJECT *bson_selector        = NULL ;
+   PYOBJECT *bson_order_by        = NULL ;
+   PYOBJECT *bson_hint            = NULL ;
+   PYOBJECT *bson_options         = NULL ;
+   sdbCollection *cl              = NULL ;
+   sdbCursor *cursor              = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *selector  = NULL ;
+   const bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *hint      = NULL ;
+   const bson::BSONObj *options   = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOLLLO", &obj, &cursor_object,
+        &bson_condition,  &bson_selector, &bson_order_by,
+        &bson_hint, &num_to_skip, &num_to_return, &flag, &bson_options ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_options, options ) ;
+
+   rc = cl->explain( *cursor, *condition, *selector, *order_by, *hint,
+                     num_to_skip, num_to_return, flag, *options ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   DELETE_CPPOBJECT( condition ) ;
+   DELETE_CPPOBJECT( selector ) ;
+   DELETE_CPPOBJECT( order_by ) ;
+   DELETE_CPPOBJECT( hint ) ;
+   DELETE_CPPOBJECT( options ) ;
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 ///< implement cursor
 __METHOD_IMP(create_cursor)
 {
@@ -3028,7 +3081,7 @@ static PyMethodDef sequoiadb_methods[] = {
    {"cl_get_lob",                      cl_get_lob,                      METH_VARARGS},
    {"cl_remove_lob",                   cl_remove_lob,                   METH_VARARGS},
    {"cl_list_lobs",                    cl_list_lobs,                    METH_VARARGS},
-   
+   {"cl_explain",                      cl_explain,                      METH_VARARGS},
    /** cr */
    {"create_cursor",                   create_cursor,                   METH_VARARGS},
    {"release_cursor",                  release_cursor,                  METH_VARARGS},
