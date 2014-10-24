@@ -2,7 +2,7 @@ var searchData=
 [
   ['canceltask',['cancelTask',['../classsdbclient_1_1sdb.html#a8d79a58d3b826b19f1dbf20d0e3a59f0',1,'sdbclient::sdb']]],
   ['client_2ehpp',['client.hpp',['../client_8hpp.html',1,'']]],
-  ['close',['close',['../classsdbclient_1_1sdbCursor.html#ae19fe2a2fa1e1ef9c031e8b00c8fb462',1,'sdbclient::sdbCursor']]],
+  ['close',['close',['../classsdbclient_1_1sdbCursor.html#ae19fe2a2fa1e1ef9c031e8b00c8fb462',1,'sdbclient::sdbCursor::close()'],['../classsdbclient_1_1sdbLob.html#a6f657580a3c047ef4f99f5a6dd6e5d13',1,'sdbclient::sdbLob::close()']]],
   ['closeallcursors',['closeAllCursors',['../classsdbclient_1_1sdb.html#a2052673f94c49d421bed64e096553093',1,'sdbclient::sdb']]],
   ['connect',['connect',['../classsdbclient_1_1sdbNode.html#a1f2e1269f21af5bcf36e0e38deb15cf8',1,'sdbclient::sdbNode::connect()'],['../classsdbclient_1_1sdb.html#a41960ef1b7c1d2914c59247309c17b53',1,'sdbclient::sdb::connect(const CHAR *pHostName, UINT16 port)'],['../classsdbclient_1_1sdb.html#a32b0e972d5aa6f3e58fb102ce3d4eded',1,'sdbclient::sdb::connect(const CHAR *pHostName, UINT16 port, const CHAR *pUsrName, const CHAR *pPasswd)'],['../classsdbclient_1_1sdb.html#aa1ffa2592e22ed4d0e98c9dbe8f937e6',1,'sdbclient::sdb::connect(const CHAR *pHostName, const CHAR *pServiceName)'],['../classsdbclient_1_1sdb.html#a97c1f8b762abebfeec2b550f803490de',1,'sdbclient::sdb::connect(const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pUsrName, const CHAR *pPasswd)'],['../classsdbclient_1_1sdb.html#a34313780f36d821b9a6627f0ca743a01',1,'sdbclient::sdb::connect(const CHAR **pConnAddrs, INT32 arrSize, const CHAR *pUsrName, const CHAR *pPasswd)']]],
   ['create',['create',['../classsdbclient_1_1sdbCollection.html#aff4162e8c438202e2d096a2a813b513a',1,'sdbclient::sdbCollection::create()'],['../classsdbclient_1_1sdbCollectionSpace.html#a399205e99a65a1a8557a6cfb310e45d6',1,'sdbclient::sdbCollectionSpace::create()']]],
@@ -10,6 +10,7 @@ var searchData=
   ['createcollectionspace',['createCollectionSpace',['../classsdbclient_1_1sdb.html#a52f05987880262c5f1451b71aac819ae',1,'sdbclient::sdb']]],
   ['createdomain',['createDomain',['../classsdbclient_1_1sdb.html#a615990b4893d5c2e41629c22b8c16997',1,'sdbclient::sdb']]],
   ['createindex',['createIndex',['../classsdbclient_1_1sdbCollection.html#a233a9df73d247e5a78bd113fe2bd2dff',1,'sdbclient::sdbCollection']]],
+  ['createlob',['createLob',['../classsdbclient_1_1__sdbCollection.html#aca72e22c140722d803566ba632971c64',1,'sdbclient::_sdbCollection::createLob()'],['../classsdbclient_1_1sdbCollection.html#ab1b462cd1506e4afd0cc56d7f4a806d5',1,'sdbclient::sdbCollection::createLob()']]],
   ['createnode',['createNode',['../classsdbclient_1_1sdbReplicaGroup.html#ae4062f8836a13a35ceac11d7a3417ab1',1,'sdbclient::sdbReplicaGroup']]],
   ['createreplicacatagroup',['createReplicaCataGroup',['../classsdbclient_1_1sdb.html#a3b36154a0f5ac15e885e567b78b7bf01',1,'sdbclient::sdb']]],
   ['createreplicagroup',['createReplicaGroup',['../classsdbclient_1_1sdb.html#a35d94e0a21b14c5bc4aee19ca7b06d79',1,'sdbclient::sdb']]],

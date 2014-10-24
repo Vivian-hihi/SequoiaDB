@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ownmem',['ownmem',['../structbson.html#aab9be867998f26fcf6b616a7fd4f4de1',1,'bson']]]
+  ['openlob',['openLob',['../classsdbclient_1_1sdbCollection.html#af7a6611ea6816d1c7da7974fe8b892b0',1,'sdbclient::sdbCollection']]]
 ];

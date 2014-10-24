@@ -61,6 +61,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="annotated.html"><span>Class&#160;List</span></a></li>
       <li><a href="classes.html"><span>Class&#160;Index</span></a></li>
+      <li><a href="hierarchy.html"><span>Class&#160;Hierarchy</span></a></li>
       <li><a href="functions.html"><span>Class&#160;Members</span></a></li>
     </ul>
   </div>
@@ -150,14 +151,20 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a2b4c991db1d4024d6bde92849c6b300c"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a2b4c991db1d4024d6bde92849c6b300c">FLG_QUERY_STRINGOUT</a> = 0x00000001</td></tr>
-<tr class="memdesc:a2b4c991db1d4024d6bde92849c6b300c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Nornally, query return bson stream, if add this flag, query return binary data stream.  <a href="#a2b4c991db1d4024d6bde92849c6b300c"></a><br/></td></tr>
+<tr class="memdesc:a2b4c991db1d4024d6bde92849c6b300c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Normally, query return bson stream, when this flag is added, query return binary data stream.  <a href="#a2b4c991db1d4024d6bde92849c6b300c"></a><br/></td></tr>
 <tr class="separator:a2b4c991db1d4024d6bde92849c6b300c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac26e2c0cee7cf2b23fa52a288abb698c"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac26e2c0cee7cf2b23fa52a288abb698c">FLG_QUERY_FORCE_HINT</a> = 0x00000080</td></tr>
-<tr class="memdesc:ac26e2c0cee7cf2b23fa52a288abb698c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Force to use specifed hint to query, if database have no index assigned by the hint, fail to query.  <a href="#ac26e2c0cee7cf2b23fa52a288abb698c"></a><br/></td></tr>
+<tr class="memdesc:ac26e2c0cee7cf2b23fa52a288abb698c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Force to use specified hint to query, if database have no index assigned by the hint, fail to query.  <a href="#ac26e2c0cee7cf2b23fa52a288abb698c"></a><br/></td></tr>
 <tr class="separator:ac26e2c0cee7cf2b23fa52a288abb698c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3dbd2e5fe88a3a683fe78d8d73b8a3d"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3dbd2e5fe88a3a683fe78d8d73b8a3d">FLG_QUERY_PARALLED</a> = 0x00000100</td></tr>
-<tr class="memdesc:ad3dbd2e5fe88a3a683fe78d8d73b8a3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable paralled sub querys.  <a href="#ad3dbd2e5fe88a3a683fe78d8d73b8a3d"></a><br/></td></tr>
+<tr class="memdesc:ad3dbd2e5fe88a3a683fe78d8d73b8a3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable paralled sub query.  <a href="#ad3dbd2e5fe88a3a683fe78d8d73b8a3d"></a><br/></td></tr>
 <tr class="separator:ad3dbd2e5fe88a3a683fe78d8d73b8a3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3dfd00ad8d166cee821c46ca18359859"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a3dfd00ad8d166cee821c46ca18359859">FLG_QUERY_WITH_RETURNDATA</a> = 0x00000200</td></tr>
+<tr class="memdesc:a3dfd00ad8d166cee821c46ca18359859"><td class="mdescLeft">&#160;</td><td class="mdescRight">return data in query response  <a href="#a3dfd00ad8d166cee821c46ca18359859"></a><br/></td></tr>
+<tr class="separator:a3dfd00ad8d166cee821c46ca18359859"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a334a60ade03231167cab57ae23c84ba1"><td class="memItemLeft" align="right" valign="top">static final int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a334a60ade03231167cab57ae23c84ba1">FLG_QUERY_EXPLAIN</a> = 0x00000400</td></tr>
+<tr class="memdesc:a334a60ade03231167cab57ae23c84ba1"><td class="mdescLeft">&#160;</td><td class="mdescRight">explain query  <a href="#a334a60ade03231167cab57ae23c84ba1"></a><br/></td></tr>
+<tr class="separator:a334a60ade03231167cab57ae23c84ba1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Database operation rules. </p>
@@ -627,6 +634,29 @@ Static Public Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="a334a60ade03231167cab57ae23c84ba1"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">final int FLG_QUERY_EXPLAIN = 0x00000400</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>explain query </p>
+<p>0x00000400 </p>
+
+</div>
+</div>
 <a class="anchor" id="ac26e2c0cee7cf2b23fa52a288abb698c"></a>
 <div class="memitem">
 <div class="memproto">
@@ -645,7 +675,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Force to use specifed hint to query, if database have no index assigned by the hint, fail to query. </p>
+<p>Force to use specified hint to query, if database have no index assigned by the hint, fail to query. </p>
 <p>0x00000080 </p>
 
 </div>
@@ -668,7 +698,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Enable paralled sub querys. </p>
+<p>Enable paralled sub query. </p>
 <p>0x00000100 </p>
 
 </div>
@@ -691,18 +721,41 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Nornally, query return bson stream, if add this flag, query return binary data stream. </p>
+<p>Normally, query return bson stream, when this flag is added, query return binary data stream. </p>
 <p>0x00000001 </p>
 
 </div>
 </div>
+<a class="anchor" id="a3dfd00ad8d166cee821c46ca18359859"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">final int FLG_QUERY_WITH_RETURNDATA = 0x00000200</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>return data in query response </p>
+<p>0x00000200 </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>E:/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBQuery.java</li>
+<li>E:/work/sequoiadb/driver/java/src/main/java/com/sequoiadb/base/DBQuery.java</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 6 2014 16:03:05 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Oct 21 2014 16:06:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
